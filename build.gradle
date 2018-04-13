@@ -1,0 +1,13 @@
+allprojects {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+      url "https://repository.cloudera.com/artifactory/cloudera-repos/"
+    }
+  }
+}
+
+subprojects {
+  version = '0.1-SNAPSHOT'
+}

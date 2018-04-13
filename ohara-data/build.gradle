@@ -1,0 +1,16 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+
+dependencies {
+  compile libs.scala
+  compile libs.slf4jApi
+  compile libs.slf4jlog4j
+  compile libs.scalaLogging
+  testCompile libs.scalatest
+  testCompile libs.junit
+}
+
+task copyDeps(type: Copy) {
+  into "$buildDir/lib"
+  from configurations.compile
+}

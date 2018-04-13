@@ -1,0 +1,20 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+
+dependencies {
+  compile libs.kafkaClient
+  compile libs.kafkaConnect
+  compile libs.kafkaConnectFile
+  compile libs.kafkaConnectRuntime
+  compile libs.scala
+  compile libs.zookeeper
+  compile libs.scalaLogging
+  testCompile libs.scalatest
+  testCompile libs.mockito
+  testCompile libs.junit
+}
+
+task copyDeps(type: Copy) {
+  into "$buildDir/lib"
+  from configurations.compile
+}
