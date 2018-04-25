@@ -1,8 +1,10 @@
 apply plugin: 'java-library-distribution'
 
 dependencies {
-  compile project(':ohara-data')
+  compile project(':ohara-common')
   compile project(':ohara-core')
+  compile project(':ohara-data')
+  compile project(':ohara-kafka-data')
 }
 
 distributions {

@@ -16,8 +16,9 @@ versions["scalatest"] = project.hasProperty('scalatest.version') ? project.prope
 versions["junit"] = project.hasProperty('junit.version') ? project.properties['junit.version'] : "4.12"
 versions["slf4j"] = project.hasProperty('slf4j.version') ? project.properties['slf4j.version'] : "1.7.25"
 versions["scalaLogging"] = project.hasProperty('scalaLogging.version') ? project.properties['scalaLogging.version'] : "3.8.0"
-
+versions["typesafeConfig"] = project.hasProperty('typesafeConfig.version') ? project.properties['typesafeConfig.version'] : "1.3.3"
 libs += [
+  kafkaCore: "org.apache.kafka:kafka_2.12:$versions.kafka",
   kafkaClient: "org.apache.kafka:kafka-clients:$versions.kafka",
   kafkaConnect: "org.apache.kafka:connect-api:$versions.kafka",
   kafkaConnectFile: "org.apache.kafka:connect-file:$versions.kafka",
@@ -31,5 +32,6 @@ libs += [
   scalatest: "org.scalatest:scalatest_2.12:$versions.scalatest",
   scalaLogging: "com.typesafe.scala-logging:scala-logging_2.12:$versions.scalaLogging",
   mockito: "org.mockito:mockito-all:$versions.mockito",
-  junit: "junit:junit:$versions.junit"
+  junit: "junit:junit:$versions.junit",
+  typesafeConfig: "com.typesafe:config:$versions.typesafeConfig"
 ]

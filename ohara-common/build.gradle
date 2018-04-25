@@ -2,13 +2,14 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
-  compile project(':ohara-common')
   compile libs.scala
+  compile libs.scalaLogging
   compile libs.slf4jApi
   compile libs.slf4jlog4j
-  compile libs.scalaLogging
   testCompile libs.scalatest
+  testCompile libs.mockito
   testCompile libs.junit
+  testCompile libs.typesafeConfig
 }
 
 task copyDeps(type: Copy) {

@@ -4,14 +4,8 @@ apply plugin: 'scala'
 dependencies {
   compile project(':ohara-common')
   compile libs.scala
-  compile libs.slf4jApi
-  compile libs.slf4jlog4j
-  compile libs.scalaLogging
+  compile libs.kafkaCore
   testCompile libs.scalatest
+  testCompile libs.mockito
   testCompile libs.junit
-}
-
-task copyDeps(type: Copy) {
-  into "$buildDir/lib"
-  from configurations.compile
 }
