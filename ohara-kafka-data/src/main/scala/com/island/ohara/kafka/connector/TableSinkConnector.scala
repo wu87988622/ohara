@@ -6,7 +6,7 @@ import org.apache.kafka.connect.sink.SinkConnector
 /**
   * A wrap to SinkConnector. Currently, only Task is replaced by ohara object - TableSinkTask
   */
-abstract class classTableSinkConnector extends SinkConnector {
+abstract class TableSinkConnector extends SinkConnector {
 
   /**
     * Returns the TableSinkTask implementation for this Connector.
