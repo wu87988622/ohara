@@ -2,14 +2,17 @@ package com.island.ohara.config
 
 import java.util
 
+import com.island.ohara.rule.SmallTest
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import org.junit.Test
 import org.junit.runner.RunWith
+import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
 
-@RunWith(classOf[JUnitRunner])
-class TestTypesafeConfig extends FlatSpec with Matchers {
-  "The basic getter/setter" should "work" in {
+class TestTypesafeConfig extends SmallTest with Matchers {
+
+  @Test
+  def testGetterAndSetter():Unit = {
     val conf = ConfigFactory.empty()
       .withValue("key", ConfigValueFactory.fromAnyRef("value"))
       .withValue("key2", ConfigValueFactory.fromIterable(util.Arrays.asList("v0", "v1")))

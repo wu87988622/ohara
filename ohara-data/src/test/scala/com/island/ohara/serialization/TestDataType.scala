@@ -1,13 +1,13 @@
 package com.island.ohara.serialization
 
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestDataType extends FlatSpec with Matchers {
+class TestDataType extends SmallTest with Matchers {
 
-  "The index of all DataTypes " should "different" in {
+  @Test
+  def testIndexWithoutDuplicate():Unit = {
     collection.SortedSet(DataType.all.map(_.index): _*).size shouldBe DataType.all.size
   }
 }

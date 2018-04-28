@@ -1,13 +1,13 @@
 package com.island.ohara.core
 
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestBuilder extends FlatSpec with Matchers {
+class TestBuilder extends SmallTest with Matchers {
 
-  "The cell builder" should "work" in {
+  @Test
+  def testCellBuilder():Unit = {
     val builder = Cell.builder.name("cf")
     val list = List(123, 123L, "123", 123D, 123F, true)
     list.map(_ match {
@@ -27,7 +27,8 @@ class TestBuilder extends FlatSpec with Matchers {
     })
   }
 
-  "The row builder" should "work" in {
+  @Test
+  def testRowBuilder():Unit = {
     val row = Row.builder
       .append(Cell.builder.name("0").build(1))
       .append(Cell.builder.name("1").build("Abc"))
@@ -45,7 +46,8 @@ class TestBuilder extends FlatSpec with Matchers {
     an[IndexOutOfBoundsException] should be thrownBy row.seekCell(100)
   }
 
-  "The table builder" should "work" in {
+  @Test
+  def testTableBuilder():Unit = {
     val table = Table.builder("test_table")
       .append(Row.builder.append(Cell.builder.name("0").build(1)).build())
       .append(Row.builder.append(Cell.builder.name("1").build("ohara")).build())

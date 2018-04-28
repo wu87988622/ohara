@@ -3,23 +3,24 @@ package com.island.ohara.kafka
 import java.util.Properties
 
 import com.island.ohara.core.{Cell, Row, Table}
+import com.island.ohara.rule.SmallTest
 import org.apache.kafka.clients.producer.{ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.serialization.ByteArraySerializer
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.junit.Test
+import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FlatSpec, Matchers}
 
-@RunWith(classOf[JUnitRunner])
-class TestProducer extends FlatSpec with Matchers with MockitoSugar {
+class TestProducer extends SmallTest with Matchers with MockitoSugar {
 
-  "Newing a TableProducer" should "work" in {
+  @Test
+  def testCreateTableProducer():Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
     new TableProducer[Array[Byte]](producerProps, new ByteArraySerializer).close()
   }
 
-  "Sending Table to TableProducer" should "work" in {
+  @Test
+  def testSendDataWithTable():Unit = {
     // assume we get some data from cav file
     val csvData = readDataFromCsv
     // assume we get cf name and type from ohara configurator
@@ -42,13 +43,15 @@ class TestProducer extends FlatSpec with Matchers with MockitoSugar {
     table.seekCell("cf2").next().value shouldBe 10
   }
 
-  "Newing a RowProducer" should "work" in {
+  @Test
+  def testCreateRowProducer():Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
     new RowProducer[Array[Byte]](producerProps, new ByteArraySerializer).close()
   }
 
-  "Sending Table to RowProducer" should "work" in {
+  @Test
+  def testSendDataWithRow():Unit = {
     // assume we get some data from cav file
     val csvData = readDataFromCsv
     // assume we get cf name and type from ohara configurator

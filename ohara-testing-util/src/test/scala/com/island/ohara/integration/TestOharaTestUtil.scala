@@ -2,21 +2,23 @@ package com.island.ohara.integration
 
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.rule.MediumTest
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
+import org.junit.Test
 import org.junit.runner.RunWith
+import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration._
 
-@RunWith(classOf[JUnitRunner])
-class TestOharaTestUtil extends FlatSpec with Matchers {
+class TestOharaTestUtil extends MediumTest with Matchers {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  "creating 3 brokers" should "work" in {
+  @Test
+  def testCreateClusterWithMultiBrokers():Unit = {
     doClose(new OharaTestUtil(3)) {
       testUtil => {
         testUtil.kafkaBrokers.size shouldBe 3

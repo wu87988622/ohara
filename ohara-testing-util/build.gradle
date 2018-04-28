@@ -6,6 +6,7 @@ dependencies {
   compile libs.scala
   compile libs.kafkaCore
   testCompile libs.scalatest
+  testCompile project(':ohara-common').sourceSets.test.output
   testCompile libs.mockito
   testCompile libs.junit
 }

@@ -1,13 +1,13 @@
 package com.island.ohara.io
 
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestByteUtil extends FlatSpec with Matchers {
+class TestByteUtil extends SmallTest with Matchers {
 
-  "The conversion" should "obey the symmetry rule" in {
+  @Test
+  def testConversionOfPrimitiveType():Unit = {
     ByteUtil.toShort(ByteUtil.toBytes(1.toShort)) shouldBe 1
     ByteUtil.toInt(ByteUtil.toBytes(1)) shouldBe 1
     ByteUtil.toLong(ByteUtil.toBytes(1.toLong)) shouldBe 1
@@ -18,7 +18,8 @@ class TestByteUtil extends FlatSpec with Matchers {
     ByteUtil.toBoolean(ByteUtil.toBytes(true)) shouldBe true
   }
 
-  "The conversion by range" should "obey the symmetry rule" in {
+  @Test
+  def testConversionOfPrimitiveTypeWithOffset():Unit = {
     val buf = new Array[Byte](20)
     val init = 2
     var index = init

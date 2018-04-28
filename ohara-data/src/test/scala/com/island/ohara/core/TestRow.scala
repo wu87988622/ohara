@@ -1,13 +1,13 @@
 package com.island.ohara.core
 
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestRow extends FlatSpec with Matchers {
+class TestRow extends SmallTest with Matchers {
 
-  "The build of row" should "work" in {
+  @Test
+  def testBuilderRow():Unit = {
     val list = List(123.toShort, 123, 123L, "123", 123D, 123F, true)
     val row = Row(list.map(_ match {
       case v: Boolean => Cell.builder.name("boolean").build(v)

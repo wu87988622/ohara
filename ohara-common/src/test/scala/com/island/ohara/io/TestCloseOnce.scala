@@ -2,15 +2,15 @@ package com.island.ohara.io
 
 import java.io.IOException
 
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestCloseOnce extends FlatSpec with Matchers {
+class TestCloseOnce extends SmallTest with Matchers {
 
-  "The close method" should "be invoked" in {
+  @Test
+  def testFinalClose():Unit = {
     def invalidString(): CloseOnce = throw new IOException("IOE")
 
     try {

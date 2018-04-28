@@ -1,13 +1,15 @@
 package com.island.ohara.config
 
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
 import org.junit.runner.RunWith
+import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
 
-@RunWith(classOf[JUnitRunner])
-class TestPropertyBuilder extends FlatSpec with Matchers {
+class TestPropertyBuilder extends SmallTest with Matchers {
 
-  "The build of Property" should "work" in {
+  @Test
+  def testBuildProperties():Unit = {
     val builder = Property.builder
       .key("key")
       .description("desc")

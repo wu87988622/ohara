@@ -4,17 +4,17 @@ import java.io.ByteArrayOutputStream
 
 import com.island.ohara.core.{Cell, Row, Table}
 import com.island.ohara.io.CloseOnce._
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestRW extends FlatSpec with Matchers {
+class TestRW extends SmallTest with Matchers {
   private[this] val row_0 = Row(for (index <- 0 until 5) yield Cell.builder.name(index.toString).build(index))
   private[this] val row_1 = Row(for (index <- 0 until 10) yield Cell.builder.name(index.toString).build(index))
   private[this] val table = Table("test_table", row_0, row_1)
 
-  "Writing a empty table" should "work" in {
+  @Test
+  def testWriteEmptyTable():Unit = {
     val bs = new ByteArrayOutputStream(100)
     TableWriter(bs, "empty_table", 0).close()
     doClose(TableReader(bs.toByteArray)) {
@@ -25,7 +25,8 @@ class TestRW extends FlatSpec with Matchers {
     }
   }
 
-  "Writing a empty row" should "work" in {
+  @Test
+  def testWriteEmptyRow():Unit = {
     val bs = new ByteArrayOutputStream(100)
     doClose(TableWriter(bs, "empty_row", 1)) {
       tableWriter => {
@@ -41,7 +42,8 @@ class TestRW extends FlatSpec with Matchers {
     }
   }
 
-  "The conversion between object and bytes" should "work" in {
+  @Test
+  def testConversion():Unit = {
     val bs = new ByteArrayOutputStream(100)
     doClose(TableWriter(bs, table.id, table.rowCount)) {
       tableWriter => {

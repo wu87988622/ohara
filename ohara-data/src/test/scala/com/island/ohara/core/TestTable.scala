@@ -1,13 +1,15 @@
 package com.island.ohara.core
 
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
 import org.junit.runner.RunWith
+import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
 
-@RunWith(classOf[JUnitRunner])
-class TestTable extends FlatSpec with Matchers {
+class TestTable extends SmallTest with Matchers {
 
-  "The build of table" should "work" in {
+  @Test
+  def testBuildTable():Unit = {
     val table = Table("test_table", for (_ <- 0 until 10) yield
       Row(for (cellIndex <- 0 until 10) yield Cell.builder.name(cellIndex.toString).build(cellIndex)))
     table.id shouldBe "test_table"

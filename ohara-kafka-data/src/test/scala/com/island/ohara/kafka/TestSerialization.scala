@@ -1,14 +1,14 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.core.{Cell, Row, Table}
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import com.island.ohara.rule.SmallTest
+import org.junit.Test
+import org.scalatest.Matchers
 
-@RunWith(classOf[JUnitRunner])
-class TestSerialization extends FlatSpec with Matchers {
+class TestSerialization extends SmallTest with Matchers {
 
-  "The conversion of table between serializer and deserializer" should "work" in {
+  @Test
+  def testSerializeTable():Unit = {
     val table = Table.builder("my_table")
       .append(Row(Cell.builder.name("cell").build(123)))
       .build()
@@ -18,7 +18,8 @@ class TestSerialization extends FlatSpec with Matchers {
     copy.rowCount shouldBe table.rowCount
   }
 
-  "The conversion of row between serializer and deserializer" should "work" in {
+  @Test
+  def testSerializeRow():Unit = {
     val row = Row(Cell.builder.name("cell").build(123))
     val copy = (new RowDeserializer).deserialize("xx", (new RowSerializer).serialize("topic", row))
     copy.cellCount shouldBe row.cellCount

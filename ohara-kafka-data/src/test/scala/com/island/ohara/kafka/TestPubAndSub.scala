@@ -4,21 +4,18 @@ import com.island.ohara.core.{Cell, Row, Table}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.rule.MediumTest
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FlatSpec, Matchers}
+import org.junit.Test
+import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
-@RunWith(classOf[JUnitRunner])
-class TestPubAndSub extends FlatSpec with Matchers {
+class TestPubAndSub extends MediumTest with Matchers {
 
-  private[this] lazy val logger = Logger(getClass.getName)
-
-  "Transferring data from RowProducer to RowConsumer" should "work" in {
+  @Test
+  def testSendDataBetweenRowProducerAndRowConsumer():Unit = {
     val row = Row.builder.append(Cell.builder.name("cf0").build(0))
       .append(Cell.builder.name("cf1").build(1)).build
     doClose(new OharaTestUtil(3)) {
@@ -48,7 +45,8 @@ class TestPubAndSub extends FlatSpec with Matchers {
     }
   }
 
-  "Transferring data from TableProducer to TableConsumer" should "work" in {
+  @Test
+  def testSendDataBetweenTableProducerAndTableConsumer():Unit = {
     val table = Table("my_table", Row.builder.append(Cell.builder.name("cf0").build(0))
       .append(Cell.builder.name("cf1").build(1)).build)
     doClose(new OharaTestUtil(3)) {
