@@ -11,8 +11,3 @@ dependencies {
   testCompile libs.junit
   testCompile libs.typesafeConfig
 }
-
-task copyDeps(type: Copy) {
-  into "$buildDir/lib"
-  from configurations.compile
-}

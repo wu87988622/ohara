@@ -19,7 +19,3 @@ dependencies {
   testCompile libs.junit
 }
 
-task copyDeps(type: Copy) {
-  into "$buildDir/lib"
-  from configurations.compile
-}
