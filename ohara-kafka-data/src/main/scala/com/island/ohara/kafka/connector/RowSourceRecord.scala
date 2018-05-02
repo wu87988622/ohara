@@ -14,7 +14,7 @@ class RowSourceRecord(sourcePartition: Map[String, _], sourceOffset: Map[String,
                       keySchema: Schema, key: Any, row: Row, timestamp: Long)
   extends SourceRecord(sourcePartition.asJava, sourceOffset.asJava, topic,
     if (partition < 0) null else partition, keySchema, key,
-    ConnectSchema.ROW_SCHEMA, RowWriter.toBytes(row), if (timestamp < 0) null else timestamp) {
+    Schema.BYTES_SCHEMA, RowWriter.toBytes(row), if (timestamp < 0) null else timestamp) {
 
   def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _],
            topic: String, row: Row) {

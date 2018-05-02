@@ -1,6 +1,6 @@
 package com.island.ohara.kafka.connector
 
-import com.island.ohara.core.{Row, Table}
+import com.island.ohara.core.Row
 import com.island.ohara.serialization.RowReader
 import org.apache.kafka.common.record.TimestampType
 import org.apache.kafka.connect.data.Schema
@@ -21,7 +21,7 @@ class RowSinkRecord(sinkRecord: SinkRecord) {
 
   def topic: String = sinkRecord.topic()
 
-  def kafkaPartition: Option[Int] = if (sinkRecord.kafkaPartition == null) None else Option(sinkRecord.kafkaPartition)
+  def kafkaPartition: Option[Int] = if (sinkRecord.kafkaPartition == null) None else Some(sinkRecord.kafkaPartition)
 
   def key: Any = sinkRecord.key()
 
@@ -32,5 +32,5 @@ class RowSinkRecord(sinkRecord: SinkRecord) {
     case _ => throw new IllegalStateException(s"Why we get a non-supported type:${sinkRecord.value.getClass.getName}")
   }
 
-  def timestamp: Option[Long] = if (sinkRecord.timestamp == null) None else Option(sinkRecord.timestamp)
+  def timestamp: Option[Long] = if (sinkRecord.timestamp == null) None else Some(sinkRecord.timestamp)
 }

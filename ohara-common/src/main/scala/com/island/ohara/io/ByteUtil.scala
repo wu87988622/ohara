@@ -22,7 +22,7 @@ object ByteUtil {
   // -------------[string]------------- //
   implicit def toBytes(value: String): Array[Byte] = value.getBytes(StandardCharsets.UTF_8)
 
-  implicit def toBytes(value: String, f: Byte => Any): Unit = value.getBytes(StandardCharsets.UTF_8).foreach(f)
+  implicit def toBytes(value: String, f: Byte => Unit): Unit = value.getBytes(StandardCharsets.UTF_8).foreach(f)
 
   implicit def toString(value: Array[Byte]): String = toString(value, 0, value.length)
 
@@ -42,7 +42,7 @@ object ByteUtil {
   /**
     * optimize the conversion manully.
     */
-  implicit def toBytes(value: Long, f: Byte => Any): Unit = {
+  implicit def toBytes(value: Long, f: Byte => Unit): Unit = {
     f((value >>> 56).toByte)
     f((value >>> 48).toByte)
     f((value >>> 40).toByte)
@@ -92,7 +92,7 @@ object ByteUtil {
   /**
     * optimize the conversion manully.
     */
-  implicit def toBytes(value: Int, f: Byte => Any): Unit = {
+  implicit def toBytes(value: Int, f: Byte => Unit): Unit = {
     f((value >>> 24).toByte)
     f((value >>> 16).toByte)
     f((value >>> 8).toByte)
@@ -127,7 +127,7 @@ object ByteUtil {
     buf
   }
 
-  implicit def toBytes(value: Short, f: Byte => Any): Unit = {
+  implicit def toBytes(value: Short, f: Byte => Unit): Unit = {
     f((value >>> 8).toByte)
     f((value >>> 0).toByte)
   }
@@ -144,21 +144,21 @@ object ByteUtil {
   // -------------[double]------------- //
   implicit def toBytes(value: Double): Array[Byte] = toBytes(java.lang.Double.doubleToRawLongBits(value))
 
-  implicit def toBytes(value: Double, f: Byte => Any): Unit = toBytes(java.lang.Double.doubleToRawLongBits(value), f)
+  implicit def toBytes(value: Double, f: Byte => Unit): Unit = toBytes(java.lang.Double.doubleToRawLongBits(value), f)
 
   implicit def toDouble(data: Array[Byte], offset: Int = 0): Double = java.lang.Double.longBitsToDouble(toLong(data, offset))
 
   // -------------[float]------------- //
   implicit def toBytes(value: Float): Array[Byte] = toBytes(java.lang.Float.floatToIntBits(value))
 
-  implicit def toBytes(value: Float, f: Byte => Any): Unit = toBytes(java.lang.Float.floatToIntBits(value), f)
+  implicit def toBytes(value: Float, f: Byte => Unit): Unit = toBytes(java.lang.Float.floatToIntBits(value), f)
 
   implicit def toFloat(data: Array[Byte], offset: Int = 0): Float = java.lang.Float.intBitsToFloat(toInt(data, offset))
 
   // -------------[boolean]------------- //
   implicit def toBytes(value: Boolean): Array[Byte] = if (value) Array[Byte]((-1).toByte) else Array[Byte](0.toByte)
 
-  implicit def toBytes(value: Boolean, f: Byte => Any): Unit = if (value) f((-1).toByte) else f((0).toByte)
+  implicit def toBytes(value: Boolean, f: Byte => Unit): Unit = if (value) f((-1).toByte) else f((0).toByte)
 
   implicit def toBoolean(data: Array[Byte], offset: Int = 0): Boolean = data(offset) != 0
 

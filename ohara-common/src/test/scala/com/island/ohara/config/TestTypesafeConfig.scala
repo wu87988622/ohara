@@ -5,9 +5,7 @@ import java.util
 import com.island.ohara.rule.SmallTest
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
 
 class TestTypesafeConfig extends SmallTest with Matchers {
 

@@ -2,7 +2,7 @@ package com.island.ohara.serialization
 
 import java.io.OutputStream
 
-import com.island.ohara.core.{Cell, Row, Table}
+import com.island.ohara.core.{Cell, Row}
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.io.{ArrayBufferOutputStream, DataStreamWriter}
 

@@ -3,19 +3,14 @@ package com.island.ohara.integration
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.MediumTest
-import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.duration._
 
 class TestOharaTestUtil extends MediumTest with Matchers {
-
-  private[this] lazy val logger = Logger(getClass.getName)
 
   @Test
   def testCreateClusterWithMultiBrokers():Unit = {

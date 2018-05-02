@@ -17,31 +17,31 @@ class PropertyBuilder[state <: State] private {
   }
 
   def build(default: String)(implicit state: state =:= FullState): Property[String] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value
+    override def from(value: String): String = value
   }
 
   def build(default: Short)(implicit state: state =:= FullState): Property[Short] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value.toShort
+    override def from(value: String): Short = value.toShort
   }
 
   def build(default: Int)(implicit state: state =:= FullState): Property[Int] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value.toInt
+    override def from(value: String): Int = value.toInt
   }
 
   def build(default: Long)(implicit state: state =:= FullState): Property[Long] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value.toLong
+    override def from(value: String): Long = value.toLong
   }
 
   def build(default: Float)(implicit state: state =:= FullState): Property[Float] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value.toFloat
+    override def from(value: String): Float = value.toFloat
   }
 
   def build(default: Double)(implicit state: state =:= FullState): Property[Double] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value.toDouble
+    override def from(value: String): Double = value.toDouble
   }
 
   def build(default: Boolean)(implicit state: state =:= FullState): Property[Boolean] = new PropertyImpl(key, description, default) {
-    override def from(value: String) = value.toBoolean
+    override def from(value: String): Boolean = value.toBoolean
   }
 }
 

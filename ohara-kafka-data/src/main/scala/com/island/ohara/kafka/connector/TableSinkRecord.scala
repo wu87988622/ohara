@@ -21,7 +21,7 @@ class TableSinkRecord(sinkRecord: SinkRecord) {
 
   def topic: String = sinkRecord.topic()
 
-  def kafkaPartition: Option[Int] = if (sinkRecord.kafkaPartition == null) None else Option(sinkRecord.kafkaPartition)
+  def kafkaPartition: Option[Int] = if (sinkRecord.kafkaPartition == null) None else Some(sinkRecord.kafkaPartition)
 
   def key: Any = sinkRecord.key()
 
@@ -32,5 +32,5 @@ class TableSinkRecord(sinkRecord: SinkRecord) {
     case _ => throw new IllegalStateException(s"Why we get a non-supported type:${sinkRecord.value.getClass.getName}")
   }
 
-  def timestamp: Option[Long] = if (sinkRecord.timestamp == null) None else Option(sinkRecord.timestamp)
+  def timestamp: Option[Long] = if (sinkRecord.timestamp == null) None else Some(sinkRecord.timestamp)
 }

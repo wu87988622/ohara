@@ -2,9 +2,7 @@ package com.island.ohara.config
 
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
 
 class TestPropertyBuilder extends SmallTest with Matchers {
 

@@ -25,6 +25,12 @@ package object integration {
     throw new IllegalStateException("Failed to create tmp folder")
   }
 
+  /**
+    * Delete the file or folder
+    * @param path path to file or folder
+    * @return  <code>true</code> if and only if the file or directory is
+    *          successfully deleted; <code>false</code> otherwise
+    */
   def deleteFile(path: File): Boolean = {
     if (!path.exists) throw new FileNotFoundException(path.getAbsolutePath)
     var ret = true

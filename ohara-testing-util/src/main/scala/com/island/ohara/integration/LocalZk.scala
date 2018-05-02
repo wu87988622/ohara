@@ -3,6 +3,7 @@ package com.island.ohara.integration
 import java.net.InetSocketAddress
 
 import com.island.ohara.io.CloseOnce
+import com.typesafe.scalalogging.Logger
 import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
 
 /**
@@ -12,6 +13,7 @@ import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
   * @param tickTime time to tick
   */
 private class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
+  private[this] lazy val logger = Logger(getClass.getName)
   private[this] val port = if (_port <= 0) availablePort else _port
   private[this] val factory = new NIOServerCnxnFactory()
   private[this] val snapshotDir = createTempDir("standalone-zk/snapshot")
@@ -21,8 +23,8 @@ private class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
 
   override protected def doClose(): Unit = {
     factory.shutdown()
-    deleteFile(snapshotDir)
-    deleteFile(logDir)
+    if (!deleteFile(snapshotDir)) logger.debug(s"Fail to delete ${snapshotDir.getAbsolutePath}")
+    if (!deleteFile(logDir))  logger.debug(s"Fail to delete ${logDir.getAbsolutePath}")
   }
 
   def connection: String = "localhost:" + port

@@ -77,7 +77,7 @@ class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
     */
   def createTopic(topic: String): Unit = {
     CloseOnce.doClose(AdminClient.create(properties))(admin => admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
-    await(() => exist(topic), 10 second)
+    if (!await(() => exist(topic), 10 second)) throw new IllegalStateException(s"$topic isn't created successfully after 10 seconds. Perhaps we should increase the wait time?")
   }
 
   /**

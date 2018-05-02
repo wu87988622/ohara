@@ -14,7 +14,7 @@ class TableSourceRecord(sourcePartition: Map[String, _], sourceOffset: Map[Strin
                         keySchema: Schema, key: Any, table: Table, timestamp: Long)
   extends SourceRecord(sourcePartition.asJava, sourceOffset.asJava, topic,
     if (partition < 0) null else partition, keySchema, key,
-    ConnectSchema.TABLE_SCHEMA, TableWriter.toBytes(table), if (timestamp < 0) null else timestamp) {
+    Schema.BYTES_SCHEMA, TableWriter.toBytes(table), if (timestamp < 0) null else timestamp) {
 
   def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _],
            topic: String, table: Table) {

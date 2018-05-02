@@ -1,6 +1,5 @@
 package com.island.ohara.serialization
 
-import com.island.ohara.core.Cell
 import com.island.ohara.io.{ByteUtil, CloseOnce, DataStreamWriter}
 
 /**

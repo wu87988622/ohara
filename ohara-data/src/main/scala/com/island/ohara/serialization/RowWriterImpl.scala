@@ -17,13 +17,13 @@ private class RowWriterImpl(val writer: DataStreamWriter, cellCount: Int, autoCl
   writer.write(cellCount)
   private[this] var processedCellCount: Int = 0
 
-  private[this] def checkState = {
+  private[this] def checkState():Unit = {
     checkClose
     if (processedCellCount >= cellCount) throw new IllegalArgumentException(s"there are no rooms to accept more cells")
   }
 
   override def append(cell: Cell[_]): RowWriter = {
-    checkState
+    checkState()
     val (valueType, valueBytes) = cell.value match {
       case v: Array[Byte] => (BYTES, v)
       case v: Boolean => (BOOLEAN, ByteUtil.toBytes(v))

@@ -18,7 +18,7 @@ class DataStreamReader(input: InputStream) extends AutoCloseable {
     var remaining = length
     val buf = new Array[Byte](length)
     while (remaining != 0) {
-      var rval = input.read(buf, buf.length - remaining, remaining)
+      val rval = input.read(buf, buf.length - remaining, remaining)
       if (rval <= 0) {
         if (remaining == 0) return buf
         else throw new IllegalStateException(s"required $length bytes but actual ${length - remaining} bytes")

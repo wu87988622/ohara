@@ -2,9 +2,7 @@ package com.island.ohara.core
 
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
 
 class TestTable extends SmallTest with Matchers {
 

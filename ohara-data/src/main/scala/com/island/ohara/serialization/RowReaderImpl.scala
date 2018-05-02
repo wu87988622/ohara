@@ -1,6 +1,6 @@
 package com.island.ohara.serialization
 
-import com.island.ohara.core.{Cell, Row}
+import com.island.ohara.core.Cell
 import com.island.ohara.io.{ByteUtil, CloseOnce, DataStreamReader}
 
 private class RowReaderImpl(reader: DataStreamReader, autoClose: Boolean) extends RowReader with CloseOnce {
@@ -15,7 +15,7 @@ private class RowReaderImpl(reader: DataStreamReader, autoClose: Boolean) extend
     if (nextCell != null) return true
     if (cellIndex >= cellCount) return false
     // TODO: we know the size of cell so it is doable to locate the cell at single byte array
-    val cellLength = reader.readInt()
+    reader.readInt()
 
     implicit def readValue = (reader: DataStreamReader) => reader.forceRead(reader.readShort())
 

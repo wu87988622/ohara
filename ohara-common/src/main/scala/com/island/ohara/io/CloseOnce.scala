@@ -16,7 +16,7 @@ trait CloseOnce extends AutoCloseable {
   def isClosed: Boolean = closed
 
   final override def close(): Unit = {
-    checkClose
+    checkClose()
     try doClose() finally closed = true
   }
 }
