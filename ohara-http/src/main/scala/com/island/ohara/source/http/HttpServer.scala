@@ -23,13 +23,17 @@ object OharaHttp {
 
     val producer = KafkaProducer(
       Conf(
-        new StringSerializer, new StringSerializer,
+        new StringSerializer,
+        new StringSerializer,
         // TODO: move to config file
-        bootstrapServers = "jimin-cdk-30-1.is-land.taipei:9092, jimin-cdk-30-2.is-land.taipei:9092, jimin-cdk-30-3.is-land.taipei:9092, jimin-cdk-30-4.is-land.taipei:9092"
+        bootstrapServers =
+          "jimin-cdk-30-1.is-land.taipei:9092, jimin-cdk-30-2.is-land.taipei:9092, jimin-cdk-30-3.is-land.taipei:9092, jimin-cdk-30-4.is-land.taipei:9092"
       )
     )
 
-    Http().bindAndHandle(new WebService(system, producer).route, config.getString("http.interface"), config.getInt("http.port"))
+    Http().bindAndHandle(new WebService(system, producer).route,
+                         config.getString("http.interface"),
+                         config.getInt("http.port"))
 
     sys.addShutdownHook(producer.close)
   }

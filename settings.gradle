@@ -1,2 +1,2 @@
 include 'ohara-testing-util', 'ohara-common', 'ohara-data', 'ohara-kafka-data', 'ohara-assembly',
-        'ohara-manager', 'ohara-hdfs-sink-connector', 'ohara-http'
+  'ohara-manager', 'ohara-hdfs-sink-connector', 'ohara-http'

@@ -7,28 +7,30 @@ import org.scalatest.Matchers
 class TestBuilder extends SmallTest with Matchers {
 
   @Test
-  def testCellBuilder():Unit = {
+  def testCellBuilder(): Unit = {
     val builder = Cell.builder.name("cf")
     val list = List(123, 123L, "123", 123D, 123F, true)
-    list.map(_ match {
-      case v: Boolean => builder.build(v)
-      case v: Short => builder.build(v)
-      case v: Int => builder.build(v)
-      case v: Long => builder.build(v)
-      case v: Float => builder.build(v)
-      case v: Double => builder.build(v)
-      case v: String => builder.build(v)
-      case _ => throw new IllegalArgumentException
-    }).foreach((cell: Cell[_]) => {
-      cell.value match {
-        case v: Boolean => v shouldBe true
-        case _ => cell.value.toString.toDouble shouldBe 123.0
-      }
-    })
+    list
+      .map(_ match {
+        case v: Boolean => builder.build(v)
+        case v: Short   => builder.build(v)
+        case v: Int     => builder.build(v)
+        case v: Long    => builder.build(v)
+        case v: Float   => builder.build(v)
+        case v: Double  => builder.build(v)
+        case v: String  => builder.build(v)
+        case _          => throw new IllegalArgumentException
+      })
+      .foreach((cell: Cell[_]) => {
+        cell.value match {
+          case v: Boolean => v shouldBe true
+          case _          => cell.value.toString.toDouble shouldBe 123.0
+        }
+      })
   }
 
   @Test
-  def testRowBuilder():Unit = {
+  def testRowBuilder(): Unit = {
     val row = Row.builder
       .append(Cell.builder.name("0").build(1))
       .append(Cell.builder.name("1").build("Abc"))
@@ -47,8 +49,9 @@ class TestBuilder extends SmallTest with Matchers {
   }
 
   @Test
-  def testTableBuilder():Unit = {
-    val table = Table.builder("test_table")
+  def testTableBuilder(): Unit = {
+    val table = Table
+      .builder("test_table")
       .append(Row.builder.append(Cell.builder.name("0").build(1)).build())
       .append(Row.builder.append(Cell.builder.name("1").build("ohara")).build())
       .append(Row.builder.append(Cell.builder.name("2").build(10.134)).build())

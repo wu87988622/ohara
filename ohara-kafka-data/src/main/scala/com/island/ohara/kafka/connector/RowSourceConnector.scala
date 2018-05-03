@@ -36,5 +36,6 @@ abstract class RowSourceConnector extends SourceConnector {
   /**
     * We take over this method to disable user to use java collection.
     */
-  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = _taskConfigs().map(JavaConverters.mapAsJavaMap(_)).asJava
+  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
+    _taskConfigs().map(JavaConverters.mapAsJavaMap(_)).asJava
 }

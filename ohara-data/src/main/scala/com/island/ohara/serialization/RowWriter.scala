@@ -12,13 +12,11 @@ abstract class RowWriter extends AutoCloseable {
 
 object RowWriter {
   def toBytes(row: Row): Array[Byte] = {
-    doClose(new ArrayBufferOutputStream(row.cellCount * 20)) {
-      output =>
-        doClose(RowWriter(output, row.cellCount)) {
-          rowWriter =>
-            row.foreach(rowWriter.append(_))
-            output.toByteArray
-        }
+    doClose(new ArrayBufferOutputStream(row.cellCount * 20)) { output =>
+      doClose(RowWriter(output, row.cellCount)) { rowWriter =>
+        row.foreach(rowWriter.append(_))
+        output.toByteArray
+      }
     }
   }
 

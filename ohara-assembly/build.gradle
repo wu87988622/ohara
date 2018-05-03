@@ -17,17 +17,17 @@ dependencies {
 distributions {
   main {
     baseName = "ohara"
-      contents {
-        exclude "ohara-assembly-${version}.jar"
-        into ("conf") {
-          // ref to root module
-          from {"$projectDir/../conf"}
-        }
-        into ("bin") {
-          // ref to root module
-          from {"$projectDir/../bin"}
-          fileMode 0755
-        }
+    contents {
+      exclude "ohara-assembly-${version}.jar"
+      into("conf") {
+        // ref to root module
+        from { "$projectDir/../conf" }
       }
+      into("bin") {
+        // ref to root module
+        from { "$projectDir/../bin" }
+        fileMode 0755
+      }
+    }
   }
 }

@@ -15,17 +15,16 @@ import scala.concurrent.duration._
 class TestPubAndSub extends MediumTest with Matchers {
 
   @Test
-  def testSendDataBetweenRowProducerAndRowConsumer():Unit = {
-    val row = Row.builder.append(Cell.builder.name("cf0").build(0))
-      .append(Cell.builder.name("cf1").build(1)).build
-    doClose(new OharaTestUtil(3)) {
-      testUtil => {
+  def testSendDataBetweenRowProducerAndRowConsumer(): Unit = {
+    val row = Row.builder.append(Cell.builder.name("cf0").build(0)).append(Cell.builder.name("cf1").build(1)).build
+    doClose(new OharaTestUtil(3)) { testUtil =>
+      {
         testUtil.kafkaBrokers.size shouldBe 3
         testUtil.createTopic("my_topic")
         val (_, rowQueue) = testUtil.run("my_topic", new ByteArrayDeserializer, new RowDeserializer)
         val totalMessageCount = 100
-        doClose(new RowProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) {
-          producer => {
+        doClose(new RowProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) { producer =>
+          {
             var count: Int = totalMessageCount
             while (count > 0) {
               producer.send(new ProducerRecord[Array[Byte], Row]("my_topic", ByteUtil.toBytes("key"), row))
@@ -46,17 +45,18 @@ class TestPubAndSub extends MediumTest with Matchers {
   }
 
   @Test
-  def testSendDataBetweenTableProducerAndTableConsumer():Unit = {
-    val table = Table("my_table", Row.builder.append(Cell.builder.name("cf0").build(0))
-      .append(Cell.builder.name("cf1").build(1)).build)
-    doClose(new OharaTestUtil(3)) {
-      testUtil => {
+  def testSendDataBetweenTableProducerAndTableConsumer(): Unit = {
+    val table = Table(
+      "my_table",
+      Row.builder.append(Cell.builder.name("cf0").build(0)).append(Cell.builder.name("cf1").build(1)).build)
+    doClose(new OharaTestUtil(3)) { testUtil =>
+      {
         testUtil.kafkaBrokers.size shouldBe 3
         testUtil.createTopic("my_topic")
         val (_, rowQueue) = testUtil.run("my_topic", new ByteArrayDeserializer, new TableDeserializer)
         val totalMessageCount = 100
-        doClose(new TableProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) {
-          producer => {
+        doClose(new TableProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) { producer =>
+          {
             var count: Int = totalMessageCount
             while (count > 0) {
               producer.send(new ProducerRecord[Array[Byte], Table]("my_topic", ByteUtil.toBytes("key"), table))

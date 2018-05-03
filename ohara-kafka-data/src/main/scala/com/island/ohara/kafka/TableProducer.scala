@@ -18,6 +18,4 @@ import org.apache.kafka.common.serialization.Serializer
   * @tparam K key type
   */
 class TableProducer[K](config: Properties, keySerializer: Serializer[K] = null)
-  extends KafkaProducer[K, Table](config, keySerializer, new TableSerializer()) {
-
-}
+    extends KafkaProducer[K, Table](config, keySerializer, new TableSerializer()) {}

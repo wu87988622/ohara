@@ -29,7 +29,7 @@ class TableSinkRecord(sinkRecord: SinkRecord) {
 
   def value: Table = sinkRecord.value match {
     case buf: Array[Byte] => TableReader.toTable(buf)
-    case _ => throw new IllegalStateException(s"Why we get a non-supported type:${sinkRecord.value.getClass.getName}")
+    case _                => throw new IllegalStateException(s"Why we get a non-supported type:${sinkRecord.value.getClass.getName}")
   }
 
   def timestamp: Option[Long] = if (sinkRecord.timestamp == null) None else Some(sinkRecord.timestamp)

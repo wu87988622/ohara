@@ -13,27 +13,31 @@ import org.scalatest.mockito.MockitoSugar
 class TestProducer extends SmallTest with Matchers with MockitoSugar {
 
   @Test
-  def testCreateTableProducer():Unit = {
+  def testCreateTableProducer(): Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
     new TableProducer[Array[Byte]](producerProps, new ByteArraySerializer).close()
   }
 
   @Test
-  def testSendDataWithTable():Unit = {
+  def testSendDataWithTable(): Unit = {
     // assume we get some data from cav file
     val csvData = readDataFromCsv
     // assume we get cf name and type from ohara configurator
     val types = readTypeAndCfFromConfig
     val producer = mock[TableProducer[Array[Byte]]]
-    val table = Table.builder("my_table").append(Row(csvData.zipWithIndex.map(_ match {
-      case (data, index) => types(index) match {
-        case (name, "string") => Cell.builder.name(name).build(data)
-        case (name, "boolean") => Cell.builder.name(name).build(data.toBoolean)
-        case (name, "int") => Cell.builder.name(name).build(data.toInt)
-        case _ => throw new UnsupportedOperationException
-      }
-    }))).build()
+    val table = Table
+      .builder("my_table")
+      .append(Row(csvData.zipWithIndex.map(_ match {
+        case (data, index) =>
+          types(index) match {
+            case (name, "string")  => Cell.builder.name(name).build(data)
+            case (name, "boolean") => Cell.builder.name(name).build(data.toBoolean)
+            case (name, "int")     => Cell.builder.name(name).build(data.toInt)
+            case _                 => throw new UnsupportedOperationException
+          }
+      })))
+      .build()
     // just a mock so nothing can happen
     producer.send(new ProducerRecord[Array[Byte], Table]("topic", table))
     table.rowCount shouldBe 1
@@ -44,26 +48,27 @@ class TestProducer extends SmallTest with Matchers with MockitoSugar {
   }
 
   @Test
-  def testCreateRowProducer():Unit = {
+  def testCreateRowProducer(): Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
     new RowProducer[Array[Byte]](producerProps, new ByteArraySerializer).close()
   }
 
   @Test
-  def testSendDataWithRow():Unit = {
+  def testSendDataWithRow(): Unit = {
     // assume we get some data from cav file
     val csvData = readDataFromCsv
     // assume we get cf name and type from ohara configurator
     val types = readTypeAndCfFromConfig
     val producer = mock[RowProducer[Array[Byte]]]
     val row = Row(csvData.zipWithIndex.map(_ match {
-      case (data, index) => types(index) match {
-        case (name, "string") => Cell.builder.name(name).build(data)
-        case (name, "boolean") => Cell.builder.name(name).build(data.toBoolean)
-        case (name, "int") => Cell.builder.name(name).build(data.toInt)
-        case _ => throw new UnsupportedOperationException
-      }
+      case (data, index) =>
+        types(index) match {
+          case (name, "string")  => Cell.builder.name(name).build(data)
+          case (name, "boolean") => Cell.builder.name(name).build(data.toBoolean)
+          case (name, "int")     => Cell.builder.name(name).build(data.toInt)
+          case _                 => throw new UnsupportedOperationException
+        }
     }))
     // just a mock so nothing can happen
     producer.send(new ProducerRecord[Array[Byte], Row]("topic", row))
@@ -75,5 +80,6 @@ class TestProducer extends SmallTest with Matchers with MockitoSugar {
 
   private[this] def readDataFromCsv: Array[String] = Array("123", "true", "10")
 
-  private[this] def readTypeAndCfFromConfig: Array[(String, String)] = Array(("cf0", "string"), ("cf1", "boolean"), ("cf2", "int"))
+  private[this] def readTypeAndCfFromConfig: Array[(String, String)] =
+    Array(("cf0", "string"), ("cf1", "boolean"), ("cf2", "int"))
 }

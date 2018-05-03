@@ -20,6 +20,3 @@ trait Property[T] {
 object Property {
   def builder = PropertyBuilder()
 }
-
-
-

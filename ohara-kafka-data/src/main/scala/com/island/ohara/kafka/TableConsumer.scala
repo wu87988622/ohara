@@ -18,5 +18,4 @@ import org.apache.kafka.common.serialization.Deserializer
   * @tparam K key type
   */
 class TableConsumer[K](properties: Properties, keyDeserializer: Deserializer[K])
-  extends KafkaConsumer[K, Table](properties, keyDeserializer, new TableDeserializer) {
-}
+    extends KafkaConsumer[K, Table](properties, keyDeserializer, new TableDeserializer) {}

@@ -14,11 +14,11 @@ class TestRW extends SmallTest with Matchers {
   private[this] val table = Table("test_table", row_0, row_1)
 
   @Test
-  def testWriteEmptyTable():Unit = {
+  def testWriteEmptyTable(): Unit = {
     val bs = new ByteArrayOutputStream(100)
     TableWriter(bs, "empty_table", 0).close()
-    doClose(TableReader(bs.toByteArray)) {
-      tableReader => {
+    doClose(TableReader(bs.toByteArray)) { tableReader =>
+      {
         tableReader.id shouldBe "empty_table"
         tableReader.rowCount shouldBe 0
       }
@@ -26,15 +26,15 @@ class TestRW extends SmallTest with Matchers {
   }
 
   @Test
-  def testWriteEmptyRow():Unit = {
+  def testWriteEmptyRow(): Unit = {
     val bs = new ByteArrayOutputStream(100)
-    doClose(TableWriter(bs, "empty_row", 1)) {
-      tableWriter => {
+    doClose(TableWriter(bs, "empty_row", 1)) { tableWriter =>
+      {
         tableWriter.startRow(0).close()
       }
     }
-    doClose(TableReader(bs.toByteArray)) {
-      tableReader => {
+    doClose(TableReader(bs.toByteArray)) { tableReader =>
+      {
         tableReader.id shouldBe "empty_row"
         tableReader.rowCount shouldBe 1
         tableReader.next().cellCount shouldBe 0
@@ -43,12 +43,13 @@ class TestRW extends SmallTest with Matchers {
   }
 
   @Test
-  def testConversion():Unit = {
+  def testConversion(): Unit = {
     val bs = new ByteArrayOutputStream(100)
-    doClose(TableWriter(bs, table.id, table.rowCount)) {
-      tableWriter => {
-        table.foreach((row: Row) => doClose(tableWriter.startRow(row.cellCount)) {
-          rowWriter => row.foreach(rowWriter.append(_))
+    doClose(TableWriter(bs, table.id, table.rowCount)) { tableWriter =>
+      {
+        table.foreach((row: Row) =>
+          doClose(tableWriter.startRow(row.cellCount)) { rowWriter =>
+            row.foreach(rowWriter.append(_))
         })
       }
     }
@@ -59,10 +60,9 @@ class TestRW extends SmallTest with Matchers {
       }
     }
 
-
     def verify = (buf: Array[Byte]) => {
-      doClose(TableReader(bs.toByteArray)) {
-        tableReader => {
+      doClose(TableReader(bs.toByteArray)) { tableReader =>
+        {
           tableReader.id shouldBe "test_table"
           tableReader.rowCount shouldBe table.rowCount
           tableReader.zipWithIndex.foreach {
@@ -95,6 +95,6 @@ class TestRW extends SmallTest with Matchers {
 
     val input = Array(bs.toByteArray, TableWriter.toBytes(table))
     val verifier: Array[(Array[Byte]) => Unit] = Array(verify, verify2)
-    input.foreach((bf: Array[Byte]) => verifier.foreach(_ (bf)))
+    input.foreach((bf: Array[Byte]) => verifier.foreach(_(bf)))
   }
 }

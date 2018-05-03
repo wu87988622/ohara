@@ -10,24 +10,46 @@ import scala.collection.JavaConverters._
 /**
   * A wrap to SourceRecord. Currently, only value schema and value are changed.
   */
-class RowSourceRecord(sourcePartition: Map[String, _], sourceOffset: Map[String, _], topic: String, partition: Int,
-                      keySchema: Schema, key: Any, row: Row, timestamp: Long)
-  extends SourceRecord(sourcePartition.asJava, sourceOffset.asJava, topic,
-    if (partition < 0) null else partition, keySchema, key,
-    Schema.BYTES_SCHEMA, RowWriter.toBytes(row), if (timestamp < 0) null else timestamp) {
+class RowSourceRecord(sourcePartition: Map[String, _],
+                      sourceOffset: Map[String, _],
+                      topic: String,
+                      partition: Int,
+                      keySchema: Schema,
+                      key: Any,
+                      row: Row,
+                      timestamp: Long)
+    extends SourceRecord(
+      sourcePartition.asJava,
+      sourceOffset.asJava,
+      topic,
+      if (partition < 0) null else partition,
+      keySchema,
+      key,
+      Schema.BYTES_SCHEMA,
+      RowWriter.toBytes(row),
+      if (timestamp < 0) null else timestamp
+    ) {
 
-  def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _],
-           topic: String, row: Row) {
+  def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _], topic: String, row: Row) {
     this(sourcePartition, sourceOffset, topic, -1, null, null, row, -1)
   }
 
-  def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _],
-           topic: String, keySchema: Schema, key: Any, row: Row) {
+  def this(sourcePartition: Map[String, _],
+           sourceOffset: Map[String, _],
+           topic: String,
+           keySchema: Schema,
+           key: Any,
+           row: Row) {
     this(sourcePartition, sourceOffset, topic, -1, keySchema, key, row, -1)
   }
 
-  def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _],
-           topic: String, partition: Int, keySchema: Schema, key: Any, row: Row) {
+  def this(sourcePartition: Map[String, _],
+           sourceOffset: Map[String, _],
+           topic: String,
+           partition: Int,
+           keySchema: Schema,
+           key: Any,
+           row: Row) {
     this(sourcePartition, sourceOffset, topic, partition, keySchema, key, row, -1)
   }
 

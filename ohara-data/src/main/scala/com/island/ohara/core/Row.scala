@@ -4,6 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.{TraversableOnce, mutable}
 
 abstract class Row extends Iterable[Cell[_]] {
+
   /**
     * Iterate the column names
     *
@@ -58,16 +59,18 @@ object Row {
     * Instantiate a row with copying all cells from passed argument
     */
   def apply(cells: TraversableOnce[Cell[_]]): Row = new Row() {
+
     /**
       * Save a array of cells in order to make size and index only require O(1) time
       */
     private[this] val cellArray = new ArrayBuffer[Cell[_]]
     private[this] val cellGroup = new mutable.TreeMap[String, Cell[_]]()
-    cells.foreach((cell: Cell[_]) =>
-      if (cellGroup.contains(cell.name)) throw new IllegalArgumentException(s"Duplicate name:${cell.name}")
-      else {
-        cellArray += cell
-        cellGroup.put(cell.name, cell)
+    cells.foreach(
+      (cell: Cell[_]) =>
+        if (cellGroup.contains(cell.name)) throw new IllegalArgumentException(s"Duplicate name:${cell.name}")
+        else {
+          cellArray += cell
+          cellGroup.put(cell.name, cell)
       })
 
     override def cellCount = cellGroup.size
@@ -78,7 +81,8 @@ object Row {
 
     override def names: Iterator[String] = cellGroup.keysIterator.toIterator
 
-    override def seekCell(index: Int): Cell[_] = try cellArray(index) catch {
+    override def seekCell(index: Int): Cell[_] = try cellArray(index)
+    catch {
       case e: ArrayIndexOutOfBoundsException => throw new IndexOutOfBoundsException(e.getMessage)
     }
   }

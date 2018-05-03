@@ -1,6 +1,5 @@
 package com.island.ohara.serialization
 
-
 /**
   * List the supported type in default reader/writer.
   * NOTED: DON'T change the index since it is a part of serialization.

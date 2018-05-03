@@ -15,7 +15,9 @@ import com.island.ohara.io.{ByteUtil, CloseOnce, DataStreamWriter}
   * @param id       id of table
   * @param rowCount number of rows
   */
-private class TableWriterImpl(val writer: DataStreamWriter, id: String, rowCount: Int, autoClose: Boolean) extends TableWriter with CloseOnce {
+private class TableWriterImpl(val writer: DataStreamWriter, id: String, rowCount: Int, autoClose: Boolean)
+    extends TableWriter
+    with CloseOnce {
   if (id == null || id.length == 0) throw new IllegalArgumentException("Unsupported to pass a empty id")
   val idBytes = ByteUtil.toBytes(id)
   // NOTED: 2 bytes is enough to store the id
@@ -36,8 +38,7 @@ private class TableWriterImpl(val writer: DataStreamWriter, id: String, rowCount
 }
 
 private[serialization] object TableWriterImpl {
-  val CELL_OVERHEAD
-  = ByteUtil.SIZE_OF_INT // cell length
+  val CELL_OVERHEAD = ByteUtil.SIZE_OF_INT // cell length
   +ByteUtil.SIZE_OF_SHORT // cell name length
   +ByteUtil.SIZE_OF_BYTE // cell value type
   +ByteUtil.SIZE_OF_SHORT // cell value length

@@ -16,14 +16,12 @@ abstract class TableWriter extends AutoCloseable {
 object TableWriter {
 
   def toBytes(table: Table): Array[Byte] = {
-    doClose(new ArrayBufferOutputStream(table.cellCount * 20)) {
-      output =>
-        doClose(TableWriter(output, table.id, table.rowCount)) {
-          tableWriter =>
-            table.foreach((row: Row) => doClose(tableWriter.startRow(row.cellCount))
-            (rowWriter => row.foreach(rowWriter.append(_))))
-            output.toByteArray
-        }
+    doClose(new ArrayBufferOutputStream(table.cellCount * 20)) { output =>
+      doClose(TableWriter(output, table.id, table.rowCount)) { tableWriter =>
+        table.foreach((row: Row) =>
+          doClose(tableWriter.startRow(row.cellCount))(rowWriter => row.foreach(rowWriter.append(_))))
+        output.toByteArray
+      }
     }
   }
 
@@ -36,7 +34,8 @@ object TableWriter {
     * @param rowCount row count
     * @return a TableWriter
     */
-  def apply(output: OutputStream, id: String, rowCount: Int): TableWriter = apply(DataStreamWriter(output), id, rowCount)
+  def apply(output: OutputStream, id: String, rowCount: Int): TableWriter =
+    apply(DataStreamWriter(output), id, rowCount)
 
   /**
     * Return a TableWriter used to write the table to output stream.

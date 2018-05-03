@@ -94,8 +94,11 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     * @param topic topic name
     */
   def createTopic(topic: String): Unit = {
-    CloseOnce.doClose(AdminClient.create(properties))(admin => admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
-    if (!await(() => exist(topic), 10 second)) throw new IllegalStateException(s"$topic isn't created successfully after 10 seconds. Perhaps we should increase the wait time?")
+    CloseOnce.doClose(AdminClient.create(properties))(admin =>
+      admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
+    if (!await(() => exist(topic), 10 second))
+      throw new IllegalStateException(
+        s"$topic isn't created successfully after 10 seconds. Perhaps we should increase the wait time?")
   }
 
   /**
@@ -120,7 +123,8 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     * @param topic topic name
     * @return true if the topic exists
     */
-  def exist(topic: String): Boolean = CloseOnce.doClose(AdminClient.create(properties))(admin => admin.listTopics().names().thenApply(_.stream().anyMatch(_.equals(topic))).get())
+  def exist(topic: String): Boolean = CloseOnce.doClose(AdminClient.create(properties))(admin =>
+    admin.listTopics().names().thenApply(_.stream().anyMatch(_.equals(topic))).get())
 
   import scala.collection.JavaConverters._
 
@@ -130,12 +134,9 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     * @param topic topic name
     * @return a pair of topic name and partition number
     */
-  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(AdminClient.create(properties)) {
-    admin => {
-      val desc = admin.describeTopics(util.Arrays.asList(topic))
-        .all()
-        .get()
-        .get(topic)
+  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(AdminClient.create(properties)) { admin =>
+    {
+      val desc = admin.describeTopics(util.Arrays.asList(topic)).all().get().get(topic)
       (desc.name(), desc.partitions().asScala.map(_.partition()).toArray)
     }
   }
@@ -150,7 +151,9 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     * @tparam V type of value
     * @return a pair of blocking queue storing the data of key and value
     */
-  def run[K, V](topic: String, keySerializer: Deserializer[K], valueSerializer: Deserializer[V]): (BlockingQueue[K], BlockingQueue[V]) = {
+  def run[K, V](topic: String,
+                keySerializer: Deserializer[K],
+                valueSerializer: Deserializer[V]): (BlockingQueue[K], BlockingQueue[V]) = {
     val props = properties
     props.put("group.id", s"console-consumer-${new Random().nextInt(100000)}")
     val consumer = new KafkaConsumer[K, V](props, keySerializer, valueSerializer)
@@ -170,7 +173,9 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     * @tparam V value type
     * @return a pair of blocking queue storing the data of key and value
     */
-  def run[K, V](consumer: KafkaConsumer[K, V], pollTimeout: Int = 1000, seekToBegin: Boolean = true): (BlockingQueue[K], BlockingQueue[V]) = {
+  def run[K, V](consumer: KafkaConsumer[K, V],
+                pollTimeout: Int = 1000,
+                seekToBegin: Boolean = true): (BlockingQueue[K], BlockingQueue[V]) = {
     val keyQueue = new LinkedBlockingQueue[K](100)
     val valueQueue = new LinkedBlockingQueue[V](100)
     val consumerThread = Future {

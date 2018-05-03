@@ -17,7 +17,8 @@ trait CloseOnce extends AutoCloseable {
 
   final override def close(): Unit = {
     checkClose()
-    try doClose() finally closed = true
+    try doClose()
+    finally closed = true
   }
 }
 

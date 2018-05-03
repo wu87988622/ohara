@@ -21,15 +21,15 @@ private class RowReaderImpl(reader: DataStreamReader, autoClose: Boolean) extend
 
     val name = ByteUtil.toString(reader)
     nextCell = DataType.of(reader.readByte()) match {
-      case BYTES => Cell.builder.name(name).build(reader)
+      case BYTES   => Cell.builder.name(name).build(reader)
       case BOOLEAN => Cell.builder.name(name).build(ByteUtil.toBoolean(reader))
-      case SHORT => Cell.builder.name(name).build(ByteUtil.toShort(reader))
-      case INT => Cell.builder.name(name).build(ByteUtil.toInt(reader))
-      case LONG => Cell.builder.name(name).build(ByteUtil.toLong(reader))
-      case FLOAT => Cell.builder.name(name).build(ByteUtil.toFloat(reader))
-      case DOUBLE => Cell.builder.name(name).build(ByteUtil.toDouble(reader))
-      case STRING => Cell.builder.name(name).build(ByteUtil.toString(reader))
-      case e: Any => throw new UnsupportedClassVersionError(s"${e.getClass.getName}")
+      case SHORT   => Cell.builder.name(name).build(ByteUtil.toShort(reader))
+      case INT     => Cell.builder.name(name).build(ByteUtil.toInt(reader))
+      case LONG    => Cell.builder.name(name).build(ByteUtil.toLong(reader))
+      case FLOAT   => Cell.builder.name(name).build(ByteUtil.toFloat(reader))
+      case DOUBLE  => Cell.builder.name(name).build(ByteUtil.toDouble(reader))
+      case STRING  => Cell.builder.name(name).build(ByteUtil.toString(reader))
+      case e: Any  => throw new UnsupportedClassVersionError(s"${e.getClass.getName}")
     }
     cellIndex += 1
     true

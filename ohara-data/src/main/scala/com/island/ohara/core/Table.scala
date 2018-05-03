@@ -80,7 +80,8 @@ object Table {
 
     override def iterator: Iterator[Row] = rowArray.iterator
 
-    override def seekRow(index: Int): Row = try rowArray(index) catch {
+    override def seekRow(index: Int): Row = try rowArray(index)
+    catch {
       case e: ArrayIndexOutOfBoundsException => throw new IndexOutOfBoundsException(e.getMessage)
     }
 

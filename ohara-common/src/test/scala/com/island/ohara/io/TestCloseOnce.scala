@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 class TestCloseOnce extends SmallTest with Matchers {
 
   @Test
-  def testFinalClose():Unit = {
+  def testFinalClose(): Unit = {
     def invalidString(): CloseOnce = throw new IOException("IOE")
 
     try {

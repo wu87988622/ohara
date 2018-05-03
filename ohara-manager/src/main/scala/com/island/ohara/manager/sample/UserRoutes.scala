@@ -34,7 +34,7 @@ trait UserRoutes extends SprayJsonSupport {
 
   lazy val userRoutes: Route =
     pathPrefix("users") {
-      concat (
+      concat(
         get {
           val users: Future[Users] = (userRegistryActor ? GetUsers).mapTo[Users]
           complete(users)
@@ -44,11 +44,11 @@ trait UserRoutes extends SprayJsonSupport {
             val userCreated = (userRegistryActor ? CreateUser(user)).mapTo[ActionPerformed]
             onSuccess(userCreated) { performed =>
               log.info("Created user [{}]: {}", user.name, performed.description)
-              complete( (StatusCodes.Created, performed) )
+              complete((StatusCodes.Created, performed))
             }
           }
         }
-      )  // concat
+      ) // concat
     }
 
 }

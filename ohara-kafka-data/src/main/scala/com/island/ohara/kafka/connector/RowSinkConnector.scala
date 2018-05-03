@@ -36,5 +36,6 @@ abstract class RowSinkConnector extends SinkConnector {
   /**
     * We take over this method to disable user to use java collection.
     */
-  override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = _taskConfigs().map(JavaConverters.mapAsJavaMap(_)).asJava
+  override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
+    _taskConfigs().map(JavaConverters.mapAsJavaMap(_)).asJava
 }

@@ -29,7 +29,8 @@ private class TableReaderImpl(reader: DataStreamReader, autoClose: Boolean) exte
 
   override def next(): Row = {
     if (nextRow == null && !hasNext) throw new NoSuchElementException()
-    try nextRow finally nextRow = null
+    try nextRow
+    finally nextRow = null
   }
 
   override protected def doClose(): Unit = if (autoClose) reader.close()

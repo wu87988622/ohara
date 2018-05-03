@@ -3,6 +3,7 @@ package com.island.ohara.core
 import scala.collection.TraversableOnce
 
 abstract class RowBuilder {
+
   /**
     * Append a cell to the end of this builder
     *

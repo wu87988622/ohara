@@ -11,8 +11,7 @@ import org.junit.Test
 // TODO:
 //  1. Please extend either SmallTest or MediumTest. With our test catalog, the RunWith is redundant.
 //     Also, it requires the junit-style.
-class TestUserRoutes extends JUnitSuiteLike with UserRoutes
-        with Matchers with ScalaFutures with ScalatestRouteTest {
+class TestUserRoutes extends JUnitSuiteLike with UserRoutes with Matchers with ScalaFutures with ScalatestRouteTest {
 
   override def userRegistryActor: ActorRef = system.actorOf(UserRegistryActor.props, "userRegistry")
   lazy val routes = userRoutes

@@ -24,7 +24,7 @@ private class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
   override protected def doClose(): Unit = {
     factory.shutdown()
     if (!deleteFile(snapshotDir)) logger.debug(s"Fail to delete ${snapshotDir.getAbsolutePath}")
-    if (!deleteFile(logDir))  logger.debug(s"Fail to delete ${logDir.getAbsolutePath}")
+    if (!deleteFile(logDir)) logger.debug(s"Fail to delete ${logDir.getAbsolutePath}")
   }
 
   /**

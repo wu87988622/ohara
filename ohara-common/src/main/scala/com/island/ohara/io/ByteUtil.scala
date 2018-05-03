@@ -26,7 +26,8 @@ object ByteUtil {
 
   implicit def toString(value: Array[Byte]): String = toString(value, 0, value.length)
 
-  implicit def toString(value: Array[Byte], offset: Int, length: Int): String = new String(value, offset, length, StandardCharsets.UTF_8)
+  implicit def toString(value: Array[Byte], offset: Int, length: Int): String =
+    new String(value, offset, length, StandardCharsets.UTF_8)
 
   // -------------[long]------------- //
   implicit def toBytes(value: Long): Array[Byte] = {
@@ -146,7 +147,8 @@ object ByteUtil {
 
   implicit def toBytes(value: Double, f: Byte => Unit): Unit = toBytes(java.lang.Double.doubleToRawLongBits(value), f)
 
-  implicit def toDouble(data: Array[Byte], offset: Int = 0): Double = java.lang.Double.longBitsToDouble(toLong(data, offset))
+  implicit def toDouble(data: Array[Byte], offset: Int = 0): Double =
+    java.lang.Double.longBitsToDouble(toLong(data, offset))
 
   // -------------[float]------------- //
   implicit def toBytes(value: Float): Array[Byte] = toBytes(java.lang.Float.floatToIntBits(value))
@@ -164,6 +166,7 @@ object ByteUtil {
 
   // -------------[help method]------------- //
   private[this] def checkSize(expected: Int, actual: Int): Unit = {
-    if (expected > actual) throw new IllegalArgumentException(s"The bytes size $actual should be bigger then or equal with $expected")
+    if (expected > actual)
+      throw new IllegalArgumentException(s"The bytes size $actual should be bigger then or equal with $expected")
   }
 }

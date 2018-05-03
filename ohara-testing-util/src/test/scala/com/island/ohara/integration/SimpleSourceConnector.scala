@@ -41,7 +41,6 @@ class SimpleSourceConnector extends SourceConnector {
   }
 
   override def config(): ConfigDef = {
-    new ConfigDef()
-      .define("topic", Type.LIST, Importance.HIGH, "The topic to publish data to")
+    new ConfigDef().define("topic", Type.LIST, Importance.HIGH, "The topic to publish data to")
   }
 }

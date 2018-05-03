@@ -2,12 +2,18 @@ allprojects {
   repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-      url "https://repository.cloudera.com/artifactory/cloudera-repos/"
-    }
-    maven {
-      url "https://dl.bintray.com/cakesolutions/maven/"
-    }
+    maven { url "https://repository.cloudera.com/artifactory/cloudera-repos/" }
+    maven { url "https://dl.bintray.com/cakesolutions/maven/" }
+  }
+}
+
+buildscript {
+  repositories {
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
+  // DON'T move this plugin info to dependencies.gradle. It is unnecessary to make version of build tool configurable.
+  dependencies {
+    classpath "com.diffplug.spotless:spotless-plugin-gradle:3.10.0"
   }
 }
 
@@ -28,46 +34,55 @@ subprojects {
     }
   }
 
+  // All sub-projects have applied the scala checkstyle.
+  apply plugin: "com.diffplug.gradle.spotless"
+  spotless {
+    scala {
+      // DON'T change the scalafmt version since the rules may be changed in newer version.
+      scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+    }
+  }
+
   // we put some test case in ohara-assembly so those compiler options should be added to ohara-assembly also.
   tasks.withType(ScalaCompile) {
     scalaCompileOptions.additionalParameters = [
-            // Scala Compiler Options
-            // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/StandardScalaSettings.scala
-            // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/ScalaSettings.scala
-            "-deprecation",
-            "-unchecked",
-            "-encoding", "utf8",
-            "-Xlog-reflective-calls",
-            "-feature",
-            "-language:postfixOps",
-            "-language:implicitConversions",
-            "-language:existentials",
-            "-Xlint:by-name-right-associative",
-            "-Xlint:delayedinit-select",
-            "-Xlint:doc-detached",
-            "-Xlint:missing-interpolator",
-            "-Xlint:nullary-override",
-            "-Xlint:nullary-unit",
-            "-Xlint:option-implicit",
-            "-Xlint:package-object-classes",
-            "-Xlint:poly-implicit-overload",
-            "-Xlint:private-shadow",
-            "-Xlint:stars-align",
-            "-Xlint:type-parameter-shadow",
-            "-Xlint:unsound-match",
-            "-target:jvm-1.8",
-            "-explaintypes",
-            "-feature",
-            "-unchecked",
-            "-Xlint",
-            "-Ywarn-dead-code",
-            "-Ywarn-unused:implicits",
-            "-Ywarn-unused:imports",
-            "-Ywarn-unused:locals",
-            "-Ywarn-unused:params",
-            "-Ywarn-unused:patvars",
-            "-Ywarn-unused:privates",
-            "-Ywarn-value-discard"
+      // Scala Compiler Options
+      // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/StandardScalaSettings.scala
+      // https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/ScalaSettings.scala
+      "-deprecation",
+      "-unchecked",
+      "-encoding", "utf8",
+      "-Xlog-reflective-calls",
+      "-feature",
+      "-language:postfixOps",
+      "-language:implicitConversions",
+      "-language:existentials",
+      "-Xlint:by-name-right-associative",
+      "-Xlint:delayedinit-select",
+      "-Xlint:doc-detached",
+      "-Xlint:missing-interpolator",
+      "-Xlint:nullary-override",
+      "-Xlint:nullary-unit",
+      "-Xlint:option-implicit",
+      "-Xlint:package-object-classes",
+      "-Xlint:poly-implicit-overload",
+      "-Xlint:private-shadow",
+      "-Xlint:stars-align",
+      "-Xlint:type-parameter-shadow",
+      "-Xlint:unsound-match",
+      "-target:jvm-1.8",
+      "-explaintypes",
+      "-feature",
+      "-unchecked",
+      "-Xlint",
+      "-Ywarn-dead-code",
+      "-Ywarn-unused:implicits",
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused:locals",
+      "-Ywarn-unused:params",
+      "-Ywarn-unused:patvars",
+      "-Ywarn-unused:privates",
+      "-Ywarn-value-discard"
     ]
 
     configure(scalaCompileOptions.forkOptions) {

@@ -11,14 +11,14 @@ import org.scalatest.Matchers
 class TestConsumer extends SmallTest with Matchers {
 
   @Test
-  def testCreateTableConsumer():Unit = {
+  def testCreateTableConsumer(): Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
     new TableConsumer[Array[Byte]](producerProps, new ByteArrayDeserializer).close()
   }
 
   @Test
-  def testCreateRowConsumer():Unit = {
+  def testCreateRowConsumer(): Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
     new RowConsumer[Array[Byte]](producerProps, new ByteArrayDeserializer).close()

@@ -10,6 +10,7 @@ import CellBuilder._
   * @tparam state a phantom type used to rule the call order
   */
 abstract class CellBuilder[state <: State] {
+
   /**
     * set the name to the cell which will be built
     *
@@ -35,4 +36,3 @@ object CellBuilder {
 
   type FullState = Name
 }
-

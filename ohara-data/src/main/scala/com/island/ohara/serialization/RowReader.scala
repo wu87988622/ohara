@@ -11,6 +11,7 @@ abstract class RowReader extends Iterator[Cell[_]] with AutoCloseable {
 }
 
 object RowReader {
+
   /**
     * Instantiate a table by a byte array.
     *
@@ -44,7 +45,7 @@ object RowReader {
     */
   def apply(reader: DataStreamReader, autoClose: Boolean = true): RowReader = {
     reader.readInt() match {
-      case 0 => new RowReaderImpl(reader, autoClose)
+      case 0      => new RowReaderImpl(reader, autoClose)
       case v: Int => throw new UnsupportedOperationException(s"unsupported version:$v")
     }
   }

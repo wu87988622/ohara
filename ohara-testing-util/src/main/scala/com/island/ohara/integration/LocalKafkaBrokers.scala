@@ -16,7 +16,8 @@ import org.apache.kafka.common.utils.SystemTime
   * @param _ports         the port to bind. default is a random number
   * @param baseProperties the properties passed to brokers
   */
-private class LocalKafkaBrokers(zkConnection: String, _ports: Seq[Int], baseProperties: Properties = new Properties) extends CloseOnce {
+private class LocalKafkaBrokers(zkConnection: String, _ports: Seq[Int], baseProperties: Properties = new Properties)
+    extends CloseOnce {
   private[this] val ports = resolvePorts(_ports)
   val brokersString: String = {
     val sb = new StringBuilder
@@ -28,28 +29,29 @@ private class LocalKafkaBrokers(zkConnection: String, _ports: Seq[Int], baseProp
   }
   val brokers = new Array[KafkaServer](ports.size)
   val logDirs = new Array[File](ports.size)
-  ports.zipWithIndex.foreach { case (port: Int, index: Int) => {
-    val logDir = createTempDir("kafka-local")
-    val properties = new Properties()
-    // reduce the number of partitions and replicas to speedup the mini cluster
-    properties.put(KafkaConfig.OffsetsTopicPartitionsProp, 1.toString)
-    properties.put(KafkaConfig.OffsetsTopicReplicationFactorProp, 1.toString)
-    properties.put(KafkaConfig.ZkConnectProp, zkConnection)
-    properties.put(KafkaConfig.BrokerIdProp, String.valueOf(index + 1))
-    properties.put(KafkaConfig.ListenersProp, "PLAINTEXT://:" + port)
-    properties.put(KafkaConfig.LogDirProp, logDir.getAbsolutePath())
-    properties.putAll(baseProperties)
+  ports.zipWithIndex.foreach {
+    case (port: Int, index: Int) => {
+      val logDir = createTempDir("kafka-local")
+      val properties = new Properties()
+      // reduce the number of partitions and replicas to speedup the mini cluster
+      properties.put(KafkaConfig.OffsetsTopicPartitionsProp, 1.toString)
+      properties.put(KafkaConfig.OffsetsTopicReplicationFactorProp, 1.toString)
+      properties.put(KafkaConfig.ZkConnectProp, zkConnection)
+      properties.put(KafkaConfig.BrokerIdProp, String.valueOf(index + 1))
+      properties.put(KafkaConfig.ListenersProp, "PLAINTEXT://:" + port)
+      properties.put(KafkaConfig.LogDirProp, logDir.getAbsolutePath())
+      properties.putAll(baseProperties)
 
-    def startBroker(props: Properties): KafkaServer = {
-      val server = new KafkaServer(new KafkaConfig(props), new SystemTime)
-      server.startup
-      server
+      def startBroker(props: Properties): KafkaServer = {
+        val server = new KafkaServer(new KafkaConfig(props), new SystemTime)
+        server.startup
+        server
+      }
+
+      val broker = startBroker(properties)
+      brokers.update(index, broker)
+      logDirs.update(index, logDir)
     }
-
-    val broker = startBroker(properties)
-    brokers.update(index, broker)
-    logDirs.update(index, logDir)
-  }
   }
 
   /**

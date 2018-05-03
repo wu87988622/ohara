@@ -23,7 +23,8 @@ object TableReader {
     * @param buffer byte array storing the table data
     * @return a Table
     */
-  def toTable(buffer: Array[Byte]): Table = doClose(TableReader(buffer))(tableReader => (Table.builder(tableReader.id) ++= tableReader).build())
+  def toTable(buffer: Array[Byte]): Table =
+    doClose(TableReader(buffer))(tableReader => (Table.builder(tableReader.id) ++= tableReader).build())
 
   /**
     * Create a TableReader used to build a Table from a byte array
@@ -50,7 +51,7 @@ object TableReader {
     */
   def apply(reader: DataStreamReader, autoClose: Boolean = true): TableReader = {
     reader.readInt() match {
-      case 0 => new TableReaderImpl(reader, autoClose)
+      case 0      => new TableReaderImpl(reader, autoClose)
       case v: Int => throw new UnsupportedOperationException(s"unsupported version:$v")
     }
   }

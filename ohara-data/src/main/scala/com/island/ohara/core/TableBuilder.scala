@@ -3,6 +3,7 @@ package com.island.ohara.core
 import scala.collection.TraversableOnce
 
 abstract class TableBuilder {
+
   /**
     * Append a row to the end of this builder
     *

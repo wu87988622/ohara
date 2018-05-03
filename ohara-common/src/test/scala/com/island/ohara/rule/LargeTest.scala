@@ -11,4 +11,3 @@ trait LargeTest extends JUnitSuiteLike {
   @Rule
   def globalTimeout: Timeout = Timeout.seconds(5 * 60)
 }
-
