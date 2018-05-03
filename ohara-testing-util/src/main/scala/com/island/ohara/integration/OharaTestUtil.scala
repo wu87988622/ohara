@@ -1,6 +1,5 @@
 package com.island.ohara.integration
 
-import java.io.File
 import java.util
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 import java.util.{Properties, Random}
@@ -8,9 +7,15 @@ import java.util.{Properties, Random}
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import kafka.server.KafkaServer
+import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.Deserializer
+import org.apache.kafka.connect.runtime.Worker
+import org.apache.kafka.connect.runtime.rest.RestServer
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,12 +42,13 @@ import scala.concurrent.{Await, Future}
   *
   * @param brokerCount brokers count
   */
-class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
+class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnce {
   private[this] lazy val logger = Logger(getClass.getName)
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
   private[this] val zk = new LocalZk()
-  private[this] val kafka = new LocalKafka(zk.connection, ports(brokerCount))
+  private[this] val localBrokerCluster = new LocalKafkaBrokers(zk.connection, ports(brokerCount))
+  private[this] val localWorkerCluster = new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(workerCount))
 
   private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
 
@@ -51,7 +57,7 @@ class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
     *
     * @return a Properties with brokers info and zookeeper info
     */
-  def properties: Properties = kafka.properties
+  def properties: Properties = localBrokerCluster.properties
 
   /**
     * @return zookeeper connection used to create zk services
@@ -61,12 +67,24 @@ class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
   /**
     * @return a list of running brokers
     */
-  def kafkaBrokers: Seq[KafkaServer] = kafka.kafkaBrokers
+  def kafkaBrokers: Seq[KafkaServer] = localBrokerCluster.brokers
 
   /**
-    * @return a list of log dir
+    * @return a list of running brokers
     */
-  def kafkaLogFolder: Seq[File] = kafka.kafkaLogFolder
+  def kafkaWorkers: Seq[Worker] = localWorkerCluster.workers
+
+  /**
+    * @return a list of running brokers
+    */
+  def kafkaRestServers: Seq[RestServer] = localWorkerCluster.restServers
+
+  /**
+    * Exposing the brokers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
+    *
+    * @return brokers connection information
+    */
+  def brokersString: String = localBrokerCluster.brokersString
 
   import scala.concurrent.duration._
 
@@ -95,7 +113,7 @@ class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
       if (f()) return true
       else TimeUnit.MILLISECONDS.sleep(freq)
     }
-    if (useException) throw new IllegalStateException("timeout") else f()
+    if (useException) throw new IllegalStateException("timeout") else false
   }
 
   /**
@@ -168,11 +186,7 @@ class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
       try {
         if (seekToBegin) {
           updateQueue(consumer.poll(0))
-          try {
-            consumer.seekToBeginning(consumer.assignment())
-          } catch {
-            case e: Throwable => logger.info(s"[CHIA] error:${e.getMessage}")
-          }
+          consumer.seekToBeginning(consumer.assignment())
         }
         while (!stopConsumer) {
           updateQueue(consumer.poll(pollTimeout))
@@ -183,11 +197,66 @@ class OharaTestUtil(brokerCount: Int = 1) extends CloseOnce {
     (keyQueue, valueQueue)
   }
 
+  /**
+    * Send the Get request to list the running connectors
+    *
+    * @return http response in json format
+    */
+  def runningConnectors(): String = request("connectors")
+
+  /**
+    * Send the Get request to list the available connectors
+    *
+    * @return http response in json format
+    */
+  def availableConnectors(): String = request("connector-plugins")
+
+  /**
+    * Send the Get request to list the available connectors
+    *
+    * @param jsonString json payload
+    * @return http response in json format
+    */
+  def startConnector(jsonString: String): (Int, String) = {
+    request("connectors", jsonString)
+  }
+
+  /**
+    * GET to kafka connectors
+    *
+    * @param cmd command
+    * @return response content
+    */
+  private[this] def request(cmd: String): String = {
+    val url = localWorkerCluster.pickRandomRestServer().advertisedUrl().toString + cmd
+    val request = new HttpGet(url)
+    request.addHeader("content-type", "application/json")
+    EntityUtils.toString(HttpClientBuilder.create().build().execute(request).getEntity)
+  }
+
+  /**
+    * POST to kafka connectors
+    *
+    * @param cmd      command
+    * @param jsonBody payload
+    * @return response content
+    */
+  private[this] def request(cmd: String, jsonBody: String): (Int, String) = {
+    val jsonContent = new StringEntity(jsonBody)
+    val url = localWorkerCluster.pickRandomRestServer().advertisedUrl().toString + cmd
+    val request = new HttpPost(url)
+    request.addHeader("content-type", "application/json")
+    request.setEntity(jsonContent)
+    val response = HttpClientBuilder.create().build().execute(request)
+    (response.getStatusLine.getStatusCode, EntityUtils.toString(response.getEntity))
+  }
+
   override protected def doClose(): Unit = {
     stopConsumer = true
     consumerThreads.foreach(Await.result(_, 1 minute))
     consumerThreads.clear()
-    kafka.close()
+    localWorkerCluster.close()
+    localBrokerCluster.close()
     zk.close()
   }
 }

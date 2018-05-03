@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.Logger
 import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
 
 /**
-  * A standalone zk service.
+  * A standalone zk service. The data are located at {TMP}/standalone-zk. The default port is an random integer.
   *
   * @param _port    The port to bind. default is a random number
   * @param tickTime time to tick
@@ -27,6 +27,10 @@ private class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
     if (!deleteFile(logDir))  logger.debug(s"Fail to delete ${logDir.getAbsolutePath}")
   }
 
+  /**
+    * zookeeper connection information. The form is "loaclhost:{port}".
+    * @return zk connection information
+    */
   def connection: String = "localhost:" + port
 
   override def toString: String = {

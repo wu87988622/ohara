@@ -5,7 +5,6 @@ dependencies {
   compile project(':ohara-data')
   compile project(':ohara-testing-util')
   compile libs.kafkaClient
-  compile libs.kafkaConnect
   compile libs.kafkaConnectFile
   compile libs.kafkaConnectRuntime
   compile libs.scala

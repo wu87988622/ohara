@@ -6,6 +6,9 @@ import java.net.ServerSocket
 import scala.util.Random
 
 package object integration {
+
+  def resolvePorts(ports: Seq[Int]): Seq[Int] = ports.map((port: Int) => if (port <= 0) availablePort else port)
+
   def availablePort: Int = {
     val socket = new ServerSocket(0)
     try socket.getLocalPort
