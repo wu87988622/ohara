@@ -1,0 +1,13 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+
+dependencies {
+  compile libs.akkaHttp
+  compile libs.akkaStream
+  compile libs.sprayJson
+  compile libs.kafkaScalaWrapper
+  testCompile libs.akkaHttpTestKit
+  testCompile libs.scalatest
+  testCompile libs.mockito
+  testCompile libs.junit
+}
