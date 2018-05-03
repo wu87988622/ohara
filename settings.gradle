@@ -1,2 +1,3 @@
 rootProject.name = 'ohara'
-include 'ohara-testing-util', 'ohara-common', 'ohara-data', 'ohara-kafka-data', 'ohara-assembly'
+include 'ohara-testing-util', 'ohara-common', 'ohara-data', 'ohara-kafka-data', 'ohara-assembly',
+        'ohara-manager'
