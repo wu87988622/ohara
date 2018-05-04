@@ -40,7 +40,7 @@ class HDFSSinkConnector extends RowSinkConnector {
     throw new UnsupportedOperationException("This method doesn't implement at present");
   }
 
-  override protected def _taskConfigs(): Seq[Map[String, String]] = {
+  override protected def _taskConfigs(maxTasks: Int): Seq[Map[String, String]] = {
     //TODO
     throw new UnsupportedOperationException("This method doesn't implement at present");
   }

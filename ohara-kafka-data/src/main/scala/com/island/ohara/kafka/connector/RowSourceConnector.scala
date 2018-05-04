@@ -29,7 +29,7 @@ abstract class RowSourceConnector extends SourceConnector {
     *
     * @return a seq of configs
     */
-  protected def _taskConfigs(): Seq[Map[String, String]]
+  protected def _taskConfigs(maxTasks: Int): Seq[Map[String, String]]
 
   import scala.collection.JavaConverters._
 
@@ -37,5 +37,5 @@ abstract class RowSourceConnector extends SourceConnector {
     * We take over this method to disable user to use java collection.
     */
   final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
-    _taskConfigs().map(JavaConverters.mapAsJavaMap(_)).asJava
+    _taskConfigs(maxTasks: Int).map(JavaConverters.mapAsJavaMap(_)).asJava
 }
