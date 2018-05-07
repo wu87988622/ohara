@@ -4,13 +4,13 @@ import java.util
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 import java.util.{Properties, Random}
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse}
+import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import kafka.server.KafkaServer
-import org.apache.http.client.methods.{HttpGet, HttpPost}
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.util.EntityUtils
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.Deserializer
@@ -51,6 +51,17 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
   private[this] val localWorkerCluster = new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(workerCount))
 
   private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
+
+  /**
+    * OharaTestUtil use akka http to submit the GET and POST requests. Since both of ActorSystem and ActorMaterializer are
+    * heavyweight structure, creating and putting them in OharaTestUtil is more effective.
+    */
+  private[this] implicit val actorSystem = ActorSystem("OharaTestUtil-system")
+
+  /**
+    * The actorSystem is declared as implicit so it will be used in constructing the ActorMaterializer
+    */
+  private[this] implicit val actorMaterializer = ActorMaterializer()
 
   /**
     * Copy the cluster connection information, which includes broker and zookeeper, to an new properties.
@@ -234,9 +245,9 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     */
   private[this] def request(cmd: String): String = {
     val url = localWorkerCluster.pickRandomRestServer().advertisedUrl().toString + cmd
-    val request = new HttpGet(url)
-    request.addHeader("content-type", "application/json")
-    EntityUtils.toString(HttpClientBuilder.create().build().execute(request).getEntity)
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
+    Await
+      .result(responseFuture.flatMap(res => res.entity.toStrict(5 seconds).map(_.data.decodeString("UTF-8"))), 5 second)
   }
 
   /**
@@ -247,17 +258,25 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     * @return response content
     */
   private[this] def request(cmd: String, jsonBody: String): (Int, String) = {
-    val jsonContent = new StringEntity(jsonBody)
     val url = localWorkerCluster.pickRandomRestServer().advertisedUrl().toString + cmd
-    val request = new HttpPost(url)
-    request.addHeader("content-type", "application/json")
-    request.setEntity(jsonContent)
-    val response = HttpClientBuilder.create().build().execute(request)
-    (response.getStatusLine.getStatusCode, EntityUtils.toString(response.getEntity))
+    val responseFuture: Future[HttpResponse] =
+      Http().singleRequest(
+        HttpRequest(
+          HttpMethods.POST,
+          url,
+          entity = HttpEntity(ContentTypes.`application/json`, jsonBody.getBytes("UTF-8"))
+        )
+      )
+    Await.result(
+      responseFuture.flatMap(res =>
+        res.entity.toStrict(5 seconds).map(strict => (res._1.intValue(), strict.data.decodeString("UTF-8")))),
+      5 second)
   }
 
   override protected def doClose(): Unit = {
     stopConsumer = true
+    actorMaterializer.shutdown()
+    actorSystem.terminate()
     consumerThreads.foreach(Await.result(_, 1 minute))
     consumerThreads.clear()
     localWorkerCluster.close()

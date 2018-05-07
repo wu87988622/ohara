@@ -7,7 +7,8 @@ dependencies {
   compile libs.kafkaCore
   compile libs.kafkaConnectJson
   compile libs.kafkaConnectRuntime
-  compile libs.apacheHttpClient
+  compile libs.akkaHttp
+  compile libs.akkaStream
   testCompile libs.scalatest
   testCompile project(':ohara-common').sourceSets.test.output
   testCompile libs.mockito
