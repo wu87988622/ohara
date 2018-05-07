@@ -10,7 +10,7 @@ if (project.hasProperty('cdh')) {
   versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "1.0.1"
 }
 versions["mockito"] = project.hasProperty('mockito.version') ? project.properties['mockito.version'] : "1.10.19"
-versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : "2.12.4"
+versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : "2.12.6"
 versions["akka"] = project.hasProperty('akka.version') ? project.properties['akka.version'] : "2.5.12"
 versions["akkaHttp"] = project.hasProperty('akka.http.version') ? project.properties['akka.http.version'] : "10.1.1"
 versions["kafkaScalaWrapper"] = project.hasProperty('kafka.scala.wrapper') ? project.properties['kafka.scala.wrapper'] : "1.0.0"

@@ -82,7 +82,8 @@ subprojects {
       "-Ywarn-unused:params",
       "-Ywarn-unused:patvars",
       "-Ywarn-unused:privates",
-      "-Ywarn-value-discard"
+      "-Ywarn-value-discard",
+      "-Ybackend-parallelism", "4"
     ]
 
     configure(scalaCompileOptions.forkOptions) {
