@@ -30,11 +30,6 @@ class HDFSSinkConnector extends RowSinkConnector {
     throw new UnsupportedOperationException("This method doesn't implement at present");
   }
 
-  override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
-    //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
-  }
-
   override def config(): ConfigDef = {
     //TODO
     throw new UnsupportedOperationException("This method doesn't implement at present");

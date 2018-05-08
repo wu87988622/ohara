@@ -19,8 +19,8 @@ class RowSourceRecord(sourcePartition: Map[String, _],
                       row: Row,
                       timestamp: Long)
     extends SourceRecord(
-      sourcePartition.asJava,
-      sourceOffset.asJava,
+      if (sourcePartition == null) null else sourcePartition.asJava,
+      if (sourceOffset == null) null else sourceOffset.asJava,
       topic,
       if (partition < 0) null else partition,
       keySchema,

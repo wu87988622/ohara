@@ -71,11 +71,11 @@ class TestOharaTestUtil extends MediumTest with Matchers {
 
         // check the data sent by source task
         testUtil.await(() => SimpleSourceTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size, 30 second)
-        SimpleSourceTask.dataSet.foreach(value => SimpleSourceTask.taskValues.contains(value))
+        SimpleSourceTask.dataSet.foreach(value => SimpleSourceTask.taskValues.contains(value) shouldBe true)
 
         // check the data received by sink task
         testUtil.await(() => SimpleSinkTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size, 30 second)
-        SimpleSourceTask.dataSet.foreach(value => SimpleSinkTask.taskValues.contains(value))
+        SimpleSourceTask.dataSet.foreach(value => SimpleSinkTask.taskValues.contains(value) shouldBe true)
       }
     }
   }

@@ -3,7 +3,6 @@ apply plugin: 'scala'
 
 dependencies {
   compile project(':ohara-data')
-  compile project(':ohara-testing-util')
   compile libs.kafkaClient
   compile libs.kafkaConnectFile
   compile libs.kafkaConnectRuntime
@@ -12,6 +11,7 @@ dependencies {
   compile libs.scalaLogging
   compile libs.slf4jApi
   compile libs.slf4jlog4j
+  testCompile project(':ohara-testing-util')
   testCompile project(":ohara-common").sourceSets.test.output
   testCompile libs.scalatest
   testCompile libs.mockito
