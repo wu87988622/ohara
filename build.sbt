@@ -106,9 +106,10 @@ lazy val commonSettings = Seq(
     "org.mockito" % "mockito-all" % "1.10.19" % Test,
     "junit" % "junit" % "4.12" % Test,
 
-    // IG
+    // integration testing
     "org.apache.zookeeper" % "zookeeper" % "3.4.10"
   ),
+  scalafmtOnCompile := true,
   formatAll := {
     (scalafmt in Compile).value
     (scalafmt in Test).value
