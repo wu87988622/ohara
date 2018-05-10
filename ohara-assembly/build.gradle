@@ -9,6 +9,7 @@ dependencies {
   testCompile project(path: ':ohara-data', configuration: 'tests')
   testCompile project(path: ':ohara-kafka-data', configuration: 'tests')
   testCompile project(path: ':ohara-testing-util', configuration: 'tests')
+  testCompile project(path: ':ohara-hdfs-sink-connector', configuration: 'tests')
   testCompile libs.typesafeConfig
   testCompile libs.scalatest
   testCompile libs.junit

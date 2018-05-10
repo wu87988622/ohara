@@ -4,39 +4,36 @@ import java.util
 
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask}
 import org.apache.kafka.common.config.ConfigDef
+import scala.collection.JavaConverters._
 
 /**
   * This class extends RowSinkConnector abstract.
   */
 class HDFSSinkConnector extends RowSinkConnector {
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = {
-    //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
-  }
+  var props: util.Map[String, String] = _
 
   override def start(props: util.Map[String, String]): Unit = {
-    //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
+    this.props = props
   }
 
-  override def version(): String = {
-    //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
+  override protected def _taskClass(): Class[_ <: RowSinkTask] = {
+    classOf[HDFSSinkTask]
   }
 
   override def stop(): Unit = {
     //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
   }
 
   override def config(): ConfigDef = {
-    //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
+    new ConfigDef()
   }
 
   override protected def _taskConfigs(maxTasks: Int): Seq[Map[String, String]] = {
-    //TODO
-    throw new UnsupportedOperationException("This method doesn't implement at present");
+    Seq.fill(maxTasks) { props.asScala.toMap }
+  }
+
+  override def version(): String = {
+    Version.getVersion()
   }
 }
