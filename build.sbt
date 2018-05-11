@@ -57,14 +57,14 @@ lazy val akkaHttpV = "10.1.1"
 lazy val akkaV = "2.5.12"
 lazy val kafkaV = "1.0.1"
 lazy val slf4jV = "1.7.25"
-
-resolvers += Resolver.bintrayRepo("cakesolutions", "maven")
+lazy val hadoopV = "2.7.0"
 
 val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
 val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
 
 lazy val commonSettings = Seq(
   scalaVersion := "2.12.6",
+  resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
   libraryDependencies ++= Seq(
     // kafka
     "org.apache.kafka" %% "kafka" % kafkaV,
@@ -145,6 +145,12 @@ lazy val `ohara-manager` = (project in file("ohara-manager"))
 
 lazy val `ohara-hdfs-sink` = (project in file("ohara-hdfs-sink-connector"))
   .settings(commonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.apache.hadoop" % "hadoop-common" % hadoopV,
+      "org.apache.hadoop" % "hadoop-hdfs" % hadoopV
+    )
+  )
   .dependsOn(`ohara-data`, `ohara-kafka-data-wrapper`)
 
 lazy val `ohara-http` = (project in file("ohara-http"))
