@@ -41,7 +41,8 @@ trait UserRoutes extends SprayJsonSupport {
         },
         post {
           entity(as[User]) { user =>
-            val userCreated = (userRegistryActor ? CreateUser(user)).mapTo[ActionPerformed]
+            val userCreated =
+              (userRegistryActor ? CreateUser(user)).mapTo[ActionPerformed]
             onSuccess(userCreated) { performed =>
               log.info("Created user [{}]: {}", user.name, performed.description)
               complete((StatusCodes.Created, performed))
