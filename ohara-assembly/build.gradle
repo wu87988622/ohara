@@ -5,6 +5,7 @@ dependencies {
   compile project(':ohara-common')
   compile project(':ohara-data')
   compile project(':ohara-kafka-data')
+  compile project(':ohara-hdfs-sink-connector')
   testCompile project(path: ':ohara-common', configuration: 'tests')
   testCompile project(path: ':ohara-data', configuration: 'tests')
   testCompile project(path: ':ohara-kafka-data', configuration: 'tests')
