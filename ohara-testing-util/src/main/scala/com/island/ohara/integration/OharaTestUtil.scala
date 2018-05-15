@@ -286,8 +286,8 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
       )
     Await.result(
       responseFuture.flatMap(res =>
-        res.entity.toStrict(5 seconds).map(strict => (res._1.intValue(), strict.data.decodeString("UTF-8")))),
-      5 second)
+        res.entity.toStrict(10 seconds).map(strict => (res._1.intValue(), strict.data.decodeString("UTF-8")))),
+      10 second)
   }
 
   override protected def doClose(): Unit = {
