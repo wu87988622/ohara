@@ -11,6 +11,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import kafka.server.KafkaServer
+import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.Deserializer
@@ -42,13 +43,15 @@ import scala.concurrent.{Await, Future}
   *
   * @param brokerCount brokers count
   */
-class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnce {
+//TODO The dataNodeCount doesn't implement at present
+class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: Int = 1) extends CloseOnce {
   private[this] lazy val logger = Logger(getClass.getName)
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
   private[this] val zk = new LocalZk()
   private[this] val localBrokerCluster = new LocalKafkaBrokers(zk.connection, ports(brokerCount))
   private[this] val localWorkerCluster = new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(workerCount))
+  private[this] val localHDFSCluster = new LocalHDFS(dataNodeCount)
 
   private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
 
@@ -238,6 +241,20 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
   }
 
   /**
+    * Get to HDFS FileSystem
+    *
+    * @return
+    */
+  def hdfsFileSystem(): FileSystem = localHDFSCluster.fileSystem()
+
+  /**
+    *Get to temp dir path
+    *
+    * @return
+    */
+  def hdfsTempDir(): String = localHDFSCluster.tmpDirPath()
+
+  /**
     * GET to kafka connectors
     *
     * @param cmd command
@@ -281,6 +298,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1) extends CloseOnc
     consumerThreads.clear()
     localWorkerCluster.close()
     localBrokerCluster.close()
+    localHDFSCluster.close()
     zk.close()
   }
 }

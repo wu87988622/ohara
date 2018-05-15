@@ -1,13 +1,17 @@
 package com.island.ohara.integration
 
+import java.io.{BufferedReader, DataInputStream, InputStream, OutputStream}
+
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.MediumTest
+import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
 class TestOharaTestUtil extends MediumTest with Matchers {
@@ -76,6 +80,54 @@ class TestOharaTestUtil extends MediumTest with Matchers {
         // check the data received by sink task
         testUtil.await(() => SimpleSinkTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size, 30 second)
         SimpleSourceTask.dataSet.foreach(value => SimpleSinkTask.taskValues.contains(value) shouldBe true)
+      }
+    }
+  }
+
+  @Test
+  def testHDFSDataNodeWithMultiDataNodes(): Unit = {
+    doClose(new OharaTestUtil(3, 2, 1)) { testUtil =>
+      {
+        val fileSystem: FileSystem = testUtil.hdfsFileSystem()
+        val hdfsTempDir: String = testUtil.hdfsTempDir()
+        val tmpFolder: Path = new Path(s"$hdfsTempDir/tmp")
+        val tmpFile1: Path = new Path(s"$tmpFolder/tempfile1.txt")
+        val tmpFile2: Path = new Path(s"$tmpFolder/tempfile2.txt")
+        val text: String = "helloworld"
+        var helloBytes: Array[Byte] = text.getBytes()
+
+        //Test create folder to local HDFS
+        fileSystem.mkdirs(tmpFolder)
+        fileSystem.exists(tmpFolder) shouldBe true
+
+        //Test delete folder to local HDFS
+        fileSystem.delete(tmpFolder, true)
+        fileSystem.exists(tmpFolder) shouldBe false
+
+        //Test create new file to local HDFS
+        fileSystem.exists(tmpFile1) shouldBe false
+        fileSystem.createNewFile(tmpFile1)
+        fileSystem.exists(tmpFile1) shouldBe true
+
+        //Test write data to local HDFS
+        val outputStream: OutputStream = fileSystem.create(tmpFile2, true)
+        outputStream.write(helloBytes)
+        outputStream.close()
+        fileSystem.exists(tmpFile2) shouldBe true
+
+        //Test read data from local HDFS
+        var inputStream: DataInputStream = fileSystem.open(tmpFile2)
+        var buffer: Array[Byte] = Array[Byte]()
+        var result: StringBuilder = new StringBuilder()
+        Stream
+          .continually(inputStream.read())
+          .takeWhile(_ != -1)
+          .foreach(x => {
+            result.append(x.toChar)
+          })
+        inputStream.close()
+        result.toString() shouldBe text
+
       }
     }
   }

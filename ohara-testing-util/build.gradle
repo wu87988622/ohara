@@ -9,8 +9,22 @@ dependencies {
   compile libs.kafkaConnectRuntime
   compile libs.akkaHttp
   compile libs.akkaStream
+  compile libs.hadoopCommon
+  compile libs.hadoopHDFS
   testCompile libs.scalatest
   testCompile project(':ohara-common').sourceSets.test.output
   testCompile libs.mockito
   testCompile libs.junit
+}
+
+/**
+ * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+ *
+ * Solve running Kafka Connect mini cluster failed. OHARA-103
+ */
+configurations.testCompile {
+  exclude group: 'com.sun.jersey', module: 'jersey-core'
+  exclude group: 'com.sun.jersey', module: 'jersey-json'
+  exclude group: 'com.sun.jersey', module: 'jersey-servlet'
+  exclude group: 'com.sun.jersey', module: 'jersey-server'
 }
