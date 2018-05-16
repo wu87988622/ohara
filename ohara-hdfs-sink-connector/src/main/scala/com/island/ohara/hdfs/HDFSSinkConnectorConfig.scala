@@ -20,12 +20,12 @@ class HDFSSinkConnectorConfig(props: util.Map[String, String]) {
 
   def hadoopConfiguration(): Configuration = {
     val config = new Configuration()
-    config.set(HadoopConfigurationConstants.FS_DEFAULTFS, props.get(HDFSSinkConnectorConfig.HDFS_URL))
+    config.set(HadoopConfigurationConstants.FS_DEFAULTFS, hdfsURL())
     config
   }
 
   def hdfsURL(): String = {
-    props.get(HadoopConfigurationConstants.FS_DEFAULTFS)
+    props.get(HDFSSinkConnectorConfig.HDFS_URL)
   }
 
   def flushLineCount(): Int = {
