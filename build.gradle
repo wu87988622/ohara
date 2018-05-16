@@ -17,11 +17,25 @@ buildscript {
   }
 }
 
+ext {
+  userMaxForks = project.hasProperty('maxParallelForks') ? maxParallelForks.toInteger() : null
+}
+
 subprojects {
   version = '0.1-SNAPSHOT'
-  if (it.name != 'ohara-assembly') {
-    apply plugin: 'scala'
 
+  apply plugin: 'scala'
+  test {
+    maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()
+    minHeapSize = "256m"
+    maxHeapSize = "2048m"
+    testLogging {
+      events = ["passed", "skipped", "failed"]
+    }
+  }
+
+  // The *-tests.jar of ohara-assembly is useless so we exclude the ohara-assembly
+  if (it.name != 'ohara-assembly') {
     configurations {
       tests.extendsFrom archives
     }
