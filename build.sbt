@@ -1,4 +1,3 @@
-import java.lang.Runtime
 
 name := "ohara"
 
@@ -10,7 +9,7 @@ organizationHomepage := Some(url("https://github.com/is-land"))
 
 organization := "com.island"
 
-val cpus = Runtime.getRuntime().availableProcessors().toString
+val cpus = sys.runtime.availableProcessors
 
 scalacOptions ++= Seq(
   // Scala Compiler Options
@@ -50,7 +49,7 @@ scalacOptions ++= Seq(
   "-Ywarn-unused:patvars",
   "-Ywarn-unused:privates",
   "-Ywarn-value-discard",
-  "-Ybackend-parallelism", cpus
+  "-Ybackend-parallelism", cpus.toString
 )
 
 lazy val akkaHttpV = "10.1.1"
@@ -58,6 +57,11 @@ lazy val akkaV = "2.5.12"
 lazy val kafkaV = "1.0.1"
 lazy val slf4jV = "1.7.25"
 lazy val hadoopV = "2.7.0"
+
+lazy val hadoopDependencies = Seq(
+  "org.apache.hadoop" % "hadoop-common" % hadoopV,
+  "org.apache.hadoop" % "hadoop-hdfs" % hadoopV
+)
 
 val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
 val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
@@ -145,12 +149,7 @@ lazy val `ohara-manager` = (project in file("ohara-manager"))
 
 lazy val `ohara-hdfs-sink` = (project in file("ohara-hdfs-sink-connector"))
   .settings(commonSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.apache.hadoop" % "hadoop-common" % hadoopV,
-      "org.apache.hadoop" % "hadoop-hdfs" % hadoopV
-    )
-  )
+  .settings(libraryDependencies ++= hadoopDependencies)
   .dependsOn(`ohara-data`, `ohara-kafka-data-wrapper`)
 
 lazy val `ohara-http` = (project in file("ohara-http"))
@@ -158,4 +157,5 @@ lazy val `ohara-http` = (project in file("ohara-http"))
 
 lazy val `testkit` = (project in file("ohara-testing-util"))
   .settings(commonSettings)
+  .settings(libraryDependencies ++= hadoopDependencies)
   .dependsOn(`ohara-common` % "compile->compile; compile->test")
