@@ -34,8 +34,8 @@ class TestTopicOStore extends LargeTest with Matchers {
     config.set(TopicOStore.TOPIC_NAME, "testacid2")
     // make small retention so as to trigger log clear
     config.set("log.retention.ms", 1000)
-    doClose(new TopicOStore[String, String](config)) {
-      anotherStore => {
+    doClose(new TopicOStore[String, String](config)) { anotherStore =>
+      {
         0 until 10 foreach (index => anotherStore.update("key", index.toString))
         // the local cache do the de-duplicate
         anotherStore.size shouldBe 1
@@ -48,7 +48,7 @@ class TestTopicOStore extends LargeTest with Matchers {
     config.set(ConsumerConfig.GROUP_ID_CONFIG, "testRetention")
     val consumer = new KafkaConsumer[String, String](config.toProperties)
     consumer.subscribe(util.Arrays.asList("testacid2"))
-    var record:ConsumerRecords[String, String] = null
+    var record: ConsumerRecords[String, String] = null
     var count = 0
     do {
       record = consumer.poll(1000)

@@ -75,7 +75,7 @@ private object MapConfig {
 
   def apply(config: OharaConfig): OharaConfig = {
     val map = new mutable.HashMap[String, String]
-    config.foreach{
+    config.foreach {
       case (key, value) => map.put(key, value)
     }
     new MapConfig(map.toMap)
