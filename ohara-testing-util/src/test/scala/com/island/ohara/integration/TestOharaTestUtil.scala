@@ -1,20 +1,19 @@
 package com.island.ohara.integration
 
-import java.io.{BufferedReader, DataInputStream, InputStream, OutputStream}
+import java.io.{DataInputStream, OutputStream}
 
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.rule.MediumTest
-import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
+import com.island.ohara.rule.LargeTest
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
-class TestOharaTestUtil extends MediumTest with Matchers {
+class TestOharaTestUtil extends LargeTest with Matchers {
 
   @Test
   def testCreateClusterWithMultiBrokers(): Unit = {

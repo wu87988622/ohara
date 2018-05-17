@@ -263,8 +263,8 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   private[this] def request(cmd: String): String = {
     val url = localWorkerCluster.pickRandomRestServer().advertisedUrl().toString + cmd
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
-    Await
-      .result(responseFuture.flatMap(res => res.entity.toStrict(5 seconds).map(_.data.decodeString("UTF-8"))), 5 second)
+    Await.result(responseFuture.flatMap(res => res.entity.toStrict(10 seconds).map(_.data.decodeString("UTF-8"))),
+                 5 second)
   }
 
   /**

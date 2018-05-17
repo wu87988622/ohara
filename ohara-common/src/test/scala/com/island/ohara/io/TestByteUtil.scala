@@ -78,4 +78,12 @@ class TestByteUtil extends SmallTest with Matchers {
                        finally index += 1)
     ByteUtil.toBoolean(buf, init) shouldBe false
   }
+
+  @Test
+  def testCompare(): Unit = {
+    val a = "abc"
+    val b = "aad"
+    ByteUtil.compare(ByteUtil.toBytes(a), ByteUtil.toBytes(b)) shouldBe 1
+    ByteUtil.compare(ByteUtil.toBytes(a), 2, 1, ByteUtil.toBytes(b), 2, 1) shouldBe -1
+  }
 }

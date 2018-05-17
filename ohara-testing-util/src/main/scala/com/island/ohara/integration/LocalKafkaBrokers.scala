@@ -40,6 +40,8 @@ private class LocalKafkaBrokers(zkConnection: String, _ports: Seq[Int], baseProp
       properties.put(KafkaConfig.BrokerIdProp, String.valueOf(index + 1))
       properties.put(KafkaConfig.ListenersProp, "PLAINTEXT://:" + port)
       properties.put(KafkaConfig.LogDirProp, logDir.getAbsolutePath())
+      // increase the timeout in order to avoid ZkTimeoutException
+      properties.put(KafkaConfig.ZkConnectionTimeoutMsProp, (30 * 1000).toString)
       properties.putAll(baseProperties)
 
       def startBroker(props: Properties): KafkaServer = {

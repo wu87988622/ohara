@@ -164,6 +164,39 @@ object ByteUtil {
 
   implicit def toBoolean(data: Array[Byte], offset: Int = 0): Boolean = data(offset) != 0
 
+  // -------------[comparator]------------- //
+  /**
+    * Compare two byte arrays.
+    * @param buf1 byte array 1
+    * @param buf2 byte array 2
+    * @return -1 if array1 is smaller than array2. 0 means they have same content. 1 if array2 is smaller than array1
+    */
+  def compare(buf1: Array[Byte], buf2: Array[Byte]): Int = compare(buf1, 0, buf1.size, buf2, 0, buf2.size)
+
+  /**
+    * Compare a specified range of two byte array
+    * @param buf1 byte array 1
+    * @param offset1 offset 1
+    * @param len1 length 1
+    * @param buf2 byte array 2
+    * @param offset2 offset 2
+    * @param len2 length 2
+    * @return -1 if array1 is smaller than array2. 0 means they have same content. 1 if array2 is smaller than array1
+    */
+  def compare(buf1: Array[Byte], offset1: Int, len1: Int, buf2: Array[Byte], offset2: Int, len2: Int): Int = {
+    if (buf1 == buf2 && offset1 == offset2 && len1 == len2) 0
+    else {
+      val end1 = offset1 + len1
+      for (index1 <- offset1 until end1 if (index1 - offset1 < len2)) {
+        val index2 = index1 - offset1 + offset2
+        val a = buf1(index1) & 0xff
+        val b = buf2(index2) & 0xff
+        if (a != b) return a - b
+      }
+      len1 - len2
+    }
+  }
+
   // -------------[help method]------------- //
   private[this] def checkSize(expected: Int, actual: Int): Unit = {
     if (expected > actual)

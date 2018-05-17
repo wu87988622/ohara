@@ -10,6 +10,17 @@ import org.scalatest.Matchers
 class TestCloseOnce extends SmallTest with Matchers {
 
   @Test
+  def testCloseOnlyOnce(): Unit = {
+    class SimpleCloser extends CloseOnce {
+      var count = 0
+      override protected def doClose(): Unit = count += 1
+    }
+    val simpleCloser = new SimpleCloser
+    0 until 10 foreach (_ => simpleCloser.close())
+    simpleCloser.count shouldBe 1
+  }
+
+  @Test
   def testFinalClose(): Unit = {
     def invalidString(): CloseOnce = throw new IOException("IOE")
 
