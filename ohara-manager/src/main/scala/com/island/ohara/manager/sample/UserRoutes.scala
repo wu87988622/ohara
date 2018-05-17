@@ -30,7 +30,8 @@ trait UserRoutes extends SprayJsonSupport {
   implicit val usersJsonFormat = jsonFormat1(Users)
   implicit val actionPerformedJsonFormat = jsonFormat1(ActionPerformed)
 
-  def userRegistryActor: ActorRef
+  lazy val userRegistryActor: ActorRef =
+    system.actorOf(UserRegistryActor.props, "userRegistryActor")
 
   lazy val userRoutes: Route =
     pathPrefix("users") {

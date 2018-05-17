@@ -146,6 +146,7 @@ lazy val `ohara-kafka-data-wrapper` = (project in file("ohara-kafka-data"))
 
 lazy val `ohara-manager` = (project in file("ohara-manager"))
   .settings(commonSettings)
+  .dependsOn(`ohara-common` % "compile->compile; compile->test")
 
 lazy val `ohara-hdfs-sink` = (project in file("ohara-hdfs-sink-connector"))
   .settings(commonSettings)

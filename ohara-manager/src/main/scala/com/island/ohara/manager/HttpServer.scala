@@ -8,7 +8,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ContentTypeResolver.Default
 import akka.stream.ActorMaterializer
-import com.island.ohara.manager.sample.{UserRegistryActor, UserRoutes}
+import com.island.ohara.manager.sample.UserRoutes
 
 import scala.io.StdIn
 
@@ -18,12 +18,10 @@ object HttpServer extends UserRoutes {
     * This relative path is used for testing. For example, you can create the folder src/web in testing and then HttpServer will load it even if
     * no env variable is configured. You should, however, assign the absolute path by env variable in the production.
     */
-  val PROP_WEBROOT_DEFAULT = "src/web"
+  val PROP_WEBROOT_DEFAULT = "ohara-manager/src/web"
   val PROP_WEBROOT = "ohara.manager.webRoot"
 
   implicit val system = ActorSystem("ohara-manager")
-  val userRegistryActor: ActorRef =
-    system.actorOf(UserRegistryActor.props, "userRegistryActor")
   implicit val executionContext = system.dispatcher
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
     def genString(o: AnyRef): String = o.getClass.getName
@@ -53,7 +51,7 @@ object HttpServer extends UserRoutes {
     try {
       val webRoot: File = this.webRoot(PROP_WEBROOT_DEFAULT)
 
-      log.info(s"Ohara-manager web root: " + webRoot.toString)
+      log.info("Ohara-manager web root: " + webRoot.getCanonicalPath)
 
       val route =
         pathPrefix(Segments) { names =>

@@ -13,7 +13,7 @@ import org.junit.Test
 //     Also, it requires the junit-style.
 class TestUserRoutes extends JUnitSuiteLike with UserRoutes with Matchers with ScalaFutures with ScalatestRouteTest {
 
-  override def userRegistryActor: ActorRef = system.actorOf(UserRegistryActor.props, "userRegistry")
+  override lazy val userRegistryActor: ActorRef = system.actorOf(UserRegistryActor.props, "userRegistry")
   lazy val routes = userRoutes
 
   @Test
