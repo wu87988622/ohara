@@ -4,7 +4,7 @@ import java.util
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, Property, UuidUtil}
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
@@ -45,7 +45,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinuish the records.
     * TODO: make sure this uuid is unique in a distributed cluster.
     */
-  val uuid = java.util.UUID.randomUUID.toString
+  val uuid = UuidUtil.uuid()
 
   /**
     * Used to sort the change to topic. We shouldn't worry about the overflow since it is not a update-heavy.

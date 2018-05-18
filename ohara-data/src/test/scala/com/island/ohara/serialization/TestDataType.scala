@@ -10,4 +10,11 @@ class TestDataType extends SmallTest with Matchers {
   def testIndexWithoutDuplicate(): Unit = {
     collection.SortedSet(DataType.all.map(_.index): _*).size shouldBe DataType.all.size
   }
+
+  @Test
+  def testIndexByName(): Unit = {
+    DataType.all.map(t => {
+      DataType.of(t.getClass.getSimpleName) shouldBe t
+    })
+  }
 }

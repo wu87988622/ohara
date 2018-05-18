@@ -14,6 +14,9 @@ trait Property[T] {
 
   def from(value: String): T
 
+  def from(value: Map[String, String]): T = throw new UnsupportedOperationException(
+    "Unsupported to pass Map<String, Strgin>")
+
   override def toString: String = s"$key:$default"
 }
 

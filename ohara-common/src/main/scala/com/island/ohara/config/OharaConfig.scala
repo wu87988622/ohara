@@ -6,7 +6,7 @@ import java.util.Properties
   * A string-based config collection. If the configures used in the code are the primitve type, this class is a helper tool to be a configuration base.
   * NOTED: the implementations of this class are not required to be thread-safe
   */
-trait OharaConfig extends Iterable[(String, String)] {
+trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])] {
 
   /**
     * Create a snapshot for this OharaConfig.
@@ -15,7 +15,11 @@ trait OharaConfig extends Iterable[(String, String)] {
   def snapshot: OharaConfig = {
     val anotherOne = OharaConfig()
     this.foreach {
-      case (key, value) => anotherOne.set(key, value)
+      case (key, value) =>
+        value match {
+          case Left(s)  => anotherOne.set(key, s)
+          case Right(s) => anotherOne.set(key, s)
+        }
     }
     anotherOne
   }
@@ -24,63 +28,71 @@ trait OharaConfig extends Iterable[(String, String)] {
     * add a string with key
     * @param key key
     * @param value value
-    * @return Some[String] if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: String): Option[String]
+  def set(key: String, value: String): Option[Either[String, Map[String, String]]]
+
+  /**
+    * add a string with key
+    * @param key key
+    * @param value value
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
+    */
+  def set(key: String, value: Map[String, String]): Option[Either[String, Map[String, String]]]
 
   /**
     * add a boolean value with key.
     * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @return Some[Boolean] if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Boolean): Option[Boolean] = set(key, value.toString).map(_.toBoolean)
+  def set(key: String, value: Boolean): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * add a Short value with key.
     * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @return Some[Short] if previous key-value exists. Otherwise None
+    * @returnString or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Short): Option[Short] = set(key, value.toString).map(_.toShort)
+  def set(key: String, value: Short): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * add a Int value with key.
     * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @return Some[Int] if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Int): Option[Int] = set(key, value.toString).map(_.toInt)
+  def set(key: String, value: Int): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * add a Long value with key.
     * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @return Some[Long] if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Long): Option[Long] = set(key, value.toString).map(_.toLong)
+  def set(key: String, value: Long): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * add a Float value with key.
     * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @return Some[Float] if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Float): Option[Float] = set(key, value.toString).map(_.toFloat)
+  def set(key: String, value: Float): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * add a Double value with key.
     * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @return Some[Double] if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Double): Option[Double] = set(key, value.toString).map(_.toDouble)
+  def set(key: String, value: Double): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * Get the value realted to the key of property. If the key-value doesn't exist, this method will return the default value of property.
@@ -92,9 +104,9 @@ trait OharaConfig extends Iterable[(String, String)] {
 
   /**
     * @param key key
-    * @return Some[String] if the value mapped to the input key exist. Otherwise None
+    * @return String or Map<String, String> if the value mapped to the input key exist. Otherwise None
     */
-  def get(key: String): Option[String]
+  def get(key: String): Option[Either[String, Map[String, String]]]
 
   /**
     * @param prop property
@@ -117,7 +129,26 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @return value
     */
   def requireString(key: String): String =
-    get(key).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+    get(key)
+      .map {
+        case Left(s)  => s
+        case Right(s) => throw new IllegalArgumentException(s"required: String, actual:${s.getClass.getName}")
+      }
+      .getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+
+  /**
+    * Get and convert the value to Map<String, String>. If the key doesn't exist, a runtime exception will be thrown.
+    * @param key key
+    * @return value
+    */
+  def requireMap(key: String): Map[String, String] =
+    get(key)
+      .map {
+        case Left(s) =>
+          throw new IllegalArgumentException(s"required: Map[String, String], actual:${s.getClass.getName}")
+        case Right(s) => s
+      }
+      .getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
 
   /**
     * Get and convert the value to Short. If the key doesn't exist, a runtime exception will be thrown.
@@ -126,8 +157,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param key key
     * @return value
     */
-  def requireShort(key: String): Short =
-    get(key).map(_.toShort).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+  def requireShort(key: String): Short = requireString(key).toShort
 
   /**
     * Get and convert the value to Int. If the key doesn't exist, a runtime exception will be thrown.
@@ -136,8 +166,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param key key
     * @return value
     */
-  def requireInt(key: String): Int =
-    get(key).map(_.toInt).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+  def requireInt(key: String): Int = requireString(key).toInt
 
   /**
     * Get and convert the value to Long. If the key doesn't exist, a runtime exception will be thrown.
@@ -146,8 +175,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param key key
     * @return value
     */
-  def requireLong(key: String): Long =
-    get(key).map(_.toLong).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+  def requireLong(key: String): Long = requireString(key).toLong
 
   /**
     * Get and convert the value to Float. If the key doesn't exist, a runtime exception will be thrown.
@@ -156,8 +184,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param key key
     * @return value
     */
-  def requireFloat(key: String): Float =
-    get(key).map(_.toFloat).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+  def requireFloat(key: String): Float = requireString(key).toFloat
 
   /**
     * Get and convert the value to Double. If the key doesn't exist, a runtime exception will be thrown.
@@ -166,8 +193,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param key key
     * @return value
     */
-  def requireDouble(key: String): Double =
-    get(key).map(_.toDouble).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+  def requireDouble(key: String): Double = requireString(key).toDouble
 
   /**
     * Get and convert the value to Boolean. If the key doesn't exist, a runtime exception will be thrown.
@@ -176,8 +202,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param key key
     * @return value
     */
-  def requireBoolean(key: String): Boolean =
-    get(key).map(_.toBoolean).getOrElse(throw new IllegalArgumentException(s"The $key doesn't exist"))
+  def requireBoolean(key: String): Boolean = requireString(key).toBoolean
 
   /**
     * Convert all configuration to string with json format.
@@ -197,18 +222,14 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param json json
     * @return new OharaConfig consising of this OharaConfig and the json content.
     */
-  def merge(json: OharaJson): OharaConfig
+  def merge(json: OharaJson): OharaConfig = merge(OharaConfig(json))
 
   /**
     * create a new OharaConfig consising of this OharaConfig and the Properties.
     * @param props Properties
     * @return new OharaConfig consising of this OharaConfig and the Properties.
     */
-  def merge(props: Properties): OharaConfig = {
-    val copy = snapshot
-    props.forEach((k, v) => copy.set(k.asInstanceOf[String], v.asInstanceOf[String]))
-    copy
-  }
+  def merge(props: Properties): OharaConfig = merge(OharaConfig(props))
 
   /**
     * Merge all configuration of another one with this OharaConfig. The key-value in this OharaConfig will be replaced by another one.
@@ -217,9 +238,7 @@ trait OharaConfig extends Iterable[(String, String)] {
     */
   def merge(another: OharaConfig): OharaConfig = {
     val copy = snapshot
-    another.foreach {
-      case (key, value) => copy.set(key, value)
-    }
+    copy.load(another)
     copy
   }
 
@@ -228,17 +247,14 @@ trait OharaConfig extends Iterable[(String, String)] {
     * @param json json
     * @return this OharaConfig with the json content
     */
-  def load(json: OharaJson): OharaConfig
+  def load(json: OharaJson): OharaConfig = load(OharaConfig(json))
 
   /**
     * load the Properties to this OharaConfig.
     * @param props Properties
     * @return this OharaConfig with the properties
     */
-  def load(props: Properties): OharaConfig = {
-    props.forEach((k, v) => set(k.asInstanceOf[String], v.asInstanceOf[String]))
-    this
-  }
+  def load(props: Properties): OharaConfig = load(OharaConfig(props))
 
   /**
     * load the OharaConfig to this OharaConfig.
@@ -247,7 +263,11 @@ trait OharaConfig extends Iterable[(String, String)] {
     */
   def load(another: OharaConfig): OharaConfig = {
     another.foreach {
-      case (key, value) => set(key, value)
+      case (key, value) =>
+        value match {
+          case Left(s)  => set(key, s)
+          case Right(s) => set(key, s)
+        }
     }
     this
   }

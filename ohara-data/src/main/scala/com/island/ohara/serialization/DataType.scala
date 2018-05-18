@@ -25,7 +25,23 @@ case object DOUBLE extends DataType(7)
 case object STRING extends DataType(8)
 
 object DataType {
+
+  /**
+    * @return a array of all supported data type
+    */
   def all = Array(BYTES, BOOLEAN, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, STRING)
 
+  /**
+    * seek the data type by the index
+    * @param index index of data type
+    * @return Data type
+    */
   def of(index: Byte): DataType = all.find(_.index == index).get
+
+  /**
+    * seek the data type by the type name
+    * @param name index of data type
+    * @return Data type
+    */
+  def of(name: String): DataType = all.find(_.getClass.getSimpleName == name).get
 }
