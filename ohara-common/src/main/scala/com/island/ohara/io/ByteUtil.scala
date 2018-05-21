@@ -41,7 +41,7 @@ object ByteUtil {
   }
 
   /**
-    * optimize the conversion manully.
+    * optimize the conversion manually.
     */
   implicit def toBytes(value: Long, f: Byte => Unit): Unit = {
     f((value >>> 56).toByte)
@@ -55,7 +55,7 @@ object ByteUtil {
   }
 
   /**
-    * optimize the conversion manully.
+    * optimize the conversion manually.
     */
   implicit def toLong(data: Array[Byte], offset: Int = 0): Long = {
     checkSize(SIZE_OF_LONG, data.length - offset)
@@ -91,7 +91,7 @@ object ByteUtil {
   }
 
   /**
-    * optimize the conversion manully.
+    * optimize the conversion manually.
     */
   implicit def toBytes(value: Int, f: Byte => Unit): Unit = {
     f((value >>> 24).toByte)
@@ -101,7 +101,7 @@ object ByteUtil {
   }
 
   /**
-    * optimize the conversion manully.
+    * optimize the conversion manually.
     */
   implicit def toInt(data: Array[Byte], offset: Int = 0): Int = {
     checkSize(SIZE_OF_INT, data.length - offset)
