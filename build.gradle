@@ -96,7 +96,6 @@ subprojects {
       "-Ywarn-unused:params",
       "-Ywarn-unused:patvars",
       "-Ywarn-unused:privates",
-      "-Ywarn-value-discard",
       "-Ybackend-parallelism", "4"
     ]
 
