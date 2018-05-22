@@ -15,12 +15,14 @@ import scala.collection.mutable.ArrayBuffer
 class SimpleRowSourceConnector extends RowSourceConnector {
   private[this] lazy val logger = Logger(getClass.getName)
   private[this] var topicName: String = null
+  private[this] var pollCountMax: Int = 0
 
   override def version(): String = 100.toString
 
   override def start(props: util.Map[String, String]): Unit = {
     topicName = props.get("topic")
-    logger.info(s"start SimpleRowSourceConnector:${topicName}")
+    pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).toInt
+    logger.info(s"start SimpleRowSourceConnector:${topicName} maxPoll:$pollCountMax")
   }
 
   override def _taskClass(): Class[_ <: RowSourceTask] = classOf[SimpleRowSourceTask]
@@ -30,7 +32,7 @@ class SimpleRowSourceConnector extends RowSourceConnector {
     for (_ <- 0 until maxTasks) {
       val config = new mutable.HashMap[String, String]()
       config.put("topic", topicName)
-      config.put("task.count", maxTasks.toString)
+      config.put(SimpleRowSourceConnector.POLL_COUNT_MAX, pollCountMax.toString)
       list += config.toMap
     }
     logger.info(s"source configs:${list.size} maxTasks:$maxTasks")
@@ -44,4 +46,8 @@ class SimpleRowSourceConnector extends RowSourceConnector {
   override def config(): ConfigDef = {
     new ConfigDef().define("topic", Type.LIST, Importance.HIGH, "The topic to publish data to")
   }
+}
+
+object SimpleRowSourceConnector {
+  val POLL_COUNT_MAX = "poll.count.max"
 }

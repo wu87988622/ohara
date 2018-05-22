@@ -13,23 +13,23 @@ import org.apache.kafka.common.utils.SystemTime
   * no replication and single partition in order to speedup the startup.
   *
   * @param zkConnection   zookeeper connection.
-  * @param _ports         the port to bind. default is a random number
+  * @param ports         the port to bind. default is a random number
   * @param baseProperties the properties passed to brokers
   */
-private class LocalKafkaBrokers(zkConnection: String, _ports: Seq[Int], baseProperties: Properties = new Properties)
+private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseProperties: Properties = new Properties)
     extends CloseOnce {
-  private[this] val ports = resolvePorts(_ports)
+  private[this] val validPorts = resolvePorts(ports)
   val brokersString: String = {
     val sb = new StringBuilder
-    for (port <- ports) {
+    for (port <- validPorts) {
       if (sb.length > 0) sb.append(",")
       sb.append("localhost:").append(port)
     }
     sb.toString
   }
-  val brokers = new Array[KafkaServer](ports.size)
-  val logDirs = new Array[File](ports.size)
-  ports.zipWithIndex.foreach {
+  val brokers = new Array[KafkaServer](validPorts.size)
+  val logDirs = new Array[File](validPorts.size)
+  validPorts.zipWithIndex.foreach {
     case (port: Int, index: Int) => {
       val logDir = createTempDir("kafka-local")
       val properties = new Properties()
@@ -46,7 +46,7 @@ private class LocalKafkaBrokers(zkConnection: String, _ports: Seq[Int], baseProp
 
       def startBroker(props: Properties): KafkaServer = {
         val server = new KafkaServer(new KafkaConfig(props), new SystemTime)
-        server.startup
+        server.startup()
         server
       }
 

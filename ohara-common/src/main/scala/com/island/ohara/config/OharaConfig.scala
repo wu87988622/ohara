@@ -42,7 +42,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * add a boolean value with key.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
@@ -51,16 +51,16 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * add a Short value with key.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key
     * @param value
-    * @returnString or Map<String, String> if previous key-value exists. Otherwise None
+    * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
   def set(key: String, value: Short): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
     * add a Int value with key.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
@@ -69,7 +69,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * add a Long value with key.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
@@ -78,7 +78,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * add a Float value with key.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
@@ -87,7 +87,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * add a Double value with key.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
@@ -124,7 +124,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to String. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to String. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to String. If your implementation have another form of value, please provide the your implementation
     * @param key key
     * @return value
     */
@@ -152,7 +152,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to Short. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to Short. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to Short. If your implementation have another form of value, please provide the your implementation
     *
     * @param key key
     * @return value
@@ -161,7 +161,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to Int. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to Int. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to Int. If your implementation have another form of value, please provide the your implementation
     *
     * @param key key
     * @return value
@@ -170,7 +170,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to Long. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to Long. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to Long. If your implementation have another form of value, please provide the your implementation
     *
     * @param key key
     * @return value
@@ -179,7 +179,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to Float. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to Float. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to Float. If your implementation have another form of value, please provide the your implementation
     *
     * @param key key
     * @return value
@@ -188,7 +188,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to Double. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to Double. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to Double. If your implementation have another form of value, please provide the your implementation
     *
     * @param key key
     * @return value
@@ -197,7 +197,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * Get and convert the value to Boolean. If the key doesn't exist, a runtime exception will be thrown.
-    * NOTED: the default implementation use scala conversion to convert the value to Boolean. If your implemetation have another form of value, please provide the your implementation
+    * NOTED: the default implementation use scala conversion to convert the value to Boolean. If your implementation have another form of value, please provide the your implementation
     *
     * @param key key
     * @return value
@@ -212,8 +212,8 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
   def toJson: OharaJson
 
   /**
-    * Convert this config to java.util.Properties. Since most kafka conpoments require a Properties in constructing, this helper method can make user life easier
-    * @return a Properties have all key-value of thie config
+    * Convert this config to java.util.Properties. Since most kafka components require a Properties in constructing, this helper method can make user life easier
+    * @return a Properties have all key-value of this config
     */
   def toProperties: Properties
 

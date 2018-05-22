@@ -43,7 +43,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
 
   /**
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinuish the records.
-    * TODO: make sure this uuid is unique in a distributed cluster.
+    * TODO: make sure this uuid is unique in a distributed cluster. by chia
     */
   val uuid = UuidUtil.uuid()
 
@@ -100,7 +100,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
           var haveData = false
           if (records != null) {
             records
-            // TODO: throw exception if there are data from unknown topic?
+            // TODO: throw exception if there are data from unknown topic? by chia
               .records(topicName)
               .forEach(record => {
                 val headers = record.headers().iterator()
@@ -133,7 +133,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
           readToEnd.set(!haveData) // We have collected all data from the topic
         } catch {
           case e: WakeupException => logger.debug("interrupted by ourself")
-          // TODO: Should we close this class when encountering the error?
+          // TODO: Should we close this class when encountering the error? by chia
           case e: Throwable => logger.error("failure when running the poller", e)
         }
       }

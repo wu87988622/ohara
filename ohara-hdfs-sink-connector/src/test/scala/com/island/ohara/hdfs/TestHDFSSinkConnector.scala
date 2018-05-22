@@ -31,6 +31,7 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
     result.get(0).get(HDFSSinkConnectorConfig.HDFS_URL) shouldBe hdfsURL
     result.get(0).get(HDFSSinkConnectorConfig.TMP_DIR) shouldBe tmpDir
   }
+
   @Test
   def testRunMiniClusterAndAssignConfig(): Unit = {
     val sinkTasks = 2
@@ -43,11 +44,14 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
     val hdfsURL = "hdfs://test:9000"
 
     doClose(new OharaTestUtil(3, 1)) { testUtil =>
-      val resp: (Int, String) =
-        testUtil.startConnector(s"""{"name":"my_sink_connector", "config":{"connector.class":"${classOf[
-          SimpleHDFSSinkConnector].getName}","topics":"my_connector_topic", "tasks.max":"$sinkTasks",
-          "$flushLineCountName": "$flushLineCount", "$tmpDirName": "$tmpDirPath", "$hdfsURLName": "$hdfsURL"}}""")
-
+      testUtil
+        .sinkConnectorCreator()
+        .name("my_sink_connector")
+        .connectorClass(classOf[SimpleHDFSSinkConnector])
+        .topic("my_connector_topic")
+        .taskNumber(sinkTasks)
+        .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> hdfsURL))
+        .run()
       testUtil.await(() => SimpleHDFSSinkTask.taskProps.get("topics") == "my_connector_topic", 20 second)
       testUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
       testUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, 20 second)

@@ -14,7 +14,7 @@ private class RowReaderImpl(reader: DataStreamReader, autoClose: Boolean) extend
   override def hasNext: Boolean = {
     if (nextCell != null) return true
     if (cellIndex >= cellCount) return false
-    // TODO: we know the size of cell so it is doable to locate the cell at single byte array
+    // TODO: we know the size of cell so it is doable to locate the cell at single byte array. by chia
     reader.readInt()
 
     implicit def readValue = (reader: DataStreamReader) => reader.forceRead(reader.readShort())

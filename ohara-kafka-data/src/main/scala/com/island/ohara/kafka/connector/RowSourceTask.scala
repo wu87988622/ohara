@@ -21,5 +21,10 @@ abstract class RowSourceTask extends SourceTask {
   /**
     * We take over this method to enforce ohara-XXX code to be used
     */
-  final override def poll(): util.List[SourceRecord] = _poll().map(_.asInstanceOf[SourceRecord]).toList.asJava
+  final override def poll(): util.List[SourceRecord] = {
+    val value = _poll()
+    // kafka connector doesn't support the empty list in testing. see https://github.com/apache/kafka/pull/4958
+    if (value == null || value.isEmpty) null
+    else value.map(_.asInstanceOf[SourceRecord]).toList.asJava
+  }
 }

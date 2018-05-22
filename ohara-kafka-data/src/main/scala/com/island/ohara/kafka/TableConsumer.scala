@@ -10,8 +10,8 @@ import org.apache.kafka.common.serialization.Deserializer
   * A warp to Kafka consumer. The main change is the generic type V is pined at Table type. The conversion between Table and
   * byte array is covered. Ohara user shouldn't care about the serialization of ohara table.
   *
-  * TODO: wrap the generic type K
-  * TODO: wrap the config
+  * TODO: wrap the generic type K. by chia
+  * TODO: wrap the config. by chia
   *
   * @param properties      kafka config
   * @param keyDeserializer key deserializer

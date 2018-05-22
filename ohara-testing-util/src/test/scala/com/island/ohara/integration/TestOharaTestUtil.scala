@@ -22,7 +22,7 @@ class TestOharaTestUtil extends LargeTest with Matchers {
         testUtil.kafkaBrokers.size shouldBe 3
         testUtil.createTopic("my_topic")
         testUtil.exist("my_topic") shouldBe true
-        val (_, valueQueue) = testUtil.run("my_topic", new ByteArrayDeserializer, new ByteArrayDeserializer)
+        val (_, valueQueue) = testUtil.run("my_topic", true, new ByteArrayDeserializer, new ByteArrayDeserializer)
         val totalMessageCount = 100
         doClose(
           new KafkaProducer[Array[Byte], Array[Byte]](testUtil.properties,
@@ -53,8 +53,13 @@ class TestOharaTestUtil extends LargeTest with Matchers {
       {
         testUtil.availableConnectors().contains(classOf[SimpleSourceConnector].getSimpleName) shouldBe true
         testUtil.runningConnectors() shouldBe "[]"
-        var resp = testUtil.startConnector(s"""{"name":"my_source_connector", "config":{"connector.class":"${classOf[
-          SimpleSourceConnector].getName}","topic":"my_connector_topic","tasks.max":"$sourceTasks"}}""")
+        var resp = testUtil
+          .sourceConnectorCreator()
+          .name("my_source_connector")
+          .connectorClass(classOf[SimpleSourceConnector])
+          .topic("my_connector_topic")
+          .taskNumber(sourceTasks)
+          .run()
         withClue(s"body:${resp._2}") {
           resp._1 shouldBe 201
         }
@@ -62,8 +67,13 @@ class TestOharaTestUtil extends LargeTest with Matchers {
         testUtil.await(() => testUtil.runningConnectors().contains("my_source_connector"), 10 second)
         // wait for starting the source task
         testUtil.await(() => SimpleSourceTask.taskCount.get >= sourceTasks, 10 second)
-        resp = testUtil.startConnector(s"""{"name":"my_sink_connector", "config":{"connector.class":"${classOf[
-          SimpleSinkConnector].getName}","topics":"my_connector_topic","tasks.max":"$sinkTasks"}}""")
+        resp = testUtil
+          .sinkConnectorCreator()
+          .name("my_sink_connector")
+          .connectorClass(classOf[SimpleSinkConnector])
+          .topic("my_connector_topic")
+          .taskNumber(sinkTasks)
+          .run()
         withClue(s"body:${resp._2}") {
           resp._1 shouldBe 201
         }
@@ -93,7 +103,7 @@ class TestOharaTestUtil extends LargeTest with Matchers {
         val tmpFile1: Path = new Path(s"$tmpFolder/tempfile1.txt")
         val tmpFile2: Path = new Path(s"$tmpFolder/tempfile2.txt")
         val text: String = "helloworld"
-        var helloBytes: Array[Byte] = text.getBytes()
+        val helloBytes: Array[Byte] = text.getBytes()
 
         //Test create folder to local HDFS
         fileSystem.mkdirs(tmpFolder)
@@ -115,9 +125,8 @@ class TestOharaTestUtil extends LargeTest with Matchers {
         fileSystem.exists(tmpFile2) shouldBe true
 
         //Test read data from local HDFS
-        var inputStream: DataInputStream = fileSystem.open(tmpFile2)
-        var buffer: Array[Byte] = Array[Byte]()
-        var result: StringBuilder = new StringBuilder()
+        val inputStream: DataInputStream = fileSystem.open(tmpFile2)
+        val result: StringBuilder = new StringBuilder()
         Stream
           .continually(inputStream.read())
           .takeWhile(_ != -1)

@@ -2,22 +2,26 @@ package com.island.ohara.integration
 
 import java.util
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
-import java.util.{Properties, Random}
+import java.util.{Objects, Properties, Random}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
+import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
-import com.typesafe.scalalogging.Logger
 import kafka.server.KafkaServer
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
-import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, KafkaConsumer}
+import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.Deserializer
-import org.apache.kafka.connect.runtime.Worker
+import org.apache.kafka.connect.converters.ByteArrayConverter
 import org.apache.kafka.connect.runtime.rest.RestServer
+import org.apache.kafka.connect.runtime.{ConnectorConfig, Worker, WorkerConfig}
+import org.apache.kafka.connect.sink.SinkConnector
+import org.apache.kafka.connect.source.SourceConnector
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -32,7 +36,7 @@ import scala.concurrent.{Await, Future}
   * 2) get the configured properties
   * val props = testUtil.properties
   * 3) instantiate your producer or consumer
-  * val producer = new KafkaProducer[Array[Byte], Array[Byte]](testUtil.properties, new ByteArraySerializer, new ByteArraySerializer)
+  * val producer = new KafkaProducer<Array<Byte>, Array<Byte>>(testUtil.properties, new ByteArraySerializer, new ByteArraySerializer)
   * 4) do what you want for your producer and consumer
   * ...
   * 5) close OharaTestUtil
@@ -45,7 +49,6 @@ import scala.concurrent.{Await, Future}
   */
 //TODO The dataNodeCount doesn't implement at present
 class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: Int = 1) extends CloseOnce {
-  private[this] lazy val logger = Logger(getClass.getName)
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
   private[this] val zk = new LocalZk()
@@ -159,6 +162,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * Run a consumer with specified deserializer, and all received data will be stored to queue.
     *
     * @param topic           topic to subscribe
+    * @param seekToBegin true if you want to reset the offset
     * @param keySerializer   key serializer
     * @param valueSerializer value serializer
     * @tparam K type of key
@@ -166,10 +170,13 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @return a pair of blocking queue storing the data of key and value
     */
   def run[K, V](topic: String,
+                seekToBegin: Boolean,
                 keySerializer: Deserializer[K],
                 valueSerializer: Deserializer[V]): (BlockingQueue[K], BlockingQueue[V]) = {
     val props = properties
-    props.put("group.id", s"console-consumer-${new Random().nextInt(100000)}")
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, s"console-consumer-${new Random().nextInt(100000)}")
+    if (seekToBegin) props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+    else props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
     val consumer = new KafkaConsumer[K, V](props, keySerializer, valueSerializer)
     consumer.subscribe(util.Arrays.asList(topic))
     run(consumer)
@@ -182,14 +189,11 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     *
     * @param consumer    the consumer to run background
     * @param pollTimeout timeout to poll
-    * @param seekToBegin true if you want to seek to the begin of subscribed topics
     * @tparam K key type
     * @tparam V value type
     * @return a pair of blocking queue storing the data of key and value
     */
-  def run[K, V](consumer: KafkaConsumer[K, V],
-                pollTimeout: Int = 1000,
-                seekToBegin: Boolean = true): (BlockingQueue[K], BlockingQueue[V]) = {
+  def run[K, V](consumer: KafkaConsumer[K, V], pollTimeout: Int = 1000): (BlockingQueue[K], BlockingQueue[V]) = {
     val keyQueue = new LinkedBlockingQueue[K](100)
     val valueQueue = new LinkedBlockingQueue[V](100)
     val consumerThread = Future {
@@ -203,10 +207,6 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
       }
 
       try {
-        if (seekToBegin) {
-          updateQueue(consumer.poll(0))
-          consumer.seekToBeginning(consumer.assignment())
-        }
         while (!stopConsumer) {
           updateQueue(consumer.poll(pollTimeout))
         }
@@ -231,13 +231,90 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   def availableConnectors(): String = request("connector-plugins")
 
   /**
-    * Send the Get request to list the available connectors
-    *
-    * @param jsonString json payload
-    * @return http response in json format
+    * @return a source connector builder.
     */
-  def startConnector(jsonString: String): (Int, String) = {
-    request("connectors", jsonString)
+  def sourceConnectorCreator() = new SourceConnectorCreator() {
+    private[this] var name: String = null
+    private[this] var clz: Class[_ <: SourceConnector] = null
+    private[this] var topicName: String = null
+    private[this] var taskMax: Int = -1
+    private[this] var config: Map[String, String] = null
+    private[this] var _disableConverter: Boolean = false
+    override def name(name: String): SourceConnectorCreator = { this.name = name; this }
+    override def connectorClass(clz: Class[_ <: SourceConnector]): SourceConnectorCreator = { this.clz = clz; this }
+    override def topic(topicName: String): SourceConnectorCreator = { this.topicName = topicName; this }
+    override def taskNumber(taskMax: Int): SourceConnectorCreator = { this.taskMax = taskMax; this }
+    override def config(config: Map[String, String]): SourceConnectorCreator = { this.config = config; this }
+    private[this] def checkArgument(): Unit = {
+      Objects.requireNonNull(name)
+      Objects.requireNonNull(clz)
+      Objects.requireNonNull(topicName)
+      if (taskMax <= 0) throw new IllegalArgumentException(s"taskMax should be bigger than zero, current:$taskMax")
+    }
+
+    override def run(): (Int, String) = {
+      checkArgument()
+      val request = OharaConfig()
+      val connectConfig = new mutable.HashMap[String, String]
+      if (config != null) connectConfig ++= config
+      request.set("name", name)
+      connectConfig.put(ConnectorConfig.CONNECTOR_CLASS_CONFIG, clz.getName)
+      connectConfig.put("topic", topicName)
+      connectConfig.put(ConnectorConfig.TASKS_MAX_CONFIG, taskMax.toString)
+      if (_disableConverter) {
+        connectConfig.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, classOf[ByteArrayConverter].getName)
+        connectConfig.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, classOf[ByteArrayConverter].getName)
+      }
+      request.set("config", connectConfig.toMap)
+      requestToConnector("connectors", request.toJson.asString)
+    }
+
+    override def disableConverter: SourceConnectorCreator = { _disableConverter = true; this }
+
+  }
+
+  /**
+    * @return a sink connector builder.
+    */
+  def sinkConnectorCreator() = new SinkConnectorCreator() {
+    private[this] var name: String = null
+    private[this] var clz: Class[_ <: SinkConnector] = null
+    private[this] var topicNames: Seq[String] = null
+    private[this] var taskMax: Int = -1
+    private[this] var config: Map[String, String] = null
+    private[this] var _disableConverter: Boolean = false
+    override def name(name: String): SinkConnectorCreator = { this.name = name; this }
+    override def connectorClass(clz: Class[_ <: SinkConnector]): SinkConnectorCreator = { this.clz = clz; this }
+    override def topics(topicNames: Seq[String]): SinkConnectorCreator = { this.topicNames = topicNames; this }
+    override def taskNumber(taskMax: Int): SinkConnectorCreator = { this.taskMax = taskMax; this }
+    override def config(config: Map[String, String]): SinkConnectorCreator = { this.config = config; this }
+    private[this] def checkArgument(): Unit = {
+      Objects.requireNonNull(name)
+      Objects.requireNonNull(clz)
+      Objects.requireNonNull(topicNames)
+      if (topicNames.isEmpty) throw new IllegalArgumentException(s"You must specify 1+ topic names")
+      if (taskMax <= 0) throw new IllegalArgumentException(s"taskMax should be bigger than zero, current:$taskMax")
+    }
+    override def run(): (Int, String) = {
+      checkArgument()
+      val request = OharaConfig()
+      val connectConfig = new mutable.HashMap[String, String]
+      if (config != null) connectConfig ++= config
+      request.set("name", name)
+      connectConfig.put(ConnectorConfig.CONNECTOR_CLASS_CONFIG, clz.getName)
+      val topicString = StringBuilder.newBuilder
+      topicNames.foreach(topicString.append(_).append(","))
+      connectConfig.put("topics", topicString.substring(0, topicString.length - 1))
+      connectConfig.put(ConnectorConfig.TASKS_MAX_CONFIG, taskMax.toString)
+      if (_disableConverter) {
+        connectConfig.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, classOf[ByteArrayConverter].getName)
+        connectConfig.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, classOf[ByteArrayConverter].getName)
+      }
+      request.set("config", connectConfig.toMap)
+      requestToConnector("connectors", request.toJson.asString)
+    }
+
+    override def disableConverter: SinkConnectorCreator = { _disableConverter = true; this }
   }
 
   /**
@@ -274,7 +351,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @param jsonBody payload
     * @return response content
     */
-  private[this] def request(cmd: String, jsonBody: String): (Int, String) = {
+  private[this] def requestToConnector(cmd: String, jsonBody: String): (Int, String) = {
     val url = localWorkerCluster.pickRandomRestServer().advertisedUrl().toString + cmd
     val responseFuture: Future[HttpResponse] =
       Http().singleRequest(

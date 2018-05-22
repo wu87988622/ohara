@@ -4,7 +4,6 @@ import java.util
 import java.util.Properties
 
 import com.island.ohara.io.CloseOnce
-import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.utils.Time
 import org.apache.kafka.connect.runtime.distributed.{DistributedConfig, DistributedHerder}
@@ -22,21 +21,20 @@ import scala.util.Random
   * to load should be added to the classpath when you are running this mini services.
   *
   * @param brokersConn    the brokers info
-  * @param _ports         the ports to bind for workers
+  * @param ports         the ports to bind for workers
   * @param baseProperties the properties is used to override the default configs
   */
-class LocalKafkaWorkers(brokersConn: String, _ports: Seq[Int], baseProperties: Properties = new Properties)
+class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseProperties: Properties = new Properties)
     extends CloseOnce {
-  private[this] lazy val logger = Logger(getClass.getName)
-  private[this] val ports = resolvePorts(_ports)
+  private[this] val validPorts = resolvePorts(ports)
 
-  val connects = new Array[Connect](ports.size)
-  val workers = new Array[Worker](ports.size)
-  val restServers = new Array[RestServer](ports.size)
+  val connects = new Array[Connect](validPorts.size)
+  val workers = new Array[Worker](validPorts.size)
+  val restServers = new Array[RestServer](validPorts.size)
 
   def pickRandomRestServer(): RestServer = restServers(Random.nextInt(restServers.size))
 
-  ports.zipWithIndex.foreach {
+  validPorts.zipWithIndex.foreach {
     case (port: Int, index: Int) => {
       val configs = new util.HashMap[String, String]()
       // reduce the number of partitions and replicas to speedup the mini cluster
@@ -64,9 +62,10 @@ class LocalKafkaWorkers(brokersConn: String, _ports: Seq[Int], baseProperties: P
       configs.put("internal.key.converter.schemas.enable", false.toString)
       configs.put(WorkerConfig.INTERNAL_VALUE_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
       configs.put("internal.value.converter.schemas.enable", false.toString)
-      // TODO: REST_PORT_CONFIG is deprecated in kafka-1.1.0. Use LISTENERS_CONFIG instead
+      // TODO: REST_PORT_CONFIG is deprecated in kafka-1.1.0. Use LISTENERS_CONFIG instead. by chia
       configs.put(WorkerConfig.REST_PORT_CONFIG, (port + index).toString)
       configs.put(WorkerConfig.PLUGIN_PATH_CONFIG, "")
+      baseProperties.forEach((k, v) => configs.put(k.asInstanceOf[String], v.asInstanceOf[String]))
       val distConfig = new DistributedConfig(configs)
 
       def createPlugins: Plugins = {
@@ -88,7 +87,7 @@ class LocalKafkaWorkers(brokersConn: String, _ports: Seq[Int], baseProperties: P
       statusBackingStore.configure(distConfig)
       val configBackingStore = new KafkaConfigBackingStore(internalValueConverter, distConfig)
       val rest = new RestServer(distConfig)
-      // TODO: DistributedHerder is a private class so its constructor is changed in kafka-1.1.0.
+      // TODO: DistributedHerder is a private class so its constructor is changed in kafka-1.1.0. by chia
       val herder = new DistributedHerder(distConfig,
                                          time,
                                          worker,

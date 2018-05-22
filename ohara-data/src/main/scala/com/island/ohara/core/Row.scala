@@ -40,6 +40,21 @@ abstract class Row extends Iterable[Cell[_]] {
     * @return row count
     */
   override def size: Int = cellCount
+
+  override def toString(): String = toList.mkString(",")
+
+  /**
+    * Indicates whether this row is equal to another row
+    * NOTED: the default implementation depends on the Cell#quals.
+    *
+    * @param obj another row
+    * @return true if this row is equal with another row. false otherwise
+    */
+  override def equals(obj: scala.Any): Boolean = obj match {
+    // TODO: evaluating the size first may be reduce the performance if the Row impl get the size by iterating. by chia
+    case row: Row if (size == row.size) => !filter(c => row.seekCell(c.name).map(_.equals(c)).getOrElse(false)).isEmpty
+    case _                              => false
+  }
 }
 
 object Row {
@@ -70,7 +85,8 @@ object Row {
         if (cellGroup.contains(cell.name)) throw new IllegalArgumentException(s"Duplicate name:${cell.name}")
         else {
           cellArray += cell
-          cellGroup.put(cell.name, cell)
+          if (cellGroup.put(cell.name, cell).isDefined)
+            throw new IllegalArgumentException(s"duplicate column:${cell.name} are not supported")
       })
 
     override def cellCount = cellGroup.size
@@ -79,7 +95,7 @@ object Row {
 
     override def seekCell(name: String): Option[Cell[_]] = cellGroup.get(name)
 
-    override def names: Iterator[String] = cellGroup.keysIterator.toIterator
+    override def names: Iterator[String] = cellGroup.keysIterator
 
     override def seekCell(index: Int): Cell[_] = try cellArray(index)
     catch {

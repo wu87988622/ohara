@@ -64,7 +64,7 @@ object ReflectionUtil {
     val ctr =
       if (parameters.isEmpty) clz.getDeclaredConstructor()
       else clz.getDeclaredConstructor(parameters.map(_._1): _*)
-    // TODO: allow to create the instance through the non-public constructor?  by chia-ping 2018.05.11
+    // TODO: allow to create the instance through the non-public constructor?  by chia
     ctr.setAccessible(true)
     if (parameters.isEmpty) ctr.newInstance().asInstanceOf[U]
     else ctr.newInstance(parameters.map(_._2.asInstanceOf[Object]): _*).asInstanceOf[U]
