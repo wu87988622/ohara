@@ -194,4 +194,16 @@ class TestMapConfig extends SmallTest with Matchers {
     }
   }
 
+  @Test
+  def testToMap(): Unit = {
+    val conf = new MapConfig()
+    conf.set("key0", "value0") shouldBe None
+    conf.set("key1", "value1") shouldBe None
+    conf.set("key2", Map("aaa" -> "bb")) shouldBe None
+
+    val map = conf.toPlainMap
+    map.get("key0") shouldBe Some("value0")
+    map.get("key1") shouldBe Some("value1")
+    map.get("key2") shouldBe None
+  }
 }

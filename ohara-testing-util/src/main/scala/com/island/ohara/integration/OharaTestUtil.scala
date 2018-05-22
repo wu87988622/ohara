@@ -2,7 +2,7 @@ package com.island.ohara.integration
 
 import java.util
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
-import java.util.{Objects, Properties, Random}
+import java.util.{Objects, Random}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -33,10 +33,10 @@ import scala.concurrent.{Await, Future}
   * How to use this class:
   * 1) create the OharaTestUtil with 1 broker (you can assign arbitrary number of brokers)
   * val testUtil = new OharaTestUtil(1)
-  * 2) get the configured properties
-  * val props = testUtil.properties
+  * 2) get the basic|producer|consumer OharaConfiguration
+  * val config = testUtil.producerConfig
   * 3) instantiate your producer or consumer
-  * val producer = new KafkaProducer<Array<Byte>, Array<Byte>>(testUtil.properties, new ByteArraySerializer, new ByteArraySerializer)
+  * val producer = new KafkaProducer<Array<Byte>, Array<Byte>>(config, new ByteArraySerializer, new ByteArraySerializer)
   * 4) do what you want for your producer and consumer
   * ...
   * 5) close OharaTestUtil
@@ -70,11 +70,33 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   private[this] implicit val actorMaterializer = ActorMaterializer()
 
   /**
-    * Copy the cluster connection information, which includes broker and zookeeper, to an new properties.
-    *
-    * @return a Properties with brokers info and zookeeper info
+    * Generate the basic config. The config is composed of following setting.
+    * 1) bootstrap.servers
+    * 2) metadata.broker.list
+    * 3) zookeeper.connect
+    * @return a basic config including the brokers information
     */
-  def properties: Properties = localBrokerCluster.properties
+  def config: OharaConfig = localBrokerCluster.config
+
+  /**
+    * Generate a config for kafka producer. The config is composed of following setting.
+    * 1) bootstrap.servers
+    * 2) metadata.broker.list
+    * 3) zookeeper.connect
+    * @return a config used to instantiate kafka producer
+    */
+  def producerConfig: OharaConfig = localBrokerCluster.producerConfig
+
+  /**
+    * Generate a config for kafka consumer. The config is composed of following setting.
+    * 1) bootstrap.servers
+    * 2) metadata.broker.list
+    * 3) zookeeper.connect
+    * 4) group.id -> a arbitrary string
+    * 5) auto.offset.reset -> earliest
+    * @return a config used to instantiate kafka consumer
+    */
+  def consumerConfig: OharaConfig = localBrokerCluster.consumerConfig
 
   /**
     * @return zookeeper connection used to create zk services
@@ -111,7 +133,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @param topic topic name
     */
   def createTopic(topic: String): Unit = {
-    CloseOnce.doClose(AdminClient.create(properties))(admin =>
+    CloseOnce.doClose(AdminClient.create(config.toProperties))(admin =>
       admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
     if (!await(() => exist(topic), 10 second))
       throw new IllegalStateException(
@@ -140,7 +162,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @param topic topic name
     * @return true if the topic exists
     */
-  def exist(topic: String): Boolean = CloseOnce.doClose(AdminClient.create(properties))(admin =>
+  def exist(topic: String): Boolean = CloseOnce.doClose(AdminClient.create(config.toProperties))(admin =>
     admin.listTopics().names().thenApply(_.stream().anyMatch(_.equals(topic))).get())
 
   import scala.collection.JavaConverters._
@@ -151,11 +173,12 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @param topic topic name
     * @return a pair of topic name and partition number
     */
-  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(AdminClient.create(properties)) { admin =>
-    {
-      val desc = admin.describeTopics(util.Arrays.asList(topic)).all().get().get(topic)
-      (desc.name(), desc.partitions().asScala.map(_.partition()).toArray)
-    }
+  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(AdminClient.create(config.toProperties)) {
+    admin =>
+      {
+        val desc = admin.describeTopics(util.Arrays.asList(topic)).all().get().get(topic)
+        (desc.name(), desc.partitions().asScala.map(_.partition()).toArray)
+      }
   }
 
   /**
@@ -173,11 +196,11 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
                 seekToBegin: Boolean,
                 keySerializer: Deserializer[K],
                 valueSerializer: Deserializer[V]): (BlockingQueue[K], BlockingQueue[V]) = {
-    val props = properties
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, s"console-consumer-${new Random().nextInt(100000)}")
-    if (seekToBegin) props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-    else props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
-    val consumer = new KafkaConsumer[K, V](props, keySerializer, valueSerializer)
+    val config = this.config
+    config.set(ConsumerConfig.GROUP_ID_CONFIG, s"console-consumer-${new Random().nextInt(100000)}")
+    if (seekToBegin) config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+    else config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+    val consumer = new KafkaConsumer[K, V](config.toProperties, keySerializer, valueSerializer)
     consumer.subscribe(util.Arrays.asList(topic))
     run(consumer)
   }

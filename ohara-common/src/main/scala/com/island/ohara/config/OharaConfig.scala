@@ -218,6 +218,13 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
   def toProperties: Properties
 
   /**
+    * Convert this config to immutable.Map[String, String].
+    * NOTED: only (string -> string) will be included in the immutable.Map[String, String]
+    * @return immutable.Map[String, String]
+    */
+  def toPlainMap: Map[String, String]
+
+  /**
     * create a new OharaConfig consising of this OharaConfig and the json content.
     * @param json json
     * @return new OharaConfig consising of this OharaConfig and the json content.

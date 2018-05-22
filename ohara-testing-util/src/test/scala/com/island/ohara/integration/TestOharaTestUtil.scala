@@ -25,7 +25,7 @@ class TestOharaTestUtil extends LargeTest with Matchers {
         val (_, valueQueue) = testUtil.run("my_topic", true, new ByteArrayDeserializer, new ByteArrayDeserializer)
         val totalMessageCount = 100
         doClose(
-          new KafkaProducer[Array[Byte], Array[Byte]](testUtil.properties,
+          new KafkaProducer[Array[Byte], Array[Byte]](testUtil.producerConfig.toProperties,
                                                       new ByteArraySerializer,
                                                       new ByteArraySerializer)) { producer =>
           {

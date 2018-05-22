@@ -1,9 +1,10 @@
 package com.island.ohara.integration
 
 import java.util
-import java.util.Properties
 
+import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
+import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.utils.Time
 import org.apache.kafka.connect.runtime.distributed.{DistributedConfig, DistributedHerder}
@@ -22,12 +23,13 @@ import scala.util.Random
   *
   * @param brokersConn    the brokers info
   * @param ports         the ports to bind for workers
-  * @param baseProperties the properties is used to override the default configs
+  * @param baseConfig the properties is used to override the default configs
   */
-class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseProperties: Properties = new Properties)
+class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseConfig: OharaConfig = OharaConfig())
     extends CloseOnce {
+  private[this] val logger = Logger(getClass.getName)
   private[this] val validPorts = resolvePorts(ports)
-
+  logger.info(s"ports used in LocalKafkaWorkers are ${validPorts.mkString(",")}")
   val connects = new Array[Connect](validPorts.size)
   val workers = new Array[Worker](validPorts.size)
   val restServers = new Array[RestServer](validPorts.size)
@@ -36,37 +38,38 @@ class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseProperties: Pr
 
   validPorts.zipWithIndex.foreach {
     case (port: Int, index: Int) => {
-      val configs = new util.HashMap[String, String]()
+      val config = OharaConfig()
       // reduce the number of partitions and replicas to speedup the mini cluster
       // for config storage. the partition of config topic is always 1 so we needn't to set it to 1 here.
-      configs.put(DistributedConfig.CONFIG_TOPIC_CONFIG, "connect-configs")
-      configs.put(DistributedConfig.CONFIG_STORAGE_REPLICATION_FACTOR_CONFIG, 1.toString)
+      config.set(DistributedConfig.CONFIG_TOPIC_CONFIG, "connect-configs")
+      config.set(DistributedConfig.CONFIG_STORAGE_REPLICATION_FACTOR_CONFIG, 1.toString)
       // for offset storage
-      configs.put(DistributedConfig.OFFSET_STORAGE_TOPIC_CONFIG, "connect-offsets")
-      configs.put(DistributedConfig.OFFSET_STORAGE_PARTITIONS_CONFIG, 1.toString)
-      configs.put(DistributedConfig.OFFSET_STORAGE_REPLICATION_FACTOR_CONFIG, 1.toString)
+      config.set(DistributedConfig.OFFSET_STORAGE_TOPIC_CONFIG, "connect-offsets")
+      config.set(DistributedConfig.OFFSET_STORAGE_PARTITIONS_CONFIG, 1.toString)
+      config.set(DistributedConfig.OFFSET_STORAGE_REPLICATION_FACTOR_CONFIG, 1.toString)
       // for status storage
-      configs.put(DistributedConfig.STATUS_STORAGE_TOPIC_CONFIG, "connect-status")
-      configs.put(DistributedConfig.STATUS_STORAGE_PARTITIONS_CONFIG, 1.toString)
-      configs.put(DistributedConfig.STATUS_STORAGE_REPLICATION_FACTOR_CONFIG, 1.toString)
+      config.set(DistributedConfig.STATUS_STORAGE_TOPIC_CONFIG, "connect-status")
+      config.set(DistributedConfig.STATUS_STORAGE_PARTITIONS_CONFIG, 1.toString)
+      config.set(DistributedConfig.STATUS_STORAGE_REPLICATION_FACTOR_CONFIG, 1.toString)
       // set the brokers info
-      configs.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersConn)
-      configs.put(DistributedConfig.GROUP_ID_CONFIG, "connect")
+      config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersConn)
+      config.set(DistributedConfig.GROUP_ID_CONFIG, "connect")
       // set the normal converter
-      configs.put(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
-      configs.put("key.converter.schemas.enable", true.toString)
-      configs.put(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
-      configs.put("value.converter.schemas.enable", true.toString)
+      config.set(WorkerConfig.KEY_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
+      config.set("key.converter.schemas.enable", true.toString)
+      config.set(WorkerConfig.VALUE_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
+      config.set("value.converter.schemas.enable", true.toString)
       // set the internal converter. NOTED: kafka connector doesn't support to use schema in internal topics.
-      configs.put(WorkerConfig.INTERNAL_KEY_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
-      configs.put("internal.key.converter.schemas.enable", false.toString)
-      configs.put(WorkerConfig.INTERNAL_VALUE_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
-      configs.put("internal.value.converter.schemas.enable", false.toString)
+      config.set(WorkerConfig.INTERNAL_KEY_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
+      config.set("internal.key.converter.schemas.enable", false.toString)
+      config.set(WorkerConfig.INTERNAL_VALUE_CONVERTER_CLASS_CONFIG, "org.apache.kafka.connect.json.JsonConverter")
+      config.set("internal.value.converter.schemas.enable", false.toString)
       // TODO: REST_PORT_CONFIG is deprecated in kafka-1.1.0. Use LISTENERS_CONFIG instead. by chia
-      configs.put(WorkerConfig.REST_PORT_CONFIG, (port + index).toString)
-      configs.put(WorkerConfig.PLUGIN_PATH_CONFIG, "")
-      baseProperties.forEach((k, v) => configs.put(k.asInstanceOf[String], v.asInstanceOf[String]))
-      val distConfig = new DistributedConfig(configs)
+      config.set(WorkerConfig.REST_PORT_CONFIG, port.toString)
+      config.set(WorkerConfig.PLUGIN_PATH_CONFIG, "")
+      config.load(baseConfig)
+      import scala.collection.JavaConverters._
+      val distConfig = new DistributedConfig(config.toPlainMap.asJava)
 
       def createPlugins: Plugins = {
         val pluginProps = new util.HashMap[String, String]
@@ -76,8 +79,8 @@ class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseProperties: Pr
         pluginProps.put(WorkerConfig.PLUGIN_PATH_CONFIG, "")
         new Plugins(pluginProps)
       }
-
-      val workerId = s"localhost:${port + index}"
+      val rest = new RestServer(distConfig)
+      val workerId = s"localhost:${rest.advertisedUrl().getPort}"
       val offsetBackingStore = new KafkaOffsetBackingStore
       offsetBackingStore.configure(distConfig)
       val time = Time.SYSTEM
@@ -86,7 +89,6 @@ class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseProperties: Pr
       val statusBackingStore = new KafkaStatusBackingStore(time, internalValueConverter)
       statusBackingStore.configure(distConfig)
       val configBackingStore = new KafkaConfigBackingStore(internalValueConverter, distConfig)
-      val rest = new RestServer(distConfig)
       // TODO: DistributedHerder is a private class so its constructor is changed in kafka-1.1.0. by chia
       val herder = new DistributedHerder(distConfig,
                                          time,

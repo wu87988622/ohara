@@ -2,7 +2,6 @@ package com.island.ohara.kafka
 
 import java.util
 
-import com.island.ohara.config.UuidUtil
 import com.island.ohara.core.{Cell, Row, Table}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.ByteUtil
@@ -14,17 +13,19 @@ import com.island.ohara.kafka.connector.{
   SimpleRowSourceTask
 }
 import com.island.ohara.rule.LargeTest
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
-import org.junit.{Before, Test}
+import org.junit.rules.TestName
+import org.junit.{Before, Rule, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
-  private[this] val topicName = getClass.getSimpleName + "-topic"
+  @Rule
+  def name = new TestName
+  private[this] val topicName = name.getMethodName + "-topic"
 
   @Before
   def setUp(): Unit = {
@@ -38,17 +39,18 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
     doClose(new OharaTestUtil(3)) { testUtil =>
       {
         testUtil.kafkaBrokers.size shouldBe 3
-        testUtil.createTopic("my_topic")
-        val (_, rowQueue) = testUtil.run("my_topic", true, new ByteArrayDeserializer, new RowDeserializer)
+        testUtil.createTopic(topicName)
+        val (_, rowQueue) = testUtil.run(topicName, true, new ByteArrayDeserializer, new RowDeserializer)
         val totalMessageCount = 100
-        doClose(new RowProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) { producer =>
-          {
-            var count: Int = totalMessageCount
-            while (count > 0) {
-              producer.send(new ProducerRecord[Array[Byte], Row]("my_topic", ByteUtil.toBytes("key"), row))
-              count -= 1
+        doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
+          producer =>
+            {
+              var count: Int = totalMessageCount
+              while (count > 0) {
+                producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row))
+                count -= 1
+              }
             }
-          }
         }
         testUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
         rowQueue.forEach((r: Row) => {
@@ -70,17 +72,18 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
     doClose(new OharaTestUtil(3)) { testUtil =>
       {
         testUtil.kafkaBrokers.size shouldBe 3
-        testUtil.createTopic("my_topic")
-        val (_, rowQueue) = testUtil.run("my_topic", true, new ByteArrayDeserializer, new TableDeserializer)
+        testUtil.createTopic(topicName)
+        val (_, rowQueue) = testUtil.run(topicName, true, new ByteArrayDeserializer, new TableDeserializer)
         val totalMessageCount = 100
-        doClose(new TableProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) { producer =>
-          {
-            var count: Int = totalMessageCount
-            while (count > 0) {
-              producer.send(new ProducerRecord[Array[Byte], Table]("my_topic", ByteUtil.toBytes("key"), table))
-              count -= 1
+        doClose(new TableProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
+          producer =>
+            {
+              var count: Int = totalMessageCount
+              while (count > 0) {
+                producer.send(new ProducerRecord[Array[Byte], Table](topicName, ByteUtil.toBytes("key"), table))
+                count -= 1
+              }
             }
-          }
         }
         testUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
         rowQueue.forEach((t: Table) => {
@@ -118,12 +121,13 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
         import scala.concurrent.duration._
         testUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
 
-        doClose(new RowProducer[Array[Byte]](testUtil.properties, new ByteArraySerializer)) { producer =>
-          {
-            0 until rowCount foreach (_ =>
-              producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
-            producer.flush()
-          }
+        doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
+          producer =>
+            {
+              0 until rowCount foreach (_ =>
+                producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
+              producer.flush()
+            }
         }
         testUtil.await(() => SimpleRowSinkTask.receivedRows.size == rowCount, 30 second)
       }
@@ -150,19 +154,17 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
         import scala.concurrent.duration._
         testUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
-        val props = testUtil.properties
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-        doClose(new RowConsumer[Array[Byte]](props, new ByteArrayDeserializer)) { consumer =>
-          {
-            consumer.subscribe(util.Arrays.asList(topicName))
-            val list = Iterator
-              .continually(consumer.poll(30 * 1000))
-              .takeWhile(record => record != null && !record.isEmpty)
-              .toList
-            // check the number of rows consumer has received
-            list.map(_.count()).sum shouldBe pollCountMax * SimpleRowSourceTask.rows.length
-          }
+        doClose(new RowConsumer[Array[Byte]](testUtil.consumerConfig.toProperties, new ByteArrayDeserializer)) {
+          consumer =>
+            {
+              consumer.subscribe(util.Arrays.asList(topicName))
+              val list = Iterator
+                .continually(consumer.poll(30 * 1000))
+                .takeWhile(record => record != null && !record.isEmpty)
+                .toList
+              // check the number of rows consumer has received
+              list.map(_.count()).sum shouldBe pollCountMax * SimpleRowSourceTask.rows.length
+            }
         }
       }
     }

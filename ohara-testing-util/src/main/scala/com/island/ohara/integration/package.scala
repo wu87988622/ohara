@@ -11,8 +11,10 @@ package object integration {
 
   def availablePort: Int = {
     val socket = new ServerSocket(0)
-    try socket.getLocalPort
-    finally socket.close()
+    try {
+      socket.setReuseAddress(true)
+      socket.getLocalPort
+    } finally socket.close()
   }
 
   def createTempDir(dirPrefix: String): File = {

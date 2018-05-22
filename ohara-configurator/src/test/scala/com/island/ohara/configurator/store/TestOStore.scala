@@ -103,7 +103,7 @@ class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
 
   private[this] def createOharaTestUtil() = if (config.requireBoolean(NEED_OHARA_UTIL)) {
     val util = new OharaTestUtil(3, 3)
-    config = config.merge(util.properties)
+    config = config.merge(util.config)
     util
   } else null
 

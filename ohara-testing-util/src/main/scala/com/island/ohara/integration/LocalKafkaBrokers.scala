@@ -3,9 +3,12 @@ package com.island.ohara.integration
 import java.io.File
 import java.util.Properties
 
+import com.island.ohara.config.{OharaConfig, UuidUtil}
 import com.island.ohara.io.CloseOnce
+import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.utils.SystemTime
 
 /**
@@ -14,11 +17,13 @@ import org.apache.kafka.common.utils.SystemTime
   *
   * @param zkConnection   zookeeper connection.
   * @param ports         the port to bind. default is a random number
-  * @param baseProperties the properties passed to brokers
+  * @param baseConfig the properties passed to brokers
   */
-private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseProperties: Properties = new Properties)
+private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseConfig: OharaConfig = OharaConfig())
     extends CloseOnce {
+  private[this] val logger = Logger(getClass.getName)
   private[this] val validPorts = resolvePorts(ports)
+  logger.info(s"ports used in LocalKafkaBrokers are ${validPorts.mkString(",")}")
   val brokersString: String = {
     val sb = new StringBuilder
     for (port <- validPorts) {
@@ -32,17 +37,17 @@ private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], basePrope
   validPorts.zipWithIndex.foreach {
     case (port: Int, index: Int) => {
       val logDir = createTempDir("kafka-local")
-      val properties = new Properties()
+      val config = OharaConfig()
       // reduce the number of partitions and replicas to speedup the mini cluster
-      properties.put(KafkaConfig.OffsetsTopicPartitionsProp, 1.toString)
-      properties.put(KafkaConfig.OffsetsTopicReplicationFactorProp, 1.toString)
-      properties.put(KafkaConfig.ZkConnectProp, zkConnection)
-      properties.put(KafkaConfig.BrokerIdProp, String.valueOf(index + 1))
-      properties.put(KafkaConfig.ListenersProp, "PLAINTEXT://:" + port)
-      properties.put(KafkaConfig.LogDirProp, logDir.getAbsolutePath())
+      config.set(KafkaConfig.OffsetsTopicPartitionsProp, 1.toString)
+      config.set(KafkaConfig.OffsetsTopicReplicationFactorProp, 1.toString)
+      config.set(KafkaConfig.ZkConnectProp, zkConnection)
+      config.set(KafkaConfig.BrokerIdProp, String.valueOf(index + 1))
+      config.set(KafkaConfig.ListenersProp, "PLAINTEXT://:" + port)
+      config.set(KafkaConfig.LogDirProp, logDir.getAbsolutePath())
       // increase the timeout in order to avoid ZkTimeoutException
-      properties.put(KafkaConfig.ZkConnectionTimeoutMsProp, (30 * 1000).toString)
-      properties.putAll(baseProperties)
+      config.set(KafkaConfig.ZkConnectionTimeoutMsProp, (30 * 1000).toString)
+      config.load(baseConfig)
 
       def startBroker(props: Properties): KafkaServer = {
         val server = new KafkaServer(new KafkaConfig(props), new SystemTime)
@@ -50,23 +55,59 @@ private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], basePrope
         server
       }
 
-      val broker = startBroker(properties)
+      val broker = startBroker(config.toProperties)
       brokers.update(index, broker)
       logDirs.update(index, logDir)
     }
   }
 
   /**
-    * A properties is used to create the KafkaProducer or KafkaConsumer. The basic information including brokers info and zk info have
-    * been added.
-    * @return properties
+    * Generate the basic config. The config is composed of following setting.
+    * 1) bootstrap.servers
+    * 2) metadata.broker.list
+    * 3) zookeeper.connect
+    * @return a basic config including the brokers information
     */
-  def properties: Properties = {
-    val props = new Properties
-    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    props.put("metadata.broker.list", brokersString)
-    props.put("zookeeper.connect", zkConnection)
-    props
+  def config: OharaConfig = {
+    val config = OharaConfig()
+    config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
+    config.set("metadata.broker.list", brokersString)
+    config.set("zookeeper.connect", zkConnection)
+    config
+  }
+
+  /**
+    * Generate a config for kafka producer. The config is composed of following setting.
+    * 1) bootstrap.servers
+    * 2) metadata.broker.list
+    * 3) zookeeper.connect
+    * @return a config used to instantiate kafka producer
+    */
+  def producerConfig: OharaConfig = {
+    val config = OharaConfig()
+    config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
+    config.set("metadata.broker.list", brokersString)
+    config.set("zookeeper.connect", zkConnection)
+    config
+  }
+
+  /**
+    * Generate a config for kafka consumer. The config is composed of following setting.
+    * 1) bootstrap.servers
+    * 2) metadata.broker.list
+    * 3) zookeeper.connect
+    * 4) group.id -> a arbitrary string
+    * 5) auto.offset.reset -> earliest
+    * @return a config used to instantiate kafka consumer
+    */
+  def consumerConfig: OharaConfig = {
+    val config = OharaConfig()
+    config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
+    config.set("metadata.broker.list", brokersString)
+    config.set("zookeeper.connect", zkConnection)
+    config.set(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
+    config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+    config
   }
 
   override def toString: String = {

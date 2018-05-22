@@ -67,6 +67,14 @@ private class MapConfig(another: Map[String, Either[String, Map[String, String]]
   override def set(key: String, value: Map[String, String]): Option[Either[String, Map[String, String]]] =
     config.put(key, Right(value))
 
+  override def toPlainMap: Map[String, String] = config
+    .filter {
+      case (k, v) => v.isLeft
+    }
+    .map {
+      case (k, v) => (k, v.left.get)
+    }
+    .toMap
 }
 
 private object MapConfig {

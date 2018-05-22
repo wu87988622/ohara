@@ -96,7 +96,7 @@ class TestTopicOStore extends LargeTest with Matchers {
 
   private[this] def createOharaTestUtil() = {
     val util = new OharaTestUtil(3, 3)
-    config.load(util.properties)
+    config.load(util.config)
     util
   }
 
