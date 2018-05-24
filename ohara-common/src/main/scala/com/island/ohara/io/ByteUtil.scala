@@ -1,11 +1,20 @@
 package com.island.ohara.io
 
 import java.nio.charset.StandardCharsets
+import java.util.Comparator
 
 /**
   * A collection of helper methods used to do conversion between object and byte array.
   */
 object ByteUtil {
+
+  /**
+    * used to sort the byte array in collection.
+    */
+  val COMPARATOR = new Comparator[Array[Byte]]() {
+    override def compare(o1: Array[Byte], o2: Array[Byte]): Int = ByteUtil.compare(o1, o2)
+  }
+
   // pre-defined constants
   def SIZE_OF_BYTE: Int = java.lang.Byte.SIZE / java.lang.Byte.SIZE
 

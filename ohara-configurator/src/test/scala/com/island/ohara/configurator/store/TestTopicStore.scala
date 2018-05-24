@@ -14,27 +14,27 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-class TestTopicOStore extends LargeTest with Matchers {
+class TestTopicStore extends LargeTest with Matchers {
 
-  val config = configForTopicOStore
+  val config = configForTopicStore
   val testUtil = createOharaTestUtil()
-  var store = new TopicOStore[String, String](config)
+  var store = new TopicStore[String, String](config)
 
   @Test
   def testRestart(): Unit = {
     store.update("aa", "bb") shouldBe None
     store.close()
-    store = new TopicOStore[String, String](config)
+    store = new TopicStore[String, String](config)
     store.get("aa") shouldBe Some("bb")
   }
 
   @Test
   def testRetention(): Unit = {
     val config = OharaConfig(this.config)
-    config.set(TopicOStore.TOPIC_NAME, "testacid2")
+    config.set(TopicStore.TOPIC_NAME, "testacid2")
     // make small retention so as to trigger log clear
     config.set("log.retention.ms", 1000)
-    doClose(new TopicOStore[String, String](config)) { anotherStore =>
+    doClose(new TopicStore[String, String](config)) { anotherStore =>
       {
         0 until 10 foreach (index => anotherStore.update("key", index.toString))
         // the local cache do the de-duplicate
@@ -64,7 +64,7 @@ class TestTopicOStore extends LargeTest with Matchers {
   @Test
   def testMultiStore(): Unit = {
     val numberOfStore = 5
-    val stores = 0 until numberOfStore map (_ => new TopicOStore[String, String](config))
+    val stores = 0 until numberOfStore map (_ => new TopicStore[String, String](config))
     0 until 10 foreach (index => store.update(index.toString, index.toString))
 
     // make sure all stores have synced the updated data
@@ -83,8 +83,8 @@ class TestTopicOStore extends LargeTest with Matchers {
 
     // This store is based on another topic so it should have no data
     val anotherConfig = config.snapshot
-    anotherConfig.set(TopicOStore.TOPIC_NAME, "testacidXX")
-    val anotherStore = new TopicOStore[String, String](anotherConfig)
+    anotherConfig.set(TopicStore.TOPIC_NAME, "testacidXX")
+    val anotherStore = new TopicStore[String, String](anotherConfig)
     anotherStore.size shouldBe 0
   }
 
@@ -100,17 +100,18 @@ class TestTopicOStore extends LargeTest with Matchers {
     util
   }
 
-  private[this] def configForTopicOStore: OharaConfig = {
+  private[this] def configForTopicStore: OharaConfig = {
     val config = OharaConfig()
-    config.set(OStore.OSTORE_IMPL, classOf[TopicOStore[_, _]].getName)
-    config.set(OStore.COMPARATOR_IMPL, classOf[StringComparator].getName)
+    config.set(Store.STORE_IMPL, classOf[TopicStore[_, _]].getName)
+    config.set(Store.KEY_SERIALIZER_IMPL, classOf[StringSerializer].getName)
+    config.set(Store.VALUE_SERIALIZER_IMPL, classOf[StringSerializer].getName)
     config.set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
     config.set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
     config.set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
     config.set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
-    config.set(TopicOStore.TOPIC_NAME, "testacid")
-    config.set(TopicOStore.TOPIC_PARTITION_COUNT.key, 1.toString)
-    config.set(TopicOStore.TOPIC_REPLICATION_COUNT.key, 1.toString)
+    config.set(TopicStore.TOPIC_NAME, "testacid")
+    config.set(TopicStore.TOPIC_PARTITION_COUNT.key, 1.toString)
+    config.set(TopicStore.TOPIC_REPLICATION_COUNT.key, 1.toString)
     config.set(NEED_OHARA_UTIL, true.toString)
     config
   }

@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.config.{OharaConfig, Property, UuidUtil}
+import com.island.ohara.configurator.serialization.Serializer
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
@@ -26,7 +27,7 @@ import scala.concurrent.{Await, Future}
   *
   * NOTED: There are two kind of execution order in this class. 1) the caller order happening in update/remove. 2) data commit order. We take later
   * to complete the consistent order. For example, there are two callers A) and B). A call the update before B. However, the data updated by
-  * B is committed before A. So the TopicOStore#update will return the data of B to A.
+  * B is committed before A. So the TopicStore#update will return the data of B to A.
   *
   * NOTED: Since we view the topic as persistent storage, this class will reset the offset to the beginner to load all data from topic. If
   * you try to change the offset, the side-effect is that the data may be loss.
@@ -39,24 +40,24 @@ import scala.concurrent.{Await, Future}
   * @tparam K key type
   * @tparam V value type
   */
-private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V] with CloseOnce {
+private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) with CloseOnce {
 
   /**
-    * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinuish the records.
+    * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
     * TODO: make sure this uuid is unique in a distributed cluster. by chia
     */
   val uuid = UuidUtil.uuid()
 
   /**
-    * Used to sort the change to topic. We shouldn't worry about the overflow since it is not a update-heavy.
+    * Used to sort the change to topic. We shouldn't worry about the overflow since it is not update-heavy.
     */
   private[this] val HEADER_INDEX = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
-  val topicName = config.requireString(TopicOStore.TOPIC_NAME)
-  val pollTimeout = config.get(TopicOStore.POLL_TIMEOUT)
+  val topicName = config.requireString(TopicStore.TOPIC_NAME)
+  val pollTimeout = config.get(TopicStore.POLL_TIMEOUT)
   config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
   // enable kafka save the latest message for each key
-  // we use magin string since the constant is located in kafka-core. Importing the whole core project is too expensive.
+  // we use magic string since the constant is located in kafka-core. Importing the whole core project is too expensive.
   config.set("log.cleanup.policy", "compact")
   config.set(ConsumerConfig.GROUP_ID_CONFIG, uuid)
 
@@ -69,9 +70,9 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
       admin.createTopics(
         util.Arrays.asList(
           new NewTopic(topicName,
-                       config.get(TopicOStore.TOPIC_PARTITION_COUNT),
-                       config.get(TopicOStore.TOPIC_REPLICATION_COUNT))))
-      val end = System.currentTimeMillis() + config.get(TopicOStore.CREATE_TOPIC_TIMEOUT)
+                       config.get(TopicStore.TOPIC_PARTITION_COUNT),
+                       config.get(TopicStore.TOPIC_REPLICATION_COUNT))))
+      val end = System.currentTimeMillis() + config.get(TopicStore.CREATE_TOPIC_TIMEOUT)
       // wait the topic to be created
       while (!topicExist() && (System.currentTimeMillis() < end)) {
         TimeUnit.SECONDS.sleep(1)
@@ -80,12 +81,16 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
     }
   })
 
-  private[this] val consumer = new KafkaConsumer[K, V](config.toProperties)
+  private[this] val consumer = new KafkaConsumer[K, V](config.toProperties,
+                                                       TopicStore.toKafkaDeserializer(keySerializer),
+                                                       TopicStore.toKafkaDeserializer(valueSerializer))
   consumer.subscribe(util.Arrays.asList(topicName))
-  private[this] val producer = new KafkaProducer[K, V](config.toProperties)
+  private[this] val producer = new KafkaProducer[K, V](config.toProperties,
+                                                       TopicStore.toKafkaSerializer(keySerializer),
+                                                       TopicStore.toKafkaSerializer(valueSerializer))
   private[this] val updateLock = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
-  private[this] val cache = new MemOStore[K, V](config)
+  private[this] val cache = new MemStore[K, V](config)
 
   /**
     * true if poller haven't grab any data recently.
@@ -122,6 +127,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
                   if (record.value() == null) cache.remove(record.key()) else cache.update(record.key(), record.value())
                 // index != null means this record is sent by this node
                 if (index != null) {
+                  messageCount += 1
                   commitResult.put(index, previous)
                   updateLock.synchronized {
                     updateLock.notifyAll()
@@ -140,7 +146,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
     } finally {
       // we do the wait for initialization of reading topic. cancel the flag to break the wait loop.
       readToEnd.set(true)
-      TopicOStore.this.close()
+      TopicStore.this.close()
     }
     messageCount
   }
@@ -168,7 +174,7 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
   override def iterator: Iterator[(K, V)] = cache.iterator
 
   /**
-    * Overrride the size to provide the efficient implementation
+    * Override the size to provide the efficient implementation
     * @return size of this store
     */
   override def size: Int = cache.size
@@ -197,36 +203,74 @@ private[store] class TopicOStore[K, V](config: OharaConfig) extends OStore[K, V]
       /**
         * @return an empty array since we don't use this field
         */
-      override def value(): Array[Byte] = TopicOStore.EMPTY_ARRAY
+      override def value(): Array[Byte] = TopicStore.EMPTY_ARRAY
     }
   }
 }
 
-object TopicOStore {
+object TopicStore {
 
   /**
     * A required config. It dedicate the topic name used to store the data.
     */
-  val TOPIC_NAME = "ohara.topicostore.topic.name"
+  val TOPIC_NAME = "ohara.topic.store.name"
   val TOPIC_PARTITION_COUNT = Property.builder
     .description("The number of partition of backed topic")
-    .key("ohara.topicostore.partition.count")
+    .key("ohara.topic.store.partition.count")
     .build(10)
   val TOPIC_REPLICATION_COUNT = Property.builder
     .description("The number of replication of backed topic")
-    .key("ohara.topicostore.replication.count")
+    .key("ohara.topic.store.replication.count")
     .build(10.toShort)
   val POLL_TIMEOUT = Property.builder
     .description("The time, in milliseconds, spent waiting in poll the kafka consumer")
-    .key("ohara.topicostore.poll.timeout")
+    .key("ohara.topic.store.poll.timeout")
     .build(5 * 1000)
   val CREATE_TOPIC_TIMEOUT = Property.builder
     .description("The time, in milliseconds, spent waiting in creating the topic")
-    .key("ohara.topicostore.create.topic.timeout")
+    .key("ohara.topic.store.create.topic.timeout")
     .build(60 * 1000)
 
   /**
     * zero array. Used to be the value of header.
     */
   private val EMPTY_ARRAY = new Array[Byte](0)
+
+  /**
+    * wrap ohara serializer to kafka serializer.
+    * @param serializer ohara serializer
+    * @tparam T object type
+    * @return kafka serializer
+    */
+  private def toKafkaSerializer[T](serializer: Serializer[T, Array[Byte]]) =
+    new org.apache.kafka.common.serialization.Serializer[T]() {
+      override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
+        // do nothing
+      }
+      override def serialize(topic: String, data: T): Array[Byte] = if (data == null) null else serializer.to(data)
+
+      override def close(): Unit = {
+        // do nothing
+      }
+    }
+
+  /**
+    * wrap ohara deserializer to kafka deserializer.
+    * @param serializer ohara deserializer
+    * @tparam T object type
+    * @return kafka deserializer
+    */
+  private def toKafkaDeserializer[T](serializer: Serializer[T, Array[Byte]]) =
+    new org.apache.kafka.common.serialization.Deserializer[T]() {
+      override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
+        // do nothing
+      }
+
+      override def close(): Unit = {
+        // do nothing
+      }
+
+      override def deserialize(topic: String, data: Array[Byte]): T =
+        if (data == null || data.isEmpty) null.asInstanceOf[T] else serializer.from(data)
+    }
 }

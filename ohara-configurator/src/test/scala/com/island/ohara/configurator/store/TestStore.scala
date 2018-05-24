@@ -23,13 +23,13 @@ import scala.concurrent.{Await, Future}
 import scala.util.Random
 
 /**
-  * @param config configuration for OStore implementation
+  * @param config configuration for Store implementation
   */
 @RunWith(value = classOf[Parameterized])
-class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
+class TestStore(var config: OharaConfig) extends LargeTest with Matchers {
 
   val testUtil = createOharaTestUtil()
-  val store = OStore[String, String](config)
+  val store = Store[String, String](config)
   val elapsedTime = 30 // second
   val readerCount = 10
   val updaterCount = 10
@@ -75,8 +75,8 @@ class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
   }
 
   /**
-    * The write and read ops shouldn't make the data inconsistent. This test will create many threads to change the data stored in OStore.
-    * And then many readers run for reading and checking the data. Each change to OStore is a pair of random and identical key-value.
+    * The write and read ops shouldn't make the data inconsistent. This test will create many threads to change the data stored in Store.
+    * And then many readers run for reading and checking the data. Each change to Store is a pair of random and identical key-value.
     * Hence, this test fails if reader find a pair having different key or value.
     */
   @Test
@@ -107,7 +107,7 @@ class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
     util
   } else null
 
-  private[this] def createRemover(closed: AtomicBoolean, store: OStore[String, String]): Future[Long] = {
+  private[this] def createRemover(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
@@ -127,7 +127,7 @@ class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
     }
   }
 
-  private[this] def createUpdater(closed: AtomicBoolean, store: OStore[String, String]): Future[Long] = {
+  private[this] def createUpdater(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
@@ -139,7 +139,7 @@ class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
     }
   }
 
-  private[this] def createReader(closed: AtomicBoolean, store: OStore[String, String]): Future[Long] = {
+  private[this] def createReader(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
@@ -163,32 +163,34 @@ class TestOStore(var config: OharaConfig) extends LargeTest with Matchers {
   }
 }
 
-object TestOStore {
+object TestStore {
 
   @Parameters
   def parameters: util.Collection[Array[OharaConfig]] = {
-    util.Arrays.asList(Array(configForMemOStore), Array(configForTopicOStore))
+    util.Arrays.asList(Array(configForMemStore), Array(configForTopicStore))
   }
 
-  private[this] def configForMemOStore: OharaConfig = {
+  private[this] def configForMemStore: OharaConfig = {
     val config = OharaConfig()
-    config.set(OStore.OSTORE_IMPL, classOf[MemOStore[_, _]].getName)
-    config.set(OStore.COMPARATOR_IMPL, classOf[StringComparator].getName)
+    config.set(Store.STORE_IMPL, classOf[MemStore[_, _]].getName)
+    config.set(Store.KEY_SERIALIZER_IMPL, classOf[StringSerializer].getName)
+    config.set(Store.VALUE_SERIALIZER_IMPL, classOf[StringSerializer].getName)
     config.set(NEED_OHARA_UTIL, false.toString)
     config
   }
 
-  private[this] def configForTopicOStore: OharaConfig = {
+  private[this] def configForTopicStore: OharaConfig = {
     val config = OharaConfig()
-    config.set(OStore.OSTORE_IMPL, classOf[TopicOStore[_, _]].getName)
-    config.set(OStore.COMPARATOR_IMPL, classOf[StringComparator].getName)
+    config.set(Store.STORE_IMPL, classOf[TopicStore[_, _]].getName)
+    config.set(Store.KEY_SERIALIZER_IMPL, classOf[StringSerializer].getName)
+    config.set(Store.VALUE_SERIALIZER_IMPL, classOf[StringSerializer].getName)
     config.set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
     config.set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
     config.set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
     config.set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
-    config.set(TopicOStore.TOPIC_NAME, "testacid")
-    config.set(TopicOStore.TOPIC_PARTITION_COUNT.key, 1.toString)
-    config.set(TopicOStore.TOPIC_REPLICATION_COUNT.key, 1.toString)
+    config.set(TopicStore.TOPIC_NAME, "testacid")
+    config.set(TopicStore.TOPIC_PARTITION_COUNT.key, 1.toString)
+    config.set(TopicStore.TOPIC_REPLICATION_COUNT.key, 1.toString)
     config.set(NEED_OHARA_UTIL, true.toString)
     config
   }

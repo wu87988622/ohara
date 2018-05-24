@@ -1,5 +1,7 @@
 package com.island.ohara.io
 
+import java.util
+
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -85,5 +87,25 @@ class TestByteUtil extends SmallTest with Matchers {
     val b = "aad"
     ByteUtil.compare(ByteUtil.toBytes(a), ByteUtil.toBytes(b)) shouldBe 1
     ByteUtil.compare(ByteUtil.toBytes(a), 2, 1, ByteUtil.toBytes(b), 2, 1) shouldBe -1
+  }
+
+  @Test
+  def testComparator(): Unit = {
+    val map = new util.TreeSet[Array[Byte]](ByteUtil.COMPARATOR)
+    map.add(ByteUtil.toBytes("ccc"))
+    map.add(ByteUtil.toBytes("bbb"))
+    map.add(ByteUtil.toBytes("aaa"))
+    map.add(ByteUtil.toBytes("adc"))
+    map.size shouldBe 4
+    var count = 0
+    map.forEach(value => {
+      count match {
+        case 0 => ByteUtil.toString(value) shouldBe "aaa"
+        case 1 => ByteUtil.toString(value) shouldBe "adc"
+        case 2 => ByteUtil.toString(value) shouldBe "bbb"
+        case 3 => ByteUtil.toString(value) shouldBe "ccc"
+      }
+      count += 1
+    })
   }
 }
