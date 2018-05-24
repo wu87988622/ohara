@@ -136,27 +136,27 @@ lazy val `ohara-data` = (project in file("ohara-data"))
   .dependsOn(`ohara-common` % "compile->compile; compile->test")
   .settings(commonSettings)
 
-lazy val `ohara-kafka-data-wrapper` = (project in file("ohara-kafka-data"))
+lazy val `ohara-kafka-data` = (project in file("ohara-kafka-data"))
   .settings(commonSettings)
   .dependsOn(
     `ohara-common` % "compile->compile; compile->test",
     `ohara-core`,
     `ohara-data`,
-    `testkit` % "compile->compile; compile->test")
+    `ohara-testing-util` % "compile->compile; compile->test")
 
 lazy val `ohara-manager` = (project in file("ohara-manager"))
   .settings(commonSettings)
   .dependsOn(`ohara-common` % "compile->compile; compile->test")
 
-lazy val `ohara-hdfs-sink` = (project in file("ohara-hdfs-sink-connector"))
+lazy val `ohara-hdfs-connector` = (project in file("ohara-hdfs-sink-connector"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= hadoopDependencies)
-  .dependsOn(`ohara-data`, `ohara-kafka-data-wrapper`)
+  .dependsOn(`ohara-data`, `ohara-kafka-data`)
 
 lazy val `ohara-http` = (project in file("ohara-http"))
   .settings(commonSettings)
 
-lazy val `testkit` = (project in file("ohara-testing-util"))
+lazy val `ohara-testing-util` = (project in file("ohara-testing-util"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= hadoopDependencies)
   .dependsOn(`ohara-common` % "compile->compile; compile->test")
