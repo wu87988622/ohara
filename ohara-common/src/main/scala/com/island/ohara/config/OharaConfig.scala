@@ -3,7 +3,9 @@ package com.island.ohara.config
 import java.util.Properties
 
 /**
-  * A string-based config collection. If the configures used in the code are the primitve type, this class is a helper tool to be a configuration base.
+  * A string-based config collection. If the configures used in the code are the primitive type, this class is a helper tool to be a configuration base.
+  * OharaConfig is able to store two type - String and Map[String, String] - although the really data format depends on how to implement OharaConfig.
+  * Hence, the type of value is represented by either String or Map[String, String].
   * NOTED: the implementations of this class are not required to be thread-safe
   */
 trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])] {
@@ -95,24 +97,30 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
   def set(key: String, value: Double): Option[Either[String, Map[String, String]]] = set(key, value.toString)
 
   /**
-    * Get the value realted to the key of property. If the key-value doesn't exist, this method will return the default value of property.
-    * @param prop property
-    * @tparam T type
-    * @return parsed value or default value
-    */
-  def get[T](prop: Property[T]): T
-
-  /**
     * @param key key
     * @return String or Map<String, String> if the value mapped to the input key exist. Otherwise None
     */
   def get(key: String): Option[Either[String, Map[String, String]]]
 
   /**
-    * @param prop property
-    * @return true if there is a value mapped to the key of property
+    * @param key key
+    * @return String or Map<String, String> if the value mapped to the input key exist. Otherwise None
     */
-  def exist(prop: Property[_]): Boolean = exist(prop.key)
+  def getString(key: String): Option[String] = get(key).map(value =>
+    value match {
+      case Left(s)  => s
+      case Right(_) => throw new IllegalArgumentException("require String; actual Map[String, String]")
+  })
+
+  /**
+    * @param key key
+    * @return String or Map<String, String> if the value mapped to the input key exist. Otherwise None
+    */
+  def getMap(key: String): Option[Map[String, String]] = get(key).map(value =>
+    value match {
+      case Left(_)  => throw new IllegalArgumentException("require Map[String, String]; actual String")
+      case Right(s) => s
+  })
 
   /**
     * @param key key
@@ -251,6 +259,14 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   /**
     * load the json to this OharaConfig.
+    * NOTED: the value type must be either string or Map<String, String>
+    * @param map map
+    * @return this OharaConfig with the json content
+    */
+  def load(map: Map[String, Any]): OharaConfig = load(OharaConfig(map))
+
+  /**
+    * load the json to this OharaConfig.
     * @param json json
     * @return this OharaConfig with the json content
     */
@@ -278,9 +294,40 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     }
     this
   }
+
+  override def toString(): String = toJson.toString
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case another: OharaConfig =>
+      if (another.size != size) false
+      else {
+        forall {
+          case (key, value) =>
+            another
+              .get(key)
+              .map(anotherValue =>
+                anotherValue match {
+                  case Left(s)  => value.isLeft && value.left.get.equals(s)
+                  case Right(s) => value.isRight && value.right.get.sameElements(s)
+              })
+              .getOrElse(false)
+        }
+      }
+    case _ => false
+  }
+
+  // TODO: depending on 3th tool may be unstable. by chia
+  override def hashCode(): Int = toString.hashCode()
 }
 
 object OharaConfig {
+
+  /**
+    * NOTED: the value type must be either string or Map<String, String>
+    * @param map used to initialize the OharaConfig
+    * @return a OharaConfig with same content of props
+    */
+  def apply(map: Map[String, Any]): OharaConfig = MapConfig(map)
 
   /**
     * @return a empty OharaConfig

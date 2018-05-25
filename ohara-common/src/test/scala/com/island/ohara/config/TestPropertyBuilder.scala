@@ -7,27 +7,63 @@ import org.scalatest.Matchers
 class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
+  def testBuildWithoutDefault(): Unit = {
+    val builder = Property.builder.key("key").description("vvv")
+
+    builder.booleanProperty.default shouldBe None
+    builder.doubleProperty.default shouldBe None
+    builder.floatProperty.default shouldBe None
+    builder.intProperty.default shouldBe None
+    builder.longProperty.default shouldBe None
+    builder.shortProperty.default shouldBe None
+    builder.stringProperty.default shouldBe None
+    builder.mapProperty.default shouldBe None
+  }
+
+  @Test
   def testBuildProperties(): Unit = {
     val builder = Property.builder.key("key").description("desc")
     val list = List(123, 123L, "123", 123D, 123F, true)
     list
       .map(_ match {
-        case default: Short   => builder.build(default)
-        case default: Int     => builder.build(default)
-        case default: Long    => builder.build(default)
-        case default: Float   => builder.build(default)
-        case default: Double  => builder.build(default)
-        case default: Boolean => builder.build(default)
-        case default: String  => builder.build(default)
+        case default: Short   => builder.shortProperty(default)
+        case default: Int     => builder.intProperty(default)
+        case default: Long    => builder.longProperty(default)
+        case default: Float   => builder.floatProperty(default)
+        case default: Double  => builder.doubleProperty(default)
+        case default: Boolean => builder.booleanProperty(default)
+        case default: String  => builder.stringProperty(default)
         case _                => throw new IllegalArgumentException
       })
-      .foreach((prop: Property[_]) => {
+      .foreach(prop => {
         prop.key shouldBe "key"
         prop.description shouldBe "desc"
-        prop.default match {
+        prop.default.map(_ match {
           case v: Boolean => v shouldBe true
-          case _          => prop.default.toString.toDouble shouldBe 123.0
-        }
+          case v: Any     => v.toString.toDouble shouldBe 123.0
+        })
       })
+  }
+
+  @Test
+  def testMapBuilder(): Unit = {
+    val property: Property[Map[String, Int]] =
+      Property.builder.key("key").description("nothing").mapProperty(_.toInt, _.toString)
+    an[UnsupportedOperationException] should be thrownBy property.from("xx")
+    val value = property.from(Map("k0" -> "123", "k1" -> "456"))
+    value.get("k0").get shouldBe 123
+    value.get("k1").get shouldBe 456
+  }
+
+  @Test
+  def testClear(): Unit = {
+    val builder = Property.builder.key("key0").description("desc0").alias("alias0")
+
+    val property = builder.clear().key("key1").description("desc1").alias("alias1").intProperty(100)
+
+    property.key shouldBe "key1"
+    property.description shouldBe "desc1"
+    property.default.get shouldBe 100
+    property.alias shouldBe "alias1"
   }
 }

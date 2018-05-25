@@ -6,6 +6,8 @@ import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.mutable
+
 class TestMapConfig extends SmallTest with Matchers {
 
   @Test
@@ -166,6 +168,25 @@ class TestMapConfig extends SmallTest with Matchers {
     props.requireMap("key4") shouldBe Map("aaa" -> "bb", "dd" -> "cc")
 
     conf.load(props.toJson)
+    conf.requireString("key0") shouldBe "value0"
+    conf.requireString("key1") shouldBe "value1"
+    conf.requireMap("key2") shouldBe Map("aaa" -> "bb")
+    conf.requireString("key3") shouldBe "value3"
+    conf.requireMap("key4") shouldBe Map("aaa" -> "bb", "dd" -> "cc")
+  }
+
+  @Test
+  def testLoadMap(): Unit = {
+    val conf = new MapConfig()
+    conf.set("key0", "value0") shouldBe None
+    conf.set("key1", "value1") shouldBe None
+    conf.set("key2", Map("aaa" -> "bb")) shouldBe None
+
+    val map = new mutable.HashMap[String, Any]()
+    map.put("key3", "value3")
+    map.put("key4", Map("aaa" -> "bb", "dd" -> "cc"))
+
+    conf.load(map.toMap)
     conf.requireString("key0") shouldBe "value0"
     conf.requireString("key1") shouldBe "value1"
     conf.requireMap("key2") shouldBe Map("aaa" -> "bb")

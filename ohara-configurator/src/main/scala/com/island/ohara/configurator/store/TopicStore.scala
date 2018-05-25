@@ -53,8 +53,8 @@ private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](c
     */
   private[this] val HEADER_INDEX = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
-  val topicName = config.requireString(TopicStore.TOPIC_NAME)
-  val pollTimeout = config.get(TopicStore.POLL_TIMEOUT)
+  val topicName = TopicStore.TOPIC_NAME.require(config)
+  val pollTimeout = TopicStore.POLL_TIMEOUT.require(config)
   config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
   // enable kafka save the latest message for each key
   // we use magic string since the constant is located in kafka-core. Importing the whole core project is too expensive.
@@ -70,9 +70,9 @@ private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](c
       admin.createTopics(
         util.Arrays.asList(
           new NewTopic(topicName,
-                       config.get(TopicStore.TOPIC_PARTITION_COUNT),
-                       config.get(TopicStore.TOPIC_REPLICATION_COUNT))))
-      val end = System.currentTimeMillis() + config.get(TopicStore.CREATE_TOPIC_TIMEOUT)
+                       TopicStore.TOPIC_PARTITION_COUNT.require(config),
+                       TopicStore.TOPIC_REPLICATION_COUNT.require(config))))
+      val end = System.currentTimeMillis() + TopicStore.CREATE_TOPIC_TIMEOUT.require(config)
       // wait the topic to be created
       while (!topicExist() && (System.currentTimeMillis() < end)) {
         TimeUnit.SECONDS.sleep(1)
@@ -109,7 +109,7 @@ private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](c
               .records(topicName)
               .forEach(record => {
                 val headers = record.headers().iterator()
-                var count = 0;
+                var count = 0
                 var index: String = null
                 while (headers.hasNext) {
                   if (count == 0) {
@@ -119,9 +119,7 @@ private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](c
                       index = key
                     }
                     count += 1
-                  } else {
-                    throw new IllegalArgumentException(s"The number of header should be 1")
-                  }
+                  } else throw new IllegalArgumentException(s"The number of header should be 1")
                 }
                 val previous =
                   if (record.value() == null) cache.remove(record.key()) else cache.update(record.key(), record.value())
@@ -213,23 +211,25 @@ object TopicStore {
   /**
     * A required config. It dedicate the topic name used to store the data.
     */
-  val TOPIC_NAME = "ohara.topic.store.name"
-  val TOPIC_PARTITION_COUNT = Property.builder
+  val TOPIC_NAME: Property[String] =
+    Property.builder.description("The name of backed topic").key("ohara.topic.store.name").stringProperty
+
+  val TOPIC_PARTITION_COUNT: Property[Int] = Property.builder
     .description("The number of partition of backed topic")
     .key("ohara.topic.store.partition.count")
-    .build(10)
-  val TOPIC_REPLICATION_COUNT = Property.builder
+    .intProperty(10)
+  val TOPIC_REPLICATION_COUNT: Property[Short] = Property.builder
     .description("The number of replication of backed topic")
     .key("ohara.topic.store.replication.count")
-    .build(10.toShort)
-  val POLL_TIMEOUT = Property.builder
+    .shortProperty(10)
+  val POLL_TIMEOUT: Property[Long] = Property.builder
     .description("The time, in milliseconds, spent waiting in poll the kafka consumer")
     .key("ohara.topic.store.poll.timeout")
-    .build(5 * 1000)
-  val CREATE_TOPIC_TIMEOUT = Property.builder
+    .longProperty(5 * 1000)
+  val CREATE_TOPIC_TIMEOUT: Property[Long] = Property.builder
     .description("The time, in milliseconds, spent waiting in creating the topic")
     .key("ohara.topic.store.create.topic.timeout")
-    .build(60 * 1000)
+    .longProperty(60 * 1000)
 
   /**
     * zero array. Used to be the value of header.

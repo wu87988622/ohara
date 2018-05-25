@@ -5,6 +5,7 @@ package com.island.ohara.config
   * string to represent is not a good way since it is hard to distinuish the string and "json" string.
   */
 trait OharaJson {
+  override def toString: String = asString
   def asString: String
 }
 

@@ -15,17 +15,14 @@ import com.island.ohara.kafka.connector.{
 import com.island.ohara.rule.LargeTest
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
-import org.junit.rules.TestName
-import org.junit.{Before, Rule, Test}
+import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
-  @Rule
-  def name = new TestName
-  private[this] val topicName = name.getMethodName + "-topic"
+  private[this] val topicName = testName.getMethodName + "-topic"
 
   @Before
   def setUp(): Unit = {

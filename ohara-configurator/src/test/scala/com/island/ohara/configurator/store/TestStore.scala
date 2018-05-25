@@ -10,7 +10,7 @@ import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.LargeTest
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
@@ -188,9 +188,9 @@ object TestStore {
     config.set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
     config.set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
     config.set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
-    config.set(TopicStore.TOPIC_NAME, "testacid")
-    config.set(TopicStore.TOPIC_PARTITION_COUNT.key, 1.toString)
-    config.set(TopicStore.TOPIC_REPLICATION_COUNT.key, 1.toString)
+    TopicStore.TOPIC_NAME.set(config, "testacid")
+    TopicStore.TOPIC_PARTITION_COUNT.set(config, 1)
+    TopicStore.TOPIC_REPLICATION_COUNT.set(config, 1)
     config.set(NEED_OHARA_UTIL, true.toString)
     config
   }

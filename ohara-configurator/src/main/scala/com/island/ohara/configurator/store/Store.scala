@@ -50,8 +50,10 @@ object Store {
   val KEY_SERIALIZER_IMPL = "ohara.store.key.serializer.impl"
   val VALUE_SERIALIZER_IMPL = "ohara.store.value.serializer.impl"
   val STORE_IMPL = "ohara.store.impl"
-  val STORE_IMPL_DEFAULT = classOf[MemStore[_, _]].getName
+  val STORE_IMPL_DEFAULT = classOf[TopicStore[_, _]].getName
   def apply[K, V](config: OharaConfig): Store[K, V] =
-    ReflectionUtil.instantiate(config.requireString(STORE_IMPL), classOf[Store[K, V]], (classOf[OharaConfig], config))
+    ReflectionUtil.instantiate(config.getString(STORE_IMPL).getOrElse(STORE_IMPL_DEFAULT),
+                               classOf[Store[K, V]],
+                               (classOf[OharaConfig], config))
   def apply[K, V](clzName: String): Store[K, V] = ReflectionUtil.instantiate(clzName, classOf[Store[K, V]])
 }

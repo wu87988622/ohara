@@ -1,7 +1,7 @@
 package com.island.ohara.config
 
 import java.io.StringReader
-import java.util.Properties
+import java.util.{Objects, Properties}
 
 import com.typesafe.config.{ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
 import com.typesafe.scalalogging.Logger
@@ -19,21 +19,13 @@ private class MapConfig(another: Map[String, Either[String, Map[String, String]]
     logger.info("Succeed to initialize MapConfig by loading another config")
   }
 
-  override def get[T](prop: Property[T]): T = config
-    .get(prop.key)
-    .map {
-      case Left(s)  => prop.from(s)
-      case Right(s) => prop.from(s)
-    }
-    .getOrElse(prop.default)
-
   override def exist(key: String): Boolean = config.contains(key)
 
   override def iterator: Iterator[(String, Either[String, Map[String, String]])] = config.iterator
 
   override def set(key: String, value: String): Option[Either[String, Map[String, String]]] = {
-    val previous = config.get(key)
-    config.update(key, Left(value))
+    val previous = config.get(Objects.requireNonNull(key))
+    config.update(key, Left(Objects.requireNonNull(value)))
     previous
   }
 
@@ -50,7 +42,7 @@ private class MapConfig(another: Map[String, Either[String, Map[String, String]]
     OharaJson(typeSafe.root().render(ConfigRenderOptions.concise()))
   }
 
-  override def get(key: String): Option[Either[String, Map[String, String]]] = config.get(key)
+  override def get(key: String): Option[Either[String, Map[String, String]]] = config.get(Objects.requireNonNull(key))
 
   override def toProperties: Properties = {
     val props = new Properties
@@ -65,11 +57,11 @@ private class MapConfig(another: Map[String, Either[String, Map[String, String]]
   }
 
   override def set(key: String, value: Map[String, String]): Option[Either[String, Map[String, String]]] =
-    config.put(key, Right(value))
+    config.put(Objects.requireNonNull(key), Right(Objects.requireNonNull(value)))
 
   override def toPlainMap: Map[String, String] = config
     .filter {
-      case (k, v) => v.isLeft
+      case (_, v) => v.isLeft
     }
     .map {
       case (k, v) => (k, v.left.get)
@@ -79,7 +71,22 @@ private class MapConfig(another: Map[String, Either[String, Map[String, String]]
 
 private object MapConfig {
 
-  def apply(config: OharaConfig): OharaConfig = {
+  def apply(input: Map[String, Any]): MapConfig = {
+    val map = new mutable.HashMap[String, Either[String, Map[String, String]]]
+    input.foreach {
+      case (k, v) =>
+        v match {
+          case s: String              => map.put(k, Left(s))
+          case s: Map[String, String] => map.put(k, Right(s))
+          case _ =>
+            throw new UnsupportedClassVersionError(
+              s"Only accept the string or Map<String, String>, actual:${v.getClass.getName}")
+        }
+    }
+    new MapConfig(map.toMap)
+  }
+
+  def apply(config: OharaConfig): MapConfig = {
     val map = new mutable.HashMap[String, Either[String, Map[String, String]]]
     config.foreach {
       case (key, value) => map.put(key, value)
@@ -90,12 +97,12 @@ private object MapConfig {
   def apply(props: Properties): MapConfig = {
     val map = new mutable.HashMap[String, Either[String, Map[String, String]]]
     props.forEach((k, v) =>
-      v match {
+      Objects.requireNonNull(v) match {
         case s: String              => map.put(k.asInstanceOf[String], Left(s))
         case s: Map[String, String] => map.put(k.asInstanceOf[String], Right(s))
-        case s: Object =>
+        case _ =>
           throw new UnsupportedClassVersionError(
-            s"Only accept the string or Map<String, String>, actual:${s.getClass.getName}")
+            s"Only accept the string or Map<String, String>, actual:${v.getClass.getName}")
     })
     new MapConfig(map.toMap)
   }

@@ -4,7 +4,15 @@ package com.island.ohara.serialization
   * List the supported type in default reader/writer.
   * NOTED: DON'T change the index since it is a part of serialization.
   */
-sealed abstract class DataType(val index: Byte)
+sealed abstract class DataType(val index: Byte) {
+
+  /**
+    * the name to this data type.
+    * NOTED: DON'T change the class name
+    * @return type name
+    */
+  def name: String = getClass.getSimpleName
+}
 
 case object BYTES extends DataType(0)
 
@@ -43,5 +51,5 @@ object DataType {
     * @param name index of data type
     * @return Data type
     */
-  def of(name: String): DataType = all.find(_.getClass.getSimpleName == name).get
+  def of(name: String): DataType = all.find(_.getClass.getSimpleName.equalsIgnoreCase(name)).get
 }
