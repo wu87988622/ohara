@@ -9,6 +9,7 @@ import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.common.network.ListenerName
 import org.apache.kafka.common.utils.SystemTime
 
 /**
@@ -22,19 +23,9 @@ import org.apache.kafka.common.utils.SystemTime
 private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseConfig: OharaConfig = OharaConfig())
     extends CloseOnce {
   private[this] val logger = Logger(getClass.getName)
-  private[this] val validPorts = resolvePorts(ports)
-  logger.info(s"ports used in LocalKafkaBrokers are ${validPorts.mkString(",")}")
-  val brokersString: String = {
-    val sb = new StringBuilder
-    for (port <- validPorts) {
-      if (sb.length > 0) sb.append(",")
-      sb.append("localhost:").append(port)
-    }
-    sb.toString
-  }
-  val brokers = new Array[KafkaServer](validPorts.size)
-  val logDirs = new Array[File](validPorts.size)
-  validPorts.zipWithIndex.foreach {
+  val brokers = new Array[KafkaServer](ports.size)
+  val logDirs = new Array[File](ports.size)
+  val validPorts = ports.zipWithIndex.map {
     case (port: Int, index: Int) => {
       val logDir = createTempDir("kafka-local")
       val config = OharaConfig()
@@ -43,23 +34,22 @@ private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseConfi
       config.set(KafkaConfig.OffsetsTopicReplicationFactorProp, 1.toString)
       config.set(KafkaConfig.ZkConnectProp, zkConnection)
       config.set(KafkaConfig.BrokerIdProp, String.valueOf(index + 1))
-      config.set(KafkaConfig.ListenersProp, "PLAINTEXT://:" + port)
+      config.set(KafkaConfig.ListenersProp, "PLAINTEXT://:" + (if (port <= 0) 0 else port))
       config.set(KafkaConfig.LogDirProp, logDir.getAbsolutePath())
       // increase the timeout in order to avoid ZkTimeoutException
       config.set(KafkaConfig.ZkConnectionTimeoutMsProp, (30 * 1000).toString)
       config.load(baseConfig)
 
-      def startBroker(props: Properties): KafkaServer = {
-        val server = new KafkaServer(new KafkaConfig(props), new SystemTime)
-        server.startup()
-        server
-      }
-
-      val broker = startBroker(config.toProperties)
+      val broker = new KafkaServer(new KafkaConfig(config.toProperties), new SystemTime)
+      broker.startup()
       brokers.update(index, broker)
       logDirs.update(index, logDir)
+      broker.boundPort(new ListenerName("PLAINTEXT"))
     }
   }
+
+  logger.info(s"ports used in LocalKafkaBrokers are ${validPorts.mkString(",")}")
+  val brokersString: String = validPorts.map("localhost:" + _).mkString(",")
 
   /**
     * Generate the basic config. The config is composed of following setting.
