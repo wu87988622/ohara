@@ -1,10 +1,9 @@
 package com.island.ohara.kafka.connector
 
 import com.island.ohara.core.Row
-import com.island.ohara.serialization.RowWriter
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.SourceRecord
-
+import com.island.ohara.serialization.RowSerializer
 import scala.collection.JavaConverters._
 
 /**
@@ -26,7 +25,7 @@ class RowSourceRecord(sourcePartition: Map[String, _],
       keySchema,
       key,
       Schema.BYTES_SCHEMA,
-      RowWriter.toBytes(row),
+      RowSerializer.to(row),
       if (timestamp < 0) null else timestamp
     ) {
 

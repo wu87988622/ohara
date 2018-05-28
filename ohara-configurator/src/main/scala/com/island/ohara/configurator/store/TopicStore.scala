@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.config.{OharaConfig, Property, UuidUtil}
-import com.island.ohara.configurator.serialization.Serializer
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.KafkaUtil
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
@@ -40,7 +40,7 @@ import scala.concurrent.{Await, Future}
   * @tparam K key type
   * @tparam V value type
   */
-private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) with CloseOnce {
+private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) with CloseOnce {
 
   /**
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
@@ -82,12 +82,12 @@ private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](c
   })
 
   private[this] val consumer = new KafkaConsumer[K, V](config.toProperties,
-                                                       TopicStore.toKafkaDeserializer(keySerializer),
-                                                       TopicStore.toKafkaDeserializer(valueSerializer))
+                                                       KafkaUtil.wrapDeserializer(keySerializer),
+                                                       KafkaUtil.wrapDeserializer(valueSerializer))
   consumer.subscribe(util.Arrays.asList(topicName))
   private[this] val producer = new KafkaProducer[K, V](config.toProperties,
-                                                       TopicStore.toKafkaSerializer(keySerializer),
-                                                       TopicStore.toKafkaSerializer(valueSerializer))
+                                                       KafkaUtil.wrapSerializer(keySerializer),
+                                                       KafkaUtil.wrapSerializer(valueSerializer))
   private[this] val updateLock = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
   private[this] val cache = new MemStore[K, V](config)
@@ -206,7 +206,7 @@ private[store] class TopicStore[K, V](config: OharaConfig) extends Store[K, V](c
   }
 }
 
-object TopicStore {
+private object TopicStore {
 
   /**
     * A required config. It dedicate the topic name used to store the data.
@@ -235,42 +235,4 @@ object TopicStore {
     * zero array. Used to be the value of header.
     */
   private val EMPTY_ARRAY = new Array[Byte](0)
-
-  /**
-    * wrap ohara serializer to kafka serializer.
-    * @param serializer ohara serializer
-    * @tparam T object type
-    * @return kafka serializer
-    */
-  private def toKafkaSerializer[T](serializer: Serializer[T, Array[Byte]]) =
-    new org.apache.kafka.common.serialization.Serializer[T]() {
-      override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
-        // do nothing
-      }
-      override def serialize(topic: String, data: T): Array[Byte] = if (data == null) null else serializer.to(data)
-
-      override def close(): Unit = {
-        // do nothing
-      }
-    }
-
-  /**
-    * wrap ohara deserializer to kafka deserializer.
-    * @param serializer ohara deserializer
-    * @tparam T object type
-    * @return kafka deserializer
-    */
-  private def toKafkaDeserializer[T](serializer: Serializer[T, Array[Byte]]) =
-    new org.apache.kafka.common.serialization.Deserializer[T]() {
-      override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
-        // do nothing
-      }
-
-      override def close(): Unit = {
-        // do nothing
-      }
-
-      override def deserialize(topic: String, data: Array[Byte]): T =
-        if (data == null || data.isEmpty) null.asInstanceOf[T] else serializer.from(data)
-    }
 }

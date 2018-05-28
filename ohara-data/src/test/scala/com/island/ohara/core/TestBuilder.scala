@@ -7,6 +7,12 @@ import org.scalatest.Matchers
 class TestBuilder extends SmallTest with Matchers {
 
   @Test
+  def testInvalidArgument(): Unit = {
+    an[NullPointerException] should be thrownBy Cell.builder.name("").build(123)
+    an[NullPointerException] should be thrownBy Cell.builder.name("123").build(null)
+  }
+
+  @Test
   def testCellBuilder(): Unit = {
     val builder = Cell.builder.name("cf")
     val list = List(123, 123L, "123", 123D, 123F, true)
@@ -48,25 +54,4 @@ class TestBuilder extends SmallTest with Matchers {
     an[IndexOutOfBoundsException] should be thrownBy row.seekCell(100)
   }
 
-  @Test
-  def testTableBuilder(): Unit = {
-    val table = Table
-      .builder("test_table")
-      .append(Row.builder.append(Cell.builder.name("0").build(1)).build())
-      .append(Row.builder.append(Cell.builder.name("1").build("ohara")).build())
-      .append(Row.builder.append(Cell.builder.name("2").build(10.134)).build())
-      .build()
-
-    table.id shouldBe "test_table"
-    table.cellCount shouldBe 3
-    table.rowCount shouldBe 3
-    table.seekRow(0).seekCell(0).name shouldBe "0"
-    table.seekRow(0).seekCell(0).value shouldBe 1
-    table.seekRow(1).seekCell(0).name shouldBe "1"
-    table.seekRow(1).seekCell(0).value shouldBe "ohara"
-    table.seekRow(2).seekCell(0).name shouldBe "2"
-    table.seekRow(2).seekCell(0).value shouldBe 10.134
-    an[IndexOutOfBoundsException] should be thrownBy table.seekRow(-1)
-    an[IndexOutOfBoundsException] should be thrownBy table.seekRow(100)
-  }
 }

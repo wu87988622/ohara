@@ -25,5 +25,5 @@ object JobStatus {
     * @param name index of job status
     * @return job status
     */
-  def of(name: String): JobStatus = all.find(_.getClass.getSimpleName.equalsIgnoreCase(name)).get
+  def of(name: String): JobStatus = all.find(_.name.equalsIgnoreCase(name)).get
 }

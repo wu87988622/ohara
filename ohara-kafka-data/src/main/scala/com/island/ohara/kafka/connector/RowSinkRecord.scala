@@ -1,7 +1,7 @@
 package com.island.ohara.kafka.connector
 
 import com.island.ohara.core.Row
-import com.island.ohara.serialization.RowReader
+import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.common.record.TimestampType
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.sink.SinkRecord
@@ -28,7 +28,7 @@ class RowSinkRecord(sinkRecord: SinkRecord) {
   def keySchema: Schema = sinkRecord.keySchema()
 
   def value: Row = sinkRecord.value match {
-    case buf: Array[Byte] => RowReader.toRow(buf)
+    case buf: Array[Byte] => RowSerializer.from(buf)
     case _                => throw new IllegalStateException(s"Why we get a non-supported type:${sinkRecord.value.getClass.getName}")
   }
 

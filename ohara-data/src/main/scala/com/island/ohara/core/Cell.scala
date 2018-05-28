@@ -1,7 +1,5 @@
 package com.island.ohara.core
 
-import com.island.ohara.core.CellBuilder.State
-
 /**
   * A cell consists of name and value.
   *
@@ -29,5 +27,5 @@ abstract class Cell[T] {
 
 object Cell {
   // TODO: use offheap builder instead. by chia
-  def builder: CellBuilder[State] = new CellBuilderImpl[State]()
+  def builder: CellBuilder = new CellBuilderImpl()
 }

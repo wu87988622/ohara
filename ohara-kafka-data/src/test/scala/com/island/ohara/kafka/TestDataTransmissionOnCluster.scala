@@ -2,7 +2,7 @@ package com.island.ohara.kafka
 
 import java.util
 
-import com.island.ohara.core.{Cell, Row, Table}
+import com.island.ohara.core.{Cell, Row}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
@@ -13,6 +13,7 @@ import com.island.ohara.kafka.connector.{
   SimpleRowSourceTask
 }
 import com.island.ohara.rule.LargeTest
+import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.{Before, Test}
@@ -37,7 +38,8 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
       {
         testUtil.kafkaBrokers.size shouldBe 3
         testUtil.createTopic(topicName)
-        val (_, rowQueue) = testUtil.run(topicName, true, new ByteArrayDeserializer, new RowDeserializer)
+        val (_, rowQueue) =
+          testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
         val totalMessageCount = 100
         doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
           producer =>
@@ -60,43 +62,6 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
       }
     }
   }
-
-  @Test
-  def testTableProducer2TableConsumer(): Unit = {
-    val table = Table(
-      "my_table",
-      Row.builder.append(Cell.builder.name("cf0").build(0)).append(Cell.builder.name("cf1").build(1)).build)
-    doClose(new OharaTestUtil(3)) { testUtil =>
-      {
-        testUtil.kafkaBrokers.size shouldBe 3
-        testUtil.createTopic(topicName)
-        val (_, rowQueue) = testUtil.run(topicName, true, new ByteArrayDeserializer, new TableDeserializer)
-        val totalMessageCount = 100
-        doClose(new TableProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
-          producer =>
-            {
-              var count: Int = totalMessageCount
-              while (count > 0) {
-                producer.send(new ProducerRecord[Array[Byte], Table](topicName, ByteUtil.toBytes("key"), table))
-                count -= 1
-              }
-            }
-        }
-        testUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
-        rowQueue.forEach((t: Table) => {
-          t.id shouldBe "my_table"
-          t.rowCount shouldBe 1
-          val r = t.iterator.next()
-          r.cellCount shouldBe table.iterator.next().cellCount
-          r.seekCell(0).name shouldBe "cf0"
-          r.seekCell(0).value shouldBe 0
-          r.seekCell(1).name shouldBe "cf1"
-          r.seekCell(1).value shouldBe 1
-        })
-      }
-    }
-  }
-
   @Test
   def testProducer2SinkConnector(): Unit = {
     val rowCount = 3

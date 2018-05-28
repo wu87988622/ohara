@@ -1,5 +1,7 @@
 package com.island.ohara.config
 
+import java.util.Objects
+
 /**
   * used to build the Property. It requires user to assign the 1) key and 2) description. The 1) alias and 2) default value
   * are optional. If you have custom implementation of conversing string to value, the #property(fun) is designed for you.
@@ -148,22 +150,29 @@ class PropertyBuilder private {
     * @param fun conversion function
     * @return an new property which can convert the string value to specific type.
     */
-  def property[T](fun: String => T, fun2: T => String): Property[T] = new Property[T] {
-    override def key: String = PropertyBuilder.this.key
-    override def alias: String = PropertyBuilder.this.alias
-    override def default: Option[T] =
-      if (PropertyBuilder.this.default == null) None else Some(PropertyBuilder.this.default.asInstanceOf[T])
-    override def description: String = PropertyBuilder.this.description
+  def property[T](fun: String => T, fun2: T => String): Property[T] = {
+    checkArguments()
+    new Property[T] {
+      override def key: String = PropertyBuilder.this.key
 
-    override protected[config] def from(value: Map[String, String]): T = throw new UnsupportedOperationException(
-      "Unsupported to pass Map<String, String>")
-    override def set(config: OharaConfig, value: T): Option[T] = {
-      val previous = get(config)
-      config.set(key, fun2(value))
-      previous
+      override def alias: String = PropertyBuilder.this.alias
+
+      override def default: Option[T] =
+        if (PropertyBuilder.this.default == null) None else Some(PropertyBuilder.this.default.asInstanceOf[T])
+
+      override def description: String = PropertyBuilder.this.description
+
+      override protected[config] def from(value: Map[String, String]): T = throw new UnsupportedOperationException(
+        "Unsupported to pass Map<String, String>")
+
+      override def set(config: OharaConfig, value: T): Option[T] = {
+        val previous = get(config)
+        config.set(key, fun2(value))
+        previous
+      }
+
+      override protected[config] def from(value: String): T = fun(value)
     }
-
-    override protected[config] def from(value: String): T = fun(value)
   }
 
   def mapProperty(default: Map[String, String]): Property[Map[String, String]] = {
@@ -193,26 +202,42 @@ class PropertyBuilder private {
     * @param fun conversion function
     * @return an new property which can convert the Map[String, String] value to specific type.
     */
-  def mapProperty[T](fun: String => T, fun2: T => String): Property[Map[String, T]] = new Property[Map[String, T]] {
-    override def key: String = PropertyBuilder.this.key
-    override def alias: String = PropertyBuilder.this.alias
-    override def default: Option[Map[String, T]] =
-      if (PropertyBuilder.this.default == null) None
-      else Some(PropertyBuilder.this.default.asInstanceOf[Map[String, T]])
-    override def description: String = PropertyBuilder.this.description
-    override protected[config] def from(value: String): Map[String, T] = throw new UnsupportedOperationException(
-      "Unsupported to pass String")
-    override protected[config] def from(value: Map[String, String]): Map[String, T] = value.map {
-      case (k, v) => (k, fun(v))
-    }
+  def mapProperty[T](fun: String => T, fun2: T => String): Property[Map[String, T]] = {
+    checkArguments()
+    new Property[Map[String, T]] {
+      override def key: String = PropertyBuilder.this.key
 
-    override def set(config: OharaConfig, value: Map[String, T]): Option[Map[String, T]] = {
-      val previous = get(config)
-      config.set(key, value.map {
-        case (k, v) => (k, fun2(v))
-      })
-      previous
+      override def alias: String = PropertyBuilder.this.alias
+
+      override def default: Option[Map[String, T]] =
+        if (PropertyBuilder.this.default == null) None
+        else Some(PropertyBuilder.this.default.asInstanceOf[Map[String, T]])
+
+      override def description: String = PropertyBuilder.this.description
+
+      override protected[config] def from(value: String): Map[String, T] = throw new UnsupportedOperationException(
+        "Unsupported to pass String")
+
+      override protected[config] def from(value: Map[String, String]): Map[String, T] = value.map {
+        case (k, v) => (k, fun(v))
+      }
+
+      override def set(config: OharaConfig, value: Map[String, T]): Option[Map[String, T]] = {
+        val previous = get(config)
+        config.set(key, value.map {
+          case (k, v) => (k, fun2(v))
+        })
+        previous
+      }
     }
+  }
+
+  private[this] def checkArguments(): Unit = {
+    Objects.requireNonNull(key)
+    if (description == null) description = key
+    Objects.requireNonNull(description)
+    if (alias == null) alias = key
+    Objects.requireNonNull(alias)
   }
 
   /**
@@ -228,6 +253,6 @@ class PropertyBuilder private {
   }
 }
 
-object PropertyBuilder {
-  private[config] def apply() = new PropertyBuilder()
+private object PropertyBuilder {
+  def apply() = new PropertyBuilder()
 }

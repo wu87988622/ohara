@@ -3,6 +3,7 @@ package com.island.ohara.kafka
 import java.util.Properties
 
 import com.island.ohara.core.Row
+import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.Deserializer
 
@@ -18,4 +19,4 @@ import org.apache.kafka.common.serialization.Deserializer
   * @tparam K key type
   */
 class RowConsumer[K](properties: Properties, keyDeserializer: Deserializer[K])
-    extends KafkaConsumer[K, Row](properties, keyDeserializer, new RowDeserializer) {}
+    extends KafkaConsumer[K, Row](properties, keyDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))

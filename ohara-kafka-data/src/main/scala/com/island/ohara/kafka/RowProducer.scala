@@ -1,8 +1,10 @@
 package com.island.ohara.kafka
 
+import java.util
 import java.util.Properties
 
 import com.island.ohara.core.Row
+import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.common.serialization.Serializer
 
@@ -18,4 +20,4 @@ import org.apache.kafka.common.serialization.Serializer
   * @tparam K key type
   */
 class RowProducer[K](config: Properties, keySerializer: Serializer[K] = null)
-    extends KafkaProducer[K, Row](config, keySerializer, new RowSerializer()) {}
+    extends KafkaProducer[K, Row](config, keySerializer, KafkaUtil.wrapSerializer(RowSerializer))

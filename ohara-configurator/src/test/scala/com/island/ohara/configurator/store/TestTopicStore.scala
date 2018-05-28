@@ -6,19 +6,19 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.config.OharaConfig
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.{close, _}
+import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rule.LargeTest
+import com.island.ohara.serialization.StringSerializer
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 class TestTopicStore extends LargeTest with Matchers {
 
-  val config = configForTopicStore
-  val testUtil = createOharaTestUtil()
-  var store = new TopicStore[String, String](config)
+  private[this] val config = configForTopicStore
+  private[this] val testUtil = createOharaTestUtil()
+  private[this] var store = new TopicStore[String, String](config)
 
   @Test
   def testRestart(): Unit = {
@@ -46,7 +46,9 @@ class TestTopicStore extends LargeTest with Matchers {
     config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     config.set("log.cleanup.policy", "compact")
     config.set(ConsumerConfig.GROUP_ID_CONFIG, "testRetention")
-    val consumer = new KafkaConsumer[String, String](config.toProperties)
+    val consumer = new KafkaConsumer[String, String](config.toProperties,
+                                                     KafkaUtil.wrapDeserializer(StringSerializer),
+                                                     KafkaUtil.wrapDeserializer(StringSerializer))
     consumer.subscribe(util.Arrays.asList("testacid2"))
     var record: ConsumerRecords[String, String] = null
     var count = 0
@@ -102,13 +104,9 @@ class TestTopicStore extends LargeTest with Matchers {
 
   private[this] def configForTopicStore: OharaConfig = {
     val config = OharaConfig()
-    config.set(Store.STORE_IMPL, classOf[TopicStore[_, _]].getName)
-    config.set(Store.KEY_SERIALIZER_IMPL, classOf[StringSerializer].getName)
-    config.set(Store.VALUE_SERIALIZER_IMPL, classOf[StringSerializer].getName)
-    config.set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
-    config.set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
-    config.set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
-    config.set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
+    Store.STORE_IMPL.set(config, classOf[TopicStore[_, _]].getName)
+    Store.KEY_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
+    Store.VALUE_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
     TopicStore.TOPIC_NAME.set(config, "testacid")
     TopicStore.TOPIC_PARTITION_COUNT.set(config, 1)
     TopicStore.TOPIC_REPLICATION_COUNT.set(config, 1)

@@ -8,9 +8,7 @@ import com.island.ohara.config.OharaConfig
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.LargeTest
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringDeserializer
+import com.island.ohara.serialization.StringSerializer
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
@@ -172,22 +170,18 @@ object TestStore {
 
   private[this] def configForMemStore: OharaConfig = {
     val config = OharaConfig()
-    config.set(Store.STORE_IMPL, classOf[MemStore[_, _]].getName)
-    config.set(Store.KEY_SERIALIZER_IMPL, classOf[StringSerializer].getName)
-    config.set(Store.VALUE_SERIALIZER_IMPL, classOf[StringSerializer].getName)
+    Store.STORE_IMPL.set(config, classOf[MemStore[_, _]].getName)
+    Store.KEY_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
+    Store.VALUE_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
     config.set(NEED_OHARA_UTIL, false.toString)
     config
   }
 
   private[this] def configForTopicStore: OharaConfig = {
     val config = OharaConfig()
-    config.set(Store.STORE_IMPL, classOf[TopicStore[_, _]].getName)
-    config.set(Store.KEY_SERIALIZER_IMPL, classOf[StringSerializer].getName)
-    config.set(Store.VALUE_SERIALIZER_IMPL, classOf[StringSerializer].getName)
-    config.set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
-    config.set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
-    config.set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
-    config.set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
+    Store.STORE_IMPL.set(config, classOf[TopicStore[_, _]].getName)
+    Store.KEY_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
+    Store.VALUE_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
     TopicStore.TOPIC_NAME.set(config, "testacid")
     TopicStore.TOPIC_PARTITION_COUNT.set(config, 1)
     TopicStore.TOPIC_REPLICATION_COUNT.set(config, 1)

@@ -2,49 +2,31 @@ package com.island.ohara.kafka
 
 import java.util.Properties
 
-import com.island.ohara.core.{Cell, Row, Table}
+import com.island.ohara.core.{Cell, Row}
 import com.island.ohara.rule.SmallTest
+import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.clients.producer.{ProducerConfig, ProducerRecord}
-import org.apache.kafka.common.serialization.ByteArraySerializer
+import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-class TestProducer extends SmallTest with Matchers with MockitoSugar {
+class TestConsumerAndProducer extends SmallTest with Matchers with MockitoSugar {
 
   @Test
-  def testCreateTableProducer(): Unit = {
+  def testCreateRowConsumer(): Unit = {
     val producerProps = new Properties
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000")
-    new TableProducer[Array[Byte]](producerProps, new ByteArraySerializer).close()
+    new RowConsumer[Array[Byte]](producerProps, new ByteArrayDeserializer).close()
   }
 
   @Test
-  def testSendDataWithTable(): Unit = {
-    // assume we get some data from cav file
-    val csvData = readDataFromCsv
-    // assume we get cf name and type from ohara configurator
-    val types = readTypeAndCfFromConfig
-    val producer = mock[TableProducer[Array[Byte]]]
-    val table = Table
-      .builder("my_table")
-      .append(Row(csvData.zipWithIndex.map(_ match {
-        case (data, index) =>
-          types(index) match {
-            case (name, "string")  => Cell.builder.name(name).build(data)
-            case (name, "boolean") => Cell.builder.name(name).build(data.toBoolean)
-            case (name, "int")     => Cell.builder.name(name).build(data.toInt)
-            case _                 => throw new UnsupportedOperationException
-          }
-      })))
-      .build()
-    // just a mock so nothing can happen
-    producer.send(new ProducerRecord[Array[Byte], Table]("topic", table))
-    table.rowCount shouldBe 1
-    table.cellCount shouldBe 3
-    table.seekCell("cf0").next().value shouldBe "123"
-    table.seekCell("cf1").next().value shouldBe true
-    table.seekCell("cf2").next().value shouldBe 10
+  def testSerializeRow(): Unit = {
+    val row = Row(Cell.builder.name("cell").build(123))
+    val copy = (KafkaUtil
+      .wrapDeserializer(RowSerializer))
+      .deserialize("xx", (KafkaUtil.wrapSerializer(RowSerializer).serialize("topic", row)))
+    copy.cellCount shouldBe row.cellCount
   }
 
   @Test

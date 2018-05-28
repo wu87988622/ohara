@@ -3,6 +3,7 @@ apply plugin: 'scala'
 
 dependencies {
   compile project(':ohara-data')
+  compile project(':ohara-kafka-data')
   compile libs.kafkaClient
   compile libs.kafkaConnectFile
   compile libs.kafkaConnectRuntime

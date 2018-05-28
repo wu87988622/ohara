@@ -1,8 +1,8 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.config.OharaConfig
-import com.island.ohara.configurator.serialization.Serializer
+import com.island.ohara.config.{OharaConfig, Property}
 import com.island.ohara.reflection.ReflectionUtil
+import com.island.ohara.serialization.Serializer
 
 /**
   * A key-value store. It is used to save the component information
@@ -13,14 +13,14 @@ abstract class Store[K, V](config: OharaConfig) extends AutoCloseable with Itera
   /**
     * instantiate the key serializer used to do the conversion between key object and byte array.
     */
-  protected val keySerializer: Serializer[K, Array[Byte]] =
-    ReflectionUtil.instantiate(config.requireString(Store.KEY_SERIALIZER_IMPL), classOf[Serializer[K, Array[Byte]]])
+  protected val keySerializer: Serializer[K] =
+    ReflectionUtil.instantiate(Store.KEY_SERIALIZER_IMPL.require(config), classOf[Serializer[K]])
 
   /**
     * instantiate the key serializer used to do the conversion between value object and byte array.
     */
-  protected val valueSerializer: Serializer[V, Array[Byte]] =
-    ReflectionUtil.instantiate(config.requireString(Store.VALUE_SERIALIZER_IMPL), classOf[Serializer[V, Array[Byte]]])
+  protected val valueSerializer: Serializer[V] =
+    ReflectionUtil.instantiate(Store.VALUE_SERIALIZER_IMPL.require(config), classOf[Serializer[V]])
 
   /**
     * Update the value with specified key. If the key-value exist, the new value will replace the previous value.
@@ -47,13 +47,24 @@ abstract class Store[K, V](config: OharaConfig) extends AutoCloseable with Itera
 }
 
 object Store {
-  val KEY_SERIALIZER_IMPL = "ohara.store.key.serializer.impl"
-  val VALUE_SERIALIZER_IMPL = "ohara.store.value.serializer.impl"
-  val STORE_IMPL = "ohara.store.impl"
-  val STORE_IMPL_DEFAULT = classOf[TopicStore[_, _]].getName
+
+  val KEY_SERIALIZER_IMPL: Property[String] = Property.builder
+    .key("ohara.store.key.serializer.impl")
+    .description("the full class name of key serializer implementation")
+    .stringProperty
+
+  val VALUE_SERIALIZER_IMPL: Property[String] = Property.builder
+    .key("ohara.store.value.serializer.impl")
+    .description("the full class name of value serializer implementation")
+    .stringProperty
+
+  val STORE_IMPL: Property[String] = Property.builder
+    .key("ohara.store.impl")
+    .description("the full class name of store implementation")
+    .stringProperty(classOf[TopicStore[_, _]].getName)
+
   def apply[K, V](config: OharaConfig): Store[K, V] =
-    ReflectionUtil.instantiate(config.getString(STORE_IMPL).getOrElse(STORE_IMPL_DEFAULT),
-                               classOf[Store[K, V]],
-                               (classOf[OharaConfig], config))
+    ReflectionUtil.instantiate(STORE_IMPL.require(config), classOf[Store[K, V]], (classOf[OharaConfig], config))
+
   def apply[K, V](clzName: String): Store[K, V] = ReflectionUtil.instantiate(clzName, classOf[Store[K, V]])
 }

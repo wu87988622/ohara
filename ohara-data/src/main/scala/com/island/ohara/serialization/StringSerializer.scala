@@ -1,9 +1,11 @@
-package com.island.ohara.configurator.store
+package com.island.ohara.serialization
 
-import com.island.ohara.configurator.serialization.Serializer
 import com.island.ohara.io.ByteUtil
 
-class StringSerializer extends Serializer[String, Array[Byte]] {
+/**
+  * Used to do conversion between String and byte array.
+  */
+object StringSerializer extends Serializer[String] {
 
   override def to(obj: String): Array[Byte] = ByteUtil.toBytes(obj)
 

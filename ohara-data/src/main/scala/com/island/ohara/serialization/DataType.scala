@@ -51,5 +51,5 @@ object DataType {
     * @param name index of data type
     * @return Data type
     */
-  def of(name: String): DataType = all.find(_.getClass.getSimpleName.equalsIgnoreCase(name)).get
+  def of(name: String): DataType = all.find(_.name.equalsIgnoreCase(name)).get
 }

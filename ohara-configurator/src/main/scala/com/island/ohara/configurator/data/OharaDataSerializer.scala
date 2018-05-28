@@ -1,11 +1,14 @@
-package com.island.ohara.configurator.serialization
+package com.island.ohara.configurator.data
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
-import com.island.ohara.configurator.data.OharaData
+import com.island.ohara.serialization.Serializer
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.reflection.ReflectionUtil
 
-class OharaDataSerializer extends Serializer[OharaData, Array[Byte]] {
+/**
+  * Used to do conversion between ohara data and byte array.
+  */
+object OharaDataSerializer extends Serializer[OharaData] {
 
   /**
     * Convert the OharaData to a serializable type.
@@ -28,8 +31,4 @@ class OharaDataSerializer extends Serializer[OharaData, Array[Byte]] {
     ReflectionUtil
       .instantiate(OharaData.implProperty.require(config), classOf[OharaData], (classOf[OharaConfig], config))
   }
-}
-
-object OharaDataSerializer {
-  val SINGLETON = new OharaDataSerializer()
 }
