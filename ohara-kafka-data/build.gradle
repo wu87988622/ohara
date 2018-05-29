@@ -11,6 +11,7 @@ dependencies {
   compile libs.scalaLogging
   compile libs.slf4jApi
   compile libs.slf4jlog4j
+  testCompile project(':ohara-data')
   testCompile project(':ohara-testing-util')
   testCompile project(":ohara-common").sourceSets.test.output
   testCompile libs.scalatest

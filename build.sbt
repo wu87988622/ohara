@@ -141,7 +141,7 @@ lazy val `ohara-kafka-data` = (project in file("ohara-kafka-data"))
   .dependsOn(
     `ohara-common` % "compile->compile; compile->test",
     `ohara-core`,
-    `ohara-data`,
+    `ohara-data` % "compile->compile; compile->test",
     `ohara-testing-util` % "compile->compile; compile->test")
 
 lazy val `ohara-manager` = (project in file("ohara-manager"))

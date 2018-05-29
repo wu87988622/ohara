@@ -79,7 +79,7 @@ object Row {
       * Save a array of cells in order to make size and index only require O(1) time
       */
     private[this] val cellArray = new ArrayBuffer[Cell[_]]
-    private[this] val cellGroup = new mutable.TreeMap[String, Cell[_]]()
+    private[this] val cellGroup = new mutable.LinkedHashMap[String, Cell[_]]()
     cells.foreach(
       (cell: Cell[_]) =>
         if (cellGroup.contains(cell.name)) throw new IllegalArgumentException(s"Duplicate name:${cell.name}")

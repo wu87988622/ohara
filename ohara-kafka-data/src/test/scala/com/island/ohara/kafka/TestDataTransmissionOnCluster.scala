@@ -14,8 +14,13 @@ import com.island.ohara.kafka.connector.{
 }
 import com.island.ohara.rule.LargeTest
 import com.island.ohara.serialization.RowSerializer
-import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.apache.kafka.common.serialization.{
+  ByteArrayDeserializer,
+  ByteArraySerializer,
+  StringDeserializer,
+  StringSerializer
+}
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
@@ -129,6 +134,40 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
             }
         }
       }
+    }
+  }
+
+  /**
+    * Test case for OHARA-150
+    */
+  @Test
+  def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
+    doClose(new OharaTestUtil(1)) { testUtil =>
+      testUtil.kafkaBrokers.size shouldBe 1
+      testUtil.createTopic(topicName)
+
+      val row = Row.builder
+        .append(Cell.builder.name("c").build(3))
+        .append(Cell.builder.name("b").build(2))
+        .append(Cell.builder.name("a").build(1))
+        .build()
+
+      doClose(
+        new KafkaProducer[String, Row](testUtil.producerConfig.toProperties,
+                                       new StringSerializer,
+                                       KafkaUtil.wrapSerializer(RowSerializer))) { producer =>
+        producer.send(new ProducerRecord[String, Row](topicName, topicName, row)).get()
+      }
+
+      val (_, valueQueue) =
+        testUtil.run(topicName, true, new StringDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
+      testUtil.await(() => valueQueue.size() == 1, 10 seconds)
+      val fromKafka = valueQueue.take()
+
+      fromKafka.seekCell(0).name shouldBe "c"
+      fromKafka.seekCell(1).name shouldBe "b"
+      fromKafka.seekCell(2).name shouldBe "a"
+
     }
   }
 }
