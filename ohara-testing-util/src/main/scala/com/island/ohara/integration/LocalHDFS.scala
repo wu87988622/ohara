@@ -12,7 +12,7 @@ import org.apache.hadoop.fs.FileSystem
   * @param numDataNodes
   */
 //TODO This class haven't been completed. Perhaps we should make it be pseudo dist in 0.2
-private class LocalHDFS(numDataNodes: Int) extends CloseOnce {
+class LocalHDFS private (numDataNodes: Int) extends CloseOnce {
 
   private[this] val tmpDir: File = createTempDir("hdfs-local")
 
@@ -35,5 +35,11 @@ private class LocalHDFS(numDataNodes: Int) extends CloseOnce {
   override protected def doClose(): Unit = {
     fileSystem.close()
     deleteFile(tmpDir)
+  }
+}
+
+object LocalHDFS {
+  def apply(numDataNodes: Int): LocalHDFS = {
+    new LocalHDFS(numDataNodes)
   }
 }

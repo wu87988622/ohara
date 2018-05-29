@@ -54,7 +54,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   private[this] val zk = new LocalZk()
   private[this] val localBrokerCluster = new LocalKafkaBrokers(zk.connection, ports(brokerCount))
   private[this] val localWorkerCluster = new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(workerCount))
-  private[this] val localHDFSCluster = new LocalHDFS(dataNodeCount)
+  private[this] val localHDFSCluster = OharaTestUtil.localHDFS(dataNodeCount)
 
   private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
 
@@ -401,4 +401,8 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     localHDFSCluster.close()
     zk.close()
   }
+}
+
+object OharaTestUtil {
+  def localHDFS(numOfNode: Int): LocalHDFS = LocalHDFS(numOfNode)
 }
