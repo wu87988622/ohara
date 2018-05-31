@@ -148,7 +148,7 @@ lazy val `ohara-manager` = (project in file("ohara-manager"))
   .settings(commonSettings)
   .dependsOn(`ohara-common` % "compile->compile; compile->test")
 
-lazy val `ohara-hdfs-connector` = (project in file("ohara-hdfs-sink-connector"))
+lazy val `ohara-hdfs-connector` = (project in file("ohara-hdfs-connector"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= hadoopDependencies)
   .dependsOn(`ohara-data`, `ohara-kafka-data`)
