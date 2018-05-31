@@ -126,12 +126,12 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
   def testGetDataFilePrefixName(): Unit = {
     val props: util.Map[String, String] = new util.HashMap[String, String]
     props.put(HDFSSinkConnectorConfig.HDFS_URL, HDFS_URL_VALUE)
-    props.put(HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME, "datapart")
+    props.put(HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME, "datapart123AAA")
 
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
       new HDFSSinkConnectorConfig(props)
 
-    hdfsSinkConnectorConfig.dataFilePrefixName() shouldBe "datapart"
+    hdfsSinkConnectorConfig.dataFilePrefixName() shouldBe "datapart123AAA"
   }
 
   @Test
@@ -142,7 +142,35 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
       new HDFSSinkConnectorConfig(props)
 
-    hdfsSinkConnectorConfig.dataFilePrefixName() shouldBe "part-"
+    hdfsSinkConnectorConfig.dataFilePrefixName() shouldBe "part"
+  }
+
+  @Test
+  def testGetDataFilePrefixNameException1(): Unit = {
+    val props: util.Map[String, String] = new util.HashMap[String, String]
+    props.put(HDFSSinkConnectorConfig.HDFS_URL, HDFS_URL_VALUE)
+    props.put(HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME, "datapart123AAA-")
+
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
+      new HDFSSinkConnectorConfig(props)
+
+    assertThrows[RuntimeException] {
+      hdfsSinkConnectorConfig.dataFilePrefixName() shouldBe "datapart123AAA-"
+    }
+  }
+
+  @Test
+  def testGetDataFilePrefixNameException2(): Unit = {
+    val props: util.Map[String, String] = new util.HashMap[String, String]
+    props.put(HDFSSinkConnectorConfig.HDFS_URL, HDFS_URL_VALUE)
+    props.put(HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME, "data-part123-AAA")
+
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
+      new HDFSSinkConnectorConfig(props)
+
+    assertThrows[RuntimeException] {
+      hdfsSinkConnectorConfig.dataFilePrefixName() shouldBe "data-part123-AAA"
+    }
   }
 
   @Test

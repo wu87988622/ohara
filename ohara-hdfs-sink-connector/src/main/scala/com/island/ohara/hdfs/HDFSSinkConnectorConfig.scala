@@ -3,6 +3,7 @@ package com.island.ohara.hdfs
 import java.util
 
 import org.apache.hadoop.conf.Configuration
+import com.island.ohara.hdfs.creator.HDFSStorageCreator
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.Importance
 import org.apache.kafka.common.config.ConfigDef.Type
@@ -12,6 +13,8 @@ import org.apache.kafka.common.config.ConfigDef.Type
   * @param props
   */
 class HDFSSinkConnectorConfig(props: util.Map[String, String]) {
+  val PREFIX_FILENAME_PATTERN: String = "[a-zA-Z0-9]*"
+
   if (props.get(HDFSSinkConnectorConfig.HDFS_URL) == null) {
     throw new RuntimeException(
       "Please assign the " +
@@ -55,8 +58,14 @@ class HDFSSinkConnectorConfig(props: util.Map[String, String]) {
   }
 
   def dataFilePrefixName(): String = {
-    props
+    val prefixFileName: String = props
       .getOrDefault(HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME, HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME_DEFAULT)
+
+    if (!prefixFileName.matches(PREFIX_FILENAME_PATTERN)) {
+      throw new RuntimeException(
+        "The " + HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME + " value only a-z or A-Z or 0-9")
+    }
+    prefixFileName
   }
 
   def offsetInconsistentSkip(): Boolean = {
@@ -71,6 +80,11 @@ class HDFSSinkConnectorConfig(props: util.Map[String, String]) {
       .getOrDefault(HDFSSinkConnectorConfig.DATA_BUFFER_COUNT,
                     HDFSSinkConnectorConfig.DATA_BUFFER_COUNT_DEFAULT.toString())
       .toLong
+  }
+
+  def hdfsStorageCreatorClass(): String = {
+    props.getOrDefault(HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS,
+                       HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS_DEFAULT)
   }
 }
 
@@ -87,9 +101,11 @@ object HDFSSinkConnectorConfig {
   val DATA_DIR: String = "data.dir"
   val DATA_DIR_DEFAULT = "/data"
   val DATAFILE_PREFIX_NAME: String = "datafile.prefix.name"
-  val DATAFILE_PREFIX_NAME_DEFAULT: String = "part-"
+  val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
   val OFFSET_INCONSISTENT_SKIP: String = "offset.inconsistent.skip"
   val OFFSET_INCONSISTENT_SKIP_DEFAULT: Boolean = false
   val DATA_BUFFER_COUNT: String = "data.buffer.size"
   val DATA_BUFFER_COUNT_DEFAULT: Long = 100
+  val HDFS_STORAGE_CREATOR_CLASS: String = "hdfs.storage.creator.class"
+  val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName()
 }
