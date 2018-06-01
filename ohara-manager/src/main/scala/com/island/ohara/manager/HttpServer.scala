@@ -2,14 +2,13 @@ package com.island.ohara.manager
 
 import java.io.File
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ContentTypeResolver.Default
 import akka.stream.ActorMaterializer
 import com.island.ohara.manager.sample.UserRoutes
-
 import scala.io.StdIn
 
 object HttpServer extends UserRoutes {
@@ -50,15 +49,18 @@ object HttpServer extends UserRoutes {
 
     try {
       val webRoot: File = this.webRoot(PROP_WEBROOT_DEFAULT)
-
       log.info("Ohara-manager web root: " + webRoot.getCanonicalPath)
 
+      val apiRoutes = new ApiRoutes(system)
+
       val route =
-        pathPrefix(Segments) { names =>
-          get {
-            getFromDirectory(new File(webRoot, names.mkString("/")).getCanonicalPath)
-          }
-        } ~ userRoutes
+        apiRoutes.routes ~
+          pathPrefix(Segments) { names =>
+            get {
+              getFromDirectory(new File(webRoot, names.mkString("/")).getCanonicalPath)
+            }
+          } ~
+          userRoutes
 
       val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
