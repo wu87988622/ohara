@@ -63,6 +63,8 @@ lazy val hadoopDependencies = Seq(
   "org.apache.hadoop" % "hadoop-hdfs" % hadoopV
 )
 
+fork in test := true
+
 val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
 val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
 
@@ -79,7 +81,7 @@ lazy val commonSettings = Seq(
     "org.apache.kafka" % "connect-json" % kafkaV,
 
     // 3rd for kafka
-    "net.cakesolutions" %% "scala-kafka-client" % "1.1.0",
+    "net.cakesolutions" %% "scala-kafka-client" % "1.0.0",
 
     // akka
     "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -126,6 +128,13 @@ lazy val commonSettings = Seq(
   }
 )
 
+concurrentRestrictions in Global := Seq(Tags.limitAll(1))
+val exclusionRules = Seq(ExclusionRule("com.sun.jersey", "jersey-core"),
+  ExclusionRule("com.sun.jersey", "jersey-json"),
+  ExclusionRule("com.sun.jersey", "jersey-servlet"),
+  ExclusionRule("com.sun.jersey", "jersey-server")
+)
+
 lazy val `ohara-common` = (project in file("ohara-common"))
   .settings(commonSettings)
 
@@ -151,12 +160,23 @@ lazy val `ohara-manager` = (project in file("ohara-manager"))
 lazy val `ohara-hdfs-connector` = (project in file("ohara-hdfs-connector"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= hadoopDependencies)
+  .settings(excludeDependencies ++= exclusionRules)
   .dependsOn(`ohara-data`, `ohara-kafka-data`)
+  .dependsOn(
+    `ohara-data`, `ohara-kafka-data`,
+    `ohara-common` % "compile->compile; compile->test"
+  )
 
 lazy val `ohara-http` = (project in file("ohara-http"))
   .settings(commonSettings)
+  .settings(excludeDependencies ++= exclusionRules)
+  .dependsOn(
+    `ohara-data`, `ohara-kafka-data`, `ohara-testing-util`,
+    `ohara-common` % "compile->compile; compile->test"
+  )
 
 lazy val `ohara-testing-util` = (project in file("ohara-testing-util"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= hadoopDependencies)
+  .settings(excludeDependencies ++= exclusionRules)
   .dependsOn(`ohara-common` % "compile->compile; compile->test")
