@@ -13,7 +13,7 @@ oharaManager.widget.login = {
     },
     onSuccess: function(username, islogin) {
         if (islogin) {
-          alert(username + " login success.");
+          window.location.href="../main/index.html";
         } else {
           alert(username + " login failed.");
         }

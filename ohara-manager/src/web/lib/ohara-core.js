@@ -2,6 +2,7 @@
 (function( $ ) {
 
     // TODO: Custom Named Events
+    // TODO: Add constructor
     /**
      * return object:
      * @param prototype
@@ -37,7 +38,11 @@
             };
 
             var result = $.extend({
-                $baseEl: $baseEl
+                $baseEl: $baseEl,
+                autoBinding: true,
+                bindClickEvent: function(){
+                  $.each(this.clickBinding, _bindClickEvent);
+                }
             }, prototype);
 
             result.$val = function(id, val){
@@ -54,8 +59,8 @@
                 return $baseEl.find(selector);
             };
 
-            if (result.clickBinding) {
-                $.each(result.clickBinding, _bindClickEvent);
+            if (result.autoBinding && result.clickBinding) {
+                result.bindClickEvent().call(result);
             }
             return result;
         };
@@ -68,6 +73,15 @@ var oharaManager = {
     widget: {}
 };
 
+oharaManager.template = {
+    cloneTemplate: function(selector) {
+       _.templateSettings = {
+          interpolate: /\{\{(.+?)\}\}/g
+       };
+       return _.template($(selector).clone().html());
+    }
+};
+
 oharaManager.api = {
     login: function(username, password, successCallback, errorCallback) {
         $.post({
@@ -76,12 +90,28 @@ oharaManager.api = {
           dataType: 'json',
           data: JSON.stringify({"name": username, "password": password}),
           success: function(result) {
-             var isLoginSuccess = result.data
-             successCallback(username, isLoginSuccess)
+             var isLoginSuccess = result.data;
+             successCallback(username, isLoginSuccess);
           },
           error: function(XMLHttpRequest, textStatus, errorThrown) {
-             var errorMessage = XMLHttpRequest.statusText
-             errorCallback(errorMessage)
+             var errorMessage = XMLHttpRequest.statusText;
+             errorCallback(errorMessage);
+          }
+        })
+    },
+    logout: function(username, successCallback, errorCallback) {
+        $.post({
+          url: '../api/logout',
+          contentType: 'application/json',
+          dataType: 'json',
+          data: username,
+          success: function(result) {
+             var isLogout = result.data;
+             successCallback(username, isLogout);
+          },
+          error: function(XMLHttpRequest, textStatus, errorThrown) {
+             var errorMessage = XMLHttpRequest.statusText;
+             errorCallback(errorMessage);
           }
         })
     }
