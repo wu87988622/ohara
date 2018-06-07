@@ -71,6 +71,8 @@ val checkFormat = taskKey[Unit]("Check all the source code which includes src, t
 lazy val commonSettings = Seq(
   scalaVersion := "2.12.6",
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
+  fork in Test := true,
+  javaOptions in Test ++= Seq("-Xms256m", "-Xmx4g"),
   libraryDependencies ++= Seq(
     // kafka
     "org.apache.kafka" %% "kafka" % kafkaV,
