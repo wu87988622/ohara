@@ -1,5 +1,8 @@
 package com.island.ohara.hdfs
 
+import java.io.File
+import org.apache.commons.io.FilenameUtils
+
 /**
   * This class for the process the data file name related
   */
@@ -38,12 +41,12 @@ object FileUtils {
 
   /**
     * Get stop offset
-    * @param fileNameList
+    * @param fileNames
     * @return
     */
-  def getStopOffset(fileNameList: List[String]): Long = {
-    if (!fileNameList.isEmpty)
-      fileNameList
+  def getStopOffset(fileNames: Iterator[String]): Long = {
+    if (!fileNames.isEmpty)
+      fileNames
         .map(fileName => {
           if (checkFileNameFormat(fileName)) {
             fileName.split(FILENAME_SEPARATOR)(STOP_OFFSET_INDEX).replace(FILENAME_ENDSWITH, "").toLong
@@ -63,5 +66,14 @@ object FileUtils {
     */
   def checkFileNameFormat(fileName: String): Boolean = {
     fileName.matches(COMMITTED_FILENAME_PATTERN)
+  }
+
+  /**
+    * Get path simple file name
+    * @param path
+    * @return
+    */
+  def fileName(path: String): String = {
+    FilenameUtils.getName(path)
   }
 }

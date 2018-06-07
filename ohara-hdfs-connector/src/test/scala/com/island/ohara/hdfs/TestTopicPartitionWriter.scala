@@ -190,7 +190,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val dataDir = "/data/partition1"
-    val result = topicPartitionWriter.flushFilePath(List(), dataDir)
+    val result = topicPartitionWriter.flushFilePath(Iterator(), dataDir)
     result shouldBe "/data/partition1/part-000000000-000000000.csv"
   }
 
@@ -209,17 +209,17 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
     topicPartitionWriter.processLineCount = 1000
     val dataDir = "/data/partition1"
-    var flushFilePath = topicPartitionWriter.flushFilePath(List(), dataDir)
+    var flushFilePath = topicPartitionWriter.flushFilePath(Iterator(), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000000000-000000999.csv"
 
-    flushFilePath = topicPartitionWriter.flushFilePath(List("part-000000000-000000999.csv"), dataDir)
+    flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000000000-000000999.csv"), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000001000-000001999.csv"
 
-    flushFilePath =
-      topicPartitionWriter.flushFilePath(List("part-000000000-000000999.csv", "part-000001000-000001999.csv"), dataDir)
+    flushFilePath = topicPartitionWriter
+      .flushFilePath(Iterator("part-000000000-000000999.csv", "part-000001000-000001999.csv"), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000002000-000002999.csv"
 
-    flushFilePath = topicPartitionWriter.flushFilePath(List("part-000002000-000002999.csv"), dataDir)
+    flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000002000-000002999.csv"), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000003000-000003999.csv"
   }
 
@@ -239,15 +239,15 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val dataDir = "/data/partition1"
 
     topicPartitionWriter.processLineCount = 1000
-    var flushFilePath = topicPartitionWriter.flushFilePath(List(), dataDir)
+    var flushFilePath = topicPartitionWriter.flushFilePath(Iterator(), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000000000-000000999.csv"
 
     topicPartitionWriter.processLineCount = 500
-    flushFilePath = topicPartitionWriter.flushFilePath(List("part-000000000-000000999.csv"), dataDir)
+    flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000000000-000000999.csv"), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000001000-000001499.csv"
 
     topicPartitionWriter.processLineCount = 222
-    flushFilePath = topicPartitionWriter.flushFilePath(List("part-000001000-000001499.csv"), dataDir)
+    flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000001000-000001499.csv"), dataDir)
     flushFilePath shouldBe "/data/partition1/part-000001500-000001721.csv"
   }
 }

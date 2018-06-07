@@ -120,17 +120,87 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
       val partitionID: String = "partition0"
       testUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, 10 seconds)
 
-      testUtil.await(
-        () =>
-          FileUtils.getStopOffset(
-            storage.list(s"$dataDirPath/$topicName/$partitionID").map(x => new Path(x).getName()).toList) == 99,
-        10 seconds)
+      testUtil.await(() =>
+                       FileUtils.getStopOffset(
+                         storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 99,
+                     10 seconds)
 
       testUtil.await(() =>
                        storage
                          .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(x => new Path(x).getName())
+                         .map(FileUtils.fileName(_))
                          .contains("part-000000090-000000099.csv"),
+                     10 seconds)
+    }
+  }
+
+  @Test
+  def testRecoverOffset(): Unit = {
+    val sinkTasks = 1
+    val flushLineCountName = HDFSSinkConnectorConfig.FLUSH_LINE_COUNT
+    val flushLineCount = "100"
+    val rotateIntervalMSName = HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS
+    val tmpDirName = HDFSSinkConnectorConfig.TMP_DIR
+    val dataDirName = HDFSSinkConnectorConfig.DATA_DIR
+    val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
+    val topicName = "topic1"
+    val rowCount = 200
+    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
+    val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
+    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
+
+    doClose(new OharaTestUtil(3, 1)) { testUtil =>
+      val fileSystem = testUtil.hdfsFileSystem()
+      val storage = new HDFSStorage(fileSystem)
+      val tmpDirPath = s"${testUtil.hdfsTempDir}/tmp"
+      val dataDirPath = s"${testUtil.hdfsTempDir}/data"
+
+      //Before running the Kafka Connector, create the file to local hdfs for test recover offset
+      val partitionID: String = "partition0"
+      fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
+
+      doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
+        {
+          0 until rowCount foreach (_ =>
+            producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
+          producer.flush()
+        }
+      }
+      val localURL = s"file://${testUtil.hdfsTempDir()}"
+      testUtil
+        .sinkConnectorCreator()
+        .name("my_sink_connector")
+        .connectorClass(classOf[HDFSSinkConnector])
+        .topic(topicName)
+        .taskNumber(sinkTasks)
+        .disableConverter
+        .config(Map(
+          flushLineCountName -> flushLineCount,
+          tmpDirName -> tmpDirPath,
+          hdfsURLName -> localURL,
+          hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+          dataDirName -> dataDirPath
+        ))
+        .run()
+
+      Thread.sleep(20000);
+      storage
+        .list(s"$dataDirPath/$topicName/$partitionID")
+        .foreach(x => {
+          println(s"file path: $x")
+        })
+      testUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, 10 seconds)
+
+      testUtil.await(() =>
+                       FileUtils.getStopOffset(
+                         storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 199,
+                     10 seconds)
+
+      testUtil.await(() =>
+                       storage
+                         .list(s"$dataDirPath/$topicName/$partitionID")
+                         .map(FileUtils.fileName(_))
+                         .contains("part-000000100-000000199.csv"),
                      10 seconds)
     }
   }
@@ -155,5 +225,4 @@ class SimpleHDFSSinkTask extends HDFSSinkTask {
 object SimpleHDFSSinkTask {
   val taskProps = new ConcurrentHashMap[String, String]
   var sinkConnectorConfig: HDFSSinkConnectorConfig = _
-
 }

@@ -34,7 +34,10 @@ class HDFSSinkTask extends RowSinkTask {
   }
 
   override protected def flush(offsets: util.Map[TopicPartition, OffsetAndMetadata]): Unit = {
-    //TODO The OHARA-98 is going to implement
+    logger.debug("running flush function.")
+    offsets.asScala.toMap.foreach(offset => {
+      logger.debug(s"[${offset._1.topic}-${offset._1.partition}] offset: ${offset._2.offset}")
+    })
   }
 
   override protected def close(partitions: util.Collection[TopicPartition]): Unit = {

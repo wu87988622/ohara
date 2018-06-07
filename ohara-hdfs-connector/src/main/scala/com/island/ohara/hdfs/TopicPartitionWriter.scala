@@ -4,7 +4,6 @@ import com.island.ohara.hdfs.storage.Storage
 import com.island.ohara.hdfs.text.{CSVRecordWriterOutput, RecordWriterOutput}
 import com.island.ohara.kafka.connector.RowSinkRecord
 import com.typesafe.scalalogging.Logger
-import org.apache.hadoop.fs.Path
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.connect.sink.SinkTaskContext
 
@@ -16,7 +15,7 @@ import org.apache.kafka.connect.sink.SinkTaskContext
   * @param storage
   */
 class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
-                           context: SinkTaskContext, //TODO OHARA-98 for move offset position
+                           context: SinkTaskContext,
                            partition: TopicPartition,
                            storage: Storage) {
   private[this] lazy val logger = Logger(getClass().getName())
@@ -26,7 +25,6 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
 
   val tmpDir: String = s"${config.tmpDir()}/${partition.topic()}/${partitionName}"
   val dataDir: String = s"${config.dataDir()}/${partition.topic()}/${partitionName}"
-  val offsetDir: String = s"${config.offsetDir()}/${partition.topic()}/${partitionName}"
 
   val filePrefixName: String = config.dataFilePrefixName()
   val flushLineCount: Int = config.flushLineCount()
@@ -38,11 +36,8 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     //If tmp dir not exists to create tmp dir
     createTmpDirIfNotExists(s"$tmpDir")
 
-    //If offset dir not exists to create offset dir
-    createOffsetDirIfNotExists(s"$dataDir")
-
     //If data dir not exists to create data dir
-    createDataDirIfNotExists(s"$offsetDir")
+    createDataDirIfNotExists(s"$dataDir")
 
     //Execute offset recover
     recoveryOffset()
@@ -97,7 +92,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     logger.info(s"running commit file tmpFileName: ${tmpFilePath}")
     recordWriterProvider.close()
     commit(tmpFilePath,
-           flushFilePath(storage.list(s"${dataDir}").map(filePath => new Path(filePath).getName()).toList, dataDir))
+           flushFilePath(storage.list(s"${dataDir}").map(filePath => FileUtils.fileName(filePath)), dataDir))
   }
 
   def close(): Unit = {
@@ -105,7 +100,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
       storage.delete(tmpDir, true)
   }
 
-  def flushFilePath(fileList: List[String], dataDir: String): String = {
+  def flushFilePath(fileList: Iterator[String], dataDir: String): String = {
     var startOffset: Long = FileUtils.getStopOffset(fileList)
 
     //if flush size = 10
@@ -133,10 +128,6 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     (System.currentTimeMillis() - startTimeMS) >= rotateInterval
   }
 
-  protected def recoveryOffset(): Unit = {
-    //TODO Execute offset recver OHARA-98
-  }
-
   protected def commit(sourcePath: String, destPath: String): Unit = {
     storage.renameFile(sourcePath, destPath)
   }
@@ -147,16 +138,22 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     }
   }
 
-  protected def createOffsetDirIfNotExists(dataDirPath: String): Unit = {
-    if (!storage.exists(dataDirPath)) {
-      storage.mkdirs(dataDirPath)
-    }
-  }
-
   protected def createDataDirIfNotExists(offsetDirPath: String): Unit = {
     if (!storage.exists(offsetDirPath)) {
       storage.mkdirs(offsetDirPath)
     }
+  }
+
+  /**
+    * Kafka Topic Partition recovery to offset position
+    */
+  private def recoveryOffset(): Unit = {
+    logger.info("recovery offset")
+    val previousStopOffset: Long =
+      FileUtils.getStopOffset(storage.list(s"${dataDir}").map(filePath => FileUtils.fileName(filePath)))
+
+    //Move kafka topic partition offset to not commit to data dir position for HDFSSink connector fault or connect worker fault
+    context.offset(partition, previousStopOffset)
   }
 
   private def runningCommitFile(): Unit = {
