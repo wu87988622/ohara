@@ -8,7 +8,7 @@ import java.util.Objects
   * Noted: it is not thread-safe.
   * Noted: call #clear before reusing the builder to construct another property
   */
-class PropertyBuilder private {
+class PropertyBuilder private[config] {
   private[this] var key: String = _
   private[this] var description: String = _
   private[this] var default: Any = null
@@ -251,8 +251,4 @@ class PropertyBuilder private {
     this.description = null
     this
   }
-}
-
-private object PropertyBuilder {
-  def apply() = new PropertyBuilder()
 }

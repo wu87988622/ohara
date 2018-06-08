@@ -9,7 +9,7 @@ dependencies {
   compile libs.akkaStream
   //compile libs.slf4jApi
   //compile libs.slf4jlog4j
-  //compile libs.scalaLogging
+  compile libs.scalaLogging
 
   testCompile project(":ohara-common").sourceSets.test.output
   testCompile libs.scalatest

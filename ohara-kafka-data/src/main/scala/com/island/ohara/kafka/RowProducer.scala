@@ -1,6 +1,5 @@
 package com.island.ohara.kafka
 
-import java.util
 import java.util.Properties
 
 import com.island.ohara.core.Row

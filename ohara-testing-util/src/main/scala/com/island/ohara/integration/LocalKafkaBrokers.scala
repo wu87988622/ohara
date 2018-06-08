@@ -1,14 +1,13 @@
 package com.island.ohara.integration
 
 import java.io.File
-import java.util.Properties
 
 import com.island.ohara.config.{OharaConfig, UuidUtil}
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.{ConsumerConfig, OffsetResetStrategy}
 import org.apache.kafka.common.network.ListenerName
 import org.apache.kafka.common.utils.SystemTime
 
@@ -48,55 +47,43 @@ private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseConfi
     }
   }
 
-  logger.info(s"ports used in LocalKafkaBrokers are ${validPorts.mkString(",")}")
   val brokersString: String = validPorts.map("localhost:" + _).mkString(",")
+  logger.info(s"ports used in LocalKafkaBrokers are ${brokersString}")
 
   /**
     * Generate the basic config. The config is composed of following setting.
     * 1) bootstrap.servers
-    * 2) metadata.broker.list
-    * 3) zookeeper.connect
     * @return a basic config including the brokers information
     */
   def config: OharaConfig = {
     val config = OharaConfig()
     config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    config.set("metadata.broker.list", brokersString)
-    config.set("zookeeper.connect", zkConnection)
     config
   }
 
   /**
     * Generate a config for kafka producer. The config is composed of following setting.
     * 1) bootstrap.servers
-    * 2) metadata.broker.list
-    * 3) zookeeper.connect
     * @return a config used to instantiate kafka producer
     */
   def producerConfig: OharaConfig = {
     val config = OharaConfig()
     config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    config.set("metadata.broker.list", brokersString)
-    config.set("zookeeper.connect", zkConnection)
     config
   }
 
   /**
     * Generate a config for kafka consumer. The config is composed of following setting.
     * 1) bootstrap.servers
-    * 2) metadata.broker.list
-    * 3) zookeeper.connect
-    * 4) group.id -> a arbitrary string
-    * 5) auto.offset.reset -> earliest
+    * 2) group.id -> a arbitrary string
+    * 3) auto.offset.reset -> earliest
     * @return a config used to instantiate kafka consumer
     */
   def consumerConfig: OharaConfig = {
     val config = OharaConfig()
     config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    config.set("metadata.broker.list", brokersString)
-    config.set("zookeeper.connect", zkConnection)
     config.set(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
-    config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+    config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
     config
   }
 

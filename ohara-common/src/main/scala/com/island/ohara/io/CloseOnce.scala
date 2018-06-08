@@ -29,6 +29,22 @@ trait CloseOnce extends AutoCloseable {
   def isClosed: Boolean = closed.get
 
   final override def close(): Unit = if (closed.compareAndSet(false, true)) doClose()
+
+  /**
+    * new a object or call the close() when getting a exception
+    * @param fun generator
+    * @tparam T type
+    * @return an new object
+    */
+  final def newOrClose[T](fun: => T): T = {
+    try fun
+    catch {
+      case e: Throwable => {
+        close()
+        throw e
+      }
+    }
+  }
 }
 
 object CloseOnce {
@@ -39,7 +55,19 @@ object CloseOnce {
     * @param closeable nullable object
     * @param swallow true if you don't want to see the exception.
     */
-  def close(closeable: AutoCloseable, swallow: Boolean = false): Unit = {
+  def release(closeable: => Any, swallow: Boolean = true): Unit = {
+    try closeable
+    catch {
+      case e: Throwable => if (swallow) logger.error("fail to close object", e) else throw e
+    }
+  }
+
+  /**
+    * Close the non-null object and swallow/throw the exception
+    * @param closeable nullable object
+    * @param swallow true if you don't want to see the exception.
+    */
+  def close(closeable: AutoCloseable, swallow: Boolean = true): Unit = {
     try {
       if (closeable != null) {
         closeable.close()

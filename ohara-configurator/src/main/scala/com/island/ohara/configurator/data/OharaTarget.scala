@@ -44,5 +44,5 @@ object OharaTarget {
   }
   def properties: Seq[Property[_]] = Array(configProperty)
   val configProperty: Property[Map[String, String]] =
-    Property.builder.key("ohara-target-configs").alias("configs").description("the configs of ohara target").mapProperty
+    Property.builder.key("ohara-target-config").alias("config").description("the configs of ohara target").mapProperty
 }

@@ -52,7 +52,7 @@ object RowSerializer extends Serializer[Row] {
     implicit def readValue = (reader: DataStreamReader) => reader.forceRead(reader.readShort())
     Row(for (_ <- 0 until cellCount) yield {
       // TODO: we know the size of cell so it is doable to locate the cell at single byte array. by chia
-      val cellSize = reader.readInt()
+      reader.readInt()
       val name = ByteUtil.toString(reader)
       val dataType = DataType.of(reader.readByte())
       val cell = dataType match {

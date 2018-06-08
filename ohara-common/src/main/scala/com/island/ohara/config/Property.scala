@@ -55,7 +55,11 @@ trait Property[T] {
     * @return parsed value or default value
     */
   def require(config: OharaConfig): T =
-    get(config).getOrElse(throw new IllegalArgumentException(s"the ${key} doesn't exist"))
+    get(config).getOrElse(throw new IllegalArgumentException(s"the ${key} doesn't exist. $description"))
+
+  def require(config: T): T =
+    if (config == null) default.getOrElse(throw new IllegalArgumentException(s"No valid value. $description"))
+    else config
 
   /**
     * Get the value related to the key of property. If the key-value doesn't exist, this method will return the default value of property.
@@ -81,5 +85,5 @@ trait Property[T] {
 }
 
 object Property {
-  def builder = PropertyBuilder()
+  def builder = new PropertyBuilder()
 }

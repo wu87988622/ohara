@@ -52,7 +52,7 @@ class TestRow extends SmallTest with Matchers {
 
   @Test
   def testBuilderRow(): Unit = {
-    val list = List(123.toShort, 123, 123L, "123", 123D, 123F, true)
+    val list = List[Any](123.toShort, 123, 123L, "123", 123D, 123F, true)
     val row = Row(list.map(_ match {
       case v: Boolean => Cell.builder.name("boolean").build(v)
       case v: Short   => Cell.builder.name("short").build(v)

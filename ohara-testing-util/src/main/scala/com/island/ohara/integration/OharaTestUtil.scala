@@ -72,8 +72,6 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   /**
     * Generate the basic config. The config is composed of following setting.
     * 1) bootstrap.servers
-    * 2) metadata.broker.list
-    * 3) zookeeper.connect
     * @return a basic config including the brokers information
     */
   def config: OharaConfig = localBrokerCluster.config
@@ -81,8 +79,6 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   /**
     * Generate a config for kafka producer. The config is composed of following setting.
     * 1) bootstrap.servers
-    * 2) metadata.broker.list
-    * 3) zookeeper.connect
     * @return a config used to instantiate kafka producer
     */
   def producerConfig: OharaConfig = localBrokerCluster.producerConfig
@@ -90,10 +86,8 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   /**
     * Generate a config for kafka consumer. The config is composed of following setting.
     * 1) bootstrap.servers
-    * 2) metadata.broker.list
-    * 3) zookeeper.connect
-    * 4) group.id -> a arbitrary string
-    * 5) auto.offset.reset -> earliest
+    * 2) group.id -> a arbitrary string
+    * 3) auto.offset.reset -> earliest
     * @return a config used to instantiate kafka consumer
     */
   def consumerConfig: OharaConfig = localBrokerCluster.consumerConfig

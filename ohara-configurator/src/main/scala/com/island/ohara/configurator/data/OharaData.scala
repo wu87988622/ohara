@@ -8,7 +8,7 @@ import com.island.ohara.config.{OharaConfig, OharaJson, Property}
   *
   * @param config stores all properties
   */
-abstract class OharaData(protected val config: OharaConfig) {
+abstract class OharaData(private val config: OharaConfig) {
   val properties = Array[Property[_]](OharaData.uuidProperty, OharaData.implProperty, OharaData.nameProperty) ++ extraProperties
   if (config.get(OharaData.implProperty.key).isEmpty) OharaData.implProperty.set(config, getClass.getName)
   // verify the content of passed config. Throw the exception if any property isn't included in the config

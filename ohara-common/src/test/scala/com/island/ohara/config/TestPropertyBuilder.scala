@@ -23,7 +23,7 @@ class TestPropertyBuilder extends SmallTest with Matchers {
   @Test
   def testBuildProperties(): Unit = {
     val builder = Property.builder.key("key").description("desc")
-    val list = List(123, 123L, "123", 123D, 123F, true)
+    val list = List[Any](123, 123L, "123", 123D, 123F, true)
     list
       .map(_ match {
         case default: Short   => builder.shortProperty(default)
@@ -65,5 +65,26 @@ class TestPropertyBuilder extends SmallTest with Matchers {
     property.description shouldBe "desc1"
     property.default.get shouldBe 100
     property.alias shouldBe "alias1"
+  }
+
+  @Test
+  def testInvalidValue(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Property.builder
+      .key("key")
+      .description("dd")
+      .stringProperty
+      .require(null.asInstanceOf[String])
+
+    an[IllegalArgumentException] should be thrownBy Property.builder
+      .key("key")
+      .description("dd")
+      .property((a: String) => ("xx", "bb"), (a: (String, String)) => "xxx")
+      .require(null.asInstanceOf[(String, String)])
+
+    an[IllegalArgumentException] should be thrownBy Property.builder
+      .key("key")
+      .description("dd")
+      .mapProperty
+      .require(null.asInstanceOf[Map[String, String]])
   }
 }

@@ -1,21 +1,22 @@
 package com.island.ohara.configurator.store
 
 import java.util
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
 
-import com.island.ohara.config.{OharaConfig, Property, UuidUtil}
+import com.island.ohara.config.{OharaConfig, UuidUtil}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
-import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
+import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.header.Header
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
   * This class implements the OStroe through the kafka topic. The config passed to this class will be added with All data persist in the kafka topic.
@@ -36,26 +37,37 @@ import scala.concurrent.{Await, Future}
   * wait the response from kafka topic. Hence, the latency MAY be vary large.
   *
   * NOTED: this class is exposed as package-private for testing.
-  * @param config configuration
   * @tparam K key type
   * @tparam V value type
   */
-private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) with CloseOnce {
+private class TopicStore[K, V](keySerializer: Serializer[K],
+                               valueSerializer: Serializer[V],
+                               brokers: String,
+                               topicName: String,
+                               partitions: Int,
+                               replications: Short,
+                               pollTimeout: Duration,
+                               initializationTimeout: Duration,
+                               config: OharaConfig)
+    extends Store[K, V]
+    with CloseOnce {
 
   /**
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
     * TODO: make sure this uuid is unique in a distributed cluster. by chia
     */
-  val uuid = UuidUtil.uuid()
+  val uuid = UuidUtil.uuid
+
+  implicit val executor =
+    ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
 
   /**
     * Used to sort the change to topic. We shouldn't worry about the overflow since it is not update-heavy.
     */
   private[this] val HEADER_INDEX = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
-  val topicName = TopicStore.TOPIC_NAME.require(config)
-  val pollTimeout = TopicStore.POLL_TIMEOUT.require(config)
-  config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+  config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+  config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
   // enable kafka save the latest message for each key
   // we use magic string since the constant is located in kafka-core. Importing the whole core project is too expensive.
   config.set("log.cleanup.policy", "compact")
@@ -64,45 +76,39 @@ private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) 
   /**
     * Initialize the topic
     */
-  CloseOnce.doClose(AdminClient.create(config.toProperties))(admin => {
-    def topicExist: () => Boolean = () => admin.listTopics().names().thenApply(_.contains(topicName)).get()
-    if (!topicExist()) {
-      admin.createTopics(
-        util.Arrays.asList(
-          new NewTopic(topicName,
-                       TopicStore.TOPIC_PARTITION_COUNT.require(config),
-                       TopicStore.TOPIC_REPLICATION_COUNT.require(config))))
-      val end = System.currentTimeMillis() + TopicStore.CREATE_TOPIC_TIMEOUT.require(config)
-      // wait the topic to be created
-      while (!topicExist() && (System.currentTimeMillis() < end)) {
-        TimeUnit.SECONDS.sleep(1)
-      }
-      if (!topicExist()) throw new IllegalArgumentException(s"Failed to create the $topicName")
-    }
-  })
+  KafkaUtil.createTopicIfNonexist(
+    config,
+    topicName,
+    partitions,
+    replications,
+    initializationTimeout
+  )
 
-  private[this] val consumer = new KafkaConsumer[K, V](config.toProperties,
-                                                       KafkaUtil.wrapDeserializer(keySerializer),
-                                                       KafkaUtil.wrapDeserializer(valueSerializer))
+  private[this] val consumer = newOrClose(
+    new KafkaConsumer[K, V](config.toProperties,
+                            KafkaUtil.wrapDeserializer(keySerializer),
+                            KafkaUtil.wrapDeserializer(valueSerializer)))
   consumer.subscribe(util.Arrays.asList(topicName))
-  private[this] val producer = new KafkaProducer[K, V](config.toProperties,
-                                                       KafkaUtil.wrapSerializer(keySerializer),
-                                                       KafkaUtil.wrapSerializer(valueSerializer))
+  private[this] val producer = newOrClose(
+    new KafkaProducer[K, V](config.toProperties,
+                            KafkaUtil.wrapSerializer(keySerializer),
+                            KafkaUtil.wrapSerializer(valueSerializer)))
   private[this] val updateLock = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
-  private[this] val cache = new MemStore[K, V](config)
+  private[this] val cache = newOrClose(new MemStore[K, V](keySerializer, valueSerializer))
 
   /**
     * true if poller haven't grab any data recently.
     */
-  private[this] val readToEnd = new AtomicBoolean(false)
-  private[this] val poller = Future[Long] {
-    var messageCount = 0L
+  private[this] val initialLatch = new CountDownLatch(1)
+  private[this] val poller = Future[Unit] {
+    var firstPoll = true
     try {
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(pollTimeout)
-          var haveData = false
+          val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
+          if (firstPoll) initialLatch.countDown()
+          firstPoll = false
           if (records != null) {
             records
             // TODO: throw exception if there are data from unknown topic? by chia
@@ -125,33 +131,28 @@ private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) 
                   if (record.value() == null) cache.remove(record.key()) else cache.update(record.key(), record.value())
                 // index != null means this record is sent by this node
                 if (index != null) {
-                  messageCount += 1
                   commitResult.put(index, previous)
                   updateLock.synchronized {
                     updateLock.notifyAll()
                   }
                 }
-                haveData = true
               })
           }
-          readToEnd.set(!haveData) // We have collected all data from the topic
         } catch {
-          case e: WakeupException => logger.debug("interrupted by ourself")
-          // TODO: Should we close this class when encountering the error? by chia
-          case e: Throwable => logger.error("failure when running the poller", e)
+          case _: WakeupException => logger.debug("interrupted by ourself")
         }
       }
+    } catch {
+      case e: Throwable => logger.error("failure when running the poller", e)
     } finally {
-      // we do the wait for initialization of reading topic. cancel the flag to break the wait loop.
-      readToEnd.set(true)
+      if (firstPoll) initialLatch.countDown()
       TopicStore.this.close()
     }
-    messageCount
   }
 
-  // wait to grab all data from topic
-  while (!isClosed && !readToEnd.get()) {
-    TimeUnit.MILLISECONDS.sleep(500)
+  if (!initialLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
+    close()
+    throw new IllegalArgumentException(s"timeout to initialize the queue")
   }
 
   override def update(key: K, value: V): Option[V] = waitCallback(send(key, value))
@@ -162,12 +163,16 @@ private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) 
   override protected def doClose(): Unit = {
     import scala.concurrent.duration._
     // notify the poller
-    consumer.wakeup()
+    if (consumer != null) consumer.wakeup()
     // hardcode
-    Await.result(poller, 60 seconds)
-    producer.close()
-    consumer.close()
-    cache.close()
+    if (poller != null) Await.result(poller, 60 seconds)
+    if (producer != null) producer.close()
+    if (consumer != null) consumer.close()
+    if (cache != null) cache.close()
+    if (executor != null) {
+      executor.shutdownNow()
+      executor.awaitTermination(60, TimeUnit.SECONDS)
+    }
   }
   override def iterator: Iterator[(K, V)] = cache.iterator
 
@@ -184,6 +189,7 @@ private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) 
         updateLock.wait(1000)
       }
     }
+    checkClose()
     commitResult.remove(index)
   }
   private[this] def send(key: K, value: V = null.asInstanceOf[V]): String = {
@@ -204,32 +210,19 @@ private class TopicStore[K, V](config: OharaConfig) extends Store[K, V](config) 
       override def value(): Array[Byte] = TopicStore.EMPTY_ARRAY
     }
   }
+
+  override def take(timeout: Duration): Option[(K, V)] = {
+    // first - remove the element from cache
+    val rval = cache.take(timeout)
+    // second - remove the element from kafka topic
+    rval.map {
+      case (k, _) => remove(k)
+    }
+    rval
+  }
 }
 
 private object TopicStore {
-
-  /**
-    * A required config. It dedicate the topic name used to store the data.
-    */
-  val TOPIC_NAME: Property[String] =
-    Property.builder.description("The name of backed topic").key("ohara.topic.store.name").stringProperty
-
-  val TOPIC_PARTITION_COUNT: Property[Int] = Property.builder
-    .description("The number of partition of backed topic")
-    .key("ohara.topic.store.partition.count")
-    .intProperty(10)
-  val TOPIC_REPLICATION_COUNT: Property[Short] = Property.builder
-    .description("The number of replication of backed topic")
-    .key("ohara.topic.store.replication.count")
-    .shortProperty(10)
-  val POLL_TIMEOUT: Property[Long] = Property.builder
-    .description("The time, in milliseconds, spent waiting in poll the kafka consumer")
-    .key("ohara.topic.store.poll.timeout")
-    .longProperty(5 * 1000)
-  val CREATE_TOPIC_TIMEOUT: Property[Long] = Property.builder
-    .description("The time, in milliseconds, spent waiting in creating the topic")
-    .key("ohara.topic.store.create.topic.timeout")
-    .longProperty(60 * 1000)
 
   /**
     * zero array. Used to be the value of header.

@@ -9,7 +9,7 @@ import org.scalatest.Matchers
 
 class TestSerializer extends SmallTest with Matchers {
 
-  private[this] val values = Seq("1", false, 1.toShort, 1, 1.toLong, 1.0.toFloat, 1.0, ByteUtil.toBytes("abc"))
+  private[this] val values = Seq[Any]("1", false, 1.toShort, 1, 1.toLong, 1.0.toFloat, 1.0, ByteUtil.toBytes("abc"))
 
   @Test
   def testReflection(): Unit = {

@@ -7,34 +7,48 @@ import com.island.ohara.config.OharaConfig
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.{close, _}
 import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.rule.LargeTest
+import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.StringSerializer
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
-import org.junit.{After, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-class TestTopicStore extends LargeTest with Matchers {
+class TestTopicStore extends MediumTest with Matchers {
 
-  private[this] val config = configForTopicStore
-  private[this] val testUtil = createOharaTestUtil()
-  private[this] var store = new TopicStore[String, String](config)
+  private[this] var testUtil: OharaTestUtil = _
+  private[this] var store: Store[String, String] = _
 
   @Test
   def testRestart(): Unit = {
     store.update("aa", "bb") shouldBe None
-    store.close()
-    store = new TopicStore[String, String](config)
     store.get("aa") shouldBe Some("bb")
+    store.close()
+    val another = Store
+      .builder(StringSerializer, StringSerializer)
+      .brokers(testUtil.brokersString)
+      .topicName(testName.getMethodName)
+      .build()
+    try {
+      testUtil.await(() => another.get("aa").isDefined, 10 seconds)
+      another.get("aa") shouldBe Some("bb")
+    } finally another.close()
+
   }
 
   @Test
   def testRetention(): Unit = {
-    val config = OharaConfig(this.config)
-    TopicStore.TOPIC_NAME.set(config, "testacid2")
+    val config = OharaConfig()
     // make small retention so as to trigger log clear
     config.set("log.retention.ms", 1000)
-    doClose(new TopicStore[String, String](config)) { anotherStore =>
+    doClose(
+      Store
+        .builder(StringSerializer, StringSerializer)
+        .brokers(testUtil.brokersString)
+        .topicName(testName.getMethodName + "copy")
+        .configuration(config)
+        .build()) { anotherStore =>
       {
         0 until 10 foreach (index => anotherStore.update("key", index.toString))
         // the local cache do the de-duplicate
@@ -66,8 +80,14 @@ class TestTopicStore extends LargeTest with Matchers {
   @Test
   def testMultiStore(): Unit = {
     val numberOfStore = 5
-    val stores = 0 until numberOfStore map (_ => new TopicStore[String, String](config))
+    val stores = 0 until numberOfStore map (index =>
+      Store
+        .builder(StringSerializer, StringSerializer)
+        .brokers(testUtil.brokersString)
+        .topicName(testName.getMethodName)
+        .build())
     0 until 10 foreach (index => store.update(index.toString, index.toString))
+    store.size shouldBe 10
 
     // make sure all stores have synced the updated data
     testUtil.await(() => stores.filter(_.size == 10).size == numberOfStore, 30 second)
@@ -84,33 +104,107 @@ class TestTopicStore extends LargeTest with Matchers {
     testUtil.await(() => stores.filter(_.isEmpty).size == numberOfStore, 30 second)
 
     // This store is based on another topic so it should have no data
-    val anotherConfig = config.snapshot
-    TopicStore.TOPIC_NAME.set(anotherConfig, "testacidXX")
-    val anotherStore = new TopicStore[String, String](anotherConfig)
+    val anotherStore = Store
+      .builder(StringSerializer, StringSerializer)
+      .brokers(testUtil.brokersString)
+      .topicName(testName.getMethodName + "copy")
+      .build()
     anotherStore.size shouldBe 0
   }
+  @Test
+  def testTake(): Unit = {
+    0 until 10 foreach (index => store.update(index.toString, index.toString))
+    store.size shouldBe 10
+    var count = 0
+    var done = false
+    while (!done) {
+      val data = store.take()
+      if (data.isEmpty) done = true
+      else
+        data.foreach {
+          case (key, value) => {
+            key shouldBe count.toString
+            value shouldBe count.toString
+            count += 1
+          }
+        }
+    }
+    count shouldBe 10
 
+    doClose(
+      Store
+        .builder(StringSerializer, StringSerializer)
+        .brokers(testUtil.brokersString)
+        .topicName(s"${testName.getMethodName}-copy")
+        .build()) { another =>
+      {
+        another.size shouldBe 0
+      }
+    }
+  }
+
+  @Test
+  def testUpdate() = {
+    0 until 10 foreach (index => store.update(index.toString, index.toString) shouldBe None)
+    0 until 10 foreach (index => store.update(index.toString, index.toString) shouldBe Some(index.toString))
+    0 until 10 foreach (index => store.get(index.toString) shouldBe Some(index.toString))
+  }
+
+  @Test
+  def testRemove(): Unit = {
+    0 until 10 foreach (index => store.update(index.toString, index.toString))
+
+    val removed = new ArrayBuffer[String]
+    for (index <- 0 until 10) {
+      store.get(index.toString) shouldBe Some(index.toString)
+      if (index % 2 == 0) {
+        store.remove(index.toString)
+        removed += index.toString
+      }
+    }
+    removed.foreach(store.get(_) shouldBe None)
+  }
+
+  @Test
+  def testIterable(): Unit = {
+    0 until 10 foreach (index => store.update(index.toString, index.toString))
+    store.size shouldBe 10
+    store.foreach {
+      case (k, v) => k shouldBe v
+    }
+  }
+
+  @Test
+  def testStoreBuilder(): Unit = {
+    var builder = Store.builder(StringSerializer, StringSerializer)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.initializationTimeout(10 seconds)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.pollTimeout(1 seconds)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.replications(1)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.partitions(3)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.topicName(testName.getMethodName)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.brokers(testUtil.brokersString)
+    val store = builder.build()
+    store.close()
+  }
+
+  @Before
+  def before(): Unit = {
+    testUtil = new OharaTestUtil(3, 3)
+    store = Store
+      .builder(StringSerializer, StringSerializer)
+      .brokers(testUtil.brokersString)
+      .topicName(testName.getMethodName)
+      .build()
+  }
   @After
   def tearDown(): Unit = {
     close(store)
     close(testUtil)
-  }
-
-  private[this] def createOharaTestUtil() = {
-    val util = new OharaTestUtil(3, 3)
-    config.load(util.config)
-    util
-  }
-
-  private[this] def configForTopicStore: OharaConfig = {
-    val config = OharaConfig()
-    Store.STORE_IMPL.set(config, classOf[TopicStore[_, _]].getName)
-    Store.KEY_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
-    Store.VALUE_SERIALIZER_IMPL.set(config, StringSerializer.getClass.getName)
-    TopicStore.TOPIC_NAME.set(config, "testacid")
-    TopicStore.TOPIC_PARTITION_COUNT.set(config, 1)
-    TopicStore.TOPIC_REPLICATION_COUNT.set(config, 1)
-    config.set(NEED_OHARA_UTIL, true.toString)
-    config
   }
 }

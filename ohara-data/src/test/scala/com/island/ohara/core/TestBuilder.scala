@@ -15,7 +15,7 @@ class TestBuilder extends SmallTest with Matchers {
   @Test
   def testCellBuilder(): Unit = {
     val builder = Cell.builder.name("cf")
-    val list = List(123, 123L, "123", 123D, 123F, true)
+    val list = List[Any](123, 123L, "123", 123D, 123F, true)
     list
       .map(_ match {
         case v: Boolean => builder.build(v)

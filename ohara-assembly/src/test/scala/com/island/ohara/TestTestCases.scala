@@ -11,7 +11,6 @@ import org.scalatest.Matchers
 import scala.collection.mutable.ArrayBuffer
 
 class TestTestCases extends MediumTest with Matchers {
-  private[this] lazy val logger = Logger(getClass.getName)
   private[this] val validTestCatalog: Array[Class[_]] =
     Array(classOf[SmallTest], classOf[MediumTest], classOf[LargeTest])
   private[this] val validTestName: Array[String] = validTestCatalog.map(_.getName)

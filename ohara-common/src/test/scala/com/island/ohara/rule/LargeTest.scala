@@ -1,5 +1,6 @@
 package com.island.ohara.rule
 
+import com.typesafe.scalalogging.Logger
 import org.junit.Rule
 import org.junit.rules.{TestName, Timeout}
 import org.scalatest.junit.JUnitSuiteLike
@@ -8,6 +9,7 @@ import org.scalatest.junit.JUnitSuiteLike
   * Set the timeout to 5 minutes. Please don't use this LargeTest unless the tests you created is really a big stuff.
   */
 trait LargeTest extends JUnitSuiteLike {
+  protected lazy val logger = Logger(getClass.getName)
   @Rule
   def globalTimeout: Timeout = Timeout.seconds(5 * 60)
 

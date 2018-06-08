@@ -1,26 +1,14 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.config.{OharaConfig, Property}
-import com.island.ohara.reflection.ReflectionUtil
 import com.island.ohara.serialization.Serializer
+
+import scala.concurrent.duration._
 
 /**
   * A key-value store. It is used to save the component information
   * NOTED: All implementation of Store should be thread-safe.
   */
-abstract class Store[K, V](config: OharaConfig) extends AutoCloseable with Iterable[(K, V)] {
-
-  /**
-    * instantiate the key serializer used to do the conversion between key object and byte array.
-    */
-  protected val keySerializer: Serializer[K] =
-    ReflectionUtil.instantiate(Store.KEY_SERIALIZER_IMPL.require(config), classOf[Serializer[K]])
-
-  /**
-    * instantiate the key serializer used to do the conversion between value object and byte array.
-    */
-  protected val valueSerializer: Serializer[V] =
-    ReflectionUtil.instantiate(Store.VALUE_SERIALIZER_IMPL.require(config), classOf[Serializer[V]])
+trait Store[K, V] extends AutoCloseable with Iterable[(K, V)] {
 
   /**
     * Update the value with specified key. If the key-value exist, the new value will replace the previous value.
@@ -44,27 +32,22 @@ abstract class Store[K, V](config: OharaConfig) extends AutoCloseable with Itera
     * @return previous value or None if no key exist.
     */
   def remove(key: K): Option[V]
+
+  /**
+    * Removes and returns a key-value mapping associated with the least key in this map, or null if the map is empty.
+    * @param timeout to poll
+    * @return he removed first entry of this map, or null if this map is empty
+    */
+  def take(timeout: Duration = Store.DEFAULT_TAKE_TIMEOUT): Option[(K, V)]
 }
 
 object Store {
+  def builder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]) =
+    new StoreBuilder(keySerializer, valueSerializer)
 
-  val KEY_SERIALIZER_IMPL: Property[String] = Property.builder
-    .key("ohara.store.key.serializer.impl")
-    .description("the full class name of key serializer implementation")
-    .stringProperty
-
-  val VALUE_SERIALIZER_IMPL: Property[String] = Property.builder
-    .key("ohara.store.value.serializer.impl")
-    .description("the full class name of value serializer implementation")
-    .stringProperty
-
-  val STORE_IMPL: Property[String] = Property.builder
-    .key("ohara.store.impl")
-    .description("the full class name of store implementation")
-    .stringProperty(classOf[TopicStore[_, _]].getName)
-
-  def apply[K, V](config: OharaConfig): Store[K, V] =
-    ReflectionUtil.instantiate(STORE_IMPL.require(config), classOf[Store[K, V]], (classOf[OharaConfig], config))
-
-  def apply[K, V](clzName: String): Store[K, V] = ReflectionUtil.instantiate(clzName, classOf[Store[K, V]])
+  val DEFAULT_REPLICATION_NUMBER: Short = 3
+  val DEFAULT_PARTITION_NUMBER: Int = 3
+  val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
+  val DEFAULT_POLL_TIMEOUT: Duration = 5 seconds
+  val DEFAULT_TAKE_TIMEOUT: Duration = 1 seconds
 }

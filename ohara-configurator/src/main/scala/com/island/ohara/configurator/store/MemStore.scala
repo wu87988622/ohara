@@ -3,18 +3,21 @@ package com.island.ohara.configurator.store
 import java.util.Objects
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.{ByteUtil, CloseOnce}
+import com.island.ohara.serialization.Serializer
+
+import scala.concurrent.duration._
 
 /**
   * All data are stored in memory. If user have set the comparator to properties, MemStore will use the ConcurrentSkipListMap
   * to store the data.
   * NOTED: DON'T use MemStore in your production since MemStore doesn't support to persist data.
-  * @param config config
   * @tparam K key
   * @tparam V value
   */
-private class MemStore[K, V](config: OharaConfig) extends Store[K, V](config) with CloseOnce {
+private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V])
+    extends Store[K, V]
+    with CloseOnce {
   private[this] val store =
     new ConcurrentSkipListMap[Array[Byte], Array[Byte]](ByteUtil.COMPARATOR)
 
@@ -22,10 +25,16 @@ private class MemStore[K, V](config: OharaConfig) extends Store[K, V](config) wi
   private[this] def fromKey(key: Array[Byte]) = keySerializer.from(Objects.requireNonNull(key))
   private[this] def toValue(value: V) = valueSerializer.to(Objects.requireNonNull(value))
   private[this] def fromValue(value: Array[Byte]) = valueSerializer.from(Objects.requireNonNull(value))
-
+  private[this] val updateLock = new Object
   override def update(key: K, value: V): Option[V] = {
-    checkClose()
-    Option(store.put(toKey(key), toValue(value))).map(fromValue(_))
+    try {
+      checkClose()
+      Option(store.put(toKey(key), toValue(value))).map(fromValue(_))
+    } finally {
+      updateLock.synchronized {
+        updateLock.notifyAll()
+      }
+    }
   }
 
   override def get(key: K): Option[V] = {
@@ -35,6 +44,9 @@ private class MemStore[K, V](config: OharaConfig) extends Store[K, V](config) wi
 
   override protected def doClose(): Unit = {
     store.clear()
+    updateLock.synchronized {
+      updateLock.notify()
+    }
   }
 
   override def remove(key: K): Option[V] = {
@@ -60,4 +72,23 @@ private class MemStore[K, V](config: OharaConfig) extends Store[K, V](config) wi
     * @return size of this store
     */
   override def size: Int = store.size()
+
+  /**
+    * Removes and returns a key-value mapping associated with the least key in this map, or null if the map is empty.
+    *
+    * @return he removed first entry of this map, or null if this map is empty
+    */
+  override def take(timeout: Duration): Option[(K, V)] = {
+    val end = timeout + (System.currentTimeMillis milliseconds)
+    while (end.toMillis >= System.currentTimeMillis && !isClosed) {
+      val first = store.pollFirstEntry()
+      if (first != null) return Some((fromKey(first.getKey), fromValue(first.getValue)))
+      updateLock.synchronized {
+        updateLock.wait(timeout.toMillis)
+      }
+    }
+    val first = store.pollFirstEntry()
+    if (first != null) return Some((fromKey(first.getKey), fromValue(first.getValue)))
+    else None
+  }
 }
