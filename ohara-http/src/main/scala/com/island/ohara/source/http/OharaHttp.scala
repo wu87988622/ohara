@@ -1,17 +1,18 @@
 package com.island.ohara.source.http
 
-import java.io.File
+import java.io.{File, StringReader}
 import java.util.concurrent.ConcurrentHashMap
+import java.util.Properties
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import cakesolutions.kafka.KafkaProducer
-import cakesolutions.kafka.KafkaProducer.Conf
+import com.island.ohara.core.Row
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.serialization.RowSerializer
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig}
 import org.apache.kafka.common.serialization.StringSerializer
 
 import scala.collection.JavaConverters._
@@ -52,12 +53,19 @@ object OharaHttp extends KafkaRoute {
         ConfigFactory.load.atPath(pathStr)
       }
 
-    val producer = KafkaProducer(
-      Conf(
-        new StringSerializer,
-        KafkaUtil.wrapSerializer(RowSerializer),
-        bootstrapServers = config.getStringList("kafka-broker").asScala.mkString(",")
-      )
+    val configString =
+      s"""
+         |${ProducerConfig.ACKS_CONFIG}="all"
+         |${ProducerConfig.BOOTSTRAP_SERVERS_CONFIG}="${config.getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG).asScala.mkString(",")}"
+         |
+       """.stripMargin
+    val prop = new Properties()
+
+    prop.load(new StringReader(configString))
+    val producer = new KafkaProducer[String, Row](
+      prop,
+      new StringSerializer,
+      KafkaUtil.wrapSerializer(RowSerializer)
     )
 
     def healthyCheck = pathSingleSlash {

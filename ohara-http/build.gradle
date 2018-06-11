@@ -5,7 +5,7 @@ dependencies {
   compile libs.akkaHttp
   compile libs.akkaStream
   compile libs.sprayJson
-  compile libs.kafkaScalaWrapper
+  compile libs.kafkaClient
   compile project(':ohara-kafka-data')
   compile project(':ohara-data')
   testCompile libs.akkaHttpTestKit

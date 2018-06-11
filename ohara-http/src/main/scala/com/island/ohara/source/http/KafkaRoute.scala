@@ -7,7 +7,9 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
-import cakesolutions.kafka.{KafkaProducerLike, KafkaProducerRecord}
+import org.apache.kafka.clients.producer.{Producer, ProducerRecord, RecordMetadata, Callback}
+
+import scala.concurrent.Promise
 import com.island.ohara.core.{Cell, Row, RowBuilder}
 import com.island.ohara.serialization._
 import spray.json.{JsBoolean, JsString, JsValue}
@@ -17,6 +19,14 @@ import scala.util.{Failure, Success, Try}
 
 final case class CSV(row: List[JsValue])
 final case class SchemaException(private val message: String) extends Exception(message)
+class KafkaCallBack(val promise: Promise[RecordMetadata]) extends Callback {
+  override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+    val result =
+      if (exception == null) Success(metadata)
+      else Failure(exception)
+    promise.complete(result)
+  }
+}
 
 /**
   * Use to construct routing logic of Akka-HTTP to Kafka Producer
@@ -29,7 +39,7 @@ trait KafkaRoute extends Directives with CsvSupport {
 
   private lazy val log = Logging(system, classOf[KafkaRoute])
 
-  def kafkaRoute(producer: KafkaProducerLike[String, Row], schemaMap: ConcurrentMap[String, (String, RowSchema)]) = {
+  def kafkaRoute(producer: Producer[String, Row], schemaMap: ConcurrentMap[String, (String, RowSchema)]) = {
     path(
       Segment.flatMap(
         pathName =>
@@ -43,8 +53,15 @@ trait KafkaRoute extends Directives with CsvSupport {
         val (kafkaTopic, oharaSchema) = schemaMap.get(pathName)
         onComplete(
           transform(csv.row, oharaSchema.schema) match {
-            case Success(oharaRow) =>
-              producer.send(KafkaProducerRecord(kafkaTopic, UUID.randomUUID().toString, oharaRow))
+            case Success(oharaRow) => {
+              val promise = Promise[RecordMetadata]()
+              producer.send(
+                // UUID for preventing hotspot
+                new ProducerRecord[String, Row](kafkaTopic, UUID.randomUUID().toString, oharaRow),
+                new KafkaCallBack(promise)
+              )
+              promise.future
+            }
             case Failure(e) =>
               Future(e)
           }

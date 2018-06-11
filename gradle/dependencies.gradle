@@ -15,7 +15,6 @@ versions["mockito"] = project.hasProperty('mockito.version') ? project.propertie
 versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : "2.12.6"
 versions["akka"] = project.hasProperty('akka.version') ? project.properties['akka.version'] : "2.5.12"
 versions["akkaHttp"] = project.hasProperty('akka.http.version') ? project.properties['akka.http.version'] : "10.1.1"
-versions["kafkaScalaWrapper"] = project.hasProperty('kafka.scala.wrapper') ? project.properties['kafka.scala.wrapper'] : "1.0.0"
 versions["scalatest"] = project.hasProperty('scalatest.version') ? project.properties['scalatest.version'] : "3.0.5"
 versions["junit"] = project.hasProperty('junit.version') ? project.properties['junit.version'] : "4.12"
 versions["slf4j"] = project.hasProperty('slf4j.version') ? project.properties['slf4j.version'] : "1.7.25"
@@ -33,7 +32,6 @@ libs += [
   akkaHttp           : "com.typesafe.akka:akka-http_2.12:$versions.akkaHttp",
   sprayJson          : "com.typesafe.akka:akka-http-spray-json_2.12:$versions.akkaHttp",
   akkaSlf4j          : "com.typesafe.akka:akka-slf4j_2.12:$versions.akka",
-  kafkaScalaWrapper  : "net.cakesolutions:scala-kafka-client_2.12:$versions.kafkaScalaWrapper",
   scala              : "org.scala-lang:scala-library:$versions.scala",
   slf4jApi           : "org.slf4j:slf4j-api:$versions.slf4j",
   slf4jlog4j         : "org.slf4j:slf4j-log4j12:$versions.slf4j",

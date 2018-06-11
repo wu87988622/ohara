@@ -82,9 +82,6 @@ lazy val commonSettings = Seq(
     "org.apache.kafka" % "connect-runtime" % kafkaV,
     "org.apache.kafka" % "connect-json" % kafkaV,
 
-    // 3rd for kafka
-    "net.cakesolutions" %% "scala-kafka-client" % "1.0.0",
-
     // akka
     "com.typesafe.akka" %% "akka-actor" % akkaV,
     "com.typesafe.akka" %% "akka-stream" % akkaV,
@@ -127,7 +124,8 @@ lazy val commonSettings = Seq(
     (scalafmtCheck in Compile).value
     (scalafmtCheck in Test).value
     (scalafmtSbtCheck in Compile).value
-  }
+  },
+  scalafmtOnCompile := true
 )
 
 concurrentRestrictions in Global := Seq(Tags.limitAll(1))

@@ -1,18 +1,20 @@
 package com.island.ohara.source.http
 
+import java.io.StringReader
+import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import cakesolutions.kafka.KafkaProducer
-import cakesolutions.kafka.KafkaProducer.Conf
+import com.island.ohara.core.Row
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization._
 import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.producer.{KafkaProducer, Producer, ProducerConfig}
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.junit.Test
 import org.scalatest.Matchers
@@ -20,20 +22,28 @@ import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
-class KafkaRouteMiniCluster extends MediumTest with Matchers with ScalaFutures with ScalatestRouteTest with KafkaRoute {
+class TestKafkaRouteWithMiniCluster
+    extends MediumTest
+    with Matchers
+    with ScalaFutures
+    with ScalatestRouteTest
+    with KafkaRoute {
 
   val schema = Vector(("name", STRING), ("year", INT), ("month", SHORT), ("isHuman", BOOLEAN))
   val map = new ConcurrentHashMap[String, (String, RowSchema)]() {
     this.put("test", ("test", RowSchema(schema)))
   }
 
-  private def buildProducer(servers: String) = KafkaProducer(
-    Conf(
-      new StringSerializer,
-      KafkaUtil.wrapSerializer(RowSerializer),
-      bootstrapServers = servers
-    )
-  )
+  private def buildProducer(servers: String): Producer[String, Row] = {
+    val prop = new Properties()
+    val configString =
+      s"""
+         |${ProducerConfig.ACKS_CONFIG}=all
+         |${ProducerConfig.BOOTSTRAP_SERVERS_CONFIG}=$servers
+       """.stripMargin
+    prop.load(new StringReader(configString))
+    new KafkaProducer[String, Row](prop, new StringSerializer, KafkaUtil.wrapSerializer(RowSerializer))
+  }
 
   @Test
   def shouldReturnNotFoundWhenUrlNotExist(): Unit = {
@@ -93,13 +103,8 @@ class KafkaRouteMiniCluster extends MediumTest with Matchers with ScalaFutures w
           |}
         """.stripMargin
 
-      val producer = KafkaProducer(
-        Conf(
-          new StringSerializer,
-          KafkaUtil.wrapSerializer(RowSerializer),
-          bootstrapServers = testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get
-        )
-      )
+      val producer =
+        buildProducer(testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get)
 
       try {
         Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
@@ -144,13 +149,8 @@ class KafkaRouteMiniCluster extends MediumTest with Matchers with ScalaFutures w
            |}
         """.stripMargin
 
-      val producer = KafkaProducer(
-        Conf(
-          new StringSerializer,
-          KafkaUtil.wrapSerializer(RowSerializer),
-          bootstrapServers = testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get
-        )
-      )
+      val producer =
+        buildProducer(testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get)
 
       try {
         Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
