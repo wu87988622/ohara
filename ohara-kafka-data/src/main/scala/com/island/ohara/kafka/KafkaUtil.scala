@@ -57,7 +57,7 @@ object KafkaUtil {
   /**
     * check whether the specified topic exist
     * @param config the config used to build the kafka admin
-    * @param topicName topic name
+    * @param topicName topic nameHDFSStorage
     * @return true if the topic exist. Otherwise, false
     */
   def exist(config: OharaConfig, topicName: String): Boolean =
@@ -81,13 +81,11 @@ object KafkaUtil {
                             timeout: Duration = 10 seconds): Unit = {
     CloseOnce.doClose(AdminClient.create(config.toProperties))(admin => {
       if (!exist(admin, topicName)) {
-        admin.createTopics(util.Arrays.asList(new NewTopic(topicName, partitions, replication)))
-        val end = System.currentTimeMillis() + timeout.toMillis
-        // wait the topic to be created
-        while (!exist(admin, topicName) && (System.currentTimeMillis() < end)) {
-          TimeUnit.SECONDS.sleep(1)
-        }
-        if (!exist(admin, topicName)) throw new IllegalArgumentException(s"Failed to create the $topicName")
+        admin
+          .createTopics(util.Arrays.asList(new NewTopic(topicName, partitions, replication)))
+          .values()
+          .get(topicName)
+          .get(timeout.toMillis, TimeUnit.MILLISECONDS)
       }
     })
   }
