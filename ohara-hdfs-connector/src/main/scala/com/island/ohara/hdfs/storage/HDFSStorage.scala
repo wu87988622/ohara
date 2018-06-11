@@ -24,11 +24,13 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
       wrapper(underlying)
     }
 
-    fileSystem
-      .listLocatedStatus(new Path(path))
+    val hdfsPath = new Path(path)
+    if (fileSystem.exists(hdfsPath))
+      fileSystem.listLocatedStatus(hdfsPath)
       .map(fileStatus => {
         fileStatus.getPath().toString()
       })
+    else Iterator.empty
   }
 
   /**
