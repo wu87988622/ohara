@@ -56,7 +56,10 @@ object OharaHttp extends KafkaRoute {
     val configString =
       s"""
          |${ProducerConfig.ACKS_CONFIG}="all"
-         |${ProducerConfig.BOOTSTRAP_SERVERS_CONFIG}="${config.getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG).asScala.mkString(",")}"
+         |${ProducerConfig.BOOTSTRAP_SERVERS_CONFIG}="${config
+           .getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG)
+           .asScala
+           .mkString(",")}"
          |
        """.stripMargin
     val prop = new Properties()
