@@ -50,7 +50,7 @@ object OharaJob {
     .key("ohara-job-status")
     .alias("status")
     .description("the status of ohara job")
-    .property(JobStatus.of(_), _.name, STOP)
+    .property(JobStatus.of(_), _.name, JobStatus.STOP)
   val rulesProperty: Property[Map[String, Seq[String]]] = Property.builder
     .key("ohara-job-rules")
     .alias("rules")

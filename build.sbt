@@ -52,7 +52,7 @@ scalacOptions ++= Seq(
   "-Ybackend-parallelism", cpus.toString
 )
 
-lazy val akkaHttpV = "10.1.1"
+lazy val akkaHttpV = "10.1.3"
 lazy val akkaV = "2.5.12"
 lazy val kafkaV = "1.0.1"
 lazy val slf4jV = "1.7.25"

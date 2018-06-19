@@ -24,7 +24,7 @@ class TestOharaData extends SmallTest with Matchers {
   def testOharaJob(): Unit = {
     val uuid = testName.getMethodName
     val name = "name"
-    val status = RUNNING
+    val status = JobStatus.RUNNING
     val rules = Map("cmp0" -> Seq("cmp1", "cmp2"))
     def assert(job: OharaJob) = {
       job.uuid shouldBe uuid
@@ -47,14 +47,14 @@ class TestOharaData extends SmallTest with Matchers {
 
       val uuid2 = "uuid2"
       val name2 = "name2"
-      val status2 = STOP
+      val status2 = JobStatus.STOP
       val rules2 = Map("rules2" -> Seq("rules2", "rules2"))
       job.copy(OharaData.uuidProperty, uuid2).uuid shouldBe uuid2
       job.copy(OharaData.nameProperty, name2).name shouldBe name2
       job.copy(OharaJob.statusProperty, status2).status shouldBe status2
       job.copy(OharaJob.rulesProperty, rules2).rules.sameElements(rules2) shouldBe true
     }
-    assert(OharaJob(uuid, name, RUNNING, Map("cmp0" -> Array("cmp1", "cmp2"))))
+    assert(OharaJob(uuid, name, JobStatus.RUNNING, Map("cmp0" -> Array("cmp1", "cmp2"))))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaJob(oharaConfig)

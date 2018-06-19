@@ -16,7 +16,7 @@ class TestOharaDataSerializer extends SmallTest with Matchers {
       OharaStreaming("uuid", "name", "c", "d"),
       OharaSource("uuid", "name", Map("a" -> "b", "c" -> "d")),
       OharaTarget("uuid", "name", Map("a" -> "b", "c" -> "d")),
-      OharaJob("uuid", "name", RUNNING, Map("a" -> Array("b", "c"), "c" -> Array("d", "aaa")))
+      OharaJob("uuid", "name", JobStatus.RUNNING, Map("a" -> Array("b", "c"), "c" -> Array("d", "aaa")))
     )
 
     val serializer = OharaDataSerializer

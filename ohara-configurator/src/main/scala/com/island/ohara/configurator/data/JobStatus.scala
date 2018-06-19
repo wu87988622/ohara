@@ -1,19 +1,14 @@
 package com.island.ohara.configurator.data
 
-sealed abstract class JobStatus {
+import com.island.ohara.reflection.ClassName
 
-  /**
-    * the name to this job status.
-    * NOTED: DON'T change the class name
-    * @return status name
-    */
-  def name: String = getClass.getSimpleName
-}
-case object RUNNING extends JobStatus
-case object PAUSE extends JobStatus
-case object STOP extends JobStatus
+sealed abstract class JobStatus extends ClassName
 
 object JobStatus {
+
+  object RUNNING extends JobStatus
+  object PAUSE extends JobStatus
+  object STOP extends JobStatus
 
   /**
     * @return a array of all job status

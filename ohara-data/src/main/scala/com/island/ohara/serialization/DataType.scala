@@ -1,18 +1,12 @@
 package com.island.ohara.serialization
 
+import com.island.ohara.reflection.ClassName
+
 /**
   * List the supported type in default reader/writer.
   * NOTED: DON'T change the index since it is a part of serialization.
   */
-sealed abstract class DataType(val index: Byte) {
-
-  /**
-    * the name to this data type.
-    * NOTED: DON'T change the class name
-    * @return type name
-    */
-  def name: String = getClass.getSimpleName
-}
+sealed abstract class DataType(val index: Byte) extends ClassName
 
 case object BYTES extends DataType(0)
 
