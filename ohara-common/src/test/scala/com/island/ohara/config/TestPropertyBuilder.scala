@@ -8,7 +8,7 @@ class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testBuildWithoutDefault(): Unit = {
-    val builder = Property.builder.key("key").description("vvv")
+    val builder = OharaProperty.builder.key("key").description("vvv")
 
     builder.booleanProperty.default shouldBe None
     builder.doubleProperty.default shouldBe None
@@ -22,7 +22,7 @@ class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testBuildProperties(): Unit = {
-    val builder = Property.builder.key("key").description("desc")
+    val builder = OharaProperty.builder.key("key").description("desc")
     val list = List[Any](123, 123L, "123", 123D, 123F, true)
     list
       .map(_ match {
@@ -47,8 +47,8 @@ class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testMapBuilder(): Unit = {
-    val property: Property[Map[String, Int]] =
-      Property.builder.key("key").description("nothing").mapProperty(_.toInt, _.toString)
+    val property: OharaProperty[Map[String, Int]] =
+      OharaProperty.builder.key("key").description("nothing").mapProperty(_.toInt, _.toString)
     an[UnsupportedOperationException] should be thrownBy property.from("xx")
     val value = property.from(Map("k0" -> "123", "k1" -> "456"))
     value.get("k0").get shouldBe 123
@@ -57,7 +57,7 @@ class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testClear(): Unit = {
-    val builder = Property.builder.key("key0").description("desc0").alias("alias0")
+    val builder = OharaProperty.builder.key("key0").description("desc0").alias("alias0")
 
     val property = builder.clear().key("key1").description("desc1").alias("alias1").intProperty(100)
 
@@ -69,19 +69,19 @@ class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testInvalidValue(): Unit = {
-    an[IllegalArgumentException] should be thrownBy Property.builder
+    an[IllegalArgumentException] should be thrownBy OharaProperty.builder
       .key("key")
       .description("dd")
       .stringProperty
       .require(null.asInstanceOf[String])
 
-    an[IllegalArgumentException] should be thrownBy Property.builder
+    an[IllegalArgumentException] should be thrownBy OharaProperty.builder
       .key("key")
       .description("dd")
       .property((a: String) => ("xx", "bb"), (a: (String, String)) => "xxx")
       .require(null.asInstanceOf[(String, String)])
 
-    an[IllegalArgumentException] should be thrownBy Property.builder
+    an[IllegalArgumentException] should be thrownBy OharaProperty.builder
       .key("key")
       .description("dd")
       .mapProperty

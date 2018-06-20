@@ -1,12 +1,12 @@
 package com.island.ohara.configurator.job
 
-import com.island.ohara.config.{OharaConfig, Property, UuidUtil}
+import com.island.ohara.config.{OharaConfig, OharaProperty, UuidUtil}
 import com.island.ohara.configurator.data.OharaData
 import com.island.ohara.serialization.DataType
 
 class HttpJobRequest(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
 
-  override def copy[T](prop: Property[T], value: T): HttpJobRequest = {
+  override def copy[T](prop: OharaProperty[T], value: T): HttpJobRequest = {
     val clone = oharaConfig.snapshot
     prop.set(clone, value)
     new HttpJobRequest(clone)
@@ -28,7 +28,7 @@ class HttpJobRequest(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
     * @return config
     */
   def config: Map[String, String] = HttpJobRequest.configProperty.require(oharaConfig)
-  override protected def extraProperties: Seq[Property[_]] = HttpJobRequest.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = HttpJobRequest.properties
 }
 
 object HttpJobRequest {
@@ -52,22 +52,26 @@ object HttpJobRequest {
     new HttpJobRequest(oharaConfig)
   }
 
-  def properties: Seq[Property[_]] = Array(pathProperty, actionProperty, configProperty, schemaProperty)
-  val pathProperty: Property[String] =
-    Property.builder.key("http-job-request-path").alias("path").description("the path of HttpJobRequest").stringProperty
-  val actionProperty: Property[Action] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(pathProperty, actionProperty, configProperty, schemaProperty)
+  val pathProperty: OharaProperty[String] =
+    OharaProperty.builder
+      .key("http-job-request-path")
+      .alias("path")
+      .description("the path of HttpJobRequest")
+      .stringProperty
+  val actionProperty: OharaProperty[Action] = OharaProperty.builder
     .key("http-job-request-action")
     .alias("action")
     .description("the action of HttpJobRequest")
     .property(Action.of(_), _.name)
-  val schemaProperty: Property[Map[String, DataType]] = Property.builder
+  val schemaProperty: OharaProperty[Map[String, DataType]] = OharaProperty.builder
     .key("http-job-request-schema")
     .alias("schema")
     .description("the schema of HttpJobRequest")
     .mapProperty(DataType.of(_), _.name)
 
-  val configProperty: Property[Map[String, String]] =
-    Property.builder
+  val configProperty: OharaProperty[Map[String, String]] =
+    OharaProperty.builder
       .key("http-job-request-config")
       .alias("config")
       .description("the config of HttpJobRequest")

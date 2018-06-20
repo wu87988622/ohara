@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.data
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 
 /**
   * a pojo to represent the description of ohara job
@@ -8,12 +8,12 @@ import com.island.ohara.config.{OharaConfig, Property}
   */
 class OharaJob(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaJob.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaJob.properties
 
   def status: JobStatus = OharaJob.statusProperty.require(config)
   def rules: Map[String, Seq[String]] = OharaJob.rulesProperty.require(config)
 
-  override def copy[T](prop: Property[T], value: T): OharaJob = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaJob = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaJob(clone)
@@ -45,13 +45,13 @@ object OharaJob {
     rulesProperty.set(oharaConfig, rules)
     new OharaJob(oharaConfig)
   }
-  def properties: Seq[Property[_]] = Array(statusProperty, rulesProperty)
-  val statusProperty: Property[JobStatus] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(statusProperty, rulesProperty)
+  val statusProperty: OharaProperty[JobStatus] = OharaProperty.builder
     .key("ohara-job-status")
     .alias("status")
     .description("the status of ohara job")
     .property(JobStatus.of(_), _.name, JobStatus.STOP)
-  val rulesProperty: Property[Map[String, Seq[String]]] = Property.builder
+  val rulesProperty: OharaProperty[Map[String, Seq[String]]] = OharaProperty.builder
     .key("ohara-job-rules")
     .alias("rules")
     .description("the rules of ohara job")

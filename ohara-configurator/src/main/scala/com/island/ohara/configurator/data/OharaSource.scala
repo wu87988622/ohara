@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.data
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 
 /**
   * a pojo to represent the description of ohara source
@@ -8,10 +8,10 @@ import com.island.ohara.config.{OharaConfig, Property}
   */
 class OharaSource(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaSource.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaSource.properties
 
   def configs: Map[String, String] = OharaSource.configProperty.require(config)
-  override def copy[T](prop: Property[T], value: T): OharaSource = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaSource = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaSource(clone)
@@ -41,7 +41,11 @@ object OharaSource {
     configProperty.set(oharaConfig, configs)
     new OharaSource(oharaConfig)
   }
-  def properties: Seq[Property[_]] = Array(configProperty)
-  val configProperty: Property[Map[String, String]] =
-    Property.builder.key("ohara-source-config").alias("config").description("the configs of ohara source").mapProperty
+  def properties: Seq[OharaProperty[_]] = Array(configProperty)
+  val configProperty: OharaProperty[Map[String, String]] =
+    OharaProperty.builder
+      .key("ohara-source-config")
+      .alias("config")
+      .description("the configs of ohara source")
+      .mapProperty
 }

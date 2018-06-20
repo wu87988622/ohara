@@ -1,11 +1,11 @@
 package com.island.ohara.configurator.job
 
-import com.island.ohara.config.{OharaConfig, Property, UuidUtil}
+import com.island.ohara.config.{OharaConfig, OharaProperty, UuidUtil}
 import com.island.ohara.configurator.data.OharaData
 
 class HttpJobResponse(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
 
-  override def copy[T](prop: Property[T], value: T): HttpJobResponse = {
+  override def copy[T](prop: OharaProperty[T], value: T): HttpJobResponse = {
     val clone = oharaConfig.snapshot
     prop.set(clone, value)
     new HttpJobResponse(clone)
@@ -14,7 +14,7 @@ class HttpJobResponse(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
   def status: Status = HttpJobResponse.statusProperty.require(oharaConfig)
   def config: Map[String, String] = HttpJobResponse.configProperty.require(oharaConfig)
 
-  override protected def extraProperties: Seq[Property[_]] = HttpJobResponse.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = HttpJobResponse.properties
 }
 
 object HttpJobResponse {
@@ -45,16 +45,16 @@ object HttpJobResponse {
     new HttpJobResponse(oharaConfig)
   }
 
-  def properties: Seq[Property[_]] = Array(configProperty, statusProperty)
+  def properties: Seq[OharaProperty[_]] = Array(configProperty, statusProperty)
 
-  val statusProperty: Property[Status] =
-    Property.builder
+  val statusProperty: OharaProperty[Status] =
+    OharaProperty.builder
       .key("http-job-response-status")
       .alias("status")
       .description("the status of http job response")
       .property(Status.of(_), _.name)
-  val configProperty: Property[Map[String, String]] =
-    Property.builder
+  val configProperty: OharaProperty[Map[String, String]] =
+    OharaProperty.builder
       .key("http-job-response-config")
       .alias("config")
       .description("the config of http job response")

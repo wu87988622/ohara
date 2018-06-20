@@ -49,91 +49,91 @@ class PropertyBuilder private[config] {
     * @param default default value
     * @return an new property which can convert the string value to string. If the related key isn't existed, it return the default value
     */
-  def stringProperty(default: String): Property[String] = { this.default = default; stringProperty }
+  def stringProperty(default: String): OharaProperty[String] = { this.default = default; stringProperty }
 
   /**
     * do nothing abort the conversion.
     * @return an new property which can convert the string value to string
     */
-  def stringProperty: Property[String] = property(_.toString, _.toString)
+  def stringProperty: OharaProperty[String] = property(_.toString, _.toString)
 
   /**
     * create a property using scala conversion to parse string value to short.
     * @param default default value
     * @return an new property which can convert the string value to short. If the related key isn't existed, it return the default value
     */
-  def shortProperty(default: Short): Property[Short] = { this.default = default; shortProperty }
+  def shortProperty(default: Short): OharaProperty[Short] = { this.default = default; shortProperty }
 
   /**
     * create a property using scala conversion to parse string value to short.
     * @return an new property which can convert the string value to short.
     */
-  def shortProperty: Property[Short] = property(_.toShort, _.toString)
+  def shortProperty: OharaProperty[Short] = property(_.toShort, _.toString)
 
   /**
     * create a property using scala conversion to parse string value to int.
     * @param default default value
     * @return an new property which can convert the string value to int. If the related key isn't existed, it return the default value
     */
-  def intProperty(default: Int): Property[Int] = { this.default = default; intProperty }
+  def intProperty(default: Int): OharaProperty[Int] = { this.default = default; intProperty }
 
   /**
     * create a property using scala conversion to parse string value to int.
     * @return an new property which can convert the string value to int.
     */
-  def intProperty: Property[Int] = property(_.toInt, _.toString)
+  def intProperty: OharaProperty[Int] = property(_.toInt, _.toString)
 
   /**
     * create a property using scala conversion to parse string value to long.
     * @param default default value
     * @return an new property which can convert the string value to long. If the related key isn't existed, it return the default value
     */
-  def longProperty(default: Long): Property[Long] = { this.default = default; longProperty }
+  def longProperty(default: Long): OharaProperty[Long] = { this.default = default; longProperty }
 
   /**
     * create a property using scala conversion to parse string value to long.
     * @return an new property which can convert the string value to long.
     */
-  def longProperty: Property[Long] = property(_.toLong, _.toString)
+  def longProperty: OharaProperty[Long] = property(_.toLong, _.toString)
 
   /**
     * create a property using scala conversion to parse string value to float.
     * @param default default value
     * @return an new property which can convert the string value to float. If the related key isn't existed, it return the default value
     */
-  def floatProperty(default: Float): Property[Float] = { this.default = default; floatProperty }
+  def floatProperty(default: Float): OharaProperty[Float] = { this.default = default; floatProperty }
 
   /**
     * create a property using scala conversion to parse string value to float.
     * @return an new property which can convert the string value to float.
     */
-  def floatProperty: Property[Float] = property(_.toFloat, _.toString)
+  def floatProperty: OharaProperty[Float] = property(_.toFloat, _.toString)
 
   /**
     * create a property using scala conversion to parse string value to double.
     * @param default default value
     * @return an new property which can convert the string value to double. If the related key isn't existed, it return the default value
     */
-  def doubleProperty(default: Double): Property[Double] = { this.default = default; doubleProperty }
+  def doubleProperty(default: Double): OharaProperty[Double] = { this.default = default; doubleProperty }
 
   /**
     * create a property using scala conversion to parse string value to double.
     * @return an new property which can convert the string value to double.
     */
-  def doubleProperty: Property[Double] = property(_.toDouble, _.toString)
+  def doubleProperty: OharaProperty[Double] = property(_.toDouble, _.toString)
 
   /**
     * create a property using scala conversion to parse string value to boolean.
     * @param default default value
     * @return an new property which can convert the string value to boolean. If the related key isn't existed, it return the default value
     */
-  def booleanProperty(default: Boolean): Property[Boolean] = { this.default = default; booleanProperty }
+  def booleanProperty(default: Boolean): OharaProperty[Boolean] = { this.default = default; booleanProperty }
 
   /**
     * create a property using scala conversion to parse string value to boolean.
     * @return an new property which can convert the string value to boolean.
     */
-  def booleanProperty: Property[Boolean] = property(_.toBoolean, _.toString)
+  def booleanProperty: OharaProperty[Boolean] = property(_.toBoolean, _.toString)
 
   /**
     * create a property using custom conversion to parse string value to specific value.
@@ -141,7 +141,7 @@ class PropertyBuilder private[config] {
     * @param default default value
     * @return an new property which can convert the string value to specific type. If the related key isn't existed, it return the default value
     */
-  def property[T](fun: String => T, fun2: T => String, default: T): Property[T] = {
+  def property[T](fun: String => T, fun2: T => String, default: T): OharaProperty[T] = {
     this.default = default; property(fun, fun2)
   }
 
@@ -150,9 +150,9 @@ class PropertyBuilder private[config] {
     * @param fun conversion function
     * @return an new property which can convert the string value to specific type.
     */
-  def property[T](fun: String => T, fun2: T => String): Property[T] = {
+  def property[T](fun: String => T, fun2: T => String): OharaProperty[T] = {
     checkArguments()
-    new Property[T] {
+    new OharaProperty[T] {
       override def key: String = PropertyBuilder.this.key
 
       override def alias: String = PropertyBuilder.this.alias
@@ -175,7 +175,7 @@ class PropertyBuilder private[config] {
     }
   }
 
-  def mapProperty(default: Map[String, String]): Property[Map[String, String]] = {
+  def mapProperty(default: Map[String, String]): OharaProperty[Map[String, String]] = {
     this.default = default
     mapProperty
   }
@@ -184,7 +184,7 @@ class PropertyBuilder private[config] {
     * create a property without conversion
     * @return an new property
     */
-  def mapProperty: Property[Map[String, String]] = mapProperty(v => v, v => v)
+  def mapProperty: OharaProperty[Map[String, String]] = mapProperty(v => v, v => v)
 
   /**
     * create a property using custom conversion to parse Map[String, String] to specific value.
@@ -192,7 +192,7 @@ class PropertyBuilder private[config] {
     * @param default default value
     * @return an new property which can convert the Map[String, String] value to specific type. If the related key isn't existed, it return the default value
     */
-  def mapProperty[T](fun: String => T, fun2: T => String, default: Map[String, T]): Property[Map[String, T]] = {
+  def mapProperty[T](fun: String => T, fun2: T => String, default: Map[String, T]): OharaProperty[Map[String, T]] = {
     this.default = default
     mapProperty(fun, fun2)
   }
@@ -202,9 +202,9 @@ class PropertyBuilder private[config] {
     * @param fun conversion function
     * @return an new property which can convert the Map[String, String] value to specific type.
     */
-  def mapProperty[T](fun: String => T, fun2: T => String): Property[Map[String, T]] = {
+  def mapProperty[T](fun: String => T, fun2: T => String): OharaProperty[Map[String, T]] = {
     checkArguments()
-    new Property[Map[String, T]] {
+    new OharaProperty[Map[String, T]] {
       override def key: String = PropertyBuilder.this.key
 
       override def alias: String = PropertyBuilder.this.alias

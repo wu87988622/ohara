@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 import com.island.ohara.configurator.data.OharaData
 
 import scala.concurrent.duration.Duration
@@ -11,11 +11,11 @@ import scala.concurrent.duration.Duration
   */
 private class OharaRequest(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaRequest.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaRequest.properties
 
   def lease: Long = OharaRequest.leaseProperty.require(config)
 
-  override def copy[T](prop: Property[T], value: T): OharaRequest = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaRequest = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaRequest(clone)
@@ -42,8 +42,8 @@ private object OharaRequest {
     new OharaRequest(config)
   }
 
-  def properties: Seq[Property[_]] = Array[Property[_]](leaseProperty)
-  val leaseProperty: Property[Long] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array[OharaProperty[_]](leaseProperty)
+  val leaseProperty: OharaProperty[Long] = OharaProperty.builder
     .key("ohara-request-lease")
     .alias("request-lease")
     .description("the lease of the ohara request")

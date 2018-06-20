@@ -6,7 +6,7 @@ package com.island.ohara.config
   *
   * @tparam T the value converted from string config
   */
-trait Property[T] {
+trait OharaProperty[T] {
 
   /**
     * key to this property.
@@ -84,6 +84,6 @@ trait Property[T] {
   def set(config: OharaConfig, value: T): Option[T]
 }
 
-object Property {
+object OharaProperty {
   def builder = new PropertyBuilder()
 }

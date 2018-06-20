@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.data
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 
 /**
   * a pojo to represent the description of ohara streaming
@@ -8,12 +8,12 @@ import com.island.ohara.config.{OharaConfig, Property}
   */
 class OharaStreaming(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaStreaming.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaStreaming.properties
 
   def schemaId: String = OharaStreaming.schemaIdProperty.require(config)
 
   def topicId: String = OharaStreaming.topicIdProperty.require(config)
-  override def copy[T](prop: Property[T], value: T): OharaStreaming = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaStreaming = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaStreaming(clone)
@@ -45,12 +45,16 @@ object OharaStreaming {
     topicIdProperty.set(oharaConfig, topicId)
     new OharaStreaming(oharaConfig)
   }
-  def properties: Seq[Property[_]] = Array(topicIdProperty, schemaIdProperty)
-  val schemaIdProperty: Property[String] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(topicIdProperty, schemaIdProperty)
+  val schemaIdProperty: OharaProperty[String] = OharaProperty.builder
     .key("ohara-streaming-schema-id")
     .alias("schema")
     .description("the id of ohara streaming")
     .stringProperty
-  val topicIdProperty: Property[String] =
-    Property.builder.key("ohara-streaming-topic-id").alias("topic").description("the id of ohara topic").stringProperty
+  val topicIdProperty: OharaProperty[String] =
+    OharaProperty.builder
+      .key("ohara-streaming-topic-id")
+      .alias("topic")
+      .description("the id of ohara topic")
+      .stringProperty
 }

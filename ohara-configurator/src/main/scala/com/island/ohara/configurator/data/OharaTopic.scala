@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.data
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 
 /**
   * a pojo to represent the description of ohara topic
@@ -8,12 +8,12 @@ import com.island.ohara.config.{OharaConfig, Property}
   */
 class OharaTopic(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaTopic.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaTopic.properties
 
   def numberOfPartition: Int = OharaTopic.partitionProperty.require(config)
 
   def numberOfReplication: Int = OharaTopic.replicationProperty.require(config)
-  override def copy[T](prop: Property[T], value: T): OharaTopic = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaTopic = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaTopic(clone)
@@ -46,13 +46,13 @@ object OharaTopic {
     new OharaTopic(oharaConfig)
   }
 
-  def properties: Seq[Property[_]] = Array(partitionProperty, replicationProperty)
-  val partitionProperty: Property[Int] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(partitionProperty, replicationProperty)
+  val partitionProperty: OharaProperty[Int] = OharaProperty.builder
     .key("ohara-topic-partitions")
     .alias("partitionNumber")
     .description("the number of partition of ohara topic")
     .intProperty(1)
-  val replicationProperty: Property[Int] = Property.builder
+  val replicationProperty: OharaProperty[Int] = OharaProperty.builder
     .key("ohara-topic-replications")
     .alias("replicationNumber")
     .description("the number of replication of ohara topic")

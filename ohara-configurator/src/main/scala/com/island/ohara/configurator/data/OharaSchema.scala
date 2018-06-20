@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.data
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 import com.island.ohara.serialization.DataType
 
 /**
@@ -9,10 +9,10 @@ import com.island.ohara.serialization.DataType
   */
 class OharaSchema(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaSchema.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaSchema.properties
 
-  def columns: Map[String, DataType] = OharaSchema.columnsProperty.require(config)
-  override def copy[T](prop: Property[T], value: T): OharaSchema = {
+  def columns: Map[String, DataType] = OharaSchema.columnType.require(config)
+  override def copy[T](prop: OharaProperty[T], value: T): OharaSchema = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaSchema(clone)
@@ -39,11 +39,11 @@ object OharaSchema {
     val oharaConfig = OharaConfig()
     OharaData.uuidProperty.set(oharaConfig, uuid)
     OharaData.nameProperty.set(oharaConfig, name)
-    columnsProperty.set(oharaConfig, columns)
+    columnType.set(oharaConfig, columns)
     new OharaSchema(oharaConfig)
   }
-  def properties: Seq[Property[_]] = Array(columnsProperty)
-  val columnsProperty: Property[Map[String, DataType]] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(columnType)
+  val columnType: OharaProperty[Map[String, DataType]] = OharaProperty.builder
     .key("ohara-schema-columns")
     .alias("columns")
     .description("the columns of ohara schema")

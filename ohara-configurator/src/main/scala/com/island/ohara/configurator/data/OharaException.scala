@@ -2,7 +2,7 @@ package com.island.ohara.configurator.data
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 /**
@@ -12,13 +12,13 @@ import org.apache.commons.lang3.exception.ExceptionUtils
   * @param config stores all properties
   */
 class OharaException(config: OharaConfig) extends OharaData(config) {
-  override def copy[T](prop: Property[T], value: T): OharaException = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaException = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaException(clone)
   }
 
-  override protected def extraProperties: Seq[Property[_]] = OharaException.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaException.properties
 
   def stack: String = OharaException.stackProperty.require(config)
 
@@ -42,13 +42,13 @@ object OharaException {
     descriptionProperty.set(config, description)
     new OharaException(config)
   }
-  def properties: Seq[Property[_]] = Array(descriptionProperty, stackProperty)
-  val descriptionProperty: Property[String] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(descriptionProperty, stackProperty)
+  val descriptionProperty: OharaProperty[String] = OharaProperty.builder
     .key("ohara-exception-description")
     .alias("description")
     .description("the description of ohara exception")
     .stringProperty
-  val stackProperty: Property[String] = Property.builder
+  val stackProperty: OharaProperty[String] = OharaProperty.builder
     .key("ohara-exception-stack")
     .alias("stack")
     .description("the stack of ohara exception")

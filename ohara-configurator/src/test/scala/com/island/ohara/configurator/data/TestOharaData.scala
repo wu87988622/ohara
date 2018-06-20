@@ -158,7 +158,7 @@ class TestOharaData extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
     OharaData.nameProperty.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.columnsProperty.set(oharaConfig, columns)
+    OharaSchema.columnType.set(oharaConfig, columns)
     assert(OharaSchema(oharaConfig))
   }
 

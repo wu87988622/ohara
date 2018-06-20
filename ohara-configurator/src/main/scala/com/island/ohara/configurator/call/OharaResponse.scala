@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.config.{OharaConfig, Property}
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 import com.island.ohara.configurator.data.OharaData
 
 /**
@@ -9,10 +9,10 @@ import com.island.ohara.configurator.data.OharaData
   */
 private class OharaResponse(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[Property[_]] = OharaResponse.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = OharaResponse.properties
 
   def requestId: String = OharaResponse.requestIdProperty.require(config)
-  override def copy[T](prop: Property[T], value: T): OharaResponse = {
+  override def copy[T](prop: OharaProperty[T], value: T): OharaResponse = {
     val clone = config.snapshot
     prop.set(clone, value)
     new OharaResponse(clone)
@@ -34,8 +34,8 @@ private object OharaResponse {
     new OharaResponse(config)
   }
 
-  def properties: Seq[Property[_]] = Array(requestIdProperty)
-  val requestIdProperty: Property[String] = Property.builder
+  def properties: Seq[OharaProperty[_]] = Array(requestIdProperty)
+  val requestIdProperty: OharaProperty[String] = OharaProperty.builder
     .key("ohara-response-request-id")
     .alias("request-id")
     .description("the uuid against the ohara response")
