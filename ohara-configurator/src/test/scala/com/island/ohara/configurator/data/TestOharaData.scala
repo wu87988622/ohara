@@ -144,13 +144,15 @@ class TestOharaData extends SmallTest with Matchers {
     val uuid = testName.getMethodName
     val name = "name"
     val columns = Map("column-0" -> BYTES, "column-1" -> INT)
+    val indexes = Map("column-0" -> 0, "column-1" -> 1)
     def assert(schema: OharaSchema) = {
       schema.uuid shouldBe uuid
       schema.name shouldBe name
-      schema.columns.sameElements(columns) shouldBe true
+      schema.types.sameElements(columns) shouldBe true
+      schema.indexes.sameElements(indexes) shouldBe true
       checkJsonContent(schema)
     }
-    assert(OharaSchema(uuid, name, columns))
+    assert(OharaSchema(uuid, name, columns, indexes))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
@@ -159,6 +161,7 @@ class TestOharaData extends SmallTest with Matchers {
     OharaData.nameProperty.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
     OharaSchema.columnType.set(oharaConfig, columns)
+    OharaSchema.indexType.set(oharaConfig, indexes)
     assert(OharaSchema(oharaConfig))
   }
 
