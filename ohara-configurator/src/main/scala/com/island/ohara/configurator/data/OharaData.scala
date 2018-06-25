@@ -9,8 +9,8 @@ import com.island.ohara.config.{OharaConfig, OharaJson, OharaProperty}
   * @param config stores all properties
   */
 abstract class OharaData(private val config: OharaConfig) {
-  val properties = Array[OharaProperty[_]](OharaData.uuidProperty, OharaData.implProperty, OharaData.nameProperty) ++ extraProperties
-  if (config.get(OharaData.implProperty.key).isEmpty) OharaData.implProperty.set(config, getClass.getName)
+  val properties = Array[OharaProperty[_]](OharaData.uuid, OharaData.implName, OharaData.name) ++ extraProperties
+  if (config.get(OharaData.implName.key).isEmpty) OharaData.implName.set(config, getClass.getName)
   // verify the content of passed config. Throw the exception if any property isn't included in the config
   if (properties == null || properties.isEmpty) throw new IllegalArgumentException("Must have property")
   properties.foreach(_.require(config))
@@ -18,30 +18,25 @@ abstract class OharaData(private val config: OharaConfig) {
   /**
     * @return uuid to this object
     */
-  def uuid: String = OharaData.uuidProperty.require(config)
+  def uuid: String = OharaData.uuid.require(config)
 
   /**
     * @return the impl of ohara data
     */
-  def impl: String = OharaData.implProperty.require(config)
+  def impl: String = OharaData.implName.require(config)
 
   /**
     * @return the impl of ohara data
     */
-  def name: String = OharaData.nameProperty.require(config)
+  def name: String = OharaData.name.require(config)
 
   def copy[T](prop: OharaProperty[T], value: T): OharaData
 
   /**
     * Convert to json
-    * @param alias true if you want to replace the key by the alias.
     * @return json
     */
-  def toJson(alias: Boolean = true): OharaJson = {
-    if (alias) {
-      config.toJson
-    } else config.toJson
-  }
+  def toJson: OharaJson = config.toJson
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case another: OharaData => config.equals(another.config)
@@ -55,10 +50,11 @@ abstract class OharaData(private val config: OharaConfig) {
 }
 
 object OharaData {
-  val uuidProperty =
-    OharaProperty.builder.key("ohara-data-uuid").alias("uuid").description("the uuid of ohara data").stringProperty
-  val implProperty =
-    OharaProperty.builder.key("ohara-data-impl").alias("impl").description("the impl of ohara data").stringProperty
-  val nameProperty =
-    OharaProperty.builder.key("ohara-data-name").alias("name").description("the name of ohara data").stringProperty
+
+  val uuid: OharaProperty[String] =
+    OharaProperty.builder.key("uuid").description("the uuid of ohara data").stringProperty
+  val implName: OharaProperty[String] =
+    OharaProperty.builder.key("implName").description("the impl of ohara data").stringProperty
+  val name: OharaProperty[String] =
+    OharaProperty.builder.key("name").description("the name of ohara data").stringProperty
 }

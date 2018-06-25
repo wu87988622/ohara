@@ -9,8 +9,7 @@ import org.scalatest.Matchers
 class TestCallQueueData extends SmallTest with Matchers {
 
   private[this] def checkJsonContent(data: OharaData) = {
-    data.properties.foreach(prop => data.toJson(true).asString.contains(prop.alias))
-    data.properties.foreach(prop => data.toJson(false).asString.contains(prop.key))
+    data.properties.foreach(prop => data.toJson.toString.contains(prop.key))
   }
 
   @Test
@@ -26,18 +25,18 @@ class TestCallQueueData extends SmallTest with Matchers {
       val uuid2 = "uuid2"
       val name2 = "name2"
       val lease2: Long = 5000
-      request.copy(OharaData.uuidProperty, uuid2).uuid shouldBe uuid2
-      request.copy(OharaData.nameProperty, name2).name shouldBe name2
-      request.copy(OharaRequest.leaseProperty, lease2).lease shouldBe lease2
+      request.copy(OharaData.uuid, uuid2).uuid shouldBe uuid2
+      request.copy(OharaData.name, name2).name shouldBe name2
+      request.copy(OharaRequest.lease, lease2).lease shouldBe lease2
     }
     assert(OharaRequest(uuid, lease))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaRequest(oharaConfig)
-    OharaData.uuidProperty.set(oharaConfig, uuid)
+    OharaData.uuid.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaRequest(oharaConfig)
-    OharaData.nameProperty.set(oharaConfig, OharaRequest.getClass.getSimpleName)
-    OharaRequest.leaseProperty.set(oharaConfig, lease)
+    OharaData.name.set(oharaConfig, OharaRequest.getClass.getSimpleName)
+    OharaRequest.lease.set(oharaConfig, lease)
     assert(new OharaRequest(oharaConfig))
   }
 
@@ -54,19 +53,19 @@ class TestCallQueueData extends SmallTest with Matchers {
       val uuid2 = "uuid2"
       val name2 = "name2"
       val requestUuit2 = testName.getMethodName + "-REQ2"
-      response.copy(OharaData.uuidProperty, uuid2).uuid shouldBe uuid2
-      response.copy(OharaData.nameProperty, name2).name shouldBe name2
-      response.copy(OharaResponse.requestIdProperty, requestUuit2).requestId shouldBe requestUuit2
+      response.copy(OharaData.uuid, uuid2).uuid shouldBe uuid2
+      response.copy(OharaData.name, name2).name shouldBe name2
+      response.copy(OharaResponse.requestId, requestUuit2).requestId shouldBe requestUuit2
     }
     assert(OharaResponse(uuid, requestUuit))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaResponse(oharaConfig)
-    OharaData.uuidProperty.set(oharaConfig, uuid)
+    OharaData.uuid.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaResponse(oharaConfig)
-    OharaData.nameProperty.set(oharaConfig, OharaResponse.getClass.getSimpleName)
+    OharaData.name.set(oharaConfig, OharaResponse.getClass.getSimpleName)
     an[IllegalArgumentException] should be thrownBy new OharaResponse(oharaConfig)
-    OharaResponse.requestIdProperty.set(oharaConfig, requestUuit)
+    OharaResponse.requestId.set(oharaConfig, requestUuit)
     assert(new OharaResponse(oharaConfig))
   }
 }

@@ -16,7 +16,7 @@ object OharaDataSerializer extends Serializer[OharaData] {
     * @param obj OharaData
     * @return a serializable type
     */
-  override def to(obj: OharaData): Array[Byte] = ByteUtil.toBytes(obj.toJson(false).asString)
+  override def to(obj: OharaData): Array[Byte] = ByteUtil.toBytes(obj.toJson.toString)
 
   /**
     * Convert the serialized data to OharaData.
@@ -28,7 +28,6 @@ object OharaDataSerializer extends Serializer[OharaData] {
     */
   override def from(serial: Array[Byte]): OharaData = {
     val config = OharaConfig(OharaJson(ByteUtil.toString(serial)))
-    ReflectionUtil
-      .instantiate(OharaData.implProperty.require(config), classOf[OharaData], (classOf[OharaConfig], config))
+    ReflectionUtil.instantiate(OharaData.implName.require(config), classOf[OharaData], (classOf[OharaConfig], config))
   }
 }

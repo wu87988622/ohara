@@ -1,5 +1,6 @@
 package com.island.ohara.integration
 
+import com.island.ohara.rest.RestResponse
 import org.apache.kafka.connect.source.SourceConnector
 
 /**
@@ -55,5 +56,5 @@ trait SourceConnectorCreator {
     * send the request to create the source connector.
     * @return this one
     */
-  def run(): (Int, String)
+  def run(): RestResponse
 }

@@ -51,8 +51,8 @@ class TestOharaTestUtil extends LargeTest with Matchers {
     val sinkTasks = 2
     doClose(new OharaTestUtil(3, 2)) { testUtil =>
       {
-        testUtil.availableConnectors().contains(classOf[SimpleSourceConnector].getSimpleName) shouldBe true
-        testUtil.runningConnectors() shouldBe "[]"
+        testUtil.availableConnectors().body.contains(classOf[SimpleSourceConnector].getSimpleName) shouldBe true
+        testUtil.runningConnectors().body shouldBe "[]"
         var resp = testUtil
           .sourceConnectorCreator()
           .name("my_source_connector")
@@ -60,11 +60,11 @@ class TestOharaTestUtil extends LargeTest with Matchers {
           .topic("my_connector_topic")
           .taskNumber(sourceTasks)
           .run()
-        withClue(s"body:${resp._2}") {
-          resp._1 shouldBe 201
+        withClue(s"body:${resp.body}") {
+          resp.statusCode shouldBe 201
         }
         // wait for starting the source connector
-        testUtil.await(() => testUtil.runningConnectors().contains("my_source_connector"), 10 second)
+        testUtil.await(() => testUtil.runningConnectors().body.contains("my_source_connector"), 10 second)
         // wait for starting the source task
         testUtil.await(() => SimpleSourceTask.taskCount.get >= sourceTasks, 10 second)
         resp = testUtil
@@ -74,11 +74,11 @@ class TestOharaTestUtil extends LargeTest with Matchers {
           .topic("my_connector_topic")
           .taskNumber(sinkTasks)
           .run()
-        withClue(s"body:${resp._2}") {
-          resp._1 shouldBe 201
+        withClue(s"body:${resp.body}") {
+          resp.statusCode shouldBe 201
         }
         // wait for starting the sink connector
-        testUtil.await(() => testUtil.runningConnectors().contains("my_sink_connector"), 10 second)
+        testUtil.await(() => testUtil.runningConnectors().body.contains("my_sink_connector"), 10 second)
         // wait for starting the sink task
         testUtil.await(() => SimpleSinkTask.taskCount.get >= sinkTasks, 10 second)
 

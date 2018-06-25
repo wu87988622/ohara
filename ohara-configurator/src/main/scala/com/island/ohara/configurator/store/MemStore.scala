@@ -15,7 +15,7 @@ import scala.concurrent.duration._
   * @tparam K key
   * @tparam V value
   */
-private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V])
+private[configurator] class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V])
     extends Store[K, V]
     with CloseOnce {
   private[this] val store =

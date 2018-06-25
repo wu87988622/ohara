@@ -10,9 +10,9 @@ class OharaTopic(config: OharaConfig) extends OharaData(config) {
 
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaTopic.properties
 
-  def numberOfPartition: Int = OharaTopic.partitionProperty.require(config)
+  def numberOfPartition: Int = OharaTopic.partitionNumber.require(config)
 
-  def numberOfReplication: Int = OharaTopic.replicationProperty.require(config)
+  def numberOfReplication: Int = OharaTopic.replicationNumber.require(config)
   override def copy[T](prop: OharaProperty[T], value: T): OharaTopic = {
     val clone = config.snapshot
     prop.set(clone, value)
@@ -39,22 +39,18 @@ object OharaTopic {
     */
   def apply(uuid: String, name: String, partitionNumber: Int, replicationNumber: Int): OharaTopic = {
     val oharaConfig = OharaConfig()
-    OharaData.uuidProperty.set(oharaConfig, uuid)
-    OharaData.nameProperty.set(oharaConfig, name)
-    partitionProperty.set(oharaConfig, partitionNumber)
-    replicationProperty.set(oharaConfig, replicationNumber)
+    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.name.set(oharaConfig, name)
+    OharaTopic.partitionNumber.set(oharaConfig, partitionNumber)
+    OharaTopic.replicationNumber.set(oharaConfig, replicationNumber)
     new OharaTopic(oharaConfig)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(partitionProperty, replicationProperty)
-  val partitionProperty: OharaProperty[Int] = OharaProperty.builder
-    .key("ohara-topic-partitions")
-    .alias("partitionNumber")
-    .description("the number of partition of ohara topic")
-    .intProperty(1)
-  val replicationProperty: OharaProperty[Int] = OharaProperty.builder
-    .key("ohara-topic-replications")
-    .alias("replicationNumber")
+  def properties: Seq[OharaProperty[_]] = Array(partitionNumber, replicationNumber)
+  val partitionNumber: OharaProperty[Int] =
+    OharaProperty.builder.key("partitionNumber").description("the number of partition of ohara topic").intProperty(1)
+  val replicationNumber: OharaProperty[Int] = OharaProperty.builder
+    .key("replicationNumber")
     .description("the number of replication of ohara topic")
     .intProperty(3)
 }

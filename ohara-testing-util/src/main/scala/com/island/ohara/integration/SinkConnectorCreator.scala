@@ -1,5 +1,6 @@
 package com.island.ohara.integration
 
+import com.island.ohara.rest.RestResponse
 import org.apache.kafka.connect.sink.SinkConnector
 
 /**
@@ -62,5 +63,5 @@ trait SinkConnectorCreator {
     * send the request to create the sink connector.
     * @return this one
     */
-  def run(): (Int, String)
+  def run(): RestResponse
 }

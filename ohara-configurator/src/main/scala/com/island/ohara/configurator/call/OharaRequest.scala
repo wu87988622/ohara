@@ -13,7 +13,7 @@ private class OharaRequest(config: OharaConfig) extends OharaData(config) {
 
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaRequest.properties
 
-  def lease: Long = OharaRequest.leaseProperty.require(config)
+  def lease: Long = OharaRequest.lease.require(config)
 
   override def copy[T](prop: OharaProperty[T], value: T): OharaRequest = {
     val clone = config.snapshot
@@ -36,16 +36,15 @@ private object OharaRequest {
     */
   def apply(uuid: String, lease: Long): OharaRequest = {
     val config = OharaConfig()
-    OharaData.uuidProperty.set(config, uuid)
-    OharaData.nameProperty.set(config, OharaRequest.getClass.getSimpleName)
-    leaseProperty.set(config, lease)
+    OharaData.uuid.set(config, uuid)
+    OharaData.name.set(config, OharaRequest.getClass.getSimpleName)
+    OharaRequest.lease.set(config, lease)
     new OharaRequest(config)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array[OharaProperty[_]](leaseProperty)
-  val leaseProperty: OharaProperty[Long] = OharaProperty.builder
-    .key("ohara-request-lease")
-    .alias("request-lease")
+  def properties: Seq[OharaProperty[_]] = Array[OharaProperty[_]](lease)
+  val lease: OharaProperty[Long] = OharaProperty.builder
+    .key("requestLease")
     .description("the lease of the ohara request")
     .longProperty(CallQueue.DEFAULT_EXPIRATION_TIME.toMillis)
 

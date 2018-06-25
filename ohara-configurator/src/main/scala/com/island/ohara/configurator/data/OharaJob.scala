@@ -10,8 +10,8 @@ class OharaJob(config: OharaConfig) extends OharaData(config) {
 
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaJob.properties
 
-  def status: JobStatus = OharaJob.statusProperty.require(config)
-  def rules: Map[String, Seq[String]] = OharaJob.rulesProperty.require(config)
+  def status: JobStatus = OharaJob.status.require(config)
+  def rules: Map[String, Seq[String]] = OharaJob.rules.require(config)
 
   override def copy[T](prop: OharaProperty[T], value: T): OharaJob = {
     val clone = config.snapshot
@@ -39,21 +39,19 @@ object OharaJob {
     */
   def apply(uuid: String, name: String, status: JobStatus, rules: Map[String, Seq[String]]): OharaJob = {
     val oharaConfig = OharaConfig()
-    OharaData.uuidProperty.set(oharaConfig, uuid)
-    OharaData.nameProperty.set(oharaConfig, name)
-    statusProperty.set(oharaConfig, status)
-    rulesProperty.set(oharaConfig, rules)
+    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.name.set(oharaConfig, name)
+    OharaJob.status.set(oharaConfig, status)
+    OharaJob.rules.set(oharaConfig, rules)
     new OharaJob(oharaConfig)
   }
-  def properties: Seq[OharaProperty[_]] = Array(statusProperty, rulesProperty)
-  val statusProperty: OharaProperty[JobStatus] = OharaProperty.builder
-    .key("ohara-job-status")
-    .alias("status")
+  def properties: Seq[OharaProperty[_]] = Array(status, rules)
+  val status: OharaProperty[JobStatus] = OharaProperty.builder
+    .key("status")
     .description("the status of ohara job")
     .property(JobStatus.of(_), _.name, JobStatus.STOP)
-  val rulesProperty: OharaProperty[Map[String, Seq[String]]] = OharaProperty.builder
-    .key("ohara-job-rules")
-    .alias("rules")
+  val rules: OharaProperty[Map[String, Seq[String]]] = OharaProperty.builder
+    .key("rules")
     .description("the rules of ohara job")
     .mapProperty(_.replace(" ", "").split(SEPARATE_CHAR), _.mkString(SEPARATE_CHAR))
 

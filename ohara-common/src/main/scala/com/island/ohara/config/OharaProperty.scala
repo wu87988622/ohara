@@ -15,12 +15,6 @@ trait OharaProperty[T] {
   def key: String
 
   /**
-    * alias to this property. Usually the alias is a short name of key.
-    * @return alias string
-    */
-  def alias: String
-
-  /**
     * the default value of this property.
     * @return default value
     */
@@ -85,5 +79,5 @@ trait OharaProperty[T] {
 }
 
 object OharaProperty {
-  def builder = new PropertyBuilder()
+  def builder = new OharaPropertyBuilder()
 }

@@ -10,9 +10,9 @@ class OharaStreaming(config: OharaConfig) extends OharaData(config) {
 
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaStreaming.properties
 
-  def schemaId: String = OharaStreaming.schemaIdProperty.require(config)
+  def schemaId: String = OharaStreaming.schemaId.require(config)
 
-  def topicId: String = OharaStreaming.topicIdProperty.require(config)
+  def topicId: String = OharaStreaming.topicId.require(config)
   override def copy[T](prop: OharaProperty[T], value: T): OharaStreaming = {
     val clone = config.snapshot
     prop.set(clone, value)
@@ -39,22 +39,15 @@ object OharaStreaming {
     */
   def apply(uuid: String, name: String, schemaId: String, topicId: String): OharaStreaming = {
     val oharaConfig = OharaConfig()
-    OharaData.uuidProperty.set(oharaConfig, uuid)
-    OharaData.nameProperty.set(oharaConfig, name)
-    schemaIdProperty.set(oharaConfig, schemaId)
-    topicIdProperty.set(oharaConfig, topicId)
+    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.name.set(oharaConfig, name)
+    OharaStreaming.schemaId.set(oharaConfig, schemaId)
+    OharaStreaming.topicId.set(oharaConfig, topicId)
     new OharaStreaming(oharaConfig)
   }
-  def properties: Seq[OharaProperty[_]] = Array(topicIdProperty, schemaIdProperty)
-  val schemaIdProperty: OharaProperty[String] = OharaProperty.builder
-    .key("ohara-streaming-schema-id")
-    .alias("schema")
-    .description("the id of ohara streaming")
-    .stringProperty
-  val topicIdProperty: OharaProperty[String] =
-    OharaProperty.builder
-      .key("ohara-streaming-topic-id")
-      .alias("topic")
-      .description("the id of ohara topic")
-      .stringProperty
+  def properties: Seq[OharaProperty[_]] = Array(topicId, schemaId)
+  val schemaId: OharaProperty[String] =
+    OharaProperty.builder.key("schema").description("the id of ohara streaming").stringProperty
+  val topicId: OharaProperty[String] =
+    OharaProperty.builder.key("topic").description("the id of ohara topic").stringProperty
 }

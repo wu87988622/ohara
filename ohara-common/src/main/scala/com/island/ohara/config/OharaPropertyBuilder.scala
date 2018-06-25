@@ -8,7 +8,7 @@ import java.util.Objects
   * Noted: it is not thread-safe.
   * Noted: call #clear before reusing the builder to construct another property
   */
-class PropertyBuilder private[config] {
+class OharaPropertyBuilder private[config] {
   private[this] var key: String = _
   private[this] var description: String = _
   private[this] var default: Any = null
@@ -19,7 +19,7 @@ class PropertyBuilder private[config] {
     * @param key key of property
     * @return this builder
     */
-  def key(key: String): PropertyBuilder = {
+  def key(key: String): OharaPropertyBuilder = {
     this.key = key
     this
   }
@@ -29,18 +29,8 @@ class PropertyBuilder private[config] {
     * @param description description of property
     * @return this builder
     */
-  def description(description: String): PropertyBuilder = {
+  def description(description: String): OharaPropertyBuilder = {
     this.description = description
-    this
-  }
-
-  /**
-    * set the alias for the property.
-    * @param alias alias of property
-    * @return this builder
-    */
-  def alias(alias: String): PropertyBuilder = {
-    this.alias = alias
     this
   }
 
@@ -153,14 +143,12 @@ class PropertyBuilder private[config] {
   def property[T](fun: String => T, fun2: T => String): OharaProperty[T] = {
     checkArguments()
     new OharaProperty[T] {
-      override def key: String = PropertyBuilder.this.key
-
-      override def alias: String = PropertyBuilder.this.alias
+      override def key: String = OharaPropertyBuilder.this.key
 
       override def default: Option[T] =
-        if (PropertyBuilder.this.default == null) None else Some(PropertyBuilder.this.default.asInstanceOf[T])
+        if (OharaPropertyBuilder.this.default == null) None else Some(OharaPropertyBuilder.this.default.asInstanceOf[T])
 
-      override def description: String = PropertyBuilder.this.description
+      override def description: String = OharaPropertyBuilder.this.description
 
       override protected[config] def from(value: Map[String, String]): T = throw new UnsupportedOperationException(
         "Unsupported to pass Map<String, String>")
@@ -205,15 +193,13 @@ class PropertyBuilder private[config] {
   def mapProperty[T](fun: String => T, fun2: T => String): OharaProperty[Map[String, T]] = {
     checkArguments()
     new OharaProperty[Map[String, T]] {
-      override def key: String = PropertyBuilder.this.key
-
-      override def alias: String = PropertyBuilder.this.alias
+      override def key: String = OharaPropertyBuilder.this.key
 
       override def default: Option[Map[String, T]] =
-        if (PropertyBuilder.this.default == null) None
-        else Some(PropertyBuilder.this.default.asInstanceOf[Map[String, T]])
+        if (OharaPropertyBuilder.this.default == null) None
+        else Some(OharaPropertyBuilder.this.default.asInstanceOf[Map[String, T]])
 
-      override def description: String = PropertyBuilder.this.description
+      override def description: String = OharaPropertyBuilder.this.description
 
       override protected[config] def from(value: String): Map[String, T] = throw new UnsupportedOperationException(
         "Unsupported to pass String")
@@ -244,7 +230,7 @@ class PropertyBuilder private[config] {
     * set all inner members to null. this method works for the users who plan to reuse this builder to construct another property
     * @return this build
     */
-  def clear(): PropertyBuilder = {
+  def clear(): OharaPropertyBuilder = {
     this.default = null
     this.alias = null
     this.key = null

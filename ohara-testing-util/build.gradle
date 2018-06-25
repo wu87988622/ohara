@@ -7,8 +7,6 @@ dependencies {
   compile libs.kafkaCore
   compile libs.kafkaConnectJson
   compile libs.kafkaConnectRuntime
-  compile libs.akkaHttp
-  compile libs.akkaStream
   compile libs.hadoopCommon
   compile libs.hadoopHDFS
   testCompile libs.scalatest

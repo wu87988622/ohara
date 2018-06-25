@@ -81,8 +81,8 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
           .taskNumber(1)
           .disableConverter
           .run()
-        withClue(s"body:${resp._2}") {
-          resp._1 shouldBe 201
+        withClue(s"body:${resp.body}") {
+          resp.statusCode shouldBe 201
         }
 
         import scala.concurrent.duration._
@@ -115,8 +115,8 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
           .disableConverter
           .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
           .run()
-        withClue(s"body:${resp._2}") {
-          resp._1 shouldBe 201
+        withClue(s"body:${resp.body}") {
+          resp.statusCode shouldBe 201
         }
 
         import scala.concurrent.duration._

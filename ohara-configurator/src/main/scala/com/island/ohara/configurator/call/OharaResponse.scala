@@ -11,7 +11,7 @@ private class OharaResponse(config: OharaConfig) extends OharaData(config) {
 
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaResponse.properties
 
-  def requestId: String = OharaResponse.requestIdProperty.require(config)
+  def requestId: String = OharaResponse.requestId.require(config)
   override def copy[T](prop: OharaProperty[T], value: T): OharaResponse = {
     val clone = config.snapshot
     prop.set(clone, value)
@@ -28,16 +28,13 @@ private object OharaResponse {
     */
   def apply(uuid: String, reqId: String): OharaResponse = {
     val config = OharaConfig()
-    OharaData.uuidProperty.set(config, uuid)
-    OharaData.nameProperty.set(config, OharaResponse.getClass.getSimpleName)
-    requestIdProperty.set(config, reqId)
+    OharaData.uuid.set(config, uuid)
+    OharaData.name.set(config, OharaResponse.getClass.getSimpleName)
+    OharaResponse.requestId.set(config, reqId)
     new OharaResponse(config)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(requestIdProperty)
-  val requestIdProperty: OharaProperty[String] = OharaProperty.builder
-    .key("ohara-response-request-id")
-    .alias("request-id")
-    .description("the uuid against the ohara response")
-    .stringProperty
+  def properties: Seq[OharaProperty[_]] = Array(requestId)
+  val requestId: OharaProperty[String] =
+    OharaProperty.builder.key("requestId").description("the uuid against the ohara response").stringProperty
 }

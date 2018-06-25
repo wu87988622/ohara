@@ -3,7 +3,7 @@ package com.island.ohara.config
 import java.io.StringReader
 import java.util.{Objects, Properties}
 
-import com.typesafe.config.{ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
+import com.typesafe.config.{ConfigException, ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
@@ -106,11 +106,11 @@ private object MapConfig {
     })
     new MapConfig(map.toMap)
   }
-  def apply(json: OharaJson): MapConfig = {
+  def apply(json: OharaJson): MapConfig = try {
     import scala.collection.JavaConverters._
     val map = new mutable.HashMap[String, Either[String, Map[String, String]]]
     ConfigFactory
-      .parseReader(new StringReader(json.asString))
+      .parseReader(new StringReader(json.toString))
       // convert the config to tree in order to get the map type
       .root
       .entrySet()
@@ -120,5 +120,8 @@ private object MapConfig {
           case s: java.util.Map[String, String] => map.put(entry.getKey, Right(s.asScala.toMap))
       })
     new MapConfig(map.toMap)
+  } catch {
+    // wrap the typesafe's exception since we don't want to expose the typesafe
+    case e: ConfigException => throw new IllegalArgumentException(e)
   }
 }

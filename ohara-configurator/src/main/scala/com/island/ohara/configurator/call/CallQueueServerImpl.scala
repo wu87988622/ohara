@@ -110,14 +110,14 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
       override val request: Request = clientRequest
 
       override def complete(oharaData: Response): Unit = if (response != null)
-        throw new IllegalArgumentException(s"you have assigned the response:${response.toJson().toString()}")
+        throw new IllegalArgumentException(s"you have assigned the response:${response.toJson.toString()}")
       else {
         response = oharaData
         send(OharaResponse.apply(responseUuid, internalRequest.uuid), response)
       }
 
       override def complete(exception: Throwable): Unit = if (response != null)
-        throw new IllegalArgumentException(s"you have assigned the response:${response.toJson().toString}")
+        throw new IllegalArgumentException(s"you have assigned the response:${response.toJson.toString}")
       else {
         response = OharaException.apply(exception.getMessage, exception)
         send(OharaResponse.apply(responseUuid, internalRequest.uuid), response)

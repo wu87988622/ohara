@@ -37,25 +37,25 @@ class TestHttpJobData extends SmallTest with Matchers {
       val action2: Action = PAUSE
       val schema2 = Map("a" -> BYTES, "b" -> BOOLEAN, "c" -> INT)
       val config2 = Map("A" -> "b", "c" -> "d", "AA" -> "CC")
-      request.copy(HttpJobRequest.actionProperty, action2).action shouldBe action2
-      request.copy[Map[String, DataType]](HttpJobRequest.schemaProperty, schema2).schema shouldBe schema2
-      request.copy(HttpJobRequest.configProperty, config2).config shouldBe config2
+      request.copy(HttpJobRequest.action, action2).action shouldBe action2
+      request.copy[Map[String, DataType]](HttpJobRequest.schema, schema2).schema shouldBe schema2
+      request.copy(HttpJobRequest.config, config2).config shouldBe config2
     }
     assert(HttpJobRequest(uuid, name, action, path, schema, config))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    OharaData.uuidProperty.set(oharaConfig, uuid)
+    OharaData.uuid.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    OharaData.nameProperty.set(oharaConfig, name)
+    OharaData.name.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    HttpJobRequest.pathProperty.set(oharaConfig, path)
+    HttpJobRequest.path.set(oharaConfig, path)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    HttpJobRequest.actionProperty.set(oharaConfig, action)
+    HttpJobRequest.action.set(oharaConfig, action)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    HttpJobRequest.schemaProperty.set(oharaConfig, schema)
+    HttpJobRequest.schema.set(oharaConfig, schema)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    HttpJobRequest.configProperty.set(oharaConfig, config)
+    HttpJobRequest.config.set(oharaConfig, config)
     assert(new HttpJobRequest(oharaConfig))
 
     HttpJobRequest(action, path, schema, config).name shouldBe classOf[HttpJobRequest].getSimpleName
@@ -74,20 +74,20 @@ class TestHttpJobData extends SmallTest with Matchers {
 
       val status2 = NON_RUNNING
       val config2 = Map("A" -> "b", "c" -> "d", "DDD" -> "22")
-      response.copy(HttpJobResponse.statusProperty, status2).status shouldBe status2
-      response.copy(HttpJobResponse.configProperty, config2).config shouldBe config2
+      response.copy(HttpJobResponse.status, status2).status shouldBe status2
+      response.copy(HttpJobResponse.config, config2).config shouldBe config2
     }
     assert(HttpJobResponse(uuid, name, status, config))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new HttpJobResponse(oharaConfig)
-    OharaData.uuidProperty.set(oharaConfig, uuid)
+    OharaData.uuid.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    OharaData.nameProperty.set(oharaConfig, name)
+    OharaData.name.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new HttpJobRequest(oharaConfig)
-    HttpJobResponse.statusProperty.set(oharaConfig, status)
+    HttpJobResponse.status.set(oharaConfig, status)
     an[IllegalArgumentException] should be thrownBy new HttpJobResponse(oharaConfig)
-    HttpJobResponse.configProperty.set(oharaConfig, config)
+    HttpJobResponse.config.set(oharaConfig, config)
     assert(new HttpJobResponse(oharaConfig))
 
     HttpJobResponse(status, config).name shouldBe classOf[HttpJobResponse].getSimpleName

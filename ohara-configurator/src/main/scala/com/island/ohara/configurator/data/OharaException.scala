@@ -2,7 +2,7 @@ package com.island.ohara.configurator.data
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.island.ohara.config.{OharaConfig, OharaProperty}
+import com.island.ohara.config.{OharaConfig, OharaJson, OharaProperty}
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 /**
@@ -20,9 +20,11 @@ class OharaException(config: OharaConfig) extends OharaData(config) {
 
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaException.properties
 
-  def stack: String = OharaException.stackProperty.require(config)
+  def stack: String = OharaException.stack.require(config)
 
-  def message: String = OharaException.descriptionProperty.require(config)
+  def message: String = OharaException.message.require(config)
+
+  def typeName: String = OharaException.typeName.require(config)
 }
 
 object OharaException {
@@ -32,25 +34,36 @@ object OharaException {
     */
   private[this] val INDEXER = new AtomicLong(0)
 
+  /**
+    * create a OharaSchema with specified config
+    * @param json config in json format
+    * @return a new OharaSchema
+    */
+  def apply(json: OharaJson): OharaException = apply(OharaConfig(json))
+
+  /**
+    * create a OharaSchema with specified config
+    * @param config config
+    * @return a new OharaSchema
+    */
+  def apply(config: OharaConfig): OharaException = new OharaException(config)
+
   def apply(exception: Throwable): OharaException = apply(exception.getMessage, exception)
 
   def apply(description: String, exception: Throwable): OharaException = {
     val config = OharaConfig()
-    OharaData.uuidProperty.set(config, INDEXER.getAndIncrement().toString)
-    OharaData.nameProperty.set(config, OharaException.getClass.getSimpleName)
-    stackProperty.set(config, ExceptionUtils.getStackTrace(exception))
-    descriptionProperty.set(config, description)
+    OharaData.uuid.set(config, INDEXER.getAndIncrement().toString)
+    OharaData.name.set(config, OharaException.getClass.getSimpleName)
+    OharaException.stack.set(config, ExceptionUtils.getStackTrace(exception))
+    OharaException.message.set(config, description)
+    OharaException.typeName.set(config, exception.getClass.getName)
     new OharaException(config)
   }
-  def properties: Seq[OharaProperty[_]] = Array(descriptionProperty, stackProperty)
-  val descriptionProperty: OharaProperty[String] = OharaProperty.builder
-    .key("ohara-exception-description")
-    .alias("description")
-    .description("the description of ohara exception")
-    .stringProperty
-  val stackProperty: OharaProperty[String] = OharaProperty.builder
-    .key("ohara-exception-stack")
-    .alias("stack")
-    .description("the stack of ohara exception")
-    .stringProperty
+  def properties: Seq[OharaProperty[_]] = Array(typeName, message, stack)
+  val typeName: OharaProperty[String] =
+    OharaProperty.builder.key("type").description("the type name of ohara exception").stringProperty
+  val message: OharaProperty[String] =
+    OharaProperty.builder.key("description").description("the description of ohara exception").stringProperty
+  val stack: OharaProperty[String] =
+    OharaProperty.builder.key("stack").description("the stack of ohara exception").stringProperty
 }

@@ -4,7 +4,7 @@ import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestPropertyBuilder extends SmallTest with Matchers {
+class TestOharaPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testBuildWithoutDefault(): Unit = {
@@ -57,14 +57,13 @@ class TestPropertyBuilder extends SmallTest with Matchers {
 
   @Test
   def testClear(): Unit = {
-    val builder = OharaProperty.builder.key("key0").description("desc0").alias("alias0")
+    val builder = OharaProperty.builder.key("key0").description("desc0")
 
-    val property = builder.clear().key("key1").description("desc1").alias("alias1").intProperty(100)
+    val property = builder.clear().key("key1").description("desc1").intProperty(100)
 
     property.key shouldBe "key1"
     property.description shouldBe "desc1"
     property.default.get shouldBe 100
-    property.alias shouldBe "alias1"
   }
 
   @Test
