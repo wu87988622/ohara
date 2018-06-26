@@ -1,6 +1,7 @@
 package com.island.ohara.configurator.call
 
 import java.util
+import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
 
@@ -35,18 +36,19 @@ import scala.reflect.ClassTag
   * @param replications the number of topic partition. Used to build the topic
   * @param pollTimeout the specified waiting time elapses to poll the consumer
   * @param initializeTimeout the specified waiting time to initialize this call queue server
-  * @param config configuration
+  * @param topicOptions configuration
   * @tparam Request the supported request type
   * @tparam Response the supported response type
   */
-private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: OharaData](brokers: String,
-                                                                                         topicName: String,
-                                                                                         groupId: String,
-                                                                                         partitions: Int,
-                                                                                         replications: Short,
-                                                                                         pollTimeout: Duration,
-                                                                                         initializeTimeout: Duration,
-                                                                                         config: OharaConfig)
+private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: OharaData](
+  brokers: String,
+  topicName: String,
+  groupId: String,
+  partitions: Int,
+  replications: Short,
+  pollTimeout: Duration,
+  initializeTimeout: Duration,
+  topicOptions: Map[String, String])
     extends CallQueueServer[Request, Response] {
 
   private[this] val logger = Logger(getClass.getName)
@@ -65,33 +67,35 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     * the uuid for this instance
     */
   private[this] val uuid = UuidUtil.uuid()
-  config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-
-  /**
-    * the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
-    * distribute the request.
-    */
-  config.set(ConsumerConfig.GROUP_ID_CONFIG, groupId)
-  config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
+  private[this] val baseConfig: Properties = locally {
+    val config = new Properties
+    config.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    config.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
+    // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
+    // distribute the request.
+    config.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+    config
+  }
 
   /**
     * Initialize the topic
     */
-  KafkaUtil.createTopicIfNonexist(
-    config,
+  KafkaUtil.createTopicIfNonexistent(
+    brokers,
     topicName,
     partitions,
     replications,
+    topicOptions,
     initializeTimeout
   )
 
   private[this] val producer = newOrClose(
-    new KafkaProducer[OharaData, OharaData](config.toProperties,
+    new KafkaProducer[OharaData, OharaData](baseConfig,
                                             KafkaUtil.wrapSerializer(OharaDataSerializer),
                                             KafkaUtil.wrapSerializer(OharaDataSerializer)))
 
   private[this] val consumer = newOrClose(
-    new KafkaConsumer[OharaData, OharaData](config.toProperties,
+    new KafkaConsumer[OharaData, OharaData](baseConfig,
                                             KafkaUtil.wrapDeserializer(OharaDataSerializer),
                                             KafkaUtil.wrapDeserializer(OharaDataSerializer)))
   consumer.subscribe(util.Arrays.asList(topicName))

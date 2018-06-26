@@ -20,7 +20,7 @@ class CallQueueServerBuilder private[call] {
   private[this] var replications: Option[Short] = Some(CallQueue.DEFAULT_REPLICATION_NUMBER)
   private[this] var pollTimeout: Option[Duration] = Some(CallQueue.DEFAULT_POLL_TIMEOUT)
   private[this] var initializationTimeout: Option[Duration] = Some(CallQueue.DEFAULT_INITIALIZATION_TIMEOUT)
-  private[this] var config: Option[OharaConfig] = Some(OharaConfig())
+  private[this] var topicOptions: Option[Map[String, String]] = Some(Map[String, String]())
 
   /**
     * set the kafka brokers information.
@@ -83,11 +83,11 @@ class CallQueueServerBuilder private[call] {
   }
 
   /**
-    * @param _config extra configuration passed to call queue client
+    * @param _topicOptions extra configuration passed to call queue client to build the topic
     * @return this builder
     */
-  def configuration(_config: OharaConfig): CallQueueServerBuilder = {
-    this.config = Some(_config)
+  def topicOptions(_topicOptions: Map[String, String]): CallQueueServerBuilder = {
+    this.topicOptions = Some(_topicOptions)
     this
   }
 
@@ -116,6 +116,6 @@ class CallQueueServerBuilder private[call] {
       replications.get,
       pollTimeout.get,
       initializationTimeout.get,
-      config.get
+      topicOptions.get
     )
 }

@@ -1,10 +1,11 @@
 package com.island.ohara.configurator.store
 
 import java.util
+import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
 
-import com.island.ohara.config.{OharaConfig, UuidUtil}
+import com.island.ohara.config.UuidUtil
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.serialization.Serializer
@@ -12,6 +13,7 @@ import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.header.Header
 
@@ -48,7 +50,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
                                replications: Short,
                                pollTimeout: Duration,
                                initializationTimeout: Duration,
-                               config: OharaConfig)
+                               topicOptions: Map[String, String])
     extends Store[K, V]
     with CloseOnce {
 
@@ -66,31 +68,44 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     */
   private[this] val HEADER_INDEX = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
-  config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-  config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
+  private[this] val baseConfig: Properties = locally {
+    val config = new Properties
+    config.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    config.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
+    config.setProperty(ConsumerConfig.GROUP_ID_CONFIG, uuid)
+    config
+  }
+
+  if (!topicOptions
+        .get(TopicConfig.CLEANUP_POLICY_CONFIG)
+        .map(_.equals(TopicConfig.CLEANUP_POLICY_COMPACT))
+        .getOrElse(true))
+    throw new IllegalArgumentException(
+      s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_COMPACT}")
+
   // enable kafka save the latest message for each key
-  // we use magic string since the constant is located in kafka-core. Importing the whole core project is too expensive.
-  config.set("log.cleanup.policy", "compact")
-  config.set(ConsumerConfig.GROUP_ID_CONFIG, uuid)
+  private[this] val topicConfig
+    : Map[String, String] = topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT)
 
   /**
     * Initialize the topic
     */
-  KafkaUtil.createTopicIfNonexist(
-    config,
+  KafkaUtil.createTopicIfNonexistent(
+    brokers,
     topicName,
     partitions,
     replications,
+    topicConfig,
     initializationTimeout
   )
 
   private[this] val consumer = newOrClose(
-    new KafkaConsumer[K, V](config.toProperties,
+    new KafkaConsumer[K, V](baseConfig,
                             KafkaUtil.wrapDeserializer(keySerializer),
                             KafkaUtil.wrapDeserializer(valueSerializer)))
   consumer.subscribe(util.Arrays.asList(topicName))
   private[this] val producer = newOrClose(
-    new KafkaProducer[K, V](config.toProperties,
+    new KafkaProducer[K, V](baseConfig,
                             KafkaUtil.wrapSerializer(keySerializer),
                             KafkaUtil.wrapSerializer(valueSerializer)))
   private[this] val updateLock = new Object

@@ -1,11 +1,13 @@
 package com.island.ohara.kafka
 
 import java.util
+import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.serialization.Serializer
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 
 import scala.concurrent.duration._
@@ -74,15 +76,20 @@ object KafkaUtil {
   def exist(admin: AdminClient, topicName: String): Boolean =
     admin.listTopics().names().thenApply(_.contains(topicName)).get()
 
-  def createTopicIfNonexist(config: OharaConfig,
-                            topicName: String,
-                            partitions: Int,
-                            replication: Short,
-                            timeout: Duration = 10 seconds): Unit = {
-    CloseOnce.doClose(AdminClient.create(config.toProperties))(admin => {
+  def createTopicIfNonexistent(brokers: String,
+                               topicName: String,
+                               partitions: Int,
+                               replication: Short,
+                               topicConfig: Map[String, String] = Map[String, String](),
+                               timeout: Duration = 10 seconds): Unit = {
+    import scala.collection.JavaConverters._
+    val adminProps = new Properties()
+    adminProps.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    CloseOnce.doClose(AdminClient.create(adminProps))(admin => {
       if (!exist(admin, topicName)) {
         admin
-          .createTopics(util.Arrays.asList(new NewTopic(topicName, partitions, replication)))
+          .createTopics(
+            util.Arrays.asList(new NewTopic(topicName, partitions, replication).configs(topicConfig.asJava)))
           .values()
           .get(topicName)
           .get(timeout.toMillis, TimeUnit.MILLISECONDS)

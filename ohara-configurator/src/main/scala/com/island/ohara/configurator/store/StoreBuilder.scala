@@ -1,6 +1,5 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.serialization.Serializer
 
 import scala.concurrent.duration.Duration
@@ -16,7 +15,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
   private[this] var replications: Option[Short] = Some(Store.DEFAULT_REPLICATION_NUMBER)
   private[this] var pollTimeout: Option[Duration] = Some(Store.DEFAULT_POLL_TIMEOUT)
   private[this] var initializationTimeout: Option[Duration] = Some(Store.DEFAULT_INITIALIZATION_TIMEOUT)
-  private[this] var config: Option[OharaConfig] = Some(OharaConfig())
+  private[this] var topicOptions: Option[Map[String, String]] = Some(Map[String, String]())
 
   /**
     * set the kafka brokers information.
@@ -79,11 +78,11 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
   }
 
   /**
-    * @param _config extra configuration passed to StoreBuilder
+    * @param _topicOptions extra configuration passed to StoreBuilder to build the topic
     * @return this builder
     */
-  def configuration(_config: OharaConfig): StoreBuilder[K, V] = {
-    this.config = Some(_config)
+  def topicOptions(_topicOptions: Map[String, String]): StoreBuilder[K, V] = {
+    this.topicOptions = Some(_topicOptions)
     this
   }
 
@@ -96,6 +95,6 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     replications.get,
     pollTimeout.get,
     initializationTimeout.get,
-    config.get
+    topicOptions.get
   )
 }

@@ -167,8 +167,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     * @tparam T subclass type
     * @return a subclass of ohara data
     */
-  private[this] def updateData[T <: OharaData](data: T): Option[T] =
-    store.update(data.uuid, data).filter(_.isInstanceOf[T]).map(_.asInstanceOf[T])
+  private[this] def updateData[T <: OharaData: ClassTag](data: T): Option[T] =
+    store.update(data.uuid, data).filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
 
   /**
     * Iterate the specified type. The unrelated type will be ignored.

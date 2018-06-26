@@ -1,15 +1,9 @@
 package com.island.ohara.configurator.store
 
-import java.util
-import java.util.concurrent.TimeUnit
-
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.{close, _}
-import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.StringSerializer
-import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -17,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 class TestTopicStore extends MediumTest with Matchers {
 
-  private[this] var testUtil: OharaTestUtil = _
+  private[this] val testUtil = new OharaTestUtil(3, 3)
   private[this] var store: Store[String, String] = _
 
   @Test
@@ -35,42 +29,6 @@ class TestTopicStore extends MediumTest with Matchers {
       another.get("aa") shouldBe Some("bb")
     } finally another.close()
 
-  }
-
-  @Test
-  def testRetention(): Unit = {
-    val config = OharaConfig()
-    // make small retention so as to trigger log clear
-    config.set("log.retention.ms", 1000)
-    doClose(
-      Store
-        .builder(StringSerializer, StringSerializer)
-        .brokers(testUtil.brokersString)
-        .topicName(testName.getMethodName + "copy")
-        .configuration(config)
-        .build()) { anotherStore =>
-      {
-        0 until 10 foreach (index => anotherStore.update("key", index.toString))
-        // the local cache do the de-duplicate
-        anotherStore.size shouldBe 1
-      }
-    }
-    // wait for the log clear
-    TimeUnit.SECONDS.sleep(3)
-    config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-    config.set("log.cleanup.policy", "compact")
-    config.set(ConsumerConfig.GROUP_ID_CONFIG, "testRetention")
-    val consumer = new KafkaConsumer[String, String](config.toProperties,
-                                                     KafkaUtil.wrapDeserializer(StringSerializer),
-                                                     KafkaUtil.wrapDeserializer(StringSerializer))
-    consumer.subscribe(util.Arrays.asList("testacid2"))
-    var record: ConsumerRecords[String, String] = null
-    var count = 0
-    do {
-      record = consumer.poll(1000)
-      if (record != null) count += 1
-    } while (record == null)
-    count shouldBe 1
   }
 
   /**
@@ -174,28 +132,8 @@ class TestTopicStore extends MediumTest with Matchers {
     }
   }
 
-  @Test
-  def testStoreBuilder(): Unit = {
-    var builder = Store.builder(StringSerializer, StringSerializer)
-    an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.initializationTimeout(10 seconds)
-    an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.pollTimeout(1 seconds)
-    an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.replications(1)
-    an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.partitions(3)
-    an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.topicName(testName.getMethodName)
-    an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.brokers(testUtil.brokersString)
-    val store = builder.build()
-    store.close()
-  }
-
   @Before
   def before(): Unit = {
-    testUtil = new OharaTestUtil(3, 3)
     store = Store
       .builder(StringSerializer, StringSerializer)
       .brokers(testUtil.brokersString)

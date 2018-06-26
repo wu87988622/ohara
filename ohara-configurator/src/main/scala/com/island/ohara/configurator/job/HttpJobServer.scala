@@ -6,14 +6,14 @@ import com.island.ohara.io.CloseOnce
 
 import scala.concurrent.duration.Duration
 
-class HttpJobServer(brokers: String, groupId: String, topicName: String, config: OharaConfig = OharaConfig())
+class HttpJobServer(brokers: String, groupId: String, topicName: String, topicOptions: Map[String, String] = Map())
     extends CloseOnce {
 
   private[this] val server: CallQueueServer[HttpJobRequest, HttpJobResponse] = CallQueue.serverBuilder
     .brokers(brokers)
     .groupId(groupId)
     .topicName(topicName)
-    .configuration(config)
+    .topicOptions(topicOptions)
     .build[HttpJobRequest, HttpJobResponse]()
 
   def countOfUndealtTasks: Int = server.countOfUndealtTasks
