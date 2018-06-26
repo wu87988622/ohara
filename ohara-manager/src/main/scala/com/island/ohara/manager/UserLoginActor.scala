@@ -3,7 +3,7 @@ package com.island.ohara.manager
 import akka.actor.{Actor, ActorLogging, Props}
 
 object UserLoginActor {
-  final case object GetLoginUsers
+  object GetLoginUsers
   final case class Login(name: String, password: String)
   final case class Logout(name: String)
 
@@ -29,7 +29,7 @@ class UserLoginActor extends Actor with ActorLogging {
     case Login(name, password) =>
       val msg = loginUsers.find(_.name == name) match {
         case Some(user) =>
-          ReturnMessage(false, "already login")
+          ReturnMessage(false, s"$user already logged in")
         case _ =>
           ALL_USERS
             .find { user =>

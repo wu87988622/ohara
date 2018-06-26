@@ -35,9 +35,9 @@ class ApiRoutes(val system: ActorSystem) extends SprayJsonSupport {
       entity(as[User]) { user =>
         logger.info("login: " + user.name)
         val result = (userLoginActor ? Login(user.name, user.password.getOrElse(""))).mapTo[ReturnMessage[Boolean]]
-        onSuccess(result) { r =>
-          logger.info(r.message)
-          complete(r)
+        onSuccess(result) { returnMessage =>
+          logger.info(returnMessage.message)
+          complete(returnMessage)
         }
       }
     }
@@ -48,9 +48,9 @@ class ApiRoutes(val system: ActorSystem) extends SprayJsonSupport {
       entity(as[String]) { name =>
         logger.info(s"logout: $name")
         val result = (userLoginActor ? Logout(name)).mapTo[ReturnMessage[Boolean]]
-        onSuccess(result) { r =>
-          logger.info(r.message)
-          complete(r)
+        onSuccess(result) { returnMessage =>
+          logger.info(returnMessage.message)
+          complete(returnMessage)
         }
       }
     }
