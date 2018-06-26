@@ -80,7 +80,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
   /**
     * Initialize the topic
     */
-  KafkaUtil.createTopicIfNonexistent(
+  KafkaUtil.createTopicIfNotExist(
     brokers,
     topicName,
     partitions,

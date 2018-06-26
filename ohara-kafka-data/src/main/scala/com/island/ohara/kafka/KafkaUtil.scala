@@ -76,12 +76,12 @@ object KafkaUtil {
   def exist(admin: AdminClient, topicName: String): Boolean =
     admin.listTopics().names().thenApply(_.contains(topicName)).get()
 
-  def createTopicIfNonexistent(brokers: String,
-                               topicName: String,
-                               partitions: Int,
-                               replication: Short,
-                               topicConfig: Map[String, String] = Map[String, String](),
-                               timeout: Duration = 10 seconds): Unit = {
+  def createTopicIfNotExist(brokers: String,
+                            topicName: String,
+                            partitions: Int,
+                            replication: Short,
+                            topicConfig: Map[String, String] = Map[String, String](),
+                            timeout: Duration = 10 seconds): Unit = {
     import scala.collection.JavaConverters._
     val adminProps = new Properties()
     adminProps.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)

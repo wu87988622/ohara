@@ -90,7 +90,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   /**
     * Initialize the topic
     */
-  KafkaUtil.createTopicIfNonexistent(
+  KafkaUtil.createTopicIfNotExist(
     brokers,
     topicName,
     partitions,
