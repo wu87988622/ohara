@@ -1,6 +1,8 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.config.OharaJson
+import java.util.concurrent.{Executors, TimeUnit}
+
+import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data._
 import com.island.ohara.configurator.store.MemStore
 import com.island.ohara.io.CloseOnce._
@@ -9,6 +11,8 @@ import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.{BYTES, INT, LONG, StringSerializer}
 import org.junit.Test
 import org.scalatest.Matchers
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class TestConfigurator extends MediumTest with Matchers {
 
@@ -28,7 +32,7 @@ class TestConfigurator extends MediumTest with Matchers {
             {
               var response = client.post(configurator.hostname, configurator.port, path, schema)
               response.statusCode shouldBe 200
-              response.body shouldBe uuid
+              response.body.indexOf(uuid) should not be -1
               configurator.schemas.size shouldBe 1
               configurator.schemas.next().name shouldBe schemaName
               configurator.schemas.next().types.foreach {
@@ -92,8 +96,7 @@ class TestConfigurator extends MediumTest with Matchers {
       }
     }
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
-    val store = new MemStore[String, OharaData](StringSerializer, OharaDataSerializer)
-    doClose(Configurator.builder.hostname("localhost").port(0).store(store).build()) { configurator =>
+    doClose(Configurator.builder.hostname("localhost").port(0).inMemoryStore().build()) { configurator =>
       {
         doClose(RestClient()) { client =>
           schemas.foreach(client.post(configurator.hostname, configurator.port, path, _).statusCode shouldBe 200)
@@ -110,7 +113,6 @@ class TestConfigurator extends MediumTest with Matchers {
     var uuidIndex = 0
     val schemas: Seq[OharaJson] =
       (0 until schemaCount).map(index => OharaSchema.json(index.toString, Map("cf" -> BYTES), Map("cf" -> 1)))
-    val store = new MemStore[String, OharaData](StringSerializer, OharaDataSerializer)
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(
       Configurator.builder
@@ -121,7 +123,7 @@ class TestConfigurator extends MediumTest with Matchers {
         })
         .hostname("localhost")
         .port(0)
-        .store(store)
+        .inMemoryStore()
         .build()) { configurator =>
       {
         doClose(RestClient()) { client =>
@@ -130,16 +132,18 @@ class TestConfigurator extends MediumTest with Matchers {
               case (schema, index) => {
                 val response = client.post(configurator.hostname, configurator.port, path, schema)
                 response.statusCode shouldBe 200
-                response.body shouldBe uuids(index)
+                response.body.indexOf(uuids(index)) should not be -1
               }
             }
             // test list
             val response = client.get(configurator.hostname, configurator.port, path)
             response.statusCode shouldBe 200
-            val responsedUuids = response.body.substring(1, response.body.size - 1).replace(" ", "").split(",")
+            val responsedUuids = OharaConfig(OharaJson(response.body)).getMap("uuids").get
             responsedUuids.size shouldBe uuids.size
-            withClue(s"expected:${uuids.mkString(",")} actual:${responsedUuids.mkString(",")}")(
-              responsedUuids.sameElements(uuids) shouldBe true)
+            uuids.foreach(uuid => {
+              // the uuid is equal with name
+              responsedUuids.get(uuid).get shouldBe uuid
+            })
           }
         }
       }
@@ -148,9 +152,8 @@ class TestConfigurator extends MediumTest with Matchers {
 
   @Test
   def testInvalidSchema(): Unit = {
-    val store = new MemStore[String, OharaData](StringSerializer, OharaDataSerializer)
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
-    doClose(Configurator.builder.hostname("localhost").port(0).store(store).build()) { configurator =>
+    doClose(Configurator.builder.hostname("localhost").port(0).inMemoryStore().build()) { configurator =>
       {
         doClose(RestClient()) { client =>
           {
@@ -166,6 +169,27 @@ class TestConfigurator extends MediumTest with Matchers {
           }
         }
       }
+    }
+  }
+
+  @Test
+  def testMain(): Unit = {
+    an[UnsupportedOperationException] should be thrownBy ConfiguratorBuilder.main(Array[String]("localhost"))
+    an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
+      Array[String]("localhost", "localhost", "localhost"))
+    val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+    Future[Unit] {
+      ConfiguratorBuilder.main(Array[String]("localhost", "0"))
+    }(service)
+    try {
+      val endtime = System.currentTimeMillis() + 10 * 1000 // max time = 10 seconds
+      while (System.currentTimeMillis() <= endtime && !ConfiguratorBuilder.hasRunningConfigurator) {
+        TimeUnit.SECONDS.sleep(1)
+      }
+      ConfiguratorBuilder.hasRunningConfigurator shouldBe true
+    } finally {
+      ConfiguratorBuilder.closeRunningConfigurator = true
+      service.shutdownNow()
     }
   }
 }

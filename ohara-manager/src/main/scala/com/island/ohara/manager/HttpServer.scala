@@ -10,6 +10,7 @@ import akka.http.scaladsl.server.directives.ContentTypeResolver.Default
 import akka.stream.ActorMaterializer
 import com.island.ohara.manager.sample.UserRoutes
 import scala.io.StdIn
+import com.island.ohara.io.CloseOnce._
 
 object HttpServer extends UserRoutes {
 
@@ -51,26 +52,29 @@ object HttpServer extends UserRoutes {
       val webRoot: File = this.webRoot(PROP_WEBROOT_DEFAULT)
       log.info("Ohara-manager web root: " + webRoot.getCanonicalPath)
 
-      val apiRoutes = new ApiRoutes(system)
+      // TODO: a temporary information of configurator. How we pass the configurator information to ohara manager?
+      doClose(new ApiRoutes(system, ("localhost", 9999))) { apiRoutes =>
+        {
+          val route =
+            apiRoutes.routes ~
+              pathPrefix(Segments) { names =>
+                get {
+                  getFromDirectory(new File(webRoot, names.mkString("/")).getCanonicalPath)
+                }
+              } ~
+              userRoutes
 
-      val route =
-        apiRoutes.routes ~
-          pathPrefix(Segments) { names =>
-            get {
-              getFromDirectory(new File(webRoot, names.mkString("/")).getCanonicalPath)
-            }
-          } ~
-          userRoutes
+          val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
-      val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+          log.info(s"Ohara-manager online at http://localhost:8080/")
 
-      log.info(s"Ohara-manager online at http://localhost:8080/")
+          //Await.result(system.whenTerminated, Duration.Inf)   // await infinite
 
-      //Await.result(system.whenTerminated, Duration.Inf)   // await infinite
-
-      log.info("Press RETURN to stop...")
-      StdIn.readLine()
-      bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
+          log.info("Press RETURN to stop...")
+          StdIn.readLine()
+          bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
+        }
+      }
     } catch {
       case e: Throwable =>
         log.error(e, e.toString)

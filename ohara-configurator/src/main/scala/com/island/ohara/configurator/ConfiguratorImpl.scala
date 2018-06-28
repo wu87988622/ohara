@@ -2,8 +2,10 @@ package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.StandardRoute
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data.{OharaData, OharaException, OharaSchema}
@@ -26,8 +28,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                                store: Store[String, OharaData],
                                initializationTimeout: Duration,
                                terminationTimeout: Duration)
-    extends Configurator
-    with Directives {
+    extends Configurator {
 
   /**
     * this route is used to handle the request to schema.
@@ -37,35 +38,34 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       StatusCodes.BadRequest -> OharaException(
         new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson.toString)
 
+    def handleException(function: () => StandardRoute) = try function()
+    catch {
+      case e: Throwable => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
+    }
     val addSchema = pathEnd {
       post {
         entity(as[String]) { body =>
-          try {
+          handleException(() => {
             val request = OharaConfig(OharaJson(body))
             val schema =
               OharaSchema(uuidGenerator(),
                           OharaData.name.require(request),
                           OharaSchema.columnType.require(request),
-                          OharaSchema.columnIndex.require(request))
+                          OharaSchema.columnOrder.require(request))
             updateData(schema)
-            complete(schema.uuid)
-          } catch {
-            case e: IllegalArgumentException => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
-          }
+            complete("\"uuid\":\"" + schema.uuid + "\"")
+          })
         }
       }
     }
 
-    val listSchema = pathEnd {
-      get {
-        complete(listUuid[OharaSchema])
-      }
-    }
+    val listSchema = pathEnd(get(handleException(() => complete(listUuid[OharaSchema]))))
 
     val getSchema = path(Segment) { uuid =>
       {
         get {
-          getData[OharaSchema](uuid).map(r => complete(r.toJson.toString)).getOrElse(rejectNonexistantUuid(uuid))
+          handleException(() =>
+            getData[OharaSchema](uuid).map(r => complete(r.toJson.toString)).getOrElse(rejectNonexistantUuid(uuid)))
         }
       }
     }
@@ -73,7 +73,11 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     val deleteSchema = path(Segment) { uuid =>
       {
         delete {
-          removeData[OharaSchema](uuid).map(_ => complete(StatusCodes.OK)).getOrElse(rejectNonexistantUuid(uuid))
+          handleException(
+            () =>
+              removeData[OharaSchema](uuid)
+                .map(data => complete(data.toJson.toString))
+                .getOrElse(rejectNonexistantUuid(uuid)))
         }
       }
     }
@@ -82,7 +86,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       {
         put {
           entity(as[String]) { body =>
-            try {
+            handleException(() => {
               getData[OharaSchema](previousUuid)
                 .map(_ => {
                   val request = OharaConfig(OharaJson(body))
@@ -90,14 +94,12 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                     OharaSchema(previousUuid,
                                 OharaData.name.require(request),
                                 OharaSchema.columnType.require(request),
-                                OharaSchema.columnIndex.require(request))
+                                OharaSchema.columnOrder.require(request))
                   updateData(schema)
-                  complete(StatusCodes.OK)
+                  complete("\"uuid\":\"" + previousUuid + "\"")
                 })
                 .getOrElse(rejectNonexistantUuid(previousUuid))
-            } catch {
-              case e: IllegalArgumentException => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
-            }
+            })
           }
         }
       }
@@ -111,17 +113,17 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
-  private[this] val route = pathPrefix(Configurator.VERSION)(schemaRoute) ~ path(Remaining)(_ => {
+  private[this] val route: server.Route = pathPrefix(Configurator.VERSION)(schemaRoute) ~ path(Remaining)(_ => {
     // TODO: just reject? by chia
     reject
   })
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[ConfiguratorImpl].getSimpleName}-system")
   private[this] implicit val actorMaterializer = ActorMaterializer()
-  private[this] val server: Http.ServerBinding =
+  private[this] val httpServer: Http.ServerBinding =
     Await.result(Http().bindAndHandle(route, hostname, _port), initializationTimeout.toMillis milliseconds)
 
-  override val port = server.localAddress.getPort
+  override val port = httpServer.localAddress.getPort
 
   override def schemas: Iterator[OharaSchema] = iterateData[OharaSchema]
 
@@ -129,8 +131,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
-    if (server != null)
-      CloseOnce.release(() => Await.result(server.unbind(), terminationTimeout.toMillis milliseconds), true)
+    if (httpServer != null)
+      CloseOnce.release(() => Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds), true)
     if (actorSystem != null)
       CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds), true)
     store.close()
@@ -138,7 +140,11 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
 
   import scala.reflect._
 
-  private[this] def listUuid[T <: OharaData: ClassTag](): String = s"[${iterateData[T].map(_.uuid).mkString(",")}]"
+  private[this] def listUuid[T <: OharaData: ClassTag](): String = {
+    val rval = OharaConfig()
+    rval.set("uuids", iterateData[T].map(d => (d.uuid -> d.name)).toMap)
+    rval.toJson.toString
+  }
 
   /**
     * Retrieve a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
@@ -182,4 +188,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     .map {
       case (_, data) => data.asInstanceOf[T]
     }
+
+  override def iterator: Iterator[OharaData] = store.map(_._2).iterator
+
+  override def size = store.size
 }

@@ -19,3 +19,24 @@ dependencies {
   testCompile libs.junit
 }
 
+/**
+ * run a configurator. the configurator created by this command is in standalone mode.
+ * So ... this command is just for testing.
+ */
+task runConfigurator(type: JavaExec, dependsOn: 'classes') {
+  doFirst {
+    println 'run the configurator ... you can use -Phost and -Pport to change the address and port of configurator'
+  }
+  String hostname = "localhost"
+  if(project.hasProperty('host')) {
+    hostname = "${project.getProperty('host')}"
+  }
+  String port = 0
+  if(project.hasProperty('port')) {
+    port = "${project.getProperty('port')}"
+  }
+  classpath = sourceSets.main.runtimeClasspath
+  main = "com.island.ohara.configurator.ConfiguratorBuilder"
+  args = Arrays.asList(hostname, port)
+}
+

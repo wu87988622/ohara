@@ -1,7 +1,10 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.configurator.data.OharaData
-import com.island.ohara.configurator.store.Store
+import java.util.concurrent.TimeUnit
+
+import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer}
+import com.island.ohara.configurator.store.{MemStore, Store}
+import com.island.ohara.serialization.StringSerializer
 
 import scala.concurrent.duration.Duration
 
@@ -54,6 +57,15 @@ class ConfiguratorBuilder {
     this
   }
 
+  /**
+    * set the in-memory store. Used in testing when there is no kafka.
+    * @return this builder
+    */
+  def inMemoryStore(): ConfiguratorBuilder = {
+    store = Some(new MemStore[String, OharaData](StringSerializer, OharaDataSerializer))
+    this
+  }
+
   def terminationTimeout(_terminationTimeout: Duration): ConfiguratorBuilder = {
     terminationTimeout = Some(_terminationTimeout)
     this
@@ -70,4 +82,45 @@ class ConfiguratorBuilder {
                                                    store.get,
                                                    initializationTimeout.get,
                                                    terminationTimeout.get)
+}
+
+object ConfiguratorBuilder {
+
+  /**
+    * Running a standalone configurator.
+    * NOTED: this main is exposed to build.gradle. If you want to move the main out of this class, please update the
+    * build.gradle also.
+    * @param args the first element is hostname and the second one is port
+    */
+  def main(args: Array[String]): Unit = {
+    // TODO: make the parse more friendly
+    val configurator = args.length match {
+      case 2 =>
+        Configurator.builder.hostname(args(0)).port(args(1).toInt).inMemoryStore().build()
+      case 1 => throw new UnsupportedOperationException("The configurator in production hasn't been completed")
+      case _ => throw new IllegalArgumentException("[Usage] <hostname> <port")
+    }
+    hasRunningConfigurator = true
+    try {
+      println(
+        s"start a standalone configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
+      println("enter ctrl+c to terminate the configurator")
+      while (!closeRunningConfigurator) {
+        TimeUnit.SECONDS.sleep(2)
+        println(s"Current data size:${configurator.size}")
+      }
+    } catch {
+      case _: InterruptedException => println("prepare to die")
+    } finally configurator.close()
+  }
+
+  /**
+    * visible for testing.
+    */
+  @volatile private[configurator] var hasRunningConfigurator = false
+
+  /**
+    * visible for testing.
+    */
+  @volatile private[configurator] var closeRunningConfigurator = false
 }

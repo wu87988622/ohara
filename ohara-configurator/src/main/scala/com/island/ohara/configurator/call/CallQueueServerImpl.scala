@@ -5,7 +5,7 @@ import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
 
-import com.island.ohara.config.{OharaConfig, UuidUtil}
+import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer, OharaException}
 import com.island.ohara.kafka.KafkaUtil
 import com.typesafe.scalalogging.Logger

@@ -4,7 +4,6 @@ import java.io.StringReader
 import java.util.{Objects, Properties}
 
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigRenderOptions, ConfigValueFactory}
-import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 
@@ -12,12 +11,8 @@ import scala.collection.mutable
   * Implemented by typesafe config.
   */
 private class MapConfig(another: Map[String, Either[String, Map[String, String]]] = null) extends OharaConfig {
-  private[this] val logger = Logger(getClass.getName)
   private[this] val config = new mutable.HashMap[String, Either[String, Map[String, String]]]()
-  if (another != null) {
-    config ++= another
-    logger.info("Succeed to initialize MapConfig by loading another config")
-  }
+  if (another != null) config ++= another
 
   override def exist(key: String): Boolean = config.contains(key)
 

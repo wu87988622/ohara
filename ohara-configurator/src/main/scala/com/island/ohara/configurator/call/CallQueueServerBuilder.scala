@@ -1,6 +1,5 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.configurator.data.OharaData
 
 import scala.concurrent.duration.Duration

@@ -1,7 +1,7 @@
 package com.island.ohara.manager
 
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.{MalformedRequestContentRejection, ValidationRejection}
+import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
@@ -12,7 +12,7 @@ import spray.json.DeserializationException
 class TestApiRoutes extends SmallTest with Matchers with ScalaFutures with ScalatestRouteTest {
   @Test
   def testLoginSuccess(): Unit = {
-    val apiRoutes = new ApiRoutes(system)
+    val apiRoutes = new ApiRoutes(system, null)
     val request = HttpRequest(
       method = HttpMethods.POST,
       uri = "/api/login",
@@ -27,7 +27,7 @@ class TestApiRoutes extends SmallTest with Matchers with ScalaFutures with Scala
 
   @Test
   def testLoginFail1(): Unit = {
-    val apiRoutes = new ApiRoutes(system)
+    val apiRoutes = new ApiRoutes(system, null)
     val request = HttpRequest(
       method = HttpMethods.POST,
       uri = "/api/login",
@@ -42,7 +42,7 @@ class TestApiRoutes extends SmallTest with Matchers with ScalaFutures with Scala
 
   @Test
   def testLoginFail2(): Unit = {
-    val apiRoutes = new ApiRoutes(system)
+    val apiRoutes = new ApiRoutes(system, null)
     val request = HttpRequest(method = HttpMethods.POST,
                               uri = "/api/login",
                               entity = HttpEntity(MediaTypes.`application/json`, "{}"))
@@ -57,7 +57,7 @@ class TestApiRoutes extends SmallTest with Matchers with ScalaFutures with Scala
 
   @Test
   def testLogoutFailed: Unit = {
-    val apiRoutes = new ApiRoutes(system)
+    val apiRoutes = new ApiRoutes(system, null)
     val requestLogout = HttpRequest(method = HttpMethods.POST,
                                     uri = "/api/logout",
                                     entity = HttpEntity(MediaTypes.`application/json`, "jack"))

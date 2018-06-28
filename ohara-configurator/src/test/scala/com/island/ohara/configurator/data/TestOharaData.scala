@@ -148,7 +148,7 @@ class TestOharaData extends SmallTest with Matchers {
       schema.uuid shouldBe uuid
       schema.name shouldBe name
       schema.types.sameElements(columns) shouldBe true
-      schema.indexes.sameElements(indexes) shouldBe true
+      schema.orders.sameElements(indexes) shouldBe true
       checkJsonContent(schema)
     }
     assert(OharaSchema(uuid, name, columns, indexes))
@@ -160,7 +160,7 @@ class TestOharaData extends SmallTest with Matchers {
     OharaData.name.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
     OharaSchema.columnType.set(oharaConfig, columns)
-    OharaSchema.columnIndex.set(oharaConfig, indexes)
+    OharaSchema.columnOrder.set(oharaConfig, indexes)
     assert(OharaSchema(oharaConfig))
   }
 

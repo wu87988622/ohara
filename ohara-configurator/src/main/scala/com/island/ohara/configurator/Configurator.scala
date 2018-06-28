@@ -1,11 +1,10 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.data.OharaSchema
+import com.island.ohara.configurator.data.{OharaData, OharaSchema}
 import com.island.ohara.io.CloseOnce
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{Duration, _}
 
 /**
   * Configurator works for controlling the jobs running in Ohara cluster. Configurator hosts a rest server in order
@@ -14,7 +13,7 @@ import scala.concurrent.duration._
   * Configurator stores all Ohara data in Ohara Store. Currently the store impl is based on kafka topic.
   * see TopicStore for more details
   */
-trait Configurator extends CloseOnce {
+trait Configurator extends Iterable[OharaData] with CloseOnce {
 
   /**
     * the hostname of rest server
@@ -39,7 +38,7 @@ object Configurator {
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
 
   val VERSION = "v0"
-  val SCHEMA_PATH = "schema"
+  val SCHEMA_PATH = "schemas"
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_TERMINATION_TIMEOUT: Duration = 10 seconds
 }

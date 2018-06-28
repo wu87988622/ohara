@@ -12,7 +12,7 @@ class OharaSchema(config: OharaConfig) extends OharaData(config) {
   override protected def extraProperties: Seq[OharaProperty[_]] = OharaSchema.properties
 
   def types: Map[String, DataType] = OharaSchema.columnType.require(config)
-  def indexes: Map[String, Int] = OharaSchema.columnIndex.require(config)
+  def orders: Map[String, Int] = OharaSchema.columnOrder.require(config)
 
   override def copy[T](prop: OharaProperty[T], value: T): OharaSchema = {
     val clone = config.snapshot
@@ -28,14 +28,14 @@ object OharaSchema {
     * NOTED: it is used in testing only
     * @param name name
     * @param types column types
-    * @param indexes column indexes
+    * @param orders column orders
     * @return json
     */
-  private[configurator] def json(name: String, types: Map[String, DataType], indexes: Map[String, Int]): OharaJson = {
+  def json(name: String, types: Map[String, DataType], orders: Map[String, Int]): OharaJson = {
     val config = OharaConfig()
     OharaData.name.set(config, name)
     columnType.set(config, types)
-    columnIndex.set(config, indexes)
+    columnOrder.set(config, orders)
     config.toJson
   }
 
@@ -57,23 +57,26 @@ object OharaSchema {
     * create an new OharaSchema with specified arguments
     * @param uuid uuid
     * @param name target name
-    * @param columns columnName-type
+    * @param types columnName-type
     * @return an new OharaSchema
     */
-  def apply(uuid: String, name: String, columns: Map[String, DataType], indexes: Map[String, Int]): OharaSchema = {
+  def apply(uuid: String, name: String, types: Map[String, DataType], orders: Map[String, Int]): OharaSchema = {
     val oharaConfig = OharaConfig()
     OharaData.uuid.set(oharaConfig, uuid)
     OharaData.name.set(oharaConfig, name)
-    columnType.set(oharaConfig, columns)
-    columnIndex.set(oharaConfig, indexes)
+    columnType.set(oharaConfig, types)
+    columnOrder.set(oharaConfig, orders)
     new OharaSchema(oharaConfig)
   }
 
   def properties: Seq[OharaProperty[_]] = Array(columnType)
 
   val columnType: OharaProperty[Map[String, DataType]] =
-    OharaProperty.builder.key("type").description("the column type of ohara schema").mapProperty(DataType.of(_), _.name)
+    OharaProperty.builder
+      .key("types")
+      .description("the column type of ohara schema")
+      .mapProperty(DataType.of(_), _.name)
 
-  val columnIndex: OharaProperty[Map[String, Int]] =
-    OharaProperty.builder.key("index").description("the column index of ohara schema").mapProperty(_.toInt, _.toString)
+  val columnOrder: OharaProperty[Map[String, Int]] =
+    OharaProperty.builder.key("orders").description("the column order of ohara schema").mapProperty(_.toInt, _.toString)
 }

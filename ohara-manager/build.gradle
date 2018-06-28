@@ -2,13 +2,13 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
+  compile project(':ohara-common')
+  compile project(':ohara-configurator')
   compile libs.scala
   compile libs.akkaHttp
   compile libs.akkaHttpTestKit
   compile libs.sprayJson
   compile libs.akkaStream
-  //compile libs.slf4jApi
-  //compile libs.slf4jlog4j
   compile libs.scalaLogging
 
   testCompile project(":ohara-common").sourceSets.test.output

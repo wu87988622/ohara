@@ -1,6 +1,5 @@
 package com.island.ohara.configurator.job
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.configurator.call.{CallQueue, CallQueueServer, CallQueueTask}
 import com.island.ohara.io.CloseOnce
 
