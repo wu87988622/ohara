@@ -38,15 +38,26 @@ abstract class OharaData(private val config: OharaConfig) {
     */
   def toJson: OharaJson = config.toJson
 
-  override def equals(obj: scala.Any): Boolean = obj match {
-    case another: OharaData => config.equals(another.config)
-    case _                  => false
+  override def equals(obj: scala.Any): Boolean = equals(obj, true)
+
+  def equals(obj: scala.Any, includeUuid: Boolean): Boolean = obj match {
+    case another: OharaData =>
+      if (!includeUuid) {
+        val configCopy = OharaConfig(config)
+        configCopy.remove(OharaData.uuid.key)
+        val anotherConfigCopy = OharaConfig(config)
+        anotherConfigCopy.remove(OharaData.uuid.key)
+        configCopy.equals(anotherConfigCopy)
+      } else config.equals(another.config)
+    case _ => false
   }
 
   /**
     * @return the valid properties for this ohara data
     */
   protected def extraProperties: Seq[OharaProperty[_]]
+
+  override def toString(): String = config.toString()
 }
 
 object OharaData {

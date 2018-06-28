@@ -14,6 +14,8 @@ class OharaSchema(config: OharaConfig) extends OharaData(config) {
   def types: Map[String, DataType] = OharaSchema.columnType.require(config)
   def orders: Map[String, Int] = OharaSchema.columnOrder.require(config)
 
+  def disabled: Boolean = OharaSchema.disabled.require(config)
+
   override def copy[T](prop: OharaProperty[T], value: T): OharaSchema = {
     val clone = config.snapshot
     prop.set(clone, value)
@@ -31,11 +33,12 @@ object OharaSchema {
     * @param orders column orders
     * @return json
     */
-  def json(name: String, types: Map[String, DataType], orders: Map[String, Int]): OharaJson = {
+  def json(name: String, types: Map[String, DataType], orders: Map[String, Int], disabled: Boolean): OharaJson = {
     val config = OharaConfig()
     OharaData.name.set(config, name)
     columnType.set(config, types)
     columnOrder.set(config, orders)
+    OharaSchema.disabled.set(config, disabled)
     config.toJson
   }
 
@@ -56,20 +59,37 @@ object OharaSchema {
   /**
     * create an new OharaSchema with specified arguments
     * @param uuid uuid
+    * @param json remaining options in json format
+    * @return an new OharaSchema
+    */
+  def apply(uuid: String, json: OharaJson): OharaSchema = {
+    val oharaConfig = OharaConfig(json)
+    OharaData.uuid.set(oharaConfig, uuid)
+    new OharaSchema(oharaConfig)
+  }
+
+  /**
+    * create an new OharaSchema with specified arguments
+    * @param uuid uuid
     * @param name target name
     * @param types columnName-type
     * @return an new OharaSchema
     */
-  def apply(uuid: String, name: String, types: Map[String, DataType], orders: Map[String, Int]): OharaSchema = {
+  def apply(uuid: String,
+            name: String,
+            types: Map[String, DataType],
+            orders: Map[String, Int],
+            disabled: Boolean): OharaSchema = {
     val oharaConfig = OharaConfig()
     OharaData.uuid.set(oharaConfig, uuid)
     OharaData.name.set(oharaConfig, name)
     columnType.set(oharaConfig, types)
     columnOrder.set(oharaConfig, orders)
+    OharaSchema.disabled.set(oharaConfig, disabled)
     new OharaSchema(oharaConfig)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(columnType)
+  def properties: Seq[OharaProperty[_]] = Array(columnType, columnOrder, disabled)
 
   val columnType: OharaProperty[Map[String, DataType]] =
     OharaProperty.builder
@@ -79,4 +99,10 @@ object OharaSchema {
 
   val columnOrder: OharaProperty[Map[String, Int]] =
     OharaProperty.builder.key("orders").description("the column order of ohara schema").mapProperty(_.toInt, _.toString)
+
+  val disabled: OharaProperty[Boolean] =
+    OharaProperty.builder
+      .key("disabled")
+      .description("true if this schema is selectable in UI. otherwise false")
+      .booleanProperty
 }

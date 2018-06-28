@@ -40,7 +40,7 @@ class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
         var rsp = restClient.post(httpServer.localAddress.getHostName,
                                   httpServer.localAddress.getPort,
                                   "api/schemas",
-                                  OharaSchema.json(name, types, orders))
+                                  OharaSchema.json(name, types, orders, true))
         rsp.statusCode shouldBe 200
         toMap(rsp.body).requireString("status").toBoolean shouldBe true
         val uuid = toMap(rsp.body).requireString("uuid")
@@ -61,6 +61,7 @@ class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
         returnedSchema.name shouldBe name
         returnedSchema.types.sameElements(types) shouldBe true
         returnedSchema.orders.sameElements(orders) shouldBe true
+        returnedSchema.disabled shouldBe true
 
         // get a nonexistant schema
         rsp = restClient.get(httpServer.localAddress.getHostName, httpServer.localAddress.getPort, s"api/schemas/xxx")

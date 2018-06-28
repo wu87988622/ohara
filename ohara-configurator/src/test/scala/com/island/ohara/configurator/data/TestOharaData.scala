@@ -1,12 +1,36 @@
 package com.island.ohara.configurator.data
 
-import com.island.ohara.config.OharaConfig
+import com.island.ohara.config.{OharaConfig, OharaProperty}
 import com.island.ohara.rule.SmallTest
 import com.island.ohara.serialization.{BYTES, INT}
 import org.junit.Test
 import org.scalatest.Matchers
 
 class TestOharaData extends SmallTest with Matchers {
+
+  @Test
+  def testEquals(): Unit = {
+    val config0 = OharaConfig()
+    OharaData.uuid.set(config0, "123")
+    OharaData.name.set(config0, "123")
+    OharaData.implName.set(config0, "xxxx")
+    val data0 = new OharaData(config0) {
+      override def copy[T](prop: OharaProperty[T], value: T): OharaData = this
+      override protected def extraProperties: Seq[OharaProperty[_]] = Seq.empty[OharaProperty[_]]
+    }
+
+    val config1 = OharaConfig()
+    OharaData.uuid.set(config1, "1234")
+    OharaData.name.set(config1, "123")
+    OharaData.implName.set(config1, "xxxx")
+    val data1 = new OharaData(config1) {
+      override def copy[T](prop: OharaProperty[T], value: T): OharaData = this
+      override protected def extraProperties: Seq[OharaProperty[_]] = Seq.empty[OharaProperty[_]]
+    }
+
+    data0.equals(data1) shouldBe false
+    data0.equals(data1, false) shouldBe true
+  }
 
   @Test
   def testJobStatus(): Unit = {
@@ -144,14 +168,16 @@ class TestOharaData extends SmallTest with Matchers {
     val name = "name"
     val columns = Map("column-0" -> BYTES, "column-1" -> INT)
     val indexes = Map("column-0" -> 0, "column-1" -> 1)
+    val disabled = false
     def assert(schema: OharaSchema) = {
       schema.uuid shouldBe uuid
       schema.name shouldBe name
       schema.types.sameElements(columns) shouldBe true
       schema.orders.sameElements(indexes) shouldBe true
+      schema.disabled shouldBe disabled
       checkJsonContent(schema)
     }
-    assert(OharaSchema(uuid, name, columns, indexes))
+    assert(OharaSchema(uuid, name, columns, indexes, disabled))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
@@ -160,7 +186,10 @@ class TestOharaData extends SmallTest with Matchers {
     OharaData.name.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
     OharaSchema.columnType.set(oharaConfig, columns)
+    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
     OharaSchema.columnOrder.set(oharaConfig, indexes)
+    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
+    OharaSchema.disabled.set(oharaConfig, disabled)
     assert(OharaSchema(oharaConfig))
   }
 

@@ -30,28 +30,24 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                                terminationTimeout: Duration)
     extends Configurator {
 
+  private[this] def rejectNonexistantUuid(uuid: String) = complete(StatusCodes.BadRequest -> OharaException(
+    new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson.toString)
+
+  private[this] def handleException(function: () => StandardRoute) = try function()
+  catch {
+    case e: Throwable => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
+  }
+
   /**
     * this route is used to handle the request to schema.
     */
   private[this] val schemaRoute = locally {
-    def rejectNonexistantUuid(uuid: String) = complete(
-      StatusCodes.BadRequest -> OharaException(
-        new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson.toString)
 
-    def handleException(function: () => StandardRoute) = try function()
-    catch {
-      case e: Throwable => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
-    }
     val addSchema = pathEnd {
       post {
         entity(as[String]) { body =>
           handleException(() => {
-            val request = OharaConfig(OharaJson(body))
-            val schema =
-              OharaSchema(uuidGenerator(),
-                          OharaData.name.require(request),
-                          OharaSchema.columnType.require(request),
-                          OharaSchema.columnOrder.require(request))
+            val schema = OharaSchema(uuidGenerator(), OharaJson(body))
             updateData(schema)
             complete("\"uuid\":\"" + schema.uuid + "\"")
           })
@@ -89,12 +85,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
             handleException(() => {
               getData[OharaSchema](previousUuid)
                 .map(_ => {
-                  val request = OharaConfig(OharaJson(body))
-                  val schema =
-                    OharaSchema(previousUuid,
-                                OharaData.name.require(request),
-                                OharaSchema.columnType.require(request),
-                                OharaSchema.columnOrder.require(request))
+                  val schema = OharaSchema(previousUuid, OharaJson(body))
                   updateData(schema)
                   complete("\"uuid\":\"" + previousUuid + "\"")
                 })

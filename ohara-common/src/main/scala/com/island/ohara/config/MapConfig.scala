@@ -62,6 +62,8 @@ private class MapConfig(another: Map[String, Either[String, Map[String, String]]
       case (k, v) => (k, v.left.get)
     }
     .toMap
+
+  override def remove(key: String): Option[Either[String, Map[String, String]]] = config.remove(key)
 }
 
 private object MapConfig {

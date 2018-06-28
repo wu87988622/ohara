@@ -22,7 +22,8 @@ class TestConfigurator extends MediumTest with Matchers {
     val schemaName = "testSchema"
     val schemaType = Map("cf1" -> BYTES, "cf2" -> INT)
     val schemaIndex = Map("cf1" -> 1, "cf2" -> 2)
-    val schema = OharaSchema.json(schemaName, schemaType, schemaIndex)
+    val disabled = false
+    val schema = OharaSchema.json(schemaName, schemaType, schemaIndex, disabled)
     val uuid = System.currentTimeMillis().toString
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(Configurator.builder.uuidGenerator(() => uuid).hostname("localhost").port(0).store(store).build()) {
@@ -52,16 +53,15 @@ class TestConfigurator extends MediumTest with Matchers {
               val newName = "testSchema"
               val newTypes = Map("cf3" -> BYTES, "cf2" -> LONG)
               val newIndexes = Map("cf3" -> 1, "cf2" -> 2)
-              val newSchema = OharaSchema.json(newName, newTypes, newIndexes)
+              val newDisabled = true
+              val newSchema = OharaSchema.json(newName, newTypes, newIndexes, newDisabled)
               response = client.put(configurator.hostname, configurator.port, s"$path/$uuid", newSchema)
               response.statusCode shouldBe 200
 
               response = client.get(configurator.hostname, configurator.port, s"$path/$uuid")
               response.statusCode shouldBe 200
               returnedSchema = OharaSchema(OharaJson(response.body))
-              configurator.schemas.next().types.foreach {
-                case (name, t) => returnedSchema.types.get(name).get shouldBe t
-              }
+              configurator.schemas.next().equals(returnedSchema, false) shouldBe true
 
               response = client.delete(configurator.hostname, configurator.port, s"$path/$uuid")
               response.statusCode shouldBe 200
@@ -92,7 +92,7 @@ class TestConfigurator extends MediumTest with Matchers {
     val schemaCount = 100
     val schemas = (0 until schemaCount).map { index =>
       {
-        OharaSchema.json(index.toString, Map(index.toString -> BYTES), Map(index.toString -> index))
+        OharaSchema.json(index.toString, Map(index.toString -> BYTES), Map(index.toString -> index), false)
       }
     }
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
@@ -112,7 +112,7 @@ class TestConfigurator extends MediumTest with Matchers {
     val uuids: Seq[String] = (0 until schemaCount).map(_.toString)
     var uuidIndex = 0
     val schemas: Seq[OharaJson] =
-      (0 until schemaCount).map(index => OharaSchema.json(index.toString, Map("cf" -> BYTES), Map("cf" -> 1)))
+      (0 until schemaCount).map(index => OharaSchema.json(index.toString, Map("cf" -> BYTES), Map("cf" -> 1), false))
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(
       Configurator.builder

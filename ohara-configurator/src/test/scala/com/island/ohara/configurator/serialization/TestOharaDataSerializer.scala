@@ -12,7 +12,7 @@ class TestOharaDataSerializer extends SmallTest with Matchers {
   def testSerialization(): Unit = {
     val dataList: Array[OharaData] = Array(
       OharaTopic("uuid", "name", 100, 9),
-      OharaSchema("uuid", "name", Map("a" -> BYTES, "c" -> INT), Map("a" -> 0, "c" -> 1)),
+      OharaSchema("uuid", "name", Map("a" -> BYTES, "c" -> INT), Map("a" -> 0, "c" -> 1), false),
       OharaStreaming("uuid", "name", "c", "d"),
       OharaSource("uuid", "name", Map("a" -> "b", "c" -> "d")),
       OharaTarget("uuid", "name", Map("a" -> "b", "c" -> "d")),

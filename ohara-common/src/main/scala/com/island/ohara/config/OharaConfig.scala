@@ -318,6 +318,8 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
 
   // TODO: depending on 3th tool may be unstable. by chia
   override def hashCode(): Int = toString.hashCode()
+
+  def remove(key: String): Option[Either[String, Map[String, String]]]
 }
 
 object OharaConfig {
