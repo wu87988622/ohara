@@ -42,6 +42,20 @@
                 autoBinding: true,
                 bindClickEvent: function(){
                   $.each(this.clickBinding, _bindClickEvent);
+                },
+                _template: function(selector){
+                    _.templateSettings = {
+                        interpolate: /\{\{(.+?)\}\}/g
+                    };
+                    return _.template($(selector).clone().html());
+                },
+                createWidget: function(selectorTemplate, selector, prototype) {
+                    // create dom from template
+                     var template = this._template(selectorTemplate);
+                    // append into baseEl
+                     this.$baseEl.append(template);
+                    // $().widget(prototype) and return
+                     return $(selector).widget(prototype);
                 }
             }, prototype);
 
@@ -73,16 +87,25 @@ var oharaManager = {
     widget: {}
 };
 
-oharaManager.template = {
-    cloneTemplate: function(selector) {
-       _.templateSettings = {
-          interpolate: /\{\{(.+?)\}\}/g
-       };
-       return _.template($(selector).clone().html());
-    }
-};
-
 oharaManager.api = {
+    createSchema: function(createSchemaJSONStr, successCallback, errorCallback) {
+        $.post({
+          url: '../api/schemas',
+          contentType: 'application/json',
+          dataType: 'json',
+          data: createSchemaJSONStr,
+          success: function(result) {
+             var isCreateSchemaSuccess = result.status;
+             var uuid = result.uuid;
+             var errorMessage = result.description;
+             successCallback(isCreateSchemaSuccess, uuid, errorMessage);
+          },
+          error: function(XMLHttpRequest, textStatus, errorThrown) {
+             var errorMessage = XMLHttpRequest.statusText;
+             errorCallback(errorMessage);
+          }
+        })
+    },
     login: function(username, password, successCallback, errorCallback) {
         $.post({
           url: '../api/login',

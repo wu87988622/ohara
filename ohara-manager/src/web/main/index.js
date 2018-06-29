@@ -3,8 +3,10 @@ $(document).ready(function() {
    headerPanel.buildItems();
    headerPanel.bindClickEvent();
 
-   var contentPanel = $("#content-wrap .h2").widget(oharaManager.widget.content);
+   var contentHeaderPanel = $("#content-header .h2").widget(oharaManager.widget.contentHeader);
+   var contentPanel = $("#content").widget(oharaManager.widget.content);
    var cfg = $.extend({
+       "contentHeaderPanel": contentHeaderPanel,
        "contentPanel": contentPanel,
        autoBinding: false
    }, oharaManager.widget.menu);
