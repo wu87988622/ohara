@@ -25,6 +25,7 @@ class TestTopicStorePersistence extends MediumTest with Matchers {
   @Test
   def testRetention(): Unit = {
     val topicName = "testRetention"
+    val numberOfOtherMessages = 2048
     doClose(
       Store
         .builder(StringSerializer, StringSerializer)
@@ -40,42 +41,45 @@ class TestTopicStorePersistence extends MediumTest with Matchers {
         store.size shouldBe 1
         store.iterator.next()._2 shouldBe 9.toString
 
-        0 until 2048 foreach (index => store.update(index.toString, index.toString))
+        0 until numberOfOtherMessages foreach (index => store.update(index.toString, index.toString))
       }
     }
-    // wait for the log clear
-    TimeUnit.SECONDS.sleep(10)
-    val config = new Properties()
-    config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, testUtil.brokersString)
-    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-    config.put(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
-    doClose(
-      new KafkaConsumer[String, String](config,
-                                        KafkaUtil.wrapDeserializer(StringSerializer),
-                                        KafkaUtil.wrapDeserializer(StringSerializer))) { consumer =>
-      {
-        consumer.subscribe(util.Arrays.asList(topicName))
-        val messageBuffer = new ArrayBuffer[String]()
-        import scala.collection.JavaConverters._
-        var done = false
-        while (!done) {
-          val records: ConsumerRecords[String, String] = consumer.poll(5 * 1000)
-          if (records == null || records.isEmpty) done = true
-          else {
-            records
-              .records(topicName)
-              .asScala
-              .foreach(record => {
-                messageBuffer += record.key()
-              })
+    def checkContentOfTopic(): (Int, Int) = {
+      val config = new Properties()
+      config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, testUtil.brokersString)
+      config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
+      config.put(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
+      doClose(
+        new KafkaConsumer[String, String](config,
+                                          KafkaUtil.wrapDeserializer(StringSerializer),
+                                          KafkaUtil.wrapDeserializer(StringSerializer))) { consumer =>
+        {
+          consumer.subscribe(util.Arrays.asList(topicName))
+          val messageBuffer = new ArrayBuffer[String]()
+          import scala.collection.JavaConverters._
+          var done = false
+          while (!done) {
+            val records: ConsumerRecords[String, String] = consumer.poll(5 * 1000)
+            if (records == null || records.isEmpty) done = true
+            else {
+              records
+                .records(topicName)
+                .asScala
+                .foreach(record => {
+                  messageBuffer += record.key()
+                })
+            }
           }
+          (messageBuffer.filter(_.equals("key")).size, messageBuffer.filterNot(_.equals("key")).size)
         }
-        val keyCount: Int = messageBuffer.filter(_.equals("key")).size
-        val otherCount: Int = messageBuffer.filterNot(_.equals("key")).size
-        keyCount shouldBe 1
-        otherCount shouldBe 2048
       }
     }
+
+    import scala.concurrent.duration._
+    testUtil.await(() => {
+      val result = checkContentOfTopic()
+      result._1 == 1 && result._2 == numberOfOtherMessages
+    }, 60 seconds)
   }
 
   @After
