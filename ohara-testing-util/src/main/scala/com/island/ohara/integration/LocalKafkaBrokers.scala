@@ -19,7 +19,9 @@ import org.apache.kafka.common.utils.SystemTime
   * @param ports         the port to bind. default is a random number
   * @param baseConfig the properties passed to brokers
   */
-private class LocalKafkaBrokers(zkConnection: String, ports: Seq[Int], baseConfig: OharaConfig = OharaConfig())
+class LocalKafkaBrokers private[integration] (zkConnection: String,
+                                              ports: Seq[Int],
+                                              baseConfig: OharaConfig = OharaConfig())
     extends CloseOnce {
   private[this] val logger = Logger(getClass.getName)
   val brokers = new Array[KafkaServer](ports.size)

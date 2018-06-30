@@ -21,6 +21,7 @@ import org.apache.kafka.connect.source.SourceConnector
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 /**
@@ -29,7 +30,7 @@ import scala.concurrent.{Await, Future}
   *
   * How to use this class:
   * 1) create the OharaTestUtil with 1 broker (you can assign arbitrary number of brokers)
-  * val testUtil = new OharaTestUtil(1)
+  * val testUtil = OharaTestUtil.localBrokers(1)
   * 2) get the basic|producer|consumer OharaConfiguration
   * val config = testUtil.producerConfig
   * 3) instantiate your producer or consumer
@@ -42,19 +43,10 @@ import scala.concurrent.{Await, Future}
   * see TestOharaTestUtil for more examples
   * NOTED: the close() will shutdown all services including the passed consumers (see run())
   *
-  * @param brokerCount brokers count
   */
-//TODO The dataNodeCount doesn't implement at present
-class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: Int = 1) extends CloseOnce {
+class OharaTestUtil private[integration] (componentBox: ComponentBox) extends CloseOnce {
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
-  private[this] val zk = new LocalZk()
-  private[this] val localBrokerCluster = new LocalKafkaBrokers(zk.connection, ports(brokerCount))
-  private[this] val localWorkerCluster = new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(workerCount))
-  private[this] val localHDFSCluster = OharaTestUtil.localHDFS(dataNodeCount)
-
-  private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
-
   private[this] val restClient = RestClient()
 
   /**
@@ -62,14 +54,14 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * 1) bootstrap.servers
     * @return a basic config including the brokers information
     */
-  def config: OharaConfig = localBrokerCluster.config
+  def config: OharaConfig = componentBox.brokers.config
 
   /**
     * Generate a config for kafka producer. The config is composed of following setting.
     * 1) bootstrap.servers
     * @return a config used to instantiate kafka producer
     */
-  def producerConfig: OharaConfig = localBrokerCluster.producerConfig
+  def producerConfig: OharaConfig = componentBox.brokers.producerConfig
 
   /**
     * Generate a config for kafka consumer. The config is composed of following setting.
@@ -78,34 +70,34 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * 3) auto.offset.reset -> earliest
     * @return a config used to instantiate kafka consumer
     */
-  def consumerConfig: OharaConfig = localBrokerCluster.consumerConfig
+  def consumerConfig: OharaConfig = componentBox.brokers.consumerConfig
 
   /**
     * @return zookeeper connection used to create zk services
     */
-  def zkConnection: String = zk.connection
+  def zkConnection: String = componentBox.zookeeper.connection
 
   /**
     * @return a list of running brokers
     */
-  def kafkaBrokers: Seq[KafkaServer] = localBrokerCluster.brokers
+  def kafkaBrokers: Seq[KafkaServer] = componentBox.brokers.brokers
 
   /**
     * @return a list of running brokers
     */
-  def kafkaWorkers: Seq[Worker] = localWorkerCluster.workers
+  def kafkaWorkers: Seq[Worker] = componentBox.workers.workers
 
   /**
     * @return a list of running brokers
     */
-  def kafkaRestServers: Seq[RestServer] = localWorkerCluster.restServers
+  def kafkaRestServers: Seq[RestServer] = componentBox.workers.restServers
 
   /**
     * Exposing the brokers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
     *
     * @return brokers connection information
     */
-  def brokersString: String = localBrokerCluster.brokersString
+  def brokersString: String = componentBox.brokers.brokersString
 
   import scala.concurrent.duration._
 
@@ -117,27 +109,9 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
   def createTopic(topic: String): Unit = {
     CloseOnce.doClose(AdminClient.create(config.toProperties))(admin =>
       admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
-    if (!await(() => exist(topic), 10 second))
+    if (!OharaTestUtil.await(() => exist(topic), 10 second))
       throw new IllegalStateException(
         s"$topic isn't created successfully after 10 seconds. Perhaps we should increase the wait time?")
-  }
-
-  /**
-    * helper method. Loop the specified method until timeout or get true from method
-    *
-    * @param f            function
-    * @param d            duration
-    * @param freq         frequency to call the method
-    * @param useException true make this method throw exception after timeout.
-    * @return false if timeout and (useException = true). Otherwise, the return value is true
-    */
-  def await(f: () => Boolean, d: Duration, freq: Int = 100, useException: Boolean = true): Boolean = {
-    val startTs = System.currentTimeMillis()
-    while (d.toMillis >= (System.currentTimeMillis() - startTs)) {
-      if (f()) return true
-      else TimeUnit.MILLISECONDS.sleep(freq)
-    }
-    if (useException) throw new IllegalStateException("timeout") else false
   }
 
   /**
@@ -327,14 +301,14 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     *
     * @return
     */
-  def hdfsFileSystem(): FileSystem = localHDFSCluster.fileSystem()
+  def fileSystem(): FileSystem = componentBox.hdfs.fileSystem()
 
   /**
     *Get to temp dir path
     *
     * @return
     */
-  def hdfsTempDir(): String = localHDFSCluster.tmpDirPath()
+  def tmpDirectory(): String = componentBox.hdfs.tmpDirectory()
 
   /**
     * GET to kafka connectors
@@ -343,7 +317,7 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @return response content
     */
   private[this] def request(cmd: String): RestResponse = {
-    val url = localWorkerCluster.pickRandomRestServer().advertisedUrl()
+    val url = componentBox.workers.pickRandomRestServer().advertisedUrl()
     restClient.get(url.getHost, url.getPort, cmd)
   }
 
@@ -355,22 +329,140 @@ class OharaTestUtil(brokerCount: Int = 1, workerCount: Int = 1, dataNodeCount: I
     * @return response content
     */
   private[this] def requestToConnector(cmd: String, jsonBody: String): RestResponse = {
-    val url = localWorkerCluster.pickRandomRestServer().advertisedUrl()
+    val url = componentBox.workers.pickRandomRestServer().advertisedUrl()
     restClient.post(url.getHost, url.getPort, cmd, OharaJson(jsonBody))
   }
 
   override protected def doClose(): Unit = {
     stopConsumer = true
-    restClient.close()
-    consumerThreads.foreach(Await.result(_, 1 minute))
+    CloseOnce.close(restClient)
+    CloseOnce.release(() => consumerThreads.foreach(Await.result(_, 1 minute)))
     consumerThreads.clear()
-    localWorkerCluster.close()
-    localBrokerCluster.close()
-    localHDFSCluster.close()
-    zk.close()
+    componentBox.close()
   }
+
 }
 
 object OharaTestUtil {
-  def localHDFS(numOfNode: Int): LocalHDFS = LocalHDFS(numOfNode)
+
+  /**
+    * helper method. Loop the specified method until timeout or get true from method
+    *
+    * @param f            function
+    * @param d            duration
+    * @param freq         frequency to call the method
+    * @param useException true make this method throw exception after timeout.
+    * @return false if timeout and (useException = true). Otherwise, the return value is true
+    */
+  def await(f: () => Boolean, d: Duration, freq: Int = 100, useException: Boolean = true): Boolean = {
+    val startTs = System.currentTimeMillis()
+    while (d.toMillis >= (System.currentTimeMillis() - startTs)) {
+      if (f()) return true
+      else TimeUnit.MILLISECONDS.sleep(freq)
+    }
+    if (useException) throw new IllegalStateException("timeout") else false
+  }
+
+  def builder = new OharaTestUtilBuilder()
+
+  /**
+    * Create a test util with multi-brokers.
+    * NOTED: don't call the worker and hdfs service. otherwise you will get exception
+    * @param numberOfBrokers the number of brokers you want to run locally
+    * @return a test util
+    */
+  def localBrokers(numberOfBrokers: Int) = new OharaTestUtil(new ComponentBox(numberOfBrokers, -1, -1))
+
+  /**
+    * Create a test util with multi-brokers and multi-workers.
+    * NOTED: don't call the hdfs service. otherwise you will get exception
+    * @param numberOfBrokers the number of brokers you want to run locally
+    * @param numberOfWorkers the number of workers you want to run locally
+    * @return a test util
+    */
+  def localWorkers(numberOfBrokers: Int, numberOfWorkers: Int) = new OharaTestUtil(
+    new ComponentBox(numberOfBrokers, numberOfWorkers, -1))
+
+  /**
+    * Create a test util with single namenode and multi-datanode
+    * NOTED: don't call the workers and brokers service. otherwise you will get exception
+    * @param numOfNode the number of data nodes you want to run locally
+    * @return a test util
+    */
+  def localHDFS(numOfNode: Int): OharaTestUtil = new OharaTestUtil(new ComponentBox(-1, -1, numOfNode))
+
+}
+
+private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: Int, numberOfDataNodes: Int)
+    extends CloseOnce {
+  private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
+  private[this] val zk = if (numberOfBrokers > 0) newOrClose(new LocalZk()) else null
+  private[this] val localBrokerCluster =
+    if (numberOfBrokers > 0) newOrClose(new LocalKafkaBrokers(zk.connection, ports(numberOfBrokers))) else null
+  private[this] val localWorkerCluster =
+    if (numberOfWorkers > 0) newOrClose(new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(numberOfWorkers)))
+    else null
+  private[this] val localHDFSCluster = if (numberOfDataNodes > 0) newOrClose(new LocalHDFS(numberOfDataNodes)) else null
+
+  def zookeeper = require(zk, "You haven't started zookeeper")
+  def brokers = require(localBrokerCluster, "You haven't started brokers")
+  def workers = require(localWorkerCluster, "You haven't started workers")
+  def hdfs = require(localHDFSCluster, "You haven't started hdfs")
+
+  private[this] def require[T](obj: T, message: String) =
+    if (obj == null) throw new NullPointerException(message) else obj
+  override protected def doClose(): Unit = {
+    CloseOnce.close(localWorkerCluster)
+    CloseOnce.close(localBrokerCluster)
+    CloseOnce.close(localHDFSCluster)
+    CloseOnce.close(zk)
+  }
+}
+
+/**
+  * As we integrate more services into test util, the constructor of test util will get more complicated.
+  * This builder helps us to add services and it handle the dependency between services.
+  */
+class OharaTestUtilBuilder private[integration] {
+  private[this] var numberOfBrokers: Option[Int] = Some(3)
+  private[this] var numberOfWorkers: Option[Int] = Some(0)
+  private[this] var numberOfDataNodes: Option[Int] = Some(0)
+
+  private[this] def validate(number: Int): Int = if (number <= 0)
+    throw new IllegalArgumentException(s"the number:$number should be bigger than zero")
+  else number
+
+  /**
+    * @param numberOfBrokers the number of brokers you want to run
+    * @return this builder
+    */
+  def numberOfBrokers(numberOfBrokers: Int): OharaTestUtilBuilder = {
+    this.numberOfBrokers = Some(validate(numberOfBrokers))
+    this
+  }
+
+  /**
+    * @param numberOfWorkers the number of workers you want to run
+    * @return this builder
+    */
+  def numberOfWorkers(numberOfWorkers: Int): OharaTestUtilBuilder = {
+    this.numberOfWorkers = Some(validate(numberOfWorkers))
+    // We can't run the workers without brokers
+    if (numberOfBrokers.isEmpty) numberOfBrokers(1)
+    this
+  }
+
+  /**
+    * @param numberOfDatanodes the number of data node you want to run
+    * @return this builder
+    */
+  def numberOfDataNodes(numberOfDatanodes: Int): OharaTestUtilBuilder = {
+    this.numberOfDataNodes = Some(validate(numberOfDatanodes))
+    this
+  }
+
+  /**
+    * @return a test util with specified services
+    */
+  def build() = new OharaTestUtil(new ComponentBox(numberOfBrokers.get, numberOfWorkers.get, numberOfDataNodes.get))
 }

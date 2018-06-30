@@ -2,11 +2,8 @@ package com.island.ohara.hdfs
 
 import java.util
 
-import org.apache.hadoop.conf.Configuration
 import com.island.ohara.hdfs.creator.HDFSStorageCreator
-import org.apache.kafka.common.config.ConfigDef
-import org.apache.kafka.common.config.ConfigDef.Importance
-import org.apache.kafka.common.config.ConfigDef.Type
+import org.apache.hadoop.conf.Configuration
 
 /**
   * This class for props Map convert to object for convenient get data

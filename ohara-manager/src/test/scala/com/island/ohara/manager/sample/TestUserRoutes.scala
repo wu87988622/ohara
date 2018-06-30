@@ -4,10 +4,9 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.{ContentTypes, HttpRequest, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.island.ohara.rule.SmallTest
+import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.junit.JUnitSuiteLike
-import org.junit.Test
 
 // TODO:
 //  1. Please extend either SmallTest or MediumTest. With our test catalog, the RunWith is redundant.

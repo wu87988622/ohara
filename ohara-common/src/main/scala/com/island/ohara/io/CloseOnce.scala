@@ -55,8 +55,8 @@ object CloseOnce {
     * @param closeable nullable object
     * @param swallow true if you don't want to see the exception.
     */
-  def release(closeable: => Any, swallow: Boolean = true): Unit = {
-    try closeable
+  def release(closeable: () => Any, swallow: Boolean = true): Unit = {
+    try closeable()
     catch {
       case e: Throwable => if (swallow) logger.error("fail to close object", e) else throw e
     }

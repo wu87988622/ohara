@@ -1,10 +1,11 @@
 package com.island.ohara.configurator
 
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.Executors
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data._
 import com.island.ohara.configurator.store.MemStore
+import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rest.RestClient
 import com.island.ohara.rule.MediumTest
@@ -181,13 +182,9 @@ class TestConfigurator extends MediumTest with Matchers {
     Future[Unit] {
       ConfiguratorBuilder.main(Array[String]("localhost", "0"))
     }(service)
-    try {
-      val endtime = System.currentTimeMillis() + 10 * 1000 // max time = 10 seconds
-      while (System.currentTimeMillis() <= endtime && !ConfiguratorBuilder.hasRunningConfigurator) {
-        TimeUnit.SECONDS.sleep(1)
-      }
-      ConfiguratorBuilder.hasRunningConfigurator shouldBe true
-    } finally {
+    import scala.concurrent.duration._
+    try OharaTestUtil.await(() => ConfiguratorBuilder.hasRunningConfigurator, 10 seconds)
+    finally {
       ConfiguratorBuilder.closeRunningConfigurator = true
       service.shutdownNow()
     }

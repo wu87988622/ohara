@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 class TestCallQueue extends LargeTest with Matchers {
 
   private[this] val topicName = getClass.getSimpleName
-  private[this] val util = new OharaTestUtil(3, 3)
+  private[this] val util = OharaTestUtil.localBrokers(3)
   private[this] val groupId = UuidUtil.uuid()
   private[this] val defaultServerBuilder =
     CallQueue.serverBuilder.brokers(util.brokersString).topicName(topicName).groupId(groupId)
@@ -43,7 +43,7 @@ class TestCallQueue extends LargeTest with Matchers {
     an[TimeoutException] should be thrownBy Await.result(request, 3 second)
 
     // wait the one of servers receive the request
-    util.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
+    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
 
     // get the task and assign a response
     val task = servers.find(_.countOfUndealtTasks == 1).get.take()
@@ -58,7 +58,7 @@ class TestCallQueue extends LargeTest with Matchers {
     an[TimeoutException] should be thrownBy Await.result(request, 3 second)
 
     // wait the one of servers receive the request
-    util.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
+    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
 
     // get the task and assign a error
     val task = servers.find(_.countOfUndealtTasks == 1).get.take()
@@ -77,7 +77,7 @@ class TestCallQueue extends LargeTest with Matchers {
     an[TimeoutException] should be thrownBy Await.result(request, 3 second)
 
     // wait the one of servers receive the request
-    util.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
+    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
 
     // get the server accepting the request
     val server = servers.find(_.countOfUndealtTasks == 1).get
@@ -137,13 +137,13 @@ class TestCallQueue extends LargeTest with Matchers {
   }
 
   @Test
-  def testMulitRequest(): Unit = {
+  def testMultiRequest(): Unit = {
     val requestCount = 10
     val requests = 0 until requestCount map { _ =>
       client.request(requestData)
     }
     // wait the one of servers receive the request
-    util.await(() => servers.map(_.countOfUndealtTasks).sum == requestCount, 10 second)
+    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == requestCount, 10 second)
     val tasks = servers.flatMap(server => {
       Iterator.continually(server.take(1 second)).takeWhile(_.isDefined).map(_.get)
     })
@@ -158,14 +158,14 @@ class TestCallQueue extends LargeTest with Matchers {
   }
 
   @Test
-  def testMulitRequestFromDifferentClients(): Unit = {
+  def testMultiRequestFromDifferentClients(): Unit = {
     val clientCount = 10
     val clients = 0 until clientCount map { _ =>
       CallQueue.clientBuilder.brokers(util.brokersString).topicName(topicName).build[OharaSource, OharaSource]()
     }
     val requests = clients.map(_.request(requestData))
     // wait the one of servers receive the request
-    util.await(() => servers.map(_.countOfUndealtTasks).sum == clientCount, 10 second)
+    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == clientCount, 10 second)
     val tasks = servers.flatMap(server => {
       Iterator.continually(server.take(1 second)).takeWhile(_.isDefined).map(_.get)
     })

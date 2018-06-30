@@ -8,9 +8,10 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ContentTypeResolver.Default
 import akka.stream.ActorMaterializer
-import com.island.ohara.manager.sample.UserRoutes
-import scala.io.StdIn
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.manager.sample.UserRoutes
+
+import scala.io.StdIn
 
 object HttpServer extends UserRoutes {
 

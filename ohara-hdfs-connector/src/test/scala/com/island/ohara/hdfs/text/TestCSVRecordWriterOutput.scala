@@ -1,30 +1,29 @@
 package com.island.ohara.hdfs.text
 
-import java.io.{InputStream, OutputStream}
 import java.util
 
 import com.island.ohara.core.{Cell, Row}
-import com.island.ohara.hdfs.{HDFSSinkConnectorConfig, HadoopConfigurationConstants}
+import com.island.ohara.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.hdfs.storage.{HDFSStorage, Storage}
-import com.island.ohara.integration.{LocalHDFS, OharaTestUtil}
+import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.MediumTest
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.Test
 import org.scalatest.Matchers
-import com.island.ohara.io.CloseOnce._
-import org.apache.hadoop.fs.{FileSystem, Path}
 
 class TestCSVRecordWriterOutput extends MediumTest with Matchers {
 
   @Test
   def testWriteData(): Unit = {
-    val localHDFS: LocalHDFS = OharaTestUtil.localHDFS(1)
+    val testUtil = OharaTestUtil.localHDFS(1)
     val props: util.HashMap[String, String] = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, localHDFS.tmpDirPath)
+    props.put(HDFSSinkConnectorConfig.HDFS_URL, testUtil.tmpDirectory())
 
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
-    val fileSystem: FileSystem = localHDFS.fileSystem()
+    val fileSystem: FileSystem = testUtil.fileSystem()
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${localHDFS.tmpDirPath}/file1.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory()}/file1.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 

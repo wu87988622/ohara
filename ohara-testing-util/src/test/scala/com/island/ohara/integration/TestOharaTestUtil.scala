@@ -17,7 +17,7 @@ class TestOharaTestUtil extends LargeTest with Matchers {
 
   @Test
   def testCreateClusterWithMultiBrokers(): Unit = {
-    doClose(new OharaTestUtil(3)) { testUtil =>
+    doClose(OharaTestUtil.localBrokers(3)) { testUtil =>
       {
         testUtil.kafkaBrokers.size shouldBe 3
         testUtil.createTopic("my_topic")
@@ -39,7 +39,7 @@ class TestOharaTestUtil extends LargeTest with Matchers {
             }
           }
         }
-        testUtil.await(() => valueQueue.size() == totalMessageCount, 1 minute)
+        OharaTestUtil.await(() => valueQueue.size() == totalMessageCount, 1 minute)
         valueQueue.forEach((value: Array[Byte]) => ByteUtil.toString(value) shouldBe "value")
       }
     }
@@ -49,7 +49,7 @@ class TestOharaTestUtil extends LargeTest with Matchers {
   def testCreateConnectorWithMultiWorkers(): Unit = {
     val sourceTasks = 3
     val sinkTasks = 2
-    doClose(new OharaTestUtil(3, 2)) { testUtil =>
+    doClose(OharaTestUtil.localWorkers(3, 2)) { testUtil =>
       {
         testUtil.availableConnectors().body.contains(classOf[SimpleSourceConnector].getSimpleName) shouldBe true
         testUtil.runningConnectors().body shouldBe "[]"
@@ -64,9 +64,9 @@ class TestOharaTestUtil extends LargeTest with Matchers {
           resp.statusCode shouldBe 201
         }
         // wait for starting the source connector
-        testUtil.await(() => testUtil.runningConnectors().body.contains("my_source_connector"), 10 second)
+        OharaTestUtil.await(() => testUtil.runningConnectors().body.contains("my_source_connector"), 10 second)
         // wait for starting the source task
-        testUtil.await(() => SimpleSourceTask.taskCount.get >= sourceTasks, 10 second)
+        OharaTestUtil.await(() => SimpleSourceTask.taskCount.get >= sourceTasks, 10 second)
         resp = testUtil
           .sinkConnectorCreator()
           .name("my_sink_connector")
@@ -78,16 +78,18 @@ class TestOharaTestUtil extends LargeTest with Matchers {
           resp.statusCode shouldBe 201
         }
         // wait for starting the sink connector
-        testUtil.await(() => testUtil.runningConnectors().body.contains("my_sink_connector"), 10 second)
+        OharaTestUtil.await(() => testUtil.runningConnectors().body.contains("my_sink_connector"), 10 second)
         // wait for starting the sink task
-        testUtil.await(() => SimpleSinkTask.taskCount.get >= sinkTasks, 10 second)
+        OharaTestUtil.await(() => SimpleSinkTask.taskCount.get >= sinkTasks, 10 second)
 
         // check the data sent by source task
-        testUtil.await(() => SimpleSourceTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size, 30 second)
+        OharaTestUtil.await(() => SimpleSourceTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size,
+                            30 second)
         SimpleSourceTask.dataSet.foreach(value => SimpleSourceTask.taskValues.contains(value) shouldBe true)
 
         // check the data received by sink task
-        testUtil.await(() => SimpleSinkTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size, 30 second)
+        OharaTestUtil.await(() => SimpleSinkTask.taskValues.size == sourceTasks * SimpleSourceTask.dataSet.size,
+                            30 second)
         SimpleSourceTask.dataSet.foreach(value => SimpleSinkTask.taskValues.contains(value) shouldBe true)
       }
     }
@@ -95,17 +97,17 @@ class TestOharaTestUtil extends LargeTest with Matchers {
 
   @Test
   def testHDFSDataNodeWithMultiDataNodes(): Unit = {
-    doClose(new OharaTestUtil(3, 2, 1)) { testUtil =>
+    doClose(OharaTestUtil.localHDFS(1)) { testUtil =>
       {
-        testLocalHDFS(testUtil.hdfsFileSystem(), testUtil.hdfsTempDir())
+        testLocalHDFS(testUtil.fileSystem(), testUtil.tmpDirectory())
       }
     }
   }
 
   @Test
   def testLocalHDFSObject(): Unit = {
-    val localHDFS: LocalHDFS = OharaTestUtil.localHDFS(1)
-    testLocalHDFS(localHDFS.fileSystem(), localHDFS.tmpDirPath())
+    val testUtil = OharaTestUtil.localHDFS(1)
+    testLocalHDFS(testUtil.fileSystem(), testUtil.tmpDirectory())
   }
 
   def testLocalHDFS(fileSystem: FileSystem, hdfsTempDir: String): Unit = {

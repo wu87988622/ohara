@@ -21,14 +21,15 @@ import org.apache.kafka.common.serialization.{
   StringDeserializer,
   StringSerializer
 }
-import org.junit.{Before, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
-  private[this] val topicName = testName.getMethodName + "-topic"
+  private[this] val testUtil = OharaTestUtil.localWorkers(3, 1)
+  private[this] val topicName = "TestDataTransmissionOnCluster"
 
   @Before
   def setUp(): Unit = {
@@ -39,100 +40,83 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
   @Test
   def testRowProducer2RowConsumer(): Unit = {
     val row = Row.builder.append(Cell.builder.name("cf0").build(0)).append(Cell.builder.name("cf1").build(1)).build
-    doClose(new OharaTestUtil(3)) { testUtil =>
+    testUtil.kafkaBrokers.size shouldBe 3
+    testUtil.createTopic(topicName)
+    val (_, rowQueue) =
+      testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
+    val totalMessageCount = 100
+    doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
       {
-        testUtil.kafkaBrokers.size shouldBe 3
-        testUtil.createTopic(topicName)
-        val (_, rowQueue) =
-          testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
-        val totalMessageCount = 100
-        doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
-          producer =>
-            {
-              var count: Int = totalMessageCount
-              while (count > 0) {
-                producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row))
-                count -= 1
-              }
-            }
+        var count: Int = totalMessageCount
+        while (count > 0) {
+          producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row))
+          count -= 1
         }
-        testUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
-        rowQueue.forEach((r: Row) => {
-          r.cellCount shouldBe row.cellCount
-          r.seekCell(0).name shouldBe "cf0"
-          r.seekCell(0).value shouldBe 0
-          r.seekCell(1).name shouldBe "cf1"
-          r.seekCell(1).value shouldBe 1
-        })
       }
     }
+    OharaTestUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
+    rowQueue.forEach((r: Row) => {
+      r.cellCount shouldBe row.cellCount
+      r.seekCell(0).name shouldBe "cf0"
+      r.seekCell(0).value shouldBe 0
+      r.seekCell(1).name shouldBe "cf1"
+      r.seekCell(1).value shouldBe 1
+    })
   }
   @Test
   def testProducer2SinkConnector(): Unit = {
     val rowCount = 3
     val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
-    doClose(new OharaTestUtil(3)) { testUtil =>
+    val resp = testUtil
+      .sinkConnectorCreator()
+      .name("my_sink_connector")
+      .connectorClass(classOf[SimpleRowSinkConnector])
+      .topic(topicName)
+      .taskNumber(1)
+      .disableConverter
+      .run()
+    withClue(s"body:${resp.body}") {
+      resp.statusCode shouldBe 201
+    }
+
+    import scala.concurrent.duration._
+    OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
+
+    doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
       {
-        val resp = testUtil
-          .sinkConnectorCreator()
-          .name("my_sink_connector")
-          .connectorClass(classOf[SimpleRowSinkConnector])
-          .topic(topicName)
-          .taskNumber(1)
-          .disableConverter
-          .run()
-        withClue(s"body:${resp.body}") {
-          resp.statusCode shouldBe 201
-        }
-
-        import scala.concurrent.duration._
-        testUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
-
-        doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) {
-          producer =>
-            {
-              0 until rowCount foreach (_ =>
-                producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
-              producer.flush()
-            }
-        }
-        testUtil.await(() => SimpleRowSinkTask.receivedRows.size == rowCount, 30 second)
+        0 until rowCount foreach (_ =>
+          producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
+        producer.flush()
       }
     }
+    OharaTestUtil.await(() => SimpleRowSinkTask.receivedRows.size == rowCount, 30 second)
   }
 
   @Test
   def testSourceConnector2Consumer(): Unit = {
     val pollCountMax = 5
-    doClose(new OharaTestUtil(3)) { testUtil =>
-      {
-        val resp = testUtil
-          .sourceConnectorCreator()
-          .name("my_sink_connector")
-          .connectorClass(classOf[SimpleRowSourceConnector])
-          .topic(topicName)
-          .taskNumber(1)
-          .disableConverter
-          .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
-          .run()
-        withClue(s"body:${resp.body}") {
-          resp.statusCode shouldBe 201
-        }
+    val resp = testUtil
+      .sourceConnectorCreator()
+      .name("my_sink_connector")
+      .connectorClass(classOf[SimpleRowSourceConnector])
+      .topic(topicName)
+      .taskNumber(1)
+      .disableConverter
+      .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
+      .run()
+    withClue(s"body:${resp.body}") {
+      resp.statusCode shouldBe 201
+    }
 
-        import scala.concurrent.duration._
-        testUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
-        doClose(new RowConsumer[Array[Byte]](testUtil.consumerConfig.toProperties, new ByteArrayDeserializer)) {
-          consumer =>
-            {
-              consumer.subscribe(util.Arrays.asList(topicName))
-              val list = Iterator
-                .continually(consumer.poll(30 * 1000))
-                .takeWhile(record => record != null && !record.isEmpty)
-                .toList
-              // check the number of rows consumer has received
-              list.map(_.count()).sum shouldBe pollCountMax * SimpleRowSourceTask.rows.length
-            }
-        }
+    import scala.concurrent.duration._
+    OharaTestUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
+    doClose(new RowConsumer[Array[Byte]](testUtil.consumerConfig.toProperties, new ByteArrayDeserializer)) { consumer =>
+      {
+        consumer.subscribe(util.Arrays.asList(topicName))
+        val list =
+          Iterator.continually(consumer.poll(30 * 1000)).takeWhile(record => record != null && !record.isEmpty).toList
+        // check the number of rows consumer has received
+        list.map(_.count()).sum shouldBe pollCountMax * SimpleRowSourceTask.rows.length
       }
     }
   }
@@ -142,32 +126,33 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
     */
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
-    doClose(new OharaTestUtil(1)) { testUtil =>
-      testUtil.kafkaBrokers.size shouldBe 1
-      testUtil.createTopic(topicName)
+    testUtil.createTopic(topicName)
 
-      val row = Row.builder
-        .append(Cell.builder.name("c").build(3))
-        .append(Cell.builder.name("b").build(2))
-        .append(Cell.builder.name("a").build(1))
-        .build()
+    val row = Row.builder
+      .append(Cell.builder.name("c").build(3))
+      .append(Cell.builder.name("b").build(2))
+      .append(Cell.builder.name("a").build(1))
+      .build()
 
-      doClose(
-        new KafkaProducer[String, Row](testUtil.producerConfig.toProperties,
-                                       new StringSerializer,
-                                       KafkaUtil.wrapSerializer(RowSerializer))) { producer =>
-        producer.send(new ProducerRecord[String, Row](topicName, topicName, row)).get()
-      }
-
-      val (_, valueQueue) =
-        testUtil.run(topicName, true, new StringDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
-      testUtil.await(() => valueQueue.size() == 1, 10 seconds)
-      val fromKafka = valueQueue.take()
-
-      fromKafka.seekCell(0).name shouldBe "c"
-      fromKafka.seekCell(1).name shouldBe "b"
-      fromKafka.seekCell(2).name shouldBe "a"
-
+    doClose(
+      new KafkaProducer[String, Row](testUtil.producerConfig.toProperties,
+                                     new StringSerializer,
+                                     KafkaUtil.wrapSerializer(RowSerializer))) { producer =>
+      producer.send(new ProducerRecord[String, Row](topicName, topicName, row)).get()
     }
+
+    val (_, valueQueue) =
+      testUtil.run(topicName, true, new StringDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
+    OharaTestUtil.await(() => valueQueue.size() == 1, 10 seconds)
+    val fromKafka = valueQueue.take()
+
+    fromKafka.seekCell(0).name shouldBe "c"
+    fromKafka.seekCell(1).name shouldBe "b"
+    fromKafka.seekCell(2).name shouldBe "a"
+  }
+
+  @After
+  def tearDown(): Unit = {
+    testUtil.close()
   }
 }

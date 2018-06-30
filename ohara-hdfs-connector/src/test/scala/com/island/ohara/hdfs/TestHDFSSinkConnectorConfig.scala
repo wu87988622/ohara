@@ -1,6 +1,7 @@
 package com.island.ohara.hdfs
 
 import java.util
+
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers

@@ -14,8 +14,8 @@ import com.island.ohara.serialization.BYTES
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
 

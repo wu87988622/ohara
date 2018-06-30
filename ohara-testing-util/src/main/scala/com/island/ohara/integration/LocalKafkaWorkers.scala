@@ -25,7 +25,9 @@ import scala.util.Random
   * @param ports         the ports to bind for workers
   * @param baseConfig the properties is used to override the default configs
   */
-class LocalKafkaWorkers(brokersConn: String, ports: Seq[Int], baseConfig: OharaConfig = OharaConfig())
+private class LocalKafkaWorkers private[integration] (brokersConn: String,
+                                                      ports: Seq[Int],
+                                                      baseConfig: OharaConfig = OharaConfig())
     extends CloseOnce {
   private[this] val logger = Logger(getClass.getName)
   private[this] val validPorts = resolvePorts(ports)

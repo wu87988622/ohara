@@ -8,10 +8,10 @@ import com.island.ohara.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
 import com.island.ohara.io.ByteUtil
-import com.island.ohara.rule.MediumTest
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.RowProducer
 import com.island.ohara.kafka.connector.RowSinkTask
+import com.island.ohara.rule.MediumTest
 import org.apache.hadoop.fs.Path
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.ByteArraySerializer
@@ -50,8 +50,8 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
     val tmpDirPath = "/home/tmp"
     val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
 
-    doClose(new OharaTestUtil(3, 1)) { testUtil =>
-      val localURL = s"file://${testUtil.hdfsTempDir()}"
+    doClose(OharaTestUtil.builder.numberOfBrokers(3).numberOfWorkers(1).numberOfDataNodes(1).build()) { testUtil =>
+      val localURL = s"file://${testUtil.tmpDirectory()}"
       testUtil
         .sinkConnectorCreator()
         .name("my_sink_connector")
@@ -62,13 +62,13 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
         .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
         .run()
 
-      testUtil.await(() => SimpleHDFSSinkTask.taskProps.get("topics") == "my_connector_topic", 20 second)
-      testUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
-      testUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, 20 second)
-      testUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, 10 second)
-      testUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir() == "/data", 20 second)
-      testUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount() == 2000, 20 second)
-      testUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.offsetInconsistentSkip() == false, 20 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get("topics") == "my_connector_topic", 20 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, 20 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, 10 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir() == "/data", 20 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount() == 2000, 20 second)
+      OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.offsetInconsistentSkip() == false, 20 second)
     }
   }
 
@@ -87,11 +87,11 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
 
-    doClose(new OharaTestUtil(3, 1)) { testUtil =>
-      val fileSystem = testUtil.hdfsFileSystem()
+    doClose(OharaTestUtil.builder.numberOfBrokers(3).numberOfWorkers(1).numberOfDataNodes(1).build()) { testUtil =>
+      val fileSystem = testUtil.fileSystem()
       val storage = new HDFSStorage(fileSystem)
-      val tmpDirPath = s"${testUtil.hdfsTempDir}/tmp"
-      val dataDirPath = s"${testUtil.hdfsTempDir}/data"
+      val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
+      val dataDirPath = s"${testUtil.tmpDirectory}/data"
       doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
         {
           0 until rowCount foreach (_ =>
@@ -99,7 +99,7 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
           producer.flush()
         }
       }
-      val localURL = s"file://${testUtil.hdfsTempDir()}"
+      val localURL = s"file://${testUtil.tmpDirectory()}"
       testUtil
         .sinkConnectorCreator()
         .name("my_sink_connector")
@@ -118,19 +118,19 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
 
       Thread.sleep(20000);
       val partitionID: String = "partition0"
-      testUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, 10 seconds)
+      OharaTestUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, 10 seconds)
 
-      testUtil.await(() =>
-                       FileUtils.getStopOffset(
-                         storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 99,
-                     10 seconds)
+      OharaTestUtil.await(() =>
+                            FileUtils.getStopOffset(
+                              storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 99,
+                          10 seconds)
 
-      testUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName(_))
-                         .contains("part-000000090-000000099.csv"),
-                     10 seconds)
+      OharaTestUtil.await(() =>
+                            storage
+                              .list(s"$dataDirPath/$topicName/$partitionID")
+                              .map(FileUtils.fileName(_))
+                              .contains("part-000000090-000000099.csv"),
+                          10 seconds)
     }
   }
 
@@ -149,11 +149,11 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
 
-    doClose(new OharaTestUtil(3, 1)) { testUtil =>
-      val fileSystem = testUtil.hdfsFileSystem()
+    doClose(OharaTestUtil.builder.numberOfBrokers(3).numberOfWorkers(1).numberOfDataNodes(1).build()) { testUtil =>
+      val fileSystem = testUtil.fileSystem()
       val storage = new HDFSStorage(fileSystem)
-      val tmpDirPath = s"${testUtil.hdfsTempDir}/tmp"
-      val dataDirPath = s"${testUtil.hdfsTempDir}/data"
+      val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
+      val dataDirPath = s"${testUtil.tmpDirectory}/data"
 
       //Before running the Kafka Connector, create the file to local hdfs for test recover offset
       val partitionID: String = "partition0"
@@ -166,7 +166,7 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
           producer.flush()
         }
       }
-      val localURL = s"file://${testUtil.hdfsTempDir()}"
+      val localURL = s"file://${testUtil.tmpDirectory()}"
       testUtil
         .sinkConnectorCreator()
         .name("my_sink_connector")
@@ -189,19 +189,19 @@ class TestHDFSSinkConnector extends MediumTest with Matchers {
         .foreach(x => {
           println(s"file path: $x")
         })
-      testUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, 10 seconds)
+      OharaTestUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, 10 seconds)
 
-      testUtil.await(() =>
-                       FileUtils.getStopOffset(
-                         storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 199,
-                     10 seconds)
+      OharaTestUtil.await(() =>
+                            FileUtils.getStopOffset(
+                              storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 199,
+                          10 seconds)
 
-      testUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName(_))
-                         .contains("part-000000100-000000199.csv"),
-                     10 seconds)
+      OharaTestUtil.await(() =>
+                            storage
+                              .list(s"$dataDirPath/$topicName/$partitionID")
+                              .map(FileUtils.fileName(_))
+                              .contains("part-000000100-000000199.csv"),
+                          10 seconds)
     }
   }
 }

@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 
 class TestTopicStoreBuilder extends MediumTest with Matchers {
 
-  private[this] val testUtil = new OharaTestUtil(3, 3)
+  private[this] val testUtil = OharaTestUtil.localBrokers(3)
 
   @Test
   def testIncompleteArguments(): Unit = {

@@ -12,7 +12,7 @@ import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
   * @param _port    The port to bind. default is a random number
   * @param tickTime time to tick
   */
-private class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
+class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
   private[this] lazy val logger = Logger(getClass.getName)
   private[this] val port = if (_port <= 0) availablePort else _port
   private[this] val factory = new NIOServerCnxnFactory()

@@ -103,7 +103,6 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     new KafkaConsumer[K, V](baseConfig,
                             KafkaUtil.wrapDeserializer(keySerializer),
                             KafkaUtil.wrapDeserializer(valueSerializer)))
-  consumer.subscribe(util.Arrays.asList(topicName))
   private[this] val producer = newOrClose(
     new KafkaProducer[K, V](baseConfig,
                             KafkaUtil.wrapSerializer(keySerializer),
@@ -115,14 +114,15 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   /**
     * true if poller haven't grab any data recently.
     */
-  private[this] val initialLatch = new CountDownLatch(1)
+  private[this] val initializeConsumerLatch = new CountDownLatch(1)
   private[this] val poller = Future[Unit] {
+    consumer.subscribe(util.Arrays.asList(topicName))
     var firstPoll = true
     try {
       while (!this.isClosed) {
         try {
           val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
-          if (firstPoll) initialLatch.countDown()
+          if (firstPoll) initializeConsumerLatch.countDown()
           firstPoll = false
           if (records != null) {
             records
@@ -160,12 +160,12 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     } catch {
       case e: Throwable => logger.error("failure when running the poller", e)
     } finally {
-      if (firstPoll) initialLatch.countDown()
+      if (firstPoll) initializeConsumerLatch.countDown()
       TopicStore.this.close()
     }
   }
 
-  if (!initialLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
+  if (!initializeConsumerLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
     close()
     throw new IllegalArgumentException(s"timeout to initialize the queue")
   }
@@ -180,10 +180,10 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     // notify the poller
     if (consumer != null) consumer.wakeup()
     // hardcode
-    if (poller != null) Await.result(poller, 60 seconds)
-    if (producer != null) producer.close()
-    if (consumer != null) consumer.close()
-    if (cache != null) cache.close()
+    if (poller != null) CloseOnce.release(() => Await.result(poller, 60 seconds))
+    CloseOnce.close(producer)
+    CloseOnce.close(consumer)
+    CloseOnce.close(cache)
     if (executor != null) {
       executor.shutdownNow()
       executor.awaitTermination(60, TimeUnit.SECONDS)

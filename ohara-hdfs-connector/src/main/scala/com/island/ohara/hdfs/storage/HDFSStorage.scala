@@ -1,8 +1,7 @@
 package com.island.ohara.hdfs.storage
 
 import java.io.OutputStream
-import java.net.URI
-import com.island.ohara.hdfs.HDFSSinkConnectorConfig
+
 import com.typesafe.scalalogging.Logger
 import org.apache.hadoop.fs.{FileSystem, Path, RemoteIterator}
 

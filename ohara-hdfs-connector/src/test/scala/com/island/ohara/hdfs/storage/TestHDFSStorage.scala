@@ -2,22 +2,19 @@ package com.island.ohara.hdfs.storage
 
 import java.io.{InputStream, OutputStream}
 
-import com.island.ohara.integration.{LocalHDFS, OharaTestUtil}
+import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.rule.LargeTest
 import org.apache.hadoop.fs.{FileSystem, Path}
-import com.island.ohara.io.CloseOnce._
-import org.apache.hadoop.hdfs.server.common.Storage
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 class TestHDFSStorage extends LargeTest with Matchers {
 
+  private[this] val testUtil = OharaTestUtil.localHDFS(1)
   @Test
   def testHdfsStorage(): Unit = {
-    val localHDFS: LocalHDFS = OharaTestUtil.localHDFS(1)
-
-    val fileSystem: FileSystem = localHDFS.fileSystem()
-    val hdfsTempDir: String = localHDFS.tmpDirPath
+    val fileSystem: FileSystem = testUtil.fileSystem()
+    val hdfsTempDir: String = testUtil.tmpDirectory()
     val hdfsStorage: Storage = new HDFSStorage(fileSystem)
     hdfsStorage.list(hdfsTempDir).size shouldBe 0
 
@@ -31,10 +28,8 @@ class TestHDFSStorage extends LargeTest with Matchers {
 
   @Test
   def testOpenFile(): Unit = {
-    val localHDFS: LocalHDFS = OharaTestUtil.localHDFS(1)
-
-    val fileSystem: FileSystem = localHDFS.fileSystem()
-    val hdfsTempDir: String = localHDFS.tmpDirPath()
+    val fileSystem: FileSystem = testUtil.fileSystem()
+    val hdfsTempDir: String = testUtil.tmpDirectory()
     val fileName: String = s"$hdfsTempDir/file.txt"
     val hdfsStorage: Storage = new HDFSStorage(fileSystem)
     val text: String = "helloworld"
@@ -59,10 +54,8 @@ class TestHDFSStorage extends LargeTest with Matchers {
 
   @Test
   def testRename(): Unit = {
-    val localHDFS: LocalHDFS = OharaTestUtil.localHDFS(1)
-
-    val fileSystem: FileSystem = localHDFS.fileSystem()
-    val hdfsTempDir: String = localHDFS.tmpDirPath()
+    val fileSystem: FileSystem = testUtil.fileSystem()
+    val hdfsTempDir: String = testUtil.tmpDirectory()
     val folderName: String = s"$hdfsTempDir/folder1"
     val newFolderName: String = s"$hdfsTempDir/folder2"
 
@@ -77,14 +70,18 @@ class TestHDFSStorage extends LargeTest with Matchers {
 
   @Test
   def testNewInstance(): Unit = {
-    val localHDFS: FileSystem = OharaTestUtil.localHDFS(1).fileSystem()
     val hdfsStorage: Storage = Class
       .forName("com.island.ohara.hdfs.storage.HDFSStorage")
       .getConstructor(classOf[FileSystem])
-      .newInstance(localHDFS)
+      .newInstance(testUtil.fileSystem())
       .asInstanceOf[Storage]
 
     hdfsStorage.mkdirs("test")
 
+  }
+
+  @After
+  def tearDown(): Unit = {
+    testUtil.close()
   }
 }

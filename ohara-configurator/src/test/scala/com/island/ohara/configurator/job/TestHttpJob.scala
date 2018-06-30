@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 
 class TestHttpJob extends SmallTest with Matchers {
 
-  private[this] val util = new OharaTestUtil(3, 3)
+  private[this] val util = OharaTestUtil.localBrokers(3)
   private[this] val topicName = "TestHttpJob"
   private[this] val server = new HttpJobServer(util.brokersString, UuidUtil.uuid(), topicName)
   private[this] val client = new HttpJobClient(util.brokersString, topicName)
@@ -23,7 +23,7 @@ class TestHttpJob extends SmallTest with Matchers {
   @Test
   def testNormalRequestAndResponse(): Unit = {
     val response = client.request(jobRequest)
-    util.await(() => server.countOfUndealtTasks == 1, 5 seconds)
+    OharaTestUtil.await(() => server.countOfUndealtTasks == 1, 5 seconds)
     server.take().complete(jobResponse)
     Await.result(response, 5 seconds) match {
       case Right(r) => r shouldBe jobResponse

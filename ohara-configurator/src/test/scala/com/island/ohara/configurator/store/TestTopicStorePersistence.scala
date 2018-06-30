@@ -2,14 +2,13 @@ package com.island.ohara.configurator.store
 
 import java.util
 import java.util.Properties
-import java.util.concurrent.TimeUnit
 
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rule.MediumTest
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.StringSerializer
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.common.config.TopicConfig
@@ -20,7 +19,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class TestTopicStorePersistence extends MediumTest with Matchers {
 
-  private[this] val testUtil: OharaTestUtil = new OharaTestUtil(3, 3)
+  private[this] val testUtil: OharaTestUtil = OharaTestUtil.localBrokers(3)
 
   @Test
   def testRetention(): Unit = {
@@ -76,7 +75,7 @@ class TestTopicStorePersistence extends MediumTest with Matchers {
     }
 
     import scala.concurrent.duration._
-    testUtil.await(() => {
+    OharaTestUtil.await(() => {
       val result = checkContentOfTopic()
       result._1 == 1 && result._2 == numberOfOtherMessages
     }, 60 seconds)

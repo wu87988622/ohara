@@ -56,7 +56,7 @@ class TestApiRoutes extends SmallTest with Matchers with ScalaFutures with Scala
   }
 
   @Test
-  def testLogoutFailed: Unit = {
+  def testLogoutFailed(): Unit = {
     val apiRoutes = new ApiRoutes(system, null)
     val requestLogout = HttpRequest(method = HttpMethods.POST,
                                     uri = "/api/logout",

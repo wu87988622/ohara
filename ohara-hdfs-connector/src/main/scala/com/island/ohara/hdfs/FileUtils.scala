@@ -1,6 +1,5 @@
 package com.island.ohara.hdfs
 
-import java.io.File
 import org.apache.commons.io.FilenameUtils
 
 /**

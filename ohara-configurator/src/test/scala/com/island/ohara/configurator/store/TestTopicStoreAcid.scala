@@ -14,7 +14,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 class TestTopicStoreAcid extends MediumTest with Matchers {
-  val testUtil = new OharaTestUtil(3, 3)
+  val testUtil = OharaTestUtil.localBrokers(3)
   val store = Store
     .builder(StringSerializer, StringSerializer)
     .brokers(testUtil.brokersString)

@@ -42,4 +42,11 @@ class TestCloseOnce extends SmallTest with Matchers {
     }
     doFinally(validString)(_ => true)(_ => {}) shouldBe true
   }
+
+  @Test
+  def testRelease(): Unit = {
+    var hasRun = false
+    release(() => hasRun = true)
+    hasRun shouldBe true
+  }
 }

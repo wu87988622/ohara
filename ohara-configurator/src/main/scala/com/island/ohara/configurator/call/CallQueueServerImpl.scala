@@ -7,6 +7,7 @@ import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, Tim
 
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer, OharaException}
+import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
@@ -98,7 +99,6 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     new KafkaConsumer[OharaData, OharaData](baseConfig,
                                             KafkaUtil.wrapDeserializer(OharaDataSerializer),
                                             KafkaUtil.wrapDeserializer(OharaDataSerializer)))
-  consumer.subscribe(util.Arrays.asList(topicName))
 
   private[call] val undealtTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
   private[call] val processingTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
@@ -143,7 +143,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
   /**
     * Used to check whether consumer have completed the first poll.
     */
-  private[this] val initialLatch = new CountDownLatch(1)
+  private[this] val initializeConsumerLatch = new CountDownLatch(1)
 
   /**
     * a single thread to handle the request and response. For call queue server, the supported consumer's key is OharaRequest,
@@ -151,12 +151,13 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     * the supported producer's value is RESPONSE.
     */
   private[this] val requestWorker = Future[Unit] {
+    consumer.subscribe(util.Arrays.asList(topicName))
     var firstPoll = true
     try {
       while (!this.isClosed) {
         try {
           val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
-          if (firstPoll) initialLatch.countDown()
+          if (firstPoll) initializeConsumerLatch.countDown()
           firstPoll = false
           if (records != null) {
             records
@@ -201,12 +202,12 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     } catch {
       case e: Throwable => logger.error("failure when running the requestWorker", e)
     } finally {
-      if (firstPoll) initialLatch.countDown()
+      if (firstPoll) initializeConsumerLatch.countDown()
       close()
     }
   }
 
-  if (!initialLatch.await(initializeTimeout.toMillis, TimeUnit.MILLISECONDS)) {
+  if (!initializeConsumerLatch.await(initializeTimeout.toMillis, TimeUnit.MILLISECONDS)) {
     close()
     throw new IllegalArgumentException(s"timeout to initialize the call queue server")
   }
@@ -233,17 +234,22 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     */
   override protected def doClose(): Unit = {
     import scala.concurrent.duration._
-    Iterator
-      .continually(processingTasks.poll(1, TimeUnit.SECONDS))
-      .takeWhile(_ != null)
-      .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION))
-    Iterator
-      .continually(undealtTasks.poll(1, TimeUnit.SECONDS))
-      .takeWhile(_ != null)
-      .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION))
+    CloseOnce.release(
+      () =>
+        Iterator
+          .continually(processingTasks.poll(1, TimeUnit.SECONDS))
+          .takeWhile(_ != null)
+          .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION)))
+    CloseOnce.release(
+      () =>
+        Iterator
+          .continually(undealtTasks.poll(1, TimeUnit.SECONDS))
+          .takeWhile(_ != null)
+          .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION)))
     if (consumer != null) consumer.wakeup()
-    if (requestWorker != null) Await.result(requestWorker, 60 seconds)
-    if (producer != null) producer.close()
+    if (requestWorker != null) CloseOnce.release(() => Await.result(requestWorker, 60 seconds))
+    CloseOnce.close(producer)
+    CloseOnce.close(consumer)
     if (executor != null) {
       executor.shutdownNow()
       executor.awaitTermination(60, TimeUnit.SECONDS)
