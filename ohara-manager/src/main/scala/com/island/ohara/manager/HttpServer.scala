@@ -10,6 +10,7 @@ import akka.http.scaladsl.server.directives.ContentTypeResolver.Default
 import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.manager.sample.UserRoutes
+import com.island.ohara.rest.RestClient
 
 import scala.io.StdIn
 
@@ -54,7 +55,7 @@ object HttpServer extends UserRoutes {
       log.info("Ohara-manager web root: " + webRoot.getCanonicalPath)
 
       // TODO: a temporary information of configurator. How we pass the configurator information to ohara manager?
-      doClose(new ApiRoutes(system, ("localhost", 9999))) { apiRoutes =>
+      doClose(new ApiRoutes(system, RestClient("localhost", 9999))) { apiRoutes =>
         {
           val route =
             apiRoutes.routes ~

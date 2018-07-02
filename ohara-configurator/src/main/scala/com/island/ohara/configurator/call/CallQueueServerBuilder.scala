@@ -15,88 +15,88 @@ class CallQueueServerBuilder private[call] {
   private[this] var brokers: Option[String] = None
   private[this] var topicName: Option[String] = None
   private[this] var groupId: Option[String] = None
-  private[this] var partitions: Option[Int] = Some(CallQueue.DEFAULT_PARTITION_NUMBER)
-  private[this] var replications: Option[Short] = Some(CallQueue.DEFAULT_REPLICATION_NUMBER)
+  private[this] var numberOfPartitions: Option[Int] = Some(CallQueue.DEFAULT_PARTITION_NUMBER)
+  private[this] var numberOfReplications: Option[Short] = Some(CallQueue.DEFAULT_REPLICATION_NUMBER)
   private[this] var pollTimeout: Option[Duration] = Some(CallQueue.DEFAULT_POLL_TIMEOUT)
   private[this] var initializationTimeout: Option[Duration] = Some(CallQueue.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var topicOptions: Option[Map[String, String]] = Some(Map[String, String]())
 
   /**
     * set the kafka brokers information.
-    * @param _brokers kafka brokers
+    * @param brokers kafka brokers
     * @return this builder
     */
-  def brokers(_brokers: String): CallQueueServerBuilder = {
-    this.brokers = Some(_brokers)
+  def brokers(brokers: String): CallQueueServerBuilder = {
+    this.brokers = Some(brokers)
     this
   }
 
   /**
     * set the topic used to send/receive the request/response
-    * @param _topicName topic name
+    * @param topicName topic name
     * @return this builder
     */
-  def topicName(_topicName: String): CallQueueServerBuilder = {
-    this.topicName = Some(_topicName)
+  def topicName(topicName: String): CallQueueServerBuilder = {
+    this.topicName = Some(topicName)
     this
   }
 
   /**
     * set the number of partition of initializing the topic
-    * @param _partitions the number of partition
+    * @param numberOfPartitions the number of partition
     * @return this builder
     */
-  def partitions(_partitions: Int): CallQueueServerBuilder = {
-    this.partitions = Some(_partitions)
+  def numberOfPartitions(numberOfPartitions: Int): CallQueueServerBuilder = {
+    this.numberOfPartitions = Some(numberOfPartitions)
     this
   }
 
   /**
     * set the number of replications of initializing the topic
-    * @param _replications the number of partition
+    * @param numberOfReplications the number of partition
     * @return this builder
     */
-  def replications(_replications: Short): CallQueueServerBuilder = {
-    this.replications = Some(_replications)
+  def numberOfReplications(numberOfReplications: Short): CallQueueServerBuilder = {
+    this.numberOfReplications = Some(numberOfReplications)
     this
   }
 
   /**
     * the time to poll the consumer to receive the response.
-    * @param _pollTimeout poll time in millisecond
+    * @param pollTimeout poll time in millisecond
     * @return this builder
     */
-  def pollTimeout(_pollTimeout: Duration): CallQueueServerBuilder = {
-    this.pollTimeout = Some(_pollTimeout)
+  def pollTimeout(pollTimeout: Duration): CallQueueServerBuilder = {
+    this.pollTimeout = Some(pollTimeout)
     this
   }
 
   /**
     * set the timeout of initializing the call queue client
-    * @param _initializationTimeout initial timeout
+    * @param initializationTimeout initial timeout
     * @return this builder
     */
-  def initializationTimeout(_initializationTimeout: Duration): CallQueueServerBuilder = {
-    this.initializationTimeout = Some(_initializationTimeout)
+  def initializationTimeout(initializationTimeout: Duration): CallQueueServerBuilder = {
+    this.initializationTimeout = Some(initializationTimeout)
     this
   }
 
   /**
-    * @param _topicOptions extra configuration passed to call queue client to build the topic
+    * @param topicOptions extra configuration passed to call queue client to build the topic
     * @return this builder
     */
-  def topicOptions(_topicOptions: Map[String, String]): CallQueueServerBuilder = {
-    this.topicOptions = Some(_topicOptions)
+  def topicOptions(topicOptions: Map[String, String]): CallQueueServerBuilder = {
+    this.topicOptions = Some(topicOptions)
     this
   }
 
   /**
     * the group id used to bind the consumer.
-    * @param _groupId group id
+    * @param groupId group id
     * @return this builder
     */
-  def groupId(_groupId: String): CallQueueServerBuilder = {
-    this.groupId = Some(_groupId)
+  def groupId(groupId: String): CallQueueServerBuilder = {
+    this.groupId = Some(groupId)
     this
   }
 
@@ -111,8 +111,8 @@ class CallQueueServerBuilder private[call] {
       brokers.get,
       topicName.get,
       groupId.get,
-      partitions.get,
-      replications.get,
+      numberOfPartitions.get,
+      numberOfReplications.get,
       pollTimeout.get,
       initializationTimeout.get,
       topicOptions.get

@@ -48,14 +48,15 @@ object OharaException {
     */
   def apply(config: OharaConfig): OharaException = new OharaException(config)
 
-  def apply(exception: Throwable): OharaException = apply(exception.getMessage, exception)
+  def apply(exception: Throwable): OharaException =
+    apply(if (exception.getMessage == null) "None" else exception.getMessage, exception)
 
-  def apply(description: String, exception: Throwable): OharaException = {
+  def apply(message: String, exception: Throwable): OharaException = {
     val config = OharaConfig()
     OharaData.uuid.set(config, INDEXER.getAndIncrement().toString)
     OharaData.name.set(config, OharaException.getClass.getSimpleName)
     OharaException.stack.set(config, ExceptionUtils.getStackTrace(exception))
-    OharaException.message.set(config, description)
+    OharaException.message.set(config, message)
     OharaException.typeName.set(config, exception.getClass.getName)
     new OharaException(config)
   }

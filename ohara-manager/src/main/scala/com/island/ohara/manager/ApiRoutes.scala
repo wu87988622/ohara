@@ -11,7 +11,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.island.ohara.config.{OharaConfig, OharaJson, OharaProperty}
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rest.{RestClient, RestResponse}
+import com.island.ohara.rest.{BoundRestClient, RestClient, RestResponse}
 
 import scala.concurrent.duration._
 
@@ -20,9 +20,9 @@ import scala.concurrent.duration._
   * are stored in ohara configurator. this class plays as a proxy which redirects the request from UI to backend
   * configurator. And then parse and revise the request if UI has something special "requirement" to the response.
   *
-  * @param configuratorInfo nullable. Null means you are writing tests and you don't run the configurator.
+  * @param restClient nullable. Null means you are writing tests and you don't run the configurator.
   */
-class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extends SprayJsonSupport with CloseOnce {
+class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends SprayJsonSupport with CloseOnce {
   import UserLoginActor._
   import spray.json.DefaultJsonProtocol._
 
@@ -33,8 +33,6 @@ class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extend
 
   lazy val userLoginActor: ActorRef =
     system.actorOf(UserLoginActor.props, "userLoginActor")
-
-  private[this] val restClient = RestClient()
 
   /**
     * UI requires a field to represent the status of the rest call.
@@ -47,13 +45,13 @@ class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extend
     data.toJson.toString
   }
 
-  private[this] val schemaRoute: Route = if (configuratorInfo == null) pathPrefix("schemas") { reject } else {
+  private[this] val schemaRoute: Route = if (restClient == null) pathPrefix("schemas") { reject } else {
     val basicPath2Configurator = "v0/schemas"
     val addSchema = pathEnd {
       post {
         entity(as[String]) { requestBody =>
           val result =
-            restClient.post(configuratorInfo._1, configuratorInfo._2, basicPath2Configurator, OharaJson(requestBody))
+            restClient.post(basicPath2Configurator, OharaJson(requestBody))
           complete(200 -> appendStatus(result))
         }
       }
@@ -62,7 +60,7 @@ class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extend
     val getSchema = path(Segment) { uuid =>
       {
         get {
-          val result = restClient.get(configuratorInfo._1, configuratorInfo._2, s"$basicPath2Configurator/${uuid}")
+          val result = restClient.get(s"$basicPath2Configurator/${uuid}")
           complete(200 -> appendStatus(result))
         }
       }
@@ -70,7 +68,7 @@ class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extend
 
     val listSchemas = pathEnd {
       get {
-        val result = restClient.get(configuratorInfo._1, configuratorInfo._2, basicPath2Configurator)
+        val result = restClient.get(basicPath2Configurator)
         complete(200 -> appendStatus(result))
       }
     }
@@ -78,7 +76,7 @@ class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extend
     val deleteSchema = path(Segment) { uuid =>
       {
         delete {
-          val result = restClient.delete(configuratorInfo._1, configuratorInfo._2, s"$basicPath2Configurator/${uuid}")
+          val result = restClient.delete(s"$basicPath2Configurator/${uuid}")
           complete(200 -> appendStatus(result))
         }
       }
@@ -88,10 +86,7 @@ class ApiRoutes(val system: ActorSystem, configuratorInfo: (String, Int)) extend
       {
         put {
           entity(as[String]) { requestBody =>
-            val result = restClient.put(configuratorInfo._1,
-                                        configuratorInfo._2,
-                                        s"$basicPath2Configurator/$uuid",
-                                        OharaJson(requestBody))
+            val result = restClient.put(s"$basicPath2Configurator/$uuid", OharaJson(requestBody))
             complete(200 -> appendStatus(result))
           }
         }

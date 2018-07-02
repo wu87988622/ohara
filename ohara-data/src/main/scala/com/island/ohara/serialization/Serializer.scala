@@ -22,3 +22,14 @@ trait Serializer[T] {
     */
   def from(serial: Array[Byte]): T
 }
+
+object Serializer {
+  val string = StringSerializer
+  val short = ShortSerializer
+  val int = IntSerializer
+  val long = LongSerializer
+  val double = DoubleSerializer
+  val float = FloatSerializer
+  val bytes = BytesSerializer
+  val boolean = BooleanSerializer
+}

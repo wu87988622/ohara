@@ -34,3 +34,7 @@ trait CallQueueServer[Request <: OharaData, Response <: OharaData] extends Close
     */
   def countOfProcessingTasks: Int
 }
+
+object CallQueueServer {
+  def builder = new CallQueueServerBuilder()
+}

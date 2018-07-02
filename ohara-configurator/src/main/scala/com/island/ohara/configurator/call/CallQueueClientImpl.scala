@@ -1,10 +1,11 @@
 package com.island.ohara.configurator.call
 
 import java.util
+import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
 
-import com.island.ohara.config.{OharaConfig, UuidUtil}
+import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer, OharaException}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
@@ -14,9 +15,8 @@ import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetR
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.errors.WakeupException
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.reflect.ClassTag
 
 /**
@@ -27,9 +27,8 @@ import scala.reflect.ClassTag
   * @param brokers KAFKA server
   * @param topicName topic name. the topic will be created automatically if it doesn't exist
   * @param pollTimeout the specified waiting time elapses to poll the consumer
-  * @param initializeTimeout the specified waiting time to initialize this call queue client
+  * @param initializationTimeout the specified waiting time to initialize this call queue client
   * @param expirationCleanupTime the time to call the lease dustman
-  * @param config configuration
   * @tparam Request the supported request type
   * @tparam Response the supported response type
   */
@@ -37,9 +36,8 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
   brokers: String,
   topicName: String,
   pollTimeout: Duration,
-  initializeTimeout: Duration,
-  expirationCleanupTime: Duration,
-  config: OharaConfig)
+  initializationTimeout: Duration,
+  expirationCleanupTime: Duration)
     extends CallQueueClient[Request, Response] {
 
   private[this] val logger = Logger(getClass.getName)
@@ -60,32 +58,35 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     */
   private[this] val uuid: String = UuidUtil.uuid
 
-  config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-
-  /**
-    * the uuid of requestConsumer is random since we want to check all response.
-    */
-  config.set(ConsumerConfig.GROUP_ID_CONFIG, uuid)
-  config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
-
-  if (!KafkaUtil.exist(config, topicName)) throw new IllegalArgumentException(s"The topic:$topicName doesn't exist")
+  if (!KafkaUtil.exist(brokers, topicName)) throw new IllegalArgumentException(s"The topic:$topicName doesn't exist")
 
   /**
     * used to publish the request.
     */
-  private[this] val producer = newOrClose(
-    new KafkaProducer[OharaData, OharaData](config.toProperties,
+  private[this] val producer = newOrClose {
+    val props = new Properties()
+    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    new KafkaProducer[OharaData, OharaData](props,
                                             KafkaUtil.wrapSerializer(OharaDataSerializer),
-                                            KafkaUtil.wrapSerializer(OharaDataSerializer)))
+                                            KafkaUtil.wrapSerializer(OharaDataSerializer))
+  }
 
   /**
     * used to receive the response.
     */
-  private[this] val consumer = newOrClose(
-    new KafkaConsumer[OharaData, OharaData](config.toProperties,
+  private[this] val consumer = newOrClose {
+    val props = new Properties()
+    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+
+    /**
+      * the uuid of requestConsumer is random since we want to check all response.
+      */
+    props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, uuid)
+    props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
+    new KafkaConsumer[OharaData, OharaData](props,
                                             KafkaUtil.wrapDeserializer(OharaDataSerializer),
-                                            KafkaUtil.wrapDeserializer(OharaDataSerializer)))
-  consumer.subscribe(util.Arrays.asList(topicName))
+                                            KafkaUtil.wrapDeserializer(OharaDataSerializer))
+  }
 
   /**
     * Used to check whether consumer have completed the first poll.
@@ -106,6 +107,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
   private[this] val responseWorker = Future[Unit] {
     var firstPoll = true
     try {
+      consumer.subscribe(util.Arrays.asList(topicName))
       while (!this.isClosed) {
         try {
           val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
@@ -182,7 +184,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     notifierOfDustman.notifyAll()
   }
 
-  if (!initialLatch.await(initializeTimeout.toMillis, TimeUnit.MILLISECONDS)) {
+  if (!initialLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
     close()
     throw new IllegalArgumentException(s"timeout to initialize the call queue server")
   }

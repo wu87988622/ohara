@@ -1,14 +1,14 @@
 package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.server
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.{Http, server}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson}
-import com.island.ohara.configurator.data.{OharaData, OharaException, OharaSchema}
+import com.island.ohara.configurator.data.{OharaData, OharaException, OharaSchema, OharaTopic}
+import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.io.CloseOnce
 
@@ -26,6 +26,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                                val hostname: String,
                                _port: Int,
                                store: Store[String, OharaData],
+                               kafkaClient: KafkaClient,
                                initializationTimeout: Duration,
                                terminationTimeout: Duration)
     extends Configurator {
@@ -33,10 +34,15 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
   private[this] def rejectNonexistantUuid(uuid: String) = complete(StatusCodes.BadRequest -> OharaException(
     new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson.toString)
 
-  private[this] def handleException(function: () => StandardRoute) = try function()
+  private[this] def handleException(function: () => StandardRoute): StandardRoute = try function()
   catch {
-    case e: Throwable => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
+    // Parsing the invalid request can cause the IllegalArgumentException
+    case e: IllegalArgumentException => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
+    // otherwise we may encounter some bugs in configurator
+    case e: Throwable => complete(StatusCodes.ServiceUnavailable -> OharaException(e).toJson.toString)
   }
+
+  private[this] def completeUuid(uuid: String) = complete("\"uuid\":\"" + uuid + "\"")
 
   /**
     * this route is used to handle the request to schema.
@@ -49,7 +55,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
           handleException(() => {
             val schema = OharaSchema(uuidGenerator(), OharaJson(body))
             updateData(schema)
-            complete("\"uuid\":\"" + schema.uuid + "\"")
+            completeUuid(schema.uuid)
           })
         }
       }
@@ -87,7 +93,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                 .map(_ => {
                   val schema = OharaSchema(previousUuid, OharaJson(body))
                   updateData(schema)
-                  complete("\"uuid\":\"" + previousUuid + "\"")
+                  completeUuid(previousUuid)
                 })
                 .getOrElse(rejectNonexistantUuid(previousUuid))
             })
@@ -101,13 +107,45 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     }
   }
 
+  private[this] val topicRoute = locally {
+
+    val addTopic = pathEnd {
+      post {
+        entity(as[String]) { body =>
+          handleException(() => {
+            val topicInfo =
+              OharaTopic(uuidGenerator(), OharaJson(body))
+            if (kafkaClient.exist(topicInfo.uuid))
+              // this should be impossible....
+              throw new IllegalArgumentException(s"The topic:${topicInfo.uuid} exists")
+            else {
+              kafkaClient.topicCreator
+              // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
+                .topicName(topicInfo.uuid)
+                .numberOfPartitions(topicInfo.numberOfPartitions)
+                .numberOfReplications(topicInfo.numberOfReplications)
+                .create()
+              updateData(topicInfo)
+              completeUuid(topicInfo.uuid)
+            }
+          })
+        }
+      }
+    }
+
+    pathPrefix(Configurator.TOPIC_PATH) {
+      addTopic
+    }
+  }
+
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
-  private[this] val route: server.Route = pathPrefix(Configurator.VERSION)(schemaRoute) ~ path(Remaining)(_ => {
-    // TODO: just reject? by chia
-    reject
-  })
+  private[this] val route: server.Route = pathPrefix(Configurator.VERSION)(schemaRoute ~ topicRoute) ~ path(Remaining)(
+    _ => {
+      // TODO: just reject? by chia
+      reject
+    })
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[ConfiguratorImpl].getSimpleName}-system")
   private[this] implicit val actorMaterializer = ActorMaterializer()

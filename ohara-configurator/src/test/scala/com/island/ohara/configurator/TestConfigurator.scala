@@ -4,7 +4,7 @@ import java.util.concurrent.Executors
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data._
-import com.island.ohara.configurator.store.MemStore
+import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rest.RestClient
@@ -19,7 +19,7 @@ class TestConfigurator extends MediumTest with Matchers {
 
   @Test
   def testSchema(): Unit = {
-    val store = new MemStore[String, OharaData](StringSerializer, OharaDataSerializer)
+    val store = Store.inMemory(StringSerializer, OharaDataSerializer)
     val schemaName = "testSchema"
     val schemaType = Map("cf1" -> BYTES, "cf2" -> INT)
     val schemaIndex = Map("cf1" -> 1, "cf2" -> 2)
@@ -27,7 +27,7 @@ class TestConfigurator extends MediumTest with Matchers {
     val schema = OharaSchema.json(schemaName, schemaType, schemaIndex, disabled)
     val uuid = System.currentTimeMillis().toString
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
-    doClose(Configurator.builder.uuidGenerator(() => uuid).hostname("localhost").port(0).store(store).build()) {
+    doClose(Configurator.builder.noCluster.uuidGenerator(() => uuid).hostname("localhost").port(0).store(store).build()) {
       configurator =>
         {
           doClose(RestClient()) { client =>
@@ -97,7 +97,7 @@ class TestConfigurator extends MediumTest with Matchers {
       }
     }
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
-    doClose(Configurator.builder.hostname("localhost").port(0).inMemoryStore().build()) { configurator =>
+    doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
       {
         doClose(RestClient()) { client =>
           schemas.foreach(client.post(configurator.hostname, configurator.port, path, _).statusCode shouldBe 200)
@@ -116,7 +116,7 @@ class TestConfigurator extends MediumTest with Matchers {
       (0 until schemaCount).map(index => OharaSchema.json(index.toString, Map("cf" -> BYTES), Map("cf" -> 1), false))
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(
-      Configurator.builder
+      Configurator.builder.noCluster
         .uuidGenerator(() => {
           uuidIndex <= uuids.size shouldBe true
           try uuids(uuidIndex)
@@ -124,7 +124,6 @@ class TestConfigurator extends MediumTest with Matchers {
         })
         .hostname("localhost")
         .port(0)
-        .inMemoryStore()
         .build()) { configurator =>
       {
         doClose(RestClient()) { client =>
@@ -154,7 +153,7 @@ class TestConfigurator extends MediumTest with Matchers {
   @Test
   def testInvalidSchema(): Unit = {
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
-    doClose(Configurator.builder.hostname("localhost").port(0).inMemoryStore().build()) { configurator =>
+    doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
       {
         doClose(RestClient()) { client =>
           {

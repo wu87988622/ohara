@@ -42,11 +42,23 @@ trait Store[K, V] extends AutoCloseable with Iterable[(K, V)] {
 }
 
 object Store {
+
+  /**
+    * create a store based on memory. This store does not require the kafka cluster.
+    * @param keySerializer key serializer
+    * @param valueSerializer value serializer
+    * @tparam K key type
+    * @tparam V value type
+    * @return a in-memory store
+    */
+  def inMemory[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] =
+    new MemStore(keySerializer, valueSerializer)
+
   def builder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]) =
     new StoreBuilder(keySerializer, valueSerializer)
 
-  val DEFAULT_REPLICATION_NUMBER: Short = 3
-  val DEFAULT_PARTITION_NUMBER: Int = 3
+  val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 3
+  val DEFAULT_NUMBER_OF_PARTITIONS: Int = 3
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_POLL_TIMEOUT: Duration = 5 seconds
   val DEFAULT_TAKE_TIMEOUT: Duration = 1 seconds

@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 
 class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.builder.inMemoryStore().hostname("localhost").port(0).build()
+  private[this] val configurator = Configurator.builder.noCluster.hostname("localhost").port(0).build()
   private[this] val restClient = RestClient()
 
   private[this] def toMap(body: String) = OharaConfig(OharaJson(body))
@@ -29,7 +29,7 @@ class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
   @Test
   def testSendSchemaRequest(): Unit = {
 
-    doClose(new ApiRoutes(system, (configurator.hostname, configurator.port))) { route =>
+    doClose(new ApiRoutes(system, RestClient(configurator.hostname, configurator.port))) { route =>
       {
         val httpServer: Http.ServerBinding =
           Await.result(Http().bindAndHandle(route.routes, "localhost", 0), 10 seconds)

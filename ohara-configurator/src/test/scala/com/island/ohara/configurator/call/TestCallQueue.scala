@@ -122,7 +122,12 @@ class TestCallQueue extends LargeTest with Matchers {
     val anotherTopic = "testLease"
     val leaseCleanupFreq: Duration = 5 seconds
 
-    KafkaUtil.createTopicIfNotExist(util.brokersString, anotherTopic, 1, 1)
+    KafkaUtil.topicCreator
+      .brokers(util.brokersString)
+      .topicName(anotherTopic)
+      .numberOfPartitions(1)
+      .numberOfReplications(1)
+      .create()
     val timeoutClient: CallQueueClient[OharaSource, OharaSource] = CallQueue.clientBuilder
       .brokers(util.brokersString)
       .topicName(anotherTopic)
@@ -183,7 +188,12 @@ class TestCallQueue extends LargeTest with Matchers {
   def testCloseClientWithOnFlyRequests(): Unit = {
     val requestCount = 10
     val topicName = testName.getMethodName
-    KafkaUtil.createTopicIfNotExist(util.brokersString, topicName, 1, 1)
+    KafkaUtil.topicCreator
+      .brokers(util.brokersString)
+      .topicName(topicName)
+      .numberOfPartitions(1)
+      .numberOfReplications(1)
+      .create()
     val invalidClient: CallQueueClient[OharaSource, OharaSource] =
       CallQueue.clientBuilder.brokers(util.brokersString).topicName(topicName).build[OharaSource, OharaSource]()
     val requests = try 0 until requestCount map { _ =>

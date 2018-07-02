@@ -1,6 +1,5 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.configurator.data.OharaData
 
 import scala.concurrent.duration.Duration
@@ -17,45 +16,44 @@ class CallQueueClientBuilder private[call] {
   private[this] var pollTimeout: Option[Duration] = Some(CallQueue.DEFAULT_POLL_TIMEOUT)
   private[this] var initializationTimeout: Option[Duration] = Some(CallQueue.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var expirationCleanupTime: Option[Duration] = Some(CallQueue.DEFAULT_EXPIRATION_CLEANUP_TIME)
-  private[this] var config: Option[OharaConfig] = Some(OharaConfig())
 
   /**
     * set the kafka brokers information.
-    * @param _brokers kafka brokers
+    * @param brokers kafka brokers
     * @return this builder
     */
-  def brokers(_brokers: String): CallQueueClientBuilder = {
-    this.brokers = Some(_brokers)
+  def brokers(brokers: String): CallQueueClientBuilder = {
+    this.brokers = Some(brokers)
     this
   }
 
   /**
     * set the topic used to send/receive the request/response
-    * @param _topicName topic name
+    * @param topicName topic name
     * @return this builder
     */
-  def topicName(_topicName: String): CallQueueClientBuilder = {
-    this.topicName = Some(_topicName)
+  def topicName(topicName: String): CallQueueClientBuilder = {
+    this.topicName = Some(topicName)
     this
   }
 
   /**
     * the time to poll the consumer to receive the response.
-    * @param _pollTimeout poll time in millisecond
+    * @param pollTimeout poll time in millisecond
     * @return this builder
     */
-  def pollTimeout(_pollTimeout: Duration): CallQueueClientBuilder = {
-    this.pollTimeout = Some(_pollTimeout)
+  def pollTimeout(pollTimeout: Duration): CallQueueClientBuilder = {
+    this.pollTimeout = Some(pollTimeout)
     this
   }
 
   /**
     * set the timeout of initializing the call queue client
-    * @param _initializationTimeout initial timeout
+    * @param initializationTimeout initial timeout
     * @return this builder
     */
-  def initializationTimeout(_initializationTimeout: Duration): CallQueueClientBuilder = {
-    this.initializationTimeout = Some(_initializationTimeout)
+  def initializationTimeout(initializationTimeout: Duration): CallQueueClientBuilder = {
+    this.initializationTimeout = Some(initializationTimeout)
     this
   }
 
@@ -66,15 +64,6 @@ class CallQueueClientBuilder private[call] {
     */
   def expirationCleanupTime(expirationCleanupTime: Duration): CallQueueClientBuilder = {
     this.expirationCleanupTime = Some(expirationCleanupTime)
-    this
-  }
-
-  /**
-    * @param _config extra configuration passed to call queue client
-    * @return this builder
-    */
-  def configuration(_config: OharaConfig): CallQueueClientBuilder = {
-    this.config = Some(_config)
     this
   }
 
@@ -90,7 +79,6 @@ class CallQueueClientBuilder private[call] {
       topicName.get,
       pollTimeout.get,
       initializationTimeout.get,
-      expirationCleanupTime.get,
-      config.get
+      expirationCleanupTime.get
     )
 }

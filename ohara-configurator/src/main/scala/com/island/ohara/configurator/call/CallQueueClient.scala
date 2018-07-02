@@ -24,3 +24,7 @@ trait CallQueueClient[Request <: OharaData, Response <: OharaData] extends Close
   def request(request: Request,
               timeout: Duration = CallQueue.DEFAULT_EXPIRATION_TIME): Future[Either[OharaException, Response]]
 }
+
+object CallQueueClient {
+  def builder = new CallQueueClientBuilder()
+}

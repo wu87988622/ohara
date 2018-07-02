@@ -13,6 +13,7 @@ import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
 
 import scala.concurrent.duration._
@@ -36,7 +37,7 @@ import scala.reflect.ClassTag
   * @param partitions the number of topic partition. Used to build the topic
   * @param replications the number of topic partition. Used to build the topic
   * @param pollTimeout the specified waiting time elapses to poll the consumer
-  * @param initializeTimeout the specified waiting time to initialize this call queue server
+  * @param initializationTimeout the specified waiting time to initialize this call queue server
   * @param topicOptions configuration
   * @tparam Request the supported request type
   * @tparam Response the supported response type
@@ -48,7 +49,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
   partitions: Int,
   replications: Short,
   pollTimeout: Duration,
-  initializeTimeout: Duration,
+  initializationTimeout: Duration,
   topicOptions: Map[String, String])
     extends CallQueueServer[Request, Response] {
 
@@ -68,37 +69,46 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     * the uuid for this instance
     */
   private[this] val uuid = UuidUtil.uuid()
-  private[this] val baseConfig: Properties = locally {
-    val config = new Properties
-    config.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    config.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
-    // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
-    // distribute the request.
-    config.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId)
-    config
-  }
+
+  if (!topicOptions
+        .get(TopicConfig.CLEANUP_POLICY_CONFIG)
+        .map(_.equals(TopicConfig.CLEANUP_POLICY_DELETE))
+        .getOrElse(true))
+    throw new IllegalArgumentException(
+      s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_DELETE}")
 
   /**
     * Initialize the topic
     */
-  KafkaUtil.createTopicIfNotExist(
-    brokers,
-    topicName,
-    partitions,
-    replications,
-    topicOptions,
-    initializeTimeout
-  )
+  KafkaUtil.topicCreator
+    .brokers(brokers)
+    .topicName(topicName)
+    .numberOfPartitions(partitions)
+    .numberOfReplications(replications)
+    // enable kafka delete all stale requests
+    .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
+    .timeout(initializationTimeout)
+    .create()
 
-  private[this] val producer = newOrClose(
-    new KafkaProducer[OharaData, OharaData](baseConfig,
+  private[this] val producer = newOrClose {
+    val props = new Properties()
+    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    new KafkaProducer[OharaData, OharaData](props,
                                             KafkaUtil.wrapSerializer(OharaDataSerializer),
-                                            KafkaUtil.wrapSerializer(OharaDataSerializer)))
+                                            KafkaUtil.wrapSerializer(OharaDataSerializer))
+  }
 
-  private[this] val consumer = newOrClose(
-    new KafkaConsumer[OharaData, OharaData](baseConfig,
+  private[this] val consumer = newOrClose {
+    val props = new Properties
+    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
+    // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
+    // distribute the request.
+    props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+    new KafkaConsumer[OharaData, OharaData](props,
                                             KafkaUtil.wrapDeserializer(OharaDataSerializer),
-                                            KafkaUtil.wrapDeserializer(OharaDataSerializer)))
+                                            KafkaUtil.wrapDeserializer(OharaDataSerializer))
+  }
 
   private[call] val undealtTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
   private[call] val processingTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
@@ -151,9 +161,9 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     * the supported producer's value is RESPONSE.
     */
   private[this] val requestWorker = Future[Unit] {
-    consumer.subscribe(util.Arrays.asList(topicName))
     var firstPoll = true
     try {
+      consumer.subscribe(util.Arrays.asList(topicName))
       while (!this.isClosed) {
         try {
           val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
@@ -207,7 +217,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     }
   }
 
-  if (!initializeConsumerLatch.await(initializeTimeout.toMillis, TimeUnit.MILLISECONDS)) {
+  if (!initializeConsumerLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
     close()
     throw new IllegalArgumentException(s"timeout to initialize the call queue server")
   }

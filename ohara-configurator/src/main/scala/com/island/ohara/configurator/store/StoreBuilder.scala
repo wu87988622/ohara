@@ -11,78 +11,78 @@ import scala.concurrent.duration.Duration
 class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
   private[this] var brokers: Option[String] = None
   private[this] var topicName: Option[String] = None
-  private[this] var partitions: Option[Int] = Some(Store.DEFAULT_PARTITION_NUMBER)
-  private[this] var replications: Option[Short] = Some(Store.DEFAULT_REPLICATION_NUMBER)
+  private[this] var numberOfPartitions: Option[Int] = Some(Store.DEFAULT_NUMBER_OF_PARTITIONS)
+  private[this] var numberOfReplications: Option[Short] = Some(Store.DEFAULT_NUMBER_OF_REPLICATIONS)
   private[this] var pollTimeout: Option[Duration] = Some(Store.DEFAULT_POLL_TIMEOUT)
   private[this] var initializationTimeout: Option[Duration] = Some(Store.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var topicOptions: Option[Map[String, String]] = Some(Map[String, String]())
 
   /**
     * set the kafka brokers information.
-    * @param _brokers kafka brokers
+    * @param brokers kafka brokers
     * @return this builder
     */
-  def brokers(_brokers: String): StoreBuilder[K, V] = {
-    this.brokers = Some(_brokers)
+  def brokers(brokers: String): StoreBuilder[K, V] = {
+    this.brokers = Some(brokers)
     this
   }
 
   /**
     * set the topic used to send/receive the request/response
-    * @param _topicName topic name
+    * @param topicName topic name
     * @return this builder
     */
-  def topicName(_topicName: String): StoreBuilder[K, V] = {
-    this.topicName = Some(_topicName)
+  def topicName(topicName: String): StoreBuilder[K, V] = {
+    this.topicName = Some(topicName)
     this
   }
 
   /**
     * set the number of partition of initializing the topic
-    * @param _partitions the number of partition
+    * @param numberOfPartitions the number of partition
     * @return this builder
     */
-  def partitions(_partitions: Int): StoreBuilder[K, V] = {
-    this.partitions = Some(_partitions)
+  def numberOfPartitions(numberOfPartitions: Int): StoreBuilder[K, V] = {
+    this.numberOfPartitions = Some(numberOfPartitions)
     this
   }
 
   /**
     * set the number of replications of initializing the topic
-    * @param _replications the number of partition
+    * @param numberOfReplications the number of partition
     * @return this builder
     */
-  def replications(_replications: Short): StoreBuilder[K, V] = {
-    this.replications = Some(_replications)
+  def numberOfReplications(numberOfReplications: Short): StoreBuilder[K, V] = {
+    this.numberOfReplications = Some(numberOfReplications)
     this
   }
 
   /**
     * the time to poll the consumer to receive the response.
-    * @param _pollTimeout poll time in millisecond
+    * @param pollTimeout poll time in millisecond
     * @return this builder
     */
-  def pollTimeout(_pollTimeout: Duration): StoreBuilder[K, V] = {
-    this.pollTimeout = Some(_pollTimeout)
+  def pollTimeout(pollTimeout: Duration): StoreBuilder[K, V] = {
+    this.pollTimeout = Some(pollTimeout)
     this
   }
 
   /**
     * set the timeout of initializing the StoreBuilder
-    * @param _initializationTimeout initial timeout
+    * @param initializationTimeout initial timeout
     * @return this builder
     */
-  def initializationTimeout(_initializationTimeout: Duration): StoreBuilder[K, V] = {
-    this.initializationTimeout = Some(_initializationTimeout)
+  def initializationTimeout(initializationTimeout: Duration): StoreBuilder[K, V] = {
+    this.initializationTimeout = Some(initializationTimeout)
     this
   }
 
   /**
-    * @param _topicOptions extra configuration passed to StoreBuilder to build the topic
+    * @param topicOptions extra configuration passed to StoreBuilder to build the topic
     * @return this builder
     */
-  def topicOptions(_topicOptions: Map[String, String]): StoreBuilder[K, V] = {
-    this.topicOptions = Some(_topicOptions)
+  def topicOptions(topicOptions: Map[String, String]): StoreBuilder[K, V] = {
+    this.topicOptions = Some(topicOptions)
     this
   }
 
@@ -91,8 +91,8 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     Option(valueSerializer).get,
     brokers.get,
     topicName.get,
-    partitions.get,
-    replications.get,
+    numberOfPartitions.get,
+    numberOfReplications.get,
     pollTimeout.get,
     initializationTimeout.get,
     topicOptions.get

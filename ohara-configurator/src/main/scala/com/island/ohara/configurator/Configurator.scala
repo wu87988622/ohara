@@ -41,4 +41,5 @@ object Configurator {
   val SCHEMA_PATH = "schemas"
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_TERMINATION_TIMEOUT: Duration = 10 seconds
+  val TOPIC_PATH = "topics"
 }

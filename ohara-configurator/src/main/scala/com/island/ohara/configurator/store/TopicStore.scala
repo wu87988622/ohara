@@ -39,6 +39,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   * wait the response from kafka topic. Hence, the latency MAY be vary large.
   *
   * NOTED: this class is exposed as package-private for testing.
+  *
   * @tparam K key type
   * @tparam V value type
   */
@@ -68,13 +69,6 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     */
   private[this] val HEADER_INDEX = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
-  private[this] val baseConfig: Properties = locally {
-    val config = new Properties
-    config.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    config.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-    config.setProperty(ConsumerConfig.GROUP_ID_CONFIG, uuid)
-    config
-  }
 
   if (!topicOptions
         .get(TopicConfig.CLEANUP_POLICY_CONFIG)
@@ -83,42 +77,46 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     throw new IllegalArgumentException(
       s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_COMPACT}")
 
-  // enable kafka save the latest message for each key
-  private[this] val topicConfig
-    : Map[String, String] = topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT)
-
   /**
     * Initialize the topic
     */
-  KafkaUtil.createTopicIfNotExist(
-    brokers,
-    topicName,
-    partitions,
-    replications,
-    topicConfig,
-    initializationTimeout
-  )
+  KafkaUtil.topicCreator
+    .brokers(brokers)
+    .topicName(topicName)
+    .numberOfPartitions(partitions)
+    .numberOfReplications(replications)
+    // enable kafka save the latest message for each key
+    .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
+    .timeout(initializationTimeout)
+    .create()
 
-  private[this] val consumer = newOrClose(
-    new KafkaConsumer[K, V](baseConfig,
+  private[this] val consumer = newOrClose {
+    val props = new Properties()
+    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
+    props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, uuid)
+    new KafkaConsumer[K, V](props,
                             KafkaUtil.wrapDeserializer(keySerializer),
-                            KafkaUtil.wrapDeserializer(valueSerializer)))
-  private[this] val producer = newOrClose(
-    new KafkaProducer[K, V](baseConfig,
-                            KafkaUtil.wrapSerializer(keySerializer),
-                            KafkaUtil.wrapSerializer(valueSerializer)))
+                            KafkaUtil.wrapDeserializer(valueSerializer))
+  }
+
+  private[this] val producer = newOrClose {
+    val props = new Properties()
+    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    new KafkaProducer[K, V](props, KafkaUtil.wrapSerializer(keySerializer), KafkaUtil.wrapSerializer(valueSerializer))
+  }
   private[this] val updateLock = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
-  private[this] val cache = newOrClose(new MemStore[K, V](keySerializer, valueSerializer))
+  private[this] val cache = newOrClose(Store.inMemory(keySerializer, valueSerializer))
 
   /**
     * true if poller haven't grab any data recently.
     */
   private[this] val initializeConsumerLatch = new CountDownLatch(1)
   private[this] val poller = Future[Unit] {
-    consumer.subscribe(util.Arrays.asList(topicName))
     var firstPoll = true
     try {
+      consumer.subscribe(util.Arrays.asList(topicName))
       while (!this.isClosed) {
         try {
           val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
@@ -175,6 +173,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   override def get(key: K): Option[V] = cache.get(key)
 
   override def remove(key: K): Option[V] = waitCallback(send(key))
+
   override protected def doClose(): Unit = {
     import scala.concurrent.duration._
     // notify the poller
@@ -189,10 +188,12 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
       executor.awaitTermination(60, TimeUnit.SECONDS)
     }
   }
+
   override def iterator: Iterator[(K, V)] = cache.iterator
 
   /**
     * Override the size to provide the efficient implementation
+    *
     * @return size of this store
     */
   override def size: Int = cache.size
@@ -207,6 +208,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     checkClose()
     commitResult.remove(index)
   }
+
   private[this] def send(key: K, value: V = null.asInstanceOf[V]): String = {
     val header = createHeader(uuid)
     producer.send(new ProducerRecord[K, V](topicName, null, key, value, util.Arrays.asList(header)))
@@ -217,6 +219,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   private def createHeader(uuid: String): Header = {
     new Header() {
       private[this] val uuidIndex = uuid + "-" + HEADER_INDEX.getAndIncrement().toString
+
       override def key(): String = uuidIndex
 
       /**

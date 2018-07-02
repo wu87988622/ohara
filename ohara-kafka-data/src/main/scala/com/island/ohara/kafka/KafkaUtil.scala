@@ -4,7 +4,6 @@ import java.util
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
@@ -58,14 +57,12 @@ object KafkaUtil {
 
   /**
     * check whether the specified topic exist
-    * @param config the config used to build the kafka admin
+    * @param brokers the location of kafka brokers
     * @param topicName topic nameHDFSStorage
     * @return true if the topic exist. Otherwise, false
     */
-  def exist(config: OharaConfig, topicName: String): Boolean =
-    CloseOnce.doClose(AdminClient.create(config.toProperties)) { admin =>
-      exist(admin, topicName)
-    }
+  def exist(brokers: String, topicName: String): Boolean =
+    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(exist(_, topicName))
 
   /**
     * check whether the specified topic exist
@@ -76,24 +73,98 @@ object KafkaUtil {
   def exist(admin: AdminClient, topicName: String): Boolean =
     admin.listTopics().names().thenApply(_.contains(topicName)).get()
 
-  def createTopicIfNotExist(brokers: String,
-                            topicName: String,
-                            partitions: Int,
-                            replication: Short,
-                            topicConfig: Map[String, String] = Map[String, String](),
-                            timeout: Duration = 10 seconds): Unit = {
-    import scala.collection.JavaConverters._
+  def topicInfo(brokers: String, topicName: String): Option[TopicInfo] =
+    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(topicInfo(_, topicName))
+
+  def topicInfo(admin: AdminClient, topicName: String): Option[TopicInfo] = {
+    Option(admin.describeTopics(util.Arrays.asList(topicName)).values().get(topicName))
+      .map(_.get())
+      .map(topicPartitionInfo =>
+        TopicInfo(topicPartitionInfo.name(),
+                  topicPartitionInfo.partitions().size(),
+                  topicPartitionInfo.partitions().get(0).replicas().size().toShort))
+  }
+
+  def topicCreator: TopicCreator = new TopicCreator()
+
+  /**
+    * a helper method used to put the brokers information to java properties.
+    * Usually controlling the admin client only require the broker information.
+    * @param brokers kafka brokers information
+    * @return a properties with brokers information
+    */
+  def toAdminProps(brokers: String): Properties = {
     val adminProps = new Properties()
     adminProps.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    CloseOnce.doClose(AdminClient.create(adminProps))(admin => {
-      if (!exist(admin, topicName)) {
-        admin
-          .createTopics(
-            util.Arrays.asList(new NewTopic(topicName, partitions, replication).configs(topicConfig.asJava)))
+    adminProps
+  }
+}
+
+case class TopicInfo(name: String, partitions: Int, replications: Short)
+
+/**
+  * a helper class used to create the kafka topic.
+  * all member are protected since we have to implement a do-nothing TopicCreator in testing.
+  */
+class TopicCreator {
+  protected var admin: Option[AdminClient] = None
+  protected var brokers: Option[String] = None
+  protected var topicName: Option[String] = None
+  protected var numberOfPartitions: Option[Int] = None
+  protected var numberOfReplications: Option[Short] = None
+  protected var topicOptions: Option[Map[String, String]] = Some(Map.empty[String, String])
+  protected var timeout: Option[Duration] = Some(10 seconds)
+
+  def admin(admin: AdminClient): TopicCreator = {
+    this.admin = Some(admin)
+    this
+  }
+
+  def brokers(brokers: String): TopicCreator = {
+    this.brokers = Some(brokers)
+    this
+  }
+
+  def topicName(topicName: String): TopicCreator = {
+    this.topicName = Some(topicName)
+    this
+  }
+
+  def numberOfPartitions(partitions: Int): TopicCreator = {
+    this.numberOfPartitions = Some(partitions)
+    this
+  }
+
+  def numberOfReplications(replication: Short): TopicCreator = {
+    this.numberOfReplications = Some(replication)
+    this
+  }
+
+  def topicOptions(topicOptions: Map[String, String]): TopicCreator = {
+    this.topicOptions = Some(topicOptions)
+    this
+  }
+
+  def timeout(timeout: Duration): TopicCreator = {
+    this.timeout = Some(timeout)
+    this
+  }
+
+  private[this] def getOrCreateAdmin(): (AdminClient, Boolean) =
+    admin.map((_, false)).getOrElse((AdminClient.create(KafkaUtil.toAdminProps(brokers.get)), true))
+
+  def create(): Unit = {
+    import scala.collection.JavaConverters._
+    val (adminClient, needClose) = getOrCreateAdmin()
+    try {
+      if (!KafkaUtil.exist(adminClient, topicName.get)) {
+        adminClient
+          .createTopics(util.Arrays.asList(new NewTopic(topicName.get, numberOfPartitions.get, numberOfReplications.get)
+            .configs(topicOptions.get.asJava)))
           .values()
-          .get(topicName)
-          .get(timeout.toMillis, TimeUnit.MILLISECONDS)
+          .get(topicName.get)
+          .get(timeout.get.toMillis, TimeUnit.MILLISECONDS)
       }
-    })
+    } finally if (needClose) adminClient.close()
   }
 }

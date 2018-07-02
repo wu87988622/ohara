@@ -3,7 +3,8 @@ package com.island.ohara.configurator
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer}
-import com.island.ohara.configurator.store.{MemStore, Store}
+import com.island.ohara.configurator.kafka.KafkaClient
+import com.island.ohara.configurator.store.Store
 import com.island.ohara.serialization.StringSerializer
 
 import scala.concurrent.duration.Duration
@@ -13,6 +14,7 @@ class ConfiguratorBuilder {
   private[this] var hostname: Option[String] = None
   private[this] var port: Option[Int] = None
   private[this] var store: Option[Store[String, OharaData]] = None
+  private[this] var kafkaClient: Option[KafkaClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(Configurator.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var terminationTimeout: Option[Duration] = Some(Configurator.DEFAULT_TERMINATION_TIMEOUT)
 
@@ -28,58 +30,64 @@ class ConfiguratorBuilder {
 
   /**
     * set a specified hostname
-    * @param _hostname used to build the rest server
+    * @param hostname used to build the rest server
     * @return this builder
     */
-  def hostname(_hostname: String): ConfiguratorBuilder = {
-    hostname = Some(_hostname)
+  def hostname(hostname: String): ConfiguratorBuilder = {
+    this.hostname = Some(hostname)
     this
   }
 
   /**
     * set a specified port
-    * @param _port used to build the rest server
+    * @param port used to build the rest server
     * @return this builder
     */
-  def port(_port: Int): ConfiguratorBuilder = {
-    port = Some(_port)
+  def port(port: Int): ConfiguratorBuilder = {
+    this.port = Some(port)
     this
   }
 
   /**
     * set a specified store used to maintain the ohara data.
     * NOTED: Configurator has responsibility to release this store.
-    * @param _store used to maintain the ohara data.
+    * @param store used to maintain the ohara data.
     * @return this builder
     */
-  def store(_store: Store[String, OharaData]): ConfiguratorBuilder = {
-    store = Some(_store)
+  def store(store: Store[String, OharaData]): ConfiguratorBuilder = {
+    this.store = Some(store)
+    this
+  }
+
+  def terminationTimeout(terminationTimeout: Duration): ConfiguratorBuilder = {
+    this.terminationTimeout = Some(terminationTimeout)
+    this
+  }
+
+  def initializationTimeout(initializationTimeout: Duration): ConfiguratorBuilder = {
+    this.initializationTimeout = Some(initializationTimeout)
+    this
+  }
+
+  def kafkaClient(kafkaClient: KafkaClient): ConfiguratorBuilder = {
+    this.kafkaClient = Some(kafkaClient)
     this
   }
 
   /**
-    * set the in-memory store. Used in testing when there is no kafka.
+    * set a mock kafka client to this configurator. a testing-purpose method.
     * @return this builder
     */
-  def inMemoryStore(): ConfiguratorBuilder = {
-    store = Some(new MemStore[String, OharaData](StringSerializer, OharaDataSerializer))
-    this
-  }
-
-  def terminationTimeout(_terminationTimeout: Duration): ConfiguratorBuilder = {
-    terminationTimeout = Some(_terminationTimeout)
-    this
-  }
-
-  def initializationTimeout(_initializationTimeout: Duration): ConfiguratorBuilder = {
-    initializationTimeout = Some(_initializationTimeout)
-    this
+  def noCluster: ConfiguratorBuilder = {
+    kafkaClient(KafkaClient.empty)
+    store(Store.inMemory(StringSerializer, OharaDataSerializer))
   }
 
   def build(): Configurator = new ConfiguratorImpl(uuidGenerator.get,
                                                    hostname.get,
                                                    port.get,
                                                    store.get,
+                                                   kafkaClient.get,
                                                    initializationTimeout.get,
                                                    terminationTimeout.get)
 }
@@ -96,7 +104,7 @@ object ConfiguratorBuilder {
     // TODO: make the parse more friendly
     val configurator = args.length match {
       case 2 =>
-        Configurator.builder.hostname(args(0)).port(args(1).toInt).inMemoryStore().build()
+        Configurator.builder.noCluster.hostname(args(0)).port(args(1).toInt).build()
       case 1 => throw new UnsupportedOperationException("The configurator in production hasn't been completed")
       case _ => throw new IllegalArgumentException("[Usage] <hostname> <port")
     }

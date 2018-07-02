@@ -141,24 +141,24 @@ class TestOharaData extends SmallTest with Matchers {
   def testOharaTopic(): Unit = {
     val uuid = testName.getMethodName
     val name = "name"
-    val numberOfPartition = 5
-    val numberOfReplication = 10
+    val numberOfPartitions = 5
+    val numberOfReplications = 10.toShort
     def assert(topic: OharaTopic) = {
       topic.uuid shouldBe uuid
       topic.name shouldBe name
-      topic.numberOfPartition shouldBe numberOfPartition
-      topic.numberOfReplication shouldBe numberOfReplication
+      topic.numberOfPartitions shouldBe numberOfPartitions
+      topic.numberOfReplications shouldBe numberOfReplications
       checkJsonContent(topic)
     }
-    assert(OharaTopic(uuid, name, numberOfPartition, numberOfReplication))
+    assert(OharaTopic(uuid, name, numberOfPartitions, numberOfReplications))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaTopic(oharaConfig)
     OharaData.uuid.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaTopic(oharaConfig)
     OharaData.name.set(oharaConfig, name)
-    oharaConfig.set(OharaTopic.partitionNumber.key, numberOfPartition)
-    oharaConfig.set(OharaTopic.replicationNumber.key, numberOfReplication)
+    oharaConfig.set(OharaTopic.numberOfPartitions.key, numberOfPartitions)
+    oharaConfig.set(OharaTopic.numberOfReplications.key, numberOfReplications)
     assert(OharaTopic(oharaConfig))
   }
 
