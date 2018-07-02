@@ -13,5 +13,7 @@ dependencies {
 
   testCompile project(":ohara-common").sourceSets.test.output
   testCompile libs.scalatest
+  testCompile libs.scalatest
+  testCompile libs.mockito
   testCompile libs.junit
 }

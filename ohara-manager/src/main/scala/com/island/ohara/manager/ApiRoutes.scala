@@ -130,7 +130,8 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
 
   lazy val routes: Route =
     pathPrefix("api") {
-      userRoute ~ schemaRoute
+      // TODO: remove hardcoded host and port
+      userRoute ~ schemaRoute ~ new TopicRoutes(new ConfiguratorService(system, "localhost", 9999))(system).routes
     }
 
   override protected def doClose(): Unit = restClient.close()

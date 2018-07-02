@@ -155,7 +155,10 @@ lazy val `ohara-kafka-data` = (project in file("ohara-kafka-data"))
 
 lazy val `ohara-manager` = (project in file("ohara-manager"))
   .settings(commonSettings)
-  .dependsOn(`ohara-common` % "compile->compile; compile->test")
+  .dependsOn(`ohara-configurator`)
+  .dependsOn(
+    `ohara-configurator` % "compile->compile; compile->test"
+  )
 
 lazy val `ohara-configurator` = (project in file("ohara-configurator"))
   .settings(commonSettings)
