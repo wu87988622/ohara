@@ -88,6 +88,24 @@ var oharaManager = {
 };
 
 oharaManager.api = {
+    createTopic: function(createTopicJSONStr, successCallback, errorCallback) {
+        $.post({
+          url: '../api/topics',
+          contentType: 'application/json',
+          dataType: 'json',
+          data: createTopicJSONStr,
+          success: function(result) {
+             var isCreateTopicSuccess = result.status;
+             var uuid = result.uuid;
+             var errorMessage = result.message;
+             successCallback(isCreateTopicSuccess, uuid, errorMessage);
+          },
+          error: function(XMLHttpRequest, textStatus, errorThrown) {
+              var errorMessage = XMLHttpRequest.statusText;
+              errorCallback(errorMessage);
+          }
+        })
+    },
     createSchema: function(createSchemaJSONStr, successCallback, errorCallback) {
         $.post({
           url: '../api/schemas',

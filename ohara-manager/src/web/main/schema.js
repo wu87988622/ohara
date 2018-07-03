@@ -53,7 +53,7 @@ oharaManager.widget.schemaCreateDialog = {
         var jsonStr =        '{"name": "' + schemaName + '",';
         jsonStr = jsonStr +  '"types": {' + types + '},';
         jsonStr = jsonStr +  '"orders": {' + orders + '},';
-        jsonStr = jsonStr +  '"disable":"' + isDisable + '"}';
+        jsonStr = jsonStr +  '"disabled":"' + isDisable + '"}';
         return jsonStr;
     },
     deleteSchemaRowUI: function($tr) {

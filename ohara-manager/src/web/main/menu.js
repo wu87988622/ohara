@@ -25,6 +25,12 @@ oharaManager.widget.menu = {
       this.contentPanel.clean();
       this.contentHeaderPanel.clean();
       this.contentHeaderPanel.append("Topic");
+
+      var topicContentPanel = this._template("#template .topicContentPanel");
+      this.contentPanel.append(topicContentPanel);
+
+      var createTopicDialogWidget = this.contentPanel.createWidget("#template .createTopicDialog", ".container-fluid .createTopicDialog", oharaManager.widget.topicCreateDialog);
+      createTopicDialogWidget.bind();
     },
     clickSchema: function(e){
       this.contentPanel.clean();
