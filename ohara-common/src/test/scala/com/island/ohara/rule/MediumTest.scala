@@ -22,4 +22,6 @@ trait MediumTest extends JUnitSuiteLike {
 
   @Rule
   def testName: TestName = _testName
+
+  def methodName: String = testName.getMethodName
 }

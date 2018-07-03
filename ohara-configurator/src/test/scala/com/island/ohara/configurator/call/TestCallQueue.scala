@@ -187,7 +187,7 @@ class TestCallQueue extends LargeTest with Matchers {
   @Test
   def testCloseClientWithOnFlyRequests(): Unit = {
     val requestCount = 10
-    val topicName = testName.getMethodName
+    val topicName = methodName
     KafkaUtil.topicCreator
       .brokers(util.brokersString)
       .topicName(topicName)

@@ -30,9 +30,9 @@ class TestConfigurator extends MediumTest with Matchers {
     doClose(Configurator.builder.noCluster.uuidGenerator(() => uuid).hostname("localhost").port(0).store(store).build()) {
       configurator =>
         {
-          doClose(RestClient()) { client =>
+          doClose(RestClient(configurator.hostname, configurator.port)) { client =>
             {
-              var response = client.post(configurator.hostname, configurator.port, path, schema)
+              var response = client.post(path, schema)
               response.statusCode shouldBe 200
               response.body.indexOf(uuid) should not be -1
               configurator.schemas.size shouldBe 1
@@ -41,14 +41,14 @@ class TestConfigurator extends MediumTest with Matchers {
                 case (name, t) => schemaType.get(name).get shouldBe t
               }
 
-              response = client.get(configurator.hostname, configurator.port, s"$path/$uuid")
+              response = client.get(s"$path/$uuid")
               response.statusCode shouldBe 200
               var returnedSchema = OharaSchema(OharaJson(response.body))
               configurator.schemas.next().types.foreach {
                 case (name, t) => returnedSchema.types.get(name).get shouldBe t
               }
 
-              response = client.delete(configurator.hostname, configurator.port, s"$path/phantom")
+              response = client.delete(s"$path/phantom")
               response.statusCode shouldBe 400
 
               val newName = "testSchema"
@@ -56,22 +56,22 @@ class TestConfigurator extends MediumTest with Matchers {
               val newIndexes = Map("cf3" -> 1, "cf2" -> 2)
               val newDisabled = true
               val newSchema = OharaSchema.json(newName, newTypes, newIndexes, newDisabled)
-              response = client.put(configurator.hostname, configurator.port, s"$path/$uuid", newSchema)
+              response = client.put(s"$path/$uuid", newSchema)
               response.statusCode shouldBe 200
 
-              response = client.get(configurator.hostname, configurator.port, s"$path/$uuid")
+              response = client.get(s"$path/$uuid")
               response.statusCode shouldBe 200
               returnedSchema = OharaSchema(OharaJson(response.body))
               configurator.schemas.next().equals(returnedSchema, false) shouldBe true
 
-              response = client.delete(configurator.hostname, configurator.port, s"$path/$uuid")
+              response = client.delete(s"$path/$uuid")
               response.statusCode shouldBe 200
 
               // we can't update a nonexistant schema
-              response = client.put(configurator.hostname, configurator.port, s"$path/$uuid", newSchema)
+              response = client.put(s"$path/$uuid", newSchema)
               response.statusCode shouldBe 400
 
-              response = client.get(configurator.hostname, configurator.port, s"$path/$uuid")
+              response = client.get(s"$path/$uuid")
               response.statusCode shouldBe 400
 
               configurator.schemas.size shouldBe 0
@@ -80,7 +80,7 @@ class TestConfigurator extends MediumTest with Matchers {
               val anotherUuid = (System.currentTimeMillis() + 100).toString
               val anotherName = "invalidschema"
               store.update(anotherUuid, OharaTopic.apply(anotherUuid, anotherName, 1, 1))
-              response = client.get(configurator.hostname, configurator.port, s"$path/$anotherUuid")
+              response = client.get(s"$path/$anotherUuid")
               response.statusCode shouldBe 400
             }
           }
@@ -99,8 +99,8 @@ class TestConfigurator extends MediumTest with Matchers {
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
       {
-        doClose(RestClient()) { client =>
-          schemas.foreach(client.post(configurator.hostname, configurator.port, path, _).statusCode shouldBe 200)
+        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+          schemas.foreach(client.post(path, _).statusCode shouldBe 200)
         }
         configurator.schemas.size shouldBe schemaCount
       }
@@ -126,17 +126,17 @@ class TestConfigurator extends MediumTest with Matchers {
         .port(0)
         .build()) { configurator =>
       {
-        doClose(RestClient()) { client =>
+        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
           {
             schemas.zipWithIndex.foreach {
               case (schema, index) => {
-                val response = client.post(configurator.hostname, configurator.port, path, schema)
+                val response = client.post(path, schema)
                 response.statusCode shouldBe 200
                 response.body.indexOf(uuids(index)) should not be -1
               }
             }
             // test list
-            val response = client.get(configurator.hostname, configurator.port, path)
+            val response = client.get(path)
             response.statusCode shouldBe 200
             val responsedUuids = OharaConfig(OharaJson(response.body)).getMap("uuids").get
             responsedUuids.size shouldBe uuids.size
@@ -155,14 +155,14 @@ class TestConfigurator extends MediumTest with Matchers {
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
       {
-        doClose(RestClient()) { client =>
+        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
           {
-            var response = client.post(configurator.hostname, configurator.port, path, OharaJson("xxx"))
+            var response = client.post(path, OharaJson("xxx"))
             response.statusCode shouldBe 400
             var exception = OharaException(OharaJson(response.body))
             exception.typeName.contains(classOf[IllegalArgumentException].getSimpleName)
 
-            response = client.put(configurator.hostname, configurator.port, s"$path/12345", OharaJson("xxx"))
+            response = client.put(s"$path/12345", OharaJson("xxx"))
             response.statusCode shouldBe 400
             exception = OharaException(OharaJson(response.body))
             exception.typeName.contains(classOf[IllegalArgumentException].getSimpleName)
@@ -186,6 +186,26 @@ class TestConfigurator extends MediumTest with Matchers {
     finally {
       ConfiguratorBuilder.closeRunningConfigurator = true
       service.shutdownNow()
+    }
+  }
+
+  @Test
+  def testCreateTopic(): Unit = {
+    val path = s"${Configurator.VERSION}/${Configurator.TOPIC_PATH}"
+    val uuid = "123"
+    doClose(Configurator.builder.noCluster.uuidGenerator(() => uuid).hostname("localhost").port(0).build()) {
+      configurator =>
+        {
+          doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+            {
+              val response =
+                client.post(path,
+                            OharaJson("{\"name\":my_topic, \"numberOfPartitions\":1, \"numberOfReplications\":1}"))
+              withClue(s" body:${response.body}")(response.statusCode shouldBe 200)
+              response.body shouldBe "{\"uuid\":\"123\"}"
+            }
+          }
+        }
     }
   }
 }

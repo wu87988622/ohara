@@ -7,8 +7,10 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
+import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 
+import scala.concurrent.ExecutionException
 import scala.concurrent.duration._
 
 /**
@@ -61,8 +63,8 @@ object KafkaUtil {
     * @param topicName topic nameHDFSStorage
     * @return true if the topic exist. Otherwise, false
     */
-  def exist(brokers: String, topicName: String): Boolean =
-    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(exist(_, topicName))
+  def exist(brokers: String, topicName: String, timeout: Duration): Boolean =
+    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(exist(_, topicName, timeout))
 
   /**
     * check whether the specified topic exist
@@ -70,20 +72,29 @@ object KafkaUtil {
     * @param topicName topic name
     * @return true if the topic exist. Otherwise, false
     */
-  def exist(admin: AdminClient, topicName: String): Boolean =
-    admin.listTopics().names().thenApply(_.contains(topicName)).get()
+  def exist(admin: AdminClient, topicName: String, timeout: Duration): Boolean =
+    admin.listTopics().names().thenApply(_.contains(topicName)).get(timeout.toMillis, TimeUnit.MILLISECONDS)
 
-  def topicInfo(brokers: String, topicName: String): Option[TopicInfo] =
-    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(topicInfo(_, topicName))
+  def topicInfo(brokers: String, topicName: String, timeout: Duration): Option[TopicInfo] =
+    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(topicInfo(_, topicName, timeout))
 
-  def topicInfo(admin: AdminClient, topicName: String): Option[TopicInfo] = {
-    Option(admin.describeTopics(util.Arrays.asList(topicName)).values().get(topicName))
-      .map(_.get())
+  def topicInfo(admin: AdminClient, topicName: String, timeout: Duration): Option[TopicInfo] =
+    try Option(admin.describeTopics(util.Arrays.asList(topicName)).values().get(topicName))
+      .map(_.get(timeout.toMillis, TimeUnit.MILLISECONDS))
       .map(topicPartitionInfo =>
-        TopicInfo(topicPartitionInfo.name(),
-                  topicPartitionInfo.partitions().size(),
-                  topicPartitionInfo.partitions().get(0).replicas().size().toShort))
-  }
+        TopicInfo(
+          topicPartitionInfo.name(),
+          topicPartitionInfo.partitions().size(),
+          // TODO: seems it has chance that each partition has different number of replications. by chia
+          topicPartitionInfo.partitions().get(0).replicas().size().toShort
+      ))
+    catch {
+      case e: ExecutionException =>
+        e.getCause match {
+          case ee: UnknownTopicOrPartitionException => throw new IllegalArgumentException(ee.getMessage)
+          case other: Throwable                     => throw other
+        }
+    }
 
   def topicCreator: TopicCreator = new TopicCreator()
 
@@ -97,6 +108,50 @@ object KafkaUtil {
     val adminProps = new Properties()
     adminProps.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
     adminProps
+  }
+
+  /**
+    * Increate the number of partitions. This method check the number before doing the alter. If the number is equal
+    * to the previous setting, nothing will happen; Decreasing the number is not allowed and it will cause
+    * an IllegalArgumentException. Otherwise, this method use kafka AdminClient to send the request to increase the
+    * number of partitions.
+    * @param brokers brokers information
+    * @param topicName topic name
+    * @param numberOfPartitions if this number is s
+    */
+  def addPartitions(brokers: String, topicName: String, numberOfPartitions: Int, timeout: Duration): Unit =
+    CloseOnce.doClose(AdminClient.create(toAdminProps(brokers)))(
+      addPartitions(_, topicName, numberOfPartitions, timeout))
+
+  /**
+    * Increate the number of partitions. This method check the number before doing the alter. If the number is equal
+    * to the previous setting, nothing will happen; Decreasing the number is not allowed and it will cause
+    * an IllegalArgumentException. Otherwise, this method use kafka AdminClient to send the request to increase the
+    * number of partitions.
+    * @param admin admin
+    * @param topicName topic name
+    * @param numberOfPartitions if this number is s
+    */
+  def addPartitions(admin: AdminClient, topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
+    if (!topicInfo(admin, topicName, timeout)
+          .map(
+            current =>
+              if (current.partitions > numberOfPartitions)
+                throw new IllegalArgumentException("Reducing the number of partitions is disallowed")
+              else if (current.partitions == numberOfPartitions) false
+              else true)
+          .map(shouldRun => {
+            if (shouldRun) {
+              import scala.collection.JavaConverters._
+              admin
+                .createPartitions(Map(topicName -> NewPartitions.increaseTo(numberOfPartitions)).asJava)
+                .all()
+                .get(timeout.toMillis, TimeUnit.MILLISECONDS)
+            }
+            // this true means the topic exists
+            true
+          })
+          .getOrElse(false)) throw new IllegalArgumentException(s"the topic:${topicName} isn't existed")
   }
 }
 
@@ -157,7 +212,7 @@ class TopicCreator {
     import scala.collection.JavaConverters._
     val (adminClient, needClose) = getOrCreateAdmin()
     try {
-      if (!KafkaUtil.exist(adminClient, topicName.get)) {
+      if (!KafkaUtil.exist(adminClient, topicName.get, timeout.get)) {
         adminClient
           .createTopics(util.Arrays.asList(new NewTopic(topicName.get, numberOfPartitions.get, numberOfReplications.get)
             .configs(topicOptions.get.asJava)))

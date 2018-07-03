@@ -2,6 +2,7 @@ package com.island.ohara.configurator
 
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.data.{OharaData, OharaSchema}
+import com.island.ohara.configurator.store.Store
 import com.island.ohara.io.CloseOnce
 
 import scala.concurrent.duration.{Duration, _}
@@ -25,11 +26,12 @@ trait Configurator extends Iterable[OharaData] with CloseOnce {
     */
   val port: Int
 
+  val store: Store[String, OharaData]
+
   /**
     * @return iteration of schemas managed by configurator
     */
   def schemas: Iterator[OharaSchema]
-
 }
 
 object Configurator {

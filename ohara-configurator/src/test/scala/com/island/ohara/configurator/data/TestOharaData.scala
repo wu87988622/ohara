@@ -45,7 +45,7 @@ class TestOharaData extends SmallTest with Matchers {
 
   @Test
   def testOharaJob(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val name = "name"
     val status = JobStatus.RUNNING
     val rules = Map("cmp0" -> Seq("cmp1", "cmp2"))
@@ -93,7 +93,7 @@ class TestOharaData extends SmallTest with Matchers {
 
   @Test
   def testOharaTarget(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val name = "name"
     val configs = Map("a" -> "b", "c" -> "d")
     def assert(target: OharaTarget) = {
@@ -116,7 +116,7 @@ class TestOharaData extends SmallTest with Matchers {
 
   @Test
   def testOharaSource(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val name = "name"
     val configs = Map("a" -> "b", "c" -> "d")
     def assert(source: OharaSource) = {
@@ -139,7 +139,7 @@ class TestOharaData extends SmallTest with Matchers {
 
   @Test
   def testOharaTopic(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val name = "name"
     val numberOfPartitions = 5
     val numberOfReplications = 10.toShort
@@ -164,7 +164,7 @@ class TestOharaData extends SmallTest with Matchers {
 
   @Test
   def testOharaSchema(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val name = "name"
     val columns = Map("column-0" -> BYTES, "column-1" -> INT)
     val indexes = Map("column-0" -> 0, "column-1" -> 1)
@@ -195,7 +195,7 @@ class TestOharaData extends SmallTest with Matchers {
 
   @Test
   def testOharaStreaming(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val name = "name"
     val schemaId = "scheam"
     val topicId = "topic"

@@ -14,7 +14,7 @@ class TestCallQueueData extends SmallTest with Matchers {
 
   @Test
   def testOharaRequest(): Unit = {
-    val uuid = testName.getMethodName
+    val uuid = methodName
     val lease: Long = 1000
     def assert(request: OharaRequest) = {
       request.uuid shouldBe uuid
@@ -42,8 +42,8 @@ class TestCallQueueData extends SmallTest with Matchers {
 
   @Test
   def testOharaResponse(): Unit = {
-    val uuid = testName.getMethodName
-    val requestUuit = testName.getMethodName + "-REQ"
+    val uuid = methodName
+    val requestUuit = methodName + "-REQ"
     def assert(response: OharaResponse) = {
       response.uuid shouldBe uuid
       response.name shouldBe OharaResponse.getClass.getSimpleName
@@ -52,7 +52,7 @@ class TestCallQueueData extends SmallTest with Matchers {
 
       val uuid2 = "uuid2"
       val name2 = "name2"
-      val requestUuit2 = testName.getMethodName + "-REQ2"
+      val requestUuit2 = methodName + "-REQ2"
       response.copy(OharaData.uuid, uuid2).uuid shouldBe uuid2
       response.copy(OharaData.name, name2).name shouldBe name2
       response.copy(OharaResponse.requestId, requestUuit2).requestId shouldBe requestUuit2

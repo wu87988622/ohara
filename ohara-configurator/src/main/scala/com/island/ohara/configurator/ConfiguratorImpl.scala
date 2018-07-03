@@ -2,7 +2,7 @@ package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.{Http, server}
+import akka.http.scaladsl.{server, Http}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
 import akka.stream.ActorMaterializer
@@ -11,6 +11,7 @@ import com.island.ohara.configurator.data.{OharaData, OharaException, OharaSchem
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.io.CloseOnce
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
@@ -25,24 +26,29 @@ import scala.concurrent.duration.{Duration, _}
 private class ConfiguratorImpl(uuidGenerator: () => String,
                                val hostname: String,
                                _port: Int,
-                               store: Store[String, OharaData],
+                               val store: Store[String, OharaData],
                                kafkaClient: KafkaClient,
                                initializationTimeout: Duration,
                                terminationTimeout: Duration)
     extends Configurator {
 
-  private[this] def rejectNonexistantUuid(uuid: String) = complete(StatusCodes.BadRequest -> OharaException(
+  private val log = Logger(classOf[ConfiguratorImpl])
+
+  private[this] def rejectNonexistentUuid(uuid: String) = complete(StatusCodes.BadRequest -> OharaException(
     new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson.toString)
 
   private[this] def handleException(function: () => StandardRoute): StandardRoute = try function()
   catch {
     // Parsing the invalid request can cause the IllegalArgumentException
     case e: IllegalArgumentException => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
-    // otherwise we may encounter some bugs in configurator
-    case e: Throwable => complete(StatusCodes.ServiceUnavailable -> OharaException(e).toJson.toString)
+    // otherwise configurator may encounter some bugs
+    case e: Throwable => {
+      log.error("What happens here?", e)
+      complete(StatusCodes.ServiceUnavailable -> OharaException(e).toJson.toString)
+    }
   }
 
-  private[this] def completeUuid(uuid: String) = complete("\"uuid\":\"" + uuid + "\"")
+  private[this] def completeUuid(uuid: String) = complete("{\"uuid\":\"" + uuid + "\"}")
 
   /**
     * this route is used to handle the request to schema.
@@ -67,7 +73,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       {
         get {
           handleException(() =>
-            getData[OharaSchema](uuid).map(r => complete(r.toJson.toString)).getOrElse(rejectNonexistantUuid(uuid)))
+            getData[OharaSchema](uuid).map(r => complete(r.toJson.toString)).getOrElse(rejectNonexistentUuid(uuid)))
         }
       }
     }
@@ -79,7 +85,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
             () =>
               removeData[OharaSchema](uuid)
                 .map(data => complete(data.toJson.toString))
-                .getOrElse(rejectNonexistantUuid(uuid)))
+                .getOrElse(rejectNonexistentUuid(uuid)))
         }
       }
     }
@@ -92,10 +98,11 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
               getData[OharaSchema](previousUuid)
                 .map(_ => {
                   val schema = OharaSchema(previousUuid, OharaJson(body))
+                  // TODO: we should disallow user to reduce or reorder the column. by chia
                   updateData(schema)
                   completeUuid(previousUuid)
                 })
-                .getOrElse(rejectNonexistantUuid(previousUuid))
+                .getOrElse(rejectNonexistentUuid(previousUuid))
             })
           }
         }
@@ -133,8 +140,30 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       }
     }
 
+    val updateTopic = path(Segment) { previousUuid =>
+      {
+        put {
+          entity(as[String]) { body =>
+            handleException(() => {
+              getData[OharaTopic](previousUuid)
+                .map(previousTopic => {
+                  val topic = OharaTopic(previousUuid, OharaJson(body))
+                  if (previousTopic.numberOfReplications != topic.numberOfReplications)
+                    throw new IllegalArgumentException("Non-support to change the number of replications")
+                  if (previousTopic.numberOfPartitions != topic.numberOfPartitions)
+                    kafkaClient.addPartition(previousUuid, topic.numberOfPartitions)
+                  updateData(topic)
+                  completeUuid(previousUuid)
+                })
+                .getOrElse(rejectNonexistentUuid(previousUuid))
+            })
+          }
+        }
+      }
+    }
+
     pathPrefix(Configurator.TOPIC_PATH) {
-      addTopic
+      addTopic ~ updateTopic
     }
   }
 
@@ -164,7 +193,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       CloseOnce.release(() => Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds), true)
     if (actorSystem != null)
       CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds), true)
-    store.close()
+    CloseOnce.close(store)
+    CloseOnce.close(kafkaClient)
   }
 
   import scala.reflect._

@@ -25,7 +25,7 @@ class TestTopicStoreBuilder extends MediumTest with Matchers {
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.numberOfPartitions(3)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.topicName(testName.getMethodName)
+    builder = builder.topicName(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.brokers(testUtil.brokersString)
     builder.build().close()
@@ -39,7 +39,7 @@ class TestTopicStoreBuilder extends MediumTest with Matchers {
       .pollTimeout(1 seconds)
       .numberOfReplications(1)
       .numberOfPartitions(1)
-      .topicName(testName.getMethodName)
+      .topicName(methodName)
       .brokers(testUtil.brokersString)
       // the following option is invalid for topic store
       .topicOptions(Map(TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))

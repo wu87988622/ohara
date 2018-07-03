@@ -63,7 +63,7 @@ class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
         returnedSchema.orders.sameElements(orders) shouldBe true
         returnedSchema.disabled shouldBe true
 
-        // get a nonexistant schema
+        // get a nonexistent schema
         rsp = restClient.get(httpServer.localAddress.getHostName, httpServer.localAddress.getPort, s"api/schemas/xxx")
         rsp.statusCode shouldBe 200
         toMap(rsp.body).requireString("status").toBoolean shouldBe false
@@ -74,7 +74,7 @@ class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
         rsp.statusCode shouldBe 200
         toMap(rsp.body).requireString("status").toBoolean shouldBe true
 
-        // delete a nonexistant schema
+        // delete a nonexistent schema
         rsp =
           restClient.delete(httpServer.localAddress.getHostName, httpServer.localAddress.getPort, s"api/schemas/$uuid")
         rsp.statusCode shouldBe 200

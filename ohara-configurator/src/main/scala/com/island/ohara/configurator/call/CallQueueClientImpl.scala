@@ -58,7 +58,8 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     */
   private[this] val uuid: String = UuidUtil.uuid
 
-  if (!KafkaUtil.exist(brokers, topicName)) throw new IllegalArgumentException(s"The topic:$topicName doesn't exist")
+  if (!KafkaUtil.exist(brokers, topicName, initializationTimeout))
+    throw new IllegalArgumentException(s"The topic:$topicName doesn't exist")
 
   /**
     * used to publish the request.

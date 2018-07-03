@@ -79,7 +79,7 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   def noCluster: ConfiguratorBuilder = {
-    kafkaClient(KafkaClient.empty)
+    kafkaClient(KafkaClient.EMPTY)
     store(Store.inMemory(StringSerializer, OharaDataSerializer))
   }
 

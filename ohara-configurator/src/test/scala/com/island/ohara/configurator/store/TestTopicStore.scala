@@ -19,11 +19,8 @@ class TestTopicStore extends MediumTest with Matchers {
     store.update("aa", "bb") shouldBe None
     store.get("aa") shouldBe Some("bb")
     store.close()
-    val another = Store
-      .builder(StringSerializer, StringSerializer)
-      .brokers(testUtil.brokersString)
-      .topicName(testName.getMethodName)
-      .build()
+    val another =
+      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokersString).topicName(methodName).build()
     try {
       OharaTestUtil.await(() => another.get("aa").isDefined, 10 seconds)
       another.get("aa") shouldBe Some("bb")
@@ -39,11 +36,7 @@ class TestTopicStore extends MediumTest with Matchers {
   def testMultiStore(): Unit = {
     val numberOfStore = 5
     val stores = 0 until numberOfStore map (index =>
-      Store
-        .builder(StringSerializer, StringSerializer)
-        .brokers(testUtil.brokersString)
-        .topicName(testName.getMethodName)
-        .build())
+      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokersString).topicName(methodName).build())
     0 until 10 foreach (index => store.update(index.toString, index.toString))
     store.size shouldBe 10
 
@@ -65,7 +58,7 @@ class TestTopicStore extends MediumTest with Matchers {
     val anotherStore = Store
       .builder(StringSerializer, StringSerializer)
       .brokers(testUtil.brokersString)
-      .topicName(testName.getMethodName + "copy")
+      .topicName(methodName + "copy")
       .build()
     anotherStore.size shouldBe 0
   }
@@ -93,7 +86,7 @@ class TestTopicStore extends MediumTest with Matchers {
       Store
         .builder(StringSerializer, StringSerializer)
         .brokers(testUtil.brokersString)
-        .topicName(s"${testName.getMethodName}-copy")
+        .topicName(s"${methodName}-copy")
         .build()) { another =>
       {
         another.size shouldBe 0
@@ -134,11 +127,8 @@ class TestTopicStore extends MediumTest with Matchers {
 
   @Before
   def before(): Unit = {
-    store = Store
-      .builder(StringSerializer, StringSerializer)
-      .brokers(testUtil.brokersString)
-      .topicName(testName.getMethodName)
-      .build()
+    store =
+      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokersString).topicName(methodName).build()
   }
   @After
   def tearDown(): Unit = {

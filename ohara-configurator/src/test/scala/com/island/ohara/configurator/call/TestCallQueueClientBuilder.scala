@@ -19,7 +19,7 @@ class TestCallQueueClientBuilder extends MediumTest with Matchers {
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.pollTimeout(1 seconds)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.topicName(testName.getMethodName)
+    builder = builder.topicName(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.brokers(testUtil.brokersString)
     // we haven't created the topic
@@ -27,7 +27,7 @@ class TestCallQueueClientBuilder extends MediumTest with Matchers {
     KafkaUtil.topicCreator
       .numberOfReplications(1)
       .numberOfPartitions(1)
-      .topicName(testName.getMethodName)
+      .topicName(methodName)
       .brokers(testUtil.brokersString)
       .create()
     builder.build().close()

@@ -88,7 +88,7 @@ object RestClient {
   /**
     * the default timeout to wait the response from rest server.
     */
-  val DEFAULT_REQUEST_TIMEOUT: Duration = 5 seconds
+  val DEFAULT_REQUEST_TIMEOUT: Duration = 10 seconds
 
   val HTTP_SCHEME = "http"
 }
