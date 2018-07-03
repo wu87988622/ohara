@@ -4,7 +4,6 @@ import java.net.URL
 import java.util.regex.Pattern
 
 import com.island.ohara.rule.{LargeTest, MediumTest, SmallTest}
-import com.typesafe.scalalogging.Logger
 import org.junit.Test
 import org.scalatest.Matchers
 

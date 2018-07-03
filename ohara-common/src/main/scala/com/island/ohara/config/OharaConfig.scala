@@ -49,7 +49,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Boolean): Option[Either[String, Map[String, String]]] = set(key, value.toString)
+  def set(key: String, value: Boolean): Option[Either[String, Map[String, String]]]
 
   /**
     * add a Short value with key.
@@ -58,7 +58,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Short): Option[Either[String, Map[String, String]]] = set(key, value.toString)
+  def set(key: String, value: Short): Option[Either[String, Map[String, String]]]
 
   /**
     * add a Int value with key.
@@ -67,7 +67,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Int): Option[Either[String, Map[String, String]]] = set(key, value.toString)
+  def set(key: String, value: Int): Option[Either[String, Map[String, String]]]
 
   /**
     * add a Long value with key.
@@ -76,7 +76,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Long): Option[Either[String, Map[String, String]]] = set(key, value.toString)
+  def set(key: String, value: Long): Option[Either[String, Map[String, String]]]
 
   /**
     * add a Float value with key.
@@ -85,7 +85,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Float): Option[Either[String, Map[String, String]]] = set(key, value.toString)
+  def set(key: String, value: Float): Option[Either[String, Map[String, String]]]
 
   /**
     * add a Double value with key.
@@ -94,7 +94,7 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     * @param value
     * @return String or Map<String, String> if previous key-value exists. Otherwise None
     */
-  def set(key: String, value: Double): Option[Either[String, Map[String, String]]] = set(key, value.toString)
+  def set(key: String, value: Double): Option[Either[String, Map[String, String]]]
 
   /**
     * @param key key

@@ -227,4 +227,16 @@ class TestMapConfig extends SmallTest with Matchers {
     map.get("key1") shouldBe Some("value1")
     map.get("key2") shouldBe None
   }
+
+  @Test
+  def testToJson(): Unit = {
+    val json = "{\"key0\":123,\"key1\":false,\"key2\":\"abc\",\"key3\":123.3}"
+    val conf = OharaConfig(OharaJson(json))
+    conf.requireInt("key0") shouldBe 123
+    conf.requireBoolean("key1") shouldBe false
+    conf.requireString("key2") shouldBe "abc"
+    conf.requireDouble("key3") shouldBe 123.3
+
+    conf.toJson.toString shouldBe json
+  }
 }
