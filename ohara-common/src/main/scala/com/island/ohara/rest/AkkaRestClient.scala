@@ -11,11 +11,13 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-private class AkkaRestClient extends RestClient {
-  private[this] implicit val actorSystem = ActorSystem(s"${classOf[AkkaRestClient].getSimpleName}-system")
+private class AkkaRestClient(as: ActorSystem = null) extends RestClient {
+  private[this] val needClose = as == null
+  private[this] implicit val actorSystem =
+    if (as == null) ActorSystem(s"${classOf[AkkaRestClient].getSimpleName}-system") else as
   private[this] implicit val actorMaterializer = ActorMaterializer()
 
-  override protected def doClose(): Unit = Await.result(actorSystem.terminate(), 60 seconds)
+  override protected def doClose(): Unit = if (needClose) Await.result(actorSystem.terminate(), 60 seconds)
 
   override def get(host: String, port: Int, path: String, timeout: Duration): RestResponse =
     request(host, port, HttpMethods.GET, path, null, timeout)

@@ -55,7 +55,7 @@ object HttpServer extends UserRoutes {
       log.info("Ohara-manager web root: " + webRoot.getCanonicalPath)
 
       // TODO: a temporary information of configurator. How we pass the configurator information to ohara manager?
-      doClose(new ApiRoutes(system, RestClient("localhost", 9999))) { apiRoutes =>
+      doClose(new ApiRoutes(system, RestClient("localhost", 9999, system))) { apiRoutes =>
         {
           val route =
             apiRoutes.routes ~

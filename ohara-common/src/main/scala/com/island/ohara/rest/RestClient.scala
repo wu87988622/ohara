@@ -1,5 +1,6 @@
 package com.island.ohara.rest
 
+import akka.actor.ActorSystem
 import com.island.ohara.config.OharaJson
 import com.island.ohara.io.CloseOnce
 
@@ -65,13 +66,29 @@ object RestClient {
   def apply(): RestClient = new AkkaRestClient()
 
   /**
+    * Create a akka-based rest client sharing the ActorSystem
+    * @param actorSystem shared actorSystem
+    * @return a new RestClient
+    */
+  def apply(actorSystem: ActorSystem): RestClient = new AkkaRestClient(actorSystem)
+
+  /**
     * Create a default impl of rest client.
     * @param host the target address
     * @param port the target port
     * @return a new RestClient
     */
-  def apply(host: String, port: Int): BoundRestClient = new BoundRestClient() {
-    private[this] val delegatee = RestClient()
+  def apply(host: String, port: Int): BoundRestClient = apply(host, port, null)
+
+  /**
+    * Create a default impl of rest client.
+    * @param host the target address
+    * @param port the target port
+    * @param actorSystem shared actorSystem.
+    * @return a new RestClient
+    */
+  def apply(host: String, port: Int, actorSystem: ActorSystem): BoundRestClient = new BoundRestClient() {
+    private[this] val delegatee = RestClient(actorSystem)
     override def get(path: String, timeout: Duration): RestResponse = delegatee.get(host, port, path, timeout)
 
     override def delete(path: String, timeout: Duration): RestResponse = delegatee.delete(host, port, path, timeout)
