@@ -32,7 +32,7 @@ class TestTopicRoutes
     val post = CreateTopic("123", 1, 1)
 
     val uuid = UUID.randomUUID().toString
-    when(configuratorService.createTopic(post)).thenReturn(Future.successful(uuid))
+    when(configuratorService.createTopic(post)).thenReturn(Future.successful(Right(CreateTopicSuccess(uuid))))
 
     val routes = new TopicRoutes(configuratorService).routes
 
@@ -47,17 +47,16 @@ class TestTopicRoutes
   def configuratorReturnEmpty(): Unit = {
     val configuratorService = mock[ConfiguratorService]
     val post = CreateTopic("123", 1, 1)
-
-    when(configuratorService.createTopic(post)).thenReturn(Future.successful(EMPTY_UUID))
+    val stackMessage = "Message from stack trace"
+    when(configuratorService.createTopic(post))
+      .thenReturn(Future.successful(Left(CreateTopicFailure("", "", stackMessage))))
 
     val routes = new TopicRoutes(configuratorService).routes
 
     val request = HttpEntity(MediaTypes.`application/json`, post.toJson.toString)
     Post("/topics", request) ~> Route.seal(routes) ~> check {
       status shouldEqual StatusCodes.OK
-      responseAs[CreateTopicResponse] shouldEqual CreateTopicResponse(false,
-                                                                      "Configurator returns empty or null",
-                                                                      EMPTY_UUID)
+      responseAs[CreateTopicResponse] shouldEqual CreateTopicResponse(false, stackMessage, EMPTY_UUID)
     }
   }
 }

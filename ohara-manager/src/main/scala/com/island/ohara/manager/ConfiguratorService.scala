@@ -15,13 +15,23 @@ trait TopicJsonSupport extends DefaultJsonProtocol {
   implicit val topicCreatedResponse = jsonFormat3(CreateTopicResponse)
 }
 
-class ConfiguratorService(system: ActorSystem, host: String, port: Int) extends TopicJsonSupport with SprayJsonSupport {
+trait ConfiguratorJsonSupport extends DefaultJsonProtocol {
+  implicit val configuratorSuccess = jsonFormat1(CreateTopicSuccess)
+  implicit val configuratorFailure = jsonFormat3(CreateTopicFailure)
+}
+
+class ConfiguratorService(system: ActorSystem, host: String, port: Int)
+    extends TopicJsonSupport
+    with ConfiguratorJsonSupport
+    with SprayJsonSupport {
   import ConfiguratorService._
   private implicit val actorSystem = system
   private implicit val materializer = ActorMaterializer()
   private implicit val executionContext = system.dispatcher
 
-  def createTopic(post: CreateTopic): Future[String] = {
+  private type CreateTopicReturn = Either[CreateTopicFailure, CreateTopicSuccess]
+
+  def createTopic(post: CreateTopic): Future[CreateTopicReturn] = {
     Marshal(post)
       .to[RequestEntity]
       .flatMap { entity =>
@@ -30,8 +40,9 @@ class ConfiguratorService(system: ActorSystem, host: String, port: Int) extends 
                                   entity = entity)
         Http().singleRequest(request)
       }
-      .flatMap(response => Unmarshal(response.entity).to[String])
-      .fallbackTo(Future(""))
+      .flatMap { response =>
+        Unmarshal(response.entity).to[CreateTopicReturn]
+      }
   }
 }
 
@@ -41,3 +52,6 @@ object ConfiguratorService {
   val configuratorScheme = "http"
 
 }
+
+final case class CreateTopicSuccess(uuid: String)
+final case class CreateTopicFailure(message: String, code: String, stack: String)

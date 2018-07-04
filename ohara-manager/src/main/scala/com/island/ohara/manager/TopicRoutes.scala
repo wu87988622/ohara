@@ -16,14 +16,10 @@ class TopicRoutes(val configuratorService: ConfiguratorService)(implicit system:
     (post & entity(as[CreateTopic])) { post =>
       onComplete(
         if (validateCreate(post)) {
-          configuratorService
-            .createTopic(post)
-            .map(result =>
-              if (Option(result).getOrElse(EMPTY_STRING) != EMPTY_UUID) {
-                CreateTopicResponse(true, EMPTY_STRING, result)
-              } else {
-                CreateTopicResponse(false, "Configurator returns empty or null", result)
-            })
+          configuratorService.createTopic(post).map {
+            case Right(success) => CreateTopicResponse(true, EMPTY_STRING, success.uuid)
+            case Left(failure)  => CreateTopicResponse(false, failure.stack, EMPTY_UUID)
+          }
         } else {
           Future(CreateTopicResponse(false, "User didn't input expected values", EMPTY_UUID))
         }
