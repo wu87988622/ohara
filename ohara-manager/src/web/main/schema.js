@@ -1,3 +1,13 @@
+oharaManager.widget.schemaList = {
+    listSchema: function() {
+        var rowTemplate = this._template("#template .listSchemaTableBody table tbody");
+        //TODO OHARA-205 to implement connect resftul api to get schema info
+        for (var i = 1 ; i <= 10 ; i++) {
+            this.$baseEl.find("table tbody").append(rowTemplate({schemaName: "schema" + i, isDisable: "false"}));
+        }
+    }
+}
+
 oharaManager.widget.schemaCreateDialog = {
     rows: [],
     rowCount: 0,
@@ -10,7 +20,7 @@ oharaManager.widget.schemaCreateDialog = {
             _this.rowCount = _this.rowCount + 1;
             _this.rows.push({rowID: this.rowCount, columnName: columnName, dataType: dataTypeValue});
 
-            var rowTemplate = this._template("#template .schemaTableBody table tbody");
+            var rowTemplate = this._template("#template .createSchemaTableBody table tbody");
             var rowTR = rowTemplate({rowID: this.rowCount, columnName: columnName, dataType: dataType});
             this.$baseEl.find("table tbody").append(rowTR);
             this.$baseEl.find("table tbody tr:last-child a").attr("columnName", columnName);
