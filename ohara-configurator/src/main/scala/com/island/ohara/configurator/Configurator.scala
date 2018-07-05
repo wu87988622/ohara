@@ -1,9 +1,10 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.data.{OharaData, OharaSchema}
-import com.island.ohara.configurator.store.Store
+import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer, OharaSchema}
+import com.island.ohara.configurator.store.{Store, StoreBuilder}
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.serialization.Serializer
 
 import scala.concurrent.duration.{Duration, _}
 
@@ -35,6 +36,7 @@ trait Configurator extends Iterable[OharaData] with CloseOnce {
 }
 
 object Configurator {
+  def storeBuilder: StoreBuilder[String, OharaData] = Store.builder(Serializer.string, OharaDataSerializer)
   def builder = new ConfiguratorBuilder()
 
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()

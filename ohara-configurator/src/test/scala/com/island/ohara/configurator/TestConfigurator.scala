@@ -1,6 +1,6 @@
 package com.island.ohara.configurator
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data._
@@ -173,20 +173,78 @@ class TestConfigurator extends MediumTest with Matchers {
   }
 
   @Test
+  def testInvalidMain(): Unit = {
+    // enable this flag to make sure the instance of Configurator is always die.
+    ConfiguratorBuilder.closeRunningConfigurator = true
+    try {
+      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(Array[String]("localhost"))
+      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
+        Array[String]("localhost", "localhost", "localhost"))
+      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
+        Array[String](ConfiguratorBuilder.HOSTNAME_KEY,
+                      "localhost",
+                      ConfiguratorBuilder.PORT_KEY,
+                      "123",
+                      ConfiguratorBuilder.TOPIC_KEY))
+      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
+        Array[String](ConfiguratorBuilder.HOSTNAME_KEY,
+                      "localhost",
+                      ConfiguratorBuilder.PORT_KEY,
+                      "123",
+                      ConfiguratorBuilder.TOPIC_KEY,
+                      "topic"))
+    } finally ConfiguratorBuilder.closeRunningConfigurator = false
+  }
+
+  @Test
   def testMain(): Unit = {
-    an[UnsupportedOperationException] should be thrownBy ConfiguratorBuilder.main(Array[String]("localhost"))
-    an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
-      Array[String]("localhost", "localhost", "localhost"))
-    val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
-    Future[Unit] {
-      ConfiguratorBuilder.main(Array[String]("localhost", "0"))
-    }(service)
-    import scala.concurrent.duration._
-    try OharaTestUtil.await(() => ConfiguratorBuilder.hasRunningConfigurator, 10 seconds)
-    finally {
-      ConfiguratorBuilder.closeRunningConfigurator = true
-      service.shutdownNow()
+    def runStandalone() = {
+      ConfiguratorBuilder.closeRunningConfigurator = false
+      val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+      Future[Unit] {
+        ConfiguratorBuilder.main(
+          Array[String](ConfiguratorBuilder.HOSTNAME_KEY, "localhost", ConfiguratorBuilder.PORT_KEY, "0"))
+      }(service)
+      import scala.concurrent.duration._
+      try OharaTestUtil.await(() => ConfiguratorBuilder.hasRunningConfigurator, 10 seconds)
+      finally {
+        ConfiguratorBuilder.closeRunningConfigurator = true
+        service.shutdownNow()
+        service.awaitTermination(60, TimeUnit.SECONDS)
+      }
     }
+
+    def runDist() = {
+      doClose(OharaTestUtil.localBrokers(3)) { util =>
+        {
+          ConfiguratorBuilder.closeRunningConfigurator = false
+          val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+          Future[Unit] {
+            ConfiguratorBuilder.main(
+              Array[String](
+                ConfiguratorBuilder.HOSTNAME_KEY,
+                "localhost",
+                ConfiguratorBuilder.PORT_KEY,
+                "0",
+                ConfiguratorBuilder.BROKERS_KEY,
+                util.brokersString,
+                ConfiguratorBuilder.TOPIC_KEY,
+                methodName
+              ))
+          }(service)
+          import scala.concurrent.duration._
+          try OharaTestUtil.await(() => ConfiguratorBuilder.hasRunningConfigurator, 30 seconds)
+          finally {
+            ConfiguratorBuilder.closeRunningConfigurator = true
+            service.shutdownNow()
+            service.awaitTermination(60, TimeUnit.SECONDS)
+          }
+        }
+      }
+    }
+
+    runStandalone()
+    runDist()
   }
 
   @Test

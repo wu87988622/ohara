@@ -1,0 +1,8 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+dependencies {
+  compile project(':ohara-common')
+  compile project(':ohara-configurator')
+  compile project(':ohara-manager')
+  compile project(':ohara-testing-util')
+}

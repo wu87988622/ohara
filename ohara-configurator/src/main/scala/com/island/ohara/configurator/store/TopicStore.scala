@@ -47,13 +47,15 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
                                valueSerializer: Serializer[V],
                                brokers: String,
                                topicName: String,
-                               partitions: Int,
-                               replications: Short,
+                               numberOfPartitions: Int,
+                               numberOfReplications: Short,
                                pollTimeout: Duration,
                                initializationTimeout: Duration,
                                topicOptions: Map[String, String])
     extends Store[K, V]
     with CloseOnce {
+
+  private[this] val log = Logger(TopicStore.getClass)
 
   /**
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
@@ -77,18 +79,24 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     throw new IllegalArgumentException(
       s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_COMPACT}")
 
+  log.info(
+    s"start to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")
+
   /**
     * Initialize the topic
     */
   KafkaUtil.topicCreator
     .brokers(brokers)
     .topicName(topicName)
-    .numberOfPartitions(partitions)
-    .numberOfReplications(replications)
+    .numberOfPartitions(numberOfPartitions)
+    .numberOfReplications(numberOfReplications)
     // enable kafka save the latest message for each key
     .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
     .timeout(initializationTimeout)
     .create()
+
+  log.info(
+    s"succeed to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")
 
   private[this] val consumer = newOrClose {
     val props = new Properties()

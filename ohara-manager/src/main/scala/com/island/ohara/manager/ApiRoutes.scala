@@ -3,15 +3,15 @@ package com.island.ohara.manager
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.MethodDirectives.post
 import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.pattern.ask
 import akka.util.Timeout
 import com.island.ohara.config.{OharaConfig, OharaJson, OharaProperty}
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rest.{BoundRestClient, RestClient, RestResponse}
+import com.island.ohara.rest.{BoundRestClient, RestResponse}
 
 import scala.concurrent.duration._
 
@@ -23,19 +23,21 @@ import scala.concurrent.duration._
   * @param restClient nullable. Null means you are writing tests and you don't run the configurator.
   */
 class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends SprayJsonSupport with CloseOnce {
+
   import UserLoginActor._
   import spray.json.DefaultJsonProtocol._
 
-  lazy val logger = Logging(system, classOf[ApiRoutes])
-  implicit lazy val timeout = Timeout(5.seconds)
-  implicit val userJsonFormat = jsonFormat2(User)
-  implicit val returnMessageFormat = jsonFormat2(ReturnMessage[Boolean])
+  private lazy val logger = Logging(system, classOf[ApiRoutes])
+  private implicit lazy val timeout = Timeout(5.seconds)
+  private implicit val userJsonFormat = jsonFormat2(User)
+  private implicit val returnMessageFormat = jsonFormat2(ReturnMessage[Boolean])
 
   lazy val userLoginActor: ActorRef =
     system.actorOf(UserLoginActor.props, "userLoginActor")
 
   /**
     * UI requires a field to represent the status of the rest call.
+    *
     * @param response come from ohara configurator
     * @return a new response with extra field "status"
     */
@@ -45,7 +47,9 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
     data.toJson.toString
   }
 
-  private[this] val schemaRoute: Route = if (restClient == null) pathPrefix("schemas") { reject } else {
+  private[this] val schemaRoute: Route = if (restClient == null) pathPrefix("schemas") {
+    reject
+  } else {
     val basicPath2Configurator = "v0/schemas"
     val addSchema = pathEnd {
       post {

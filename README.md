@@ -45,12 +45,16 @@ gradle clean build
 
 The release files are in ./ohara-assembly/build/.
 
-## Copy the dependencies
+## quick start configurator
 
 ```
-gradle clean copyDeps
+gradle runConfigurator
 ```
-The dependencies are in ./ohara-{module}/build/lib/.
+## quick start manager
+
+```
+gradle runManager
+```
 
 ## Built With
 

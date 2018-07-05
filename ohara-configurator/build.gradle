@@ -20,12 +20,12 @@ dependencies {
 }
 
 /**
- * run a configurator. the configurator created by this command is in standalone mode.
- * So ... this command is just for testing.
+ * run a configurator
  */
 task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   doFirst {
-    println 'run the configurator ... you can use -Phost and -Pport to change the address and port of configurator'
+    println 'run the configurator ... you can use -Phost and -Pport to change the address and port of configurator.' +
+            'Also, you can assign -Pbrokers, -Ptopic, -Ppartitions, and -Preplications to run the configurator on truly kafka'
   }
   String hostname = "localhost"
   if(project.hasProperty('host')) {
@@ -37,6 +37,20 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   }
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.configurator.ConfiguratorBuilder"
-  args = Arrays.asList(hostname, port)
+  if(project.hasProperty('brokers') && project.hasProperty('topic') ) {
+    String brokers = "${project.getProperty('brokers')}"
+    String topic = "${project.getProperty('topic')}"
+    String partitions = "1"
+    if(project.hasProperty('partitions')) {
+      partitions = "${project.getProperty('partitions')}"
+    }
+    String replications = "1"
+    if(project.hasProperty('replications')) {
+      replications = "${project.getProperty('replications')}"
+    }
+    args = Arrays.asList("--hostname", hostname, "--port", port, "--brokers", brokers, "--topic", topic, "--partitions", partitions, "--replications", replications)
+  } else {
+    args = Arrays.asList("--hostname", hostname, "--port", port)
+  }
 }
 
