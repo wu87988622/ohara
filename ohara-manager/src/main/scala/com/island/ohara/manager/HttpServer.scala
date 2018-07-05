@@ -1,6 +1,7 @@
 package com.island.ohara.manager
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.event.{Logging, LogSource}
@@ -55,7 +56,9 @@ object HttpServer extends UserRoutes {
   val HOSTNAME_KEY = "--hostname"
   val PORT_KEY = "--port"
   val CONFIGURATOR_KEY = "--configurator"
-  val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $CONFIGURATOR_KEY"
+  val WEB_ROOT_KEY = "--web"
+  val TTL_KEY = "--ttl"
+  val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $CONFIGURATOR_KEY $WEB_ROOT_KEY $TTL_KEY"
 
   def main(args: Array[String]): Unit = {
     if (args.length == 1 && args(0).equals(HELP_KEY)) {
@@ -67,10 +70,14 @@ object HttpServer extends UserRoutes {
     var hostname: Option[String] = Some("localhost")
     var port: Option[Int] = Some(0)
     var configurator: Option[(String, Int)] = None
+    var web: Option[String] = Some(PROP_WEBROOT_DEFAULT)
+    var ttl: Option[Int] = Some(999)
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value)     => hostname = Some(value)
       case Array(PORT_KEY, value)         => port = Some(value.toInt)
       case Array(CONFIGURATOR_KEY, value) => configurator = Some((value.split(":")(0), value.split(":")(1).toInt))
+      case Array(WEB_ROOT_KEY, value)     => web = Some(value)
+      case Array(TTL_KEY, value)          => ttl = Some(value.toInt)
       case _                              => throw new IllegalArgumentException(USAGE)
     }
     if (configurator.isEmpty) log.info("No running configurator!!!")
@@ -78,11 +85,11 @@ object HttpServer extends UserRoutes {
     implicit val materializer = ActorMaterializer()
 
     try {
-      val webRoot: File = this.webRoot(PROP_WEBROOT_DEFAULT)
+      val webRoot: File = this.webRoot(web.get)
       log.info("Ohara-manager web root: " + webRoot.getCanonicalPath)
 
       // TODO: a temporary information of configurator. How we pass the configurator information to ohara manager?
-      doClose(new ApiRoutes(system, RestClient("localhost", 9999, system))) { apiRoutes =>
+      doClose(new ApiRoutes(system, RestClient(configurator.get._1, configurator.get._2, system))) { apiRoutes =>
         {
           val route =
             apiRoutes.routes ~
@@ -93,15 +100,13 @@ object HttpServer extends UserRoutes {
               } ~
               userRoutes
           import scala.concurrent.duration._
-          val server = Await.result(Http().bindAndHandle(route, "localhost", 8080), 10 seconds)
+          val server = Await.result(Http().bindAndHandle(route, hostname.get, port.get), 10 seconds)
           try {
-            log.info(
-              s"Ohara-manager online at http://${server.localAddress.getHostName}:${server.localAddress.getPort}/main/index.html")
+            log.info(s"configurator: http://${configurator.get._1}:${configurator.get._2}" +
+              s" Ohara-manager online at http://${server.localAddress.getHostName}:${server.localAddress.getPort}/main/index.html")
 
-            //Await.result(system.whenTerminated, Duration.Inf)   // await infinite
-
-            log.info("Press RETURN to stop...")
-            StdIn.readLine()
+            log.info(s"Will close manager after ${ttl.get} seconds")
+            TimeUnit.SECONDS.sleep(ttl.get)
           } finally server.unbind()
         }
       }

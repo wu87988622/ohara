@@ -1,5 +1,7 @@
 package com.island.ohara
 
+import java.util.concurrent.TimeUnit
+
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.integration.OharaTestUtil
@@ -14,6 +16,8 @@ object runOhara {
   def main(args: Array[String]) = {
     doClose(OharaTestUtil.localBrokers(3)) { util =>
       {
+        println("wait for the mini cluster")
+        TimeUnit.SECONDS.sleep(5)
         doClose(
           Configurator.builder
             .kafkaClient(KafkaClient(util.brokersString))
@@ -27,9 +31,9 @@ object runOhara {
               Array[String](HttpServer.HOSTNAME_KEY,
                             "localhost",
                             HttpServer.PORT_KEY,
-                            "8080",
+                            "0",
                             HttpServer.CONFIGURATOR_KEY,
-                            s"${configurator.hostname}:${configurator.port}"))
+                            s"${configurator.hostname}:${configurator.port}") ++ args)
           }
         }
       }
