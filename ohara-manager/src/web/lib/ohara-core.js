@@ -124,6 +124,21 @@ oharaManager.api = {
           }
         })
     },
+    listSchemas: function(_this, successCallback, errorCallback) {
+        $.get({
+          url: '../api/schemas',
+          dataType: 'json',
+          success: function(result) {
+             var status = result.status;
+             var uuids = result.uuids;
+             successCallback(_this, status, uuids);
+          },
+          error: function(XMLHttpRequest, textStatus, errorThrown) {
+             var errorMessage = XMLHttpRequest.statusText;
+             errorCallback(errorMessage);
+          }
+        })
+    },
     login: function(username, password, successCallback, errorCallback) {
         $.post({
           url: '../api/login',

@@ -1,10 +1,20 @@
 oharaManager.widget.schemaList = {
     listSchema: function() {
-        var rowTemplate = this._template("#template .listSchemaTableBody table tbody");
-        //TODO OHARA-205 to implement connect resftul api to get schema info
-        for (var i = 1 ; i <= 10 ; i++) {
-            this.$baseEl.find("table tbody").append(rowTemplate({schemaName: "schema" + i, isDisable: "false"}));
+        oharaManager.api.listSchemas(this, this.onSuccess, this.onFail);
+    },
+    onSuccess: function(_this, status, uuids) {
+        if (status == "true") {
+           var rowTemplate = _this._template("#template .listSchemaTableBody table tbody");
+           for(var uuid in uuids) {
+               var schemaName = uuids[uuid];
+               _this.$baseEl.find("table tbody").append(rowTemplate({schemaName: schemaName}));
+           }
+        } else {
+           aletr("list schema failed.");
         }
+    },
+    onFail: function(errorMessage) {
+        console.log(errorMessage);
     }
 }
 
