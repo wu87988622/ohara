@@ -83,23 +83,26 @@ object RestClient {
   /**
     * Create a default impl of rest client.
     * @param host the target address
-    * @param port the target port
+    * @param _port the target port
     * @param actorSystem shared actorSystem.
     * @return a new RestClient
     */
-  def apply(host: String, port: Int, actorSystem: ActorSystem): BoundRestClient = new BoundRestClient() {
+  def apply(host: String, _port: Int, actorSystem: ActorSystem): BoundRestClient = new BoundRestClient() {
     private[this] val delegatee = RestClient(actorSystem)
-    override def get(path: String, timeout: Duration): RestResponse = delegatee.get(host, port, path, timeout)
+    override def get(path: String, timeout: Duration): RestResponse = delegatee.get(hostname, port, path, timeout)
 
-    override def delete(path: String, timeout: Duration): RestResponse = delegatee.delete(host, port, path, timeout)
+    override def delete(path: String, timeout: Duration): RestResponse = delegatee.delete(hostname, port, path, timeout)
 
     override def put(path: String, body: OharaJson, timeout: Duration): RestResponse =
-      delegatee.put(host, port, path, body, timeout)
+      delegatee.put(hostname, port, path, body, timeout)
 
     override def post(path: String, body: OharaJson, timeout: Duration): RestResponse =
-      delegatee.post(host, port, path, body, timeout)
+      delegatee.post(hostname, port, path, body, timeout)
 
     override def close(): Unit = delegatee.close()
+
+    override val hostname: String = host
+    override val port: Int = _port
   }
 
   /**
@@ -117,6 +120,10 @@ object RestClient {
   * node but it may confuse the user... by chia
   */
 trait BoundRestClient extends AutoCloseable {
+
+  val hostname: String
+
+  val port: Int
 
   /**
     * send a GET request to target server

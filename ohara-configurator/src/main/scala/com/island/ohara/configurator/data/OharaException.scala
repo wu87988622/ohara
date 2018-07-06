@@ -24,7 +24,7 @@ class OharaException(config: OharaConfig) extends OharaData(config) {
 
   def message: String = OharaException.message.require(config)
 
-  def typeName: String = OharaException.typeName.require(config)
+  def code: String = OharaException.code.require(config)
 }
 
 object OharaException {
@@ -57,14 +57,14 @@ object OharaException {
     OharaData.name.set(config, OharaException.getClass.getSimpleName)
     OharaException.stack.set(config, ExceptionUtils.getStackTrace(exception))
     OharaException.message.set(config, message)
-    OharaException.typeName.set(config, exception.getClass.getName)
+    OharaException.code.set(config, exception.getClass.getName)
     new OharaException(config)
   }
-  def properties: Seq[OharaProperty[_]] = Array(typeName, message, stack)
-  val typeName: OharaProperty[String] =
-    OharaProperty.builder.key("type").description("the type name of ohara exception").stringProperty
+  def properties: Seq[OharaProperty[_]] = Array(code, message, stack)
+  val code: OharaProperty[String] =
+    OharaProperty.builder.key("code").description("the error code of ohara exception").stringProperty
   val message: OharaProperty[String] =
-    OharaProperty.builder.key("description").description("the description of ohara exception").stringProperty
+    OharaProperty.builder.key("message").description("the message of ohara exception").stringProperty
   val stack: OharaProperty[String] =
     OharaProperty.builder.key("stack").description("the stack of ohara exception").stringProperty
 }

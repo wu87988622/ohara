@@ -160,12 +160,12 @@ class TestConfigurator extends MediumTest with Matchers {
             var response = client.post(path, OharaJson("xxx"))
             response.statusCode shouldBe 400
             var exception = OharaException(OharaJson(response.body))
-            exception.typeName.contains(classOf[IllegalArgumentException].getSimpleName)
+            exception.code.contains(classOf[IllegalArgumentException].getSimpleName)
 
             response = client.put(s"$path/12345", OharaJson("xxx"))
             response.statusCode shouldBe 400
             exception = OharaException(OharaJson(response.body))
-            exception.typeName.contains(classOf[IllegalArgumentException].getSimpleName)
+            exception.code.contains(classOf[IllegalArgumentException].getSimpleName)
           }
         }
       }

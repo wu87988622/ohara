@@ -1,7 +1,7 @@
 package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCode, StatusCodes}
 import akka.http.scaladsl.{server, Http}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
@@ -34,21 +34,30 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
 
   private val log = Logger(classOf[ConfiguratorImpl])
 
-  private[this] def rejectNonexistentUuid(uuid: String) = complete(StatusCodes.BadRequest -> OharaException(
-    new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson.toString)
+  private[this] def rejectNonexistentUuid(uuid: String) = completeJson(
+    OharaException(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson,
+    StatusCodes.BadRequest)
 
   private[this] def handleException(function: () => StandardRoute): StandardRoute = try function()
   catch {
     // Parsing the invalid request can cause the IllegalArgumentException
-    case e: IllegalArgumentException => complete(StatusCodes.BadRequest -> OharaException(e).toJson.toString)
+    case e: IllegalArgumentException => completeJson(OharaException(e).toJson, StatusCodes.BadRequest)
     // otherwise configurator may encounter some bugs
     case e: Throwable => {
       log.error("What happens here?", e)
-      complete(StatusCodes.ServiceUnavailable -> OharaException(e).toJson.toString)
+      completeJson(OharaException(e).toJson, StatusCodes.ServiceUnavailable)
     }
   }
 
-  private[this] def completeUuid(uuid: String) = complete("{\"uuid\":\"" + uuid + "\"}")
+  /**
+    * complete the request with json response. This method also add the "application/json" to the header
+    * @param json response body
+    * @return route
+    */
+  private[this] def completeJson(json: OharaJson, status: StatusCode = StatusCodes.OK) = complete(
+    HttpResponse(status, entity = HttpEntity(ContentType(MediaTypes.`application/json`), json.toString)))
+
+  private[this] def completeUuid(uuid: String) = completeJson(OharaJson("{\"uuid\":\"" + uuid + "\"}"))
 
   /**
     * this route is used to handle the request to schema.
@@ -67,13 +76,13 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       }
     }
 
-    val listSchema = pathEnd(get(handleException(() => complete(listUuid[OharaSchema]))))
+    val listSchema = pathEnd(get(handleException(() => completeJson(listUuid[OharaSchema]))))
 
     val getSchema = path(Segment) { uuid =>
       {
         get {
-          handleException(() =>
-            getData[OharaSchema](uuid).map(r => complete(r.toJson.toString)).getOrElse(rejectNonexistentUuid(uuid)))
+          handleException(
+            () => getData[OharaSchema](uuid).map(r => completeJson(r.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
         }
       }
     }
@@ -81,11 +90,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     val deleteSchema = path(Segment) { uuid =>
       {
         delete {
-          handleException(
-            () =>
-              removeData[OharaSchema](uuid)
-                .map(data => complete(data.toJson.toString))
-                .getOrElse(rejectNonexistentUuid(uuid)))
+          handleException(() =>
+            removeData[OharaSchema](uuid).map(data => completeJson(data.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
         }
       }
     }
@@ -199,10 +205,10 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
 
   import scala.reflect._
 
-  private[this] def listUuid[T <: OharaData: ClassTag](): String = {
+  private[this] def listUuid[T <: OharaData: ClassTag](): OharaJson = {
     val rval = OharaConfig()
     rval.set("uuids", iterateData[T].map(d => (d.uuid -> d.name)).toMap)
-    rval.toJson.toString
+    rval.toJson
   }
 
   /**

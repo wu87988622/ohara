@@ -3,6 +3,7 @@ package com.island.ohara.manager
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.MethodDirectives.post
@@ -41,11 +42,19 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
     * @param response come from ohara configurator
     * @return a new response with extra field "status"
     */
-  private[this] def appendStatus(response: RestResponse): String = {
+  private[this] def appendStatus(response: RestResponse): OharaJson = {
     val data: OharaConfig = OharaConfig(OharaJson(response.body))
     ApiRoutes.status.set(data, if (response.statusCode == 200) true else false)
-    data.toJson.toString
+    data.toJson
   }
+
+  /**
+    * complete the request with json response. This method also add the "application/json" to the header
+    * @param json response body
+    * @return route
+    */
+  private[this] def completeJson(json: OharaJson, status: StatusCode = StatusCodes.OK) = complete(
+    HttpResponse(status, entity = HttpEntity(ContentType(MediaTypes.`application/json`), json.toString)))
 
   private[this] val schemaRoute: Route = if (restClient == null) pathPrefix("schemas") {
     reject
@@ -56,7 +65,7 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
         entity(as[String]) { requestBody =>
           val result =
             restClient.post(basicPath2Configurator, OharaJson(requestBody))
-          complete(200 -> appendStatus(result))
+          completeJson(appendStatus(result))
         }
       }
     }
@@ -65,7 +74,7 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
       {
         get {
           val result = restClient.get(s"$basicPath2Configurator/${uuid}")
-          complete(200 -> appendStatus(result))
+          completeJson(appendStatus(result))
         }
       }
     }
@@ -73,7 +82,7 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
     val listSchemas = pathEnd {
       get {
         val result = restClient.get(basicPath2Configurator)
-        complete(200 -> appendStatus(result))
+        completeJson(appendStatus(result))
       }
     }
 
@@ -81,7 +90,7 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
       {
         delete {
           val result = restClient.delete(s"$basicPath2Configurator/${uuid}")
-          complete(200 -> appendStatus(result))
+          completeJson(appendStatus(result))
         }
       }
     }
@@ -91,7 +100,7 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
         put {
           entity(as[String]) { requestBody =>
             val result = restClient.put(s"$basicPath2Configurator/$uuid", OharaJson(requestBody))
-            complete(200 -> appendStatus(result))
+            completeJson(appendStatus(result))
           }
         }
       }
@@ -132,10 +141,14 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
     loginRoute ~ logoutRoute
   }
 
+  private[this] val topicRoute: Route =
+    if (restClient == null) pathPrefix("topics")(reject)
+    else new TopicRoutes(new ConfiguratorService(system, restClient.hostname, restClient.port))(system).routes
+
   lazy val routes: Route =
     pathPrefix("api") {
       // TODO: remove hardcoded host and port
-      userRoute ~ schemaRoute ~ new TopicRoutes(new ConfiguratorService(system, "localhost", 9999))(system).routes
+      userRoute ~ schemaRoute ~ topicRoute
     }
 
   override protected def doClose(): Unit = restClient.close()
