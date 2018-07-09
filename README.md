@@ -55,6 +55,12 @@ gradle runConfigurator
 ```
 gradle runOhara
 ```
+
+* argument description:
+-Phostname: Running ohara-manager HTTP server hostname. default is localhost
+-Pport: Running ohara-manager HTTP server port. default is random
+-Pttl: Assign server timeout time. default is 60 seconds
+
 NOTED: a full ohara service consists of 1) manager, 2) configurator and 3) kafka cluster. The above command starts
 a local kafka cluster with 3 brokers.
 

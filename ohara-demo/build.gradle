@@ -17,6 +17,15 @@ task runOhara(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.runOhara"
   String ttl = 60 //seconds
+  String hostname = "localhost"
+  String port = 0
+
   if(project.hasProperty('ttl')) ttl = "${project.getProperty('ttl')}"
-  args = Arrays.asList("--web", "$parent.projectDir/ohara-manager/src/web", "--ttl", ttl)
+  if(project.hasProperty('hostname')) hostname = "${project.getProperty('hostname')}"
+  if(project.hasProperty("port")) port = "${project.getProperty('port')}"
+
+  args = Arrays.asList("--web", "$parent.projectDir/ohara-manager/src/web",
+          "--ttl", ttl,
+          "--hostname", hostname,
+          "--port", port)
 }

@@ -28,12 +28,7 @@ object runOhara {
           {
             // TODO: we should make the manage be a component rather than a fat main process...
             HttpServer.main(
-              Array[String](HttpServer.HOSTNAME_KEY,
-                            "localhost",
-                            HttpServer.PORT_KEY,
-                            "0",
-                            HttpServer.CONFIGURATOR_KEY,
-                            s"${configurator.hostname}:${configurator.port}") ++ args)
+              Array[String](HttpServer.CONFIGURATOR_KEY, s"${configurator.hostname}:${configurator.port}") ++ args)
           }
         }
       }
