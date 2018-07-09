@@ -1,7 +1,16 @@
 package com.island.ohara.configurator
 
+import java.util.UUID
 import java.util.concurrent.{Executors, TimeUnit}
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import spray.json._
+import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data._
 import com.island.ohara.configurator.store.Store
@@ -9,13 +18,20 @@ import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rest.RestClient
 import com.island.ohara.rule.MediumTest
+import com.island.ohara.configurator.ConfiguratorImpl._
 import com.island.ohara.serialization.{BYTES, INT, LONG, StringSerializer}
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 
-class TestConfigurator extends MediumTest with Matchers {
+class TestConfigurator extends MediumTest with Matchers with ConfiguratorJsonSupport with SprayJsonSupport {
+
+  val topicPath = s"/${Configurator.VERSION}/${Configurator.TOPIC_PATH}"
+  private implicit val actorSystem = ActorSystem()
+  private implicit val materializer = ActorMaterializer()
+  private implicit val executionContext = actorSystem.dispatcher
 
   @Test
   def testSchema(): Unit = {
@@ -264,6 +280,136 @@ class TestConfigurator extends MediumTest with Matchers {
             }
           }
         }
+    }
+  }
+
+  @Test
+  def getTopicShouldResponse(): Unit = {
+
+    doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
+      {
+
+        // create topic
+        val originTopicName = "5566"
+
+        val createTopic = CreateTopic(originTopicName, 1, 1)
+
+        val futureResponse = for {
+          requestEntity <- Marshal(createTopic).to[RequestEntity]
+          response <- Http().singleRequest(
+            HttpRequest(method = HttpMethods.POST,
+                        uri = "http://" + configurator.hostname + ":" + configurator.port + topicPath,
+                        entity = requestEntity))
+        } yield response
+
+        val createTopicResponse = Await.result(futureResponse, 3.seconds)
+        createTopicResponse.status shouldBe StatusCodes.OK
+
+        val uuidResponse = Await.result(Unmarshal(createTopicResponse.entity).to[UuidResponse], 3 second)
+
+        // get topic
+        val request =
+          HttpRequest(
+            method = HttpMethods.GET,
+            uri = "http://" + configurator.hostname + ":" + configurator.port + topicPath + "/" + uuidResponse.uuid)
+        val responseFuture = Http().singleRequest(request)
+        val response = Await.result(responseFuture, 3.seconds)
+
+        response.status shouldBe StatusCodes.OK
+        response.entity shouldBe HttpEntity(
+          ContentTypes.`application/json`,
+          GetTopicResponse(uuidResponse.uuid,
+                           createTopic.name,
+                           createTopic.numberOfPartitions,
+                           createTopic.numberOfReplications).toJson.toString
+        )
+      }
+    }
+  }
+
+  @Test
+  def deleteTopic(): Unit = {
+
+    doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
+      {
+
+        // create topic
+        val originTopicName = "5566"
+
+        val createTopic = CreateTopic(originTopicName, 1, 1)
+
+        val futureResponse = for {
+          requestEntity <- Marshal(createTopic).to[RequestEntity]
+          response <- Http().singleRequest(
+            HttpRequest(method = HttpMethods.POST,
+                        uri = "http://" + configurator.hostname + ":" + configurator.port + topicPath,
+                        entity = requestEntity))
+        } yield response
+
+        val createTopicResponse = Await.result(futureResponse, 3.seconds)
+        createTopicResponse.status shouldBe StatusCodes.OK
+
+        val uuidResponse = Await.result(Unmarshal(createTopicResponse.entity).to[UuidResponse], 3 second)
+
+        // delete topic
+        val request =
+          HttpRequest(
+            method = HttpMethods.DELETE,
+            uri = "http://" + configurator.hostname + ":" + configurator.port + topicPath + "/" + uuidResponse.uuid)
+        val responseFuture = Http().singleRequest(request)
+        val response = Await.result(responseFuture, 3.seconds)
+
+        response.status shouldBe StatusCodes.OK
+        response.entity shouldBe HttpEntity(
+          ContentTypes.`application/json`,
+          GetTopicResponse(uuidResponse.uuid,
+                           createTopic.name,
+                           createTopic.numberOfPartitions,
+                           createTopic.numberOfReplications).toJson.toString
+        )
+      }
+    }
+  }
+
+  @Test
+  def getTopicDidntExist(): Unit = {
+
+    doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
+      {
+        val request =
+          HttpRequest(
+            method = HttpMethods.GET,
+            uri = "http://" + configurator.hostname + ":" + configurator.port + topicPath + "/" + UUID.randomUUID())
+        val responseFuture = Http().singleRequest(request)
+        val response = Await.result(responseFuture, 3.seconds)
+
+        response.status shouldBe StatusCodes.OK
+        response.entity shouldBe HttpEntity(
+          ContentTypes.`application/json`,
+          TOPIC_IS_NOT_FOUND.toJson.toString
+        )
+      }
+    }
+  }
+
+  @Test
+  def deleteTopicDidntExist(): Unit = {
+
+    doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
+      {
+        val request =
+          HttpRequest(
+            method = HttpMethods.DELETE,
+            uri = "http://" + configurator.hostname + ":" + configurator.port + topicPath + "/" + UUID.randomUUID())
+        val responseFuture = Http().singleRequest(request)
+        val response = Await.result(responseFuture, 3.seconds)
+
+        response.status shouldBe StatusCodes.OK
+        response.entity shouldBe HttpEntity(
+          ContentTypes.`application/json`,
+          TOPIC_IS_NOT_FOUND.toJson.toString
+        )
+      }
     }
   }
 }

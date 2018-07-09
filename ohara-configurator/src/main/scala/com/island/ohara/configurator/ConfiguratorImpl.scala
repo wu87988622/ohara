@@ -2,9 +2,11 @@ package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCode, StatusCodes}
-import akka.http.scaladsl.{server, Http}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.{Http, server}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.StandardRoute
+import akka.http.scaladsl.server.{ExceptionHandler, StandardRoute}
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.data.{OharaData, OharaException, OharaSchema, OharaTopic}
@@ -30,7 +32,10 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                                kafkaClient: KafkaClient,
                                initializationTimeout: Duration,
                                terminationTimeout: Duration)
-    extends Configurator {
+    extends Configurator
+    with ConfiguratorJsonSupport
+    with SprayJsonSupport {
+  import ConfiguratorImpl._
 
   private val log = Logger(classOf[ConfiguratorImpl])
 
@@ -168,8 +173,38 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       }
     }
 
+    val exceptionHandler = ExceptionHandler {
+      case e: Throwable => complete(FailureMessage(e.getMessage, "", e.getStackTrace.toString))
+    }
+
+    def getTopic = path("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r) { uuid =>
+      handleExceptions(exceptionHandler) {
+        get {
+          getData[OharaTopic](uuid) match {
+            case Some(oharaTopic) =>
+              complete(
+                GetTopicResponse(uuid, oharaTopic.name, oharaTopic.numberOfPartitions, oharaTopic.numberOfReplications))
+            case None => complete(TOPIC_IS_NOT_FOUND)
+          }
+        }
+      }
+    }
+
+    def deleteTopic = path("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r) { uuid =>
+      handleExceptions(exceptionHandler) {
+        delete {
+          removeData[OharaTopic](uuid) match {
+            case Some(oharaTopic) =>
+              complete(
+                GetTopicResponse(uuid, oharaTopic.name, oharaTopic.numberOfPartitions, oharaTopic.numberOfReplications))
+            case None => complete(TOPIC_IS_NOT_FOUND)
+          }
+        }
+      }
+    }
+
     pathPrefix(Configurator.TOPIC_PATH) {
-      addTopic ~ updateTopic
+      addTopic ~ updateTopic ~ getTopic ~ deleteTopic
     }
   }
 
@@ -257,4 +292,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
   override def iterator: Iterator[OharaData] = store.map(_._2).iterator
 
   override def size = store.size
+}
+
+object ConfiguratorImpl {
+  val TOPIC_IS_NOT_FOUND = FailureMessage("Topic is not found", "", "")
 }
