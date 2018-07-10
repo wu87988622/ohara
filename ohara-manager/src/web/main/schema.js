@@ -1,5 +1,6 @@
 oharaManager.widget.schemaList = {
     listSchema: function() {
+        this.$baseEl.find("table tbody").empty();
         oharaManager.api.listSchemas(this, this.onSuccess, this.onFail);
     },
     onSuccess: function(_this, status, uuids) {
@@ -52,14 +53,15 @@ oharaManager.widget.schemaCreateDialog = {
         if(schemaName != '' && this.rows.length > 0) {
             var isDisable = $("input[name='isDisable']").prop("checked");
             var createSchemaJsonString = this.buildCreateSchemaJsonString(schemaName, isDisable, this.rows);
-            oharaManager.api.createSchema(createSchemaJsonString, this.onSuccess, this.onFail);
+            oharaManager.api.createSchema(this, createSchemaJsonString, this.onSuccess, this.onFail);
         } else {
             alert("The schema name or column is empty. Please input your schema name or add column");
         }
     },
-    onSuccess: function(status, uuid, errorMessage) {
+    onSuccess: function(_this, status, uuid, errorMessage) {
         if (status == "true") {
            alert("create schema finish. uuid:" + uuid);
+           _this.listSchemaPanel.listSchema();
         } else {
            alert("create schema failed:\n" + errorMessage);
         }

@@ -41,7 +41,10 @@ oharaManager.widget.menu = {
       schemaContentPanelWidget.listSchema();
 
       var createSchemaDialogWidget = this.contentPanel.createWidget("#template .createSchemaDialog", ".container-fluid .createSchemaDialog", oharaManager.widget.schemaCreateDialog);
-      createSchemaDialogWidget.bind();
+      var cfg = $.extend({
+          "listSchemaPanel": schemaContentPanelWidget
+      }, createSchemaDialogWidget);
+      cfg.bind();
     },
     buildItems: function(){
       var cloneToolTemplate = this._template("#template .tool");

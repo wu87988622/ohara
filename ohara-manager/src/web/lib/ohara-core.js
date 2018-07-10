@@ -106,7 +106,7 @@ oharaManager.api = {
           }
         })
     },
-    createSchema: function(createSchemaJSONStr, successCallback, errorCallback) {
+    createSchema: function(_this, createSchemaJSONStr, successCallback, errorCallback) {
         $.post({
           url: '../api/schemas',
           contentType: 'application/json',
@@ -116,7 +116,7 @@ oharaManager.api = {
              var isCreateSchemaSuccess = result.status;
              var uuid = result.uuid;
              var errorMessage = result.description;
-             successCallback(isCreateSchemaSuccess, uuid, errorMessage);
+             successCallback(_this, isCreateSchemaSuccess, uuid, errorMessage);
           },
           error: function(XMLHttpRequest, textStatus, errorThrown) {
              var errorMessage = XMLHttpRequest.statusText;
