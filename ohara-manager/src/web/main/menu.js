@@ -37,12 +37,17 @@ oharaManager.widget.menu = {
       this.contentHeaderPanel.clean();
       this.contentHeaderPanel.append("Schema");
 
+      var schemaDetailDialogWidget = this.contentPanel.createWidget("#template .schemaDetailDialog", ".container-fluid .schemaDetailDialog", oharaManager.widget.schemaDetail);
       var schemaContentPanelWidget = this.contentPanel.createWidget("#template .schemaContentPanel", ".container-fluid .listSchemaPanel", oharaManager.widget.schemaList);
-      schemaContentPanelWidget.listSchema();
+
+      var schemaListAndDetail = $.extend({
+          "schemaDetailDialog": schemaDetailDialogWidget
+      }, schemaContentPanelWidget);
+      schemaListAndDetail.listSchema();
 
       var createSchemaDialogWidget = this.contentPanel.createWidget("#template .createSchemaDialog", ".container-fluid .createSchemaDialog", oharaManager.widget.schemaCreateDialog);
       var cfg = $.extend({
-          "listSchemaPanel": schemaContentPanelWidget
+          "listSchemaPanel": schemaListAndDetail
       }, createSchemaDialogWidget);
       cfg.bind();
     },

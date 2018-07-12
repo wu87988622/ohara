@@ -1,3 +1,21 @@
+oharaManager.widget.schemaDetail = {
+    showSchemaDetail: function(uuid) {
+        var schemaInfoTemplate = this._template("#template .schemaDetailInfo");
+
+        //TODO OHARA-221 Integration Web UI and Restful api to display schema info
+        var schemaName = "schema1";
+        var isDisable = "false";
+        var schemaInfo = {uuid: uuid, schemaName: schemaName, isDisable: isDisable};
+        this.$find(".modal-dialog .modal-content .modal-body").html(schemaInfoTemplate(schemaInfo));
+
+        var schemaDetailTableTemplate = this._template("#template .schemaDetailTable table tbody");
+        for(var i = 1; i <= 3; i++) {
+            var row = schemaDetailTableTemplate({columnID: i, columnName: "column" + i, dataType: "string"});
+            this.$find("table tbody").append(row);
+        }
+    }
+}
+
 oharaManager.widget.schemaList = {
     listSchema: function() {
         this.$baseEl.find("table tbody").empty();
@@ -9,8 +27,14 @@ oharaManager.widget.schemaList = {
            for(var uuid in uuids) {
                var schemaName = uuids[uuid];
                _this.$baseEl.find("table tbody").append(rowTemplate({schemaName: schemaName}));
+               _this.$baseEl.find("table tbody tr:last-child a").attr("uuid", uuid);
+               _this.$baseEl.find("table tbody tr:last-child a").bind("click", function() {
+                   var uuid = $(this).attr("uuid");
+                   _this.schemaDetailDialog.showSchemaDetail(uuid);
+               });
            }
         } else {
+           //TODO Integration restful API to return exception message to WEB UI
            aletr("list schema failed.");
         }
     },
