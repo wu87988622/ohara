@@ -1,0 +1,5 @@
+node_modules
+
+# Client
+/client/coverage
+/client/cypress/videos

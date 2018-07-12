@@ -1,0 +1,49 @@
+<testsuites name="jest tests" tests="14" failures="1" time="6.76">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2018-07-10T03:11:10" time="0.989" tests="1">
+    <testcase classname=" renders without crashing" name=" renders without crashing" time="0.028">
+    </testcase>
+  </testsuite>
+  <testsuite name="&lt;SchemaPage /&gt;" errors="0" failures="0" skipped="0" timestamp="2018-07-10T03:11:11" time="0.633" tests="3">
+    <testcase classname="&lt;SchemaPage /&gt; renders correctly" name="&lt;SchemaPage /&gt; renders correctly" time="0.008">
+    </testcase>
+    <testcase classname="&lt;SchemaPage /&gt; renders &lt;Header /&gt;" name="&lt;SchemaPage /&gt; renders &lt;Header /&gt;" time="0.002">
+    </testcase>
+    <testcase classname="&lt;SchemaPage /&gt; toggles the class isActive" name="&lt;SchemaPage /&gt; toggles the class isActive" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="&lt;App /&gt;" errors="0" failures="0" skipped="0" timestamp="2018-07-10T03:11:12" time="0.607" tests="1">
+    <testcase classname="&lt;App /&gt; renders correctly" name="&lt;App /&gt; renders correctly" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="&lt;Button /&gt;" errors="0" failures="0" skipped="0" timestamp="2018-07-10T03:11:12" time="0.597" tests="1">
+    <testcase classname="&lt;Button /&gt; renders correctly" name="&lt;Button /&gt; renders correctly" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="isNumber" errors="0" failures="0" skipped="0" timestamp="2018-07-10T03:11:13" time="0.599" tests="5">
+    <testcase classname="isNumber returns true if the given value type is number" name="isNumber returns true if the given value type is number" time="0.001">
+    </testcase>
+    <testcase classname="isNumber returns false if the given value type is not number" name="isNumber returns false if the given value type is not number" time="0.001">
+    </testcase>
+    <testcase classname="double doubles the given input" name="double doubles the given input" time="0.001">
+    </testcase>
+    <testcase classname="double return null when the given input has wrong type of items" name="double return null when the given input has wrong type of items" time="0">
+    </testcase>
+    <testcase classname="double return null when the given input is not an array" name="double return null when the given input is not an array" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="&lt;TopicPage /&gt;" errors="0" failures="1" skipped="0" timestamp="2018-07-10T03:11:10" time="5.969" tests="3">
+    <testcase classname="&lt;TopicPage /&gt; renders correctly" name="&lt;TopicPage /&gt; renders correctly" time="5.014">
+      <failure>Error: Timeout - Async callback was not invoked within timeout specified by jasmine.DEFAULT_TIMEOUT_INTERVAL.
+    at pTimeout (/Users/joshua/Desktop/sanbox/ohara-demo/client/node_modules/jest-jasmine2/build/queueRunner.js:53:21)
+    at setTimeout (/Users/joshua/Desktop/sanbox/ohara-demo/client/node_modules/jest-jasmine2/build/p-timeout.js:21:44)
+    at Timeout.callback [as _onTimeout] (/Users/joshua/Desktop/sanbox/ohara-demo/client/node_modules/jsdom/lib/jsdom/browser/Window.js:523:19)
+    at ontimeout (timers.js:498:11)
+    at tryOnTimeout (timers.js:323:5)
+    at Timer.listOnTimeout (timers.js:290:5)</failure>
+    </testcase>
+    <testcase classname="&lt;TopicPage /&gt; renders &lt;Header /&gt;" name="&lt;TopicPage /&gt; renders &lt;Header /&gt;" time="0.005">
+    </testcase>
+    <testcase classname="&lt;TopicPage /&gt; renders content correctly" name="&lt;TopicPage /&gt; renders content correctly" time="0.002">
+    </testcase>
+  </testsuite>
+</testsuites>
