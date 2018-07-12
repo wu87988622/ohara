@@ -412,4 +412,47 @@ class TestConfigurator extends MediumTest with Matchers with ConfiguratorJsonSup
       }
     }
   }
+
+  @Test
+  def testListTopicUuid(): Unit = {
+    val topicCount = 10
+    val uuids: Seq[String] = (0 until topicCount).map(_.toString)
+    var uuidIndex = 0
+    val topics: Seq[OharaJson] =
+      (0 until topicCount).map(index => OharaTopic.json(index.toString, 1, 1))
+    val path = s"${Configurator.VERSION}/${Configurator.TOPIC_PATH}"
+    doClose(
+      Configurator.builder.noCluster
+        .uuidGenerator(() => {
+          uuidIndex <= uuids.size shouldBe true
+          try uuids(uuidIndex)
+          finally uuidIndex += 1
+        })
+        .hostname("localhost")
+        .port(0)
+        .build()) { configurator =>
+      {
+        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+          {
+            topics.zipWithIndex.foreach {
+              case (topic, index) => {
+                val response = client.post(path, topic)
+                response.statusCode shouldBe 200
+                response.body.indexOf(uuids(index)) should not be -1
+              }
+            }
+            // test list
+            val response = client.get(path)
+            response.statusCode shouldBe 200
+            val responsedUuids = OharaConfig(OharaJson(response.body)).getMap("uuids").get
+            responsedUuids.size shouldBe uuids.size
+            uuids.foreach(uuid => {
+              // the uuid is equal with name
+              responsedUuids.get(uuid).get shouldBe uuid
+            })
+          }
+        }
+      }
+    }
+  }
 }

@@ -151,6 +151,8 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
       }
     }
 
+    val listTopic = pathEnd(get(handleException(() => completeJson(listUuid[OharaTopic]))))
+
     val updateTopic = path(Segment) { previousUuid =>
       {
         put {
@@ -204,7 +206,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     }
 
     pathPrefix(Configurator.TOPIC_PATH) {
-      addTopic ~ updateTopic ~ getTopic ~ deleteTopic
+      addTopic ~ listTopic ~ updateTopic ~ getTopic ~ deleteTopic
     }
   }
 
