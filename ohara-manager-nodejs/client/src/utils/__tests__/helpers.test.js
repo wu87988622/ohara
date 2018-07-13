@@ -1,4 +1,20 @@
-import { isNumber, double } from '../helpers';
+import { isNumber, isDefined } from '../helpers';
+
+describe('isDefined', () => {
+  it('returns true if the given value type is defined', () => {
+    expect(isDefined('')).toBe(true);
+    expect(isDefined(1)).toBe(true);
+    expect(isDefined(NaN)).toBe(true);
+    expect(isDefined({})).toBe(true);
+    expect(isDefined([])).toBe(true);
+    expect(isDefined(null)).toBe(true);
+    expect(isDefined(() => {})).toBe(true);
+  });
+
+  it('returns false if the given value type is undefined', () => {
+    expect(isDefined(undefined)).toBe(false);
+  });
+});
 
 describe('isNumber', () => {
   it('returns true if the given value type is number', () => {
@@ -7,19 +23,5 @@ describe('isNumber', () => {
 
   it('returns false if the given value type is not number', () => {
     expect(isNumber('test me!')).toBe(false);
-  });
-});
-
-describe('double', () => {
-  it('doubles the given input', () => {
-    expect(double([2, 4])).toEqual([4, 8]);
-  });
-
-  it('return null when the given input has wrong type of items', () => {
-    expect(double([2, 'string'])).toBe(null);
-  });
-
-  it('return null when the given input is not an array', () => {
-    expect(double({})).toBe(null);
   });
 });

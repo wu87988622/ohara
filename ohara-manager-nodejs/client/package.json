@@ -1,7 +1,12 @@
 {
-  "name": "ohara-demo",
+  "name": "ohara-manager-client",
   "version": "0.1.0",
   "private": true,
+  "proxy": {
+    "/api/*": {
+      "target": "http://localhost:5050"
+    }
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -13,6 +18,7 @@
     "cypress:all": "cypress run"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "react": "^16.4.1",
@@ -20,7 +26,8 @@
     "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.4",
     "react-test-renderer": "^16.4.1",
-    "styled-components": "^3.3.3"
+    "styled-components": "^3.3.3",
+    "toastr": "^2.1.4"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

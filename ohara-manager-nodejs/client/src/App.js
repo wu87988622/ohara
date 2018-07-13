@@ -1,11 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
-
 import { BrowserRouter, Route, NavLink } from 'react-router-dom';
 
 import Home from './components/Home';
 import SchemaPage from './components/SchemaPage';
 import TopicPage from './components/TopicPage';
+import LoginPage from './components/pages/LoginPage';
 
 const NavWrapper = styled.ul`
   margin: 20px;
@@ -51,6 +51,7 @@ const App = () => (
       <Route exact path="/" component={Home} />
       <Route path="/schema" component={SchemaPage} />
       <Route path="/topics" component={TopicPage} />
+      <Route path="/login" component={LoginPage} />
     </div>
   </BrowserRouter>
 );

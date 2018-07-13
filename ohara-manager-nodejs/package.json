@@ -1,9 +1,9 @@
 {
-  "name": "ohara-demo",
-  "version": "1.0.0",
+  "name": "ohara-manager",
+  "private": true,
+  "version": "0.1.0",
   "main": "index.js",
   "author": "Joshua Lin (http://konekoya.github.io)",
-  "license": "MIT",
   "scripts": {
     "start": "nodemon index.js"
   },

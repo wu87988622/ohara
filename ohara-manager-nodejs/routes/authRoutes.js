@@ -1,31 +1,26 @@
 module.exports = app => {
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
+    isValidUser = username.toLowerCase() === 'joshua' && password === '111111';
 
-    if (username && password) {
-      const data = {
-        id: 12121,
-        username,
-        auth_token:
-          'okaythisisasupersecrettokenthatyouwillneverbeabletodecondeiguess',
-      };
+    if (isValidUser) {
+      res.status(200).json({
+        isSuccess: true,
+        token: 'sdfjlsjdfksjdf',
+      });
 
-      res.status(200).json(data);
       return;
     }
 
-    res.status(400).send('You should provide both username and password');
+    res.status(400).json({
+      isSuccess: false,
+      errMsg: 'Invalid username or password',
+    });
   });
 
-  app.get('/api/current_user', (req, res) => {
-    const currentUser = {
-      name: 'Joshua',
-      age: 20,
-      gender: 'male',
-      occupation: 'Frontend dev',
-      location: 'Taiwan',
-    };
-
-    res.status(200).send(currentUser);
+  app.get('/api/logout', (req, res) => {
+    res.status(200).json({
+      isSuccess: true,
+    });
   });
 };
