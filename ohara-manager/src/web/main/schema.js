@@ -1,18 +1,27 @@
 oharaManager.widget.schemaDetail = {
     showSchemaDetail: function(uuid) {
-        var schemaInfoTemplate = this._template("#template .schemaDetailInfo");
+        oharaManager.api.schemaDetail(this, uuid, this.onSuccess, this.onFail);
+    },
+    onSuccess: function(_this, status, uuid, schemaName, disabled, types, orders) {
+       var schemaInfoTemplate = _this._template("#template .schemaDetailInfo");
+       var schemaInfo = {uuid: uuid, schemaName: schemaName, isDisable: disabled};
+       _this.$find(".modal-dialog .modal-content .modal-body").html(schemaInfoTemplate(schemaInfo));
 
-        //TODO OHARA-221 Integration Web UI and Restful api to display schema info
-        var schemaName = "schema1";
-        var isDisable = "false";
-        var schemaInfo = {uuid: uuid, schemaName: schemaName, isDisable: isDisable};
-        this.$find(".modal-dialog .modal-content .modal-body").html(schemaInfoTemplate(schemaInfo));
+       var schemaDetailTableTemplate = _this._template("#template .schemaDetailTable table tbody");
 
-        var schemaDetailTableTemplate = this._template("#template .schemaDetailTable table tbody");
-        for(var i = 1; i <= 3; i++) {
-            var row = schemaDetailTableTemplate({columnID: i, columnName: "column" + i, dataType: "string"});
-            this.$find("table tbody").append(row);
-        }
+       var ordersRowSize = Object.keys(orders).length;
+       for (var i = 1 ; i <= ordersRowSize ; i++) {
+           for(var order in orders) {
+               if (i == orders[order]) {
+                  var dataType = types[order].replace("$", "");
+                  var row = schemaDetailTableTemplate({columnID: i, columnName: order, dataType: dataType});
+                  _this.$find("table tbody").append(row);
+               }
+           }
+       }
+    },
+    onFail: function(errorMessage) {
+        console.log(errorMessage);
     }
 }
 

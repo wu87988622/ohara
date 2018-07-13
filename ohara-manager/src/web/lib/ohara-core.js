@@ -139,6 +139,24 @@ oharaManager.api = {
           }
         })
     },
+    schemaDetail: function(_this, uuid, successCallback, errorCallback) {
+        $.get({
+          url: '../api/schemas/' + uuid,
+          dataType: 'json',
+          success: function(result) {
+              var status = result.status;
+              var schemaName = result.name;
+              var disabled = result.disabled;
+              var types = result.types;
+              var orders = result.orders;
+              successCallback(_this, status, uuid, schemaName, disabled, types, orders);
+          },
+          error: function(XMLHttpRequest, textStatus, errorThrown) {
+              var errorMessage = XMLHttpRequest.statusText;
+              errorCallback(errorMessage);
+          }
+        })
+    },
     login: function(username, password, successCallback, errorCallback) {
         $.post({
           url: '../api/login',
