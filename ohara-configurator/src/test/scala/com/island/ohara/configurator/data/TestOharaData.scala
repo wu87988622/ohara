@@ -160,6 +160,13 @@ class TestOharaData extends SmallTest with Matchers {
     oharaConfig.set(OharaTopic.numberOfPartitions.key, numberOfPartitions)
     oharaConfig.set(OharaTopic.numberOfReplications.key, numberOfReplications)
     assert(OharaTopic(oharaConfig))
+
+    val topic = OharaTopic(oharaConfig)
+    var json = topic.toJson.toString
+
+    withClue(s"${json}")(json.contains("\"numberOfReplications\":" + numberOfReplications) shouldBe true)
+    json = OharaTopic.json("abc", 5, 7).toString
+    withClue(s"${json}")(json.contains("\"numberOfReplications\":7") shouldBe true)
   }
 
   @Test

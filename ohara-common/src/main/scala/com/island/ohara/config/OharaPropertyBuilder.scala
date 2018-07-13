@@ -45,7 +45,7 @@ class OharaPropertyBuilder private[config] {
     * do nothing abort the conversion.
     * @return an new property which can convert the string value to string
     */
-  def stringProperty: OharaProperty[String] = property(_.toString, _.toString)
+  def stringProperty: OharaProperty[String] = property(_.toString)
 
   /**
     * create a property using scala conversion to parse string value to short.
@@ -58,7 +58,7 @@ class OharaPropertyBuilder private[config] {
     * create a property using scala conversion to parse string value to short.
     * @return an new property which can convert the string value to short.
     */
-  def shortProperty: OharaProperty[Short] = property(_.toShort, _.toString)
+  def shortProperty: OharaProperty[Short] = property(_.toShort)
 
   /**
     * create a property using scala conversion to parse string value to int.
@@ -71,7 +71,7 @@ class OharaPropertyBuilder private[config] {
     * create a property using scala conversion to parse string value to int.
     * @return an new property which can convert the string value to int.
     */
-  def intProperty: OharaProperty[Int] = property(_.toInt, _.toString)
+  def intProperty: OharaProperty[Int] = property(_.toInt)
 
   /**
     * create a property using scala conversion to parse string value to long.
@@ -84,7 +84,7 @@ class OharaPropertyBuilder private[config] {
     * create a property using scala conversion to parse string value to long.
     * @return an new property which can convert the string value to long.
     */
-  def longProperty: OharaProperty[Long] = property(_.toLong, _.toString)
+  def longProperty: OharaProperty[Long] = property(_.toLong)
 
   /**
     * create a property using scala conversion to parse string value to float.
@@ -97,7 +97,7 @@ class OharaPropertyBuilder private[config] {
     * create a property using scala conversion to parse string value to float.
     * @return an new property which can convert the string value to float.
     */
-  def floatProperty: OharaProperty[Float] = property(_.toFloat, _.toString)
+  def floatProperty: OharaProperty[Float] = property(_.toFloat)
 
   /**
     * create a property using scala conversion to parse string value to double.
@@ -110,7 +110,7 @@ class OharaPropertyBuilder private[config] {
     * create a property using scala conversion to parse string value to double.
     * @return an new property which can convert the string value to double.
     */
-  def doubleProperty: OharaProperty[Double] = property(_.toDouble, _.toString)
+  def doubleProperty: OharaProperty[Double] = property(_.toDouble)
 
   /**
     * create a property using scala conversion to parse string value to boolean.
@@ -123,7 +123,17 @@ class OharaPropertyBuilder private[config] {
     * create a property using scala conversion to parse string value to boolean.
     * @return an new property which can convert the string value to boolean.
     */
-  def booleanProperty: OharaProperty[Boolean] = property(_.toBoolean, _.toString)
+  def booleanProperty: OharaProperty[Boolean] = property(_.toBoolean)
+
+  /**
+    * create a property using custom conversion to parse string value to specific value.
+    * @param fun conversion function
+    * @param default default value
+    * @return an new property which can convert the string value to specific type. If the related key isn't existed, it return the default value
+    */
+  def property[T](fun: String => T, default: T): OharaProperty[T] = {
+    this.default = default; property(fun)
+  }
 
   /**
     * create a property using custom conversion to parse string value to specific value.
@@ -140,7 +150,7 @@ class OharaPropertyBuilder private[config] {
     * @param fun conversion function
     * @return an new property which can convert the string value to specific type.
     */
-  def property[T](fun: String => T, fun2: T => String): OharaProperty[T] = {
+  def property[T](fun: String => T, fun2: T => String = null): OharaProperty[T] = {
     checkArguments()
     new OharaProperty[T] {
       override def key: String = OharaPropertyBuilder.this.key
@@ -155,7 +165,7 @@ class OharaPropertyBuilder private[config] {
 
       override def set(config: OharaConfig, value: T): Option[T] = {
         val previous = get(config)
-        config.set(key, fun2(value))
+        config.set(key, if (fun2 != null) fun2(value) else value)
         previous
       }
 

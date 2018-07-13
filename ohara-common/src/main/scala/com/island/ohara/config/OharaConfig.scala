@@ -96,6 +96,17 @@ trait OharaConfig extends Iterable[(String, Either[String, Map[String, String]])
     */
   def set(key: String, value: Double): Option[Either[String, Map[String, String]]]
 
+  def set[T](key: String, value: T): Option[Either[String, Map[String, String]]] = value match {
+    case v: Boolean             => set(key, v)
+    case v: Short               => set(key, v)
+    case v: Int                 => set(key, v)
+    case v: Long                => set(key, v)
+    case v: Float               => set(key, v)
+    case v: Double              => set(key, v)
+    case v: String              => set(key, v)
+    case v: Map[String, String] => set(key, v)
+  }
+
   /**
     * @param key key
     * @return String or Map<String, String> if the value mapped to the input key exist. Otherwise None
