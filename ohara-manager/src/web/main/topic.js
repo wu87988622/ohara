@@ -1,3 +1,26 @@
+oharaManager.widget.topicListPanel = {
+   listTopic: function() {
+       this.$baseEl.find("table tbody").empty();
+       oharaManager.api.listTopics(this, this.onSuccess, this.onFail);
+   },
+   onSuccess: function(_this, status, uuids) {
+        if (status == true) {
+          var rowTemplate = _this._template("#template .listTopicTableBody table tbody");
+          for(var uuid in uuids) {
+              var topicName = uuids[uuid];
+              var row = rowTemplate({topicName: topicName});
+              _this.$find("table tbody").append(row);
+          }
+        } else {
+            //TODO exception message
+            alert("List topic error");
+        }
+   },
+   onFail: function(errorMessage) {
+        console.log(errorMessage);
+   }
+}
+
 oharaManager.widget.topicCreateDialog = {
     clickSaveTopicButton: function() {
         var topicName = this.$baseEl.find("input[name='topicName']").val();
@@ -9,12 +32,14 @@ oharaManager.widget.topicCreateDialog = {
             alert("The partition and replication, please input the Number");
         } else {
             var createTopicJsonStr = this.buildCreateTopicJsonString(topicName, partition, replication);
-            oharaManager.api.createTopic(createTopicJsonStr, this.onSuccess, this.onFail);
+            oharaManager.api.createTopic(this, createTopicJsonStr, this.onSuccess, this.onFail);
+
         }
     },
-    onSuccess: function(status, uuid, errorMessage) {
+    onSuccess: function(_this, status, uuid, errorMessage) {
         if (status == true) {
            alert("create topic finish. uuid:" + uuid);
+           _this.listTopicPanel.listTopic();
         } else {
            alert("create topic failed:\n" + errorMessage);
         }

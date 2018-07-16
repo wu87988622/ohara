@@ -31,7 +31,7 @@ oharaManager.widget.schemaList = {
         oharaManager.api.listSchemas(this, this.onSuccess, this.onFail);
     },
     onSuccess: function(_this, status, uuids) {
-        if (status == "true") {
+        if (status == true) {
            var rowTemplate = _this._template("#template .listSchemaTableBody table tbody");
            for(var uuid in uuids) {
                var schemaName = uuids[uuid];
@@ -44,7 +44,7 @@ oharaManager.widget.schemaList = {
            }
         } else {
            //TODO Integration restful API to return exception message to WEB UI
-           aletr("list schema failed.");
+           alert("list schema failed.");
         }
     },
     onFail: function(errorMessage) {
@@ -92,7 +92,7 @@ oharaManager.widget.schemaCreateDialog = {
         }
     },
     onSuccess: function(_this, status, uuid, errorMessage) {
-        if (status == "true") {
+        if (status == true) {
            alert("create schema finish. uuid:" + uuid);
            _this.listSchemaPanel.listSchema();
         } else {
