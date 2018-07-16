@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.data.OharaSchema
+import com.island.ohara.configurator.data.{OharaSchema, OharaTopic}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.rest.RestClient
@@ -83,6 +83,22 @@ class TestApiRoutesWithConfigurator extends SmallTest with Matchers {
         Await.result(httpServer.unbind(), 10 seconds)
       }
     }
+  }
+
+  @Test
+  def testSendTopicRequest(): Unit = {
+    doClose(new ApiRoutes(system, RestClient(configurator.hostname, configurator.port))) { route =>
+      {
+        val httpServer: Http.ServerBinding =
+          Await.result(Http().bindAndHandle(route.routes, "localhost", 0), 10 seconds)
+
+        // list the schema
+        val rsp = restClient.get(httpServer.localAddress.getHostName, httpServer.localAddress.getPort, "api/topics")
+        rsp.statusCode shouldBe 200
+        toMap(rsp.body).requireString("status").toBoolean shouldBe true
+      }
+    }
+
   }
 
   @After

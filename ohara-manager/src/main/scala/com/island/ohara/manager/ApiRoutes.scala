@@ -142,8 +142,19 @@ class ApiRoutes(val system: ActorSystem, restClient: BoundRestClient) extends Sp
   }
 
   private[this] val topicRoute: Route =
-    if (restClient == null) pathPrefix("topics")(reject)
-    else new TopicRoutes(new ConfiguratorService(system, restClient.hostname, restClient.port))(system).routes
+    if (restClient == null) {
+      pathPrefix("topics")(reject)
+    } else {
+      val createTopic: Route =
+        new TopicRoutes(new ConfiguratorService(system, restClient.hostname, restClient.port))(system).routes
+      val listTopic: Route = path("topics") {
+        get {
+          val result = restClient.get("v0/topics")
+          completeJson(appendStatus(result))
+        }
+      }
+      createTopic ~ listTopic
+    }
 
   lazy val routes: Route =
     pathPrefix("api") {
