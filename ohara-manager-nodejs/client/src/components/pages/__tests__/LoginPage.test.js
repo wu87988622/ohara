@@ -1,13 +1,16 @@
 import React from 'react';
 import toastr from 'toastr';
+import localStorageMock from '../../../__mocks__/localStorage';
 import { shallow } from 'enzyme';
 
 import LoginPage from '../LoginPage';
 import * as LOGIN_PAGE from '../../../constants/login';
 import * as api from '../../../apis/authApi';
 
+window.localStorage = localStorageMock;
+
 api.login = jest.fn(() => {
-  return { isSuccess: true };
+  return { data: { token: 'toekn' }, isSuccess: true };
 });
 
 jest.mock('toastr', () => {
@@ -96,13 +99,9 @@ describe('<LoginPage />', () => {
 
   it('calls onSubmit()', () => {
     const evt = { preventDefault: jest.fn() };
-
     expect(api.login).toHaveBeenCalledTimes(0);
-
     wrapper.setState({ username: 'test', password: '1234' });
-
     wrapper.find('.form-login').simulate('submit', evt);
-
     expect(api.login).toHaveBeenCalledTimes(1);
   });
 

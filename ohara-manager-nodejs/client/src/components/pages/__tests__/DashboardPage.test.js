@@ -1,15 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import App from '../App';
+import DashboardPage from '../DashboardPage';
 
-describe('<App />', () => {
+describe('<DashboardPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<App />);
+    wrapper = shallow(<DashboardPage />);
   });
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
+    expect(wrapper.props().title).toBe('Dashboard');
   });
 });

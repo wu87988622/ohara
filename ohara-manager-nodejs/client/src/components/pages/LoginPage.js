@@ -3,15 +3,15 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
+import { setUserKey } from '../../utils/authHelpers';
 import { login } from '../../apis/authApi';
 import { isDefined } from '../../utils/helpers';
+import { HOME } from '../../constants/url';
 import * as LOGIN_PAGE from '../../constants/login';
 import * as MESSAGE from '../../constants/message';
-import { HOME } from '../../constants/url';
 
 const FormContainer = styled.div`
   display: flex;
-  margin-top: -120px;
   height: calc(100vh - 80px);
 `;
 
@@ -57,6 +57,7 @@ class LoginPage extends React.Component {
 
     if (isDefined(res)) {
       this.setState({ redirect: true });
+      setUserKey(res.data.token);
       toastr.success(MESSAGE.LOGIN_SUCCESS);
     }
   };

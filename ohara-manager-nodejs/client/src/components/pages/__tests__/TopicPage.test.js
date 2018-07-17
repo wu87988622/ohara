@@ -1,12 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import App from '../App';
+import TopicPage from '../TopicPage';
 
-describe('<App />', () => {
+describe('<TopicPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<App />);
+    wrapper = shallow(<TopicPage />);
   });
 
   it('renders correctly', () => {

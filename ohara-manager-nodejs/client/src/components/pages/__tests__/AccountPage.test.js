@@ -1,15 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import App from '../App';
+import AccountPage from '../AccountPage';
 
-describe('<App />', () => {
+describe('<AccountPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<App />);
+    wrapper = shallow(<AccountPage />);
   });
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
+    expect(wrapper.props().title).toBe('Account');
   });
 });

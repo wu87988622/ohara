@@ -14,3 +14,13 @@ export const login = async ({ username, password }) => {
     handleError(err);
   }
 };
+
+export const logout = async () => {
+  try {
+    const res = await axios.get('/api/logout');
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

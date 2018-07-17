@@ -1,15 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import App from '../App';
+import SchemaPage from '../SchemaPage';
 
-describe('<App />', () => {
+describe('<SchemaPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<App />);
+    wrapper = shallow(<SchemaPage />);
   });
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
+    expect(wrapper.props().title).toBe('Schema');
   });
 });
