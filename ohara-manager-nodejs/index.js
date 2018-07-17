@@ -14,8 +14,9 @@ app.use(compression());
 
 app.use(express.static(path.resolve(__dirname, 'client', 'build')));
 
-// APIs
+// API routes
 require('./routes/authRoutes')(app);
+require('./routes/topicRoutes')(app);
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
