@@ -1,7 +1,9 @@
 import React from 'react';
 import toastr from 'toastr';
-import localStorageMock from '../../../__mocks__/localStorage';
+import { Redirect } from 'react-router-dom';
 import { shallow } from 'enzyme';
+
+import localStorageMock from '../../../__mocks__/localStorage';
 
 import LoginPage from '../LoginPage';
 import * as LOGIN_PAGE from '../../../constants/login';
@@ -110,7 +112,6 @@ describe('<LoginPage />', () => {
 
     wrapper.setState({ redirect: true });
 
-    // TODO: this test is brittle, refactoring needed
-    expect(wrapper.type().toString()).toMatch(/function Redirect/);
+    expect(wrapper.type()).toBe(Redirect);
   });
 });

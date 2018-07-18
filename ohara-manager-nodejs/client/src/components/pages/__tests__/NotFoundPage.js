@@ -1,15 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import TopicPage from '../TopicPage';
+import NotFoundPage from '../NotFoundPage';
 
-describe('<TopicPage />', () => {
+describe('<NotFoundPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<TopicPage />);
+    wrapper = shallow(<NotFoundPage />);
   });
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
+    expect(wrapper.props().title).toBe('Oops, page not found');
   });
 });

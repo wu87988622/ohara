@@ -95,7 +95,7 @@ const Nav = () => {
               className="nav-link"
               exact
               activeClassName="active"
-              to={URL.TOPIC}
+              to={URL.TOPICS}
             >
               <IconWrapper className="fas fa-codepen" />
               Topic
