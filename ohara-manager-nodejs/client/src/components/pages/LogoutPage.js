@@ -2,7 +2,7 @@ import React from 'react';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
-import { logout } from '../../apis/authApi';
+import { logout } from '../../apis/authApis';
 import { deleteUserKey } from '../../utils/authHelpers';
 import { HOME } from '../../constants/url';
 import { LOGOUT_SUCCESS } from '../../constants/message';

@@ -4,4 +4,4 @@ export const ACCOUNT = '/account';
 export const MONITOR = '/monitor';
 export const DASHBOARD = '/dashboard';
 export const TOPICS = '/topics';
-export const SCHEMA = '/schema';
+export const SCHEMAS = '/schemas';

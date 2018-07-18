@@ -107,10 +107,10 @@ const Nav = () => {
               className="nav-link"
               exact
               activeClassName="active"
-              to={URL.SCHEMA}
+              to={URL.SCHEMAS}
             >
               <IconWrapper className="fas fa-copy" />
-              Schema
+              Schemas
             </NavLinkWrapper>
           </li>
         </ul>

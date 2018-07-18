@@ -3,8 +3,9 @@ import { shallow } from 'enzyme';
 
 import TopicsPage from '../TopicsPage';
 import Loading from '../../common/Loading';
+import { TOPICS } from '../../../constants/url';
 
-import * as api from '../../../apis/topicApi';
+import * as api from '../../../apis/topicsApis';
 
 const res = { data: { uuids: { a: 'a', b: 'b' } } };
 
@@ -29,14 +30,13 @@ describe('<TopicsPage />', () => {
     expect(wrapper.props().title).toBe('Topics');
   });
 
-  it('renders <table />', () => {
-    const table = wrapper.find('table');
-    expect(table.length).toBe(1);
-    expect(table.hasClass('table table-striped')).toBe(true);
-  });
+  it('renders <Table />', () => {
+    const table = wrapper.find('Table');
+    const _props = table.props();
 
-  it('renders correct <th />', () => {
-    const headerLength = wrapper.state().headers.length;
-    expect(wrapper.find('th').length).toBe(headerLength);
+    // TODO: get back to the list test, the output is weird now
+    expect(table.length).toBe(1);
+    expect(_props.headers).toBe(wrapper.state().headers);
+    expect(_props.urlDir).toBe(TOPICS);
   });
 });

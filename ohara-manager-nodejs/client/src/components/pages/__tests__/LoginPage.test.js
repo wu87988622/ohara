@@ -7,7 +7,7 @@ import localStorageMock from '../../../__mocks__/localStorage';
 
 import LoginPage from '../LoginPage';
 import * as LOGIN_PAGE from '../../../constants/login';
-import * as api from '../../../apis/authApi';
+import * as api from '../../../apis/authApis';
 
 window.localStorage = localStorageMock;
 

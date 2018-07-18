@@ -4,7 +4,7 @@ import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
 import { setUserKey } from '../../utils/authHelpers';
-import { login } from '../../apis/authApi';
+import { login } from '../../apis/authApis';
 import { isDefined } from '../../utils/helpers';
 import { HOME } from '../../constants/url';
 import * as LOGIN_PAGE from '../../constants/login';
