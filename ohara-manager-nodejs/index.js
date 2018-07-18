@@ -17,6 +17,7 @@ app.use(express.static(path.resolve(__dirname, 'client', 'build')));
 // API routes
 require('./routes/authRoutes')(app);
 require('./routes/topicRoutes')(app);
+require('./routes/schemaRoutes')(app);
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
