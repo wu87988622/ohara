@@ -7,7 +7,7 @@ const TableRow = styled.tr`
   background-color: #81bef7;
 `;
 
-const Table = ({ headers, list, urlDir }) => {
+const ListTable = ({ headers, list, urlDir }) => {
   return (
     <table className="table table-striped">
       <thead>
@@ -24,7 +24,7 @@ const Table = ({ headers, list, urlDir }) => {
             <tr key={key}>
               <td>{value}</td>
               <td>
-                <Link to={`${urlDir}/${value}`}>Details</Link>
+                <Link to={`${urlDir}/${key}`}>Details</Link>
               </td>
             </tr>
           );
@@ -34,10 +34,10 @@ const Table = ({ headers, list, urlDir }) => {
   );
 };
 
-Table.propTypes = {
+ListTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
   list: PropTypes.arrayOf(PropTypes.shape).isRequired,
   urlDir: PropTypes.string.isRequired,
 };
 
-export default Table;
+export default ListTable;

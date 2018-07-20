@@ -2,7 +2,7 @@ import React from 'react';
 
 import AppWrapper from '../common/AppWrapper';
 import Loading from '../common/Loading';
-import Table from '../common/Table';
+import { ListTable } from '../common/Table';
 import { fetchTopics } from '../../apis/topicsApis';
 import { TOPICS } from '../../constants/url';
 
@@ -35,7 +35,7 @@ class TopicsPage extends React.Component {
     }
     return (
       <AppWrapper title="Topics">
-        <Table headers={headers} list={topics} urlDir={TOPICS} />
+        <ListTable headers={headers} list={topics} urlDir={TOPICS} />
       </AppWrapper>
     );
   }

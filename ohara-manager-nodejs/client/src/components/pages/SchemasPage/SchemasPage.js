@@ -3,7 +3,7 @@ import toastr from 'toastr';
 
 import AppWrapper from '../../common/AppWrapper';
 import Loading from '../../common/Loading';
-import Table from '../../common/Table';
+import { ListTable } from '../../common/Table';
 import Modal from './Modal';
 import { fetchSchemas, createSchemas } from '../../../apis/schemasApis';
 import { SCHEMAS } from '../../../constants/url';
@@ -197,7 +197,7 @@ class SchemasPage extends React.Component {
           handleDeleteColumn={this.handleDeleteColumn}
           handleSave={this.handleSave}
         />
-        <Table headers={tableHeaders} list={schemas} urlDir={SCHEMAS} />
+        <ListTable headers={tableHeaders} list={schemas} urlDir={SCHEMAS} />
       </AppWrapper>
     );
   }

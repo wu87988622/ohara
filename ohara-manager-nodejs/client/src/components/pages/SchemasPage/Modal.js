@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import styled from 'styled-components';
 
+import { DataTable } from '../../common/Table';
+
 const modalStyles = {
   content: {
     top: '15%',
@@ -52,7 +54,7 @@ const Modal = ({
   handleDeleteColumn,
   handleSave,
 }) => {
-  const tableHeaders = ['#', 'Column Name', 'Data Type', 'Action'];
+  const tableHeaders = ['#', 'Column Name', 'Data Type'];
 
   return (
     <ReactModal
@@ -113,33 +115,12 @@ const Modal = ({
         </div>
       </FormWrapper>
 
-      <table className="table table-striped">
-        <thead>
-          <tr>{tableHeaders.map(header => <th key={header}>{header}</th>)}</tr>
-        </thead>
-        <tbody>
-          {schemasColumns.map(({ name, type }, idx) => {
-            const seq = ++idx;
-            return (
-              <tr key={idx}>
-                <td>{seq}</td>
-                <td>{name}</td>
-                <td>{type}</td>
-                <td>
-                  <button
-                    type="delete"
-                    className="btn btn-danger"
-                    onClick={() => handleDeleteColumn(name)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
+      <DataTable
+        headers={tableHeaders}
+        data={schemasColumns}
+        handleDelete={handleDeleteColumn}
+        hasAction
+      />
       <div className="float-right">
         <button type="button" className="btn btn-primary" onClick={handleSave}>
           Save

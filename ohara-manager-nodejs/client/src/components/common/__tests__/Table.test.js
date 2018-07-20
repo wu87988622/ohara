@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import Table from '../Table';
+import { ListTable } from '../Table';
 
 const props = {
   headers: ['a', 'b'],
@@ -9,10 +9,10 @@ const props = {
   urlDir: 'testDir',
 };
 
-describe('<Table />', () => {
+describe('<ListTable />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<Table {...props} />);
+    wrapper = shallow(<ListTable {...props} />);
   });
 
   test('renders self', () => {

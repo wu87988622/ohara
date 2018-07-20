@@ -11,6 +11,7 @@ import MonitorPage from './components/pages/MonitorPage';
 import DashboardPage from './components/pages/DashboardPage';
 import TopicsPage from './components/pages/TopicsPage';
 import SchemasPage from './components/pages/SchemasPage';
+import SchemasDetailsPage from './components/pages/SchemasPage/SchemasDetailsPage';
 import LoginPage from './components/pages/LoginPage';
 import LogoutPage from './components/pages/LogoutPage';
 import NotFoundPage from './components/pages/NotFoundPage';
@@ -32,7 +33,8 @@ const App = () => (
         <Route path="/monitor" component={MonitorPage} />
         <Route path="/dashboard" component={DashboardPage} />
         <Route path="/topics" component={TopicsPage} />
-        <Route path="/schemas" component={SchemasPage} />
+        <Route exact path="/schemas" component={SchemasPage} />
+        <Route path="/schemas/:uuid" component={SchemasDetailsPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/logout" component={LogoutPage} />
         <Route component={NotFoundPage} />
