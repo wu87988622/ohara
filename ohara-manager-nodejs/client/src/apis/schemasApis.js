@@ -9,3 +9,12 @@ export const fetchSchemas = async () => {
     handleError(err);
   }
 };
+
+export const createSchemas = async params => {
+  try {
+    const res = await axios.post('/api/schemas', params);
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

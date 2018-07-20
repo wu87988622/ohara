@@ -1,19 +1,19 @@
-import React from "react";
-import styled from "styled-components";
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import React from 'react';
+import styled from 'styled-components';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
-import Header from "./components/common/Header";
-import Nav from "./components/common/Nav";
-import HomePage from "./components/pages/HomePage";
-import JobsPage from "./components/pages/JobsPage";
-import AccountPage from "./components/pages/AccountPage";
-import MonitorPage from "./components/pages/MonitorPage";
-import DashboardPage from "./components/pages/DashboardPage";
-import TopicsPage from "./components/pages/TopicsPage";
-import SchemasPage from "./components/pages/SchemasPage";
-import LoginPage from "./components/pages/LoginPage";
-import LogoutPage from "./components/pages/LogoutPage";
-import NotFoundPage from "./components/pages/NotFoundPage";
+import Header from './components/common/Header';
+import Nav from './components/common/Nav';
+import HomePage from './components/pages/HomePage';
+import JobsPage from './components/pages/JobsPage';
+import AccountPage from './components/pages/AccountPage';
+import MonitorPage from './components/pages/MonitorPage';
+import DashboardPage from './components/pages/DashboardPage';
+import TopicsPage from './components/pages/TopicsPage';
+import SchemasPage from './components/pages/SchemasPage';
+import LoginPage from './components/pages/LoginPage';
+import LogoutPage from './components/pages/LogoutPage';
+import NotFoundPage from './components/pages/NotFoundPage';
 
 const Container = styled.div`
   height: calc(100vh - 200px);

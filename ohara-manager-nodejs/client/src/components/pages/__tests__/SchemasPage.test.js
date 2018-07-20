@@ -14,4 +14,6 @@ describe('<SchemasPage />', () => {
     expect(wrapper.length).toBe(1);
     expect(wrapper.props().title).toBe('Schemas');
   });
+
+  // TODO: finish all the tests
 });
