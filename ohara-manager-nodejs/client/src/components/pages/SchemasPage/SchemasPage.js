@@ -127,7 +127,7 @@ class SchemasPage extends React.Component {
 
     const res = await createSchemas(params);
 
-    if (res.status) {
+    if (res.data.status) {
       toastr.success(MESSAGE.SCHEMA_CREATION_SUCCESS);
       this.handleCloseModal();
       this.fetchData();
@@ -181,7 +181,7 @@ class SchemasPage extends React.Component {
           type="button"
           className="btn btn-outline-primary mb-3"
         >
-          Create Schemas
+          Create schemas
         </button>
         <Modal
           isActive={modalIsActive}

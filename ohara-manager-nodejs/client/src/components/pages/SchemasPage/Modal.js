@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import styled from 'styled-components';
-
 import { DataTable } from '../../common/Table';
 
 const modalStyles = {
@@ -54,7 +53,7 @@ const Modal = ({
   handleDeleteColumn,
   handleSave,
 }) => {
-  const tableHeaders = ['#', 'Column Name', 'Data Type'];
+  const tableHeaders = ['#', 'Column Name', 'Data Type', 'Action'];
 
   return (
     <ReactModal
@@ -75,6 +74,7 @@ const Modal = ({
             name="schemaName"
             onChange={handleChangeInput}
             value={schemaName}
+            required
           />
         </div>
 
@@ -86,6 +86,7 @@ const Modal = ({
               name="columnName"
               onChange={handleChangeInput}
               value={columnName}
+              required
             />
           </InlineWrapper>
 

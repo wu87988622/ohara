@@ -28,15 +28,15 @@ const App = () => (
       <Nav />
       <Switch>
         <Route exact path="/" component={HomePage} />
-        <Route path="/jobs" component={JobsPage} />
-        <Route path="/account" component={AccountPage} />
-        <Route path="/monitor" component={MonitorPage} />
-        <Route path="/dashboard" component={DashboardPage} />
-        <Route path="/topics" component={TopicsPage} />
+        <Route exact path="/jobs" component={JobsPage} />
+        <Route exact path="/account" component={AccountPage} />
+        <Route exact path="/monitor" component={MonitorPage} />
+        <Route exact path="/dashboard" component={DashboardPage} />
+        <Route exact path="/topics" component={TopicsPage} />
         <Route exact path="/schemas" component={SchemasPage} />
-        <Route path="/schemas/:uuid" component={SchemasDetailsPage} />
-        <Route path="/login" component={LoginPage} />
-        <Route path="/logout" component={LogoutPage} />
+        <Route exact path="/schemas/:uuid" component={SchemasDetailsPage} />
+        <Route exact path="/login" component={LoginPage} />
+        <Route exact path="/logout" component={LogoutPage} />
         <Route component={NotFoundPage} />
       </Switch>
     </Container>

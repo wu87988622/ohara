@@ -36,7 +36,6 @@ class SchemasDetailsPage extends React.Component {
         isLoading: false,
       });
     }
-    console.log(res);
   }
 
   render() {
