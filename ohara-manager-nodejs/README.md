@@ -47,6 +47,12 @@ Start the development server:
 yarn start
 ```
 
+Use the following command to set a specific API URL via environment vriables:
+
+```sh
+CONFIGURATOR_API=http://localhost:1000/v0 yarn start
+```
+
 Run all unit test suites and stay in the watch mode. Note that a junit like report will be generated every time when you run this command:
 
 ```sh

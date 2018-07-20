@@ -1,3 +1,2 @@
-const port = process.env.API_CONFIGURATOR || 63110;
-
-exports.API_BASE = `http://localhost:${port}/v0`;
+const configurator_api = process.env.CONFIGURATOR_API || 'http://localhost:9999/v0';
+exports.API_BASE = configurator_api;
