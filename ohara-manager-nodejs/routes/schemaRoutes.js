@@ -25,4 +25,6 @@ module.exports = app => {
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
+
+  return app;
 };

@@ -23,4 +23,6 @@ module.exports = app => {
       isSuccess: true,
     });
   });
+
+  return app;
 };
