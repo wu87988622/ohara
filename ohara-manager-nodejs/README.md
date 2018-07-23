@@ -1,77 +1,52 @@
 # Ohara Manager
 
-This repository contains Ohara manager itself (A HTTP server built with node.js) and Ohara manager client (Ohara fastdata UIs built with React.js via create-react-app). In the following docs, we refer **server** as Ohara manager and **client** as Ohara manager client.
+This repository contains Ohara manager itself (an HTTP server built with node.js) and Ohara manager client (Ohara fastdata UIs built with React.js via create-react-app). In the following docs, we refer **Server** as Ohara manager and **Client** as Ohara manager client.
 
-## Requirements
+## Initial machine setup
 
-- [Node.js](https://nodejs.org/en/) v8.11.2
-- [Yarn](https://yarnpkg.com/lang/en/) v1.7.0
+1.  Install [Node.js](https://nodejs.org/en/) 8.11.2 or greater.
 
-## Install dependencies
+2.  Install [Yarn](https://yarnpkg.com/lang/en/) v1.7.0 or greater.
 
-Use `node -v` and `yarn -v` to see if you have the correct version of node.js and yarn (see the requirements section) installed in your machine.
+3.  Make sure you're in the project root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
 
-Install all the dependencies for the server
-
-Make sure you're in the root level of the project, and use the following command to start the dev server
-
-```sh
-yarn
-```
-
-Install all the dependencies for the client
-
-Make sure you're in the **client** directory before using these commands.
-
-```sh
-yarn
-```
+Have issues while setting up? Try the **Having issue** section to troubleshoot.
 
 ## Development
 
-Start the development server:
+> If this is your first time running this project, you need to complete the **Initial machine setup** section
 
-Make sure you're in the root level of the project, and use the following command to start the dev server
+You need to start both **Server** and **Client** server before you can start your development. Follow the instructions below:
 
-```sh
-yarn start
-```
+**Server:**
 
-## Client side development
-
-Make sure you're in the **client** directory before using these commands.
-
-Start the development server:
+Make sure you're in the project root and start the server with:
 
 ```sh
 yarn start
 ```
 
-Use the following command to set a specific API URL via environment vriables:
+You can start the server and set the configurator API like this:
 
 ```sh
 CONFIGURATOR_API=http://localhost:1000/v0 yarn start
 ```
 
-Run all unit test suites and stay in the watch mode. Note that a junit like report will be generated every time when you run this command:
+After starting the server, visit `http://localhost:5050` in your browser.
+
+**Client**:
+
+Make you're in the **client** directory and start the dev server with:
 
 ```sh
-yarn test
+yarn start
 ```
 
-Generate a coverage report:
-
-```sh
-yarn test:coverage
-```
-
-You can run End-to-End test with the following command. If this is your first time running this, you may need some extra setups in order to run it.
-
-```sh
-yarn cypress
-```
+After starting the dev server, visit `http://localhost:3000` in your browser.
 
 ## Build
+
+> Note that this step is only required for the **Client** not the **Server**
 
 You can get the production-ready static files by using the following command:
 
@@ -79,4 +54,26 @@ These static files will be build and put into the **/build** directory.
 
 ```sh
 yarn build
+```
+
+## Having issues?
+
+**While starting the server got an error like this: Error: Cannot find module ${module-name}**
+
+If you're running into this, it's probably that this module is not correctly installed on your machine. You can fix this by simply run:
+
+```sh
+yarn # If this doesn't work, try `yarn add ${module-name}
+```
+
+After the installation is completed, start the server again.
+
+**Got an error while starting the server on a Linux machine**
+
+[TODO] Test this on a linux machine and add the error message:
+
+You can run this command to increase the limit on the number of files Linux will watch.
+
+```sh
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p.
 ```
