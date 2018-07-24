@@ -8,7 +8,7 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
 
 2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0 or greater.
 
-3.  Make sure you're in the project root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
+3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
 
 Have issues while setting up? Try the **Having issues** section to troubleshoot.
 
@@ -20,7 +20,7 @@ You need to start both **Server** and **Client** server before you can start you
 
 **Server:**
 
-Make sure you're in the project root and start the server with:
+Make sure you're in the ohara-manager root and start the server with:
 
 ```sh
 yarn start
@@ -43,6 +43,78 @@ yarn start
 ```
 
 After starting the dev server, visit `http://localhost:3000` in your browser.
+
+## Test
+
+You can run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test with a single npm script:
+
+> Note that this command won't generate test reports for you
+
+```sh
+yarn test:all
+```
+
+**Server**
+
+Make sure you're in the ohara-manager root, and use the following commands:
+
+Run the test
+
+```sh
+yarn test
+```
+
+Run the test and stay in Jest watch mode
+
+```sh
+yarn test:watch
+```
+
+Generate a test coverage report
+
+> The coverage report can be found in `ohara-manager/client/coverage/`
+
+```sh
+yarn test:coverage
+```
+
+**Client:**
+
+Make sure you're in the **client** directory, and use the following commands:
+
+Run the test and stay in Jest watch mode, notice that you don't need to append `:watch` after the `yarn test` in the **Client**
+
+```sh
+yarn test
+```
+
+Generate a test coverage report
+
+> The coverage report can be found in `ohara-manager/client/coverage/`
+
+```sh
+yarn test:coverage
+```
+
+**Client** also have End-to-End tests, you can run them via these commands:
+
+```sh
+yarn cypress
+```
+
+### CI server integration
+
+Run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test. The test reports can be found in `ohara-manager/testReports/`
+
+```sh
+yarn test-ci
+```
+
+Remove `testReports` directory
+
+```sh
+yarn clean
+```
 
 ## Build
 

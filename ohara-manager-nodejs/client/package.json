@@ -12,7 +12,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "test:ci": "yarn test --coverage --reporters=default --reporters=jest-junit",
+    "test:report": "JEST_JUNIT_OUTPUT=\"../testReports/clientUnits.xml\" CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
     "eject": "react-scripts eject",
     "cypress": "cypress open",

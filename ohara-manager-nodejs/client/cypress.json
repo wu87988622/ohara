@@ -1,3 +1,8 @@
 {
-  "baseUrl": "http://localhost:3000/"
+  "baseUrl": "http://localhost:3000/",
+  "reporter": "junit",
+  "reporterOptions": {
+    "mochaFile": "../testReports/clientE2e.xml",
+    "toConsole": true
+  }
 }
