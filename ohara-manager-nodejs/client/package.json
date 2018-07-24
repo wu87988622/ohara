@@ -12,11 +12,11 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "test:ci": "react-scripts test --env=jsdom --coverage --reporters=default --reporters=jest-junit",
-    "test:coverage": "react-scripts test --env=jsdom --coverage",
+    "test:ci": "yarn test --coverage --reporters=default --reporters=jest-junit",
+    "test:coverage": "yarn test --coverage",
     "eject": "react-scripts eject",
     "cypress": "cypress open",
-    "cypress:all": "cypress run"
+    "cypress:ci": "cypress run"
   },
   "dependencies": {
     "axios": "0.18.0",
@@ -35,10 +35,17 @@
     "babel-core": "6.26.3",
     "babel-runtime": "6.26.0",
     "cypress": "3.0.2",
+    "eslint-plugin-cypress": "2.0.1",
     "jest-junit": "5.1.0"
   },
   "eslintConfig": {
     "extends": "react-app",
+    "plugins": [
+      "cypress"
+    ],
+    "env": {
+      "cypress/globals": true
+    },
     "rules": {
       "jsx-a11y/href-no-hash": "off"
     }

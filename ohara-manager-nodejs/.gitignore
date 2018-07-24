@@ -1,6 +1,8 @@
+# Global ignores
 node_modules
+testReports
+coverage
 
 # Client
-/client/coverage
 /client/cypress/videos
 /client/junit.xml
