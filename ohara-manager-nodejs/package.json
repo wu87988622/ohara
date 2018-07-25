@@ -11,11 +11,15 @@
     "test:report": "JEST_JUNIT_OUTPUT=\"./testReports/serverUnits.xml\" yarn test --reporters=default --reporters=jest-junit",
     "test:watch": "yarn test --watch",
     "test:coverage": "yarn test --coverage",
+    "pretest-ci": "yarn setup",
     "test-ci": "npm-run-all test:report test:client:*",
+    "posttest-ci": "kill-port 3000",
     "test:all": "npm-run-all test test:client:*",
     "test:client:unit": "yarn --cwd client test:report",
     "test:client:e2e": "yarn start:client & wait-on http://localhost:3000 && yarn --cwd client cypress:ci",
-    "clean": "rimraf ./testReports"
+    "clean": "npm-run-all clean:client clean:server",
+    "clean:server": "rimraf ./testReports node_modules",
+    "clean:client": "rimraf ./client/node_modules ./client/build"
   },
   "dependencies": {
     "axios": "0.18.0",
@@ -27,6 +31,7 @@
   "devDependencies": {
     "jest": "23.4.1",
     "jest-junit": "5.1.0",
+    "kill-port": "1.3.1",
     "moxios": "0.4.0",
     "nodemon": "^1.17.5",
     "npm-run-all": "4.1.3",
