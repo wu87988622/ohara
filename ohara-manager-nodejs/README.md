@@ -54,7 +54,7 @@ You can run all tests including **Server** and **Client** unit test as well as *
 yarn test:all
 ```
 
-**Server**
+**Server:**
 
 Make sure you're in the ohara-manager root, and use the following commands:
 
@@ -102,15 +102,21 @@ yarn test:coverage
 yarn cypress
 ```
 
-### CI server integration
+### **CI server integration**
 
-Run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test. The test reports can be found in `ohara-manager/testReports/`
+In order to work with Graddle, Ohara manager provides a few npm scripts as the following:
+
+Run tests on CI:
 
 ```sh
 yarn test-ci
 ```
 
-Remove `testReports` directory
+- Run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test. The test reports can be found in `ohara-manager/testReports/`
+
+- This npm script will also run `yarn setup` to ensure that all necessary packages are correctly installed prior to running tests.
+
+Clean `testReports/` on the **Server**, `node_moduels/` on both **Server** and **Client** directories:
 
 ```sh
 yarn clean
