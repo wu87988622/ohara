@@ -56,6 +56,11 @@ gradle runConfigurator
 gradle runOhara
 ```
 
+## quick start ohara-http
+```bash
+gradle :ohara-http:runMain
+```
+
 * argument description:
 -Phostname: Running ohara-manager HTTP server hostname. default is localhost
 -Pport: Running ohara-manager HTTP server port. default is random

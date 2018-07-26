@@ -29,13 +29,13 @@ class KafkaCallBack(val promise: Promise[RecordMetadata]) extends Callback {
 }
 
 /**
-  * Use to construct routing logic of Akka-HTTP to Kafka Producer
+  * Use to construct routing logic of HTTP post to Kafka Producer
   */
 trait KafkaRoute extends Directives with CsvSupport {
 
   implicit def system: ActorSystem
 
-  implicit val kafkaDispatch = system.dispatchers.lookup("kafka-dispatcher")
+  implicit def kafkaDispatch = system.dispatchers.lookup("kafka-dispatcher")
 
   private lazy val log = Logging(system, classOf[KafkaRoute])
 

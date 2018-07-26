@@ -28,3 +28,9 @@ configurations.testCompile {
   exclude group: 'com.sun.jersey', module: 'jersey-servlet'
   exclude group: 'com.sun.jersey', module: 'jersey-server'
 }
+
+
+task(runMain, dependsOn: 'classes', type: JavaExec) {
+  main = 'com.island.ohara.source.http.OharaHttp'
+  classpath = sourceSets.main.runtimeClasspath
+}

@@ -63,8 +63,6 @@ lazy val hadoopDependencies = Seq(
   "org.apache.hadoop" % "hadoop-hdfs" % hadoopV
 )
 
-fork in test := true
-
 val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
 val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
 
@@ -72,6 +70,7 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.12.6",
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
   fork in Test := true,
+  fork in run := true,
   javaOptions in Test ++= Seq("-Xms256m", "-Xmx4g"),
   libraryDependencies ++= Seq(
     // kafka
