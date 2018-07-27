@@ -11,7 +11,7 @@
     "test:report": "JEST_JUNIT_OUTPUT=\"./testReports/serverUnits.xml\" yarn test --reporters=default --reporters=jest-junit",
     "test:watch": "yarn test --watch",
     "test:coverage": "yarn test --coverage",
-    "test-ci": "yarn setup && yarn test:all && kill-port 3000",
+    "test:ci": "yarn setup && yarn test:all && kill-port 3000",
     "test:all": "yarn test:report && yarn test:client:unit && yarn test:client:e2e",
     "test:client:unit": "yarn --cwd client test:report",
     "test:client:e2e": "yarn start:client & wait-on http://localhost:3000 && yarn --cwd client cypress:ci",

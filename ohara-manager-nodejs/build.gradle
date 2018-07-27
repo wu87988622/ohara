@@ -1,0 +1,15 @@
+task clean {
+  doLast {
+    exec {
+      commandLine 'yarn', 'clean'
+    }
+  }
+}
+
+task test {
+  doLast {
+    exec {
+      commandLine 'yarn', 'test:ci'
+    }
+  }
+}

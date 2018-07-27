@@ -24,18 +24,20 @@ ext {
 subprojects {
   version = '0.1-SNAPSHOT'
 
-  apply plugin: 'scala'
-  test {
-    maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()
-    minHeapSize = "256m"
-    maxHeapSize = "4096m"
-    testLogging {
-      events = ["passed", "skipped", "failed"]
+  if (it.name != 'ohara-manager-nodejs') {
+    apply plugin: 'scala'
+    test {
+      maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()
+      minHeapSize = "256m"
+      maxHeapSize = "4096m"
+      testLogging {
+        events = ["passed", "skipped", "failed"]
+      }
     }
   }
 
   // The *-tests.jar of ohara-assembly is useless so we exclude the ohara-assembly
-  if (it.name != 'ohara-assembly') {
+  if (it.name != 'ohara-assembly' && it.name != 'ohara-manager-nodejs') {
     configurations {
       tests.extendsFrom archives
     }
@@ -49,11 +51,13 @@ subprojects {
   }
 
   // All sub-projects have applied the scala checkstyle.
-  apply plugin: "com.diffplug.gradle.spotless"
-  spotless {
-    scala {
-      // DON'T change the scalafmt version since the rules may be changed in newer version.
-      scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+  if (it.name != 'ohara-manager-nodejs') {
+    apply plugin: "com.diffplug.gradle.spotless"
+    spotless {
+      scala {
+        // DON'T change the scalafmt version since the rules may be changed in newer version.
+        scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+      }
     }
   }
 
