@@ -109,7 +109,7 @@ In order to work with Graddle, Ohara manager provides a few npm scripts as the f
 Run tests on CI:
 
 ```sh
-yarn test-ci
+yarn test:ci
 ```
 
 - Run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test. The test reports can be found in `ohara-manager/testReports/`
