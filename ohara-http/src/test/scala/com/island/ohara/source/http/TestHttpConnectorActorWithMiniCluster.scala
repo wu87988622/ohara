@@ -2,7 +2,7 @@ package com.island.ohara.source.http
 
 import akka.testkit.TestKit
 import com.island.ohara.rule.SmallTest
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
 import com.island.ohara.integration.OharaTestUtil
@@ -38,15 +38,19 @@ class TestHttpConnectorActorWithMiniCluster
        |  port = ${port}
        |}
        |
-        |bootstrap.servers = [
+       |bootstrap.servers = [
        | ${serverIPs.map(server => "\"" + server + "\"").mkString(",")}
        |]
       """.stripMargin
 
+  private val actorName = "HttpConnectorActor"
+
+  private def getNewHttpActor = system.actorOf(Props(new HttpConnectorActor), name = actorName)
+
   @Test
   def startHttpServerShouldReturnHealthCheck(): Unit = {
 
-    val httpActor = system.actorOf(Props(new HttpConnectorActor), name = "HttpConnector")
+    val httpActor = getNewHttpActor
 
     val config = ConfigFactory.parseString(configStr)
     httpActor ! HttpCommand.START(config)
@@ -60,12 +64,14 @@ class TestHttpConnectorActorWithMiniCluster
     }
 
     httpActor ! HttpCommand.STOP
+
+    httpActor ! PoisonPill
   }
 
   @Test
   def stopHttpServerShouldFail(): Unit = {
 
-    val httpActor = system.actorOf(Props(new HttpConnectorActor), name = "HttpConnector")
+    val httpActor = getNewHttpActor
 
     val config = ConfigFactory.parseString(configStr)
     httpActor ! HttpCommand.START(config)
@@ -76,12 +82,14 @@ class TestHttpConnectorActorWithMiniCluster
     assertThrows[Exception] {
       Await.result(futureResponse, 1 seconds)
     }
+
+    httpActor ! PoisonPill
   }
 
   @Test
   def stopAndStartAgainShouldSuccess(): Unit = {
 
-    val httpActor = system.actorOf(Props(new HttpConnectorActor), name = "HttpConnector")
+    val httpActor = getNewHttpActor
 
     val config = ConfigFactory.parseString(configStr)
     httpActor ! HttpCommand.START(config)
@@ -97,6 +105,8 @@ class TestHttpConnectorActorWithMiniCluster
     }
 
     httpActor ! HttpCommand.STOP
+
+    httpActor ! PoisonPill
   }
 
   @After

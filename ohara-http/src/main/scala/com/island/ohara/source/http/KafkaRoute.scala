@@ -35,6 +35,9 @@ trait KafkaRoute extends Directives with CsvSupport {
 
   implicit def system: ActorSystem
 
+  /**
+    * Using a different dispatcher because Kafka Producer is blocking.
+    */
   implicit def kafkaDispatch = system.dispatchers.lookup("kafka-dispatcher")
 
   private lazy val log = Logging(system, classOf[KafkaRoute])
