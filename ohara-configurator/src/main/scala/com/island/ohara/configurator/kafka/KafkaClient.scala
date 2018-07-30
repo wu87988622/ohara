@@ -1,6 +1,7 @@
 package com.island.ohara.configurator.kafka
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util
+import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.{KafkaUtil, TopicCreator, TopicInfo}
@@ -19,6 +20,8 @@ trait KafkaClient extends CloseOnce {
   def topicInfo(topicName: String): Option[TopicInfo]
 
   def addPartition(topicName: String, numberOfPartitions: Int): Unit
+
+  def deleteTopic(topicName: String): Unit
 }
 
 object KafkaClient {
@@ -58,6 +61,8 @@ object KafkaClient {
       LOG.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
 
     override def topicInfo(topicName: String): Option[TopicInfo] = Option(cachedTopics.get(topicName))
+    override def deleteTopic(topicName: String): Unit =
+      if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
   }
 
   /**
@@ -79,5 +84,7 @@ object KafkaClient {
 
     override def addPartition(topicName: String, numberOfPartitions: Int): Unit =
       KafkaUtil.addPartitions(admin, topicName, numberOfPartitions, DEFAULT_TIMEOUT)
+    override def deleteTopic(topicName: String): Unit =
+      admin.deleteTopics(util.Arrays.asList(topicName)).all().get(DEFAULT_TIMEOUT.toMillis, TimeUnit.MILLISECONDS)
   }
 }

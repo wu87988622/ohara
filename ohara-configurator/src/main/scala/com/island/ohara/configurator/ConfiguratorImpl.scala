@@ -32,10 +32,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
                                kafkaClient: KafkaClient,
                                initializationTimeout: Duration,
                                terminationTimeout: Duration)
-    extends Configurator
-    with ConfiguratorJsonSupport
-    with SprayJsonSupport {
-  import ConfiguratorImpl._
+    extends Configurator {
 
   private val log = Logger(classOf[ConfiguratorImpl])
 
@@ -84,38 +81,32 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     val listSchema = pathEnd(get(handleException(() => completeJson(listUuid[OharaSchema]))))
 
     val getSchema = path(Segment) { uuid =>
-      {
-        get {
-          handleException(
-            () => getData[OharaSchema](uuid).map(r => completeJson(r.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
-        }
+      get {
+        handleException(
+          () => getData[OharaSchema](uuid).map(r => completeJson(r.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
       }
     }
 
     val deleteSchema = path(Segment) { uuid =>
-      {
-        delete {
-          handleException(() =>
-            removeData[OharaSchema](uuid).map(data => completeJson(data.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
-        }
+      delete {
+        handleException(() =>
+          removeData[OharaSchema](uuid).map(data => completeJson(data.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
       }
     }
 
     val updateSchema = path(Segment) { previousUuid =>
-      {
-        put {
-          entity(as[String]) { body =>
-            handleException(() => {
-              getData[OharaSchema](previousUuid)
-                .map(_ => {
-                  val schema = OharaSchema(previousUuid, OharaJson(body))
-                  // TODO: we should disallow user to reduce or reorder the column. by chia
-                  updateData(schema)
-                  completeUuid(previousUuid)
-                })
-                .getOrElse(rejectNonexistentUuid(previousUuid))
-            })
-          }
+      put {
+        entity(as[String]) { body =>
+          handleException(() => {
+            getData[OharaSchema](previousUuid)
+              .map(_ => {
+                val schema = OharaSchema(previousUuid, OharaJson(body))
+                // TODO: we should disallow user to reduce or reorder the column. by chia
+                updateData(schema)
+                completeUuid(previousUuid)
+              })
+              .getOrElse(rejectNonexistentUuid(previousUuid))
+          })
         }
       }
     }
@@ -154,54 +145,42 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
     val listTopic = pathEnd(get(handleException(() => completeJson(listUuid[OharaTopic]))))
 
     val updateTopic = path(Segment) { previousUuid =>
-      {
-        put {
-          entity(as[String]) { body =>
-            handleException(() => {
-              getData[OharaTopic](previousUuid)
-                .map(previousTopic => {
-                  val topic = OharaTopic(previousUuid, OharaJson(body))
-                  if (previousTopic.numberOfReplications != topic.numberOfReplications)
-                    throw new IllegalArgumentException("Non-support to change the number of replications")
-                  if (previousTopic.numberOfPartitions != topic.numberOfPartitions)
-                    kafkaClient.addPartition(previousUuid, topic.numberOfPartitions)
-                  updateData(topic)
-                  completeUuid(previousUuid)
-                })
-                .getOrElse(rejectNonexistentUuid(previousUuid))
-            })
-          }
+      put {
+        entity(as[String]) { body =>
+          handleException(() => {
+            getData[OharaTopic](previousUuid)
+              .map(previousTopic => {
+                val topic = OharaTopic(previousUuid, OharaJson(body))
+                if (previousTopic.numberOfReplications != topic.numberOfReplications)
+                  throw new IllegalArgumentException("Non-support to change the number of replications")
+                if (previousTopic.numberOfPartitions != topic.numberOfPartitions)
+                  kafkaClient.addPartition(previousUuid, topic.numberOfPartitions)
+                updateData(topic)
+                completeUuid(previousUuid)
+              })
+              .getOrElse(rejectNonexistentUuid(previousUuid))
+          })
         }
       }
     }
 
-    val exceptionHandler = ExceptionHandler {
-      case e: Throwable => complete(FailureMessage(e.getMessage, "", e.getStackTrace.toString))
-    }
-
-    def getTopic = path("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r) { uuid =>
-      handleExceptions(exceptionHandler) {
-        get {
-          getData[OharaTopic](uuid) match {
-            case Some(oharaTopic) =>
-              complete(
-                GetTopicResponse(uuid, oharaTopic.name, oharaTopic.numberOfPartitions, oharaTopic.numberOfReplications))
-            case None => complete(TOPIC_IS_NOT_FOUND)
-          }
-        }
+    val getTopic = path(Segment) { uuid =>
+      get {
+        handleException(
+          () => getData[OharaTopic](uuid).map(r => completeJson(r.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
       }
     }
 
-    def deleteTopic = path("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r) { uuid =>
-      handleExceptions(exceptionHandler) {
-        delete {
-          removeData[OharaTopic](uuid) match {
-            case Some(oharaTopic) =>
-              complete(
-                GetTopicResponse(uuid, oharaTopic.name, oharaTopic.numberOfPartitions, oharaTopic.numberOfReplications))
-            case None => complete(TOPIC_IS_NOT_FOUND)
-          }
-        }
+    val deleteTopic = path(Segment) { uuid =>
+      delete {
+        handleException(
+          () =>
+            removeData[OharaTopic](uuid)
+              .map(data => {
+                kafkaClient.deleteTopic(uuid)
+                completeJson(data.toJson)
+              })
+              .getOrElse(rejectNonexistentUuid(uuid)))
       }
     }
 
@@ -293,9 +272,5 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
 
   override def iterator: Iterator[OharaData] = store.map(_._2).iterator
 
-  override def size = store.size
-}
-
-object ConfiguratorImpl {
-  val TOPIC_IS_NOT_FOUND = FailureMessage("Topic is not found", "", "")
+  override def size: Int = store.size
 }

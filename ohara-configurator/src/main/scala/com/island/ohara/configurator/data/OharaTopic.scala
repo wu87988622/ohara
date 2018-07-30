@@ -41,6 +41,13 @@ object OharaTopic {
     * @param config config
     * @return a new OharaTopic
     */
+  def apply(json: OharaJson) = new OharaTopic(OharaConfig(json))
+
+  /**
+    * create a OharaTopic with specified config
+    * @param config config
+    * @return a new OharaTopic
+    */
   def apply(config: OharaConfig) = new OharaTopic(config)
 
   def apply(uuid: String, otherOptions: OharaJson): OharaTopic = {

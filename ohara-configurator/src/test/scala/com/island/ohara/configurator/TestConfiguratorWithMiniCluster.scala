@@ -35,21 +35,19 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
           .build())
       .kafkaClient(KafkaClient(util.brokersString))
       .build()
-  private[this] val hostName = configurator.hostname
-  private[this] val port = configurator.port
-  private[this] val restClient = RestClient()
+  private[this] val restClient = RestClient(configurator.hostname, configurator.port)
   private[this] val path = s"${Configurator.VERSION}/${Configurator.TOPIC_PATH}"
 
   import scala.concurrent.duration._
   private[this] val timeout = 10 seconds
 
   @Test
-  def testAddTopic(): Unit = {
+  def testTopic(): Unit = {
     var topicName = methodName
     var numberOfPartitions = 2
     val numberOfReplications = 2.toShort
     var oharaTopic = OharaTopic.json(topicName, numberOfPartitions, numberOfReplications)
-    var rsp = restClient.post(hostName, port, path, oharaTopic)
+    var rsp = restClient.post(path, oharaTopic)
     rsp.statusCode shouldBe 200
     val uuid = OharaConfig(OharaJson(rsp.body)).requireString("uuid")
     uuid shouldBe currentUuid.get().toString
@@ -70,7 +68,7 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
     numberOfPartitions = 3
     topicName = s"${methodName}123"
     oharaTopic = OharaTopic.json(topicName, numberOfPartitions, numberOfReplications)
-    rsp = restClient.put(hostName, port, s"$path/$uuid", oharaTopic)
+    rsp = restClient.put(s"$path/$uuid", oharaTopic)
     rsp.statusCode shouldBe 200
     OharaConfig(OharaJson(rsp.body)).requireString("uuid") shouldBe currentUuid.get().toString
 
@@ -87,6 +85,23 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
     storedTopic.name shouldBe topicName
     storedTopic.numberOfPartitions shouldBe numberOfPartitions
     storedTopic.numberOfReplications shouldBe numberOfReplications
+
+    rsp = restClient.get(s"$path/$uuid")
+    rsp.statusCode shouldBe 200
+    val rval = OharaTopic.apply(OharaJson(rsp.body))
+    rval.uuid shouldBe uuid
+    rval.name shouldBe topicName
+    rval.numberOfPartitions shouldBe numberOfPartitions
+    rval.numberOfReplications shouldBe numberOfReplications
+
+    // the topic should in kafka cluster
+    KafkaUtil.exist(util.brokersString, uuid, timeout) shouldBe true
+    rsp = restClient.delete(s"$path/$uuid")
+    rsp.statusCode shouldBe 200
+    // the topic should be gone
+    KafkaUtil.exist(util.brokersString, uuid, timeout) shouldBe false
+    // the meta data should be removed from configurator too
+    configurator.store.iterator.map(_._1).filter(_ == uuid).size shouldBe 0
   }
 
   @After
