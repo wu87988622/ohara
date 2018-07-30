@@ -24,5 +24,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(chalk.green(`Ohara manager is running at port: ${PORT}`));
+  console.log(chalk.green(`Ohara manager is running at port: ${PORT}`)); // eslint-disable-line
 });

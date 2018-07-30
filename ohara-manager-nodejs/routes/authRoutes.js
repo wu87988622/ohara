@@ -1,7 +1,8 @@
 module.exports = app => {
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    isValidUser = username.toLowerCase() === 'joshua' && password === '111111';
+    const isValidUser =
+      username.toLowerCase() === 'joshua' && password === '111111';
 
     if (isValidUser) {
       res.status(200).json({

@@ -3,7 +3,6 @@ import { shallow } from 'enzyme';
 
 import TopicsPage from '../TopicsPage';
 import Loading from '../../common/Loading';
-import { TOPICS } from '../../../constants/url';
 
 import * as api from '../../../apis/topicsApis';
 

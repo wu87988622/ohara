@@ -11,10 +11,10 @@
     "setup": "yarn && yarn build",
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "lint": "node_modules/eslint/bin/eslint.js src cypress",
     "test": "react-scripts test --env=jsdom",
     "test:report": "JEST_JUNIT_OUTPUT=\"../testReports/clientUnits.xml\" CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
-    "eject": "react-scripts eject",
     "cypress": "cypress open",
     "cypress:ci": "cypress run"
   },

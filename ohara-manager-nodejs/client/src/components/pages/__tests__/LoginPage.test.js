@@ -1,5 +1,4 @@
 import React from 'react';
-import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 import { shallow } from 'enzyme';
 

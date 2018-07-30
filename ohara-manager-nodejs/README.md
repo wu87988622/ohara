@@ -14,7 +14,7 @@ Have issues while setting up? Try the **Having issues** section to troubleshoot.
 
 ## Development
 
-> If this is your first time running this project, you need to complete the **Initial machine setup** section
+**If this is your first time running this project, you need to complete the _Initial machine setup_ section**
 
 You need to start both **Server** and **Client** server before you can start your development. Follow the instructions below:
 
@@ -72,7 +72,7 @@ yarn test:watch
 
 Generate a test coverage report
 
-> The coverage report can be found in `ohara-manager/client/coverage/`
+> The coverage reports can be found in `ohara-manager/client/coverage/`
 
 ```sh
 yarn test:coverage
@@ -88,9 +88,9 @@ Run the test and stay in Jest watch mode, notice that you don't need to append `
 yarn test
 ```
 
-Generate a test coverage report
+Generate test coverage reports
 
-> The coverage report can be found in `ohara-manager/client/coverage/`
+> The coverage reports can be found in `ohara-manager/client/coverage/`
 
 ```sh
 yarn test:coverage
@@ -102,9 +102,53 @@ yarn test:coverage
 yarn cypress
 ```
 
-### **CI server integration**
+## Lint
 
-In order to work with Graddle, Ohara manager provides a few npm scripts as the following:
+We use [ESLint](https://github.com/eslint/eslint) to ensure our code quality:
+
+```sh
+yarn lint
+```
+
+**Server:**
+
+It's usually helpful to run linting while developing, that's why we also provide a npm script to do so:
+
+```
+yarn dev
+```
+
+**Client:**
+
+Our client is bootstrapped with create-react-app, so the linting part is already taken care. When starting the **Client** dev server with `yarn start`, the linting will be starting automatically.
+
+## Format
+
+We use [Prettier](https://github.com/prettier/prettier) to format our code. You can format all `.js` files with:
+
+```sh
+yarn format
+```
+
+- You can ignore files or folders when running `yarn format` by editing the `.prettierignore` in the Ohara-manager root.
+
+> Note that `node_modules` is ignore by default so you don't need to add that in the `.prettierignore`
+
+## Build
+
+**Note that this step is only required for the Client _NOT THE SERVER_**
+
+You can get the production-ready static files by using the following command:
+
+```sh
+yarn build
+```
+
+> These static files will be build and put into the **/build** directory.
+
+## CI server integration
+
+In order to work with Graddle on Jenkins, Ohara manager provides a few npm scripts as the following:
 
 Run tests on CI:
 
@@ -120,18 +164,6 @@ Clean `testReports/` on the **Server**, `node_moduels/` on both **Server** and *
 
 ```sh
 yarn clean
-```
-
-## Build
-
-> Note that this step is only required for the **Client** not the **Server**
-
-You can get the production-ready static files by using the following command:
-
-These static files will be build and put into the **/build** directory.
-
-```sh
-yarn build
 ```
 
 ## Having issues?
