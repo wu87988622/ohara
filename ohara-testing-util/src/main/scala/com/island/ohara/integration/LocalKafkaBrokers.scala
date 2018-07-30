@@ -1,9 +1,11 @@
 package com.island.ohara.integration
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.config.{OharaConfig, UuidUtil}
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.CloseOnce.doClose
 import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.clients.CommonClientConfigs
@@ -55,6 +57,7 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
   /**
     * Generate the basic config. The config is composed of following setting.
     * 1) bootstrap.servers
+    *
     * @return a basic config including the brokers information
     */
   def config: OharaConfig = {
@@ -66,6 +69,7 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
   /**
     * Generate a config for kafka producer. The config is composed of following setting.
     * 1) bootstrap.servers
+    *
     * @return a config used to instantiate kafka producer
     */
   def producerConfig: OharaConfig = {
@@ -79,6 +83,7 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
     * 1) bootstrap.servers
     * 2) group.id -> a arbitrary string
     * 3) auto.offset.reset -> earliest
+    *
     * @return a config used to instantiate kafka consumer
     */
   def consumerConfig: OharaConfig = {
@@ -99,5 +104,32 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
   override protected def doClose(): Unit = {
     brokers.foreach(_.shutdown())
     logDirs.foreach(deleteFile(_))
+  }
+}
+
+object LocalKafkaBrokers {
+  val HELP_KEY = "--help"
+  val TTL_KEY = "--ttl"
+  val USAGE = s"[Usage] $TTL_KEY"
+
+  def main(args: Array[String]): Unit = {
+    if (args.length == 1 && args(0).equals(HELP_KEY)) {
+      println(USAGE)
+      return
+    }
+    if (args.size % 2 != 0) throw new IllegalArgumentException(USAGE)
+    var ttl = 9999
+    args.sliding(2, 2).foreach {
+      case Array(TTL_KEY, value) => ttl = value.toInt
+      case _                     => throw new IllegalArgumentException(USAGE)
+    }
+    doClose(OharaTestUtil.localBrokers(3)) { util =>
+      println("wait for the mini broker cluster")
+      TimeUnit.SECONDS.sleep(5)
+      println(s"Succeed to run the mini kafka: ${util.brokersString}")
+      println(
+        s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after ${ttl} seconds")
+      TimeUnit.SECONDS.sleep(ttl)
+    }
   }
 }

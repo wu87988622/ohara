@@ -191,40 +191,35 @@ class TestConfigurator extends MediumTest with Matchers with ConfiguratorJsonSup
   @Test
   def testInvalidMain(): Unit = {
     // enable this flag to make sure the instance of Configurator is always die.
-    ConfiguratorBuilder.closeRunningConfigurator = true
+    Configurator.closeRunningConfigurator = true
     try {
-      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(Array[String]("localhost"))
-      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
+      an[IllegalArgumentException] should be thrownBy Configurator.main(Array[String]("localhost"))
+      an[IllegalArgumentException] should be thrownBy Configurator.main(
         Array[String]("localhost", "localhost", "localhost"))
-      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
-        Array[String](ConfiguratorBuilder.HOSTNAME_KEY,
+      an[IllegalArgumentException] should be thrownBy Configurator.main(
+        Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "123", Configurator.TOPIC_KEY))
+      an[IllegalArgumentException] should be thrownBy Configurator.main(
+        Array[String](Configurator.HOSTNAME_KEY,
                       "localhost",
-                      ConfiguratorBuilder.PORT_KEY,
+                      Configurator.PORT_KEY,
                       "123",
-                      ConfiguratorBuilder.TOPIC_KEY))
-      an[IllegalArgumentException] should be thrownBy ConfiguratorBuilder.main(
-        Array[String](ConfiguratorBuilder.HOSTNAME_KEY,
-                      "localhost",
-                      ConfiguratorBuilder.PORT_KEY,
-                      "123",
-                      ConfiguratorBuilder.TOPIC_KEY,
+                      Configurator.TOPIC_KEY,
                       "topic"))
-    } finally ConfiguratorBuilder.closeRunningConfigurator = false
+    } finally Configurator.closeRunningConfigurator = false
   }
 
   @Test
   def testMain(): Unit = {
     def runStandalone() = {
-      ConfiguratorBuilder.closeRunningConfigurator = false
+      Configurator.closeRunningConfigurator = false
       val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
       Future[Unit] {
-        ConfiguratorBuilder.main(
-          Array[String](ConfiguratorBuilder.HOSTNAME_KEY, "localhost", ConfiguratorBuilder.PORT_KEY, "0"))
+        Configurator.main(Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0"))
       }(service)
       import scala.concurrent.duration._
-      try OharaTestUtil.await(() => ConfiguratorBuilder.hasRunningConfigurator, 10 seconds)
+      try OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 10 seconds)
       finally {
-        ConfiguratorBuilder.closeRunningConfigurator = true
+        Configurator.closeRunningConfigurator = true
         service.shutdownNow()
         service.awaitTermination(60, TimeUnit.SECONDS)
       }
@@ -233,25 +228,25 @@ class TestConfigurator extends MediumTest with Matchers with ConfiguratorJsonSup
     def runDist() = {
       doClose(OharaTestUtil.localBrokers(3)) { util =>
         {
-          ConfiguratorBuilder.closeRunningConfigurator = false
+          Configurator.closeRunningConfigurator = false
           val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
           Future[Unit] {
-            ConfiguratorBuilder.main(
+            Configurator.main(
               Array[String](
-                ConfiguratorBuilder.HOSTNAME_KEY,
+                Configurator.HOSTNAME_KEY,
                 "localhost",
-                ConfiguratorBuilder.PORT_KEY,
+                Configurator.PORT_KEY,
                 "0",
-                ConfiguratorBuilder.BROKERS_KEY,
+                Configurator.BROKERS_KEY,
                 util.brokersString,
-                ConfiguratorBuilder.TOPIC_KEY,
+                Configurator.TOPIC_KEY,
                 methodName
               ))
           }(service)
           import scala.concurrent.duration._
-          try OharaTestUtil.await(() => ConfiguratorBuilder.hasRunningConfigurator, 30 seconds)
+          try OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 30 seconds)
           finally {
-            ConfiguratorBuilder.closeRunningConfigurator = true
+            Configurator.closeRunningConfigurator = true
             service.shutdownNow()
             service.awaitTermination(60, TimeUnit.SECONDS)
           }

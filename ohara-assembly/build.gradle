@@ -7,7 +7,6 @@ dependencies {
   compile project(':ohara-kafka-data')
   compile project(':ohara-hdfs-connector')
   compile project(':ohara-configurator')
-  compile project(':ohara-manager')
   // the following dependencies is required in runtime
   compile libs.akkaSlf4j
   testCompile project(path: ':ohara-common', configuration: 'tests')
@@ -16,7 +15,6 @@ dependencies {
   testCompile project(path: ':ohara-testing-util', configuration: 'tests')
   testCompile project(path: ':ohara-hdfs-connector', configuration: 'tests')
   testCompile project(path: ':ohara-configurator', configuration: 'tests')
-  testCompile project(path: ':ohara-manager', configuration: 'tests')
   testCompile libs.typesafeConfig
   testCompile libs.scalatest
   testCompile libs.junit
@@ -27,7 +25,6 @@ distributions {
     baseName = "ohara"
     contents {
       exclude "ohara-assembly-${version}.jar"
-      exclude "ohara-demo-${version}.jar"
       into("conf") {
         // ref to root module
         from { "$projectDir/../conf" }

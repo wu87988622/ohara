@@ -24,7 +24,7 @@ ext {
 subprojects {
   version = '0.1-SNAPSHOT'
 
-  if (it.name != 'ohara-manager-nodejs') {
+  if (it.name != 'ohara-manager') {
     apply plugin: 'scala'
     test {
       maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()
@@ -37,7 +37,7 @@ subprojects {
   }
 
   // The *-tests.jar of ohara-assembly is useless so we exclude the ohara-assembly
-  if (it.name != 'ohara-assembly' && it.name != 'ohara-manager-nodejs') {
+  if (it.name != 'ohara-assembly' && it.name != 'ohara-manager') {
     configurations {
       tests.extendsFrom archives
     }
@@ -51,7 +51,7 @@ subprojects {
   }
 
   // All sub-projects have applied the scala checkstyle.
-  if (it.name != 'ohara-manager-nodejs') {
+  if (it.name != 'ohara-manager') {
     apply plugin: "com.diffplug.gradle.spotless"
     spotless {
       scala {

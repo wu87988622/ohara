@@ -8,7 +8,7 @@ a powerful ETL tool
 
 ### Prerequisites
 
-* JDK1.8+
+* JDK 1.8+
 * Scala 2.12
 * gradle 4.5+
 
@@ -45,16 +45,25 @@ gradle clean build
 
 The release files are in ./ohara-assembly/build/.
 
+## quick start broker cluster
+
+```
+gradle runBroker
+```
+
 ## quick start configurator
 
 ```
 gradle runConfigurator
 ```
-## quick start ohara
+use -Pbrokers to specify the service url of broker cluster 
+
+## quick start manager
 
 ```
-gradle runOhara
+gradle runManger
 ```
+use -PconfiguratorPort to specify the port of configurator 
 
 ## quick start ohara-http
 ```bash

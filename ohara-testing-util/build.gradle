@@ -26,3 +26,15 @@ configurations.testCompile {
   exclude group: 'com.sun.jersey', module: 'jersey-servlet'
   exclude group: 'com.sun.jersey', module: 'jersey-server'
 }
+
+/**
+ * run ohara
+ */
+task runBroker(type: JavaExec, dependsOn: 'classes') {
+  description 'start a local broker cluster'
+  classpath = sourceSets.main.runtimeClasspath
+  main = "com.island.ohara.integration.LocalKafkaBrokers"
+  String ttl = 9999 // seconds
+  if(project.hasProperty('ttl')) ttl = "${project.getProperty('ttl')}"
+  args = Arrays.asList("--ttl", ttl)
+}
