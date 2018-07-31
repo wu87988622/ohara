@@ -4,7 +4,7 @@ import AppWrapper from '../common/AppWrapper';
 
 class HomePage extends React.Component {
   render() {
-    return <AppWrapper title="HomePage" />;
+    return <AppWrapper title="Ohara home" />;
   }
 }
 

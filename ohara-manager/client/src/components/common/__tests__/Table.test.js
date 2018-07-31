@@ -15,7 +15,7 @@ describe('<ListTable />', () => {
     wrapper = shallow(<ListTable {...props} />);
   });
 
-  test('renders self', () => {
+  it('renders self', () => {
     expect(wrapper).toHaveLength(1);
     expect(wrapper.hasClass('table table-striped')).toBe(true);
     expect(wrapper.type()).toBe('table');

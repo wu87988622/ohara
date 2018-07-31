@@ -1,16 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import MonitorPage from '../MonitorPage';
+import PipelinePage from '../PipelinePage';
 
-describe('<MonitorPage />', () => {
+describe('<PipelinePage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<MonitorPage />);
+    wrapper = shallow(<PipelinePage />);
   });
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.props().title).toBe('Monitor');
+    expect(wrapper.props().title).toBe('Pipeline');
   });
 });

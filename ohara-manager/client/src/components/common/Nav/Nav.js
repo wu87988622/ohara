@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import { primary } from '../../../theme/colors';
+import { primary, white, dimBlue, lightGray } from '../../../theme/colors';
 import * as URL from '../../../constants/url';
 
 const NavWrapper = styled.div`
@@ -11,27 +11,64 @@ const NavWrapper = styled.div`
   bottom: 0;
   left: 0;
   z-index: 100;
-  padding: 48px 0 0;
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  width: 199px;
+  border-right: 1px solid ${lightGray}
+  background-color: ${white};
 `;
 
-const NavInner = styled.nav`
-  position: relative;
-  top: 0;
-  height: calc(100vh - 48px);
-  padding-top: 0.5rem;
-  overflow-x: hidden;
-  overflow-y: auto;
+const Brand = styled(NavLink)`
+  color: ${primary};
+  font-size: 24px;
+  margin: 25px auto 0 50px;
+  padding: 0;
+  display: block;
 `;
 
-const NavLinkWrapper = styled(NavLink)`
-  color: black;
+Brand.displayName = 'Brand';
+
+const Ul = styled.nav`
+  margin-top: 100px;
+`;
+
+const LinkWrapper = styled(NavLink)`
+  color: ${dimBlue};
   font-size: 14px;
+  display: block;
+  padding: 15px 0 15px 50px;
+  margin: 10px 0;
+  position: relative;
+  transition: 0.3s all;
+
+  &:hover {
+    color: ${primary};
+
+    &:after {
+      content: '';
+      border-right: 2px solid ${primary};
+      position: absolute;
+      top: 0;
+      left: 99%;
+      height: 100%;
+      transition: 0.3s all;
+    }
+  }
 
   &.active {
     color: ${primary};
+
+    &:after {
+      content: '';
+      border-right: 2px solid ${primary};
+      position: absolute;
+      top: 0;
+      left: 99%;
+      height: 100%;
+      transition: 0.3s all;
+    }
   }
 `;
+
+LinkWrapper.displayName = 'LinkWrapper';
 
 const IconWrapper = styled.i`
   margin-right: 8px;
@@ -39,82 +76,42 @@ const IconWrapper = styled.i`
 
 const Nav = () => {
   return (
-    <NavWrapper className="col-md-2 d-none d-md-block bg-light sidebar">
-      <NavInner className="sidebar-sticky">
-        <ul className="nav flex-column">
-          <li className="nav-item">
-            <NavLinkWrapper
-              className="nav-link"
-              exact
-              activeClassName="active"
-              to={URL.JOBS}
-            >
-              <IconWrapper className="fas fa-align-left" />
-              Jobs
-            </NavLinkWrapper>
-          </li>
+    <NavWrapper>
+      <Brand data-testid="brand" to={URL.HOME}>
+        Ohara
+      </Brand>
 
-          <li className="nav-item">
-            <NavLinkWrapper
-              className="nav-link"
-              exact
-              activeClassName="active"
-              to={URL.ACCOUNT}
-            >
-              <IconWrapper className="fas fa-user" />
-              Account
-            </NavLinkWrapper>
-          </li>
+      <Ul>
+        <LinkWrapper
+          data-testid="nav-pipeline"
+          exact
+          activeClassName="active"
+          to={URL.PIPELINE}
+        >
+          <IconWrapper className="fas fa-code-branch" />
+          Pipeline
+        </LinkWrapper>
 
-          <li className="nav-item">
-            <NavLinkWrapper
-              className="nav-link"
-              exact
-              activeClassName="active"
-              to={URL.MONITOR}
-            >
-              <IconWrapper className="fas fa-desktop" />
-              Monitor
-            </NavLinkWrapper>
-          </li>
+        <LinkWrapper
+          data-testid="nav-kafka"
+          exact
+          activeClassName="active"
+          to={URL.KAFKA}
+        >
+          <IconWrapper className="fas fa-align-left" />
+          Kafka
+        </LinkWrapper>
 
-          <li className="nav-item">
-            <NavLinkWrapper
-              className="nav-link"
-              exact
-              activeClassName="active"
-              to={URL.DASHBOARD}
-            >
-              <IconWrapper className="fas fa-chart-bar" />
-              DashBoard
-            </NavLinkWrapper>
-          </li>
-
-          <li className="nav-item">
-            <NavLinkWrapper
-              className="nav-link"
-              exact
-              activeClassName="active"
-              to={URL.TOPICS}
-            >
-              <IconWrapper className="fas fa-codepen" />
-              Topic
-            </NavLinkWrapper>
-          </li>
-
-          <li className="nav-item">
-            <NavLinkWrapper
-              className="nav-link"
-              exact
-              activeClassName="active"
-              to={URL.SCHEMAS}
-            >
-              <IconWrapper className="fas fa-copy" />
-              Schemas
-            </NavLinkWrapper>
-          </li>
-        </ul>
-      </NavInner>
+        <LinkWrapper
+          data-testid="nav-configuration"
+          exact
+          activeClassName="active"
+          to={URL.CONFIGURATION}
+        >
+          <IconWrapper className="fas fa-cog" />
+          Configuration
+        </LinkWrapper>
+      </Ul>
     </NavWrapper>
   );
 };

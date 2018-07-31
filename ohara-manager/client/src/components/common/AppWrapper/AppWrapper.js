@@ -3,18 +3,14 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
-  margin-top: 68px;
-`;
-
-const H2 = styled.h2`
-  border-bottom: 1px solid #e5e5e5;
-  padding-bottom: 8px;
+  margin-top: 100px;
+  margin-left: 240px;
 `;
 
 const AppWrapper = ({ title, children }) => {
   return (
-    <Wrapper className="col-md-9 ml-sm-auto col-lg-10 px-4">
-      <H2>{title}</H2>
+    <Wrapper>
+      <h2>{title}</h2>
       {children}
     </Wrapper>
   );

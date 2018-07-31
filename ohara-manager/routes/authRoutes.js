@@ -8,6 +8,8 @@ module.exports = app => {
       res.status(200).json({
         isSuccess: true,
         token: 'sdfjlsjdfksjdf',
+        username: 'Joshua Milton',
+        avatar: '',
       });
 
       return;

@@ -1,7 +1,8 @@
 export const HOME = '/';
-export const JOBS = '/jobs';
-export const ACCOUNT = '/account';
-export const MONITOR = '/monitor';
+export const PIPELINE = '/pipeline';
+export const KAFKA = '/kafka';
+export const CONFIGURATION = '/configuration';
+
 export const DASHBOARD = '/dashboard';
 export const TOPICS = '/topics';
 export const SCHEMAS = '/schemas';

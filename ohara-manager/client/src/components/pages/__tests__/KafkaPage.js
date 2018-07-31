@@ -1,16 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import DashboardPage from '../DashboardPage';
+import KafkaPage from '../KafkaPage';
 
-describe('<DashboardPage />', () => {
+describe('<KafkaPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<DashboardPage />);
+    wrapper = shallow(<KafkaPage />);
   });
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.props().title).toBe('Dashboard');
+    expect(wrapper.props().title).toBe('Kafka');
   });
 });

@@ -1,0 +1,16 @@
+import React from 'react';
+import { shallow } from 'enzyme';
+
+import Configuration from '../ConfigurationPage.js';
+
+describe('<Configuration />', () => {
+  let wrapper;
+  beforeEach(() => {
+    wrapper = shallow(<Configuration />);
+  });
+
+  it('renders correctly', () => {
+    expect(wrapper.length).toBe(1);
+    expect(wrapper.props().title).toBe('Configuration');
+  });
+});
