@@ -46,34 +46,40 @@ object RowSerializer extends Serializer[Row] {
   }
 
   private[this] def fromV0(reader: DataStreamReader): Row = {
-    val cellCount = reader.readInt()
-    if (cellCount < 0)
-      throw new IllegalStateException(s"the number of cell is $cellCount. It should be bigger than zero")
-    implicit def readValue = (reader: DataStreamReader) => reader.forceRead(reader.readShort())
-    Row(for (_ <- 0 until cellCount) yield {
-      // TODO: we know the size of cell so it is doable to locate the cell at single byte array. by chia
-      reader.readInt()
-      val name = ByteUtil.toString(reader)
-      val dataType = DataType.of(reader.readByte())
-      val cell = dataType match {
-        case BYTES   => Cell.builder.name(name).build(reader)
-        case BOOLEAN => Cell.builder.name(name).build(ByteUtil.toBoolean(reader))
-        case SHORT   => Cell.builder.name(name).build(ByteUtil.toShort(reader))
-        case INT     => Cell.builder.name(name).build(ByteUtil.toInt(reader))
-        case LONG    => Cell.builder.name(name).build(ByteUtil.toLong(reader))
-        case FLOAT   => Cell.builder.name(name).build(ByteUtil.toFloat(reader))
-        case DOUBLE  => Cell.builder.name(name).build(ByteUtil.toDouble(reader))
-        case STRING  => Cell.builder.name(name).build(ByteUtil.toString(reader))
-        case e: Any  => throw new UnsupportedClassVersionError(s"${e.getClass.getName}")
-      }
-      cell
-    })
+    def readCells: DataStreamReader => Seq[Cell[_]] = (reader: DataStreamReader) => {
+      val cellCount = reader.readInt()
+      if (cellCount < 0)
+        throw new IllegalStateException(s"the number of cell is $cellCount. It should be bigger than zero")
+      (0 until cellCount).map(_ => {
+        // TODO: we know the size of cell so it is doable to locate the cell at single byte array. by chia
+        reader.readInt()
+        val name = ByteUtil.toString(reader.forceRead(reader.readShort()))
+        DataType.of(reader.readByte()) match {
+          case BYTES   => Cell.builder.name(name).build(reader.forceRead(reader.readShort()))
+          case BOOLEAN => Cell.builder.name(name).build(ByteUtil.toBoolean(reader.forceRead(reader.readShort())))
+          case SHORT   => Cell.builder.name(name).build(ByteUtil.toShort(reader.forceRead(reader.readShort())))
+          case INT     => Cell.builder.name(name).build(ByteUtil.toInt(reader.forceRead(reader.readShort())))
+          case LONG    => Cell.builder.name(name).build(ByteUtil.toLong(reader.forceRead(reader.readShort())))
+          case FLOAT   => Cell.builder.name(name).build(ByteUtil.toFloat(reader.forceRead(reader.readShort())))
+          case DOUBLE  => Cell.builder.name(name).build(ByteUtil.toDouble(reader.forceRead(reader.readShort())))
+          case STRING  => Cell.builder.name(name).build(ByteUtil.toString(reader.forceRead(reader.readShort())))
+          case e: Any  => throw new UnsupportedClassVersionError(s"${e.getClass.getName}")
+        }
+      })
+    }
+    def readTags: DataStreamReader => Set[String] = (reader: DataStreamReader) => {
+      (0 until reader.readShort()).map(_ => ByteUtil.toString(reader.forceRead(reader.readShort()))).toSet
+    }
+    Row(readCells(reader), readTags(reader))
   }
 
   /**
-    * cell count of first row (4 bytes)
+    * cell count of row (4 bytes)
     * cell length (4 bytes) | cell name length (2 bytes) | cell name | cell value type (1 byte) | cell value length (2 bytes) | cell value
     * cell length (4 bytes) | cell name length (2 bytes) | cell name | cell value type (1 byte) | cell value length (2 bytes) | cell value
+    * tag count (2 bytes)
+    * tag length (2 bytes) | tag bytes
+    * tag length (2 bytes) | tag bytes
     *
     * @param row row
     * @param writer writer
@@ -103,6 +109,14 @@ object RowSerializer extends Serializer[Row] {
       // convert the int to short
       writer.write(valueBytes.length.toShort)
       writer.write(valueBytes)
+    })
+    // convert the int to short
+    writer.write(row.tags.size.toShort)
+    row.tags.foreach(tag => {
+      val bytes = ByteUtil.toBytes(tag)
+      // convert the int to short
+      writer.write(bytes.length.toShort)
+      writer.write(bytes)
     })
   }
   val CELL_OVERHEAD_V0 = ByteUtil.SIZE_OF_INT // cell length

@@ -41,6 +41,7 @@ class TestBuilder extends SmallTest with Matchers {
       .append(Cell.builder.name("0").build(1))
       .append(Cell.builder.name("1").build("Abc"))
       .append(Cell.builder.name("2").build(10.123))
+      .tags(Set[String]("tag0", "tag8"))
       .build()
 
     row.cellCount shouldBe 3
@@ -50,6 +51,10 @@ class TestBuilder extends SmallTest with Matchers {
     row.seekCell(1).value shouldBe "Abc"
     row.seekCell(2).name shouldBe "2"
     row.seekCell(2).value shouldBe 10.123
+    row.tags.size shouldBe 2
+    row.tags.contains("tag0") shouldBe true
+    row.tags.contains("tag8") shouldBe true
+    row.tags.contains("phantom-tag") shouldBe false
     an[IndexOutOfBoundsException] should be thrownBy row.seekCell(-1)
     an[IndexOutOfBoundsException] should be thrownBy row.seekCell(100)
   }

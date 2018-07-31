@@ -51,10 +51,22 @@ abstract class Row extends Iterable[Cell[_]] {
     * @return true if this row is equal with another row. false otherwise
     */
   override def equals(obj: scala.Any): Boolean = obj match {
-    // TODO: evaluating the size first may be reduce the performance if the Row impl get the size by iterating. by chia
-    case row: Row if (size == row.size) => !filter(c => row.seekCell(c.name).map(_.equals(c)).getOrElse(false)).isEmpty
-    case _                              => false
+    case row: Row => equals(row, true)
+    case _        => false
   }
+
+  def equals(other: Row, includeTag: Boolean = true): Boolean =
+    compareCell(other) && (!includeTag || compareTags(other))
+
+  // TODO: evaluating the size first may be reduce the performance if the Row impl get the size by iterating. by chia
+  private[this] def compareCell(other: Row): Boolean = if (isEmpty && other.isEmpty) true
+  else if (size == other.size) !filter(c => other.seekCell(c.name).map(_.equals(c)).getOrElse(false)).isEmpty
+  else false
+
+  private[this] def compareTags(other: Row): Boolean = if (tags.isEmpty && other.tags.isEmpty) true
+  else if (tags.size == other.tags.size) !tags.filter(tag => other.tags.contains(tag)).isEmpty
+  else false
+  def tags: Set[String]
 }
 
 object Row {
@@ -73,7 +85,7 @@ object Row {
   /**
     * Instantiate a row with copying all cells from passed argument
     */
-  def apply(cells: TraversableOnce[Cell[_]]): Row = new Row() {
+  def apply(cells: TraversableOnce[Cell[_]], _tags: Set[String] = Set.empty): Row = new Row() {
 
     /**
       * Save a array of cells in order to make size and index only require O(1) time
@@ -101,5 +113,6 @@ object Row {
     catch {
       case e: ArrayIndexOutOfBoundsException => throw new IndexOutOfBoundsException(e.getMessage)
     }
+    override def tags: Set[String] = _tags
   }
 }

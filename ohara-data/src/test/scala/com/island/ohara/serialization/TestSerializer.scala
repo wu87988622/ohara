@@ -30,7 +30,8 @@ class TestSerializer extends SmallTest with Matchers {
       {
         val row = Row(values.zipWithIndex.map {
           case (v, cellIndex) => Cell.builder.name(cellIndex.toString).build(v)
-        })
+        }, Set[String]("tag0", "tag1"))
+
         row shouldBe RowSerializer.from(RowSerializer.to(row))
       }
     }

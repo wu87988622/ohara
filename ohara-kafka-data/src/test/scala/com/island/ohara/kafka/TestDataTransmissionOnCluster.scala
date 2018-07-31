@@ -39,7 +39,11 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
   @Test
   def testRowProducer2RowConsumer(): Unit = {
-    val row = Row.builder.append(Cell.builder.name("cf0").build(0)).append(Cell.builder.name("cf1").build(1)).build
+    val row = Row.builder
+      .append(Cell.builder.name("cf0").build(0))
+      .append(Cell.builder.name("cf1").build(1))
+      .tags(Set[String]("123", "456"))
+      .build
     testUtil.kafkaBrokers.size shouldBe 3
     testUtil.createTopic(topicName)
     val (_, rowQueue) =
@@ -61,6 +65,9 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
       r.seekCell(0).value shouldBe 0
       r.seekCell(1).name shouldBe "cf1"
       r.seekCell(1).value shouldBe 1
+      r.tags.size shouldBe 2
+      r.tags.contains("123") shouldBe true
+      r.tags.contains("456") shouldBe true
     })
   }
   @Test
