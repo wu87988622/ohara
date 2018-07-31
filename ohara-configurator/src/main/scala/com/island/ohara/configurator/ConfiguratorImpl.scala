@@ -1,17 +1,15 @@
 package com.island.ohara.configurator
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCode, StatusCodes}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.{Http, server}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{ExceptionHandler, StandardRoute}
+import akka.http.scaladsl.server.StandardRoute
+import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson}
-import com.island.ohara.configurator.data.{OharaData, OharaException, OharaSchema, OharaTopic}
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
+import com.island.ohara.data.{OharaData, OharaException, OharaSchema, OharaTopic}
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 
@@ -21,9 +19,10 @@ import scala.concurrent.duration.{Duration, _}
 /**
   * A simple impl of Configurator. This impl maintains all subclass of ohara data in a single ohara store.
   * TODO: the store should be a special class providing the helper methods to iterate the specified sub-class of OharaData
+  *
   * @param hostname hostname of rest server
-  * @param _port port of rest server
-  * @param store store
+  * @param _port    port of rest server
+  * @param store    store
   */
 private class ConfiguratorImpl(uuidGenerator: () => String,
                                val hostname: String,
@@ -53,6 +52,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
 
   /**
     * complete the request with json response. This method also add the "application/json" to the header
+    *
     * @param json response body
     * @return route
     */
@@ -230,6 +230,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
   /**
     * Retrieve a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
     * type, the None will be returned.
+    *
     * @param uuid of ohara data
     * @tparam T subclass type
     * @return a subclass of ohara data
@@ -240,6 +241,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
   /**
     * Remove a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
     * type, the None will be returned.
+    *
     * @param uuid of ohara data
     * @tparam T subclass type
     * @return a subclass of ohara data
@@ -250,6 +252,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
   /**
     * Update a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
     * type, the None will be returned.
+    *
     * @param data ohara data
     * @tparam T subclass type
     * @return a subclass of ohara data
@@ -259,6 +262,7 @@ private class ConfiguratorImpl(uuidGenerator: () => String,
 
   /**
     * Iterate the specified type. The unrelated type will be ignored.
+    *
     * @tparam T subclass type
     * @return iterator
     */

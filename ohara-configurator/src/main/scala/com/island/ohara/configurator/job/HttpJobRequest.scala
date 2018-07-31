@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.job
 
 import com.island.ohara.config.{OharaConfig, OharaProperty, UuidUtil}
-import com.island.ohara.configurator.data.OharaData
+import com.island.ohara.data.OharaData
 import com.island.ohara.serialization.DataType
 
 class HttpJobRequest(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {

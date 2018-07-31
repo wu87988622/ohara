@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.island.ohara.core.Row
+import com.island.ohara.data.Row
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rule.MediumTest

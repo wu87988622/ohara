@@ -1,6 +1,6 @@
 package com.island.ohara.hdfs.text
 
-import com.island.ohara.core.Row
+import com.island.ohara.data.Row
 
 /**
   * This abstract to define how to write data to file

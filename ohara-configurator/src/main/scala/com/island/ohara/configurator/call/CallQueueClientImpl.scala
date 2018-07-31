@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer, OharaException}
+import com.island.ohara.data.{OharaData, OharaDataSerializer, OharaException}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
 import com.typesafe.scalalogging.Logger
@@ -24,12 +24,12 @@ import scala.reflect.ClassTag
   * kafka producer internally. The conumser is used to receive the RESPONSE or OharaException from call queue server.
   * The producer is used send the REQUEST to call queue server.
   *
-  * @param brokers KAFKA server
-  * @param topicName topic name. the topic will be created automatically if it doesn't exist
-  * @param pollTimeout the specified waiting time elapses to poll the consumer
+  * @param brokers               KAFKA server
+  * @param topicName             topic name. the topic will be created automatically if it doesn't exist
+  * @param pollTimeout           the specified waiting time elapses to poll the consumer
   * @param initializationTimeout the specified waiting time to initialize this call queue client
   * @param expirationCleanupTime the time to call the lease dustman
-  * @tparam Request the supported request type
+  * @tparam Request  the supported request type
   * @tparam Response the supported response type
   */
 private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: ClassTag](
@@ -233,14 +233,16 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
 
   /**
     * Used to notify the request with a response or exception
+    *
     * @param requestUuid the request uuid
-    * @param lease lease
+    * @param lease       lease
     */
   private class ResponseReceiver(val requestUuid: String, lease: Duration) {
     private[this] val promise = Promise[Either[OharaException, Response]]()
 
     /**
       * complete the request with a response
+      *
       * @param response response
       */
     def complete(response: Response): Unit = if (promise.isCompleted)
@@ -249,6 +251,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
 
     /**
       * complete the request with a exception
+      *
       * @param exception exception
       */
     def complete(exception: OharaException): Unit = if (promise.isCompleted)
@@ -257,6 +260,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
 
     /**
       * complete the request with a exception
+      *
       * @param exception exception
       */
     def complete(exception: Throwable): Unit = complete(OharaException(exception))
@@ -268,4 +272,5 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
 
     def future: Future[Either[OharaException, Response]] = promise.future
   }
+
 }

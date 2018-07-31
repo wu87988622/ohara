@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.job
 
 import com.island.ohara.configurator.call.CallQueue
-import com.island.ohara.configurator.data.OharaException
+import com.island.ohara.data.OharaException
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.serialization.DataType
 

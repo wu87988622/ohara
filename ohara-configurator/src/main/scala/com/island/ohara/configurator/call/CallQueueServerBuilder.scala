@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.configurator.data.OharaData
+import com.island.ohara.data.OharaData
 
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
@@ -23,6 +23,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * set the kafka brokers information.
+    *
     * @param brokers kafka brokers
     * @return this builder
     */
@@ -33,6 +34,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * set the topic used to send/receive the request/response
+    *
     * @param topicName topic name
     * @return this builder
     */
@@ -43,6 +45,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * set the number of partition of initializing the topic
+    *
     * @param numberOfPartitions the number of partition
     * @return this builder
     */
@@ -53,6 +56,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * set the number of replications of initializing the topic
+    *
     * @param numberOfReplications the number of partition
     * @return this builder
     */
@@ -63,6 +67,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * the time to poll the consumer to receive the response.
+    *
     * @param pollTimeout poll time in millisecond
     * @return this builder
     */
@@ -73,6 +78,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * set the timeout of initializing the call queue client
+    *
     * @param initializationTimeout initial timeout
     * @return this builder
     */
@@ -92,6 +98,7 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * the group id used to bind the consumer.
+    *
     * @param groupId group id
     * @return this builder
     */
@@ -102,7 +109,8 @@ class CallQueueServerBuilder private[call] {
 
   /**
     * construct the call queue server
-    * @tparam REQUEST the type of request
+    *
+    * @tparam REQUEST  the type of request
     * @tparam RESPONSE the type of response
     * @return a call queue server implementation
     */

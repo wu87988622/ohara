@@ -3,7 +3,7 @@ package com.island.ohara.configurator.call
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.data.{OharaSource, OharaTarget}
+import com.island.ohara.data.{OharaSource, OharaTarget}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.kafka.KafkaUtil

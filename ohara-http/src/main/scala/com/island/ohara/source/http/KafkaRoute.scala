@@ -7,10 +7,11 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
-import org.apache.kafka.clients.producer.{Producer, ProducerRecord, RecordMetadata, Callback}
+import org.apache.kafka.clients.producer.{Callback, Producer, ProducerRecord, RecordMetadata}
 
 import scala.concurrent.Promise
-import com.island.ohara.core.{Cell, Row, RowBuilder}
+import com.island.ohara.data.{Row, RowBuilder}
+import com.island.ohara.data.{Cell, Row, RowBuilder}
 import com.island.ohara.serialization._
 import spray.json.{JsBoolean, JsString, JsValue}
 

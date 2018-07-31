@@ -8,7 +8,7 @@ import akka.actor.{Actor, ActorLogging}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
-import com.island.ohara.core.Row
+import com.island.ohara.data.Row
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig}

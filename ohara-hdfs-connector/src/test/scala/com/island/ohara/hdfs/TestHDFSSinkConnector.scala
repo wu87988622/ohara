@@ -3,7 +3,7 @@ package com.island.ohara.hdfs
 import java.util
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.core.{Cell, Row}
+import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._

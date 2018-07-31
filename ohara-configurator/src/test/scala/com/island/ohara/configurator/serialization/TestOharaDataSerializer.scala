@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.serialization
 
-import com.island.ohara.configurator.data._
+import com.island.ohara.data._
 import com.island.ohara.rule.SmallTest
 import com.island.ohara.serialization.{BYTES, INT}
 import org.junit.Test
@@ -16,7 +16,7 @@ class TestOharaDataSerializer extends SmallTest with Matchers {
       OharaStreaming("uuid", "name", "c", "d"),
       OharaSource("uuid", "name", Map("a" -> "b", "c" -> "d")),
       OharaTarget("uuid", "name", Map("a" -> "b", "c" -> "d")),
-      OharaJob("uuid", "name", JobStatus.RUNNING, Map("a" -> Array("b", "c"), "c" -> Array("d", "aaa")))
+      OharaPipeline("uuid", "name", PipelineStatus.RUNNING, Map("a" -> Array("b", "c"), "c" -> Array("d", "aaa")))
     )
 
     val serializer = OharaDataSerializer

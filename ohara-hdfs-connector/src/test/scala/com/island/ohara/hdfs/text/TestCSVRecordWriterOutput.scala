@@ -2,7 +2,7 @@ package com.island.ohara.hdfs.text
 
 import java.util
 
-import com.island.ohara.core.{Cell, Row}
+import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.integration.OharaTestUtil

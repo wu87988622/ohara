@@ -1,8 +1,8 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer}
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
+import com.island.ohara.data.{OharaData, OharaDataSerializer}
 import com.island.ohara.serialization.StringSerializer
 
 import scala.concurrent.duration.Duration

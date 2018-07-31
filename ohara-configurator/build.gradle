@@ -2,8 +2,8 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
-  compile project(':ohara-data')
-  compile project(':ohara-kafka-data')
+  compile project(':ohara-common')
+  compile project(':ohara-kafka')
   compile libs.kafkaClient
   compile libs.kafkaConnectFile
   compile libs.kafkaConnectRuntime

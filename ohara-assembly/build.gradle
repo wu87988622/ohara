@@ -3,15 +3,13 @@ apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
   compile project(':ohara-common')
-  compile project(':ohara-data')
-  compile project(':ohara-kafka-data')
+  compile project(':ohara-kafka')
   compile project(':ohara-hdfs-connector')
   compile project(':ohara-configurator')
   // the following dependencies is required in runtime
   compile libs.akkaSlf4j
   testCompile project(path: ':ohara-common', configuration: 'tests')
-  testCompile project(path: ':ohara-data', configuration: 'tests')
-  testCompile project(path: ':ohara-kafka-data', configuration: 'tests')
+  testCompile project(path: ':ohara-kafka', configuration: 'tests')
   testCompile project(path: ':ohara-testing-util', configuration: 'tests')
   testCompile project(path: ':ohara-hdfs-connector', configuration: 'tests')
   testCompile project(path: ':ohara-configurator', configuration: 'tests')

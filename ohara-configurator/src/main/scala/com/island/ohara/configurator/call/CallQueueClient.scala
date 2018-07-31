@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.configurator.data.{OharaData, OharaException}
+import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
 
 import scala.concurrent.Future

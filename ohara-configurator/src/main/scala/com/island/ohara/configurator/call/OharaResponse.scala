@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.call
 
 import com.island.ohara.config.{OharaConfig, OharaProperty}
-import com.island.ohara.configurator.data.OharaData
+import com.island.ohara.data.OharaData
 
 /**
   * a internal-purposed ohara data. see CallQueueServerImpl and CallQueueClientImpl for more details.

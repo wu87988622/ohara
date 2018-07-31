@@ -3,9 +3,9 @@ package com.island.ohara.configurator
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
-import com.island.ohara.configurator.data.{OharaDataSerializer, OharaTopic}
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
+import com.island.ohara.data.{OharaDataSerializer, OharaTopic}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil

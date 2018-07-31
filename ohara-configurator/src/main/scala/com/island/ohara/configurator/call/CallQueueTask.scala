@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.configurator.data.OharaData
+import com.island.ohara.data.OharaData
 
 /**
   * the task means a undealt request. the guy who have a task should generate the response and pass it to task through Task#complete.

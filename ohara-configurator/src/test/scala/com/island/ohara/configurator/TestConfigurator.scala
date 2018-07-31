@@ -3,8 +3,8 @@ package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
-import com.island.ohara.configurator.data._
 import com.island.ohara.configurator.store.Store
+import com.island.ohara.data.{OharaDataSerializer, OharaException, OharaSchema, OharaTopic}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rest.RestClient
@@ -12,6 +12,7 @@ import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.{BYTES, INT, LONG, StringSerializer}
 import org.junit.Test
 import org.scalatest.Matchers
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestConfigurator extends MediumTest with Matchers {

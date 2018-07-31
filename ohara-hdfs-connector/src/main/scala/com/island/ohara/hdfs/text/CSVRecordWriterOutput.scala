@@ -2,7 +2,7 @@ package com.island.ohara.hdfs.text
 
 import java.io.OutputStream
 
-import com.island.ohara.core.Row
+import com.island.ohara.data.Row
 import com.island.ohara.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.hdfs.storage.Storage
 import com.island.ohara.io.ByteUtil

@@ -3,7 +3,7 @@ package com.island.ohara.source.http
 import java.util.concurrent.ConcurrentHashMap
 
 import akka.actor.ActorSystem
-import com.island.ohara.core.Row
+import com.island.ohara.data.Row
 import org.apache.kafka.clients.producer.KafkaProducer
 
 /**

@@ -3,9 +3,9 @@ package com.island.ohara.configurator
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.data.{OharaData, OharaDataSerializer, OharaSchema}
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.{Store, StoreBuilder}
+import com.island.ohara.data.{OharaData, OharaDataSerializer, OharaSchema}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.serialization.{Serializer, StringSerializer}
 import com.typesafe.scalalogging.Logger

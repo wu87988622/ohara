@@ -2,7 +2,7 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
-  compile project(':ohara-kafka-data')
+  compile project(':ohara-kafka')
   compile libs.hadoopCommon
   compile libs.hadoopHDFS
   testCompile project(":ohara-testing-util")
