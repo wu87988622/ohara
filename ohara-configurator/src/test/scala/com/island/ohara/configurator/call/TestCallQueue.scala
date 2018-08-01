@@ -8,7 +8,7 @@ import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rule.LargeTest
-import org.junit.{After, Test}
+import org.junit.{After, AfterClass, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 class TestCallQueue extends LargeTest with Matchers {
 
   private[this] val topicName = getClass.getSimpleName
-  private[this] val util = OharaTestUtil.localBrokers(3)
+  private[this] val util = TestCallQueue.util
   private[this] val groupId = UuidUtil.uuid()
   private[this] val defaultServerBuilder =
     CallQueue.serverBuilder.brokers(util.brokersString).topicName(topicName).groupId(groupId)
@@ -209,7 +209,20 @@ class TestCallQueue extends LargeTest with Matchers {
   def tearDown(): Unit = {
     servers.foreach(close(_))
     close(client)
-    close(util)
   }
 
+}
+
+object TestCallQueue {
+  var util: OharaTestUtil = null
+
+  @BeforeClass
+  def beforeAll(): Unit = {
+    util = OharaTestUtil.localBrokers(3)
+  }
+
+  @AfterClass
+  def afterAll(): Unit = {
+    close(util)
+  }
 }

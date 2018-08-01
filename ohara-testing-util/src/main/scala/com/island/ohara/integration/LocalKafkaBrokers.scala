@@ -102,7 +102,10 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
   }
 
   override protected def doClose(): Unit = {
-    brokers.foreach(_.shutdown())
+    brokers.foreach(s => {
+      s.shutdown()
+      s.awaitShutdown()
+    })
     logDirs.foreach(deleteFile(_))
   }
 }
