@@ -86,11 +86,11 @@ class ConfiguratorBuilder {
     store(Store.inMemory(StringSerializer, OharaDataSerializer))
   }
 
-  def build(): Configurator = new ConfiguratorImpl(uuidGenerator.get,
-                                                   hostname.get,
-                                                   port.get,
-                                                   store.get,
-                                                   kafkaClient.get,
-                                                   initializationTimeout.get,
-                                                   terminationTimeout.get)
+  def build(): Configurator = new Configurator(uuidGenerator.get,
+                                               hostname.get,
+                                               port.get,
+                                               store.get,
+                                               kafkaClient.get,
+                                               initializationTimeout.get,
+                                               terminationTimeout.get)
 }

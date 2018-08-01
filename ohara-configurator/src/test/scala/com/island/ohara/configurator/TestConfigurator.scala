@@ -35,16 +35,16 @@ class TestConfigurator extends MediumTest with Matchers {
               var response = client.post(path, schema)
               response.statusCode shouldBe 200
               response.body.indexOf(uuid) should not be -1
-              configurator.schemas.size shouldBe 1
-              configurator.schemas.next().name shouldBe schemaName
-              configurator.schemas.next().types.foreach {
+              configurator.data[OharaSchema].size shouldBe 1
+              configurator.data[OharaSchema].next().name shouldBe schemaName
+              configurator.data[OharaSchema].next().types.foreach {
                 case (name, t) => schemaType.get(name).get shouldBe t
               }
 
               response = client.get(s"$path/$uuid")
               response.statusCode shouldBe 200
               var returnedSchema = OharaSchema(OharaJson(response.body))
-              configurator.schemas.next().types.foreach {
+              configurator.data[OharaSchema].next().types.foreach {
                 case (name, t) => returnedSchema.types.get(name).get shouldBe t
               }
 
@@ -62,7 +62,7 @@ class TestConfigurator extends MediumTest with Matchers {
               response = client.get(s"$path/$uuid")
               response.statusCode shouldBe 200
               returnedSchema = OharaSchema(OharaJson(response.body))
-              configurator.schemas.next().equals(returnedSchema, false) shouldBe true
+              configurator.data[OharaSchema].next().equals(returnedSchema, false) shouldBe true
 
               response = client.delete(s"$path/$uuid")
               response.statusCode shouldBe 200
@@ -74,7 +74,7 @@ class TestConfigurator extends MediumTest with Matchers {
               response = client.get(s"$path/$uuid")
               response.statusCode shouldBe 400
 
-              configurator.schemas.size shouldBe 0
+              configurator.data[OharaSchema].size shouldBe 0
 
               // add other ohara data
               val anotherUuid = (System.currentTimeMillis() + 100).toString
@@ -102,7 +102,7 @@ class TestConfigurator extends MediumTest with Matchers {
         doClose(RestClient(configurator.hostname, configurator.port)) { client =>
           schemas.foreach(client.post(path, _).statusCode shouldBe 200)
         }
-        configurator.schemas.size shouldBe schemaCount
+        configurator.data[OharaSchema].size shouldBe schemaCount
       }
     }
   }
