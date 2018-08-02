@@ -2,8 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import { white, lightGray } from '../../../theme/colors';
-import { isLoggedin, deleteUserKey } from '../../../utils/authHelpers';
+import { white, lighterGray } from '../../../theme/variables';
+import { deleteUserKey } from '../../../utils/authHelpers';
+import { LOGIN, LOGOUT } from '../../../constants/url';
 
 const HeaderWrapper = styled.header`
   background-color: ${white};
@@ -12,7 +13,7 @@ const HeaderWrapper = styled.header`
   top: 0;
   right: 0;
   height: 59px;
-  border-bottom: 1px solid ${lightGray};
+  border-bottom: 1px solid ${lighterGray};
   display: flex;
   align-items: center;
   padding: 0 30px;
@@ -32,12 +33,14 @@ class Header extends React.Component {
   };
 
   render() {
+    const { isLogin } = this.props;
+
     return (
       <HeaderWrapper>
         <Ul>
           <li>
-            <NavLink to={isLoggedin() ? `/logout` : '/login'}>
-              {isLoggedin() ? '登出' : '登入'}
+            <NavLink data-testid="login-state" to={isLogin ? LOGOUT : LOGIN}>
+              {isLogin ? 'Log out' : 'Log in'}
             </NavLink>
           </li>
         </Ul>

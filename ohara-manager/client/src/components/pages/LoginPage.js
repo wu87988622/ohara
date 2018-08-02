@@ -3,10 +3,17 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
+import { Input, Button } from '../common/Form';
 import { setUserKey } from '../../utils/authHelpers';
+import { get, isDefined } from '../../utils/helpers';
 import { login } from '../../apis/authApis';
-import { isDefined } from '../../utils/helpers';
 import { HOME } from '../../constants/url';
+import {
+  white,
+  radiusNormal,
+  lighterGray,
+  darkBlue,
+} from '../../theme/variables';
 import * as LOGIN_PAGE from '../../constants/login';
 import * as MESSAGE from '../../constants/message';
 
@@ -15,25 +22,42 @@ const FormContainer = styled.div`
   height: calc(100vh - 80px);
 `;
 
+const Heading3 = styled.h3`
+  font-size: 24px;
+  color: ${darkBlue};
+  text-transform: uppercase;
+`;
+
+Heading3.displayName = 'Heading3';
+
 const Form = styled.form`
-  width: 100%;
   max-width: 330px;
-  padding: 15px;
+  padding: 25px 40px 70px 40px;
   margin: auto;
   text-align: center;
+  background-color: ${white};
+  border-radius: ${radiusNormal};
+  border: 1px solid ${lighterGray};
+  box-shadow: 0 1px 1px 0px rgba(0, 0, 0, 0.1);
 `;
 
-const UserInput = styled.input`
-  margin-bottom: -1px;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
+Form.displayName = 'Form';
+
+const FormInner = styled.div`
+  max-width: 250px;
 `;
 
-const PasswordInput = styled.input`
+const UsernameInput = styled(Input)`
   margin-bottom: 10px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
 `;
+
+UsernameInput.displayName = 'UsernameInput';
+
+const PasswordInput = styled(Input)`
+  margin-bottom: 10px;
+`;
+
+PasswordInput.displayName = 'PasswordInput';
 
 class LoginPage extends React.Component {
   state = {
@@ -55,9 +79,12 @@ class LoginPage extends React.Component {
       password,
     });
 
-    if (isDefined(res)) {
+    const isSuccess = get(res, 'data.isSuccess', undefined);
+
+    if (isDefined(isSuccess) && isSuccess) {
       this.setState({ redirect: true });
       setUserKey(res.data.token);
+      this.props.updateLoginState(true);
       toastr.success(MESSAGE.LOGIN_SUCCESS);
     }
   };
@@ -70,28 +97,39 @@ class LoginPage extends React.Component {
     }
 
     return (
-      <FormContainer className="form-container">
-        <Form className="form-login" onSubmit={this.handleSubmit}>
-          <h3 className="h3">{LOGIN_PAGE.PAGE_HEADING}</h3>
-          <UserInput
-            id="username"
-            className="form-control"
-            type="text"
-            placeholder={LOGIN_PAGE.USERNAME_PLACEHOLDER}
-            value={username}
-            onChange={this.handleChange}
-          />
-          <PasswordInput
-            id="password"
-            type="password"
-            className="form-control"
-            placeholder={LOGIN_PAGE.PASSWORD_PLACEHOLDER}
-            value={password}
-            onChange={this.handleChange}
-          />
-          <button type="submit" className="btn btn-lg btn-primary btn-block">
-            {LOGIN_PAGE.SUBMIT_BUTTON_TEXT}
-          </button>
+      <FormContainer>
+        <Form data-testid="login-form" onSubmit={this.handleSubmit}>
+          <FormInner>
+            <Heading3>{LOGIN_PAGE.PAGE_HEADING}</Heading3>
+
+            <UsernameInput
+              id="username"
+              type="text"
+              placeholder={LOGIN_PAGE.USERNAME_PLACEHOLDER}
+              value={username}
+              width="250px"
+              height="45px"
+              handleChange={this.handleChange}
+              data-testid="username"
+            />
+
+            <PasswordInput
+              id="password"
+              type="password"
+              placeholder={LOGIN_PAGE.PASSWORD_PLACEHOLDER}
+              value={password}
+              width="250px"
+              height="45px"
+              handleChange={this.handleChange}
+              data-testid="password"
+            />
+
+            <Button
+              type="submit"
+              width="100%"
+              text={LOGIN_PAGE.SUBMIT_BUTTON_TEXT}
+            />
+          </FormInner>
         </Form>
       </FormContainer>
     );

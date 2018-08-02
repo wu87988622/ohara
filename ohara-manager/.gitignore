@@ -5,4 +5,5 @@ coverage
 
 # Client
 /client/cypress/videos
+/client/cypress/screenshots
 /client/junit.xml

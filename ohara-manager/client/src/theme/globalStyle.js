@@ -1,6 +1,14 @@
 import ReactModal from 'react-modal';
 import { injectGlobal } from 'styled-components';
-import { primary, primaryHover, lighterGray, darkBlue } from './colors';
+
+import {
+  blue,
+  blueHover,
+  lightGray,
+  whiteSmoke,
+  darkBlue,
+  durationNormal,
+} from './variables';
 
 import '../../node_modules/toastr/build/toastr.css';
 
@@ -16,12 +24,16 @@ export default injectGlobal`
     box-sizing: border-box;
   }
 
+  ::placeholder {
+    color: ${lightGray};
+  }
+
   body {
     color: ${darkBlue};
     padding: 0;
     margin: 0;
     font-family: Roboto, sans-serif;
-    background-color: ${lighterGray};
+    background-color: ${whiteSmoke};
   }
 
    h1 {
@@ -29,13 +41,13 @@ export default injectGlobal`
   }
 
   a {
-    transition: .3s all;
+    transition: ${durationNormal} all;
     text-decoration: none;
-    color: ${primary};
+    color: ${blue};
     
     &:hover {
-      transition: .3s all;
-      color: ${primaryHover}
+      transition: ${durationNormal} all;
+      color: ${blueHover}
     }
   }
 
@@ -43,6 +55,14 @@ export default injectGlobal`
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  button, input {
+    outline: none;
+  }
+
+  button {
+    cursor: pointer;
   }
 
 `;

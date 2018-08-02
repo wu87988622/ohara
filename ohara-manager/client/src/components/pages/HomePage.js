@@ -1,5 +1,4 @@
 import React from 'react';
-
 import AppWrapper from '../common/AppWrapper';
 
 class HomePage extends React.Component {

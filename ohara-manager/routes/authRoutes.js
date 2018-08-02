@@ -15,7 +15,7 @@ module.exports = app => {
       return;
     }
 
-    res.status(400).json({
+    res.status(200).json({
       isSuccess: false,
       errMsg: 'Invalid username or password',
     });

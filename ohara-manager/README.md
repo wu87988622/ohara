@@ -4,7 +4,7 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
 
 ## Initial machine setup
 
-1.  Install [Node.js](https://nodejs.org/en/) 8.11.2 or greater.
+1.  Install [Node.js](https://nodejs.org/en/) 8.10.0 or greater.
 
 2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0 or greater.
 

@@ -9,6 +9,10 @@ export const login = async ({ username, password }) => {
       password,
     });
 
+    if (!res.data.isSuccess) {
+      handleError(res);
+    }
+
     return res;
   } catch (err) {
     handleError(err);
@@ -18,6 +22,10 @@ export const login = async ({ username, password }) => {
 export const logout = async () => {
   try {
     const res = await axios.get('/api/logout');
+
+    if (!res.data.isSuccess) {
+      handleError(res);
+    }
 
     return res;
   } catch (err) {

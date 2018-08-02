@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import { primary, white, dimBlue, lightGray } from '../../../theme/colors';
+import { blue, white, dimBlue, lighterGray } from '../../../theme/variables';
 import * as URL from '../../../constants/url';
 
 const NavWrapper = styled.div`
@@ -12,12 +12,12 @@ const NavWrapper = styled.div`
   left: 0;
   z-index: 100;
   width: 199px;
-  border-right: 1px solid ${lightGray}
+  border-right: 1px solid ${lighterGray}
   background-color: ${white};
 `;
 
 const Brand = styled(NavLink)`
-  color: ${primary};
+  color: ${blue};
   font-size: 24px;
   margin: 25px auto 0 50px;
   padding: 0;
@@ -40,11 +40,11 @@ const LinkWrapper = styled(NavLink)`
   transition: 0.3s all;
 
   &:hover {
-    color: ${primary};
+    color: ${blue};
 
     &:after {
       content: '';
-      border-right: 2px solid ${primary};
+      border-right: 2px solid ${blue};
       position: absolute;
       top: 0;
       left: 99%;
@@ -54,11 +54,11 @@ const LinkWrapper = styled(NavLink)`
   }
 
   &.active {
-    color: ${primary};
+    color: ${blue};
 
     &:after {
       content: '';
-      border-right: 2px solid ${primary};
+      border-right: 2px solid ${blue};
       position: absolute;
       top: 0;
       left: 99%;

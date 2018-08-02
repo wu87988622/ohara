@@ -10,10 +10,9 @@ describe('<SchemasPage />', () => {
     wrapper.setState({ isLoading: false });
   });
 
-  it('renders correctly', () => {
+  // TODO: Skip the test now, since the feature is not confirm yet
+  it.skip('renders correctly', () => {
     expect(wrapper.length).toBe(1);
     expect(wrapper.props().title).toBe('Schemas');
   });
-
-  // TODO: finish all the tests
 });

@@ -17,6 +17,7 @@ class LogoutPage extends React.Component {
 
     if (res) {
       this.setState({ redirect: true });
+      this.props.updateLoginState(false);
       deleteUserKey();
       toastr.success(LOGOUT_SUCCESS);
     }

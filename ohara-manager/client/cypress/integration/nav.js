@@ -1,7 +1,7 @@
 import { HOME, PIPELINE, KAFKA, CONFIGURATION } from '../../src/constants/url';
 
 describe('Nav', () => {
-  it('loads with the correct URL', () => {
+  it('matches the correct routes', () => {
     cy.visit('/');
     cy.location('pathname').should('eq', HOME);
 
