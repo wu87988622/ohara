@@ -6,12 +6,25 @@ task clean {
   }
 }
 
+task cleanProcess {
+  doLast {
+    exec {
+      commandLine 'yarn', 'clean:process'
+    }
+  }
+}
+
 task test {
   doLast {
     exec {
       commandLine 'yarn', 'test:ci'
     }
   }
+  finalizedBy cleanProcess
+}
+
+task build {
+  dependsOn test
 }
 
 task runManager {
@@ -21,7 +34,7 @@ task runManager {
       commandLine 'fuser', '-k', '5050/tcp'
       commandLine 'yarn', 'clean'
       commandLine 'yarn', 'setup'
-      String configuratorPort = 9999 // seconds
+      String configuratorPort = 9999
       if(project.hasProperty('configuratorPort')) configuratorPort = "${project.getProperty('configuratorPort')}"
       environment "CONFIGURATOR_API", "http://localhost:" + configuratorPort + "/v0"
       commandLine 'yarn', 'start'
