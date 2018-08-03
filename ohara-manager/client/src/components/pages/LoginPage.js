@@ -13,7 +13,11 @@ import {
   radiusNormal,
   lighterGray,
   darkBlue,
+  shadowNormal,
 } from '../../theme/variables';
+
+import { submitButton } from '../../theme/buttonTheme';
+
 import * as LOGIN_PAGE from '../../constants/login';
 import * as MESSAGE from '../../constants/message';
 
@@ -38,7 +42,7 @@ const Form = styled.form`
   background-color: ${white};
   border-radius: ${radiusNormal};
   border: 1px solid ${lighterGray};
-  box-shadow: 0 1px 1px 0px rgba(0, 0, 0, 0.1);
+  box-shadow: ${shadowNormal};
 `;
 
 Form.displayName = 'Form';
@@ -125,8 +129,8 @@ class LoginPage extends React.Component {
             />
 
             <Button
-              type="submit"
               width="100%"
+              theme={submitButton}
               text={LOGIN_PAGE.SUBMIT_BUTTON_TEXT}
             />
           </FormInner>

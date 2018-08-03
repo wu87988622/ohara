@@ -57,7 +57,6 @@ describe('<LoginPage />', () => {
     const btn = wrapper.find('Button');
     const _props = btn.props();
     expect(btn.length).toBe(1);
-    expect(_props.type).toBe('submit');
     expect(_props.text).toBe(LOGIN_PAGE.SUBMIT_BUTTON_TEXT);
   });
 
