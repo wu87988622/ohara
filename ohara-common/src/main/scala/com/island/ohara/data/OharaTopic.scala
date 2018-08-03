@@ -2,17 +2,20 @@ package com.island.ohara.data
 
 import com.island.ohara.config.{OharaConfig, OharaJson, OharaProperty}
 
+import OharaTopic._
+import OharaData._
+
 /**
   * a pojo to represent the description of ohara topic
   * @param config stores all properties
   */
 class OharaTopic(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[OharaProperty[_]] = OharaTopic.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = PROPERTIES
 
-  def numberOfPartitions: Int = OharaTopic.numberOfPartitions.require(config)
+  def numberOfPartitions: Int = NUMBER_OF_PARTITIONS.require(config)
 
-  def numberOfReplications: Short = OharaTopic.numberOfReplications.require(config)
+  def numberOfReplications: Short = NUMBER_OF_REPLICATIONS.require(config)
   override def copy[T](prop: OharaProperty[T], value: T): OharaTopic = {
     val clone = config.snapshot
     prop.set(clone, value)
@@ -30,9 +33,9 @@ object OharaTopic {
     */
   def json(name: String, numberOfPartitions: Int, numberOfReplications: Short): OharaJson = {
     val config = OharaConfig()
-    OharaData.name.set(config, name)
-    OharaTopic.numberOfPartitions.set(config, numberOfPartitions)
-    OharaTopic.numberOfReplications.set(config, numberOfReplications)
+    NAME.set(config, name)
+    NUMBER_OF_PARTITIONS.set(config, numberOfPartitions)
+    NUMBER_OF_REPLICATIONS.set(config, numberOfReplications)
     config.toJson
   }
 
@@ -52,7 +55,7 @@ object OharaTopic {
 
   def apply(uuid: String, otherOptions: OharaJson): OharaTopic = {
     val oharaConfig = OharaConfig(otherOptions)
-    OharaData.uuid.set(oharaConfig, uuid)
+    UUID.set(oharaConfig, uuid)
     new OharaTopic(oharaConfig)
   }
 
@@ -66,18 +69,18 @@ object OharaTopic {
     */
   def apply(uuid: String, name: String, numberOfPartitions: Int, numberOfReplications: Short): OharaTopic = {
     val oharaConfig = OharaConfig()
-    OharaData.uuid.set(oharaConfig, uuid)
-    OharaData.name.set(oharaConfig, name)
-    OharaTopic.numberOfPartitions.set(oharaConfig, numberOfPartitions)
-    OharaTopic.numberOfReplications.set(oharaConfig, numberOfReplications)
+    UUID.set(oharaConfig, uuid)
+    NAME.set(oharaConfig, name)
+    NUMBER_OF_PARTITIONS.set(oharaConfig, numberOfPartitions)
+    NUMBER_OF_REPLICATIONS.set(oharaConfig, numberOfReplications)
     new OharaTopic(oharaConfig)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(numberOfPartitions, numberOfReplications)
-  val numberOfPartitions: OharaProperty[Int] =
+  val NUMBER_OF_PARTITIONS: OharaProperty[Int] =
     OharaProperty.builder.key("numberOfPartitions").description("the number of partition of ohara topic").intProperty(1)
-  val numberOfReplications: OharaProperty[Short] = OharaProperty.builder
+  val NUMBER_OF_REPLICATIONS: OharaProperty[Short] = OharaProperty.builder
     .key("numberOfReplications")
     .description("the number of replication of ohara topic")
     .shortProperty(3)
+  val PROPERTIES: Seq[OharaProperty[_]] = Array(NUMBER_OF_PARTITIONS, NUMBER_OF_REPLICATIONS)
 }

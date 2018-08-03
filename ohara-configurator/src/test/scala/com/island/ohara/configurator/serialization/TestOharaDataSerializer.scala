@@ -2,7 +2,7 @@ package com.island.ohara.configurator.serialization
 
 import com.island.ohara.data._
 import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.{BYTES, INT}
+import com.island.ohara.serialization.{BYTES, INT, OharaDataSerializer}
 import org.junit.Test
 import org.scalatest.Matchers
 

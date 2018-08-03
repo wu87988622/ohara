@@ -24,12 +24,7 @@ class TestCallQueueClientBuilder extends MediumTest with Matchers {
     builder = builder.brokers(testUtil.brokersString)
     // we haven't created the topic
     an[IllegalArgumentException] should be thrownBy builder.build()
-    KafkaUtil.topicCreator
-      .numberOfReplications(1)
-      .numberOfPartitions(1)
-      .topicName(methodName)
-      .brokers(testUtil.brokersString)
-      .create()
+    KafkaUtil.createTopic(testUtil.brokersString, methodName, 1, 1)
     builder.build().close()
   }
 

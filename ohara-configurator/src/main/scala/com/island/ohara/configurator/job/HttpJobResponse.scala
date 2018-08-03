@@ -2,7 +2,8 @@ package com.island.ohara.configurator.job
 
 import com.island.ohara.config.{OharaConfig, OharaProperty, UuidUtil}
 import com.island.ohara.data.OharaData
-
+import HttpJobResponse._
+import OharaData._
 class HttpJobResponse(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
 
   override def copy[T](prop: OharaProperty[T], value: T): HttpJobResponse = {
@@ -11,10 +12,10 @@ class HttpJobResponse(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
     new HttpJobResponse(clone)
   }
 
-  def status: Status = HttpJobResponse.status.require(oharaConfig)
-  def config: Map[String, String] = HttpJobResponse.config.require(oharaConfig)
+  def status: Status = STATUS.require(oharaConfig)
+  def config: Map[String, String] = CONFIG.require(oharaConfig)
 
-  override protected def extraProperties: Seq[OharaProperty[_]] = HttpJobResponse.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = PROPERTIES
 }
 
 object HttpJobResponse {
@@ -38,17 +39,17 @@ object HttpJobResponse {
     */
   def apply(uuid: String, name: String, status: Status, config: Map[String, String]): HttpJobResponse = {
     val oharaConfig = OharaConfig()
-    OharaData.uuid.set(oharaConfig, uuid)
-    OharaData.name.set(oharaConfig, name)
-    HttpJobResponse.config.set(oharaConfig, config)
-    HttpJobResponse.status.set(oharaConfig, status)
+    UUID.set(oharaConfig, uuid)
+    NAME.set(oharaConfig, name)
+    CONFIG.set(oharaConfig, config)
+    STATUS.set(oharaConfig, status)
     new HttpJobResponse(oharaConfig)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(config, status)
+  def PROPERTIES: Seq[OharaProperty[_]] = Array(CONFIG, STATUS)
 
-  val status: OharaProperty[Status] =
+  val STATUS: OharaProperty[Status] =
     OharaProperty.builder.key("status").description("the status of http job response").property(Status.of(_), _.name)
-  val config: OharaProperty[Map[String, String]] =
+  val CONFIG: OharaProperty[Map[String, String]] =
     OharaProperty.builder.key("config").description("the config of http job response").mapProperty
 }

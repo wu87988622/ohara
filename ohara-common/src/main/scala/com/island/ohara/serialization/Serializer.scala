@@ -24,12 +24,13 @@ trait Serializer[T] {
 }
 
 object Serializer {
-  val string = StringSerializer
-  val short = ShortSerializer
-  val int = IntSerializer
-  val long = LongSerializer
-  val double = DoubleSerializer
-  val float = FloatSerializer
-  val bytes = BytesSerializer
-  val boolean = BooleanSerializer
+  val STRING = StringSerializer
+  val SHORT = ShortSerializer
+  val INT = IntSerializer
+  val LONG = LongSerializer
+  val DOUBLE = DoubleSerializer
+  val FLOAT = FloatSerializer
+  val BYTES = BytesSerializer
+  val BOOLEAN = BooleanSerializer
+  val OHARA_DATA = OharaDataSerializer
 }

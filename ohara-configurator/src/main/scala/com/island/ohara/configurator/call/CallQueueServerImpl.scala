@@ -6,9 +6,11 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.data.{OharaData, OharaDataSerializer, OharaException}
+import com.island.ohara.configurator.kafka.KafkaClient
+import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.serialization.OharaDataSerializer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
@@ -34,8 +36,8 @@ import scala.reflect.ClassTag
   * @param brokers KAFKA server
   * @param topicName topic name. the topic will be created automatically if it doesn't exist
   * @param groupId used to create the consumer to accept the request from client
-  * @param partitions the number of topic partition. Used to build the topic
-  * @param replications the number of topic partition. Used to build the topic
+  * @param numberOfPartitions the number of topic partition. Used to build the topic
+  * @param numberOfReplications the number of topic partition. Used to build the topic
   * @param pollTimeout the specified waiting time elapses to poll the consumer
   * @param initializationTimeout the specified waiting time to initialize this call queue server
   * @param topicOptions configuration
@@ -46,8 +48,8 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
   brokers: String,
   topicName: String,
   groupId: String,
-  partitions: Int,
-  replications: Short,
+  numberOfPartitions: Int,
+  numberOfReplications: Short,
   pollTimeout: Duration,
   initializationTimeout: Duration,
   topicOptions: Map[String, String])
@@ -80,15 +82,16 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
   /**
     * Initialize the topic
     */
-  KafkaUtil.topicCreator
-    .brokers(brokers)
-    .topicName(topicName)
-    .numberOfPartitions(partitions)
-    .numberOfReplications(replications)
-    // enable kafka delete all stale requests
-    .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
-    .timeout(initializationTimeout)
-    .create()
+  CloseOnce.doClose(KafkaClient(brokers)) { client =>
+    client.topicCreator
+      .topicName(topicName)
+      .numberOfPartitions(numberOfPartitions)
+      .numberOfReplications(numberOfReplications)
+      // enable kafka delete all stale requests
+      .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
+      .timeout(initializationTimeout)
+      .create()
+  }
 
   private[this] val producer = newOrClose {
     val props = new Properties()

@@ -11,18 +11,18 @@ class TestOharaData extends SmallTest with Matchers {
   @Test
   def testEquals(): Unit = {
     val config0 = OharaConfig()
-    OharaData.uuid.set(config0, "123")
-    OharaData.name.set(config0, "123")
-    OharaData.implName.set(config0, "xxxx")
+    OharaData.UUID.set(config0, "123")
+    OharaData.NAME.set(config0, "123")
+    OharaData.IMPLEMENTATION_NAME.set(config0, "xxxx")
     val data0 = new OharaData(config0) {
       override def copy[T](prop: OharaProperty[T], value: T): OharaData = this
       override protected def extraProperties: Seq[OharaProperty[_]] = Seq.empty[OharaProperty[_]]
     }
 
     val config1 = OharaConfig()
-    OharaData.uuid.set(config1, "1234")
-    OharaData.name.set(config1, "123")
-    OharaData.implName.set(config1, "xxxx")
+    OharaData.UUID.set(config1, "1234")
+    OharaData.NAME.set(config1, "123")
+    OharaData.IMPLEMENTATION_NAME.set(config1, "xxxx")
     val data1 = new OharaData(config1) {
       override def copy[T](prop: OharaProperty[T], value: T): OharaData = this
       override protected def extraProperties: Seq[OharaProperty[_]] = Seq.empty[OharaProperty[_]]
@@ -72,22 +72,22 @@ class TestOharaData extends SmallTest with Matchers {
       val name2 = "name2"
       val status2 = PipelineStatus.STOP
       val rules2 = Map("rules2" -> Seq("rules2", "rules2"))
-      job.copy(OharaData.uuid, uuid2).uuid shouldBe uuid2
-      job.copy(OharaData.name, name2).name shouldBe name2
-      job.copy(OharaPipeline.status, status2).status shouldBe status2
-      job.copy(OharaPipeline.rules, rules2).rules.sameElements(rules2) shouldBe true
+      job.copy(OharaData.UUID, uuid2).uuid shouldBe uuid2
+      job.copy(OharaData.NAME, name2).name shouldBe name2
+      job.copy(OharaPipeline.STATUS, status2).status shouldBe status2
+      job.copy(OharaPipeline.RULES, rules2).rules.sameElements(rules2) shouldBe true
     }
     assert(OharaPipeline(uuid, name, PipelineStatus.RUNNING, Map("cmp0" -> Array("cmp1", "cmp2"))))
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.UUID.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaData.name.set(oharaConfig, name)
+    OharaData.NAME.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaPipeline.status.set(oharaConfig, status)
+    OharaPipeline.STATUS.set(oharaConfig, status)
     an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaPipeline.rules.set(oharaConfig, rules)
+    OharaPipeline.RULES.set(oharaConfig, rules)
     assert(new OharaPipeline(oharaConfig))
   }
 
@@ -106,11 +106,11 @@ class TestOharaData extends SmallTest with Matchers {
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaTarget(oharaConfig)
-    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.UUID.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaTarget(oharaConfig)
-    OharaData.name.set(oharaConfig, name)
+    OharaData.NAME.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaTarget(oharaConfig)
-    OharaTarget.config.set(oharaConfig, configs)
+    OharaTarget.CONFIG.set(oharaConfig, configs)
     assert(new OharaTarget(oharaConfig))
   }
 
@@ -129,11 +129,11 @@ class TestOharaData extends SmallTest with Matchers {
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaSource(oharaConfig)
-    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.UUID.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaSource(oharaConfig)
-    OharaData.name.set(oharaConfig, name)
+    OharaData.NAME.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaSource(oharaConfig)
-    OharaSource.config.set(oharaConfig, configs)
+    OharaSource.CONFIG.set(oharaConfig, configs)
     assert(new OharaSource(oharaConfig))
   }
 
@@ -154,11 +154,11 @@ class TestOharaData extends SmallTest with Matchers {
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaTopic(oharaConfig)
-    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.UUID.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaTopic(oharaConfig)
-    OharaData.name.set(oharaConfig, name)
-    oharaConfig.set(OharaTopic.numberOfPartitions.key, numberOfPartitions)
-    oharaConfig.set(OharaTopic.numberOfReplications.key, numberOfReplications)
+    OharaData.NAME.set(oharaConfig, name)
+    oharaConfig.set(OharaTopic.NUMBER_OF_PARTITIONS.key, numberOfPartitions)
+    oharaConfig.set(OharaTopic.NUMBER_OF_REPLICATIONS.key, numberOfReplications)
     assert(OharaTopic(oharaConfig))
 
     val topic = OharaTopic(oharaConfig)
@@ -188,15 +188,15 @@ class TestOharaData extends SmallTest with Matchers {
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.UUID.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaData.name.set(oharaConfig, name)
+    OharaData.NAME.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.columnType.set(oharaConfig, columns)
+    OharaSchema.COLUMN_TYPE.set(oharaConfig, columns)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.columnOrder.set(oharaConfig, indexes)
+    OharaSchema.COLUMN_ORDER.set(oharaConfig, indexes)
     an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.disabled.set(oharaConfig, disabled)
+    OharaSchema.DISABLED.set(oharaConfig, disabled)
     assert(OharaSchema(oharaConfig))
   }
 
@@ -217,13 +217,13 @@ class TestOharaData extends SmallTest with Matchers {
 
     val oharaConfig = OharaConfig()
     an[IllegalArgumentException] should be thrownBy new OharaStreaming(oharaConfig)
-    OharaData.uuid.set(oharaConfig, uuid)
+    OharaData.UUID.set(oharaConfig, uuid)
     an[IllegalArgumentException] should be thrownBy new OharaStreaming(oharaConfig)
-    OharaData.name.set(oharaConfig, name)
+    OharaData.NAME.set(oharaConfig, name)
     an[IllegalArgumentException] should be thrownBy new OharaStreaming(oharaConfig)
-    OharaStreaming.schemaId.set(oharaConfig, schemaId)
+    OharaStreaming.SCHEMA_ID.set(oharaConfig, schemaId)
     an[IllegalArgumentException] should be thrownBy new OharaStreaming(oharaConfig)
-    OharaStreaming.topicId.set(oharaConfig, topicId)
+    OharaStreaming.TOPIC_ID.set(oharaConfig, topicId)
     assert(OharaStreaming(oharaConfig))
   }
 }

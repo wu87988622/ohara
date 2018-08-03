@@ -4,6 +4,8 @@ apply plugin: 'scala'
 dependencies {
   compile project(':ohara-common')
   compile project(':ohara-kafka')
+  compile libs.hadoopCommon
+  compile libs.hadoopHDFS
   compile libs.kafkaClient
   compile libs.kafkaConnectFile
   compile libs.kafkaConnectRuntime
@@ -21,11 +23,23 @@ dependencies {
 }
 
 /**
- * run a configurator
+ * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+ *
+ * Solve running Kafka Connect mini cluster failed. OHARA-103
+ */
+configurations.testCompile {
+  exclude group: 'com.sun.jersey', module: 'jersey-core'
+  exclude group: 'com.sun.jersey', module: 'jersey-json'
+  exclude group: 'com.sun.jersey', module: 'jersey-servlet'
+  exclude group: 'com.sun.jersey', module: 'jersey-server'
+}
+
+/**
+ * run a configurator based on kafka cluster
  */
 task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   description 'run a configurator. You can use -Phost and -Pport to change the address and port of configurator.' +
-          'Also, you can assign -Pbrokers, -Ptopic, -Ppartitions, and -Preplications to run the configurator on truly kafka'
+          'Also, you can assign -Pbrokers, -Pworkers, -Ptopic, -Ppartitions, and -Preplications to run the configurator on truly kafka'
   String hostname = "localhost"
   if(project.hasProperty('host')) {
     hostname = "${project.getProperty('host')}"
@@ -36,7 +50,7 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   }
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.configurator.Configurator"
-  String brokers = "localhost:9092"
+  String brokers = "none"
   if(project.hasProperty('brokers')) {
     brokers = "${project.getProperty('brokers')}"
   }
@@ -52,6 +66,12 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   if(project.hasProperty('replications')) {
     replications = "${project.getProperty('replications')}"
   }
-  args = Arrays.asList("--hostname", hostname, "--port", port, "--brokers", brokers, "--topic", topic, "--partitions", partitions, "--replications", replications)
+  String workers = "none"
+  if(project.hasProperty('workers')) {
+    workers = "${project.getProperty('workers')}"
+  }
+  args = Arrays.asList("--hostname", hostname, "--port", port, "--brokers", brokers, "--topic", topic,
+          "--partitions", partitions, "--replications", replications, "--workers", workers)
+
 }
 

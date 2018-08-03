@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
+import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.serialization.Serializer
@@ -85,15 +86,16 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   /**
     * Initialize the topic
     */
-  KafkaUtil.topicCreator
-    .brokers(brokers)
-    .topicName(topicName)
-    .numberOfPartitions(numberOfPartitions)
-    .numberOfReplications(numberOfReplications)
-    // enable kafka save the latest message for each key
-    .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
-    .timeout(initializationTimeout)
-    .create()
+  CloseOnce.doClose(KafkaClient(brokers)) { client =>
+    client.topicCreator
+      .topicName(topicName)
+      .numberOfPartitions(numberOfPartitions)
+      .numberOfReplications(numberOfReplications)
+      // enable kafka save the latest message for each key
+      .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
+      .timeout(initializationTimeout)
+      .create()
+  }
 
   log.info(
     s"succeed to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")

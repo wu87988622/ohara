@@ -3,15 +3,18 @@ package com.island.ohara.configurator.call
 import com.island.ohara.config.{OharaConfig, OharaProperty}
 import com.island.ohara.data.OharaData
 
+import OharaResponse._
+import OharaData._
+
 /**
   * a internal-purposed ohara data. see CallQueueServerImpl and CallQueueClientImpl for more details.
   * @param config stores all properties
   */
 private class OharaResponse(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[OharaProperty[_]] = OharaResponse.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = PROPERTIES
 
-  def requestId: String = OharaResponse.requestId.require(config)
+  def requestId: String = REQUEST_ID.require(config)
   override def copy[T](prop: OharaProperty[T], value: T): OharaResponse = {
     val clone = config.snapshot
     prop.set(clone, value)
@@ -28,13 +31,14 @@ private object OharaResponse {
     */
   def apply(uuid: String, reqId: String): OharaResponse = {
     val config = OharaConfig()
-    OharaData.uuid.set(config, uuid)
-    OharaData.name.set(config, OharaResponse.getClass.getSimpleName)
-    OharaResponse.requestId.set(config, reqId)
+    UUID.set(config, uuid)
+    NAME.set(config, OharaResponse.getClass.getSimpleName)
+    REQUEST_ID.set(config, reqId)
     new OharaResponse(config)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(requestId)
-  val requestId: OharaProperty[String] =
+  val REQUEST_ID: OharaProperty[String] =
     OharaProperty.builder.key("requestId").description("the uuid against the ohara response").stringProperty
+  val PROPERTIES: Seq[OharaProperty[_]] = Array(REQUEST_ID)
+
 }

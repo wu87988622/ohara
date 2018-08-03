@@ -1,9 +1,16 @@
 package com.island.ohara.configurator
 
+import java.util.concurrent.ConcurrentHashMap
+
+import com.island.ohara.config.OharaJson
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.data.{OharaData, OharaDataSerializer}
-import com.island.ohara.serialization.StringSerializer
+import com.island.ohara.data.OharaData
+import com.island.ohara.kafka.{TopicCreator, TopicInfo}
+import com.island.ohara.rest.{ConnectorClient, RestResponse, SinkConnectorCreator, SourceConnectorCreator}
+import com.island.ohara.serialization.{OharaDataSerializer, StringSerializer}
+import com.typesafe.scalalogging.Logger
+import org.eclipse.jetty.util.ConcurrentHashSet
 
 import scala.concurrent.duration.Duration
 
@@ -13,6 +20,7 @@ class ConfiguratorBuilder {
   private[this] var port: Option[Int] = None
   private[this] var store: Option[Store[String, OharaData]] = None
   private[this] var kafkaClient: Option[KafkaClient] = None
+  private[this] var connectClient: Option[ConnectorClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(Configurator.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var terminationTimeout: Option[Duration] = Some(Configurator.DEFAULT_TERMINATION_TIMEOUT)
 
@@ -76,13 +84,19 @@ class ConfiguratorBuilder {
     this
   }
 
+  def connectClient(connectClient: ConnectorClient): ConfiguratorBuilder = {
+    this.connectClient = Some(connectClient)
+    this
+  }
+
   /**
     * set a mock kafka client to this configurator. a testing-purpose method.
     *
     * @return this builder
     */
   def noCluster: ConfiguratorBuilder = {
-    kafkaClient(KafkaClient.EMPTY)
+    kafkaClient(new FakeKafkaClient())
+    connectClient(new FakeConnectorClient())
     store(Store.inMemory(StringSerializer, OharaDataSerializer))
   }
 
@@ -91,6 +105,85 @@ class ConfiguratorBuilder {
                                                port.get,
                                                store.get,
                                                kafkaClient.get,
+                                               connectClient.get,
                                                initializationTimeout.get,
                                                terminationTimeout.get)
+}
+
+/**
+  * this class is exposed to Validator...an ugly way (TODO) by chia
+  */
+private[configurator] class FakeConnectorClient extends ConnectorClient {
+  private[this] val cachedConnectors = new ConcurrentHashSet[String]()
+  override def sourceCreator(): SourceConnectorCreator = new SourceConnectorCreator() {
+    override protected def send(cmd: String, body: OharaJson): RestResponse = {
+      if (cachedConnectors.contains(name)) RestResponse(400, s"the connector:$name exists!")
+      else {
+        cachedConnectors.add(name)
+        RestResponse(200, "Nice to meet you")
+      }
+    }
+  }
+  override def sinkCreator(): SinkConnectorCreator = new SinkConnectorCreator() {
+    override protected def send(cmd: String, body: OharaJson): RestResponse = {
+      if (cachedConnectors.contains(name)) RestResponse(400, s"the connector:$name exists!")
+      else {
+        cachedConnectors.add(name)
+        RestResponse(200, "Nice to meet you")
+      }
+    }
+  }
+  override def delete(name: String): RestResponse = {
+    if (cachedConnectors.remove(name)) RestResponse(204, "")
+    else {
+      RestResponse(400, s"the connector:$name doesn't exist!")
+    }
+  }
+  import scala.collection.JavaConverters._
+  // TODO; does this work? by chia
+  override def listPlugins(): RestResponse = RestResponse(200, cachedConnectors.asScala.mkString(","))
+  override def listConnectors(): RestResponse = RestResponse(200, cachedConnectors.asScala.mkString(","))
+  override protected def doClose(): Unit = cachedConnectors.clear()
+}
+
+/**
+  * A do-nothing impl of KafkaClient.
+  * NOTED: It should be used in testing only.
+  */
+private class FakeKafkaClient extends KafkaClient {
+  private[this] val log = Logger(KafkaClient.getClass.getName)
+  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
+  override def exist(topicName: String, timeout: Duration): Boolean = {
+    printDebugMessage()
+    cachedTopics.contains(topicName)
+  }
+  override protected def doClose(): Unit = {
+    printDebugMessage()
+  }
+
+  override def topicCreator: TopicCreator = new TopicCreator() {
+    override def create(): Unit = {
+      printDebugMessage()
+      cachedTopics.put(topicName.get, TopicInfo(topicName.get, numberOfPartitions.get, numberOfReplications.get))
+    }
+  }
+
+  override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
+    printDebugMessage()
+    Option(cachedTopics.get(topicName))
+      .map(previous => TopicInfo(topicName, numberOfPartitions, previous.numberOfReplications))
+      .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
+  }
+
+  private[this] def printDebugMessage(): Unit =
+    log.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
+
+  override def topicInfo(topicName: String, timeout: Duration): Option[TopicInfo] = Option(cachedTopics.get(topicName))
+  override def deleteTopic(topicName: String, timeout: Duration): Unit =
+    if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
+
+  import scala.collection.JavaConverters._
+  override def listTopics(timeout: Duration): Seq[String] = cachedTopics.keys().asScala.map(t => t).toList
+
+  override def brokersString: String = ""
 }

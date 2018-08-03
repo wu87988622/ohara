@@ -9,11 +9,13 @@ import akka.http.scaladsl.server.StandardRoute
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.{OharaConfig, OharaJson, UuidUtil}
+import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.{Store, StoreBuilder}
 import com.island.ohara.data._
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.serialization.{Serializer, StringSerializer}
+import com.island.ohara.rest.ConnectorClient
+import com.island.ohara.serialization.{OharaDataSerializer, Serializer, StringSerializer}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.Await
@@ -32,6 +34,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
                                           _port: Int,
                                           val store: Store[String, OharaData],
                                           kafkaClient: KafkaClient,
+                                          connectClient: ConnectorClient,
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration)
     extends Iterable[OharaData]
@@ -101,16 +104,16 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     val updateSchema = path(Segment) { previousUuid =>
       put {
         entity(as[String]) { body =>
-          handleException(() => {
-            data[OharaSchema](previousUuid)
-              .map(_ => {
-                val schema = OharaSchema(previousUuid, OharaJson(body))
-                // TODO: we should disallow user to reduce or reorder the column. by chia
-                updateData(schema)
-                completeUuid(previousUuid)
-              })
-              .getOrElse(rejectNonexistentUuid(previousUuid))
-          })
+          handleException(
+            () =>
+              data[OharaSchema](previousUuid)
+                .map(_ => {
+                  val schema = OharaSchema(previousUuid, OharaJson(body))
+                  // TODO: we should disallow user to reduce or reorder the column. by chia
+                  updateData(schema)
+                  completeUuid(previousUuid)
+                })
+                .getOrElse(rejectNonexistentUuid(previousUuid)))
         }
       }
     }
@@ -151,19 +154,19 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     val updateTopic = path(Segment) { previousUuid =>
       put {
         entity(as[String]) { body =>
-          handleException(() => {
-            data[OharaTopic](previousUuid)
-              .map(previousTopic => {
-                val topic = OharaTopic(previousUuid, OharaJson(body))
-                if (previousTopic.numberOfReplications != topic.numberOfReplications)
-                  throw new IllegalArgumentException("Non-support to change the number of replications")
-                if (previousTopic.numberOfPartitions != topic.numberOfPartitions)
-                  kafkaClient.addPartition(previousUuid, topic.numberOfPartitions)
-                updateData(topic)
-                completeUuid(previousUuid)
-              })
-              .getOrElse(rejectNonexistentUuid(previousUuid))
-          })
+          handleException(
+            () =>
+              data[OharaTopic](previousUuid)
+                .map(previousTopic => {
+                  val topic = OharaTopic(previousUuid, OharaJson(body))
+                  if (previousTopic.numberOfReplications != topic.numberOfReplications)
+                    throw new IllegalArgumentException("Non-support to change the number of replications")
+                  if (previousTopic.numberOfPartitions != topic.numberOfPartitions)
+                    kafkaClient.addPartition(previousUuid, topic.numberOfPartitions)
+                  updateData(topic)
+                  completeUuid(previousUuid)
+                })
+                .getOrElse(rejectNonexistentUuid(previousUuid)))
         }
       }
     }
@@ -193,10 +196,31 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     }
   }
 
+  private[this] val validationRoute = pathPrefix(Configurator.VALIDATION_PATH) {
+    pathEnd {
+      put {
+        entity(as[String]) { body =>
+          handleException(() => {
+            val config = OharaConfig(OharaJson(body))
+            // TODO: only test 3 workers? by chia
+            val reports = Validator.run(connectClient, kafkaClient.brokersString, config.toPlainMap, 3)
+            if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
+            val result = OharaConfig()
+            // TODO: Is the reports used by other component? If so, we should move it out of configurator. by chia
+            reports.foreach(r =>
+              result.set(r.hostname, Map("status" -> (if (r.pass) "pass" else "failed"), "message" -> r.message)))
+            completeJson(result.toJson)
+          })
+        }
+      }
+    }
+  }
+
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
-  private[this] val route: server.Route = pathPrefix(Configurator.VERSION)(schemaRoute ~ topicRoute) ~ path(Remaining)(
+  private[this] val route
+    : server.Route = pathPrefix(Configurator.VERSION)(schemaRoute ~ topicRoute ~ validationRoute) ~ path(Remaining)(
     _ => {
       // TODO: just reject? by chia
       reject
@@ -279,7 +303,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
 }
 
 object Configurator {
-  def storeBuilder: StoreBuilder[String, OharaData] = Store.builder(Serializer.string, OharaDataSerializer)
+  def storeBuilder: StoreBuilder[String, OharaData] = Store.builder(Serializer.STRING, OharaDataSerializer)
   def builder = new ConfiguratorBuilder()
 
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
@@ -289,6 +313,7 @@ object Configurator {
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_TERMINATION_TIMEOUT: Duration = 10 seconds
   val TOPIC_PATH = "topics"
+  val VALIDATION_PATH = "validate"
 
   //----------------[main]----------------//
   private[this] lazy val LOG = Logger(Configurator.getClass)
@@ -296,6 +321,7 @@ object Configurator {
   val HOSTNAME_KEY = "--hostname"
   val PORT_KEY = "--port"
   val BROKERS_KEY = "--brokers"
+  val WORKERS_KEY = "--workers"
   val TOPIC_KEY = "--topic"
   val PARTITIONS_KEY = "--partitions"
   val REPLICATIONS_KEY = "--replications"
@@ -318,41 +344,44 @@ object Configurator {
     var hostname = "localhost"
     var port: Int = 0
     var brokers: Option[String] = None
-    var topicName: Option[String] = None
+    var workers: Option[String] = None
+    var topicName = "test-topic"
     var numberOfPartitions: Int = 1
     var numberOfReplications: Short = 1
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value)     => hostname = value
       case Array(PORT_KEY, value)         => port = value.toInt
-      case Array(BROKERS_KEY, value)      => brokers = Some(value)
-      case Array(TOPIC_KEY, value)        => topicName = Some(value)
+      case Array(BROKERS_KEY, value)      => if (!value.toLowerCase.equals("none")) brokers = Some(value)
+      case Array(WORKERS_KEY, value)      => if (!value.toLowerCase.equals("none")) workers = Some(value)
+      case Array(TOPIC_KEY, value)        => topicName = value
       case Array(PARTITIONS_KEY, value)   => numberOfPartitions = value.toInt
       case Array(REPLICATIONS_KEY, value) => numberOfReplications = value.toShort
       case _                              => throw new IllegalArgumentException(USAGE)
     }
-
-    if (brokers.isEmpty ^ topicName.isEmpty)
-      throw new IllegalArgumentException(if (brokers.isEmpty) "brokers" else "topic" + " can't be empty")
-
+    var standalone = false
     val configurator =
-      if (brokers.isEmpty) Configurator.builder.noCluster.hostname(hostname).port(port).build()
-      else
+      if (brokers.isEmpty || workers.isEmpty) {
+        standalone = true
+        Configurator.builder.noCluster.hostname(hostname).port(port).build()
+      } else
         Configurator.builder
           .store(
             Store
               .builder(StringSerializer, OharaDataSerializer)
               .brokers(brokers.get)
-              .topicName(topicName.get)
+              .topicName(topicName)
               .numberOfReplications(numberOfReplications)
               .numberOfPartitions(numberOfPartitions)
               .build())
           .kafkaClient(KafkaClient(brokers.get))
+          .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
           .port(port)
           .build()
     hasRunningConfigurator = true
     try {
-      LOG.info(s"start a configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
+      LOG.info(
+        s"start a ${(if (standalone) "standalone")} configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
       LOG.info("enter ctrl+c to terminate the configurator")
       while (!closeRunningConfigurator) {
         TimeUnit.SECONDS.sleep(2)

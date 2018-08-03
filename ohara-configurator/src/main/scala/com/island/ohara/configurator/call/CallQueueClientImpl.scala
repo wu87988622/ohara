@@ -6,9 +6,10 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.data.{OharaData, OharaDataSerializer, OharaException}
+import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.serialization.OharaDataSerializer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}

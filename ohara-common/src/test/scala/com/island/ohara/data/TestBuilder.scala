@@ -1,6 +1,5 @@
 package com.island.ohara.data
 
-import com.island.ohara.data.Cell
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers

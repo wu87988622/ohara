@@ -76,6 +76,12 @@ trait OharaProperty[T] {
     * @return previous value of None
     */
   def set(config: OharaConfig, value: T): Option[T]
+
+  /**
+    * @param config config
+    * @return true if config has the key
+    */
+  def exist(config: OharaConfig): Boolean = config.exist(key)
 }
 
 object OharaProperty {

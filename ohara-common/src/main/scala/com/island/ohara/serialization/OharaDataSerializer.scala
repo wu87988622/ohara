@@ -1,9 +1,8 @@
-package com.island.ohara.data
-
+package com.island.ohara.serialization
 import com.island.ohara.config.{OharaConfig, OharaJson}
+import com.island.ohara.data.OharaData
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.reflection.ReflectionUtil
-import com.island.ohara.serialization.Serializer
 
 /**
   * Used to do conversion between ohara data and byte array.
@@ -28,6 +27,7 @@ object OharaDataSerializer extends Serializer[OharaData] {
     */
   override def from(serial: Array[Byte]): OharaData = {
     val config = OharaConfig(OharaJson(ByteUtil.toString(serial)))
-    ReflectionUtil.instantiate(OharaData.implName.require(config), classOf[OharaData], (classOf[OharaConfig], config))
+    ReflectionUtil
+      .instantiate(OharaData.IMPLEMENTATION_NAME.require(config), classOf[OharaData], (classOf[OharaConfig], config))
   }
 }

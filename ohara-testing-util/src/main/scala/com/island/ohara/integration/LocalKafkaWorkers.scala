@@ -106,6 +106,8 @@ private class LocalKafkaWorkers private[integration] (brokersConn: String,
     }
   }
 
+  val workersString: String = validPorts.map("localhost:" + _).mkString(",")
+
   override protected def doClose(): Unit = {
     connects.foreach(_.stop())
     connects.foreach(_.awaitStop())

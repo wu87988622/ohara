@@ -44,7 +44,7 @@ private class AkkaRestClient(as: ActorSystem = null) extends RestClient {
           else
             HttpRequest(
               http,
-              s"${RestClient.HTTP_SCHEME}://$host:$port/$path",
+              s"${RestClient.HTTP_SCHEME}://$host:$port${if (path.startsWith("/")) path else s"/$path"}",
               entity = HttpEntity(ContentTypes.`application/json`, ByteUtil.toBytes(body.toString))
             ))
         .flatMap(

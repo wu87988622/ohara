@@ -14,16 +14,11 @@ class TestKafkaUtil extends MediumTest with Matchers {
   @Test
   def testAddPartitions(): Unit = {
     val topicName = methodName
-    KafkaUtil.topicCreator
-      .topicName(topicName)
-      .brokers(util.brokersString)
-      .numberOfPartitions(1)
-      .numberOfReplications(1)
-      .create()
-    KafkaUtil.topicInfo(util.brokersString, topicName, timeout).get.partitions shouldBe 1
+    KafkaUtil.createTopic(util.brokersString, topicName, 1, 1)
+    KafkaUtil.topicInfo(util.brokersString, topicName, timeout).get.numberOfPartitions shouldBe 1
 
     KafkaUtil.addPartitions(util.brokersString, topicName, 2, timeout)
-    KafkaUtil.topicInfo(util.brokersString, topicName, timeout).get.partitions shouldBe 2
+    KafkaUtil.topicInfo(util.brokersString, topicName, timeout).get.numberOfPartitions shouldBe 2
 
     // decrease the number
     an[IllegalArgumentException] should be thrownBy KafkaUtil.addPartitions(util.brokersString, topicName, 1, timeout)

@@ -5,15 +5,18 @@ import com.island.ohara.data.OharaData
 
 import scala.concurrent.duration.Duration
 
+import OharaRequest._
+import OharaData._
+
 /**
   * a internal-purposed ohara data. see CallQueueServerImpl and CallQueueClientImpl for more details.
   * @param config stores all properties
   */
 private class OharaRequest(config: OharaConfig) extends OharaData(config) {
 
-  override protected def extraProperties: Seq[OharaProperty[_]] = OharaRequest.properties
+  override protected def extraProperties: Seq[OharaProperty[_]] = PROPERTIES
 
-  def lease: Long = OharaRequest.lease.require(config)
+  def lease: Long = LEASE.require(config)
 
   override def copy[T](prop: OharaProperty[T], value: T): OharaRequest = {
     val clone = config.snapshot
@@ -36,16 +39,16 @@ private object OharaRequest {
     */
   def apply(uuid: String, lease: Long): OharaRequest = {
     val config = OharaConfig()
-    OharaData.uuid.set(config, uuid)
-    OharaData.name.set(config, OharaRequest.getClass.getSimpleName)
-    OharaRequest.lease.set(config, lease)
+    UUID.set(config, uuid)
+    NAME.set(config, OharaRequest.getClass.getSimpleName)
+    LEASE.set(config, lease)
     new OharaRequest(config)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array[OharaProperty[_]](lease)
-  val lease: OharaProperty[Long] = OharaProperty.builder
+  val LEASE: OharaProperty[Long] = OharaProperty.builder
     .key("requestLease")
     .description("the lease of the ohara request")
     .longProperty(CallQueue.DEFAULT_EXPIRATION_TIME.toMillis)
+  val PROPERTIES: Seq[OharaProperty[_]] = Array[OharaProperty[_]](LEASE)
 
 }

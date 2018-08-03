@@ -4,12 +4,12 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.data.{OharaDataSerializer, OharaException, OharaSchema, OharaTopic}
+import com.island.ohara.data.{OharaException, OharaSchema, OharaTopic}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.rest.RestClient
+import com.island.ohara.rest.BoundRestClient
 import com.island.ohara.rule.MediumTest
-import com.island.ohara.serialization.{BYTES, INT, LONG, StringSerializer}
+import com.island.ohara.serialization._
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -30,7 +30,7 @@ class TestConfigurator extends MediumTest with Matchers {
     doClose(Configurator.builder.noCluster.uuidGenerator(() => uuid).hostname("localhost").port(0).store(store).build()) {
       configurator =>
         {
-          doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+          doClose(BoundRestClient(configurator.hostname, configurator.port)) { client =>
             {
               var response = client.post(path, schema)
               response.statusCode shouldBe 200
@@ -99,7 +99,7 @@ class TestConfigurator extends MediumTest with Matchers {
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
       {
-        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+        doClose(BoundRestClient(configurator.hostname, configurator.port)) { client =>
           schemas.foreach(client.post(path, _).statusCode shouldBe 200)
         }
         configurator.data[OharaSchema].size shouldBe schemaCount
@@ -126,7 +126,7 @@ class TestConfigurator extends MediumTest with Matchers {
         .port(0)
         .build()) { configurator =>
       {
-        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+        doClose(BoundRestClient(configurator.hostname, configurator.port)) { client =>
           {
             schemas.zipWithIndex.foreach {
               case (schema, index) => {
@@ -155,7 +155,7 @@ class TestConfigurator extends MediumTest with Matchers {
     val path = s"${Configurator.VERSION}/${Configurator.SCHEMA_PATH}"
     doClose(Configurator.builder.noCluster.hostname("localhost").port(0).build()) { configurator =>
       {
-        doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+        doClose(BoundRestClient(configurator.hostname, configurator.port)) { client =>
           {
             var response = client.post(path, OharaJson("xxx"))
             response.statusCode shouldBe 400
@@ -181,14 +181,7 @@ class TestConfigurator extends MediumTest with Matchers {
       an[IllegalArgumentException] should be thrownBy Configurator.main(
         Array[String]("localhost", "localhost", "localhost"))
       an[IllegalArgumentException] should be thrownBy Configurator.main(
-        Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "123", Configurator.TOPIC_KEY))
-      an[IllegalArgumentException] should be thrownBy Configurator.main(
-        Array[String](Configurator.HOSTNAME_KEY,
-                      "localhost",
-                      Configurator.PORT_KEY,
-                      "123",
-                      Configurator.TOPIC_KEY,
-                      "topic"))
+        Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0", Configurator.TOPIC_KEY))
     } finally Configurator.closeRunningConfigurator = false
   }
 
@@ -210,7 +203,7 @@ class TestConfigurator extends MediumTest with Matchers {
     }
 
     def runDist() = {
-      doClose(OharaTestUtil.localBrokers(3)) { util =>
+      doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
         {
           Configurator.closeRunningConfigurator = false
           val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
@@ -223,6 +216,8 @@ class TestConfigurator extends MediumTest with Matchers {
                 "0",
                 Configurator.BROKERS_KEY,
                 util.brokersString,
+                Configurator.WORKERS_KEY,
+                util.workersString,
                 Configurator.TOPIC_KEY,
                 methodName
               ))
@@ -249,7 +244,7 @@ class TestConfigurator extends MediumTest with Matchers {
     doClose(Configurator.builder.noCluster.uuidGenerator(() => uuid).hostname("localhost").port(0).build()) {
       configurator =>
         {
-          doClose(RestClient(configurator.hostname, configurator.port)) { client =>
+          doClose(BoundRestClient(configurator.hostname, configurator.port)) { client =>
             {
               val response =
                 client.post(path,

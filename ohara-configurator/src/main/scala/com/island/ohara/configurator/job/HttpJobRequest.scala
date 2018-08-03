@@ -4,6 +4,8 @@ import com.island.ohara.config.{OharaConfig, OharaProperty, UuidUtil}
 import com.island.ohara.data.OharaData
 import com.island.ohara.serialization.DataType
 
+import HttpJobRequest._
+import OharaData._
 class HttpJobRequest(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
 
   override def copy[T](prop: OharaProperty[T], value: T): HttpJobRequest = {
@@ -12,23 +14,23 @@ class HttpJobRequest(oharaConfig: OharaConfig) extends OharaData(oharaConfig) {
     new HttpJobRequest(clone)
   }
 
-  def path: String = HttpJobRequest.path.require(oharaConfig)
+  def path: String = PATH.require(oharaConfig)
 
   /**
     * @return action
     */
-  def action: Action = HttpJobRequest.action.require(oharaConfig)
+  def action: Action = ACTION.require(oharaConfig)
 
   /**
     * @return schema
     */
-  def schema: Map[String, DataType] = HttpJobRequest.schema.require(oharaConfig)
+  def schema: Map[String, DataType] = SCHEMA.require(oharaConfig)
 
   /**
     * @return config
     */
-  def config: Map[String, String] = HttpJobRequest.config.require(oharaConfig)
-  override protected def extraProperties: Seq[OharaProperty[_]] = HttpJobRequest.properties
+  def config: Map[String, String] = CONFIG.require(oharaConfig)
+  override protected def extraProperties: Seq[OharaProperty[_]] = PROPERTIES
 }
 
 object HttpJobRequest {
@@ -43,23 +45,24 @@ object HttpJobRequest {
             schema: Map[String, DataType],
             config: Map[String, String]): HttpJobRequest = {
     val oharaConfig = OharaConfig()
-    OharaData.uuid.set(oharaConfig, uuid)
-    OharaData.name.set(oharaConfig, name)
-    HttpJobRequest.action.set(oharaConfig, action)
-    HttpJobRequest.path.set(oharaConfig, path)
-    HttpJobRequest.schema.set(oharaConfig, schema)
-    HttpJobRequest.config.set(oharaConfig, config)
+    UUID.set(oharaConfig, uuid)
+    NAME.set(oharaConfig, name)
+    ACTION.set(oharaConfig, action)
+    PATH.set(oharaConfig, path)
+    SCHEMA.set(oharaConfig, schema)
+    CONFIG.set(oharaConfig, config)
     new HttpJobRequest(oharaConfig)
   }
 
-  def properties: Seq[OharaProperty[_]] = Array(path, action, config, schema)
-  val path: OharaProperty[String] =
+  val PATH: OharaProperty[String] =
     OharaProperty.builder.key("path").description("the path of HttpJobRequest").stringProperty
-  val action: OharaProperty[Action] =
+  val ACTION: OharaProperty[Action] =
     OharaProperty.builder.key("action").description("the action of HttpJobRequest").property(Action.of(_), _.name)
-  val schema: OharaProperty[Map[String, DataType]] =
+  val SCHEMA: OharaProperty[Map[String, DataType]] =
     OharaProperty.builder.key("schema").description("the schema of HttpJobRequest").mapProperty(DataType.of(_), _.name)
 
-  val config: OharaProperty[Map[String, String]] =
+  val CONFIG: OharaProperty[Map[String, String]] =
     OharaProperty.builder.key("config").description("the config of HttpJobRequest").mapProperty
+  val PROPERTIES: Seq[OharaProperty[_]] = Array(PATH, ACTION, CONFIG, SCHEMA)
+
 }
