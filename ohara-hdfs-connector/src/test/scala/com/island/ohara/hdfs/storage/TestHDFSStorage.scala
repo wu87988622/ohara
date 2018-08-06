@@ -40,8 +40,7 @@ class TestHDFSStorage extends LargeTest with Matchers {
     outputStream.close()
 
     val inputStream: InputStream = fileSystem.open(new Path(fileName))
-    var buffer: Array[Byte] = Array[Byte]()
-    var result: StringBuilder = new StringBuilder()
+    val result: StringBuilder = new StringBuilder()
     Stream
       .continually(inputStream.read())
       .takeWhile(_ != -1)

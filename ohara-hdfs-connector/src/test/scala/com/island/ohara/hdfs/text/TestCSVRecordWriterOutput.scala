@@ -34,8 +34,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
 
     doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
       {
-        var buffer: Array[Byte] = Array[Byte]()
-        var result: StringBuilder = new StringBuilder()
+        val result: StringBuilder = new StringBuilder()
         Stream
           .continually(inputStream.read())
           .takeWhile(_ != -1)

@@ -76,8 +76,9 @@ object KafkaClient {
       catch {
         case e: ExecutionException =>
           e.getCause match {
-            case ee: UnknownTopicOrPartitionException => throw new IllegalArgumentException(ee.getMessage)
-            case other: Throwable                     => throw other
+            // substitute None for UnknownTopicOrPartitionException
+            case _: UnknownTopicOrPartitionException => None
+            case other: Throwable                    => throw other
           }
       }
 

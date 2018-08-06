@@ -1,17 +1,16 @@
 package com.island.ohara.configurator.endpoint
 
 import com.island.ohara.configurator.endpoint.Validator._
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rest.ConnectorClient
-import com.island.ohara.rule.MediumTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-class TestValidator extends MediumTest with Matchers {
+class TestValidator extends With3Blockers3Workers with Matchers {
   private[this] val taskCount = 3
-  private[this] val util = OharaTestUtil.localWorkers(taskCount, taskCount)
-  private[this] val connectorClient = ConnectorClient(util.workersString)
+  private[this] val connectorClient = ConnectorClient(testUtil.workersString)
+
   @Before
   def setup(): Unit = {
     connectorClient.existPlugin(classOf[Validator].getSimpleName) shouldBe true
@@ -25,14 +24,17 @@ class TestValidator extends MediumTest with Matchers {
   @Test
   def testValidateHdfs(): Unit = {
     evaluate(
-      Validator.run(connectorClient, util.brokersString, Map(TARGET -> TARGET_HDFS, URL -> "file:///tmp"), taskCount))
+      Validator
+        .run(connectorClient, testUtil.brokersString, Map(TARGET -> TARGET_HDFS, URL -> "file:///tmp"), taskCount))
   }
 
   @Test
   def testValidateBroker(): Unit = {
     evaluate(
-      Validator
-        .run(connectorClient, util.brokersString, Map(TARGET -> TARGET_BROKER, URL -> util.brokersString), taskCount))
+      Validator.run(connectorClient,
+                    testUtil.brokersString,
+                    Map(TARGET -> TARGET_BROKER, URL -> testUtil.brokersString),
+                    taskCount))
   }
 
   // TODO: add test against RDB. by chia
@@ -40,6 +42,5 @@ class TestValidator extends MediumTest with Matchers {
   @After
   def tearDown(): Unit = {
     CloseOnce.close(connectorClient)
-    util.close()
   }
 }

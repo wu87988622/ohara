@@ -23,7 +23,7 @@ object FileUtils {
     */
   def offsetFileName(prefixName: String, startOffset: Long, stopOffset: Long): String = {
     val pattern: String = "%09d"
-    var appendFileName: StringBuilder = new StringBuilder()
+    val appendFileName: StringBuilder = new StringBuilder()
     appendFileName.append(prefixName)
     appendFileName.append(FILENAME_SEPARATOR)
     appendFileName.append(pattern.format(startOffset))

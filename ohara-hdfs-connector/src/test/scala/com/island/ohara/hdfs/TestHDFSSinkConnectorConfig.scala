@@ -10,7 +10,7 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
   val HDFS_URL_VALUE = "hdfs://test:9000"
   @Test
   def testGetFlushLineCount(): Unit = {
-    var props: util.Map[String, String] = new util.HashMap[String, String]
+    val props: util.Map[String, String] = new util.HashMap[String, String]
     props.put(HDFSSinkConnectorConfig.HDFS_URL, HDFS_URL_VALUE)
     props.put(HDFSSinkConnectorConfig.FLUSH_LINE_COUNT, "2000")
 

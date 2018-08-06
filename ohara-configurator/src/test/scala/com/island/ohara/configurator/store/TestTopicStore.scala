@@ -1,17 +1,15 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.integration.{OharaTestUtil, With3Blockers}
 import com.island.ohara.io.CloseOnce.{close, _}
-import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.StringSerializer
 import org.junit._
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-class TestTopicStore extends MediumTest with Matchers {
+class TestTopicStore extends With3Blockers with Matchers {
 
-  private[this] val testUtil = TestTopicStore.util
   private[this] var store: Store[String, String] = _
 
   @Test
@@ -134,19 +132,5 @@ class TestTopicStore extends MediumTest with Matchers {
   @After
   def tearDown(): Unit = {
     close(store)
-  }
-}
-
-object TestTopicStore {
-  var util: OharaTestUtil = null
-
-  @BeforeClass
-  def beforeAll(): Unit = {
-    util = OharaTestUtil.localBrokers(3)
-  }
-
-  @AfterClass
-  def afterAll(): Unit = {
-    close(util)
   }
 }

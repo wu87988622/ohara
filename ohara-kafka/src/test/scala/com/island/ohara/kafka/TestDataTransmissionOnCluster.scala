@@ -3,7 +3,7 @@ package com.island.ohara.kafka
 import java.util
 
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.connector.{
@@ -12,7 +12,6 @@ import com.island.ohara.kafka.connector.{
   SimpleRowSourceConnector,
   SimpleRowSourceTask
 }
-import com.island.ohara.rule.LargeTest
 import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{
@@ -21,15 +20,12 @@ import org.apache.kafka.common.serialization.{
   StringDeserializer,
   StringSerializer
 }
-import org.junit.{After, Before, Test}
+import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
-class TestDataTransmissionOnCluster extends LargeTest with Matchers {
-
-  private[this] val testUtil = OharaTestUtil.localWorkers(3, 1)
-  private[this] val topicName = "TestDataTransmissionOnCluster"
+class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers {
 
   @Before
   def setUp(): Unit = {
@@ -39,6 +35,7 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
   @Test
   def testRowProducer2RowConsumer(): Unit = {
+    val topicName = methodName
     val row = Row.builder
       .append(Cell.builder.name("cf0").build(0))
       .append(Cell.builder.name("cf1").build(1))
@@ -72,11 +69,13 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
   }
   @Test
   def testProducer2SinkConnector(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
     val rowCount = 3
     val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
     val resp = testUtil
       .sinkConnectorCreator()
-      .name("my_sink_connector")
+      .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topic(topicName)
       .taskNumber(1)
@@ -101,10 +100,12 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
 
   @Test
   def testSourceConnector2Consumer(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
     val pollCountMax = 5
     val resp = testUtil
       .sourceConnectorCreator()
-      .name("my_sink_connector")
+      .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
       .topic(topicName)
       .taskNumber(1)
@@ -133,6 +134,7 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
     */
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
+    val topicName = methodName
     testUtil.createTopic(topicName)
 
     val row = Row.builder
@@ -156,10 +158,5 @@ class TestDataTransmissionOnCluster extends LargeTest with Matchers {
     fromKafka.seekCell(0).name shouldBe "c"
     fromKafka.seekCell(1).name shouldBe "b"
     fromKafka.seekCell(2).name shouldBe "a"
-  }
-
-  @After
-  def tearDown(): Unit = {
-    testUtil.close()
   }
 }

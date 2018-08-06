@@ -3,7 +3,6 @@ package com.island.ohara.hdfs
 import com.island.ohara.hdfs.creator.StorageCreator
 import com.island.ohara.hdfs.storage.Storage
 import com.island.ohara.kafka.connector.RowSinkRecord
-import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.connect.sink.SinkTaskContext
 
@@ -15,7 +14,6 @@ import scala.collection.mutable
   * @param context
   */
 class DataWriter(config: HDFSSinkConnectorConfig, context: SinkTaskContext) {
-  private[this] lazy val logger = Logger(getClass().getName())
 
   private[this] val createStorage: StorageCreator = Class
     .forName(config.hdfsStorageCreatorClass())

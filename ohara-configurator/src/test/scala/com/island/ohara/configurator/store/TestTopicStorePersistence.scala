@@ -4,22 +4,18 @@ import java.util
 import java.util.Properties
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.integration.{OharaTestUtil, With3Blockers}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.StringSerializer
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.common.config.TopicConfig
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 
-class TestTopicStorePersistence extends MediumTest with Matchers {
-
-  private[this] val testUtil: OharaTestUtil = OharaTestUtil.localBrokers(3)
+class TestTopicStorePersistence extends With3Blockers with Matchers {
 
   @Test
   def testRetention(): Unit = {
@@ -79,10 +75,5 @@ class TestTopicStorePersistence extends MediumTest with Matchers {
       val result = checkContentOfTopic()
       result._1 == 1 && result._2 == numberOfOtherMessages
     }, 60 seconds)
-  }
-
-  @After
-  def tearDown(): Unit = {
-    CloseOnce.close(testUtil)
   }
 }

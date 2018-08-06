@@ -1,15 +1,12 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.rule.MediumTest
+import com.island.ohara.integration.With3Blockers
 import org.apache.kafka.common.config.TopicConfig
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-class TestCallQueueServerBuilder extends MediumTest with Matchers {
-
-  private[this] val testUtil = OharaTestUtil.localBrokers(1)
+class TestCallQueueServerBuilder extends With3Blockers with Matchers {
 
   @Test
   def testIncompleteArguments(): Unit = {
@@ -44,10 +41,5 @@ class TestCallQueueServerBuilder extends MediumTest with Matchers {
       // the following option is invalid for topic store
       .topicOptions(Map(TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
       .build()
-  }
-
-  @After
-  def tearDown(): Unit = {
-    testUtil.close()
   }
 }

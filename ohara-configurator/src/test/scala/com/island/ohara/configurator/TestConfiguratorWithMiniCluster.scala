@@ -6,18 +6,16 @@ import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.data.OharaTopic
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rest.{BoundRestClient, ConnectorClient}
-import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.{OharaDataSerializer, StringSerializer}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
+class TestConfiguratorWithMiniCluster extends With3Blockers3Workers with Matchers {
 
-  private[this] val util = OharaTestUtil.localWorkers(3, 3)
   private[this] val currentUuid = new AtomicInteger(0)
   private[this] val uuidGenerator = () => currentUuid.incrementAndGet().toString
   private[this] val configurator =
@@ -31,10 +29,10 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
           .numberOfPartitions(1)
           .numberOfReplications(1)
           .topicName("TestConfiguratorWithMiniCluster")
-          .brokers(util.brokersString)
+          .brokers(testUtil.brokersString)
           .build())
-      .kafkaClient(KafkaClient(util.brokersString))
-      .connectClient(ConnectorClient(util.workersString))
+      .kafkaClient(KafkaClient(testUtil.brokersString))
+      .connectClient(ConnectorClient(testUtil.workersString))
       .build()
   private[this] val restClient = BoundRestClient(configurator.hostname, configurator.port)
   private[this] val topicPath = s"${Configurator.VERSION}/${Configurator.TOPIC_PATH}"
@@ -55,7 +53,7 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
     uuid shouldBe currentUuid.get().toString
 
     // check the information stored in kafka
-    var topicInfo = KafkaUtil.topicInfo(util.brokersString, uuid, timeout).get
+    var topicInfo = KafkaUtil.topicInfo(testUtil.brokersString, uuid, timeout).get
     topicInfo.name shouldBe uuid
     topicInfo.numberOfPartitions shouldBe numberOfPartitions
     topicInfo.numberOfReplications shouldBe numberOfReplications
@@ -75,7 +73,7 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
     OharaConfig(OharaJson(rsp.body)).requireString("uuid") shouldBe currentUuid.get().toString
 
     // check the information stored in kafka
-    topicInfo = KafkaUtil.topicInfo(util.brokersString, uuid, timeout).get
+    topicInfo = KafkaUtil.topicInfo(testUtil.brokersString, uuid, timeout).get
 
     topicInfo.name shouldBe uuid
     topicInfo.numberOfPartitions shouldBe numberOfPartitions
@@ -97,11 +95,11 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
     rval.numberOfReplications shouldBe numberOfReplications
 
     // the topic should in kafka cluster
-    KafkaUtil.exist(util.brokersString, uuid, timeout) shouldBe true
+    KafkaUtil.exist(testUtil.brokersString, uuid, timeout) shouldBe true
     rsp = restClient.delete(s"$topicPath/$uuid")
     rsp.statusCode shouldBe 200
     // the topic should be gone
-    KafkaUtil.exist(util.brokersString, uuid, timeout) shouldBe false
+    KafkaUtil.exist(testUtil.brokersString, uuid, timeout) shouldBe false
     // the meta data should be removed from configurator too
     configurator.store.iterator.map(_._1).filter(_ == uuid).size shouldBe 0
   }
@@ -118,6 +116,5 @@ class TestConfiguratorWithMiniCluster extends MediumTest with Matchers {
   def tearDown(): Unit = {
     CloseOnce.close(restClient)
     CloseOnce.close(configurator)
-    util.close()
   }
 }

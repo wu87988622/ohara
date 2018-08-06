@@ -55,7 +55,6 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     when(storage.open(anyString(), anyBoolean())).thenReturn(mock[OutputStream])
 
     val recordWriterOutput = mock[RecordWriterOutput]
-    val outputStream: OutputStream = mock[OutputStream]
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 

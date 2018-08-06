@@ -3,6 +3,7 @@ package com.island.ohara
 import java.net.URL
 import java.util.regex.Pattern
 
+import com.island.ohara.integration.{With3Blockers, With3Blockers3Workers, With3Blockers3Workers3DataNodes}
 import com.island.ohara.rule.{LargeTest, MediumTest, SmallTest}
 import org.junit.Test
 import org.scalatest.Matchers
@@ -11,7 +12,14 @@ import scala.collection.mutable.ArrayBuffer
 
 class TestTestCases extends MediumTest with Matchers {
   private[this] val validTestCatalog: Array[Class[_]] =
-    Array(classOf[SmallTest], classOf[MediumTest], classOf[LargeTest])
+    Array(
+      classOf[SmallTest],
+      classOf[MediumTest],
+      classOf[LargeTest],
+      classOf[With3Blockers3Workers],
+      classOf[With3Blockers],
+      classOf[With3Blockers3Workers3DataNodes]
+    )
   private[this] val validTestName: Array[String] = validTestCatalog.map(_.getName)
 
   /**

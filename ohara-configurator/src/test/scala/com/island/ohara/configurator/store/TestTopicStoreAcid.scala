@@ -3,9 +3,8 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.integration.With3Blockers
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.StringSerializer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -13,8 +12,7 @@ import org.scalatest.Matchers
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
-class TestTopicStoreAcid extends MediumTest with Matchers {
-  val testUtil = OharaTestUtil.localBrokers(3)
+class TestTopicStoreAcid extends With3Blockers with Matchers {
   val store = Store
     .builder(StringSerializer, StringSerializer)
     .brokers(testUtil.brokersString)
@@ -55,7 +53,6 @@ class TestTopicStoreAcid extends MediumTest with Matchers {
   @After
   def tearDown(): Unit = {
     close(store)
-    close(testUtil)
   }
 
   private[this] def createRemover(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
