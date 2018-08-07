@@ -23,6 +23,7 @@ distributions {
     baseName = "ohara"
     contents {
       exclude "ohara-assembly-${version}.jar"
+      exclude "ohara-demo-${version}.jar"
       into("conf") {
         // ref to root module
         from { "$projectDir/../conf" }

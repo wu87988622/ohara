@@ -45,11 +45,12 @@ gradle clean build
 
 The release files are in ./ohara-assembly/build/.
 
-## quick start broker cluster
+## quick start kafka cluster
 
 ```
-gradle runBroker
+gradle runKafka
 ```
+NOTED: the above command will run 3 brokers and 3 workers
 
 ## quick start configurator
 

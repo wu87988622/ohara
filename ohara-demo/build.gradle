@@ -1,0 +1,11 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+dependencies {
+  compile project(':ohara-testing-util')
+  compile project(':ohara-configurator')
+}
+
+task runBackend(type: JavaExec, dependsOn: 'classes') {
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'com.island.ohara.demo.Backend'
+}

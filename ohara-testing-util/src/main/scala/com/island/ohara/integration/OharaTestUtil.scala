@@ -6,6 +6,7 @@ import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.config.{OharaConfig, OharaJson}
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.rest.{RestClient, RestResponse}
 import kafka.server.KafkaServer
 import org.apache.hadoop.fs.FileSystem
@@ -330,6 +331,30 @@ object OharaTestUtil {
     */
   def localHDFS(numOfNode: Int): OharaTestUtil = new OharaTestUtil(new ComponentBox(-1, -1, numOfNode))
 
+  val HELP_KEY = "--help"
+  val TTL_KEY = "--ttl"
+  val USAGE = s"[Usage] $TTL_KEY"
+
+  def main(args: Array[String]): Unit = {
+    if (args.length == 1 && args(0).equals(HELP_KEY)) {
+      println(USAGE)
+      return
+    }
+    if (args.size % 2 != 0) throw new IllegalArgumentException(USAGE)
+    var ttl = 9999
+    args.sliding(2, 2).foreach {
+      case Array(TTL_KEY, value) => ttl = value.toInt
+      case _                     => throw new IllegalArgumentException(USAGE)
+    }
+    doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
+      println("wait for the mini kafka cluster")
+      TimeUnit.SECONDS.sleep(5)
+      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workersString}")
+      println(
+        s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after ${ttl} seconds")
+      TimeUnit.SECONDS.sleep(ttl)
+    }
+  }
 }
 
 private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: Int, numberOfDataNodes: Int)

@@ -7,8 +7,23 @@ dependencies {
   compile libs.kafkaCore
   compile libs.kafkaConnectJson
   compile libs.kafkaConnectRuntime
-  compile libs.hadoopCommon
-  compile libs.hadoopHDFS
+  /**
+   * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+   *
+   * Solve running Kafka Connect mini cluster failed. OHARA-103
+   */
+  compile (libs.hadoopCommon) {
+    exclude group: 'com.sun.jersey', module: 'jersey-core'
+    exclude group: 'com.sun.jersey', module: 'jersey-json'
+    exclude group: 'com.sun.jersey', module: 'jersey-servlet'
+    exclude group: 'com.sun.jersey', module: 'jersey-server'
+  }
+  compile (libs.hadoopHDFS) {
+    exclude group: 'com.sun.jersey', module: 'jersey-core'
+    exclude group: 'com.sun.jersey', module: 'jersey-json'
+    exclude group: 'com.sun.jersey', module: 'jersey-servlet'
+    exclude group: 'com.sun.jersey', module: 'jersey-server'
+  }
   testCompile libs.scalatest
   testCompile project(':ohara-common').sourceSets.test.output
   testCompile libs.mockito
@@ -16,24 +31,12 @@ dependencies {
 }
 
 /**
- * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
- *
- * Solve running Kafka Connect mini cluster failed. OHARA-103
- */
-configurations.testCompile {
-  exclude group: 'com.sun.jersey', module: 'jersey-core'
-  exclude group: 'com.sun.jersey', module: 'jersey-json'
-  exclude group: 'com.sun.jersey', module: 'jersey-servlet'
-  exclude group: 'com.sun.jersey', module: 'jersey-server'
-}
-
-/**
  * run ohara
  */
-task runBroker(type: JavaExec, dependsOn: 'classes') {
+task runKafka(type: JavaExec, dependsOn: 'classes') {
   description 'start a local broker cluster'
   classpath = sourceSets.main.runtimeClasspath
-  main = "com.island.ohara.integration.LocalKafkaBrokers"
+  main = "com.island.ohara.integration.OharaTestUtil"
   String ttl = 9999 // seconds
   if(project.hasProperty('ttl')) ttl = "${project.getProperty('ttl')}"
   args = Arrays.asList("--ttl", ttl)
