@@ -123,8 +123,8 @@ object Validator {
       try {
         latch.await(timeout.toMillis, TimeUnit.MILLISECONDS)
         val validationName = s"Validator-${INDEXER.getAndIncrement()}"
-        val response = connectorClient
-          .sourceCreator()
+        connectorClient
+          .sourceConnectorCreator()
           .name(validationName)
           .disableConverter()
           .connectorClass(classOf[Validator].getName)
@@ -133,8 +133,6 @@ object Validator {
           .config(config)
           .config(REQUEST_ID, requestId)
           .run()
-        if (response.statusCode != 201)
-          throw new IllegalStateException(s"Failed to start the validator. error code:${response.statusCode}")
         try Await.result(future, timeout)
         finally connectorClient.delete(validationName)
       } finally closed.set(true)

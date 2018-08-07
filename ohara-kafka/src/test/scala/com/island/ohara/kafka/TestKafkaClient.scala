@@ -1,12 +1,11 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.configurator.kafka.KafkaClient
-import com.island.ohara.integration.With3Blockers
+import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-
-class TestKafkaClient extends With3Blockers with Matchers {
+class TestKafkaClient extends With3Blockers3Workers with Matchers {
   import scala.concurrent.duration._
   private[this] val timeout = 10 seconds
 

@@ -4,7 +4,7 @@ import java.util
 
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
-import com.island.ohara.io.ByteUtil
+import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.connector.{
   SimpleRowSinkConnector,
@@ -20,13 +20,14 @@ import org.apache.kafka.common.serialization.{
   StringDeserializer,
   StringSerializer
 }
-import org.junit.{Before, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers {
 
+  private[this] val connectorClient = testUtil.connectorClient()
   @Before
   def setUp(): Unit = {
     SimpleRowSinkTask.reset()
@@ -73,7 +74,7 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
     val connectorName = methodName
     val rowCount = 3
     val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
-    val resp = testUtil
+    connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
@@ -81,9 +82,6 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
       .taskNumber(1)
       .disableConverter
       .run()
-    withClue(s"body:${resp.body}") {
-      resp.statusCode shouldBe 201
-    }
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
@@ -103,7 +101,7 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
     val topicName = methodName
     val connectorName = methodName
     val pollCountMax = 5
-    val resp = testUtil
+    connectorClient
       .sourceConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
@@ -112,9 +110,6 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
       .disableConverter
       .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
       .run()
-    withClue(s"body:${resp.body}") {
-      resp.statusCode shouldBe 201
-    }
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
@@ -158,5 +153,10 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
     fromKafka.seekCell(0).name shouldBe "c"
     fromKafka.seekCell(1).name shouldBe "b"
     fromKafka.seekCell(2).name shouldBe "a"
+  }
+
+  @After
+  def cleanup(): Unit = {
+    CloseOnce.close(connectorClient)
   }
 }

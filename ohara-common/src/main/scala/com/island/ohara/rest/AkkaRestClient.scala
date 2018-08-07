@@ -36,15 +36,16 @@ private class AkkaRestClient(as: ActorSystem = null) extends RestClient {
                             http: HttpMethod,
                             path: String,
                             body: OharaJson,
-                            timeout: Duration): RestResponse =
+                            timeout: Duration): RestResponse = {
+    val uri = s"${RestClient.HTTP_SCHEME}://$host:$port${if (path.startsWith("/")) path else s"/$path"}"
     Await.result(
       Http()
         .singleRequest(
-          if (body == null) HttpRequest(http, uri = s"${RestClient.HTTP_SCHEME}://$host:$port/$path")
+          if (body == null) HttpRequest(http, uri)
           else
             HttpRequest(
               http,
-              s"${RestClient.HTTP_SCHEME}://$host:$port${if (path.startsWith("/")) path else s"/$path"}",
+              uri,
               entity = HttpEntity(ContentTypes.`application/json`, ByteUtil.toBytes(body.toString))
             ))
         .flatMap(
@@ -54,4 +55,5 @@ private class AkkaRestClient(as: ActorSystem = null) extends RestClient {
               .map(strict => RestResponse(res._1.intValue(), strict.data.decodeString("UTF-8")))),
       timeout
     )
+  }
 }

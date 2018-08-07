@@ -2,12 +2,12 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.config.OharaJson
 import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.data.OharaData
 import com.island.ohara.kafka.{TopicCreator, TopicInfo}
-import com.island.ohara.rest.{ConnectorClient, RestResponse, SinkConnectorCreator, SourceConnectorCreator}
+import com.island.ohara.rest.ConnectorJson.{ConnectorRequest, ConnectorResponse, Plugin}
+import com.island.ohara.rest.{ConnectorClient, SinkConnectorCreator, SourceConnectorCreator}
 import com.island.ohara.serialization.{OharaDataSerializer, StringSerializer}
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.util.ConcurrentHashSet
@@ -115,35 +115,23 @@ class ConfiguratorBuilder {
   */
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashSet[String]()
-  override def sourceCreator(): SourceConnectorCreator = new SourceConnectorCreator() {
-    override protected def send(cmd: String, body: OharaJson): RestResponse = {
-      if (cachedConnectors.contains(name)) RestResponse(400, s"the connector:$name exists!")
-      else {
-        cachedConnectors.add(name)
-        RestResponse(200, "Nice to meet you")
-      }
-    }
-  }
-  override def sinkCreator(): SinkConnectorCreator = new SinkConnectorCreator() {
-    override protected def send(cmd: String, body: OharaJson): RestResponse = {
-      if (cachedConnectors.contains(name)) RestResponse(400, s"the connector:$name exists!")
-      else {
-        cachedConnectors.add(name)
-        RestResponse(200, "Nice to meet you")
-      }
-    }
-  }
-  override def delete(name: String): RestResponse = {
-    if (cachedConnectors.remove(name)) RestResponse(204, "")
-    else {
-      RestResponse(400, s"the connector:$name doesn't exist!")
-    }
-  }
+
+  override def sourceConnectorCreator(): SourceConnectorCreator = (request: ConnectorRequest) =>
+    if (cachedConnectors.contains(request.name))
+      throw new IllegalStateException(s"the connector:${request.name} exists!")
+    else ConnectorResponse(request.name, request.config, Seq.empty, "source")
+
+  override def sinkConnectorCreator(): SinkConnectorCreator = (request: ConnectorRequest) =>
+    if (cachedConnectors.contains(request.name))
+      throw new IllegalStateException(s"the connector:${request.name} exists!")
+    else ConnectorResponse(request.name, request.config, Seq.empty, "source")
+  override def delete(name: String): Unit =
+    if (!cachedConnectors.remove(name)) throw new IllegalStateException(s"the connector:$name doesn't exist!")
   import scala.collection.JavaConverters._
   // TODO; does this work? by chia
-  override def listPlugins(): RestResponse = RestResponse(200, cachedConnectors.asScala.mkString(","))
-  override def listConnectors(): RestResponse = RestResponse(200, cachedConnectors.asScala.mkString(","))
+  override def plugins(): Seq[Plugin] = cachedConnectors.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
   override protected def doClose(): Unit = cachedConnectors.clear()
+  override def activeConnectors(): Seq[String] = cachedConnectors.asScala.toSeq
 }
 
 /**

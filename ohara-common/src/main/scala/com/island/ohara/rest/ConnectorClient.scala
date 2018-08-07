@@ -1,48 +1,120 @@
 package com.island.ohara.rest
+import java.net.HttpRetryException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
+import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.rest.ConnectorJson._
+import spray.json.DefaultJsonProtocol
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.util.Random
 
 /**
   * a helper class used to send the rest request to kafka worker.
   */
 trait ConnectorClient extends CloseOnce {
 
-  def sourceCreator(): SourceConnectorCreator
+  def sourceConnectorCreator(): SourceConnectorCreator
 
-  def sinkCreator(): SinkConnectorCreator
+  def sinkConnectorCreator(): SinkConnectorCreator
 
-  //TODO: Convert the returned tyoe from string to POJO...by chia
-  def delete(name: String): RestResponse
+  def delete(name: String): Unit
 
-  def existPlugin(name: String): Boolean = listPlugins().body.contains(name)
+  def plugins(): Seq[Plugin]
 
-  //TODO: Convert the returned tyoe from string to POJO...by chia
-  def listPlugins(): RestResponse
-
-  def existConnector(name: String): Boolean = listConnectors().body.contains(name)
-
-  //TODO: Convert the returned tyoe from string to POJO...by chia
-  def listConnectors(): RestResponse
+  def activeConnectors(): Seq[String]
 }
 
 object ConnectorClient {
+  private[this] val COUNTER = new AtomicInteger(0)
+  import scala.concurrent.duration._
+  val TIMEOUT = 10 seconds
 
-  def apply(workers: String): ConnectorClient = {
-    val workerAddress = workers
-      .split(",")
-      .map(s => {
-        val ss = s.split(":")
-        (ss(0), ss(1).toInt)
-      })
-    if (workerAddress.isEmpty) throw new IllegalArgumentException(s"Invalid workers:$workers")
-    new ConnectorClient() {
-      private[this] val restClient = BoundRestClient(workerAddress(0)._1, workerAddress(0)._2)
-      override def sourceCreator(): SourceConnectorCreator = SourceConnectorCreator(restClient)
-      override def sinkCreator(): SinkConnectorCreator = SinkConnectorCreator(restClient)
-      override def delete(name: String): RestResponse = restClient.delete(s"connectors/$name")
-      override protected def doClose(): Unit = restClient.close()
-      override def listPlugins(): RestResponse = restClient.get("connector-plugins")
-      override def listConnectors(): RestResponse = restClient.get("connectors")
+  def apply(workersString: String): ConnectorClient = {
+    val workers = workersString.split(",")
+    if (workers.isEmpty) throw new IllegalArgumentException(s"Invalid workers:$workersString")
+    new ConnectorClient() with SprayJsonSupport with DefaultJsonProtocol {
+      private[this] def workerAddress: String = workers(Random.nextInt(workers.size))
+
+      private[this] implicit val actorSystem = ActorSystem(
+        s"${classOf[ConnectorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
+
+      private[this] implicit val actorMaterializer = ActorMaterializer()
+
+      override def sourceConnectorCreator(): SourceConnectorCreator = (request: ConnectorRequest) => send(request)
+
+      override def sinkConnectorCreator(): SinkConnectorCreator = (request: ConnectorRequest) => send(request)
+
+      private[this] def send(request: ConnectorRequest): ConnectorResponse = Await.result(
+        Marshal(request)
+          .to[RequestEntity]
+          .flatMap(entity => {
+            Http()
+              .singleRequest(
+                HttpRequest(method = HttpMethods.POST, uri = s"http://${workerAddress}/connectors", entity = entity))
+              .flatMap(res => Unmarshal(res.entity).to[ConnectorResponse])
+          }),
+        TIMEOUT
+      )
+
+      override def delete(name: String): Unit = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.DELETE, uri = s"http://${workerAddress}/connectors/$name"))
+          .flatMap(
+            res =>
+              if (res.status.isFailure())
+                Unmarshal(res.entity)
+                  .to[ErrorResponse]
+                  .flatMap(error => Future.failed(new IllegalStateException(error.toString)))
+              else Future.successful((): Unit)),
+        TIMEOUT
+      )
+
+      override protected def doClose(): Unit = Await.result(actorSystem.terminate(), 60 seconds)
+
+      override def plugins(): Seq[Plugin] = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://${workerAddress}/connector-plugins"))
+          .flatMap(unmarshal[Seq[Plugin]](_)),
+        TIMEOUT
+      )
+      override def activeConnectors(): Seq[String] = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://${workerAddress}/connectors"))
+          .flatMap(unmarshal[Seq[String]](_))
+          .recover {
+            // retry
+            case _: HttpRetryException => {
+              TimeUnit.SECONDS.sleep(1)
+              activeConnectors()
+            }
+          },
+        TIMEOUT
+      )
+
+      private[this] def unmarshal[T](response: HttpResponse)(implicit um: Unmarshaller[HttpEntity, T]): Future[T] =
+        if (response.status.isSuccess()) Unmarshal(response.entity).to[T]
+        else
+          Unmarshal(response.entity)
+            .to[ErrorResponse]
+            .flatMap(error => {
+              // this is a retriable exception
+              if (error.error_code == StatusCodes.Conflict.intValue)
+                Future.failed(new HttpRetryException(error.message, error.error_code))
+              else {
+                // convert the error response to runtime exception
+                Future.failed(new IllegalStateException(error.toString))
+              }
+            })
     }
   }
-  def apply(host: String, port: Int): ConnectorClient = apply(s"$host:$port")
 }

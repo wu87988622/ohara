@@ -3,17 +3,16 @@ package com.island.ohara.configurator.endpoint
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rest.ConnectorClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 class TestValidator extends With3Blockers3Workers with Matchers {
   private[this] val taskCount = 3
-  private[this] val connectorClient = ConnectorClient(testUtil.workersString)
+  private[this] val connectorClient = testUtil.connectorClient()
 
   @Before
   def setup(): Unit = {
-    connectorClient.existPlugin(classOf[Validator].getSimpleName) shouldBe true
+    connectorClient.plugins().filter(_.className.equals(classOf[Validator].getName)).isEmpty shouldBe false
   }
 
   private[this] def evaluate(reports: Seq[Report]): Unit = {

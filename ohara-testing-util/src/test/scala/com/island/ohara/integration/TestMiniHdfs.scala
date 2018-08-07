@@ -4,7 +4,7 @@ import java.io.{DataInputStream, OutputStream}
 
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.LargeTest
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.junit.Test
 import org.scalatest.Matchers
 

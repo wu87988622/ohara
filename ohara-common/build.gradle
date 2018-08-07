@@ -11,6 +11,7 @@ dependencies {
   compile libs.akkaHttp
   compile libs.akkaStream
   compile libs.akkaActor
+  compile libs.sprayJson
   testCompile libs.scalatest
   testCompile libs.mockito
   testCompile libs.junit

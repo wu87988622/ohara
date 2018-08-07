@@ -1,11 +1,9 @@
 package com.island.ohara.integration
 
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 import com.island.ohara.config.{OharaConfig, UuidUtil}
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.io.CloseOnce.doClose
 import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.clients.CommonClientConfigs

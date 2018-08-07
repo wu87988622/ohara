@@ -4,10 +4,10 @@ import java.util
 import java.util.Random
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 
-import com.island.ohara.config.{OharaConfig, OharaJson}
+import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.rest.{RestClient, RestResponse}
+import com.island.ohara.rest.ConnectorClient
 import kafka.server.KafkaServer
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
@@ -44,7 +44,6 @@ import scala.concurrent.{Await, Future}
 class OharaTestUtil private[integration] (componentBox: ComponentBox) extends CloseOnce {
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
-  private[this] val restClient = RestClient()
 
   /**
     * Generate the basic config. The config is composed of following setting.
@@ -200,20 +199,6 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   }
 
   /**
-    * Send the Get request to list the running connectors
-    *
-    * @return http response in json format
-    */
-  def runningConnectors(): RestResponse = request("connectors")
-
-  /**
-    * Send the Get request to list the available connectors
-    *
-    * @return http response in json format
-    */
-  def availableConnectors(): RestResponse = request("connector-plugins")
-
-  /**
     * @return the public address and port of a worker picked by random
     */
   def pickWorkerAddress(): (String, Int) = {
@@ -229,21 +214,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     (s.getHost, s.getPort)
   }
 
-  /**
-    * @return a source connector builder.
-    */
-  def sourceConnectorCreator(): SourceConnectorCreator = (cmd: String, body: OharaJson) => {
-    val (host, port) = pickWorkerAddress()
-    restClient.post(host, port, cmd, body)
-  }
-
-  /**
-    * @return a sink connector builder.
-    */
-  def sinkConnectorCreator(): SinkConnectorCreator = (cmd: String, body: OharaJson) => {
-    val (host, port) = pickWorkerAddress()
-    restClient.post(host, port, cmd, body)
-  }
+  def connectorClient() = ConnectorClient(workersString)
 
   /**
     * Get to HDFS FileSystem
@@ -259,20 +230,8 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     */
   def tmpDirectory(): String = componentBox.hdfs.tmpDirectory()
 
-  /**
-    * GET to kafka connectors
-    *
-    * @param cmd command
-    * @return response content
-    */
-  private[this] def request(cmd: String): RestResponse = {
-    val (host, port) = pickWorkerAddress()
-    restClient.get(host, port, cmd)
-  }
-
   override protected def doClose(): Unit = {
     stopConsumer = true
-    CloseOnce.close(restClient)
     CloseOnce.release(() => consumerThreads.foreach(Await.result(_, 1 minute)))
     consumerThreads.clear()
     componentBox.close()

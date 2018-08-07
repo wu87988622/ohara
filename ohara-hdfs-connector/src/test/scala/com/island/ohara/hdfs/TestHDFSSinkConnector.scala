@@ -7,21 +7,22 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
-import com.island.ohara.io.ByteUtil
+import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.RowProducer
 import com.island.ohara.kafka.connector.RowSinkTask
 import org.apache.hadoop.fs.Path
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.ByteArraySerializer
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
 class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matchers {
-  val hdfsURL: String = "hdfs://host1:9000"
-  val tmpDir: String = "/tmp"
+  private[this] val hdfsURL: String = "hdfs://host1:9000"
+  private[this] val tmpDir: String = "/tmp"
+  private[this] val connectorClient = testUtil.connectorClient()
 
   @Test
   def testTaskConfigs(): Unit = {
@@ -52,7 +53,7 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
     val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
 
     val localURL = s"file://${testUtil.tmpDirectory()}"
-    testUtil
+    connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleHDFSSinkConnector])
@@ -61,7 +62,6 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
       .disableConverter
       .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
       .run()
-      .statusCode shouldBe 201
 
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get("topics") == connectorName, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
@@ -100,7 +100,7 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
     }
 
     val localURL = s"file://${testUtil.tmpDirectory()}"
-    testUtil
+    connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -165,7 +165,7 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
       }
     }
     val localURL = s"file://${testUtil.tmpDirectory()}"
-    testUtil
+    connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -200,6 +200,11 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
                             .map(FileUtils.fileName(_))
                             .contains("part-000000100-000000199.csv"),
                         10 seconds)
+  }
+
+  @After
+  def cleanup(): Unit = {
+    CloseOnce.close(connectorClient)
   }
 }
 
