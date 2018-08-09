@@ -2,7 +2,6 @@ package com.island.ohara.kafka
 
 import java.util
 
-import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.serialization.Serializer
 
@@ -65,7 +64,7 @@ object KafkaUtil {
   def exist(brokers: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean =
     doClose(KafkaClient(brokers))(_.exist(topicName, timeout))
 
-  def topicInfo(brokers: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicInfo] =
+  def topicInfo(brokers: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription] =
     doClose(KafkaClient(brokers))(_.topicInfo(topicName, timeout))
 
   /**

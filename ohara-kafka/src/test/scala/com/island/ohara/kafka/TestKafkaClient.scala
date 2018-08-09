@@ -1,6 +1,5 @@
 package com.island.ohara.kafka
 
-import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
 import org.junit.{After, Test}

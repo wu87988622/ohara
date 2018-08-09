@@ -4,7 +4,7 @@ import com.island.ohara.config.UuidUtil
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.BYTES
+import com.island.ohara.serialization.DataType.BYTES
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

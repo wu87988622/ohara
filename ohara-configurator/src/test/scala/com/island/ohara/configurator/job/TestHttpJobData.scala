@@ -3,7 +3,8 @@ package com.island.ohara.configurator.job
 import com.island.ohara.config.OharaConfig
 import com.island.ohara.data.OharaData
 import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.{BOOLEAN, BYTES, DataType, INT}
+import com.island.ohara.serialization.DataType
+import com.island.ohara.serialization.DataType._
 import org.junit.Test
 import org.scalatest.Matchers
 

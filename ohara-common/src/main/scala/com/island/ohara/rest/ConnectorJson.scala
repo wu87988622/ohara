@@ -1,9 +1,18 @@
 package com.island.ohara.rest
-import com.sun.xml.internal.ws.encoding.soap.DeserializationException
-import spray.json.{DefaultJsonProtocol, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{
+  DefaultJsonProtocol,
+  DeserializationException,
+  JsArray,
+  JsNull,
+  JsObject,
+  JsString,
+  JsValue,
+  RootJsonFormat
+}
 
 /**
-  * a collection of marshalling/unmarshalling connector data to/from json
+  * a collection of marshalling/unmarshalling connector data to/from json.
+  * NOTED: the json format is a part of PUBLIC INTERFACE so please don't change the field names after releasing the ohara.
   */
 object ConnectorJson extends DefaultJsonProtocol {
   final case class Plugin(className: String, typeName: String, version: String)
@@ -12,29 +21,21 @@ object ConnectorJson extends DefaultJsonProtocol {
     * this custom format is necessary since some keys in json are keywords in scala also...
     */
   implicit val PLUGIN_JSON_FORMAT: RootJsonFormat[Plugin] = new RootJsonFormat[Plugin] {
-    override def read(value: JsValue): Plugin = {
-      value.asJsObject.getFields("class", "type", "version") match {
-        case Seq(JsString(className), JsString(typeName), JsString(version)) =>
-          Plugin(className, typeName, version)
-        case other: Any => throw new DeserializationException(s"${classOf[Plugin].getSimpleName} expected but ${other}")
-      }
+    override def read(json: JsValue): Plugin = json.asJsObject.getFields("class", "type", "version") match {
+      case Seq(JsString(className), JsString(typeName), JsString(version)) =>
+        Plugin(className, typeName, version)
+      case other: Any => throw DeserializationException(s"${classOf[Plugin].getSimpleName} expected but ${other}")
     }
-    override def write(c: Plugin) = JsObject(
-      "class" -> JsString(c.className),
-      "type" -> JsString(c.typeName),
-      "version" -> JsString(c.version)
+    override def write(obj: Plugin) = JsObject(
+      "class" -> JsString(obj.className),
+      "type" -> JsString(obj.typeName),
+      "version" -> JsString(obj.version)
     )
   }
 
-  /**
-    * DON'T change the name of field since it is mapped to the json key
-    */
   final case class ConnectorRequest(name: String, config: Map[String, String])
   implicit val CONNECTOR_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorRequest] = jsonFormat2(ConnectorRequest)
 
-  /**
-    * DON'T change the name of field since it is mapped to the json key
-    */
   final case class ConnectorResponse(name: String, config: Map[String, String], tasks: Seq[String], typeName: String)
 
   /**
@@ -42,8 +43,8 @@ object ConnectorJson extends DefaultJsonProtocol {
     */
   implicit val CONNECTOR_RESPONSE_JSON_FORMAT: RootJsonFormat[ConnectorResponse] =
     new RootJsonFormat[ConnectorResponse] {
-      override def read(value: JsValue): ConnectorResponse = {
-        value.asJsObject.getFields("name", "config", "tasks", "type") match {
+      override def read(json: JsValue): ConnectorResponse =
+        json.asJsObject.getFields("name", "config", "tasks", "type") match {
           case Seq(JsString(className), JsObject(config), JsArray(tasks), JsString(typeName)) =>
             ConnectorResponse(className,
                               config.map { case (k, v) => (k, v.toString()) },
@@ -59,20 +60,17 @@ object ConnectorJson extends DefaultJsonProtocol {
               "null"
             )
           case other: Any =>
-            throw new DeserializationException(s"${classOf[ConnectorResponse].getSimpleName} expected but ${other}")
+            throw DeserializationException(s"${classOf[ConnectorResponse].getSimpleName} expected but ${other}")
         }
-      }
-      override def write(c: ConnectorResponse) = JsObject(
-        "class" -> JsString(c.name),
-        "config" -> JsObject(c.config.map { case (k, v) => (k, JsString(v)) }),
-        "tasks" -> JsArray(c.tasks.map(JsString(_)): _*),
-        "type" -> JsString(c.typeName)
+
+      override def write(obj: ConnectorResponse) = JsObject(
+        "class" -> JsString(obj.name),
+        "config" -> JsObject(obj.config.map { case (k, v) => (k, JsString(v)) }),
+        "tasks" -> JsArray(obj.tasks.map(JsString(_)): _*),
+        "type" -> JsString(obj.typeName)
       )
     }
 
-  /**
-    * DON'T change the name of field since it is mapped to the json key
-    */
   final case class ErrorResponse(error_code: Int, message: String)
   implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[ErrorResponse] = jsonFormat2(ErrorResponse)
 }

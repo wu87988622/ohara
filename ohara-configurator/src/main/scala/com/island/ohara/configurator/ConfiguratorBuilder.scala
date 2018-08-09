@@ -2,13 +2,11 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.configurator.kafka.KafkaClient
+import com.island.ohara.kafka.{KafkaClient, TopicCreator, TopicDescription}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.data.OharaData
-import com.island.ohara.kafka.{TopicCreator, TopicInfo}
 import com.island.ohara.rest.ConnectorJson.{ConnectorRequest, ConnectorResponse, Plugin}
 import com.island.ohara.rest.{ConnectorClient, SinkConnectorCreator, SourceConnectorCreator}
-import com.island.ohara.serialization.{OharaDataSerializer, StringSerializer}
+import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.util.ConcurrentHashSet
 
@@ -18,7 +16,7 @@ class ConfiguratorBuilder {
   private[this] var uuidGenerator: Option[() => String] = Some(Configurator.DEFAULT_UUID_GENERATOR)
   private[this] var hostname: Option[String] = None
   private[this] var port: Option[Int] = None
-  private[this] var store: Option[Store[String, OharaData]] = None
+  private[this] var store: Option[Store[String, Any]] = None
   private[this] var kafkaClient: Option[KafkaClient] = None
   private[this] var connectClient: Option[ConnectorClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(Configurator.DEFAULT_INITIALIZATION_TIMEOUT)
@@ -64,7 +62,7 @@ class ConfiguratorBuilder {
     * @param store used to maintain the ohara data.
     * @return this builder
     */
-  def store(store: Store[String, OharaData]): ConfiguratorBuilder = {
+  def store(store: Store[String, Any]): ConfiguratorBuilder = {
     this.store = Some(store)
     this
   }
@@ -97,7 +95,7 @@ class ConfiguratorBuilder {
   def noCluster: ConfiguratorBuilder = {
     kafkaClient(new FakeKafkaClient())
     connectClient(new FakeConnectorClient())
-    store(Store.inMemory(StringSerializer, OharaDataSerializer))
+    store(Store.inMemory(Serializer.STRING, Serializer.OBJECT))
   }
 
   def build(): Configurator = new Configurator(uuidGenerator.get,
@@ -140,7 +138,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   */
 private class FakeKafkaClient extends KafkaClient {
   private[this] val log = Logger(KafkaClient.getClass.getName)
-  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
+  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
   override def exist(topicName: String, timeout: Duration): Boolean = {
     printDebugMessage()
     cachedTopics.contains(topicName)
@@ -152,21 +150,22 @@ private class FakeKafkaClient extends KafkaClient {
   override def topicCreator: TopicCreator = new TopicCreator() {
     override def create(): Unit = {
       printDebugMessage()
-      cachedTopics.put(topicName.get, TopicInfo(topicName.get, numberOfPartitions.get, numberOfReplications.get))
+      cachedTopics.put(topicName.get, TopicDescription(topicName.get, numberOfPartitions.get, numberOfReplications.get))
     }
   }
 
   override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
     printDebugMessage()
     Option(cachedTopics.get(topicName))
-      .map(previous => TopicInfo(topicName, numberOfPartitions, previous.numberOfReplications))
+      .map(previous => TopicDescription(topicName, numberOfPartitions, previous.numberOfReplications))
       .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
   }
 
   private[this] def printDebugMessage(): Unit =
     log.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
 
-  override def topicInfo(topicName: String, timeout: Duration): Option[TopicInfo] = Option(cachedTopics.get(topicName))
+  override def topicInfo(topicName: String, timeout: Duration): Option[TopicDescription] = Option(
+    cachedTopics.get(topicName))
   override def deleteTopic(topicName: String, timeout: Duration): Unit =
     if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
 

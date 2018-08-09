@@ -2,7 +2,6 @@ package com.island.ohara.data
 
 import com.island.ohara.config.{OharaConfig, OharaProperty}
 import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.{BYTES, INT}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -135,69 +134,6 @@ class TestOharaData extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy new OharaSource(oharaConfig)
     OharaSource.CONFIG.set(oharaConfig, configs)
     assert(new OharaSource(oharaConfig))
-  }
-
-  @Test
-  def testOharaTopic(): Unit = {
-    val uuid = methodName
-    val name = "name"
-    val numberOfPartitions = 5
-    val numberOfReplications = 10.toShort
-    def assert(topic: OharaTopic) = {
-      topic.uuid shouldBe uuid
-      topic.name shouldBe name
-      topic.numberOfPartitions shouldBe numberOfPartitions
-      topic.numberOfReplications shouldBe numberOfReplications
-      checkJsonContent(topic)
-    }
-    assert(OharaTopic(uuid, name, numberOfPartitions, numberOfReplications))
-
-    val oharaConfig = OharaConfig()
-    an[IllegalArgumentException] should be thrownBy new OharaTopic(oharaConfig)
-    OharaData.UUID.set(oharaConfig, uuid)
-    an[IllegalArgumentException] should be thrownBy new OharaTopic(oharaConfig)
-    OharaData.NAME.set(oharaConfig, name)
-    oharaConfig.set(OharaTopic.NUMBER_OF_PARTITIONS.key, numberOfPartitions)
-    oharaConfig.set(OharaTopic.NUMBER_OF_REPLICATIONS.key, numberOfReplications)
-    assert(OharaTopic(oharaConfig))
-
-    val topic = OharaTopic(oharaConfig)
-    var json = topic.toJson.toString
-
-    withClue(s"${json}")(json.contains("\"numberOfReplications\":" + numberOfReplications) shouldBe true)
-    json = OharaTopic.json("abc", 5, 7).toString
-    withClue(s"${json}")(json.contains("\"numberOfReplications\":7") shouldBe true)
-  }
-
-  @Test
-  def testOharaSchema(): Unit = {
-    val uuid = methodName
-    val name = "name"
-    val columns = Map("column-0" -> BYTES, "column-1" -> INT)
-    val indexes = Map("column-0" -> 0, "column-1" -> 1)
-    val disabled = false
-    def assert(schema: OharaSchema) = {
-      schema.uuid shouldBe uuid
-      schema.name shouldBe name
-      schema.types.sameElements(columns) shouldBe true
-      schema.orders.sameElements(indexes) shouldBe true
-      schema.disabled shouldBe disabled
-      checkJsonContent(schema)
-    }
-    assert(OharaSchema(uuid, name, columns, indexes, disabled))
-
-    val oharaConfig = OharaConfig()
-    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaData.UUID.set(oharaConfig, uuid)
-    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaData.NAME.set(oharaConfig, name)
-    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.COLUMN_TYPE.set(oharaConfig, columns)
-    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.COLUMN_ORDER.set(oharaConfig, indexes)
-    an[IllegalArgumentException] should be thrownBy new OharaSchema(oharaConfig)
-    OharaSchema.DISABLED.set(oharaConfig, disabled)
-    assert(OharaSchema(oharaConfig))
   }
 
   @Test

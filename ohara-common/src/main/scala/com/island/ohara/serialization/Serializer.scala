@@ -33,4 +33,5 @@ object Serializer {
   val BYTES = BytesSerializer
   val BOOLEAN = BooleanSerializer
   val OHARA_DATA = OharaDataSerializer
+  val OBJECT = ObjectSerializer
 }

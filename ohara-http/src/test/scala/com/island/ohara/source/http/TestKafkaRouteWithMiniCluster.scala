@@ -11,6 +11,7 @@ import com.island.ohara.data.Row
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.rule.MediumTest
+import com.island.ohara.serialization.DataType._
 import com.island.ohara.serialization._
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, Producer, ProducerConfig}

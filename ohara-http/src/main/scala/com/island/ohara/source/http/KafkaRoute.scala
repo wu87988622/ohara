@@ -7,15 +7,13 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
-import org.apache.kafka.clients.producer.{Callback, Producer, ProducerRecord, RecordMetadata}
-
-import scala.concurrent.Promise
-import com.island.ohara.data.{Row, RowBuilder}
 import com.island.ohara.data.{Cell, Row, RowBuilder}
+import com.island.ohara.serialization.DataType._
 import com.island.ohara.serialization._
+import org.apache.kafka.clients.producer.{Callback, Producer, ProducerRecord, RecordMetadata}
 import spray.json.{JsBoolean, JsString, JsValue}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 
 final case class CSV(row: List[JsValue])

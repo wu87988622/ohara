@@ -1,12 +1,11 @@
-package com.island.ohara.configurator.kafka
+package com.island.ohara.kafka
 
 import java.util
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.configurator.kafka.KafkaClient._
+import com.island.ohara.kafka.KafkaClient._
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.{TopicCreator, TopicInfo}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
@@ -23,7 +22,7 @@ trait KafkaClient extends CloseOnce {
 
   def exist(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean
 
-  def topicInfo(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicInfo]
+  def topicInfo(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription]
 
   def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration = DEFAULT_TIMEOUT): Unit
 
@@ -63,11 +62,11 @@ object KafkaClient {
       }
     }
 
-    override def topicInfo(topicName: String, timeout: Duration): Option[TopicInfo] =
+    override def topicInfo(topicName: String, timeout: Duration): Option[TopicDescription] =
       try Option(admin.describeTopics(util.Arrays.asList(topicName)).values().get(topicName))
         .map(_.get(timeout.toMillis, TimeUnit.MILLISECONDS))
         .map(topicPartitionInfo =>
-          TopicInfo(
+          TopicDescription(
             topicPartitionInfo.name(),
             topicPartitionInfo.partitions().size(),
             // TODO: seems it has chance that each partition has different number of replications. by chia
@@ -124,3 +123,5 @@ object KafkaClient {
     adminProps
   }
 }
+
+case class TopicDescription(name: String, numberOfPartitions: Int, numberOfReplications: Short)

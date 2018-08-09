@@ -2,12 +2,12 @@ package com.island.ohara.demo
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.kafka.KafkaClient
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.doClose
+import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.rest.ConnectorClient
-import com.island.ohara.serialization.{OharaDataSerializer, StringSerializer}
+import com.island.ohara.serialization.Serializer
 
 /**
   * run a configurator based on 3 brokers and 3 workers.
@@ -22,7 +22,7 @@ object Backend {
       val configurator = Configurator.builder
         .store(
           Store
-            .builder(StringSerializer, OharaDataSerializer)
+            .builder(Serializer.STRING, Serializer.OBJECT)
             .brokers(util.brokersString)
             .topicName(topicName)
             .numberOfReplications(1)

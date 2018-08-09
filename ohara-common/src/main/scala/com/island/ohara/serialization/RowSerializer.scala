@@ -5,6 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.io.{ByteUtil, DataStreamReader, DataStreamWriter}
+import com.island.ohara.serialization.DataType._
 
 object RowSerializer extends Serializer[Row] {
 

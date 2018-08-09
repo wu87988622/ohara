@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.kafka.KafkaClient
+import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaUtil

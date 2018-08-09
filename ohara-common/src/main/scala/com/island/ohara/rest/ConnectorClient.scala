@@ -12,7 +12,6 @@ import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
 import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rest.ConnectorJson._
-import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -42,7 +41,7 @@ object ConnectorClient {
   def apply(workersString: String): ConnectorClient = {
     val workers = workersString.split(",")
     if (workers.isEmpty) throw new IllegalArgumentException(s"Invalid workers:$workersString")
-    new ConnectorClient() with SprayJsonSupport with DefaultJsonProtocol {
+    new ConnectorClient() with SprayJsonSupport {
       private[this] def workerAddress: String = workers(Random.nextInt(workers.size))
 
       private[this] implicit val actorSystem = ActorSystem(
@@ -101,7 +100,7 @@ object ConnectorClient {
         TIMEOUT
       )
 
-      private[this] def unmarshal[T](response: HttpResponse)(implicit um: Unmarshaller[HttpEntity, T]): Future[T] =
+      private[this] def unmarshal[T](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, T]): Future[T] =
         if (response.status.isSuccess()) Unmarshal(response.entity).to[T]
         else
           Unmarshal(response.entity)

@@ -3,20 +3,22 @@ package com.island.ohara.configurator
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.StandardRoute
+import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.config.{OharaConfig, OharaJson, UuidUtil}
+import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.endpoint.Validator
-import com.island.ohara.configurator.kafka.KafkaClient
+import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.configurator.store.{Store, StoreBuilder}
-import com.island.ohara.data._
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.rest.ConfiguratorJson._
 import com.island.ohara.rest.ConnectorClient
-import com.island.ohara.serialization.{OharaDataSerializer, Serializer, StringSerializer}
+import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
@@ -32,88 +34,70 @@ import scala.concurrent.duration.{Duration, _}
 class Configurator private[configurator] (uuidGenerator: () => String,
                                           val hostname: String,
                                           _port: Int,
-                                          val store: Store[String, OharaData],
+                                          val store: Store[String, Any],
                                           kafkaClient: KafkaClient,
                                           connectClient: ConnectorClient,
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration)
-    extends Iterable[OharaData]
-    with CloseOnce {
+    extends CloseOnce
+    with SprayJsonSupport {
 
   private val log = Logger(classOf[Configurator])
 
-  private[this] def rejectNonexistentUuid(uuid: String) = completeJson(
-    OharaException(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")).toJson,
-    StatusCodes.BadRequest)
+  private[this] def rejectNonexistentUuid(uuid: String) = complete(
+    StatusCodes.BadRequest -> toResponse(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
 
-  private[this] def handleException(function: () => StandardRoute): StandardRoute = try function()
-  catch {
-    // Parsing the invalid request can cause the IllegalArgumentException
-    case e: IllegalArgumentException => completeJson(OharaException(e).toJson, StatusCodes.BadRequest)
-    // otherwise configurator may encounter some bugs
+  private[this] def toResponse(e: Throwable) = ErrorResponse(e.getClass.getName,
+                                                             if (e.getMessage == null) "None" else e.getMessage,
+                                                             ExceptionUtils.getStackTrace(e))
+
+  private[this] val exceptionHandler = ExceptionHandler {
+    case e: IllegalArgumentException =>
+      extractUri { uri =>
+        log.error(s"Request to $uri could not be handled normally")
+        complete(StatusCodes.BadRequest -> toResponse(e))
+      }
     case e: Throwable => {
       log.error("What happens here?", e)
-      completeJson(OharaException(e).toJson, StatusCodes.ServiceUnavailable)
+      complete(StatusCodes.ServiceUnavailable -> toResponse(e))
     }
   }
-
-  /**
-    * complete the request with json response. This method also add the "application/json" to the header
-    *
-    * @param json response body
-    * @return route
-    */
-  private[this] def completeJson(json: OharaJson, status: StatusCode = StatusCodes.OK) = complete(
-    HttpResponse(status, entity = HttpEntity(ContentType(MediaTypes.`application/json`), json.toString)))
-
-  private[this] def completeUuid(uuid: String) = completeJson(OharaJson("{\"uuid\":\"" + uuid + "\"}"))
 
   /**
     * this route is used to handle the request to schema.
     */
   private[this] val schemaRoute = locally {
 
+    def toSchema(uuid: String, request: SchemaRequest) =
+      Schema(uuid, request.name, request.types, request.orders, request.disabled, System.currentTimeMillis())
+
     val addSchema = pathEnd {
       post {
-        entity(as[String]) { body =>
-          handleException(() => {
-            val schema = OharaSchema(uuidGenerator(), OharaJson(body))
-            updateData(schema)
-            completeUuid(schema.uuid)
-          })
+        entity(as[SchemaRequest].map(toSchema(uuidGenerator(), _))) { schema =>
+          updateData(schema.uuid, schema)
+          complete(schema)
         }
       }
     }
 
-    val listSchema = pathEnd(get(handleException(() => completeJson(listUuid[OharaSchema]))))
+    val listSchema = pathEnd(get(complete(data[Schema].toSeq)))
 
-    val getSchema = path(Segment) { uuid =>
-      get {
-        handleException(
-          () => data[OharaSchema](uuid).map(r => completeJson(r.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
-      }
-    }
+    val getSchema =
+      path(Segment)(uuid => get(data[Schema](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))))
 
-    val deleteSchema = path(Segment) { uuid =>
-      delete {
-        handleException(() =>
-          removeData[OharaSchema](uuid).map(data => completeJson(data.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
-      }
-    }
+    val deleteSchema = path(Segment)(uuid =>
+      delete(removeData[Schema](uuid).map(schema => complete(schema)).getOrElse(rejectNonexistentUuid(uuid))))
 
-    val updateSchema = path(Segment) { previousUuid =>
+    val updateSchema = path(Segment) { uuid =>
       put {
-        entity(as[String]) { body =>
-          handleException(
-            () =>
-              data[OharaSchema](previousUuid)
-                .map(_ => {
-                  val schema = OharaSchema(previousUuid, OharaJson(body))
-                  // TODO: we should disallow user to reduce or reorder the column. by chia
-                  updateData(schema)
-                  completeUuid(previousUuid)
-                })
-                .getOrElse(rejectNonexistentUuid(previousUuid)))
+        entity(as[SchemaRequest].map(toSchema(uuid, _))) { schema =>
+          data[Schema](uuid)
+            .map(_ => {
+              // TODO: we should disallow user to reduce or reorder the column. by chia
+              updateData(uuid, schema)
+              complete(schema)
+            })
+            .getOrElse(rejectNonexistentUuid(uuid))
         }
       }
     }
@@ -125,69 +109,62 @@ class Configurator private[configurator] (uuidGenerator: () => String,
 
   private[this] val topicRoute = locally {
 
+    def toTopicInfo(uuid: String, request: TopicInfoRequest) = TopicInfo(uuid,
+                                                                         request.name,
+                                                                         request.numberOfPartitions,
+                                                                         request.numberOfReplications,
+                                                                         System.currentTimeMillis())
+
     val addTopic = pathEnd {
       post {
-        entity(as[String]) { body =>
-          handleException(() => {
-            val topicInfo =
-              OharaTopic(uuidGenerator(), OharaJson(body))
-            if (kafkaClient.exist(topicInfo.uuid))
-              // this should be impossible....
-              throw new IllegalArgumentException(s"The topic:${topicInfo.uuid} exists")
-            else {
-              kafkaClient.topicCreator
-              // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
-                .topicName(topicInfo.uuid)
-                .numberOfPartitions(topicInfo.numberOfPartitions)
-                .numberOfReplications(topicInfo.numberOfReplications)
-                .create()
-              updateData(topicInfo)
-              completeUuid(topicInfo.uuid)
-            }
-          })
+        entity(as[TopicInfoRequest].map(toTopicInfo(uuidGenerator(), _))) { topicInfo =>
+          if (kafkaClient.exist(topicInfo.uuid))
+            // this should be impossible....
+            throw new IllegalArgumentException(s"The topic:${topicInfo.uuid} exists")
+          else {
+            kafkaClient.topicCreator
+            // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
+              .topicName(topicInfo.uuid)
+              .numberOfPartitions(topicInfo.numberOfPartitions)
+              .numberOfReplications(topicInfo.numberOfReplications)
+              .create()
+            updateData(topicInfo.uuid, topicInfo)
+            complete(topicInfo)
+          }
         }
       }
     }
 
-    val listTopic = pathEnd(get(handleException(() => completeJson(listUuid[OharaTopic]))))
+    val listTopic = pathEnd(get(complete(data[TopicInfo].toSeq)))
 
-    val updateTopic = path(Segment) { previousUuid =>
+    val updateTopic = path(Segment) { uuid =>
       put {
-        entity(as[String]) { body =>
-          handleException(
-            () =>
-              data[OharaTopic](previousUuid)
-                .map(previousTopic => {
-                  val topic = OharaTopic(previousUuid, OharaJson(body))
-                  if (previousTopic.numberOfReplications != topic.numberOfReplications)
-                    throw new IllegalArgumentException("Non-support to change the number of replications")
-                  if (previousTopic.numberOfPartitions != topic.numberOfPartitions)
-                    kafkaClient.addPartition(previousUuid, topic.numberOfPartitions)
-                  updateData(topic)
-                  completeUuid(previousUuid)
-                })
-                .getOrElse(rejectNonexistentUuid(previousUuid)))
+        entity(as[TopicInfoRequest].map(toTopicInfo(uuid, _))) { newTopicInfo =>
+          data[TopicInfo](uuid)
+            .map(previousTopicInfo => {
+              if (previousTopicInfo.numberOfReplications != newTopicInfo.numberOfReplications)
+                throw new IllegalArgumentException("Non-support to change the number of replications")
+              if (previousTopicInfo.numberOfPartitions != newTopicInfo.numberOfPartitions)
+                kafkaClient.addPartition(uuid, newTopicInfo.numberOfPartitions)
+              updateData(uuid, newTopicInfo)
+              complete(newTopicInfo)
+            })
+            .getOrElse(rejectNonexistentUuid(uuid))
         }
       }
     }
 
-    val getTopic = path(Segment) { uuid =>
-      get {
-        handleException(
-          () => data[OharaTopic](uuid).map(r => completeJson(r.toJson)).getOrElse(rejectNonexistentUuid(uuid)))
-      }
-    }
+    val getTopic =
+      path(Segment)(uuid => get(data[TopicInfo](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))))
 
     val deleteTopic = path(Segment) { uuid =>
       delete {
-        handleException(
-          () =>
-            removeData[OharaTopic](uuid)
-              .map(data => {
-                kafkaClient.deleteTopic(uuid)
-                completeJson(data.toJson)
-              })
-              .getOrElse(rejectNonexistentUuid(uuid)))
+        removeData[TopicInfo](uuid)
+          .map(topicInfo => {
+            kafkaClient.deleteTopic(uuid)
+            complete(topicInfo)
+          })
+          .getOrElse(rejectNonexistentUuid(uuid))
       }
     }
 
@@ -199,18 +176,11 @@ class Configurator private[configurator] (uuidGenerator: () => String,
   private[this] val validationRoute = pathPrefix(Configurator.VALIDATION_PATH) {
     pathEnd {
       put {
-        entity(as[String]) { body =>
-          handleException(() => {
-            val config = OharaConfig(OharaJson(body))
-            // TODO: only test 3 workers? by chia
-            val reports = Validator.run(connectClient, kafkaClient.brokersString, config.toPlainMap, 3)
-            if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
-            val result = OharaConfig()
-            // TODO: Is the reports used by other component? If so, we should move it out of configurator. by chia
-            reports.foreach(r =>
-              result.set(r.hostname, Map("status" -> (if (r.pass) "pass" else "failed"), "message" -> r.message)))
-            completeJson(result.toJson)
-          })
+        entity(as[Map[String, String]]) { request =>
+          // TODO: only test 3 workers? by chia
+          val reports = Validator.run(connectClient, kafkaClient.brokersString, request, 3)
+          if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
+          complete(reports)
         }
       }
     }
@@ -219,12 +189,9 @@ class Configurator private[configurator] (uuidGenerator: () => String,
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
-  private[this] val route
-    : server.Route = pathPrefix(Configurator.VERSION)(schemaRoute ~ topicRoute ~ validationRoute) ~ path(Remaining)(
-    _ => {
-      // TODO: just reject? by chia
-      reject
-    })
+  private[this] val route: server.Route = handleExceptions(exceptionHandler) {
+    pathPrefix(Configurator.VERSION)(schemaRoute ~ topicRoute ~ validationRoute) ~ path(Remaining)(_ => reject)
+  }
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer = ActorMaterializer()
@@ -245,12 +212,6 @@ class Configurator private[configurator] (uuidGenerator: () => String,
 
   import scala.reflect._
 
-  private[this] def listUuid[T <: OharaData: ClassTag](): OharaJson = {
-    val rval = OharaConfig()
-    rval.set("uuids", data[T].map(d => (d.uuid -> d.name)).toMap)
-    rval.toJson
-  }
-
   /**
     * Remove a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
     * type, the None will be returned.
@@ -259,8 +220,8 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     * @tparam T subclass type
     * @return a subclass of ohara data
     */
-  private[this] def removeData[T <: OharaData: ClassTag](uuid: String): Option[T] =
-    data[T](uuid).flatMap(d => store.remove(d.uuid).map(_.asInstanceOf[T]))
+  private[this] def removeData[T: ClassTag](uuid: String): Option[T] =
+    data[T](uuid).flatMap(d => store.remove(uuid).map(_.asInstanceOf[T]))
 
   /**
     * Update a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
@@ -270,14 +231,10 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     * @tparam T subclass type
     * @return a subclass of ohara data
     */
-  private[this] def updateData[T <: OharaData: ClassTag](data: T): Option[T] =
-    store.update(data.uuid, data).filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
+  private[this] def updateData[T](uuid: String, data: T): Option[T] =
+    store.update(uuid, data).filter(_.getClass.equals(data.getClass)).map(_.asInstanceOf[T])
 
   //-----------------[public interfaces]-----------------//
-
-  override def iterator: Iterator[OharaData] = store.map(_._2).iterator
-
-  override def size: Int = store.size
 
   val port = httpServer.localAddress.getPort
 
@@ -287,7 +244,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     * @tparam T subclass type
     * @return iterator
     */
-  def data[T <: OharaData: ClassTag]: Iterator[T] =
+  def data[T: ClassTag]: Iterator[T] =
     store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
 
   /**
@@ -298,12 +255,14 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     * @tparam T subclass type
     * @return a subclass of ohara data
     */
-  def data[T <: OharaData: ClassTag](uuid: String): Option[T] =
+  def data[T: ClassTag](uuid: String): Option[T] =
     store.get(uuid).filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
+
+  def size: Int = store.size
 }
 
 object Configurator {
-  def storeBuilder: StoreBuilder[String, OharaData] = Store.builder(Serializer.STRING, OharaDataSerializer)
+  def storeBuilder: StoreBuilder[String, Any] = Store.builder(Serializer.STRING, Serializer.OBJECT)
   def builder = new ConfiguratorBuilder()
 
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
@@ -367,7 +326,7 @@ object Configurator {
         Configurator.builder
           .store(
             Store
-              .builder(StringSerializer, OharaDataSerializer)
+              .builder(Serializer.STRING, Serializer.OBJECT)
               .brokers(brokers.get)
               .topicName(topicName)
               .numberOfReplications(numberOfReplications)

@@ -2,16 +2,15 @@ package com.island.ohara.configurator.endpoint
 
 import java.sql.DriverManager
 import java.util
-import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.Properties
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-import com.island.ohara.config.OharaConfig
 import com.island.ohara.configurator.FakeConnectorClient
 import com.island.ohara.configurator.endpoint.Validator._
-import com.island.ohara.configurator.kafka.KafkaClient
-import com.island.ohara.data.OharaData
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.rest.ConfiguratorJson.ValidationResponse
 import com.island.ohara.rest.ConnectorClient
 import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.conf.Configuration
@@ -25,8 +24,8 @@ import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTask}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 /**
@@ -72,6 +71,7 @@ object Validator {
 
   /**
     * a helper method to run the validation process quickly.
+    *
     * @param connectorClient connector client
     * @param brokersString broker information. form -> host:port,host:port
     * @param config config used to test
@@ -83,35 +83,35 @@ object Validator {
           brokersString: String,
           config: Map[String, String],
           taskCount: Int,
-          timeout: Duration = 30 seconds): Seq[Report] = connectorClient match {
+          timeout: Duration = 30 seconds): Seq[ValidationResponse] = connectorClient match {
     // we expose the fake component...ugly way (TODO) by chia
-    case _: FakeConnectorClient => (0 until taskCount).map(_ => Report("localhost", "a fake report"))
+    case _: FakeConnectorClient => (0 until taskCount).map(_ => ValidationResponse("localhost", "a fake report", true))
     case _ => {
       val requestId: String = INDEXER.getAndIncrement().toString
       val latch = new CountDownLatch(1)
       val closed = new AtomicBoolean(false)
       // we have to create the consumer first so as to avoid the messages from connector
-      val future = Future[Seq[Report]] {
-        val consumerConfig = OharaConfig()
-        consumerConfig.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-        consumerConfig.set(ConsumerConfig.GROUP_ID_CONFIG, s"Validator-consumer-${INDEXER.getAndIncrement()}")
-        consumerConfig.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
+      val future = Future[Seq[ValidationResponse]] {
+        val consumerConfig = new Properties()
+        consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
+        consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, s"Validator-consumer-${INDEXER.getAndIncrement()}")
+        consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
         doClose(
-          new KafkaConsumer[String, OharaData](consumerConfig.toProperties,
-                                               KafkaUtil.wrapDeserializer(Serializer.STRING),
-                                               KafkaUtil.wrapDeserializer(Serializer.OHARA_DATA))) { consumer =>
+          new KafkaConsumer[String, Any](consumerConfig,
+                                         KafkaUtil.wrapDeserializer(Serializer.STRING),
+                                         KafkaUtil.wrapDeserializer(Serializer.OBJECT))) { consumer =>
           try {
             consumer.subscribe(util.Arrays.asList(INTERNAL_TOPIC))
-            val reports = new ArrayBuffer[Report]()
+            val reports = new ArrayBuffer[ValidationResponse]()
             val endtime = System.currentTimeMillis() + timeout.toMillis
             while (!closed.get && reports.size < taskCount && System.currentTimeMillis() < endtime) {
               val records = consumer.poll(if (latch.getCount == 1) 100 else 500)
               latch.countDown()
               if (records != null) {
-                records.forEach((record: ConsumerRecord[String, OharaData]) => {
+                records.forEach((record: ConsumerRecord[String, Any]) => {
                   if (record.key != null && record.key.equals(requestId)) record.value() match {
-                    case report: Report => reports += report
-                    case _              => throw new IllegalStateException(s"Unknown report:${record.value()}")
+                    case report: ValidationResponse => reports += report
+                    case _                          => throw new IllegalStateException(s"Unknown report:${record.value()}")
                   }
                 })
               }
@@ -149,7 +149,6 @@ object Validator {
   val TARGET = "target"
   val TARGET_HDFS = "hdfs"
   val TARGET_RDB = "rdb"
-  val TARGET_BROKER = "broker"
   val URL = "url"
   val TABLE = "table"
   val USER = "user"
@@ -180,11 +179,10 @@ class ValidatorTask extends SourceTask {
     null
   } else
     try information match {
-      case info: HdfsInformation   => toSourceRecord(Report(hostname, validate(info)))
-      case info: RdbInformation    => toSourceRecord(Report(hostname, validate(info)))
-      case info: BrokerInformation => toSourceRecord(Report(hostname, validate(info)))
+      case info: HdfsInformation => toSourceRecord(ValidationResponse(hostname, validate(info), true))
+      case info: RdbInformation  => toSourceRecord(ValidationResponse(hostname, validate(info), true))
     } catch {
-      case e: Throwable => toSourceRecord(Report(hostname, e))
+      case e: Throwable => toSourceRecord(ValidationResponse(hostname, e.getMessage, false))
     } finally {
       done = true
     }
@@ -204,13 +202,6 @@ class ValidatorTask extends SourceTask {
   }
   import com.island.ohara.io.CloseOnce._
 
-  private[this] def validate(info: BrokerInformation): String = doClose(KafkaClient(info.url)) { client =>
-    {
-      val topics = client.listTopics()
-      s"check the broker:${info.url} by listing the topics:${topics.mkString(",")}"
-    }
-  }
-
   private[this] def validate(info: RdbInformation): String = {
     val connectionUrl = s"${info.url};user=${info.user};password=${info.password}"
     doClose(DriverManager.getConnection(connectionUrl)) { _ =>
@@ -219,15 +210,13 @@ class ValidatorTask extends SourceTask {
   }
 
   private[this] def information = require(TARGET) match {
-    case TARGET_HDFS   => HdfsInformation(require(URL))
-    case TARGET_BROKER => BrokerInformation(require(URL))
-    case TARGET_RDB    => RdbInformation(require(URL), require(TABLE), require(USER), require(PASSWORD))
+    case TARGET_HDFS => HdfsInformation(require(URL))
+    case TARGET_RDB  => RdbInformation(require(URL), require(TABLE), require(USER), require(PASSWORD))
     case other: String =>
-      throw new IllegalArgumentException(
-        s"valid targets are $TARGET_HDFS, $TARGET_BROKER, and $TARGET_RDB. current is $other")
+      throw new IllegalArgumentException(s"valid targets are $TARGET_HDFS and $TARGET_RDB. current is $other")
   }
 
-  private[this] def toSourceRecord(data: OharaData): util.List[SourceRecord] =
+  private[this] def toSourceRecord(data: ValidationResponse): util.List[SourceRecord] =
     util.Arrays.asList(
       new SourceRecord(null,
                        null,
@@ -235,7 +224,7 @@ class ValidatorTask extends SourceTask {
                        Schema.BYTES_SCHEMA,
                        Serializer.STRING.to(requestId),
                        Schema.BYTES_SCHEMA,
-                       Serializer.OHARA_DATA.to(data)))
+                       Serializer.OBJECT.to(data)))
 
   private[this] def require(key: String): String =
     props.get(key).getOrElse(throw new IllegalArgumentException(s"the $key is required"))
@@ -247,5 +236,4 @@ class ValidatorTask extends SourceTask {
 }
 
 private case class HdfsInformation(url: String)
-private case class BrokerInformation(url: String)
 private case class RdbInformation(url: String, table: String, user: String, password: String)
