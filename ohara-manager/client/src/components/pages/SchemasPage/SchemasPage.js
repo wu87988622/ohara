@@ -4,7 +4,6 @@ import toastr from 'toastr';
 import AppWrapper from '../../common/AppWrapper';
 import Loading from '../../common/Loading';
 import { ListTable } from '../../common/Table';
-import Modal from './Modal';
 import { fetchSchemas, createSchemas } from '../../../apis/schemasApis';
 import { SCHEMAS } from '../../../constants/url';
 import * as MESSAGE from '../../../constants/message';
@@ -158,17 +157,7 @@ class SchemasPage extends React.Component {
   };
 
   render() {
-    const {
-      isLoading,
-      tableHeaders,
-      schemas,
-      modalIsActive,
-      schemaName,
-      columnName,
-      dataTypes,
-      currDataType,
-      schemasColumns,
-    } = this.state;
+    const { isLoading, tableHeaders, schemas } = this.state;
 
     if (isLoading) {
       return <Loading />;
@@ -183,20 +172,7 @@ class SchemasPage extends React.Component {
         >
           Create schemas
         </button>
-        <Modal
-          isActive={modalIsActive}
-          schemaName={schemaName}
-          columnName={columnName}
-          dataTypes={dataTypes}
-          currDataType={currDataType}
-          schemasColumns={schemasColumns}
-          handleChangeSelect={this.handleChangeSelect}
-          handleCloseModal={this.handleCloseModal}
-          handleChangeInput={this.handleChangeInput}
-          handleAddColumn={this.handleAddColumn}
-          handleDeleteColumn={this.handleDeleteColumn}
-          handleSave={this.handleSave}
-        />
+
         <ListTable headers={tableHeaders} list={schemas} urlDir={SCHEMAS} />
       </AppWrapper>
     );

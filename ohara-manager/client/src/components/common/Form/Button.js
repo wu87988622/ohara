@@ -3,7 +3,13 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import { defaultButton } from '../../../theme/buttonTheme';
-import { radiusNormal, durationNormal } from '../../../theme/variables';
+import {
+  radiusNormal,
+  durationNormal,
+  lighterGray,
+  lightGray,
+  white,
+} from '../../../theme/variables';
 
 const ButtonWrapper = styled.button`
   font-size: 13px;
@@ -22,7 +28,16 @@ const ButtonWrapper = styled.button`
     color: ${props => props.theme.colorHover};
     transition: ${durationNormal} all;
   }
+
+  &.is-working {
+    border: 1px solid ${lighterGray};
+    cursor: not-allowed;
+    color: ${lightGray};
+    background-color: ${white};
+  }
 `;
+
+ButtonWrapper.displayName = 'ButtonWrapper';
 
 const Button = ({
   text,
@@ -30,17 +45,23 @@ const Button = ({
   theme = defaultButton,
   type = 'submit',
   width = 'auto',
+  isWorking = false,
   ...rest
 }) => {
+  const isWorkingCls = isWorking ? 'is-working' : '';
+  const buttonText = isWorking ? `${text} ...` : text;
+
   return (
     <ButtonWrapper
       type={type}
       width={width}
       onClick={handleClick}
       theme={theme}
+      className={isWorkingCls}
+      disabled={isWorking}
       {...rest}
     >
-      {text}
+      {buttonText}
     </ButtonWrapper>
   );
 };

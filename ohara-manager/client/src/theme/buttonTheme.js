@@ -1,4 +1,4 @@
-import { lighterGray, darkBlue, blue, blueHover, white } from './variables';
+import { lighterGray, darkerBlue, blue, blueHover, white } from './variables';
 
 export const submitButton = {
   color: white,
@@ -10,16 +10,16 @@ export const submitButton = {
 };
 
 export const cancelButton = {
-  color: darkBlue,
+  color: darkerBlue,
   bgColor: white,
   border: 0,
   bgHover: lighterGray,
-  colorHover: darkBlue,
+  colorHover: darkerBlue,
   borderHover: 0,
 };
 
 export const defaultButton = {
-  color: darkBlue,
+  color: darkerBlue,
   bgColor: white,
   border: `1px solid ${lighterGray}`,
   bgHover: blueHover,

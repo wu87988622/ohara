@@ -22,7 +22,7 @@ describe('Test schema restful api', () => {
       },
     });
     const res = await request(app).get('/api/schemas');
-    expect(res.body.status).toBe(true);
+    expect(res.body.isSuccess).toBe(true);
     expect(res.body.uuids['b2c07622-3288-4f68-8bc5-6a921cbfb863']).toBe(
       'schema1',
     );
@@ -44,7 +44,7 @@ describe('Test schema restful api', () => {
       },
     });
     const res = await request(app).get(`/api/schemas/${uuid}`);
-    expect(res.body.status).toBe(true);
+    expect(res.body.isSuccess).toBe(true);
     expect(res.body.name).toBe('schema1');
     expect(res.body.disabled).toBe('false');
     expect(moxios.requests.mostRecent().url).toBe(
@@ -61,7 +61,7 @@ describe('Test schema restful api', () => {
       },
     });
     const res = await request(app).post('/api/schemas');
-    expect(res.body.status).toBe(true);
+    expect(res.body.isSuccess).toBe(true);
     expect(res.body.uuid).toBe('f5df1620-d9b7-4dff-8df5-13c6f4122cd3');
     expect(moxios.requests.mostRecent().url).toBe(
       CONFIGURATOR_POST_CREATE_SCHEMA_URL,

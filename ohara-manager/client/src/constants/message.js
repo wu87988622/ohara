@@ -13,3 +13,6 @@ export const SCHEMA_CREATION_SUCCESS = 'Schema 已成功新增！';
 export const TOPIC_CREATION_SUCCESS = 'Topic 已成功新增！';
 
 export const GENERIC_ERROR = 'Oops, something went wrong 😱 😱 😱';
+
+export const LEAVE_WITHOUT_SAVE =
+  'You have unsaved changes, are you sure you want to leave?';

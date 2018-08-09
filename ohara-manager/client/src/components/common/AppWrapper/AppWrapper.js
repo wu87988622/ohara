@@ -16,10 +16,12 @@ const Main = styled.div`
 
 const AppWrapper = ({ title, children }) => {
   return (
-    <Wrapper>
-      <h2>{title}</h2>
-      <Main>{children}</Main>
-    </Wrapper>
+    <div>
+      <Wrapper>
+        <h2>{title}</h2>
+        <Main>{children}</Main>
+      </Wrapper>
+    </div>
   );
 };
 

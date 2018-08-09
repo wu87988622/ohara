@@ -12,7 +12,7 @@ import {
   white,
   radiusNormal,
   lighterGray,
-  darkBlue,
+  darkerBlue,
   shadowNormal,
 } from '../../theme/variables';
 
@@ -28,7 +28,7 @@ const FormContainer = styled.div`
 
 const Heading3 = styled.h3`
   font-size: 24px;
-  color: ${darkBlue};
+  color: ${darkerBlue};
   text-transform: uppercase;
 `;
 

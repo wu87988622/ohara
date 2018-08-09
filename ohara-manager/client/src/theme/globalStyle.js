@@ -6,7 +6,7 @@ import {
   blueHover,
   lightGray,
   whiteSmoke,
-  darkBlue,
+  darkerBlue,
   durationNormal,
 } from './variables';
 
@@ -14,7 +14,7 @@ import '../../node_modules/toastr/build/toastr.css';
 
 // Global styles for ReactModal
 // TODO: use styled-component to style ReactModal
-ReactModal.defaultStyles.overlay.backgroundColor = 'rgba(0, 0, 0, .5)';
+ReactModal.defaultStyles.overlay.backgroundColor = 'rgba(32, 42, 65, .9)';
 ReactModal.defaultStyles.overlay.zIndex = 1100;
 
 export default injectGlobal`
@@ -29,7 +29,7 @@ export default injectGlobal`
   }
 
   body {
-    color: ${darkBlue};
+    color: ${darkerBlue};
     padding: 0;
     margin: 0;
     font-family: Roboto, sans-serif;

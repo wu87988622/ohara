@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { Prompt } from 'react-router-dom';
 
 import AppWrapper from '../common/AppWrapper';
 import { validate, save } from '../../apis/configurationApis';
@@ -8,6 +9,7 @@ import { Input, Button } from '../common/Form';
 import { submitButton, cancelButton } from '../../theme/buttonTheme';
 import { lightBlue, lighterGray } from '../../theme/variables';
 import { get, isDefined } from '../../utils/helpers';
+import { LEAVE_WITHOUT_SAVE } from '../../constants/message';
 
 const FormInner = styled.div`
   padding: 45px 30px;
@@ -41,10 +43,11 @@ class ConfigurationPage extends React.Component {
   state = {
     connectionUrl: '',
     target: 'hdfs',
+    isFormDirty: false,
   };
 
   handleChange = ({ target: { value } }) => {
-    this.setState({ connectionUrl: value });
+    this.setState({ connectionUrl: value, isFormDirty: true });
   };
 
   handleCancel = e => {
@@ -77,8 +80,10 @@ class ConfigurationPage extends React.Component {
   };
 
   render() {
+    const { isFormDirty, connectionUrl } = this.state;
     return (
       <AppWrapper title="Configuration">
+        <Prompt when={isFormDirty} message={LEAVE_WITHOUT_SAVE} />
         <form>
           <FormInner>
             <FormGroup>
@@ -87,7 +92,7 @@ class ConfigurationPage extends React.Component {
                 type="text"
                 width="250px"
                 placeholder="http://localhost:5050"
-                value={this.state.connectionUrl}
+                value={connectionUrl}
                 handleChange={this.handleChange}
               />
             </FormGroup>
@@ -97,7 +102,7 @@ class ConfigurationPage extends React.Component {
             <Button text="Test connection" handleClick={this.handleTest} />
             <ActionGroup>
               <CancelButton
-                text="cancel"
+                text="Cancel"
                 theme={cancelButton}
                 handleClick={this.handleCancel}
               />

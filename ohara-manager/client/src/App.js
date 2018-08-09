@@ -7,18 +7,24 @@ import HomePage from './components/pages/HomePage';
 import Pipeline from './components/pages/PipelinePage';
 import Kafka from './components/pages/KafkaPage';
 import Configuration from './components/pages/ConfigurationPage';
-
-import TopicsPage from './components/pages/TopicsPage';
-import SchemasPage from './components/pages/SchemasPage';
-import SchemasDetailsPage from './components/pages/SchemasPage/SchemasDetailsPage';
 import LoginPage from './components/pages/LoginPage';
 import LogoutPage from './components/pages/LogoutPage';
 import NotFoundPage from './components/pages/NotFoundPage';
+
+import { getUserKey } from './utils/authHelpers';
 
 class App extends React.Component {
   state = {
     isLogin: false,
   };
+
+  componentDidMount() {
+    const key = getUserKey();
+
+    if (key) {
+      this.setState({ isLogin: true });
+    }
+  }
 
   updateLoginState = state => {
     this.setState({ isLogin: state });
@@ -37,10 +43,6 @@ class App extends React.Component {
             <Route exact path="/pipeline" component={Pipeline} />
             <Route exact path="/kafka" component={Kafka} />
             <Route exact path="/configuration" component={Configuration} />
-
-            <Route exact path="/topics" component={TopicsPage} />
-            <Route exact path="/schemas" component={SchemasPage} />
-            <Route exact path="/schemas/:uuid" component={SchemasDetailsPage} />
             <Route
               exact
               path="/login"

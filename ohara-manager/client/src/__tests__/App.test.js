@@ -2,6 +2,9 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import App from '../App';
+import localStorageMock from '../__mocks__/localStorage';
+
+window.localStorage = localStorageMock;
 
 describe('<App />', () => {
   let wrapper;

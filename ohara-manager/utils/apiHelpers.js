@@ -1,5 +1,5 @@
 exports.onSuccess = (res, result) => {
-  result.data.status = true;
+  result.data.isSuccess = true;
   res.json(result.data);
   return;
 };
@@ -7,9 +7,7 @@ exports.onSuccess = (res, result) => {
 exports.onError = (res, err) => {
   if (err.response) {
     const { data: errorMessage } = err.response;
-    errorMessage.status = false;
-
-    res.json({ errorMessage });
+    res.json({ errorMessage, isSuccess: false });
     return;
   }
 };

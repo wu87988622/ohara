@@ -2,9 +2,11 @@
 export const blueHover = '#2c68ea';
 export const blue = '#4c84ff';
 
+export const lighterBlue = '#a5aebe';
 export const lightBlue = '#70798e';
 export const dimBlue = '#a5aebe';
-export const darkBlue = '#202a41';
+export const darkBlue = '#52565d';
+export const darkerBlue = '#202a41';
 
 export const orange = '#fdba00';
 export const red = '#ff545f';

@@ -4,16 +4,16 @@ import styled from 'styled-components';
 
 import {
   blue,
-  gray,
   lighterGray,
   radiusNormal,
   durationNormal,
+  lightBlue,
 } from '../../../theme/variables';
 
 const InputWrapper = styled.input`
   font-size: 13px;
   font-family: inherit;
-  color: ${gray};
+  color: ${lightBlue};
   border: 1px solid ${lighterGray};
   padding: 10px 10px 10px 15px;
   width: ${({ width }) => width};
@@ -28,6 +28,8 @@ const InputWrapper = styled.input`
     transition: ${durationNormal} all;
   }
 `;
+
+InputWrapper.displayName = 'Input';
 
 const Input = ({
   type,

@@ -17,15 +17,12 @@ describe('<ListTable />', () => {
 
   it('renders self', () => {
     expect(wrapper).toHaveLength(1);
-    expect(wrapper.hasClass('table table-striped')).toBe(true);
-    expect(wrapper.type()).toBe('table');
+    expect(wrapper.dive().type()).toBe('table');
   });
 
-  it('renders <th /> correctly', () => {
-    const ths = wrapper.find('th');
+  it('renders <Th /> correctly', () => {
+    const ths = wrapper.find('Th');
     expect(ths.length).toBe(props.headers.length);
-    expect(ths.at(0).text()).toBe(props.headers[0]);
-    expect(ths.at(1).text()).toBe(props.headers[1]);
   });
 
   // TODO: finish up the test

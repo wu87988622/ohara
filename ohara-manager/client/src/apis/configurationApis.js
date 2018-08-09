@@ -4,7 +4,7 @@ import { handleError } from '../utils/apiHelpers';
 
 export const validate = async ({ target, url }) => {
   try {
-    const res = await axios.post('/api/validate', {
+    const res = await axios.post('/api/configuration/validate', {
       target,
       url,
     });
@@ -21,7 +21,7 @@ export const validate = async ({ target, url }) => {
 
 export const save = async ({ target, url }) => {
   try {
-    const res = await axios.post('/api/save', {
+    const res = await axios.post('/api/configuration/save', {
       target,
       url,
     });

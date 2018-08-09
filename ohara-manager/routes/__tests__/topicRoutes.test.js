@@ -22,7 +22,7 @@ describe('Test topic restful api', () => {
       },
     });
     const res = await request(app).get('/api/topics');
-    expect(res.body.status).toBe(true);
+    expect(res.body.isSuccess).toBe(true);
     expect(res.body.uuids['efee24c0-6c64-40f3-ad80-487ff86b04fa']).toBe(
       'topic1',
     );
@@ -38,7 +38,7 @@ describe('Test topic restful api', () => {
       },
     });
     const res = await request(app).post('/api/topics');
-    expect(res.body.status).toBe(true);
+    expect(res.body.isSuccess).toBe(true);
     expect(res.body.uuid).toBe('0abb8352-a6ca-4c8f-a3a0-f3dd6ab9fbe0');
     expect(moxios.requests.mostRecent().url).toBe(
       CONFIGURATOR_POST_CREATE_TOPIC_URL,

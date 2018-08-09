@@ -1,7 +1,7 @@
 // TODO: use the real APIs
 
 module.exports = app => {
-  app.post('/api/validate', (req, res) => {
+  app.post('/api/configuration/validate', (req, res) => {
     res.json({
       isSuccess: true,
       isValidate: true,
@@ -9,7 +9,7 @@ module.exports = app => {
     });
   });
 
-  app.post('/api/save', (req, res) => {
+  app.post('/api/configuration/save', (req, res) => {
     res.json({
       isSuccess: true,
       target: req.params.target || 'no-target-specified',

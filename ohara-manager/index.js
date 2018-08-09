@@ -7,6 +7,7 @@ const path = require('path');
 /* eslint-disable no-console */
 
 const PORT = process.env.PORT || 5050;
+const API_ROOT = process.env.CONFIGURATOR_API;
 const app = express();
 
 app.use(bodyParser.json());
@@ -21,6 +22,7 @@ require('./routes/authRoutes')(app);
 require('./routes/topicRoutes')(app);
 require('./routes/schemaRoutes')(app);
 require('./routes/configurationRoutes')(app);
+require('./routes/kafkaRoutes')(app);
 
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
@@ -29,7 +31,11 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(chalk.green(`Ohara manager is running at port: ${PORT}`));
 
-  console.log(
-    chalk.blue(`CONFIGURATOR_API_BASE: ${process.env.CONFIGURATOR_API}`),
-  );
+  if (!API_ROOT) {
+    console.log(chalk.red(`CONFIGURATOR_API_BASE did not specify!`));
+  } else {
+    console.log(
+      chalk.blue(`CONFIGURATOR_API_BASE: ${process.env.CONFIGURATOR_API}`),
+    );
+  }
 });
