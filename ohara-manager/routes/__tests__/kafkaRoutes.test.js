@@ -5,7 +5,7 @@ const request = require('supertest');
 const app = require('../kafkaRoutes')(express());
 const { API_BASE } = require('../../constants/url');
 
-describe('Kafka routes', () => {
+describe.skip('Kafka routes', () => {
   beforeEach(() => {
     moxios.install();
   });

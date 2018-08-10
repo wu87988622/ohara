@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import { H2 } from '../../common/Heading';
 import { white, radiusNormal, shadowNormal } from '../../../theme/variables';
 
 const Wrapper = styled.div`
@@ -18,7 +19,7 @@ const AppWrapper = ({ title, children }) => {
   return (
     <div>
       <Wrapper>
-        <h2>{title}</h2>
+        <H2>{title}</H2>
         <Main>{children}</Main>
       </Wrapper>
     </div>

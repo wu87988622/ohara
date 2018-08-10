@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
@@ -14,6 +15,7 @@ import { Input, Button } from '../../common/Form';
 import { ListTable } from '../../common/Table';
 import { submitButton, cancelButton } from '../../../theme/buttonTheme';
 import { get, isDefined } from '../../../utils/helpers';
+import { KAFKA } from '../../../constants/documentTitles';
 import {
   LEAVE_WITHOUT_SAVE,
   TOPIC_CREATION_SUCCESS,
@@ -108,9 +110,9 @@ class KafkaPage extends React.Component {
   fetchData = async () => {
     const res = await fetchTopics();
 
-    const isSuccess = get(res, 'data.isSuccess', undefined);
+    const _result = get(res, 'data.result', null);
 
-    if (isSuccess) {
+    if (_result && _result.length > 0) {
       const { uuids } = res.data;
       const topics = Object.keys(uuids).map(key => {
         return {
@@ -214,91 +216,93 @@ class KafkaPage extends React.Component {
     } = this.state;
 
     return (
-      <Wrapper>
-        <Prompt when={isFormDirty} message={LEAVE_WITHOUT_SAVE} />
-        <Modal
-          isActive={isModalActive}
-          topicName={topicName}
-          partitions={partitions}
-          replicationFactor={replicationFactor}
-          handleChange={this.handleChange}
-          handleCreate={this.handleCreateTopics}
-          handleClose={this.handleModalClose}
-          isCreateTopicWorking={isCreateTopicWorking}
-        />
-        <h2>Kafka</h2>
+      <DocumentTitle title={KAFKA}>
+        <Wrapper>
+          <Prompt when={isFormDirty} message={LEAVE_WITHOUT_SAVE} />
+          <Modal
+            isActive={isModalActive}
+            topicName={topicName}
+            partitions={partitions}
+            replicationFactor={replicationFactor}
+            handleChange={this.handleChange}
+            handleCreate={this.handleCreateTopics}
+            handleClose={this.handleModalClose}
+            isCreateTopicWorking={isCreateTopicWorking}
+          />
+          <h2>Kafka</h2>
 
-        <Section>
-          <form>
-            <FormInner>
-              <FormGroup>
-                <Label>Cluster name</Label>
-                <Input
-                  type="text"
-                  width="250px"
-                  id="clusterName"
-                  placeholder="kafka-cluster"
-                  value={clusterName}
-                  data-testid="clusterName"
-                  handleChange={this.handleChange}
-                />
-              </FormGroup>
+          <Section>
+            <form>
+              <FormInner>
+                <FormGroup>
+                  <Label>Cluster name</Label>
+                  <Input
+                    type="text"
+                    width="250px"
+                    id="clusterName"
+                    placeholder="kafka-cluster"
+                    value={clusterName}
+                    data-testid="clusterName"
+                    handleChange={this.handleChange}
+                  />
+                </FormGroup>
 
-              <FormGroup>
-                <Label>Broker List</Label>
-                <Input
-                  type="text"
-                  width="250px"
-                  id="brokerList"
-                  placeholder="http://localhost:5050"
-                  value={brokerList}
-                  data-testid="brokerList"
-                  handleChange={this.handleChange}
-                />
-              </FormGroup>
-            </FormInner>
+                <FormGroup>
+                  <Label>Broker List</Label>
+                  <Input
+                    type="text"
+                    width="250px"
+                    id="brokerList"
+                    placeholder="http://localhost:5050"
+                    value={brokerList}
+                    data-testid="brokerList"
+                    handleChange={this.handleChange}
+                  />
+                </FormGroup>
+              </FormInner>
 
-            <Actions>
-              <Button
-                text="Test connection"
-                handleClick={this.handleTest}
-                isWorking={isTestConnectionWorking}
-                data-testid="testConnection"
-              />
-              <ActionGroup>
-                <CancelButton
-                  text="Cancel"
-                  theme={cancelButton}
-                  data-testid="cancelButton"
-                  handleClick={this.handleCancel}
-                />
+              <Actions>
                 <Button
-                  text="Save"
-                  isWorking={isSaveConfigsWorking}
-                  theme={submitButton}
-                  handleClick={this.handleSaveConfigs}
+                  text="Test connection"
+                  handleClick={this.handleTest}
+                  isWorking={isTestConnectionWorking}
+                  data-testid="testConnection"
                 />
-              </ActionGroup>
-            </Actions>
-          </form>
-        </Section>
+                <ActionGroup>
+                  <CancelButton
+                    text="Cancel"
+                    theme={cancelButton}
+                    data-testid="cancelButton"
+                    handleClick={this.handleCancel}
+                  />
+                  <Button
+                    text="Save"
+                    isWorking={isSaveConfigsWorking}
+                    theme={submitButton}
+                    handleClick={this.handleSaveConfigs}
+                  />
+                </ActionGroup>
+              </Actions>
+            </form>
+          </Section>
 
-        <Section>
-          <TopicsInner>
-            <SectionHeader>
-              <H3>Topics</H3>
-              <Button
-                text="New topic"
-                theme={submitButton}
-                data-testid="newTopic"
-                handleClick={this.handleModalOpen}
-              />
-            </SectionHeader>
+          <Section>
+            <TopicsInner>
+              <SectionHeader>
+                <H3>Topics</H3>
+                <Button
+                  text="New topic"
+                  theme={submitButton}
+                  data-testid="newTopic"
+                  handleClick={this.handleModalOpen}
+                />
+              </SectionHeader>
 
-            <ListTable headers={tableHeaders} list={topics} />
-          </TopicsInner>
-        </Section>
-      </Wrapper>
+              <ListTable headers={tableHeaders} list={topics} />
+            </TopicsInner>
+          </Section>
+        </Wrapper>
+      </DocumentTitle>
     );
   }
 }

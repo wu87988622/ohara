@@ -11,6 +11,8 @@ describe('<NotFoundPage />', () => {
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.props().title).toBe('Oops, page not found');
+    expect(wrapper.find('AppWrapper').props().title).toBe(
+      'Oops, page not found',
+    );
   });
 });

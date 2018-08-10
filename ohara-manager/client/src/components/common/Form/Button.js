@@ -23,7 +23,7 @@ const ButtonWrapper = styled.button`
   transition: ${durationNormal} all;
 
   &:hover {
-    border: ${props => props.theme.borderHover}
+    border: ${props => props.theme.borderHover};
     background-color: ${props => props.theme.bgHover};
     color: ${props => props.theme.colorHover};
     transition: ${durationNormal} all;
@@ -37,7 +37,11 @@ const ButtonWrapper = styled.button`
   }
 `;
 
-ButtonWrapper.displayName = 'ButtonWrapper';
+ButtonWrapper.displayName = 'Button';
+
+const IWrapper = styled.i`
+  margin-left: 5px;
+`;
 
 const Button = ({
   text,
@@ -49,7 +53,6 @@ const Button = ({
   ...rest
 }) => {
   const isWorkingCls = isWorking ? 'is-working' : '';
-  const buttonText = isWorking ? `${text} ...` : text;
 
   return (
     <ButtonWrapper
@@ -61,7 +64,7 @@ const Button = ({
       disabled={isWorking}
       {...rest}
     >
-      {buttonText}
+      {text} {isWorking && <IWrapper className="fas fa-spinner fa-spin" />}
     </ButtonWrapper>
   );
 };

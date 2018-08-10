@@ -4,6 +4,9 @@ import { injectGlobal } from 'styled-components';
 import {
   blue,
   blueHover,
+  red,
+  orange,
+  green,
   lightGray,
   whiteSmoke,
   darkerBlue,
@@ -36,10 +39,6 @@ export default injectGlobal`
     background-color: ${whiteSmoke};
   }
 
-   h1 {
-    font-family: Merriweather;
-  }
-
   a {
     transition: ${durationNormal} all;
     text-decoration: none;
@@ -65,4 +64,61 @@ export default injectGlobal`
     cursor: pointer;
   }
 
+  #toast-container > div.toast {
+    opacity: 0.9;
+    padding: 20px 20px 20px 35px;
+    box-shadow: none;
+    width: auto;
+    background-image: none !important;
+
+    &.toast-success {
+        background-color: ${green}
+
+      &:before {
+        font-family: "Font Awesome 5 Free";
+        content: "\f058";
+        position: absolute;
+        left: 15px;
+      }
+    }
+
+    &.toast-info {
+      background-color: ${blue};
+      &:before {
+        font-family: "Font Awesome 5 Free";
+        content: "\f059";
+        position: absolute;
+        left: 15px;
+      }
+    }
+
+    &.toast-warning {
+      background-color: ${orange};
+      &:before {
+        font-family: "Font Awesome 5 Free";
+        content: "\f059";
+        position: absolute;
+        left: 15px;
+      }
+    }
+
+    &.toast-error {
+      background-color: ${red};
+      &:before {
+        font-family: "Font Awesome 5 Free";
+        content: "\f057";
+        position: absolute;
+        left: 15px;
+      }
+    }
+
+    .toast-title {
+      font-size: 13px;
+      font-weight: normal;
+    }
+
+    &:hover {
+      box-shadow: none;
+    }
+  }
 `;

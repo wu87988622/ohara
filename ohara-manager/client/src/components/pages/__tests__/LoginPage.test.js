@@ -61,7 +61,7 @@ describe('<LoginPage />', () => {
   });
 
   it('renders <Redirect /> if the this.state.redirect is true', () => {
-    expect(wrapper.dive().type()).toBe('div');
+    expect(wrapper.dive().type()).not.toBe(Redirect);
     wrapper.setState({ redirect: true });
     expect(wrapper.type()).toBe(Redirect);
   });

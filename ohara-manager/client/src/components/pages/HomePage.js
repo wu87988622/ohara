@@ -1,9 +1,16 @@
 import React from 'react';
+import DocumentTitle from 'react-document-title';
+
 import AppWrapper from '../common/AppWrapper';
+import { HOME } from '../../constants/documentTitles';
 
 class HomePage extends React.Component {
   render() {
-    return <AppWrapper title="Ohara home" />;
+    return (
+      <DocumentTitle title={HOME}>
+        <AppWrapper title="Ohara home" />
+      </DocumentTitle>
+    );
   }
 }
 

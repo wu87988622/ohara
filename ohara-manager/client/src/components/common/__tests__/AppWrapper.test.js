@@ -20,10 +20,10 @@ describe('<AppWrapper />', () => {
     expect(wrapper).toHaveLength(1);
   });
 
-  it('renders <h2 />', () => {
+  it('renders <H2 />', () => {
     expect(
       wrapper
-        .find('h2')
+        .find('H2')
         .children()
         .text(),
     ).toBe(props.title);

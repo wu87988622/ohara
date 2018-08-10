@@ -1,13 +1,15 @@
 import React from 'react';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import DocumentTitle from 'react-document-title';
 import { Redirect } from 'react-router-dom';
 
 import { Input, Button } from '../common/Form';
 import { setUserKey } from '../../utils/authHelpers';
 import { get, isDefined } from '../../utils/helpers';
 import { login } from '../../apis/authApis';
-import { HOME } from '../../constants/url';
+import { LOGIN } from '../../constants/documentTitles';
+import * as URL from '../../constants/url';
 import {
   white,
   radiusNormal,
@@ -97,45 +99,47 @@ class LoginPage extends React.Component {
     const { username, password, redirect } = this.state;
 
     if (redirect) {
-      return <Redirect to={HOME} />;
+      return <Redirect to={URL.HOME} />;
     }
 
     return (
-      <FormContainer>
-        <Form data-testid="login-form" onSubmit={this.handleSubmit}>
-          <FormInner>
-            <Heading3>{LOGIN_PAGE.PAGE_HEADING}</Heading3>
+      <DocumentTitle title={LOGIN}>
+        <FormContainer>
+          <Form data-testid="login-form" onSubmit={this.handleSubmit}>
+            <FormInner>
+              <Heading3>{LOGIN_PAGE.PAGE_HEADING}</Heading3>
 
-            <UsernameInput
-              id="username"
-              type="text"
-              placeholder={LOGIN_PAGE.USERNAME_PLACEHOLDER}
-              value={username}
-              width="250px"
-              height="45px"
-              handleChange={this.handleChange}
-              data-testid="username"
-            />
+              <UsernameInput
+                id="username"
+                type="text"
+                placeholder={LOGIN_PAGE.USERNAME_PLACEHOLDER}
+                value={username}
+                width="250px"
+                height="45px"
+                handleChange={this.handleChange}
+                data-testid="username"
+              />
 
-            <PasswordInput
-              id="password"
-              type="password"
-              placeholder={LOGIN_PAGE.PASSWORD_PLACEHOLDER}
-              value={password}
-              width="250px"
-              height="45px"
-              handleChange={this.handleChange}
-              data-testid="password"
-            />
+              <PasswordInput
+                id="password"
+                type="password"
+                placeholder={LOGIN_PAGE.PASSWORD_PLACEHOLDER}
+                value={password}
+                width="250px"
+                height="45px"
+                handleChange={this.handleChange}
+                data-testid="password"
+              />
 
-            <Button
-              width="100%"
-              theme={submitButton}
-              text={LOGIN_PAGE.SUBMIT_BUTTON_TEXT}
-            />
-          </FormInner>
-        </Form>
-      </FormContainer>
+              <Button
+                width="100%"
+                theme={submitButton}
+                text={LOGIN_PAGE.SUBMIT_BUTTON_TEXT}
+              />
+            </FormInner>
+          </Form>
+        </FormContainer>
+      </DocumentTitle>
     );
   }
 }

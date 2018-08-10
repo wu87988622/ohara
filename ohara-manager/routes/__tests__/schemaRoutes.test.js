@@ -4,7 +4,7 @@ const request = require('supertest');
 const app = require('../schemaRoutes')(express());
 const { API_BASE } = require('../../constants/url');
 
-describe('Test schema restful api', () => {
+describe.skip('Test schema restful api', () => {
   beforeEach(() => {
     moxios.install();
   });

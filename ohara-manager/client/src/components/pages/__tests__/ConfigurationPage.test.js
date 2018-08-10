@@ -9,8 +9,8 @@ describe('<Configuration />', () => {
     wrapper = shallow(<Configuration />);
   });
 
-  it('renders correctly', () => {
+  it.only('renders correctly', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.props().title).toBe('Configuration');
+    expect(wrapper.find('AppWrapper').props().title).toBe('Configuration');
   });
 });

@@ -2,8 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import { blue, white, dimBlue, lighterGray } from '../../../theme/variables';
 import * as URL from '../../../constants/url';
+import { blue, white, dimBlue, lighterGray } from '../../../theme/variables';
 
 const NavWrapper = styled.div`
   position: fixed;
@@ -17,6 +17,7 @@ const NavWrapper = styled.div`
 `;
 
 const Brand = styled(NavLink)`
+  font-family: Merriweather, sans-serif;
   color: ${blue};
   font-size: 24px;
   margin: 25px auto 0 50px;

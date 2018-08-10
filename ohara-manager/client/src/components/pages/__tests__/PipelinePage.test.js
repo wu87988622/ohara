@@ -11,6 +11,6 @@ describe('<PipelinePage />', () => {
 
   it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.props().title).toBe('Pipeline');
+    expect(wrapper.find('AppWrapper').props().title).toBe('Pipeline');
   });
 });

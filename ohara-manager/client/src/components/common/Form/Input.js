@@ -32,7 +32,7 @@ const InputWrapper = styled.input`
 InputWrapper.displayName = 'Input';
 
 const Input = ({
-  type,
+  type = 'text',
   value,
   handleChange,
   placeholder = '',
@@ -54,9 +54,9 @@ const Input = ({
 };
 
 Input.propTypes = {
-  type: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
   handleChange: PropTypes.func.isRequired,
+  type: PropTypes.string,
   width: PropTypes.string,
   height: PropTypes.string,
 };
