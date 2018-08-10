@@ -1,7 +1,15 @@
-task clean {
+task cleanFile {
   doLast {
     exec {
       commandLine 'yarn', 'clean'
+    }
+  }
+}
+
+task setup {
+  doLast {
+    exec {
+      commandLine 'yarn', 'setup'
     }
   }
 }
@@ -13,6 +21,17 @@ task cleanProcess {
     }
   }
 }
+
+task clean {
+  dependsOn setup
+  doLast {
+    exec {
+      commandLine 'yarn', 'clean:process'
+    }
+  }
+  finalizedBy cleanFile
+}
+
 
 task test {
   doLast {
@@ -27,13 +46,21 @@ task build {
   dependsOn test
 }
 
-task runManager {
-  description 'run a manager'
+task cleanAndSetup {
+  dependsOn clean
   doLast {
     exec {
-      commandLine 'fuser', '-k', '5050/tcp'
-      commandLine 'yarn', 'clean'
       commandLine 'yarn', 'setup'
+    }
+  }
+}
+
+
+task runManager {
+  description 'run a manager'
+  dependsOn cleanAndSetup
+  doLast {
+    exec {
       String configuratorPort = 9999
       if(project.hasProperty('configuratorPort')) configuratorPort = "${project.getProperty('configuratorPort')}"
       environment "CONFIGURATOR_API", "http://localhost:" + configuratorPort + "/v0"
