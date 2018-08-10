@@ -226,6 +226,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
       CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds), true)
     CloseOnce.close(store)
     CloseOnce.close(kafkaClient)
+    CloseOnce.close(connectClient)
   }
 
   import scala.reflect._
