@@ -130,6 +130,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   override def plugins(): Seq[Plugin] = cachedConnectors.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
   override protected def doClose(): Unit = cachedConnectors.clear()
   override def activeConnectors(): Seq[String] = cachedConnectors.asScala.toSeq
+  override def workersString: String = "Unknown"
 }
 
 /**
@@ -172,5 +173,5 @@ private class FakeKafkaClient extends KafkaClient {
   import scala.collection.JavaConverters._
   override def listTopics(timeout: Duration): Seq[String] = cachedTopics.keys().asScala.map(t => t).toList
 
-  override def brokersString: String = ""
+  override def brokersString: String = "Unknown"
 }

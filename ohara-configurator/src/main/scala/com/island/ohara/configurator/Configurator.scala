@@ -11,17 +11,19 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.endpoint.Validator
-import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.configurator.store.{Store, StoreBuilder}
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.rest.ConfiguratorJson._
 import com.island.ohara.rest.ConnectorClient
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
+import spray.json.RootJsonFormat
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
+import scala.reflect.ClassTag
 
 /**
   * A simple impl of Configurator. This impl maintains all subclass of ohara data in a single ohara store.
@@ -64,49 +66,44 @@ class Configurator private[configurator] (uuidGenerator: () => String,
   }
 
   /**
-    * this route is used to handle the request to schema.
+    * a basic route used to handle CRUD.
     */
-  private[this] val schemaRoute = locally {
-
-    def toSchema(uuid: String, request: SchemaRequest) =
-      Schema(uuid, request.name, request.types, request.orders, request.disabled, System.currentTimeMillis())
-
-    val addSchema = pathEnd {
+  private[this] def basicRoute[Req, Res: ClassTag](toData: (String, Req) => Res, prefix: String)(
+    implicit f0: RootJsonFormat[Req],
+    f1: RootJsonFormat[Res]): server.Route = pathPrefix(prefix) {
+    pathEnd {
+      // add
       post {
-        entity(as[SchemaRequest].map(toSchema(uuidGenerator(), _))) { schema =>
-          updateData(schema.uuid, schema)
-          complete(schema)
+        entity(as[Req].map(req => {
+          val uuid = uuidGenerator()
+          (uuid, toData(uuid, req))
+        })) {
+          case (uuid, data) =>
+            updateData(uuid, data)
+            complete(data)
         }
-      }
-    }
-
-    val listSchema = pathEnd(get(complete(data[Schema].toSeq)))
-
-    val getSchema =
-      path(Segment)(uuid => get(data[Schema](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))))
-
-    val deleteSchema = path(Segment)(uuid =>
-      delete(removeData[Schema](uuid).map(schema => complete(schema)).getOrElse(rejectNonexistentUuid(uuid))))
-
-    val updateSchema = path(Segment) { uuid =>
-      put {
-        entity(as[SchemaRequest].map(toSchema(uuid, _))) { schema =>
-          data[Schema](uuid)
-            .map(_ => {
-              // TODO: we should disallow user to reduce or reorder the column. by chia
-              updateData(uuid, schema)
-              complete(schema)
-            })
-            .getOrElse(rejectNonexistentUuid(uuid))
+      } ~ get(complete(data[Res].toSeq)) // list
+    } ~ path(Segment) { uuid =>
+      // get data by uuid
+      get(data[Res](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))) ~
+        // delete get by uuid
+        delete(removeData[Res](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))) ~
+        // update data by uuid
+        put {
+          entity(as[Req].map(req => (uuid, toData(uuid, req)))) {
+            case (uuid, newData) =>
+              data[Res](uuid)
+                .map(_ => {
+                  updateData(uuid, newData)
+                  complete(newData)
+                })
+                .getOrElse(rejectNonexistentUuid(uuid))
+          }
         }
-      }
-    }
-
-    pathPrefix(Configurator.SCHEMA_PATH) {
-      addSchema ~ listSchema ~ getSchema ~ deleteSchema ~ updateSchema
     }
   }
 
+  //-----------------------------------------------[topic]-----------------------------------------------//
   private[this] val topicRoute = locally {
 
     def toTopicInfo(uuid: String, request: TopicInfoRequest) = TopicInfo(uuid,
@@ -168,16 +165,29 @@ class Configurator private[configurator] (uuidGenerator: () => String,
       }
     }
 
-    pathPrefix(Configurator.TOPIC_PATH) {
+    pathPrefix(TOPIC_PATH) {
       addTopic ~ listTopic ~ updateTopic ~ getTopic ~ deleteTopic
     }
   }
 
-  private[this] val validationRoute = pathPrefix(Configurator.VALIDATION_PATH) {
-    pathEnd {
-      put {
-        entity(as[Map[String, String]]) { request =>
-          // TODO: only test 3 workers? by chia
+  //-----------------------------------------------[schema]-----------------------------------------------//
+  private[this] val schemaRoute = basicRoute(
+    (uuid: String, request: SchemaRequest) =>
+      Schema(uuid, request.name, request.types, request.orders, request.disabled, System.currentTimeMillis()),
+    SCHEMA_PATH
+  )
+
+  //-----------------------------------------------[hdfs]-----------------------------------------------//
+  private[this] val hdfsRoute = basicRoute(
+    (uuid: String, request: HdfsInformationRequest) =>
+      HdfsInformation(uuid, request.name, request.uri, System.currentTimeMillis()),
+    HDFS_PATH)
+
+  //-----------------------------------------------[validation]-----------------------------------------------//
+  private[this] val validationRoute = path(VALIDATION_PATH / HDFS_VALIDATION_PATH) {
+    put {
+      entity(as[HdfsValidationRequest]) { request =>
+        {
           val reports = Validator.run(connectClient, kafkaClient.brokersString, request, 3)
           if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
           complete(reports)
@@ -186,11 +196,19 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     }
   }
 
+  //-----------------------------------------------[cluster]-----------------------------------------------//
+  private[this] val clusterRoute = path(CLUSTER_PATH) {
+    get {
+      complete(ClusterInformation(kafkaClient.brokersString, connectClient.workersString))
+    }
+  }
+
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
   private[this] val route: server.Route = handleExceptions(exceptionHandler) {
-    pathPrefix(Configurator.VERSION)(schemaRoute ~ topicRoute ~ validationRoute) ~ path(Remaining)(_ => reject)
+    pathPrefix(VERSION_V0)(schemaRoute ~ topicRoute ~ hdfsRoute ~ validationRoute ~ clusterRoute) ~ path(Remaining)(_ =>
+      reject)
   }
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
@@ -266,13 +284,8 @@ object Configurator {
   def builder = new ConfiguratorBuilder()
 
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
-
-  val VERSION = "v0"
-  val SCHEMA_PATH = "schemas"
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_TERMINATION_TIMEOUT: Duration = 10 seconds
-  val TOPIC_PATH = "topics"
-  val VALIDATION_PATH = "validate"
 
   //----------------[main]----------------//
   private[this] lazy val LOG = Logger(Configurator.getClass)
@@ -340,7 +353,7 @@ object Configurator {
     hasRunningConfigurator = true
     try {
       LOG.info(
-        s"start a ${(if (standalone) "standalone")} configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
+        s"start a ${(if (standalone) "standalone" else "truly")} configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
       LOG.info("enter ctrl+c to terminate the configurator")
       while (!closeRunningConfigurator) {
         TimeUnit.SECONDS.sleep(2)

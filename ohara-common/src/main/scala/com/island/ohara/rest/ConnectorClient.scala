@@ -7,11 +7,12 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.{Unmarshal, Unmarshaller}
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, RequestEntity, StatusCodes}
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rest.ConnectorJson._
+import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -31,6 +32,8 @@ trait ConnectorClient extends CloseOnce {
   def plugins(): Seq[Plugin]
 
   def activeConnectors(): Seq[String]
+
+  def workersString: String
 }
 
 object ConnectorClient {
@@ -38,9 +41,9 @@ object ConnectorClient {
   import scala.concurrent.duration._
   val TIMEOUT = 10 seconds
 
-  def apply(workersString: String): ConnectorClient = {
-    val workers = workersString.split(",")
-    if (workers.isEmpty) throw new IllegalArgumentException(s"Invalid workers:$workersString")
+  def apply(_workersString: String): ConnectorClient = {
+    val workers = _workersString.split(",")
+    if (workers.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_workersString}")
     new ConnectorClient() with SprayJsonSupport {
       private[this] def workerAddress: String = workers(Random.nextInt(workers.size))
 
@@ -100,10 +103,10 @@ object ConnectorClient {
         TIMEOUT
       )
 
-      private[this] def unmarshal[T](response: HttpResponse)(implicit um: Unmarshaller[ResponseEntity, T]): Future[T] =
-        if (response.status.isSuccess()) Unmarshal(response.entity).to[T]
+      private[this] def unmarshal[T](response: HttpResponse)(implicit um: RootJsonFormat[T]): Future[T] =
+        if (response.status.isSuccess()) Unmarshal(response).to[T]
         else
-          Unmarshal(response.entity)
+          Unmarshal(response)
             .to[ErrorResponse]
             .flatMap(error => {
               // this is a retriable exception
@@ -114,6 +117,7 @@ object ConnectorClient {
                 Future.failed(new IllegalStateException(error.toString))
               }
             })
+      override def workersString: String = _workersString
     }
   }
 }

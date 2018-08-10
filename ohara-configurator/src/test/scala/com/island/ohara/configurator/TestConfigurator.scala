@@ -7,7 +7,7 @@ import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.rest.ConfiguratorJson.{Schema, SchemaRequest, TopicInfo, TopicInfoRequest}
+import com.island.ohara.rest.ConfiguratorJson._
 import com.island.ohara.rest.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.serialization.{DataType, Serializer}
 import org.junit.{After, Test}
@@ -65,28 +65,30 @@ class TestConfigurator extends With3Blockers3Workers with Matchers {
       }
 
       // test add
-      client.topics().size shouldBe 0
+      client.list[TopicInfo].size shouldBe 0
       val request = TopicInfoRequest(methodName, 1, 1)
-      val response = compareRequestAndResponse(request, client.add(request))
+      val response = compareRequestAndResponse(request, client.add[TopicInfoRequest, TopicInfo](request))
 
       // test get
-      compare2Response(response, client.topic(response.uuid))
+      compare2Response(response, client.get[TopicInfo](response.uuid))
 
       // test update
       val anotherRequest = TopicInfoRequest(methodName, 2, 1)
-      val newResponse = compareRequestAndResponse(anotherRequest, client.update(response.uuid, anotherRequest))
+      val newResponse =
+        compareRequestAndResponse(anotherRequest,
+                                  client.update[TopicInfoRequest, TopicInfo](response.uuid, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.topic(newResponse.uuid))
+      compare2Response(newResponse, client.get[TopicInfo](newResponse.uuid))
 
       // test delete
-      client.topics().size shouldBe 1
-      client.deleteTopic(response.uuid)
-      client.topics().size shouldBe 0
+      client.list[TopicInfo].size shouldBe 1
+      client.delete[TopicInfo](response.uuid)
+      client.list[TopicInfo].size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.topic("123")
-      an[IllegalArgumentException] should be thrownBy client.update("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy client.get[TopicInfo]("123")
+      an[IllegalArgumentException] should be thrownBy client.update[TopicInfoRequest, TopicInfo]("777", anotherRequest)
     })
   }
 
@@ -110,32 +112,95 @@ class TestConfigurator extends With3Blockers3Workers with Matchers {
       }
 
       // test add
-      client.schemas().size shouldBe 0
+      client.list[Schema].size shouldBe 0
       val request = SchemaRequest(methodName, Map("cf0" -> DataType.BYTES), Map("cf0" -> 1), false)
-      val response = compareRequestAndResponse(request, client.add(request))
+      val response = compareRequestAndResponse(request, client.add[SchemaRequest, Schema](request))
 
       // test get
-      compare2Response(response, client.schema(response.uuid))
+      compare2Response(response, client.get[Schema](response.uuid))
 
       // test update
       val anotherRequest = SchemaRequest(methodName,
                                          Map("cf0" -> DataType.BYTES, "cf1" -> DataType.DOUBLE),
                                          Map("cf0" -> 1, "cf1" -> 2),
                                          false)
-      val newResponse = compareRequestAndResponse(anotherRequest, client.update(response.uuid, anotherRequest))
+      val newResponse =
+        compareRequestAndResponse(anotherRequest, client.update[SchemaRequest, Schema](response.uuid, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.schema(newResponse.uuid))
+      compare2Response(newResponse, client.get[Schema](newResponse.uuid))
 
       // test delete
-      client.schemas().size shouldBe 1
-      client.deleteSchema(response.uuid)
-      client.schemas().size shouldBe 0
+      client.list[Schema].size shouldBe 1
+      client.delete[Schema](response.uuid)
+      client.list[Schema].size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.topic("123")
-      an[IllegalArgumentException] should be thrownBy client.update("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy client.get[Schema]("123")
+      an[IllegalArgumentException] should be thrownBy client.update[SchemaRequest, Schema]("777", anotherRequest)
     })
+  }
+
+  @Test
+  def testHdfsInformation(): Unit = {
+    clients.foreach(client => {
+      def compareRequestAndResponse(request: HdfsInformationRequest, response: HdfsInformation): HdfsInformation = {
+        request.name shouldBe response.name
+        request.uri shouldBe response.uri
+        response
+      }
+
+      def compare2Response(lhs: HdfsInformation, rhs: HdfsInformation): Unit = {
+        lhs.uuid shouldBe rhs.uuid
+        lhs.name shouldBe rhs.name
+        lhs.uri shouldBe rhs.uri
+        lhs.lastModified shouldBe rhs.lastModified
+      }
+
+      // test add
+      client.list[HdfsInformation].size shouldBe 0
+      val request = HdfsInformationRequest(methodName, "file:///")
+      val response = compareRequestAndResponse(request, client.add[HdfsInformationRequest, HdfsInformation](request))
+
+      // test get
+      compare2Response(response, client.get[HdfsInformation](response.uuid))
+
+      // test update
+      val anotherRequest = HdfsInformationRequest(s"$methodName-2", "file:///")
+      val newResponse =
+        compareRequestAndResponse(anotherRequest,
+                                  client.update[HdfsInformationRequest, HdfsInformation](response.uuid, anotherRequest))
+
+      // test get
+      compare2Response(newResponse, client.get[HdfsInformation](newResponse.uuid))
+
+      // test delete
+      client.list[HdfsInformation].size shouldBe 1
+      client.delete[HdfsInformation](response.uuid)
+      client.list[HdfsInformation].size shouldBe 0
+
+      // test nonexistent data
+      an[IllegalArgumentException] should be thrownBy client.get[HdfsInformation]("123")
+      an[IllegalArgumentException] should be thrownBy client
+        .update[HdfsInformationRequest, HdfsInformation]("777", anotherRequest)
+    })
+  }
+
+  @Test
+  def testValidationOfHdfs(): Unit = {
+    clients.foreach(client => {
+      val report = client.validate[HdfsValidationRequest, ValidationReport](HdfsValidationRequest("file:///tmp"))
+      report.isEmpty shouldBe false
+      report.foreach(_.pass shouldBe true)
+    })
+  }
+
+  @Test
+  def testClusterInformation(): Unit = {
+    // only test the configurator based on mini cluster
+    val clusterInformation = client0.cluster[ClusterInformation]
+    clusterInformation.brokers shouldBe testUtil.brokersString
+    clusterInformation.workers shouldBe testUtil.workersString
   }
 
   @Test

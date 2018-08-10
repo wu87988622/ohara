@@ -10,18 +10,19 @@ import com.island.ohara.configurator.FakeConnectorClient
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.rest.ConfiguratorJson.ValidationResponse
-import com.island.ohara.rest.ConnectorClient
+import com.island.ohara.rest.ConfiguratorJson.{HdfsValidationRequest, RdbValidationRequest, ValidationReport}
+import com.island.ohara.rest.{ConfiguratorJson, ConnectorClient}
 import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer, OffsetResetStrategy}
+import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
-import org.apache.kafka.common.config.{ConfigDef, ConfigException}
 import org.apache.kafka.connect.connector.Task
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTask}
+import spray.json.{JsObject, JsString}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,18 +33,14 @@ import scala.concurrent.{Await, Future}
   * This class is used to verify the connection to 1) HDFS, 2) KAFKA and 3) RDB. Since ohara have many sources/sinks implemented
   * by kafak connector, the verification of connection should be run at the worker nodes. This class is implemented by kafka
   * souce connector in order to run the validation on all worker nodes.
+  * TODO: refactor this one...it is ugly I'd say... by chia
   */
 class Validator extends SourceConnector {
   private[this] var props: util.Map[String, String] = null
   override def version(): String = VERSION
   override def start(props: util.Map[String, String]): Unit = {
     this.props = new util.HashMap[String, String](props)
-    checkArgument(TOPIC)
-    checkArgument(URL)
-    checkArgument(REQUEST_ID)
-    checkArgument(TARGET)
-    if (props.get(TARGET).toLowerCase.equals(TARGET_HDFS) && props.get(URL).startsWith("/"))
-      throw new IllegalArgumentException(s"The $URL should have schema")
+    // we don't want to make any exception here
   }
 
   override def taskClass(): Class[_ <: Task] = classOf[ValidatorTask]
@@ -61,13 +58,48 @@ class Validator extends SourceConnector {
   }
   override def config(): ConfigDef = CONFIG_DEF
 
-  private[this] def checkArgument(key: String): Unit = if (!props.containsKey(key) || props.get(key).isEmpty)
-    throw new ConfigException(s"$key is required and it can't be empty")
 }
 
 object Validator {
+  private[this] val TIMEOUT = 30 seconds
   private[this] val INDEXER = new AtomicLong()
-  private val INTERNAL_TOPIC = "_Validator_topic"
+  private[endpoint] val INTERNAL_TOPIC = "_Validator_topic"
+
+  /**
+    * add this to config and then the key pushed to topic will be same with the value
+    */
+  private[endpoint] val REQUEST_ID = "requestId"
+
+  private[endpoint] val VERSION = "0.1"
+  private[endpoint] val TARGET = "target"
+  private[endpoint] val TARGET_HDFS = "hdfs"
+  private[endpoint] val TARGET_RDB = "rdb"
+
+  def run(connectorClient: ConnectorClient,
+          brokersString: String,
+          request: RdbValidationRequest,
+          taskCount: Int): Seq[ValidationReport] = run(
+    connectorClient,
+    brokersString,
+    TARGET_RDB,
+    ConfiguratorJson.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+      case (k, v) => (k, v.asInstanceOf[JsString].value)
+    },
+    taskCount
+  )
+
+  def run(connectorClient: ConnectorClient,
+          brokersString: String,
+          request: HdfsValidationRequest,
+          taskCount: Int): Seq[ValidationReport] = run(
+    connectorClient,
+    brokersString,
+    TARGET_HDFS,
+    ConfiguratorJson.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+      case (k, v) => (k, v.asInstanceOf[JsString].value)
+    },
+    taskCount
+  )
 
   /**
     * a helper method to run the validation process quickly.
@@ -79,19 +111,19 @@ object Validator {
     * @param timeout timeout
     * @return reports
     */
-  def run(connectorClient: ConnectorClient,
-          brokersString: String,
-          config: Map[String, String],
-          taskCount: Int,
-          timeout: Duration = 30 seconds): Seq[ValidationResponse] = connectorClient match {
+  private[this] def run(connectorClient: ConnectorClient,
+                        brokersString: String,
+                        target: String,
+                        config: Map[String, String],
+                        taskCount: Int): Seq[ValidationReport] = connectorClient match {
     // we expose the fake component...ugly way (TODO) by chia
-    case _: FakeConnectorClient => (0 until taskCount).map(_ => ValidationResponse("localhost", "a fake report", true))
+    case _: FakeConnectorClient => (0 until taskCount).map(_ => ValidationReport("localhost", "a fake report", true))
     case _ => {
       val requestId: String = INDEXER.getAndIncrement().toString
       val latch = new CountDownLatch(1)
       val closed = new AtomicBoolean(false)
       // we have to create the consumer first so as to avoid the messages from connector
-      val future = Future[Seq[ValidationResponse]] {
+      val future = Future[Seq[ValidationReport]] {
         val consumerConfig = new Properties()
         consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
         consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, s"Validator-consumer-${INDEXER.getAndIncrement()}")
@@ -102,16 +134,16 @@ object Validator {
                                          KafkaUtil.wrapDeserializer(Serializer.OBJECT))) { consumer =>
           try {
             consumer.subscribe(util.Arrays.asList(INTERNAL_TOPIC))
-            val reports = new ArrayBuffer[ValidationResponse]()
-            val endtime = System.currentTimeMillis() + timeout.toMillis
+            val reports = new ArrayBuffer[ValidationReport]()
+            val endtime = System.currentTimeMillis() + TIMEOUT.toMillis
             while (!closed.get && reports.size < taskCount && System.currentTimeMillis() < endtime) {
               val records = consumer.poll(if (latch.getCount == 1) 100 else 500)
               latch.countDown()
               if (records != null) {
                 records.forEach((record: ConsumerRecord[String, Any]) => {
                   if (record.key != null && record.key.equals(requestId)) record.value() match {
-                    case report: ValidationResponse => reports += report
-                    case _                          => throw new IllegalStateException(s"Unknown report:${record.value()}")
+                    case report: ValidationReport => reports += report
+                    case _                        => throw new IllegalStateException(s"Unknown report:${record.value()}")
                   }
                 })
               }
@@ -121,7 +153,7 @@ object Validator {
         }
       }
       try {
-        latch.await(timeout.toMillis, TimeUnit.MILLISECONDS)
+        latch.await(TIMEOUT.toMillis, TimeUnit.MILLISECONDS)
         val validationName = s"Validator-${INDEXER.getAndIncrement()}"
         connectorClient
           .sourceConnectorCreator()
@@ -132,44 +164,25 @@ object Validator {
           .topic(INTERNAL_TOPIC)
           .config(config)
           .config(REQUEST_ID, requestId)
+          .config(TARGET, target)
           .run()
-        try Await.result(future, timeout)
+        try Await.result(future, TIMEOUT)
         finally connectorClient.delete(validationName)
       } finally closed.set(true)
     }
   }
 
-  /**
-    * add this to config and then the key pushed to topic will be same with the value
-    */
-  val REQUEST_ID = "requestId"
-
-  val TOPIC = "topic"
-  val VERSION = "0.1"
-  val TARGET = "target"
-  val TARGET_HDFS = "hdfs"
-  val TARGET_RDB = "rdb"
-  val URL = "url"
-  val TABLE = "table"
-  val USER = "user"
-  val PASSWORD = "password"
-
-  val CONFIG_DEF = new ConfigDef()
-    .define(URL, Type.STRING, null, Importance.HIGH, "target url")
-    .define(TARGET, Type.STRING, null, Importance.HIGH, "target type")
-    .define(TOPIC, Type.STRING, null, Importance.HIGH, "target topic")
+  val CONFIG_DEF = new ConfigDef().define(TARGET, Type.STRING, null, Importance.HIGH, "target type")
 }
 
 import scala.collection.JavaConverters._
-
 class ValidatorTask extends SourceTask {
   private[this] var done = false
-  private[this] var props: Map[String, String] = null
-  private[this] var topic: String = null
-  private[this] var requestId: String = null
+  private[this] var props: Map[String, String] = _
+  private[this] val topic: String = INTERNAL_TOPIC
+  private[this] var requestId: String = _
   override def start(props: util.Map[String, String]): Unit = {
     this.props = props.asScala.toMap
-    topic = require(TOPIC)
     requestId = require(REQUEST_ID)
   }
 
@@ -179,10 +192,10 @@ class ValidatorTask extends SourceTask {
     null
   } else
     try information match {
-      case info: HdfsInformation => toSourceRecord(ValidationResponse(hostname, validate(info), true))
-      case info: RdbInformation  => toSourceRecord(ValidationResponse(hostname, validate(info), true))
+      case info: HdfsValidationRequest => toSourceRecord(ValidationReport(hostname, validate(info), true))
+      case info: RdbValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
     } catch {
-      case e: Throwable => toSourceRecord(ValidationResponse(hostname, e.getMessage, false))
+      case e: Throwable => toSourceRecord(ValidationReport(hostname, e.getMessage, false))
     } finally {
       done = true
     }
@@ -193,30 +206,31 @@ class ValidatorTask extends SourceTask {
 
   override def version(): String = VERSION
 
-  private[this] def validate(info: HdfsInformation): String = {
+  private[this] def validate(info: HdfsValidationRequest): String = {
     val config = new Configuration()
-    config.set("fs.defaultFS", info.url)
+    config.set("fs.defaultFS", info.uri)
     val fs = FileSystem.get(config)
     val home = fs.getHomeDirectory
-    s"check the hdfs:${info.url} by getting the home:${home}"
+    s"check the hdfs:${info.uri} by getting the home:${home}"
   }
   import com.island.ohara.io.CloseOnce._
 
-  private[this] def validate(info: RdbInformation): String = {
-    val connectionUrl = s"${info.url};user=${info.user};password=${info.password}"
+  private[this] def validate(info: RdbValidationRequest): String = {
+    val connectionUrl = s"${info.uri};user=${info.user};password=${info.password}"
     doClose(DriverManager.getConnection(connectionUrl)) { _ =>
       s"succeed to establish the connection:$connectionUrl"
     }
   }
 
+  private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(TARGET) match {
-    case TARGET_HDFS => HdfsInformation(require(URL))
-    case TARGET_RDB  => RdbInformation(require(URL), require(TABLE), require(USER), require(PASSWORD))
+    case TARGET_HDFS => ConfiguratorJson.HDFS_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case TARGET_RDB  => ConfiguratorJson.RDB_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
     case other: String =>
       throw new IllegalArgumentException(s"valid targets are $TARGET_HDFS and $TARGET_RDB. current is $other")
   }
 
-  private[this] def toSourceRecord(data: ValidationResponse): util.List[SourceRecord] =
+  private[this] def toSourceRecord(data: ValidationReport): util.List[SourceRecord] =
     util.Arrays.asList(
       new SourceRecord(null,
                        null,
@@ -234,6 +248,3 @@ class ValidatorTask extends SourceTask {
     case _: Throwable => "unknown"
   }
 }
-
-private case class HdfsInformation(url: String)
-private case class RdbInformation(url: String, table: String, user: String, password: String)

@@ -1,9 +1,8 @@
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rest.ConfiguratorJson.ValidationResponse
+import com.island.ohara.rest.ConfiguratorJson.{HdfsValidationRequest, ValidationReport}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -16,16 +15,14 @@ class TestValidator extends With3Blockers3Workers with Matchers {
     connectorClient.plugins().filter(_.className.equals(classOf[Validator].getName)).isEmpty shouldBe false
   }
 
-  private[this] def evaluate(reports: Seq[ValidationResponse]): Unit = {
+  private[this] def evaluate(reports: Seq[ValidationReport]): Unit = {
     reports.isEmpty shouldBe false
     reports.foreach(_.pass shouldBe true)
   }
 
   @Test
-  def testValidateHdfs(): Unit = {
-    evaluate(
-      Validator
-        .run(connectorClient, testUtil.brokersString, Map(TARGET -> TARGET_HDFS, URL -> "file:///tmp"), taskCount))
+  def testValidationOfHdfs(): Unit = {
+    evaluate(Validator.run(connectorClient, testUtil.brokersString, HdfsValidationRequest("file:///tmp"), taskCount))
   }
 
   // TODO: add test against RDB. by chia
