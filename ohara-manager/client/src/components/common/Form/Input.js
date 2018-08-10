@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 import {
   blue,
+  lightGray,
   lighterGray,
   radiusNormal,
   durationNormal,
@@ -27,6 +28,12 @@ const InputWrapper = styled.input`
     box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
     transition: ${durationNormal} all;
   }
+
+  &.is-disabled {
+    border: 1px solid ${lighterGray};
+    cursor: not-allowed;
+    color: ${lightGray};
+  }
 `;
 
 InputWrapper.displayName = 'Input';
@@ -38,8 +45,11 @@ const Input = ({
   placeholder = '',
   width = '120px',
   height = '40px',
+  disabled,
   ...rest
 }) => {
+  const disableCls = disabled ? 'is-disabled' : '';
+
   return (
     <InputWrapper
       type={type}
@@ -48,6 +58,8 @@ const Input = ({
       placeholder={placeholder}
       width={width}
       height={height}
+      disabled={disabled}
+      className={disableCls}
       {...rest}
     />
   );
@@ -55,7 +67,7 @@ const Input = ({
 
 Input.propTypes = {
   value: PropTypes.string.isRequired,
-  handleChange: PropTypes.func.isRequired,
+  handleChange: PropTypes.func,
   type: PropTypes.string,
   width: PropTypes.string,
   height: PropTypes.string,

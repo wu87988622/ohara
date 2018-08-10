@@ -6,15 +6,14 @@ import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
 import {
-  validate,
-  save,
   createTopics,
   fetchTopics,
+  fetchCluster,
 } from '../../../apis/kafkaApis';
 import { Input, Button } from '../../common/Form';
 import { ListTable } from '../../common/Table';
-import { submitButton, cancelButton } from '../../../theme/buttonTheme';
-import { get, isDefined } from '../../../utils/helpers';
+import { submitButton } from '../../../theme/buttonTheme';
+import { get } from '../../../utils/helpers';
 import { KAFKA } from '../../../constants/documentTitles';
 import {
   LEAVE_WITHOUT_SAVE,
@@ -23,7 +22,6 @@ import {
 import {
   white,
   lightBlue,
-  lighterGray,
   radiusNormal,
   shadowNormal,
 } from '../../../theme/variables';
@@ -57,23 +55,9 @@ const FormGroup = styled.div`
   }
 `;
 
-const Actions = styled.div`
-  display: flex;
-  padding: 20px;
-  border-top: 1px solid ${lighterGray};
-`;
-
-const ActionGroup = styled.div`
-  margin-left: auto;
-`;
-
 const Label = styled.label`
   color: ${lightBlue};
   margin-bottom: 20px;
-`;
-
-const CancelButton = styled(Button)`
-  margin-right: 10px;
 `;
 
 const SectionHeader = styled.div`
@@ -88,9 +72,8 @@ const H3 = styled.h3`
 
 class KafkaPage extends React.Component {
   state = {
-    target: 'hdfs',
-    clusterName: '',
     brokerList: '',
+    workerList: '',
     isFormDirty: false,
     tableHeaders: ['Topic name', 'Details link'],
     isModalActive: false,
@@ -98,8 +81,6 @@ class KafkaPage extends React.Component {
     partitions: '',
     replicationFactor: '',
     topics: [],
-    isTestConnectionWorking: false,
-    isSaveWorking: false,
     isCreateTopicWorking: false,
   };
 
@@ -108,19 +89,23 @@ class KafkaPage extends React.Component {
   }
 
   fetchData = async () => {
-    const res = await fetchTopics();
+    const topicRes = await fetchTopics();
+    const clusterRes = await fetchCluster();
 
-    const _result = get(res, 'data.result', null);
+    const _topicResult = get(topicRes, 'data.result', null);
+    const _clusterResult = get(clusterRes, 'data.result', null);
 
-    if (_result && _result.length > 0) {
-      const { uuids } = res.data;
-      const topics = Object.keys(uuids).map(key => {
-        return {
-          [key]: uuids[key],
-        };
-      });
+    if (_topicResult && _topicResult.length > 0) {
+      this.setState({ topics: _topicResult, isLoading: false });
+    }
 
-      this.setState({ topics, isLoading: false });
+    if (_clusterResult) {
+      const {
+        brokersString: brokerList,
+        workersString: workerList,
+      } = _clusterResult;
+
+      this.setState({ brokerList, workerList });
     }
   };
 
@@ -129,23 +114,19 @@ class KafkaPage extends React.Component {
   };
 
   handleModalClose = () => {
-    this.setState({ isModalActive: false });
+    this.setState({ isModalActive: false, isFormDirty: false });
     this.resetModal();
   };
 
   handleCreateTopics = async e => {
     e.preventDefault();
-    const {
-      topicName: name,
-      partitions: numberOfPartitions,
-      replicationFactor: numberOfReplications,
-    } = this.state;
+    const { topicName: name, partitions, replicationFactor } = this.state;
 
     this.setState({ isCreateTopicWorking: true });
     const res = await createTopics({
       name,
-      numberOfPartitions,
-      numberOfReplications,
+      numberOfPartitions: Number(partitions),
+      numberOfReplications: Number(replicationFactor),
     });
     this.setState({ isCreateTopicWorking: false });
 
@@ -167,42 +148,14 @@ class KafkaPage extends React.Component {
     this.props.history.goBack();
   };
 
-  handleSaveConfigs = async e => {
-    e.preventDefault();
-    const { target, clusterName, brokerList } = this.state;
-    this.setState({ isSaveConfigsWorking: true });
-    const res = await save({ target, clusterName, brokerList });
-    this.setState({ isSaveConfigsWorking: false });
-
-    const result = get(res, 'data.isSuccess', undefined);
-
-    if (isDefined(result)) {
-      toastr.success('Kafka configurations saved!');
-    }
-  };
-
-  handleTest = async e => {
-    e.preventDefault();
-    const { target, clusterName, brokerList } = this.state;
-    this.setState({ isTestConnectionWorking: true });
-    const res = await validate({ target, clusterName, url: brokerList });
-    this.setState({ isTestConnectionWorking: false });
-
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (isSuccess) {
-      toastr.success('Test passed!');
-    }
-  };
-
   resetModal = () => {
     this.setState({ topicName: '', partitions: '', replicationFactor: '' });
   };
 
   render() {
     const {
-      clusterName,
       brokerList,
+      workerList,
       isFormDirty,
       tableHeaders,
       isModalActive,
@@ -210,8 +163,6 @@ class KafkaPage extends React.Component {
       topics,
       partitions,
       replicationFactor,
-      isTestConnectionWorking,
-      isSaveConfigsWorking,
       isCreateTopicWorking,
     } = this.state;
 
@@ -235,54 +186,24 @@ class KafkaPage extends React.Component {
             <form>
               <FormInner>
                 <FormGroup>
-                  <Label>Cluster name</Label>
-                  <Input
-                    type="text"
-                    width="250px"
-                    id="clusterName"
-                    placeholder="kafka-cluster"
-                    value={clusterName}
-                    data-testid="clusterName"
-                    handleChange={this.handleChange}
-                  />
-                </FormGroup>
-
-                <FormGroup>
                   <Label>Broker List</Label>
                   <Input
-                    type="text"
-                    width="250px"
-                    id="brokerList"
-                    placeholder="http://localhost:5050"
+                    width="350px"
                     value={brokerList}
                     data-testid="brokerList"
-                    handleChange={this.handleChange}
+                    disabled
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Worker List</Label>
+                  <Input
+                    width="350px"
+                    value={workerList}
+                    data-testid="workerList"
+                    disabled
                   />
                 </FormGroup>
               </FormInner>
-
-              <Actions>
-                <Button
-                  text="Test connection"
-                  handleClick={this.handleTest}
-                  isWorking={isTestConnectionWorking}
-                  data-testid="testConnection"
-                />
-                <ActionGroup>
-                  <CancelButton
-                    text="Cancel"
-                    theme={cancelButton}
-                    data-testid="cancelButton"
-                    handleClick={this.handleCancel}
-                  />
-                  <Button
-                    text="Save"
-                    isWorking={isSaveConfigsWorking}
-                    theme={submitButton}
-                    handleClick={this.handleSaveConfigs}
-                  />
-                </ActionGroup>
-              </Actions>
             </form>
           </Section>
 

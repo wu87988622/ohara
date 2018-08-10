@@ -9,7 +9,7 @@ const props = {
   urlDir: 'testDir',
 };
 
-describe('<ListTable />', () => {
+describe.skip('<ListTable />', () => {
   let wrapper;
   beforeEach(() => {
     wrapper = shallow(<ListTable {...props} />);

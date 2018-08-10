@@ -66,54 +66,30 @@ export default injectGlobal`
 
   #toast-container > div.toast {
     opacity: 0.9;
-    padding: 20px 20px 20px 35px;
+    padding: 20px 20px 20px 20px;
     box-shadow: none;
     width: auto;
+    max-width: 300px;
     background-image: none !important;
 
     &.toast-success {
         background-color: ${green}
-
-      &:before {
-        font-family: "Font Awesome 5 Free";
-        content: "\f058";
-        position: absolute;
-        left: 15px;
-      }
     }
 
     &.toast-info {
       background-color: ${blue};
-      &:before {
-        font-family: "Font Awesome 5 Free";
-        content: "\f059";
-        position: absolute;
-        left: 15px;
-      }
     }
 
     &.toast-warning {
       background-color: ${orange};
-      &:before {
-        font-family: "Font Awesome 5 Free";
-        content: "\f059";
-        position: absolute;
-        left: 15px;
-      }
     }
 
     &.toast-error {
       background-color: ${red};
-      &:before {
-        font-family: "Font Awesome 5 Free";
-        content: "\f057";
-        position: absolute;
-        left: 15px;
-      }
     }
 
-    .toast-title {
-      font-size: 13px;
+    .toast-title, toast-message {
+      font-size: 12px;
       font-weight: normal;
     }
 
