@@ -1,13 +1,13 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 
-import com.island.ohara.rest.ConnectorJson.{ConnectorRequest, ConnectorResponse}
+import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse}
 
 import scala.collection.mutable
 
 /**
   * Used to config and run the sink connector.
   */
-abstract class SinkConnectorCreator extends ConnectorCreator {
+abstract class SinkConnectorBuilder extends ConnectorBuilder {
 
   /**
     * set the topics in which you have interest.
@@ -25,7 +25,7 @@ abstract class SinkConnectorCreator extends ConnectorCreator {
     *
     * @return this one
     */
-  def run(): ConnectorResponse = {
+  def build(): ConnectorResponse = {
     checkArgument()
     if (config == null) config = new mutable.HashMap[String, String]()
     config += ("connector.class" -> clzName)

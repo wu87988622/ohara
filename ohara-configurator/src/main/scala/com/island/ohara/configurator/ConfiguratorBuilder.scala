@@ -2,10 +2,10 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.kafka.{KafkaClient, TopicCreator, TopicDescription}
+import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicBuilder, TopicDescription}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.rest.ConnectorJson.{ConnectorRequest, ConnectorResponse, Plugin}
-import com.island.ohara.rest.{ConnectorClient, SinkConnectorCreator, SourceConnectorCreator}
+import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse, Plugin}
+import com.island.ohara.client.{ConnectorClient, SinkConnectorBuilder, SourceConnectorBuilder}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.util.ConcurrentHashSet
@@ -114,12 +114,15 @@ class ConfiguratorBuilder {
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashSet[String]()
 
-  override def sourceConnectorCreator(): SourceConnectorCreator = (request: ConnectorRequest) =>
+  override def sourceConnectorCreator(): SourceConnectorBuilder = (request: ConnectorRequest) =>
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
-    else ConnectorResponse(request.name, request.config, Seq.empty, "source")
+    else {
+      cachedConnectors.add(request.name)
+      ConnectorResponse(request.name, request.config, Seq.empty, "source")
+  }
 
-  override def sinkConnectorCreator(): SinkConnectorCreator = (request: ConnectorRequest) =>
+  override def sinkConnectorCreator(): SinkConnectorBuilder = (request: ConnectorRequest) =>
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
     else ConnectorResponse(request.name, request.config, Seq.empty, "source")
@@ -130,7 +133,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   override def plugins(): Seq[Plugin] = cachedConnectors.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
   override protected def doClose(): Unit = cachedConnectors.clear()
   override def activeConnectors(): Seq[String] = cachedConnectors.asScala.toSeq
-  override def workersString: String = "Unknown"
+  override def workers: String = "Unknown"
 }
 
 /**
@@ -148,8 +151,8 @@ private class FakeKafkaClient extends KafkaClient {
     printDebugMessage()
   }
 
-  override def topicCreator: TopicCreator = new TopicCreator() {
-    override def create(): Unit = {
+  override def topicCreator: TopicBuilder = new TopicBuilder() {
+    override def build(): Unit = {
       printDebugMessage()
       cachedTopics.put(topicName.get, TopicDescription(topicName.get, numberOfPartitions.get, numberOfReplications.get))
     }
@@ -173,5 +176,9 @@ private class FakeKafkaClient extends KafkaClient {
   import scala.collection.JavaConverters._
   override def listTopics(timeout: Duration): Seq[String] = cachedTopics.keys().asScala.map(t => t).toList
 
-  override def brokersString: String = "Unknown"
+  override def brokers: String = "Unknown"
+  override def consumerBuilder[K, V](keySerializer: Serializer[K],
+                                     valueSerializer: Serializer[V]): ConsumerBuilder[K, V] =
+    throw new UnsupportedOperationException(
+      s"${classOf[FakeKafkaClient].getSimpleName} does not support this operation")
 }

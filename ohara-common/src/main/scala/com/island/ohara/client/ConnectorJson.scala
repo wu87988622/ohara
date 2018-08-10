@@ -1,4 +1,4 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 import spray.json.{
   DefaultJsonProtocol,
   DeserializationException,

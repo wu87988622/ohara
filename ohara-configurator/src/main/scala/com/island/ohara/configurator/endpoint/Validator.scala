@@ -2,21 +2,18 @@ package com.island.ohara.configurator.endpoint
 
 import java.sql.DriverManager
 import java.util
-import java.util.Properties
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import com.island.ohara.configurator.FakeConnectorClient
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.rest.ConfiguratorJson.{HdfsValidationRequest, RdbValidationRequest, ValidationReport}
-import com.island.ohara.rest.{ConfiguratorJson, ConnectorClient}
+import com.island.ohara.kafka.{ConsumerRecord, KafkaClient}
+import com.island.ohara.client.ConfiguratorJson.{HdfsValidationRequest, RdbValidationRequest, ValidationReport}
+import com.island.ohara.client.{ConfiguratorJson, ConnectorClient}
 import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.kafka.connect.connector.Task
@@ -76,11 +73,11 @@ object Validator {
   private[endpoint] val TARGET_RDB = "rdb"
 
   def run(connectorClient: ConnectorClient,
-          brokersString: String,
+          kafkaClient: KafkaClient,
           request: RdbValidationRequest,
           taskCount: Int): Seq[ValidationReport] = run(
     connectorClient,
-    brokersString,
+    kafkaClient,
     TARGET_RDB,
     ConfiguratorJson.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
@@ -89,11 +86,11 @@ object Validator {
   )
 
   def run(connectorClient: ConnectorClient,
-          brokersString: String,
+          kafkaClient: KafkaClient,
           request: HdfsValidationRequest,
           taskCount: Int): Seq[ValidationReport] = run(
     connectorClient,
-    brokersString,
+    kafkaClient,
     TARGET_HDFS,
     ConfiguratorJson.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
@@ -112,7 +109,7 @@ object Validator {
     * @return reports
     */
   private[this] def run(connectorClient: ConnectorClient,
-                        brokersString: String,
+                        kafkaClient: KafkaClient,
                         target: String,
                         config: Map[String, String],
                         taskCount: Int): Seq[ValidationReport] = connectorClient match {
@@ -124,29 +121,29 @@ object Validator {
       val closed = new AtomicBoolean(false)
       // we have to create the consumer first so as to avoid the messages from connector
       val future = Future[Seq[ValidationReport]] {
-        val consumerConfig = new Properties()
-        consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-        consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, s"Validator-consumer-${INDEXER.getAndIncrement()}")
-        consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
         doClose(
-          new KafkaConsumer[String, Any](consumerConfig,
-                                         KafkaUtil.wrapDeserializer(Serializer.STRING),
-                                         KafkaUtil.wrapDeserializer(Serializer.OBJECT))) { consumer =>
+          kafkaClient
+            .consumerBuilder(Serializer.STRING, Serializer.OBJECT)
+            .fromBegin(false)
+            .topicName(INTERNAL_TOPIC)
+            .build()) { consumer =>
           try {
-            consumer.subscribe(util.Arrays.asList(INTERNAL_TOPIC))
             val reports = new ArrayBuffer[ValidationReport]()
             val endtime = System.currentTimeMillis() + TIMEOUT.toMillis
             while (!closed.get && reports.size < taskCount && System.currentTimeMillis() < endtime) {
-              val records = consumer.poll(if (latch.getCount == 1) 100 else 500)
+              val records = consumer.poll(if (latch.getCount == 1) 100 millis else 500 millis)
               latch.countDown()
-              if (records != null) {
-                records.forEach((record: ConsumerRecord[String, Any]) => {
-                  if (record.key != null && record.key.equals(requestId)) record.value() match {
-                    case report: ValidationReport => reports += report
-                    case _                        => throw new IllegalStateException(s"Unknown report:${record.value()}")
-                  }
-                })
-              }
+              records.foreach(
+                (record: ConsumerRecord[String, Any]) =>
+                  record.key
+                    .filter(_.equals(requestId))
+                    .map(_ => {
+                      // must have value...by chia
+                      record.value.get match {
+                        case report: ValidationReport => reports += report
+                        case _                        => throw new IllegalStateException(s"Unknown report:${record.value}")
+                      }
+                    }))
             }
             reports
           } finally latch.countDown()
@@ -165,7 +162,7 @@ object Validator {
           .config(config)
           .config(REQUEST_ID, requestId)
           .config(TARGET, target)
-          .run()
+          .build()
         try Await.result(future, TIMEOUT)
         finally connectorClient.delete(validationName)
       } finally closed.set(true)

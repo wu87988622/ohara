@@ -1,19 +1,16 @@
 package com.island.ohara.configurator.call
 
-import java.util
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.serialization.OharaDataSerializer
+import com.island.ohara.kafka.{Consumer, KafkaClient, KafkaUtil}
+import com.island.ohara.serialization.{OharaDataSerializer, Serializer}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
@@ -39,7 +36,8 @@ import scala.reflect.ClassTag
   * @param numberOfPartitions the number of topic partition. Used to build the topic
   * @param numberOfReplications the number of topic partition. Used to build the topic
   * @param pollTimeout the specified waiting time elapses to poll the consumer
-  * @param initializationTimeout the specified waiting time to initialize this call queue server
+  * @param initializationTimeout the specified waiting time to ini
+  *                             tialize this call queue server
   * @param topicOptions configuration
   * @tparam Request the supported request type
   * @tparam Response the supported response type
@@ -90,7 +88,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
       // enable kafka delete all stale requests
       .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
       .timeout(initializationTimeout)
-      .create()
+      .build()
   }
 
   private[this] val producer = newOrClose {
@@ -102,15 +100,15 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
   }
 
   private[this] val consumer = newOrClose {
-    val props = new Properties
-    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
-    // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
-    // distribute the request.
-    props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId)
-    new KafkaConsumer[OharaData, OharaData](props,
-                                            KafkaUtil.wrapDeserializer(OharaDataSerializer),
-                                            KafkaUtil.wrapDeserializer(OharaDataSerializer))
+    Consumer
+      .builder(Serializer.OHARA_DATA, Serializer.OHARA_DATA)
+      .brokers(brokers)
+      .fromBegin(false)
+      // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
+      // distribute the request.
+      .groupId(groupId)
+      .topicName(topicName)
+      .build()
   }
 
   private[call] val undealtTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
@@ -164,50 +162,37 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     * the supported producer's value is RESPONSE.
     */
   private[this] val requestWorker = Future[Unit] {
-    var firstPoll = true
     try {
-      consumer.subscribe(util.Arrays.asList(topicName))
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
-          if (firstPoll) initializeConsumerLatch.countDown()
-          firstPoll = false
-          if (records != null) {
-            records
-            // TODO: throw exception if there are data from unknown topic? by chia
-              .records(topicName)
-              .forEach(record => {
-                record.key match {
+          val records = consumer.poll(pollTimeout)
+          initializeConsumerLatch.countDown()
+          records
+            .filter(_.topic.equals(topicName))
+            .foreach(record => {
+              record.key.foreach(k => {
+                k match {
                   case internalRequest: OharaRequest =>
                     if (internalRequest.lease <= System.currentTimeMillis)
                       logger.debug(s"the lease of request is violated")
-                    else {
-                      record.value match {
-                        case clientRequest: Request =>
-                          undealtTasks.put(createCallQueueTask(internalRequest, clientRequest))
-                        case _ =>
-                          try sendToKafka(
-                            OharaResponse.apply(responseUuid, internalRequest.uuid),
-                            OharaException.apply(
-                              new IllegalArgumentException(
-                                "Unsupported type:"
-                                  + (if (record.value() == null) "null"
-                                     else record.value().getClass.getName)))
-                          )
-                          catch {
-                            case _: Throwable => logger.error("Failed to response the unsupported request")
-                          }
-
-                      }
-                    }
+                    else
+                      record.value.foreach(v =>
+                        v match {
+                          case clientRequest: Request =>
+                            undealtTasks.put(createCallQueueTask(internalRequest, clientRequest))
+                          case _ =>
+                            try sendToKafka(OharaResponse.apply(responseUuid, internalRequest.uuid),
+                                            OharaException.apply(new IllegalArgumentException(s"Unsupported type:$v")))
+                            catch {
+                              case _: Throwable => logger.error("Failed to response the unsupported request")
+                            }
+                      })
                   case _: OharaResponse => // this is for the call queue client
                   case _ =>
-                    logger.error(
-                      s"unsupported key:" + (if (record.key() == null) "null" else record.key().getClass.getName)
-                        + " the supported key by call queue server is OharaRequest")
+                    logger.error(s"unsupported key:$k. The supported key by call queue server is OharaRequest")
                 }
               })
-          }
+            })
         } catch {
           case _: WakeupException => logger.debug("interrupted by ourself")
         }
@@ -215,7 +200,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     } catch {
       case e: Throwable => logger.error("failure when running the requestWorker", e)
     } finally {
-      if (firstPoll) initializeConsumerLatch.countDown()
+      initializeConsumerLatch.countDown()
       close()
     }
   }

@@ -7,7 +7,7 @@ import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.rest.ConnectorClient
+import com.island.ohara.client.ConnectorClient
 import kafka.server.KafkaServer
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
@@ -51,7 +51,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     *
     * @return a basic config including the brokers information
     */
-  def config: OharaConfig = componentBox.brokers.config
+  def config: OharaConfig = componentBox.brokerCluster.config
 
   /**
     * Generate a config for kafka producer. The config is composed of following setting.
@@ -59,7 +59,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     *
     * @return a config used to instantiate kafka producer
     */
-  def producerConfig: OharaConfig = componentBox.brokers.producerConfig
+  def producerConfig: OharaConfig = componentBox.brokerCluster.producerConfig
 
   /**
     * Generate a config for kafka consumer. The config is composed of following setting.
@@ -69,7 +69,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     *
     * @return a config used to instantiate kafka consumer
     */
-  def consumerConfig: OharaConfig = componentBox.brokers.consumerConfig
+  def consumerConfig: OharaConfig = componentBox.brokerCluster.consumerConfig
 
   /**
     * @return zookeeper connection used to create zk services
@@ -79,31 +79,31 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   /**
     * @return a list of running brokers
     */
-  def kafkaBrokers: Seq[KafkaServer] = componentBox.brokers.brokers
+  def kafkaBrokers: Seq[KafkaServer] = componentBox.brokerCluster.brokers
 
   /**
     * @return a list of running brokers
     */
-  def kafkaWorkers: Seq[Worker] = componentBox.workers.workers
+  def kafkaWorkers: Seq[Worker] = componentBox.workerCluster.kafkaWorkers
 
   /**
     * @return a list of running brokers
     */
-  def kafkaRestServers: Seq[RestServer] = componentBox.workers.restServers
+  def kafkaRestServers: Seq[RestServer] = componentBox.workerCluster.restServers
 
   /**
     * Exposing the brokers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
     *
     * @return brokers connection information
     */
-  def brokersString: String = componentBox.brokers.brokersString
+  def brokersString: String = componentBox.brokerCluster.brokersString
 
   /**
     * Exposing the workers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
     *
     * @return workers connection information
     */
-  def workersString: String = componentBox.workers.workersString
+  def workers: String = componentBox.workerCluster.workers
 
   import scala.concurrent.duration._
 
@@ -202,7 +202,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @return the public address and port of a worker picked by random
     */
   def pickWorkerAddress(): (String, Int) = {
-    val s = componentBox.workers.pickRandomRestServer().advertisedUrl()
+    val s = componentBox.workerCluster.pickRandomRestServer().advertisedUrl()
     (s.getHost, s.getPort)
   }
 
@@ -210,11 +210,11 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @return the public address and port of a broker picked by random
     */
   def pickBrokerAddress(): (String, Int) = {
-    val s = componentBox.workers.pickRandomRestServer().advertisedUrl()
+    val s = componentBox.workerCluster.pickRandomRestServer().advertisedUrl()
     (s.getHost, s.getPort)
   }
 
-  def connectorClient() = ConnectorClient(workersString)
+  def connectorClient() = ConnectorClient(workers)
 
   /**
     * Get to HDFS FileSystem
@@ -308,7 +308,7 @@ object OharaTestUtil {
     doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workersString}")
+      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workers}")
       println(
         s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after ${ttl} seconds")
       TimeUnit.SECONDS.sleep(ttl)
@@ -328,8 +328,8 @@ private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: I
   private[this] val localHDFSCluster = if (numberOfDataNodes > 0) newOrClose(new LocalHDFS(numberOfDataNodes)) else null
 
   def zookeeper: LocalZk = require(zk, "You haven't started zookeeper")
-  def brokers: LocalKafkaBrokers = require(localBrokerCluster, "You haven't started brokers")
-  def workers: LocalKafkaWorkers = require(localWorkerCluster, "You haven't started workers")
+  def brokerCluster: LocalKafkaBrokers = require(localBrokerCluster, "You haven't started brokers")
+  def workerCluster: LocalKafkaWorkers = require(localWorkerCluster, "You haven't started workers")
   def hdfs: LocalHDFS = require(localHDFSCluster, "You haven't started hdfs")
 
   private[this] def require[T](obj: T, message: String) =

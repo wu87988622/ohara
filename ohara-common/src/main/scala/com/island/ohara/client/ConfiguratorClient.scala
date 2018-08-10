@@ -1,4 +1,4 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.ActorSystem
@@ -104,7 +104,7 @@ object ConfiguratorClient {
         TIMEOUT
       )
 
-    import com.island.ohara.rest.ConfiguratorJson.{ERROR_RESPONSE_JSON_FORMAT, ErrorResponse}
+    import com.island.ohara.client.ConfiguratorJson.{ERROR_RESPONSE_JSON_FORMAT, ErrorResponse}
     private[this] def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else

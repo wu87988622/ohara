@@ -6,7 +6,7 @@ import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.rest.ConnectorClient
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.serialization.Serializer
 
 /**
@@ -17,7 +17,7 @@ object Backend {
     doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workersString}")
+      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workers}")
       val topicName = s"demo-${System.currentTimeMillis()}"
       val configurator = Configurator.builder
         .store(
@@ -29,7 +29,7 @@ object Backend {
             .numberOfPartitions(1)
             .build())
         .kafkaClient(KafkaClient(util.brokersString))
-        .connectClient(ConnectorClient(util.workersString))
+        .connectClient(ConnectorClient(util.workers))
         .hostname("localhost")
         .port(0)
         .build()

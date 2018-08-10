@@ -35,7 +35,7 @@ class TestKafkaClient extends With3Blockers3Workers with Matchers {
       .topicName(topicName)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
-      .create()
+      .build()
 
     val topicInfo = client.topicInfo(topicName).get
     topicInfo.name shouldBe topicName

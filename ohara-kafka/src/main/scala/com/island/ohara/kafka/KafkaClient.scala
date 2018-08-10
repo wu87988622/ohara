@@ -4,8 +4,9 @@ import java.util
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.kafka.KafkaClient._
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.KafkaClient._
+import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
@@ -18,7 +19,7 @@ import scala.concurrent.duration._
   */
 trait KafkaClient extends CloseOnce {
 
-  def topicCreator: TopicCreator
+  def topicCreator: TopicBuilder
 
   def exist(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean
 
@@ -30,7 +31,9 @@ trait KafkaClient extends CloseOnce {
 
   def listTopics(timeout: Duration = DEFAULT_TIMEOUT): Seq[String]
 
-  def brokersString: String
+  def brokers: String
+
+  def consumerBuilder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): ConsumerBuilder[K, V]
 }
 
 object KafkaClient {
@@ -39,11 +42,11 @@ object KafkaClient {
   /**
     * this impl will host a kafka.AdminClient so you must call the #close() to release the kafka.AdminClient.
     *
-    * @param brokers the kafka brokers information
+    * @param _brokers the kafka brokers information
     * @return a impl of KafkaClient
     */
-  def apply(brokers: String): KafkaClient = new KafkaClient() {
-    private[this] val admin = AdminClient.create(toAdminProps(brokers))
+  def apply(_brokers: String): KafkaClient = new KafkaClient() {
+    private[this] val admin = AdminClient.create(toAdminProps(_brokers))
 
     override def exist(topicName: String, timeout: Duration): Boolean =
       admin.listTopics().names().thenApply(_.contains(topicName)).get(timeout.toMillis, TimeUnit.MILLISECONDS)
@@ -51,8 +54,8 @@ object KafkaClient {
     override protected def doClose(): Unit = admin.close()
 
     import scala.collection.JavaConverters._
-    override def topicCreator: TopicCreator = new TopicCreator() {
-      override def create(): Unit = if (!exist(topicName.get)) {
+    override def topicCreator: TopicBuilder = new TopicBuilder() {
+      override def build(): Unit = if (!exist(topicName.get)) {
         admin
           .createTopics(util.Arrays.asList(new NewTopic(topicName.get, numberOfPartitions.get, numberOfReplications.get)
             .configs(topicOptions.get.asJava)))
@@ -107,7 +110,10 @@ object KafkaClient {
 
     override def listTopics(timeout: Duration): Seq[String] =
       admin.listTopics().names().get(timeout.toMillis, TimeUnit.MILLISECONDS).asScala.toList
-    override def brokersString: String = brokers
+    override def brokers: String = _brokers
+    override def consumerBuilder[K, V](keySerializer: Serializer[K],
+                                       valueSerializer: Serializer[V]): ConsumerBuilder[K, V] =
+      new ConsumerBuilder[K, V](keySerializer, valueSerializer).brokers(brokers)
   }
 
   /**

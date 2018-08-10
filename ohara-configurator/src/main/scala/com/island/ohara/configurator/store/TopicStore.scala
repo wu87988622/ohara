@@ -6,13 +6,11 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.kafka.{Consumer, KafkaClient, KafkaUtil}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
@@ -56,7 +54,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     extends Store[K, V]
     with CloseOnce {
 
-  private[this] val log = Logger(TopicStore.getClass)
+  private[this] val log = Logger(classOf[TopicStore[_, _]])
 
   /**
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
@@ -70,7 +68,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   /**
     * Used to sort the change to topic. We shouldn't worry about the overflow since it is not update-heavy.
     */
-  private[this] val HEADER_INDEX = new AtomicLong(0)
+  private[this] val headerIndexer = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
 
   if (!topicOptions
@@ -94,20 +92,20 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
       // enable kafka save the latest message for each key
       .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
       .timeout(initializationTimeout)
-      .create()
+      .build()
   }
 
   log.info(
     s"succeed to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")
 
   private[this] val consumer = newOrClose {
-    val props = new Properties()
-    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-    props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, uuid)
-    new KafkaConsumer[K, V](props,
-                            KafkaUtil.wrapDeserializer(keySerializer),
-                            KafkaUtil.wrapDeserializer(valueSerializer))
+    Consumer
+      .builder(keySerializer, valueSerializer)
+      .topicName(topicName)
+      .brokers(brokers)
+      .fromBegin(true)
+      .groupId(uuid)
+      .build()
   }
 
   private[this] val producer = newOrClose {
@@ -124,43 +122,29 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     */
   private[this] val initializeConsumerLatch = new CountDownLatch(1)
   private[this] val poller = Future[Unit] {
-    var firstPoll = true
     try {
-      consumer.subscribe(util.Arrays.asList(topicName))
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
-          if (firstPoll) initializeConsumerLatch.countDown()
-          firstPoll = false
-          if (records != null) {
-            records
-            // TODO: throw exception if there are data from unknown topic? by chia
-              .records(topicName)
-              .forEach(record => {
-                val headers = record.headers().iterator()
-                var count = 0
-                var index: String = null
-                while (headers.hasNext) {
-                  if (count == 0) {
-                    val key = headers.next().key()
-                    // make sure we only store the record to which we sent
-                    if (key.startsWith(uuid)) {
-                      index = key
-                    }
-                    count += 1
-                  } else throw new IllegalArgumentException(s"The number of header should be 1")
-                }
-                val previous =
-                  if (record.value() == null) cache.remove(record.key()) else cache.update(record.key(), record.value())
-                // index != null means this record is sent by this node
-                if (index != null) {
+          val records = consumer.poll(pollTimeout)
+          initializeConsumerLatch.countDown()
+          records
+            .filter(_.topic.equals(topicName))
+            .foreach(record => {
+              if (record.headers.size != 1) throw new IllegalArgumentException(s"The number of header should be 1")
+              record.key.foreach(k => {
+                // If no value exist, remove the key. Otherwise, update the value mapped to the key
+                val previous: Option[V] = record.value.map(cache.update(k, _)).getOrElse(cache.remove(k))
+
+                val index = record.headers.head.key
+                // response the update sent by this topic store
+                if (index.startsWith(uuid)) {
                   commitResult.put(index, previous)
                   updateLock.synchronized {
                     updateLock.notifyAll()
                   }
                 }
               })
-          }
+            })
         } catch {
           case _: WakeupException => logger.debug("interrupted by ourself")
         }
@@ -168,7 +152,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     } catch {
       case e: Throwable => logger.error("failure when running the poller", e)
     } finally {
-      if (firstPoll) initializeConsumerLatch.countDown()
+      initializeConsumerLatch.countDown()
       TopicStore.this.close()
     }
   }
@@ -228,14 +212,14 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
 
   private def createHeader(uuid: String): Header = {
     new Header() {
-      private[this] val uuidIndex = uuid + "-" + HEADER_INDEX.getAndIncrement().toString
+      private[this] val uuidIndex = uuid + "-" + headerIndexer.getAndIncrement().toString
 
       override def key(): String = uuidIndex
 
       /**
         * @return an empty array since we don't use this field
         */
-      override def value(): Array[Byte] = TopicStore.EMPTY_ARRAY
+      override def value(): Array[Byte] = Array.emptyByteArray
     }
   }
 
@@ -243,17 +227,9 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     // first - remove the element from cache
     val rval = cache.take(timeout)
     // second - remove the element from kafka topic
-    rval.map {
+    rval.foreach {
       case (k, _) => remove(k)
     }
     rval
   }
-}
-
-private object TopicStore {
-
-  /**
-    * zero array. Used to be the value of header.
-    */
-  private val EMPTY_ARRAY = new Array[Byte](0)
 }

@@ -1,19 +1,19 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 
-import com.island.ohara.rest.ConnectorJson.{ConnectorRequest, ConnectorResponse}
+import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse}
 
 import scala.collection.mutable
 
 /**
   * Used to config and run the source connector.
   */
-abstract class SourceConnectorCreator extends ConnectorCreator {
+abstract class SourceConnectorBuilder extends ConnectorBuilder {
 
   /**
     * send the request to create the sink connector.
     * @return this one
     */
-  override def run(): ConnectorResponse = {
+  override def build(): ConnectorResponse = {
     checkArgument()
     if (topicNames.size != 1) throw new IllegalArgumentException("multi-topics is invalid for source connector")
     if (config == null) config = new mutable.HashMap[String, String]()

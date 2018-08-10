@@ -1,6 +1,5 @@
 package com.island.ohara.configurator.call
 
-import java.util
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
@@ -8,11 +7,10 @@ import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, T
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.serialization.OharaDataSerializer
+import com.island.ohara.kafka.{Consumer, KafkaUtil}
+import com.island.ohara.serialization.{OharaDataSerializer, Serializer}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.errors.WakeupException
 
@@ -77,23 +75,20 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     * used to receive the response.
     */
   private[this] val consumer = newOrClose {
-    val props = new Properties()
-    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-
-    /**
-      * the uuid of requestConsumer is random since we want to check all response.
-      */
-    props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, uuid)
-    props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
-    new KafkaConsumer[OharaData, OharaData](props,
-                                            KafkaUtil.wrapDeserializer(OharaDataSerializer),
-                                            KafkaUtil.wrapDeserializer(OharaDataSerializer))
+    Consumer
+      .builder(Serializer.OHARA_DATA, Serializer.OHARA_DATA)
+      .brokers(brokers)
+      // the uuid of requestConsumer is random since we want to check all response.
+      .groupId(uuid)
+      .fromBegin(false)
+      .topicName(topicName)
+      .build()
   }
 
   /**
     * Used to check whether consumer have completed the first poll.
     */
-  private[this] val initialLatch = new CountDownLatch(1)
+  private[this] val initializationLatch = new CountDownLatch(1)
 
   /**
     * store the response handler against the OharaResponse.
@@ -107,40 +102,35 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     * to the internal response handler used to accept the response and notify the user who is waiting for the response
     */
   private[this] val responseWorker = Future[Unit] {
-    var firstPoll = true
     try {
-      consumer.subscribe(util.Arrays.asList(topicName))
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(if (firstPoll) 0 else pollTimeout.toMillis)
-          if (firstPoll) initialLatch.countDown()
-          firstPoll = false
-          if (records != null) {
-            records
-            // TODO: throw exception if there are data from unknown topic? by chia
-              .records(topicName)
-              .forEach(record => {
-                record.key match {
+          val records = consumer.poll(pollTimeout)
+          initializationLatch.countDown()
+          records
+            .filter(_.topic.equals(topicName))
+            .foreach(record => {
+              record.key.foreach(k =>
+                k match {
                   case internalResponse: OharaResponse =>
-                    record.value match {
-                      case response: Response if (responseReceivers.containsKey(internalResponse.requestId)) => {
-                        // NOTED: the uuid we record is OharaRequest'd uuid
-                        responseReceivers.remove(internalResponse.requestId).complete(response)
-                      }
-                      case exception: OharaException if (responseReceivers.containsKey(internalResponse.requestId)) => {
-                        // NOTED: the uuid we record is OharaRequest'd uuid
-                        responseReceivers.remove(internalResponse.requestId).complete(exception)
-                      }
-                      case _ => // this response is not for this client
-                    }
+                    record.value.foreach(v =>
+                      v match {
+                        case response: Response if (responseReceivers.containsKey(internalResponse.requestId)) => {
+                          // NOTED: the uuid we record is OharaRequest'd uuid
+                          responseReceivers.remove(internalResponse.requestId).complete(response)
+                        }
+                        case exception: OharaException
+                            if (responseReceivers.containsKey(internalResponse.requestId)) => {
+                          // NOTED: the uuid we record is OharaRequest'd uuid
+                          responseReceivers.remove(internalResponse.requestId).complete(exception)
+                        }
+                        case _ => // this response is not for this client
+                    })
                   case _: OharaRequest => // This is call queue server's job
                   case _ =>
-                    logger.error(
-                      s"unsupported key:" + (if (record.key() == null) "null" else record.key().getClass.getName)
-                        + " the supported key by call queue client is OharaResponse")
-                }
+                    logger.error(s"unsupported key:$k. The supported key by call queue client is OharaResponse")
               })
-          }
+            })
         } catch {
           case _: WakeupException => logger.debug("interrupted by ourself")
         }
@@ -148,7 +138,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     } catch {
       case e: Throwable => logger.error("failure when running the responseWorker", e)
     } finally {
-      if (firstPoll) initialLatch.countDown()
+      initializationLatch.countDown()
       close()
     }
   }
@@ -186,7 +176,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     notifierOfDustman.notifyAll()
   }
 
-  if (!initialLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
+  if (!initializationLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
     close()
     throw new IllegalArgumentException(s"timeout to initialize the call queue server")
   }

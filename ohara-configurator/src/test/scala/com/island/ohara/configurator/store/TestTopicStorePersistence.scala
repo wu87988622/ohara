@@ -1,14 +1,10 @@
 package com.island.ohara.configurator.store
 
-import java.util
-import java.util.Properties
-
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.integration.{OharaTestUtil, With3Blockers}
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.serialization.StringSerializer
-import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer, OffsetResetStrategy}
+import com.island.ohara.kafka.Consumer
+import com.island.ohara.serialization.{Serializer, StringSerializer}
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.Test
 import org.scalatest.Matchers
@@ -19,7 +15,8 @@ class TestTopicStorePersistence extends With3Blockers with Matchers {
 
   @Test
   def testRetention(): Unit = {
-    val topicName = "testRetention"
+    val specifiedKey = "specifiedKey"
+    val topicName = methodName
     val numberOfOtherMessages = 2048
     doClose(
       Store
@@ -27,53 +24,40 @@ class TestTopicStorePersistence extends With3Blockers with Matchers {
         .brokers(testUtil.brokersString)
         .topicName(topicName)
         // make small retention so as to trigger log clear
-        .topicOptions(Map(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG -> 1000.toString,
-                          TopicConfig.SEGMENT_BYTES_CONFIG -> 1024.toString))
+        .topicOptions(
+          Map(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG -> "1000", TopicConfig.SEGMENT_BYTES_CONFIG -> "1024"))
         .build()) { store =>
       {
-        0 until 10 foreach (index => store.update("key", index.toString))
+        0 until 10 foreach (index => store.update(specifiedKey, index.toString))
         // the local cache do the de-duplicate
         store.size shouldBe 1
         store.iterator.next()._2 shouldBe 9.toString
 
         0 until numberOfOtherMessages foreach (index => store.update(index.toString, index.toString))
+        store.size shouldBe (numberOfOtherMessages + 1)
       }
     }
-    def checkContentOfTopic(): (Int, Int) = {
-      val config = new Properties()
-      config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, testUtil.brokersString)
-      config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-      config.put(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
-      doClose(
-        new KafkaConsumer[String, String](config,
-                                          KafkaUtil.wrapDeserializer(StringSerializer),
-                                          KafkaUtil.wrapDeserializer(StringSerializer))) { consumer =>
-        {
-          consumer.subscribe(util.Arrays.asList(topicName))
-          val messageBuffer = new ArrayBuffer[String]()
-          import scala.collection.JavaConverters._
-          var done = false
-          while (!done) {
-            val records: ConsumerRecords[String, String] = consumer.poll(5 * 1000)
-            if (records == null || records.isEmpty) done = true
-            else {
-              records
-                .records(topicName)
-                .asScala
-                .foreach(record => {
-                  messageBuffer += record.key()
-                })
-            }
-          }
-          (messageBuffer.filter(_.equals("key")).size, messageBuffer.filterNot(_.equals("key")).size)
-        }
-      }
-    }
-
     import scala.concurrent.duration._
-    OharaTestUtil.await(() => {
-      val result = checkContentOfTopic()
-      result._1 == 1 && result._2 == numberOfOtherMessages
-    }, 60 seconds)
+    def verifyTopicContent(timeout: Duration): Boolean = doClose(
+      Consumer
+        .builder(Serializer.STRING, Serializer.STRING)
+        .brokers(testUtil.brokersString)
+        .fromBegin(true)
+        .groupId(UuidUtil.uuid())
+        .topicName(topicName)
+        .build()) { consumer =>
+      {
+        val messageBuffer = new ArrayBuffer[String]()
+        def checkBuffer(): Boolean = messageBuffer.filter(_.equals(specifiedKey)).size == 1 && messageBuffer
+          .filterNot(_.equals(specifiedKey))
+          .size == numberOfOtherMessages
+        val endtime = System.currentTimeMillis() + timeout.toMillis
+        while (!checkBuffer() && System.currentTimeMillis() < endtime)(consumer
+          .poll(5 seconds)
+          .foreach(_.key.foreach(messageBuffer += _)))
+        checkBuffer()
+      }
+    }
+    OharaTestUtil.await(() => verifyTopicContent(10 seconds), 30 seconds)
   }
 }

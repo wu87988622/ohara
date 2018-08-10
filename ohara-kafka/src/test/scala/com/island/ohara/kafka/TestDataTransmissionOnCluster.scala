@@ -1,18 +1,16 @@
 package com.island.ohara.kafka
 
-import java.util
-
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
-import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.kafka.connector.{
   SimpleRowSinkConnector,
   SimpleRowSinkTask,
   SimpleRowSourceConnector,
   SimpleRowSourceTask
 }
-import com.island.ohara.serialization.RowSerializer
+import com.island.ohara.serialization.{RowSerializer, Serializer}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{
   ByteArrayDeserializer,
@@ -81,7 +79,7 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
       .topic(topicName)
       .taskNumber(1)
       .disableConverter
-      .run()
+      .build()
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
@@ -109,19 +107,17 @@ class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers 
       .taskNumber(1)
       .disableConverter
       .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
-      .run()
+      .build()
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
-    doClose(new RowConsumer[Array[Byte]](testUtil.consumerConfig.toProperties, new ByteArrayDeserializer)) { consumer =>
-      {
-        consumer.subscribe(util.Arrays.asList(topicName))
-        val list =
-          Iterator.continually(consumer.poll(30 * 1000)).takeWhile(record => record != null && !record.isEmpty).toList
-        // check the number of rows consumer has received
-        list.map(_.count()).sum shouldBe pollCountMax * SimpleRowSourceTask.rows.length
-      }
-    }
+    doClose(
+      Consumer
+        .builder(Serializer.BYTES, Serializer.ROW)
+        .brokers(testUtil.brokersString)
+        .topicName(topicName)
+        .fromBegin(true)
+        .build()) { _.poll(20 seconds).size shouldBe pollCountMax * SimpleRowSourceTask.rows.length }
   }
 
   /**

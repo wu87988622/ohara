@@ -34,4 +34,5 @@ object Serializer {
   val BOOLEAN = BooleanSerializer
   val OHARA_DATA = OharaDataSerializer
   val OBJECT = ObjectSerializer
+  val ROW = RowSerializer
 }

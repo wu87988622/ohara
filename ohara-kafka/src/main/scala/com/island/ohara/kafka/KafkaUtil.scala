@@ -93,7 +93,7 @@ object KafkaUtil {
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
       .topicName(topicName)
-      .create()
+      .build()
   }
 
 }

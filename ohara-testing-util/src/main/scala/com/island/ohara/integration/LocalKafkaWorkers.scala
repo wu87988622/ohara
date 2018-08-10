@@ -33,7 +33,7 @@ private class LocalKafkaWorkers private[integration] (brokersConn: String,
   private[this] val validPorts = resolvePorts(ports)
   logger.info(s"ports used in LocalKafkaWorkers are ${validPorts.mkString(",")}")
   val connects = new Array[Connect](validPorts.size)
-  val workers = new Array[Worker](validPorts.size)
+  val kafkaWorkers = new Array[Worker](validPorts.size)
   val restServers = new Array[RestServer](validPorts.size)
 
   def pickRandomRestServer(): RestServer = restServers(Random.nextInt(restServers.size))
@@ -101,12 +101,12 @@ private class LocalKafkaWorkers private[integration] (brokersConn: String,
       val connect = new Connect(herder, rest)
       connect.start()
       restServers.update(index, rest)
-      workers.update(index, worker)
+      kafkaWorkers.update(index, worker)
       connects.update(index, connect)
     }
   }
 
-  val workersString: String = validPorts.map("localhost:" + _).mkString(",")
+  val workers: String = validPorts.map("localhost:" + _).mkString(",")
 
   override protected def doClose(): Unit = {
     connects.foreach(_.stop())

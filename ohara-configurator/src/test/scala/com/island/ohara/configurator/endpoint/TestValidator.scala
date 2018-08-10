@@ -2,13 +2,15 @@ package com.island.ohara.configurator.endpoint
 
 import com.island.ohara.integration.With3Blockers3Workers
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rest.ConfiguratorJson.{HdfsValidationRequest, ValidationReport}
+import com.island.ohara.client.ConfiguratorJson.{HdfsValidationRequest, ValidationReport}
+import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 class TestValidator extends With3Blockers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val connectorClient = testUtil.connectorClient()
+  private[this] val kafkaClient = KafkaClient(testUtil.brokersString)
 
   @Before
   def setup(): Unit = {
@@ -22,7 +24,7 @@ class TestValidator extends With3Blockers3Workers with Matchers {
 
   @Test
   def testValidationOfHdfs(): Unit = {
-    evaluate(Validator.run(connectorClient, testUtil.brokersString, HdfsValidationRequest("file:///tmp"), taskCount))
+    evaluate(Validator.run(connectorClient, kafkaClient, HdfsValidationRequest("file:///tmp"), taskCount))
   }
 
   // TODO: add test against RDB. by chia
@@ -30,5 +32,6 @@ class TestValidator extends With3Blockers3Workers with Matchers {
   @After
   def tearDown(): Unit = {
     CloseOnce.close(connectorClient)
+    CloseOnce.close(kafkaClient)
   }
 }

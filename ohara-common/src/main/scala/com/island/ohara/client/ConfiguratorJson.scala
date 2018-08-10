@@ -1,4 +1,4 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 import com.island.ohara.serialization.DataType
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 

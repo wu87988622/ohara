@@ -61,7 +61,7 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
       .taskNumber(sinkTasks)
       .disableConverter
       .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
-      .run()
+      .build()
 
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get("topics") == connectorName, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
@@ -114,7 +114,7 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
         hdfsCreatorClassName -> hdfsCreatorClassNameValue,
         dataDirName -> dataDirPath
       ))
-      .run()
+      .build()
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
@@ -179,7 +179,7 @@ class TestHDFSSinkConnector extends With3Blockers3Workers3DataNodes with Matcher
         hdfsCreatorClassName -> hdfsCreatorClassNameValue,
         dataDirName -> dataDirPath
       ))
-      .run()
+      .build()
 
     TimeUnit.SECONDS.sleep(5)
     storage

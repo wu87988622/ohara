@@ -7,8 +7,8 @@ import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.rest.ConfiguratorJson._
-import com.island.ohara.rest.{ConfiguratorClient, ConnectorClient}
+import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.serialization.{DataType, Serializer}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -34,7 +34,7 @@ class TestConfigurator extends With3Blockers3Workers with Matchers {
           .brokers(testUtil.brokersString)
           .build())
       .kafkaClient(KafkaClient(testUtil.brokersString))
-      .connectClient(ConnectorClient(testUtil.workersString))
+      .connectClient(ConnectorClient(testUtil.workers))
       .build()
 
   private[this] val configurator1 =
@@ -200,7 +200,7 @@ class TestConfigurator extends With3Blockers3Workers with Matchers {
     // only test the configurator based on mini cluster
     val clusterInformation = client0.cluster[ClusterInformation]
     clusterInformation.brokers shouldBe testUtil.brokersString
-    clusterInformation.workers shouldBe testUtil.workersString
+    clusterInformation.workers shouldBe testUtil.workers
   }
 
   @Test
@@ -235,7 +235,7 @@ class TestConfigurator extends With3Blockers3Workers with Matchers {
                 Configurator.BROKERS_KEY,
                 util.brokersString,
                 Configurator.WORKERS_KEY,
-                util.workersString,
+                util.workers,
                 Configurator.TOPIC_KEY,
                 methodName
               ))

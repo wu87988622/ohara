@@ -1,14 +1,14 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 import java.util.Objects
 
-import com.island.ohara.rest.ConnectorJson.ConnectorResponse
+import com.island.ohara.client.ConnectorJson.ConnectorResponse
 
 import scala.collection.mutable
 
 /**
   * a base class used to collect the config of source/sink connector when creating
   */
-abstract class ConnectorCreator {
+abstract class ConnectorBuilder {
   protected var name: String = _
   protected var clzName: String = _
   protected var topicNames: Seq[String] = _
@@ -132,7 +132,7 @@ abstract class ConnectorCreator {
     *
     * @return this one
     */
-  def run(): ConnectorResponse
+  def build(): ConnectorResponse
 
   protected def checkArgument(): Unit = {
     Objects.requireNonNull(name)

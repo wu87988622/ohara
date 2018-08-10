@@ -1,7 +1,7 @@
 package com.island.ohara.integration
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.rest.ConnectorJson.ConnectorResponse
+import com.island.ohara.client.ConnectorJson.ConnectorResponse
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.Test
@@ -57,7 +57,7 @@ class TestMiniKafka extends With3Blockers3Workers with Matchers {
           .topic(topicName)
           .taskNumber(sourceTasks)
           .config("key0", "value0")
-          .run()
+          .build()
         resp.name shouldBe sourceConnectorName
         // TODO: enable following check after KAFKA-7253 is resolved. by chia
         // resp.typeName shouldBe "source"
@@ -74,7 +74,7 @@ class TestMiniKafka extends With3Blockers3Workers with Matchers {
           .topic(topicName)
           .taskNumber(sinkTasks)
           .config("key0", "value0")
-          .run()
+          .build()
 
         resp.name shouldBe sinkConnectorName
         // TODO: enable following check after KAFKA-7253 is resolved. by chia

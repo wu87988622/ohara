@@ -14,8 +14,8 @@ import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.store.{Store, StoreBuilder}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.rest.ConfiguratorJson._
-import com.island.ohara.rest.ConnectorClient
+import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -124,7 +124,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
               .topicName(topicInfo.uuid)
               .numberOfPartitions(topicInfo.numberOfPartitions)
               .numberOfReplications(topicInfo.numberOfReplications)
-              .create()
+              .build()
             updateData(topicInfo.uuid, topicInfo)
             complete(topicInfo)
           }
@@ -188,7 +188,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     put {
       entity(as[HdfsValidationRequest]) { request =>
         {
-          val reports = Validator.run(connectClient, kafkaClient.brokersString, request, 3)
+          val reports = Validator.run(connectClient, kafkaClient, request, 3)
           if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
           complete(reports)
         }
@@ -199,7 +199,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
   //-----------------------------------------------[cluster]-----------------------------------------------//
   private[this] val clusterRoute = path(CLUSTER_PATH) {
     get {
-      complete(ClusterInformation(kafkaClient.brokersString, connectClient.workersString))
+      complete(ClusterInformation(kafkaClient.brokers, connectClient.workers))
     }
   }
 

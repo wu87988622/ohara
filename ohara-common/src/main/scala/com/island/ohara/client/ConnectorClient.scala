@@ -1,4 +1,4 @@
-package com.island.ohara.rest
+package com.island.ohara.client
 import java.net.HttpRetryException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -11,7 +11,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, Request
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.rest.ConnectorJson._
+import com.island.ohara.client.ConnectorJson._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,9 +23,9 @@ import scala.util.Random
   */
 trait ConnectorClient extends CloseOnce {
 
-  def sourceConnectorCreator(): SourceConnectorCreator
+  def sourceConnectorCreator(): SourceConnectorBuilder
 
-  def sinkConnectorCreator(): SinkConnectorCreator
+  def sinkConnectorCreator(): SinkConnectorBuilder
 
   def delete(name: String): Unit
 
@@ -33,7 +33,7 @@ trait ConnectorClient extends CloseOnce {
 
   def activeConnectors(): Seq[String]
 
-  def workersString: String
+  def workers: String
 }
 
 object ConnectorClient {
@@ -41,20 +41,20 @@ object ConnectorClient {
   import scala.concurrent.duration._
   val TIMEOUT = 10 seconds
 
-  def apply(_workersString: String): ConnectorClient = {
-    val workers = _workersString.split(",")
-    if (workers.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_workersString}")
+  def apply(_workers: String): ConnectorClient = {
+    val workerList = _workers.split(",")
+    if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_workers}")
     new ConnectorClient() with SprayJsonSupport {
-      private[this] def workerAddress: String = workers(Random.nextInt(workers.size))
+      private[this] val workerAddress: String = workerList(Random.nextInt(workerList.size))
 
       private[this] implicit val actorSystem = ActorSystem(
         s"${classOf[ConnectorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
 
       private[this] implicit val actorMaterializer = ActorMaterializer()
 
-      override def sourceConnectorCreator(): SourceConnectorCreator = (request: ConnectorRequest) => send(request)
+      override def sourceConnectorCreator(): SourceConnectorBuilder = (request: ConnectorRequest) => send(request)
 
-      override def sinkConnectorCreator(): SinkConnectorCreator = (request: ConnectorRequest) => send(request)
+      override def sinkConnectorCreator(): SinkConnectorBuilder = (request: ConnectorRequest) => send(request)
 
       private[this] def send(request: ConnectorRequest): ConnectorResponse = Await.result(
         Marshal(request)
@@ -117,7 +117,7 @@ object ConnectorClient {
                 Future.failed(new IllegalStateException(error.toString))
               }
             })
-      override def workersString: String = _workersString
+      override def workers: String = _workers
     }
   }
 }
