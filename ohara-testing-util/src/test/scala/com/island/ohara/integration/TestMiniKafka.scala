@@ -9,7 +9,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
-class TestMiniKafka extends With3Blockers3Workers with Matchers {
+class TestMiniKafka extends With3Brokers3Workers with Matchers {
 
   @Test
   def testCreateClusterWithMultiBrokers(): Unit = {

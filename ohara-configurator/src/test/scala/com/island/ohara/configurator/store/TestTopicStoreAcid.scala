@@ -3,7 +3,7 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.integration.With3Blockers
+import com.island.ohara.integration.With3Brokers
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.serialization.StringSerializer
 import org.junit.{After, Test}
@@ -12,7 +12,7 @@ import org.scalatest.Matchers
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
-class TestTopicStoreAcid extends With3Blockers with Matchers {
+class TestTopicStoreAcid extends With3Brokers with Matchers {
   val store = Store
     .builder(StringSerializer, StringSerializer)
     .brokers(testUtil.brokersString)

@@ -1,13 +1,13 @@
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.integration.With3Blockers3Workers
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.client.ConfiguratorJson.{HdfsValidationRequest, ValidationReport}
 import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-class TestValidator extends With3Blockers3Workers with Matchers {
+class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val connectorClient = testUtil.connectorClient()
   private[this] val kafkaClient = KafkaClient(testUtil.brokersString)

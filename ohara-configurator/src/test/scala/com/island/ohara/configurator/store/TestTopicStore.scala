@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.integration.{OharaTestUtil, With3Blockers}
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.{close, _}
 import com.island.ohara.serialization.StringSerializer
 import org.junit._
@@ -8,7 +8,7 @@ import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-class TestTopicStore extends With3Blockers with Matchers {
+class TestTopicStore extends With3Brokers with Matchers {
 
   private[this] var store: Store[String, String] = _
 

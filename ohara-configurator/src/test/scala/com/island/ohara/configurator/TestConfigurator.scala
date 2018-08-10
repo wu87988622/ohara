@@ -3,7 +3,7 @@ package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.KafkaClient
@@ -19,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * this test includes two configurators - with/without cluster.
   * All test cases should work with all configurators.
   */
-class TestConfigurator extends With3Blockers3Workers with Matchers {
+class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   private[this] val configurator0 =
     Configurator.builder

@@ -4,7 +4,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.data.{OharaSource, OharaTarget}
-import com.island.ohara.integration.{OharaTestUtil, With3Blockers}
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
@@ -13,7 +13,7 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class TestCallQueue extends With3Blockers with Matchers {
+class TestCallQueue extends With3Brokers with Matchers {
 
   private[this] val topicName = getClass.getSimpleName
   private[this] val groupId = UuidUtil.uuid()

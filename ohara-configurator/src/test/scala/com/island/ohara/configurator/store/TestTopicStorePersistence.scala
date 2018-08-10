@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.store
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.integration.{OharaTestUtil, With3Blockers}
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.serialization.{Serializer, StringSerializer}
@@ -11,7 +11,7 @@ import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 
-class TestTopicStorePersistence extends With3Blockers with Matchers {
+class TestTopicStorePersistence extends With3Brokers with Matchers {
 
   @Test
   def testRetention(): Unit = {

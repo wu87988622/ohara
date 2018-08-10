@@ -1,12 +1,12 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.integration.With3Blockers
+import com.island.ohara.integration.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-class TestCallQueueServerBuilder extends With3Blockers with Matchers {
+class TestCallQueueServerBuilder extends With3Brokers with Matchers {
 
   @Test
   def testIncompleteArguments(): Unit = {

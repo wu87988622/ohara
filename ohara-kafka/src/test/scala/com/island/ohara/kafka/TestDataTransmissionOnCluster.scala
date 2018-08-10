@@ -1,7 +1,7 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.{OharaTestUtil, With3Blockers3Workers}
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.kafka.connector.{
@@ -23,7 +23,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
-class TestDataTransmissionOnCluster extends With3Blockers3Workers with Matchers {
+class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] val connectorClient = testUtil.connectorClient()
   @Before
