@@ -1,7 +1,5 @@
 package com.island.ohara.source.http
 
-import java.io.StringReader
-import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 
 import akka.actor.{Actor, ActorLogging}
@@ -9,14 +7,13 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
 import com.island.ohara.data.Row
-import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.serialization.RowSerializer
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig}
-import org.apache.kafka.common.serialization.StringSerializer
+import com.island.ohara.kafka.Producer
+import com.island.ohara.serialization.Serializer
+import org.apache.kafka.clients.producer.ProducerConfig
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 /**
   * This actor uses for start or stop Akka-HTTP at runtime.
@@ -25,7 +22,7 @@ import scala.concurrent.duration._
 class HttpConnectorActor extends Actor with ActorLogging {
 
   private var server: Future[ServerBinding] = _
-  private var producer: KafkaProducer[String, Row] = _
+  private var producer: Producer[String, Row] = _
   private var schemaMap: ConcurrentHashMap[String, (String, RowSchema)] = _
   private implicit val system = context.system
   private implicit var materializer: ActorMaterializer = _
@@ -40,24 +37,11 @@ class HttpConnectorActor extends Actor with ActorLogging {
           materializer = ActorMaterializer()
           executor = system.dispatcher
 
-          val configString =
-            s"""
-               |${ProducerConfig.ACKS_CONFIG}=all
-               |${ProducerConfig.BOOTSTRAP_SERVERS_CONFIG}=${config
-                 .getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG)
-                 .asScala
-                 .mkString(",")}
-           """.stripMargin
-
-          val prop = new Properties()
-
-          prop.load(new StringReader(configString))
-
-          producer = new KafkaProducer[String, Row](
-            prop,
-            new StringSerializer,
-            KafkaUtil.wrapSerializer(RowSerializer)
-          )
+          producer = Producer
+            .builder(Serializer.STRING, Serializer.ROW)
+            .brokers(config.getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG).asScala.mkString(","))
+            .allAcks()
+            .build()
 
           schemaMap = new ConcurrentHashMap[String, (String, RowSchema)]()
 

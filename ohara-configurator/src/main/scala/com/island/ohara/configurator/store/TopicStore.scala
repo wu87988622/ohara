@@ -1,20 +1,15 @@
 package com.island.ohara.configurator.store
 
-import java.util
-import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.{Consumer, KafkaClient, KafkaUtil}
+import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
-import org.apache.kafka.common.header.Header
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -109,10 +104,9 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   }
 
   private[this] val producer = newOrClose {
-    val props = new Properties()
-    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    new KafkaProducer[K, V](props, KafkaUtil.wrapSerializer(keySerializer), KafkaUtil.wrapSerializer(valueSerializer))
+    Producer.builder(keySerializer, valueSerializer).brokers(brokers).build()
   }
+
   private[this] val updateLock = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
   private[this] val cache = newOrClose(Store.inMemory(keySerializer, valueSerializer))
@@ -204,23 +198,10 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   }
 
   private[this] def send(key: K, value: V = null.asInstanceOf[V]): String = {
-    val header = createHeader(uuid)
-    producer.send(new ProducerRecord[K, V](topicName, null, key, value, util.Arrays.asList(header)))
+    val header = Header(s"$uuid-${headerIndexer.getAndIncrement().toString}", Array.emptyByteArray)
+    producer.sender().topic(topicName).header(header).key(key).value(value).send()
     producer.flush()
-    header.key()
-  }
-
-  private def createHeader(uuid: String): Header = {
-    new Header() {
-      private[this] val uuidIndex = uuid + "-" + headerIndexer.getAndIncrement().toString
-
-      override def key(): String = uuidIndex
-
-      /**
-        * @return an empty array since we don't use this field
-        */
-      override def value(): Array[Byte] = Array.emptyByteArray
-    }
+    header.key
   }
 
   override def take(timeout: Duration): Option[(K, V)] = {

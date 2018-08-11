@@ -31,9 +31,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .numberOfPartitions(1)
           .numberOfReplications(1)
           .topicName(classOf[TestConfigurator].getSimpleName)
-          .brokers(testUtil.brokersString)
+          .brokers(testUtil.brokers)
           .build())
-      .kafkaClient(KafkaClient(testUtil.brokersString))
+      .kafkaClient(KafkaClient(testUtil.brokers))
       .connectClient(ConnectorClient(testUtil.workers))
       .build()
 
@@ -199,7 +199,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testClusterInformation(): Unit = {
     // only test the configurator based on mini cluster
     val clusterInformation = client0.cluster[ClusterInformation]
-    clusterInformation.brokers shouldBe testUtil.brokersString
+    clusterInformation.brokers shouldBe testUtil.brokers
     clusterInformation.workers shouldBe testUtil.workers
   }
 
@@ -233,7 +233,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
                 Configurator.PORT_KEY,
                 "0",
                 Configurator.BROKERS_KEY,
-                util.brokersString,
+                util.brokers,
                 Configurator.WORKERS_KEY,
                 util.workers,
                 Configurator.TOPIC_KEY,

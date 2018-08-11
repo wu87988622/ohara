@@ -1,17 +1,14 @@
 package com.island.ohara.configurator.call
 
-import java.util.Properties
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.data.{OharaData, OharaException}
 import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.{Consumer, KafkaUtil}
-import com.island.ohara.serialization.{OharaDataSerializer, Serializer}
+import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
+import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.errors.WakeupException
 
 import scala.concurrent.duration._
@@ -64,11 +61,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     * used to publish the request.
     */
   private[this] val producer = newOrClose {
-    val props = new Properties()
-    props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    new KafkaProducer[OharaData, OharaData](props,
-                                            KafkaUtil.wrapSerializer(OharaDataSerializer),
-                                            KafkaUtil.wrapSerializer(OharaDataSerializer))
+    Producer.builder(Serializer.OHARA_DATA, Serializer.OHARA_DATA).brokers(brokers).build()
   }
 
   /**
@@ -190,7 +183,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
     val receiver = new ResponseReceiver(internalRequest.uuid, lease)
     responseReceivers.put(internalRequest.uuid, receiver)
     try {
-      producer.send(new ProducerRecord[OharaData, OharaData](topicName, null, internalRequest, request, null))
+      producer.sender().topic(topicName).key(internalRequest).value(request).send()
       producer.flush()
     } catch {
       case exception: Throwable => {

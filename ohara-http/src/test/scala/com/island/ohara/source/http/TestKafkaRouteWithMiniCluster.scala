@@ -1,29 +1,23 @@
 package com.island.ohara.source.http
 
-import java.io.StringReader
-import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.island.ohara.data.Row
-import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.rule.MediumTest
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
+import com.island.ohara.kafka.{KafkaUtil, Producer}
 import com.island.ohara.serialization.DataType._
 import com.island.ohara.serialization._
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{KafkaProducer, Producer, ProducerConfig}
-import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
-import org.junit.{After, Test}
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
 class TestKafkaRouteWithMiniCluster
-    extends MediumTest
+    extends With3Brokers
     with Matchers
     with ScalaFutures
     with ScalatestRouteTest
@@ -34,23 +28,10 @@ class TestKafkaRouteWithMiniCluster
     this.put("test", ("test", RowSchema(schema)))
   }
 
-  private[this] val testUtil = OharaTestUtil.localBrokers(3)
-  private def buildProducer(servers: String): Producer[String, Row] = {
-    val prop = new Properties()
-    val configString =
-      s"""
-         |${ProducerConfig.ACKS_CONFIG}=all
-         |${ProducerConfig.BOOTSTRAP_SERVERS_CONFIG}=$servers
-       """.stripMargin
-    prop.load(new StringReader(configString))
-    new KafkaProducer[String, Row](prop, new StringSerializer, KafkaUtil.wrapSerializer(RowSerializer))
-  }
-
   @Test
   def shouldReturnNotFoundWhenUrlNotExist(): Unit = {
     val request = HttpRequest(uri = "/abcd")
-    val producer =
-      buildProducer(testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get)
+    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
 
     try {
       val route = kafkaRoute(producer, map)
@@ -63,15 +44,14 @@ class TestKafkaRouteWithMiniCluster
   @Test
   def shouldReturnOkWhenUrlExist(): Unit = {
     val request = HttpRequest(uri = "/test")
-    val producer =
-      buildProducer(testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get)
+    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
 
     try {
       val route = kafkaRoute(producer, map)
       request ~> Route.seal(route) ~> check {
         status should ===(StatusCodes.OK)
       }
-    } finally producer.close
+    } finally producer.close()
   }
 
   @Test
@@ -97,8 +77,7 @@ class TestKafkaRouteWithMiniCluster
         |}
       """.stripMargin
 
-    val producer =
-      buildProducer(testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get)
+    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
@@ -114,7 +93,7 @@ class TestKafkaRouteWithMiniCluster
           row.seekCell(i).value shouldBe value
         }
       }
-    } finally producer.close
+    } finally producer.close()
   }
 
   @Test
@@ -140,18 +119,12 @@ class TestKafkaRouteWithMiniCluster
          |}
       """.stripMargin
 
-    val producer =
-      buildProducer(testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get)
+    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
         status should ===(StatusCodes.BadRequest)
       }
-    } finally producer.close
-  }
-
-  @After
-  def tearDown(): Unit = {
-    testUtil.close()
+    } finally producer.close()
   }
 }

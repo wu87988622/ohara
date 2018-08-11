@@ -8,9 +8,9 @@ import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import com.island.ohara.data.{Cell, Row, RowBuilder}
+import com.island.ohara.kafka.{Producer, RecordMetadata}
 import com.island.ohara.serialization.DataType._
 import com.island.ohara.serialization._
-import org.apache.kafka.clients.producer.{Callback, Producer, ProducerRecord, RecordMetadata}
 import spray.json.{JsBoolean, JsString, JsValue}
 
 import scala.concurrent.{Future, Promise}
@@ -18,14 +18,6 @@ import scala.util.{Failure, Success, Try}
 
 final case class CSV(row: List[JsValue])
 final case class SchemaException(private val message: String) extends Exception(message)
-class KafkaCallBack(val promise: Promise[RecordMetadata]) extends Callback {
-  override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-    val result =
-      if (exception == null) Success(metadata)
-      else Failure(exception)
-    promise.complete(result)
-  }
-}
 
 /**
   * Use to construct routing logic of HTTP post to Kafka Producer
@@ -57,11 +49,16 @@ trait KafkaRoute extends Directives with CsvSupport {
           transform(csv.row, oharaSchema.schema) match {
             case Success(oharaRow) => {
               val promise = Promise[RecordMetadata]()
-              producer.send(
-                // UUID for preventing hotspot
-                new ProducerRecord[String, Row](kafkaTopic, UUID.randomUUID().toString, oharaRow),
-                new KafkaCallBack(promise)
-              )
+              producer
+                .sender()
+                .topic(kafkaTopic)
+                .key(UUID.randomUUID().toString)
+                .value(oharaRow)
+                .send((meta: Either[Throwable, RecordMetadata]) =>
+                  meta match {
+                    case Left(e)  => promise.failure(e)
+                    case Right(m) => promise.success(m)
+                })
               promise.future
             }
             case Failure(e) =>
@@ -111,7 +108,7 @@ trait KafkaRoute extends Directives with CsvSupport {
     }
     if (rows.size != types.size) {
       log.info(s"JSON didn't match supported schema.")
-      Failure(throw SchemaException("JSON didn't match supported schema."))
+      Failure(SchemaException("JSON didn't match supported schema."))
     } else {
       Try(buildRow(Row.builder, rows zip types))
     }

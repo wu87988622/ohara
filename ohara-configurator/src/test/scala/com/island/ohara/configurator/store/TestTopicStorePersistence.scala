@@ -9,8 +9,6 @@ import org.apache.kafka.common.config.TopicConfig
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.collection.mutable.ArrayBuffer
-
 class TestTopicStorePersistence extends With3Brokers with Matchers {
 
   @Test
@@ -21,7 +19,7 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
     doClose(
       Store
         .builder(StringSerializer, StringSerializer)
-        .brokers(testUtil.brokersString)
+        .brokers(testUtil.brokers)
         .topicName(topicName)
         // make small retention so as to trigger log clear
         .topicOptions(
@@ -41,23 +39,18 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
     def verifyTopicContent(timeout: Duration): Boolean = doClose(
       Consumer
         .builder(Serializer.STRING, Serializer.STRING)
-        .brokers(testUtil.brokersString)
+        .brokers(testUtil.brokers)
         .fromBegin(true)
         .groupId(UuidUtil.uuid())
         .topicName(topicName)
         .build()) { consumer =>
       {
-        val messageBuffer = new ArrayBuffer[String]()
-        def checkBuffer(): Boolean = messageBuffer.filter(_.equals(specifiedKey)).size == 1 && messageBuffer
+        val keys = consumer.poll(timeout, numberOfOtherMessages + 1).map(_.key.get)
+        keys.filter(_.equals(specifiedKey)).size == 1 && keys
           .filterNot(_.equals(specifiedKey))
           .size == numberOfOtherMessages
-        val endtime = System.currentTimeMillis() + timeout.toMillis
-        while (!checkBuffer() && System.currentTimeMillis() < endtime)(consumer
-          .poll(5 seconds)
-          .foreach(_.key.foreach(messageBuffer += _)))
-        checkBuffer()
       }
     }
-    OharaTestUtil.await(() => verifyTopicContent(10 seconds), 30 seconds)
+    OharaTestUtil.await(() => verifyTopicContent(10 seconds), 20 seconds)
   }
 }

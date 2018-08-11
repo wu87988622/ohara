@@ -7,6 +7,7 @@ import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 
 /**
@@ -22,6 +23,24 @@ trait Consumer[K, V] extends CloseOnce {
     * @return records
     */
   def poll(timeout: Duration): Seq[ConsumerRecord[K, V]]
+
+  /**
+    * It accept another condition - expected size of records. Somethins it is helpful if you already know
+    * the number of records which should be returned.
+    * @param timeout timeout
+    * @param expectedSize the number of records should be returned
+    */
+  def poll(timeout: Duration, expectedSize: Int): Seq[ConsumerRecord[K, V]] = {
+    val buf = new ArrayBuffer[ConsumerRecord[K, V]](expectedSize)
+    val endtime = System.currentTimeMillis() + timeout.toMillis
+    var ramaining = endtime - System.currentTimeMillis()
+    while (buf.size < expectedSize && ramaining > 0) {
+      import scala.concurrent.duration._
+      buf ++= poll(ramaining millis)
+      ramaining = endtime - System.currentTimeMillis()
+    }
+    buf
+  }
 
   /**
     * @return the topic names subscribed by this consumer
@@ -42,10 +61,10 @@ object Consumer {
 }
 
 class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
-  private[this] var fromBegin = false
-  private[this] var topicNames: Seq[String] = _
-  private[this] var groupId: String = s"ohara-consumer-${Consumer.CONSUMER_ID.getAndIncrement().toString}"
-  private[this] var brokers: String = _
+  protected var fromBegin = false
+  protected var topicNames: Seq[String] = _
+  protected var groupId: String = s"ohara-consumer-${Consumer.CONSUMER_ID.getAndIncrement().toString}"
+  protected var brokers: String = _
 
   /**
     * @param fromBegin true if you want to receive all un-deleted message from subscribed topics
@@ -132,8 +151,6 @@ class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSerialize
     override def wakeup(): Unit = kafkaConsumer.wakeup()
   }
 }
-
-case class Header(key: String, value: Array[Byte])
 
 /**
   * a scala wrap of kafka's consumer record.

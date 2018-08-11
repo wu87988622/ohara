@@ -18,7 +18,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     store.get("aa") shouldBe Some("bb")
     store.close()
     val another =
-      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokersString).topicName(methodName).build()
+      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build()
     try {
       OharaTestUtil.await(() => another.get("aa").isDefined, 10 seconds)
       another.get("aa") shouldBe Some("bb")
@@ -34,7 +34,7 @@ class TestTopicStore extends With3Brokers with Matchers {
   def testMultiStore(): Unit = {
     val numberOfStore = 5
     val stores = 0 until numberOfStore map (index =>
-      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokersString).topicName(methodName).build())
+      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build())
     0 until 10 foreach (index => store.update(index.toString, index.toString))
     store.size shouldBe 10
 
@@ -53,11 +53,8 @@ class TestTopicStore extends With3Brokers with Matchers {
     OharaTestUtil.await(() => stores.filter(_.isEmpty).size == numberOfStore, 30 second)
 
     // This store is based on another topic so it should have no data
-    val anotherStore = Store
-      .builder(StringSerializer, StringSerializer)
-      .brokers(testUtil.brokersString)
-      .topicName(methodName + "copy")
-      .build()
+    val anotherStore =
+      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName + "copy").build()
     anotherStore.size shouldBe 0
   }
   @Test
@@ -83,7 +80,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     doClose(
       Store
         .builder(StringSerializer, StringSerializer)
-        .brokers(testUtil.brokersString)
+        .brokers(testUtil.brokers)
         .topicName(s"${methodName}-copy")
         .build()) { another =>
       {
@@ -125,8 +122,7 @@ class TestTopicStore extends With3Brokers with Matchers {
 
   @Before
   def before(): Unit = {
-    store =
-      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokersString).topicName(methodName).build()
+    store = Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build()
   }
 
   @After

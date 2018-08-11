@@ -13,11 +13,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
-  val store = Store
-    .builder(StringSerializer, StringSerializer)
-    .brokers(testUtil.brokersString)
-    .topicName("TestTopicStoreAcid")
-    .build()
+  val store =
+    Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName("TestTopicStoreAcid").build()
   val elapsedTime = 30 // second
   val readerCount = 5
   val updaterCount = 5

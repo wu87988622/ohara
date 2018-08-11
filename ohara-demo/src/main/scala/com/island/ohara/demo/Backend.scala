@@ -17,18 +17,18 @@ object Backend {
     doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workers}")
+      println(s"Succeed to run the mini brokers: ${util.brokers} and workers:${util.workers}")
       val topicName = s"demo-${System.currentTimeMillis()}"
       val configurator = Configurator.builder
         .store(
           Store
             .builder(Serializer.STRING, Serializer.OBJECT)
-            .brokers(util.brokersString)
+            .brokers(util.brokers)
             .topicName(topicName)
             .numberOfReplications(1)
             .numberOfPartitions(1)
             .build())
-        .kafkaClient(KafkaClient(util.brokersString))
+        .kafkaClient(KafkaClient(util.brokers))
         .connectClient(ConnectorClient(util.workers))
         .hostname("localhost")
         .port(0)

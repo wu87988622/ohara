@@ -1,21 +1,20 @@
 package com.island.ohara.source.http
 
-import akka.testkit.TestKit
-import com.island.ohara.rule.SmallTest
 import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+import akka.testkit.TestKit
 import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.rule.SmallTest
 import com.typesafe.config.ConfigFactory
-import org.apache.kafka.clients.CommonClientConfigs
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.{ScalaFutures, ScaledTimeSpans}
-import org.scalatest.time.{Seconds, Span}
 import org.scalatest.time.SpanSugar._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
+import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.Await
 
@@ -29,8 +28,7 @@ class TestHttpConnectorActorWithMiniCluster
   private implicit val materializer = ActorMaterializer()
   private val interface = "localhost"
   private val port = 5566
-  private val serverIPs =
-    testUtil.producerConfig.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG).get.left.get.split(",")
+  private val serverIPs = testUtil.brokers.split(",")
   private val configStr =
     s"""
        |http {

@@ -15,7 +15,7 @@ object HttpCommand {
     * ]
     * }}}
     *
-    * for KafkaProducer
+    * for Producer
     *
     * @param config
     */

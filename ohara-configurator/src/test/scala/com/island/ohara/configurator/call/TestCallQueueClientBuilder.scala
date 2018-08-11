@@ -21,10 +21,10 @@ class TestCallQueueClientBuilder extends MediumTest with Matchers {
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.topicName(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.brokers(testUtil.brokersString)
+    builder = builder.brokers(testUtil.brokers)
     // we haven't created the topic
     an[IllegalArgumentException] should be thrownBy builder.build()
-    KafkaUtil.createTopic(testUtil.brokersString, methodName, 1, 1)
+    KafkaUtil.createTopic(testUtil.brokers, methodName, 1, 1)
     builder.build().close()
   }
 

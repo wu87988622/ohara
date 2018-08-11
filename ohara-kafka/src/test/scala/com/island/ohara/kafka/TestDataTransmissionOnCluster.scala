@@ -11,16 +11,11 @@ import com.island.ohara.kafka.connector.{
   SimpleRowSourceTask
 }
 import com.island.ohara.serialization.{RowSerializer, Serializer}
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.kafka.common.serialization.{
-  ByteArrayDeserializer,
-  ByteArraySerializer,
-  StringDeserializer,
-  StringSerializer
-}
+import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
@@ -45,11 +40,11 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val (_, rowQueue) =
       testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
     val totalMessageCount = 100
-    doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
+    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
         var count: Int = totalMessageCount
         while (count > 0) {
-          producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row))
+          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send()
           count -= 1
         }
       }
@@ -84,10 +79,10 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
 
-    doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
+    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
         0 until rowCount foreach (_ =>
-          producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
+          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send())
         producer.flush()
       }
     }
@@ -114,10 +109,12 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     doClose(
       Consumer
         .builder(Serializer.BYTES, Serializer.ROW)
-        .brokers(testUtil.brokersString)
+        .brokers(testUtil.brokers)
         .topicName(topicName)
         .fromBegin(true)
-        .build()) { _.poll(20 seconds).size shouldBe pollCountMax * SimpleRowSourceTask.rows.length }
+        .build()) {
+      _.poll(40 seconds, pollCountMax * SimpleRowSourceTask.rows.length).size shouldBe pollCountMax * SimpleRowSourceTask.rows.length
+    }
   }
 
   /**
@@ -134,11 +131,9 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .append(Cell.builder.name("a").build(1))
       .build()
 
-    doClose(
-      new KafkaProducer[String, Row](testUtil.producerConfig.toProperties,
-                                     new StringSerializer,
-                                     KafkaUtil.wrapSerializer(RowSerializer))) { producer =>
-      producer.send(new ProducerRecord[String, Row](topicName, topicName, row)).get()
+    doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+      producer.sender().topic(topicName).key(topicName).value(row).send()
+      producer.flush()
     }
 
     val (_, valueQueue) =
@@ -149,6 +144,11 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     fromKafka.seekCell(0).name shouldBe "c"
     fromKafka.seekCell(1).name shouldBe "b"
     fromKafka.seekCell(2).name shouldBe "a"
+
+    doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+      val meta = Await.result(producer.sender().topic(topicName).key(topicName).value(row).send(), 10 seconds)
+      meta.topic shouldBe topicName
+    }
   }
 
   @After

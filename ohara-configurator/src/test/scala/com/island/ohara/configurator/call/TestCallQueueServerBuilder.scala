@@ -22,7 +22,7 @@ class TestCallQueueServerBuilder extends With3Brokers with Matchers {
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.topicName(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.brokers(testUtil.brokersString)
+    builder = builder.brokers(testUtil.brokers)
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.groupId("xxx")
     builder.build().close()
@@ -36,7 +36,7 @@ class TestCallQueueServerBuilder extends With3Brokers with Matchers {
       .numberOfReplications(1)
       .numberOfPartitions(1)
       .topicName(methodName)
-      .brokers(testUtil.brokersString)
+      .brokers(testUtil.brokers)
       .groupId("xxx")
       // the following option is invalid for topic store
       .topicOptions(Map(TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))

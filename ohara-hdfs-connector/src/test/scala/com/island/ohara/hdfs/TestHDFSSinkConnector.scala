@@ -7,13 +7,12 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
-import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.kafka.RowProducer
+import com.island.ohara.io.{ByteUtil, CloseOnce}
+import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.RowSinkTask
+import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.fs.Path
-import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -91,10 +90,10 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
-    doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
+    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
         0 until rowCount foreach (_ =>
-          producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
+          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send())
         producer.flush()
       }
     }
@@ -157,13 +156,14 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    doClose(new RowProducer[Array[Byte]](testUtil.producerConfig.toProperties, new ByteArraySerializer)) { producer =>
+    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
         0 until rowCount foreach (_ =>
-          producer.send(new ProducerRecord[Array[Byte], Row](topicName, ByteUtil.toBytes("key"), row)))
+          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send())
         producer.flush()
       }
     }
+
     val localURL = s"file://${testUtil.tmpDirectory()}"
     connectorClient
       .sinkConnectorCreator()

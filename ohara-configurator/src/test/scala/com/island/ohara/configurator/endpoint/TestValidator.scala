@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val connectorClient = testUtil.connectorClient()
-  private[this] val kafkaClient = KafkaClient(testUtil.brokersString)
+  private[this] val kafkaClient = KafkaClient(testUtil.brokers)
 
   @Before
   def setup(): Unit = {

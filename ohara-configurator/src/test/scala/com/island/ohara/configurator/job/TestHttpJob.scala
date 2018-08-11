@@ -15,8 +15,8 @@ class TestHttpJob extends SmallTest with Matchers {
 
   private[this] val util = OharaTestUtil.localBrokers(3)
   private[this] val topicName = "TestHttpJob"
-  private[this] val server = new HttpJobServer(util.brokersString, UuidUtil.uuid(), topicName)
-  private[this] val client = new HttpJobClient(util.brokersString, topicName)
+  private[this] val server = new HttpJobServer(util.brokers, UuidUtil.uuid(), topicName)
+  private[this] val client = new HttpJobClient(util.brokers, topicName)
   private[this] val jobRequest = HttpJobRequest.apply(RUN, "path", Map("a" -> BYTES), Map("a" -> "b"))
   private[this] val jobResponse = HttpJobResponse.apply(RUNNING, Map("a" -> "b"))
 

@@ -14,6 +14,7 @@ dependencies {
   testCompile libs.junit
   testCompile project(':ohara-testing-util')
   testCompile project(":ohara-common").sourceSets.test.output
+  testCompile project(":ohara-testing-util").sourceSets.test.output
 }
 
 task(runMain, dependsOn: 'classes', type: JavaExec) {

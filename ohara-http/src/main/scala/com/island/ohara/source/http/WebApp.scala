@@ -4,16 +4,16 @@ import java.util.concurrent.ConcurrentHashMap
 
 import akka.actor.ActorSystem
 import com.island.ohara.data.Row
-import org.apache.kafka.clients.producer.KafkaProducer
+import com.island.ohara.kafka.Producer
 
 /**
   * Use for creating the center of the routing directive
   *
-  * @param producer KafkaProducer
+  * @param producer Producer
   * @param schemaMap
   * @param actorSystem
   */
-class WebApp(producer: KafkaProducer[String, Row], schemaMap: ConcurrentHashMap[String, (String, RowSchema)])(
+class WebApp(producer: Producer[String, Row], schemaMap: ConcurrentHashMap[String, (String, RowSchema)])(
   implicit actorSystem: ActorSystem)
     extends KafkaRoute {
 

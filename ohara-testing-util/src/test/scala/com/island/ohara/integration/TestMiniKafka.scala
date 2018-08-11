@@ -1,7 +1,10 @@
 package com.island.ohara.integration
+import java.util.Properties
+
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.client.ConnectorJson.ConnectorResponse
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
 import org.junit.Test
@@ -18,20 +21,20 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
     testUtil.exist("my_topic") shouldBe true
     val (_, valueQueue) = testUtil.run("my_topic", true, new ByteArrayDeserializer, new ByteArrayDeserializer)
     val totalMessageCount = 100
-    doClose(
-      new KafkaProducer[Array[Byte], Array[Byte]](testUtil.producerConfig.toProperties,
-                                                  new ByteArraySerializer,
-                                                  new ByteArraySerializer)) { producer =>
-      {
-        var count: Int = totalMessageCount
-        while (count > 0) {
-          producer.send(
-            new ProducerRecord[Array[Byte], Array[Byte]]("my_topic",
-                                                         ByteUtil.toBytes("key"),
-                                                         ByteUtil.toBytes("value")))
-          count -= 1
+    val props = new Properties()
+    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, testUtil.brokers)
+    doClose(new KafkaProducer[Array[Byte], Array[Byte]](props, new ByteArraySerializer, new ByteArraySerializer)) {
+      producer =>
+        {
+          var count: Int = totalMessageCount
+          while (count > 0) {
+            producer.send(
+              new ProducerRecord[Array[Byte], Array[Byte]]("my_topic",
+                                                           ByteUtil.toBytes("key"),
+                                                           ByteUtil.toBytes("value")))
+            count -= 1
+          }
         }
-      }
     }
     OharaTestUtil.await(() => valueQueue.size() == totalMessageCount, 1 minute)
     valueQueue.forEach((value: Array[Byte]) => ByteUtil.toString(value) shouldBe "value")

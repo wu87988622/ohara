@@ -24,7 +24,7 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
                                               baseConfig: OharaConfig = OharaConfig())
     extends CloseOnce {
   private[this] val logger = Logger(getClass.getName)
-  val brokers = new Array[KafkaServer](ports.size)
+  val kafkaBrokers = new Array[KafkaServer](ports.size)
   val logDirs = new Array[File](ports.size)
   val validPorts = ports.zipWithIndex.map {
     case (port: Int, index: Int) => {
@@ -43,64 +43,24 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
 
       val broker = new KafkaServer(new KafkaConfig(config.toProperties), new SystemTime)
       broker.startup()
-      brokers.update(index, broker)
+      kafkaBrokers.update(index, broker)
       logDirs.update(index, logDir)
       broker.boundPort(new ListenerName("PLAINTEXT"))
     }
   }
 
-  val brokersString: String = validPorts.map("localhost:" + _).mkString(",")
-  logger.info(s"ports used in LocalKafkaBrokers are ${brokersString}")
-
-  /**
-    * Generate the basic config. The config is composed of following setting.
-    * 1) bootstrap.servers
-    *
-    * @return a basic config including the brokers information
-    */
-  def config: OharaConfig = {
-    val config = OharaConfig()
-    config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    config
-  }
-
-  /**
-    * Generate a config for kafka producer. The config is composed of following setting.
-    * 1) bootstrap.servers
-    *
-    * @return a config used to instantiate kafka producer
-    */
-  def producerConfig: OharaConfig = {
-    val config = OharaConfig()
-    config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    config
-  }
-
-  /**
-    * Generate a config for kafka consumer. The config is composed of following setting.
-    * 1) bootstrap.servers
-    * 2) group.id -> a arbitrary string
-    * 3) auto.offset.reset -> earliest
-    *
-    * @return a config used to instantiate kafka consumer
-    */
-  def consumerConfig: OharaConfig = {
-    val config = OharaConfig()
-    config.set(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokersString)
-    config.set(ConsumerConfig.GROUP_ID_CONFIG, UuidUtil.uuid())
-    config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-    config
-  }
+  val brokers: String = validPorts.map("localhost:" + _).mkString(",")
+  logger.info(s"ports used in LocalKafkaBrokers are ${brokers}")
 
   override def toString: String = {
     val sb = new StringBuilder("LocalKafka{")
-    sb.append("brokerList='").append(brokersString).append('\'')
+    sb.append("brokerList='").append(brokers).append('\'')
     sb.append('}')
     sb.toString
   }
 
   override protected def doClose(): Unit = {
-    brokers.foreach(s => {
+    kafkaBrokers.foreach(s => {
       s.shutdown()
       s.awaitShutdown()
     })

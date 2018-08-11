@@ -1,15 +1,15 @@
 package com.island.ohara.integration
 
 import java.util
-import java.util.Random
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
+import java.util.{Properties, Random}
 
-import com.island.ohara.config.OharaConfig
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.client.ConnectorClient
 import kafka.server.KafkaServer
 import org.apache.hadoop.fs.FileSystem
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.serialization.Deserializer
@@ -46,32 +46,6 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
 
   /**
-    * Generate the basic config. The config is composed of following setting.
-    * 1) bootstrap.servers
-    *
-    * @return a basic config including the brokers information
-    */
-  def config: OharaConfig = componentBox.brokerCluster.config
-
-  /**
-    * Generate a config for kafka producer. The config is composed of following setting.
-    * 1) bootstrap.servers
-    *
-    * @return a config used to instantiate kafka producer
-    */
-  def producerConfig: OharaConfig = componentBox.brokerCluster.producerConfig
-
-  /**
-    * Generate a config for kafka consumer. The config is composed of following setting.
-    * 1) bootstrap.servers
-    * 2) group.id -> a arbitrary string
-    * 3) auto.offset.reset -> earliest
-    *
-    * @return a config used to instantiate kafka consumer
-    */
-  def consumerConfig: OharaConfig = componentBox.brokerCluster.consumerConfig
-
-  /**
     * @return zookeeper connection used to create zk services
     */
   def zkConnection: String = componentBox.zookeeper.connection
@@ -79,7 +53,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   /**
     * @return a list of running brokers
     */
-  def kafkaBrokers: Seq[KafkaServer] = componentBox.brokerCluster.brokers
+  def kafkaBrokers: Seq[KafkaServer] = componentBox.brokerCluster.kafkaBrokers
 
   /**
     * @return a list of running brokers
@@ -96,7 +70,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     *
     * @return brokers connection information
     */
-  def brokersString: String = componentBox.brokerCluster.brokersString
+  def brokers: String = componentBox.brokerCluster.brokers
 
   /**
     * Exposing the workers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
@@ -107,14 +81,19 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
 
   import scala.concurrent.duration._
 
+  private[this] def kafkaAdmin(): AdminClient = {
+    val props = new Properties()
+    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    AdminClient.create(props)
+  }
+
   /**
     * Create the topic and wait the procedure to succeed
     *
     * @param topic topic name
     */
   def createTopic(topic: String): Unit = {
-    CloseOnce.doClose(AdminClient.create(config.toProperties))(admin =>
-      admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
+    CloseOnce.doClose(kafkaAdmin())(admin => admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
     if (!OharaTestUtil.await(() => exist(topic), 10 second))
       throw new IllegalStateException(
         s"$topic isn't created successfully after 10 seconds. Perhaps we should increase the wait time?")
@@ -124,7 +103,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @param topic topic name
     * @return true if the topic exists
     */
-  def exist(topic: String): Boolean = CloseOnce.doClose(AdminClient.create(config.toProperties))(admin =>
+  def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(admin =>
     admin.listTopics().names().thenApply(_.stream().anyMatch(_.equals(topic))).get())
 
   import scala.collection.JavaConverters._
@@ -135,12 +114,11 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @param topic topic name
     * @return a pair of topic name and partition number
     */
-  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(AdminClient.create(config.toProperties)) {
-    admin =>
-      {
-        val desc = admin.describeTopics(util.Arrays.asList(topic)).all().get().get(topic)
-        (desc.name(), desc.partitions().asScala.map(_.partition()).toArray)
-      }
+  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(kafkaAdmin()) { admin =>
+    {
+      val desc = admin.describeTopics(util.Arrays.asList(topic)).all().get().get(topic)
+      (desc.name(), desc.partitions().asScala.map(_.partition()).toArray)
+    }
   }
 
   /**
@@ -158,11 +136,12 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
                 seekToBegin: Boolean,
                 keySerializer: Deserializer[K],
                 valueSerializer: Deserializer[V]): (BlockingQueue[K], BlockingQueue[V]) = {
-    val config = this.config
-    config.set(ConsumerConfig.GROUP_ID_CONFIG, s"console-consumer-${new Random().nextInt(100000)}")
-    if (seekToBegin) config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-    else config.set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
-    val consumer = new KafkaConsumer[K, V](config.toProperties, keySerializer, valueSerializer)
+    val props = new Properties()
+    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, s"testing-consumer-${new Random().nextInt(100000)}")
+    if (seekToBegin) props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
+    else props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
+    val consumer = new KafkaConsumer[K, V](props, keySerializer, valueSerializer)
     consumer.subscribe(util.Arrays.asList(topic))
     run(consumer)
   }
@@ -308,7 +287,7 @@ object OharaTestUtil {
     doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokersString} and workers:${util.workers}")
+      println(s"Succeed to run the mini brokers: ${util.brokers} and workers:${util.workers}")
       println(
         s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after ${ttl} seconds")
       TimeUnit.SECONDS.sleep(ttl)
@@ -323,7 +302,7 @@ private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: I
   private[this] val localBrokerCluster =
     if (numberOfBrokers > 0) newOrClose(new LocalKafkaBrokers(zk.connection, ports(numberOfBrokers))) else null
   private[this] val localWorkerCluster =
-    if (numberOfWorkers > 0) newOrClose(new LocalKafkaWorkers(localBrokerCluster.brokersString, ports(numberOfWorkers)))
+    if (numberOfWorkers > 0) newOrClose(new LocalKafkaWorkers(localBrokerCluster.brokers, ports(numberOfWorkers)))
     else null
   private[this] val localHDFSCluster = if (numberOfDataNodes > 0) newOrClose(new LocalHDFS(numberOfDataNodes)) else null
 
