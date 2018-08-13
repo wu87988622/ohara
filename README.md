@@ -16,6 +16,12 @@ a powerful ETL tool
 
 [TODO]
 
+## Build ohara images for CI
+```
+cd ohara/docker
+docker build --no-cache --build-arg SSH_PRIVATE_KEY={access key} -t haredata/ohara:latest -f ./ohara.latest.dockerfile .
+```
+
 ## Running the tests
 
 ```
