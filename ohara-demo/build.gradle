@@ -6,6 +6,16 @@ dependencies {
 }
 
 task runBackend(type: JavaExec, dependsOn: 'classes') {
+  description 'Use -Pttl to configure the value of ttl; Use -Pport to configure the port bound by configurator'
   classpath = sourceSets.main.runtimeClasspath
+  String ttl = "9999"
+  if(project.hasProperty('ttl')) {
+    ttl = "${project.getProperty('ttl')}"
+  }
+  String port = "0"
+  if(project.hasProperty('port')) {
+    port = "${project.getProperty('port')}"
+  }
+  args = Arrays.asList("--ttl", ttl, "--port", port)
   main = 'com.island.ohara.demo.Backend'
 }
