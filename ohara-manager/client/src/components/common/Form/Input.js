@@ -45,7 +45,7 @@ const Input = ({
   placeholder = '',
   width = '120px',
   height = '40px',
-  disabled,
+  disabled = false,
   ...rest
 }) => {
   const disableCls = disabled ? 'is-disabled' : '';
@@ -66,11 +66,13 @@ const Input = ({
 };
 
 Input.propTypes = {
+  type: PropTypes.string,
   value: PropTypes.string.isRequired,
   handleChange: PropTypes.func,
-  type: PropTypes.string,
+  placeholder: PropTypes.string,
   width: PropTypes.string,
   height: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default Input;

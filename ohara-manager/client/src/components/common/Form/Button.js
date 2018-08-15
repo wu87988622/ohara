@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import cx from 'classnames';
 
 import { defaultButton } from '../../../theme/buttonTheme';
 import {
@@ -29,7 +30,8 @@ const ButtonWrapper = styled.button`
     transition: ${durationNormal} all;
   }
 
-  &.is-working {
+  &.is-working,
+  &.is-disabled {
     border: 1px solid ${lighterGray};
     cursor: not-allowed;
     color: ${lightGray};
@@ -49,10 +51,11 @@ const Button = ({
   theme = defaultButton,
   type = 'submit',
   width = 'auto',
+  disabled = false,
   isWorking = false,
   ...rest
 }) => {
-  const isWorkingCls = isWorking ? 'is-working' : '';
+  const cls = cx({ 'is-working': isWorking }, { 'is-disabled': disabled });
 
   return (
     <ButtonWrapper
@@ -60,8 +63,8 @@ const Button = ({
       width={width}
       onClick={handleClick}
       theme={theme}
-      className={isWorkingCls}
-      disabled={isWorking}
+      className={cls}
+      disabled={disabled}
       {...rest}
     >
       {text} {isWorking && <IWrapper className="fas fa-spinner fa-spin" />}
@@ -84,6 +87,7 @@ Button.propTypes = {
   type: PropTypes.string,
   handleClick: PropTypes.func,
   width: PropTypes.string,
+  isWorking: PropTypes.bool,
 };
 
 export default Button;

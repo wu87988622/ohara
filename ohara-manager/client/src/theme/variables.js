@@ -9,6 +9,8 @@ export const darkBlue = '#52565d';
 export const darkerBlue = '#202a41';
 
 export const green = '#28a745';
+export const lightYellow = '#fff4ce';
+export const lightOrange = '#fecc22';
 export const orange = '#fdba00';
 export const red = '#ff545f';
 
@@ -21,6 +23,7 @@ export const lighterGray = '#ececf0';
 
 // Units
 export const radiusNormal = '4px';
+export const radiusCompact = '2px';
 export const durationNormal = '0.3s';
 
 export const shadowNormal = `0 1px 1px 0px rgba(0, 0, 0, 0.1)`;

@@ -100,10 +100,7 @@ class KafkaPage extends React.Component {
     }
 
     if (_clusterResult) {
-      const {
-        brokersString: brokerList,
-        workersString: workerList,
-      } = _clusterResult;
+      const { brokers: brokerList, workers: workerList } = _clusterResult;
 
       this.setState({ brokerList, workerList });
     }
