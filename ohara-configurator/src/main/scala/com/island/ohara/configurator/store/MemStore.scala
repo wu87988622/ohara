@@ -91,4 +91,6 @@ private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Seri
     if (first != null) return Some((fromKey(first.getKey), fromValue(first.getValue)))
     else None
   }
+
+  override def clear(): Unit = store.clear()
 }

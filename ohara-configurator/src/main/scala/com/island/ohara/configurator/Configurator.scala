@@ -9,45 +9,39 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.config.UuidUtil
-import com.island.ohara.configurator.endpoint.Validator
-import com.island.ohara.configurator.store.{Store, StoreBuilder}
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.config.UuidUtil
+import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.endpoint.Validator
+import com.island.ohara.configurator.route.{HdfsInformationRoute, PipelineRoute, SchemaRoute, TopicInfoRoute}
+import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
-import spray.json.RootJsonFormat
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 
 /**
   * A simple impl of Configurator. This impl maintains all subclass of ohara data in a single ohara store.
-  * TODO: the store should be a special class providing the helper methods to iterate the specified sub-class of OharaData
-  *
+  * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
   * @param hostname hostname of rest server
-  * @param _port    port of rest server
+  * @param configuredPort    port of rest server
   * @param store    store
   */
-class Configurator private[configurator] (uuidGenerator: () => String,
-                                          val hostname: String,
-                                          _port: Int,
-                                          val store: Store[String, Any],
-                                          kafkaClient: KafkaClient,
-                                          connectClient: ConnectorClient,
-                                          initializationTimeout: Duration,
-                                          terminationTimeout: Duration)
+class Configurator private[configurator] (val hostname: String, configuredPort: Int)(implicit ug: () => String,
+                                                                                     val store: Store,
+                                                                                     kafkaClient: KafkaClient,
+                                                                                     connectClient: ConnectorClient,
+                                                                                     initializationTimeout: Duration,
+                                                                                     terminationTimeout: Duration)
     extends CloseOnce
     with SprayJsonSupport {
 
   private val log = Logger(classOf[Configurator])
-
-  private[this] def rejectNonexistentUuid(uuid: String) = complete(
-    StatusCodes.BadRequest -> toResponse(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
 
   private[this] def toResponse(e: Throwable) = ErrorResponse(e.getClass.getName,
                                                              if (e.getMessage == null) "None" else e.getMessage,
@@ -56,7 +50,7 @@ class Configurator private[configurator] (uuidGenerator: () => String,
   private[this] val exceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
       extractUri { uri =>
-        log.error(s"Request to $uri could not be handled normally")
+        log.error(s"Request to $uri could not be handled normally because ${e.getMessage}")
         complete(StatusCodes.BadRequest -> toResponse(e))
       }
     case e: Throwable => {
@@ -64,124 +58,6 @@ class Configurator private[configurator] (uuidGenerator: () => String,
       complete(StatusCodes.ServiceUnavailable -> toResponse(e))
     }
   }
-
-  /**
-    * a basic route used to handle CRUD.
-    */
-  private[this] def basicRoute[Req, Res: ClassTag](toData: (String, Req) => Res, prefix: String)(
-    implicit f0: RootJsonFormat[Req],
-    f1: RootJsonFormat[Res]): server.Route = pathPrefix(prefix) {
-    pathEnd {
-      // add
-      post {
-        entity(as[Req].map(req => {
-          val uuid = uuidGenerator()
-          (uuid, toData(uuid, req))
-        })) {
-          case (uuid, data) =>
-            updateData(uuid, data)
-            complete(data)
-        }
-      } ~ get(complete(data[Res].toSeq)) // list
-    } ~ path(Segment) { uuid =>
-      // get data by uuid
-      get(data[Res](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))) ~
-        // delete get by uuid
-        delete(removeData[Res](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))) ~
-        // update data by uuid
-        put {
-          entity(as[Req].map(req => (uuid, toData(uuid, req)))) {
-            case (uuid, newData) =>
-              data[Res](uuid)
-                .map(_ => {
-                  updateData(uuid, newData)
-                  complete(newData)
-                })
-                .getOrElse(rejectNonexistentUuid(uuid))
-          }
-        }
-    }
-  }
-
-  //-----------------------------------------------[topic]-----------------------------------------------//
-  private[this] val topicRoute = locally {
-
-    def toTopicInfo(uuid: String, request: TopicInfoRequest) = TopicInfo(uuid,
-                                                                         request.name,
-                                                                         request.numberOfPartitions,
-                                                                         request.numberOfReplications,
-                                                                         System.currentTimeMillis())
-
-    val addTopic = pathEnd {
-      post {
-        entity(as[TopicInfoRequest].map(toTopicInfo(uuidGenerator(), _))) { topicInfo =>
-          if (kafkaClient.exist(topicInfo.uuid))
-            // this should be impossible....
-            throw new IllegalArgumentException(s"The topic:${topicInfo.uuid} exists")
-          else {
-            kafkaClient.topicCreator
-            // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
-              .topicName(topicInfo.uuid)
-              .numberOfPartitions(topicInfo.numberOfPartitions)
-              .numberOfReplications(topicInfo.numberOfReplications)
-              .build()
-            updateData(topicInfo.uuid, topicInfo)
-            complete(topicInfo)
-          }
-        }
-      }
-    }
-
-    val listTopic = pathEnd(get(complete(data[TopicInfo].toSeq)))
-
-    val updateTopic = path(Segment) { uuid =>
-      put {
-        entity(as[TopicInfoRequest].map(toTopicInfo(uuid, _))) { newTopicInfo =>
-          data[TopicInfo](uuid)
-            .map(previousTopicInfo => {
-              if (previousTopicInfo.numberOfReplications != newTopicInfo.numberOfReplications)
-                throw new IllegalArgumentException("Non-support to change the number of replications")
-              if (previousTopicInfo.numberOfPartitions != newTopicInfo.numberOfPartitions)
-                kafkaClient.addPartition(uuid, newTopicInfo.numberOfPartitions)
-              updateData(uuid, newTopicInfo)
-              complete(newTopicInfo)
-            })
-            .getOrElse(rejectNonexistentUuid(uuid))
-        }
-      }
-    }
-
-    val getTopic =
-      path(Segment)(uuid => get(data[TopicInfo](uuid).map(complete(_)).getOrElse(rejectNonexistentUuid(uuid))))
-
-    val deleteTopic = path(Segment) { uuid =>
-      delete {
-        removeData[TopicInfo](uuid)
-          .map(topicInfo => {
-            kafkaClient.deleteTopic(uuid)
-            complete(topicInfo)
-          })
-          .getOrElse(rejectNonexistentUuid(uuid))
-      }
-    }
-
-    pathPrefix(TOPIC_PATH) {
-      addTopic ~ listTopic ~ updateTopic ~ getTopic ~ deleteTopic
-    }
-  }
-
-  //-----------------------------------------------[schema]-----------------------------------------------//
-  private[this] val schemaRoute = basicRoute(
-    (uuid: String, request: SchemaRequest) =>
-      Schema(uuid, request.name, request.types, request.orders, request.disabled, System.currentTimeMillis()),
-    SCHEMA_PATH
-  )
-
-  //-----------------------------------------------[hdfs]-----------------------------------------------//
-  private[this] val hdfsRoute = basicRoute(
-    (uuid: String, request: HdfsInformationRequest) =>
-      HdfsInformation(uuid, request.name, request.uri, System.currentTimeMillis()),
-    HDFS_PATH)
 
   //-----------------------------------------------[validation]-----------------------------------------------//
   private[this] val validationRoute = path(VALIDATION_PATH / HDFS_VALIDATION_PATH) {
@@ -207,14 +83,17 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
   private[this] val route: server.Route = handleExceptions(exceptionHandler) {
-    pathPrefix(VERSION_V0)(schemaRoute ~ topicRoute ~ hdfsRoute ~ validationRoute ~ clusterRoute) ~ path(Remaining)(_ =>
-      reject)
+    pathPrefix(VERSION_V0)(
+      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply ~ validationRoute ~ clusterRoute) ~ path(
+      Remaining)(path => {
+      throw new IllegalArgumentException(s"Unsupported restful api:$path")
+    })
   }
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer = ActorMaterializer()
   private[this] val httpServer: Http.ServerBinding =
-    Await.result(Http().bindAndHandle(route, hostname, _port), initializationTimeout.toMillis milliseconds)
+    Await.result(Http().bindAndHandle(route, hostname, configuredPort), initializationTimeout.toMillis milliseconds)
 
   /**
     * Do what you want to do when calling closing.
@@ -229,59 +108,25 @@ class Configurator private[configurator] (uuidGenerator: () => String,
     CloseOnce.close(connectClient)
   }
 
-  import scala.reflect._
-
-  /**
-    * Remove a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
-    * type, the None will be returned.
-    *
-    * @param uuid of ohara data
-    * @tparam T subclass type
-    * @return a subclass of ohara data
-    */
-  private[this] def removeData[T: ClassTag](uuid: String): Option[T] =
-    data[T](uuid).flatMap(d => store.remove(uuid).map(_.asInstanceOf[T]))
-
-  /**
-    * Update a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
-    * type, the None will be returned.
-    *
-    * @param data ohara data
-    * @tparam T subclass type
-    * @return a subclass of ohara data
-    */
-  private[this] def updateData[T](uuid: String, data: T): Option[T] =
-    store.update(uuid, data).filter(_.getClass.equals(data.getClass)).map(_.asInstanceOf[T])
-
   //-----------------[public interfaces]-----------------//
 
   val port = httpServer.localAddress.getPort
 
-  /**
-    * Iterate the specified type. The unrelated type will be ignored.
-    *
-    * @tparam T subclass type
-    * @return iterator
-    */
-  def data[T: ClassTag]: Iterator[T] =
-    store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
-
-  /**
-    * Retrieve a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
-    * type, the None will be returned.
-    *
-    * @param uuid of ohara data
-    * @tparam T subclass type
-    * @return a subclass of ohara data
-    */
-  def data[T: ClassTag](uuid: String): Option[T] =
-    store.get(uuid).filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
-
   def size: Int = store.size
+
+  def clear(): Unit = {
+    // remove all topics first
+    store
+      .raw()
+      .filter(_.isInstanceOf[TopicInfo])
+      .foreach(topicInfo => {
+        kafkaClient.deleteTopic(topicInfo.uuid)
+      })
+    store.clear()
+  }
 }
 
 object Configurator {
-  def storeBuilder: StoreBuilder[String, Any] = Store.builder(Serializer.STRING, Serializer.OBJECT)
   def builder = new ConfiguratorBuilder()
 
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
@@ -339,7 +184,7 @@ object Configurator {
       } else
         Configurator.builder
           .store(
-            Store
+            com.island.ohara.configurator.store.Store
               .builder(Serializer.STRING, Serializer.OBJECT)
               .brokers(brokers.get)
               .topicName(topicName)
@@ -377,4 +222,84 @@ object Configurator {
     * visible for testing.
     */
   @volatile private[configurator] var closeRunningConfigurator = false
+
+  private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, Any]) extends CloseOnce {
+
+    /**
+      * Remove a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
+      * type, an exception will be thrown.
+      *
+      * @param uuid of ohara data
+      * @tparam T subclass type
+      * @return the removed data
+      */
+    def remove[T <: Data: ClassTag](uuid: String): T = store
+      .get(uuid)
+      .filter(classTag[T].runtimeClass.isInstance(_))
+      .flatMap(_ => store.remove(uuid))
+      .getOrElse(throw new IllegalArgumentException(s"The object:$uuid doesn't exist"))
+      .asInstanceOf[T]
+
+    /**
+      * update an existed object in the store. If the uuid doesn't  exists, an exception will be thrown.
+      * @param uuid uuid
+      * @param data data
+      * @tparam T type of data
+      * @return the removed data
+      */
+    def update[T <: Data: ClassTag](uuid: String, data: T): T =
+      if (store.get(uuid).filter(classTag[T].runtimeClass.isInstance(_)).isEmpty)
+        throw new IllegalArgumentException(s"The object:$uuid doesn't exist")
+      else store.update(uuid, data).get.asInstanceOf[T]
+
+    /**
+      * add an new object to the store. If the uuid already exists, an exception will be thrown.
+      * @param uuid uuid
+      * @param data data
+      * @tparam T type of data
+      */
+    def add[T <: Data: ClassTag](uuid: String, data: T): Unit =
+      if (store.get(uuid).filter(classTag[T].runtimeClass.isInstance(_)).isEmpty)
+        store.update(uuid, data)
+      else throw new IllegalArgumentException(s"The object:$uuid exists")
+
+    /**
+      * Iterate the specified type. The unrelated type will be ignored.
+      *
+      * @tparam T subclass type
+      * @return iterator
+      */
+    def data[T <: Data: ClassTag]: Iterator[T] =
+      store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
+
+    /**
+      * Retrieve a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
+      * type, the None will be returned.
+      *
+      * @param uuid of ohara data
+      * @tparam T subclass type
+      * @return a subclass of ohara data
+      */
+    def data[T <: Data: ClassTag](uuid: String): T =
+      store
+        .get(uuid)
+        .filter(classTag[T].runtimeClass.isInstance(_))
+        .getOrElse(throw new IllegalArgumentException(s"The object:$uuid doesn't exist"))
+        .asInstanceOf[T]
+
+    def raw(): Iterator[Data] = store.iterator.map(_._2).filter(_.isInstanceOf[Data]).map(_.asInstanceOf[Data])
+
+    def raw(uuid: String): Data = store
+      .get(uuid)
+      .filter(_.isInstanceOf[Data])
+      .map(_.asInstanceOf[Data])
+      .getOrElse(throw new IllegalArgumentException(s"The object:$uuid doesn't exist"))
+
+    def size: Int = store.size
+
+    override protected def doClose(): Unit = store.close()
+
+    def clear(): Unit = store.clear()
+  }
+
 }

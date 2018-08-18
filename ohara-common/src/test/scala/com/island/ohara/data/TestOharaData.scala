@@ -43,54 +43,6 @@ class TestOharaData extends SmallTest with Matchers {
   }
 
   @Test
-  def testOharaJob(): Unit = {
-    val uuid = methodName
-    val name = "name"
-    val status = PipelineStatus.RUNNING
-    val rules = Map("cmp0" -> Seq("cmp1", "cmp2"))
-    def assert(job: OharaPipeline) = {
-      job.uuid shouldBe uuid
-      job.name shouldBe name
-      job.status shouldBe status
-      val actualRules = job.rules
-      actualRules.size shouldBe rules.size
-      rules.foreach {
-        case (k, v) =>
-          actualRules.get(k) match {
-            case Some(actualValue) => v.sameElements(actualValue) shouldBe true
-            case None              => throw new IllegalArgumentException(s"miss $k")
-          }
-      }
-      rules.size shouldBe 1
-      val iter = rules.get("cmp0").get.iterator
-      iter.next shouldBe "cmp1"
-      iter.next shouldBe "cmp2"
-      checkJsonContent(job)
-
-      val uuid2 = "uuid2"
-      val name2 = "name2"
-      val status2 = PipelineStatus.STOP
-      val rules2 = Map("rules2" -> Seq("rules2", "rules2"))
-      job.copy(OharaData.UUID, uuid2).uuid shouldBe uuid2
-      job.copy(OharaData.NAME, name2).name shouldBe name2
-      job.copy(OharaPipeline.STATUS, status2).status shouldBe status2
-      job.copy(OharaPipeline.RULES, rules2).rules.sameElements(rules2) shouldBe true
-    }
-    assert(OharaPipeline(uuid, name, PipelineStatus.RUNNING, Map("cmp0" -> Array("cmp1", "cmp2"))))
-
-    val oharaConfig = OharaConfig()
-    an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaData.UUID.set(oharaConfig, uuid)
-    an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaData.NAME.set(oharaConfig, name)
-    an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaPipeline.STATUS.set(oharaConfig, status)
-    an[IllegalArgumentException] should be thrownBy new OharaPipeline(oharaConfig)
-    OharaPipeline.RULES.set(oharaConfig, rules)
-    assert(new OharaPipeline(oharaConfig))
-  }
-
-  @Test
   def testOharaTarget(): Unit = {
     val uuid = methodName
     val name = "name"

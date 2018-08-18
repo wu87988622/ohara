@@ -2,12 +2,10 @@ package com.island.ohara.integration
 
 import java.io.File
 
-import com.island.ohara.config.{OharaConfig, UuidUtil}
+import com.island.ohara.config.OharaConfig
 import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.{ConsumerConfig, OffsetResetStrategy}
 import org.apache.kafka.common.network.ListenerName
 import org.apache.kafka.common.utils.SystemTime
 

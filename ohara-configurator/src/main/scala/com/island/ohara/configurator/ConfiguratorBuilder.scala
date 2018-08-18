@@ -2,10 +2,10 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicBuilder, TopicDescription}
-import com.island.ohara.configurator.store.Store
 import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse, Plugin}
 import com.island.ohara.client.{ConnectorClient, SinkConnectorBuilder, SourceConnectorBuilder}
+import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicBuilder, TopicDescription}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.util.ConcurrentHashSet
@@ -16,7 +16,7 @@ class ConfiguratorBuilder {
   private[this] var uuidGenerator: Option[() => String] = Some(Configurator.DEFAULT_UUID_GENERATOR)
   private[this] var hostname: Option[String] = None
   private[this] var port: Option[Int] = None
-  private[this] var store: Option[Store[String, Any]] = None
+  private[this] var store: Option[Store] = None
   private[this] var kafkaClient: Option[KafkaClient] = None
   private[this] var connectClient: Option[ConnectorClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(Configurator.DEFAULT_INITIALIZATION_TIMEOUT)
@@ -62,8 +62,8 @@ class ConfiguratorBuilder {
     * @param store used to maintain the ohara data.
     * @return this builder
     */
-  def store(store: Store[String, Any]): ConfiguratorBuilder = {
-    this.store = Some(store)
+  def store(store: com.island.ohara.configurator.store.Store[String, Any]): ConfiguratorBuilder = {
+    this.store = Some(new Store(store))
     this
   }
 
@@ -95,17 +95,15 @@ class ConfiguratorBuilder {
   def noCluster: ConfiguratorBuilder = {
     kafkaClient(new FakeKafkaClient())
     connectClient(new FakeConnectorClient())
-    store(Store.inMemory(Serializer.STRING, Serializer.OBJECT))
+    store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
   }
 
-  def build(): Configurator = new Configurator(uuidGenerator.get,
-                                               hostname.get,
-                                               port.get,
-                                               store.get,
-                                               kafkaClient.get,
-                                               connectClient.get,
-                                               initializationTimeout.get,
-                                               terminationTimeout.get)
+  def build(): Configurator = new Configurator(hostname.get, port.get)(uuidGenerator.get,
+                                                                       store.get,
+                                                                       kafkaClient.get,
+                                                                       connectClient.get,
+                                                                       initializationTimeout.get,
+                                                                       terminationTimeout.get)
 }
 
 /**

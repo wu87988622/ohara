@@ -1,32 +1,50 @@
 package com.island.ohara.serialization
 
-import com.island.ohara.reflection.ClassName
-
 /**
   * List the supported type in default reader/writer.
   * NOTED: DON'T change the index since it is a part of serialization.
   */
-sealed abstract class DataType(val index: Byte) extends ClassName with Serializable
+sealed abstract class DataType(val index: Byte) extends Serializable {
+  def name: String
+}
 
 object DataType {
 
-  case object BYTES extends DataType(0)
+  case object BYTES extends DataType(0) {
+    override def name: String = "byte array"
+  }
 
-  case object BOOLEAN extends DataType(1)
+  case object BOOLEAN extends DataType(1) {
+    override def name: String = "boolean"
+  }
 
-  case object BYTE extends DataType(2)
+  case object BYTE extends DataType(2) {
+    override def name: String = "byte"
+  }
 
-  case object SHORT extends DataType(3)
+  case object SHORT extends DataType(3) {
+    override def name: String = "short"
+  }
 
-  case object INT extends DataType(4)
+  case object INT extends DataType(4) {
+    override def name: String = "integer"
+  }
 
-  case object LONG extends DataType(5)
+  case object LONG extends DataType(5) {
+    override def name: String = "long"
+  }
 
-  case object FLOAT extends DataType(6)
+  case object FLOAT extends DataType(6) {
+    override def name: String = "float"
+  }
 
-  case object DOUBLE extends DataType(7)
+  case object DOUBLE extends DataType(7) {
+    override def name: String = "double"
+  }
 
-  case object STRING extends DataType(8)
+  case object STRING extends DataType(8) {
+    override def name: String = "string"
+  }
 
   /**
     * @return a array of all supported data type

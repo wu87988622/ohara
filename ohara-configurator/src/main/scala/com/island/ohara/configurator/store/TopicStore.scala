@@ -213,4 +213,6 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     }
     rval
   }
+
+  override def clear(): Unit = cache.iterator.map(_._1).foreach(remove(_))
 }

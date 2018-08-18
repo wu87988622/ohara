@@ -120,6 +120,14 @@ class TestTopicStore extends With3Brokers with Matchers {
     }
   }
 
+  @Test
+  def testClear(): Unit = {
+    0 until 100 foreach (index => store.update(index.toString, index.toString))
+    store.size shouldBe 100
+    store.clear()
+    store.size shouldBe 0
+  }
+
   @Before
   def before(): Unit = {
     store = Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build()

@@ -12,13 +12,6 @@ class TestDataType extends SmallTest with Matchers {
   }
 
   @Test
-  def testIndexByName(): Unit = {
-    DataType.all.map(t => {
-      DataType.of(t.getClass.getSimpleName) shouldBe t
-    })
-  }
-
-  @Test
   def testTypeName(): Unit = {
     // it should pass
     DataType.all.foreach(dataType => DataType.of(dataType.name))

@@ -8,6 +8,7 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.io.CloseOnce
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
@@ -37,6 +38,9 @@ trait ConfiguratorClient extends CloseOnce {
                                        cf: ValidationCommandFormat[Req]): Seq[Res]
   //------------------------------------------------[cluster]------------------------------------------------//
   def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res
+  //------------------------------------------------[control]------------------------------------------------//
+  def start[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T
+  def stop[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T
 }
 
 object ConfiguratorClient {
@@ -118,5 +122,12 @@ object ConfiguratorClient {
         Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress))).flatMap(unmarshal[Res](_)),
         TIMEOUT
       )
+    override def start[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T = Await.result(
+      Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(configuratorAddress, uuid))).flatMap(unmarshal[T](_)),
+      TIMEOUT)
+
+    override def stop[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T = Await.result(
+      Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(configuratorAddress, uuid))).flatMap(unmarshal[T](_)),
+      TIMEOUT)
   }
 }

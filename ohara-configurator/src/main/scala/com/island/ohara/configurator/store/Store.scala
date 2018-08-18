@@ -39,6 +39,12 @@ trait Store[K, V] extends AutoCloseable with Iterable[(K, V)] {
     * @return he removed first entry of this map, or null if this map is empty
     */
   def take(timeout: Duration = Store.DEFAULT_TAKE_TIMEOUT): Option[(K, V)]
+
+  /**
+    * remove all data from this store.
+    * NOTED: this operation is expensive when the store is based on kafka topic.
+    */
+  def clear(): Unit
 }
 
 object Store {
