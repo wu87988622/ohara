@@ -1,19 +1,13 @@
+plugins {
+  id "com.diffplug.gradle.spotless" version "3.14.0"
+}
+
 allprojects {
   repositories {
     mavenLocal()
     mavenCentral()
     maven { url "https://repository.cloudera.com/artifactory/cloudera-repos/" }
     maven { url "https://dl.bintray.com/cakesolutions/maven/" }
-  }
-}
-
-buildscript {
-  repositories {
-    maven { url "https://plugins.gradle.org/m2/" }
-  }
-  // DON'T move this plugin info to dependencies.gradle. It is unnecessary to make version of build tool configurable.
-  dependencies {
-    classpath "com.diffplug.spotless:spotless-plugin-gradle:3.10.0"
   }
 }
 
