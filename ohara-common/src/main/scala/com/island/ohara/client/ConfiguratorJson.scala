@@ -117,7 +117,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     override def read(json: JsValue): Status = Status.of(json.asInstanceOf[JsString].value)
   }
 
-  val PIPELINE_PATH = "pipeline"
+  val PIPELINE_PATH = "pipelines"
   final case class PipelineRequest(name: String, rules: Map[String, String])
   implicit val PIPELINE_REQUEST_JSON_FORMAT: RootJsonFormat[PipelineRequest] = jsonFormat2(PipelineRequest)
 
