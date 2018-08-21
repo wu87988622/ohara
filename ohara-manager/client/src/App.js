@@ -1,10 +1,11 @@
 import React from 'react';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import Header from './components/common/Header';
 import Nav from './components/common/Nav';
 import HomePage from './components/pages/HomePage';
 import Pipeline from './components/pages/PipelinePage';
+import PipelineNew from './components/pages/PipelinePage/PipelineNewPage';
 import Kafka from './components/pages/KafkaPage';
 import Configuration from './components/pages/ConfigurationPage';
 import LoginPage from './components/pages/LoginPage';
@@ -34,13 +35,18 @@ class App extends React.Component {
     const { isLogin } = this.state;
 
     return (
-      <BrowserRouter>
-        <div>
+      <Router>
+        <React.Fragment>
           <Header isLogin={isLogin} />
           <Nav />
           <Switch>
             <Route exact path="/" component={HomePage} />
             <Route exact path="/pipeline" component={Pipeline} />
+            <Route
+              exact
+              path="/pipeline/new/:page/:topicId?"
+              component={PipelineNew}
+            />
             <Route exact path="/kafka" component={Kafka} />
             <Route exact path="/configuration" component={Configuration} />
             <Route
@@ -65,8 +71,8 @@ class App extends React.Component {
             />
             <Route component={NotFoundPage} />
           </Switch>
-        </div>
-      </BrowserRouter>
+        </React.Fragment>
+      </Router>
     );
   }
 }

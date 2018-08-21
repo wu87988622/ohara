@@ -60,9 +60,9 @@ describe('<LoginPage />', () => {
     expect(_props.text).toBe(LOGIN_PAGE.SUBMIT_BUTTON_TEXT);
   });
 
-  it('renders <Redirect /> if the this.state.redirect is true', () => {
+  it('renders <Redirect /> if the this.state.isRedirect is true', () => {
     expect(wrapper.dive().type()).not.toBe(Redirect);
-    wrapper.setState({ redirect: true });
+    wrapper.setState({ isRedirect: true });
     expect(wrapper.type()).toBe(Redirect);
   });
 });

@@ -9,7 +9,7 @@ const getErrors = data => {
   return errors;
 };
 
-exports.onValideSuccess = (res, result) => {
+exports.onValidateSuccess = (res, result) => {
   const errors = getErrors(result.data);
 
   if (errors.length > 0) {

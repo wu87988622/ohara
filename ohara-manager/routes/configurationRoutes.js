@@ -3,7 +3,11 @@
 const axios = require('axios');
 
 const { API_BASE } = require('../constants/url');
-const { onSuccess, onValideSuccess, onError } = require('../utils/apiHelpers');
+const {
+  onSuccess,
+  onValidateSuccess,
+  onError,
+} = require('../utils/apiHelpers');
 
 module.exports = app => {
   app.get('/api/configuration/hdfs', (req, res) => {
@@ -16,7 +20,7 @@ module.exports = app => {
   app.put('/api/configuration/validate/hdfs', (req, res) => {
     axios
       .put(`${API_BASE}/validate/hdfs`, req.body)
-      .then(result => onValideSuccess(res, result))
+      .then(result => onValidateSuccess(res, result))
       .catch(err => onError(res, err));
   });
 

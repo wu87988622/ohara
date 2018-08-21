@@ -69,7 +69,7 @@ class LoginPage extends React.Component {
   state = {
     username: '',
     password: '',
-    redirect: false,
+    isRedirect: false,
   };
 
   handleChange = ({ target: { value, id: field } }) => {
@@ -88,7 +88,7 @@ class LoginPage extends React.Component {
     const isSuccess = get(res, 'data.isSuccess', undefined);
 
     if (isDefined(isSuccess) && isSuccess) {
-      this.setState({ redirect: true });
+      this.setState({ isRedirect: true });
       setUserKey(res.data.token);
       this.props.updateLoginState(true);
       toastr.success(MESSAGE.LOGIN_SUCCESS);
@@ -96,9 +96,9 @@ class LoginPage extends React.Component {
   };
 
   render() {
-    const { username, password, redirect } = this.state;
+    const { username, password, isRedirect } = this.state;
 
-    if (redirect) {
+    if (isRedirect) {
       return <Redirect to={URL.HOME} />;
     }
 

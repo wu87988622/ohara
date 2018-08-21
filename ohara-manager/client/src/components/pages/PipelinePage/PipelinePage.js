@@ -77,7 +77,10 @@ class PipelinePage extends React.Component {
   };
 
   handleModalConfirm = () => {
-    console.log(this.state.currentTopic); // eslint-disable-line
+    const { history, match } = this.props;
+    const { uuid } = this.state.currentTopic;
+
+    history.push(`${match.url}/new/topic/${uuid}`);
     this.handleModalClose();
   };
 
@@ -108,6 +111,7 @@ class PipelinePage extends React.Component {
 
   render() {
     const { isModalActive, topics, currentTopic } = this.state;
+
     return (
       <DocumentTitle title={PIPELINE}>
         <React.Fragment>
