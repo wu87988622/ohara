@@ -41,13 +41,13 @@ const ButtonWrapper = styled.button`
 
 ButtonWrapper.displayName = 'Button';
 
-const IWrapper = styled.i`
+const IconWrapper = styled.i`
   margin-left: 5px;
 `;
 
 const Button = ({
   text,
-  handleClick,
+  handleClick = () => {},
   theme = defaultButton,
   type = 'submit',
   width = 'auto',
@@ -67,26 +67,25 @@ const Button = ({
       disabled={disabled}
       {...rest}
     >
-      {text} {isWorking && <IWrapper className="fas fa-spinner fa-spin" />}
+      {text} {isWorking && <IconWrapper className="fas fa-spinner fa-spin" />}
     </ButtonWrapper>
   );
 };
 
 Button.propTypes = {
   text: PropTypes.string.isRequired,
-  theme: PropTypes.shape({
-    color: PropTypes.string.isRequired,
-    bgColor: PropTypes.string.isRequired,
-    border: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-      .isRequired,
-    bgHover: PropTypes.string.isRequired,
-    colorHover: PropTypes.string.isRequired,
-    borderHover: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-      .isRequired,
-  }),
-  type: PropTypes.string,
   handleClick: PropTypes.func,
+  theme: PropTypes.shape({
+    color: PropTypes.string,
+    bgColor: PropTypes.string,
+    border: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    bgHover: PropTypes.string,
+    colorHover: PropTypes.string,
+    borderHover: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }).isRequired,
+  type: PropTypes.string,
   width: PropTypes.string,
+  disabled: PropTypes.bool,
   isWorking: PropTypes.bool,
 };
 

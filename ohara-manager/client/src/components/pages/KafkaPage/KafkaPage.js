@@ -5,11 +5,8 @@ import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
-import {
-  createTopics,
-  fetchTopics,
-  fetchCluster,
-} from '../../../apis/kafkaApis';
+import { fetchCluster } from '../../../apis/kafkaApis';
+import { createTopics, fetchTopics } from '../../../apis/topicApis';
 import { Input, Button } from '../../common/Form';
 import { ListTable } from '../../common/Table';
 import { submitButton } from '../../../theme/buttonTheme';
@@ -19,22 +16,11 @@ import {
   LEAVE_WITHOUT_SAVE,
   TOPIC_CREATION_SUCCESS,
 } from '../../../constants/message';
-import {
-  white,
-  lightBlue,
-  radiusNormal,
-  shadowNormal,
-} from '../../../theme/variables';
+import { lightBlue } from '../../../theme/variables';
+import { Box } from '../../common/Layout';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
-`;
-
-const Section = styled.section`
-  background-color: ${white};
-  border-radius: ${radiusNormal};
-  box-shadow: ${shadowNormal};
-  margin-bottom: 20px;
 `;
 
 const FormInner = styled.div`
@@ -179,7 +165,7 @@ class KafkaPage extends React.Component {
           />
           <h2>Kafka</h2>
 
-          <Section>
+          <Box>
             <form>
               <FormInner>
                 <FormGroup>
@@ -202,9 +188,9 @@ class KafkaPage extends React.Component {
                 </FormGroup>
               </FormInner>
             </form>
-          </Section>
+          </Box>
 
-          <Section>
+          <Box>
             <TopicsInner>
               <SectionHeader>
                 <H3>Topics</H3>
@@ -218,7 +204,7 @@ class KafkaPage extends React.Component {
 
               <ListTable headers={tableHeaders} list={topics} />
             </TopicsInner>
-          </Section>
+          </Box>
         </Wrapper>
       </DocumentTitle>
     );

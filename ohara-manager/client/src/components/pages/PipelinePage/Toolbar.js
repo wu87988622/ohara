@@ -22,7 +22,7 @@ const Wrapper = styled.div`
   align-items: center;
 `;
 
-const IWrapper = styled.i`
+const IconWrapper = styled.i`
   color: ${lighterBlue};
   font-size: 25px;
   padding: 10px 20px;
@@ -67,6 +67,8 @@ class Toolbar extends React.Component {
         type: PropTypes.string,
         uuid: PropTypes.string,
         isActive: PropTypes.bool,
+        isExact: PropTypes.bool,
+        icon: PropTypes.string,
       }),
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
@@ -96,7 +98,7 @@ class Toolbar extends React.Component {
   render() {
     return (
       <Wrapper>
-        <IWrapper
+        <IconWrapper
           className="fa fa-database"
           onClick={this.update}
           data-id="source"
@@ -104,7 +106,7 @@ class Toolbar extends React.Component {
         <HadoopIconContainer onClick={this.update} data-id="sink">
           <HadoopIconWrapper width={28} height={28} fillColor={lightBlue} />
         </HadoopIconContainer>
-        <IWrapper
+        <IconWrapper
           className="fa fa-list-ul"
           onClick={this.update}
           data-id="topic"

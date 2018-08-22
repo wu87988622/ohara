@@ -10,6 +10,7 @@ import PipelineSinkPage from './PipelineSinkPage';
 import Toolbar from './Toolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
+import { fetchTopic } from '../../../apis/topicApis';
 import { H2 } from '../../common/Heading';
 import { PIPELINE } from '../../../constants/url';
 import { PIPELINE_NEW } from '../../../constants/documentTitles';
@@ -22,6 +23,7 @@ const Wrapper = styled.div`
 class PipelineNewPage extends React.Component {
   state = {
     title: 'Untitle pipeline',
+    topicName: '',
     graph: [
       {
         type: 'source',
@@ -49,7 +51,11 @@ class PipelineNewPage extends React.Component {
   };
 
   componentDidMount() {
-    this.checkTopicId(this.props.match);
+    const isValid = this.checkTopicId(this.props.match);
+
+    if (isValid) {
+      this.fetchData();
+    }
   }
 
   componentDidUpdate({ match }) {
@@ -64,17 +70,29 @@ class PipelineNewPage extends React.Component {
     }
   }
 
+  fetchData = async () => {
+    const { topicId } = this.props.match.params;
+    const res = await fetchTopic(topicId);
+    const result = _.get(res, 'data.result', null);
+
+    if (!_.isNull(result)) {
+      this.setState({ topicName: result.name });
+    }
+  };
+
   checkTopicId = match => {
     const topicId = _.get(match, 'params.topicId', null);
     const isValid = !_.isNull(topicId) && _.isUuid(topicId);
 
     if (!isValid) {
       this.setState(() => ({ isRedirect: true }));
+      return false;
     } else {
       const { graph } = this.state;
       const topic = graph.find(g => g.type === 'topic');
       const update = { ...topic, isActive: true, uuid: topicId, isExist: true };
       this.updateGraph(graph, update, 'topic');
+      return true;
     }
   };
 
@@ -91,7 +109,7 @@ class PipelineNewPage extends React.Component {
   };
 
   render() {
-    const { title, graph, isRedirect } = this.state;
+    const { title, graph, isRedirect, topicName } = this.state;
 
     if (isRedirect) {
       toastr.error(
@@ -124,9 +142,18 @@ class PipelineNewPage extends React.Component {
             {...this.props}
           />
 
-          <Route path="/pipeline/new/source" component={PipelineSourcePage} />
-          <Route path="/pipeline/new/topic" component={PipelineTopicPage} />
-          <Route path="/pipeline/new/sink" component={PipelineSinkPage} />
+          <Route
+            path="/pipeline/new/source"
+            render={() => <PipelineSourcePage />}
+          />
+          <Route
+            path="/pipeline/new/topic"
+            render={() => <PipelineTopicPage name={topicName} />}
+          />
+          <Route
+            path="/pipeline/new/sink"
+            render={() => <PipelineSinkPage />}
+          />
         </Wrapper>
       </DocumentTitle>
     );

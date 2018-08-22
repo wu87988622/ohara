@@ -6,6 +6,8 @@ const H3Wrapper = styled.h3`
   font-size: 22px;
 `;
 
+H3Wrapper.displayName = 'H3Wrapper';
+
 const H3 = ({ children, ...rest }) => {
   return <H3Wrapper {...rest}>{children}</H3Wrapper>;
 };

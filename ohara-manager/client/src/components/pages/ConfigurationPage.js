@@ -4,7 +4,7 @@ import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
-import AppWrapper from '../common/AppWrapper';
+import { AppWrapper } from '../common/Layout';
 import {
   validateHdfs,
   saveHdfs,

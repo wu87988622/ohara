@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 
 import Modal from '../../common/Modal';
-import { fetchTopics } from '../../../apis/kafkaApis';
+import { fetchTopics } from '../../../apis/topicApis';
 import { H2 } from '../../common/Heading';
 import { Button, Select } from '../../common/Form';
 import { submitButton } from '../../../theme/buttonTheme';
@@ -31,7 +31,7 @@ const Warning = styled.p`
   color: ${lighterBlue};
 `;
 
-const IWrapper = styled.i`
+const IconWrapper = styled.i`
   padding: 5px 10px;
   background-color: ${lightYellow};
   margin-right: 10px;
@@ -126,7 +126,7 @@ class PipelinePage extends React.Component {
           >
             <Inner>
               <Warning>
-                <IWrapper className="fas fa-exclamation" />
+                <IconWrapper className="fas fa-exclamation" />
                 Please select a topic for the new pipeline
               </Warning>
               <Select

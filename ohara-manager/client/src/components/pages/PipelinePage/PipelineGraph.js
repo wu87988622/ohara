@@ -3,14 +3,13 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import cx from 'classnames';
 
+import { Box } from '../../common/Layout';
 import { H5 } from '../../common/Heading';
 import { HadoopIcon } from '../../common/Icons';
 import { get, isNull } from '../../../utils/helpers';
 
 import {
   white,
-  shadowNormal,
-  radiusNormal,
   radiusRounded,
   lightBlue,
   lightestBlue,
@@ -20,18 +19,13 @@ import {
   durationNormal,
 } from '../../../theme/variables';
 
-const Wrapper = styled.div`
-  padding: 25px;
-  background-color: ${white};
-  box-shadow: ${shadowNormal};
-  border-radius: ${radiusNormal};
-`;
-
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
   font-weight: normal;
   color: ${lightBlue};
 `;
+
+H5Wrapper.displayName = 'H5Wrapper';
 
 const Graph = styled.ul`
   display: flex;
@@ -42,6 +36,8 @@ const Graph = styled.ul`
     justify-content: space-between;
   }
 `;
+
+Graph.displayName = 'Graph';
 
 const Node = styled.li`
   width: 60px;
@@ -89,11 +85,15 @@ const Node = styled.li`
   }
 `;
 
+Node.displayName = 'Node';
+
 const IconWrapper = styled.i`
   position: relative;
   z-index: 100;
   color: ${lightestBlue};
 `;
+
+IconWrapper.displayName = 'IconWrapper';
 
 class PipelineGraph extends React.Component {
   static propTypes = {
@@ -102,6 +102,8 @@ class PipelineGraph extends React.Component {
         type: PropTypes.string,
         uuid: PropTypes.string,
         isActive: PropTypes.bool,
+        isExist: PropTypes.bool,
+        icon: PropTypes.string,
       }),
     ).isRequired,
     resetGraph: PropTypes.func.isRequired,
@@ -139,7 +141,7 @@ class PipelineGraph extends React.Component {
 
   render() {
     return (
-      <Wrapper>
+      <Box>
         <H5Wrapper>Pipeline graph</H5Wrapper>
 
         <Graph className={this.state.isMultiple ? 'is-multiple' : ''}>
@@ -163,7 +165,7 @@ class PipelineGraph extends React.Component {
             );
           })}
         </Graph>
-      </Wrapper>
+      </Box>
     );
   }
 }

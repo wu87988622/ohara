@@ -1,7 +1,7 @@
 import React from 'react';
 import DocumentTitle from 'react-document-title';
 
-import AppWrapper from '../common/AppWrapper';
+import { AppWrapper } from '../common/Layout';
 import { HOME } from '../../constants/documentTitles';
 
 class HomePage extends React.Component {

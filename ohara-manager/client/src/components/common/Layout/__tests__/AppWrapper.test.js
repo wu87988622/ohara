@@ -18,15 +18,15 @@ describe('<AppWrapper />', () => {
 
   it('renders self', () => {
     expect(wrapper).toHaveLength(1);
+    expect(wrapper.name()).toBe('Wrapper');
   });
 
   it('renders <H2 />', () => {
-    expect(
-      wrapper
-        .find('H2')
-        .children()
-        .text(),
-    ).toBe(props.title);
+    expect(wrapper.find('H2').length).toBe(1);
+  });
+
+  it('renders <Main />', () => {
+    expect(wrapper.find('Main').length).toBe(1);
   });
 
   it('renders children', () => {

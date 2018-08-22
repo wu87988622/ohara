@@ -9,20 +9,22 @@ const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
 `;
 
+Wrapper.displayName = 'Wrapper';
+
 const Main = styled.div`
   background-color: ${white};
   border-radius: ${radiusNormal};
   box-shadow: ${shadowNormal};
 `;
 
+Main.displayName = 'Main';
+
 const AppWrapper = ({ title, children }) => {
   return (
-    <div>
-      <Wrapper>
-        <H2>{title}</H2>
-        <Main>{children}</Main>
-      </Wrapper>
-    </div>
+    <Wrapper>
+      <H2>{title}</H2>
+      <Main>{children}</Main>
+    </Wrapper>
   );
 };
 
