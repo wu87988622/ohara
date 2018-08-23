@@ -63,7 +63,7 @@ describe('<PipelinePage />', () => {
     wrapper
       .find('Modal')
       .dive()
-      .find('[data-testid="modalCancelButton"]')
+      .find('[data-testid="modal-cancel-button"]')
       .dive()
       .dive()
       .simulate('click');

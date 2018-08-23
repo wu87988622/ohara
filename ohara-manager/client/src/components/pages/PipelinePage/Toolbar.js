@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { get } from '../../../utils/helpers';
 import { HadoopIcon } from '../../common/Icons';
 import {
   lightestBlue,
@@ -12,6 +11,7 @@ import {
   durationNormal,
   blue,
 } from '../../../theme/variables';
+import * as _ from '../../../utils/helpers';
 
 const Wrapper = styled.div`
   margin-bottom: 15px;
@@ -28,11 +28,16 @@ const IconWrapper = styled.i`
   padding: 10px 20px;
   transition: ${durationNormal} all;
   cursor: pointer;
+  border-right: 1px solid ${lightestBlue};
 
   &:hover,
   &.is-active {
     transition: ${durationNormal} all;
     color: ${blue};
+  }
+
+  &:last-child {
+    border-right: none;
   }
 `;
 
@@ -42,6 +47,7 @@ const HadoopIconContainer = styled.i`
   transition: ${durationNormal} all;
   vertical-align: middle;
   cursor: pointer;
+  border-right: 1px solid ${lightestBlue};
 
   &:hover svg,
   &.is-active svg {
@@ -75,7 +81,7 @@ class Toolbar extends React.Component {
   };
 
   update = e => {
-    let type = get(e, 'target.dataset.id', null);
+    let type = _.get(e, 'target.dataset.id', null);
     const isSvg = e.target.nodeName === 'svg';
     const { graph, updateGraph } = this.props;
 
@@ -102,14 +108,20 @@ class Toolbar extends React.Component {
           className="fa fa-database"
           onClick={this.update}
           data-id="source"
+          data-testid="toolbar-source"
         />
-        <HadoopIconContainer onClick={this.update} data-id="sink">
+        <HadoopIconContainer
+          onClick={this.update}
+          data-id="sink"
+          data-testid="toolbar-sink"
+        >
           <HadoopIconWrapper width={28} height={28} fillColor={lightBlue} />
         </HadoopIconContainer>
         <IconWrapper
           className="fa fa-list-ul"
           onClick={this.update}
           data-id="topic"
+          data-testid="toolbar-topic"
         />
       </Wrapper>
     );

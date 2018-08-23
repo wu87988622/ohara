@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 import { handleError } from '../utils/apiHelpers';
-import { get } from '../utils/helpers';
+import * as _ from '../utils/helpers';
 
 export const fetchHdfs = async () => {
   try {
     const res = await axios.get('/api/configuration/hdfs');
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -23,7 +23,7 @@ export const validateHdfs = async ({ uri }) => {
     const res = await axios.put('/api/configuration/validate/hdfs', {
       uri,
     });
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -41,7 +41,7 @@ export const saveHdfs = async ({ name, uri }) => {
       name,
       uri,
     });
-    const isSuccess = get(res, 'data.isSuccess', false);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

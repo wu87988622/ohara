@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { handleError } from '../utils/apiHelpers';
+import * as _ from '../utils/helpers';
 
 export const login = async ({ username, password }) => {
   try {
@@ -8,8 +9,9 @@ export const login = async ({ username, password }) => {
       username,
       password,
     });
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (!res.data.isSuccess) {
+    if (!isSuccess) {
       handleError(res);
     }
 
@@ -22,8 +24,9 @@ export const login = async ({ username, password }) => {
 export const logout = async () => {
   try {
     const res = await axios.get('/api/logout');
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (!res.data.isSuccess) {
+    if (!isSuccess) {
       handleError(res);
     }
 

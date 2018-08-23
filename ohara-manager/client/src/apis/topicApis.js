@@ -1,11 +1,14 @@
 import axios from 'axios';
 
 import { handleError } from '../utils/apiHelpers';
+import * as _ from '../utils/helpers';
 
 export const fetchTopic = async topicId => {
   try {
     const res = await axios.get(`/api/topics/${topicId}`);
-    if (!res.data.isSuccess) {
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
       handleError(res);
     }
 
@@ -18,7 +21,9 @@ export const fetchTopic = async topicId => {
 export const fetchTopics = async () => {
   try {
     const res = await axios.get('/api/topics');
-    if (!res.data.isSuccess) {
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
       handleError(res);
     }
 
@@ -31,7 +36,9 @@ export const fetchTopics = async () => {
 export const createTopics = async params => {
   try {
     const res = await axios.post('/api/topics', params);
-    if (!res.data.isSuccess) {
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
       handleError(res);
     }
 

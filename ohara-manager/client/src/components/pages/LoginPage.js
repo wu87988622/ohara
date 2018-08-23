@@ -6,7 +6,6 @@ import { Redirect } from 'react-router-dom';
 
 import { Input, Button } from '../common/Form';
 import { setUserKey } from '../../utils/authHelpers';
-import { get, isDefined } from '../../utils/helpers';
 import { login } from '../../apis/authApis';
 import { LOGIN } from '../../constants/documentTitles';
 import * as URL from '../../constants/url';
@@ -17,6 +16,7 @@ import {
   darkerBlue,
   shadowNormal,
 } from '../../theme/variables';
+import * as _ from '../../utils/helpers';
 
 import { submitButton } from '../../theme/buttonTheme';
 
@@ -85,9 +85,9 @@ class LoginPage extends React.Component {
       password,
     });
 
-    const isSuccess = get(res, 'data.isSuccess', undefined);
+    const isSuccess = _.get(res, 'data.isSuccess', undefined);
 
-    if (isDefined(isSuccess) && isSuccess) {
+    if (_.isDefined(isSuccess) && isSuccess) {
       this.setState({ isRedirect: true });
       setUserKey(res.data.token);
       this.props.updateLoginState(true);

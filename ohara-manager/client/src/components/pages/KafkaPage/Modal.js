@@ -113,7 +113,7 @@ const Modal = ({
               id="topicName"
               placeholder="kafka-cluster"
               value={topicName}
-              data-testid="modalClusterName"
+              data-testid="modal-cluster-name"
               handleChange={handleChange}
             />
           </FormGroup>
@@ -126,7 +126,7 @@ const Modal = ({
               id="partitions"
               placeholder="1"
               value={partitions}
-              data-testid="modalPartitions"
+              data-testid="modal-partitions"
               handleChange={handleChange}
             />
           </FormGroup>
@@ -139,7 +139,7 @@ const Modal = ({
               id="replicationFactor"
               placeholder="5"
               value={replicationFactor}
-              data-testid="modalReplicationFactor"
+              data-testid="modal-replication-factor"
               handleChange={handleChange}
             />
           </FormGroup>
@@ -149,14 +149,14 @@ const Modal = ({
             text="Cancel"
             theme={cancelButton}
             handleClick={handleClose}
-            data-testid="modalCancelButton"
+            data-testid="modal-cancel-button"
           />
           <Button
             text="Save"
             theme={submitButton}
             handleClick={handleCreate}
             isWorking={isCreateTopicWorking}
-            data-testid="modalSubmitButton"
+            data-testid="modal-submit-button"
           />
         </Actions>
       </form>

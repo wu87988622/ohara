@@ -1,4 +1,6 @@
-import { get, isNull } from 'lodash';
+import get from 'lodash.get';
+import isNull from 'lodash.isnull';
+import isFunction from 'lodash.isfunction';
 import uuidValidate from 'uuid-validate';
 
 const isEmptyString = val => val.length === 0;
@@ -17,6 +19,7 @@ export {
   isEmptyArray,
   isDefined,
   isNumber,
+  isFunction,
   isUuid,
   isNull,
 };

@@ -4,7 +4,7 @@ const request = require('supertest');
 const app = require('../topicRoutes')(express());
 const { API_BASE } = require('../../constants/url');
 
-describe.skip('Test topic restful api', () => {
+describe.skip('topicRoutes', () => {
   beforeEach(() => {
     moxios.install();
   });

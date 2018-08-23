@@ -97,13 +97,13 @@ const Modal = ({
           text="Cancel"
           theme={cancelButton}
           handleClick={handleCancel}
-          data-testid="modalCancelButton"
+          data-testid="modal-cancel-button"
         />
         <Button
           text={confirmButtonText}
           theme={submitButton}
           handleClick={handleConfirm}
-          data-testid="modalSubmitButton"
+          data-testid="modal-confirm-button"
           disabled={isConfirmDisabled}
         />
       </Actions>

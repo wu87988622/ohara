@@ -48,6 +48,7 @@ class PipelineNewPage extends React.Component {
       },
     ],
     isRedirect: false,
+    isLoading: true,
   };
 
   componentDidMount() {
@@ -73,6 +74,8 @@ class PipelineNewPage extends React.Component {
   fetchData = async () => {
     const { topicId } = this.props.match.params;
     const res = await fetchTopic(topicId);
+    this.setState(() => ({ isLoading: false }));
+
     const result = _.get(res, 'data.result', null);
 
     if (!_.isNull(result)) {
@@ -108,8 +111,12 @@ class PipelineNewPage extends React.Component {
     this.setState({ graph: update });
   };
 
+  handleTitleChange = ({ target: { value: title } }) => {
+    this.setState(() => ({ title }));
+  };
+
   render() {
-    const { title, graph, isRedirect, topicName } = this.state;
+    const { title, isLoading, graph, isRedirect, topicName } = this.state;
 
     if (isRedirect) {
       toastr.error(
@@ -122,14 +129,7 @@ class PipelineNewPage extends React.Component {
       <DocumentTitle title={PIPELINE_NEW}>
         <Wrapper>
           <H2>
-            <Editable
-              text={title}
-              inputWidth="250px"
-              inputHeight="40px"
-              inputMaxLength="50"
-              labelFontWeight="bold"
-              inputFontWeight="bold"
-            />
+            <Editable title={title} handleChange={this.handleTitleChange} />
           </H2>
           <Toolbar
             updateGraph={this.updateGraph}
@@ -148,7 +148,9 @@ class PipelineNewPage extends React.Component {
           />
           <Route
             path="/pipeline/new/topic"
-            render={() => <PipelineTopicPage name={topicName} />}
+            render={() => (
+              <PipelineTopicPage isLoading={isLoading} name={topicName} />
+            )}
           />
           <Route
             path="/pipeline/new/sink"

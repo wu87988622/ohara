@@ -6,7 +6,7 @@ import cx from 'classnames';
 import { Box } from '../../common/Layout';
 import { H5 } from '../../common/Heading';
 import { HadoopIcon } from '../../common/Icons';
-import { get, isNull } from '../../../utils/helpers';
+import * as _ from '../../../utils/helpers';
 
 import {
   white,
@@ -128,12 +128,12 @@ class PipelineGraph extends React.Component {
       nodeName !== 'LI'
         ? 'target.parentElement.dataset.id'
         : 'target.dataset.id';
-    const page = get(e, path, null);
+    const page = _.get(e, path, null);
 
     const activePage = graph.find(g => g.isActive === true);
     const isUpdate = activePage.type !== page;
 
-    if (!isNull(page) && isUpdate) {
+    if (!_.isNull(page) && isUpdate) {
       resetGraph(graph);
       history.push(`/pipeline/new/${page}`);
     }
@@ -144,7 +144,10 @@ class PipelineGraph extends React.Component {
       <Box>
         <H5Wrapper>Pipeline graph</H5Wrapper>
 
-        <Graph className={this.state.isMultiple ? 'is-multiple' : ''}>
+        <Graph
+          className={this.state.isMultiple ? 'is-multiple' : ''}
+          data-testid="graph-list"
+        >
           {this.props.graph.map(({ type, isExist, isActive, icon }) => {
             const nodeCls = cx({ 'is-exist': isExist, 'is-active': isActive });
             const iconCls = isExist ? `fas ${icon}` : '';
@@ -155,6 +158,7 @@ class PipelineGraph extends React.Component {
                 className={nodeCls}
                 onClick={this.handleClick}
                 data-id={type}
+                data-testid={`graph-${type}`}
               >
                 {type === 'sink' && isExist ? (
                   <HadoopIcon width={28} height={28} fillColor={lightestBlue} />

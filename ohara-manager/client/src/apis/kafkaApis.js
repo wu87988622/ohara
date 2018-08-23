@@ -21,8 +21,9 @@ export const fetchCluster = async () => {
 export const validate = async params => {
   try {
     const res = await axios.put('/api/kafka/validate', params);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
-    if (!res.data.isSuccess) {
+    if (!isSuccess) {
       handleError(res);
     }
 
@@ -35,8 +36,9 @@ export const validate = async params => {
 export const save = async params => {
   try {
     const res = await axios.post('/api/kafka/save', params);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
-    if (!res.data.isSuccess) {
+    if (!isSuccess) {
       handleError(res);
     }
 

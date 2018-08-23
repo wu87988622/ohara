@@ -1,25 +1,25 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add("login", (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add("drag", { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add("dismiss", { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This is will overwrite an existing command --
-// Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+import { setUserKey } from '../../src/utils/authHelpers';
+import { VALID_USER } from '../../src/constants/cypress';
+import * as _ from '../../src/utils/helpers';
+
+Cypress.Commands.add('loginWithUi', () => {
+  cy.get('[data-testid="username"]').type(VALID_USER.username);
+  cy.get('[data-testid="password"]').type(VALID_USER.password);
+  cy.get('[data-testid="login-form"]').submit();
+});
+
+Cypress.Commands.add('login', () => {
+  cy.request({
+    method: 'POST',
+    url: 'http://localhost:5050/api/login',
+    body: {
+      username: VALID_USER.username,
+      password: VALID_USER.password,
+    },
+  }).then(res => {
+    const token = _.get(res, 'body.token', null);
+    if (!_.isNull(token)) {
+      setUserKey(token);
+    }
+  });
+});

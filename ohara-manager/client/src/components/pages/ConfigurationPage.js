@@ -5,17 +5,17 @@ import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
 import { AppWrapper } from '../common/Layout';
+import { Input, Button, FormGroup, Label } from '../common/Form';
+import { submitButton, cancelButton } from '../../theme/buttonTheme';
+import { lighterGray } from '../../theme/variables';
+import { LEAVE_WITHOUT_SAVE } from '../../constants/message';
+import { CONFIGURATION } from '../../constants/documentTitles';
 import {
   validateHdfs,
   saveHdfs,
   fetchHdfs,
 } from '../../apis/configurationApis';
-import { Input, Button, FormGroup, Label } from '../common/Form';
-import { submitButton, cancelButton } from '../../theme/buttonTheme';
-import { lighterGray } from '../../theme/variables';
-import { get, isDefined } from '../../utils/helpers';
-import { LEAVE_WITHOUT_SAVE } from '../../constants/message';
-import { CONFIGURATION } from '../../constants/documentTitles';
+import * as _ from '../../utils/helpers';
 
 const FormInner = styled.div`
   padding: 45px 30px;
@@ -51,7 +51,7 @@ class ConfigurationPage extends React.Component {
   fetchData = async () => {
     const res = await fetchHdfs();
 
-    const _result = get(res, 'data.result');
+    const _result = _.get(res, 'data.result');
 
     if (_result && _result.length > 0) {
       const target = res.data.result.reduce(
@@ -75,9 +75,9 @@ class ConfigurationPage extends React.Component {
     const { connectionName: name, connectionUrl: uri } = this.state;
     const res = await saveHdfs({ name, uri });
 
-    const _res = get(res, 'data.isSuccess', false);
+    const _res = _.get(res, 'data.isSuccess', false);
 
-    if (isDefined(_res)) {
+    if (_.isDefined(_res)) {
       toastr.success('Configuration saved!');
     }
   };
@@ -89,7 +89,7 @@ class ConfigurationPage extends React.Component {
     const res = await validateHdfs({ uri });
     this.updateIsWorking(false);
 
-    const _res = get(res, 'data.isSuccess', false);
+    const _res = _.get(res, 'data.isSuccess', false);
 
     if (_res) {
       toastr.success('Test passed!');

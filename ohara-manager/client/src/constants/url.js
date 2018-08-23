@@ -1,5 +1,8 @@
 export const HOME = '/';
+
+// Pipeline
 export const PIPELINE = '/pipeline';
+
 export const KAFKA = '/kafka';
 export const CONFIGURATION = '/configuration';
 

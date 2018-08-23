@@ -4,23 +4,16 @@ const { API_ROOT } = require('../constants/url');
 const { onSuccess, onError } = require('../utils/apiHelpers');
 
 module.exports = app => {
-  app.post('/api/topics', (req, res) => {
+  app.get('/api/pipelines', (req, res) => {
     axios
-      .post(`${API_ROOT}/topics`, req.body)
+      .get(`${API_ROOT}/pipelines`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
 
-  app.get('/api/topics', (req, res) => {
+  app.post('/api/pipelines/save', (req, res) => {
     axios
-      .get(`${API_ROOT}/topics`)
-      .then(result => onSuccess(res, result))
-      .catch(err => onError(res, err));
-  });
-
-  app.get('/api/topics/:uuid', (req, res) => {
-    axios
-      .get(`${API_ROOT}/topics/${req.params.uuid}`)
+      .post(`${API_ROOT}/pipelines`, req.body)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });

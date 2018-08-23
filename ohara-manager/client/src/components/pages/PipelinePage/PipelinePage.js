@@ -5,17 +5,18 @@ import toastr from 'toastr';
 
 import Modal from '../../common/Modal';
 import { fetchTopics } from '../../../apis/topicApis';
+import { savePipelines } from '../../../apis/pipelinesApis';
 import { H2 } from '../../common/Heading';
 import { Button, Select } from '../../common/Form';
 import { submitButton } from '../../../theme/buttonTheme';
 import { PIPELINE } from '../../../constants/documentTitles';
-import { get, isEmptyArray } from '../../../utils/helpers';
 import {
   lighterBlue,
   lightYellow,
   lightOrange,
   radiusCompact,
 } from '../../../theme/variables';
+import * as _ from '../../../utils/helpers';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
@@ -54,7 +55,7 @@ class PipelinePage extends React.Component {
 
   fetchData = async () => {
     const res = await fetchTopics();
-    const result = get(res, 'data.result', null);
+    const result = _.get(res, 'data.result', null);
 
     if (result && result.length > 0) {
       this.setState({ topics: result });
@@ -80,6 +81,9 @@ class PipelinePage extends React.Component {
     const { history, match } = this.props;
     const { uuid } = this.state.currentTopic;
 
+    const params = { name: 'untitle pipeline', rules: { [uuid]: '?' } };
+    savePipelines(params);
+
     history.push(`${match.url}/new/topic/${uuid}`);
     this.handleModalClose();
   };
@@ -88,7 +92,7 @@ class PipelinePage extends React.Component {
     e.preventDefault();
     this.setState({ isModalActive: true });
 
-    if (isEmptyArray(this.state.topics)) {
+    if (_.isEmptyArray(this.state.topics)) {
       toastr.error(`You don't have any topics!`);
     }
   };
@@ -122,7 +126,7 @@ class PipelinePage extends React.Component {
             confirmButtonText="Next"
             handleConfirm={this.handleModalConfirm}
             handleCancel={this.handleModalClose}
-            isConfirmDisabled={isEmptyArray(topics) ? true : false}
+            isConfirmDisabled={_.isEmptyArray(topics) ? true : false}
           >
             <Inner>
               <Warning>
@@ -141,6 +145,7 @@ class PipelinePage extends React.Component {
             <Button
               theme={submitButton}
               text="New pipeline"
+              data-testid="new-pipeline"
               handleClick={this.handleModalOpen}
             />
           </Wrapper>

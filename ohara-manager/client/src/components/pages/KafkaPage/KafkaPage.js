@@ -173,7 +173,7 @@ class KafkaPage extends React.Component {
                   <Input
                     width="350px"
                     value={brokerList}
-                    data-testid="brokerList"
+                    data-testid="broker-list"
                     disabled
                   />
                 </FormGroup>
@@ -182,7 +182,7 @@ class KafkaPage extends React.Component {
                   <Input
                     width="350px"
                     value={workerList}
-                    data-testid="workerList"
+                    data-testid="worker-list"
                     disabled
                   />
                 </FormGroup>
@@ -197,7 +197,7 @@ class KafkaPage extends React.Component {
                 <Button
                   text="New topic"
                   theme={submitButton}
-                  data-testid="newTopic"
+                  data-testid="new-topic"
                   handleClick={this.handleModalOpen}
                 />
               </SectionHeader>

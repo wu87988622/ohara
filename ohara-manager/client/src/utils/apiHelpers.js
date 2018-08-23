@@ -1,8 +1,8 @@
 import toastr from 'toastr';
-import { get } from './helpers';
+import * as _ from './helpers';
 
 export const handleError = err => {
-  const message = get(err, 'data.errorMessage.message');
+  const message = _.get(err, 'data.errorMessage.message');
 
   if (message) {
     toastr.error(message);

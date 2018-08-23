@@ -24,7 +24,7 @@ describe('<KafkaPage />', () => {
   it('opens <Modal />', () => {
     expect(wrapper.find('Modal').props().isActive).toBe(false);
     wrapper
-      .find('[data-testid="newTopic"]')
+      .find('[data-testid="new-topic"]')
       .dive()
       .simulate('click');
 
@@ -53,7 +53,7 @@ describe('<KafkaPage />', () => {
     wrapper
       .find('Modal')
       .dive()
-      .find('[data-testid="modalCancelButton"]')
+      .find('[data-testid="modal-cancel-button"]')
       .dive()
       .dive()
       .simulate('click');
