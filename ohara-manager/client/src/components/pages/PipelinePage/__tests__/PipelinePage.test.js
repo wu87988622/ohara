@@ -42,28 +42,28 @@ describe('<PipelinePage />', () => {
     expect(wrapper.find('Modal').props().isActive).toBe(true);
   });
 
-  it('closes the <Modal /> with <CloseButton />', () => {
+  it('closes the <Modal /> with <CloseBtn />', () => {
     wrapper.setState({ isModalActive: true });
     expect(wrapper.find('Modal').props().isActive).toBe(true);
 
     wrapper
       .find('Modal')
       .dive()
-      .find('CloseButton')
+      .find('CloseBtn')
       .simulate('click');
 
     wrapper.update();
     expect(wrapper.find('Modal').props().isActive).toBe(false);
   });
 
-  it('closes the <Modal> with <CancelButton />', () => {
+  it.only('closes the <Modal> with <CancelBtn />', () => {
     wrapper.setState({ isModalActive: true });
     expect(wrapper.find('Modal').props().isActive).toBe(true);
 
     wrapper
       .find('Modal')
       .dive()
-      .find('[data-testid="modal-cancel-button"]')
+      .find('[data-testid="modal-cancel-btn"]')
       .dive()
       .dive()
       .simulate('click');

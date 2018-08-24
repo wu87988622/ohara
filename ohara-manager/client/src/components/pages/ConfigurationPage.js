@@ -6,9 +6,8 @@ import { Prompt } from 'react-router-dom';
 
 import { AppWrapper } from '../common/Layout';
 import { Input, Button, FormGroup, Label } from '../common/Form';
-import { submitButton, cancelButton } from '../../theme/buttonTheme';
+import { primaryBtn, cancelBtn } from '../../theme/btnTheme';
 import { lighterGray } from '../../theme/variables';
-import { LEAVE_WITHOUT_SAVE } from '../../constants/message';
 import { CONFIGURATION } from '../../constants/documentTitles';
 import {
   validateHdfs,
@@ -16,6 +15,7 @@ import {
   fetchHdfs,
 } from '../../apis/configurationApis';
 import * as _ from '../../utils/helpers';
+import * as MESSAGES from '../../constants/messages';
 
 const FormInner = styled.div`
   padding: 45px 30px;
@@ -31,7 +31,7 @@ const ActionGroup = styled.div`
   margin-left: auto;
 `;
 
-const CancelButton = styled(Button)`
+const CancelBtn = styled(Button)`
   margin-right: 10px;
 `;
 
@@ -78,7 +78,7 @@ class ConfigurationPage extends React.Component {
     const _res = _.get(res, 'data.isSuccess', false);
 
     if (_.isDefined(_res)) {
-      toastr.success('Configuration saved!');
+      toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
     }
   };
 
@@ -92,7 +92,7 @@ class ConfigurationPage extends React.Component {
     const _res = _.get(res, 'data.isSuccess', false);
 
     if (_res) {
-      toastr.success('Test passed!');
+      toastr.success(MESSAGES.TEST_SUCCESS);
       this.handleSave();
     }
   };
@@ -113,7 +113,7 @@ class ConfigurationPage extends React.Component {
         <AppWrapper title="Configuration">
           <Prompt
             when={isFormDirty || isWorking}
-            message={LEAVE_WITHOUT_SAVE}
+            message={MESSAGES.LEAVE_WITHOUT_SAVE}
           />
           <form>
             <FormInner>
@@ -124,6 +124,7 @@ class ConfigurationPage extends React.Component {
                   width="250px"
                   placeholder="Connection name"
                   value={connectionName}
+                  data-testid="connection-name-input"
                   handleChange={this.handleChange}
                 />
               </FormGroup>
@@ -135,6 +136,7 @@ class ConfigurationPage extends React.Component {
                   width="250px"
                   placeholder="http://localhost:5050"
                   value={connectionUrl}
+                  data-testid="connection-url-input"
                   handleChange={this.handleChange}
                 />
               </FormGroup>
@@ -142,15 +144,16 @@ class ConfigurationPage extends React.Component {
 
             <Actions>
               <ActionGroup>
-                <CancelButton
+                <CancelBtn
                   text="Cancel"
-                  theme={cancelButton}
+                  theme={cancelBtn}
                   handleClick={this.handleCancel}
                 />
                 <Button
-                  theme={submitButton}
+                  theme={primaryBtn}
                   text="Test connection"
                   isWorking={isWorking}
+                  data-testid="test-connection-btn"
                   handleClick={this.handleTest}
                 />
               </ActionGroup>

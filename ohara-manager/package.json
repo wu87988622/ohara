@@ -26,7 +26,8 @@
     "clean:process": "forever stopall",
     "clean:server": "rm -rf ./testReports node_modules",
     "clean:client": "rm -rf ./client/node_modules ./client/build",
-    "format": "prettier --single-quote --trailing-comma all --write \"**/*.js\""
+    "format": "prettier --single-quote --trailing-comma all --write \"**/*.js\"",
+    "prepush": "yarn lint && yarn test:all && yarn format"
   },
   "dependencies": {
     "axios": "0.18.0",

@@ -4,8 +4,8 @@ import ReactModal from 'react-modal';
 import styled from 'styled-components';
 
 import { Input, Button } from '../../common/Form';
-import { H2 } from '../../common/Heading';
-import { cancelButton, submitButton } from '../../../theme/buttonTheme';
+import { H2 } from '../../common/Headings';
+import { cancelBtn, primaryBtn } from '../../../theme/btnTheme';
 import {
   lightBlue,
   lightGray,
@@ -58,13 +58,13 @@ const Label = styled.label`
   margin-bottom: 20px;
 `;
 
-const CancelButton = styled(Button)`
+const CancelBtn = styled(Button)`
   margin-right: 10px;
 `;
 
-CancelButton.displayName = 'CancelButton';
+CancelBtn.displayName = 'CancelBtn';
 
-const CloseButton = styled.div`
+const CloseBtn = styled.div`
   position: absolute;
   right: 22px;
   top: 22px;
@@ -79,7 +79,7 @@ const CloseButton = styled.div`
   }
 `;
 
-CloseButton.displayName = 'CloseButton';
+CloseBtn.displayName = 'CloseBtn';
 
 const Modal = ({
   isActive,
@@ -100,13 +100,13 @@ const Modal = ({
       onRequestClose={handleClose}
     >
       <H2Wrapper>New topic</H2Wrapper>
-      <CloseButton onClick={handleClose}>
+      <CloseBtn onClick={handleClose}>
         <i className="fas fa-times" />
-      </CloseButton>
+      </CloseBtn>
       <form>
         <FormInner>
           <FormGroup>
-            <Label>Cluster name</Label>
+            <Label>Topic name</Label>
             <Input
               type="text"
               width="250px"
@@ -145,18 +145,18 @@ const Modal = ({
           </FormGroup>
         </FormInner>
         <Actions>
-          <CancelButton
+          <CancelBtn
             text="Cancel"
-            theme={cancelButton}
+            theme={cancelBtn}
             handleClick={handleClose}
-            data-testid="modal-cancel-button"
+            data-testid="modal-cancel-btn"
           />
           <Button
             text="Save"
-            theme={submitButton}
+            theme={primaryBtn}
             handleClick={handleCreate}
             isWorking={isCreateTopicWorking}
-            data-testid="modal-submit-button"
+            data-testid="modal-submit-btn"
           />
         </Actions>
       </form>

@@ -15,7 +15,9 @@ exports.onValidateSuccess = (res, result) => {
   if (errors.length > 0) {
     return res.json({
       isSuccess: false,
-      errorMessage: { message: 'Failing to passed!' },
+      errorMessage: {
+        message: 'Test failed, please check you configs and try again later!',
+      },
     });
   }
 

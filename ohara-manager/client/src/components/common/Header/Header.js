@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 
 import { white, lighterGray } from '../../../theme/variables';
 import { deleteUserKey } from '../../../utils/authHelpers';
-import { LOGIN, LOGOUT } from '../../../constants/url';
+import * as URLS from '../../../constants/urls';
 
 const HeaderWrapper = styled.header`
   background-color: ${white};
@@ -39,7 +39,10 @@ class Header extends React.Component {
       <HeaderWrapper>
         <Ul>
           <li>
-            <NavLink data-testid="login-state" to={isLogin ? LOGOUT : LOGIN}>
+            <NavLink
+              data-testid="login-state"
+              to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
+            >
               {isLogin ? 'Log out' : 'Log in'}
             </NavLink>
           </li>

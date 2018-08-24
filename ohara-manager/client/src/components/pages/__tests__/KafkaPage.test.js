@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import KafkaPage from '../KafkaPage';
-import { LEAVE_WITHOUT_SAVE } from '../../../constants/message';
+import { LEAVE_WITHOUT_SAVE } from '../../../constants/messages';
 
 describe('<KafkaPage />', () => {
   let wrapper;
@@ -32,28 +32,28 @@ describe('<KafkaPage />', () => {
     expect(wrapper.find('Modal').props().isActive).toBe(true);
   });
 
-  it('closes <Modal /> with <CloseButton>', () => {
+  it.only('closes <Modal /> with <CloseBtn>', () => {
     wrapper.setState({ isModalActive: true });
     expect(wrapper.find('Modal').props().isActive).toBe(true);
 
     wrapper
       .find('Modal')
       .dive()
-      .find('CloseButton')
+      .find('CloseBtn')
       .simulate('click');
 
     wrapper.update();
     expect(wrapper.find('Modal').props().isActive).toBe(false);
   });
 
-  it('closes <Modal> with <CancelButton>', () => {
+  it('closes <Modal> with <CancelBtn>', () => {
     wrapper.setState({ isModalActive: true });
     expect(wrapper.find('Modal').props().isActive).toBe(true);
 
     wrapper
       .find('Modal')
       .dive()
-      .find('[data-testid="modal-cancel-button"]')
+      .find('[data-testid="modal-cancel-btn"]')
       .dive()
       .dive()
       .simulate('click');

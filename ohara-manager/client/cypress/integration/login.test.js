@@ -1,13 +1,14 @@
-import { LOGIN, HOME } from '../../src/constants/url';
 import { INVALID_USER } from '../../src/constants/cypress';
+import * as MESSAGES from '../../src/constants/messages';
+import * as URLS from '../../src/constants/urls';
 
 describe('Login', () => {
   beforeEach(() => {
-    cy.visit(LOGIN);
+    cy.visit(URLS.LOGIN);
   });
 
   it('goes to login page', () => {
-    cy.location('pathname').should('eq', LOGIN);
+    cy.location('pathname').should('eq', URLS.LOGIN);
   });
 
   it('shows an error message when logging in with wrong username or password', () => {
@@ -21,8 +22,8 @@ describe('Login', () => {
   it('redirects to home and displays a success message', () => {
     cy.loginWithUi();
 
-    cy.get('.toast-success').should('contain', '登入成功');
-    cy.location('pathname').should('eq', HOME);
+    cy.get('.toast-success').should('contain', MESSAGES.LOGIN_SUCCESS);
+    cy.location('pathname').should('eq', URLS.HOME);
   });
 
   it('changes login text based on user login status', () => {
@@ -35,11 +36,11 @@ describe('Login', () => {
   it('logs out successfully', () => {
     cy.loginWithUi();
 
-    cy.get('.toast-success').should('contain', '登入成功');
+    cy.get('.toast-success').should('contain', MESSAGES.LOGIN_SUCCESS);
     cy.get('[data-testid="login-state"]').click({ force: true });
 
     // TODO: A better way to assert this
-    cy.get('.toast-success').should('contain', '登出成功');
+    cy.get('.toast-success').should('contain', MESSAGES.LOGOUT_SUCCESS);
     cy.get('[data-testid="login-state"]').should('contain', 'Log in');
   });
 });

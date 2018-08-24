@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { Facebook } from 'react-content-loader';
 
 import { Box } from '../../common/Layout';
-import { H5 } from '../../common/Heading';
+import { H5 } from '../../common/Headings';
 import { lightBlue } from '../../../theme/variables';
 
 const H5Wrapper = styled(H5)`

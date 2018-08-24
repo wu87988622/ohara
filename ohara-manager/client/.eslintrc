@@ -1,0 +1,10 @@
+{
+  "extends": "react-app",
+  "plugins": ["cypress"],
+  "env": {
+    "cypress/globals": true
+  },
+  "rules": {
+    "jsx-a11y/href-no-hash": "off"
+  }
+}

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import cx from 'classnames';
 
-import { defaultButton } from '../../../theme/buttonTheme';
+import { defaultBtn } from '../../../theme/btnTheme';
 import {
   radiusNormal,
   durationNormal,
@@ -12,7 +12,7 @@ import {
   white,
 } from '../../../theme/variables';
 
-const ButtonWrapper = styled.button`
+const BtnWrapper = styled.button`
   font-size: 13px;
   font-family: inherit;
   border: ${props => props.theme.border};
@@ -39,7 +39,7 @@ const ButtonWrapper = styled.button`
   }
 `;
 
-ButtonWrapper.displayName = 'Button';
+BtnWrapper.displayName = 'BtnWrapper';
 
 const IconWrapper = styled.i`
   margin-left: 5px;
@@ -48,7 +48,7 @@ const IconWrapper = styled.i`
 const Button = ({
   text,
   handleClick = () => {},
-  theme = defaultButton,
+  theme = defaultBtn,
   type = 'submit',
   width = 'auto',
   disabled = false,
@@ -58,7 +58,7 @@ const Button = ({
   const cls = cx({ 'is-working': isWorking }, { 'is-disabled': disabled });
 
   return (
-    <ButtonWrapper
+    <BtnWrapper
       type={type}
       width={width}
       onClick={handleClick}
@@ -68,7 +68,7 @@ const Button = ({
       {...rest}
     >
       {text} {isWorking && <IconWrapper className="fas fa-spinner fa-spin" />}
-    </ButtonWrapper>
+    </BtnWrapper>
   );
 };
 
@@ -82,7 +82,7 @@ Button.propTypes = {
     bgHover: PropTypes.string,
     colorHover: PropTypes.string,
     borderHover: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  }).isRequired,
+  }),
   type: PropTypes.string,
   width: PropTypes.string,
   disabled: PropTypes.bool,

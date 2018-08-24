@@ -10,19 +10,33 @@ import PipelineSinkPage from './PipelineSinkPage';
 import Toolbar from './Toolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
+import { ConfirmModal } from '../../common/Modal';
+import { deleteBtn } from '../../../theme/btnTheme';
+import { Button } from '../../common/Form';
 import { fetchTopic } from '../../../apis/topicApis';
-import { H2 } from '../../common/Heading';
-import { PIPELINE } from '../../../constants/url';
+import { deletePipeline } from '../../../apis/pipelinesApis';
+import { H2 } from '../../common/Headings';
+import { PIPELINE } from '../../../constants/urls';
 import { PIPELINE_NEW } from '../../../constants/documentTitles';
 import * as _ from '../../../utils/helpers';
+import * as MESSAGES from '../../../constants/messages';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
 `;
 
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Actions = styled.div`
+  margin-left: auto;
+`;
+
 class PipelineNewPage extends React.Component {
   state = {
-    title: 'Untitle pipeline',
+    title: 'Untitled pipeline',
     topicName: '',
     graph: [
       {
@@ -49,6 +63,7 @@ class PipelineNewPage extends React.Component {
     ],
     isRedirect: false,
     isLoading: true,
+    isModalActive: false,
   };
 
   componentDidMount() {
@@ -88,6 +103,7 @@ class PipelineNewPage extends React.Component {
     const isValid = !_.isNull(topicId) && _.isUuid(topicId);
 
     if (!isValid) {
+      toastr.error(MESSAGES.TOPIC_ID_REQUIRED_ERROR);
       this.setState(() => ({ isRedirect: true }));
       return false;
     } else {
@@ -115,48 +131,92 @@ class PipelineNewPage extends React.Component {
     this.setState(() => ({ title }));
   };
 
+  handleModalOpen = () => {
+    this.setState({ isModalActive: true });
+  };
+
+  handleModalClose = () => {
+    this.setState({ isModalActive: false });
+  };
+
+  handlePipelineDelete = async () => {
+    const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
+    const res = await deletePipeline(pipelineId);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      toastr.success(MESSAGES.PIPELINE_DELETION_SUCCESS);
+      this.setState(() => ({ isRedirect: true }));
+    }
+  };
+
   render() {
-    const { title, isLoading, graph, isRedirect, topicName } = this.state;
+    const {
+      title,
+      isLoading,
+      graph,
+      isRedirect,
+      topicName,
+      isModalActive,
+    } = this.state;
 
     if (isRedirect) {
-      toastr.error(
-        'You need to select a topic before creating a new pipeline!',
-      );
       return <Redirect to={PIPELINE} />;
     }
 
     return (
       <DocumentTitle title={PIPELINE_NEW}>
-        <Wrapper>
-          <H2>
-            <Editable title={title} handleChange={this.handleTitleChange} />
-          </H2>
-          <Toolbar
-            updateGraph={this.updateGraph}
-            graph={graph}
-            {...this.props}
-          />
-          <PipelineGraph
-            graph={graph}
-            resetGraph={this.resetGraph}
-            {...this.props}
+        <React.Fragment>
+          <ConfirmModal
+            isActive={isModalActive}
+            title="Delete pipeline"
+            handleCancel={this.handleModalClose}
+            handleConfirm={this.handlePipelineDelete}
+            message="Are you sure you want to delete this pipeline? This action cannot be redo!"
           />
 
-          <Route
-            path="/pipeline/new/source"
-            render={() => <PipelineSourcePage />}
-          />
-          <Route
-            path="/pipeline/new/topic"
-            render={() => (
-              <PipelineTopicPage isLoading={isLoading} name={topicName} />
-            )}
-          />
-          <Route
-            path="/pipeline/new/sink"
-            render={() => <PipelineSinkPage />}
-          />
-        </Wrapper>
+          <Wrapper>
+            <Header>
+              <H2>
+                <Editable title={title} handleChange={this.handleTitleChange} />
+              </H2>
+
+              <Actions>
+                <Button
+                  theme={deleteBtn}
+                  text="Delete pipeline"
+                  data-testid="delete-pipeline-btn"
+                  handleClick={this.handleModalOpen}
+                />
+              </Actions>
+            </Header>
+            <Toolbar
+              updateGraph={this.updateGraph}
+              graph={graph}
+              {...this.props}
+            />
+            <PipelineGraph
+              graph={graph}
+              resetGraph={this.resetGraph}
+              {...this.props}
+            />
+
+            <Route
+              path="/pipeline/new/source"
+              render={() => <PipelineSourcePage />}
+            />
+            <Route
+              path="/pipeline/new/topic"
+              render={() => (
+                <PipelineTopicPage isLoading={isLoading} name={topicName} />
+              )}
+            />
+            <Route
+              path="/pipeline/new/sink"
+              render={() => <PipelineSinkPage />}
+            />
+          </Wrapper>
+        </React.Fragment>
       </DocumentTitle>
     );
   }

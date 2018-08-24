@@ -19,9 +19,8 @@ module.exports = app => {
   });
 
   app.get('/api/schemas/:uuid', (req, res) => {
-    const uuid = req.params.uuid;
     axios
-      .get(`${API_ROOT}/schemas/${uuid}`)
+      .get(`${API_ROOT}/schemas/${req.params.uuid}`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });

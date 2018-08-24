@@ -8,7 +8,7 @@ import { Input, Button } from '../common/Form';
 import { setUserKey } from '../../utils/authHelpers';
 import { login } from '../../apis/authApis';
 import { LOGIN } from '../../constants/documentTitles';
-import * as URL from '../../constants/url';
+import * as URL from '../../constants/urls';
 import {
   white,
   radiusNormal,
@@ -18,10 +18,10 @@ import {
 } from '../../theme/variables';
 import * as _ from '../../utils/helpers';
 
-import { submitButton } from '../../theme/buttonTheme';
+import { primaryBtn } from '../../theme/btnTheme';
 
 import * as LOGIN_PAGE from '../../constants/login';
-import * as MESSAGE from '../../constants/message';
+import * as MESSAGES from '../../constants/messages';
 
 const FormContainer = styled.div`
   display: flex;
@@ -91,7 +91,7 @@ class LoginPage extends React.Component {
       this.setState({ isRedirect: true });
       setUserKey(res.data.token);
       this.props.updateLoginState(true);
-      toastr.success(MESSAGE.LOGIN_SUCCESS);
+      toastr.success(MESSAGES.LOGIN_SUCCESS);
     }
   };
 
@@ -133,7 +133,7 @@ class LoginPage extends React.Component {
 
               <Button
                 width="100%"
-                theme={submitButton}
+                theme={primaryBtn}
                 text={LOGIN_PAGE.SUBMIT_BUTTON_TEXT}
               />
             </FormInner>

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const H2Wrapper = styled.h2`
+  font-weight: normal;
   font-size: 24px;
 `;
 

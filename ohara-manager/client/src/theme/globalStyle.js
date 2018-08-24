@@ -21,7 +21,7 @@ ReactModal.defaultStyles.overlay.backgroundColor = 'rgba(32, 42, 65, .9)';
 ReactModal.defaultStyles.overlay.zIndex = 1100;
 
 export default injectGlobal`
-  @import url('https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700|Roboto');
+  @import url('https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700|Roboto:400,700,900');
   
   *, *:before, *:after {
     box-sizing: border-box;
@@ -65,12 +65,13 @@ export default injectGlobal`
   }
 
   #toast-container > div.toast {
-    opacity: 0.9;
-    padding: 20px 20px 20px 20px;
+    opacity: 0.98;
+    padding: 20px 25px;
     box-shadow: none;
     width: auto;
     max-width: 300px;
     background-image: none !important;
+    box-shadow: 2px 3px 27px rgba(0, 0, 0, .2);
 
     &.toast-success {
         background-color: ${green}
@@ -89,12 +90,14 @@ export default injectGlobal`
     }
 
     .toast-title, toast-message {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: normal;
+      word-break: break-word;
+      line-height: 1.6;
     }
 
     &:hover {
-      box-shadow: none;
+      box-shadow: 2px 3px 27px rgba(0, 0, 0, .2);
     }
   }
 `;

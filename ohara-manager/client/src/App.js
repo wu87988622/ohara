@@ -44,7 +44,7 @@ class App extends React.Component {
             <Route exact path="/pipeline" component={Pipeline} />
             <Route
               exact
-              path="/pipeline/new/:page/:topicId?"
+              path="/pipeline/new/:page/:pipelineId/:topicId"
               component={PipelineNew}
             />
             <Route exact path="/kafka" component={Kafka} />

@@ -4,15 +4,18 @@ import ReactModal from 'react-modal';
 import styled from 'styled-components';
 
 import { Button } from '../../common/Form';
-import { H2 } from '../../common/Headings';
+import { H3 } from '../../common/Headings';
 import { cancelBtn, primaryBtn } from '../../../theme/btnTheme';
 import {
   lightGray,
-  lighterGray,
+  lightBlue,
   white,
   red,
   durationNormal,
   radiusNormal,
+  lightYellow,
+  lightOrange,
+  radiusCompact,
 } from '../../../theme/variables';
 
 const ModalWrapper = styled(ReactModal)`
@@ -33,16 +36,14 @@ const ModalWrapper = styled(ReactModal)`
   }
 `;
 
-const H2Wrapper = styled(H2)`
+const H3Wrapper = styled(H3)`
   margin: 0;
   padding: 20px;
-  border-bottom: 1px solid ${lighterGray};
 `;
 
 const Actions = styled.div`
   display: flex;
   padding: 15px;
-  border-top: 1px solid ${lighterGray};
   justify-content: flex-end;
 `;
 
@@ -69,14 +70,33 @@ const CloseBtn = styled.div`
 
 CloseBtn.displayName = 'CloseBtn';
 
-const Modal = ({
+const IconWrapper = styled.i`
+  margin: 3px 10px 0 0;
+  padding: 5px 10px;
+  background-color: ${lightYellow};
+  display: inline-block;
+  color: ${lightOrange};
+  font-size: 12px;
+  border-radius: ${radiusCompact};
+  align-self: flex-start;
+`;
+
+const Warning = styled.p`
+  display: flex;
+  margin: 20px 25px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: ${lightBlue};
+`;
+
+const ConfirmModal = ({
   isActive,
   title,
   handleConfirm,
   handleCancel,
-  children,
-  width = '300px',
-  confirmBtnText = 'Save',
+  message,
+  width = '400px',
+  confirmBtnText = 'Delete',
   cancelBtnText = 'Cancel',
   isConfirmDisabled = false,
 }) => {
@@ -88,23 +108,26 @@ const Modal = ({
       width={width}
       onRequestClose={handleCancel}
     >
-      <H2Wrapper>{title}</H2Wrapper>
+      <H3Wrapper>{title}</H3Wrapper>
       <CloseBtn onClick={handleCancel}>
         <i className="fas fa-times" />
       </CloseBtn>
-      {children}
+      <Warning>
+        <IconWrapper className="fas fa-exclamation" />
+        <span>{message}</span>
+      </Warning>
       <Actions>
         <CancelBtn
           text={cancelBtnText}
           theme={cancelBtn}
           handleClick={handleCancel}
-          data-testid="modal-cancel-btn"
+          data-testid="confirm-modal-cancel-btn"
         />
         <Button
           text={confirmBtnText}
           theme={primaryBtn}
           handleClick={handleConfirm}
-          data-testid="modal-confirm-btn"
+          data-testid="confirm-modal-confirm-btn"
           disabled={isConfirmDisabled}
         />
       </Actions>
@@ -112,15 +135,15 @@ const Modal = ({
   );
 };
 
-Modal.propTypes = {
+ConfirmModal.propTypes = {
   isActive: PropTypes.bool.isRequired,
   handleConfirm: PropTypes.func.isRequired,
   handleCancel: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
-  children: PropTypes.any.isRequired,
+  message: PropTypes.any.isRequired,
   confirmBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
   isConfirmDisabled: PropTypes.bool,
 };
 
-export default Modal;
+export default ConfirmModal;

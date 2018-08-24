@@ -18,5 +18,12 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.delete('/api/pipelines/delete/:uuid', (req, res) => {
+    axios
+      .delete(`${API_ROOT}/pipelines/${req.params.uuid}`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   return app;
 };

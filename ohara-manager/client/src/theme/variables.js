@@ -9,7 +9,7 @@ export const dimBlue = '#a5aebe';
 export const darkBlue = '#52565d';
 export const darkerBlue = '#202a41';
 
-export const green = '#28a745';
+export const green = '#45dd97';
 export const lightYellow = '#fff4ce';
 export const lightOrange = '#fecc22';
 export const orange = '#fdba00';

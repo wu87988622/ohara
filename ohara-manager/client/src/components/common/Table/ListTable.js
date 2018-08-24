@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
-import { darkerBlue, lighterGray } from '../../../theme/variables';
+import { darkerBlue, lighterGray, lightBlue } from '../../../theme/variables';
 
 const Table = styled.table`
   width: 100%;
@@ -11,8 +11,13 @@ const Table = styled.table`
 
   th,
   td {
-    padding: 20px 0;
+    font-size: 13px;
+    padding: 20px 10px;
     border-bottom: 1px solid ${lighterGray};
+  }
+
+  td {
+    color: ${lightBlue};
   }
 `;
 

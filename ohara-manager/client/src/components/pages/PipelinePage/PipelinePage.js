@@ -3,12 +3,12 @@ import DocumentTitle from 'react-document-title';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
-import Modal from '../../common/Modal';
+import { Modal } from '../../common/Modal';
 import { fetchTopics } from '../../../apis/topicApis';
 import { savePipelines } from '../../../apis/pipelinesApis';
-import { H2 } from '../../common/Heading';
+import { H2 } from '../../common/Headings';
 import { Button, Select } from '../../common/Form';
-import { submitButton } from '../../../theme/buttonTheme';
+import { primaryBtn } from '../../../theme/btnTheme';
 import { PIPELINE } from '../../../constants/documentTitles';
 import {
   lighterBlue,
@@ -17,6 +17,7 @@ import {
   radiusCompact,
 } from '../../../theme/variables';
 import * as _ from '../../../utils/helpers';
+import * as MESSAGES from '../../../constants/messages';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
@@ -77,23 +78,30 @@ class PipelinePage extends React.Component {
     });
   };
 
-  handleModalConfirm = () => {
+  handleModalConfirm = async () => {
     const { history, match } = this.props;
-    const { uuid } = this.state.currentTopic;
+    const { uuid: topicUuid } = this.state.currentTopic;
 
-    const params = { name: 'untitle pipeline', rules: { [uuid]: '?' } };
-    savePipelines(params);
+    const params = { name: 'untitle pipeline', rules: { [topicUuid]: '?' } };
+    const res = await savePipelines(params);
 
-    history.push(`${match.url}/new/topic/${uuid}`);
-    this.handleModalClose();
+    const pipelineUuid = _.get(res, 'data.result.uuid', null);
+
+    if (!_.isNull(pipelineUuid)) {
+      this.handleModalClose();
+      toastr.success('New pipeline has been created!');
+      history.push(`${match.url}/new/topic/${pipelineUuid}/${topicUuid}`);
+    }
   };
+
+  save = () => {};
 
   handleModalOpen = e => {
     e.preventDefault();
     this.setState({ isModalActive: true });
 
     if (_.isEmptyArray(this.state.topics)) {
-      toastr.error(`You don't have any topics!`);
+      toastr.error(MESSAGES.NO_TOPICS_FOUND_ERROR);
     }
   };
 
@@ -123,7 +131,7 @@ class PipelinePage extends React.Component {
             isActive={isModalActive}
             title="Select topic"
             width="370px"
-            confirmButtonText="Next"
+            confirmBtnText="Next"
             handleConfirm={this.handleModalConfirm}
             handleCancel={this.handleModalClose}
             isConfirmDisabled={_.isEmptyArray(topics) ? true : false}
@@ -143,7 +151,7 @@ class PipelinePage extends React.Component {
           <Wrapper>
             <H2>Pipeline</H2>
             <Button
-              theme={submitButton}
+              theme={primaryBtn}
               text="New pipeline"
               data-testid="new-pipeline"
               handleClick={this.handleModalOpen}

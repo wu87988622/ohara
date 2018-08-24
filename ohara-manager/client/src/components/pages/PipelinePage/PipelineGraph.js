@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import cx from 'classnames';
 
 import { Box } from '../../common/Layout';
-import { H5 } from '../../common/Heading';
+import { H5 } from '../../common/Headings';
 import { HadoopIcon } from '../../common/Icons';
 import * as _ from '../../../utils/helpers';
 
@@ -123,7 +123,8 @@ class PipelineGraph extends React.Component {
 
   handleClick = e => {
     const { nodeName } = e.target;
-    const { history, resetGraph, graph } = this.props;
+    const { history, resetGraph, graph, match } = this.props;
+    const { topicId, pipelineId } = match.params;
     const path =
       nodeName !== 'LI'
         ? 'target.parentElement.dataset.id'
@@ -135,7 +136,7 @@ class PipelineGraph extends React.Component {
 
     if (!_.isNull(page) && isUpdate) {
       resetGraph(graph);
-      history.push(`/pipeline/new/${page}`);
+      history.push(`/pipeline/new/${page}/${pipelineId}/${topicId}`);
     }
   };
 

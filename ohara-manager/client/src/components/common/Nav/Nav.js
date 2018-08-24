@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import * as URL from '../../../constants/url';
+import * as URL from '../../../constants/urls';
 import { blue, white, dimBlue, lighterGray } from '../../../theme/variables';
 
 const NavWrapper = styled.div`

@@ -4,8 +4,8 @@ import { Redirect } from 'react-router-dom';
 
 import { logout } from '../../apis/authApis';
 import { deleteUserKey } from '../../utils/authHelpers';
-import { HOME } from '../../constants/url';
-import { LOGOUT_SUCCESS } from '../../constants/message';
+import { HOME } from '../../constants/urls';
+import { LOGOUT_SUCCESS } from '../../constants/messages';
 
 class LogoutPage extends React.Component {
   state = {
@@ -27,7 +27,7 @@ class LogoutPage extends React.Component {
     if (this.state.redirect) {
       return <Redirect to={HOME} />;
     }
-    return <div>登出中…</div>;
+    return <div>Logging you out…</div>;
   }
 }
 

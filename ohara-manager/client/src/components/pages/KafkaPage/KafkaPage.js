@@ -5,19 +5,17 @@ import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
+import { H2 } from '../../common/Headings';
 import { fetchCluster } from '../../../apis/kafkaApis';
 import { createTopics, fetchTopics } from '../../../apis/topicApis';
 import { Input, Button } from '../../common/Form';
 import { ListTable } from '../../common/Table';
-import { submitButton } from '../../../theme/buttonTheme';
+import { primaryBtn } from '../../../theme/btnTheme';
 import { get } from '../../../utils/helpers';
 import { KAFKA } from '../../../constants/documentTitles';
-import {
-  LEAVE_WITHOUT_SAVE,
-  TOPIC_CREATION_SUCCESS,
-} from '../../../constants/message';
 import { lightBlue } from '../../../theme/variables';
 import { Box } from '../../common/Layout';
+import * as MESSAGES from '../../../constants/messages';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
@@ -116,7 +114,7 @@ class KafkaPage extends React.Component {
     const result = get(res, 'data.isSuccess', undefined);
 
     if (result) {
-      toastr.success(TOPIC_CREATION_SUCCESS);
+      toastr.success(MESSAGES.TOPIC_CREATION_SUCCESS);
       this.handleModalClose();
       this.fetchData();
     }
@@ -152,7 +150,7 @@ class KafkaPage extends React.Component {
     return (
       <DocumentTitle title={KAFKA}>
         <Wrapper>
-          <Prompt when={isFormDirty} message={LEAVE_WITHOUT_SAVE} />
+          <Prompt when={isFormDirty} message={MESSAGES.LEAVE_WITHOUT_SAVE} />
           <Modal
             isActive={isModalActive}
             topicName={topicName}
@@ -163,7 +161,7 @@ class KafkaPage extends React.Component {
             handleClose={this.handleModalClose}
             isCreateTopicWorking={isCreateTopicWorking}
           />
-          <h2>Kafka</h2>
+          <H2>Kafka</H2>
 
           <Box>
             <form>
@@ -196,7 +194,7 @@ class KafkaPage extends React.Component {
                 <H3>Topics</H3>
                 <Button
                   text="New topic"
-                  theme={submitButton}
+                  theme={primaryBtn}
                   data-testid="new-topic"
                   handleClick={this.handleModalOpen}
                 />

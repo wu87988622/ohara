@@ -15,7 +15,7 @@ import * as _ from '../../../utils/helpers';
 
 const Wrapper = styled.div`
   margin-bottom: 15px;
-  padding: 15px 20px;
+  padding: 10px;
   border: 1px solid ${lightestBlue};
   border-radius: ${radiusNormal};
   display: flex;
