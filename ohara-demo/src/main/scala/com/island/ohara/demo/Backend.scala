@@ -52,6 +52,8 @@ object Backend {
         .port(port)
         .build()
       try {
+        val db = util.startLocalDataBase()
+        println(s"Succeed to run a database url:${db.url} user:${db.user} password:${db.password}")
         println(s"run a configurator at ${configurator.hostname}:${configurator.port} with topic:$topicName")
         println(
           s"enter ctrl+c to terminate all processes (or all processes will be terminated after ${ttl.toSeconds} seconds")
