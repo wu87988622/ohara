@@ -96,7 +96,7 @@ private class CallQueueServerImpl[Request <: OharaData: ClassTag, Response <: Oh
     Consumer
       .builder(Serializer.OHARA_DATA, Serializer.OHARA_DATA)
       .brokers(brokers)
-      .fromBegin(false)
+      .offsetAfterLatest()
       // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
       // distribute the request.
       .groupId(groupId)

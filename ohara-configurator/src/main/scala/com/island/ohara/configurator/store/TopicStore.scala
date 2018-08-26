@@ -98,7 +98,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
       .builder(keySerializer, valueSerializer)
       .topicName(topicName)
       .brokers(brokers)
-      .fromBegin(true)
+      .offsetFromBegin()
       .groupId(uuid)
       .build()
   }

@@ -73,7 +73,7 @@ private class CallQueueClientImpl[Request <: OharaData, Response <: OharaData: C
       .brokers(brokers)
       // the uuid of requestConsumer is random since we want to check all response.
       .groupId(uuid)
-      .fromBegin(false)
+      .offsetAfterLatest()
       .topicName(topicName)
       .build()
   }

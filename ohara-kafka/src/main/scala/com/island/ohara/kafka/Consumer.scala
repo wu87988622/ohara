@@ -61,17 +61,26 @@ object Consumer {
 }
 
 class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
-  protected var fromBegin = false
+  protected var fromBegin: OffsetResetStrategy = OffsetResetStrategy.LATEST
   protected var topicNames: Seq[String] = _
   protected var groupId: String = s"ohara-consumer-${Consumer.CONSUMER_ID.getAndIncrement().toString}"
   protected var brokers: String = _
 
   /**
-    * @param fromBegin true if you want to receive all un-deleted message from subscribed topics
+    * receive all un-deleted message from subscribed topics
     * @return this builder
     */
-  def fromBegin(fromBegin: Boolean): this.type = {
-    this.fromBegin = fromBegin
+  def offsetFromBegin(): this.type = {
+    this.fromBegin = OffsetResetStrategy.EARLIEST
+    this
+  }
+
+  /**
+    * receive the messages just after the last one
+    * @return this builder
+    */
+  def offsetAfterLatest(): this.type = {
+    this.fromBegin = OffsetResetStrategy.LATEST
     this
   }
 
@@ -115,11 +124,8 @@ class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSerialize
       val props = new Properties()
       props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
       props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
-      props.put(
-        ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
-        if (fromBegin) OffsetResetStrategy.EARLIEST.name.toLowerCase
-        else OffsetResetStrategy.LATEST.name.toLowerCase
-      )
+      // kafka demand us to pass lowe case words...
+      props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase)
       props
     }
     private[this] val kafkaConsumer = new KafkaConsumer[K, V](consumerConfig,

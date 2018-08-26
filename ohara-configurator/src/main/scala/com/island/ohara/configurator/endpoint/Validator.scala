@@ -124,7 +124,7 @@ object Validator {
         doClose(
           kafkaClient
             .consumerBuilder(Serializer.STRING, Serializer.OBJECT)
-            .fromBegin(false)
+            .offsetAfterLatest()
             .topicName(INTERNAL_TOPIC)
             .build()) { consumer =>
           try {

@@ -111,7 +111,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .builder(Serializer.BYTES, Serializer.ROW)
         .brokers(testUtil.brokers)
         .topicName(topicName)
-        .fromBegin(true)
+        .offsetFromBegin()
         .build()) {
       _.poll(40 seconds, pollCountMax * SimpleRowSourceTask.rows.length).size shouldBe pollCountMax * SimpleRowSourceTask.rows.length
     }

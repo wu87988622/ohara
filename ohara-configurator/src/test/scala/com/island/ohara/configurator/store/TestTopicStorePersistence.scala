@@ -40,7 +40,7 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
       Consumer
         .builder(Serializer.STRING, Serializer.STRING)
         .brokers(testUtil.brokers)
-        .fromBegin(true)
+        .offsetFromBegin()
         .groupId(UuidUtil.uuid())
         .topicName(topicName)
         .build()) { consumer =>
