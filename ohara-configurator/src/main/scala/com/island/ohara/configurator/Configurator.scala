@@ -13,8 +13,13 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.endpoint.Validator
-import com.island.ohara.configurator.route.{HdfsInformationRoute, PipelineRoute, SchemaRoute, TopicInfoRoute}
+import com.island.ohara.configurator.route.{
+  HdfsInformationRoute,
+  PipelineRoute,
+  SchemaRoute,
+  TopicInfoRoute,
+  ValidationRoute
+}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.serialization.Serializer
@@ -35,7 +40,7 @@ import scala.reflect.{ClassTag, classTag}
 class Configurator private[configurator] (val hostname: String, configuredPort: Int)(implicit ug: () => String,
                                                                                      val store: Store,
                                                                                      kafkaClient: KafkaClient,
-                                                                                     connectClient: ConnectorClient,
+                                                                                     connectorClient: ConnectorClient,
                                                                                      initializationTimeout: Duration,
                                                                                      terminationTimeout: Duration)
     extends CloseOnce
@@ -59,23 +64,10 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
     }
   }
 
-  //-----------------------------------------------[validation]-----------------------------------------------//
-  private[this] val validationRoute = path(VALIDATION_PATH / HDFS_VALIDATION_PATH) {
-    put {
-      entity(as[HdfsValidationRequest]) { request =>
-        {
-          val reports = Validator.run(connectClient, kafkaClient, request, 3)
-          if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
-          complete(reports)
-        }
-      }
-    }
-  }
-
   //-----------------------------------------------[cluster]-----------------------------------------------//
   private[this] val clusterRoute = path(CLUSTER_PATH) {
     get {
-      complete(ClusterInformation(kafkaClient.brokers, connectClient.workers))
+      complete(ClusterInformation(kafkaClient.brokers, connectorClient.workers))
     }
   }
 
@@ -84,7 +76,7 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
     */
   private[this] val route: server.Route = handleExceptions(exceptionHandler) {
     pathPrefix(VERSION_V0)(
-      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply ~ validationRoute ~ clusterRoute) ~ path(
+      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply ~ ValidationRoute.apply ~ clusterRoute) ~ path(
       Remaining)(path => {
       throw new IllegalArgumentException(s"Unsupported restful api:$path")
     })
@@ -105,7 +97,7 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
       CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds), true)
     CloseOnce.close(store)
     CloseOnce.close(kafkaClient)
-    CloseOnce.close(connectClient)
+    CloseOnce.close(connectorClient)
   }
 
   //-----------------[public interfaces]-----------------//

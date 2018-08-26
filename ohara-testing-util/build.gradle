@@ -7,6 +7,8 @@ dependencies {
   compile libs.kafkaCore
   compile libs.kafkaConnectJson
   compile libs.kafkaConnectRuntime
+  compile libs.mysql
+  compile libs.embeddedsql
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *

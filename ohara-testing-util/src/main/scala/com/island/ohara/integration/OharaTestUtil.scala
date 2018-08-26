@@ -44,6 +44,7 @@ import scala.concurrent.{Await, Future}
 class OharaTestUtil private[integration] (componentBox: ComponentBox) extends CloseOnce {
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
+  private[this] var localDb: LocalDataBase = _
 
   /**
     * @return zookeeper connection used to create zk services
@@ -209,11 +210,17 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     */
   def tmpDirectory(): String = componentBox.hdfs.tmpDirectory()
 
+  def startLocalDataBase(): LocalDataBase = {
+    if (localDb == null) localDb = LocalDataBase.mysql()
+    localDb
+  }
+
   override protected def doClose(): Unit = {
     stopConsumer = true
     CloseOnce.release(() => consumerThreads.foreach(Await.result(_, 1 minute)))
     consumerThreads.clear()
     componentBox.close()
+    CloseOnce.close(localDb)
   }
 
 }

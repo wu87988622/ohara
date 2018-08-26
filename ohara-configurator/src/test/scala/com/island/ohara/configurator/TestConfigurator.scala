@@ -46,6 +46,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val client1 = ConfiguratorClient(s"${configurator1.hostname}:${configurator1.port}")
   private[this] val clients = Seq(client0, client1)
 
+  private[this] val db = testUtil.startLocalDataBase()
+
   @Test
   def testTopic(): Unit = {
     clients.foreach(client => {
@@ -379,9 +381,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
       val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
       client.list[TopicInfo].size shouldBe 2
-      println("[CHIA] v0")
       var res = client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> UNKNOWN)))
-      println("[CHIA] v1")
       res.rules.size shouldBe 1
       res.rules.get(uuid_0).get shouldBe UNKNOWN
       res.status shouldBe Status.STOPPED
@@ -404,6 +404,16 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testValidationOfHdfs(): Unit = {
     clients.foreach(client => {
       val report = client.validate[HdfsValidationRequest, ValidationReport](HdfsValidationRequest("file:///tmp"))
+      report.isEmpty shouldBe false
+      report.foreach(_.pass shouldBe true)
+    })
+  }
+
+  @Test
+  def testValidationOfRdb(): Unit = {
+    clients.foreach(client => {
+      val report =
+        client.validate[RdbValidationRequest, ValidationReport](RdbValidationRequest(db.url, db.user, db.password))
       report.isEmpty shouldBe false
       report.foreach(_.pass shouldBe true)
     })

@@ -212,12 +212,10 @@ class ValidatorTask extends SourceTask {
   }
   import com.island.ohara.io.CloseOnce._
 
-  private[this] def validate(info: RdbValidationRequest): String = {
-    val connectionUrl = s"${info.uri};user=${info.user};password=${info.password}"
-    doClose(DriverManager.getConnection(connectionUrl)) { _ =>
-      s"succeed to establish the connection:$connectionUrl"
+  private[this] def validate(info: RdbValidationRequest): String =
+    doClose(DriverManager.getConnection(info.uri, info.user, info.password)) { _ =>
+      s"succeed to establish the connection:$info.uri"
     }
-  }
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(TARGET) match {
