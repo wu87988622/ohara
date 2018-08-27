@@ -2,10 +2,8 @@ package com.island.ohara.hdfs
 
 import com.island.ohara.hdfs.storage.Storage
 import com.island.ohara.hdfs.text.{CSVRecordWriterOutput, RecordWriterOutput}
-import com.island.ohara.kafka.connector.RowSinkRecord
+import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.common.TopicPartition
-import org.apache.kafka.connect.sink.SinkTaskContext
 
 /**
   * This class for process data
@@ -15,16 +13,16 @@ import org.apache.kafka.connect.sink.SinkTaskContext
   * @param storage
   */
 class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
-                           context: SinkTaskContext,
+                           context: RowSinkContext,
                            partition: TopicPartition,
                            storage: Storage) {
   private[this] lazy val logger = Logger(getClass().getName())
   var recordWriterOutput: RecordWriterOutput = _
   var tmpFilePath: String = _
-  val partitionName: String = s"partition${partition.partition()}"
+  val partitionName: String = s"partition${partition.partition}"
 
-  val tmpDir: String = s"${config.tmpDir()}/${partition.topic()}/${partitionName}"
-  val dataDir: String = s"${config.dataDir()}/${partition.topic()}/${partitionName}"
+  val tmpDir: String = s"${config.tmpDir()}/${partition.topic}/${partitionName}"
+  val dataDir: String = s"${config.dataDir()}/${partition.topic}/${partitionName}"
 
   val filePrefixName: String = config.dataFilePrefixName()
   val flushLineCount: Int = config.flushLineCount()
@@ -85,7 +83,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   }
 
   def writeData(rowSinkRecord: RowSinkRecord): Unit = {
-    recordWriterOutput.write(rowSinkRecord.value)
+    recordWriterOutput.write(rowSinkRecord.row)
   }
 
   def commitFile(recordWriterProvider: RecordWriterOutput, tmpFilePath: String): Unit = {

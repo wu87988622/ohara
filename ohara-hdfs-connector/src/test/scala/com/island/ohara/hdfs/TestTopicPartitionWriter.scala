@@ -1,16 +1,13 @@
 package com.island.ohara.hdfs
 
 import java.io.OutputStream
-import java.util
 
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.hdfs.text.RecordWriterOutput
 import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.kafka.connector.RowSinkRecord
+import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
 import com.island.ohara.rule.MediumTest
-import org.apache.kafka.common.TopicPartition
-import org.apache.kafka.connect.sink.SinkTaskContext
 import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -21,13 +18,10 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testOpenTempFile(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
-
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
-    val sinkTaskContext = mock[SinkTaskContext]
-    val topicPartition = new TopicPartition("topic1", 0)
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "", HDFSSinkConnectorConfig.TMP_DIR -> "/tmp"))
+    val sinkTaskContext = mock[RowSinkContext]
+    val topicPartition = TopicPartition("topic1", 0)
     val recordWriterProvider = mock[RecordWriterOutput]
 
     val testUtil = OharaTestUtil.localHDFS(1)
@@ -43,14 +37,11 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testWriteData(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "", HDFSSinkConnectorConfig.TMP_DIR -> "/tmp"))
 
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
-
-    val sinkTaskContext = mock[SinkTaskContext]
-    val topicPartition = new TopicPartition("topic1", 0)
+    val sinkTaskContext = mock[RowSinkContext]
+    val topicPartition = TopicPartition("topic1", 0)
     val storage = mock[Storage]
     when(storage.open(anyString(), anyBoolean())).thenReturn(mock[OutputStream])
 
@@ -59,7 +50,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.value).thenReturn(Row(Cell.builder.name("column1").build("value")))
+    when(rowSinkRecord.row).thenReturn(Row(Cell.builder.name("column1").build("value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     topicPartitionWriter.write(rowSinkRecord)
@@ -70,14 +61,11 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testDefaultValueCommitFile(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "", HDFSSinkConnectorConfig.TMP_DIR -> "/tmp"))
+    val sinkTaskContext = mock[RowSinkContext]
 
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
-    val sinkTaskContext = mock[SinkTaskContext]
-
-    val topicPartition = new TopicPartition("topic1", 1)
+    val topicPartition = TopicPartition("topic1", 1)
     val storage = mock[Storage]
     when(storage.open(anyString(), anyBoolean())).thenReturn(mock[OutputStream])
     when(storage.list("/data/partition1"))
@@ -88,7 +76,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.value).thenReturn(Row(Cell.builder.name("column1").build("value")))
+    when(rowSinkRecord.row).thenReturn(Row(Cell.builder.name("column1").build("value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     for (i <- 1 to 998) {
@@ -101,14 +89,11 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testIsDataCountCommit(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
+    val topicPartition = TopicPartition("topic1", 0)
 
-    val topicPartition = new TopicPartition("topic1", 0)
-
-    val sinkTaskContext = mock[SinkTaskContext]
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val sinkTaskContext = mock[RowSinkContext]
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "", HDFSSinkConnectorConfig.TMP_DIR -> "/tmp"))
     val storage = mock[Storage]
     when(storage.list("/data/partition0"))
       .thenReturn(List("prefix-000000001-000001000.csv", "prefix-000001001-000002000.csv").toIterator)
@@ -124,14 +109,11 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testIsTimeCommit(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
+    val topicPartition = TopicPartition("topic1", 0)
 
-    val topicPartition = new TopicPartition("topic1", 0)
-
-    val sinkTaskContext = mock[SinkTaskContext]
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val sinkTaskContext = mock[RowSinkContext]
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "", HDFSSinkConnectorConfig.TMP_DIR -> "/tmp"))
     val storage = mock[Storage]
     when(storage.list("/data/partition0"))
       .thenReturn(List("prefix-000000001-000001000.csv", "prefix-000001001-000002000.csv").toIterator)
@@ -146,15 +128,13 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testWriteByTime(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
-    props.put(HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS, "1500")
+    val topicPartition = TopicPartition("topic1", 0)
 
-    val topicPartition = new TopicPartition("topic1", 0)
-
-    val sinkTaskContext = mock[SinkTaskContext]
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val sinkTaskContext = mock[RowSinkContext]
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "",
+          HDFSSinkConnectorConfig.TMP_DIR -> "/tmp",
+          HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS -> "1500"))
     val storage = mock[Storage]
     when(storage.open(anyString(), anyBoolean())).thenReturn(mock[OutputStream])
     when(storage.list("/data/partition0"))
@@ -165,7 +145,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.value).thenReturn(Row(Cell.builder.name("column1").build("value")))
+    when(rowSinkRecord.row).thenReturn(Row(Cell.builder.name("column1").build("value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     topicPartitionWriter.processLineCount = 0
@@ -174,15 +154,13 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testFlushFilePath1(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, "/tmp")
-    props.put(HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS, "1500")
+    val topicPartition = TopicPartition("topic1", 0)
 
-    val topicPartition = new TopicPartition("topic1", 0)
-
-    val sinkTaskContext = mock[SinkTaskContext]
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val sinkTaskContext = mock[RowSinkContext]
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> "",
+          HDFSSinkConnectorConfig.TMP_DIR -> "/tmp",
+          HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS -> "1500"))
     val storage = mock[Storage]
 
     val topicPartitionWriter =
@@ -195,12 +173,9 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testFlushFilePath2(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-
-    val topicPartition = new TopicPartition("topic1", 0)
-    val sinkTaskContext = mock[SinkTaskContext]
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val topicPartition = TopicPartition("topic1", 0)
+    val sinkTaskContext = mock[RowSinkContext]
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(Map(HDFSSinkConnectorConfig.HDFS_URL -> ""))
     val storage = mock[Storage]
 
     val topicPartitionWriter =
@@ -224,12 +199,9 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
   @Test
   def testFlushFilePath3(): Unit = {
-    val props = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, "")
-
-    val topicPartition = new TopicPartition("topic1", 0)
-    val sinkTaskContext = mock[SinkTaskContext]
-    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val topicPartition = TopicPartition("topic1", 0)
+    val sinkTaskContext = mock[RowSinkContext]
+    val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(Map(HDFSSinkConnectorConfig.HDFS_URL -> ""))
     val storage = mock[Storage]
 
     val topicPartitionWriter =

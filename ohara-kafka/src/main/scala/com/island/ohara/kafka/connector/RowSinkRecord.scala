@@ -1,10 +1,6 @@
 package com.island.ohara.kafka.connector
 
 import com.island.ohara.data.Row
-import com.island.ohara.serialization.RowSerializer
-import org.apache.kafka.common.record.TimestampType
-import org.apache.kafka.connect.data.Schema
-import org.apache.kafka.connect.sink.SinkRecord
 
 /**
   * The methods it have are almost same with SinkRecord.
@@ -13,24 +9,11 @@ import org.apache.kafka.connect.sink.SinkRecord
   *
   * @param sinkRecord a sink record passed by kafka connector
   */
-class RowSinkRecord(sinkRecord: SinkRecord) {
+case class RowSinkRecord(topic: String,
+                         row: Row,
+                         partition: Int,
+                         offset: Long,
+                         timestamp: Long,
+                         timestampType: TimestampType)
 
-  def kafkaOffset: Long = sinkRecord.kafkaOffset()
-
-  def timestampType: TimestampType = sinkRecord.timestampType()
-
-  def topic: String = sinkRecord.topic()
-
-  def kafkaPartition: Option[Int] = if (sinkRecord.kafkaPartition == null) None else Some(sinkRecord.kafkaPartition)
-
-  def key: Any = sinkRecord.key()
-
-  def keySchema: Schema = sinkRecord.keySchema()
-
-  def value: Row = sinkRecord.value match {
-    case buf: Array[Byte] => RowSerializer.from(buf)
-    case _                => throw new IllegalStateException(s"Why we get a non-supported type:${sinkRecord.value.getClass.getName}")
-  }
-
-  def timestamp: Option[Long] = if (sinkRecord.timestamp == null) None else Some(sinkRecord.timestamp)
-}
+case class TimestampType(id: Int, name: String)

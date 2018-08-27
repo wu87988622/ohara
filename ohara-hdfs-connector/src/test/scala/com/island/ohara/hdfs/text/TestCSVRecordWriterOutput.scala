@@ -1,7 +1,5 @@
 package com.island.ohara.hdfs.text
 
-import java.util
-
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.hdfs.storage.{HDFSStorage, Storage}
@@ -17,10 +15,8 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   @Test
   def testWriteData(): Unit = {
     val testUtil = OharaTestUtil.localHDFS(1)
-    val props: util.HashMap[String, String] = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, testUtil.tmpDirectory())
-
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = new HDFSSinkConnectorConfig(
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> testUtil.tmpDirectory()))
     val fileSystem: FileSystem = testUtil.fileSystem()
     val storage: Storage = new HDFSStorage(fileSystem)
     val tempFilePath: String = s"${testUtil.tmpDirectory()}/file1.txt"

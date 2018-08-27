@@ -1,10 +1,6 @@
 package com.island.ohara.kafka.connector
 
-import java.util
-
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.common.config.ConfigDef
-import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -17,11 +13,11 @@ class SimpleRowSourceConnector extends RowSourceConnector {
   private[this] var topicName: String = null
   private[this] var pollCountMax: Int = 0
 
-  override def version(): String = 100.toString
+  override val _version = 100.toString
 
-  override def start(props: util.Map[String, String]): Unit = {
-    topicName = props.get("topic")
-    pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).toInt
+  override def _start(props: Map[String, String]): Unit = {
+    topicName = props.get("topic").get
+    pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).map(_.toInt).get
     logger.info(s"start SimpleRowSourceConnector:${topicName} maxPoll:$pollCountMax")
   }
 
@@ -39,12 +35,8 @@ class SimpleRowSourceConnector extends RowSourceConnector {
     list
   }
 
-  override def stop(): Unit = {
+  override def _stop(): Unit = {
     logger.info("stop SimpleRowSourceConnector")
-  }
-
-  override def config(): ConfigDef = {
-    new ConfigDef().define("topic", Type.LIST, Importance.HIGH, "The topic to publish data to")
   }
 }
 

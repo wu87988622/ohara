@@ -1,12 +1,7 @@
 package com.island.ohara.hdfs
 
-import java.util
-import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask}
+import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TopicOffset, TopicPartition}
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
-import org.apache.kafka.common.TopicPartition
-
-import scala.collection.JavaConverters._
 
 /**
   *This class extends RowSinkTask abstract
@@ -18,41 +13,39 @@ class HDFSSinkTask extends RowSinkTask {
   var hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = _
   var hdfsWriter: DataWriter = _
 
-  override def start(props: util.Map[String, String]): Unit = {
+  override def _start(props: Map[String, String]): Unit = {
     logger.info("starting HDFS Sink Connector")
     hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
-    hdfsWriter = new DataWriter(hdfsSinkConnectorConfig, context)
+    hdfsWriter = new DataWriter(hdfsSinkConnectorConfig, rowContext)
   }
 
-  override protected def open(partitions: util.Collection[TopicPartition]): Unit = {
-    logger.info(s"running open function. The partition size is: ${partitions.size()}")
-    hdfsWriter.createPartitionDataWriters(partitions.asScala.toList)
+  override protected def _open(partitions: Seq[TopicPartition]): Unit = {
+    logger.info(s"running open function. The partition size is: ${partitions.size}")
+    hdfsWriter.createPartitionDataWriters(partitions)
   }
 
-  override protected def _put(records: Array[RowSinkRecord]): Unit = {
+  override protected def _put(records: Seq[RowSinkRecord]): Unit = {
     hdfsWriter.write(records)
   }
 
-  override protected def flush(offsets: util.Map[TopicPartition, OffsetAndMetadata]): Unit = {
+  override protected def _flush(offsets: Seq[TopicOffset]): Unit = {
     logger.debug("running flush function.")
-    offsets.asScala.toMap.foreach(offset => {
-      logger.debug(s"[${offset._1.topic}-${offset._1.partition}] offset: ${offset._2.offset}")
+    offsets.foreach(offset => {
+      logger.debug(s"[${offset.topic}-${offset.partition}] offset: ${offset.offset}")
     })
   }
 
-  override protected def close(partitions: util.Collection[TopicPartition]): Unit = {
+  override protected def _close(partitions: Seq[TopicPartition]): Unit = {
     logger.info("running close function")
     if (partitions != null) {
-      hdfsWriter.removePartitionWriters(partitions.asScala.toList)
+      hdfsWriter.removePartitionWriters(partitions)
     }
   }
 
-  override def stop(): Unit = {
+  override def _stop(): Unit = {
     logger.info("running stop function")
     hdfsWriter.stop()
   }
 
-  override def version(): String = {
-    Version.getVersion()
-  }
+  override val _version = Version.getVersion()
 }

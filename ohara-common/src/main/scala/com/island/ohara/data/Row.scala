@@ -101,7 +101,7 @@ object Row {
             throw new IllegalArgumentException(s"duplicate column:${cell.name} are not supported")
       })
 
-    override def cellCount = cellGroup.size
+    override def cellCount: Int = cellGroup.size
 
     override def iterator: Iterator[Cell[_]] = cellGroup.valuesIterator
 

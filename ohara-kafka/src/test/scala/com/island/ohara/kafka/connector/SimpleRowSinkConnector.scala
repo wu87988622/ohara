@@ -1,9 +1,6 @@
 package com.island.ohara.kafka.connector
 
-import java.util
-
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.common.config.ConfigDef
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ArrayBuffer
@@ -14,9 +11,9 @@ import scala.collection.mutable.ArrayBuffer
 class SimpleRowSinkConnector extends RowSinkConnector {
   private[this] lazy val logger = Logger(getClass.getName)
 
-  override def version(): String = 100.toString
+  override val _version = "100"
 
-  override def start(props: util.Map[String, String]): Unit = {
+  override def _start(props: Map[String, String]): Unit = {
     logger.info("start SimpleSinkConnector")
   }
 
@@ -31,9 +28,7 @@ class SimpleRowSinkConnector extends RowSinkConnector {
     list
   }
 
-  override def stop(): Unit = {
+  override def _stop(): Unit = {
     logger.info("stop SimpleRowSinkConnector")
   }
-
-  override def config(): ConfigDef = new ConfigDef()
 }

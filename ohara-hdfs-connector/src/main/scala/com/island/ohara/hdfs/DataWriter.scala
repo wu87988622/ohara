@@ -2,9 +2,7 @@ package com.island.ohara.hdfs
 
 import com.island.ohara.hdfs.creator.StorageCreator
 import com.island.ohara.hdfs.storage.Storage
-import com.island.ohara.kafka.connector.RowSinkRecord
-import org.apache.kafka.common.TopicPartition
-import org.apache.kafka.connect.sink.SinkTaskContext
+import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
 
 import scala.collection.mutable
 
@@ -13,7 +11,7 @@ import scala.collection.mutable
   * @param config
   * @param context
   */
-class DataWriter(config: HDFSSinkConnectorConfig, context: SinkTaskContext) {
+class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext) {
 
   private[this] val createStorage: StorageCreator = Class
     .forName(config.hdfsStorageCreatorClass())
@@ -23,16 +21,15 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: SinkTaskContext) {
 
   private[this] val storage: Storage = createStorage.getStorage()
 
-  var topicPartitionWriters = new mutable.HashMap[OharaTopicPartition, TopicPartitionWriter]()
+  var topicPartitionWriters = new mutable.HashMap[TopicPartition, TopicPartitionWriter]()
 
   /**
     * Get the TopicPartition and added to TopicPartitionWriter collection
     * @param partitions
     */
-  def createPartitionDataWriters(partitions: List[TopicPartition]): Unit = {
+  def createPartitionDataWriters(partitions: Seq[TopicPartition]): Unit = {
     partitions.foreach(partition => {
-      topicPartitionWriters.put(new OharaTopicPartition(partition.topic, partition.partition),
-                                new TopicPartitionWriter(config, context, partition, storage))
+      topicPartitionWriters.put(partition, new TopicPartitionWriter(config, context, partition, storage))
     })
 
     //Check folder and recover partition offset
@@ -43,11 +40,11 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: SinkTaskContext) {
     * Get topic data
     * @param records
     */
-  def write(records: Array[RowSinkRecord]): Unit = {
+  def write(records: Seq[RowSinkRecord]): Unit = {
     records.foreach(record => {
       val topicName: String = record.topic
-      val partition: Int = record.kafkaPartition.get
-      val oharaTopicPartition: OharaTopicPartition = new OharaTopicPartition(topicName, partition)
+      val partition: Int = record.partition
+      val oharaTopicPartition: TopicPartition = TopicPartition(topicName, partition)
       topicPartitionWriters.get(oharaTopicPartition).get.write(record)
     })
 
@@ -60,9 +57,9 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: SinkTaskContext) {
     * close task
     * @param partitions
     */
-  def removePartitionWriters(partitions: List[TopicPartition]): Unit = {
+  def removePartitionWriters(partitions: Seq[TopicPartition]): Unit = {
     partitions.foreach(partition => {
-      val oharaTopicPartition: OharaTopicPartition = new OharaTopicPartition(partition.topic, partition.partition)
+      val oharaTopicPartition: TopicPartition = TopicPartition(partition.topic, partition.partition)
       topicPartitionWriters.get(oharaTopicPartition).get.close()
       topicPartitionWriters.remove(oharaTopicPartition)
     })

@@ -1,62 +1,66 @@
 package com.island.ohara.kafka.connector
 
-import com.island.ohara.data.Row
-import org.apache.kafka.connect.data.Schema
-import org.apache.kafka.connect.source.SourceRecord
-import com.island.ohara.serialization.RowSerializer
+import java.util.Objects
 
-import scala.collection.JavaConverters._
+import com.island.ohara.data.Row
 
 /**
   * A wrap to SourceRecord. Currently, only value schema and value are changed.
   */
-class RowSourceRecord(sourcePartition: Map[String, _],
-                      sourceOffset: Map[String, _],
-                      topic: String,
-                      partition: Int,
-                      keySchema: Schema,
-                      key: Any,
-                      row: Row,
-                      timestamp: Long)
-    extends SourceRecord(
-      if (sourcePartition == null) null else sourcePartition.asJava,
-      if (sourceOffset == null) null else sourceOffset.asJava,
-      topic,
-      if (partition < 0) null else partition,
-      keySchema,
-      key,
-      Schema.BYTES_SCHEMA,
-      RowSerializer.to(row),
-      if (timestamp < 0) null else timestamp
-    ) {
+case class RowSourceRecord(sourcePartition: Map[String, _],
+                           sourceOffset: Map[String, _],
+                           topic: String,
+                           partition: Option[Int],
+                           row: Row,
+                           timestamp: Option[Long])
 
-  def this(sourcePartition: Map[String, _], sourceOffset: Map[String, _], topic: String, row: Row) {
-    this(sourcePartition, sourceOffset, topic, -1, null, null, row, -1)
+object RowSourceRecord {
+  def apply(topic: String, row: Row): RowSourceRecord = builder.topic(topic).row(row).build()
+  def builder = new RowSourceRecordBuilder
+}
+class RowSourceRecordBuilder {
+  private[this] var sourcePartition: Map[String, _] = Map.empty
+  private[this] var sourceOffset: Map[String, _] = Map.empty
+  private[this] var topic: String = _
+  private[this] var partition: Option[Int] = None
+  private[this] var row: Row = _
+  private[this] var timestamp: Option[Long] = None
+
+  def sourcePartition(sourcePartition: Map[String, _]): RowSourceRecordBuilder = {
+    this.sourcePartition = Objects.requireNonNull(sourcePartition)
+    this
   }
 
-  def this(sourcePartition: Map[String, _],
-           sourceOffset: Map[String, _],
-           topic: String,
-           keySchema: Schema,
-           key: Any,
-           row: Row) {
-    this(sourcePartition, sourceOffset, topic, -1, keySchema, key, row, -1)
+  def sourceOffset(sourceOffset: Map[String, _]): RowSourceRecordBuilder = {
+    this.sourceOffset = Objects.requireNonNull(sourceOffset)
+    this
   }
 
-  def this(sourcePartition: Map[String, _],
-           sourceOffset: Map[String, _],
-           topic: String,
-           partition: Int,
-           keySchema: Schema,
-           key: Any,
-           row: Row) {
-    this(sourcePartition, sourceOffset, topic, partition, keySchema, key, row, -1)
+  def topic(topic: String): RowSourceRecordBuilder = {
+    this.topic = Objects.requireNonNull(topic)
+    this
   }
 
-  /**
-    * DON'T call this method in RowSourceTask since the object you pass is converted to a specific kafka object.
-    *
-    * @return a kafka object
-    */
-  override def value(): AnyRef = super.value()
+  def partition(partition: Int): RowSourceRecordBuilder = {
+    this.partition = Some(partition)
+    this
+  }
+
+  def row(row: Row): RowSourceRecordBuilder = {
+    this.row = Objects.requireNonNull(row)
+    this
+  }
+
+  def timestamp(timestamp: Long): RowSourceRecordBuilder = {
+    this.timestamp = Some(timestamp)
+    this
+  }
+
+  def build(): RowSourceRecord = RowSourceRecord(sourcePartition,
+                                                 sourceOffset,
+                                                 Objects.requireNonNull(topic),
+                                                 partition,
+                                                 Objects.requireNonNull(row),
+                                                 timestamp)
+
 }

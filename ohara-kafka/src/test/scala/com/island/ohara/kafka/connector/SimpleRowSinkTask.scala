@@ -1,6 +1,5 @@
 package com.island.ohara.kafka.connector
 
-import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -14,23 +13,23 @@ class SimpleRowSinkTask extends RowSinkTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  override def start(props: util.Map[String, String]): Unit = SimpleRowSinkTask.runningTaskCount.incrementAndGet()
+  override def _start(props: Map[String, String]): Unit = SimpleRowSinkTask.runningTaskCount.incrementAndGet()
 
-  override def _put(records: Array[RowSinkRecord]): Unit = {
+  override def _put(records: Seq[RowSinkRecord]): Unit = {
     records
-      .map(_.value)
+      .map(_.row)
       .foreach(row => {
         logger.info(s"get ${row}")
         SimpleRowSinkTask.receivedRows.add(row)
       })
   }
 
-  override def stop(): Unit = {
+  override def _stop(): Unit = {
     logger.info("stop SimpleSinkTask")
     SimpleRowSinkTask.runningTaskCount.decrementAndGet()
   }
 
-  override def version(): String = 100.toString
+  override val _version = 100.toString
 }
 
 object SimpleRowSinkTask {

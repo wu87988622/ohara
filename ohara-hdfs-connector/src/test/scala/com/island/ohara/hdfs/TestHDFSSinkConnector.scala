@@ -215,11 +215,11 @@ class SimpleHDFSSinkConnector extends HDFSSinkConnector {
 }
 
 class SimpleHDFSSinkTask extends HDFSSinkTask {
-  override def start(props: util.Map[String, String]): Unit = {
-    super.start(props)
-    props.forEach((key, value) => {
-      SimpleHDFSSinkTask.taskProps.put(key, value)
-    })
+  override def _start(props: Map[String, String]): Unit = {
+    super._start(props)
+    props.foreach {
+      case (k, v) => SimpleHDFSSinkTask.taskProps.put(k, v)
+    }
     SimpleHDFSSinkTask.sinkConnectorConfig = hdfsSinkConnectorConfig
   }
 }

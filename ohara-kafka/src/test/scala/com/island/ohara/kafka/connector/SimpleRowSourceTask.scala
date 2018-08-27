@@ -1,6 +1,5 @@
 package com.island.ohara.kafka.connector
 
-import java.util
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -19,9 +18,9 @@ class SimpleRowSourceTask extends RowSourceTask {
   private[this] var topicName: String = null
   private[this] var pollCountMax: Int = -1
 
-  override def start(props: util.Map[String, String]): Unit = {
-    topicName = props.get("topic")
-    pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).toInt
+  override def _start(props: Map[String, String]): Unit = {
+    topicName = props.get("topic").get
+    pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).map(_.toInt).get
     logger.info(s"start SimpleRowSourceTask topicName:$topicName pollCount:$pollCountMax")
     if (pollCountMax <= 0) throw new IllegalArgumentException(s"count:$pollCountMax should be bigger than 0")
     SimpleRowSourceTask.runningTaskCount.incrementAndGet()
@@ -31,19 +30,19 @@ class SimpleRowSourceTask extends RowSourceTask {
     if (SimpleRowSourceTask.pollCount.incrementAndGet() > pollCountMax) return null
     val data = new ArrayBuffer[RowSourceRecord]()
     SimpleRowSourceTask.rows.foreach(row => {
-      data += new RowSourceRecord(null, null, topicName, row)
+      data += RowSourceRecord(topicName, row)
       SimpleRowSourceTask.submittedRows.add(row)
       logger.info(s"add row $row")
     })
     data.toArray
   }
 
-  override def stop(): Unit = {
+  override def _stop(): Unit = {
     logger.info("stop SimpleRowSourceTask")
     SimpleRowSourceTask.runningTaskCount.decrementAndGet()
   }
 
-  override def version(): String = 100.toString
+  override val _version = 100.toString
 }
 
 object SimpleRowSourceTask {
