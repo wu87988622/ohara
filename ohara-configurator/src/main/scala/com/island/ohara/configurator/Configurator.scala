@@ -14,6 +14,7 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.{
+  ClusterRoute,
   HdfsInformationRoute,
   PipelineRoute,
   QueryRoute,
@@ -66,23 +67,16 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
     }
   }
 
-  //-----------------------------------------------[cluster]-----------------------------------------------//
-  private[this] val clusterRoute = path(CLUSTER_PATH) {
-    get {
-      complete(ClusterInformation(kafkaClient.brokers, connectorClient.workers))
-    }
-  }
-
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
   private[this] val route: server.Route = handleExceptions(exceptionHandler) {
     pathPrefix(VERSION_V0)(
       SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply
-        ~ ValidationRoute.apply ~ QueryRoute() ~ SourceRoute.apply ~ SinkRoute.apply ~ clusterRoute) ~ path(Remaining)(
-      path => {
-        throw new IllegalArgumentException(s"Unsupported restful api:$path. Or the request is invalid to the $path")
-      })
+        ~ ValidationRoute.apply ~ QueryRoute() ~ SourceRoute.apply ~ SinkRoute.apply ~ ClusterRoute.apply) ~ path(
+      Remaining)(path => {
+      throw new IllegalArgumentException(s"Unsupported restful api:$path. Or the request is invalid to the $path")
+    })
   }
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")

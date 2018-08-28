@@ -443,6 +443,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     val clusterInformation = client0.cluster[ClusterInformation]
     clusterInformation.brokers shouldBe testUtil.brokers
     clusterInformation.workers shouldBe testUtil.workers
+    clusterInformation.supportedDatabases.exists(_.equals("mysql")) shouldBe true
   }
 
   @Test
