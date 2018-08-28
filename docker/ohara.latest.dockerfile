@@ -26,4 +26,7 @@ COPY --from=deps /root/.gradle /root/.gradle
 # clone yarn dependencies
 RUN mkdir -p /root/.cache
 COPY --from=deps /root/.cache /root/.cache
+# clone database
+RUN mkdir -p /root/.embedmysql
+COPY --from=deps /root/.embedmysql /root/.embedmysql
 
