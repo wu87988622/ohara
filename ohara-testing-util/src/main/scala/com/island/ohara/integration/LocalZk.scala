@@ -2,8 +2,9 @@ package com.island.ohara.integration
 
 import java.net.InetSocketAddress
 
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.typesafe.scalalogging.Logger
+import org.apache.commons.lang3.SystemUtils
 import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
 
 /**
@@ -18,7 +19,7 @@ class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
   private[this] val factory = new NIOServerCnxnFactory()
   private[this] val snapshotDir = createTempDir("standalone-zk/snapshot")
   private[this] val logDir = createTempDir("standalone-zk/log")
-  factory.configure(new InetSocketAddress("localhost", port), 1024)
+  factory.configure(new InetSocketAddress("0.0.0.0", port), 1024)
   factory.startup(new ZooKeeperServer(snapshotDir, logDir, tickTime))
 
   override protected def doClose(): Unit = {
@@ -28,10 +29,10 @@ class LocalZk(_port: Int = -1, tickTime: Int = 500) extends CloseOnce {
   }
 
   /**
-    * zookeeper connection information. The form is "loaclhost:{port}".
+    * zookeeper connection information. The form is "IoUtil.hostname:{port}".
     * @return zk connection information
     */
-  def connection: String = "localhost:" + port
+  def connection: String = s"${IoUtil.hostname}:$port"
 
   override def toString: String = {
     val sb = new StringBuilder("EmbeddedZookeeper{")

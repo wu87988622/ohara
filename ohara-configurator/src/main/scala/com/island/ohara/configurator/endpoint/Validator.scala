@@ -5,12 +5,13 @@ import java.util
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
+import com.island.ohara.client.ConfiguratorJson.{HdfsValidationRequest, RdbValidationRequest, ValidationReport}
+import com.island.ohara.client.{ConfiguratorJson, ConnectorClient}
 import com.island.ohara.configurator.FakeConnectorClient
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.io.IoUtil
 import com.island.ohara.kafka.{ConsumerRecord, KafkaClient}
-import com.island.ohara.client.ConfiguratorJson.{HdfsValidationRequest, RdbValidationRequest, ValidationReport}
-import com.island.ohara.client.{ConfiguratorJson, ConnectorClient}
 import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -114,7 +115,8 @@ object Validator {
                         config: Map[String, String],
                         taskCount: Int): Seq[ValidationReport] = connectorClient match {
     // we expose the fake component...ugly way (TODO) by chia
-    case _: FakeConnectorClient => (0 until taskCount).map(_ => ValidationReport("localhost", "a fake report", true))
+    case _: FakeConnectorClient =>
+      (0 until taskCount).map(_ => ValidationReport(IoUtil.hostname, "a fake report", true))
     case _ => {
       val requestId: String = INDEXER.getAndIncrement().toString
       val latch = new CountDownLatch(1)
@@ -238,7 +240,7 @@ class ValidatorTask extends SourceTask {
   private[this] def require(key: String): String =
     props.get(key).getOrElse(throw new IllegalArgumentException(s"the $key is required"))
 
-  private[this] def hostname: String = try java.net.InetAddress.getLocalHost().getHostName()
+  private[this] def hostname: String = try IoUtil.hostname
   catch {
     case _: Throwable => "unknown"
   }

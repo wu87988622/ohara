@@ -48,7 +48,7 @@ object Backend {
             .build())
         .kafkaClient(KafkaClient(util.brokers))
         .connectClient(ConnectorClient(util.workers))
-        .hostname("localhost")
+        .hostname("0.0.0.0")
         .port(port)
         .build()
       try {

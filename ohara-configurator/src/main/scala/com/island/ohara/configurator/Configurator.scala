@@ -37,16 +37,17 @@ import scala.reflect.{ClassTag, classTag}
 /**
   * A simple impl of Configurator. This impl maintains all subclass of ohara data in a single ohara store.
   * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
-  * @param hostname hostname of rest server
+  * @param configuredHostname hostname of rest server
   * @param configuredPort    port of rest server
   * @param store    store
   */
-class Configurator private[configurator] (val hostname: String, configuredPort: Int)(implicit ug: () => String,
-                                                                                     val store: Store,
-                                                                                     kafkaClient: KafkaClient,
-                                                                                     connectorClient: ConnectorClient,
-                                                                                     initializationTimeout: Duration,
-                                                                                     terminationTimeout: Duration)
+class Configurator private[configurator] (configuredHostname: String, configuredPort: Int)(
+  implicit ug: () => String,
+  val store: Store,
+  kafkaClient: KafkaClient,
+  connectorClient: ConnectorClient,
+  initializationTimeout: Duration,
+  terminationTimeout: Duration)
     extends CloseOnce
     with SprayJsonSupport {
 
@@ -82,7 +83,8 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer = ActorMaterializer()
   private[this] val httpServer: Http.ServerBinding =
-    Await.result(Http().bindAndHandle(route, hostname, configuredPort), initializationTimeout.toMillis milliseconds)
+    Await.result(Http().bindAndHandle(route, configuredHostname, configuredPort),
+                 initializationTimeout.toMillis milliseconds)
 
   /**
     * Do what you want to do when calling closing.
@@ -98,6 +100,8 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
   }
 
   //-----------------[public interfaces]-----------------//
+
+  val hostname: String = httpServer.localAddress.getHostName
 
   val port: Int = httpServer.localAddress.getPort
 
@@ -148,7 +152,7 @@ object Configurator {
     }
     if (args.size < 2 || args.size % 2 != 0) throw new IllegalArgumentException(USAGE)
     // TODO: make the parse more friendly
-    var hostname = "localhost"
+    var hostname = "0.0.0.0"
     var port: Int = 0
     var brokers: Option[String] = None
     var workers: Option[String] = None

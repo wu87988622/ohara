@@ -3,7 +3,7 @@ package com.island.ohara.integration
 import java.util
 
 import com.island.ohara.config.OharaConfig
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.utils.Time
@@ -82,7 +82,7 @@ private class LocalKafkaWorkers private[integration] (brokersConn: String,
         new Plugins(pluginProps)
       }
       val rest = new RestServer(distConfig)
-      val workerId = s"localhost:${rest.advertisedUrl().getPort}"
+      val workerId = s"${IoUtil.hostname}:${rest.advertisedUrl().getPort}"
       val offsetBackingStore = new KafkaOffsetBackingStore
       offsetBackingStore.configure(distConfig)
       val time = Time.SYSTEM
@@ -106,7 +106,7 @@ private class LocalKafkaWorkers private[integration] (brokersConn: String,
     }
   }
 
-  val workers: String = validPorts.map("localhost:" + _).mkString(",")
+  val workers: String = validPorts.map(p => s"${IoUtil.hostname}:$p").mkString(",")
 
   override protected def doClose(): Unit = {
     connects.foreach(_.stop())

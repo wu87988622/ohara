@@ -3,7 +3,7 @@ import java.sql.{Connection, DriverManager}
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.wix.mysql.EmbeddedMysql.anEmbeddedMysql
 import com.wix.mysql.config.Charset.UTF8
 import com.wix.mysql.config.MysqldConfig.aMysqldConfig
@@ -37,7 +37,7 @@ object LocalDataBase {
     val mysqld = anEmbeddedMysql(config).addSchema(_dbName).start()
     new LocalDataBase {
       private[this] var _connection: Connection = _
-      override def host: String = "localhost"
+      override def host: String = IoUtil.hostname
 
       override def port: Int = config.getPort
 

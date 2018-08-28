@@ -3,14 +3,14 @@ package com.island.ohara.integration
 import java.io.File
 
 import com.island.ohara.config.OharaConfig
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.typesafe.scalalogging.Logger
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.common.network.ListenerName
 import org.apache.kafka.common.utils.SystemTime
 
 /**
-  * Mini brokers service. The log dir is under {TMP}/kafka-local/ and the hostname is "localhost". The offset topic is configured with
+  * Mini brokers service. The log dir is under {TMP}/kafka-local/ and the hostname is "IoUtil.hostname". The offset topic is configured with
   * no replication and single partition in order to speedup the startup.
   *
   * @param zkConnection   zookeeper connection.
@@ -47,7 +47,7 @@ class LocalKafkaBrokers private[integration] (zkConnection: String,
     }
   }
 
-  val brokers: String = validPorts.map("localhost:" + _).mkString(",")
+  val brokers: String = validPorts.map(p => s"${IoUtil.hostname}:$p").mkString(",")
   logger.info(s"ports used in LocalKafkaBrokers are ${brokers}")
 
   override def toString: String = {
