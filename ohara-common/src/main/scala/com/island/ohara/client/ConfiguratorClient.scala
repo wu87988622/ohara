@@ -23,7 +23,7 @@ import scala.concurrent.{Await, Future}
   */
 trait ConfiguratorClient extends CloseOnce {
 
-  //------------------------------------------------[storable data]------------------------------------------------//
+  //------------------------------------------------[DATA]------------------------------------------------//
   def list[T](implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T]
   def get[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T
   def delete[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T
@@ -32,15 +32,18 @@ trait ConfiguratorClient extends CloseOnce {
   def update[Req, Res](uuid: String, request: Req)(implicit rm0: RootJsonFormat[Req],
                                                    rm1: RootJsonFormat[Res],
                                                    cf: DataCommandFormat[Res]): Res
-  //------------------------------------------------[validation]------------------------------------------------//
+  //------------------------------------------------[VALIDATION]------------------------------------------------//
   def validate[Req, Res](request: Req)(implicit rm0: RootJsonFormat[Req],
                                        rm1: RootJsonFormat[Res],
                                        cf: ValidationCommandFormat[Req]): Seq[Res]
-  //------------------------------------------------[cluster]------------------------------------------------//
+  //------------------------------------------------[CLUSTER]------------------------------------------------//
   def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res
-  //------------------------------------------------[control]------------------------------------------------//
+  //------------------------------------------------[CONTROL]------------------------------------------------//
   def start[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T
   def stop[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T
+  //------------------------------------------------[QUERY]------------------------------------------------//
+  def query[Req, Res](
+    query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
 }
 
 object ConfiguratorClient {
@@ -108,13 +111,11 @@ object ConfiguratorClient {
         TIMEOUT
       )
 
-    import com.island.ohara.client.ConfiguratorJson.{ERROR_RESPONSE_JSON_FORMAT, ErrorResponse}
+    import com.island.ohara.client.ConfiguratorJson.{ERROR_JSON_FORMAT, Error}
     private[this] def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else
-        Unmarshal(res.entity)
-          .to[ErrorResponse]
-          .flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
+        Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
 
     // it is unnecessary to use the implicit imports here
     override def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res =
@@ -129,5 +130,17 @@ object ConfiguratorClient {
     override def stop[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T = Await.result(
       Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(configuratorAddress, uuid))).flatMap(unmarshal[T](_)),
       TIMEOUT)
+    override def query[Req, Res](
+      query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res =
+      Await.result(
+        Marshal(query)
+          .to[RequestEntity]
+          .flatMap(entity => {
+            Http()
+              .singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress), entity = entity))
+              .flatMap(unmarshal[Res](_))
+          }),
+        TIMEOUT
+      )
   }
 }

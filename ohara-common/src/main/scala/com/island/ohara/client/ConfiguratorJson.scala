@@ -1,6 +1,6 @@
 package com.island.ohara.client
 import com.island.ohara.serialization.DataType
-import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
+import spray.json.{DefaultJsonProtocol, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling configurator data to/from json.
@@ -8,7 +8,7 @@ import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
   * NOTED: common data must be put on the head.
   */
 object ConfiguratorJson extends DefaultJsonProtocol {
-  //------------------------------------------------[common data]------------------------------------------------//
+  //------------------------------------------------[COMMON]------------------------------------------------//
   /**
     * Provide a way to format DataType. Both Schema and SchemaRrquest use DataType.
     */
@@ -18,7 +18,8 @@ object ConfiguratorJson extends DefaultJsonProtocol {
   }
   val VERSION_V0 = "v0"
   val UNKNOWN = "?"
-  //------------------------------------------------[storable data]------------------------------------------------//
+
+  //------------------------------------------------[DATA]------------------------------------------------//
   sealed trait Data {
     val uuid: String
     val name: String
@@ -31,6 +32,15 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     def kind: String
   }
 
+  /**
+    * used to send data command
+    */
+  sealed trait DataCommandFormat[T] {
+    def format(address: String): String
+    def format(address: String, uuid: String): String
+  }
+
+  //------------------------------------------------[DATA-SCHEMA]------------------------------------------------//
   val SCHEMA_PATH = "schemas"
   final case class SchemaRequest(name: String,
                                  types: Map[String, DataType],
@@ -54,6 +64,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SCHEMA_PATH/$uuid"
   }
 
+  //------------------------------------------------[DATA-TOPIC]------------------------------------------------//
   val TOPIC_INFO_PATH = "topics"
   final case class TopicInfoRequest(name: String, numberOfPartitions: Int, numberOfReplications: Short)
   implicit val TOPIC_INFO_REQUEST_JSON_FORMAT: RootJsonFormat[TopicInfoRequest] = jsonFormat3(TopicInfoRequest)
@@ -72,6 +83,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$TOPIC_INFO_PATH/$uuid"
   }
 
+  //------------------------------------------------[DATA-HDFS]------------------------------------------------//
   val HDFS_PATH = "hdfs"
   final case class HdfsInformationRequest(name: String, uri: String)
   implicit val HDFS_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsInformationRequest] = jsonFormat2(
@@ -87,6 +99,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
       override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$HDFS_PATH/$uuid"
     }
 
+  //------------------------------------------------[DATA-PIPELINE]------------------------------------------------//
   sealed abstract class Status extends Serializable {
     def name: String
   }
@@ -118,6 +131,15 @@ object ConfiguratorJson extends DefaultJsonProtocol {
   }
 
   val PIPELINE_PATH = "pipelines"
+
+  /**
+    * used to control data
+    */
+  sealed trait ControlCommandFormat[T] {
+    def start(address: String, uuid: String): String
+    def stop(address: String, uuid: String): String
+  }
+
   final case class PipelineRequest(name: String, rules: Map[String, String])
   implicit val PIPELINE_REQUEST_JSON_FORMAT: RootJsonFormat[PipelineRequest] = jsonFormat2(PipelineRequest)
 
@@ -137,7 +159,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     /**
       * @return true if all values have specified uuid. otherwise, false
       */
-    def isReady(): Boolean = rules.values.filter(_.equals(UNKNOWN)).isEmpty
+    def ready(): Boolean = rules.values.exists(!_.equals(UNKNOWN))
   }
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
   implicit val PIPELINE_COMMAND_FORMAT: DataCommandFormat[Pipeline] =
@@ -152,8 +174,16 @@ object ConfiguratorJson extends DefaultJsonProtocol {
       override def stop(address: String, uuid: String): String =
         s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid/stop"
     }
-  //------------------------------------------------[validation]------------------------------------------------//
+  //------------------------------------------------[VALIDATION]------------------------------------------------//
   val VALIDATION_PATH = "validate"
+
+  /**
+    * used to send validation command
+    */
+  sealed trait ValidationCommandFormat[T] {
+    def format(address: String): String
+  }
+
   val HDFS_VALIDATION_PATH = "hdfs"
   final case class HdfsValidationRequest(uri: String)
   implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidationRequest] = jsonFormat1(
@@ -177,42 +207,47 @@ object ConfiguratorJson extends DefaultJsonProtocol {
   final case class ValidationReport(hostname: String, message: String, pass: Boolean)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 
-  //------------------------------------------------[cluster]------------------------------------------------//
-  val CLUSTER_PATH = "cluster"
-  final case class ClusterInformation(brokers: String, workers: String)
-  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat2(ClusterInformation)
-  implicit val CLUSTER_INFORMATION_COMMAND_FORMAT: ClusterCommandFormat[ClusterInformation] =
-    new ClusterCommandFormat[ClusterInformation] {
-      override def format(address: String): String = s"http://$address/$VERSION_V0/$CLUSTER_PATH"
+  //------------------------------------------------[QUERY]------------------------------------------------//
+  val QUERY_PATH = "query"
+  val RDB_QUERY_PATH = "rdb"
+
+  /**
+    * used to query 3 party system
+    */
+  sealed trait QueryCommandFormat[T] {
+    def format(address: String): String
+  }
+
+  final case class RdbColumn(name: String, typeName: String, pk: Boolean)
+  implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = new RootJsonFormat[RdbColumn] {
+    override def read(json: JsValue): RdbColumn = json.asJsObject.getFields("name", "type", "order", "pk") match {
+      case Seq(JsString(n), JsString(t), JsBoolean(pk)) => RdbColumn(n, t, pk)
+      case _                                            => throw new UnsupportedOperationException(s"invalid format of ${RdbColumn.getClass.getSimpleName}")
     }
-  //------------------------------------------------[Error]------------------------------------------------//
-  final case class ErrorResponse(code: String, message: String, stack: String)
-  implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[ErrorResponse] = jsonFormat3(ErrorResponse)
+    override def write(obj: RdbColumn): JsValue = JsObject(
+      "name" -> JsString(obj.name),
+      "type" -> JsString(obj.typeName),
+      "pk" -> JsBoolean(obj.pk)
+    )
+  }
+  final case class RdbTable(catalog: String, name: String, columns: Seq[RdbColumn])
+  implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat3(RdbTable)
 
-  //------------------------------------------------[Error]------------------------------------------------//
-
-  /**
-    * used to send data command
-    */
-  sealed trait DataCommandFormat[T] {
-    def format(address: String): String
-    def format(address: String, uuid: String): String
+  final case class RdbQuery(url: String,
+                            user: String,
+                            password: String,
+                            catalog: Option[String],
+                            tableName: Option[String])
+  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat5(RdbQuery)
+  implicit val RDB_QUERY_COMMAND_FORMAT: QueryCommandFormat[RdbQuery] = new QueryCommandFormat[RdbQuery] {
+    override def format(address: String): String = s"http://$address/$VERSION_V0/$QUERY_PATH/$RDB_QUERY_PATH"
   }
 
-  /**
-    * used to control data
-    */
-  sealed trait ControlCommandFormat[T] {
-    def start(address: String, uuid: String): String
-    def stop(address: String, uuid: String): String
-  }
+  final case class RdbInformation(name: String, tables: Seq[RdbTable])
+  implicit val RDB_INFORMATION_JSON_FORMAT: RootJsonFormat[RdbInformation] = jsonFormat2(RdbInformation)
 
-  /**
-    * used to send validation command
-    */
-  sealed trait ValidationCommandFormat[T] {
-    def format(address: String): String
-  }
+  //------------------------------------------------[CLUSTER]------------------------------------------------//
+  val CLUSTER_PATH = "cluster"
 
   /**
     * used to send cluster command
@@ -220,4 +255,14 @@ object ConfiguratorJson extends DefaultJsonProtocol {
   sealed trait ClusterCommandFormat[T] {
     def format(address: String): String
   }
+
+  final case class ClusterInformation(brokers: String, workers: String)
+  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat2(ClusterInformation)
+  implicit val CLUSTER_INFORMATION_COMMAND_FORMAT: ClusterCommandFormat[ClusterInformation] =
+    new ClusterCommandFormat[ClusterInformation] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$CLUSTER_PATH"
+    }
+  //------------------------------------------------[ERROR]------------------------------------------------//
+  final case class Error(code: String, message: String, stack: String)
+  implicit val ERROR_JSON_FORMAT: RootJsonFormat[Error] = jsonFormat3(Error)
 }

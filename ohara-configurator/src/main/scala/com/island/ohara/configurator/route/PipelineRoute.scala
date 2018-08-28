@@ -36,7 +36,7 @@ private[configurator] object PipelineRoute {
     throw new IllegalArgumentException(s"the pipeline:${pipeline.uuid} is already stopped")
 
   private[this] def verifyReady(pipeline: Pipeline): Unit =
-    if (!pipeline.isReady()) throw new IllegalArgumentException(s"pipeline has unready rules:${pipeline.rules}")
+    if (!pipeline.ready()) throw new IllegalArgumentException(s"pipeline has unready rules:${pipeline.rules}")
 
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Unit = {
     def verify(uuid: String) = {

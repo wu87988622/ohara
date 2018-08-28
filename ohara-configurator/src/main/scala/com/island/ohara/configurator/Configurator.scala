@@ -16,6 +16,7 @@ import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.{
   HdfsInformationRoute,
   PipelineRoute,
+  QueryRoute,
   SchemaRoute,
   TopicInfoRoute,
   ValidationRoute
@@ -48,9 +49,8 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
 
   private val log = Logger(classOf[Configurator])
 
-  private[this] def toResponse(e: Throwable) = ErrorResponse(e.getClass.getName,
-                                                             if (e.getMessage == null) "None" else e.getMessage,
-                                                             ExceptionUtils.getStackTrace(e))
+  private[this] def toResponse(e: Throwable) =
+    Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
 
   private[this] val exceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
@@ -76,7 +76,7 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
     */
   private[this] val route: server.Route = handleExceptions(exceptionHandler) {
     pathPrefix(VERSION_V0)(
-      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply ~ ValidationRoute.apply ~ clusterRoute) ~ path(
+      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply ~ ValidationRoute.apply ~ QueryRoute() ~ clusterRoute) ~ path(
       Remaining)(path => {
       throw new IllegalArgumentException(s"Unsupported restful api:$path")
     })

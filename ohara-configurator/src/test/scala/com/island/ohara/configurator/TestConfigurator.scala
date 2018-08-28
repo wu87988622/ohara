@@ -3,7 +3,7 @@ package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
+import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce
@@ -519,6 +519,40 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       configurators.foreach(_.clear())
       client.list[TopicInfo].size shouldBe 0
     })
+  }
+
+  @Test
+  def testQueryDb(): Unit = {
+    val tableName = methodName
+    doClose(DatabaseClient(db.url, db.user, db.password)) { dbClient =>
+      {
+        clients.foreach(client => {
+          val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None))
+          result.name shouldBe "mysql"
+          result.tables.isEmpty shouldBe false
+
+          val cf0 = RdbColumn("cf0", "INTEGER", true)
+          val cf1 = RdbColumn("cf1", "INTEGER", false)
+          def verify(info: RdbInformation): Unit = {
+            info.tables.filter(_.name.equals(tableName)).size shouldBe 1
+            val table = info.tables.filter(_.name.equals(tableName)).head
+            table.columns.size shouldBe 2
+            table.columns.filter(_.name.equals(cf0.name)).size shouldBe 1
+            table.columns.filter(_.name.equals(cf0.name)).head.pk shouldBe cf0.pk
+            table.columns.filter(_.name.equals(cf1.name)).size shouldBe 1
+            table.columns.filter(_.name.equals(cf1.name)).head.pk shouldBe cf1.pk
+          }
+          dbClient.createTable(tableName, Seq(cf0, cf1))
+
+          verify(client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None)))
+          verify(
+            client.query[RdbQuery, RdbInformation](
+              RdbQuery(db.url, db.user, db.password, Some(db.catalog), Some(tableName))))
+
+          dbClient.dropTable(tableName)
+        })
+      }
+    }
   }
 
   @After

@@ -1,4 +1,5 @@
 package com.island.ohara.integration
+import java.sql.{Connection, DriverManager}
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -11,10 +12,11 @@ import com.wix.mysql.distribution.Version.v5_7_latest
 trait LocalDataBase extends CloseOnce {
   def host: String
   def port: Int
-  def dbName: String
+  def catalog: String
   def user: String
   def password: String
   def url: String
+  def connection: Connection
 }
 
 object LocalDataBase {
@@ -34,19 +36,27 @@ object LocalDataBase {
     val _dbName = s"db-${COUNT.getAndIncrement()}"
     val mysqld = anEmbeddedMysql(config).addSchema(_dbName).start()
     new LocalDataBase {
+      private[this] var _connection: Connection = _
       override def host: String = "localhost"
 
       override def port: Int = config.getPort
 
-      override def dbName: String = _dbName
+      override def catalog: String = _dbName
 
       override def user: String = config.getUsername
 
       override def password: String = config.getPassword
 
-      override protected def doClose(): Unit = mysqld.stop()
+      override protected def doClose(): Unit = {
+        CloseOnce.close(_connection)
+        mysqld.stop()
+      }
 
-      override def url: String = s"jdbc:mysql://$host:$port/$dbName"
+      override def url: String = s"jdbc:mysql://$host:$port/$catalog"
+      override def connection: Connection = {
+        if (_connection == null) _connection = DriverManager.getConnection(url, user, password)
+        _connection
+      }
     }
   }
 }
