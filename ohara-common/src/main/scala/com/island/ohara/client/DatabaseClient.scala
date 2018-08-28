@@ -49,6 +49,12 @@ object DatabaseClient {
   private[this] def tableName(implicit rs: ResultSet): String = rs.getString("TABLE_NAME")
   private[this] def columnName(implicit rs: ResultSet): String = rs.getString("COLUMN_NAME")
   private[this] def columnType(implicit rs: ResultSet): String = rs.getString("TYPE_NAME")
+  private[this] def tableType(implicit rs: ResultSet): Seq[String] = {
+    val r = rs.getString("TABLE_TYPE")
+    if (r == null) Seq.empty
+    else r.split(" ")
+  }
+  private[this] def systemTable(types: Seq[String]): Boolean = !types.filter(_.equals("SYSTEM")).isEmpty
 
   /**
     * @return a jdbc-based DatabaseClient
@@ -65,7 +71,7 @@ object DatabaseClient {
         .doClose(md.getTables(catalog, null, if (name == null) "%" else name, null)) { implicit rs =>
           {
             val buf = new ArrayBuffer[(String, String)]()
-            while (rs.next()) buf.append((tableCatalog, tableName))
+            while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableName))
             buf
           }
         }

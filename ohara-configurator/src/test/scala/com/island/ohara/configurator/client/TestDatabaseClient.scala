@@ -19,6 +19,17 @@ class TestDatabaseClient extends MediumTest with Matchers {
   }
 
   @Test
+  def testList(): Unit = {
+    val tableName = methodName
+    val cf0 = RdbColumn("cf0", "INTEGER", true)
+    val cf1 = RdbColumn("cf1", "INTEGER", false)
+    val cf2 = RdbColumn("cf2", "INTEGER", false)
+    client.createTable(tableName, Seq(cf2, cf0, cf1))
+    val tables = client.tables()
+    tables.size shouldBe 1
+  }
+
+  @Test
   def testCreate(): Unit = {
     val tableName = methodName
     val cf0 = RdbColumn("cf0", "INTEGER", true)

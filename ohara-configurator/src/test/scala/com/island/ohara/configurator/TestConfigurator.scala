@@ -529,7 +529,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         clients.foreach(client => {
           val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None))
           result.name shouldBe "mysql"
-          result.tables.isEmpty shouldBe false
+          result.tables.isEmpty shouldBe true
 
           val cf0 = RdbColumn("cf0", "INTEGER", true)
           val cf1 = RdbColumn("cf1", "INTEGER", false)
