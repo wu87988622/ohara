@@ -18,6 +18,8 @@ import com.island.ohara.configurator.route.{
   PipelineRoute,
   QueryRoute,
   SchemaRoute,
+  SinkRoute,
+  SourceRoute,
   TopicInfoRoute,
   ValidationRoute
 }
@@ -76,10 +78,11 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
     */
   private[this] val route: server.Route = handleExceptions(exceptionHandler) {
     pathPrefix(VERSION_V0)(
-      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply ~ ValidationRoute.apply ~ QueryRoute() ~ clusterRoute) ~ path(
-      Remaining)(path => {
-      throw new IllegalArgumentException(s"Unsupported restful api:$path")
-    })
+      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply
+        ~ ValidationRoute.apply ~ QueryRoute() ~ SourceRoute.apply ~ SinkRoute.apply ~ clusterRoute) ~ path(Remaining)(
+      path => {
+        throw new IllegalArgumentException(s"Unsupported restful api:$path. Or the request is invalid to the $path")
+      })
   }
 
   private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
@@ -102,7 +105,7 @@ class Configurator private[configurator] (val hostname: String, configuredPort: 
 
   //-----------------[public interfaces]-----------------//
 
-  val port = httpServer.localAddress.getPort
+  val port: Int = httpServer.localAddress.getPort
 
   def size: Int = store.size
 

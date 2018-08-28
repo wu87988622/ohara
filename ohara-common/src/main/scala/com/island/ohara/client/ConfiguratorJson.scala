@@ -1,6 +1,6 @@
 package com.island.ohara.client
 import com.island.ohara.serialization.DataType
-import spray.json.{DefaultJsonProtocol, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DefaultJsonProtocol, JsBoolean, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling configurator data to/from json.
@@ -173,6 +173,34 @@ object ConfiguratorJson extends DefaultJsonProtocol {
         s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid/start"
       override def stop(address: String, uuid: String): String =
         s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid/stop"
+    }
+  //------------------------------------------------[DATA-SOURCE]------------------------------------------------//
+  val SOURCE_PATH = "sources"
+  final case class SourceRequest(name: String, configs: Map[String, String])
+  implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = jsonFormat2(SourceRequest)
+
+  final case class Source(uuid: String, name: String, configs: Map[String, String], lastModified: Long) extends Data {
+    override def kind: String = "source"
+  }
+  implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat4(Source)
+  implicit val SOURCE_COMMAND_FORMAT: DataCommandFormat[Source] =
+    new DataCommandFormat[Source] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH"
+      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid"
+    }
+  //------------------------------------------------[DATA-SINK]------------------------------------------------//
+  val SINK_PATH = "sinks"
+  final case class SinkRequest(name: String, configs: Map[String, String])
+  implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = jsonFormat2(SinkRequest)
+
+  final case class Sink(uuid: String, name: String, configs: Map[String, String], lastModified: Long) extends Data {
+    override def kind: String = "sink"
+  }
+  implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat4(Sink)
+  implicit val SINK_COMMAND_FORMAT: DataCommandFormat[Sink] =
+    new DataCommandFormat[Sink] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$SINK_PATH"
+      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SINK_PATH/$uuid"
     }
   //------------------------------------------------[VALIDATION]------------------------------------------------//
   val VALIDATION_PATH = "validate"

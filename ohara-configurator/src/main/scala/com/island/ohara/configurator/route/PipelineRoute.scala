@@ -8,6 +8,8 @@ import com.island.ohara.configurator.Configurator.Store
 
 private[configurator] object PipelineRoute {
 
+  private[this] val ACCEPTED_TYPES = Seq(classOf[TopicInfo], classOf[Source], classOf[Sink])
+
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
     Pipeline(uuid, request.name, Status.STOPPED, request.rules, abstracts(request), System.currentTimeMillis())
 
@@ -39,13 +41,12 @@ private[configurator] object PipelineRoute {
     if (!pipeline.ready()) throw new IllegalArgumentException(s"pipeline has unready rules:${pipeline.rules}")
 
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Unit = {
-    def verify(uuid: String) = {
+    def verify(uuid: String): Unit = {
       val data = store.raw(uuid)
-      data match {
-        case _: TopicInfo => // pass
-        case _ =>
-          throw new IllegalArgumentException(s"the type:${data.getClass.getSimpleName} can't be applied to pipeline")
-      }
+      if (!ACCEPTED_TYPES.exists(_.equals(data.getClass)))
+        throw new IllegalArgumentException(
+          s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
+            s" accepted type:${ACCEPTED_TYPES.map(_.getSimpleName).mkString(",")}")
     }
     pipeline.rules.keys.foreach(verify(_))
     pipeline.rules.values.filterNot(_.equals(UNKNOWN)).foreach(verify(_))

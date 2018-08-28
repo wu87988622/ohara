@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.data.{OharaData, OharaException}
+import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.CloseOnce
 
 import scala.concurrent.Future
@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
   * @tparam Request request type
   * @tparam Response response type
   */
-trait CallQueueClient[Request <: OharaData, Response <: OharaData] extends CloseOnce {
+trait CallQueueClient[Request, Response] extends CloseOnce {
 
   /**
     * send the request and then wait the response.
@@ -21,8 +21,7 @@ trait CallQueueClient[Request <: OharaData, Response <: OharaData] extends Close
     * @param timeout the valid duration of this request
     * @return a true response or a exception
     */
-  def request(request: Request,
-              timeout: Duration = CallQueue.DEFAULT_EXPIRATION_TIME): Future[Either[OharaException, Response]]
+  def request(request: Request, timeout: Duration = CallQueue.DEFAULT_EXPIRATION_TIME): Future[Either[Error, Response]]
 }
 
 object CallQueueClient {

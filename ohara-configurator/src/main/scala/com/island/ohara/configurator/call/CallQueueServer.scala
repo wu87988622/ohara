@@ -1,6 +1,5 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.data.OharaData
 import com.island.ohara.io.CloseOnce
 
 import scala.concurrent.duration.Duration
@@ -9,7 +8,7 @@ import scala.concurrent.duration.Duration
   * a call queue server is used to handle the request sent from client. All received task are buffered in the server,
   * and the server developer should call #take to get the undealt task, and then process it with a good response or a exception.
   */
-trait CallQueueServer[Request <: OharaData, Response <: OharaData] extends CloseOnce {
+trait CallQueueServer[Request, Response] extends CloseOnce {
 
   /**
     * get and remove the latest undealt task.

@@ -7,7 +7,7 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.kafka.KafkaClient
 
-object ValidationRoute extends SprayJsonSupport {
+private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
   def apply(implicit kafkaClient: KafkaClient, connectClient: ConnectorClient): server.Route =
     pathPrefix(VALIDATION_PATH) {

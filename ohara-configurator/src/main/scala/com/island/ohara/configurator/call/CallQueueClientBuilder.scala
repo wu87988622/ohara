@@ -1,7 +1,5 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.data.OharaData
-
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
@@ -73,7 +71,7 @@ class CallQueueClientBuilder private[call] {
     * @tparam RESPONSE the type of response
     * @return a call queue client implementation
     */
-  def build[REQUEST <: OharaData, RESPONSE <: OharaData: ClassTag](): CallQueueClient[REQUEST, RESPONSE] =
+  def build[REQUEST, RESPONSE: ClassTag](): CallQueueClient[REQUEST, RESPONSE] =
     new CallQueueClientImpl[REQUEST, RESPONSE](
       brokers.get,
       topicName.get,

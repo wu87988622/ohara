@@ -555,6 +555,155 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     }
   }
 
+  @Test
+  def testSource(): Unit = {
+    clients.foreach(client => {
+      def compareRequestAndResponse(request: SourceRequest, response: Source): Source = {
+        request.name shouldBe response.name
+        request.configs.sameElements(response.configs) shouldBe true
+        response
+      }
+
+      def compare2Response(lhs: Source, rhs: Source): Unit = {
+        lhs.uuid shouldBe rhs.uuid
+        lhs.name shouldBe rhs.name
+        lhs.configs.sameElements(rhs.configs) shouldBe true
+        lhs.lastModified shouldBe rhs.lastModified
+      }
+
+      // test add
+      client.list[Source].size shouldBe 0
+      val request = SourceRequest(methodName, Map("c0" -> "v0", "c1" -> "v1"))
+      val response = compareRequestAndResponse(request, client.add[SourceRequest, Source](request))
+
+      // test get
+      compare2Response(response, client.get[Source](response.uuid))
+
+      // test update
+      val anotherRequest = SourceRequest(methodName, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val newResponse =
+        compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.uuid, anotherRequest))
+
+      // test get
+      compare2Response(newResponse, client.get[Source](newResponse.uuid))
+
+      // test delete
+      client.list[Source].size shouldBe 1
+      client.delete[Source](response.uuid)
+      client.list[Source].size shouldBe 0
+
+      // test nonexistent data
+      an[IllegalArgumentException] should be thrownBy client.get[Source]("123")
+      an[IllegalArgumentException] should be thrownBy client.update[SourceRequest, Source]("777", anotherRequest)
+    })
+  }
+  @Test
+  def testModifySourceFromPipeline(): Unit = {
+    clients.foreach(client => {
+
+      val uuid_0 = client.add[SourceRequest, Source](SourceRequest(methodName, Map("a" -> "b"))).uuid
+      val uuid_1 = client.add[SourceRequest, Source](SourceRequest(methodName, Map("b" -> "b"))).uuid
+      val uuid_2 = client.add[SourceRequest, Source](SourceRequest(methodName, Map("c" -> "b"))).uuid
+      client.list[Source].size shouldBe 3
+
+      val response =
+        client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
+      response.status shouldBe Status.STOPPED
+
+      // the uuid_1 is used by pipeline so configurator disallow us to remove it
+      an[IllegalArgumentException] should be thrownBy client.delete[Source](uuid_1)
+
+      // the pipeline is not running so it is ok to update the source
+      client.update[SourceRequest, Source](uuid_0, SourceRequest(methodName, Map("d" -> "b")))
+
+      client.start[Pipeline](response.uuid)
+      an[IllegalArgumentException] should be thrownBy client
+        .update[SourceRequest, Source](uuid_0, SourceRequest(methodName, Map("d" -> "b")))
+
+      // update the pipeline to use another source (uuid_2)
+      client.stop[Pipeline](response.uuid)
+      client.update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
+
+      // it is ok to remove the source (uuid_1) since we have updated the pipeline to use another source (uuid_2)
+      client.delete[Source](uuid_1).uuid shouldBe uuid_1
+    })
+  }
+
+  @Test
+  def testSink(): Unit = {
+    clients.foreach(client => {
+      def compareRequestAndResponse(request: SinkRequest, response: Sink): Sink = {
+        request.name shouldBe response.name
+        request.configs.sameElements(response.configs) shouldBe true
+        response
+      }
+
+      def compare2Response(lhs: Sink, rhs: Sink): Unit = {
+        lhs.uuid shouldBe rhs.uuid
+        lhs.name shouldBe rhs.name
+        lhs.configs.sameElements(rhs.configs) shouldBe true
+        lhs.lastModified shouldBe rhs.lastModified
+      }
+
+      // test add
+      client.list[Sink].size shouldBe 0
+      val request = SinkRequest(methodName, Map("c0" -> "v0", "c1" -> "v1"))
+      val response = compareRequestAndResponse(request, client.add[SinkRequest, Sink](request))
+
+      // test get
+      compare2Response(response, client.get[Sink](response.uuid))
+
+      // test update
+      val anotherRequest = SinkRequest(methodName, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val newResponse =
+        compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.uuid, anotherRequest))
+
+      // test get
+      compare2Response(newResponse, client.get[Sink](newResponse.uuid))
+
+      // test delete
+      client.list[Sink].size shouldBe 1
+      client.delete[Sink](response.uuid)
+      client.list[Sink].size shouldBe 0
+
+      // test nonexistent data
+      an[IllegalArgumentException] should be thrownBy client.get[Sink]("123")
+      an[IllegalArgumentException] should be thrownBy client.update[SinkRequest, Sink]("777", anotherRequest)
+    })
+  }
+
+  @Test
+  def testModifySinkFromPipeline(): Unit = {
+    clients.foreach(client => {
+
+      val uuid_0 = client.add[SinkRequest, Sink](SinkRequest(methodName, Map("a" -> "b"))).uuid
+      val uuid_1 = client.add[SinkRequest, Sink](SinkRequest(methodName, Map("b" -> "b"))).uuid
+      val uuid_2 = client.add[SinkRequest, Sink](SinkRequest(methodName, Map("c" -> "b"))).uuid
+      client.list[Sink].size shouldBe 3
+
+      val response =
+        client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
+      response.status shouldBe Status.STOPPED
+
+      // the uuid_1 is used by pipeline so configurator disallow us to remove it
+      an[IllegalArgumentException] should be thrownBy client.delete[Sink](uuid_1)
+
+      // the pipeline is not running so it is ok to update the sink
+      client.update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, Map("d" -> "b")))
+
+      client.start[Pipeline](response.uuid)
+      an[IllegalArgumentException] should be thrownBy client
+        .update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, Map("d" -> "b")))
+
+      // update the pipeline to use another sink (uuid_2)
+      client.stop[Pipeline](response.uuid)
+      client.update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
+
+      // it is ok to remove the sink (uuid_1) since we have updated the pipeline to use another sink (uuid_2)
+      client.delete[Sink](uuid_1).uuid shouldBe uuid_1
+    })
+  }
+
   @After
   def tearDown(): Unit = {
     clients.foreach(CloseOnce.close(_))

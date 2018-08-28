@@ -7,7 +7,7 @@ import com.island.ohara.client.ConfiguratorJson.{Error, Pipeline, Status}
 import com.island.ohara.configurator.Configurator.Store
 import org.apache.commons.lang3.exception.ExceptionUtils
 
-object BasicRoute extends SprayJsonSupport {
+private[configurator] object BasicRoute extends SprayJsonSupport {
   def rejectNonexistentUuid(uuid: String): StandardRoute = complete(
     StatusCodes.BadRequest -> toResponse(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
 

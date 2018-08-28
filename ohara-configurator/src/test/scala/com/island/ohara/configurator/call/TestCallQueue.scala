@@ -3,7 +3,7 @@ package com.island.ohara.configurator.call
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.config.UuidUtil
-import com.island.ohara.data.{OharaSource, OharaTarget}
+import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.kafka.KafkaUtil
@@ -19,19 +19,19 @@ class TestCallQueue extends With3Brokers with Matchers {
   private[this] val groupId = UuidUtil.uuid()
   private[this] val defaultServerBuilder =
     CallQueue.serverBuilder.brokers(testUtil.brokers).topicName(topicName).groupId(groupId)
-  private[this] val server0: CallQueueServer[OharaSource, OharaSource] =
-    defaultServerBuilder.build[OharaSource, OharaSource]()
-  private[this] val server1: CallQueueServer[OharaSource, OharaSource] =
-    defaultServerBuilder.build[OharaSource, OharaSource]()
-  private[this] val server2: CallQueueServer[OharaSource, OharaSource] =
-    defaultServerBuilder.build[OharaSource, OharaSource]()
-  private[this] val client: CallQueueClient[OharaSource, OharaSource] =
-    CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[OharaSource, OharaSource]()
+  private[this] val server0: CallQueueServer[SourceRequest, Source] =
+    defaultServerBuilder.build[SourceRequest, Source]()
+  private[this] val server1: CallQueueServer[SourceRequest, Source] =
+    defaultServerBuilder.build[SourceRequest, Source]()
+  private[this] val server2: CallQueueServer[SourceRequest, Source] =
+    defaultServerBuilder.build[SourceRequest, Source]()
+  private[this] val client: CallQueueClient[SourceRequest, Source] =
+    CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[SourceRequest, Source]()
 
   private[this] val servers = Seq(server0, server1, server2)
 
-  private[this] val requestData: OharaSource = OharaSource.apply("uuid", "name", Map("a" -> "b"))
-  private[this] val responseData: OharaSource = OharaSource.apply("uuid", "name2", Map("a" -> "b"))
+  private[this] val requestData: SourceRequest = SourceRequest("name", Map("a" -> "b"))
+  private[this] val responseData: Source = Source("uuid", "name2", Map("a" -> "b"), System.currentTimeMillis())
   private[this] val error = new IllegalArgumentException("YOU SHOULD NOT PASS")
 
   @Test
@@ -89,17 +89,17 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @Test
   def testSendInvalidRequest(): Unit = {
-    val invalidClient: CallQueueClient[OharaTarget, OharaSource] = CallQueue.clientBuilder
+    val invalidClient: CallQueueClient[TopicInfoRequest, Source] = CallQueue.clientBuilder
       .brokers(testUtil.brokers)
       .topicName(topicName)
       .expirationCleanupTime(3 seconds)
-      .build[OharaTarget, OharaSource]()
+      .build[TopicInfoRequest, Source]()
     try {
-      val request = invalidClient.request(OharaTarget.apply("uuid", "name", Map("a" -> "b")))
+      val request = invalidClient.request(TopicInfoRequest("uuid", 1, 2))
       Await.result(request, 5 second) match {
         case Left(e) =>
           withClue(s"exception:${e.message}") {
-            e.message.contains(classOf[OharaTarget].getName) shouldBe true
+            e.message.contains("Unsupported type") shouldBe true
           }
         case _ => throw new RuntimeException("this request sent by this test should receive a exception")
       }
@@ -112,7 +112,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     an[IllegalArgumentException] should be thrownBy CallQueue.clientBuilder
       .brokers(testUtil.brokers)
       .topicName("aNonExistedTopic")
-      .build[OharaSource, OharaSource]()
+      .build[SourceRequest, Source]()
   }
 
   @Test
@@ -121,11 +121,11 @@ class TestCallQueue extends With3Brokers with Matchers {
     val leaseCleanupFreq: Duration = 5 seconds
 
     KafkaUtil.createTopic(testUtil.brokers, anotherTopic, 1, 1)
-    val timeoutClient: CallQueueClient[OharaSource, OharaSource] = CallQueue.clientBuilder
+    val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue.clientBuilder
       .brokers(testUtil.brokers)
       .topicName(anotherTopic)
       .expirationCleanupTime(leaseCleanupFreq)
-      .build[OharaSource, OharaSource]()
+      .build[SourceRequest, Source]()
     val request = timeoutClient.request(requestData, leaseCleanupFreq)
     TimeUnit.MILLISECONDS.sleep(leaseCleanupFreq.toMillis)
     Await.result(request, 5 second) match {
@@ -159,7 +159,7 @@ class TestCallQueue extends With3Brokers with Matchers {
   def testMultiRequestFromDifferentClients(): Unit = {
     val clientCount = 10
     val clients = 0 until clientCount map { _ =>
-      CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[OharaSource, OharaSource]()
+      CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[SourceRequest, Source]()
     }
     val requests = clients.map(_.request(requestData))
     // wait the one of servers receive the request
@@ -182,8 +182,8 @@ class TestCallQueue extends With3Brokers with Matchers {
     val requestCount = 10
     val topicName = methodName
     KafkaUtil.createTopic(testUtil.brokers, topicName, 1, 1)
-    val invalidClient: CallQueueClient[OharaSource, OharaSource] =
-      CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[OharaSource, OharaSource]()
+    val invalidClient: CallQueueClient[SourceRequest, Source] =
+      CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[SourceRequest, Source]()
     val requests = try 0 until requestCount map { _ =>
       invalidClient.request(requestData)
     } finally invalidClient.close()

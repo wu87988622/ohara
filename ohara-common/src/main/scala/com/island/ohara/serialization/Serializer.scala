@@ -1,9 +1,11 @@
 package com.island.ohara.serialization
+import com.island.ohara.data.Row
 
 /**
   * Used to convert a T object to V
   * NOTED: the impl should not be an inner/anonymous class since Store will use the reflection to create the object. The dynamical
   * call to inner/anonymous class is fraught with risks.
+  *
   * @tparam T object type
   */
 trait Serializer[T] {
@@ -24,15 +26,14 @@ trait Serializer[T] {
 }
 
 object Serializer {
-  val STRING = StringSerializer
-  val SHORT = ShortSerializer
-  val INT = IntSerializer
-  val LONG = LongSerializer
-  val DOUBLE = DoubleSerializer
-  val FLOAT = FloatSerializer
-  val BYTES = BytesSerializer
-  val BOOLEAN = BooleanSerializer
-  val OHARA_DATA = OharaDataSerializer
-  val OBJECT = ObjectSerializer
-  val ROW = RowSerializer
+  val STRING: Serializer[String] = StringSerializer
+  val SHORT: Serializer[Short] = ShortSerializer
+  val INT: Serializer[Int] = IntSerializer
+  val LONG: Serializer[Long] = LongSerializer
+  val DOUBLE: Serializer[Double] = DoubleSerializer
+  val FLOAT: Serializer[Float] = FloatSerializer
+  val BYTES: Serializer[Array[Byte]] = BytesSerializer
+  val BOOLEAN: Serializer[Boolean] = BooleanSerializer
+  val OBJECT: Serializer[Any] = ObjectSerializer
+  val ROW: Serializer[Row] = RowSerializer
 }
