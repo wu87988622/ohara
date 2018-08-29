@@ -265,8 +265,9 @@ object ConfiguratorJson extends DefaultJsonProtocol {
                             user: String,
                             password: String,
                             catalog: Option[String],
+                            schema: Option[String],
                             tableName: Option[String])
-  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat5(RdbQuery)
+  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat6(RdbQuery)
   implicit val RDB_QUERY_COMMAND_FORMAT: QueryCommandFormat[RdbQuery] = new QueryCommandFormat[RdbQuery] {
     override def format(address: String): String = s"http://$address/$VERSION_V0/$QUERY_PATH/$RDB_QUERY_PATH"
   }

@@ -73,8 +73,8 @@ class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSerialize
       override def send(callback: Either[Throwable, RecordMetadata] => Unit): Unit = {
         val record = new ProducerRecord[K, V](
           topic,
-          partition.map(new Integer(_)).getOrElse(null),
-          timestamp.map(new java.lang.Long(_)).getOrElse(null),
+          partition.map(new Integer(_)).orNull,
+          timestamp.map(new java.lang.Long(_)).orNull,
           key.getOrElse(null.asInstanceOf[K]),
           value.getOrElse(null.asInstanceOf[V]),
           headers.map(toKafkaHeader(_)).asJava

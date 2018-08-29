@@ -25,7 +25,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     val cf2 = RdbColumn("cf2", "INTEGER", false)
     client.createTable(tableName, Seq(cf2, cf0, cf1))
-    val tables = client.tables()
+    val tables = client.tables(null, null, null)
     tables.size shouldBe 1
   }
 
@@ -35,12 +35,12 @@ class TestDatabaseClient extends MediumTest with Matchers {
     val cf0 = RdbColumn("cf0", "INTEGER", true)
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     val cf2 = RdbColumn("cf2", "INTEGER", false)
-    val before = client.tables().size
+    val before = client.tables(null, null, null).size
     client.createTable(tableName, Seq(cf2, cf0, cf1))
 
-    client.tables().size shouldBe 1 + before
-    client.tables().filter(_.name.equals(tableName)).size shouldBe 1
-    val cfs = client.table(db.catalog, tableName).columns
+    client.tables(null, null, null).size shouldBe 1 + before
+    client.tables(null, null, null).filter(_.name.equals(tableName)).size shouldBe 1
+    val cfs = client.tables(db.catalog, null, tableName).head.columns
     cfs.size shouldBe 3
     cfs.filter(_.name.equals("cf0")).head.pk shouldBe true
     cfs.filter(_.name.equals("cf1")).head.pk shouldBe false
@@ -54,9 +54,9 @@ class TestDatabaseClient extends MediumTest with Matchers {
     val cf1 = RdbColumn("cf1", "INTEGER", false)
     client.createTable(tableName, Seq(cf0, cf1))
 
-    val before = client.tables().size
+    val before = client.tables(null, null, null).size
     client.dropTable(tableName)
-    client.tables().size shouldBe before - 1
+    client.tables(null, null, null).size shouldBe before - 1
   }
 
   @After

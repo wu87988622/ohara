@@ -16,24 +16,7 @@ trait DatabaseClient extends CloseOnce {
     * @param name table name
     * @return a list of table's information
     */
-  def tables(catalog: String, name: String): Seq[RdbTable]
-
-  /**
-    * @return a list of table's information
-    */
-  def tables(): Seq[RdbTable] = tables(null, null)
-
-  /**
-    * assert the singleton table with specified catalog and name
-    */
-  def table(catalog: String, name: String): RdbTable = {
-    val alternatives = tables(catalog, name)
-    alternatives.size match {
-      case 0 => throw new IllegalArgumentException(s"$catalog:$name doesn't exist")
-      case 1 => alternatives.iterator.next()
-      case _ => throw new IllegalArgumentException(s"$catalog:$name have duplicate tables...???")
-    }
-  }
+  def tables(catalog: String, schema: String, name: String): Seq[RdbTable]
 
   def name: String
 
@@ -64,11 +47,11 @@ object DatabaseClient {
 
     override def closed: Boolean = conn.isClosed
 
-    def tables(catalog: String, name: String): Seq[RdbTable] = {
+    override def tables(catalog: String, schema: String, name: String): Seq[RdbTable] = {
       val md = conn.getMetaData
 
       CloseOnce
-        .doClose(md.getTables(catalog, null, if (name == null) "%" else name, null)) { implicit rs =>
+        .doClose(md.getTables(catalog, schema, name, null)) { implicit rs =>
           {
             val buf = new ArrayBuffer[(String, String)]()
             while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableName))

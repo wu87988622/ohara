@@ -528,7 +528,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     doClose(DatabaseClient(db.url, db.user, db.password)) { dbClient =>
       {
         clients.foreach(client => {
-          val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None))
+          val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None))
           result.name shouldBe "mysql"
           result.tables.isEmpty shouldBe true
 
@@ -545,10 +545,10 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           }
           dbClient.createTable(tableName, Seq(cf0, cf1))
 
-          verify(client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None)))
+          verify(client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None)))
           verify(
             client.query[RdbQuery, RdbInformation](
-              RdbQuery(db.url, db.user, db.password, Some(db.catalog), Some(tableName))))
+              RdbQuery(db.url, db.user, db.password, Some(db.catalog), None, Some(tableName))))
 
           dbClient.dropTable(tableName)
         })
