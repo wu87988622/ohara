@@ -21,6 +21,11 @@ a powerful ETL tool
 cd ohara/docker
 docker build --no-cache --build-arg SSH_PRIVATE_KEY={access key} -t haredata/ohara:latest -f ./ohara.latest.dockerfile .
 ```
+## run ohara backend-services by ohara image
+```
+docker run --rm -e SSH_PRIVATE_KEY="" -e CONFIGURATOR_PORT=12345 -e BRANCH=master -p 12345:12345 -d chia7712/ohara:latest runBackend.sh
+```
+NOTED: the SSH_PRIVATE_KEY is required since it has to access private ohara repository
 
 ## Running the tests
 
