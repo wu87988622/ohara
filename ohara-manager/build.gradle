@@ -63,7 +63,9 @@ task runManager {
     exec {
       String configuratorPort = 9999
       if(project.hasProperty('configuratorPort')) configuratorPort = "${project.getProperty('configuratorPort')}"
-      environment "CONFIGURATOR_API", "http://localhost:" + configuratorPort + "/v0"
+      String configuratorHost = "localhost"
+      if(project.hasProperty('configuratorHost')) configuratorHost = "${project.getProperty('configuratorHost')}"
+      environment "CONFIGURATOR_API", "http://" + configuratorHost + ":" + configuratorPort + "/v0"
       commandLine 'yarn', 'start'
     }
   }
