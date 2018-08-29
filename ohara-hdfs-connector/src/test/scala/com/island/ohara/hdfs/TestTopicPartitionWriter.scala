@@ -8,7 +8,7 @@ import com.island.ohara.hdfs.text.RecordWriterOutput
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
 import com.island.ohara.rule.MediumTest
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.Matchers
@@ -17,6 +17,7 @@ import org.scalatest.mockito.MockitoSugar
 class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSugar {
 
   @Test
+  @Ignore // see OHARA-350
   def testOpenTempFile(): Unit = {
     val hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(
       Map(HDFSSinkConnectorConfig.HDFS_URL -> "", HDFSSinkConnectorConfig.TMP_DIR -> "/tmp"))
