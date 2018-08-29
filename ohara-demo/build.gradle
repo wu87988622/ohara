@@ -11,11 +11,15 @@ task runBackend(type: JavaExec, dependsOn: 'classes') {
   String ttl = "9999"
   if(project.hasProperty('ttl')) {
     ttl = "${project.getProperty('ttl')}"
-  }
+  } else if ("$System.env.TTL" != "null")
+    ttl = "$System.env.TTL"
+
   String port = "0"
   if(project.hasProperty('port')) {
     port = "${project.getProperty('port')}"
-  }
+  } else if ("$System.env.PORT" != "null")
+    port = "$System.env.PORT"
+
   args = Arrays.asList("--ttl", ttl, "--port", port)
   main = 'com.island.ohara.demo.Backend'
 }
