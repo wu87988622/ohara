@@ -52,10 +52,10 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     OharaTestUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
     rowQueue.forEach((r: Row) => {
       r.cellCount shouldBe row.cellCount
-      r.seekCell(0).name shouldBe "cf0"
-      r.seekCell(0).value shouldBe 0
-      r.seekCell(1).name shouldBe "cf1"
-      r.seekCell(1).value shouldBe 1
+      r.cell(0).name shouldBe "cf0"
+      r.cell(0).value shouldBe 0
+      r.cell(1).name shouldBe "cf1"
+      r.cell(1).value shouldBe 1
       r.tags.size shouldBe 2
       r.tags.contains("123") shouldBe true
       r.tags.contains("456") shouldBe true
@@ -141,9 +141,9 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     OharaTestUtil.await(() => valueQueue.size() == 1, 10 seconds)
     val fromKafka = valueQueue.take()
 
-    fromKafka.seekCell(0).name shouldBe "c"
-    fromKafka.seekCell(1).name shouldBe "b"
-    fromKafka.seekCell(2).name shouldBe "a"
+    fromKafka.cell(0).name shouldBe "c"
+    fromKafka.cell(1).name shouldBe "b"
+    fromKafka.cell(2).name shouldBe "a"
 
     doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       val meta = Await.result(producer.sender().topic(topicName).key(topicName).value(row).send(), 10 seconds)

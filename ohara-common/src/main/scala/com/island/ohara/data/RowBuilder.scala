@@ -23,7 +23,7 @@ abstract class RowBuilder {
   /**
     * Append a cell to the end of this builder
     *
-    * @param cell the cell to add
+    * @param cells the cells to add
     * @return the updated builder
     */
   def append(cells: TraversableOnce[Cell[_]]): RowBuilder

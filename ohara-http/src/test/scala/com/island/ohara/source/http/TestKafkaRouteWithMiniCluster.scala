@@ -89,8 +89,8 @@ class TestKafkaRouteWithMiniCluster
 
         status should ===(StatusCodes.OK)
         for (((value, (colName, _)), i) <- (csv zip schema).zipWithIndex) {
-          row.seekCell(i).name shouldBe colName
-          row.seekCell(i).value shouldBe value
+          row.cell(i).name shouldBe colName
+          row.cell(i).value shouldBe value
         }
       }
     } finally producer.close()

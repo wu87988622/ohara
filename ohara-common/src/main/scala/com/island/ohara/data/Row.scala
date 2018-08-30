@@ -27,7 +27,7 @@ abstract class Row extends Iterable[Cell[_]] {
     * @return the cell at the specific index
     * @throws IndexOutOfBoundsException if `i < 0` or `size <= i`
     */
-  def seekCell(index: Int): Cell[_]
+  def cell(index: Int): Cell[_]
 
   /**
     * @return the number of cells
@@ -55,16 +55,16 @@ abstract class Row extends Iterable[Cell[_]] {
     case _        => false
   }
 
-  def equals(other: Row, includeTag: Boolean = true): Boolean =
+  def equals(other: Row, includeTag: Boolean): Boolean =
     compareCell(other) && (!includeTag || compareTags(other))
 
   // TODO: evaluating the size first may be reduce the performance if the Row impl get the size by iterating. by chia
   private[this] def compareCell(other: Row): Boolean = if (isEmpty && other.isEmpty) true
-  else if (size == other.size) !filter(c => other.seekCell(c.name).map(_.equals(c)).getOrElse(false)).isEmpty
+  else if (size == other.size) forall(c => other.exists(_.equals(c)))
   else false
 
   private[this] def compareTags(other: Row): Boolean = if (tags.isEmpty && other.tags.isEmpty) true
-  else if (tags.size == other.tags.size) !tags.filter(tag => other.tags.contains(tag)).isEmpty
+  else if (tags.size == other.tags.size) tags.forall(t => other.tags.exists(_.equals(t)))
   else false
   def tags: Set[String]
 }
@@ -109,7 +109,7 @@ object Row {
 
     override def names: Iterator[String] = cellGroup.keysIterator
 
-    override def seekCell(index: Int): Cell[_] = try cellArray(index)
+    override def cell(index: Int): Cell[_] = try cellArray(index)
     catch {
       case e: ArrayIndexOutOfBoundsException => throw new IndexOutOfBoundsException(e.getMessage)
     }

@@ -17,7 +17,7 @@ class TestBuilder extends SmallTest with Matchers {
     val builder = Cell.builder.name("cf")
     val list = List[Any](123, 123L, "123", 123D, 123F, true)
     list
-      .map(_ match {
+      .map {
         case v: Boolean => builder.build(v)
         case v: Short   => builder.build(v)
         case v: Int     => builder.build(v)
@@ -26,7 +26,7 @@ class TestBuilder extends SmallTest with Matchers {
         case v: Double  => builder.build(v)
         case v: String  => builder.build(v)
         case _          => throw new IllegalArgumentException
-      })
+      }
       .foreach((cell: Cell[_]) => {
         cell.value match {
           case v: Boolean => v shouldBe true
@@ -45,18 +45,18 @@ class TestBuilder extends SmallTest with Matchers {
       .build()
 
     row.cellCount shouldBe 3
-    row.seekCell(0).name shouldBe "0"
-    row.seekCell(0).value shouldBe 1
-    row.seekCell(1).name shouldBe "1"
-    row.seekCell(1).value shouldBe "Abc"
-    row.seekCell(2).name shouldBe "2"
-    row.seekCell(2).value shouldBe 10.123
+    row.cell(0).name shouldBe "0"
+    row.cell(0).value shouldBe 1
+    row.cell(1).name shouldBe "1"
+    row.cell(1).value shouldBe "Abc"
+    row.cell(2).name shouldBe "2"
+    row.cell(2).value shouldBe 10.123
     row.tags.size shouldBe 2
     row.tags.contains("tag0") shouldBe true
     row.tags.contains("tag8") shouldBe true
     row.tags.contains("phantom-tag") shouldBe false
-    an[IndexOutOfBoundsException] should be thrownBy row.seekCell(-1)
-    an[IndexOutOfBoundsException] should be thrownBy row.seekCell(100)
+    an[IndexOutOfBoundsException] should be thrownBy row.cell(-1)
+    an[IndexOutOfBoundsException] should be thrownBy row.cell(100)
   }
 
 }

@@ -20,8 +20,8 @@ abstract class Cell[T] {
     * @return true if this cell is equal with another cell. false otherwise
     */
   override def equals(obj: scala.Any): Boolean = obj match {
-    case cell: Cell[_] if (name.equals(cell.name)) => value.equals(cell.value)
-    case _                                         => false
+    case cell: Cell[_] => name == cell.name && value == cell.value
+    case _             => false
   }
 }
 

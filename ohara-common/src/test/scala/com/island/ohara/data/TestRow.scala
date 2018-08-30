@@ -16,7 +16,9 @@ class TestRow extends SmallTest with Matchers {
     cell0.equals(cell1) shouldBe true
     cell1.equals(cell0) shouldBe true
 
+    //noinspection ComparingUnrelatedTypes
     cell0.equals(cell2) shouldBe false
+    //noinspection ComparingUnrelatedTypes
     cell2.equals(cell0) shouldBe false
 
     cell0.equals(cell3) shouldBe false
@@ -53,7 +55,7 @@ class TestRow extends SmallTest with Matchers {
   @Test
   def testBuilderRow(): Unit = {
     val list = List[Any](123.toShort, 123, 123L, "123", 123D, 123F, true)
-    val row = Row(list.map(_ match {
+    val row = Row(list.map {
       case v: Boolean => Cell.builder.name("boolean").build(v)
       case v: Short   => Cell.builder.name("short").build(v)
       case v: Int     => Cell.builder.name("int").build(v)
@@ -62,7 +64,7 @@ class TestRow extends SmallTest with Matchers {
       case v: Double  => Cell.builder.name("double").build(v)
       case v: String  => Cell.builder.name("string").build(v)
       case _          => throw new IllegalArgumentException
-    }))
+    })
     row.size shouldBe list.size
     row.names.size shouldBe list.size
     row seekCell "boolean" shouldBe defined
