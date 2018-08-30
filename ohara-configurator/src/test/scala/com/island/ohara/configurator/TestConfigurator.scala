@@ -589,14 +589,14 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       // test add
       client.list[Source].size shouldBe 0
-      val request = SourceRequest(methodName, Map("c0" -> "v0", "c1" -> "v1"))
+      val request = SourceRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1"))
       val response = compareRequestAndResponse(request, client.add[SourceRequest, Source](request))
 
       // test get
       compare2Response(response, client.get[Source](response.uuid))
 
       // test update
-      val anotherRequest = SourceRequest(methodName, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val anotherRequest = SourceRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.uuid, anotherRequest))
 
@@ -617,9 +617,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testModifySourceFromPipeline(): Unit = {
     clients.foreach(client => {
 
-      val uuid_0 = client.add[SourceRequest, Source](SourceRequest(methodName, Map("a" -> "b"))).uuid
-      val uuid_1 = client.add[SourceRequest, Source](SourceRequest(methodName, Map("b" -> "b"))).uuid
-      val uuid_2 = client.add[SourceRequest, Source](SourceRequest(methodName, Map("c" -> "b"))).uuid
+      val uuid_0 = client.add[SourceRequest, Source](SourceRequest(methodName, "jdbc", Map("a" -> "b"))).uuid
+      val uuid_1 = client.add[SourceRequest, Source](SourceRequest(methodName, "jdbc", Map("b" -> "b"))).uuid
+      val uuid_2 = client.add[SourceRequest, Source](SourceRequest(methodName, "jdbc", Map("c" -> "b"))).uuid
       client.list[Source].size shouldBe 3
 
       val response =
@@ -630,11 +630,11 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       an[IllegalArgumentException] should be thrownBy client.delete[Source](uuid_1)
 
       // the pipeline is not running so it is ok to update the source
-      client.update[SourceRequest, Source](uuid_0, SourceRequest(methodName, Map("d" -> "b")))
+      client.update[SourceRequest, Source](uuid_0, SourceRequest(methodName, "jdbc", Map("d" -> "b")))
 
       client.start[Pipeline](response.uuid)
       an[IllegalArgumentException] should be thrownBy client
-        .update[SourceRequest, Source](uuid_0, SourceRequest(methodName, Map("d" -> "b")))
+        .update[SourceRequest, Source](uuid_0, SourceRequest(methodName, "jdbc", Map("d" -> "b")))
 
       // update the pipeline to use another source (uuid_2)
       client.stop[Pipeline](response.uuid)
@@ -663,14 +663,14 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       // test add
       client.list[Sink].size shouldBe 0
-      val request = SinkRequest(methodName, Map("c0" -> "v0", "c1" -> "v1"))
+      val request = SinkRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1"))
       val response = compareRequestAndResponse(request, client.add[SinkRequest, Sink](request))
 
       // test get
       compare2Response(response, client.get[Sink](response.uuid))
 
       // test update
-      val anotherRequest = SinkRequest(methodName, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val anotherRequest = SinkRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.uuid, anotherRequest))
 
@@ -692,9 +692,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testModifySinkFromPipeline(): Unit = {
     clients.foreach(client => {
 
-      val uuid_0 = client.add[SinkRequest, Sink](SinkRequest(methodName, Map("a" -> "b"))).uuid
-      val uuid_1 = client.add[SinkRequest, Sink](SinkRequest(methodName, Map("b" -> "b"))).uuid
-      val uuid_2 = client.add[SinkRequest, Sink](SinkRequest(methodName, Map("c" -> "b"))).uuid
+      val uuid_0 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("a" -> "b"))).uuid
+      val uuid_1 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("b" -> "b"))).uuid
+      val uuid_2 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("c" -> "b"))).uuid
       client.list[Sink].size shouldBe 3
 
       val response =
@@ -705,11 +705,11 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       an[IllegalArgumentException] should be thrownBy client.delete[Sink](uuid_1)
 
       // the pipeline is not running so it is ok to update the sink
-      client.update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, Map("d" -> "b")))
+      client.update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, "jdbc", Map("d" -> "b")))
 
       client.start[Pipeline](response.uuid)
       an[IllegalArgumentException] should be thrownBy client
-        .update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, Map("d" -> "b")))
+        .update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, "jdbc", Map("d" -> "b")))
 
       // update the pipeline to use another sink (uuid_2)
       client.stop[Pipeline](response.uuid)

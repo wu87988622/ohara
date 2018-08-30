@@ -181,13 +181,43 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     }
   //------------------------------------------------[DATA-SOURCE]------------------------------------------------//
   val SOURCE_PATH = "sources"
-  final case class SourceRequest(name: String, configs: Map[String, String])
-  implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = jsonFormat2(SourceRequest)
+  final case class SourceRequest(name: String, className: String, configs: Map[String, String])
+  implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = new RootJsonFormat[SourceRequest] {
+    override def write(obj: SourceRequest): JsValue = JsObject(
+      "name" -> JsString(obj.name),
+      "class" -> JsString(obj.className),
+      "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) })
+    )
+    override def read(json: JsValue): SourceRequest = json.asJsObject.getFields("name", "class", "configs") match {
+      case Seq(JsString(m), JsString(clz), JsObject(c)) =>
+        SourceRequest(m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) })
+      case _ => throw new UnsupportedOperationException(s"invalid format of ${SourceRequest.getClass.getSimpleName}")
+    }
+  }
 
-  final case class Source(uuid: String, name: String, configs: Map[String, String], lastModified: Long) extends Data {
+  final case class Source(uuid: String,
+                          name: String,
+                          className: String,
+                          configs: Map[String, String],
+                          lastModified: Long)
+      extends Data {
     override def kind: String = "source"
   }
-  implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat4(Source)
+  implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = new RootJsonFormat[Source] {
+    override def write(obj: Source): JsValue = JsObject(
+      "uuid" -> JsString(obj.uuid),
+      "name" -> JsString(obj.name),
+      "class" -> JsString(obj.className),
+      "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) }),
+      "lastModified" -> JsNumber(obj.lastModified)
+    )
+    override def read(json: JsValue): Source =
+      json.asJsObject.getFields("uuid", "name", "class", "configs", "lastModified") match {
+        case Seq(JsString(u), JsString(m), JsString(clz), JsObject(c), JsNumber(t)) =>
+          Source(u, m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) }, t.toLong)
+        case _ => throw new UnsupportedOperationException(s"invalid format of ${Source.getClass.getSimpleName}")
+      }
+  }
   implicit val SOURCE_COMMAND_FORMAT: DataCommandFormat[Source] =
     new DataCommandFormat[Source] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH"
@@ -195,13 +225,39 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     }
   //------------------------------------------------[DATA-SINK]------------------------------------------------//
   val SINK_PATH = "sinks"
-  final case class SinkRequest(name: String, configs: Map[String, String])
-  implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = jsonFormat2(SinkRequest)
+  final case class SinkRequest(name: String, className: String, configs: Map[String, String])
+  implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = new RootJsonFormat[SinkRequest] {
+    override def write(obj: SinkRequest): JsValue = JsObject(
+      "name" -> JsString(obj.name),
+      "class" -> JsString(obj.className),
+      "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) })
+    )
+    override def read(json: JsValue): SinkRequest = json.asJsObject.getFields("name", "class", "configs") match {
+      case Seq(JsString(m), JsString(clz), JsObject(c)) =>
+        SinkRequest(m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) })
+      case _ => throw new UnsupportedOperationException(s"invalid format of ${SinkRequest.getClass.getSimpleName}")
+    }
+  }
 
-  final case class Sink(uuid: String, name: String, configs: Map[String, String], lastModified: Long) extends Data {
+  final case class Sink(uuid: String, name: String, className: String, configs: Map[String, String], lastModified: Long)
+      extends Data {
     override def kind: String = "sink"
   }
-  implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat4(Sink)
+  implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = new RootJsonFormat[Sink] {
+    override def write(obj: Sink): JsValue = JsObject(
+      "uuid" -> JsString(obj.uuid),
+      "name" -> JsString(obj.name),
+      "class" -> JsString(obj.className),
+      "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) }),
+      "lastModified" -> JsNumber(obj.lastModified)
+    )
+    override def read(json: JsValue): Sink =
+      json.asJsObject.getFields("uuid", "name", "class", "configs", "lastModified") match {
+        case Seq(JsString(u), JsString(m), JsString(clz), JsObject(c), JsNumber(t)) =>
+          Sink(u, m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) }, t.toLong)
+        case _ => throw new UnsupportedOperationException(s"invalid format of ${Sink.getClass.getSimpleName}")
+      }
+  }
   implicit val SINK_COMMAND_FORMAT: DataCommandFormat[Sink] =
     new DataCommandFormat[Sink] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$SINK_PATH"

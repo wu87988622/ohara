@@ -30,8 +30,8 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   private[this] val servers = Seq(server0, server1, server2)
 
-  private[this] val requestData: SourceRequest = SourceRequest("name", Map("a" -> "b"))
-  private[this] val responseData: Source = Source("uuid", "name2", Map("a" -> "b"), System.currentTimeMillis())
+  private[this] val requestData: SourceRequest = SourceRequest("name", "jdbc", Map("a" -> "b"))
+  private[this] val responseData: Source = Source("uuid", "name2", "jdbc", Map("a" -> "b"), System.currentTimeMillis())
   private[this] val error = new IllegalArgumentException("YOU SHOULD NOT PASS")
 
   @Test

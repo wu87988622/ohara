@@ -10,7 +10,7 @@ import BasicRoute._
 private[configurator] object SourceRoute extends SprayJsonSupport {
 
   private[this] def toRes(uuid: String, request: SourceRequest) =
-    Source(uuid, request.name, request.configs, System.currentTimeMillis())
+    Source(uuid, request.name, request.className, request.configs, System.currentTimeMillis())
 
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route = pathPrefix(SOURCE_PATH) {
     pathEnd {

@@ -10,7 +10,7 @@ import com.island.ohara.configurator.route.BasicRoute._
 private[configurator] object SinkRoute extends SprayJsonSupport {
 
   private[this] def toRes(uuid: String, request: SinkRequest) =
-    Sink(uuid, request.name, request.configs, System.currentTimeMillis())
+    Sink(uuid, request.name, request.className, request.configs, System.currentTimeMillis())
 
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route = pathPrefix(SINK_PATH) {
     pathEnd {
