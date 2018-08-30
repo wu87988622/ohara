@@ -137,7 +137,7 @@ object ConfiguratorClient {
           .to[RequestEntity]
           .flatMap(entity => {
             Http()
-              .singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress), entity = entity))
+              .singleRequest(HttpRequest(HttpMethods.POST, cf.format(configuratorAddress), entity = entity))
               .flatMap(unmarshal[Res](_))
           }),
         TIMEOUT

@@ -14,7 +14,7 @@ private[configurator] object QueryRoute extends SprayJsonSupport {
   def apply(): server.Route = pathPrefix(QUERY_PATH) {
     pathPrefix(RDB_QUERY_PATH) {
       pathEnd {
-        get {
+        post {
           entity(as[RdbQuery]) { query =>
             {
               val rdb = doClose(DatabaseClient(query.url, query.user, query.password)) { client =>
