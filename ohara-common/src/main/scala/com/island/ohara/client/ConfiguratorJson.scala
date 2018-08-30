@@ -1,6 +1,6 @@
 package com.island.ohara.client
 import com.island.ohara.serialization.DataType
-import spray.json.{DefaultJsonProtocol, JsBoolean, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DefaultJsonProtocol, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling configurator data to/from json.
@@ -42,23 +42,28 @@ object ConfiguratorJson extends DefaultJsonProtocol {
 
   //------------------------------------------------[DATA-SCHEMA]------------------------------------------------//
   val SCHEMA_PATH = "schemas"
-  final case class SchemaRequest(name: String,
-                                 types: Map[String, DataType],
-                                 orders: Map[String, Int],
-                                 disabled: Boolean)
+  final case class Column(name: String, typeName: DataType, order: Int)
+  implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
+    override def read(json: JsValue): Column = json.asJsObject.getFields("name", "type", "order") match {
+      case Seq(JsString(n), JsString(t), JsNumber(o)) => Column(n, DataType.of(t), o.toInt)
+      case _                                          => throw new UnsupportedOperationException(s"invalid format of ${Column.getClass.getSimpleName}")
+    }
+    override def write(obj: Column): JsValue = JsObject(
+      "name" -> JsString(obj.name),
+      "type" -> JsString(obj.typeName.name),
+      "order" -> JsNumber(obj.order)
+    )
+  }
 
-  implicit val SCHEMA_REQUEST_JSON_FORMAT: RootJsonFormat[SchemaRequest] = jsonFormat4(SchemaRequest)
+  final case class SchemaRequest(name: String, columns: Seq[Column], disabled: Boolean)
 
-  final case class Schema(uuid: String,
-                          name: String,
-                          types: Map[String, DataType],
-                          orders: Map[String, Int],
-                          disabled: Boolean,
-                          lastModified: Long)
+  implicit val SCHEMA_REQUEST_JSON_FORMAT: RootJsonFormat[SchemaRequest] = jsonFormat3(SchemaRequest)
+
+  final case class Schema(uuid: String, name: String, columns: Seq[Column], disabled: Boolean, lastModified: Long)
       extends Data {
     override def kind: String = "schema"
   }
-  implicit val SCHEMA_JSON_FORMAT: RootJsonFormat[Schema] = jsonFormat6(Schema)
+  implicit val SCHEMA_JSON_FORMAT: RootJsonFormat[Schema] = jsonFormat5(Schema)
   implicit val SCHEMA_COMMAND_FORMAT: DataCommandFormat[Schema] = new DataCommandFormat[Schema] {
     override def format(address: String): String = s"http://$address/$VERSION_V0/$SCHEMA_PATH"
     override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SCHEMA_PATH/$uuid"
@@ -248,7 +253,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
 
   final case class RdbColumn(name: String, typeName: String, pk: Boolean)
   implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = new RootJsonFormat[RdbColumn] {
-    override def read(json: JsValue): RdbColumn = json.asJsObject.getFields("name", "type", "order", "pk") match {
+    override def read(json: JsValue): RdbColumn = json.asJsObject.getFields("name", "type", "pk") match {
       case Seq(JsString(n), JsString(t), JsBoolean(pk)) => RdbColumn(n, t, pk)
       case _                                            => throw new UnsupportedOperationException(s"invalid format of ${RdbColumn.getClass.getSimpleName}")
     }

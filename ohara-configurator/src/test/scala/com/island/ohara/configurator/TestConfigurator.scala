@@ -126,32 +126,28 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       def compareRequestAndResponse(request: SchemaRequest, response: Schema): Schema = {
         request.name shouldBe response.name
         request.disabled shouldBe response.disabled
-        request.orders.sameElements(response.orders) shouldBe true
-        request.types.sameElements(response.types) shouldBe true
+        request.columns.sameElements(response.columns) shouldBe true
         response
       }
 
       def compare2Response(lhs: Schema, rhs: Schema): Unit = {
         lhs.uuid shouldBe rhs.uuid
         lhs.name shouldBe rhs.name
-        lhs.orders.sameElements(rhs.orders) shouldBe true
-        lhs.types.sameElements(rhs.types) shouldBe true
+        lhs.columns.sameElements(rhs.columns) shouldBe true
         lhs.lastModified shouldBe rhs.lastModified
       }
 
       // test add
       client.list[Schema].size shouldBe 0
-      val request = SchemaRequest(methodName, Map("cf0" -> DataType.BYTES), Map("cf0" -> 1), false)
+      val request = SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1)), true)
       val response = compareRequestAndResponse(request, client.add[SchemaRequest, Schema](request))
 
       // test get
       compare2Response(response, client.get[Schema](response.uuid))
 
       // test update
-      val anotherRequest = SchemaRequest(methodName,
-                                         Map("cf0" -> DataType.BYTES, "cf1" -> DataType.DOUBLE),
-                                         Map("cf0" -> 1, "cf1" -> 2),
-                                         false)
+      val anotherRequest =
+        SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf2", DataType.BOOLEAN, 2)), false)
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SchemaRequest, Schema](response.uuid, anotherRequest))
 
@@ -166,6 +162,26 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       // test nonexistent data
       an[IllegalArgumentException] should be thrownBy client.get[Schema]("123")
       an[IllegalArgumentException] should be thrownBy client.update[SchemaRequest, Schema]("777", anotherRequest)
+    })
+  }
+
+  @Test
+  def testInvalidSchemaRequest(): Unit = {
+    clients.foreach(client => {
+      val request0 = SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 0)), true)
+
+      // 0 is not valid order
+      an[IllegalArgumentException] should be thrownBy client.add[SchemaRequest, Schema](request0)
+
+      val request1 =
+        SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf2", DataType.BOOLEAN, 1)), true)
+      // duplicate order
+      an[IllegalArgumentException] should be thrownBy client.add[SchemaRequest, Schema](request1)
+
+      val request2 =
+        SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2)), true)
+      // duplicate name
+      an[IllegalArgumentException] should be thrownBy client.add[SchemaRequest, Schema](request2)
     })
   }
 
@@ -341,9 +357,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
       val uuid_1 =
         client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).uuid
-      val uuid_2 = client
-        .add[SchemaRequest, Schema](SchemaRequest(methodName, Map("cf0" -> DataType.BYTES), Map("cf0" -> 1), false))
-        .uuid
+      val uuid_2 =
+        client.add[SchemaRequest, Schema](SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1)), false)).uuid
       val uuid_3 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
       client.list[TopicInfo].size shouldBe 2
       client.list[HdfsInformation].size shouldBe 1

@@ -7,8 +7,18 @@ import com.island.ohara.configurator.Configurator.Store
 
 private[configurator] object SchemaRoute {
 
-  private[this] def toRes(uuid: String, request: SchemaRequest) =
-    Schema(uuid, request.name, request.types, request.orders, request.disabled, System.currentTimeMillis())
+  private[this] def toRes(uuid: String, request: SchemaRequest) = {
+    if (request.columns.map(_.order).toSet.size != request.columns.size)
+      throw new IllegalArgumentException(s"duplicate order in ${request.columns}")
+    if (request.columns.map(_.name).toSet.size != request.columns.size)
+      throw new IllegalArgumentException(s"duplicate name in ${request.columns}")
+    if (request.columns.map(_.order).exists(_.equals(0))) throw new IllegalArgumentException("0 is invalid order")
+    (1 to request.columns.size).foreach(
+      index =>
+        if (!request.columns.map(_.order).exists(_.equals(index)))
+          throw new IllegalArgumentException(s"there are ${request.columns.size} columns but $index doesn't exist"))
+    Schema(uuid, request.name, request.columns, request.disabled, System.currentTimeMillis())
+  }
 
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
     pathPrefix(SCHEMA_PATH) {
