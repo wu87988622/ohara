@@ -19,21 +19,15 @@ class LocalHDFS private[integration] (numDataNodes: Int) extends CloseOnce {
   /**
     * Creating the FileSystem object is expensive.
     * The FileSystem returned to user should be a same object in test.
-    *
-    * @return Get to Local FileSystem
     */
-  def fileSystem(): FileSystem = {
-    val config: Configuration = new Configuration()
-    FileSystem.getLocal(config)
-  }
+  val fs: FileSystem = FileSystem.newInstance(new Configuration())
 
   /**
     * @return Get to tmp dir path
     */
-  def tmpDirectory(): String = tmpDir.getPath()
+  def tmpDirectory: String = tmpDir.getPath
 
   override protected def doClose(): Unit = {
-    fileSystem.close()
     deleteFile(tmpDir)
   }
 }

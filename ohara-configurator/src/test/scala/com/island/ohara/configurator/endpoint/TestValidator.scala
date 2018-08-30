@@ -9,12 +9,11 @@ import org.scalatest.Matchers
 
 class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
-  private[this] val connectorClient = testUtil.connectorClient()
   private[this] val kafkaClient = KafkaClient(testUtil.brokers)
 
   @Before
   def setup(): Unit = {
-    connectorClient.plugins().filter(_.className.equals(classOf[Validator].getName)).isEmpty shouldBe false
+    testUtil.connectorClient.plugins().filter(_.className.equals(classOf[Validator].getName)).isEmpty shouldBe false
   }
 
   private[this] def evaluate(reports: Seq[ValidationReport]): Unit = {
@@ -24,14 +23,13 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidationOfHdfs(): Unit = {
-    evaluate(Validator.run(connectorClient, kafkaClient, HdfsValidationRequest("file:///tmp"), taskCount))
+    evaluate(Validator.run(testUtil.connectorClient, kafkaClient, HdfsValidationRequest("file:///tmp"), taskCount))
   }
 
   // TODO: add test against RDB. by chia
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(connectorClient)
     CloseOnce.close(kafkaClient)
   }
 }

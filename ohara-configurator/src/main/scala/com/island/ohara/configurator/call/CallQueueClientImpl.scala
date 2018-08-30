@@ -4,8 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.config.UuidUtil
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
@@ -13,7 +12,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.errors.WakeupException
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future, Promise}
+import scala.concurrent._
 import scala.reflect.ClassTag
 
 /**
@@ -52,7 +51,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
   /**
     * the uuid for this instance
     */
-  private[this] val uuid: String = UuidUtil.uuid
+  private[this] val uuid: String = UuidUtil.uuid()
 
   if (!KafkaUtil.exist(brokers, topicName, initializationTimeout))
     throw new IllegalArgumentException(s"The topic:$topicName doesn't exist")

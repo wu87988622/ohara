@@ -1,7 +1,6 @@
 package com.island.ohara.hdfs
 
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask}
-import org.apache.kafka.common.config.ConfigDef
 
 /**
   * This class extends RowSinkConnector abstract.

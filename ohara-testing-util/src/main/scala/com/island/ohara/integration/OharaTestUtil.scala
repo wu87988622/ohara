@@ -7,14 +7,11 @@ import java.util.{Properties, Random}
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
-import kafka.server.KafkaServer
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.serialization.Deserializer
-import org.apache.kafka.connect.runtime.Worker
-import org.apache.kafka.connect.runtime.rest.RestServer
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -45,26 +42,12 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   @volatile private[this] var stopConsumer = false
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
   private[this] var localDb: LocalDataBase = _
+  private[this] var _connectorClient: ConnectorClient = _
 
   /**
     * @return zookeeper connection used to create zk services
     */
   def zkConnection: String = componentBox.zookeeper.connection
-
-  /**
-    * @return a list of running brokers
-    */
-  def kafkaBrokers: Seq[KafkaServer] = componentBox.brokerCluster.kafkaBrokers
-
-  /**
-    * @return a list of running brokers
-    */
-  def kafkaWorkers: Seq[Worker] = componentBox.workerCluster.kafkaWorkers
-
-  /**
-    * @return a list of running brokers
-    */
-  def kafkaRestServers: Seq[RestServer] = componentBox.workerCluster.restServers
 
   /**
     * Exposing the brokers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
@@ -105,7 +88,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @return true if the topic exists
     */
   def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(admin =>
-    admin.listTopics().names().thenApply(_.stream().anyMatch(_.equals(topic))).get())
+    admin.listTopics().names().thenApply((_.stream().anyMatch((_.equals(topic))))).get())
 
   import scala.collection.JavaConverters._
 
@@ -166,10 +149,10 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
         while (!stopConsumer) {
           val records = consumer.poll(pollTimeout)
           if (records != null) {
-            records.forEach((record: ConsumerRecord[K, V]) => {
+            records.forEach(((record: ConsumerRecord[K, V]) => {
               if (record.key != null) keyQueue.put(record.key)
               if (record.value != null) valueQueue.put(record.value)
-            })
+            }))
           }
         }
       } finally consumer.close()
@@ -178,39 +161,26 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     (keyQueue, valueQueue)
   }
 
-  /**
-    * @return the public address and port of a worker picked by random
-    */
-  def pickWorkerAddress(): (String, Int) = {
-    val s = componentBox.workerCluster.pickRandomRestServer().advertisedUrl()
-    (s.getHost, s.getPort)
+  def connectorClient: ConnectorClient = {
+    if (_connectorClient == null) _connectorClient = ConnectorClient(workers)
+    _connectorClient
   }
-
-  /**
-    * @return the public address and port of a broker picked by random
-    */
-  def pickBrokerAddress(): (String, Int) = {
-    val s = componentBox.workerCluster.pickRandomRestServer().advertisedUrl()
-    (s.getHost, s.getPort)
-  }
-
-  def connectorClient() = ConnectorClient(workers)
 
   /**
     * Get to HDFS FileSystem
     *
     * @return
     */
-  def fileSystem(): FileSystem = componentBox.hdfs.fileSystem()
+  def fileSystem: FileSystem = componentBox.hdfs.fs
 
   /**
     *Get to temp dir path
     *
     * @return
     */
-  def tmpDirectory(): String = componentBox.hdfs.tmpDirectory()
+  def tmpDirectory: String = componentBox.hdfs.tmpDirectory
 
-  def startLocalDataBase(): LocalDataBase = {
+  def dataBase: LocalDataBase = {
     if (localDb == null) localDb = LocalDataBase.mysql()
     localDb
   }
@@ -219,6 +189,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     stopConsumer = true
     CloseOnce.release(() => consumerThreads.foreach(Await.result(_, 1 minute)))
     consumerThreads.clear()
+    CloseOnce.close(_connectorClient)
     componentBox.close()
     CloseOnce.close(localDb)
   }
@@ -285,7 +256,7 @@ object OharaTestUtil {
       println(USAGE)
       return
     }
-    if (args.size % 2 != 0) throw new IllegalArgumentException(USAGE)
+    if (args.length % 2 != 0) throw new IllegalArgumentException(USAGE)
     var ttl = 9999
     args.sliding(2, 2).foreach {
       case Array(TTL_KEY, value) => ttl = value.toInt
@@ -296,7 +267,7 @@ object OharaTestUtil {
       TimeUnit.SECONDS.sleep(5)
       println(s"Succeed to run the mini brokers: ${util.brokers} and workers:${util.workers}")
       println(
-        s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after ${ttl} seconds")
+        s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after $ttl seconds")
       TimeUnit.SECONDS.sleep(ttl)
     }
   }

@@ -46,7 +46,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val client1 = ConfiguratorClient(s"${configurator1.hostname}:${configurator1.port}")
   private[this] val clients = Seq(client0, client1)
 
-  private[this] val db = testUtil.startLocalDataBase()
+  private[this] val db = testUtil.dataBase
 
   @Test
   def testTopic(): Unit = {

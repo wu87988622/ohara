@@ -1,8 +1,8 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.config.UuidUtil
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.io.UuidUtil
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.serialization.{Serializer, StringSerializer}
 import org.apache.kafka.common.config.TopicConfig

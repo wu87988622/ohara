@@ -3,8 +3,7 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
 
-import com.island.ohara.config.UuidUtil
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
@@ -55,7 +54,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
     * TODO: make sure this uuid is unique in a distributed cluster. by chia
     */
-  val uuid = UuidUtil.uuid
+  val uuid = UuidUtil.uuid()
 
   implicit val executor =
     ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())

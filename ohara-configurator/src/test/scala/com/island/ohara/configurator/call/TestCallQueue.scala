@@ -2,10 +2,10 @@ package com.island.ohara.configurator.call
 
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
-import com.island.ohara.config.UuidUtil
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.close
+import com.island.ohara.io.UuidUtil
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers

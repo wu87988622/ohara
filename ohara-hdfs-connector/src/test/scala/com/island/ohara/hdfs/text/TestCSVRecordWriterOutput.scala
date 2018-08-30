@@ -16,10 +16,10 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   def testWriteData(): Unit = {
     val testUtil = OharaTestUtil.localHDFS(1)
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = new HDFSSinkConnectorConfig(
-      Map(HDFSSinkConnectorConfig.HDFS_URL -> testUtil.tmpDirectory()))
-    val fileSystem: FileSystem = testUtil.fileSystem()
+      Map(HDFSSinkConnectorConfig.HDFS_URL -> testUtil.tmpDirectory))
+    val fileSystem: FileSystem = testUtil.fileSystem
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.tmpDirectory()}/file1.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/file1.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 

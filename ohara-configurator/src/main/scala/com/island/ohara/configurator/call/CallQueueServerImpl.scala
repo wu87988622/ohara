@@ -4,8 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.config.UuidUtil
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger

@@ -2,8 +2,8 @@ package com.island.ohara.kafka
 
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.kafka.connector.{
   SimpleRowSinkConnector,
   SimpleRowSinkTask,
@@ -12,7 +12,7 @@ import com.island.ohara.kafka.connector.{
 }
 import com.island.ohara.serialization.{RowSerializer, Serializer}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
-import org.junit.{After, Before, Test}
+import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
@@ -20,7 +20,6 @@ import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
-  private[this] val connectorClient = testUtil.connectorClient()
   @Before
   def setUp(): Unit = {
     SimpleRowSinkTask.reset()
@@ -35,7 +34,6 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .append(Cell.builder.name("cf1").build(1))
       .tags(Set[String]("123", "456"))
       .build
-    testUtil.kafkaBrokers.size shouldBe 3
     testUtil.createTopic(topicName)
     val (_, rowQueue) =
       testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
@@ -67,7 +65,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val connectorName = methodName
     val rowCount = 3
     val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
-    connectorClient
+    testUtil.connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
@@ -94,7 +92,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val topicName = methodName
     val connectorName = methodName
     val pollCountMax = 5
-    connectorClient
+    testUtil.connectorClient
       .sourceConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
@@ -149,10 +147,5 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       val meta = Await.result(producer.sender().topic(topicName).key(topicName).value(row).send(), 10 seconds)
       meta.topic shouldBe topicName
     }
-  }
-
-  @After
-  def cleanup(): Unit = {
-    CloseOnce.close(connectorClient)
   }
 }

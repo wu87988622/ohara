@@ -7,13 +7,13 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
+import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.RowSinkTask
 import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.fs.Path
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers {
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
-  private[this] val connectorClient = testUtil.connectorClient()
 
   @Test
   def testTaskConfigs(): Unit = {
@@ -51,8 +50,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val tmpDirPath = "/home/tmp"
     val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
 
-    val localURL = s"file://${testUtil.tmpDirectory()}"
-    connectorClient
+    val localURL = s"file://${testUtil.tmpDirectory}"
+    testUtil.connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleHDFSSinkConnector])
@@ -86,7 +85,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
 
-    val fileSystem = testUtil.fileSystem()
+    val fileSystem = testUtil.fileSystem
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
@@ -98,8 +97,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
       }
     }
 
-    val localURL = s"file://${testUtil.tmpDirectory()}"
-    connectorClient
+    val localURL = s"file://${testUtil.tmpDirectory}"
+    testUtil.connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -147,7 +146,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
 
-    val fileSystem = testUtil.fileSystem()
+    val fileSystem = testUtil.fileSystem
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
@@ -164,8 +163,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
       }
     }
 
-    val localURL = s"file://${testUtil.tmpDirectory()}"
-    connectorClient
+    val localURL = s"file://${testUtil.tmpDirectory}"
+    testUtil.connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -200,11 +199,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
                             .map(FileUtils.fileName(_))
                             .contains("part-000000100-000000199.csv"),
                         10 seconds)
-  }
-
-  @After
-  def cleanup(): Unit = {
-    CloseOnce.close(connectorClient)
   }
 }
 

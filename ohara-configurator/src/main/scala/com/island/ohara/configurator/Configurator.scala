@@ -11,20 +11,9 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.config.UuidUtil
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.route.{
-  ClusterRoute,
-  HdfsInformationRoute,
-  PipelineRoute,
-  QueryRoute,
-  SchemaRoute,
-  SinkRoute,
-  SourceRoute,
-  TopicInfoRoute,
-  ValidationRoute
-}
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.configurator.route._
+import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
@@ -37,6 +26,7 @@ import scala.reflect.{ClassTag, classTag}
 /**
   * A simple impl of Configurator. This impl maintains all subclass of ohara data in a single ohara store.
   * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
+  *
   * @param configuredHostname hostname of rest server
   * @param configuredPort    port of rest server
   * @param store    store
@@ -235,6 +225,7 @@ object Configurator {
 
     /**
       * update an existed object in the store. If the uuid doesn't  exists, an exception will be thrown.
+      *
       * @param uuid uuid
       * @param data data
       * @tparam T type of data
@@ -247,6 +238,7 @@ object Configurator {
 
     /**
       * add an new object to the store. If the uuid already exists, an exception will be thrown.
+      *
       * @param uuid uuid
       * @param data data
       * @tparam T type of data
