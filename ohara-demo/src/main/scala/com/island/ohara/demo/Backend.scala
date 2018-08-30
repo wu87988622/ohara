@@ -21,11 +21,14 @@ object Backend {
   def main(args: Array[String]): Unit = {
     if (args.length == 1 && args(0).equals(HELP_KEY)) {
       println(USAGE)
-      return
+      System.exit(1)
     }
-    if (args.size < 2 || args.size % 2 != 0) throw new IllegalArgumentException(USAGE)
+    if (args.size % 2 != 0) {
+      println(USAGE)
+      System.exit(1)
+    }
     // TODO: make the parse more friendly
-    var ttl: Duration = 9999 millis
+    var ttl: Duration = 365 days
     var port: Int = 0
     args.sliding(2, 2).foreach {
       case Array(PORT_KEY, value) => port = value.toInt

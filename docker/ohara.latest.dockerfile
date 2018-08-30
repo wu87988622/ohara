@@ -25,7 +25,7 @@ RUN cd /root/ohara && git checkout $BRANCH
 RUN cd /root/ohara && $GRADLE_COMMAND
 
 # setup scripts
-RUN cp -r /root/ohara/bin /root/
+RUN cp -r /root/ohara/quickstart /root/
 
 # cleanup
 RUN rm -rf /root/.ssh/id_rsa
@@ -50,8 +50,8 @@ RUN mkdir /root/.ssh
 COPY --from=deps /root/.ssh/known_hosts /root/.ssh/known_hosts
 
 # clone scripts
-RUN mkdir /root/bin
-COPY --from=deps /root/bin /root/bin
+RUN mkdir /root/quickstart
+COPY --from=deps /root/quickstart /root/quickstart
 
 # setup env variables
-ENV PATH=$PATH:/root/bin
+ENV PATH=$PATH:/root/quickstart

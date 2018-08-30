@@ -1,25 +1,13 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
   compile project(':ohara-testing-util')
   compile project(':ohara-configurator')
 }
 
-task runBackend(type: JavaExec, dependsOn: 'classes') {
-  description 'Use -Pttl to configure the value of ttl; Use -Pport to configure the port bound by configurator'
-  classpath = sourceSets.main.runtimeClasspath
-  String ttl = "9999"
-  if(project.hasProperty('ttl')) {
-    ttl = "${project.getProperty('ttl')}"
-  } else if ("$System.env.TTL" != "null")
-    ttl = "$System.env.TTL"
-
-  String port = "0"
-  if(project.hasProperty('port')) {
-    port = "${project.getProperty('port')}"
-  } else if ("$System.env.PORT" != "null")
-    port = "$System.env.PORT"
-
-  args = Arrays.asList("--ttl", ttl, "--port", port)
-  main = 'com.island.ohara.demo.Backend'
+distributions {
+  main {
+    baseName = "ohara"
+  }
 }

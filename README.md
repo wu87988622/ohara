@@ -21,11 +21,28 @@ a powerful ETL tool
 cd ohara/docker
 docker build --no-cache --build-arg SSH_PRIVATE_KEY={access key} -t haredata/ohara:latest -f ./ohara.latest.dockerfile .
 ```
+* #####SSH_PRIVARY_KEY
+used to pull ohara repository (required)
+* #####BRANCH
+source code sued to to build image (default is master)
+* #####GRADLE_COMMAND
+run before completing image (default is "gradle clean build -x test")
+
 ## run ohara backend-services by ohara image
 ```
-docker run --rm -e SSH_PRIVATE_KEY="" -e CONFIGURATOR_PORT=12345 -e BRANCH=master -p 12345:12345 -d chia7712/ohara:latest runBackend.sh
+docker run -e SSH_PRIVARY_KEY="" -e BRANCH=master -e HEAP_SIZE=4000m -e CONFIGURATOR_PORT=12345 -p 12345:12345 --rm -d chia7712/ohara:latest runBackend.sh
 ```
-NOTED: the SSH_PRIVATE_KEY is required since it has to access private ohara repository
+* #####SSH_PRIVARY_KEY
+used to pull ohara repository (required)
+* #####BRANCH
+source code used to run the backend-service (default is master)
+* #####CONFIGURATOR_PORT
+used by Configurator (default is random)
+* #####HEAP_SIZE
+used by JVM (default is -Xmx4000m)
+* #####TTL
+time to terminate backend-service (default is 365 days)
+
 
 ## Running the tests
 
