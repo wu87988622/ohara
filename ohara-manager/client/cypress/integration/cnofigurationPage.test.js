@@ -1,4 +1,5 @@
 import * as URLS from '../../src/constants/urls';
+import { getTestById } from '../../src/utils/testHelpers';
 
 describe.skip('configuration page', () => {
   beforeEach(() => {
@@ -10,14 +11,14 @@ describe.skip('configuration page', () => {
   });
 
   it('should pass the test with correct HDFS info', () => {
-    cy.get('[data-testid="connection-name-input"]')
+    cy.get(getTestById('connection-name-input'))
       .clear()
       .type('test connection');
-    cy.get('[data-testid="connection-url-input"]')
+    cy.get(getTestById('connection-url-input'))
       .clear()
       .type('file://test/connection');
 
-    cy.get('[data-testid="test-connection-btn"]').click();
+    cy.get(getTestById('test-connection-btn')).click();
 
     cy.wait(3000);
     cy.get('.toast-success').should('have.length.above', 1);

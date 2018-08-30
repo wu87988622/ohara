@@ -3,9 +3,9 @@ import isNull from 'lodash.isnull';
 import isFunction from 'lodash.isfunction';
 import uuidValidate from 'uuid-validate';
 
-const isEmptyString = val => val.length === 0;
+const isEmptyStr = val => val.length === 0;
 
-const isEmptyArray = arr => arr.length === 0;
+const isEmptyArr = arr => arr.length === 0;
 
 const isDefined = val => typeof val !== 'undefined';
 
@@ -15,8 +15,8 @@ const isUuid = val => uuidValidate(val);
 
 export {
   get,
-  isEmptyString,
-  isEmptyArray,
+  isEmptyStr,
+  isEmptyArr,
   isDefined,
   isNumber,
   isFunction,

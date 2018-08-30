@@ -11,7 +11,6 @@ import Configuration from './components/pages/ConfigurationPage';
 import LoginPage from './components/pages/LoginPage';
 import LogoutPage from './components/pages/LogoutPage';
 import NotFoundPage from './components/pages/NotFoundPage';
-
 import { getUserKey } from './utils/authHelpers';
 
 class App extends React.Component {
@@ -40,17 +39,14 @@ class App extends React.Component {
           <Header isLogin={isLogin} />
           <Nav />
           <Switch>
-            <Route exact path="/" component={HomePage} />
-            <Route exact path="/pipeline" component={Pipeline} />
             <Route
-              exact
               path="/pipeline/new/:page/:pipelineId/:topicId"
               component={PipelineNew}
             />
-            <Route exact path="/kafka" component={Kafka} />
-            <Route exact path="/configuration" component={Configuration} />
+            <Route path="/pipeline" component={Pipeline} />
+            <Route path="/kafka" component={Kafka} />
+            <Route path="/configuration" component={Configuration} />
             <Route
-              exact
               path="/login"
               render={props => (
                 <LoginPage
@@ -60,7 +56,6 @@ class App extends React.Component {
               )}
             />
             <Route
-              exact
               path="/logout"
               render={props => (
                 <LogoutPage
@@ -69,6 +64,7 @@ class App extends React.Component {
                 />
               )}
             />
+            <Route exact path="/" component={HomePage} />
             <Route component={NotFoundPage} />
           </Switch>
         </React.Fragment>

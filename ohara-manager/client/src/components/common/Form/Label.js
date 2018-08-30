@@ -6,7 +6,7 @@ import { lightBlue } from '../../../theme/variables';
 
 const LabelWrapper = styled.label`
   color: ${lightBlue};
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 `;
 
 LabelWrapper.displayName = 'Label';

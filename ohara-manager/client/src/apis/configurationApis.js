@@ -37,7 +37,7 @@ export const validateHdfs = async ({ uri }) => {
 
 export const saveHdfs = async ({ name, uri }) => {
   try {
-    const res = await axios.post('/api/configuration/save/hdfs', {
+    const res = await axios.post('/api/configuration/hdfs/save', {
       name,
       uri,
     });

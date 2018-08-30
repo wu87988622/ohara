@@ -203,7 +203,7 @@ class PipelineNewPage extends React.Component {
 
             <Route
               path="/pipeline/new/source"
-              render={() => <PipelineSourcePage />}
+              render={() => <PipelineSourcePage {...this.props} />}
             />
             <Route
               path="/pipeline/new/topic"

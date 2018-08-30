@@ -56,7 +56,7 @@ describe('<PipelinePage />', () => {
     expect(wrapper.find('Modal').props().isActive).toBe(false);
   });
 
-  it.only('closes the <Modal> with <CancelBtn />', () => {
+  it('closes the <Modal> with <CancelBtn />', () => {
     wrapper.setState({ isModalActive: true });
     expect(wrapper.find('Modal').props().isActive).toBe(true);
 

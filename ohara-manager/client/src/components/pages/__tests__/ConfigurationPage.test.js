@@ -9,7 +9,7 @@ describe('<Configuration />', () => {
     wrapper = shallow(<Configuration />);
   });
 
-  it.only('renders correctly', () => {
+  it('renders correctly', () => {
     expect(wrapper.length).toBe(1);
     expect(wrapper.find('AppWrapper').props().title).toBe('Configuration');
   });

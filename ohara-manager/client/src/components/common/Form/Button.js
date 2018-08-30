@@ -10,6 +10,7 @@ import {
   lighterGray,
   lightGray,
   white,
+  blue,
 } from '../../../theme/variables';
 
 const BtnWrapper = styled.button`
@@ -27,6 +28,12 @@ const BtnWrapper = styled.button`
     border: ${props => props.theme.borderHover};
     background-color: ${props => props.theme.bgHover};
     color: ${props => props.theme.colorHover};
+    transition: ${durationNormal} all;
+  }
+
+  &:focus {
+    border-color: ${blue};
+    box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
     transition: ${durationNormal} all;
   }
 

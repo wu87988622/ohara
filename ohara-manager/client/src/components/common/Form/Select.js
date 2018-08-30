@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import {
+  white,
+  blue,
   lightBlue,
   lighterGray,
   radiusNormal,
-  white,
+  durationNormal,
 } from '../../../theme/variables';
 
 const SelectWrapper = styled.select`
@@ -17,16 +19,27 @@ const SelectWrapper = styled.select`
   padding: 10px 10px 10px 15px;
   border-radius: ${radiusNormal};
   background-color: ${white};
+  width: ${({ width }) => width};
   height: 40px;
-  width: 100%;
   outline: 0;
+
+  &:focus {
+    border-color: ${blue};
+    box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
+    transition: ${durationNormal} all;
+  }
 `;
 
 SelectWrapper.displayName = 'Select';
 
-const Select = ({ list, selected, handleChange }) => {
+const Select = ({ list, selected, handleChange, width = '100%', ...rest }) => {
   return (
-    <SelectWrapper value={selected.name} onChange={handleChange}>
+    <SelectWrapper
+      value={selected.name}
+      onChange={handleChange}
+      width={width}
+      {...rest}
+    >
       {list.map(({ uuid, name }) => {
         return (
           <option key={uuid} data-uuid={uuid}>

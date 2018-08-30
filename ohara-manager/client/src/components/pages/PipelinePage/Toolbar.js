@@ -13,7 +13,7 @@ import {
 } from '../../../theme/variables';
 import * as _ from '../../../utils/helpers';
 
-const Wrapper = styled.div`
+const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
   padding: 10px;
   border: 1px solid ${lightestBlue};
@@ -21,6 +21,8 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
 `;
+
+ToolbarWrapper.displayName = 'ToolbarWrapper';
 
 const IconWrapper = styled.i`
   color: ${lighterBlue};
@@ -41,6 +43,8 @@ const IconWrapper = styled.i`
   }
 `;
 
+IconWrapper.displayName = 'IconWrapper';
+
 const HadoopIconContainer = styled.i`
   color: ${lighterBlue};
   padding: 10px 20px;
@@ -56,9 +60,13 @@ const HadoopIconContainer = styled.i`
   }
 `;
 
+HadoopIconContainer.displayName = 'HadoopIconContainer';
+
 const HadoopIconWrapper = styled(HadoopIcon)`
   pointer-events: none;
 `;
+
+HadoopIconWrapper.displayName = 'HadoopIconWrapper';
 
 class Toolbar extends React.Component {
   static propTypes = {
@@ -103,7 +111,7 @@ class Toolbar extends React.Component {
 
   render() {
     return (
-      <Wrapper>
+      <ToolbarWrapper>
         <IconWrapper
           className="fa fa-database"
           onClick={this.update}
@@ -123,7 +131,7 @@ class Toolbar extends React.Component {
           data-id="topic"
           data-testid="toolbar-topic"
         />
-      </Wrapper>
+      </ToolbarWrapper>
     );
   }
 }

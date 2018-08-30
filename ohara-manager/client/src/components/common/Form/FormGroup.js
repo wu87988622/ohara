@@ -5,7 +5,7 @@ import styled from 'styled-components';
 const FormGroupWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 `;
 
 FormGroupWrapper.displayName = 'FormGroup';

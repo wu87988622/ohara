@@ -32,7 +32,7 @@ describe('<KafkaPage />', () => {
     expect(wrapper.find('Modal').props().isActive).toBe(true);
   });
 
-  it.only('closes <Modal /> with <CloseBtn>', () => {
+  it('closes <Modal /> with <CloseBtn>', () => {
     wrapper.setState({ isModalActive: true });
     expect(wrapper.find('Modal').props().isActive).toBe(true);
 

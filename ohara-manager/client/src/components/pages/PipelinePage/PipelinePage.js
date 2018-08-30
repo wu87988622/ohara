@@ -4,18 +4,13 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 
 import { Modal } from '../../common/Modal';
+import { Warning } from '../../common/Messages';
 import { fetchTopics } from '../../../apis/topicApis';
 import { savePipelines } from '../../../apis/pipelinesApis';
 import { H2 } from '../../common/Headings';
 import { Button, Select } from '../../common/Form';
 import { primaryBtn } from '../../../theme/btnTheme';
 import { PIPELINE } from '../../../constants/documentTitles';
-import {
-  lighterBlue,
-  lightYellow,
-  lightOrange,
-  radiusCompact,
-} from '../../../theme/variables';
 import * as _ from '../../../utils/helpers';
 import * as MESSAGES from '../../../constants/messages';
 
@@ -25,22 +20,6 @@ const Wrapper = styled.div`
 
 const Inner = styled.div`
   padding: 30px 20px;
-`;
-
-const Warning = styled.p`
-  font-size: 13px;
-  margin: 0 0 8px 0;
-  color: ${lighterBlue};
-`;
-
-const IconWrapper = styled.i`
-  padding: 5px 10px;
-  background-color: ${lightYellow};
-  margin-right: 10px;
-  display: inline-block;
-  color: ${lightOrange};
-  font-size: 12px;
-  border-radius: ${radiusCompact};
 `;
 
 class PipelinePage extends React.Component {
@@ -70,6 +49,7 @@ class PipelinePage extends React.Component {
   handleSelectChange = ({ target }) => {
     const selectedIdx = target.options.selectedIndex;
     const { uuid } = target.options[selectedIdx].dataset;
+
     this.setState({
       currentTopic: {
         name: target.value,
@@ -100,7 +80,7 @@ class PipelinePage extends React.Component {
     e.preventDefault();
     this.setState({ isModalActive: true });
 
-    if (_.isEmptyArray(this.state.topics)) {
+    if (_.isEmptyArr(this.state.topics)) {
       toastr.error(MESSAGES.NO_TOPICS_FOUND_ERROR);
     }
   };
@@ -134,13 +114,10 @@ class PipelinePage extends React.Component {
             confirmBtnText="Next"
             handleConfirm={this.handleModalConfirm}
             handleCancel={this.handleModalClose}
-            isConfirmDisabled={_.isEmptyArray(topics) ? true : false}
+            isConfirmDisabled={_.isEmptyArr(topics) ? true : false}
           >
             <Inner>
-              <Warning>
-                <IconWrapper className="fas fa-exclamation" />
-                Please select a topic for the new pipeline
-              </Warning>
+              <Warning text="Please select a topic for the new pipeline" />
               <Select
                 list={topics}
                 selected={currentTopic}

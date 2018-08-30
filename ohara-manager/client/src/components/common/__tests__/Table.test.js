@@ -9,6 +9,7 @@ const props = {
   urlDir: 'testDir',
 };
 
+// TODO: skip the test for now
 describe.skip('<ListTable />', () => {
   let wrapper;
   beforeEach(() => {

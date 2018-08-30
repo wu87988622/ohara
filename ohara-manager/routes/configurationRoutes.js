@@ -24,7 +24,7 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.post('/api/configuration/save/hdfs', (req, res) => {
+  app.post('/api/configuration/hdfs/save', (req, res) => {
     axios
       .post(`${API_ROOT}/hdfs`, req.body)
       .then(result => onSuccess(res, result))
