@@ -66,10 +66,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
     */
   private[this] val uuid = UuidUtil.uuid()
 
-  if (!topicOptions
-        .get(TopicConfig.CLEANUP_POLICY_CONFIG)
-        .map(_.equals(TopicConfig.CLEANUP_POLICY_DELETE))
-        .getOrElse(true))
+  if (topicOptions.get(TopicConfig.CLEANUP_POLICY_CONFIG).fold(false)(_ != TopicConfig.CLEANUP_POLICY_DELETE))
     throw new IllegalArgumentException(
       s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_DELETE}")
 
@@ -163,7 +160,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
           val records = consumer.poll(pollTimeout)
           initializeConsumerLatch.countDown()
           records
-            .filter(_.topic.equals(topicName))
+            .filter(_.topic == topicName)
             .foreach(record => {
               record.key.foreach {
                 case internalRequest: CallQueueRequest =>

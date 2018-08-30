@@ -37,7 +37,7 @@ object DatabaseClient {
     if (r == null) Seq.empty
     else r.split(" ")
   }
-  private[this] def systemTable(types: Seq[String]): Boolean = !types.filter(_.equals("SYSTEM")).isEmpty
+  private[this] def systemTable(types: Seq[String]): Boolean = types.exists(_ == "SYSTEM")
 
   /**
     * @return a jdbc-based DatabaseClient

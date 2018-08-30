@@ -136,7 +136,7 @@ object Configurator {
     * @param args the first element is hostname and the second one is port
     */
   def main(args: Array[String]): Unit = {
-    if (args.length == 1 && args(0).equals(HELP_KEY)) {
+    if (args.length == 1 && args(0) == HELP_KEY) {
       println(USAGE)
       return
     }
@@ -152,8 +152,8 @@ object Configurator {
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value)     => hostname = value
       case Array(PORT_KEY, value)         => port = value.toInt
-      case Array(BROKERS_KEY, value)      => if (!value.toLowerCase.equals("none")) brokers = Some(value)
-      case Array(WORKERS_KEY, value)      => if (!value.toLowerCase.equals("none")) workers = Some(value)
+      case Array(BROKERS_KEY, value)      => if (!value.toLowerCase == "none") brokers = Some(value)
+      case Array(WORKERS_KEY, value)      => if (!value.toLowerCase == "none") workers = Some(value)
       case Array(TOPIC_KEY, value)        => topicName = value
       case Array(PARTITIONS_KEY, value)   => numberOfPartitions = value.toInt
       case Array(REPLICATIONS_KEY, value) => numberOfReplications = value.toShort
@@ -232,9 +232,8 @@ object Configurator {
       * @return the removed data
       */
     def update[T <: Data: ClassTag](uuid: String, data: T): T =
-      if (store.get(uuid).filter(classTag[T].runtimeClass.isInstance(_)).isEmpty)
-        throw new IllegalArgumentException(s"The object:$uuid doesn't exist")
-      else store.update(uuid, data).get.asInstanceOf[T]
+      if (store.get(uuid).exists(classTag[T].runtimeClass.isInstance(_))) store.update(uuid, data).get.asInstanceOf[T]
+      else throw new IllegalArgumentException(s"The object:$uuid doesn't exist")
 
     /**
       * add an new object to the store. If the uuid already exists, an exception will be thrown.
@@ -244,9 +243,9 @@ object Configurator {
       * @tparam T type of data
       */
     def add[T <: Data: ClassTag](uuid: String, data: T): Unit =
-      if (store.get(uuid).filter(classTag[T].runtimeClass.isInstance(_)).isEmpty)
-        store.update(uuid, data)
-      else throw new IllegalArgumentException(s"The object:$uuid exists")
+      if (store.get(uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+        throw new IllegalArgumentException(s"The object:$uuid exists")
+      else store.update(uuid, data)
 
     /**
       * Iterate the specified type. The unrelated type will be ignored.

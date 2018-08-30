@@ -100,7 +100,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
       throw new RuntimeException(errorMessage)
     }
 
-    if (sourcePath.equals(targetPath)) {
+    if (sourcePath == targetPath) {
       logger.error("The source path equals the target path")
       return false
     }

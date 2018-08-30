@@ -19,7 +19,7 @@ object Backend {
   val TTL_KEY = "--ttl"
   val USAGE = s"[Usage] $TTL_KEY $PORT_KEY"
   def main(args: Array[String]): Unit = {
-    if (args.length == 1 && args(0).equals(HELP_KEY)) {
+    if (args.length == 1 && args(0) == HELP_KEY) {
       println(USAGE)
       System.exit(1)
     }

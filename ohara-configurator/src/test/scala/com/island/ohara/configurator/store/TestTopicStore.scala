@@ -39,7 +39,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     store.size shouldBe 10
 
     // make sure all stores have synced the updated data
-    OharaTestUtil.await(() => stores.filter(_.size == 10).size == numberOfStore, 30 second)
+    OharaTestUtil.await(() => stores.count(_.size == 10) == numberOfStore, 30 second)
 
     stores.foreach(s => {
       0 until 10 foreach (index => s.get(index.toString) shouldBe Some(index.toString))
@@ -50,7 +50,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     0 until 10 foreach (index => randomStore.remove(index.toString) shouldBe Some(index.toString))
 
     // make sure all stores have synced the updated data
-    OharaTestUtil.await(() => stores.filter(_.isEmpty).size == numberOfStore, 30 second)
+    OharaTestUtil.await(() => stores.count(_.isEmpty) == numberOfStore, 30 second)
 
     // This store is based on another topic so it should have no data
     val anotherStore =

@@ -65,10 +65,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
   private[this] val headerIndexer = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
 
-  if (!topicOptions
-        .get(TopicConfig.CLEANUP_POLICY_CONFIG)
-        .map(_.equals(TopicConfig.CLEANUP_POLICY_COMPACT))
-        .getOrElse(true))
+  if (topicOptions.get(TopicConfig.CLEANUP_POLICY_CONFIG).fold(false)(_ != TopicConfig.CLEANUP_POLICY_COMPACT))
     throw new IllegalArgumentException(
       s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_COMPACT}")
 
@@ -121,7 +118,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
           val records = consumer.poll(pollTimeout)
           initializeConsumerLatch.countDown()
           records
-            .filter(_.topic.equals(topicName))
+            .filter(_.topic == topicName)
             .foreach(record => {
               if (record.headers.size != 1) throw new IllegalArgumentException(s"The number of header should be 1")
               record.key.foreach(k => {

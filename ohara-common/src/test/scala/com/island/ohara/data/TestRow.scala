@@ -12,17 +12,17 @@ class TestRow extends SmallTest with Matchers {
     val cell1 = Cell.builder.name("CELL0").build("123")
     val cell2 = Cell.builder.name("CELL0").build(123)
     val cell3 = Cell.builder.name("CELLX").build("123")
-    cell0.equals(cell0) shouldBe true
-    cell0.equals(cell1) shouldBe true
-    cell1.equals(cell0) shouldBe true
+    cell0 == cell0 shouldBe true
+    cell0 == cell1 shouldBe true
+    cell1 == cell0 shouldBe true
 
     //noinspection ComparingUnrelatedTypes
-    cell0.equals(cell2) shouldBe false
+    cell0 == cell2 shouldBe false
     //noinspection ComparingUnrelatedTypes
-    cell2.equals(cell0) shouldBe false
+    cell2 == cell0 shouldBe false
 
-    cell0.equals(cell3) shouldBe false
-    cell3.equals(cell0) shouldBe false
+    cell0 == cell3 shouldBe false
+    cell3 == cell0 shouldBe false
   }
 
   @Test
@@ -33,18 +33,18 @@ class TestRow extends SmallTest with Matchers {
     val row3 = Row.builder.append(Cell.builder.name("CELL1").build("123")).build()
     val row4 =
       Row.builder.append(Cell.builder.name("CELL0").build("123")).append(Cell.builder.name("cell1").build(88)).build()
-    row0.equals(row0) shouldBe true
-    row0.equals(row1) shouldBe true
-    row1.equals(row0) shouldBe true
+    row0 == row0 shouldBe true
+    row0 == row1 shouldBe true
+    row1 == row0 shouldBe true
 
-    row0.equals(row2) shouldBe false
-    row2.equals(row0) shouldBe false
+    row0 == row2 shouldBe false
+    row2 == row0 shouldBe false
 
-    row0.equals(row3) shouldBe false
-    row3.equals(row0) shouldBe false
+    row0 == row3 shouldBe false
+    row3 == row0 shouldBe false
 
-    row0.equals(row4) shouldBe false
-    row4.equals(row0) shouldBe false
+    row0 == row4 shouldBe false
+    row4 == row0 shouldBe false
   }
   @Test
   def testDuplicateColumns(): Unit = {

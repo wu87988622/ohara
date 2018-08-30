@@ -12,23 +12,24 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
     StatusCodes.BadRequest -> toResponse(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
 
   def assertNotRelated2Pipeline(uuid: String)(implicit store: Store): Unit =
-    if (!store
+    if (store
           .data[Pipeline]
-          .filter(pipeline =>
-            pipeline.uuid.equals(uuid)
-              || pipeline.rules.keys.toSet.contains(uuid)
-              || pipeline.rules.values.toSet.contains(uuid))
-          .isEmpty) throw new IllegalArgumentException(s"The uuid:${uuid} is used by pipeline")
+          .exists(
+            pipeline =>
+              pipeline.uuid == uuid
+                || pipeline.rules.keys.toSet.contains(uuid)
+                || pipeline.rules.values.toSet.contains(uuid)))
+      throw new IllegalArgumentException(s"The uuid:${uuid} is used by pipeline")
 
   def assertNotRelated2RunningPipeline(uuid: String)(implicit store: Store): Unit =
-    if (!store
+    if (store
           .data[Pipeline]
           .filter(_.status == Status.RUNNING)
-          .filter(pipeline =>
-            pipeline.uuid.equals(uuid)
+          .exists(pipeline =>
+            pipeline.uuid == uuid
               || pipeline.rules.keys.toSet.contains(uuid)
-              || pipeline.rules.values.toSet.contains(uuid))
-          .isEmpty) throw new IllegalArgumentException(s"The uuid:${uuid} is used by running pipeline")
+              || pipeline.rules.values.toSet.contains(uuid)))
+      throw new IllegalArgumentException(s"The uuid:${uuid} is used by running pipeline")
 
   private[this] def toResponse(e: Throwable) =
     Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))

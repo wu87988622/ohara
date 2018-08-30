@@ -52,7 +52,7 @@ class TestTestCases extends MediumTest with Matchers {
             .map(_.getName)
             .filter(_.endsWith(".class"))
             // scala may generate some extra classes
-            .filter(!_.contains('$'))
+            .filterNot(_.contains('$'))
             .map(_.replace('/', '.'))
             .map(clzName => clzName.substring(0, clzName.length - ".class".length))
             .foreach(clzName => {

@@ -138,7 +138,7 @@ object Validator {
               records.foreach(
                 (record: ConsumerRecord[String, Any]) =>
                   record.key
-                    .filter(_.equals(requestId))
+                    .filter(_ == requestId)
                     .map(_ => {
                       // must have value...by chia
                       record.value.get match {

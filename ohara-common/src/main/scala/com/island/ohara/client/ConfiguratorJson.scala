@@ -164,7 +164,7 @@ object ConfiguratorJson extends DefaultJsonProtocol {
     /**
       * @return true if all values have specified uuid. otherwise, false
       */
-    def ready(): Boolean = rules.values.exists(!_.equals(UNKNOWN))
+    def ready(): Boolean = rules.values.forall(_ != UNKNOWN)
   }
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
   implicit val PIPELINE_COMMAND_FORMAT: DataCommandFormat[Pipeline] =

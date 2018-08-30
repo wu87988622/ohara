@@ -43,10 +43,7 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
   def testCreateConnectorWithMultiWorkers(): Unit = {
     val sourceTasks = 3
     val sinkTasks = 2
-    testUtil.connectorClient
-      .plugins()
-      .filter(_.className.equals(classOf[SimpleSourceConnector].getName))
-      .isEmpty shouldBe false
+    testUtil.connectorClient.plugins().exists(_.className == classOf[SimpleSourceConnector].getName) shouldBe true
     testUtil.connectorClient.activeConnectors().size shouldBe 0
     val sourceConnectorName = "my_source_connector"
     val topicName = "my_connector_topic"

@@ -100,7 +100,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
           val records = consumer.poll(pollTimeout)
           initializationLatch.countDown()
           records
-            .filter(_.topic.equals(topicName))
+            .filter(_.topic == topicName)
             .foreach(record => {
               record.key.foreach {
                 case internalResponse: CallQueueResponse =>

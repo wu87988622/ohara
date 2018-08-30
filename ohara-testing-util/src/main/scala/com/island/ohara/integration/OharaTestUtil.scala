@@ -88,7 +88,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @return true if the topic exists
     */
   def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(admin =>
-    admin.listTopics().names().thenApply((_.stream().anyMatch((_.equals(topic))))).get())
+    admin.listTopics().names().thenApply((_.stream().anyMatch((_ == topic)))).get())
 
   import scala.collection.JavaConverters._
 
@@ -252,7 +252,7 @@ object OharaTestUtil {
   val USAGE = s"[Usage] $TTL_KEY"
 
   def main(args: Array[String]): Unit = {
-    if (args.length == 1 && args(0).equals(HELP_KEY)) {
+    if (args.length == 1 && args(0) == HELP_KEY) {
       println(USAGE)
       return
     }

@@ -458,7 +458,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     val clusterInformation = client0.cluster[ClusterInformation]
     clusterInformation.brokers shouldBe testUtil.brokers
     clusterInformation.workers shouldBe testUtil.workers
-    clusterInformation.supportedDatabases.exists(_.equals("mysql")) shouldBe true
+    clusterInformation.supportedDatabases.exists(_ == "mysql") shouldBe true
   }
 
   @Test
@@ -550,13 +550,13 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           val cf0 = RdbColumn("cf0", "INTEGER", true)
           val cf1 = RdbColumn("cf1", "INTEGER", false)
           def verify(info: RdbInformation): Unit = {
-            info.tables.filter(_.name.equals(tableName)).size shouldBe 1
-            val table = info.tables.filter(_.name.equals(tableName)).head
+            info.tables.count(_.name == tableName) shouldBe 1
+            val table = info.tables.filter(_.name == tableName).head
             table.columns.size shouldBe 2
-            table.columns.filter(_.name.equals(cf0.name)).size shouldBe 1
-            table.columns.filter(_.name.equals(cf0.name)).head.pk shouldBe cf0.pk
-            table.columns.filter(_.name.equals(cf1.name)).size shouldBe 1
-            table.columns.filter(_.name.equals(cf1.name)).head.pk shouldBe cf1.pk
+            table.columns.count(_.name == cf0.name) shouldBe 1
+            table.columns.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
+            table.columns.count(_.name == cf1.name) shouldBe 1
+            table.columns.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
           }
           dbClient.createTable(tableName, Seq(cf0, cf1))
 

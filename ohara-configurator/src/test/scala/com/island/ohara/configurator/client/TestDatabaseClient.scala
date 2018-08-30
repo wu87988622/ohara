@@ -39,12 +39,12 @@ class TestDatabaseClient extends MediumTest with Matchers {
     client.createTable(tableName, Seq(cf2, cf0, cf1))
 
     client.tables(null, null, null).size shouldBe 1 + before
-    client.tables(null, null, null).filter(_.name.equals(tableName)).size shouldBe 1
+    client.tables(null, null, null).count(_.name == tableName) shouldBe 1
     val cfs = client.tables(db.catalog, null, tableName).head.columns
     cfs.size shouldBe 3
-    cfs.filter(_.name.equals("cf0")).head.pk shouldBe true
-    cfs.filter(_.name.equals("cf1")).head.pk shouldBe false
-    cfs.filter(_.name.equals("cf2")).head.pk shouldBe false
+    cfs.filter(_.name == "cf0").head.pk shouldBe true
+    cfs.filter(_.name == "cf1").head.pk shouldBe false
+    cfs.filter(_.name == "cf2").head.pk shouldBe false
   }
 
   @Test

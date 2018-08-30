@@ -46,9 +46,7 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
         .build()) { consumer =>
       {
         val keys = consumer.poll(timeout, numberOfOtherMessages + 1).map(_.key.get)
-        keys.filter(_.equals(specifiedKey)).size == 1 && keys
-          .filterNot(_.equals(specifiedKey))
-          .size == numberOfOtherMessages
+        keys.count(_ == specifiedKey) == 1 && keys.count(_ != specifiedKey) == numberOfOtherMessages
       }
     }
     OharaTestUtil.await(() => verifyTopicContent(10 seconds), 20 seconds)

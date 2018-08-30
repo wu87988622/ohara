@@ -13,7 +13,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    testUtil.connectorClient.plugins().filter(_.className.equals(classOf[Validator].getName)).isEmpty shouldBe false
+    testUtil.connectorClient.plugins().exists(_.className == classOf[Validator].getName) shouldBe true
   }
 
   private[this] def evaluate(reports: Seq[ValidationReport]): Unit = {

@@ -60,11 +60,11 @@ abstract class Row extends Iterable[Cell[_]] {
 
   // TODO: evaluating the size first may be reduce the performance if the Row impl get the size by iterating. by chia
   private[this] def compareCell(other: Row): Boolean = if (isEmpty && other.isEmpty) true
-  else if (size == other.size) forall(c => other.exists(_.equals(c)))
+  else if (size == other.size) forall(c => other.exists(_ == c))
   else false
 
   private[this] def compareTags(other: Row): Boolean = if (tags.isEmpty && other.tags.isEmpty) true
-  else if (tags.size == other.tags.size) tags.forall(t => other.tags.exists(_.equals(t)))
+  else if (tags.size == other.tags.size) tags.forall(t => other.tags.exists(_ == t))
   else false
   def tags: Set[String]
 }
