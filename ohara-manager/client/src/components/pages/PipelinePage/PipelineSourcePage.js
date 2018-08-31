@@ -1,17 +1,24 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
 import { Box } from '../../common/Layout';
 import { Warning } from '../../common/Messages';
-import { validateRdb } from '../../../apis/pipelinesApis';
 import { H5 } from '../../common/Headings';
 import { lightBlue, whiteSmoke } from '../../../theme/variables';
 import { primaryBtn } from '../../../theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from '../../common/Form';
 import { fetchTopics } from '../../../apis/topicApis';
-import { queryRdb } from '../../../apis/pipelinesApis';
+import {
+  queryRdb,
+  createSource,
+  fetchSources,
+  validateRdb,
+  updateSource,
+  fetchPipelines,
+} from '../../../apis/pipelinesApis';
 import * as URLS from '../../../constants/urls';
 import * as _ from '../../../utils/helpers';
 import * as MESSAGES from '../../../constants/messages';
@@ -56,42 +63,78 @@ const RightCol = styled.div`
   width: 250px;
 `;
 
-const Actions = styled.div`
+const TableWrapper = styled.div`
   display: flex;
-  justify-content: flex-end;
+`;
+
+const GetTablesBtn = styled(Button)`
+  align-self: flex-start;
+  margin-left: 20px;
+  white-space: nowrap;
 `;
 
 class PipelineSourcePage extends React.Component {
+  static propTypes = {
+    hasChanges: PropTypes.bool.isRequired,
+    updateHasChanges: PropTypes.func,
+  };
+
+  fakeTables = [{ name: 'table-1', uuid: 1 }, { name: 'table-2', uuid: 2 }];
+
   state = {
     databases: [{ name: 'mysql', uuid: '1' }, { name: 'oracle', uuid: '2' }],
-    currentDatabase: { name: 'oracle', uuid: '2' },
+    currDatabase: { name: 'oracle', uuid: '2' },
     tables: [],
-    currentTable: {},
+    currTable: {},
     writeTopics: [],
-    currentWriteTopic: {},
+    currWriteTopic: {},
     username: '',
     password: '',
     url: '',
     timestamp: '',
     isBtnWorking: false,
-    isFormDisabled: true,
+    isFormDisabled: false,
     isRedirect: false,
+    isEdit: false,
   };
 
   componentDidMount() {
-    this.fetchTopic();
+    const { match } = this.props;
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
+    const topicId = _.get(match, 'params.topicId', null);
+
+    if (!_.isNull(sourceId)) {
+      this.setState({ isEdit: true }, () => {
+        this.fetchSources(sourceId);
+      });
+    }
+
+    if (!_.isNull(pipelineId)) {
+      this.fetchPipelines(pipelineId);
+    }
+
+    if (!_.isNull(topicId)) {
+      this.fetchTopics(topicId);
+    }
   }
 
-  fetchTopic = async () => {
-    const topicId = _.get(this.props.match, 'params.topicId', null);
+  componentDidUpdate() {
+    const { hasChanges } = this.props;
 
-    if (this.isValidTopicId(topicId)) {
+    if (hasChanges) {
+      this.saveChanges();
+    }
+  }
+
+  fetchTopics = async topicId => {
+    if (this.isValidId(topicId)) {
       const res = await fetchTopics();
       const writeTopics = _.get(res, 'data.result', []);
 
       if (!_.isEmptyArr(writeTopics)) {
-        const currentWriteTopic = this.getCurrentTopic(writeTopics, topicId);
-        this.setState({ writeTopics, currentWriteTopic });
+        const currWriteTopic = this.getCurrTopic(writeTopics, topicId);
+        this.setState({ writeTopics, currWriteTopic });
       } else {
         toastr.error(MESSAGES.INVALID_TOPIC_ID);
         this.setState({ isRedirect: true });
@@ -99,28 +142,79 @@ class PipelineSourcePage extends React.Component {
     }
   };
 
+  fetchSources = async sourceId => {
+    if (this.isValidId(sourceId)) {
+      const res = await fetchSources(sourceId);
+      const isSuccess = _.get(res, 'data.isSuccess', false);
+      if (isSuccess) {
+        const {
+          database,
+          timestamp,
+          table,
+          username,
+          password,
+          topic,
+          url,
+        } = res.data.result.configs;
+
+        let currTable = '';
+        let tables = [];
+        if (!_.isEmptyStr(table)) {
+          currTable = JSON.parse(table);
+          tables = [currTable];
+        }
+
+        const hasValidProps = [username, password, url].map(x => {
+          return x.length > 0;
+        });
+
+        const isFormDisabled = !hasValidProps.every(p => p === true);
+
+        this.setState({
+          isFormDisabled,
+          database: [database],
+          topic: [topic],
+          tables,
+          currTable,
+          timestamp,
+          password,
+          username,
+          url,
+        });
+      }
+    }
+  };
+
+  fetchPipelines = async pipelineId => {
+    if (this.isValidId(pipelineId)) {
+      const res = await fetchPipelines(pipelineId);
+      const pipelines = _.get(res, 'data.result', []);
+      console.log(pipelines); // eslint-disable-line
+    }
+  };
+
   fetchRdbTables = async () => {
-    const { url, user, password } = this.state;
-    const res = await queryRdb({ url, user, password });
+    const { url, username, password } = this.state;
+    const res = await queryRdb({ url, user: username, password });
     const tables = _.get(res, 'data.result', null);
 
     if (!_.isNull(tables)) {
-      this.setState({ tables });
+      this.setState({ tables: this.fakeTables, currTable: this.fakeTables[0] });
     }
-
-    console.log(res);
   };
 
-  isValidTopicId = topicId => {
-    return !_.isNull(topicId) && _.isUuid(topicId);
+  isValidId = uuid => {
+    return _.isUuid(uuid);
   };
 
-  getCurrentTopic = (topics, targetTopic) => {
+  getCurrTopic = (topics, targetTopic) => {
     return topics.find(t => t.uuid === targetTopic);
   };
 
   handleChangeInput = ({ target: { name, value } }) => {
-    this.setState({ [name]: value });
+    this.setState({ [name]: value }, () => {
+      this.props.updateHasChanges(true);
+    });
   };
 
   handleChangeSelect = ({ target }) => {
@@ -129,14 +223,19 @@ class PipelineSourcePage extends React.Component {
     const { uuid } = options[selectedIdx].dataset;
 
     const upper = name.charAt(0).toUpperCase();
-    const current = `current${upper}${name.slice(1, -1)}`;
+    const current = `curr${upper}${name.slice(1)}`;
 
-    this.setState({
-      [current]: {
-        [name]: value,
-        uuid,
+    this.setState(
+      {
+        [current]: {
+          name: value,
+          uuid,
+        },
       },
-    });
+      () => {
+        this.props.updateHasChanges(true);
+      },
+    );
   };
 
   handleTest = async e => {
@@ -159,20 +258,59 @@ class PipelineSourcePage extends React.Component {
     this.setState({ isBtnWorking: update });
   };
 
+  saveChanges = _.debounce(async () => {
+    const { match, history } = this.props;
+    const {
+      currDatabase,
+      currWriteTopic,
+      currTable,
+      timestamp,
+      username,
+      password,
+      url,
+    } = this.state;
+
+    const sourceId = _.get(match, 'params.sourceId', null);
+
+    const params = {
+      name: 'Joshua',
+      class: 'jdbc',
+      configs: {
+        database: currDatabase.name,
+        topic: currWriteTopic.name,
+        table: JSON.stringify(currTable),
+        username,
+        password,
+        timestamp,
+        url,
+      },
+    };
+
+    const res = _.isNull(sourceId)
+      ? await createSource(params)
+      : await updateSource({ uuid: sourceId, params });
+
+    const uuid = _.get(res, 'data.result.uuid', null);
+
+    if (!_.isNull(uuid)) {
+      this.props.updateHasChanges(false);
+      if (_.isNull(sourceId)) history.push(`${match.url}/${uuid}`);
+    }
+  }, 1000);
+
   render() {
     const {
       url,
       username,
       password,
       databases,
-      currentDatabase,
+      currDatabase,
       isBtnWorking,
       tables,
-      currentTable,
+      currTable,
       timestamp,
       writeTopics,
-      currentWriteTopic,
-      isFormDisabled,
+      currWriteTopic,
       isRedirect,
     } = this.state;
 
@@ -191,7 +329,7 @@ class PipelineSourcePage extends React.Component {
                 <Select
                   name="databases"
                   list={databases}
-                  selected={currentDatabase}
+                  selected={currDatabase}
                   width="250px"
                   data-testid="dataset-select"
                   handleChange={this.handleChangeSelect}
@@ -235,29 +373,31 @@ class PipelineSourcePage extends React.Component {
                 />
               </FormGroup>
             </Fieldset>
-
-            <Actions>
-              <Button
-                theme={primaryBtn}
-                text="Test connection"
-                isWorking={isBtnWorking}
-                data-testid="test-connection-btn"
-                handleClick={this.handleTest}
-              />
-            </Actions>
           </LeftCol>
           <RightCol>
-            <Fieldset disabled={isFormDisabled}>
+            <Fieldset disabled={isBtnWorking}>
               <FormGroup>
-                <Label>Tables</Label>
-                <Select
-                  name="tables"
-                  list={tables}
-                  selected={currentTable}
-                  width="250px"
-                  data-testid="table-select"
-                  handleChange={this.handleChangeSelect}
-                />
+                <Label>Table</Label>
+
+                <TableWrapper>
+                  <Select
+                    name="table"
+                    list={tables}
+                    selected={currTable}
+                    width="250px"
+                    data-testid="table-select"
+                    handleChange={this.handleChangeSelect}
+                  />
+
+                  <GetTablesBtn
+                    theme={primaryBtn}
+                    text="Get tables"
+                    isWorking={isBtnWorking}
+                    disabled={isBtnWorking}
+                    data-testid="test-connection-btn"
+                    handleClick={this.handleTest}
+                  />
+                </TableWrapper>
               </FormGroup>
 
               <FormGroup>
@@ -277,7 +417,7 @@ class PipelineSourcePage extends React.Component {
                 <Select
                   name="writeTopics"
                   list={writeTopics}
-                  selected={currentWriteTopic}
+                  selected={currWriteTopic}
                   width="250px"
                   data-testid="write-topic-select"
                   handleChange={this.handleChangeSelect}

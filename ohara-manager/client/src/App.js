@@ -40,7 +40,7 @@ class App extends React.Component {
           <Nav />
           <Switch>
             <Route
-              path="/pipeline/new/:page/:pipelineId/:topicId"
+              path="/pipeline/new/:page/:pipelineId/:topicId/:sourceId?"
               component={PipelineNew}
             />
             <Route path="/pipeline" component={Pipeline} />

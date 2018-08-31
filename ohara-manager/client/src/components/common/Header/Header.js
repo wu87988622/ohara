@@ -17,6 +17,7 @@ const HeaderWrapper = styled.header`
   display: flex;
   align-items: center;
   padding: 0 30px;
+  z-index: 100;
 `;
 
 const Ul = styled.ul`

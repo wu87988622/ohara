@@ -68,6 +68,13 @@ const HadoopIconWrapper = styled(HadoopIcon)`
 
 HadoopIconWrapper.displayName = 'HadoopIconWrapper';
 
+const FileSavingStatus = styled.div`
+  margin-left: 30px;
+  color: red;
+  font-size: 12px;
+  color: ${lighterBlue};
+`;
+
 class Toolbar extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
@@ -86,6 +93,7 @@ class Toolbar extends React.Component {
       }),
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
+    hasChanges: PropTypes.bool.isRequired,
   };
 
   update = e => {
@@ -110,6 +118,7 @@ class Toolbar extends React.Component {
   };
 
   render() {
+    const { hasChanges } = this.props;
     return (
       <ToolbarWrapper>
         <IconWrapper
@@ -131,6 +140,10 @@ class Toolbar extends React.Component {
           data-id="topic"
           data-testid="toolbar-topic"
         />
+
+        <FileSavingStatus>
+          {hasChanges ? 'Saving...' : 'All changes saved'}
+        </FileSavingStatus>
       </ToolbarWrapper>
     );
   }

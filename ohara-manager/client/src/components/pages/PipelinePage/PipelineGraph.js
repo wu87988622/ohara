@@ -48,7 +48,7 @@ const Node = styled.li`
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  z-index: 100;
+  z-index: 50;
   display: none;
 
   &:hover {
@@ -89,7 +89,7 @@ Node.displayName = 'Node';
 
 const IconWrapper = styled.i`
   position: relative;
-  z-index: 100;
+  z-index: 50;
   color: ${lightestBlue};
 `;
 
@@ -124,7 +124,8 @@ class PipelineGraph extends React.Component {
   handleClick = e => {
     const { nodeName } = e.target;
     const { history, resetGraph, graph, match } = this.props;
-    const { topicId, pipelineId } = match.params;
+    const { topicId, pipelineId, sourceId } = match.params;
+
     const path =
       nodeName !== 'LI'
         ? 'target.parentElement.dataset.id'
@@ -136,7 +137,14 @@ class PipelineGraph extends React.Component {
 
     if (!_.isNull(page) && isUpdate) {
       resetGraph(graph);
-      history.push(`/pipeline/new/${page}/${pipelineId}/${topicId}`);
+
+      if (sourceId) {
+        history.push(
+          `/pipeline/new/${page}/${pipelineId}/${topicId}/${sourceId}`,
+        );
+      } else {
+        history.push(`/pipeline/new/${page}/${pipelineId}/${topicId}`);
+      }
     }
   };
 

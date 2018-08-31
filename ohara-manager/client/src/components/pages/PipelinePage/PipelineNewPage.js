@@ -64,6 +64,7 @@ class PipelineNewPage extends React.Component {
     isRedirect: false,
     isLoading: true,
     isModalActive: false,
+    hasChanges: false,
   };
 
   componentDidMount() {
@@ -74,8 +75,8 @@ class PipelineNewPage extends React.Component {
     }
   }
 
-  componentDidUpdate({ match }) {
-    const prevPage = _.get(match, 'params.page', null);
+  componentDidUpdate(prevProps) {
+    const prevPage = _.get(prevProps.match, 'params.page', null);
     const currPage = _.get(this.props.match, 'params.page', null);
 
     if (currPage !== prevPage) {
@@ -150,6 +151,10 @@ class PipelineNewPage extends React.Component {
     }
   };
 
+  updateHasChanges = update => {
+    this.setState({ hasChanges: update });
+  };
+
   render() {
     const {
       title,
@@ -158,6 +163,7 @@ class PipelineNewPage extends React.Component {
       isRedirect,
       topicName,
       isModalActive,
+      hasChanges,
     } = this.state;
 
     if (isRedirect) {
@@ -193,6 +199,7 @@ class PipelineNewPage extends React.Component {
             <Toolbar
               updateGraph={this.updateGraph}
               graph={graph}
+              hasChanges={hasChanges}
               {...this.props}
             />
             <PipelineGraph
@@ -203,7 +210,13 @@ class PipelineNewPage extends React.Component {
 
             <Route
               path="/pipeline/new/source"
-              render={() => <PipelineSourcePage {...this.props} />}
+              render={() => (
+                <PipelineSourcePage
+                  {...this.props}
+                  hasChanges={hasChanges}
+                  updateHasChanges={this.updateHasChanges}
+                />
+              )}
             />
             <Route
               path="/pipeline/new/topic"

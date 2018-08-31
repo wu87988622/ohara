@@ -15,7 +15,14 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.post('/api/pipelines/save', (req, res) => {
+  app.get('/api/pipelines/:uuid', (req, res) => {
+    axios
+      .get(`${API_ROOT}/pipelines/${req.params.uuid}`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.post('/api/pipelines/create', (req, res) => {
     axios
       .post(`${API_ROOT}/pipelines`, req.body)
       .then(result => onSuccess(res, result))
@@ -36,9 +43,30 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.get('/api/pipeline/query/rdb', (req, res) => {
+  app.post('/api/pipelines/query/rdb', (req, res) => {
     axios
-      .get(`${API_ROOT}/query/rdb`, req.body)
+      .post(`${API_ROOT}/query/rdb`, req.body)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.get('/api/sources/:uuid', (req, res) => {
+    axios
+      .get(`${API_ROOT}/sources/${req.params.uuid}`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.post('/api/sources/create', (req, res) => {
+    axios
+      .post(`${API_ROOT}/sources`, req.body)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.put('/api/sources/update/:uuid', (req, res) => {
+    axios
+      .put(`${API_ROOT}/sources/${req.params.uuid}`, req.body)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });

@@ -60,9 +60,12 @@ const Button = ({
   width = 'auto',
   disabled = false,
   isWorking = false,
+  className,
   ...rest
 }) => {
   const cls = cx({ 'is-working': isWorking }, { 'is-disabled': disabled });
+
+  console.log(rest);
 
   return (
     <BtnWrapper
@@ -70,7 +73,7 @@ const Button = ({
       width={width}
       onClick={handleClick}
       theme={theme}
-      className={cls}
+      className={`${className} ${cls}`}
       disabled={disabled}
       {...rest}
     >

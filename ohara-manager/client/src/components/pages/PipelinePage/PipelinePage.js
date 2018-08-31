@@ -6,7 +6,7 @@ import toastr from 'toastr';
 import { Modal } from '../../common/Modal';
 import { Warning } from '../../common/Messages';
 import { fetchTopics } from '../../../apis/topicApis';
-import { savePipelines } from '../../../apis/pipelinesApis';
+import { createPipeline } from '../../../apis/pipelinesApis';
 import { H2 } from '../../common/Headings';
 import { Button, Select } from '../../common/Form';
 import { primaryBtn } from '../../../theme/btnTheme';
@@ -62,8 +62,8 @@ class PipelinePage extends React.Component {
     const { history, match } = this.props;
     const { uuid: topicUuid } = this.state.currentTopic;
 
-    const params = { name: 'untitle pipeline', rules: { [topicUuid]: '?' } };
-    const res = await savePipelines(params);
+    const params = { name: 'untitled pipeline', rules: { [topicUuid]: '?' } };
+    const res = await createPipeline(params);
 
     const pipelineUuid = _.get(res, 'data.result.uuid', null);
 
