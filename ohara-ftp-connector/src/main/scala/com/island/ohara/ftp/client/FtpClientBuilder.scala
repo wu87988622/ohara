@@ -1,4 +1,5 @@
-package com.island.ohara.client
+package com.island.ohara.ftp.client
+
 import java.io.{InputStream, OutputStream}
 import java.util.Objects
 

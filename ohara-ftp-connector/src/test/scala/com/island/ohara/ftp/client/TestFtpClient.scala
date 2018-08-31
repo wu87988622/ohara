@@ -1,9 +1,10 @@
-package com.island.ohara.client
+package com.island.ohara.ftp.client
+
 import java.nio.charset.Charset
 
-import com.island.ohara.io.CloseOnce._
 import com.island.ohara.integration.FtpServer
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.MediumTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers

@@ -1,4 +1,5 @@
-package com.island.ohara.client
+package com.island.ohara.ftp.client
+
 import java.io._
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
