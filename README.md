@@ -30,7 +30,7 @@ run before completing image (default is "gradle clean build -x test")
 
 ## run ohara backend-services by ohara image
 ```
-docker run -e SSH_PRIVARY_KEY="" -e BRANCH=master -e HEAP_SIZE=4000m -e CONFIGURATOR_PORT=12345 -p 12345:12345 --rm -t -d chia7712/ohara:latest runBackend.sh
+docker run -e SSH_PRIVATE_KEY="" -e BRANCH=master -e HEAP_SIZE=4000m -e CONFIGURATOR_PORT=12345 -p 12345:12345 --rm -t -d chia7712/ohara:latest runBackend.sh
 ```
 * #####SSH_PRIVARY_KEY
 used to pull ohara repository (required)
