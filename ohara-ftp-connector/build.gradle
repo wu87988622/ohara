@@ -1,0 +1,12 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+
+dependencies {
+  compile project(':ohara-kafka')
+  compile libs.commonsNet
+  testCompile project(":ohara-testing-util")
+  testCompile project(":ohara-common").sourceSets.test.output
+  testCompile libs.scalatest
+  testCompile libs.mockito
+  testCompile libs.junit
+}

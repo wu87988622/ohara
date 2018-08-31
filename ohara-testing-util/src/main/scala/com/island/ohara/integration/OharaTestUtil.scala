@@ -43,6 +43,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
   private[this] var localDb: LocalDataBase = _
   private[this] var _connectorClient: ConnectorClient = _
+  private[this] var localFtpServer: FtpServer = _
 
   /**
     * @return zookeeper connection used to create zk services
@@ -185,6 +186,11 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     localDb
   }
 
+  def ftpServer: FtpServer = {
+    if (localFtpServer == null) localFtpServer = FtpServer()
+    localFtpServer
+  }
+
   override protected def doClose(): Unit = {
     stopConsumer = true
     CloseOnce.release(() => consumerThreads.foreach(Await.result(_, 1 minute)))
@@ -192,6 +198,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     CloseOnce.close(_connectorClient)
     componentBox.close()
     CloseOnce.close(localDb)
+    CloseOnce.close(localFtpServer)
   }
 
 }

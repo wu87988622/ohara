@@ -2,7 +2,7 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
-  compile libs.common
+  compile libs.commonsLang
   compile libs.scala
   compile libs.scalaLogging
   compile libs.slf4jApi
