@@ -24,7 +24,7 @@ class TestKafkaRouteWithMiniCluster
     with KafkaRoute {
 
   val schema = Vector(("name", STRING), ("year", INT), ("month", SHORT), ("isHuman", BOOLEAN))
-  val map = new ConcurrentHashMap[String, (String, RowSchema)]() {
+  val map: ConcurrentHashMap[String, (String, RowSchema)] = new ConcurrentHashMap[String, (String, RowSchema)]() {
     this.put("test", ("test", RowSchema(schema)))
   }
 
@@ -38,7 +38,7 @@ class TestKafkaRouteWithMiniCluster
       request ~> Route.seal(route) ~> check {
         status should ===(StatusCodes.NotFound)
       }
-    } finally producer.close
+    } finally producer.close()
   }
 
   @Test

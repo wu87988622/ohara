@@ -22,23 +22,23 @@ class TestCloseOnce extends SmallTest with Matchers {
 
   @Test
   def testFinalClose(): Unit = {
-    def invalidString(): CloseOnce = throw new IOException("IOE")
+    def invalidString: CloseOnce = throw new IOException("IOE")
 
     try {
       doClose(invalidString)(_ => true)
       fail("It should fail")
     } catch {
-      case _: IOException => {}
+      case _: IOException =>
     }
 
-    def validString(): CloseOnce = () => {}
+    def validString: CloseOnce = () => {}
 
     doClose(validString)(_ => true) shouldBe true
     try {
       doFinally(invalidString)(_ => true)(_ => {})
       fail("It should fail")
     } catch {
-      case _: IOException => {}
+      case _: IOException =>
     }
     doFinally(validString)(_ => true)(_ => {}) shouldBe true
   }

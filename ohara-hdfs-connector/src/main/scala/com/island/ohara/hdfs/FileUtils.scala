@@ -31,11 +31,11 @@ object FileUtils {
     appendFileName.append(pattern.format(stopOffset))
     appendFileName.append(FILENAME_ENDSWITH)
 
-    val fileName = appendFileName.toString()
+    val fileName = appendFileName.toString
     if (checkFileNameFormat(fileName))
       fileName
     else
-      throw new IllegalArgumentException(s"${fileName} does not match ${COMMITTED_FILENAME_PATTERN} pattern")
+      throw new IllegalArgumentException(s"$fileName does not match $COMMITTED_FILENAME_PATTERN pattern")
   }
 
   /**
@@ -44,13 +44,13 @@ object FileUtils {
     * @return
     */
   def getStopOffset(fileNames: Iterator[String]): Long = {
-    if (!fileNames.isEmpty)
+    if (fileNames.nonEmpty)
       fileNames
         .map(fileName => {
           if (checkFileNameFormat(fileName)) {
             fileName.split(FILENAME_SEPARATOR)(STOP_OFFSET_INDEX).replace(FILENAME_ENDSWITH, "").toLong
           } else {
-            throw new IllegalArgumentException(s"${fileName} does not match ${COMMITTED_FILENAME_PATTERN} pattern")
+            throw new IllegalArgumentException(s"$fileName does not match ${COMMITTED_FILENAME_PATTERN} pattern")
           }
         })
         .max

@@ -9,7 +9,7 @@ trait CallQueueTask[REQUEST, RESPONSE] {
   /**
     * @return the request data sent by client
     */
-  val request: REQUEST
+  def request: REQUEST
 
   /**
     * Use a response as the return object

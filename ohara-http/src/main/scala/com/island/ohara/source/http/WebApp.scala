@@ -3,6 +3,7 @@ package com.island.ohara.source.http
 import java.util.concurrent.ConcurrentHashMap
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.server.Route
 import com.island.ohara.data.Row
 import com.island.ohara.kafka.Producer
 
@@ -17,7 +18,7 @@ class WebApp(producer: Producer[String, Row], schemaMap: ConcurrentHashMap[Strin
   implicit actorSystem: ActorSystem)
     extends KafkaRoute {
 
-  implicit def system = actorSystem
+  implicit def system: ActorSystem = actorSystem
 
   private def healthyCheck = pathSingleSlash {
     get {
@@ -25,6 +26,6 @@ class WebApp(producer: Producer[String, Row], schemaMap: ConcurrentHashMap[Strin
     }
   }
 
-  def route = healthyCheck ~ kafkaRoute(producer, schemaMap)
+  def route: Route = healthyCheck ~ kafkaRoute(producer, schemaMap)
 
 }

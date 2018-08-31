@@ -4,6 +4,8 @@ import java.util
 
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.serialization.Serializer
+import org.apache.kafka.common.serialization
+import org.apache.kafka.common.serialization.Deserializer
 
 import scala.concurrent.duration._
 
@@ -21,17 +23,18 @@ object KafkaUtil {
     * @tparam T object type
     * @return a wrapper of kafka serializer
     */
-  def wrapSerializer[T](serializer: Serializer[T]) = new org.apache.kafka.common.serialization.Serializer[T]() {
-    override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
-      // do nothing
-    }
+  def wrapSerializer[T](serializer: Serializer[T]): serialization.Serializer[T] =
+    new org.apache.kafka.common.serialization.Serializer[T]() {
+      override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
+        // do nothing
+      }
 
-    override def serialize(topic: String, data: T): Array[Byte] = if (data == null) null else serializer.to(data)
+      override def serialize(topic: String, data: T): Array[Byte] = if (data == null) null else serializer.to(data)
 
-    override def close(): Unit = {
-      // do nothing
+      override def close(): Unit = {
+        // do nothing
+      }
     }
-  }
 
   /**
     * Used to convert byte array to ohara row. It is a private class since ohara consumer will instantiate one and pass it to
@@ -41,18 +44,19 @@ object KafkaUtil {
     * @tparam T object type
     * @return a wrapper of kafka deserializer
     */
-  def wrapDeserializer[T](serializer: Serializer[T]) = new org.apache.kafka.common.serialization.Deserializer[T]() {
-    override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
-      // do nothing
-    }
+  def wrapDeserializer[T](serializer: Serializer[T]): Deserializer[T] =
+    new org.apache.kafka.common.serialization.Deserializer[T]() {
+      override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
+        // do nothing
+      }
 
-    override def deserialize(topic: String, data: Array[Byte]): T =
-      if (data == null) null.asInstanceOf[T] else serializer.from(data)
+      override def deserialize(topic: String, data: Array[Byte]): T =
+        if (data == null) null.asInstanceOf[T] else serializer.from(data)
 
-    override def close(): Unit = {
-      // do nothing
+      override def close(): Unit = {
+        // do nothing
+      }
     }
-  }
 
   /**
     * check whether the specified topic exist

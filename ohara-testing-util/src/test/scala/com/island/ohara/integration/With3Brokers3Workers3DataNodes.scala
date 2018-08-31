@@ -8,7 +8,7 @@ import org.junit.{AfterClass, BeforeClass}
   * This class create a mini broker/worker/datanode cluster with 3 nodes. And the cluster will be closed after all test cases have been done.
   */
 abstract class With3Brokers3Workers3DataNodes extends LargeTest {
-  protected def testUtil = With3Brokers3Workers3DataNodes.util
+  protected def testUtil: OharaTestUtil = With3Brokers3Workers3DataNodes.util
 }
 
 object With3Brokers3Workers3DataNodes {

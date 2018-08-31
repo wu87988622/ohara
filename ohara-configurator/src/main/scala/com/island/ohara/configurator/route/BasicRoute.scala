@@ -19,7 +19,7 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
               pipeline.uuid == uuid
                 || pipeline.rules.keys.toSet.contains(uuid)
                 || pipeline.rules.values.toSet.contains(uuid)))
-      throw new IllegalArgumentException(s"The uuid:${uuid} is used by pipeline")
+      throw new IllegalArgumentException(s"The uuid:$uuid is used by pipeline")
 
   def assertNotRelated2RunningPipeline(uuid: String)(implicit store: Store): Unit =
     if (store
@@ -29,7 +29,7 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
             pipeline.uuid == uuid
               || pipeline.rules.keys.toSet.contains(uuid)
               || pipeline.rules.values.toSet.contains(uuid)))
-      throw new IllegalArgumentException(s"The uuid:${uuid} is used by running pipeline")
+      throw new IllegalArgumentException(s"The uuid:$uuid is used by running pipeline")
 
   private[this] def toResponse(e: Throwable) =
     Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))

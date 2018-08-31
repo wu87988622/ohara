@@ -24,7 +24,7 @@ object ConnectorJson extends DefaultJsonProtocol {
     override def read(json: JsValue): Plugin = json.asJsObject.getFields("class", "type", "version") match {
       case Seq(JsString(className), JsString(typeName), JsString(version)) =>
         Plugin(className, typeName, version)
-      case other: Any => throw DeserializationException(s"${classOf[Plugin].getSimpleName} expected but ${other}")
+      case other: Any => throw DeserializationException(s"${classOf[Plugin].getSimpleName} expected but $other")
     }
     override def write(obj: Plugin) = JsObject(
       "class" -> JsString(obj.className),
@@ -46,21 +46,18 @@ object ConnectorJson extends DefaultJsonProtocol {
       override def read(json: JsValue): ConnectorResponse =
         json.asJsObject.getFields("name", "config", "tasks", "type") match {
           case Seq(JsString(className), JsObject(config), JsArray(tasks), JsString(typeName)) =>
-            ConnectorResponse(className,
-                              config.map { case (k, v) => (k, v.toString()) },
-                              tasks.map(_.toString()),
-                              typeName)
+            ConnectorResponse(className, config.map { case (k, v) => (k, v.toString) }, tasks.map(_.toString), typeName)
           // TODO: this is a kafka bug which always returns null in type name. see KAFKA-7253  by chia
           case Seq(JsString(className), JsObject(config), JsArray(tasks), JsNull) =>
             ConnectorResponse(
               className,
               // it is ok to cast JsValue to JsString since we serialize the config to (JsString, JsString)
               config.map { case (k, v) => (k, v.asInstanceOf[JsString].value) },
-              tasks.map(_.toString()),
+              tasks.map(_.toString),
               "null"
             )
           case other: Any =>
-            throw DeserializationException(s"${classOf[ConnectorResponse].getSimpleName} expected but ${other}")
+            throw DeserializationException(s"${classOf[ConnectorResponse].getSimpleName} expected but $other")
         }
 
       override def write(obj: ConnectorResponse) = JsObject(

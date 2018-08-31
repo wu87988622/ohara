@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.Logger
 import org.apache.hadoop.fs.{FileSystem, Path, RemoteIterator}
 
 class HDFSStorage(fileSystem: FileSystem) extends Storage {
-  private[this] lazy val logger = Logger(getClass().getName())
+  private[this] lazy val logger = Logger(getClass.getName)
 
   /**
     * List children folder or file path from path parameter
@@ -16,7 +16,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
   override def list(path: String): Iterator[String] = {
     implicit def convertToScalaIterator[T](underlying: RemoteIterator[T]): Iterator[T] = {
       case class wrapper(underlying: RemoteIterator[T]) extends Iterator[T] {
-        override def hasNext: Boolean = underlying.hasNext()
+        override def hasNext: Boolean = underlying.hasNext
 
         override def next(): T = underlying.next()
       }
@@ -28,7 +28,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
       fileSystem
         .listLocatedStatus(hdfsPath)
         .map(fileStatus => {
-          fileStatus.getPath().toString()
+          fileStatus.getPath.toString
         })
     else Iterator.empty
   }
@@ -96,7 +96,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     */
   override def renameFile(sourcePath: String, targetPath: String): Boolean = {
     if (exists(targetPath)) {
-      val errorMessage = s"The target path: ${targetPath} is exists"
+      val errorMessage = s"The target path: $targetPath is exists"
       throw new RuntimeException(errorMessage)
     }
 
@@ -111,7 +111,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     if (exists(sourcePath)) {
       fileSystem.rename(srcPath, dstPath)
     } else {
-      val errorMessage = s"The source path: ${sourcePath} is exists"
+      val errorMessage = s"The source path: $sourcePath is exists"
       logger.error(errorMessage)
       throw new RuntimeException(errorMessage)
     }

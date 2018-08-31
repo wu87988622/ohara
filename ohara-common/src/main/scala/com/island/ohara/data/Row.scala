@@ -64,7 +64,7 @@ abstract class Row extends Iterable[Cell[_]] {
   else false
 
   private[this] def compareTags(other: Row): Boolean = if (tags.isEmpty && other.tags.isEmpty) true
-  else if (tags.size == other.tags.size) tags.forall(t => other.tags.exists(_ == t))
+  else if (tags.size == other.tags.size) tags.forall(t => other.tags.contains(t))
   else false
   def tags: Set[String]
 }

@@ -49,7 +49,7 @@ class TestMiniHdfs extends LargeTest with Matchers {
           .foreach(x => {
             result.append(x.toChar)
           })
-        result.toString() shouldBe text
+        result.toString shouldBe text
         inputStream.close()
       }
     }

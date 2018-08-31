@@ -84,26 +84,19 @@ object KafkaClient {
           }
       }
 
-    override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit =
-      if (!topicInfo(topicName, timeout)
-            .map(
-              current =>
-                if (current.numberOfPartitions > numberOfPartitions)
-                  throw new IllegalArgumentException("Reducing the number of partitions is disallowed")
-                else if (current.numberOfPartitions == numberOfPartitions) false
-                else true)
-            .map(shouldRun => {
-              if (shouldRun) {
-                import scala.collection.JavaConverters._
-                admin
-                  .createPartitions(Map(topicName -> NewPartitions.increaseTo(numberOfPartitions)).asJava)
-                  .all()
-                  .get(timeout.toMillis, TimeUnit.MILLISECONDS)
-              }
-              // this true means the topic exists
-              true
-            })
-            .getOrElse(false)) throw new IllegalArgumentException(s"the topic:${topicName} isn't existed")
+    override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
+      val current = topicInfo(topicName, timeout).getOrElse(
+        throw new IllegalArgumentException(s"the topic:$topicName isn't existed"))
+      if (current.numberOfPartitions > numberOfPartitions)
+        throw new IllegalArgumentException("Reducing the number of partitions is disallowed")
+      if (current.numberOfPartitions < numberOfPartitions) {
+        import scala.collection.JavaConverters._
+        admin
+          .createPartitions(Map(topicName -> NewPartitions.increaseTo(numberOfPartitions)).asJava)
+          .all()
+          .get(timeout.toMillis, TimeUnit.MILLISECONDS)
+      }
+    }
 
     override def deleteTopic(topicName: String, timeout: Duration): Unit =
       admin.deleteTopics(util.Arrays.asList(topicName)).all().get(timeout.toMillis, TimeUnit.MILLISECONDS)

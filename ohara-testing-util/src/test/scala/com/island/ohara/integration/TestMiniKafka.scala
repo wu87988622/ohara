@@ -58,7 +58,7 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
     resp.name shouldBe sourceConnectorName
     // TODO: enable following check after KAFKA-7253 is resolved. by chia
     // resp.typeName shouldBe "source"
-    resp.config.get("key0").get shouldBe "value0"
+    resp.config("key0") shouldBe "value0"
     // wait for starting the source connector
     OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().size == 1, 10 second)
     // wait for starting the source task
@@ -76,7 +76,7 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
     resp.name shouldBe sinkConnectorName
     // TODO: enable following check after KAFKA-7253 is resolved. by chia
     // resp.typeName shouldBe "sink"
-    resp.config.get("key0").get shouldBe "value0"
+    resp.config("key0") shouldBe "value0"
     // wait for starting the sink connector
     OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().size == 2, 10 second)
     // wait for starting the sink task

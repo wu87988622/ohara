@@ -25,5 +25,5 @@ class HDFSSinkConnector extends RowSinkConnector {
     Seq.fill(maxTasks) { props }
   }
 
-  override val _version = Version.getVersion()
+  override val _version: String = Version.getVersion
 }

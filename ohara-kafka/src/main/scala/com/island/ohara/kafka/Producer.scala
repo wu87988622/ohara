@@ -32,75 +32,73 @@ object Producer {
     new ProducerBuilder[K, V](keySerializer, valueSerializer)
 }
 
-class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
+final class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
   private[this] var brokers: String = _
   private[this] var numberOfAcks: Short = 1
 
-  def brokers(brokers: String): this.type = {
+  def brokers(brokers: String): ProducerBuilder[K, V] = {
     this.brokers = brokers
     this
   }
 
-  def noAcks(): this.type = {
+  def noAcks(): ProducerBuilder[K, V] = {
     this.numberOfAcks = 0
     this
   }
 
-  def allAcks(): this.type = {
+  def allAcks(): ProducerBuilder[K, V] = {
     this.numberOfAcks = -1
     this
   }
 
   def build(): Producer[K, V] = {
     Objects.requireNonNull(brokers)
-    innerBuild
-  }
-
-  protected def innerBuild(): Producer[K, V] = new Producer[K, V] {
-    private[this] val producerConfig = {
-      val props = new Properties()
-      props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-      props.put(ProducerConfig.ACKS_CONFIG, numberOfAcks.toString)
-      props
-    }
-    private[this] val producer = newOrClose(
-      new KafkaProducer[K, V](producerConfig,
-                              KafkaUtil.wrapSerializer(keySerializer),
-                              KafkaUtil.wrapSerializer(valueSerializer)))
-
-    import scala.collection.JavaConverters._
-    override def sender(): Sender[K, V] = new Sender[K, V] {
-      override def send(callback: Either[Throwable, RecordMetadata] => Unit): Unit = {
-        val record = new ProducerRecord[K, V](
-          topic,
-          partition.map(new Integer(_)).orNull,
-          timestamp.map(new java.lang.Long(_)).orNull,
-          key.getOrElse(null.asInstanceOf[K]),
-          value.getOrElse(null.asInstanceOf[V]),
-          headers.map(toKafkaHeader(_)).asJava
-        )
-        producer.send(
-          record,
-          (metadata: org.apache.kafka.clients.producer.RecordMetadata, exception: Exception) => {
-            if (metadata != null)
-              callback(
-                Right(
-                  RecordMetadata(metadata.topic(),
-                                 metadata.partition(),
-                                 metadata.offset(),
-                                 metadata.timestamp(),
-                                 metadata.serializedKeySize(),
-                                 metadata.serializedValueSize())))
-            if (exception != null) callback(Left(exception))
-            // In fact, it is impossible that both meta and exception are defined
-          }
-        )
+    new Producer[K, V] {
+      private[this] val producerConfig = {
+        val props = new Properties()
+        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+        props.put(ProducerConfig.ACKS_CONFIG, numberOfAcks.toString)
+        props
       }
+      private[this] val producer = newOrClose(
+        new KafkaProducer[K, V](producerConfig,
+                                KafkaUtil.wrapSerializer(keySerializer),
+                                KafkaUtil.wrapSerializer(valueSerializer)))
+
+      import scala.collection.JavaConverters._
+      override def sender(): Sender[K, V] = new Sender[K, V] {
+        override def send(callback: Either[Throwable, RecordMetadata] => Unit): Unit = {
+          val record = new ProducerRecord[K, V](
+            topic,
+            partition.map(new Integer(_)).orNull,
+            timestamp.map(new java.lang.Long(_)).orNull,
+            key.getOrElse(null.asInstanceOf[K]),
+            value.getOrElse(null.asInstanceOf[V]),
+            headers.map(toKafkaHeader).asJava
+          )
+          producer.send(
+            record,
+            (metadata: org.apache.kafka.clients.producer.RecordMetadata, exception: Exception) => {
+              if (metadata != null)
+                callback(
+                  Right(
+                    RecordMetadata(metadata.topic(),
+                                   metadata.partition(),
+                                   metadata.offset(),
+                                   metadata.timestamp(),
+                                   metadata.serializedKeySize(),
+                                   metadata.serializedValueSize())))
+              if (exception != null) callback(Left(exception))
+              // In fact, it is impossible that both meta and exception are defined
+            }
+          )
+        }
+      }
+
+      override def flush(): Unit = producer.flush()
+
+      override protected def doClose(): Unit = producer.close()
     }
-
-    override def flush(): Unit = producer.flush()
-
-    override protected def doClose(): Unit = producer.close()
   }
 
   private[this] def toKafkaHeader(header: Header): org.apache.kafka.common.header.Header = new KafkaHeader(header)
@@ -165,11 +163,10 @@ abstract class Sender[K, V] {
     */
   def send(): Future[RecordMetadata] = {
     val promise = Promise[RecordMetadata]()
-    send((meta: Either[Throwable, RecordMetadata]) =>
-      meta match {
-        case Left(e)  => promise.failure(e)
-        case Right(m) => promise.success(m)
-    })
+    send {
+      case Left(e)  => promise.failure(e)
+      case Right(m) => promise.success(m)
+    }
     promise.future
   }
 

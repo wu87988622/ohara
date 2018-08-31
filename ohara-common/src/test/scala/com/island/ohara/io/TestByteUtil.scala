@@ -1,10 +1,10 @@
 package com.island.ohara.io
 
-import java.util
-
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
+
+import scala.collection.mutable
 
 class TestByteUtil extends SmallTest with Matchers {
 
@@ -91,21 +91,20 @@ class TestByteUtil extends SmallTest with Matchers {
 
   @Test
   def testComparator(): Unit = {
-    val map = new util.TreeSet[Array[Byte]](ByteUtil.COMPARATOR)
-    map.add(ByteUtil.toBytes("ccc"))
-    map.add(ByteUtil.toBytes("bbb"))
-    map.add(ByteUtil.toBytes("aaa"))
-    map.add(ByteUtil.toBytes("adc"))
+    val map = new mutable.TreeSet[Array[Byte]]()(ByteUtil.COMPARATOR)
+    map += ByteUtil.toBytes("ccc")
+    map += ByteUtil.toBytes("bbb")
+    map += ByteUtil.toBytes("aaa")
+    map += ByteUtil.toBytes("adc")
     map.size shouldBe 4
-    var count = 0
-    map.forEach(value => {
-      count match {
-        case 0 => ByteUtil.toString(value) shouldBe "aaa"
-        case 1 => ByteUtil.toString(value) shouldBe "adc"
-        case 2 => ByteUtil.toString(value) shouldBe "bbb"
-        case 3 => ByteUtil.toString(value) shouldBe "ccc"
-      }
-      count += 1
-    })
+    map.zipWithIndex.foreach {
+      case (value, index) =>
+        index match {
+          case 0 => ByteUtil.toString(value) shouldBe "aaa"
+          case 1 => ByteUtil.toString(value) shouldBe "adc"
+          case 2 => ByteUtil.toString(value) shouldBe "bbb"
+          case 3 => ByteUtil.toString(value) shouldBe "ccc"
+        }
+    }
   }
 }

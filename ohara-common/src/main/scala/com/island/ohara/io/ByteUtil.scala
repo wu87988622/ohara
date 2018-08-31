@@ -1,7 +1,6 @@
 package com.island.ohara.io
 
 import java.nio.charset.StandardCharsets
-import java.util.Comparator
 
 /**
   * A collection of helper methods used to do conversion between object and byte array.
@@ -11,9 +10,7 @@ object ByteUtil {
   /**
     * used to sort the byte array in collection.
     */
-  val COMPARATOR = new Comparator[Array[Byte]]() {
-    override def compare(o1: Array[Byte], o2: Array[Byte]): Int = ByteUtil.compare(o1, o2)
-  }
+  val COMPARATOR: Ordering[Array[Byte]] = (o1: Array[Byte], o2: Array[Byte]) => ByteUtil.compare(o1, o2)
 
   // pre-defined constants
   def SIZE_OF_BYTE: Int = java.lang.Byte.SIZE / java.lang.Byte.SIZE
@@ -169,7 +166,7 @@ object ByteUtil {
   // -------------[boolean]------------- //
   implicit def toBytes(value: Boolean): Array[Byte] = if (value) Array[Byte]((-1).toByte) else Array[Byte](0.toByte)
 
-  implicit def toBytes(value: Boolean, f: Byte => Unit): Unit = if (value) f((-1).toByte) else f((0).toByte)
+  implicit def toBytes(value: Boolean, f: Byte => Unit): Unit = if (value) f((-1).toByte) else f(0.toByte)
 
   implicit def toBoolean(data: Array[Byte], offset: Int = 0): Boolean = data(offset) != 0
 
@@ -180,7 +177,7 @@ object ByteUtil {
     * @param buf2 byte array 2
     * @return -1 if array1 is smaller than array2. 0 means they have same content. 1 if array2 is smaller than array1
     */
-  def compare(buf1: Array[Byte], buf2: Array[Byte]): Int = compare(buf1, 0, buf1.size, buf2, 0, buf2.size)
+  def compare(buf1: Array[Byte], buf2: Array[Byte]): Int = compare(buf1, 0, buf1.length, buf2, 0, buf2.length)
 
   /**
     * Compare a specified range of two byte array
@@ -193,6 +190,7 @@ object ByteUtil {
     * @return -1 if array1 is smaller than array2. 0 means they have same content. 1 if array2 is smaller than array1
     */
   def compare(buf1: Array[Byte], offset1: Int, len1: Int, buf2: Array[Byte], offset2: Int, len2: Int): Int = {
+    //noinspection EqualityToSameElements
     if (buf1 == buf2 && offset1 == offset2 && len1 == len2) 0
     else {
       val end1 = offset1 + len1

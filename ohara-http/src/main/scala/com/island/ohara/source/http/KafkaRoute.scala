@@ -4,9 +4,10 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentMap
 
 import akka.actor.ActorSystem
+import akka.dispatch.MessageDispatcher
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.{Directives, Route}
 import com.island.ohara.data.{Cell, Row, RowBuilder}
 import com.island.ohara.kafka.{Producer, RecordMetadata}
 import com.island.ohara.serialization.DataType._
@@ -29,54 +30,39 @@ trait KafkaRoute extends Directives with CsvSupport {
   /**
     * Using a different dispatcher because Kafka Producer is blocking.
     */
-  implicit def kafkaDispatch = system.dispatchers.lookup("kafka-dispatcher")
+  implicit def kafkaDispatch: MessageDispatcher = system.dispatchers.lookup("kafka-dispatcher")
 
   private lazy val log = Logging(system, classOf[KafkaRoute])
 
-  def kafkaRoute(producer: Producer[String, Row], schemaMap: ConcurrentMap[String, (String, RowSchema)]) = {
-    path(
-      Segment.flatMap(
-        pathName =>
-          if (schemaMap.containsKey(pathName))
-            Some(pathName)
-          else
-          None)) { pathName =>
+  def kafkaRoute(producer: Producer[String, Row], schemaMap: ConcurrentMap[String, (String, RowSchema)]): Route = {
+    path(Segment.flatMap(pathName => Some(pathName).filter(schemaMap.containsKey))) { pathName =>
       get {
         complete("EXIST")
       } ~ (post & entity(as[CSV])) { csv =>
         val (kafkaTopic, oharaSchema) = schemaMap.get(pathName)
         onComplete(
           transform(csv.row, oharaSchema.schema) match {
-            case Success(oharaRow) => {
+            case Success(oharaRow) =>
               val promise = Promise[RecordMetadata]()
-              producer
-                .sender()
-                .topic(kafkaTopic)
-                .key(UUID.randomUUID().toString)
-                .value(oharaRow)
-                .send((meta: Either[Throwable, RecordMetadata]) =>
-                  meta match {
-                    case Left(e)  => promise.failure(e)
-                    case Right(m) => promise.success(m)
-                })
+              producer.sender().topic(kafkaTopic).key(UUID.randomUUID().toString).value(oharaRow).send {
+                case Left(e)  => promise.failure(e)
+                case Right(m) => promise.success(m)
+              }
               promise.future
-            }
             case Failure(e) =>
               Future(e)
           }
         ) {
           case Success(_) => complete(StatusCodes.Created.reason)
           // TODO: what message it should return.
-          case Failure(ex) => {
+          case Failure(ex) =>
             ex match {
               case SchemaException(_) => complete(StatusCodes.BadRequest)
-              case _ => {
+              case _                  =>
                 // TODO: define failed message
                 log.warning(s"Fail to send message to Kafka: $ex")
                 complete(ex.toString)
-              }
             }
-          }
         }
       }
     }

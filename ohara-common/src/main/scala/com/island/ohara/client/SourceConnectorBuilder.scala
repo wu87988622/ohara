@@ -18,7 +18,7 @@ abstract class SourceConnectorBuilder extends ConnectorBuilder {
     if (topicNames.size != 1) throw new IllegalArgumentException("multi-topics is invalid for source connector")
     if (config == null) config = new mutable.HashMap[String, String]()
     config += ("connector.class" -> clzName)
-    config += ("topic" -> topicNames(0))
+    config += ("topic" -> topicNames.head)
     config += ("tasks.max" -> taskMax.toString)
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)

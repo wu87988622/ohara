@@ -43,13 +43,13 @@ private[configurator] object PipelineRoute {
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Unit = {
     def verify(uuid: String): Unit = {
       val data = store.raw(uuid)
-      if (!ACCEPTED_TYPES.exists(_ == data.getClass))
+      if (!ACCEPTED_TYPES.contains(data.getClass))
         throw new IllegalArgumentException(
           s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
             s" accepted type:${ACCEPTED_TYPES.map(_.getSimpleName).mkString(",")}")
     }
-    pipeline.rules.keys.foreach(verify(_))
-    pipeline.rules.values.filterNot(_ == UNKNOWN).foreach(verify(_))
+    pipeline.rules.keys.foreach(verify)
+    pipeline.rules.values.filterNot(_ == UNKNOWN).foreach(verify)
     pipeline.rules.foreach {
       case (k, v) => if (k == v) throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
     }

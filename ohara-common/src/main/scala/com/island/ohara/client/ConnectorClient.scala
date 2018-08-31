@@ -39,7 +39,7 @@ trait ConnectorClient extends CloseOnce {
 object ConnectorClient {
   private[this] val COUNTER = new AtomicInteger(0)
   import scala.concurrent.duration._
-  val TIMEOUT = 10 seconds
+  val TIMEOUT: FiniteDuration = 10 seconds
 
   def apply(_workers: String): ConnectorClient = {
     val workerList = _workers.split(",")
@@ -47,10 +47,10 @@ object ConnectorClient {
     new ConnectorClient() with SprayJsonSupport {
       private[this] val workerAddress: String = workerList(Random.nextInt(workerList.size))
 
-      private[this] implicit val actorSystem = ActorSystem(
+      private[this] implicit val actorSystem: ActorSystem = ActorSystem(
         s"${classOf[ConnectorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
 
-      private[this] implicit val actorMaterializer = ActorMaterializer()
+      private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
       override def sourceConnectorCreator(): SourceConnectorBuilder = (request: ConnectorRequest) => send(request)
 
@@ -62,7 +62,7 @@ object ConnectorClient {
           .flatMap(entity => {
             Http()
               .singleRequest(
-                HttpRequest(method = HttpMethods.POST, uri = s"http://${workerAddress}/connectors", entity = entity))
+                HttpRequest(method = HttpMethods.POST, uri = s"http://$workerAddress/connectors", entity = entity))
               .flatMap(res => Unmarshal(res.entity).to[ConnectorResponse])
           }),
         TIMEOUT
@@ -70,7 +70,7 @@ object ConnectorClient {
 
       override def delete(name: String): Unit = Await.result(
         Http()
-          .singleRequest(HttpRequest(HttpMethods.DELETE, uri = s"http://${workerAddress}/connectors/$name"))
+          .singleRequest(HttpRequest(HttpMethods.DELETE, uri = s"http://$workerAddress/connectors/$name"))
           .flatMap(
             res =>
               if (res.status.isFailure())
@@ -85,14 +85,14 @@ object ConnectorClient {
 
       override def plugins(): Seq[Plugin] = Await.result(
         Http()
-          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://${workerAddress}/connector-plugins"))
-          .flatMap(unmarshal[Seq[Plugin]](_)),
+          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connector-plugins"))
+          .flatMap(unmarshal[Seq[Plugin]]),
         TIMEOUT
       )
       override def activeConnectors(): Seq[String] = Await.result(
         Http()
           .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://${workerAddress}/connectors"))
-          .flatMap(unmarshal[Seq[String]](_))
+          .flatMap(unmarshal[Seq[String]])
           .recover {
             // retry
             case _: HttpRetryException => {

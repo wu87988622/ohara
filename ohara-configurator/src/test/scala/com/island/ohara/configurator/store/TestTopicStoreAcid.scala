@@ -9,20 +9,20 @@ import com.island.ohara.serialization.StringSerializer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
-  val store =
+  val store: Store[String, String] =
     Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName("TestTopicStoreAcid").build()
   val elapsedTime = 30 // second
   val readerCount = 5
   val updaterCount = 5
   val removerCount = 5
   // use custom executor in order to make sure all threads can run parallel
-  implicit val executor =
+  implicit val executor: ExecutionContextExecutor =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(readerCount + updaterCount + removerCount))
-  def takeBreak() = TimeUnit.MILLISECONDS.sleep(300)
+  def takeBreak(): Unit = TimeUnit.MILLISECONDS.sleep(300)
 
   def needDelete(): Boolean = Random.nextBoolean()
 
@@ -32,7 +32,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
     * Hence, this test fails if reader find a pair having different key or value.
     */
   @Test
-  def testAcid() = {
+  def testAcid(): Unit = {
     val closed = new AtomicBoolean(false)
     val updaters = Seq.fill(readerCount)(createUpdater(closed, store))
     val readers = Seq.fill(updaterCount)(createReader(closed, store))
@@ -40,7 +40,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
     TimeUnit.SECONDS.sleep(elapsedTime)
     closed.set(true)
     import scala.concurrent.duration._
-    def checkResult(futures: Seq[Future[Long]]) = futures.foreach(Await.result(_, 5 second))
+    def checkResult(futures: Seq[Future[Long]]): Unit = futures.foreach(Await.result(_, 5 second))
 
     checkResult(updaters)
     checkResult(readers)
@@ -60,7 +60,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
         var done = false
         while (!done && iter.hasNext) {
           val (key, _) = iter.next()
-          if (needDelete) {
+          if (needDelete()) {
             count += 1
             store.remove(key)
             done = true

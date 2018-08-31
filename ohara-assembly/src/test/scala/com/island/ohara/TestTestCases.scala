@@ -33,9 +33,9 @@ class TestTestCases extends MediumTest with Matchers {
     val pattern = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
     val urls = classLoader.getResources(path)
     new Iterator[URL] {
-      def hasNext = urls.hasMoreElements()
+      def hasNext: Boolean = urls.hasMoreElements
 
-      def next() = urls.nextElement()
+      def next(): URL = urls.nextElement()
     }.map(url => pattern.matcher(url.getFile))
       .filter(_.find())
       .map(_.group(1))
@@ -67,7 +67,9 @@ class TestTestCases extends MediumTest with Matchers {
               val clz = Class.forName(clzName)
               if (clz.getSimpleName.startsWith("Test")) {
                 val validClzs = listSuperClassName(clz).filter(c => validTestName.contains(c))
-                withClue(s"$clzName should extend one of ${validTestName.mkString(", ")}") { validClzs.size shouldBe 1 }
+                withClue(s"$clzName should extend one of ${validTestName.mkString(", ")}") {
+                  validClzs.length shouldBe 1
+                }
                 logger.info(s"$clzName matches ${validClzs.head}")
               } else logger.info(s"${clz.getName} doesn't belong to test case. Skip")
             })

@@ -15,9 +15,9 @@ import com.typesafe.scalalogging.Logger
   */
 class CSVRecordWriterOutput(config: HDFSSinkConnectorConfig, storage: Storage, filePath: String)
     extends RecordWriterOutput {
-  private[this] lazy val logger = Logger(getClass().getName())
+  private[this] lazy val logger = Logger(getClass.getName)
   logger.info("open temp file")
-  var outputStream: OutputStream = storage.open(filePath, false)
+  val outputStream: OutputStream = storage.open(filePath, false)
 
   /**
     * Write file for csv format
@@ -25,7 +25,7 @@ class CSVRecordWriterOutput(config: HDFSSinkConnectorConfig, storage: Storage, f
     */
   override def write(row: Row): Unit = {
     val line: String = row.map(x => x.value).mkString(",")
-    this.logger.debug(s"data line: ${line}")
+    this.logger.debug(s"data line: $line")
     this.outputStream.write(ByteUtil.toBytes(line + "\n"))
   }
 

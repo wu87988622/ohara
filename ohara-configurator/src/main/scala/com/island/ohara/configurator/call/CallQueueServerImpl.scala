@@ -13,7 +13,7 @@ import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.reflect.ClassTag
 
 /**
@@ -54,7 +54,8 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   /**
     * requestWorker thread.
     */
-  private[this] implicit val executor = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+  private[this] implicit val executor: ExecutionContextExecutorService =
+    ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
 
   /**
     * We have to trace each request so we need a incrementable index.
@@ -113,18 +114,18 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
 
   private[this] def createCallQueueTask(internalRequest: CallQueueRequest, clientRequest: Request) =
     new CallQueueTask[Request, Response]() {
-      private[this] var response: Any = null
-      override val request: Request = clientRequest
+      private[this] var response: Any = _
+      override def request: Request = clientRequest
 
       override def complete(_res: Response): Unit = if (response != null)
-        throw new IllegalArgumentException(s"you have assigned the response:${response}")
+        throw new IllegalArgumentException(s"you have assigned the response:$response")
       else {
         response = _res
         send(CallQueueResponse(responseUuid, internalRequest.uuid), response)
       }
 
       override def complete(exception: Throwable): Unit = if (response != null)
-        throw new IllegalArgumentException(s"you have assigned the response:${response}")
+        throw new IllegalArgumentException(s"you have assigned the response:$response")
       else {
         response = toError(exception)
         send(CallQueueResponse(responseUuid, internalRequest.uuid), response)
@@ -134,12 +135,11 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
         processingTasks.remove(this)
         sendToKafka(key, value)
       } catch {
-        case e: Throwable => {
+        case e: Throwable =>
           logger.error("Failed to send the response back to client", e)
           // put back this task
           response = null
           undealtTasks.put(this)
-        }
       }
     }
 

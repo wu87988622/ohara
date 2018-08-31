@@ -195,7 +195,7 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    servers.foreach(close(_))
+    servers.foreach(close)
     close(client)
   }
 

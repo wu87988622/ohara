@@ -11,7 +11,7 @@ abstract class StorageCreator {
     * get storage instance
     * @return
     */
-  def getStorage(): Storage
+  def storage(): Storage
 
   /**
     * close storage filesystem

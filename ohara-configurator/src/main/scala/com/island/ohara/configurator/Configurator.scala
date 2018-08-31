@@ -52,10 +52,9 @@ class Configurator private[configurator] (configuredHostname: String, configured
         log.error(s"Request to $uri could not be handled normally because ${e.getMessage}")
         complete(StatusCodes.BadRequest -> toResponse(e))
       }
-    case e: Throwable => {
+    case e: Throwable =>
       log.error("What happens here?", e)
       complete(StatusCodes.ServiceUnavailable -> toResponse(e))
-    }
   }
 
   /**
@@ -70,8 +69,8 @@ class Configurator private[configurator] (configuredHostname: String, configured
     })
   }
 
-  private[this] implicit val actorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
-  private[this] implicit val actorMaterializer = ActorMaterializer()
+  private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
+  private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
   private[this] val httpServer: Http.ServerBinding =
     Await.result(Http().bindAndHandle(route, configuredHostname, configuredPort),
                  initializationTimeout.toMillis milliseconds)
@@ -81,9 +80,9 @@ class Configurator private[configurator] (configuredHostname: String, configured
     */
   override protected def doClose(): Unit = {
     if (httpServer != null)
-      CloseOnce.release(() => Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds), true)
+      CloseOnce.release(() => Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds))
     if (actorSystem != null)
-      CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds), true)
+      CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds))
     CloseOnce.close(store)
     CloseOnce.close(kafkaClient)
     CloseOnce.close(connectorClient)
@@ -140,7 +139,7 @@ object Configurator {
       println(USAGE)
       return
     }
-    if (args.size < 2 || args.size % 2 != 0) throw new IllegalArgumentException(USAGE)
+    if (args.length < 2 || args.length % 2 != 0) throw new IllegalArgumentException(USAGE)
     // TODO: make the parse more friendly
     var hostname = "0.0.0.0"
     var port: Int = 0
@@ -152,8 +151,8 @@ object Configurator {
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value)     => hostname = value
       case Array(PORT_KEY, value)         => port = value.toInt
-      case Array(BROKERS_KEY, value)      => if (!value.toLowerCase == "none") brokers = Some(value)
-      case Array(WORKERS_KEY, value)      => if (!value.toLowerCase == "none") workers = Some(value)
+      case Array(BROKERS_KEY, value)      => if (value.toLowerCase != "none") brokers = Some(value)
+      case Array(WORKERS_KEY, value)      => if (value.toLowerCase != "none") workers = Some(value)
       case Array(TOPIC_KEY, value)        => topicName = value
       case Array(PARTITIONS_KEY, value)   => numberOfPartitions = value.toInt
       case Array(REPLICATIONS_KEY, value) => numberOfReplications = value.toShort
@@ -182,7 +181,7 @@ object Configurator {
     hasRunningConfigurator = true
     try {
       LOG.info(
-        s"start a ${(if (standalone) "standalone" else "truly")} configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
+        s"start a ${if (standalone) "standalone" else "truly"} configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
       LOG.info("enter ctrl+c to terminate the configurator")
       while (!closeRunningConfigurator) {
         TimeUnit.SECONDS.sleep(2)

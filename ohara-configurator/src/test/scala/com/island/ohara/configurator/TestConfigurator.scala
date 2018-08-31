@@ -126,14 +126,14 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       def compareRequestAndResponse(request: SchemaRequest, response: Schema): Schema = {
         request.name shouldBe response.name
         request.disabled shouldBe response.disabled
-        request.columns.sameElements(response.columns) shouldBe true
+        request.columns == response.columns shouldBe true
         response
       }
 
       def compare2Response(lhs: Schema, rhs: Schema): Unit = {
         lhs.uuid shouldBe rhs.uuid
         lhs.name shouldBe rhs.name
-        lhs.columns.sameElements(rhs.columns) shouldBe true
+        lhs.columns == rhs.columns shouldBe true
         lhs.lastModified shouldBe rhs.lastModified
       }
 
@@ -398,7 +398,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       client.list[TopicInfo].size shouldBe 2
       var res = client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> UNKNOWN)))
       res.rules.size shouldBe 1
-      res.rules.get(uuid_0).get shouldBe UNKNOWN
+      res.rules(uuid_0) shouldBe UNKNOWN
       res.status shouldBe Status.STOPPED
       // the rules are unready so it fails to start the pipeline
       an[IllegalArgumentException] should be thrownBy client.start[Pipeline](res.uuid)
@@ -406,11 +406,11 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       // complete the rules
       res = client.update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
       res.rules.size shouldBe 1
-      res.rules.get(uuid_0).get shouldBe uuid_1
+      res.rules(uuid_0) shouldBe uuid_1
       res.status shouldBe Status.STOPPED
       res = client.start[Pipeline](res.uuid)
       res.rules.size shouldBe 1
-      res.rules.get(uuid_0).get shouldBe uuid_1
+      res.rules(uuid_0) shouldBe uuid_1
       res.status shouldBe Status.RUNNING
     })
   }
@@ -458,7 +458,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     val clusterInformation = client0.cluster[ClusterInformation]
     clusterInformation.brokers shouldBe testUtil.brokers
     clusterInformation.workers shouldBe testUtil.workers
-    clusterInformation.supportedDatabases.exists(_ == "mysql") shouldBe true
+    clusterInformation.supportedDatabases.contains("mysql") shouldBe true
   }
 
   @Test
@@ -722,7 +722,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    clients.foreach(CloseOnce.close(_))
+    clients.foreach(CloseOnce.close)
     configurators.foreach(c => {
       c.clear()
       c.close()

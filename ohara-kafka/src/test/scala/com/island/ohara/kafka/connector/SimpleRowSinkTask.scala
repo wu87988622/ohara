@@ -19,7 +19,7 @@ class SimpleRowSinkTask extends RowSinkTask {
     records
       .map(_.row)
       .foreach(row => {
-        logger.info(s"get ${row}")
+        logger.info(s"get $row")
         SimpleRowSinkTask.receivedRows.add(row)
       })
   }
@@ -29,11 +29,11 @@ class SimpleRowSinkTask extends RowSinkTask {
     SimpleRowSinkTask.runningTaskCount.decrementAndGet()
   }
 
-  override val _version = 100.toString
+  override val _version: String = 100.toString
 }
 
 object SimpleRowSinkTask {
-  def reset() = {
+  def reset(): Unit = {
     receivedRows.clear()
     runningTaskCount.set(0)
   }

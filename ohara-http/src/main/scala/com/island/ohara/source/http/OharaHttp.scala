@@ -12,7 +12,7 @@ import scala.concurrent.duration._
   */
 object OharaHttp {
 
-  val logger = Logger[this.type]
+  val logger: Logger = Logger[this.type]
 
   implicit val system: ActorSystem = ActorSystem("OharaHttpDaemon")
 
@@ -29,12 +29,10 @@ object OharaHttp {
       // After knowing how to pull the command of start and stop, it can implement the rest.
       val httpCommand = "start"
       httpCommand match {
-        case "start" => {
+        case "start" =>
           httpActor ! HttpCommand.START(ConfigFactory.load())
-        }
-        case "stop" => {
+        case "stop" =>
           httpActor ! HttpCommand.STOP
-        }
       }
     }
   }

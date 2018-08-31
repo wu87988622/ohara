@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.Logger
   */
 class HDFSSinkTask extends RowSinkTask {
 
-  private[this] lazy val logger = Logger(getClass().getName())
+  private[this] lazy val logger = Logger(getClass.getName)
 
   var hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = _
   var hdfsWriter: DataWriter = _
@@ -47,5 +47,5 @@ class HDFSSinkTask extends RowSinkTask {
     hdfsWriter.stop()
   }
 
-  override val _version = Version.getVersion()
+  override val _version: String = Version.getVersion
 }

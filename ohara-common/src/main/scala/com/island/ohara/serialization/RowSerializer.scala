@@ -120,7 +120,7 @@ object RowSerializer extends Serializer[Row] {
       writer.write(bytes)
     })
   }
-  val CELL_OVERHEAD_V0 = ByteUtil.SIZE_OF_INT // cell length
+  val CELL_OVERHEAD_V0: Int = ByteUtil.SIZE_OF_INT // cell length
   +ByteUtil.SIZE_OF_SHORT // cell name length
   +ByteUtil.SIZE_OF_BYTE // cell value type
   +ByteUtil.SIZE_OF_SHORT // cell value length

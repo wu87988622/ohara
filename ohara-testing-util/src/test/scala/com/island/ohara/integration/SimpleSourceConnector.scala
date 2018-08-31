@@ -13,13 +13,13 @@ import org.apache.kafka.connect.source.SourceConnector
   */
 class SimpleSourceConnector extends SourceConnector {
   private[this] lazy val logger = Logger(getClass.getName)
-  private[this] var topicName: String = null
+  private[this] var topicName: String = _
 
   override def version(): String = 100.toString
 
   override def start(props: util.Map[String, String]): Unit = {
     topicName = props.get("topic")
-    logger.info(s"start SimpleSourceConnector:${topicName}")
+    logger.info(s"start SimpleSourceConnector:$topicName")
   }
 
   override def taskClass(): Class[_ <: Task] = classOf[SimpleSourceTask]

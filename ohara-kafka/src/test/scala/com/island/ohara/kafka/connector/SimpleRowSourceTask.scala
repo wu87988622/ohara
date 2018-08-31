@@ -15,11 +15,11 @@ class SimpleRowSourceTask extends RowSourceTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  private[this] var topicName: String = null
+  private[this] var topicName: String = _
   private[this] var pollCountMax: Int = -1
 
   override def _start(props: Map[String, String]): Unit = {
-    topicName = props.get("topic").get
+    topicName = props("topic")
     pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).map(_.toInt).get
     logger.info(s"start SimpleRowSourceTask topicName:$topicName pollCount:$pollCountMax")
     if (pollCountMax <= 0) throw new IllegalArgumentException(s"count:$pollCountMax should be bigger than 0")
@@ -42,11 +42,11 @@ class SimpleRowSourceTask extends RowSourceTask {
     SimpleRowSourceTask.runningTaskCount.decrementAndGet()
   }
 
-  override val _version = 100.toString
+  override val _version: String = 100.toString
 }
 
 object SimpleRowSourceTask {
-  def reset() = {
+  def reset(): Unit = {
     runningTaskCount.set(0)
     submittedRows.clear()
     pollCount.set(0)

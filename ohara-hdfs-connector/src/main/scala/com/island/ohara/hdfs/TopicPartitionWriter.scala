@@ -16,13 +16,13 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
                            context: RowSinkContext,
                            partition: TopicPartition,
                            storage: Storage) {
-  private[this] lazy val logger = Logger(getClass().getName())
+  private[this] lazy val logger = Logger(getClass.getName)
   var recordWriterOutput: RecordWriterOutput = _
   var tmpFilePath: String = _
   val partitionName: String = s"partition${partition.partition}"
 
-  val tmpDir: String = s"${config.tmpDir()}/${partition.topic}/${partitionName}"
-  val dataDir: String = s"${config.dataDir()}/${partition.topic}/${partitionName}"
+  val tmpDir: String = s"${config.tmpDir()}/${partition.topic}/$partitionName"
+  val dataDir: String = s"${config.dataDir()}/${partition.topic}/$partitionName"
 
   val filePrefixName: String = config.dataFilePrefixName()
   val flushLineCount: Int = config.flushLineCount()
@@ -75,8 +75,8 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     */
   def openTempFile(recordWriterProvider: RecordWriterOutput, processLineCount: Int): Unit = {
     if (processLineCount == 0) {
-      val tmpFilePath = s"${tmpDir}/${System.currentTimeMillis()}${FileUtils.FILENAME_ENDSWITH}"
-      logger.info(s"create temp file path: ${tmpFilePath}")
+      val tmpFilePath = s"$tmpDir/${System.currentTimeMillis()}${FileUtils.FILENAME_ENDSWITH}"
+      logger.info(s"create temp file path: $tmpFilePath")
       recordWriterOutput = new CSVRecordWriterOutput(config, storage, tmpFilePath)
       this.tmpFilePath = tmpFilePath
     }
@@ -87,10 +87,9 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   }
 
   def commitFile(recordWriterProvider: RecordWriterOutput, tmpFilePath: String): Unit = {
-    logger.info(s"running commit file tmpFileName: ${tmpFilePath}")
+    logger.info(s"running commit file tmpFileName: $tmpFilePath")
     recordWriterProvider.close()
-    commit(tmpFilePath,
-           flushFilePath(storage.list(s"${dataDir}").map(filePath => FileUtils.fileName(filePath)), dataDir))
+    commit(tmpFilePath, flushFilePath(storage.list(s"$dataDir").map(filePath => FileUtils.fileName(filePath)), dataDir))
   }
 
   def close(): Unit = {
@@ -113,8 +112,8 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     if (stopOffset < 0) {
       stopOffset = 0
     }
-    val fileName = s"${dataDir}/${FileUtils.offsetFileName(filePrefixName, startOffset, stopOffset)}"
-    logger.info(s"flush file path is: ${fileName}")
+    val fileName = s"$dataDir/${FileUtils.offsetFileName(filePrefixName, startOffset, stopOffset)}"
+    logger.info(s"flush file path is: $fileName")
     fileName
   }
 
@@ -148,7 +147,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   private def recoveryOffset(): Unit = {
     logger.info("recovery offset")
     val previousStopOffset: Long =
-      FileUtils.getStopOffset(storage.list(s"${dataDir}").map(filePath => FileUtils.fileName(filePath)))
+      FileUtils.getStopOffset(storage.list(s"$dataDir").map(filePath => FileUtils.fileName(filePath)))
 
     //Move kafka topic partition offset to not commit to data dir position for HDFSSink connector fault or connect worker fault
     context.offset(partition, previousStopOffset)

@@ -57,7 +57,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
       .connectorClass(classOf[SimpleHDFSSinkConnector])
       .topic(topicName)
       .taskNumber(sinkTasks)
-      .disableConverter
+      .disableConverter()
       .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
       .build()
 
@@ -67,7 +67,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, 10 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir() == "/data", 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount() == 2000, 20 second)
-    OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.offsetInconsistentSkip() == false, 20 second)
+    OharaTestUtil.await(() => !SimpleHDFSSinkTask.sinkConnectorConfig.offsetInconsistentSkip(), 20 second)
   }
 
   @Test
@@ -81,9 +81,9 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 100
-    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
+    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
-    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
+    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
     val fileSystem = testUtil.fileSystem
     val storage = new HDFSStorage(fileSystem)
@@ -104,7 +104,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
       .connectorClass(classOf[HDFSSinkConnector])
       .topic(topicName)
       .taskNumber(sinkTasks)
-      .disableConverter
+      .disableConverter()
       .config(Map(
         flushLineCountName -> flushLineCount,
         tmpDirName -> tmpDirPath,
@@ -126,7 +126,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     OharaTestUtil.await(() =>
                           storage
                             .list(s"$dataDirPath/$topicName/$partitionID")
-                            .map(FileUtils.fileName(_))
+                            .map(FileUtils.fileName)
                             .contains("part-000000090-000000099.csv"),
                         10 seconds)
   }
@@ -142,9 +142,9 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 200
-    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
+    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
-    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName()
+    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
     val fileSystem = testUtil.fileSystem
     val storage = new HDFSStorage(fileSystem)
@@ -196,7 +196,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     OharaTestUtil.await(() =>
                           storage
                             .list(s"$dataDirPath/$topicName/$partitionID")
-                            .map(FileUtils.fileName(_))
+                            .map(FileUtils.fileName)
                             .contains("part-000000100-000000199.csv"),
                         10 seconds)
   }

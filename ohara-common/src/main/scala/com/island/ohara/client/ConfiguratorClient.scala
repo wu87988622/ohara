@@ -53,9 +53,9 @@ object ConfiguratorClient {
 
   def apply(configuratorAddress: String): ConfiguratorClient = new ConfiguratorClient with SprayJsonSupport
   with DefaultJsonProtocol {
-    private[this] implicit val actorSystem = ActorSystem(
+    private[this] implicit val actorSystem: ActorSystem = ActorSystem(
       s"${classOf[ConfiguratorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
-    private[this] implicit val actorMaterializer = ActorMaterializer()
+    private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
     override protected def doClose(): Unit = Await.result(actorSystem.terminate(), 60 seconds)
 
     override def list[T](implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T] = Await.result(
@@ -63,9 +63,7 @@ object ConfiguratorClient {
       TIMEOUT)
 
     override def delete[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T = Await.result(
-      Http()
-        .singleRequest(HttpRequest(HttpMethods.DELETE, cf.format(configuratorAddress, uuid)))
-        .flatMap(unmarshal[T](_)),
+      Http().singleRequest(HttpRequest(HttpMethods.DELETE, cf.format(configuratorAddress, uuid))).flatMap(unmarshal[T]),
       TIMEOUT)
 
     override def get[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T = Await.result(
@@ -106,7 +104,7 @@ object ConfiguratorClient {
           .flatMap(entity => {
             Http()
               .singleRequest(HttpRequest(HttpMethods.PUT, cf.format(configuratorAddress), entity = entity))
-              .flatMap(unmarshal[Seq[Res]](_))
+              .flatMap(unmarshal[Seq[Res]])
           }),
         TIMEOUT
       )

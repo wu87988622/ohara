@@ -29,7 +29,7 @@ private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Seri
   override def update(key: K, value: V): Option[V] = {
     try {
       checkClose()
-      Option(store.put(toKey(key), toValue(value))).map(fromValue(_))
+      Option(store.put(toKey(key), toValue(value))).map(fromValue)
     } finally {
       updateLock.synchronized {
         updateLock.notifyAll()
@@ -39,7 +39,7 @@ private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Seri
 
   override def get(key: K): Option[V] = {
     checkClose()
-    Option(store.get(toKey(key))).map(fromValue(_))
+    Option(store.get(toKey(key))).map(fromValue)
   }
 
   override protected def doClose(): Unit = {
@@ -56,7 +56,7 @@ private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Seri
 
   override def iterator: Iterator[(K, V)] = {
     checkClose()
-    return new Iterator[(K, V)]() {
+    new Iterator[(K, V)]() {
       private[this] val iter = store.entrySet().iterator()
       override def hasNext: Boolean = iter.hasNext
 
@@ -88,7 +88,7 @@ private class MemStore[K, V](keySerializer: Serializer[K], valueSerializer: Seri
       }
     }
     val first = store.pollFirstEntry()
-    if (first != null) return Some((fromKey(first.getKey), fromValue(first.getValue)))
+    if (first != null) Some((fromKey(first.getKey), fromValue(first.getValue)))
     else None
   }
 

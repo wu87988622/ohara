@@ -23,7 +23,7 @@ object Backend {
       println(USAGE)
       System.exit(1)
     }
-    if (args.size % 2 != 0) {
+    if (args.length % 2 != 0) {
       println(USAGE)
       System.exit(1)
     }

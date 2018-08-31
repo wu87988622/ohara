@@ -39,17 +39,16 @@ class TestSerializer extends SmallTest with Matchers {
 
   @Test
   def testPrimitiveSerializer(): Unit = {
-    values.foreach(raw =>
-      raw match {
-        case v: String      => StringSerializer.from(StringSerializer.to(v)) shouldBe v
-        case v: Boolean     => BooleanSerializer.from(BooleanSerializer.to(v)) shouldBe v
-        case v: Short       => ShortSerializer.from(ShortSerializer.to(v)) shouldBe v
-        case v: Int         => IntSerializer.from(IntSerializer.to(v)) shouldBe v
-        case v: Long        => LongSerializer.from(LongSerializer.to(v)) shouldBe v
-        case v: Float       => FloatSerializer.from(FloatSerializer.to(v)) shouldBe v
-        case v: Double      => DoubleSerializer.from(DoubleSerializer.to(v)) shouldBe v
-        case v: Array[Byte] => BytesSerializer.from(BytesSerializer.to(v)) shouldBe v
-        case _              => throw new IllegalArgumentException(s"Unsupported type:${raw.getClass.getCanonicalName}")
-    })
+    values.foreach {
+      case v: String      => StringSerializer.from(StringSerializer.to(v)) shouldBe v
+      case v: Boolean     => BooleanSerializer.from(BooleanSerializer.to(v)) shouldBe v
+      case v: Short       => ShortSerializer.from(ShortSerializer.to(v)) shouldBe v
+      case v: Int         => IntSerializer.from(IntSerializer.to(v)) shouldBe v
+      case v: Long        => LongSerializer.from(LongSerializer.to(v)) shouldBe v
+      case v: Float       => FloatSerializer.from(FloatSerializer.to(v)) shouldBe v
+      case v: Double      => DoubleSerializer.from(DoubleSerializer.to(v)) shouldBe v
+      case v: Array[Byte] => BytesSerializer.from(BytesSerializer.to(v)) shouldBe v
+      case raw            => throw new IllegalArgumentException(s"Unsupported type:${raw.getClass.getCanonicalName}")
+    }
   }
 }

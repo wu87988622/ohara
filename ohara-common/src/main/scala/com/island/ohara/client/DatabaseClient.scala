@@ -37,7 +37,7 @@ object DatabaseClient {
     if (r == null) Seq.empty
     else r.split(" ")
   }
-  private[this] def systemTable(types: Seq[String]): Boolean = types.exists(_ == "SYSTEM")
+  private[this] def systemTable(types: Seq[String]): Boolean = types.contains("SYSTEM")
 
   /**
     * @return a jdbc-based DatabaseClient
@@ -59,7 +59,7 @@ object DatabaseClient {
           }
         }
         .map {
-          case (c, t) => {
+          case (c, t) =>
             (c, t, CloseOnce.doClose(md.getPrimaryKeys(c, null, t)) { implicit rs =>
               {
                 val buf = new ArrayBuffer[String]()
@@ -67,10 +67,9 @@ object DatabaseClient {
                 buf.toSet
               }
             })
-          }
         }
         .map {
-          case (c, t, pks) => {
+          case (c, t, pks) =>
             val columns = CloseOnce.doClose(md.getColumns(c, null, t, null)) { implicit rs =>
               {
                 val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
@@ -83,7 +82,6 @@ object DatabaseClient {
               }
             }
             RdbTable(c, t, columns)
-          }
         }
         .filterNot(_.columns.isEmpty)
     }

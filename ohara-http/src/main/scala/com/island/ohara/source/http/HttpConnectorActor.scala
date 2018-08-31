@@ -2,7 +2,7 @@ package com.island.ohara.source.http
 
 import java.util.concurrent.ConcurrentHashMap
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
@@ -24,13 +24,13 @@ class HttpConnectorActor extends Actor with ActorLogging {
   private var server: Future[ServerBinding] = _
   private var producer: Producer[String, Row] = _
   private var schemaMap: ConcurrentHashMap[String, (String, RowSchema)] = _
-  private implicit val system = context.system
+  private implicit val system: ActorSystem = context.system
   private implicit var materializer: ActorMaterializer = _
   private implicit var executor: ExecutionContextExecutor = _
   private var start: Boolean = false
 
   override def receive: Receive = {
-    case HttpCommand.START(config) => {
+    case HttpCommand.START(config) =>
       log.info("COMMAND: Start HTTP Server")
       if (!start) {
         try {
@@ -50,7 +50,7 @@ class HttpConnectorActor extends Actor with ActorLogging {
           server = Http().bindAndHandle(webRoute, config.getString("http.interface"), config.getInt("http.port"))
           start = true
         } catch {
-          case e: Exception => {
+          case e: Exception =>
             log.error(e.toString)
             start = false
 
@@ -70,14 +70,12 @@ class HttpConnectorActor extends Actor with ActorLogging {
               materializer.shutdown()
               materializer = null
             }
-          }
         }
       } else {
         log.warning("Http Server already started")
       }
-    }
 
-    case HttpCommand.STOP => {
+    case HttpCommand.STOP =>
       log.info("COMMAND: Stop HTTP Server")
 
       if (start) {
@@ -86,7 +84,7 @@ class HttpConnectorActor extends Actor with ActorLogging {
           materializer.shutdown()
         } finally {
           producer.flush()
-          producer.close
+          producer.close()
         }
         server = null
         materializer = null
@@ -97,6 +95,5 @@ class HttpConnectorActor extends Actor with ActorLogging {
       } else {
         log.warning("Http Server has already been shutdown")
       }
-    }
   }
 }

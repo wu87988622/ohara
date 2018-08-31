@@ -20,7 +20,7 @@ class HDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator
     * Get HDFSStorage instance
     * @return
     */
-  override def getStorage(): Storage = {
+  override def storage(): Storage = {
     hdfsStorage
   }
 

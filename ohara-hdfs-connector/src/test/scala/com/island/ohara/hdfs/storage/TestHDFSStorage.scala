@@ -48,7 +48,7 @@ class TestHDFSStorage extends LargeTest with Matchers {
         result.append(x.toChar)
       })
     inputStream.close()
-    result.toString() shouldBe text
+    result.toString shouldBe text
   }
 
   @Test

@@ -49,7 +49,7 @@ class DataStreamWriter(val output: OutputStream) extends AutoCloseable {
     this
   }
 
-  override def close() = output.close()
+  override def close(): Unit = output.close()
 
 }
 

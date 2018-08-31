@@ -33,7 +33,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .append(Cell.builder.name("cf0").build(0))
       .append(Cell.builder.name("cf1").build(1))
       .tags(Set[String]("123", "456"))
-      .build
+      .build()
     testUtil.createTopic(topicName)
     val (_, rowQueue) =
       testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
@@ -64,14 +64,14 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val topicName = methodName
     val connectorName = methodName
     val rowCount = 3
-    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build
+    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
     testUtil.connectorClient
       .sinkConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topic(topicName)
       .taskNumber(1)
-      .disableConverter
+      .disableConverter()
       .build()
 
     import scala.concurrent.duration._
@@ -98,7 +98,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .connectorClass(classOf[SimpleRowSourceConnector])
       .topic(topicName)
       .taskNumber(1)
-      .disableConverter
+      .disableConverter()
       .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
       .build()
 

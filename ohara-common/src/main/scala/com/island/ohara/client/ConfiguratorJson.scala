@@ -21,8 +21,8 @@ object ConfiguratorJson extends DefaultJsonProtocol {
 
   //------------------------------------------------[DATA]------------------------------------------------//
   sealed trait Data {
-    val uuid: String
-    val name: String
+    def uuid: String
+    def name: String
 
     /**
       * This field should not be marshalled into json so we make it be "def" rather than "val.

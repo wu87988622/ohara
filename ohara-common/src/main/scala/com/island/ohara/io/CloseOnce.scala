@@ -39,10 +39,9 @@ trait CloseOnce extends AutoCloseable {
   final def newOrClose[T](fun: => T): T = {
     try fun
     catch {
-      case e: Throwable => {
+      case e: Throwable =>
         close()
         throw e
-      }
     }
   }
 }
@@ -65,9 +64,15 @@ object CloseOnce {
   /**
     * Close the non-null object and swallow/throw the exception
     * @param closeable nullable object
+    */
+  def close(closeable: AutoCloseable): Unit = close(closeable, true)
+
+  /**
+    * Close the non-null object and swallow/throw the exception
+    * @param closeable nullable object
     * @param swallow true if you don't want to see the exception.
     */
-  def close(closeable: AutoCloseable, swallow: Boolean = true): Unit = {
+  def close(closeable: AutoCloseable, swallow: Boolean): Unit = {
     try {
       if (closeable != null) {
         closeable.close()
@@ -88,10 +93,9 @@ object CloseOnce {
     */
   def doFinally[A, B](generator: => A)(worker: A => B)(closer: A => Unit): B = {
     Try(generator) match {
-      case Success(obj) => {
+      case Success(obj) =>
         try worker(obj)
         finally closer(obj)
-      }
       case Failure(e) => throw e
     }
   }
@@ -107,10 +111,9 @@ object CloseOnce {
     */
   def doClose[A <: java.lang.AutoCloseable, B](generator: => A)(worker: A => B): B = {
     Try(generator) match {
-      case Success(obj) => {
+      case Success(obj) =>
         try worker(obj)
         finally obj.close()
-      }
       case Failure(e) => throw e
     }
   }

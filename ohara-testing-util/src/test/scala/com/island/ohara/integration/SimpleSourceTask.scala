@@ -15,7 +15,7 @@ class SimpleSourceTask extends SourceTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  private[this] var topicName: String = null
+  private[this] var topicName: String = _
   private[this] var count: Int = -1
 
   override def start(props: util.Map[String, String]): Unit = {

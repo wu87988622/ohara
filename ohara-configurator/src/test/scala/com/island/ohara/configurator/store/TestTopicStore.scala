@@ -33,7 +33,7 @@ class TestTopicStore extends With3Brokers with Matchers {
   @Test
   def testMultiStore(): Unit = {
     val numberOfStore = 5
-    val stores = 0 until numberOfStore map (index =>
+    val stores = 0 until numberOfStore map (_ =>
       Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build())
     0 until 10 foreach (index => store.update(index.toString, index.toString))
     store.size shouldBe 10
@@ -61,36 +61,24 @@ class TestTopicStore extends With3Brokers with Matchers {
   def testTake(): Unit = {
     0 until 10 foreach (index => store.update(index.toString, index.toString))
     store.size shouldBe 10
-    var count = 0
-    var done = false
-    while (!done) {
-      val data = store.take()
-      if (data.isEmpty) done = true
-      else
-        data.foreach {
-          case (key, value) => {
-            key shouldBe count.toString
-            value shouldBe count.toString
-            count += 1
-          }
-        }
+    val data: Seq[(String, String)] = Iterator.continually(store.take()).takeWhile(_.isDefined).map(_.get).toSeq
+    data.size shouldBe 10
+    data.zipWithIndex.foreach {
+      case (d, index) =>
+        d._1 shouldBe index.toString
+        d._2 shouldBe index.toString
     }
-    count shouldBe 10
 
     doClose(
       Store
         .builder(StringSerializer, StringSerializer)
         .brokers(testUtil.brokers)
-        .topicName(s"${methodName}-copy")
-        .build()) { another =>
-      {
-        another.size shouldBe 0
-      }
-    }
+        .topicName(s"$methodName-copy")
+        .build())(_.size shouldBe 0)
   }
 
   @Test
-  def testUpdate() = {
+  def testUpdate(): Unit = {
     0 until 10 foreach (index => store.update(index.toString, index.toString) shouldBe None)
     0 until 10 foreach (index => store.update(index.toString, index.toString) shouldBe Some(index.toString))
     0 until 10 foreach (index => store.get(index.toString) shouldBe Some(index.toString))

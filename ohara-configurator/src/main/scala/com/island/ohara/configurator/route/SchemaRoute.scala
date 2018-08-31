@@ -12,10 +12,10 @@ private[configurator] object SchemaRoute {
       throw new IllegalArgumentException(s"duplicate order in ${request.columns}")
     if (request.columns.map(_.name).toSet.size != request.columns.size)
       throw new IllegalArgumentException(s"duplicate name in ${request.columns}")
-    if (request.columns.map(_.order).exists(_ == 0)) throw new IllegalArgumentException("0 is invalid order")
+    if (request.columns.map(_.order).contains(0)) throw new IllegalArgumentException("0 is invalid order")
     (1 to request.columns.size).foreach(
       index =>
-        if (!request.columns.map(_.order).exists(_ == index))
+        if (!request.columns.map(_.order).contains(index))
           throw new IllegalArgumentException(s"there are ${request.columns.size} columns but $index doesn't exist"))
     Schema(uuid, request.name, request.columns, request.disabled, System.currentTimeMillis())
   }

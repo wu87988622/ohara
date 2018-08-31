@@ -23,7 +23,7 @@ class SimpleSinkConnector extends SinkConnector {
 
   override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
     val list = new util.ArrayList[util.Map[String, String]]()
-    for (index <- 0 until maxTasks) {
+    for (_ <- 0 until maxTasks) {
       list.add(new util.HashMap[String, String]())
     }
     logger.info(s"SimpleSinkConnector maxTasks:$maxTasks")

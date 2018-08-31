@@ -25,15 +25,15 @@ class TestHttpConnectorActorWithMiniCluster
     with SmallTest {
 
   private val testUtil = OharaTestUtil.localBrokers(3)
-  private implicit val materializer = ActorMaterializer()
+  private implicit val materializer: ActorMaterializer = ActorMaterializer()
   private val interface = "localhost"
   private val port = 5566
   private val serverIPs = testUtil.brokers.split(",")
   private val configStr =
     s"""
        |http {
-       |  interface = "${interface}"
-       |  port = ${port}
+       |  interface = "$interface"
+       |  port = $port
        |}
        |
        |bootstrap.servers = [

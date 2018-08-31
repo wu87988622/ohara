@@ -11,7 +11,7 @@ import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 
 /**
   * This class implements the OStroe through the kafka topic. The config passed to this class will be added with All data persist in the kafka topic.
@@ -54,9 +54,9 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
     * TODO: make sure this uuid is unique in a distributed cluster. by chia
     */
-  val uuid = UuidUtil.uuid()
+  val uuid: String = UuidUtil.uuid()
 
-  implicit val executor =
+  implicit val executor: ExecutionContextExecutorService =
     ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
 
   /**
@@ -123,7 +123,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
               if (record.headers.size != 1) throw new IllegalArgumentException(s"The number of header should be 1")
               record.key.foreach(k => {
                 // If no value exist, remove the key. Otherwise, update the value mapped to the key
-                val previous: Option[V] = record.value.map(cache.update(k, _)).getOrElse(cache.remove(k))
+                val previous: Option[V] = record.value.fold(cache.remove(k))(cache.update(k, _))
 
                 val index = record.headers.head.key
                 // response the update sent by this topic store
@@ -210,5 +210,5 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     rval
   }
 
-  override def clear(): Unit = cache.iterator.map(_._1).foreach(remove(_))
+  override def clear(): Unit = cache.iterator.map(_._1).foreach(remove)
 }

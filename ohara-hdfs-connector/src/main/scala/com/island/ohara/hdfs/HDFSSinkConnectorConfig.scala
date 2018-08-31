@@ -22,25 +22,23 @@ class HDFSSinkConnectorConfig(props: Map[String, String]) {
     config
   }
 
-  def hdfsURL(): String = {
-    props.get(HDFSSinkConnectorConfig.HDFS_URL).get
-  }
+  def hdfsURL(): String = props(HDFSSinkConnectorConfig.HDFS_URL)
 
   def flushLineCount(): Int = {
     props
-      .getOrElse(HDFSSinkConnectorConfig.FLUSH_LINE_COUNT, HDFSSinkConnectorConfig.FLUSH_LINE_COUNT_DEFAULT.toString())
+      .getOrElse(HDFSSinkConnectorConfig.FLUSH_LINE_COUNT, HDFSSinkConnectorConfig.FLUSH_LINE_COUNT_DEFAULT.toString)
       .toInt
   }
 
   def rotateIntervalMS(): Long = {
     props
       .getOrElse(HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS,
-                 HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS_DEFAULT.toString())
+                 HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS_DEFAULT.toString)
       .toLong
   }
 
   def tmpDir(): String = {
-    props.getOrElse(HDFSSinkConnectorConfig.TMP_DIR, HDFSSinkConnectorConfig.TMP_DIR_DEFAULT.toString())
+    props.getOrElse(HDFSSinkConnectorConfig.TMP_DIR, HDFSSinkConnectorConfig.TMP_DIR_DEFAULT.toString)
   }
 
   def offsetDir(): String = {
@@ -65,14 +63,13 @@ class HDFSSinkConnectorConfig(props: Map[String, String]) {
   def offsetInconsistentSkip(): Boolean = {
     props
       .getOrElse(HDFSSinkConnectorConfig.OFFSET_INCONSISTENT_SKIP,
-                 HDFSSinkConnectorConfig.OFFSET_INCONSISTENT_SKIP_DEFAULT.toString())
+                 HDFSSinkConnectorConfig.OFFSET_INCONSISTENT_SKIP_DEFAULT.toString)
       .toBoolean
   }
 
   def dataBufferCount(): Long = {
     props
-      .getOrElse(HDFSSinkConnectorConfig.DATA_BUFFER_COUNT,
-                 HDFSSinkConnectorConfig.DATA_BUFFER_COUNT_DEFAULT.toString())
+      .getOrElse(HDFSSinkConnectorConfig.DATA_BUFFER_COUNT, HDFSSinkConnectorConfig.DATA_BUFFER_COUNT_DEFAULT.toString)
       .toLong
   }
 

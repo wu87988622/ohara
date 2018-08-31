@@ -19,9 +19,9 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext) {
     .newInstance(config)
     .asInstanceOf[StorageCreator]
 
-  private[this] val storage: Storage = createStorage.getStorage()
+  private[this] val storage: Storage = createStorage.storage()
 
-  var topicPartitionWriters = new mutable.HashMap[TopicPartition, TopicPartitionWriter]()
+  val topicPartitionWriters = new mutable.HashMap[TopicPartition, TopicPartitionWriter]()
 
   /**
     * Get the TopicPartition and added to TopicPartitionWriter collection
@@ -45,7 +45,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext) {
       val topicName: String = record.topic
       val partition: Int = record.partition
       val oharaTopicPartition: TopicPartition = TopicPartition(topicName, partition)
-      topicPartitionWriters.get(oharaTopicPartition).get.write(record)
+      topicPartitionWriters(oharaTopicPartition).write(record)
     })
 
     //When topic data is empty for check the flush time to commit temp file to data dir.
@@ -60,7 +60,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext) {
   def removePartitionWriters(partitions: Seq[TopicPartition]): Unit = {
     partitions.foreach(partition => {
       val oharaTopicPartition: TopicPartition = TopicPartition(partition.topic, partition.partition)
-      topicPartitionWriters.get(oharaTopicPartition).get.close()
+      topicPartitionWriters(oharaTopicPartition).close()
       topicPartitionWriters.remove(oharaTopicPartition)
     })
   }

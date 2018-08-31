@@ -41,5 +41,5 @@ class DataStreamReader(input: InputStream) extends AutoCloseable {
 
   def readString(length: Int): String = ByteUtil.toString(forceRead(length))
 
-  override def close() = input.close()
+  override def close(): Unit = input.close()
 }

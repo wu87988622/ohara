@@ -106,14 +106,12 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
                 case internalResponse: CallQueueResponse =>
                   if (responseReceivers.containsKey(internalResponse.reqId)) {
                     record.value.foreach {
-                      case response: Response => {
+                      case response: Response =>
                         // NOTED: the uuid we record is CallQueueRequest'd uuid
                         responseReceivers.remove(internalResponse.reqId).complete(response)
-                      }
-                      case exception: Error => {
+                      case exception: Error =>
                         // NOTED: the uuid we record is CallQueueRequest'd uuid
                         responseReceivers.remove(internalResponse.reqId).complete(exception)
-                      }
                       case _ => // this response is not for this client
                     }
                   }
@@ -187,9 +185,8 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
       producer.sender().topic(topicName).key(internalRequest).value(request).send()
       producer.flush()
     } catch {
-      case exception: Throwable => {
+      case exception: Throwable =>
         responseReceivers.remove(internalRequest.uuid).complete(toError(exception))
-      }
     }
     // an new request so it is time to invoke dustman to check the previous requests
     wakeupDustman()

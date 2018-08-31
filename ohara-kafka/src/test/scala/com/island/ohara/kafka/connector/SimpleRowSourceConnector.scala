@@ -10,15 +10,15 @@ import scala.collection.mutable.ArrayBuffer
   */
 class SimpleRowSourceConnector extends RowSourceConnector {
   private[this] lazy val logger = Logger(getClass.getName)
-  private[this] var topicName: String = null
+  private[this] var topicName: String = _
   private[this] var pollCountMax: Int = 0
 
-  override val _version = 100.toString
+  override val _version: String = 100.toString
 
   override def _start(props: Map[String, String]): Unit = {
-    topicName = props.get("topic").get
+    topicName = props("topic")
     pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).map(_.toInt).get
-    logger.info(s"start SimpleRowSourceConnector:${topicName} maxPoll:$pollCountMax")
+    logger.info(s"start SimpleRowSourceConnector:$topicName maxPoll:$pollCountMax")
   }
 
   override def _taskClass(): Class[_ <: RowSourceTask] = classOf[SimpleRowSourceTask]

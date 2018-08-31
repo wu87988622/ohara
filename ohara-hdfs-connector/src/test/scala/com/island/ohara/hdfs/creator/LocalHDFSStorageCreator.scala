@@ -10,7 +10,7 @@ class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCr
   private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS(1).fileSystem
   private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
 
-  override def getStorage(): Storage = {
+  override def storage(): Storage = {
     hdfsStorage
   }
 
