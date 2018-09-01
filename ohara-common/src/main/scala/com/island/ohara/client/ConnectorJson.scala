@@ -1,20 +1,13 @@
 package com.island.ohara.client
-import spray.json.{
-  DefaultJsonProtocol,
-  DeserializationException,
-  JsArray,
-  JsNull,
-  JsObject,
-  JsString,
-  JsValue,
-  RootJsonFormat
-}
+
+import spray.json.DefaultJsonProtocol._
+import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling connector data to/from json.
   * NOTED: the json format is a part of PUBLIC INTERFACE so please don't change the field names after releasing the ohara.
   */
-object ConnectorJson extends DefaultJsonProtocol {
+object ConnectorJson {
   final case class Plugin(className: String, typeName: String, version: String)
 
   /**

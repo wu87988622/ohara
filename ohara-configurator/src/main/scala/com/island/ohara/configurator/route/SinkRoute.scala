@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
+import spray.json.DefaultJsonProtocol._
 
 private[configurator] object SinkRoute extends SprayJsonSupport {
 

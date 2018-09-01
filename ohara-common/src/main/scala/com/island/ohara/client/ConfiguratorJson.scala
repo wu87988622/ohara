@@ -1,13 +1,14 @@
 package com.island.ohara.client
 import com.island.ohara.serialization.DataType
-import spray.json.{DefaultJsonProtocol, JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol._
+import spray.json.{JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling configurator data to/from json.
   * NOTED: the json format is a part of PUBLIC INTERFACE so please don't change the field names after releasing the ohara.
   * NOTED: common data must be put on the head.
   */
-object ConfiguratorJson extends DefaultJsonProtocol {
+object ConfiguratorJson {
   //------------------------------------------------[COMMON]------------------------------------------------//
   /**
     * Provide a way to format DataType. Both Schema and SchemaRrquest use DataType.

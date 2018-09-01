@@ -5,6 +5,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson.{Pipeline, _}
 import com.island.ohara.configurator.Configurator.Store
+import spray.json.DefaultJsonProtocol._
 
 private[configurator] object PipelineRoute {
 

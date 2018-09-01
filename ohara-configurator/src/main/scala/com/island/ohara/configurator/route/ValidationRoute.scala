@@ -6,6 +6,7 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.kafka.KafkaClient
+import spray.json.DefaultJsonProtocol._
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
