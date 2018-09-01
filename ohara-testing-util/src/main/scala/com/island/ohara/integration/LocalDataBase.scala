@@ -26,7 +26,7 @@ object LocalDataBase {
     val config = aMysqldConfig(v5_7_latest)
       .withCharset(UTF8)
       .withUser(s"user-${COUNT.getAndIncrement()}", s"password-${COUNT.getAndIncrement()}")
-      .withTimeZone("Asia/Taipei")
+      .withTimeZone(IoUtil.timezone)
       .withTimeout(2, TimeUnit.MINUTES)
       .withServerVariable("max_connect_errors", 666)
       .withFreePort()

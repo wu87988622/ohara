@@ -2,11 +2,14 @@ package com.island.ohara.io
 import java.io.{BufferedReader, File, FileInputStream, InputStreamReader}
 import java.net.InetAddress
 import java.nio.charset.Charset
+import java.util.Calendar
 
 import scala.collection.mutable.ArrayBuffer
 
 object IoUtil {
   def hostname: String = InetAddress.getLocalHost.getHostName
+
+  def timezone: String = Calendar.getInstance.getTimeZone.getID
 
   def readLines(f: File, filter: String => Boolean): Seq[String] =
     readLines(new BufferedReader(new InputStreamReader(new FileInputStream(f), Charset.forName("UTF-8"))), filter)
