@@ -5,7 +5,7 @@ pipelines:
         image: chia7712/ohara:latest
         size: 2x # 8G ram for this step.
         script:
-          - gradle clean build
+          - gradle -PmaxParallelForks=4 clean build
         artifacts:
           - '**/build/reports/**'
   custom:
@@ -14,6 +14,6 @@ pipelines:
           image: chia7712/ohara:latest
           size: 2x # 8G ram for this step.
           script:
-            - gradle clean test
+            - gradle -PmaxParallelForks=4 clean test
           artifacts:
             - '**/build/reports/**'
