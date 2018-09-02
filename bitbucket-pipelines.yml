@@ -1,0 +1,10 @@
+pipelines:
+  default:
+    - step:
+        name: build and test
+        image: chia7712/ohara:latest
+        size: 2x # Double resources available for this step.
+        script:
+          - gradle clean build
+        artifacts:
+          - '**/build/reports/**'
