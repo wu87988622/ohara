@@ -3,8 +3,17 @@ pipelines:
     - step:
         name: build and test
         image: chia7712/ohara:latest
-        size: 2x # Double resources available for this step.
+        size: 2x # 8G ram for this step.
         script:
           - gradle clean build
         artifacts:
           - '**/build/reports/**'
+  custom:
+    test:
+      - step:
+          image: chia7712/ohara:latest
+          size: 2x # 8G ram for this step.
+          script:
+            - gradle clean test
+          artifacts:
+            - '**/build/reports/**'
