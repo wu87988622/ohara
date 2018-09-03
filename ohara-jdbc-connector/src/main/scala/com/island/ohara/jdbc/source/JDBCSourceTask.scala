@@ -1,5 +1,6 @@
 package com.island.ohara.jdbc.source
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.jdbc.Version
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask}
 
@@ -10,7 +11,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @param props initial configuration
     */
-  override protected def _start(props: Map[String, String]): Unit = {
+  override protected def _start(props: Map[String, String], schema: Seq[Column]): Unit = {
     //TODO setting props for JDBC Source Connector
   }
 

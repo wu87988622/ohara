@@ -67,12 +67,12 @@ class TestRow extends SmallTest with Matchers {
     })
     row.size shouldBe list.size
     row.names.size shouldBe list.size
-    row seekCell "boolean" shouldBe defined
-    row seekCell "short" shouldBe defined
-    row seekCell "int" shouldBe defined
-    row seekCell "long" shouldBe defined
-    row seekCell "float" shouldBe defined
-    row seekCell "double" shouldBe defined
-    row seekCell "string" shouldBe defined
+    row.cell("boolean").value shouldBe true
+    row.cell("short").value shouldBe 123
+    row.cell("int").value shouldBe 123
+    row.cell("long").value shouldBe 123
+    row.cell("float").value shouldBe 123
+    row.cell("double").value shouldBe 123
+    row.cell("string").value shouldBe "123"
   }
 }

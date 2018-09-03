@@ -2,11 +2,10 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import org.apache.kafka.common.config.{Config, ConfigDef}
 import org.apache.kafka.connect.connector.{ConnectorContext, Task}
 import org.apache.kafka.connect.source.SourceConnector
-
-import scala.collection.JavaConverters
 
 /**
   * A wrap to SourceConnector. Currently, only Task is replaced by ohara object - RowSourceTask
@@ -25,15 +24,16 @@ abstract class RowSourceConnector extends SourceConnector {
     *
     * @return a seq of configs
     */
-  protected def _taskConfigs(maxTasks: Int): Seq[Map[String, String]]
+  protected def _taskConfigs(maxTasks: Int): Seq[(Map[String, String], Seq[Column])]
 
   /**
     * Start this Connector. This method will only be called on a clean Connector, i.e. it has
     * either just been instantiated and initialized or _stop() has been invoked.
     *
     * @param config configuration settings
+    * @param schema the schema should be used in this connector
     */
-  protected def _start(config: Map[String, String]): Unit
+  protected def _start(config: Map[String, String], schema: Seq[Column]): Unit
 
   /**
     * stop this connector
@@ -57,12 +57,27 @@ abstract class RowSourceConnector extends SourceConnector {
   //-------------------------------------------------[WRAPPED]-------------------------------------------------//
   import scala.collection.JavaConverters._
 
-  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
-    _taskConfigs(maxTasks: Int).map(JavaConverters.mapAsJavaMap(_)).asJava
+  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
+    _taskConfigs(maxTasks: Int).map {
+      case (config, columns) => {
+        if (config.contains(Column.COLUMN_KEY))
+          throw new IllegalArgumentException(s"DON'T touch ${Column.COLUMN_KEY} manually")
+        val copy = config + (Column.COLUMN_KEY -> Column.toString(columns))
+        copy.asJava
+      }
+    }.asJava
+  }
 
   final override def taskClass(): Class[_ <: Task] = _taskClass()
 
-  final override def start(props: util.Map[String, String]): Unit = _start(props.asScala.toMap)
+  final override def start(props: util.Map[String, String]): Unit = {
+    val config = props.asScala
+    val columns = Column.toColumns(
+      config
+        .remove(Column.COLUMN_KEY)
+        .getOrElse(throw new IllegalArgumentException(s"${Column.COLUMN_KEY} doesn't exist!!!")))
+    _start(config.toMap, columns)
+  }
 
   final override def stop(): Unit = _stop()
 

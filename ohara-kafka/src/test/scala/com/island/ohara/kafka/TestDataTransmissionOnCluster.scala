@@ -1,5 +1,6 @@
 package com.island.ohara.kafka
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.ByteUtil
@@ -10,7 +11,7 @@ import com.island.ohara.kafka.connector.{
   SimpleRowSourceConnector,
   SimpleRowSourceTask
 }
-import com.island.ohara.serialization.{RowSerializer, Serializer}
+import com.island.ohara.serialization.{DataType, RowSerializer, Serializer}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
@@ -49,7 +50,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     }
     OharaTestUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
     rowQueue.forEach((r: Row) => {
-      r.cellCount shouldBe row.cellCount
+      r.size shouldBe row.size
       r.cell(0).name shouldBe "cf0"
       r.cell(0).value shouldBe 0
       r.cell(1).name shouldBe "cf1"
@@ -96,6 +97,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .sourceConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
+      .columns(Seq(Column("cf", DataType.BOOLEAN, 1)))
       .topic(topicName)
       .taskNumber(1)
       .disableConverter()

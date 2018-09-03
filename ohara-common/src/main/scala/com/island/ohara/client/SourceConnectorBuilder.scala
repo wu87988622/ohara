@@ -1,5 +1,6 @@
 package com.island.ohara.client
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse}
 
 import scala.collection.mutable
@@ -8,6 +9,12 @@ import scala.collection.mutable
   * Used to config and run the source connector.
   */
 abstract class SourceConnectorBuilder extends ConnectorBuilder {
+  private[this] var columns: Seq[Column] = _
+
+  def columns(columns: Seq[Column]): SourceConnectorBuilder = {
+    this.columns = columns
+    this
+  }
 
   /**
     * send the request to create the sink connector.
@@ -20,6 +27,7 @@ abstract class SourceConnectorBuilder extends ConnectorBuilder {
     config += ("connector.class" -> clzName)
     config += ("topic" -> topicNames.head)
     config += ("tasks.max" -> taskMax.toString)
+    if (columns != null) config += (Column.COLUMN_KEY -> Column.toString(columns))
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)
       config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")

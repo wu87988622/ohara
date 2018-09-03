@@ -3,6 +3,7 @@ package com.island.ohara.kafka.connector
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.data.{Cell, Row}
 import com.typesafe.scalalogging.Logger
 
@@ -18,7 +19,7 @@ class SimpleRowSourceTask extends RowSourceTask {
   private[this] var topicName: String = _
   private[this] var pollCountMax: Int = -1
 
-  override def _start(props: Map[String, String]): Unit = {
+  override def _start(props: Map[String, String], schema: Seq[Column]): Unit = {
     topicName = props("topic")
     pollCountMax = props.get(SimpleRowSourceConnector.POLL_COUNT_MAX).map(_.toInt).get
     logger.info(s"start SimpleRowSourceTask topicName:$topicName pollCount:$pollCountMax")

@@ -1,4 +1,6 @@
 package com.island.ohara.client
+import java.lang.String
+
 import com.island.ohara.serialization.DataType
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
@@ -54,6 +56,22 @@ object ConfiguratorJson {
       "type" -> JsString(obj.typeName.name),
       "order" -> JsNumber(obj.order)
     )
+  }
+  object Column {
+    // kafka connector accept only Map[String, String] as input arguments so we have to serialize the column to a string
+    // TODO: Personally, I hate this ugly workaround...by chia
+    val COLUMN_KEY: String = "__row_source_schema"
+    def toString(columns: Seq[Column]): String = columns.map(c => s"${c.name},${c.typeName},${c.order}").mkString(",")
+    def toColumns(columnsString: String): Seq[Column] = {
+      val splits = columnsString.split(",")
+      if (splits.length % 3 != 0) throw new IllegalArgumentException("invalid format of columns string")
+      splits
+        .grouped(3)
+        .map {
+          case Array(name, typeName, order) => Column(name, DataType.of(typeName), order.toInt)
+        }
+        .toSeq
+    }
   }
 
   final case class SchemaRequest(name: String, columns: Seq[Column], disabled: Boolean)

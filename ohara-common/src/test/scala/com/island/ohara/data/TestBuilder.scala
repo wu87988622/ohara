@@ -44,7 +44,7 @@ class TestBuilder extends SmallTest with Matchers {
       .tags(Set[String]("tag0", "tag8"))
       .build()
 
-    row.cellCount shouldBe 3
+    row.size shouldBe 3
     row.cell(0).name shouldBe "0"
     row.cell(0).value shouldBe 1
     row.cell(1).name shouldBe "1"

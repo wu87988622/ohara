@@ -1,8 +1,5 @@
 package com.island.ohara.data
 
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.{TraversableOnce, mutable}
-
 abstract class Row extends Iterable[Cell[_]] {
 
   /**
@@ -18,7 +15,7 @@ abstract class Row extends Iterable[Cell[_]] {
     * @param name cell name
     * @return None if the target cell doesn't exist
     */
-  def seekCell(name: String): Option[Cell[_]]
+  def cell(name: String): Cell[_]
 
   /**
     * seek the cell at the specific index
@@ -29,19 +26,7 @@ abstract class Row extends Iterable[Cell[_]] {
     */
   def cell(index: Int): Cell[_]
 
-  /**
-    * @return the number of cells
-    */
-  def cellCount: Int
-
-  /**
-    * The origin behavior of size method is a expensive op.
-    *
-    * @return row count
-    */
-  override def size: Int = cellCount
-
-  override def toString(): String = toList.mkString(",")
+  override def toString(): String = mkString(",")
 
   /**
     * Indicates whether this row is equal to another row
@@ -66,6 +51,11 @@ abstract class Row extends Iterable[Cell[_]] {
   private[this] def compareTags(other: Row): Boolean = if (tags.isEmpty && other.tags.isEmpty) true
   else if (tags.size == other.tags.size) tags.forall(t => other.tags.contains(t))
   else false
+
+  /**
+    * the tag is useful to carry the extra meta for row
+    * @return tags of this row
+    */
   def tags: Set[String]
 }
 
@@ -75,44 +65,30 @@ object Row {
   /**
     * Instantiate a row with a single cell
     */
-  def apply(cell: Cell[_]): Row = apply(Array(cell))
+  def apply(cell: Cell[_]): Row = apply(Seq(cell))
 
   /**
     * Instantiate a row with copying all cells from passed argument
     */
-  def apply(cells: Cell[_]*): Row = apply(cells)
+  def apply(cells: Seq[Cell[_]]): Row = apply(cells, Set.empty)
 
   /**
     * Instantiate a row with copying all cells from passed argument
     */
-  def apply(cells: TraversableOnce[Cell[_]], _tags: Set[String] = Set.empty): Row = new Row() {
+  def apply(cells: Seq[Cell[_]], _tags: Set[String]): Row = {
+    if (cells.map(_.name).toSet.size != cells.size)
+      throw new IllegalArgumentException(s"duplicate column:${cells.map(_.name).mkString(",")} are not supported")
+    new Row() {
+      override def size: Int = cells.size
 
-    /**
-      * Save a array of cells in order to make size and index only require O(1) time
-      */
-    private[this] val cellArray = new ArrayBuffer[Cell[_]]
-    private[this] val cellGroup = new mutable.LinkedHashMap[String, Cell[_]]()
-    cells.foreach(
-      (cell: Cell[_]) =>
-        if (cellGroup.contains(cell.name)) throw new IllegalArgumentException(s"Duplicate name:${cell.name}")
-        else {
-          cellArray += cell
-          if (cellGroup.put(cell.name, cell).isDefined)
-            throw new IllegalArgumentException(s"duplicate column:${cell.name} are not supported")
-      })
+      override def iterator: Iterator[Cell[_]] = cells.iterator
 
-    override def cellCount: Int = cellGroup.size
+      override def cell(name: String): Cell[_] = cells.filter(_.name == name).head
 
-    override def iterator: Iterator[Cell[_]] = cellGroup.valuesIterator
+      override def names: Iterator[String] = cells.map(_.name).iterator
 
-    override def seekCell(name: String): Option[Cell[_]] = cellGroup.get(name)
-
-    override def names: Iterator[String] = cellGroup.keysIterator
-
-    override def cell(index: Int): Cell[_] = try cellArray(index)
-    catch {
-      case e: ArrayIndexOutOfBoundsException => throw new IndexOutOfBoundsException(e.getMessage)
+      override def cell(index: Int): Cell[_] = cells(index)
+      override def tags: Set[String] = _tags
     }
-    override def tags: Set[String] = _tags
   }
 }
