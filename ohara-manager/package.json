@@ -15,7 +15,7 @@
     "lint:server": "eslint \"**/*.js\"",
     "lint:client": "yarn --cwd client lint",
     "test": "jest",
-    "test:report": "JEST_JUNIT_OUTPUT=\"./testReports/serverUnits.xml\" yarn test --reporters=default --reporters=jest-junit",
+    "test:report": "JEST_JUNIT_OUTPUT=\"./test-reports/serverUnits.xml\" yarn test --reporters=default --reporters=jest-junit",
     "test:watch": "yarn test --watch",
     "test:coverage": "yarn test --coverage",
     "test:ci": "yarn setup && yarn test:all && yarn clean:process",
@@ -24,7 +24,7 @@
     "test:client:e2e": "yarn start:client & wait-on http://localhost:3000 && yarn start & wait-on http://localhost:5050 && yarn --cwd client cypress:ci",
     "clean": "yarn clean:client && yarn clean:server",
     "clean:process": "forever stopall",
-    "clean:server": "rm -rf ./testReports node_modules",
+    "clean:server": "rm -rf ./test-reports node_modules",
     "clean:client": "rm -rf ./client/node_modules ./client/build",
     "format": "prettier --single-quote --trailing-comma all --write \"**/*.js\"",
     "prepush": "yarn lint && yarn test:all && yarn format"

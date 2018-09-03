@@ -65,8 +65,6 @@ const Button = ({
 }) => {
   const cls = cx({ 'is-working': isWorking }, { 'is-disabled': disabled });
 
-  console.log(rest);
-
   return (
     <BtnWrapper
       type={type}
