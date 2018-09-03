@@ -19,3 +19,4 @@ pipelines:
             - gradle -PmaxParallelForks=4 clean test
           artifacts:
             - '**/build/reports/**'
+            - '**/ohara-manager/test-reports/**'
