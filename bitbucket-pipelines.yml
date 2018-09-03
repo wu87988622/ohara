@@ -1,3 +1,5 @@
+options:
+  max-time: 30 # 30 mins
 pipelines:
   default:
     - step:
