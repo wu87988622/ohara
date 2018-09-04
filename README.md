@@ -128,6 +128,7 @@ a local kafka cluster with 3 brokers.
 * **Jack Yang (jack@is-land.com.tw)** - committer
 * **Chia-Ping Tsai (chia7712@is-land.com.tw)** - committer
 * **Joshua_Lin (joshua@is-land.com.tw)** - committer
+* **Geordie Mai (geordie@is-land.com.tw)** - committer
 
 ## License
 
