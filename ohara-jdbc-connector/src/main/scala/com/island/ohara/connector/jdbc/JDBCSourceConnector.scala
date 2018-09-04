@@ -1,7 +1,7 @@
-package com.island.ohara.jdbc
+package com.island.ohara.connector.jdbc
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.jdbc.source.JDBCSourceTask
+import com.island.ohara.connector.jdbc.source.JDBCSourceTask
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask}
 
 /**

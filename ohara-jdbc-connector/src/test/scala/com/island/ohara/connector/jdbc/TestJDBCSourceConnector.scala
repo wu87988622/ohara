@@ -1,4 +1,4 @@
-package com.island.ohara.jdbc
+package com.island.ohara.connector.jdbc
 
 import com.island.ohara.integration.With3Brokers3Workers
 import org.junit.Test

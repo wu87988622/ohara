@@ -1,7 +1,7 @@
-package com.island.ohara.jdbc.source
+package com.island.ohara.connector.jdbc.source
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.jdbc.Version
+import com.island.ohara.connector.jdbc.Version
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask}
 
 class JDBCSourceTask extends RowSourceTask {
