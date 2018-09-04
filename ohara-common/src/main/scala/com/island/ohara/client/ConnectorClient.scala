@@ -64,7 +64,7 @@ object ConnectorClient {
             Http()
               .singleRequest(
                 HttpRequest(method = HttpMethods.POST, uri = s"http://$workerAddress/connectors", entity = entity))
-              .flatMap(res => Unmarshal(res.entity).to[ConnectorResponse])
+              .flatMap(unmarshal[ConnectorResponse])
           }),
         TIMEOUT
       )
@@ -92,7 +92,7 @@ object ConnectorClient {
       )
       override def activeConnectors(): Seq[String] = Await.result(
         Http()
-          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://${workerAddress}/connectors"))
+          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connectors"))
           .flatMap(unmarshal[Seq[String]])
           .recover {
             // retry

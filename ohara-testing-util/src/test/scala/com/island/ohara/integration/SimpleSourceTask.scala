@@ -15,13 +15,13 @@ class SimpleSourceTask extends SourceTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  private[this] var topicName: String = _
+  private[this] var topicNames: String = _
   private[this] var count: Int = -1
 
   override def start(props: util.Map[String, String]): Unit = {
-    topicName = props.get("topic")
+    topicNames = props.get("topics")
     count = props.get("task.count").toInt
-    logger.info(s"start SimpleSourceTask topicName:$topicName count:$count")
+    logger.info(s"start SimpleSourceTask topicName:$topicNames count:$count")
     if (count <= 0) throw new IllegalArgumentException(s"count:$count should be bigger than 0")
   }
 
@@ -29,7 +29,7 @@ class SimpleSourceTask extends SourceTask {
     if (SimpleSourceTask.taskCount.incrementAndGet() > count) return null
     val data = new util.ArrayList[SourceRecord]()
     SimpleSourceTask.dataSet.foreach(value => {
-      data.add(new SourceRecord(null, null, topicName, null, null, Schema.INT32_SCHEMA, value))
+      data.add(new SourceRecord(null, null, topicNames, null, null, Schema.INT32_SCHEMA, value))
       SimpleSourceTask.taskValues.add(value)
       logger.info(s"add $value")
     })

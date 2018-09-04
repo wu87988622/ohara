@@ -9,10 +9,10 @@ import scala.collection.mutable
   * Used to config and run the source connector.
   */
 abstract class SourceConnectorBuilder extends ConnectorBuilder {
-  private[this] var columns: Seq[Column] = _
+  private[this] var schema: Seq[Column] = _
 
-  def columns(columns: Seq[Column]): SourceConnectorBuilder = {
-    this.columns = columns
+  def schema(schema: Seq[Column]): SourceConnectorBuilder = {
+    this.schema = schema
     this
   }
 
@@ -25,9 +25,10 @@ abstract class SourceConnectorBuilder extends ConnectorBuilder {
     if (topicNames.size != 1) throw new IllegalArgumentException("multi-topics is invalid for source connector")
     if (config == null) config = new mutable.HashMap[String, String]()
     config += ("connector.class" -> clzName)
-    config += ("topic" -> topicNames.head)
+    // NOTED: the key "topics" is mapped to RowSourceConnector.TOPICS_KEYS
+    config += ("topics" -> topicNames.mkString(","))
     config += ("tasks.max" -> taskMax.toString)
-    if (columns != null) config += (Column.COLUMN_KEY -> Column.toString(columns))
+    if (schema != null) config += (Column.COLUMN_KEY -> Column.toString(schema))
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)
       config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")

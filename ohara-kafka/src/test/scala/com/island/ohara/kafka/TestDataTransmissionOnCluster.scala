@@ -97,7 +97,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .sourceConnectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
-      .columns(Seq(Column("cf", DataType.BOOLEAN, 1)))
+      .schema(Seq(Column("cf", DataType.BOOLEAN, 1)))
       .topic(topicName)
       .taskNumber(1)
       .disableConverter()

@@ -1,16 +1,13 @@
 package com.island.ohara.connector.jdbc
-
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.jdbc.source.JDBCSourceTask
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
 
 /**
   * This class for JDBC Source connector plugin
   */
 class JDBCSourceConnector extends RowSourceConnector {
 
-  var props: Map[String, String] = _
-  var schema: Seq[Column] = _
+  private[this] var taskConfig: TaskConfig = _
 
   /**
     * Start this Connector. This method will only be called on a clean Connector, i.e. it has
@@ -18,9 +15,8 @@ class JDBCSourceConnector extends RowSourceConnector {
     *
     * @param props configuration settings
     */
-  override protected def _start(props: Map[String, String], schema: Seq[Column]): Unit = {
-    this.props = props
-    this.schema = schema
+  override protected def _start(taskConfig: TaskConfig): Unit = {
+    this.taskConfig = taskConfig
   }
 
   /**
@@ -37,9 +33,9 @@ class JDBCSourceConnector extends RowSourceConnector {
     *
     * @return a seq of configs
     */
-  override protected def _taskConfigs(maxTasks: Int): Seq[(Map[String, String], Seq[Column])] = {
+  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
     //TODO
-    Seq((props, schema))
+    Seq(taskConfig)
   }
 
   /**

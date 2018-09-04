@@ -14,11 +14,10 @@ class TestColumnInSource extends SmallTest with Matchers {
   def testSource(): Unit = {
     val source = new RowSourceConnector {
       override protected def _taskClass(): Class[_ <: RowSourceTask] = ???
-      override protected def _taskConfigs(maxTasks: Int): Seq[(Map[String, String], Seq[Column])] = {
-        val map = Map(Column.COLUMN_KEY -> Column.toString(columns))
-        Seq((map, columns))
+      override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
+        Seq(TaskConfig(Seq("topic"), columns, Map(Column.COLUMN_KEY -> Column.toString(columns))))
       }
-      override protected def _start(config: Map[String, String], schema: Seq[Column]): Unit = ???
+      override protected def _start(config: TaskConfig): Unit = ???
       override protected def _stop(): Unit = ???
 
       override protected def _version: String = ???
@@ -33,7 +32,7 @@ class TestColumnInSource extends SmallTest with Matchers {
   def testTask(): Unit = {
     val task = new RowSourceTask {
 
-      override protected def _start(config: Map[String, String], schema: Seq[Column]): Unit = ???
+      override protected def _start(config: TaskConfig): Unit = ???
 
       override protected def _stop(): Unit = ???
 

@@ -13,13 +13,14 @@ import org.apache.kafka.connect.source.SourceConnector
   */
 class SimpleSourceConnector extends SourceConnector {
   private[this] lazy val logger = Logger(getClass.getName)
-  private[this] var topicName: String = _
+  private[this] var topicNames: String = _
 
   override def version(): String = 100.toString
 
   override def start(props: util.Map[String, String]): Unit = {
-    topicName = props.get("topic")
-    logger.info(s"start SimpleSourceConnector:$topicName")
+    topicNames = props.get("topics")
+    if (topicNames.split(",").size != 1) throw new IllegalArgumentException("too many topics")
+    logger.info(s"start SimpleSourceConnector:$topicNames")
   }
 
   override def taskClass(): Class[_ <: Task] = classOf[SimpleSourceTask]
@@ -28,7 +29,7 @@ class SimpleSourceConnector extends SourceConnector {
     val list = new util.ArrayList[util.Map[String, String]]()
     for (_ <- 0 until maxTasks) {
       val config = new util.HashMap[String, String]()
-      config.put("topic", topicName)
+      config.put("topics", topicNames)
       config.put("task.count", maxTasks.toString)
       list.add(config)
     }
@@ -41,6 +42,6 @@ class SimpleSourceConnector extends SourceConnector {
   }
 
   override def config(): ConfigDef = {
-    new ConfigDef().define("topic", Type.LIST, Importance.HIGH, "The topic to publish data to")
+    new ConfigDef().define("topics", Type.LIST, Importance.HIGH, "The topic to publish data to")
   }
 }

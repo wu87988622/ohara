@@ -2,7 +2,6 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.serialization.RowSerializer
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceRecord, SourceTask, SourceTaskContext}
@@ -18,8 +17,9 @@ abstract class RowSourceTask extends SourceTask {
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
     * @param config initial configuration
     * @param schema the schema should be used in this connector task
+    * @param topics the target topics
     */
-  protected def _start(config: Map[String, String], schema: Seq[Column]): Unit
+  protected def _start(config: TaskConfig): Unit
 
   /**
     * Signal this SourceTask to stop. In SourceTasks, this method only needs to signal to the task that it should stop
@@ -94,15 +94,7 @@ abstract class RowSourceTask extends SourceTask {
         .asJava
   }
 
-  final override def start(props: util.Map[String, String]): Unit = {
-    val config = props.asScala
-    val columns = Column.toColumns(
-      config
-        .remove(Column.COLUMN_KEY)
-        .getOrElse(throw new IllegalArgumentException(s"${Column.COLUMN_KEY} doesn't exist!!!")))
-    _start(config.toMap, columns)
-  }
-
+  final override def start(props: util.Map[String, String]): Unit = _start(RowSourceConnector.toTaskConfig(props))
   final override def stop(): Unit = _stop()
 
   final override def commit(): Unit = _commit()

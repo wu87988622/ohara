@@ -6,6 +6,9 @@ import com.island.ohara.client.ConfiguratorJson.Column
 import org.apache.kafka.common.config.{Config, ConfigDef}
 import org.apache.kafka.connect.connector.{ConnectorContext, Task}
 import org.apache.kafka.connect.source.SourceConnector
+import scala.collection.JavaConverters._
+
+import RowSourceConnector._
 
 /**
   * A wrap to SourceConnector. Currently, only Task is replaced by ohara object - RowSourceTask
@@ -24,16 +27,15 @@ abstract class RowSourceConnector extends SourceConnector {
     *
     * @return a seq of configs
     */
-  protected def _taskConfigs(maxTasks: Int): Seq[(Map[String, String], Seq[Column])]
+  protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig]
 
   /**
     * Start this Connector. This method will only be called on a clean Connector, i.e. it has
     * either just been instantiated and initialized or _stop() has been invoked.
     *
     * @param config configuration settings
-    * @param schema the schema should be used in this connector
     */
-  protected def _start(config: Map[String, String], schema: Seq[Column]): Unit
+  protected def _start(config: TaskConfig): Unit
 
   /**
     * stop this connector
@@ -55,29 +57,13 @@ abstract class RowSourceConnector extends SourceConnector {
   protected def _version: String
 
   //-------------------------------------------------[WRAPPED]-------------------------------------------------//
-  import scala.collection.JavaConverters._
 
-  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
-    _taskConfigs(maxTasks: Int).map {
-      case (config, columns) => {
-        if (config.contains(Column.COLUMN_KEY))
-          throw new IllegalArgumentException(s"DON'T touch ${Column.COLUMN_KEY} manually")
-        val copy = config + (Column.COLUMN_KEY -> Column.toString(columns))
-        copy.asJava
-      }
-    }.asJava
-  }
+  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
+    _taskConfigs(maxTasks: Int).map(toMap).asJava
 
   final override def taskClass(): Class[_ <: Task] = _taskClass()
 
-  final override def start(props: util.Map[String, String]): Unit = {
-    val config = props.asScala
-    val columns = Column.toColumns(
-      config
-        .remove(Column.COLUMN_KEY)
-        .getOrElse(throw new IllegalArgumentException(s"${Column.COLUMN_KEY} doesn't exist!!!")))
-    _start(config.toMap, columns)
-  }
+  final override def start(props: util.Map[String, String]): Unit = _start(toTaskConfig(props))
 
   final override def stop(): Unit = _stop()
 
@@ -96,4 +82,30 @@ abstract class RowSourceConnector extends SourceConnector {
     super.reconfigure(props)
 
   final override def validate(connectorConfigs: util.Map[String, String]): Config = super.validate(connectorConfigs)
+}
+
+object RowSourceConnector {
+  val TOPICS_KEY: String = "topics"
+  private[connector] def toTaskConfig(props: util.Map[String, String]): TaskConfig = {
+    val options = props.asScala
+    val schema = Column.toColumns(
+      options
+        .remove(Column.COLUMN_KEY)
+        .getOrElse(throw new IllegalArgumentException(s"${Column.COLUMN_KEY} doesn't exist!!!")))
+    val topics = options
+      .remove("topics")
+      .map(_.split(","))
+      .getOrElse(throw new IllegalArgumentException(s"topics doesn't exist!!!"))
+    TaskConfig(topics, schema, options.toMap)
+  }
+
+  private[connector] def toMap(taskConfig: TaskConfig): util.Map[String, String] = {
+    if (taskConfig.options.contains(Column.COLUMN_KEY))
+      throw new IllegalArgumentException(s"DON'T touch ${Column.COLUMN_KEY} manually")
+    if (taskConfig.options.contains(TOPICS_KEY))
+      throw new IllegalArgumentException(s"DON'T touch $TOPICS_KEY manually in row connector")
+    if (taskConfig.topics.isEmpty) throw new IllegalArgumentException("empty topics is invalid")
+    (taskConfig.options + (Column.COLUMN_KEY -> Column.toString(taskConfig.schema))
+      + (TOPICS_KEY -> taskConfig.topics.mkString(","))).asJava
+  }
 }
