@@ -14,9 +14,9 @@ Have issues while setting up? Try the **Having issues** section to troubleshoot.
 
 ## Development
 
-**If this is your first time running this project, you need to complete the _Initial machine setup_ section**
+**If this is your first time running this project, you need to complete the _Initial machine setup_ section above** 👆
 
-You need to start both **Server** and **Client** server before you can start your development. Follow the instructions below:
+You need to start both **Server** and **Client** servers before you can start your development. Follow the instructions below:
 
 **Server:**
 
@@ -32,6 +32,8 @@ You can start the server and set the configurator API like this:
 CONFIGURATOR_API=http://localhost:1000/v0 yarn start
 ```
 
+> Double check the configurator spelling and the API url
+
 After starting the server, visit `http://localhost:5050` in your browser.
 
 **Client**:
@@ -46,7 +48,7 @@ After starting the dev server, visit `http://localhost:3000` in your browser.
 
 ## Test
 
-You can run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test with a single npm script:
+You can run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End test with a single npm script:
 
 > Note that this command won't generate test reports for you
 
@@ -64,7 +66,7 @@ Run the test
 yarn test
 ```
 
-Run the test and stay in Jest watch mode
+Run the test and stay in Jest watch mode, **this is usually what you want to do when developing:**
 
 ```sh
 yarn test:watch
@@ -82,7 +84,7 @@ yarn test:coverage
 
 Make sure you're in the **client** directory, and use the following commands:
 
-Run the test and stay in Jest watch mode, notice that you don't need to append `:watch` after the `yarn test` in the **Client**
+Run the tests and stay in Jest watch mode, notice that you don't need to append `:watch` after the `yarn test` in the **Client**
 
 ```sh
 yarn test
@@ -96,11 +98,13 @@ Generate test coverage reports
 yarn test:coverage
 ```
 
-**Client** also have End-to-End tests, you can run them via these commands:
+**Client** also has End-to-End tests, you can run them via the following command:
 
 ```sh
 yarn cypress
 ```
+
+This will open cypress test runner, you can then run your test manually through the UIs.
 
 ## Lint
 
@@ -117,6 +121,8 @@ It's usually helpful to run linting while developing, that's why we also provide
 ```
 yarn dev
 ```
+
+This will start the server with `nodemon` and runs the linting script whenever nodemon has reloaded.
 
 **Client:**
 
@@ -156,14 +162,30 @@ Run tests on CI:
 yarn test:ci
 ```
 
-- Run all tests including **Server** and **Client** unit test as well as **Client** End-to-End test. The test reports can be found in `ohara-manager/testReports/`
+- Run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End tests. The test reports can be found in `ohara-manager/test-reports/`
 
 - This npm script will also run `yarn setup` to ensure that all necessary packages are correctly installed prior to running tests.
 
-Clean `testReports/` on the **Server**, `node_moduels/` on both **Server** and **Client** directories:
+Clean `test-reports/` on the **Server**, `node_moduels/` on both **Server** and **Client** directories:
 
 ```sh
 yarn clean
+```
+
+Clean all running processes started with node.js
+
+```sh
+yarn clean:process
+```
+
+This is useful when you want to kill all node.js processes, alternatively, use `pkill node` or simply `kill -9 ${PID}` to stop process
+
+## Prepush
+
+We also provide a npm script to run all the tests(both client and server unit tests and e2e tests) lint, and format all the JS files with:
+
+```sh
+yarn prepush
 ```
 
 ## Having issues?
@@ -187,3 +209,9 @@ After the installation is completed, start the server again.
   ```sh
   echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p.
   ```
+
+- **Node.js processes cannot be stopped even after using kill -9**
+
+  We're using `forever` to start our node.js servers on CI, and `nodemon` while in development, so you need to use the following commands to kill them. `kill -9` or `fuser` might not work as you expected.
+
+  use `yarn clean:process` command or `pkill node` to kill all the node.js processes
