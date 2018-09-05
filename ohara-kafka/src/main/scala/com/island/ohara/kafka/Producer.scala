@@ -79,6 +79,11 @@ final class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
           producer.send(
             record,
             (metadata: org.apache.kafka.clients.producer.RecordMetadata, exception: Exception) => {
+              if (metadata == null && exception == null)
+                callback(
+                  Left(
+                    new IllegalStateException("no meta and exception from kafka producer...It should be impossible")))
+
               if (metadata != null)
                 callback(
                   Right(
@@ -89,7 +94,6 @@ final class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
                                    metadata.serializedKeySize(),
                                    metadata.serializedValueSize())))
               if (exception != null) callback(Left(exception))
-              // In fact, it is impossible that both meta and exception are defined
             }
           )
         }
