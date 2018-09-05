@@ -3,7 +3,7 @@ import java.util.Properties
 
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.client.ConnectorJson.ConnectorResponse
+import com.island.ohara.client.ConnectorJson.CreateConnectorResponse
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, ByteArraySerializer}
@@ -47,12 +47,12 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
     testUtil.connectorClient.activeConnectors().size shouldBe 0
     val sourceConnectorName = "my_source_connector"
     val topicName = "my_connector_topic"
-    var resp: ConnectorResponse = testUtil.connectorClient
+    var resp: CreateConnectorResponse = testUtil.connectorClient
       .sourceConnectorCreator()
       .name(sourceConnectorName)
       .connectorClass(classOf[SimpleSourceConnector])
       .topic(topicName)
-      .taskNumber(sourceTasks)
+      .numberOfTasks(sourceTasks)
       .config("key0", "value0")
       .build()
     resp.name shouldBe sourceConnectorName
@@ -69,7 +69,7 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
       .name(sinkConnectorName)
       .connectorClass(classOf[SimpleSinkConnector])
       .topic(topicName)
-      .taskNumber(sinkTasks)
+      .numberOfTasks(sinkTasks)
       .config("key0", "value0")
       .build()
 

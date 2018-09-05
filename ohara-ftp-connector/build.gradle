@@ -6,6 +6,7 @@ dependencies {
   compile libs.commonsNet
   testCompile project(":ohara-testing-util")
   testCompile project(":ohara-common").sourceSets.test.output
+  testCompile project(":ohara-testing-util").sourceSets.test.output
   testCompile libs.scalatest
   testCompile libs.mockito
   testCompile libs.junit

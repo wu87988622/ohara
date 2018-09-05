@@ -2,7 +2,14 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse, Plugin}
+import com.island.ohara.client.ConnectorJson.{
+  ConnectorInformation,
+  ConnectorStatus,
+  CreateConnectorRequest,
+  CreateConnectorResponse,
+  Plugin,
+  Status
+}
 import com.island.ohara.client.{ConnectorClient, SinkConnectorBuilder, SourceConnectorBuilder}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicBuilder, TopicDescription}
@@ -112,18 +119,18 @@ class ConfiguratorBuilder {
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashSet[String]()
 
-  override def sourceConnectorCreator(): SourceConnectorBuilder = (request: ConnectorRequest) =>
+  override def sourceConnectorCreator(): SourceConnectorBuilder = (request: CreateConnectorRequest) =>
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
     else {
       cachedConnectors.add(request.name)
-      ConnectorResponse(request.name, request.config, Seq.empty, "source")
+      CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
   }
 
-  override def sinkConnectorCreator(): SinkConnectorBuilder = (request: ConnectorRequest) =>
+  override def sinkConnectorCreator(): SinkConnectorBuilder = (request: CreateConnectorRequest) =>
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
-    else ConnectorResponse(request.name, request.config, Seq.empty, "source")
+    else CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
   override def delete(name: String): Unit =
     if (!cachedConnectors.remove(name)) throw new IllegalStateException(s"the connector:$name doesn't exist!")
   import scala.collection.JavaConverters._
@@ -132,6 +139,12 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   override protected def doClose(): Unit = cachedConnectors.clear()
   override def activeConnectors(): Seq[String] = cachedConnectors.asScala.toSeq
   override def workers: String = "Unknown"
+  override def status(name: String): ConnectorInformation = {
+    if (cachedConnectors.contains(name)) {
+      ConnectorInformation(name, ConnectorStatus(Status.STARTED, "fake id", None), Seq.empty)
+    } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
+
+  }
 }
 
 /**

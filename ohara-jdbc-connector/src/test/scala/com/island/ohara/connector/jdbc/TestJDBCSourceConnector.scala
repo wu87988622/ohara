@@ -20,7 +20,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .connectorClass(classOf[JDBCSourceConnector])
       .topic(topicName)
-      .taskNumber(1)
+      .numberOfTasks(1)
       .build()
 
     //TODO Get Topic message for test

@@ -122,7 +122,7 @@ object Validator {
         .name(validationName)
         .disableConverter()
         .connectorClass(classOf[Validator].getName)
-        .taskNumber(taskCount)
+        .numberOfTasks(taskCount)
         .topic(INTERNAL_TOPIC)
         .config(config)
         .config(REQUEST_ID, requestId)

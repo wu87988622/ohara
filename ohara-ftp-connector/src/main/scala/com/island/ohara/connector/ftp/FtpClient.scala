@@ -1,10 +1,10 @@
-package com.island.ohara.ftp.client
+package com.island.ohara.connector.ftp
 
 import java.io._
-import java.nio.charset.StandardCharsets
+import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Files
 
-import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.io.CloseOnce
 
 /**
   * A general interface of ftp file system.
@@ -36,10 +36,16 @@ trait FtpClient extends CloseOnce {
     }
   }
 
-  def readLines(path: String): Seq[String] = readLines(path, (_) => true)
-
-  def readLines(path: String, filter: String => Boolean): Seq[String] =
-    IoUtil.readLines(new BufferedReader(new InputStreamReader(open(path), StandardCharsets.UTF_8)), filter)
+  /**
+    * read all content from the path.
+    * @param path file path
+    * @param encode encode (UTF-8 is default)
+    * @return an array of lines
+    */
+  def readLines(path: String, encode: String = "UTF-8"): Array[String] =
+    CloseOnce.doClose(new BufferedReader(new InputStreamReader(open(path), Charset.forName(encode)))) { reader =>
+      Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+    }
 
   def upload(path: String, file: File): Unit = upload(path, Files.readAllBytes(file.toPath))
 

@@ -18,7 +18,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @return a array of RowSourceRecord
     */
-  override protected def _poll(): Array[RowSourceRecord] = {
+  override protected def _poll(): Seq[RowSourceRecord] = {
     //TODO
     throw new RuntimeException("Not implement to poll database table data")
   }

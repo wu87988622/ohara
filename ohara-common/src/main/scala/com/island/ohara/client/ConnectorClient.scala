@@ -35,6 +35,8 @@ trait ConnectorClient extends CloseOnce {
   def activeConnectors(): Seq[String]
 
   def workers: String
+
+  def status(name: String): ConnectorInformation
 }
 
 object ConnectorClient {
@@ -53,18 +55,18 @@ object ConnectorClient {
 
       private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-      override def sourceConnectorCreator(): SourceConnectorBuilder = (request: ConnectorRequest) => send(request)
+      override def sourceConnectorCreator(): SourceConnectorBuilder = (request: CreateConnectorRequest) => send(request)
 
-      override def sinkConnectorCreator(): SinkConnectorBuilder = (request: ConnectorRequest) => send(request)
+      override def sinkConnectorCreator(): SinkConnectorBuilder = (request: CreateConnectorRequest) => send(request)
 
-      private[this] def send(request: ConnectorRequest): ConnectorResponse = Await.result(
+      private[this] def send(request: CreateConnectorRequest): CreateConnectorResponse = Await.result(
         Marshal(request)
           .to[RequestEntity]
           .flatMap(entity => {
             Http()
               .singleRequest(
                 HttpRequest(method = HttpMethods.POST, uri = s"http://$workerAddress/connectors", entity = entity))
-              .flatMap(unmarshal[ConnectorResponse])
+              .flatMap(unmarshal[CreateConnectorResponse])
           }),
         TIMEOUT
       )
@@ -118,7 +120,15 @@ object ConnectorClient {
                 Future.failed(new IllegalStateException(error.toString))
               }
             })
+
       override def workers: String = _workers
+
+      override def status(name: String): ConnectorInformation = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connectors/$name/status"))
+          .flatMap(unmarshal[ConnectorInformation]),
+        TIMEOUT
+      )
     }
   }
 }

@@ -1,4 +1,4 @@
-package com.island.ohara.ftp.client
+package com.island.ohara.connector.ftp
 
 import java.io.{InputStream, OutputStream}
 import java.util.Objects
@@ -133,7 +133,9 @@ class FtpClientBuilder {
         case FileType.FILE =>
           if (!client.deleteFile(path))
             throw new IllegalStateException(s"failed to delete $path because of ${client.getReplyCode}")
-        case FileType.FOLDER      => throw new UnsupportedOperationException("unsupport to move folder")
+        case FileType.FOLDER =>
+          if (!client.removeDirectory(path))
+            throw new IllegalStateException(s"failed to delete $path because of ${client.getReplyCode}")
         case FileType.NONEXISTENT => throw new IllegalStateException(s"$path doesn't exist")
 
       }
@@ -144,10 +146,11 @@ class FtpClientBuilder {
         client.getStatus(path) != null
       }
       override def fileType(path: String): FileType = if (exist(path)) {
-        client.cwd(path) match {
+        val current = client.printWorkingDirectory()
+        try client.cwd(path) match {
           case 250 => FileType.FOLDER
           case _   => FileType.FILE
-        }
+        } finally client.cwd(current)
       } else FileType.NONEXISTENT
     }
   }

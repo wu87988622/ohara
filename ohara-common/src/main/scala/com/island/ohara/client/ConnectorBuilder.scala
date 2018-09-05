@@ -1,7 +1,7 @@
 package com.island.ohara.client
 import java.util.Objects
 
-import com.island.ohara.client.ConnectorJson.ConnectorResponse
+import com.island.ohara.client.ConnectorJson.CreateConnectorResponse
 
 import scala.collection.mutable
 
@@ -12,7 +12,7 @@ abstract class ConnectorBuilder {
   protected var name: String = _
   protected var clzName: String = _
   protected var topicNames: Seq[String] = _
-  protected var taskMax: Int = -1
+  protected var numberOfTasks: Int = -1
   protected var config: mutable.HashMap[String, String] = _
   protected var _disableKeyConverter: Boolean = false
   protected var _disableValueConverter: Boolean = false
@@ -101,11 +101,11 @@ abstract class ConnectorBuilder {
   /**
     * the max number of sink task you want to create
     *
-    * @param taskMax max number of sink task
+    * @param numberOfTasks max number of sink task
     * @return this one
     */
-  def taskNumber(taskMax: Int): this.type = {
-    this.taskMax = taskMax
+  def numberOfTasks(numberOfTasks: Int): this.type = {
+    this.numberOfTasks = numberOfTasks
     this
   }
 
@@ -132,13 +132,14 @@ abstract class ConnectorBuilder {
     *
     * @return this one
     */
-  def build(): ConnectorResponse
+  def build(): CreateConnectorResponse
 
   protected def checkArgument(): Unit = {
     Objects.requireNonNull(name)
     Objects.requireNonNull(clzName)
     Objects.requireNonNull(topicNames)
     if (topicNames.isEmpty) throw new IllegalArgumentException(s"You must specify 1+ topic names")
-    if (taskMax <= 0) throw new IllegalArgumentException(s"taskMax should be bigger than zero, current:$taskMax")
+    if (numberOfTasks <= 0)
+      throw new IllegalArgumentException(s"taskMax should be bigger than zero, current:$numberOfTasks")
   }
 }

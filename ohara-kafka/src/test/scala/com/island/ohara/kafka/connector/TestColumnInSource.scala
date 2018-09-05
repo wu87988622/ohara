@@ -36,7 +36,7 @@ class TestColumnInSource extends SmallTest with Matchers {
 
       override protected def _stop(): Unit = ???
 
-      override protected def _poll(): Array[RowSourceRecord] = ???
+      override protected def _poll(): Seq[RowSourceRecord] = ???
 
       override protected def _version: String = ???
     }

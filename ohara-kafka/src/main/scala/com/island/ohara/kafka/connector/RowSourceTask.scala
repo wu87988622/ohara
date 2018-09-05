@@ -33,7 +33,7 @@ abstract class RowSourceTask extends SourceTask {
     *
     * @return a array of RowSourceRecord
     */
-  protected def _poll(): Array[RowSourceRecord]
+  protected def _poll(): Seq[RowSourceRecord]
 
   /**
     * Commit an individual RowSourceRecord when the callback from the producer client is received, or if a record is filtered by a transformation.

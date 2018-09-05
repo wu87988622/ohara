@@ -40,8 +40,11 @@ object RowSourceContext {
   import scala.collection.JavaConverters._
   def apply(context: SourceTaskContext): RowSourceContext = new RowSourceContext {
 
-    override def offset[T](partition: Map[String, T]): Map[String, _] =
-      context.offsetStorageReader().offset(partition.asJava).asScala.toMap
+    override def offset[T](partition: Map[String, T]): Map[String, _] = {
+      val r = context.offsetStorageReader().offset(partition.asJava)
+      if (r == null) Map.empty
+      else r.asScala.toMap
+    }
 
     override def offset[T](partitions: Seq[Map[String, T]]): Map[Map[String, T], Map[String, _]] =
       context

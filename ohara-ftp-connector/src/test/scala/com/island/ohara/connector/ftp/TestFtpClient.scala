@@ -1,9 +1,9 @@
-package com.island.ohara.ftp.client
+package com.island.ohara.connector.ftp
 
 import java.nio.charset.Charset
 
 import com.island.ohara.integration.FtpServer
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.MediumTest
 import org.junit.{After, Before, Test}
@@ -76,9 +76,6 @@ class TestFtpClient extends MediumTest with Matchers {
     val lineCount = 100
     client.append(tmpPath(client), (0 until lineCount).map(_.toString))
     client.readLines(tmpPath(client)).size shouldBe lineCount
-
-    client.readLines(tmpPath(client), s => s.toInt < 50).size shouldBe 50
-    client.readLines(tmpPath(client), s => s.toInt > lineCount).size shouldBe 0
   }
 
   @Test
@@ -116,6 +113,20 @@ class TestFtpClient extends MediumTest with Matchers {
 
     client.mkdir(path)
     client.fileType(path) shouldBe FileType.FOLDER
+  }
+
+  @Test
+  def testDeleteFolder(): Unit = {
+    val data = ByteUtil.toBytes(methodName)
+    val folder = s"/$methodName"
+    client.mkdir(folder)
+    client.upload(s"$folder/file", data)
+    client.listFileNames(folder).size shouldBe 1
+
+    an[IllegalStateException] should be thrownBy client.delete(folder)
+    client.delete(s"$folder/file")
+    client.delete(folder)
+    client.listFileNames(folder).size shouldBe 0
   }
 
   @After

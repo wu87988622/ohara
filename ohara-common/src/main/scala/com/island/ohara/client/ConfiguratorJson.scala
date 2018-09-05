@@ -61,7 +61,8 @@ object ConfiguratorJson {
     // kafka connector accept only Map[String, String] as input arguments so we have to serialize the column to a string
     // TODO: Personally, I hate this ugly workaround...by chia
     val COLUMN_KEY: String = "__row_source_schema"
-    def toString(schema: Seq[Column]): String = schema.map(c => s"${c.name},${c.typeName},${c.order}").mkString(",")
+    def toString(schema: Seq[Column]): String =
+      schema.map(c => s"${c.name},${c.typeName.name},${c.order}").mkString(",")
     def toColumns(columnsString: String): Seq[Column] = {
       val splits = columnsString.split(",")
       if (splits.length % 3 != 0) throw new IllegalArgumentException("invalid format of columns string")

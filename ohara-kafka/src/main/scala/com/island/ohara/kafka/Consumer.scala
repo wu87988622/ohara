@@ -2,7 +2,7 @@ package com.island.ohara.kafka
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Objects, Properties}
 
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
@@ -58,8 +58,6 @@ trait Consumer[K, V] extends CloseOnce {
 }
 
 object Consumer {
-  private[kafka] val CONSUMER_ID = new AtomicInteger(0)
-
   def builder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): ConsumerBuilder[K, V] =
     new ConsumerBuilder[K, V](keySerializer, valueSerializer)
 }
@@ -67,7 +65,7 @@ object Consumer {
 final class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
   protected var fromBegin: OffsetResetStrategy = OffsetResetStrategy.LATEST
   protected var topicNames: Seq[String] = _
-  protected var groupId: String = s"ohara-consumer-${Consumer.CONSUMER_ID.getAndIncrement().toString}"
+  protected var groupId: String = s"ohara-consumer-${UuidUtil.uuid}"
   protected var brokers: String = _
 
   /**

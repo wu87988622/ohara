@@ -26,23 +26,30 @@ object ConnectorJson {
     )
   }
 
-  final case class ConnectorRequest(name: String, config: Map[String, String])
-  implicit val CONNECTOR_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorRequest] = jsonFormat2(ConnectorRequest)
+  final case class CreateConnectorRequest(name: String, config: Map[String, String])
+  implicit val CREATE_CONNECTOR_REQUEST_JSON_FORMAT: RootJsonFormat[CreateConnectorRequest] = jsonFormat2(
+    CreateConnectorRequest)
 
-  final case class ConnectorResponse(name: String, config: Map[String, String], tasks: Seq[String], typeName: String)
+  final case class CreateConnectorResponse(name: String,
+                                           config: Map[String, String],
+                                           tasks: Seq[String],
+                                           typeName: String)
 
   /**
     * this custom format is necessary since some keys in json are keywords in scala also...
     */
-  implicit val CONNECTOR_RESPONSE_JSON_FORMAT: RootJsonFormat[ConnectorResponse] =
-    new RootJsonFormat[ConnectorResponse] {
-      override def read(json: JsValue): ConnectorResponse =
+  implicit val CREATE_CONNECTOR_RESPONSE_JSON_FORMAT: RootJsonFormat[CreateConnectorResponse] =
+    new RootJsonFormat[CreateConnectorResponse] {
+      override def read(json: JsValue): CreateConnectorResponse =
         json.asJsObject.getFields("name", "config", "tasks", "type") match {
           case Seq(JsString(className), JsObject(config), JsArray(tasks), JsString(typeName)) =>
-            ConnectorResponse(className, config.map { case (k, v) => (k, v.toString) }, tasks.map(_.toString), typeName)
+            CreateConnectorResponse(className,
+                                    config.map { case (k, v) => (k, v.toString) },
+                                    tasks.map(_.toString),
+                                    typeName)
           // TODO: this is a kafka bug which always returns null in type name. see KAFKA-7253  by chia
           case Seq(JsString(className), JsObject(config), JsArray(tasks), JsNull) =>
-            ConnectorResponse(
+            CreateConnectorResponse(
               className,
               // it is ok to cast JsValue to JsString since we serialize the config to (JsString, JsString)
               config.map { case (k, v) => (k, v.asInstanceOf[JsString].value) },
@@ -50,16 +57,72 @@ object ConnectorJson {
               "null"
             )
           case other: Any =>
-            throw DeserializationException(s"${classOf[ConnectorResponse].getSimpleName} expected but $other")
+            throw DeserializationException(s"${classOf[CreateConnectorResponse].getSimpleName} expected but $other")
         }
 
-      override def write(obj: ConnectorResponse) = JsObject(
+      override def write(obj: CreateConnectorResponse) = JsObject(
         "class" -> JsString(obj.name),
         "config" -> JsObject(obj.config.map { case (k, v) => (k, JsString(v)) }),
         "tasks" -> JsArray(obj.tasks.map(JsString(_)): _*),
         "type" -> JsString(obj.typeName)
       )
     }
+
+  /**
+    * the enumunation is referenced to org.apache.kafka.connect.runtime.WorkerConnector.State
+    */
+  abstract sealed class Status extends Serializable {
+    val name: String
+  }
+
+  object Status {
+
+    /**
+      * initial state before startup
+      */
+    case object INIT extends Status {
+      val name = "INIT"
+    }
+
+    /**
+      * the connector has been stopped/paused.
+      */
+    case object STOPPED extends Status {
+      val name = "STOPPED"
+    }
+
+    /**
+      * the connector has been started/resumed.
+      */
+    case object STARTED extends Status {
+      val name = "STARTED"
+    }
+
+    /**
+      * the connector has failed (no further transitions are possible after this state)
+      */
+    case object FAILED extends Status {
+      val name = "FAILED"
+    }
+  }
+  implicit val STATUS_JSON_FORMAT: RootJsonFormat[Status] = new RootJsonFormat[Status] {
+    override def write(obj: Status): JsValue = JsString(obj.name)
+    override def read(json: JsValue): Status = json.asInstanceOf[JsString].value match {
+      case Status.INIT.name    => Status.INIT
+      case Status.STOPPED.name => Status.STOPPED
+      case Status.STARTED.name => Status.STARTED
+      case Status.FAILED.name  => Status.FAILED
+      case _                   => throw new IllegalArgumentException(s"Unknown status name:${json.asInstanceOf[JsString].value}")
+    }
+  }
+
+  final case class ConnectorStatus(state: Status, worker_id: String, trace: Option[String])
+  implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
+  final case class TaskStatus(id: String, state: Status, worker_id: String, trace: Option[String])
+  implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)
+  final case class ConnectorInformation(name: String, connector: ConnectorStatus, tasks: Seq[TaskStatus])
+  implicit val CONNECTOR_INFORMATION_JSON_FORMAT: RootJsonFormat[ConnectorInformation] = jsonFormat3(
+    ConnectorInformation)
 
   final case class ErrorResponse(error_code: Int, message: String)
   implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[ErrorResponse] = jsonFormat2(ErrorResponse)

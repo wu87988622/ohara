@@ -26,7 +26,7 @@ class SimpleRowSourceTask extends RowSourceTask {
     SimpleRowSourceTask.runningTaskCount.incrementAndGet()
   }
 
-  override def _poll(): Array[RowSourceRecord] = {
+  override def _poll(): Seq[RowSourceRecord] = {
     if (SimpleRowSourceTask.pollCount.incrementAndGet() > pollCountMax) return null
     val data = new ArrayBuffer[RowSourceRecord]()
     SimpleRowSourceTask.rows.foreach(row => {
@@ -34,7 +34,7 @@ class SimpleRowSourceTask extends RowSourceTask {
       SimpleRowSourceTask.submittedRows.add(row)
       logger.info(s"add row $row")
     })
-    data.toArray
+    data
   }
 
   override def _stop(): Unit = {

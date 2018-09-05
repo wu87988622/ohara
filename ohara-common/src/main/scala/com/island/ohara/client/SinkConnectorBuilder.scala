@@ -1,6 +1,6 @@
 package com.island.ohara.client
 
-import com.island.ohara.client.ConnectorJson.{ConnectorRequest, ConnectorResponse}
+import com.island.ohara.client.ConnectorJson.{CreateConnectorRequest, CreateConnectorResponse}
 
 import scala.collection.mutable
 
@@ -25,16 +25,16 @@ abstract class SinkConnectorBuilder extends ConnectorBuilder {
     *
     * @return this one
     */
-  def build(): ConnectorResponse = {
+  def build(): CreateConnectorResponse = {
     checkArgument()
     if (config == null) config = new mutable.HashMap[String, String]()
     config += ("connector.class" -> clzName)
     config += ("topics" -> topicNames.mkString(","))
-    config += ("tasks.max" -> taskMax.toString)
+    config += ("tasks.max" -> numberOfTasks.toString)
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)
       config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
-    send(ConnectorRequest(name, config.toMap))
+    send(CreateConnectorRequest(name, config.toMap))
   }
 
   /**
@@ -44,5 +44,5 @@ abstract class SinkConnectorBuilder extends ConnectorBuilder {
     * @param body body
     * @return response
     */
-  protected def send(request: ConnectorRequest): ConnectorResponse
+  protected def send(request: CreateConnectorRequest): CreateConnectorResponse
 }

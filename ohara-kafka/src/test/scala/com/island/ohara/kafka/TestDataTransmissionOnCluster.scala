@@ -71,7 +71,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topic(topicName)
-      .taskNumber(1)
+      .numberOfTasks(1)
       .disableConverter()
       .build()
 
@@ -99,7 +99,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .connectorClass(classOf[SimpleRowSourceConnector])
       .schema(Seq(Column("cf", DataType.BOOLEAN, 1)))
       .topic(topicName)
-      .taskNumber(1)
+      .numberOfTasks(1)
       .disableConverter()
       .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
       .build()

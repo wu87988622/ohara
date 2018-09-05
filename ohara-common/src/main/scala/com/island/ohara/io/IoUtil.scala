@@ -1,26 +1,18 @@
 package com.island.ohara.io
-import java.io.{BufferedReader, File, FileInputStream, InputStreamReader}
 import java.net.InetAddress
-import java.nio.charset.Charset
 import java.util.Calendar
-
-import scala.collection.mutable.ArrayBuffer
 
 object IoUtil {
   def hostname: String = InetAddress.getLocalHost.getHostName
 
   def timezone: String = Calendar.getInstance.getTimeZone.getID
 
-  def readLines(f: File, filter: String => Boolean): Seq[String] =
-    readLines(new BufferedReader(new InputStreamReader(new FileInputStream(f), Charset.forName("UTF-8"))), filter)
+  def path(parent: String, name: String): String = if (parent.endsWith("/")) parent + name else s"$parent/$name"
 
-  def readLines(reader: BufferedReader, filter: String => Boolean): Seq[String] = try {
-    val buf = new ArrayBuffer[String]()
-    var line: String = reader.readLine()
-    while (line != null) {
-      if (!line.isEmpty && filter(line)) buf += line
-      line = reader.readLine()
-    }
-    buf
-  } finally reader.close()
+  def name(path: String): String = {
+    if (path == "/") throw new IllegalArgumentException(s"no file name for path:$path")
+    val last = path.lastIndexOf("/")
+    if (last == -1) path
+    else path.substring(last + 1)
+  }
 }

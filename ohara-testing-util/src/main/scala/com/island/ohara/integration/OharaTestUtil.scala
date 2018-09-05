@@ -163,6 +163,8 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   }
 
   def connectorClient: ConnectorClient = {
+    // throw exception if there is no worker cluster
+    workers
     if (_connectorClient == null) _connectorClient = ConnectorClient(workers)
     _connectorClient
   }
