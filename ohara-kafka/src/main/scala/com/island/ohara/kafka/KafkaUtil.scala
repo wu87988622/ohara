@@ -96,7 +96,7 @@ object KafkaUtil {
       .timeout(timeout)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
-      .topicName(topicName)
+      .name(topicName)
       .build()
   }
 

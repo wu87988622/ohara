@@ -55,12 +55,12 @@ object KafkaClient {
 
     import scala.collection.JavaConverters._
     override def topicCreator: TopicBuilder = new TopicBuilder() {
-      override def build(): Unit = if (!exist(topicName.get)) {
+      override def build(): Unit = if (!exist(name.get)) {
         admin
-          .createTopics(util.Arrays.asList(new NewTopic(topicName.get, numberOfPartitions.get, numberOfReplications.get)
-            .configs(topicOptions.get.asJava)))
+          .createTopics(util.Arrays.asList(
+            new NewTopic(name.get, numberOfPartitions.get, numberOfReplications.get).configs(options.get.asJava)))
           .values()
-          .get(topicName.get)
+          .get(name.get)
           .get(timeout.get.toMillis, TimeUnit.MILLISECONDS)
       }
     }

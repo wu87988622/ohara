@@ -165,7 +165,7 @@ private class FakeKafkaClient extends KafkaClient {
   override def topicCreator: TopicBuilder = new TopicBuilder() {
     override def build(): Unit = {
       printDebugMessage()
-      cachedTopics.put(topicName.get, TopicDescription(topicName.get, numberOfPartitions.get, numberOfReplications.get))
+      cachedTopics.put(name.get, TopicDescription(name.get, numberOfPartitions.get, numberOfReplications.get))
     }
   }
 

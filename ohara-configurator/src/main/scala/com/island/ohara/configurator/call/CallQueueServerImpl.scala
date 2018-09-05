@@ -76,11 +76,11 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
     */
   CloseOnce.doClose(KafkaClient(brokers)) { client =>
     client.topicCreator
-      .topicName(topicName)
+      .name(topicName)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
       // enable kafka delete all stale requests
-      .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
+      .options(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
       .timeout(initializationTimeout)
       .build()
   }

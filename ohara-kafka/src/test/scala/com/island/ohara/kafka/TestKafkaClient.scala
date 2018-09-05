@@ -31,7 +31,7 @@ class TestKafkaClient extends With3Brokers3Workers with Matchers {
     val numberOfPartitions = 2
     val numberOfReplications = 2.toShort
     client.topicCreator
-      .topicName(topicName)
+      .name(topicName)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
       .build()

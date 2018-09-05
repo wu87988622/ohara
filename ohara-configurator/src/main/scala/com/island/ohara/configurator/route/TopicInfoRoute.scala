@@ -24,7 +24,7 @@ private[configurator] object TopicInfoRoute {
             else {
               kafkaClient.topicCreator
               // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
-                .topicName(topicInfo.uuid)
+                .name(topicInfo.uuid)
                 .numberOfPartitions(topicInfo.numberOfPartitions)
                 .numberOfReplications(topicInfo.numberOfReplications)
                 .build()

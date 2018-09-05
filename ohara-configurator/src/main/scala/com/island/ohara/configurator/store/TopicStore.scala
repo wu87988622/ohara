@@ -77,11 +77,11 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     */
   CloseOnce.doClose(KafkaClient(brokers)) { client =>
     client.topicCreator
-      .topicName(topicName)
+      .name(topicName)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
       // enable kafka save the latest message for each key
-      .topicOptions(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
+      .options(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_COMPACT))
       .timeout(initializationTimeout)
       .build()
   }
