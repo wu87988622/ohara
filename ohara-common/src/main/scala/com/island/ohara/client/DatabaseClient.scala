@@ -20,7 +20,7 @@ trait DatabaseClient extends CloseOnce {
 
   def name: String
 
-  def createTable(name: String, columns: Seq[ConfiguratorJson.RdbColumn]): Unit
+  def createTable(name: String, schema: Seq[ConfiguratorJson.RdbColumn]): Unit
 
   def dropTable(name: String): Unit
 

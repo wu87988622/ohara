@@ -2,6 +2,7 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
 
+import akka.http.scaladsl.server
 import com.island.ohara.client.ConnectorJson.{
   ConnectorInformation,
   ConnectorStatus,
@@ -28,6 +29,12 @@ class ConfiguratorBuilder {
   private[this] var connectClient: Option[ConnectorClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(Configurator.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var terminationTimeout: Option[Duration] = Some(Configurator.DEFAULT_TERMINATION_TIMEOUT)
+  private[this] var extraRoute: Option[server.Route] = None
+
+  def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
+    this.extraRoute = Some(extraRoute)
+    this
+  }
 
   /**
     * set a specified uuid generator.
@@ -105,12 +112,12 @@ class ConfiguratorBuilder {
     store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
   }
 
-  def build(): Configurator = new Configurator(hostname.get, port.get)(uuidGenerator.get,
-                                                                       store.get,
-                                                                       kafkaClient.get,
-                                                                       connectClient.get,
-                                                                       initializationTimeout.get,
-                                                                       terminationTimeout.get)
+  def build(): Configurator = new Configurator(
+    hostname.get,
+    port.get,
+    initializationTimeout.get,
+    terminationTimeout.get,
+    extraRoute)(uuidGenerator.get, store.get, kafkaClient.get, connectClient.get)
 }
 
 /**

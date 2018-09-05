@@ -1,5 +1,4 @@
 package com.island.ohara.client
-import java.lang.String
 
 import com.island.ohara.serialization.DataType
 import spray.json.DefaultJsonProtocol._
@@ -20,6 +19,7 @@ object ConfiguratorJson {
     override def read(json: JsValue): DataType = DataType.of(json.asInstanceOf[JsString].value)
   }
   val VERSION_V0 = "v0"
+  val PRIVATE_API = "_private"
   val UNKNOWN = "?"
 
   //------------------------------------------------[DATA]------------------------------------------------//
@@ -316,9 +316,9 @@ object ConfiguratorJson {
   final case class ValidationReport(hostname: String, message: String, pass: Boolean)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 
-  //------------------------------------------------[QUERY]------------------------------------------------//
+  //------------------------------------------------[RDB-QUERY]------------------------------------------------//
   val QUERY_PATH = "query"
-  val RDB_QUERY_PATH = "rdb"
+  val RDB_PATH = "rdb"
 
   /**
     * used to query 3 party system
@@ -350,7 +350,7 @@ object ConfiguratorJson {
                             tableName: Option[String])
   implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat6(RdbQuery)
   implicit val RDB_QUERY_COMMAND_FORMAT: QueryCommandFormat[RdbQuery] = new QueryCommandFormat[RdbQuery] {
-    override def format(address: String): String = s"http://$address/$VERSION_V0/$QUERY_PATH/$RDB_QUERY_PATH"
+    override def format(address: String): String = s"http://$address/$VERSION_V0/$QUERY_PATH/$RDB_PATH"
   }
 
   final case class RdbInformation(name: String, tables: Seq[RdbTable])

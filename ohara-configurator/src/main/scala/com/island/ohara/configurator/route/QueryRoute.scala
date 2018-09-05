@@ -12,7 +12,7 @@ import com.island.ohara.client.DatabaseClient
 private[configurator] object QueryRoute extends SprayJsonSupport {
 
   def apply(): server.Route = pathPrefix(QUERY_PATH) {
-    pathPrefix(RDB_QUERY_PATH) {
+    pathPrefix(RDB_PATH) {
       pathEnd {
         post {
           entity(as[RdbQuery]) { query =>

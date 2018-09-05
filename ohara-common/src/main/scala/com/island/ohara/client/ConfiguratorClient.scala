@@ -51,6 +51,7 @@ object ConfiguratorClient {
   import scala.concurrent.duration._
   private[this] val TIMEOUT = 10 seconds
 
+  def apply(host: String, port: Int): ConfiguratorClient = apply(s"$host:$port")
   def apply(configuratorAddress: String): ConfiguratorClient = new ConfiguratorClient with SprayJsonSupport
   with DefaultJsonProtocol {
     private[this] implicit val actorSystem: ActorSystem = ActorSystem(

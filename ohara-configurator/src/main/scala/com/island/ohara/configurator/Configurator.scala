@@ -31,13 +31,14 @@ import scala.reflect.{ClassTag, classTag}
   * @param configuredPort    port of rest server
   * @param store    store
   */
-class Configurator private[configurator] (configuredHostname: String, configuredPort: Int)(
-  implicit ug: () => String,
-  val store: Store,
-  kafkaClient: KafkaClient,
-  connectorClient: ConnectorClient,
-  initializationTimeout: Duration,
-  terminationTimeout: Duration)
+class Configurator private[configurator] (configuredHostname: String,
+                                          configuredPort: Int,
+                                          initializationTimeout: Duration,
+                                          terminationTimeout: Duration,
+                                          extraRoute: Option[server.Route])(implicit ug: () => String,
+                                                                            val store: Store,
+                                                                            kafkaClient: KafkaClient,
+                                                                            connectorClient: ConnectorClient)
     extends CloseOnce
     with SprayJsonSupport {
 
@@ -60,20 +61,36 @@ class Configurator private[configurator] (configuredHostname: String, configured
   /**
     * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
     */
-  private[this] val route: server.Route = handleExceptions(exceptionHandler) {
-    pathPrefix(VERSION_V0)(
-      SchemaRoute.apply ~ TopicInfoRoute.apply ~ HdfsInformationRoute.apply ~ PipelineRoute.apply
-        ~ ValidationRoute.apply ~ QueryRoute() ~ SourceRoute.apply ~ SinkRoute.apply ~ ClusterRoute.apply) ~ path(
-      Remaining)(path => {
-      throw new IllegalArgumentException(s"Unsupported restful api:$path. Or the request is invalid to the $path")
-    })
-  }
+  private[this] val basicRoute: server.Route = pathPrefix(VERSION_V0)(
+    Seq[server.Route](
+      SchemaRoute.apply,
+      TopicInfoRoute.apply,
+      HdfsInformationRoute.apply,
+      PipelineRoute.apply,
+      ValidationRoute.apply,
+      QueryRoute(),
+      SourceRoute.apply,
+      SinkRoute.apply,
+      ClusterRoute.apply
+    ).reduce[server.Route]((a, b) => a ~ b))
+
+  private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
+    throw new IllegalArgumentException(s"you have to buy the license for advanced APIs of $path"))))
+
+  private[this] val finalRoute: server.Route = path(Remaining)(path =>
+    throw new IllegalArgumentException(s"Unsupported restful api:$path. Or the request is invalid to the $path"))
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
   private[this] val httpServer: Http.ServerBinding =
-    Await.result(Http().bindAndHandle(route, configuredHostname, configuredPort),
-                 initializationTimeout.toMillis milliseconds)
+    Await.result(
+      Http().bindAndHandle(
+        handleExceptions(exceptionHandler)(basicRoute ~ privateRoute ~ finalRoute),
+        configuredHostname,
+        configuredPort
+      ),
+      initializationTimeout.toMillis milliseconds
+    )
 
   /**
     * Do what you want to do when calling closing.
