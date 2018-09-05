@@ -72,11 +72,11 @@ class TestBackend extends LargeTest with Matchers {
           val r = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None))
           r.tables.size shouldBe 1
           r.tables.head.name shouldBe creation.name
-          r.tables.head.columns.size shouldBe creation.schema.size
-          r.tables.head.columns.head.name shouldBe creation.schema.head.name
+          r.tables.head.schema.size shouldBe creation.schema.size
+          r.tables.head.schema.head.name shouldBe creation.schema.head.name
           // the following check is disabled because different database may use different name to describe data type...
           // r.tables.head.columns.head.typeName shouldBe creation.schema.head.typeName
-          r.tables.head.columns.head.pk shouldBe creation.schema.head.pk
+          r.tables.head.schema.head.pk shouldBe creation.schema.head.pk
         } finally client.close()
       }
     )

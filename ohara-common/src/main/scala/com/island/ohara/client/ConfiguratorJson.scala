@@ -339,7 +339,7 @@ object ConfiguratorJson {
       "pk" -> JsBoolean(obj.pk)
     )
   }
-  final case class RdbTable(catalog: String, name: String, columns: Seq[RdbColumn])
+  final case class RdbTable(catalog: String, name: String, schema: Seq[RdbColumn])
   implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat3(RdbTable)
 
   final case class RdbQuery(url: String,

@@ -83,7 +83,7 @@ object DatabaseClient {
             }
             RdbTable(c, t, columns)
         }
-        .filterNot(_.columns.isEmpty)
+        .filterNot(_.schema.isEmpty)
     }
 
     override protected def doClose(): Unit = conn.close()

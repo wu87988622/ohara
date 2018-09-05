@@ -552,11 +552,11 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           def verify(info: RdbInformation): Unit = {
             info.tables.count(_.name == tableName) shouldBe 1
             val table = info.tables.filter(_.name == tableName).head
-            table.columns.size shouldBe 2
-            table.columns.count(_.name == cf0.name) shouldBe 1
-            table.columns.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
-            table.columns.count(_.name == cf1.name) shouldBe 1
-            table.columns.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
+            table.schema.size shouldBe 2
+            table.schema.count(_.name == cf0.name) shouldBe 1
+            table.schema.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
+            table.schema.count(_.name == cf1.name) shouldBe 1
+            table.schema.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
           }
           dbClient.createTable(tableName, Seq(cf0, cf1))
 
