@@ -40,9 +40,9 @@ const Select = ({ list, selected, handleChange, width = '100%', ...rest }) => {
       width={width}
       {...rest}
     >
-      {list.map(({ uuid, name }) => {
+      {list.map(({ uuid, name }, idx) => {
         return (
-          <option key={uuid} data-uuid={uuid}>
+          <option key={idx} data-uuid={uuid}>
             {name}
           </option>
         );

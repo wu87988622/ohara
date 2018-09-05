@@ -29,6 +29,13 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.put('/api/pipelines/update/:uuid', (req, res) => {
+    axios
+      .put(`${API_ROOT}/pipelines/${req.params.uuid}`, req.body)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   app.delete('/api/pipelines/delete/:uuid', (req, res) => {
     axios
       .delete(`${API_ROOT}/pipelines/${req.params.uuid}`)

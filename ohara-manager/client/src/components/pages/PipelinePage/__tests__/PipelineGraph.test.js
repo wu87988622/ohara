@@ -28,6 +28,7 @@ const props = {
     },
   ],
   resetGraph: jest.fn(),
+  updateGraph: jest.fn(),
 };
 
 describe('<PipelineGraph />', () => {
@@ -60,7 +61,6 @@ describe('<PipelineGraph />', () => {
     expect(nodes.length).toBe(3);
     nodes.forEach((n, i) => {
       expect(n.props()['data-id']).toBe(props.graph[i].type);
-      expect(n.find('IconWrapper').length).toBe(1);
     });
   });
 });

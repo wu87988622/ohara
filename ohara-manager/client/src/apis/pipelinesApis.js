@@ -18,6 +18,21 @@ export const createPipeline = async params => {
   }
 };
 
+export const updatePipeline = async ({ uuid, params }) => {
+  try {
+    const res = await axios.put(`/api/pipelines/update/${uuid}`, params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const deletePipeline = async uuid => {
   try {
     const res = await axios.delete(`/api/pipelines/delete/${uuid}`);

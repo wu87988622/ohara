@@ -29,12 +29,9 @@ H5Wrapper.displayName = 'H5Wrapper';
 
 const Graph = styled.ul`
   display: flex;
-  justify-content: center;
   position: relative;
-
-  &.is-multiple {
-    justify-content: space-between;
-  }
+  justify-content: space-between;
+  align-items: center;
 `;
 
 Graph.displayName = 'Graph';
@@ -49,7 +46,7 @@ const Node = styled.li`
   align-items: center;
   cursor: pointer;
   z-index: 50;
-  display: none;
+  visibility: ${props => (props.isExist ? 'visible' : 'hidden')};
 
   &:hover {
     background-color: ${blue};
@@ -61,7 +58,7 @@ const Node = styled.li`
   }
 
   &.is-exist {
-    display: flex;
+    visibility: visible;
   }
 
   &.is-active {
@@ -87,6 +84,14 @@ const Node = styled.li`
 
 Node.displayName = 'Node';
 
+const Separator = styled.div`
+  height: 3px;
+  flex: 1;
+  background: ${blue};
+  margin: 0 5px;
+  visibility: ${props => (props.isActive ? 'visible' : 'hidden')};
+`;
+
 const IconWrapper = styled.i`
   position: relative;
   z-index: 50;
@@ -107,17 +112,33 @@ class PipelineGraph extends React.Component {
       }),
     ).isRequired,
     resetGraph: PropTypes.func.isRequired,
+    updateGraph: PropTypes.func.isRequired,
   };
 
-  state = {
-    isMultiple: false,
-  };
+  componentDidMount() {
+    const { match, updateGraph } = this.props;
+    const page = _.get(match, 'params.page', null);
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const topicId = _.get(match, 'params.topicId', null);
 
-  componentDidUpdate(next) {
-    if (this.props.graph !== next.graph) {
-      const { graph } = this.props;
-      const actives = graph.filter(g => !!g.isExist);
-      if (actives.length > 1) this.setState({ isMultiple: true });
+    if (page) {
+      const update = { isActive: true, isExist: true };
+      updateGraph(update, page);
+    }
+
+    if (topicId) {
+      const update = { isExist: true };
+      updateGraph(update, 'topic');
+    }
+
+    if (sourceId) {
+      const update = { isExist: true };
+      updateGraph(update, 'source');
+    }
+
+    if (sourceId && topicId) {
+      const update = { isActive: true };
+      updateGraph(update, 'separator-1');
     }
   }
 
@@ -135,16 +156,43 @@ class PipelineGraph extends React.Component {
     const activePage = graph.find(g => g.isActive === true);
     const isUpdate = activePage.type !== page;
 
-    if (!_.isNull(page) && isUpdate) {
+    if (page && isUpdate) {
       resetGraph(graph);
+      const baseUrl = `/pipeline/new/${page}/${pipelineId}`;
 
       if (sourceId) {
-        history.push(
-          `/pipeline/new/${page}/${pipelineId}/${topicId}/${sourceId}`,
-        );
+        history.push(`${baseUrl}/${topicId}/${sourceId}`);
       } else {
-        history.push(`/pipeline/new/${page}/${pipelineId}/${topicId}`);
+        history.push(`${baseUrl}/${topicId}`);
       }
+    }
+  };
+
+  renderGraph = ({ type, isExist, isActive, icon }, idx) => {
+    const nodeCls = cx({ 'is-exist': isExist, 'is-active': isActive });
+    const separatorCls = cx({ 'is-exist': true });
+    const iconCls = `fas ${icon}`;
+
+    if (type.indexOf('separator') > -1) {
+      return (
+        <Separator className={separatorCls} isActive={isActive} key={idx} />
+      );
+    } else {
+      return (
+        <Node
+          key={idx}
+          className={nodeCls}
+          onClick={this.handleClick}
+          data-id={type}
+          data-testid={`graph-${type}`}
+        >
+          {type === 'sink' ? (
+            <HadoopIcon width={28} height={28} fillColor={lightestBlue} />
+          ) : (
+            <IconWrapper className={iconCls} />
+          )}
+        </Node>
+      );
     }
   };
 
@@ -152,31 +200,8 @@ class PipelineGraph extends React.Component {
     return (
       <Box>
         <H5Wrapper>Pipeline graph</H5Wrapper>
-
-        <Graph
-          className={this.state.isMultiple ? 'is-multiple' : ''}
-          data-testid="graph-list"
-        >
-          {this.props.graph.map(({ type, isExist, isActive, icon }) => {
-            const nodeCls = cx({ 'is-exist': isExist, 'is-active': isActive });
-            const iconCls = isExist ? `fas ${icon}` : '';
-
-            return (
-              <Node
-                key={type}
-                className={nodeCls}
-                onClick={this.handleClick}
-                data-id={type}
-                data-testid={`graph-${type}`}
-              >
-                {type === 'sink' && isExist ? (
-                  <HadoopIcon width={28} height={28} fillColor={lightestBlue} />
-                ) : (
-                  <IconWrapper className={iconCls} />
-                )}
-              </Node>
-            );
-          })}
+        <Graph data-testid="graph-list">
+          {this.props.graph.map((g, idx) => this.renderGraph(g, idx))}
         </Graph>
       </Box>
     );

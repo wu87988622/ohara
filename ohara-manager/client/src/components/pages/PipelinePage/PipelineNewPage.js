@@ -47,11 +47,21 @@ class PipelineNewPage extends React.Component {
         icon: 'fa-database',
       },
       {
+        type: 'separator-1',
+        isExist: true,
+        isActive: false,
+      },
+      {
         type: 'topic',
         isExist: false,
         isActive: false,
         uuid: null,
         icon: 'fa-list-ul',
+      },
+      {
+        type: 'separator-2',
+        isExist: true,
+        isActive: false,
       },
       {
         type: 'sink',
@@ -80,10 +90,8 @@ class PipelineNewPage extends React.Component {
     const currPage = _.get(this.props.match, 'params.page', null);
 
     if (currPage !== prevPage) {
-      const { graph } = this.state;
-      const _page = graph.find(g => g.type === currPage);
-      const update = { ..._page, isActive: true };
-      this.updateGraph(graph, update, currPage);
+      const update = { isActive: true };
+      this.updateGraph(update, currPage);
     }
   }
 
@@ -108,23 +116,34 @@ class PipelineNewPage extends React.Component {
       this.setState(() => ({ isRedirect: true }));
       return false;
     } else {
-      const { graph } = this.state;
-      const topic = graph.find(g => g.type === 'topic');
-      const update = { ...topic, isActive: true, uuid: topicId, isExist: true };
-      this.updateGraph(graph, update, 'topic');
+      const update = { uuid: topicId };
+      this.updateGraph(update, 'topic');
       return true;
     }
   };
 
-  updateGraph = (graph, update, type) => {
-    const idx = graph.findIndex(g => g.type === type);
-    const _graph = [...graph.slice(0, idx), update, ...graph.slice(idx + 1)];
-
-    this.setState({ graph: _graph });
+  updateGraph = (update, type) => {
+    this.setState(({ graph }) => {
+      const idx = graph.findIndex(g => g.type === type);
+      const _graph = [
+        ...graph.slice(0, idx),
+        { ...graph[idx], ...update },
+        ...graph.slice(idx + 1),
+      ];
+      return {
+        graph: _graph,
+      };
+    });
   };
 
   resetGraph = graph => {
-    const update = graph.map(g => ({ ...g, isActive: false }));
+    const update = graph.map(g => {
+      if (g.type.indexOf('separator') === -1) {
+        return { ...g, isActive: false };
+      }
+
+      return g;
+    });
     this.setState({ graph: update });
   };
 
@@ -204,6 +223,8 @@ class PipelineNewPage extends React.Component {
             />
             <PipelineGraph
               graph={graph}
+              updateGraph={this.updateGraph}
+              updateG={this.updateG}
               resetGraph={this.resetGraph}
               {...this.props}
             />
@@ -214,6 +235,8 @@ class PipelineNewPage extends React.Component {
                 <PipelineSourcePage
                   {...this.props}
                   hasChanges={hasChanges}
+                  graph={graph}
+                  updateGraph={this.updateGraph}
                   updateHasChanges={this.updateHasChanges}
                 />
               )}

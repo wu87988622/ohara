@@ -18,6 +18,7 @@ import {
   validateRdb,
   updateSource,
   fetchPipelines,
+  updatePipeline,
 } from '../../../apis/pipelinesApis';
 import * as URLS from '../../../constants/urls';
 import * as _ from '../../../utils/helpers';
@@ -75,8 +76,18 @@ const GetTablesBtn = styled(Button)`
 
 class PipelineSourcePage extends React.Component {
   static propTypes = {
+    graph: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        uuid: PropTypes.string,
+        isActive: PropTypes.bool,
+        isExact: PropTypes.bool,
+        icon: PropTypes.string,
+      }),
+    ).isRequired,
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func,
+    updateGraph: PropTypes.func,
   };
 
   fakeTables = [{ name: 'table-1', uuid: 1 }, { name: 'table-2', uuid: 2 }];
@@ -95,7 +106,7 @@ class PipelineSourcePage extends React.Component {
     isBtnWorking: false,
     isFormDisabled: false,
     isRedirect: false,
-    isEdit: false,
+    pipelines: null,
   };
 
   componentDidMount() {
@@ -105,9 +116,7 @@ class PipelineSourcePage extends React.Component {
     const topicId = _.get(match, 'params.topicId', null);
 
     if (!_.isNull(sourceId)) {
-      this.setState({ isEdit: true }, () => {
-        this.fetchSources(sourceId);
-      });
+      this.fetchSources(sourceId);
     }
 
     if (!_.isNull(pipelineId)) {
@@ -119,11 +128,28 @@ class PipelineSourcePage extends React.Component {
     }
   }
 
-  componentDidUpdate() {
-    const { hasChanges } = this.props;
+  async componentDidUpdate(prevProps) {
+    const { hasChanges, match } = this.props;
+
+    const prevSourceId = _.get(prevProps.match, 'params.sourceId', null);
+    const currSourceId = _.get(this.props.match, 'params.sourceId', null);
+    const topicId = _.get(match, 'params.topicId');
+    const hasTopicId = !_.isNull(topicId);
+    const isUpdate = prevSourceId !== currSourceId;
 
     if (hasChanges) {
       this.saveChanges();
+    }
+
+    if (isUpdate && hasTopicId) {
+      const { name, uuid } = this.state.pipelines;
+
+      const params = {
+        name,
+        rules: { [currSourceId]: topicId },
+      };
+
+      this.updatePipeline(uuid, params);
     }
   }
 
@@ -189,7 +215,10 @@ class PipelineSourcePage extends React.Component {
     if (this.isValidId(pipelineId)) {
       const res = await fetchPipelines(pipelineId);
       const pipelines = _.get(res, 'data.result', []);
-      console.log(pipelines); // eslint-disable-line
+
+      if (!_.isEmptyArr(pipelines)) {
+        this.setState({ pipelines });
+      }
     }
   };
 
@@ -198,7 +227,7 @@ class PipelineSourcePage extends React.Component {
     const res = await queryRdb({ url, user: username, password });
     const tables = _.get(res, 'data.result', null);
 
-    if (!_.isNull(tables)) {
+    if (tables) {
       this.setState({ tables: this.fakeTables, currTable: this.fakeTables[0] });
     }
   };
@@ -258,6 +287,17 @@ class PipelineSourcePage extends React.Component {
     this.setState({ isBtnWorking: update });
   };
 
+  updatePipeline = async (uuid, params) => {
+    const res = await updatePipeline({ uuid, params });
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      const { updateGraph } = this.props;
+      const update = { isActive: true };
+      updateGraph(update, 'separator-1');
+    }
+  };
+
   saveChanges = _.debounce(async () => {
     const { match, history } = this.props;
     const {
@@ -292,7 +332,7 @@ class PipelineSourcePage extends React.Component {
 
     const uuid = _.get(res, 'data.result.uuid', null);
 
-    if (!_.isNull(uuid)) {
+    if (uuid) {
       this.props.updateHasChanges(false);
       if (_.isNull(sourceId)) history.push(`${match.url}/${uuid}`);
     }

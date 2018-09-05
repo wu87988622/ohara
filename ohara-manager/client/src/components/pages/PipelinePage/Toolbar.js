@@ -97,24 +97,13 @@ class Toolbar extends React.Component {
   };
 
   update = e => {
-    let type = _.get(e, 'target.dataset.id', null);
-    const isSvg = e.target.nodeName === 'svg';
-    const { graph, updateGraph } = this.props;
+    const { updateGraph } = this.props;
+    const update = { isExist: true };
 
-    let _type = null;
-    let update = null;
+    let type = _.get(e, 'target.dataset.id', null);
     type = type ? type : 'sink';
 
-    if (type) {
-      _type = graph.find(g => g.type === type);
-    }
-
-    if (isSvg) {
-      _type = graph.find(g => g.type === 'sink');
-    }
-
-    update = { ..._type, isExist: true };
-    updateGraph(graph, update, type);
+    updateGraph(update, type);
   };
 
   render() {
