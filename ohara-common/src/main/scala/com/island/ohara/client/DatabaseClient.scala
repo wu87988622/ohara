@@ -29,6 +29,7 @@ trait DatabaseClient extends CloseOnce {
 
 object DatabaseClient {
   private[this] def tableCatalog(implicit rs: ResultSet): String = rs.getString("TABLE_CAT")
+  private[this] def tableSchema(implicit rs: ResultSet): String = rs.getString("TABLE_SCHEM")
   private[this] def tableName(implicit rs: ResultSet): String = rs.getString("TABLE_NAME")
   private[this] def columnName(implicit rs: ResultSet): String = rs.getString("COLUMN_NAME")
   private[this] def columnType(implicit rs: ResultSet): String = rs.getString("TYPE_NAME")
@@ -53,14 +54,14 @@ object DatabaseClient {
       CloseOnce
         .doClose(md.getTables(catalog, schema, name, null)) { implicit rs =>
           {
-            val buf = new ArrayBuffer[(String, String)]()
-            while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableName))
+            val buf = new ArrayBuffer[(String, String, String)]()
+            while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableSchema, tableName))
             buf
           }
         }
         .map {
-          case (c, t) =>
-            (c, t, CloseOnce.doClose(md.getPrimaryKeys(c, null, t)) { implicit rs =>
+          case (c, s, t) =>
+            (c, s, t, CloseOnce.doClose(md.getPrimaryKeys(c, null, t)) { implicit rs =>
               {
                 val buf = new ArrayBuffer[String]()
                 while (rs.next()) buf += columnName
@@ -69,7 +70,7 @@ object DatabaseClient {
             })
         }
         .map {
-          case (c, t, pks) =>
+          case (c, s, t, pks) =>
             val columns = CloseOnce.doClose(md.getColumns(c, null, t, null)) { implicit rs =>
               {
                 val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
@@ -81,7 +82,7 @@ object DatabaseClient {
                 buf
               }
             }
-            RdbTable(c, t, columns)
+            RdbTable(Option(c), Option(s), t, columns)
         }
         .filterNot(_.schema.isEmpty)
     }
