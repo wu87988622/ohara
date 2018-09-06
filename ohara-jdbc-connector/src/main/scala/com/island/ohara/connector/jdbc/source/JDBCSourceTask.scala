@@ -1,16 +1,25 @@
 package com.island.ohara.connector.jdbc.source
 import com.island.ohara.connector.jdbc.Version
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+import com.typesafe.scalalogging.Logger
 
 class JDBCSourceTask extends RowSourceTask {
+
+  private[this] lazy val logger = Logger(getClass.getName)
+
+  var jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = _
 
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
     *
-    * @param props initial configuration
+    * @param config initial configuration
     */
   override protected def _start(config: TaskConfig): Unit = {
-    //TODO setting props for JDBC Source Connector
+    logger.info("starting JDBC Source Connector")
+    val props = config.options
+    jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(props)
+
+    //TODO Connect to DataBase
   }
 
   /**

@@ -13,7 +13,7 @@ class JDBCSourceConnector extends RowSourceConnector {
     * Start this Connector. This method will only be called on a clean Connector, i.e. it has
     * either just been instantiated and initialized or _stop() has been invoked.
     *
-    * @param props configuration settings
+    * @param taskConfig configuration settings
     */
   override protected def _start(taskConfig: TaskConfig): Unit = {
     this.taskConfig = taskConfig
