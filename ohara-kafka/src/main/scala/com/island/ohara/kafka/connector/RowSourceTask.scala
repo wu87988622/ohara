@@ -94,7 +94,7 @@ abstract class RowSourceTask extends SourceTask {
         .asJava
   }
 
-  final override def start(props: util.Map[String, String]): Unit = _start(RowSourceConnector.toTaskConfig(props))
+  final override def start(props: util.Map[String, String]): Unit = _start(toTaskConfig(props))
   final override def stop(): Unit = _stop()
 
   final override def commit(): Unit = _commit()

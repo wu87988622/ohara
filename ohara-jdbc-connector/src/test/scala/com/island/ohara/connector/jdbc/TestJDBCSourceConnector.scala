@@ -16,12 +16,12 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     var topicName = "topic-test-1"
 
     connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[JDBCSourceConnector])
       .topic(topicName)
       .numberOfTasks(1)
-      .build()
+      .create()
 
     //TODO Get Topic message for test
   }

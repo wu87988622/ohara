@@ -19,7 +19,7 @@ abstract class RowSinkTask extends SinkTask {
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
     * @param props initial configuration
     */
-  protected def _start(config: Map[String, String]): Unit
+  protected def _start(config: TaskConfig): Unit
 
   /**
     * Perform any cleanup to stop this task. In SinkTasks, this method is invoked only once outstanding calls to other
@@ -102,7 +102,7 @@ abstract class RowSinkTask extends SinkTask {
           .toSeq)
   }
 
-  final override def start(config: util.Map[String, String]): Unit = _start(config.asScala.toMap)
+  final override def start(props: util.Map[String, String]): Unit = _start(toTaskConfig(props))
 
   final override def stop(): Unit = _stop()
 

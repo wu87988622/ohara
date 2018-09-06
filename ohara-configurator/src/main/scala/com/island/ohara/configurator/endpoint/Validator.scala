@@ -118,7 +118,7 @@ object Validator {
       val requestId: String = UuidUtil.uuid()
       val validationName = s"Validator-${INDEXER.getAndIncrement()}"
       connectorClient
-        .sourceConnectorCreator()
+        .connectorCreator()
         .name(validationName)
         .disableConverter()
         .connectorClass(classOf[Validator].getName)
@@ -127,7 +127,7 @@ object Validator {
         .config(config)
         .config(REQUEST_ID, requestId)
         .config(TARGET, target)
-        .build()
+        .create()
       // TODO: receiving all messages may be expensive...by chia
       try doClose(
         kafkaClient

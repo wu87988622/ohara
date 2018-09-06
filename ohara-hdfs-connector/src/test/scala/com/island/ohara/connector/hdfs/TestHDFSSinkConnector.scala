@@ -3,6 +3,7 @@ package com.island.ohara.connector.hdfs
 import java.util
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.data.{Cell, Row}
@@ -10,8 +11,8 @@ import com.island.ohara.integration._
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.Producer
-import com.island.ohara.kafka.connector.RowSinkTask
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
+import com.island.ohara.serialization.{DataType, Serializer}
 import org.apache.hadoop.fs.Path
 import org.junit.Test
 import org.scalatest.Matchers
@@ -22,20 +23,23 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
+  private[this] val schema = Seq(Column("cf", DataType.BOOLEAN, 1))
   @Test
   def testTaskConfigs(): Unit = {
     val maxTasks = 5
     val hdfsSinkConnector = new HDFSSinkConnector()
-    val props: util.Map[String, String] = new util.HashMap[String, String]()
-    props.put(HDFSSinkConnectorConfig.HDFS_URL, hdfsURL)
-    props.put(HDFSSinkConnectorConfig.TMP_DIR, tmpDir)
 
-    hdfsSinkConnector.start(props)
-    val result: util.List[util.Map[String, String]] = hdfsSinkConnector.taskConfigs(maxTasks)
+    hdfsSinkConnector._start(
+      TaskConfig(Seq("topic"),
+                 Seq.empty,
+                 Map(HDFSSinkConnectorConfig.HDFS_URL -> hdfsURL, HDFSSinkConnectorConfig.TMP_DIR -> tmpDir)))
+    val result = hdfsSinkConnector._taskConfigs(maxTasks)
 
-    result.size() shouldBe maxTasks
-    result.get(0).get(HDFSSinkConnectorConfig.HDFS_URL) shouldBe hdfsURL
-    result.get(0).get(HDFSSinkConnectorConfig.TMP_DIR) shouldBe tmpDir
+    result.size shouldBe maxTasks
+    result.foreach(r => {
+      r.options(HDFSSinkConnectorConfig.HDFS_URL) shouldBe hdfsURL
+      r.options(HDFSSinkConnectorConfig.TMP_DIR) shouldBe tmpDir
+    })
   }
 
   @Test
@@ -52,16 +56,16 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
 
     val localURL = s"file://${testUtil.tmpDirectory}"
     testUtil.connectorClient
-      .sinkConnectorCreator()
+      .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleHDFSSinkConnector])
       .topic(topicName)
       .numberOfTasks(sinkTasks)
       .disableConverter()
       .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
-      .build()
+      .schema(schema)
+      .create()
 
-    OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get("topics") == connectorName, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, 10 second)
@@ -99,7 +103,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
 
     val localURL = s"file://${testUtil.tmpDirectory}"
     testUtil.connectorClient
-      .sinkConnectorCreator()
+      .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
       .topic(topicName)
@@ -112,7 +116,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
         hdfsCreatorClassName -> hdfsCreatorClassNameValue,
         dataDirName -> dataDirPath
       ))
-      .build()
+      .schema(schema)
+      .create()
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
@@ -165,12 +170,12 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
 
     val localURL = s"file://${testUtil.tmpDirectory}"
     testUtil.connectorClient
-      .sinkConnectorCreator()
+      .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
       .topic(topicName)
       .numberOfTasks(sinkTasks)
-      .disableConverter
+      .disableConverter()
       .config(Map(
         flushLineCountName -> flushLineCount,
         tmpDirName -> tmpDirPath,
@@ -178,7 +183,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
         hdfsCreatorClassName -> hdfsCreatorClassNameValue,
         dataDirName -> dataDirPath
       ))
-      .build()
+      .schema(schema)
+      .create()
 
     TimeUnit.SECONDS.sleep(5)
     storage
@@ -209,9 +215,9 @@ class SimpleHDFSSinkConnector extends HDFSSinkConnector {
 }
 
 class SimpleHDFSSinkTask extends HDFSSinkTask {
-  override def _start(props: Map[String, String]): Unit = {
+  override def _start(props: TaskConfig): Unit = {
     super._start(props)
-    props.foreach {
+    props.options.foreach {
       case (k, v) => SimpleHDFSSinkTask.taskProps.put(k, v)
     }
     SimpleHDFSSinkTask.sinkConnectorConfig = hdfsSinkConnectorConfig

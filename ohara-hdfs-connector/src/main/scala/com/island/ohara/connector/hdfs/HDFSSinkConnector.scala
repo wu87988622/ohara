@@ -1,15 +1,15 @@
 package com.island.ohara.connector.hdfs
 
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask}
+import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskConfig}
 
 /**
   * This class extends RowSinkConnector abstract.
   */
 class HDFSSinkConnector extends RowSinkConnector {
 
-  var props: Map[String, String] = _
+  var props: TaskConfig = _
 
-  override def _start(props: Map[String, String]): Unit = {
+  override protected[hdfs] def _start(props: TaskConfig): Unit = {
     this.props = props
   }
 
@@ -21,7 +21,7 @@ class HDFSSinkConnector extends RowSinkConnector {
     //TODO
   }
 
-  override protected def _taskConfigs(maxTasks: Int): Seq[Map[String, String]] = {
+  override protected[hdfs] def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
     Seq.fill(maxTasks) { props }
   }
 

@@ -1,21 +1,23 @@
 package com.island.ohara.client
 import java.util.Objects
 
-import com.island.ohara.client.ConnectorJson.CreateConnectorResponse
+import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.ConnectorJson.{CreateConnectorRequest, CreateConnectorResponse}
 
 import scala.collection.mutable
 
 /**
   * a base class used to collect the config of source/sink connector when creating
   */
-abstract class ConnectorBuilder {
-  protected var name: String = _
-  protected var clzName: String = _
-  protected var topicNames: Seq[String] = _
-  protected var numberOfTasks: Int = -1
-  protected var config: mutable.HashMap[String, String] = _
-  protected var _disableKeyConverter: Boolean = false
-  protected var _disableValueConverter: Boolean = false
+abstract class ConnectorCreator {
+  private[this] var name: String = _
+  private[this] var clzName: String = _
+  private[this] var topicNames: Seq[String] = _
+  private[this] var numberOfTasks: Int = -1
+  private[this] var config: mutable.HashMap[String, String] = _
+  private[this] var _disableKeyConverter: Boolean = false
+  private[this] var _disableValueConverter: Boolean = false
+  private[this] var schema: Seq[Column] = _
 
   /**
     * config the key converter be org.apache.kafka.connect.converters.ByteArrayConverter. It is useful if the data in topic
@@ -128,11 +130,52 @@ abstract class ConnectorBuilder {
   }
 
   /**
+    * set the schema
+    * @param schema schema
+    * @return this builder
+    */
+  def schema(schema: Seq[Column]): this.type = {
+    this.schema = schema
+    this
+  }
+
+  /**
+    * set the topics in which you have interest.
+    *
+    * @param topicNames topics
+    * @return this one
+    */
+  def topics(topicNames: Seq[String]): this.type = {
+    this.topicNames = topicNames
+    this
+  }
+
+  /**
     * send the request to create the sink connector.
     *
     * @return this one
     */
-  def build(): CreateConnectorResponse
+  def create(): CreateConnectorResponse = {
+    checkArgument()
+    if (config == null) config = new mutable.HashMap[String, String]()
+    config += ("connector.class" -> clzName)
+    config += ("topics" -> topicNames.mkString(","))
+    config += ("tasks.max" -> numberOfTasks.toString)
+    if (schema != null) config += (Column.COLUMN_KEY -> Column.toString(schema))
+    if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
+    if (_disableValueConverter)
+      config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
+    send(CreateConnectorRequest(name, config.toMap))
+  }
+
+  /**
+    * send the request to kafka worker
+    *
+    * @param cmd related path
+    * @param body body
+    * @return response
+    */
+  protected def send(request: CreateConnectorRequest): CreateConnectorResponse
 
   protected def checkArgument(): Unit = {
     Objects.requireNonNull(name)

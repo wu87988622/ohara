@@ -67,13 +67,14 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val rowCount = 3
     val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
     testUtil.connectorClient
-      .sinkConnectorCreator()
+      .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topic(topicName)
       .numberOfTasks(1)
       .disableConverter()
-      .build()
+      .schema(Seq(Column("cf", DataType.BOOLEAN, 1)))
+      .create()
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
@@ -94,7 +95,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val connectorName = methodName
     val pollCountMax = 5
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
       .schema(Seq(Column("cf", DataType.BOOLEAN, 1)))
@@ -102,7 +103,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(1)
       .disableConverter()
       .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
-      .build()
+      .create()
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)

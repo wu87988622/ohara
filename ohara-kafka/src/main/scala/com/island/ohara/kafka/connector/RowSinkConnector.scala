@@ -6,7 +6,6 @@ import org.apache.kafka.common.config.{Config, ConfigDef}
 import org.apache.kafka.connect.connector.{ConnectorContext, Task}
 import org.apache.kafka.connect.sink.SinkConnector
 
-import scala.collection.JavaConverters
 import scala.collection.JavaConverters._
 
 /**
@@ -20,7 +19,7 @@ abstract class RowSinkConnector extends SinkConnector {
     *
     * @param config configuration settings
     */
-  protected def _start(config: Map[String, String]): Unit
+  protected def _start(config: TaskConfig): Unit
 
   /**
     * stop this connector
@@ -36,10 +35,10 @@ abstract class RowSinkConnector extends SinkConnector {
 
   /**
     * Return the configs for source task.
-    *
+    * NOTED: It is illegal to assign different topics to RowSinkTask
     * @return a seq of configs
     */
-  protected def _taskConfigs(maxTasks: Int): Seq[Map[String, String]]
+  protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig]
 
   /**
     * Define the configuration for the connector.
@@ -56,15 +55,28 @@ abstract class RowSinkConnector extends SinkConnector {
   protected def _version: String
 
   //-------------------------------------------------[WRAPPED]-------------------------------------------------//
+  private[this] var internalConfig: TaskConfig = _
+
   /**
     * We take over this method to disable user to use java collection.
     */
-  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
-    _taskConfigs(maxTasks).map(JavaConverters.mapAsJavaMap(_)).asJava
+  final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
+    val tasks = _taskConfigs(maxTasks: Int)
+    // kafka always overwrite the topics of task so we throw a exception early in order to mislead the usage of task configuration
+    tasks.foreach(
+      t =>
+        if (t.topics != internalConfig.topics)
+          throw new IllegalArgumentException(s"topics in task (${t.topics
+            .mkString(",")} can't be different to topics in connector (${internalConfig.topics.mkString(",")}"))
+    tasks.map(toMap).asJava
+  }
 
   final override def taskClass(): Class[_ <: Task] = _taskClass()
 
-  final override def start(props: util.Map[String, String]): Unit = _start(props.asScala.toMap)
+  final override def start(props: util.Map[String, String]): Unit = {
+    this.internalConfig = toTaskConfig(props)
+    _start(internalConfig)
+  }
 
   final override def stop(): Unit = _stop()
 

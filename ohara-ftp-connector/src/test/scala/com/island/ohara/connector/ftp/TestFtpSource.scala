@@ -80,7 +80,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testNormalCase(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -88,7 +88,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(methodName)
       .schema(schema)
       .config(props.toMap)
-      .build()
+      .create()
     try {
       val consumer = Consumer
         .builder(Serializer.BYTES, Serializer.ROW)
@@ -118,7 +118,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testPartialColumns(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -127,7 +127,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // skip last column
       .schema(schema.slice(0, schema.length - 1))
       .config(props.toMap)
-      .build()
+      .create()
     try {
       val consumer = Consumer
         .builder(Serializer.BYTES, Serializer.ROW)
@@ -155,7 +155,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testFailedCase(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -164,7 +164,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // the name can't be casted to int
       .schema(Seq(Column("name", DataType.INT, 1)))
       .config(props.toMap)
-      .build()
+      .create()
     try {
       val consumer = Consumer
         .builder(Serializer.BYTES, Serializer.ROW)
@@ -184,7 +184,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidInput(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -192,7 +192,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(methodName)
       .schema(schema)
       .config(props.copy(input = "/abc").toMap)
-      .build()
+      .create()
     assertFailedConnector(methodName)
   }
 
@@ -200,7 +200,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidOutput(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -208,7 +208,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(methodName)
       .schema(schema)
       .config(props.copy(output = "/abc").toMap)
-      .build()
+      .create()
     assertFailedConnector(methodName)
   }
 
@@ -216,7 +216,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidError(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -224,7 +224,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(methodName)
       .schema(schema)
       .config(props.copy(error = "/abc").toMap)
-      .build()
+      .create()
     assertFailedConnector(methodName)
   }
 
@@ -232,7 +232,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidSchema(): Unit = {
     val topicName = methodName
     testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
@@ -246,7 +246,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column("single", DataType.BOOLEAN, 3)
         ))
       .config(props.toMap)
-      .build()
+      .create()
     assertFailedConnector(methodName)
   }
 

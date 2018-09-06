@@ -1,6 +1,6 @@
 package com.island.ohara.connector.hdfs
 
-import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TopicOffset, TopicPartition}
+import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskConfig, TopicOffset, TopicPartition}
 import com.typesafe.scalalogging.Logger
 
 /**
@@ -13,9 +13,9 @@ class HDFSSinkTask extends RowSinkTask {
   var hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = _
   var hdfsWriter: DataWriter = _
 
-  override def _start(props: Map[String, String]): Unit = {
+  override def _start(props: TaskConfig): Unit = {
     logger.info("starting HDFS Sink Connector")
-    hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props)
+    hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props.options)
     hdfsWriter = new DataWriter(hdfsSinkConnectorConfig, rowContext)
   }
 

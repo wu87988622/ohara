@@ -13,7 +13,7 @@ class SimpleRowSinkTask extends RowSinkTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  override def _start(props: Map[String, String]): Unit = SimpleRowSinkTask.runningTaskCount.incrementAndGet()
+  override def _start(props: TaskConfig): Unit = SimpleRowSinkTask.runningTaskCount.incrementAndGet()
 
   override def _put(records: Seq[RowSinkRecord]): Unit = {
     records

@@ -24,9 +24,7 @@ import scala.util.Random
   */
 trait ConnectorClient extends CloseOnce {
 
-  def sourceConnectorCreator(): SourceConnectorBuilder
-
-  def sinkConnectorCreator(): SinkConnectorBuilder
+  def connectorCreator(): ConnectorCreator
 
   def delete(name: String): Unit
 
@@ -55,9 +53,7 @@ object ConnectorClient {
 
       private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-      override def sourceConnectorCreator(): SourceConnectorBuilder = (request: CreateConnectorRequest) => send(request)
-
-      override def sinkConnectorCreator(): SinkConnectorBuilder = (request: CreateConnectorRequest) => send(request)
+      override def connectorCreator(): ConnectorCreator = (request: CreateConnectorRequest) => send(request)
 
       private[this] def send(request: CreateConnectorRequest): CreateConnectorResponse = Await.result(
         Marshal(request)

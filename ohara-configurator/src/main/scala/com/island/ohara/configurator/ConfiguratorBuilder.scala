@@ -11,7 +11,7 @@ import com.island.ohara.client.ConnectorJson.{
   Plugin,
   Status
 }
-import com.island.ohara.client.{ConnectorClient, SinkConnectorBuilder, SourceConnectorBuilder}
+import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicBuilder, TopicDescription}
 import com.island.ohara.serialization.Serializer
@@ -126,7 +126,7 @@ class ConfiguratorBuilder {
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashSet[String]()
 
-  override def sourceConnectorCreator(): SourceConnectorBuilder = (request: CreateConnectorRequest) =>
+  override def connectorCreator(): ConnectorCreator = (request: CreateConnectorRequest) =>
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
     else {
@@ -134,10 +134,6 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
       CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
   }
 
-  override def sinkConnectorCreator(): SinkConnectorBuilder = (request: CreateConnectorRequest) =>
-    if (cachedConnectors.contains(request.name))
-      throw new IllegalStateException(s"the connector:${request.name} exists!")
-    else CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
   override def delete(name: String): Unit =
     if (!cachedConnectors.remove(name)) throw new IllegalStateException(s"the connector:$name doesn't exist!")
   import scala.collection.JavaConverters._

@@ -48,13 +48,13 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
     val sourceConnectorName = "my_source_connector"
     val topicName = "my_connector_topic"
     var resp: CreateConnectorResponse = testUtil.connectorClient
-      .sourceConnectorCreator()
+      .connectorCreator()
       .name(sourceConnectorName)
       .connectorClass(classOf[SimpleSourceConnector])
       .topic(topicName)
       .numberOfTasks(sourceTasks)
       .config("key0", "value0")
-      .build()
+      .create()
     resp.name shouldBe sourceConnectorName
     // TODO: enable following check after KAFKA-7253 is resolved. by chia
     // resp.typeName shouldBe "source"
@@ -65,13 +65,13 @@ class TestMiniKafka extends With3Brokers3Workers with Matchers {
     OharaTestUtil.await(() => SimpleSourceTask.taskCount.get >= sourceTasks, 10 second)
     val sinkConnectorName = "my_sink_connector"
     resp = testUtil.connectorClient
-      .sinkConnectorCreator()
+      .connectorCreator()
       .name(sinkConnectorName)
       .connectorClass(classOf[SimpleSinkConnector])
       .topic(topicName)
       .numberOfTasks(sinkTasks)
       .config("key0", "value0")
-      .build()
+      .create()
 
     resp.name shouldBe sinkConnectorName
     // TODO: enable following check after KAFKA-7253 is resolved. by chia
