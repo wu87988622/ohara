@@ -32,6 +32,7 @@ const Th = styled.th`
 Th.displayName = 'Th';
 
 const ListTable = ({ headers, list, urlDir }) => {
+  if (!list) return null;
   return (
     <Table>
       <thead>

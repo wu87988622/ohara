@@ -7,6 +7,7 @@ import { Redirect } from 'react-router-dom';
 import { Box } from '../../common/Layout';
 import { Warning } from '../../common/Messages';
 import { H5 } from '../../common/Headings';
+import { DataTable } from '../../common/Table';
 import { lightBlue, whiteSmoke } from '../../../theme/variables';
 import { primaryBtn } from '../../../theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from '../../common/Form';
@@ -90,7 +91,28 @@ class PipelineSourcePage extends React.Component {
     updateGraph: PropTypes.func,
   };
 
-  fakeTables = [{ name: 'table-1', uuid: 1 }, { name: 'table-2', uuid: 2 }];
+  fakeTables = [
+    {
+      name: 'table-1',
+      uuid: 1,
+      schema: [
+        { uuid: '1', name: 'col_1', type: 'INT' },
+        { uuid: '2', name: 'col_2', type: 'STRING' },
+        { uuid: '3', name: 'col_3', type: 'DATE' },
+      ],
+    },
+    {
+      name: 'table-2',
+      uuid: 2,
+      schema: [
+        { uuid: '4', name: 'New_col_1', type: 'STRING' },
+        { uuid: '5', name: 'New_col_2', type: 'INT' },
+        { uuid: '6', name: 'New_col_3', type: 'BOOLEAN' },
+      ],
+    },
+  ];
+
+  dbSchemasHeader = ['Column name', 'Column type'];
 
   state = {
     databases: [{ name: 'mysql', uuid: '1' }, { name: 'oracle', uuid: '2' }],
@@ -253,13 +275,18 @@ class PipelineSourcePage extends React.Component {
 
     const upper = name.charAt(0).toUpperCase();
     const current = `curr${upper}${name.slice(1)}`;
+    const isTable = name.toLowerCase() === 'table';
+    const schema = this.fakeTables.find(f => f.name === value).schema;
 
     this.setState(
-      {
-        [current]: {
-          name: value,
-          uuid,
-        },
+      () => {
+        return {
+          [current]: {
+            name: value,
+            uuid,
+            schema: isTable ? schema : undefined,
+          },
+        };
       },
       () => {
         this.props.updateHasChanges(true);
@@ -267,13 +294,13 @@ class PipelineSourcePage extends React.Component {
     );
   };
 
-  handleTest = async e => {
+  handleGetTables = async e => {
     e.preventDefault();
     const { username: user, password, url: uri } = this.state;
 
-    this.updateBtn(true);
+    this.updateIsBtnWorking(true);
     const res = await validateRdb({ user, password, uri });
-    this.updateBtn(false);
+    this.updateIsBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -283,7 +310,7 @@ class PipelineSourcePage extends React.Component {
     }
   };
 
-  updateBtn = update => {
+  updateIsBtnWorking = update => {
     this.setState({ isBtnWorking: update });
   };
 
@@ -359,116 +386,125 @@ class PipelineSourcePage extends React.Component {
     }
 
     return (
-      <Box>
-        <H5Wrapper>JDBC connection</H5Wrapper>
-        <Form>
-          <LeftCol>
-            <Fieldset disabled={isBtnWorking}>
-              <FormGroup>
-                <Label>Database</Label>
-                <Select
-                  name="databases"
-                  list={databases}
-                  selected={currDatabase}
-                  width="250px"
-                  data-testid="dataset-select"
-                  handleChange={this.handleChangeSelect}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>URL</Label>
-                <Input
-                  name="url"
-                  width="250px"
-                  placeholder="jdbc:mysql://localhost:3030/my-db"
-                  value={url}
-                  data-testid="url-input"
-                  handleChange={this.handleChangeInput}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>User name</Label>
-                <Input
-                  name="username"
-                  width="250px"
-                  placeholder="John doe"
-                  value={username}
-                  data-testid="username-input"
-                  handleChange={this.handleChangeInput}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  name="password"
-                  width="250px"
-                  placeholder="password"
-                  value={password}
-                  data-testid="password-input"
-                  handleChange={this.handleChangeInput}
-                />
-              </FormGroup>
-            </Fieldset>
-          </LeftCol>
-          <RightCol>
-            <Fieldset disabled={isBtnWorking}>
-              <FormGroup>
-                <Label>Table</Label>
-
-                <TableWrapper>
+      <React.Fragment>
+        <Box>
+          <H5Wrapper>JDBC connection</H5Wrapper>
+          <Form>
+            <LeftCol>
+              <Fieldset disabled={isBtnWorking}>
+                <FormGroup>
+                  <Label>Database</Label>
                   <Select
-                    name="table"
-                    list={tables}
-                    selected={currTable}
+                    name="databases"
+                    list={databases}
+                    selected={currDatabase}
                     width="250px"
-                    data-testid="table-select"
+                    data-testid="dataset-select"
                     handleChange={this.handleChangeSelect}
                   />
+                </FormGroup>
 
-                  <GetTablesBtn
-                    theme={primaryBtn}
-                    text="Get tables"
-                    isWorking={isBtnWorking}
-                    disabled={isBtnWorking}
-                    data-testid="test-connection-btn"
-                    handleClick={this.handleTest}
+                <FormGroup>
+                  <Label>URL</Label>
+                  <Input
+                    name="url"
+                    width="250px"
+                    placeholder="jdbc:mysql://localhost:3030/my-db"
+                    value={url}
+                    data-testid="url-input"
+                    handleChange={this.handleChangeInput}
                   />
-                </TableWrapper>
-              </FormGroup>
+                </FormGroup>
 
-              <FormGroup>
-                <Label>Timestamp column</Label>
-                <Input
-                  name="timestamp"
-                  width="250px"
-                  placeholder="120"
-                  value={timestamp}
-                  data-testid="timestamp-input"
-                  handleChange={this.handleChangeInput}
-                />
-              </FormGroup>
+                <FormGroup>
+                  <Label>User name</Label>
+                  <Input
+                    name="username"
+                    width="250px"
+                    placeholder="John doe"
+                    value={username}
+                    data-testid="username-input"
+                    handleChange={this.handleChangeInput}
+                  />
+                </FormGroup>
 
-              <FormGroup>
-                <Label>Write topic</Label>
-                <Select
-                  name="writeTopics"
-                  list={writeTopics}
-                  selected={currWriteTopic}
-                  width="250px"
-                  data-testid="write-topic-select"
-                  handleChange={this.handleChangeSelect}
-                />
-              </FormGroup>
-            </Fieldset>
+                <FormGroup>
+                  <Label>Password</Label>
+                  <Input
+                    type="password"
+                    name="password"
+                    width="250px"
+                    placeholder="password"
+                    value={password}
+                    data-testid="password-input"
+                    handleChange={this.handleChangeInput}
+                  />
+                </FormGroup>
+              </Fieldset>
+            </LeftCol>
+            <RightCol>
+              <Fieldset disabled={isBtnWorking}>
+                <FormGroup>
+                  <Label>Table</Label>
 
-            <Warning text="You need to test JDBC connection before filling out the above form" />
-          </RightCol>
-        </Form>
-      </Box>
+                  <TableWrapper>
+                    <Select
+                      name="table"
+                      list={tables}
+                      selected={currTable}
+                      width="250px"
+                      data-testid="table-select"
+                      handleChange={this.handleChangeSelect}
+                    />
+
+                    <GetTablesBtn
+                      theme={primaryBtn}
+                      text="Get tables"
+                      isWorking={isBtnWorking}
+                      disabled={isBtnWorking}
+                      data-testid="get-tables-btn"
+                      handleClick={this.handleGetTables}
+                    />
+                  </TableWrapper>
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Timestamp column</Label>
+                  <Input
+                    name="timestamp"
+                    width="250px"
+                    placeholder="120"
+                    value={timestamp}
+                    data-testid="timestamp-input"
+                    handleChange={this.handleChangeInput}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Write topic</Label>
+                  <Select
+                    name="writeTopics"
+                    list={writeTopics}
+                    selected={currWriteTopic}
+                    width="250px"
+                    data-testid="write-topic-select"
+                    handleChange={this.handleChangeSelect}
+                  />
+                </FormGroup>
+              </Fieldset>
+
+              <Warning text="You need to test JDBC connection before filling out the above form" />
+            </RightCol>
+          </Form>
+        </Box>
+
+        {!_.isEmpty(currTable) && (
+          <Box>
+            <H5Wrapper>Database schemas</H5Wrapper>
+            <DataTable headers={this.dbSchemasHeader} data={currTable.schema} />
+          </Box>
+        )}
+      </React.Fragment>
     );
   }
 }
