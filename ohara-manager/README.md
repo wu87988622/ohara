@@ -106,27 +106,27 @@ yarn cypress
 
 This will open cypress test runner, you can then run your test manually through the UIs.
 
-## Lint
+## Linting
 
 We use [ESLint](https://github.com/eslint/eslint) to ensure our code quality:
+
+**Server:**
 
 ```sh
 yarn lint
 ```
 
-**Server:**
-
 It's usually helpful to run linting while developing, that's why we also provide a npm script to do so:
 
-```
+```sh
 yarn dev
 ```
 
-This will start the server with `nodemon` and runs the linting script whenever nodemon has reloaded.
+This will start the server with `nodemon` and run the linting script whenever nodemon reloads.
 
 **Client:**
 
-Our client is bootstrapped with create-react-app, so the linting part is already taken care. When starting the **Client** dev server with `yarn start`, the linting will be starting automatically.
+Since our client is bootstrapped with create-react-app, so the linting part is already taken care. When starting the **Client** dev server with `yarn start`, the linting will be starting automatically.
 
 ## Format
 

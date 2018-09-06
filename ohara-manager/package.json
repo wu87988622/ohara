@@ -82,5 +82,10 @@
       "no-debugger": "warn",
       "node/no-unpublished-require": "off"
     }
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "client/*"
+    ]
   }
 }
