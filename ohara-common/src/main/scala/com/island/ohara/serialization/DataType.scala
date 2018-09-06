@@ -49,7 +49,7 @@ object DataType {
   /**
     * @return a array of all supported data type
     */
-  def all = Array(BYTES, BOOLEAN, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, STRING)
+  val all: Seq[DataType] = Seq(BYTES, BOOLEAN, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, STRING)
 
   /**
     * seek the data type by the index

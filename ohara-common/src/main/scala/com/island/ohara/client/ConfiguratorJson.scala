@@ -352,8 +352,11 @@ object ConfiguratorJson {
     def format(address: String): String
   }
 
-  final case class ClusterInformation(brokers: String, workers: String, supportedDatabases: Seq[String])
-  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat3(ClusterInformation)
+  final case class ClusterInformation(brokers: String,
+                                      workers: String,
+                                      supportedDatabases: Seq[String],
+                                      supportedDataTypes: Seq[DataType])
+  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat4(ClusterInformation)
   implicit val CLUSTER_INFORMATION_COMMAND_FORMAT: ClusterCommandFormat[ClusterInformation] =
     new ClusterCommandFormat[ClusterInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$CLUSTER_PATH"

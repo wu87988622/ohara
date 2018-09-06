@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives.{complete, get, path}
 import com.island.ohara.client.ConfiguratorJson.{CLUSTER_PATH, ClusterInformation}
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.serialization.DataType
 
 object ClusterRoute extends SprayJsonSupport {
 
@@ -12,7 +13,7 @@ object ClusterRoute extends SprayJsonSupport {
 
   def apply(implicit kafkaClient: KafkaClient, connectorClient: ConnectorClient): server.Route = path(CLUSTER_PATH) {
     get {
-      complete(ClusterInformation(kafkaClient.brokers, connectorClient.workers, SUPPORTED_DATABASES))
+      complete(ClusterInformation(kafkaClient.brokers, connectorClient.workers, SUPPORTED_DATABASES, DataType.all))
     }
   }
 }

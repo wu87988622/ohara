@@ -393,6 +393,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clusterInformation.brokers shouldBe testUtil.brokers
     clusterInformation.workers shouldBe testUtil.workers
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
+    clusterInformation.supportedDataTypes shouldBe DataType.all
   }
 
   @Test
