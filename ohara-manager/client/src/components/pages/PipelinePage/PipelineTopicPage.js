@@ -21,7 +21,6 @@ const PipelineTopicPage = ({ name, isLoading }) => {
       ) : (
         <React.Fragment>
           <H5Wrapper>Topic : {name}</H5Wrapper>
-          <H5Wrapper>Schema</H5Wrapper>
         </React.Fragment>
       )}
     </Box>
