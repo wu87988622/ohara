@@ -63,7 +63,6 @@ class Configurator private[configurator] (configuredHostname: String,
     */
   private[this] val basicRoute: server.Route = pathPrefix(VERSION_V0)(
     Seq[server.Route](
-      SchemaRoute.apply,
       TopicInfoRoute.apply,
       HdfsInformationRoute.apply,
       PipelineRoute.apply,

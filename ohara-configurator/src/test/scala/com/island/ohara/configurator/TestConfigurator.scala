@@ -121,71 +121,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   }
 
   @Test
-  def testSchema(): Unit = {
-    clients.foreach(client => {
-      def compareRequestAndResponse(request: SchemaRequest, response: Schema): Schema = {
-        request.name shouldBe response.name
-        request.disabled shouldBe response.disabled
-        request.columns == response.columns shouldBe true
-        response
-      }
-
-      def compare2Response(lhs: Schema, rhs: Schema): Unit = {
-        lhs.uuid shouldBe rhs.uuid
-        lhs.name shouldBe rhs.name
-        lhs.columns == rhs.columns shouldBe true
-        lhs.lastModified shouldBe rhs.lastModified
-      }
-
-      // test add
-      client.list[Schema].size shouldBe 0
-      val request = SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1)), true)
-      val response = compareRequestAndResponse(request, client.add[SchemaRequest, Schema](request))
-
-      // test get
-      compare2Response(response, client.get[Schema](response.uuid))
-
-      // test update
-      val anotherRequest =
-        SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf2", DataType.BOOLEAN, 2)), false)
-      val newResponse =
-        compareRequestAndResponse(anotherRequest, client.update[SchemaRequest, Schema](response.uuid, anotherRequest))
-
-      // test get
-      compare2Response(newResponse, client.get[Schema](newResponse.uuid))
-
-      // test delete
-      client.list[Schema].size shouldBe 1
-      client.delete[Schema](response.uuid)
-      client.list[Schema].size shouldBe 0
-
-      // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[Schema]("123")
-      an[IllegalArgumentException] should be thrownBy client.update[SchemaRequest, Schema]("777", anotherRequest)
-    })
-  }
-
-  @Test
-  def testInvalidSchemaRequest(): Unit = {
-    clients.foreach(client => {
-      val request0 = SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 0)), true)
-
-      // 0 is not valid order
-      an[IllegalArgumentException] should be thrownBy client.add[SchemaRequest, Schema](request0)
-
-      val request1 =
-        SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf2", DataType.BOOLEAN, 1)), true)
-      // duplicate order
-      an[IllegalArgumentException] should be thrownBy client.add[SchemaRequest, Schema](request1)
-
-      val request2 =
-        SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2)), true)
-      // duplicate name
-      an[IllegalArgumentException] should be thrownBy client.add[SchemaRequest, Schema](request2)
-    })
-  }
-
-  @Test
   def testHdfsInformation(): Unit = {
     clients.foreach(client => {
       def compareRequestAndResponse(request: HdfsInformationRequest, response: HdfsInformation): HdfsInformation = {
@@ -358,11 +293,10 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val uuid_1 =
         client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).uuid
       val uuid_2 =
-        client.add[SchemaRequest, Schema](SchemaRequest(methodName, Seq(Column("cf", DataType.BOOLEAN, 1)), false)).uuid
+        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).uuid
       val uuid_3 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
       client.list[TopicInfo].size shouldBe 2
-      client.list[HdfsInformation].size shouldBe 1
-      client.list[Schema].size shouldBe 1
+      client.list[HdfsInformation].size shouldBe 2
 
       // uuid_0 -> uuid_0: self-bound
       an[IllegalArgumentException] should be thrownBy client.add[PipelineRequest, Pipeline](
@@ -447,7 +381,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     request.uri shouldBe response.uri
 
     an[IllegalArgumentException] should be thrownBy client0.get[TopicInfo](response.uuid)
-    an[IllegalArgumentException] should be thrownBy client0.get[Schema](response.uuid)
+    an[IllegalArgumentException] should be thrownBy client0.get[Source](response.uuid)
 
     client0.delete[HdfsInformation](response.uuid)
   }

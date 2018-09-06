@@ -43,8 +43,6 @@ object ConfiguratorJson {
     def format(address: String, uuid: String): String
   }
 
-  //------------------------------------------------[DATA-SCHEMA]------------------------------------------------//
-  val SCHEMA_PATH = "schemas"
   final case class Column(name: String, typeName: DataType, order: Int)
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
     override def read(json: JsValue): Column = json.asJsObject.getFields("name", "type", "order") match {
@@ -74,21 +72,6 @@ object ConfiguratorJson {
         .toSeq
     }
   }
-
-  final case class SchemaRequest(name: String, columns: Seq[Column], disabled: Boolean)
-
-  implicit val SCHEMA_REQUEST_JSON_FORMAT: RootJsonFormat[SchemaRequest] = jsonFormat3(SchemaRequest)
-
-  final case class Schema(uuid: String, name: String, columns: Seq[Column], disabled: Boolean, lastModified: Long)
-      extends Data {
-    override def kind: String = "schema"
-  }
-  implicit val SCHEMA_JSON_FORMAT: RootJsonFormat[Schema] = jsonFormat5(Schema)
-  implicit val SCHEMA_COMMAND_FORMAT: DataCommandFormat[Schema] = new DataCommandFormat[Schema] {
-    override def format(address: String): String = s"http://$address/$VERSION_V0/$SCHEMA_PATH"
-    override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SCHEMA_PATH/$uuid"
-  }
-
   //------------------------------------------------[DATA-TOPIC]------------------------------------------------//
   val TOPIC_INFO_PATH = "topics"
   final case class TopicInfoRequest(name: String, numberOfPartitions: Int, numberOfReplications: Short)
