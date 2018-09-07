@@ -77,15 +77,6 @@ const GetTablesBtn = styled(Button)`
 
 class PipelineSourcePage extends React.Component {
   static propTypes = {
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        uuid: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func,
     updateGraph: PropTypes.func,
@@ -111,6 +102,12 @@ class PipelineSourcePage extends React.Component {
       ],
     },
   ];
+
+  selectMaps = {
+    databases: 'currDatabase',
+    tables: 'currTable',
+    wirteTopics: 'currWriteTopic',
+  };
 
   dbSchemasHeader = ['Column name', 'Column type'];
 
@@ -160,7 +157,7 @@ class PipelineSourcePage extends React.Component {
     const isUpdate = prevSourceId !== currSourceId;
 
     if (hasChanges) {
-      this.saveChanges();
+      this.save();
     }
 
     if (isUpdate && hasTopicId) {
@@ -176,71 +173,71 @@ class PipelineSourcePage extends React.Component {
   }
 
   fetchTopics = async topicId => {
-    if (this.isValidId(topicId)) {
-      const res = await fetchTopics();
-      const writeTopics = _.get(res, 'data.result', []);
+    if (!_.isUuid(topicId)) return;
 
-      if (!_.isEmptyArr(writeTopics)) {
-        const currWriteTopic = this.getCurrTopic(writeTopics, topicId);
-        this.setState({ writeTopics, currWriteTopic });
-      } else {
-        toastr.error(MESSAGES.INVALID_TOPIC_ID);
-        this.setState({ isRedirect: true });
-      }
+    const res = await fetchTopics();
+    const writeTopics = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(writeTopics)) {
+      const currWriteTopic = this.getCurrTopic(writeTopics, topicId);
+      this.setState({ writeTopics, currWriteTopic });
+    } else {
+      toastr.error(MESSAGES.INVALID_TOPIC_ID);
+      this.setState({ isRedirect: true });
     }
   };
 
   fetchSources = async sourceId => {
-    if (this.isValidId(sourceId)) {
-      const res = await fetchSources(sourceId);
-      const isSuccess = _.get(res, 'data.isSuccess', false);
-      if (isSuccess) {
-        const {
-          database,
-          timestamp,
-          table,
-          username,
-          password,
-          topic,
-          url,
-        } = res.data.result.configs;
+    if (!_.isUuid(sourceId)) return;
 
-        let currTable = '';
-        let tables = [];
-        if (!_.isEmptyStr(table)) {
-          currTable = JSON.parse(table);
-          tables = [currTable];
-        }
+    const res = await fetchSources(sourceId);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      const {
+        database,
+        timestamp,
+        table,
+        username,
+        password,
+        topic,
+        url,
+      } = res.data.result.configs;
 
-        const hasValidProps = [username, password, url].map(x => {
-          return x.length > 0;
-        });
-
-        const isFormDisabled = !hasValidProps.every(p => p === true);
-
-        this.setState({
-          isFormDisabled,
-          database: [database],
-          topic: [topic],
-          tables,
-          currTable,
-          timestamp,
-          password,
-          username,
-          url,
-        });
+      let currTable = '';
+      let tables = [];
+      if (!_.isEmptyStr(table)) {
+        currTable = JSON.parse(table);
+        tables = [currTable];
       }
+
+      const hasValidProps = [username, password, url].map(x => {
+        return x.length > 0;
+      });
+
+      const isFormDisabled = !hasValidProps.every(p => p === true);
+
+      this.setState({
+        isFormDisabled,
+        database: [database],
+        topic: [topic],
+        tables,
+        currTable,
+        timestamp,
+        password,
+        username,
+        url,
+      });
     }
   };
 
   fetchPipelines = async pipelineId => {
-    if (this.isValidId(pipelineId)) {
-      const res = await fetchPipelines(pipelineId);
-      const pipelines = _.get(res, 'data.result', []);
+    if (!_.isUuid(pipelineId)) return;
 
-      if (!_.isEmptyArr(pipelines)) {
-        this.setState({ pipelines });
-      }
+    const res = await fetchPipelines(pipelineId);
+    const pipelines = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
     }
   };
 
@@ -272,11 +269,11 @@ class PipelineSourcePage extends React.Component {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
     const { uuid } = options[selectedIdx].dataset;
-
-    const upper = name.charAt(0).toUpperCase();
-    const current = `curr${upper}${name.slice(1)}`;
-    const isTable = name.toLowerCase() === 'table';
-    const schema = this.fakeTables.find(f => f.name === value).schema;
+    const current = this.selectMaps[name];
+    const isTable = name.toLowerCase() === 'tables';
+    const schema = isTable
+      ? this.fakeTables.find(f => f.name === value).schema
+      : undefined;
 
     this.setState(
       () => {
@@ -284,7 +281,7 @@ class PipelineSourcePage extends React.Component {
           [current]: {
             name: value,
             uuid,
-            schema: isTable ? schema : undefined,
+            schema,
           },
         };
       },
@@ -325,7 +322,7 @@ class PipelineSourcePage extends React.Component {
     }
   };
 
-  saveChanges = _.debounce(async () => {
+  save = _.debounce(async () => {
     const { match, history } = this.props;
     const {
       currDatabase,
@@ -336,8 +333,8 @@ class PipelineSourcePage extends React.Component {
       password,
       url,
     } = this.state;
-
     const sourceId = _.get(match, 'params.sourceId', null);
+    const isCreate = _.isNull(sourceId) ? true : false;
 
     const params = {
       name: 'untitled source',
@@ -353,7 +350,7 @@ class PipelineSourcePage extends React.Component {
       },
     };
 
-    const res = _.isNull(sourceId)
+    const res = isCreate
       ? await createSource(params)
       : await updateSource({ uuid: sourceId, params });
 
@@ -361,7 +358,7 @@ class PipelineSourcePage extends React.Component {
 
     if (uuid) {
       this.props.updateHasChanges(false);
-      if (_.isNull(sourceId)) history.push(`${match.url}/${uuid}`);
+      if (isCreate) history.push(`${match.url}/${uuid}`);
     }
   }, 1000);
 
@@ -449,7 +446,7 @@ class PipelineSourcePage extends React.Component {
 
                   <TableWrapper>
                     <Select
-                      name="table"
+                      name="tables"
                       list={tables}
                       selected={currTable}
                       width="250px"
