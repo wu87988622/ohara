@@ -120,32 +120,31 @@ class PipelineGraph extends React.Component {
     const page = _.get(match, 'params.page', null);
     const sourceId = _.get(match, 'params.sourceId', null);
     const topicId = _.get(match, 'params.topicId', null);
+    const sinkId = _.get(match, 'params.sinkId', null);
 
     if (page) {
-      const update = { isActive: true, isExist: true };
-      updateGraph(update, page);
+      updateGraph({ isActive: true, isExist: true }, page);
     }
 
     if (topicId) {
-      const update = { isExist: true };
-      updateGraph(update, 'topic');
+      updateGraph({ isExist: true }, 'topic');
     }
 
-    if (sourceId) {
-      const update = { isExist: true };
-      updateGraph(update, 'source');
+    if (sourceId && sourceId !== '__') {
+      updateGraph({ isExist: true }, 'source');
+      updateGraph({ isActive: true }, 'separator-1');
     }
 
-    if (sourceId && topicId) {
-      const update = { isActive: true };
-      updateGraph(update, 'separator-1');
+    if (sinkId) {
+      updateGraph({ isExist: true }, 'sink');
+      updateGraph({ isActive: true }, 'separator-2');
     }
   }
 
   handleClick = e => {
     const { nodeName } = e.target;
     const { history, resetGraph, graph, match } = this.props;
-    const { topicId, pipelineId, sourceId } = match.params;
+    const { topicId, pipelineId, sourceId, sinkId } = match.params;
 
     const path =
       nodeName !== 'LI'
@@ -160,7 +159,9 @@ class PipelineGraph extends React.Component {
       resetGraph(graph);
       const baseUrl = `/pipeline/new/${page}/${pipelineId}`;
 
-      if (sourceId) {
+      if (sinkId) {
+        history.push(`${baseUrl}/${topicId}/${sourceId}/${sinkId}`);
+      } else if (sourceId) {
         history.push(`${baseUrl}/${topicId}/${sourceId}`);
       } else {
         history.push(`${baseUrl}/${topicId}`);

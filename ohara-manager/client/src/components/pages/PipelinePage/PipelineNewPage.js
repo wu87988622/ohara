@@ -216,17 +216,17 @@ class PipelineNewPage extends React.Component {
               </Actions>
             </Header>
             <Toolbar
+              {...this.props}
               updateGraph={this.updateGraph}
               graph={graph}
               hasChanges={hasChanges}
-              {...this.props}
             />
             <PipelineGraph
+              {...this.props}
               graph={graph}
               updateGraph={this.updateGraph}
               updateG={this.updateG}
               resetGraph={this.resetGraph}
-              {...this.props}
             />
 
             <Route
@@ -234,9 +234,9 @@ class PipelineNewPage extends React.Component {
               render={() => (
                 <PipelineSourcePage
                   {...this.props}
-                  hasChanges={hasChanges}
                   graph={graph}
                   updateGraph={this.updateGraph}
+                  hasChanges={hasChanges}
                   updateHasChanges={this.updateHasChanges}
                 />
               )}
@@ -249,7 +249,14 @@ class PipelineNewPage extends React.Component {
             />
             <Route
               path="/pipeline/new/sink"
-              render={() => <PipelineSinkPage />}
+              render={() => (
+                <PipelineSinkPage
+                  {...this.props}
+                  hasChanges={hasChanges}
+                  updateHasChanges={this.updateHasChanges}
+                  updateGraph={this.updateGraph}
+                />
+              )}
             />
           </Wrapper>
         </React.Fragment>

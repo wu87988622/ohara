@@ -340,7 +340,7 @@ class PipelineSourcePage extends React.Component {
     const sourceId = _.get(match, 'params.sourceId', null);
 
     const params = {
-      name: 'Joshua',
+      name: 'untitled source',
       class: 'jdbc',
       configs: {
         database: currDatabase.name,

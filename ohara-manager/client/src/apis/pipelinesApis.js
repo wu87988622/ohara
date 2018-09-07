@@ -137,3 +137,48 @@ export const fetchPipelines = async uuid => {
     handleError(err);
   }
 };
+
+export const createSink = async params => {
+  try {
+    const res = await axios.post('/api/sinks/create', params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const updateSink = async ({ uuid, params }) => {
+  try {
+    const res = await axios.put(`/api/sinks/update/${uuid}`, params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const fetchSink = async uuid => {
+  try {
+    const res = await axios.get(`/api/sinks/${uuid}`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

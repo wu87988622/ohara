@@ -78,5 +78,33 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.post('/api/sinks/create', (req, res) => {
+    axios
+      .post(`${API_ROOT}/sinks`, req.body)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.put('/api/sinks/update/:uuid', (req, res) => {
+    axios
+      .put(`${API_ROOT}/sinks/${req.params.uuid}`, req.body)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.get('/api/sinks', (req, res) => {
+    axios
+      .get(`${API_ROOT}/sinks`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.get('/api/sinks/:uuid', (req, res) => {
+    axios
+      .get(`${API_ROOT}/sinks/${req.params.uuid}`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   return app;
 };
