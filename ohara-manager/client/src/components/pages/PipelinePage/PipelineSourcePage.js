@@ -113,7 +113,7 @@ class PipelineSourcePage extends React.Component {
 
   state = {
     databases: [{ name: 'mysql', uuid: '1' }, { name: 'oracle', uuid: '2' }],
-    currDatabase: { name: 'oracle', uuid: '2' },
+    currDatabase: {},
     tables: [],
     currTable: {},
     writeTopics: [],
@@ -125,7 +125,7 @@ class PipelineSourcePage extends React.Component {
     isBtnWorking: false,
     isFormDisabled: false,
     isRedirect: false,
-    pipelines: null,
+    pipelines: {},
   };
 
   componentDidMount() {
@@ -133,6 +133,8 @@ class PipelineSourcePage extends React.Component {
     const sourceId = _.get(match, 'params.sourceId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
     const topicId = _.get(match, 'params.topicId', null);
+
+    this.setState(({ databases }) => ({ currDatabase: databases[0] }));
 
     if (!_.isNull(sourceId)) {
       this.fetchSources(sourceId);
@@ -179,7 +181,7 @@ class PipelineSourcePage extends React.Component {
     const writeTopics = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(writeTopics)) {
-      const currWriteTopic = this.getCurrTopic(writeTopics, topicId);
+      const currWriteTopic = writeTopics.find(topic => topic.uuid === topicId);
       this.setState({ writeTopics, currWriteTopic });
     } else {
       toastr.error(MESSAGES.INVALID_TOPIC_ID);
@@ -203,12 +205,17 @@ class PipelineSourcePage extends React.Component {
         url,
       } = res.data.result.configs;
 
-      let currTable = '';
+      let currTable = null;
       let tables = [];
       if (!_.isEmptyStr(table)) {
         currTable = JSON.parse(table);
         tables = [currTable];
       }
+
+      const _db = JSON.parse(database);
+      const currDatabase = this.state.databases.find(
+        db => db.name === _db.name,
+      );
 
       const hasValidProps = [username, password, url].map(x => {
         return x.length > 0;
@@ -218,7 +225,7 @@ class PipelineSourcePage extends React.Component {
 
       this.setState({
         isFormDisabled,
-        database: [database],
+        currDatabase,
         topic: [topic],
         tables,
         currTable,
@@ -249,14 +256,6 @@ class PipelineSourcePage extends React.Component {
     if (tables) {
       this.setState({ tables: this.fakeTables, currTable: this.fakeTables[0] });
     }
-  };
-
-  isValidId = uuid => {
-    return _.isUuid(uuid);
-  };
-
-  getCurrTopic = (topics, targetTopic) => {
-    return topics.find(t => t.uuid === targetTopic);
   };
 
   handleChangeInput = ({ target: { name, value } }) => {
@@ -340,7 +339,7 @@ class PipelineSourcePage extends React.Component {
       name: 'untitled source',
       class: 'jdbc',
       configs: {
-        database: currDatabase.name,
+        database: JSON.stringify(currDatabase),
         topic: currWriteTopic.name,
         table: JSON.stringify(currTable),
         username,

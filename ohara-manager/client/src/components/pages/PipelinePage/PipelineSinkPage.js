@@ -145,7 +145,9 @@ class PipelineSinkPage extends React.Component {
     const { updateHasChanges, history, match } = this.props;
     const { currHdfs, currTopic, writePath } = this.state;
     const sinkId = _.get(match, 'params.sinkId', null);
+    const sourceId = _.get(match, 'params.sourceId', null);
     const isCreate = _.isNull(sinkId) ? true : false;
+    const hasSourceId = _.isNull(sourceId) ? false : true;
 
     const params = {
       name: 'untitled sink',
@@ -165,7 +167,8 @@ class PipelineSinkPage extends React.Component {
 
     if (uuid) {
       updateHasChanges(false);
-      if (isCreate) history.push(`${match.url}/__/${uuid}`);
+      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${uuid}`);
+      if (isCreate && hasSourceId) history.push(`${match.url}/${uuid}`);
     }
   }, 1000);
 
