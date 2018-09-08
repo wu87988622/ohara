@@ -75,14 +75,17 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
     * Initialize the topic
     */
   CloseOnce.doClose(KafkaClient(brokers)) { client =>
-    client.topicCreator
-      .name(topicName)
-      .numberOfPartitions(numberOfPartitions)
-      .numberOfReplications(numberOfReplications)
-      // enable kafka delete all stale requests
-      .options(topicOptions + (TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
-      .timeout(initializationTimeout)
-      .build()
+    if (!client.exist(topicName))
+      client
+        .topicCreator()
+        .numberOfPartitions(numberOfPartitions)
+        .numberOfReplications(numberOfReplications)
+        .options(topicOptions)
+        // enable kafka delete all stale requests
+        .deleted()
+        .timeout(initializationTimeout)
+        .create(topicName)
+
   }
 
   private[this] val producer = newOrClose {

@@ -19,7 +19,7 @@ import scala.concurrent.duration._
   */
 trait KafkaClient extends CloseOnce {
 
-  def topicCreator: TopicBuilder
+  def topicCreator(): TopicCreator
 
   def exist(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean
 
@@ -54,15 +54,14 @@ object KafkaClient {
     override protected def doClose(): Unit = admin.close()
 
     import scala.collection.JavaConverters._
-    override def topicCreator: TopicBuilder = new TopicBuilder() {
-      override def build(): Unit = if (!exist(name.get)) {
-        admin
-          .createTopics(util.Arrays.asList(
-            new NewTopic(name.get, numberOfPartitions.get, numberOfReplications.get).configs(options.get.asJava)))
-          .values()
-          .get(name.get)
-          .get(timeout.get.toMillis, TimeUnit.MILLISECONDS)
-      }
+    override def topicCreator: TopicCreator = request => {
+      admin
+        .createTopics(
+          util.Arrays.asList(new NewTopic(request.name, request.numberOfPartitions, request.numberOfReplications)
+            .configs(request.options.asJava)))
+        .values()
+        .get(request.name)
+        .get(request.timeout.toMillis, TimeUnit.MILLISECONDS)
     }
 
     override def topicInfo(topicName: String, timeout: Duration): Option[TopicDescription] =

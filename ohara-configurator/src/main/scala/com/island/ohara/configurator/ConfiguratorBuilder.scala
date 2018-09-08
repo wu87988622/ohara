@@ -13,7 +13,7 @@ import com.island.ohara.client.ConnectorJson.{
 }
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicBuilder, TopicDescription}
+import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicCreator, TopicDescription}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.eclipse.jetty.util.ConcurrentHashSet
@@ -165,11 +165,10 @@ private class FakeKafkaClient extends KafkaClient {
     printDebugMessage()
   }
 
-  override def topicCreator: TopicBuilder = new TopicBuilder() {
-    override def build(): Unit = {
-      printDebugMessage()
-      cachedTopics.put(name.get, TopicDescription(name.get, numberOfPartitions.get, numberOfReplications.get))
-    }
+  override def topicCreator: TopicCreator = request => {
+    printDebugMessage()
+    cachedTopics
+      .put(request.name, TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications))
   }
 
   override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {

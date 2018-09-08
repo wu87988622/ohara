@@ -22,12 +22,12 @@ private[configurator] object TopicInfoRoute {
               // this should be impossible....
               throw new IllegalArgumentException(s"The topic:${topicInfo.uuid} exists")
             else {
-              kafkaClient.topicCreator
-              // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
-                .name(topicInfo.uuid)
+              kafkaClient
+                .topicCreator()
                 .numberOfPartitions(topicInfo.numberOfPartitions)
                 .numberOfReplications(topicInfo.numberOfReplications)
-                .build()
+                // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
+                .create(topicInfo.uuid)
               store.add(topicInfo.uuid, topicInfo)
               complete(topicInfo)
             }
