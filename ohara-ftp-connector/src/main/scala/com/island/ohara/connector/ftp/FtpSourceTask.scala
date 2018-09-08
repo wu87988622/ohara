@@ -54,9 +54,9 @@ class FtpSourceTask extends RowSourceTask {
           .map(column => {
             // column order start from 1 rather than 0
             val item = splits(column.order - 1)
-            Cell.builder
-              .name(column.name)
-              .build(column.typeName match {
+            Cell(
+              column.name,
+              column.typeName match {
                 case DataType.BOOLEAN => item.toBoolean
                 case DataType.INT     => item.toInt
                 case DataType.LONG    => item.toLong
@@ -65,8 +65,9 @@ class FtpSourceTask extends RowSourceTask {
                 case DataType.STRING  => item
                 // TODO: should we convert bytes?
                 case _ => throw new IllegalArgumentException("Unsupported type...")
-              })
-          }))
+              }
+            )
+          }): _*)
     }
 
     try if (files.isEmpty) files ++= list(props.input)

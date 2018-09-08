@@ -46,8 +46,10 @@ object RowSerializer extends Serializer[Row] {
     }
   }
 
-  private[this] def fromV0(reader: DataStreamReader): Row = {
-    def readCells: DataStreamReader => Seq[Cell[_]] = (reader: DataStreamReader) => {
+  private[this] def fromV0(reader: DataStreamReader): Row = Row
+    .builder()
+    // NOTED: DON'T change the order of this call chain. otherwise, the serialization will be broken
+    .cells {
       val cellCount = reader.readInt()
       if (cellCount < 0)
         throw new IllegalStateException(s"the number of cell is $cellCount. It should be bigger than zero")
@@ -56,23 +58,20 @@ object RowSerializer extends Serializer[Row] {
         reader.readInt()
         val name = ByteUtil.toString(reader.forceRead(reader.readShort()))
         DataType.of(reader.readByte()) match {
-          case BYTES   => Cell.builder.name(name).build(reader.forceRead(reader.readShort()))
-          case BOOLEAN => Cell.builder.name(name).build(ByteUtil.toBoolean(reader.forceRead(reader.readShort())))
-          case SHORT   => Cell.builder.name(name).build(ByteUtil.toShort(reader.forceRead(reader.readShort())))
-          case INT     => Cell.builder.name(name).build(ByteUtil.toInt(reader.forceRead(reader.readShort())))
-          case LONG    => Cell.builder.name(name).build(ByteUtil.toLong(reader.forceRead(reader.readShort())))
-          case FLOAT   => Cell.builder.name(name).build(ByteUtil.toFloat(reader.forceRead(reader.readShort())))
-          case DOUBLE  => Cell.builder.name(name).build(ByteUtil.toDouble(reader.forceRead(reader.readShort())))
-          case STRING  => Cell.builder.name(name).build(ByteUtil.toString(reader.forceRead(reader.readShort())))
+          case BYTES   => Cell(name, reader.forceRead(reader.readShort()))
+          case BOOLEAN => Cell(name, ByteUtil.toBoolean(reader.forceRead(reader.readShort())))
+          case SHORT   => Cell(name, ByteUtil.toShort(reader.forceRead(reader.readShort())))
+          case INT     => Cell(name, ByteUtil.toInt(reader.forceRead(reader.readShort())))
+          case LONG    => Cell(name, ByteUtil.toLong(reader.forceRead(reader.readShort())))
+          case FLOAT   => Cell(name, ByteUtil.toFloat(reader.forceRead(reader.readShort())))
+          case DOUBLE  => Cell(name, ByteUtil.toDouble(reader.forceRead(reader.readShort())))
+          case STRING  => Cell(name, ByteUtil.toString(reader.forceRead(reader.readShort())))
           case e: Any  => throw new UnsupportedClassVersionError(s"${e.getClass.getName}")
         }
       })
     }
-    def readTags: DataStreamReader => Set[String] = (reader: DataStreamReader) => {
-      (0 until reader.readShort()).map(_ => ByteUtil.toString(reader.forceRead(reader.readShort()))).toSet
-    }
-    Row(readCells(reader), readTags(reader))
-  }
+    .tags((0 until reader.readShort()).map(_ => ByteUtil.toString(reader.forceRead(reader.readShort()))).toSet)
+    .build()
 
   /**
     * cell count of row (4 bytes)

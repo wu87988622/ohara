@@ -85,7 +85,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 100
-    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
+    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
@@ -147,7 +147,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 200
-    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
+    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
     val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 

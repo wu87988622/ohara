@@ -23,7 +23,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(storage, tempFilePath)
 
-    val row: Row = Row(Seq(Cell.builder.name("column1").build("value1"), Cell.builder.name("column2").build("value2")))
+    val row = Row(Cell("column1", "value1"), Cell("column2", "value2"))
     csvRecordWriter.write(row)
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true

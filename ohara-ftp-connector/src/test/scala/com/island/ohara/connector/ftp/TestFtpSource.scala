@@ -20,14 +20,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     Column("single", DataType.BOOLEAN, 3)
   )
   private[this] val rows: Seq[Row] = Seq(
-    Row(
-      Seq(Cell.builder.name("name").build("chia"),
-          Cell.builder.name("ranking").build(1),
-          Cell.builder.name("single").build(false))),
-    Row(
-      Seq(Cell.builder.name("name").build("jack"),
-          Cell.builder.name("ranking").build(99),
-          Cell.builder.name("single").build(true)))
+    Row(Cell("name", "chia"), Cell("ranking", 1), Cell("single", false)),
+    Row(Cell("name", "jack"), Cell("ranking", 99), Cell("single", true))
   )
   private[this] val data: Seq[String] = rows.map(row => {
     row.map(_.value.toString).mkString(",")

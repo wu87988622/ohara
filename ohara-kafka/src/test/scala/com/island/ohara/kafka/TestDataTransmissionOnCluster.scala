@@ -30,11 +30,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   @Test
   def testRowProducer2RowConsumer(): Unit = {
     val topicName = methodName
-    val row = Row.builder
-      .append(Cell.builder.name("cf0").build(0))
-      .append(Cell.builder.name("cf1").build(1))
-      .tags(Set[String]("123", "456"))
-      .build()
+    val row = Row.builder().cells(Seq(Cell("cf0", 0), Cell("cf1", 1))).tags(Set[String]("123", "456")).build()
     testUtil.createTopic(topicName)
     val (_, rowQueue) =
       testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
@@ -65,7 +61,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val topicName = methodName
     val connectorName = methodName
     val rowCount = 3
-    val row = Row.builder.append(Cell.builder.name("cf0").build(10)).append(Cell.builder.name("cf1").build(11)).build()
+    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
@@ -126,12 +122,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val topicName = methodName
     testUtil.createTopic(topicName)
 
-    val row = Row.builder
-      .append(Cell.builder.name("c").build(3))
-      .append(Cell.builder.name("b").build(2))
-      .append(Cell.builder.name("a").build(1))
-      .build()
-
+    val row = Row(Cell("c", 3), Cell("b", 2), Cell("a", 1))
     doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       producer.sender().topic(topicName).key(topicName).value(row).send()
       producer.flush()

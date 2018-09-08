@@ -60,35 +60,10 @@ abstract class Row extends Iterable[Cell[_]] {
 }
 
 object Row {
-  def builder: RowBuilder = new RowBuilderImpl()
+  def builder(): RowBuilder = new RowBuilderImpl()
 
   /**
     * Instantiate a row with a single cell
     */
-  def apply(cell: Cell[_]): Row = apply(Seq(cell))
-
-  /**
-    * Instantiate a row with copying all cells from passed argument
-    */
-  def apply(cells: Seq[Cell[_]]): Row = apply(cells, Set.empty)
-
-  /**
-    * Instantiate a row with copying all cells from passed argument
-    */
-  def apply(cells: Seq[Cell[_]], _tags: Set[String]): Row = {
-    if (cells.map(_.name).toSet.size != cells.size)
-      throw new IllegalArgumentException(s"duplicate column:${cells.map(_.name).mkString(",")} are not supported")
-    new Row() {
-      override def size: Int = cells.size
-
-      override def iterator: Iterator[Cell[_]] = cells.iterator
-
-      override def cell(name: String): Cell[_] = cells.filter(_.name == name).head
-
-      override def names: Iterator[String] = cells.map(_.name).iterator
-
-      override def cell(index: Int): Cell[_] = cells(index)
-      override def tags: Set[String] = _tags
-    }
-  }
+  def apply(cells: Cell[_]*): Row = builder().cells(cells).build()
 }

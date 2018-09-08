@@ -8,7 +8,7 @@ import akka.dispatch.MessageDispatcher
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
-import com.island.ohara.data.{Cell, Row, RowBuilder}
+import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.kafka.{Producer, RecordMetadata}
 import com.island.ohara.serialization.DataType._
 import com.island.ohara.serialization._
@@ -72,31 +72,30 @@ trait KafkaRoute extends Directives with CsvSupport {
 
     def create(jsValue: JsValue, cellInfo: (String, DataType)): Cell[Any] = {
       val (cellName, cellType) = cellInfo
-      (cellType, jsValue) match {
-        case (STRING, JsString(str))       => Cell.builder.name(cellName).build(str)
-        case (BOOLEAN, JsBoolean(boolean)) => Cell.builder.name(cellName).build(boolean)
-        case (SHORT, _)                    => Cell.builder.name(cellName).build(jsValue.convertTo[Short])
-        case (INT, _)                      => Cell.builder.name(cellName).build(jsValue.convertTo[Int])
-        case (LONG, _)                     => Cell.builder.name(cellName).build(jsValue.convertTo[Long])
-        case (FLOAT, _)                    => Cell.builder.name(cellName).build(jsValue.convertTo[Float])
-        case (DOUBLE, _)                   => Cell.builder.name(cellName).build(jsValue.convertTo[Double])
-        case (BYTE, _)                     => Cell.builder.name(cellName).build(jsValue.convertTo[Byte])
-        case (BYTES, _)                    => Cell.builder.name(cellName).build(jsValue.convertTo[Array[Byte]])
-        // TODO: more specific which JSON type can match to ohara data type
-      }
+      Cell(
+        cellName,
+        (cellType, jsValue) match {
+          case (STRING, JsString(str))       => str
+          case (BOOLEAN, JsBoolean(boolean)) => boolean
+          case (SHORT, _)                    => jsValue.convertTo[Short]
+          case (INT, _)                      => jsValue.convertTo[Int]
+          case (LONG, _)                     => jsValue.convertTo[Long]
+          case (FLOAT, _)                    => jsValue.convertTo[Float]
+          case (DOUBLE, _)                   => jsValue.convertTo[Double]
+          case (BYTE, _)                     => jsValue.convertTo[Byte]
+          case (BYTES, _)                    => jsValue.convertTo[Array[Byte]]
+          // TODO: more specific which JSON type can match to ohara data type
+        }
+      )
     }
 
-    def buildRow(rowBuilder: RowBuilder, list: List[(JsValue, (String, DataType))]): Row = {
-      list match {
-        case Nil                         => rowBuilder.build()
-        case (jsValue, dataType) :: tail => buildRow(rowBuilder.append(create(jsValue, dataType)), tail)
-      }
-    }
     if (rows.size != types.size) {
       log.info(s"JSON didn't match supported schema.")
       Failure(SchemaException("JSON didn't match supported schema."))
     } else {
-      Try(buildRow(Row.builder, rows zip types))
+      Try(Row(rows.zipWithIndex.map {
+        case (jsValue, index) => create(jsValue, types(index))
+      }: _*))
     }
   }
 }

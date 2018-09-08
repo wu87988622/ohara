@@ -26,6 +26,7 @@ abstract class Cell[T] {
 }
 
 object Cell {
+  def apply[T](name: String, value: T): Cell[T] = builder().name(name).build(value)
   // TODO: use offheap builder instead. by chia
-  def builder: CellBuilder = new CellBuilderImpl()
+  def builder(): CellBuilder = new CellBuilderImpl()
 }

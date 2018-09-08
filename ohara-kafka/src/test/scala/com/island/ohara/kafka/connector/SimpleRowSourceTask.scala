@@ -51,9 +51,7 @@ object SimpleRowSourceTask {
     submittedRows.clear()
     pollCount.set(0)
   }
-  val rows: Array[Row] = Array(Row(Cell.builder.name("cf").build(1)),
-                               Row(Cell.builder.name("cf").build(2)),
-                               Row(Cell.builder.name("cf").build(3)))
+  val rows: Seq[Row] = Seq(Row(Cell("cf", 1)), Row(Cell("cf", 2)), Row(Cell("cf", 3)))
   val runningTaskCount = new AtomicInteger(0)
   val submittedRows = new ConcurrentLinkedQueue[Row]
   val pollCount = new AtomicInteger(0)

@@ -28,10 +28,13 @@ class TestSerializer extends SmallTest with Matchers {
   def testRowSerializer(): Unit = {
     0 until 10 foreach { _ =>
       {
-        val row = Row(values.zipWithIndex.map {
-          case (v, cellIndex) => Cell.builder.name(cellIndex.toString).build(v)
-        }, Set[String]("tag0", "tag1"))
-
+        val row = Row
+          .builder()
+          .tags(Set("tag0", "tag1"))
+          .cells(values.zipWithIndex.map {
+            case (v, cellIndex) => Cell(cellIndex.toString, v)
+          })
+          .build()
         row shouldBe RowSerializer.from(RowSerializer.to(row))
       }
     }

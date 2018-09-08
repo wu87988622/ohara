@@ -48,7 +48,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.row).thenReturn(Row(Cell.builder.name("column1").build("value")))
+    when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     topicPartitionWriter.write(rowSinkRecord)
@@ -74,7 +74,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.row).thenReturn(Row(Cell.builder.name("column1").build("value")))
+    when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     for (i <- 1 to 998) {
@@ -143,7 +143,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.row).thenReturn(Row(Cell.builder.name("column1").build("value")))
+    when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     topicPartitionWriter.processLineCount = 0

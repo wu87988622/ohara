@@ -1,38 +1,36 @@
 package com.island.ohara.data
 
+import java.util.Objects
+
 import scala.collection.immutable.Set
-import scala.collection.mutable.ArrayBuffer
 
 private class RowBuilderImpl extends RowBuilder {
-  private[this] val cellBuffer = new ArrayBuffer[Cell[_]]()
+  private[this] var cells: Seq[Cell[_]] = Seq.empty
   private[this] var tags: Set[String] = Set.empty
 
-  override def append(cell: Cell[_]): RowBuilder = {
-    cellBuffer += cell
-    this
+  override def build(): Row = {
+    Objects.requireNonNull(cells)
+    Objects.requireNonNull(tags)
+    if (cells.isEmpty) throw new IllegalArgumentException("empty cells!!!!")
+    if (cells.map(_.name).toSet.size != cells.length)
+      throw new IllegalArgumentException(s"duplicate column:${cells.map(_.name).mkString(",")} are not supported")
+    new Row() {
+      override def size: Int = cells.length
+
+      override def iterator: Iterator[Cell[_]] = cells.iterator
+
+      override def cell(name: String): Cell[_] = cells.filter(_.name == name).head
+
+      override def names: Iterator[String] = cells.map(_.name).iterator
+
+      override def cell(index: Int): Cell[_] = cells(index)
+
+      override def tags: Set[String] = RowBuilderImpl.this.tags
+    }
   }
 
-  override def replace(oldOne: Cell[_], newOne: Cell[_]): RowBuilder = {
-    val index = cellBuffer.indexOf(oldOne)
-    if (index >= 0) cellBuffer.update(index, newOne)
-    else cellBuffer += newOne
-    this
-  }
-
-  override def clear(): RowBuilder = {
-    cellBuffer.clear()
-    this
-  }
-
-  override def build(): Row = Row(cellBuffer, tags)
-
-  override def remove(cell: Cell[_]): RowBuilder = {
-    cellBuffer -= cell
-    this
-  }
-
-  override def append(cells: TraversableOnce[Cell[_]]): RowBuilder = {
-    cellBuffer ++= cells
+  override def cells(cells: Seq[Cell[_]]): RowBuilder = {
+    this.cells = cells
     this
   }
 
