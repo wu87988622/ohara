@@ -88,7 +88,7 @@ class FtpSourceTask extends RowSourceTask {
               val o = offset(index)
               val r = toRow(line)
               topics.map(t => {
-                RowSourceRecord.builder.sourcePartition(p).sourceOffset(o).topic(t).row(r).build()
+                RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).topic(t).row(r).build()
               })
           }
           if (records.nonEmpty) {
@@ -116,7 +116,7 @@ class FtpSourceTask extends RowSourceTask {
     this.schema = config.schema
     if (props.input.isEmpty) throw new IllegalArgumentException(s"invalid input:${props.input.mkString(",")}")
     topics = config.topics
-    ftpClient = FtpClient.builder.host(props.host).port(props.port).user(props.user).password(props.password).build()
+    ftpClient = FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
     offsets = new Offsets(rowContext)
   }
 

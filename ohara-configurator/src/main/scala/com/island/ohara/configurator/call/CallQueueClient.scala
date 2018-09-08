@@ -25,5 +25,5 @@ trait CallQueueClient[Request, Response] extends CloseOnce {
 }
 
 object CallQueueClient {
-  def builder = new CallQueueClientBuilder()
+  def builder() = new CallQueueClientBuilder()
 }

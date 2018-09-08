@@ -10,7 +10,7 @@ class TestCallQueueServerBuilder extends With3Brokers with Matchers {
 
   @Test
   def testIncompleteArguments(): Unit = {
-    var builder = CallQueueServer.builder
+    var builder = CallQueueServer.builder()
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.initializationTimeout(10 seconds)
     an[NoSuchElementException] should be thrownBy builder.build()
@@ -30,7 +30,8 @@ class TestCallQueueServerBuilder extends With3Brokers with Matchers {
 
   @Test
   def testInvalidTopicOptions(): Unit = {
-    an[IllegalArgumentException] should be thrownBy CallQueueServer.builder
+    an[IllegalArgumentException] should be thrownBy CallQueueServer
+      .builder()
       .initializationTimeout(10 seconds)
       .pollTimeout(1 seconds)
       .numberOfReplications(1)

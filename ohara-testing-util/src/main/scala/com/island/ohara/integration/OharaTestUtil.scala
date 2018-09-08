@@ -225,7 +225,7 @@ object OharaTestUtil {
     if (useException) throw new IllegalStateException("timeout") else false
   }
 
-  def builder = new OharaTestUtilBuilder()
+  def builder() = new OharaTestUtilBuilder()
 
   /**
     * Create a test util with multi-brokers.

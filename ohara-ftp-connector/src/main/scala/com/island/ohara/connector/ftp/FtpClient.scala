@@ -78,7 +78,7 @@ trait FtpClient extends CloseOnce {
 }
 
 object FtpClient {
-  def builder: FtpClientBuilder = new FtpClientBuilder
+  def builder(): FtpClientBuilder = new FtpClientBuilder
 }
 
 abstract sealed class FileType

@@ -79,7 +79,8 @@ object Backend {
         }
       }
       val topicName = s"demo-${System.currentTimeMillis()}"
-      val configurator = Configurator.builder
+      val configurator = Configurator
+        .builder()
         .store(
           Store
             .builder(Serializer.STRING, Serializer.OBJECT)

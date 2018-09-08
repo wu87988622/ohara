@@ -15,8 +15,8 @@ case class RowSourceRecord(sourcePartition: Map[String, _],
                            timestamp: Option[Long])
 
 object RowSourceRecord {
-  def apply(topic: String, row: Row): RowSourceRecord = builder.topic(topic).row(row).build()
-  def builder = new RowSourceRecordBuilder
+  def apply(topic: String, row: Row): RowSourceRecord = builder().topic(topic).row(row).build()
+  def builder() = new RowSourceRecordBuilder
 }
 class RowSourceRecordBuilder {
   private[this] var sourcePartition: Map[String, _] = Map.empty

@@ -101,7 +101,8 @@ abstract class RowSourceTask extends SourceTask {
 
   // TODO: We do a extra conversion here (bytes => Row)... by chia
   final override def commitRecord(record: SourceRecord): Unit = _commitRecord(
-    RowSourceRecord.builder
+    RowSourceRecord
+      .builder()
       .sourcePartition(if (record.sourcePartition() == null) Map.empty else record.sourcePartition().asScala.toMap)
       .sourceOffset(if (record.sourceOffset() == null) Map.empty else record.sourceOffset().asScala.toMap)
       .topic(record.topic())

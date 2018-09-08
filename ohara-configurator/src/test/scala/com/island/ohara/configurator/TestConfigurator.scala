@@ -22,7 +22,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   private[this] val configurator0 =
-    Configurator.builder
+    Configurator
+      .builder()
       .hostname("localhost")
       .port(0)
       .store(
@@ -38,7 +39,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .build()
 
   private[this] val configurator1 =
-    Configurator.builder.hostname("localhost").port(0).noCluster.build()
+    Configurator.builder().hostname("localhost").port(0).noCluster.build()
 
   private[this] val configurators = Seq(configurator0, configurator1)
 

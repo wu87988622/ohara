@@ -16,7 +16,7 @@ object With3Brokers3Workers3DataNodes {
 
   @BeforeClass
   def beforeAll(): Unit = {
-    util = OharaTestUtil.builder.numberOfBrokers(3).numberOfWorkers(3).numberOfDataNodes(3).build()
+    util = OharaTestUtil.builder().numberOfBrokers(3).numberOfWorkers(3).numberOfDataNodes(3).build()
   }
 
   @AfterClass

@@ -125,7 +125,7 @@ class Configurator private[configurator] (configuredHostname: String,
 }
 
 object Configurator {
-  def builder = new ConfiguratorBuilder()
+  def builder() = new ConfiguratorBuilder()
 
   val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
@@ -178,9 +178,10 @@ object Configurator {
     val configurator =
       if (brokers.isEmpty || workers.isEmpty) {
         standalone = true
-        Configurator.builder.noCluster.hostname(hostname).port(port).build()
+        Configurator.builder().noCluster.hostname(hostname).port(port).build()
       } else
-        Configurator.builder
+        Configurator
+          .builder()
           .store(
             com.island.ohara.configurator.store.Store
               .builder(Serializer.STRING, Serializer.OBJECT)

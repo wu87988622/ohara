@@ -38,7 +38,7 @@ class FtpSource extends RowSourceConnector {
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
-      FtpClient.builder.host(props.host).port(props.port).user(props.user).password(props.password).build()
+      FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
     try {
       def check(path: String, prefix: String): Unit =
         if (!ftpClient.exist(path)) throw new IllegalArgumentException(s"$prefix:$path doesn't exist")
