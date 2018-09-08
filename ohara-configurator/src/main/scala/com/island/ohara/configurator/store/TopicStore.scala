@@ -197,7 +197,7 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
 
   private[this] def send(key: K, value: V = null.asInstanceOf[V]): String = {
     val header = Header(s"$uuid-${headerIndexer.getAndIncrement().toString}", Array.emptyByteArray)
-    producer.sender().topic(topicName).header(header).key(key).value(value).send()
+    producer.sender().header(header).key(key).value(value).send(topicName)
     producer.flush()
     header.key
   }

@@ -66,37 +66,39 @@ final class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
                                 KafkaUtil.wrapSerializer(valueSerializer)))
 
       import scala.collection.JavaConverters._
-      override def sender(): Sender[K, V] = new Sender[K, V] {
-        override def send(callback: Either[Throwable, RecordMetadata] => Unit): Unit = {
-          val record = new ProducerRecord[K, V](
-            topic,
-            partition.map(new Integer(_)).orNull,
-            timestamp.map(new java.lang.Long(_)).orNull,
-            key.getOrElse(null.asInstanceOf[K]),
-            value.getOrElse(null.asInstanceOf[V]),
-            headers.map(toKafkaHeader).asJava
-          )
-          producer.send(
-            record,
-            (metadata: org.apache.kafka.clients.producer.RecordMetadata, exception: Exception) => {
-              if (metadata == null && exception == null)
-                callback(
-                  Left(
-                    new IllegalStateException("no meta and exception from kafka producer...It should be impossible")))
+      override def sender(): Sender[K, V] = (request, callback) => {
+        val record = new ProducerRecord[K, V](
+          request.topic,
+          request.partition.map(new Integer(_)).orNull,
+          request.timestamp.map(new java.lang.Long(_)).orNull,
+          request.key.getOrElse(null.asInstanceOf[K]),
+          request.value.getOrElse(null.asInstanceOf[V]),
+          request.headers.map(toKafkaHeader).asJava
+        )
+        producer.send(
+          record,
+          (metadata: org.apache.kafka.clients.producer.RecordMetadata, exception: Exception) => {
+            if (metadata == null && exception == null)
+              callback(
+                Left(new IllegalStateException("no meta and exception from kafka producer...It should be impossible")))
 
-              if (metadata != null)
-                callback(
-                  Right(
-                    RecordMetadata(metadata.topic(),
-                                   metadata.partition(),
-                                   metadata.offset(),
-                                   metadata.timestamp(),
-                                   metadata.serializedKeySize(),
-                                   metadata.serializedValueSize())))
-              if (exception != null) callback(Left(exception))
-            }
-          )
-        }
+            if (metadata != null && exception != null)
+              callback(
+                Left(
+                  new IllegalStateException("Both meta and exception from kafka producer...It should be impossible")))
+
+            if (metadata != null)
+              callback(
+                Right(
+                  RecordMetadata(metadata.topic(),
+                                 metadata.partition(),
+                                 metadata.offset(),
+                                 metadata.timestamp(),
+                                 metadata.serializedKeySize(),
+                                 metadata.serializedValueSize())))
+            if (exception != null) callback(Left(exception))
+          }
+        )
       }
 
       override def flush(): Unit = producer.flush()
@@ -120,17 +122,11 @@ final class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
   * @tparam V value type
   */
 abstract class Sender[K, V] {
-  protected var topic: String = _
-  protected var partition: Option[Int] = None
-  protected var headers: Seq[Header] = Seq.empty
-  protected var key: Option[K] = None
-  protected var value: Option[V] = None
-  protected var timestamp: Option[Long] = None
-
-  def topic(topic: String): this.type = {
-    this.topic = topic
-    this
-  }
+  private[this] var partition: Option[Int] = None
+  private[this] var headers: Seq[Header] = Seq.empty
+  private[this] var key: Option[K] = None
+  private[this] var value: Option[V] = None
+  private[this] var timestamp: Option[Long] = None
 
   def partition(partition: Int): this.type = {
     this.partition = Some(partition)
@@ -165,20 +161,34 @@ abstract class Sender[K, V] {
   /**
     * send the record to brokers with async future
     */
-  def send(): Future[RecordMetadata] = {
+  def send(topic: String): Future[RecordMetadata] = {
     val promise = Promise[RecordMetadata]()
-    send {
+    send(topic, {
       case Left(e)  => promise.failure(e)
       case Right(m) => promise.success(m)
-    }
+    })
     promise.future
   }
+
+  import Sender._
 
   /**
     * send the record to brokers with callback
     * @param callback invoked after the record is completed or failed
     */
-  def send(callback: Either[Throwable, RecordMetadata] => Unit): Unit
+  def send(topic: String, callback: Either[Throwable, RecordMetadata] => Unit): Unit =
+    doSend(Request(topic, partition, headers, key, value, timestamp), callback)
+
+  def doSend(request: Request[K, V], callback: Either[Throwable, RecordMetadata] => Unit)
+}
+
+object Sender {
+  case class Request[K, V](topic: String,
+                           partition: Option[Int],
+                           headers: Seq[Header],
+                           key: Option[K],
+                           value: Option[V],
+                           timestamp: Option[Long])
 }
 
 case class RecordMetadata(topic: String,

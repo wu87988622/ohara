@@ -108,7 +108,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   private[call] val processingTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
 
   private[this] def sendToKafka(key: Any, value: Any): Unit = {
-    producer.sender().topic(topicName).key(key).value(value).send()
+    producer.sender().key(key).value(value).send(topicName)
     producer.flush()
   }
 

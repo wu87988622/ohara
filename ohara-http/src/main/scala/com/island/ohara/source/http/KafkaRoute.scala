@@ -42,15 +42,8 @@ trait KafkaRoute extends Directives with CsvSupport {
         val (kafkaTopic, oharaSchema) = schemaMap.get(pathName)
         onComplete(
           transform(csv.row, oharaSchema.schema) match {
-            case Success(oharaRow) =>
-              val promise = Promise[RecordMetadata]()
-              producer.sender().topic(kafkaTopic).key(UUID.randomUUID().toString).value(oharaRow).send {
-                case Left(e)  => promise.failure(e)
-                case Right(m) => promise.success(m)
-              }
-              promise.future
-            case Failure(e) =>
-              Future(e)
+            case Success(oharaRow) => producer.sender().key(UUID.randomUUID().toString).value(oharaRow).send(kafkaTopic)
+            case Failure(e)        => Future(e)
           }
         ) {
           case Success(_) => complete(StatusCodes.Created.reason)

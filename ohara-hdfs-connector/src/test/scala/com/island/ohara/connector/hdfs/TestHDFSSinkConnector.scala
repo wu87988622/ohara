@@ -95,8 +95,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
     doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
-        0 until rowCount foreach (_ =>
-          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send())
+        0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
         producer.flush()
       }
     }
@@ -162,8 +161,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
 
     doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
-        0 until rowCount foreach (_ =>
-          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send())
+        0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
         producer.flush()
       }
     }

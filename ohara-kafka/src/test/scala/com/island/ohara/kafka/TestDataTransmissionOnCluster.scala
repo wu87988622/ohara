@@ -39,7 +39,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       {
         var count: Int = totalMessageCount
         while (count > 0) {
-          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send()
+          producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName)
           count -= 1
         }
       }
@@ -77,8 +77,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
     doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
       {
-        0 until rowCount foreach (_ =>
-          producer.sender().topic(topicName).key(ByteUtil.toBytes("key")).value(row).send())
+        0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
         producer.flush()
       }
     }
@@ -124,7 +123,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
     val row = Row(Cell("c", 3), Cell("b", 2), Cell("a", 1))
     doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
-      producer.sender().topic(topicName).key(topicName).value(row).send()
+      producer.sender().key(topicName).value(row).send(topicName)
       producer.flush()
     }
 
@@ -138,7 +137,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     fromKafka.cell(2).name shouldBe "a"
 
     doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
-      val meta = Await.result(producer.sender().topic(topicName).key(topicName).value(row).send(), 10 seconds)
+      val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
       meta.topic shouldBe topicName
     }
   }

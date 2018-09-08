@@ -182,7 +182,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     val receiver = new ResponseReceiver(internalRequest.uuid, lease)
     responseReceivers.put(internalRequest.uuid, receiver)
     try {
-      producer.sender().topic(topicName).key(internalRequest).value(request).send()
+      producer.sender().key(internalRequest).value(request).send(topicName)
       producer.flush()
     } catch {
       case exception: Throwable =>
