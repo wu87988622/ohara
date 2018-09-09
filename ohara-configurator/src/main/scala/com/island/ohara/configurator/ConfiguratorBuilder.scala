@@ -9,7 +9,7 @@ import com.island.ohara.client.ConnectorJson.{
   CreateConnectorRequest,
   CreateConnectorResponse,
   Plugin,
-  Status
+  State
 }
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.configurator.Configurator.Store
@@ -144,7 +144,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   override def workers: String = "Unknown"
   override def status(name: String): ConnectorInformation = {
     if (cachedConnectors.contains(name)) {
-      ConnectorInformation(name, ConnectorStatus(Status.STARTED, "fake id", None), Seq.empty)
+      ConnectorInformation(name, ConnectorStatus(State.RUNNING, "fake id", None), Seq.empty)
     } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
 
   }

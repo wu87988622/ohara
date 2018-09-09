@@ -235,7 +235,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] def assertFailedConnector(name: String): Unit = OharaTestUtil.await(
     () =>
-      try testUtil.connectorClient.status(methodName).connector.state == ConnectorJson.Status.FAILED
+      try testUtil.connectorClient.status(methodName).connector.state == ConnectorJson.State.FAILED
       catch {
         case _: Throwable => false
     },

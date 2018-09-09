@@ -69,56 +69,53 @@ object ConnectorJson {
     }
 
   /**
-    * the enumunation is referenced to org.apache.kafka.connect.runtime.WorkerConnector.State
+    * the enumeration is referenced to org.apache.kafka.connect.runtime.WorkerConnector.State
     */
-  abstract sealed class Status extends Serializable {
+  abstract sealed class State extends Serializable {
+    // adding a field to display the name of enumeration avoid we break the compatibility when moving code...
     val name: String
   }
 
-  object Status {
-
-    /**
-      * initial state before startup
-      */
-    case object INIT extends Status {
-      val name = "INIT"
+  object State {
+    case object UNASSIGNED extends State {
+      val name = "UNASSIGNED"
     }
 
-    /**
-      * the connector has been stopped/paused.
-      */
-    case object STOPPED extends Status {
-      val name = "STOPPED"
+    case object RUNNING extends State {
+      val name = "RUNNING"
     }
 
-    /**
-      * the connector has been started/resumed.
-      */
-    case object STARTED extends Status {
-      val name = "STARTED"
+    case object PAUSED extends State {
+      val name = "PAUSED"
     }
 
-    /**
-      * the connector has failed (no further transitions are possible after this state)
-      */
-    case object FAILED extends Status {
+    case object FAILED extends State {
       val name = "FAILED"
     }
-  }
-  implicit val STATUS_JSON_FORMAT: RootJsonFormat[Status] = new RootJsonFormat[Status] {
-    override def write(obj: Status): JsValue = JsString(obj.name)
-    override def read(json: JsValue): Status = json.asInstanceOf[JsString].value match {
-      case Status.INIT.name    => Status.INIT
-      case Status.STOPPED.name => Status.STOPPED
-      case Status.STARTED.name => Status.STARTED
-      case Status.FAILED.name  => Status.FAILED
-      case _                   => throw new IllegalArgumentException(s"Unknown status name:${json.asInstanceOf[JsString].value}")
+
+    case object DESTROYED extends State {
+      val name = "DESTROYED"
     }
+
+    val all: Seq[State] = Seq(
+      UNASSIGNED,
+      RUNNING,
+      PAUSED,
+      FAILED,
+      DESTROYED
+    )
+
+  }
+  implicit val STATE_JSON_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
+    override def write(obj: State): JsValue = JsString(obj.name)
+    override def read(json: JsValue): State = State.all
+      .find(_.name == json.asInstanceOf[JsString].value)
+      .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
   }
 
-  final case class ConnectorStatus(state: Status, worker_id: String, trace: Option[String])
+  final case class ConnectorStatus(state: State, worker_id: String, trace: Option[String])
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
-  final case class TaskStatus(id: String, state: Status, worker_id: String, trace: Option[String])
+  final case class TaskStatus(id: String, state: State, worker_id: String, trace: Option[String])
   implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)
   final case class ConnectorInformation(name: String, connector: ConnectorStatus, tasks: Seq[TaskStatus])
   implicit val CONNECTOR_INFORMATION_JSON_FORMAT: RootJsonFormat[ConnectorInformation] = jsonFormat3(
