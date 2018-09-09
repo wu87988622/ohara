@@ -9,7 +9,7 @@ import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
-import com.island.ohara.serialization.{DataType, Serializer}
+import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -28,12 +28,12 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .port(0)
       .store(
         Store
-          .builder(Serializer.STRING, Serializer.OBJECT)
+          .builder()
           .numberOfPartitions(1)
           .numberOfReplications(1)
           .topicName(classOf[TestConfigurator].getSimpleName)
           .brokers(testUtil.brokers)
-          .build())
+          .build[String, Any])
       .kafkaClient(KafkaClient(testUtil.brokers))
       .connectClient(ConnectorClient(testUtil.workers))
       .build()

@@ -1,5 +1,4 @@
 package com.island.ohara.kafka
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Objects, Properties}
 
 import com.island.ohara.io.{CloseOnce, UuidUtil}
@@ -58,11 +57,10 @@ trait Consumer[K, V] extends CloseOnce {
 }
 
 object Consumer {
-  def builder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): ConsumerBuilder[K, V] =
-    new ConsumerBuilder[K, V](keySerializer, valueSerializer)
+  def builder(): ConsumerBuilder = new ConsumerBuilder
 }
 
-final class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
+final class ConsumerBuilder {
   protected var fromBegin: OffsetResetStrategy = OffsetResetStrategy.LATEST
   protected var topicNames: Seq[String] = _
   protected var groupId: String = s"ohara-consumer-${UuidUtil.uuid}"
@@ -72,7 +70,7 @@ final class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
     * receive all un-deleted message from subscribed topics
     * @return this builder
     */
-  def offsetFromBegin(): ConsumerBuilder[K, V] = {
+  def offsetFromBegin(): ConsumerBuilder = {
     this.fromBegin = OffsetResetStrategy.EARLIEST
     this
   }
@@ -81,7 +79,7 @@ final class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
     * receive the messages just after the last one
     * @return this builder
     */
-  def offsetAfterLatest(): ConsumerBuilder[K, V] = {
+  def offsetAfterLatest(): ConsumerBuilder = {
     this.fromBegin = OffsetResetStrategy.LATEST
     this
   }
@@ -90,7 +88,7 @@ final class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
     * @param topicName the topic you want to subscribe
     * @return this builder
     */
-  def topicName(topicName: String): ConsumerBuilder[K, V] = {
+  def topicName(topicName: String): ConsumerBuilder = {
     this.topicNames = Seq(topicName)
     this
   }
@@ -99,22 +97,22 @@ final class ConsumerBuilder[K, V](val keySerializer: Serializer[K], val valueSer
     * @param topicName the topics you want to subscribe
     * @return this builder
     */
-  def topicNames(topicNames: Seq[String]): ConsumerBuilder[K, V] = {
+  def topicNames(topicNames: Seq[String]): ConsumerBuilder = {
     this.topicNames = topicNames
     this
   }
 
-  def groupId(groupId: String): ConsumerBuilder[K, V] = {
+  def groupId(groupId: String): ConsumerBuilder = {
     this.groupId = groupId
     this
   }
 
-  def brokers(brokers: String): ConsumerBuilder[K, V] = {
+  def brokers(brokers: String): ConsumerBuilder = {
     this.brokers = brokers
     this
   }
 
-  def build(): Consumer[K, V] = {
+  def build[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Consumer[K, V] = {
     Objects.requireNonNull(topicNames)
     Objects.requireNonNull(groupId)
     Objects.requireNonNull(brokers)

@@ -57,11 +57,10 @@ object Store {
     * @tparam V value type
     * @return a in-memory store
     */
-  def inMemory[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] =
-    new MemStore(keySerializer, valueSerializer)
+  def inMemory[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] =
+    new MemStore[K, V]
 
-  def builder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]) =
-    new StoreBuilder(keySerializer, valueSerializer)
+  def builder() = new StoreBuilder
 
   val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 3
   val DEFAULT_NUMBER_OF_PARTITIONS: Int = 3

@@ -2,7 +2,6 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.{close, _}
-import com.island.ohara.serialization.StringSerializer
 import org.junit._
 import org.scalatest.Matchers
 
@@ -18,7 +17,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     store.get("aa") shouldBe Some("bb")
     store.close()
     val another =
-      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build()
+      Store.builder().brokers(testUtil.brokers).topicName(methodName).build[String, String]
     try {
       OharaTestUtil.await(() => another.get("aa").isDefined, 10 seconds)
       another.get("aa") shouldBe Some("bb")
@@ -34,7 +33,7 @@ class TestTopicStore extends With3Brokers with Matchers {
   def testMultiStore(): Unit = {
     val numberOfStore = 5
     val stores = 0 until numberOfStore map (_ =>
-      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build())
+      Store.builder().brokers(testUtil.brokers).topicName(methodName).build[String, String])
     0 until 10 foreach (index => store.update(index.toString, index.toString))
     store.size shouldBe 10
 
@@ -54,7 +53,7 @@ class TestTopicStore extends With3Brokers with Matchers {
 
     // This store is based on another topic so it should have no data
     val anotherStore =
-      Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName + "copy").build()
+      Store.builder().brokers(testUtil.brokers).topicName(methodName + "copy").build[String, String]
     anotherStore.size shouldBe 0
   }
   @Test
@@ -69,12 +68,8 @@ class TestTopicStore extends With3Brokers with Matchers {
         d._2 shouldBe index.toString
     }
 
-    doClose(
-      Store
-        .builder(StringSerializer, StringSerializer)
-        .brokers(testUtil.brokers)
-        .topicName(s"$methodName-copy")
-        .build())(_.size shouldBe 0)
+    doClose(Store.builder().brokers(testUtil.brokers).topicName(s"$methodName-copy").build[String, String])(
+      _.size shouldBe 0)
   }
 
   @Test
@@ -118,7 +113,7 @@ class TestTopicStore extends With3Brokers with Matchers {
 
   @Before
   def before(): Unit = {
-    store = Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName(methodName).build()
+    store = Store.builder().brokers(testUtil.brokers).topicName(methodName).build[String, String]
   }
 
   @After

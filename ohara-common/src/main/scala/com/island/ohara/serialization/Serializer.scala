@@ -26,14 +26,14 @@ trait Serializer[T] {
 }
 
 object Serializer {
-  val STRING: Serializer[String] = StringSerializer
-  val SHORT: Serializer[Short] = ShortSerializer
-  val INT: Serializer[Int] = IntSerializer
-  val LONG: Serializer[Long] = LongSerializer
-  val DOUBLE: Serializer[Double] = DoubleSerializer
-  val FLOAT: Serializer[Float] = FloatSerializer
-  val BYTES: Serializer[Array[Byte]] = BytesSerializer
-  val BOOLEAN: Serializer[Boolean] = BooleanSerializer
-  val OBJECT: Serializer[Any] = ObjectSerializer
-  val ROW: Serializer[Row] = RowSerializer
+  implicit val STRING: Serializer[String] = StringSerializer
+  implicit val SHORT: Serializer[Short] = ShortSerializer
+  implicit val INT: Serializer[Int] = IntSerializer
+  implicit val LONG: Serializer[Long] = LongSerializer
+  implicit val DOUBLE: Serializer[Double] = DoubleSerializer
+  implicit val FLOAT: Serializer[Float] = FloatSerializer
+  implicit val BYTES: Serializer[Array[Byte]] = BytesSerializer
+  implicit val BOOLEAN: Serializer[Boolean] = BooleanSerializer
+  implicit val OBJECT: Serializer[Any] = ObjectSerializer
+  implicit val ROW: Serializer[Row] = RowSerializer
 }

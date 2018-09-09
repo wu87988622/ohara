@@ -1,6 +1,5 @@
 package com.island.ohara.connector.hdfs
 
-import java.util
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Column
@@ -12,7 +11,7 @@ import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
-import com.island.ohara.serialization.{DataType, Serializer}
+import com.island.ohara.serialization.DataType
 import org.apache.hadoop.fs.Path
 import org.junit.Test
 import org.scalatest.Matchers
@@ -93,7 +92,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
-    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
       {
         0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
         producer.flush()
@@ -159,7 +158,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
       {
         0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
         producer.flush()

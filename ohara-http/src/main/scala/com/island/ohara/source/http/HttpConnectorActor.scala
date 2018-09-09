@@ -38,10 +38,10 @@ class HttpConnectorActor extends Actor with ActorLogging {
           executor = system.dispatcher
 
           producer = Producer
-            .builder(Serializer.STRING, Serializer.ROW)
+            .builder()
             .brokers(config.getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG).asScala.mkString(","))
             .allAcks()
-            .build()
+            .build[String, Row]
 
           schemaMap = new ConcurrentHashMap[String, (String, RowSchema)]()
 

@@ -33,7 +33,7 @@ trait KafkaClient extends CloseOnce {
 
   def brokers: String
 
-  def consumerBuilder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): ConsumerBuilder[K, V]
+  def consumerBuilder(): ConsumerBuilder
 }
 
 object KafkaClient {
@@ -103,9 +103,8 @@ object KafkaClient {
     override def listTopics(timeout: Duration): Seq[String] =
       admin.listTopics().names().get(timeout.toMillis, TimeUnit.MILLISECONDS).asScala.toList
     override def brokers: String = _brokers
-    override def consumerBuilder[K, V](keySerializer: Serializer[K],
-                                       valueSerializer: Serializer[V]): ConsumerBuilder[K, V] =
-      new ConsumerBuilder[K, V](keySerializer, valueSerializer).brokers(brokers)
+    override def consumerBuilder(): ConsumerBuilder = new ConsumerBuilder().brokers(brokers)
+
   }
 
   /**

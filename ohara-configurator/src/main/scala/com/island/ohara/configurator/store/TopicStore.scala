@@ -36,15 +36,14 @@ import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorServic
   * @tparam K key type
   * @tparam V value type
   */
-private class TopicStore[K, V](keySerializer: Serializer[K],
-                               valueSerializer: Serializer[V],
-                               brokers: String,
-                               topicName: String,
-                               numberOfPartitions: Int,
-                               numberOfReplications: Short,
-                               pollTimeout: Duration,
-                               initializationTimeout: Duration,
-                               topicOptions: Map[String, String])
+private class TopicStore[K, V](
+  brokers: String,
+  topicName: String,
+  numberOfPartitions: Int,
+  numberOfReplications: Short,
+  pollTimeout: Duration,
+  initializationTimeout: Duration,
+  topicOptions: Map[String, String])(implicit keySerializer: Serializer[K], valueSerializer: Serializer[V])
     extends Store[K, V]
     with CloseOnce {
 
@@ -92,17 +91,11 @@ private class TopicStore[K, V](keySerializer: Serializer[K],
     s"succeed to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")
 
   private[this] val consumer = newOrClose {
-    Consumer
-      .builder(keySerializer, valueSerializer)
-      .topicName(topicName)
-      .brokers(brokers)
-      .offsetFromBegin()
-      .groupId(uuid)
-      .build()
+    Consumer.builder().topicName(topicName).brokers(brokers).offsetFromBegin().groupId(uuid).build[K, V]
   }
 
   private[this] val producer = newOrClose {
-    Producer.builder(keySerializer, valueSerializer).brokers(brokers).build()
+    Producer.builder().brokers(brokers).build[K, V]
   }
 
   private[this] val updateLock = new Object

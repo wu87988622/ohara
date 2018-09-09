@@ -6,13 +6,12 @@ import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, T
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
-import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.errors.WakeupException
 
-import scala.concurrent.duration._
 import scala.concurrent._
+import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
 /**
@@ -60,7 +59,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     * used to publish the request.
     */
   private[this] val producer = newOrClose {
-    Producer.builder(Serializer.OBJECT, Serializer.OBJECT).brokers(brokers).build()
+    Producer.builder().brokers(brokers).build[Any, Any]
   }
 
   /**
@@ -68,13 +67,13 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     */
   private[this] val consumer = newOrClose {
     Consumer
-      .builder(Serializer.OBJECT, Serializer.OBJECT)
+      .builder()
       .brokers(brokers)
       // the uuid of requestConsumer is random since we want to check all response.
       .groupId(uuid)
       .offsetAfterLatest()
       .topicName(topicName)
-      .build()
+      .build[Any, Any]
   }
 
   /**

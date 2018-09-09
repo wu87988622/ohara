@@ -5,7 +5,6 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.serialization.StringSerializer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -14,7 +13,7 @@ import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
   val store: Store[String, String] =
-    Store.builder(StringSerializer, StringSerializer).brokers(testUtil.brokers).topicName("TestTopicStoreAcid").build()
+    Store.builder().brokers(testUtil.brokers).topicName("TestTopicStoreAcid").build[String, String]
   val elapsedTime = 30 // second
   val readerCount = 5
   val updaterCount = 5

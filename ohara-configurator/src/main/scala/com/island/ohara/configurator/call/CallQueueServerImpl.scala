@@ -6,7 +6,6 @@ import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, Tim
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
-import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.config.TopicConfig
@@ -89,19 +88,19 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   }
 
   private[this] val producer = newOrClose {
-    Producer.builder(Serializer.OBJECT, Serializer.OBJECT).brokers(brokers).build()
+    Producer.builder().brokers(brokers).build[Any, Any]
   }
 
   private[this] val consumer = newOrClose {
     Consumer
-      .builder(Serializer.OBJECT, Serializer.OBJECT)
+      .builder()
       .brokers(brokers)
       .offsetAfterLatest()
       // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
       // distribute the request.
       .groupId(groupId)
       .topicName(topicName)
-      .build()
+      .build[Any, Any]
   }
 
   private[call] val undealtTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()

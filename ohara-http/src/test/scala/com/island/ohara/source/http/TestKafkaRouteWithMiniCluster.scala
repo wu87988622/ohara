@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import com.island.ohara.data.Row
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.kafka.{KafkaUtil, Producer}
 import com.island.ohara.serialization.DataType._
@@ -31,7 +32,7 @@ class TestKafkaRouteWithMiniCluster
   @Test
   def shouldReturnNotFoundWhenUrlNotExist(): Unit = {
     val request = HttpRequest(uri = "/abcd")
-    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
+    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
 
     try {
       val route = kafkaRoute(producer, map)
@@ -44,7 +45,7 @@ class TestKafkaRouteWithMiniCluster
   @Test
   def shouldReturnOkWhenUrlExist(): Unit = {
     val request = HttpRequest(uri = "/test")
-    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
+    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
 
     try {
       val route = kafkaRoute(producer, map)
@@ -77,7 +78,7 @@ class TestKafkaRouteWithMiniCluster
         |}
       """.stripMargin
 
-    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
+    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
@@ -119,7 +120,7 @@ class TestKafkaRouteWithMiniCluster
          |}
       """.stripMargin
 
-    val producer = Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).allAcks().build()
+    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {

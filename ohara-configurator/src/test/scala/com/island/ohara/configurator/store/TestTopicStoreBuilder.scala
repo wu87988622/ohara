@@ -15,26 +15,26 @@ class TestTopicStoreBuilder extends MediumTest with Matchers {
 
   @Test
   def testIncompleteArguments(): Unit = {
-    var builder = Store.builder(StringSerializer, StringSerializer)
-    an[NoSuchElementException] should be thrownBy builder.build()
+    var builder = Store.builder()
+    an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.initializationTimeout(10 seconds)
-    an[NoSuchElementException] should be thrownBy builder.build()
+    an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.pollTimeout(1 seconds)
-    an[NoSuchElementException] should be thrownBy builder.build()
+    an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.numberOfReplications(1)
-    an[NoSuchElementException] should be thrownBy builder.build()
+    an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.numberOfPartitions(3)
-    an[NoSuchElementException] should be thrownBy builder.build()
+    an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.topicName(methodName)
-    an[NoSuchElementException] should be thrownBy builder.build()
+    an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.brokers(testUtil.brokers)
-    builder.build().close()
+    builder.build[String, String].close()
   }
 
   @Test
   def testInvalidTopicOptions(): Unit = {
     an[IllegalArgumentException] should be thrownBy Store
-      .builder(StringSerializer, StringSerializer)
+      .builder()
       .initializationTimeout(10 seconds)
       .pollTimeout(1 seconds)
       .numberOfReplications(1)
@@ -43,7 +43,7 @@ class TestTopicStoreBuilder extends MediumTest with Matchers {
       .brokers(testUtil.brokers)
       // the following option is invalid for topic store
       .topicOptions(Map(TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE))
-      .build()
+      .build[String, String]
   }
 
   @After

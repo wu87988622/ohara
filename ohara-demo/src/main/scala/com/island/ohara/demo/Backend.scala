@@ -12,7 +12,6 @@ import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{LocalDataBase, OharaTestUtil}
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.serialization.Serializer
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -83,12 +82,12 @@ object Backend {
         .builder()
         .store(
           Store
-            .builder(Serializer.STRING, Serializer.OBJECT)
+            .builder()
             .brokers(util.brokers)
             .topicName(topicName)
             .numberOfReplications(1)
             .numberOfPartitions(1)
-            .build())
+            .build[String, Any])
         .kafkaClient(KafkaClient(util.brokers))
         .connectClient(ConnectorClient(util.workers))
         .hostname("0.0.0.0")

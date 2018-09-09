@@ -8,7 +8,7 @@ import scala.concurrent.duration.Duration
   * a helper class to build the Store. Excluding the #brokers and #topicName, other arguments
   * are optional. TODO: introduce a way to highlight the required arguments and optional arguments.
   */
-class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
+class StoreBuilder {
   private[this] var brokers: Option[String] = None
   private[this] var topicName: Option[String] = None
   private[this] var numberOfPartitions: Option[Int] = Some(Store.DEFAULT_NUMBER_OF_PARTITIONS)
@@ -22,7 +22,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param brokers kafka brokers
     * @return this builder
     */
-  def brokers(brokers: String): StoreBuilder[K, V] = {
+  def brokers(brokers: String): StoreBuilder = {
     this.brokers = Some(brokers)
     this
   }
@@ -32,7 +32,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param topicName topic name
     * @return this builder
     */
-  def topicName(topicName: String): StoreBuilder[K, V] = {
+  def topicName(topicName: String): StoreBuilder = {
     this.topicName = Some(topicName)
     this
   }
@@ -42,7 +42,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param numberOfPartitions the number of partition
     * @return this builder
     */
-  def numberOfPartitions(numberOfPartitions: Int): StoreBuilder[K, V] = {
+  def numberOfPartitions(numberOfPartitions: Int): StoreBuilder = {
     this.numberOfPartitions = Some(numberOfPartitions)
     this
   }
@@ -52,7 +52,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param numberOfReplications the number of partition
     * @return this builder
     */
-  def numberOfReplications(numberOfReplications: Short): StoreBuilder[K, V] = {
+  def numberOfReplications(numberOfReplications: Short): StoreBuilder = {
     this.numberOfReplications = Some(numberOfReplications)
     this
   }
@@ -62,7 +62,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param pollTimeout poll time in millisecond
     * @return this builder
     */
-  def pollTimeout(pollTimeout: Duration): StoreBuilder[K, V] = {
+  def pollTimeout(pollTimeout: Duration): StoreBuilder = {
     this.pollTimeout = Some(pollTimeout)
     this
   }
@@ -72,7 +72,7 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param initializationTimeout initial timeout
     * @return this builder
     */
-  def initializationTimeout(initializationTimeout: Duration): StoreBuilder[K, V] = {
+  def initializationTimeout(initializationTimeout: Duration): StoreBuilder = {
     this.initializationTimeout = Some(initializationTimeout)
     this
   }
@@ -81,14 +81,12 @@ class StoreBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: 
     * @param topicOptions extra configuration passed to StoreBuilder to build the topic
     * @return this builder
     */
-  def topicOptions(topicOptions: Map[String, String]): StoreBuilder[K, V] = {
+  def topicOptions(topicOptions: Map[String, String]): StoreBuilder = {
     this.topicOptions = Some(topicOptions)
     this
   }
 
-  def build(): Store[K, V] = new TopicStore(
-    Option(keySerializer).get,
-    Option(valueSerializer).get,
+  def build[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] = new TopicStore(
     brokers.get,
     topicName.get,
     numberOfPartitions.get,

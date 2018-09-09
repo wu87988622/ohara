@@ -129,18 +129,14 @@ object Validator {
         .config(TARGET, target)
         .create()
       // TODO: receiving all messages may be expensive...by chia
-      try doClose(
-        kafkaClient
-          .consumerBuilder(Serializer.STRING, Serializer.OBJECT)
-          .offsetFromBegin()
-          .topicName(INTERNAL_TOPIC)
-          .build())(_.poll(TIMEOUT,
-                           taskCount,
-                           filter = (records: Seq[ConsumerRecord[String, Any]]) =>
-                             records.filter(_.key.contains(requestId))).map(_.value.get match {
-        case report: ValidationReport => report
-        case _                        => throw new IllegalStateException(s"Unknown report")
-      }))
+      try doClose(kafkaClient.consumerBuilder().offsetFromBegin().topicName(INTERNAL_TOPIC).build[String, Any])(
+        _.poll(TIMEOUT,
+               taskCount,
+               filter = (records: Seq[ConsumerRecord[String, Any]]) => records.filter(_.key.contains(requestId)))
+          .map(_.value.get match {
+            case report: ValidationReport => report
+            case _                        => throw new IllegalStateException(s"Unknown report")
+          }))
       finally connectorClient.delete(validationName)
   }
 

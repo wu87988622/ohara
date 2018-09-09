@@ -190,8 +190,6 @@ private class FakeKafkaClient extends KafkaClient {
   override def listTopics(timeout: Duration): Seq[String] = cachedTopics.keys().asScala.map(t => t).toList
 
   override def brokers: String = "Unknown"
-  override def consumerBuilder[K, V](keySerializer: Serializer[K],
-                                     valueSerializer: Serializer[V]): ConsumerBuilder[K, V] =
-    throw new UnsupportedOperationException(
-      s"${classOf[FakeKafkaClient].getSimpleName} does not support this operation")
+  override def consumerBuilder(): ConsumerBuilder = throw new UnsupportedOperationException(
+    s"${classOf[FakeKafkaClient].getSimpleName} does not support this operation")
 }

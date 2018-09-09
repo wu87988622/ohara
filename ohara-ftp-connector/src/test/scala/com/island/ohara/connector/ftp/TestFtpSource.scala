@@ -7,7 +7,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.serialization.{DataType, Serializer}
+import com.island.ohara.serialization.DataType
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -26,7 +26,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   private[this] val data: Seq[String] = rows.map(row => {
     row.map(_.value.toString).mkString(",")
   })
-  private[this] val ftpClient = FtpClient.builder
+  private[this] val ftpClient = FtpClient
+    .builder()
     .host(testUtil.ftpServer.host)
     .port(testUtil.ftpServer.port)
     .user(testUtil.ftpServer.writableUser.name)
@@ -84,12 +85,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .config(props.toMap)
       .create()
     try {
-      val consumer = Consumer
-        .builder(Serializer.BYTES, Serializer.ROW)
-        .topicName(topicName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokers)
-        .build()
+      val consumer =
+        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
       val records = consumer.poll(20 seconds, data.length)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -123,12 +120,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .config(props.toMap)
       .create()
     try {
-      val consumer = Consumer
-        .builder(Serializer.BYTES, Serializer.ROW)
-        .topicName(topicName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokers)
-        .build()
+      val consumer =
+        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
       val records = consumer.poll(20 seconds, data.length)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -160,12 +153,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .config(props.toMap)
       .create()
     try {
-      val consumer = Consumer
-        .builder(Serializer.BYTES, Serializer.ROW)
-        .topicName(topicName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokers)
-        .build()
+      val consumer =
+        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
       val records = consumer.poll(10 seconds, data.length)
       records.size shouldBe 0
     } finally testUtil.connectorClient.delete(methodName)

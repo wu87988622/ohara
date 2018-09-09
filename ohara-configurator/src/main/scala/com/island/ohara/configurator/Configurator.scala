@@ -15,7 +15,6 @@ import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 
@@ -184,12 +183,12 @@ object Configurator {
           .builder()
           .store(
             com.island.ohara.configurator.store.Store
-              .builder(Serializer.STRING, Serializer.OBJECT)
+              .builder()
               .brokers(brokers.get)
               .topicName(topicName)
               .numberOfReplications(numberOfReplications)
               .numberOfPartitions(numberOfPartitions)
-              .build())
+              .build[String, Any])
           .kafkaClient(KafkaClient(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)

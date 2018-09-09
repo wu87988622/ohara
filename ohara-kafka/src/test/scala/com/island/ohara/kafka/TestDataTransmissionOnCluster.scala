@@ -11,7 +11,7 @@ import com.island.ohara.kafka.connector.{
   SimpleRowSourceConnector,
   SimpleRowSourceTask
 }
-import com.island.ohara.serialization.{DataType, RowSerializer, Serializer}
+import com.island.ohara.serialization.{DataType, RowSerializer}
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
@@ -35,7 +35,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val (_, rowQueue) =
       testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
     val totalMessageCount = 100
-    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
       {
         var count: Int = totalMessageCount
         while (count > 0) {
@@ -75,7 +75,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
 
-    doClose(Producer.builder(Serializer.BYTES, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
       {
         0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
         producer.flush()
@@ -102,13 +102,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
     import scala.concurrent.duration._
     OharaTestUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
-    doClose(
-      Consumer
-        .builder(Serializer.BYTES, Serializer.ROW)
-        .brokers(testUtil.brokers)
-        .topicName(topicName)
-        .offsetFromBegin()
-        .build()) {
+    doClose(Consumer.builder().brokers(testUtil.brokers).topicName(topicName).offsetFromBegin().build[Array[Byte], Row]) {
       _.poll(40 seconds, pollCountMax * SimpleRowSourceTask.rows.length).size shouldBe pollCountMax * SimpleRowSourceTask.rows.length
     }
   }
@@ -122,7 +116,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     testUtil.createTopic(topicName)
 
     val row = Row(Cell("c", 3), Cell("b", 2), Cell("a", 1))
-    doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokers).build[String, Row]) { producer =>
       producer.sender().key(topicName).value(row).send(topicName)
       producer.flush()
     }
@@ -136,7 +130,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     fromKafka.cell(1).name shouldBe "b"
     fromKafka.cell(2).name shouldBe "a"
 
-    doClose(Producer.builder(Serializer.STRING, Serializer.ROW).brokers(testUtil.brokers).build()) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokers).build[String, Row]) { producer =>
       val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
       meta.topic shouldBe topicName
     }

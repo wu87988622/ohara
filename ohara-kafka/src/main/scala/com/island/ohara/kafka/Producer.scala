@@ -28,30 +28,29 @@ trait Producer[K, V] extends CloseOnce {
 }
 
 object Producer {
-  def builder[K, V](keySerializer: Serializer[K], valueSerializer: Serializer[V]): ProducerBuilder[K, V] =
-    new ProducerBuilder[K, V](keySerializer, valueSerializer)
+  def builder(): ProducerBuilder = new ProducerBuilder
 }
 
-final class ProducerBuilder[K, V](val keySerializer: Serializer[K], val valueSerializer: Serializer[V]) {
+final class ProducerBuilder {
   private[this] var brokers: String = _
   private[this] var numberOfAcks: Short = 1
 
-  def brokers(brokers: String): ProducerBuilder[K, V] = {
+  def brokers(brokers: String): ProducerBuilder = {
     this.brokers = brokers
     this
   }
 
-  def noAcks(): ProducerBuilder[K, V] = {
+  def noAcks(): ProducerBuilder = {
     this.numberOfAcks = 0
     this
   }
 
-  def allAcks(): ProducerBuilder[K, V] = {
+  def allAcks(): ProducerBuilder = {
     this.numberOfAcks = -1
     this
   }
 
-  def build(): Producer[K, V] = {
+  def build[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Producer[K, V] = {
     Objects.requireNonNull(brokers)
     new Producer[K, V] {
       private[this] val producerConfig = {
