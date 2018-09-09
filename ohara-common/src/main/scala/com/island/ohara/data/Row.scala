@@ -66,4 +66,22 @@ object Row {
     * Instantiate a row with a single cell
     */
   def apply(cells: Cell[_]*): Row = builder().cells(cells).build()
+
+  def empty: Row = EmptyRow
+}
+
+/**
+  * a immutable empty row.
+  */
+private object EmptyRow extends Row {
+
+  override def names: Iterator[String] = Seq.empty.iterator
+
+  override def cell(name: String): Cell[_] = throw new NoSuchElementException(s"$name doesn't exist")
+
+  override def cell(index: Int): Cell[_] = throw new IndexOutOfBoundsException(s"$index is out of bound:$size")
+
+  override def tags: Set[String] = Set.empty
+
+  override def iterator: Iterator[Cell[_]] = Seq.empty.iterator
 }

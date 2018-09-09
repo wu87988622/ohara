@@ -1,10 +1,17 @@
 package com.island.ohara.data
 
 import com.island.ohara.rule.SmallTest
+import com.island.ohara.serialization.Serializer
 import org.junit.Test
 import org.scalatest.Matchers
 
 class TestCellAndRow extends SmallTest with Matchers {
+
+  @Test
+  def testEmptyRow(): Unit = {
+    val copy = Serializer.ROW.from(Serializer.ROW.to(Row.empty))
+    copy shouldBe Row.empty
+  }
 
   @Test
   def testInvalidArgument(): Unit = {

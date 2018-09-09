@@ -11,7 +11,6 @@ private class RowBuilderImpl extends RowBuilder {
   override def build(): Row = {
     Objects.requireNonNull(cells)
     Objects.requireNonNull(tags)
-    if (cells.isEmpty) throw new IllegalArgumentException("empty cells!!!!")
     if (cells.map(_.name).toSet.size != cells.length)
       throw new IllegalArgumentException(s"duplicate column:${cells.map(_.name).mkString(",")} are not supported")
     new Row() {
