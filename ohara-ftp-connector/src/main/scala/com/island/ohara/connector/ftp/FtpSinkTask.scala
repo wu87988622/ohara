@@ -7,6 +7,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 import FtpSinkTask._
+import com.island.ohara.client.FtpClient
 class FtpSinkTask extends RowSinkTask {
   private[this] var config: TaskConfig = _
   private[this] var props: FtpSinkTaskProps = _

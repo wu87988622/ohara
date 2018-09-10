@@ -2,6 +2,7 @@ package com.island.ohara.connector.ftp
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.FtpClient
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.{ByteUtil, CloseOnce, IoUtil}

@@ -1,5 +1,6 @@
 package com.island.ohara.connector.ftp
 
+import com.island.ohara.client.FtpClient
 import com.island.ohara.io.IoUtil
 import com.island.ohara.kafka.connector._
 

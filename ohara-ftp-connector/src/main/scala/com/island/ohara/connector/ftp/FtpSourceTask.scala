@@ -1,6 +1,7 @@
 package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.FtpClient
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.data.{Cell, Row}

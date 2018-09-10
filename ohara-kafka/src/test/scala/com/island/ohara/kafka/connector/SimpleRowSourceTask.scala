@@ -9,8 +9,8 @@ import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.Constants._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 /**
   * Used for testing.

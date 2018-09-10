@@ -2,6 +2,7 @@ package com.island.ohara.connector.ftp
 
 import java.nio.charset.Charset
 
+import com.island.ohara.client.{FileType, FtpClient}
 import com.island.ohara.integration.FtpServer
 import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
