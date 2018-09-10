@@ -2,9 +2,8 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.ConnectorJson
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.serialization.DataType
@@ -74,17 +73,19 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       .schema(schema)
       .config(props.toMap)
       .create()
     try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
       val consumer =
         Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
       val records = consumer.poll(20 seconds, data.length)
@@ -108,18 +109,20 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @Test
   def testPartialColumns(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       // skip last column
       .schema(schema.slice(0, schema.length - 1))
       .config(props.toMap)
       .create()
     try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
       val consumer =
         Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
       val records = consumer.poll(20 seconds, data.length)
@@ -139,20 +142,22 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   @Test
-  def testFailedCase(): Unit = {
+  def testUnmatchedSchema(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       // the name can't be casted to int
       .schema(Seq(Column("name", DataType.INT, 1)))
       .config(props.toMap)
       .create()
     try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
       val consumer =
         Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
       val records = consumer.poll(10 seconds, data.length)
@@ -166,61 +171,65 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @Test
   def testInvalidInput(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       .schema(schema)
       .config(props.copy(input = "/abc").toMap)
       .create()
-    assertFailedConnector(methodName)
+    TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
   def testInvalidOutput(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       .schema(schema)
       .config(props.copy(output = "/abc").toMap)
       .create()
-    assertFailedConnector(methodName)
+    TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
   def testInvalidError(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       .schema(schema)
       .config(props.copy(error = "/abc").toMap)
       .create()
-    assertFailedConnector(methodName)
+    TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
   def testInvalidSchema(): Unit = {
     val topicName = methodName
+    val connectorName = methodName
     testUtil.connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
       .numberOfTasks(1)
       .disableConverter()
-      .name(methodName)
+      .name(connectorName)
       .schema(
         Seq(
           // 0 is invalid
@@ -230,16 +239,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         ))
       .config(props.toMap)
       .create()
-    assertFailedConnector(methodName)
+    TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
-
-  private[this] def assertFailedConnector(name: String): Unit = OharaTestUtil.await(
-    () =>
-      try testUtil.connectorClient.status(methodName).connector.state == ConnectorJson.State.FAILED
-      catch {
-        case _: Throwable => false
-    },
-    10 seconds)
 
   @After
   def tearDown(): Unit = {

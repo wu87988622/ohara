@@ -38,17 +38,6 @@ abstract class RowSinkTask extends SinkTask {
   protected def _put(records: Seq[RowSinkRecord]): Unit
 
   /**
-    * Flush all records that have been _put for the specified topic-partitions.
-    *
-    * @param offsets the current offset state as of the last call to _put,
-    *                       provided for convenience but could also be determined by tracking all offsets included in the RowSinkRecords
-    *                       passed to _put.
-    */
-  protected def _flush(offsets: Seq[TopicOffset]): Unit = {
-    // do nothing
-  }
-
-  /**
     * Get the version of this task. Usually this should be the same as the corresponding Connector class's version.
     *
     * @return the version, formatted as a String
@@ -79,6 +68,18 @@ abstract class RowSinkTask extends SinkTask {
   }
 
   /**
+    * Pre-commit hook invoked prior to an offset commit.
+    *
+    * The default implementation simply return the offsets and is thus able to assume all offsets are safe to commit.
+    *
+    * @param offsets the current offset state as of the last call to _put,
+    *                       provided for convenience but could also be determined by tracking all offsets included in the RowSourceRecord's
+    *                       passed to _put.
+    * @return an empty map if Connect-managed offset commit is not desired, otherwise a map of offsets by topic-partition that are safe to commit.
+    */
+  protected def _preCommit(offsets: Map[TopicPartition, TopicOffset]): Map[TopicPartition, TopicOffset] = offsets
+
+  /**
     * @return RowSinkContext is provided to RowSinkTask to allow them to interact with the underlying runtime.
     */
   protected var rowContext: RowSinkContext = _
@@ -107,11 +108,6 @@ abstract class RowSinkTask extends SinkTask {
 
   final override def stop(): Unit = _stop()
 
-  final override def flush(currentOffsets: util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata]): Unit =
-    _flush(currentOffsets.asScala.map {
-      case (p, o) => TopicOffset(p.topic(), p.partition(), o.metadata(), o.offset())
-    }.toSeq)
-
   final override def version(): String = _version
 
   final override def open(partitions: util.Collection[org.apache.kafka.common.TopicPartition]): Unit = _open(
@@ -119,6 +115,14 @@ abstract class RowSinkTask extends SinkTask {
 
   final override def close(partitions: util.Collection[org.apache.kafka.common.TopicPartition]): Unit = _close(
     partitions.asScala.map(p => TopicPartition(p.topic(), p.partition())).toSeq)
+
+  final override def preCommit(currentOffsets: util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata])
+    : util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata] = _preCommit(currentOffsets.asScala.map {
+    case (p, o) => (TopicPartition(p.topic(), p.partition()), TopicOffset(o.metadata(), o.offset()))
+  }.toMap).map {
+    case (p, o) =>
+      (new org.apache.kafka.common.TopicPartition(p.topic, p.partition), new OffsetAndMetadata(o.offset, o.metadata))
+  }.asJava
   //-------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//
   final override def initialize(context: SinkTaskContext): Unit = {
     super.initialize(context)
@@ -131,9 +135,10 @@ abstract class RowSinkTask extends SinkTask {
   final override def onPartitionsRevoked(partitions: util.Collection[org.apache.kafka.common.TopicPartition]): Unit =
     super.onPartitionsRevoked(partitions)
 
-  final override def preCommit(currentOffsets: util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata])
-    : util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata] = super.preCommit(currentOffsets)
-
+  final override def flush(
+    currentOffsets: util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata]): Unit = {
+    // this API in connector is embarrassing since it is a part of default implementation of preCommit...
+  }
 }
 case class TopicPartition(topic: String, partition: Int)
-case class TopicOffset(topic: String, partition: Int, metadata: String, offset: Long)
+case class TopicOffset(metadata: String, offset: Long)

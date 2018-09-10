@@ -110,7 +110,7 @@ class FtpSourceTask extends RowSourceTask {
     }
     Seq.empty
   }
-  override protected def _version: String = FtpSource.VERSION
+  override protected def _version: String = VERSION
   override protected def _start(config: TaskConfig): Unit = {
     this.props = FtpSourceTaskProps(config.options)
     this.schema = config.schema

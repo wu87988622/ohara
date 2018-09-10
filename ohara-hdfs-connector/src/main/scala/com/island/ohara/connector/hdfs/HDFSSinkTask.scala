@@ -28,11 +28,10 @@ class HDFSSinkTask extends RowSinkTask {
     hdfsWriter.write(records)
   }
 
-  override protected def _flush(offsets: Seq[TopicOffset]): Unit = {
+  override protected def _preCommit(offsets: Map[TopicPartition, TopicOffset]): Map[TopicPartition, TopicOffset] = {
     logger.debug("running flush function.")
-    offsets.foreach(offset => {
-      logger.debug(s"[${offset.topic}-${offset.partition}] offset: ${offset.offset}")
-    })
+    offsets.foreach { case (p, o) => logger.debug(s"[${p.topic}-${p.partition}] offset: ${o.offset}") }
+    offsets
   }
 
   override protected def _close(partitions: Seq[TopicPartition]): Unit = {

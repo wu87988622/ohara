@@ -6,6 +6,34 @@ import org.scalatest.Matchers
 class TestFtpProperties extends SmallTest with Matchers {
 
   @Test
+  def testFtpSinkProps(): Unit = {
+    val props = FtpSinkProps(
+      output = "/output",
+      user = "user",
+      password = "pwd",
+      host = "host",
+      port = 123,
+      encode = Some("UTF-8")
+    )
+    val copy = FtpSinkProps(props.toMap)
+    copy shouldBe props
+  }
+
+  @Test
+  def testFtpSinkTaskProps(): Unit = {
+    val props = FtpSinkTaskProps(
+      output = "/output",
+      user = "user",
+      password = "pwd",
+      host = "host",
+      port = 123,
+      encode = Some("UTF-8")
+    )
+    val copy = FtpSinkTaskProps(props.toMap)
+    copy shouldBe props
+  }
+
+  @Test
   def testFtpSourceProps(): Unit = {
     val props = FtpSourceProps(
       input = "/input",

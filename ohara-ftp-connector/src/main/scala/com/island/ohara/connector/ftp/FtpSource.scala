@@ -53,11 +53,9 @@ class FtpSource extends RowSourceConnector {
     // do nothing
   }
 
-  override protected def _version: String = FtpSource.VERSION
+  override protected def _version: String = VERSION
 }
 
 object FtpSource {
   val LOG: Logger = LoggerFactory.getLogger(classOf[FtpSource])
-  //TODO: how to define the version of this module?
-  val VERSION: String = "0.1-SNAPSHOT"
 }
