@@ -1,19 +1,15 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.ByteUtil
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.kafka.connector.{
-  SimpleRowSinkConnector,
-  SimpleRowSinkTask,
-  SimpleRowSourceConnector,
-  SimpleRowSourceTask
-}
+import com.island.ohara.io.{ByteUtil, CloseOnce}
+import com.island.ohara.kafka.connector._
 import com.island.ohara.serialization.{DataType, RowSerializer}
-import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
-import org.junit.{Before, Test}
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
@@ -21,90 +17,145 @@ import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
-  @Before
-  def setUp(): Unit = {
-    SimpleRowSinkTask.reset()
-    SimpleRowSourceTask.reset()
+  private[this] val kafkaClient = KafkaClient(testUtil.brokers)
+  private[this] val row = Row(Cell("cf0", 10), Cell("cf1", 11))
+  private[this] val schema = Seq(Column("cf", DataType.BOOLEAN, 1))
+  private[this] val numberOfRows = 20
+
+  @After
+  def tearDown(): Unit = CloseOnce.close(kafkaClient)
+
+  private[this] def createTopic(topicName: String, compacted: Boolean): Unit = {
+    if (compacted)
+      kafkaClient.topicCreator().compacted().numberOfPartitions(1).numberOfReplications(1).create(topicName)
+    else
+      kafkaClient.topicCreator().deleted().numberOfPartitions(1).numberOfReplications(1).create(topicName)
+  }
+
+  private[this] def setupData(topicName: String): Unit = {
+    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
+      0 until numberOfRows foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+    }
+    checkData(topicName)
+  }
+
+  private[this] def checkData(topicName: String): Unit = doClose(
+    Consumer.builder().offsetFromBegin().brokers(testUtil.brokers).topicName(topicName).build[Array[Byte], Row]) {
+    consumer =>
+      val data = consumer.poll(30 seconds, numberOfRows)
+      data.size shouldBe numberOfRows
+      data.foreach(_.value.get shouldBe row)
+  }
+
+  private[this] def checkConnector(name: String): Unit = {
+    OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().contains(name), 30 second)
+    OharaTestUtil.await(() => testUtil.connectorClient.status(name).connector.state == State.RUNNING, 30 second)
   }
 
   @Test
   def testRowProducer2RowConsumer(): Unit = {
-    val topicName = methodName
-    val row = Row.builder().cells(Seq(Cell("cf0", 0), Cell("cf1", 1))).tags(Set[String]("123", "456")).build()
-    testUtil.createTopic(topicName)
-    val (_, rowQueue) =
-      testUtil.run(topicName, true, new ByteArrayDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
-    val totalMessageCount = 100
-    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
-      {
-        var count: Int = totalMessageCount
-        while (count > 0) {
-          producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName)
-          count -= 1
-        }
-      }
-    }
-    OharaTestUtil.await(() => rowQueue.size() == totalMessageCount, 1 minute)
-    rowQueue.forEach((r: Row) => {
-      r.size shouldBe row.size
-      r.cell(0).name shouldBe "cf0"
-      r.cell(0).value shouldBe 0
-      r.cell(1).name shouldBe "cf1"
-      r.cell(1).value shouldBe 1
-      r.tags.size shouldBe 2
-      r.tags.contains("123") shouldBe true
-      r.tags.contains("456") shouldBe true
-    })
+    var topicName = methodName
+    //test deleted topic
+    createTopic(topicName, false)
+    testRowProducer2RowConsumer(topicName)
+
+    topicName = methodName + "-2"
+    //test compacted topic
+    createTopic(topicName, true)
+    testRowProducer2RowConsumer(topicName)
   }
+
+  /**
+    * producer -> topic_1(topicName) -> consumer
+    */
+  private[this] def testRowProducer2RowConsumer(topicName: String): Unit = {
+    setupData(topicName)
+    doClose(Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[Array[Byte], Row]) {
+      consumer =>
+        val data = consumer.poll(10 seconds, numberOfRows)
+        data.size shouldBe numberOfRows
+        data.foreach(r => r.value.get shouldBe row)
+    }
+  }
+
   @Test
   def testProducer2SinkConnector(): Unit = {
-    val topicName = methodName
+    var topicName = methodName
+    var topicName2 = methodName + "-2"
+    //test deleted topic
+    createTopic(topicName, false)
+    createTopic(topicName2, false)
+    testProducer2SinkConnector(topicName, topicName2)
+
+    topicName = methodName + "-3"
+    topicName2 = methodName + "-4"
+    //test compacted topic
+    createTopic(topicName, true)
+    createTopic(topicName2, true)
+    testProducer2SinkConnector(topicName, topicName2)
+  }
+
+  /**
+    * producer -> topic_1(topicName) -> sink connector -> topic_2(topicName2)
+    */
+  private[this] def testProducer2SinkConnector(topicName: String, topicName2: String): Unit = {
     val connectorName = methodName
-    val rowCount = 3
-    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topic(topicName)
-      .numberOfTasks(1)
+      .numberOfTasks(2)
       .disableConverter()
-      .schema(Seq(Column("cf", DataType.BOOLEAN, 1)))
+      .schema(schema)
+      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> topicName2))
       .create()
 
-    import scala.concurrent.duration._
-    OharaTestUtil.await(() => SimpleRowSinkTask.runningTaskCount.get() == 1, 30 second)
-
-    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
-      {
-        0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
-        producer.flush()
-      }
-    }
-    OharaTestUtil.await(() => SimpleRowSinkTask.receivedRows.size == rowCount, 30 second)
+    try {
+      checkConnector(connectorName)
+      setupData(topicName)
+      checkData(topicName2)
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
   def testSourceConnector2Consumer(): Unit = {
-    val topicName = methodName
+    var topicName = methodName
+    var topicName2 = methodName + "-2"
+    //test deleted topic
+    createTopic(topicName, false)
+    createTopic(topicName2, false)
+    testSourceConnector2Consumer(topicName, topicName2)
+
+    topicName = methodName + "-3"
+    topicName2 = methodName + "-4"
+    //test compacted topic
+    createTopic(topicName, true)
+    createTopic(topicName2, true)
+    testSourceConnector2Consumer(topicName, topicName2)
+  }
+
+  /**
+    * producer -> topic_1(topicName) -> row source -> topic_2 -> consumer
+    */
+  private[this] def testSourceConnector2Consumer(topicName: String, topicName2: String): Unit = {
     val connectorName = methodName
-    val pollCountMax = 5
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
-      .schema(Seq(Column("cf", DataType.BOOLEAN, 1)))
-      .topic(topicName)
-      .numberOfTasks(1)
+      .topic(topicName2)
+      .numberOfTasks(2)
       .disableConverter()
-      .config(Map(SimpleRowSourceConnector.POLL_COUNT_MAX -> pollCountMax.toString))
+      .schema(schema)
+      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.INPUT -> topicName))
       .create()
 
-    import scala.concurrent.duration._
-    OharaTestUtil.await(() => SimpleRowSourceTask.runningTaskCount.get() == 1, 30 second)
-    doClose(Consumer.builder().brokers(testUtil.brokers).topicName(topicName).offsetFromBegin().build[Array[Byte], Row]) {
-      _.poll(40 seconds, pollCountMax * SimpleRowSourceTask.rows.length).size shouldBe pollCountMax * SimpleRowSourceTask.rows.length
-    }
+    try {
+      checkConnector(connectorName)
+      setupData(topicName)
+      checkData(topicName2)
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   /**

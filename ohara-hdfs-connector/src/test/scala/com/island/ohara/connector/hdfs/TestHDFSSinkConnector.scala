@@ -29,7 +29,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val hdfsSinkConnector = new HDFSSinkConnector()
 
     hdfsSinkConnector._start(
-      TaskConfig(Seq("topic"),
+      TaskConfig("test",
+                 Seq("topic"),
                  Seq.empty,
                  Map(HDFSSinkConnectorConfig.HDFS_URL -> hdfsURL, HDFSSinkConnectorConfig.TMP_DIR -> tmpDir)))
     val result = hdfsSinkConnector._taskConfigs(maxTasks)

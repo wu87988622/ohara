@@ -115,7 +115,7 @@ object ConnectorJson {
 
   final case class ConnectorStatus(state: State, worker_id: String, trace: Option[String])
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
-  final case class TaskStatus(id: String, state: State, worker_id: String, trace: Option[String])
+  final case class TaskStatus(id: Int, state: State, worker_id: String, trace: Option[String])
   implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)
   final case class ConnectorInformation(name: String, connector: ConnectorStatus, tasks: Seq[TaskStatus])
   implicit val CONNECTOR_INFORMATION_JSON_FORMAT: RootJsonFormat[ConnectorInformation] = jsonFormat3(

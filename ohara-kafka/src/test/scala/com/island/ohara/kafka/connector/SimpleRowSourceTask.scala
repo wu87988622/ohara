@@ -1,58 +1,54 @@
 package com.island.ohara.kafka.connector
 
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
-import com.island.ohara.data.{Cell, Row}
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.data.Row
+import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.Consumer
+import com.island.ohara.kafka.connector.Constants._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
   * Used for testing.
   */
 class SimpleRowSourceTask extends RowSourceTask {
 
-  private[this] lazy val logger = Logger(getClass.getName)
-
-  private[this] var topicName: String = _
-  private[this] var pollCountMax: Int = -1
-
+  private[this] var config: TaskConfig = _
+  private[this] val queue = new LinkedBlockingQueue[RowSourceRecord]
+  private[this] val closed = new AtomicBoolean(false)
+  private[this] var consumer: Consumer[Array[Byte], Row] = _
   override def _start(config: TaskConfig): Unit = {
-    topicName = config.topics.head
-    pollCountMax = config.options.get(SimpleRowSourceConnector.POLL_COUNT_MAX).map(_.toInt).get
-    logger.info(s"start SimpleRowSourceTask topicName:$topicName pollCount:$pollCountMax")
-    if (pollCountMax <= 0) throw new IllegalArgumentException(s"count:$pollCountMax should be bigger than 0")
-    SimpleRowSourceTask.runningTaskCount.incrementAndGet()
+    this.config = config
+    this.consumer = Consumer
+      .builder()
+      .brokers(config.options(BROKER))
+      .groupId(config.name)
+      .topicName(config.options(INPUT))
+      .offsetFromBegin()
+      .build[Array[Byte], Row]
+    Future {
+      try {
+        while (!closed.get) {
+          consumer
+            .poll(2 seconds)
+            .filter(_.value.isDefined)
+            .map(_.value.get)
+            .flatMap(row => config.topics.map(topic => RowSourceRecord.builder().row(row).build(topic)))
+            .foreach(r => queue.put(r))
+        }
+      } finally CloseOnce.close(consumer)
+    }
   }
 
-  override def _poll(): Seq[RowSourceRecord] = {
-    if (SimpleRowSourceTask.pollCount.incrementAndGet() > pollCountMax) return null
-    val data = new ArrayBuffer[RowSourceRecord]()
-    SimpleRowSourceTask.rows.foreach(row => {
-      data += RowSourceRecord(topicName, row)
-      SimpleRowSourceTask.submittedRows.add(row)
-      logger.info(s"add row $row")
-    })
-    data
-  }
+  override def _poll(): Seq[RowSourceRecord] = Iterator.continually(queue.poll()).takeWhile(_ != null).toSeq
 
   override def _stop(): Unit = {
-    logger.info("stop SimpleRowSourceTask")
-    SimpleRowSourceTask.runningTaskCount.decrementAndGet()
+    closed.set(true)
+    consumer.wakeup()
   }
-
-  override val _version: String = 100.toString
-}
-
-object SimpleRowSourceTask {
-  def reset(): Unit = {
-    runningTaskCount.set(0)
-    submittedRows.clear()
-    pollCount.set(0)
-  }
-  val rows: Seq[Row] = Seq(Row(Cell("cf", 1)), Row(Cell("cf", 2)), Row(Cell("cf", 3)))
-  val runningTaskCount = new AtomicInteger(0)
-  val submittedRows = new ConcurrentLinkedQueue[Row]
-  val pollCount = new AtomicInteger(0)
+  override val _version: String = "100"
 }

@@ -2,7 +2,6 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.rule.MediumTest
-import com.island.ohara.serialization.StringSerializer
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers

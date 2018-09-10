@@ -10,6 +10,7 @@ import com.island.ohara.data.Row
   * @param sinkRecord a sink record passed by kafka connector
   */
 case class RowSinkRecord(topic: String,
+                         key: Array[Byte],
                          row: Row,
                          partition: Int,
                          offset: Long,

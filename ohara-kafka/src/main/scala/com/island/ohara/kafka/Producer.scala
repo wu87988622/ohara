@@ -178,7 +178,7 @@ abstract class Sender[K, V] {
   def send(topic: String, callback: Either[Throwable, RecordMetadata] => Unit): Unit =
     doSend(Request(topic, partition, headers, key, value, timestamp), callback)
 
-  def doSend(request: Request[K, V], callback: Either[Throwable, RecordMetadata] => Unit)
+  protected def doSend(request: Request[K, V], callback: Either[Throwable, RecordMetadata] => Unit)
 }
 
 object Sender {

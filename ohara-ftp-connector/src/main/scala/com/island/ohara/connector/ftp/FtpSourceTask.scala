@@ -88,7 +88,7 @@ class FtpSourceTask extends RowSourceTask {
               val o = offset(index)
               val r = toRow(line)
               topics.map(t => {
-                RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).topic(t).row(r).build()
+                RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).row(r).build(t)
               })
           }
           if (records.nonEmpty) {

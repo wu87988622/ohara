@@ -84,7 +84,7 @@ abstract class RowSourceTask extends SourceTask {
             s.topic,
             s.partition.map(new Integer(_)).orNull,
             Schema.BYTES_SCHEMA,
-            null,
+            s.key,
             Schema.BYTES_SCHEMA,
             RowSerializer.to(s.row),
             s.timestamp.map(new java.lang.Long(_)).orNull
@@ -105,11 +105,10 @@ abstract class RowSourceTask extends SourceTask {
       .builder()
       .sourcePartition(if (record.sourcePartition() == null) Map.empty else record.sourcePartition().asScala.toMap)
       .sourceOffset(if (record.sourceOffset() == null) Map.empty else record.sourceOffset().asScala.toMap)
-      .topic(record.topic())
       .row(RowSerializer.from(record.value().asInstanceOf[Array[Byte]]))
       .timestamp(record.timestamp())
       .partition(record.kafkaPartition())
-      .build())
+      .build(record.topic()))
 
   final override def version(): String = _version
 

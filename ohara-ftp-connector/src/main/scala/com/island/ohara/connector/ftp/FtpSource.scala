@@ -5,7 +5,7 @@ import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, Task
 import org.slf4j.{Logger, LoggerFactory}
 
 class FtpSource extends RowSourceConnector {
-  private[this] var topics: Seq[String] = _
+  private[this] var config: TaskConfig = _
   private[this] var props: FtpSourceProps = _
   private[this] var schema: Seq[Column] = _
 
@@ -14,7 +14,8 @@ class FtpSource extends RowSourceConnector {
     (0 until maxTasks).map(
       index =>
         TaskConfig(
-          topics,
+          config.name,
+          config.topics,
           schema,
           FtpSourceTaskProps(
             total = maxTasks,
@@ -32,7 +33,7 @@ class FtpSource extends RowSourceConnector {
   }
 
   override protected def _start(config: TaskConfig): Unit = {
-    this.topics = config.topics
+    this.config = config
     this.props = FtpSourceProps(config.options)
     this.schema = config.schema
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")

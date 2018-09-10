@@ -1,42 +1,30 @@
 package com.island.ohara.kafka.connector
 
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
-
 import com.island.ohara.data.Row
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.Producer
+import Constants._
 
 /**
   * Used for testing.
   */
 class SimpleRowSinkTask extends RowSinkTask {
-
-  private[this] lazy val logger = Logger(getClass.getName)
-
-  override def _start(props: TaskConfig): Unit = SimpleRowSinkTask.runningTaskCount.incrementAndGet()
+  private[this] var config: TaskConfig = _
+  private[this] var outputTopic: String = _
+  private[this] var producer: Producer[Array[Byte], Row] = _
+  override def _start(props: TaskConfig): Unit = {
+    this.config = props
+    outputTopic = config.options(OUTPUT)
+    producer = Producer.builder().brokers(config.options(BROKER)).build[Array[Byte], Row]
+  }
 
   override def _put(records: Seq[RowSinkRecord]): Unit = {
-    records
-      .map(_.row)
-      .foreach(row => {
-        logger.info(s"get $row")
-        SimpleRowSinkTask.receivedRows.add(row)
-      })
+    records.foreach(r => {
+      producer.sender().key(r.key).value(r.row).send(outputTopic)
+    })
   }
 
-  override def _stop(): Unit = {
-    logger.info("stop SimpleSinkTask")
-    SimpleRowSinkTask.runningTaskCount.decrementAndGet()
-  }
+  override def _stop(): Unit = CloseOnce.close(producer)
 
-  override val _version: String = 100.toString
-}
-
-object SimpleRowSinkTask {
-  def reset(): Unit = {
-    receivedRows.clear()
-    runningTaskCount.set(0)
-  }
-  val receivedRows = new ConcurrentLinkedQueue[Row]
-  val runningTaskCount = new AtomicInteger(0)
+  override val _version: String = "100"
 }

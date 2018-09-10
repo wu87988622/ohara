@@ -92,6 +92,7 @@ abstract class RowSinkTask extends SinkTask {
           .map(r => {
             RowSinkRecord(
               topic = r.topic(),
+              key = r.key().asInstanceOf[Array[Byte]],
               row = RowSerializer.from(r.value().asInstanceOf[Array[Byte]]),
               partition = r.kafkaPartition(),
               offset = r.kafkaOffset(),
