@@ -10,7 +10,7 @@ case class FtpSourceProps(input: String,
                           password: String) {
   def toMap: Map[String, String] = Map(
     FTP_INPUT -> input,
-    FTP_OUTPUT -> output,
+    FTP_COMPLETED_FOLDER -> output,
     FTP_ERROR -> error,
     FTP_ENCODE -> encode.getOrElse("null"),
     FTP_HOST -> host,
@@ -23,7 +23,7 @@ case class FtpSourceProps(input: String,
 object FtpSourceProps {
   def apply(props: Map[String, String]): FtpSourceProps = FtpSourceProps(
     input = props(FTP_INPUT),
-    output = props(FTP_OUTPUT),
+    output = props(FTP_COMPLETED_FOLDER),
     error = props(FTP_ERROR),
     encode = props.get(FTP_ENCODE).filter(_.toLowerCase != "null"),
     host = props(FTP_HOST),
