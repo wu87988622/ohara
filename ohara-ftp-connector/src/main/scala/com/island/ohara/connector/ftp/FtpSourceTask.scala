@@ -58,6 +58,7 @@ class FtpSourceTask extends RowSourceTask {
               column.name,
               column.typeName match {
                 case DataType.BOOLEAN => item.toBoolean
+                case DataType.SHORT   => item.toShort
                 case DataType.INT     => item.toInt
                 case DataType.LONG    => item.toLong
                 case DataType.FLOAT   => item.toFloat
