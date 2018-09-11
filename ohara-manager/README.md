@@ -84,10 +84,10 @@ yarn test:coverage
 
 Make sure you're in the **client** directory, and use the following commands:
 
-Run the tests and stay in Jest watch mode, notice that you don't need to append `:watch` after the `yarn test` in the **Client**
+Run the tests and stay in Jest watch mode
 
 ```sh
-yarn test
+yarn test:watch # or simply yarn:test
 ```
 
 Generate test coverage reports
