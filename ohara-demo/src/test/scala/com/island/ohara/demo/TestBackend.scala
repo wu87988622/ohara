@@ -23,7 +23,7 @@ class TestBackend extends LargeTest with Matchers {
       Backend.main(Array(Backend.TTL_KEY, "1"))
     }
     // we have to wait all service to be closed so 60 seconds is a safe limit.
-    Await.result(f, 60 seconds)
+    Await.result(f, 120 seconds)
   }
 
   @Test
