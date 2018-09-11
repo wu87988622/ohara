@@ -35,6 +35,8 @@ trait ConnectorClient extends CloseOnce {
   def workers: String
 
   def status(name: String): ConnectorInformation
+
+  def config(name: String): Map[String, String]
 }
 
 object ConnectorClient {
@@ -123,6 +125,13 @@ object ConnectorClient {
         Http()
           .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connectors/$name/status"))
           .flatMap(unmarshal[ConnectorInformation]),
+        TIMEOUT
+      )
+
+      override def config(name: String): Map[String, String] = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connectors/$name/config"))
+          .flatMap(unmarshal[Map[String, String]]),
         TIMEOUT
       )
     }

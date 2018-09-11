@@ -16,7 +16,6 @@ import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicCreator, TopicDescription}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
-import org.eclipse.jetty.util.ConcurrentHashSet
 
 import scala.concurrent.duration.Duration
 
@@ -124,29 +123,34 @@ class ConfiguratorBuilder {
   * this class is exposed to Validator...an ugly way (TODO) by chia
   */
 private[configurator] class FakeConnectorClient extends ConnectorClient {
-  private[this] val cachedConnectors = new ConcurrentHashSet[String]()
+  private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
 
   override def connectorCreator(): ConnectorCreator = (request: CreateConnectorRequest) =>
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
     else {
-      cachedConnectors.add(request.name)
+      cachedConnectors.put(request.name, request.config)
       CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
   }
 
   override def delete(name: String): Unit =
-    if (!cachedConnectors.remove(name)) throw new IllegalStateException(s"the connector:$name doesn't exist!")
+    if (cachedConnectors.remove(name) == null) throw new IllegalStateException(s"the connector:$name doesn't exist!")
   import scala.collection.JavaConverters._
   // TODO; does this work? by chia
-  override def plugins(): Seq[Plugin] = cachedConnectors.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
+  override def plugins(): Seq[Plugin] = cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
   override protected def doClose(): Unit = cachedConnectors.clear()
-  override def activeConnectors(): Seq[String] = cachedConnectors.asScala.toSeq
+  override def activeConnectors(): Seq[String] = cachedConnectors.keys.asScala.toSeq
   override def workers: String = "Unknown"
   override def status(name: String): ConnectorInformation = {
     if (cachedConnectors.contains(name)) {
       ConnectorInformation(name, ConnectorStatus(State.RUNNING, "fake id", None), Seq.empty)
     } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
+  }
 
+  override def config(name: String): Map[String, String] = {
+    val config = cachedConnectors.get(name)
+    if (config == null) throw new IllegalArgumentException(s"$name doesn't exist")
+    config
   }
 }
 
@@ -165,7 +169,7 @@ private class FakeKafkaClient extends KafkaClient {
     printDebugMessage()
   }
 
-  override def topicCreator: TopicCreator = request => {
+  override def topicCreator(): TopicCreator = request => {
     printDebugMessage()
     cachedTopics
       .put(request.name, TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications))

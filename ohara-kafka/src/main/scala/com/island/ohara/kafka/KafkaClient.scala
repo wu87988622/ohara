@@ -54,7 +54,7 @@ object KafkaClient {
     override protected def doClose(): Unit = admin.close()
 
     import scala.collection.JavaConverters._
-    override def topicCreator: TopicCreator = request => {
+    override def topicCreator(): TopicCreator = request => {
       admin
         .createTopics(
           util.Arrays.asList(new NewTopic(request.name, request.numberOfPartitions, request.numberOfReplications)
