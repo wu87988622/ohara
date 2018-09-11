@@ -9,7 +9,8 @@ import spray.json.DefaultJsonProtocol._
 
 private[configurator] object PipelineRoute {
 
-  private[this] val ACCEPTED_TYPES = Seq(classOf[TopicInfo], classOf[Source], classOf[Sink])
+  private[this] val ACCEPTED_TYPES_FROM = Seq(classOf[TopicInfo], classOf[Source])
+  private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink])
 
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
     Pipeline(uuid, request.name, Status.STOPPED, request.rules, abstracts(request), System.currentTimeMillis())
@@ -42,15 +43,22 @@ private[configurator] object PipelineRoute {
     if (!pipeline.ready()) throw new IllegalArgumentException(s"pipeline has unready rules:${pipeline.rules}")
 
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Unit = {
-    def verify(uuid: String): Unit = {
+    def verifyFrom(uuid: String): Unit = {
       val data = store.raw(uuid)
-      if (!ACCEPTED_TYPES.contains(data.getClass))
+      if (!ACCEPTED_TYPES_FROM.contains(data.getClass))
         throw new IllegalArgumentException(
           s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
-            s" accepted type:${ACCEPTED_TYPES.map(_.getSimpleName).mkString(",")}")
+            s" accepted type:${ACCEPTED_TYPES_FROM.map(_.getSimpleName).mkString(",")}")
     }
-    pipeline.rules.keys.foreach(verify)
-    pipeline.rules.values.filterNot(_ == UNKNOWN).foreach(verify)
+    def verifyTo(uuid: String): Unit = {
+      val data = store.raw(uuid)
+      if (!ACCEPTED_TYPES_TO.contains(data.getClass))
+        throw new IllegalArgumentException(
+          s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
+            s" accepted type:${ACCEPTED_TYPES_TO.map(_.getSimpleName).mkString(",")}")
+    }
+    pipeline.rules.keys.foreach(verifyFrom)
+    pipeline.rules.values.filterNot(_ == UNKNOWN).foreach(verifyTo)
     pipeline.rules.foreach {
       case (k, v) => if (k == v) throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
     }

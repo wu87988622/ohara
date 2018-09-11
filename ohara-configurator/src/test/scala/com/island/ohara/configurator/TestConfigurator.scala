@@ -512,27 +512,30 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clients.foreach(client => {
       def compareRequestAndResponse(request: SourceRequest, response: Source): Source = {
         request.name shouldBe response.name
-        request.configs.sameElements(response.configs) shouldBe true
+        request.schema shouldBe response.schema
+        request.configs shouldBe response.configs
         response
       }
 
       def compare2Response(lhs: Source, rhs: Source): Unit = {
         lhs.uuid shouldBe rhs.uuid
         lhs.name shouldBe rhs.name
-        lhs.configs.sameElements(rhs.configs) shouldBe true
+        lhs.schema shouldBe rhs.schema
+        lhs.configs shouldBe rhs.configs
         lhs.lastModified shouldBe rhs.lastModified
       }
 
+      val schema = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2))
       // test add
       client.list[Source].size shouldBe 0
-      val request = SourceRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1"))
+      val request = SourceRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1"))
       val response = compareRequestAndResponse(request, client.add[SourceRequest, Source](request))
 
       // test get
       compare2Response(response, client.get[Source](response.uuid))
 
       // test update
-      val anotherRequest = SourceRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val anotherRequest = SourceRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.uuid, anotherRequest))
 
@@ -549,35 +552,21 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       an[IllegalArgumentException] should be thrownBy client.update[SourceRequest, Source]("777", anotherRequest)
     })
   }
+
   @Test
-  def testModifySourceFromPipeline(): Unit = {
+  def testInvalidSource(): Unit = {
     clients.foreach(client => {
+      client.list[Source].size shouldBe 0
 
-      val uuid_0 = client.add[SourceRequest, Source](SourceRequest(methodName, "jdbc", Map("a" -> "b"))).uuid
-      val uuid_1 = client.add[SourceRequest, Source](SourceRequest(methodName, "jdbc", Map("b" -> "b"))).uuid
-      val uuid_2 = client.add[SourceRequest, Source](SourceRequest(methodName, "jdbc", Map("c" -> "b"))).uuid
-      client.list[Source].size shouldBe 3
+      val illegalOrder = Seq(Column("cf", DataType.BOOLEAN, 0), Column("cf", DataType.BOOLEAN, 2))
+      an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
+        SourceRequest(methodName, "jdbc", illegalOrder, Map("c0" -> "v0", "c1" -> "v1")))
+      client.list[Source].size shouldBe 0
 
-      val response =
-        client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
-      response.status shouldBe Status.STOPPED
-
-      // the uuid_1 is used by pipeline so configurator disallow us to remove it
-      an[IllegalArgumentException] should be thrownBy client.delete[Source](uuid_1)
-
-      // the pipeline is not running so it is ok to update the source
-      client.update[SourceRequest, Source](uuid_0, SourceRequest(methodName, "jdbc", Map("d" -> "b")))
-
-      client.start[Pipeline](response.uuid)
-      an[IllegalArgumentException] should be thrownBy client
-        .update[SourceRequest, Source](uuid_0, SourceRequest(methodName, "jdbc", Map("d" -> "b")))
-
-      // update the pipeline to use another source (uuid_2)
-      client.stop[Pipeline](response.uuid)
-      client.update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
-
-      // it is ok to remove the source (uuid_1) since we have updated the pipeline to use another source (uuid_2)
-      client.delete[Source](uuid_1).uuid shouldBe uuid_1
+      val duplicateOrder = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 1))
+      an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
+        SourceRequest(methodName, "jdbc", duplicateOrder, Map("c0" -> "v0", "c1" -> "v1")))
+      client.list[Source].size shouldBe 0
     })
   }
 
@@ -625,13 +614,17 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   }
 
   @Test
-  def testModifySinkFromPipeline(): Unit = {
+  def testModifySourceAndSinkFromPipeline(): Unit = {
     clients.foreach(client => {
 
-      val uuid_0 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("a" -> "b"))).uuid
+      val uuid_0 = client
+        .add[SourceRequest, Source](
+          SourceRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b")))
+        .uuid
       val uuid_1 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("b" -> "b"))).uuid
       val uuid_2 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("c" -> "b"))).uuid
-      client.list[Sink].size shouldBe 3
+      client.list[Source].size shouldBe 1
+      client.list[Sink].size shouldBe 2
 
       val response =
         client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
@@ -641,7 +634,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       an[IllegalArgumentException] should be thrownBy client.delete[Sink](uuid_1)
 
       // the pipeline is not running so it is ok to update the sink
-      client.update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, "jdbc", Map("d" -> "b")))
+      client.update[SourceRequest, Source](
+        uuid_0,
+        SourceRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b")))
 
       client.start[Pipeline](response.uuid)
       an[IllegalArgumentException] should be thrownBy client

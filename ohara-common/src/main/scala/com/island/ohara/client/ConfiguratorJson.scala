@@ -2,7 +2,7 @@ package com.island.ohara.client
 
 import com.island.ohara.serialization.DataType
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsBoolean, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling configurator data to/from json.
@@ -184,23 +184,31 @@ object ConfiguratorJson {
     }
   //------------------------------------------------[DATA-SOURCE]------------------------------------------------//
   val SOURCE_PATH = "sources"
-  final case class SourceRequest(name: String, className: String, configs: Map[String, String])
+  final case class SourceRequest(name: String, className: String, schema: Seq[Column], configs: Map[String, String])
   implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = new RootJsonFormat[SourceRequest] {
     override def write(obj: SourceRequest): JsValue = JsObject(
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) })
     )
-    override def read(json: JsValue): SourceRequest = json.asJsObject.getFields("name", "class", "configs") match {
-      case Seq(JsString(m), JsString(clz), JsObject(c)) =>
-        SourceRequest(m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) })
-      case _ => throw new UnsupportedOperationException(s"invalid format of ${SourceRequest.getClass.getSimpleName}")
-    }
+    override def read(json: JsValue): SourceRequest =
+      json.asJsObject.getFields("name", "class", "schema", "configs") match {
+        case Seq(JsString(m), JsString(clz), JsArray(cs), JsObject(c)) =>
+          SourceRequest(m, clz, cs.map(COLUMN_JSON_FORMAT.read), c.map {
+            case (k, v) => (k, v.asInstanceOf[JsString].value)
+          })
+        // null schema is valid in SOURCE
+        case Seq(JsString(m), JsString(clz), JsNull, JsObject(c)) =>
+          SourceRequest(m, clz, Seq.empty, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) })
+        case _ => throw new UnsupportedOperationException(s"invalid format of ${SourceRequest.getClass.getSimpleName}")
+      }
   }
 
   final case class Source(uuid: String,
                           name: String,
                           className: String,
+                          schema: Seq[Column],
                           configs: Map[String, String],
                           lastModified: Long)
       extends Data {
@@ -211,13 +219,16 @@ object ConfiguratorJson {
       "uuid" -> JsString(obj.uuid),
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) }),
       "lastModified" -> JsNumber(obj.lastModified)
     )
     override def read(json: JsValue): Source =
-      json.asJsObject.getFields("uuid", "name", "class", "configs", "lastModified") match {
-        case Seq(JsString(u), JsString(m), JsString(clz), JsObject(c), JsNumber(t)) =>
-          Source(u, m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) }, t.toLong)
+      json.asJsObject.getFields("uuid", "name", "class", "schema", "configs", "lastModified") match {
+        case Seq(JsString(u), JsString(m), JsString(clz), JsArray(cs), JsObject(c), JsNumber(t)) =>
+          Source(u, m, clz, cs.map(COLUMN_JSON_FORMAT.read), c.map {
+            case (k, v) => (k, v.asInstanceOf[JsString].value)
+          }, t.toLong)
         case _ => throw new UnsupportedOperationException(s"invalid format of ${Source.getClass.getSimpleName}")
       }
   }

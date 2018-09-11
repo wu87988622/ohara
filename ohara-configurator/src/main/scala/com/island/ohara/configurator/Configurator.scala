@@ -235,7 +235,7 @@ object Configurator {
       .get(uuid)
       .filter(classTag[T].runtimeClass.isInstance(_))
       .flatMap(_ => store.remove(uuid))
-      .getOrElse(throw new IllegalArgumentException(s"The object:$uuid doesn't exist"))
+      .getOrElse(throw new IllegalArgumentException(s"Failed to remove $uuid since it doesn't exist"))
       .asInstanceOf[T]
 
     /**
@@ -248,7 +248,7 @@ object Configurator {
       */
     def update[T <: Data: ClassTag](uuid: String, data: T): T =
       if (store.get(uuid).exists(classTag[T].runtimeClass.isInstance(_))) store.update(uuid, data).get.asInstanceOf[T]
-      else throw new IllegalArgumentException(s"The object:$uuid doesn't exist")
+      else throw new IllegalArgumentException(s"Failed to update $uuid since it doesn't exist")
 
     /**
       * add an new object to the store. If the uuid already exists, an exception will be thrown.
@@ -283,7 +283,8 @@ object Configurator {
       store
         .get(uuid)
         .filter(classTag[T].runtimeClass.isInstance(_))
-        .getOrElse(throw new IllegalArgumentException(s"The object:$uuid doesn't exist"))
+        .getOrElse(throw new IllegalArgumentException(
+          s"Failed to find ${classTag[T].runtimeClass.getSimpleName} by $uuid since it doesn't exist"))
         .asInstanceOf[T]
 
     def raw(): Iterator[Data] = store.iterator.map(_._2).filter(_.isInstanceOf[Data]).map(_.asInstanceOf[Data])
@@ -292,7 +293,7 @@ object Configurator {
       .get(uuid)
       .filter(_.isInstanceOf[Data])
       .map(_.asInstanceOf[Data])
-      .getOrElse(throw new IllegalArgumentException(s"The object:$uuid doesn't exist"))
+      .getOrElse(throw new IllegalArgumentException(s"Failed to find raw data by $uuid since it doesn't exist"))
 
     def size: Int = store.size
 
