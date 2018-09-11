@@ -8,7 +8,6 @@ dependencies {
   compile libs.scalaLogging
   compile libs.slf4jApi
   compile libs.slf4jlog4j
-  compile libs.typesafeConfig
   compile libs.akkaHttp
   compile libs.akkaStream
   compile libs.akkaActor
