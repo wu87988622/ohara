@@ -15,7 +15,7 @@
     "lint": "node_modules/eslint/bin/eslint.js src cypress",
     "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
-    "test:report": "JEST_JUNIT_OUTPUT=\"../test-reports/clientUnits.xml\" CI=true yarn test --reporters=default --reporters=jest-junit",
+    "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
     "cypress": "cypress open",
     "cypress:ci": "cypress run"
