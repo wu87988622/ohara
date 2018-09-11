@@ -296,6 +296,35 @@ object ConfiguratorJson {
         s"http://$address/$VERSION_V0/$VALIDATION_PATH/$RDB_VALIDATION_PATH"
     }
 
+  val FTP_VALIDATION_PATH = "ftp"
+  final case class FtpValidationRequest(host: String, port: Int, user: String, password: String)
+  implicit val FTP_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpValidationRequest] =
+    new RootJsonFormat[FtpValidationRequest] {
+      override def read(json: JsValue): FtpValidationRequest =
+        json.asJsObject.getFields("host", "port", "user", "password") match {
+          case Seq(JsString(host), JsNumber(port), JsString(user), JsString(password)) =>
+            FtpValidationRequest(host, port.toInt, user, password)
+          // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
+          case Seq(JsString(host), JsString(port), JsString(user), JsString(password)) =>
+            FtpValidationRequest(host, port.toInt, user, password)
+          case _ =>
+            throw new UnsupportedOperationException(s"invalid format of ${classOf[FtpValidationRequest].getSimpleName}")
+        }
+
+      override def write(obj: FtpValidationRequest): JsValue = JsObject(
+        "host" -> JsString(obj.host),
+        "port" -> JsNumber(obj.port),
+        "user" -> JsString(obj.user),
+        "password" -> JsString(obj.password)
+      )
+    }
+
+  implicit val FTP_VALIDATION_REQUEST_COMMAND_FORMAT: ValidationCommandFormat[FtpValidationRequest] =
+    new ValidationCommandFormat[FtpValidationRequest] {
+      override def format(address: String): String =
+        s"http://$address/$VERSION_V0/$VALIDATION_PATH/$FTP_VALIDATION_PATH"
+    }
+
   final case class ValidationReport(hostname: String, message: String, pass: Boolean)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 

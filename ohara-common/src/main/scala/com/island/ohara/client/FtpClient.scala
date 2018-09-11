@@ -77,6 +77,8 @@ trait FtpClient extends CloseOnce {
   def exist(path: String): Boolean
 
   def fileType(path: String): FileType
+
+  def status(): String
 }
 
 object FtpClient {
@@ -238,6 +240,11 @@ class FtpClientBuilder {
           case _   => FileType.FILE
         } finally client.cwd(current)
       } else FileType.NONEXISTENT
+
+      override def status(): String = {
+        connectIfNeeded()
+        client.getStatus
+      }
     }
   }
 }

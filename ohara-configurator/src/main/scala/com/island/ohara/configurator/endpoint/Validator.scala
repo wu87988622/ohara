@@ -5,8 +5,13 @@ import java.util
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-import com.island.ohara.client.ConfiguratorJson.{HdfsValidationRequest, RdbValidationRequest, ValidationReport}
-import com.island.ohara.client.{ConfiguratorJson, ConnectorClient}
+import com.island.ohara.client.ConfiguratorJson.{
+  FtpValidationRequest,
+  HdfsValidationRequest,
+  RdbValidationRequest,
+  ValidationReport
+}
+import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, FtpClient}
 import com.island.ohara.configurator.FakeConnectorClient
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.io.CloseOnce._
@@ -20,7 +25,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.kafka.connect.connector.Task
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTask}
-import spray.json.{JsObject, JsString}
+import spray.json.{JsNumber, JsObject, JsString}
 
 import scala.concurrent.duration._
 
@@ -69,6 +74,7 @@ object Validator {
   private[endpoint] val TARGET = "target"
   private[endpoint] val TARGET_HDFS = "hdfs"
   private[endpoint] val TARGET_RDB = "rdb"
+  private[endpoint] val TARGET_FTP = "ftp"
 
   def run(connectorClient: ConnectorClient,
           kafkaClient: KafkaClient,
@@ -96,14 +102,32 @@ object Validator {
     taskCount
   )
 
+  def run(connectorClient: ConnectorClient,
+          kafkaClient: KafkaClient,
+          request: FtpValidationRequest,
+          taskCount: Int): Seq[ValidationReport] = run(
+    connectorClient,
+    kafkaClient,
+    TARGET_FTP,
+    ConfiguratorJson.FTP_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+      case (k, v) =>
+        v match {
+          case s: JsString => (k, s.value)
+          // port is Int type
+          case n: JsNumber => (k, n.value.toString)
+          case _           => throw new IllegalArgumentException("what is this??")
+        }
+    },
+    taskCount
+  )
+
   /**
     * a helper method to run the validation process quickly.
     *
     * @param connectorClient connector client
-    * @param brokersString broker information. form -> host:port,host:port
+    * @param kafkaClient kafka client
     * @param config config used to test
     * @param taskCount the number of task. It implies how many worker nodes should be verified
-    * @param timeout timeout
     * @return reports
     */
   private[this] def run(connectorClient: ConnectorClient,
@@ -162,6 +186,7 @@ class ValidatorTask extends SourceTask {
     try information match {
       case info: HdfsValidationRequest => toSourceRecord(ValidationReport(hostname, validate(info), true))
       case info: RdbValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
+      case info: FtpValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
     } catch {
       case e: Throwable => toSourceRecord(ValidationReport(hostname, e.getMessage, false))
     } finally {
@@ -185,13 +210,20 @@ class ValidatorTask extends SourceTask {
 
   private[this] def validate(info: RdbValidationRequest): String =
     doClose(DriverManager.getConnection(info.uri, info.user, info.password)) { _ =>
-      s"succeed to establish the connection:$info.uri"
+      s"succeed to establish the connection:${info.uri}"
+    }
+
+  private[this] def validate(info: FtpValidationRequest): String =
+    doClose(FtpClient.builder().host(info.host).port(info.port).user(info.user).password(info.password).build()) {
+      client =>
+        s"succeed to establish the connection:${info.host}:${info.port} with status:${client.status()}"
     }
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(TARGET) match {
     case TARGET_HDFS => ConfiguratorJson.HDFS_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
     case TARGET_RDB  => ConfiguratorJson.RDB_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case TARGET_FTP  => ConfiguratorJson.FTP_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
     case other: String =>
       throw new IllegalArgumentException(s"valid targets are $TARGET_HDFS and $TARGET_RDB. current is $other")
   }
