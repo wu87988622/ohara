@@ -7,6 +7,7 @@ import { darkerBlue, lighterGray, lightBlue } from '../../../theme/variables';
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  text-align: ${({ align }) => (align ? align : 'left')};
 
   th,
   td {
@@ -17,6 +18,10 @@ const Table = styled.table`
 
   td {
     color: ${lightBlue};
+
+    &.has-icon {
+      font-size: 20px;
+    }
   }
 `;
 
@@ -24,36 +29,26 @@ Table.displayName = 'Table';
 
 const Th = styled.th`
   text-transform: uppercase;
-  text-align: left;
   color: ${darkerBlue};
 `;
 
 Th.displayName = 'Th';
 
-const DataTable = ({ headers, data }) => {
-  if (!data) return null;
+const DataTable = ({ headers, children, ...rest }) => {
+  if (!children) return null;
   return (
-    <Table>
+    <Table {...rest}>
       <thead>
         <tr>{headers.map(header => <Th key={header}>{header}</Th>)}</tr>
       </thead>
-      <tbody>
-        {data.map(({ uuid, name, type }) => {
-          return (
-            <tr key={uuid}>
-              <td>{name}</td>
-              <td>{type}</td>
-            </tr>
-          );
-        })}
-      </tbody>
+      <tbody>{children}</tbody>
     </Table>
   );
 };
 
 DataTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
-  list: PropTypes.arrayOf(PropTypes.shape),
+  children: PropTypes.any,
 };
 
 export default DataTable;

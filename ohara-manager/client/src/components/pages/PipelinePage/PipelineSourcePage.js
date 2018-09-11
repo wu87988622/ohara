@@ -15,10 +15,10 @@ import { fetchTopics } from '../../../apis/topicApis';
 import {
   queryRdb,
   createSource,
-  fetchSources,
+  fetchSource,
   validateRdb,
   updateSource,
-  fetchPipelines,
+  fetchPipeline,
   updatePipeline,
 } from '../../../apis/pipelinesApis';
 import * as URLS from '../../../constants/urls';
@@ -137,11 +137,11 @@ class PipelineSourcePage extends React.Component {
     this.setState(({ databases }) => ({ currDatabase: databases[0] }));
 
     if (!_.isNull(sourceId)) {
-      this.fetchSources(sourceId);
+      this.fetchSource(sourceId);
     }
 
     if (!_.isNull(pipelineId)) {
-      this.fetchPipelines(pipelineId);
+      this.fetchPipeline(pipelineId);
     }
 
     if (!_.isNull(topicId)) {
@@ -189,10 +189,10 @@ class PipelineSourcePage extends React.Component {
     }
   };
 
-  fetchSources = async sourceId => {
+  fetchSource = async sourceId => {
     if (!_.isUuid(sourceId)) return;
 
-    const res = await fetchSources(sourceId);
+    const res = await fetchSource(sourceId);
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const {
@@ -237,10 +237,10 @@ class PipelineSourcePage extends React.Component {
     }
   };
 
-  fetchPipelines = async pipelineId => {
+  fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipelines(pipelineId);
+    const res = await fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -497,7 +497,16 @@ class PipelineSourcePage extends React.Component {
         {!_.isEmpty(currTable) && (
           <Box>
             <H5Wrapper>Database schemas</H5Wrapper>
-            <DataTable headers={this.dbSchemasHeader} data={currTable.schema} />
+            <DataTable headers={this.dbSchemasHeader}>
+              {currTable.schema.map(({ name, type, uuid }) => {
+                return (
+                  <tr key={uuid}>
+                    <td>{name}</td>
+                    <td>{type}</td>
+                  </tr>
+                );
+              })}
+            </DataTable>
           </Box>
         )}
       </React.Fragment>

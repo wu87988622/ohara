@@ -3,6 +3,21 @@ import axios from 'axios';
 import { handleError } from '../utils/apiHelpers';
 import * as _ from '../utils/helpers';
 
+export const fetchPipelines = async () => {
+  try {
+    const res = await axios.get('/api/pipelines');
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const createPipeline = async params => {
   try {
     const res = await axios.post('/api/pipelines/create', params);
@@ -108,7 +123,7 @@ export const updateSource = async ({ uuid, params }) => {
   }
 };
 
-export const fetchSources = async uuid => {
+export const fetchSource = async uuid => {
   try {
     const res = await axios.get(`/api/sources/${uuid}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
@@ -123,7 +138,7 @@ export const fetchSources = async uuid => {
   }
 };
 
-export const fetchPipelines = async uuid => {
+export const fetchPipeline = async uuid => {
   try {
     const res = await axios.get(`/api/pipelines/${uuid}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
