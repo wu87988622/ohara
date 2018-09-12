@@ -1,5 +1,7 @@
 package com.island.ohara.connector.jdbc.source
 import com.island.ohara.connector.jdbc.Version
+import com.island.ohara.connector.jdbc.util.DBTableDataProvider
+import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 import com.typesafe.scalalogging.Logger
 
@@ -7,7 +9,8 @@ class JDBCSourceTask extends RowSourceTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
 
-  var jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = _
+  private[this] var jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = _
+  private[this] var dbTableDataProvider: DBTableDataProvider = _
 
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
@@ -19,7 +22,10 @@ class JDBCSourceTask extends RowSourceTask {
     val props = config.options
     jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(props)
 
-    //TODO Connect to DataBase
+    val dbURL = jdbcSourceConnectorConfig.dbURL
+    val dbUserName = jdbcSourceConnectorConfig.dbUserName
+    val dbPassword = jdbcSourceConnectorConfig.dbPassword
+    dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
   }
 
   /**
@@ -28,7 +34,8 @@ class JDBCSourceTask extends RowSourceTask {
     * @return a array of RowSourceRecord
     */
   override protected def _poll(): Seq[RowSourceRecord] = {
-    //TODO
+    //TODO loadOffset, call dbTableDataProvider#rowList, converter ohara datatype, return Seq[RowSourceRecord]
+    //TODO OHARA-413, OHARA-414
     throw new RuntimeException("Not implement to poll database table data")
   }
 
@@ -38,7 +45,7 @@ class JDBCSourceTask extends RowSourceTask {
     * fully stopped. Note that this method necessarily may be invoked from a different thread than _poll() and _commit()
     */
   override protected def _stop(): Unit = {
-    //TODO
+    CloseOnce.close(dbTableDataProvider)
   }
 
   /**
