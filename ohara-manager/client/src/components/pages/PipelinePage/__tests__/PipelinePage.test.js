@@ -3,6 +3,11 @@ import { shallow } from 'enzyme';
 
 import PipelinePage from '../PipelinePage';
 
+const data = [
+  { name: 'a', status: 'stopped', uuid: '1' },
+  { name: 'b', status: 'start', uuid: '2' },
+];
+
 describe('<PipelinePage />', () => {
   let wrapper;
   beforeEach(() => {
@@ -28,45 +33,14 @@ describe('<PipelinePage />', () => {
     expect(modal.props().isActive).toBe(false);
   });
 
-  it('opens the <Modal /> with <NewPipelineBtn />', () => {
+  it('toggles the <Modal />', () => {
     const evt = { preventDefault: jest.fn() };
-    expect(wrapper.find('Modal').props().isActive).toBe(false);
-    wrapper
-      .find('NewPipelineBtn')
-      .dive()
-      .dive()
-      .simulate('click', evt);
-    wrapper.update();
+
+    wrapper.instance().handleSelectTopicModalOpen(evt);
     expect(wrapper.find('Modal').props().isActive).toBe(true);
-  });
+    expect(evt.preventDefault).toHaveBeenCalledTimes(1);
 
-  it('closes the <Modal /> with <CloseBtn />', () => {
-    wrapper.setState({ isModalActive: true });
-    expect(wrapper.find('Modal').props().isActive).toBe(true);
-
-    wrapper
-      .find('Modal')
-      .dive()
-      .find('CloseBtn')
-      .simulate('click');
-
-    wrapper.update();
-    expect(wrapper.find('Modal').props().isActive).toBe(false);
-  });
-
-  it('closes the <Modal> with <CancelBtn />', () => {
-    wrapper.setState({ isModalActive: true });
-    expect(wrapper.find('Modal').props().isActive).toBe(true);
-
-    wrapper
-      .find('Modal')
-      .dive()
-      .find('[data-testid="modal-cancel-btn"]')
-      .dive()
-      .dive()
-      .simulate('click');
-
-    wrapper.update();
+    wrapper.instance().handleSelectTopicModalClose();
     expect(wrapper.find('Modal').props().isActive).toBe(false);
   });
 
@@ -76,11 +50,28 @@ describe('<PipelinePage />', () => {
     expect(wrapper.find('Modal').props().isConfirmDisabled).toBe(false);
   });
 
+  it('renders <ConfirmModal />', () => {
+    const modal = wrapper.find('ConfirmModal');
+    expect(modal.length).toBe(1);
+    expect(modal.props().isActive).toBe(false);
+  });
+
+  it('toggles <ConfirmModal />', () => {
+    wrapper.setState({ pipelines: data });
+
+    const uuid = '1234';
+    wrapper.instance().handleDeletePipelineModalOpen(uuid);
+
+    expect(wrapper.find('ConfirmModal').props().isActive).toBe(true);
+    expect(wrapper.state().deletePipelineUuid).toBe(uuid);
+
+    wrapper.instance().handleDeletePipelineModalClose();
+
+    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
+    expect(wrapper.state().deletePipelineUuid).toBe('');
+  });
+
   it('renders <DataTable />', () => {
-    const data = [
-      { name: 'a', status: 'stopped', uuid: '1' },
-      { name: 'b', status: 'start', uuid: '2' },
-    ];
     wrapper.setState({ pipelines: data });
 
     const table = wrapper.find('DataTable');

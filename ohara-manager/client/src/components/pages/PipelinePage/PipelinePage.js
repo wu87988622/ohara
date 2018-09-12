@@ -4,19 +4,23 @@ import DocumentTitle from 'react-document-title';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
-import { Modal } from '../../common/Modal';
+import { Modal, ConfirmModal } from '../../common/Modal';
 import { DataTable } from '../../common/Table';
 import { Box } from '../../common/Layout';
 import { Warning } from '../../common/Messages';
 import { fetchTopics } from '../../../apis/topicApis';
-import { createPipeline, fetchPipelines } from '../../../apis/pipelinesApis';
+import {
+  createPipeline,
+  fetchPipelines,
+  deletePipeline,
+} from '../../../apis/pipelinesApis';
 import { H2 } from '../../common/Headings';
 import { Button, Select } from '../../common/Form';
 import { primaryBtn } from '../../../theme/btnTheme';
 import { PIPELINE } from '../../../constants/documentTitles';
+import { lightBlue, blue, red } from '../../../theme/variables';
 import * as _ from '../../../utils/helpers';
 import * as MESSAGES from '../../../constants/messages';
-import { lightBlue, blue, red } from '../../../theme/variables';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
@@ -46,18 +50,23 @@ const LinkIcon = styled(Link)`
   }
 `;
 
-const DeleteIcon = styled(Link)`
+const DeleteIcon = styled.a`
   color: ${lightBlue};
+  cursor: pointer;
 
   &:hover {
     color: ${red};
   }
 `;
 
+DeleteIcon.displayName = 'DeleteIcon';
+
 class PipelinePage extends React.Component {
   headers = ['#', 'name', 'status', 'start/stop', 'edit', 'delete'];
   state = {
-    isModalActive: false,
+    isSelectTopicModal: false,
+    isDeletePipelineModalActive: false,
+    deletePipelineUuid: '',
     pipelines: [],
     topics: [],
     currentTopic: {},
@@ -82,9 +91,7 @@ class PipelinePage extends React.Component {
     const result = _.get(res, 'data.result', null);
 
     if (result) {
-      this.setState(() => {
-        return { topics: result };
-      });
+      this.setState({ topics: result });
       this.setCurrentTopic();
     }
   };
@@ -101,7 +108,7 @@ class PipelinePage extends React.Component {
     });
   };
 
-  handleModalConfirm = async () => {
+  handleSelectTopicModalConfirm = async () => {
     const { history, match } = this.props;
     const { uuid: topicUuid } = this.state.currentTopic;
 
@@ -110,24 +117,65 @@ class PipelinePage extends React.Component {
 
     const pipelineUuid = _.get(res, 'data.result.uuid', null);
 
-    if (!_.isNull(pipelineUuid)) {
-      this.handleModalClose();
-      toastr.success('New pipeline has been created!');
+    if (pipelineUuid) {
+      this.handleSelectTopicModalClose();
+      toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
       history.push(`${match.url}/new/topic/${pipelineUuid}/${topicUuid}`);
     }
   };
 
-  handleModalOpen = e => {
+  handleSelectTopicModalOpen = e => {
     e.preventDefault();
-    this.setState({ isModalActive: true });
+    this.setState({ isSelectTopicModal: true });
 
-    if (_.isEmptyArr(this.state.topics)) {
+    if (_.isEmpty(this.state.topics)) {
       toastr.error(MESSAGES.NO_TOPICS_FOUND_ERROR);
     }
   };
 
-  handleModalClose = () => {
-    this.setState({ isModalActive: false });
+  handleSelectTopicModalClose = () => {
+    this.setState({ isSelectTopicModal: false });
+  };
+
+  handleDeletePipelineModalOpen = uuid => {
+    this.setState({
+      isDeletePipelineModalActive: true,
+      deletePipelineUuid: uuid,
+    });
+  };
+
+  handleDeletePipelineModalClose = () => {
+    this.setState({
+      isDeletePipelineModalActive: false,
+      deletePipelineUuid: '',
+    });
+  };
+
+  handleDeletePipelineConfirm = async () => {
+    const { deletePipelineUuid: uuid } = this.state;
+
+    if (!_.isUuid(uuid)) return;
+
+    const res = await deletePipeline(uuid);
+    const deletedUuid = _.get(res, 'data.result.uuid', null);
+    const deletedPipeline = _.get(res, 'data.result', null);
+    if (deletedUuid) {
+      this.setState(({ pipelines }) => {
+        const _pipelines = pipelines.filter(p => p.uuid !== deletedUuid);
+        return {
+          pipelines: _pipelines,
+          isDeletePipelineModalActive: false,
+          deletePipelineUuid: '',
+        };
+      });
+      toastr.success(
+        `${MESSAGES.PIPELINE_DELETION_SUCCESS} ${deletedPipeline.name}`,
+      );
+    } else {
+      toastr.error(
+        `${MESSAGES.PIPELINE_DELETION_ERROR} ${deletedPipeline.name}`,
+      );
+    }
   };
 
   setCurrentTopic = (idx = 0) => {
@@ -143,19 +191,25 @@ class PipelinePage extends React.Component {
   };
 
   render() {
-    const { isModalActive, topics, currentTopic, pipelines } = this.state;
+    const {
+      isSelectTopicModal,
+      isDeletePipelineModalActive,
+      topics,
+      currentTopic,
+      pipelines,
+    } = this.state;
 
     return (
       <DocumentTitle title={PIPELINE}>
         <React.Fragment>
           <Modal
-            isActive={isModalActive}
+            isActive={isSelectTopicModal}
             title="Select topic"
             width="370px"
             confirmBtnText="Next"
-            handleConfirm={this.handleModalConfirm}
-            handleCancel={this.handleModalClose}
-            isConfirmDisabled={_.isEmptyArr(topics) ? true : false}
+            handleConfirm={this.handleSelectTopicModalConfirm}
+            handleCancel={this.handleSelectTopicModalClose}
+            isConfirmDisabled={_.isEmpty(topics) ? true : false}
           >
             <Inner>
               <Warning text="Please select a topic for the new pipeline" />
@@ -166,6 +220,15 @@ class PipelinePage extends React.Component {
               />
             </Inner>
           </Modal>
+
+          <ConfirmModal
+            isActive={isDeletePipelineModalActive}
+            title="Delete pipeline"
+            handleCancel={this.handleDeletePipelineModalClose}
+            handleConfirm={this.handleDeletePipelineConfirm}
+            message="Are you sure you want to delete this pipeline? This action cannot be redo!"
+          />
+
           <Wrapper>
             <TopWrapper>
               <H2>Pipeline</H2>
@@ -173,7 +236,7 @@ class PipelinePage extends React.Component {
                 theme={primaryBtn}
                 text="New pipeline"
                 data-testid="new-pipeline"
-                handleClick={this.handleModalOpen}
+                handleClick={this.handleSelectTopicModalOpen}
               />
             </TopWrapper>
             <Box>
@@ -200,7 +263,11 @@ class PipelinePage extends React.Component {
                         </LinkIcon>
                       </td>
                       <td className="has-icon">
-                        <DeleteIcon to="/">
+                        <DeleteIcon
+                          onClick={() =>
+                            this.handleDeletePipelineModalOpen(uuid)
+                          }
+                        >
                           <i className="far fa-trash-alt" />
                         </DeleteIcon>
                       </td>
