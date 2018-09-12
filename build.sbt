@@ -52,66 +52,21 @@ scalacOptions ++= Seq(
   "-Ybackend-parallelism", cpus.toString
 )
 
-lazy val akkaHttpV = "10.1.3"
-lazy val akkaV = "2.5.12"
-lazy val kafkaV = "1.0.1"
-lazy val slf4jV = "1.7.25"
-lazy val hadoopV = "2.7.0"
 
-lazy val hadoopDependencies = Seq(
-  "org.apache.hadoop" % "hadoop-common" % hadoopV,
-  "org.apache.hadoop" % "hadoop-hdfs" % hadoopV
-)
-
-val formatAll   = taskKey[Unit]("Format all the source code which includes src, test, and build files")
+val formatAll = taskKey[Unit]("Format all the source code which includes src, test, and build files")
 val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
 
 lazy val commonSettings = Seq(
   scalaVersion := "2.12.6",
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
+  resolvers += "Cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
   fork in Test := true,
   fork in run := true,
-  javaOptions in Test ++= Seq("-Xms256m", "-Xmx4g"),
+  javaOptions ++= Seq("-Xms256m", "-Xmx4g", "-XX:MaxMetaspaceSize=512m"),
   libraryDependencies ++= Seq(
-    // kafka
-    "org.apache.kafka" %% "kafka" % kafkaV,
-    "org.apache.kafka" % "kafka-clients" % kafkaV,
-    "org.apache.kafka" % "connect-api" % kafkaV,
-    "org.apache.kafka" % "connect-file" % kafkaV,
-    "org.apache.kafka" % "connect-runtime" % kafkaV,
-    "org.apache.kafka" % "connect-json" % kafkaV,
-
-    // akka
-    "com.typesafe.akka" %% "akka-actor" % akkaV,
-    "com.typesafe.akka" %% "akka-stream" % akkaV,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaV,
-
-    // akka-http
-    "com.typesafe.akka" %% "akka-http"            % akkaHttpV,
-    "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
-    "com.typesafe.akka" %% "akka-http-xml"        % akkaHttpV,
-
-    // log
-    "org.slf4j" % "slf4j-api" % slf4jV,
-    "org.slf4j" % "slf4j-log4j12" % slf4jV,
-
-    // http
-    "org.apache.httpcomponents" % "httpclient" % "4.5.5",
-
-    // misc
-    "com.typesafe" % "config" % "1.3.3",
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
-
-    // test
-    "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-    "com.typesafe.akka" %% "akka-http-testkit"    % akkaHttpV % Test,
-    "com.typesafe.akka" %% "akka-testkit"         % akkaV     % Test,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
-    "org.mockito" % "mockito-all" % "1.10.19" % Test,
-    "junit" % "junit" % "4.12" % Test,
-
-    // integration testing
-    "org.apache.zookeeper" % "zookeeper" % "3.4.10"
+    libs.junit % Test,
+    libs.mockito % Test,
+    libs.scalatest % Test
   ),
   scalafmtOnCompile := true,
   formatAll := {
@@ -128,64 +83,141 @@ lazy val commonSettings = Seq(
 )
 
 concurrentRestrictions in Global := Seq(Tags.limitAll(1))
-val exclusionRules = Seq(ExclusionRule("com.sun.jersey", "jersey-core"),
-  ExclusionRule("com.sun.jersey", "jersey-json"),
-  ExclusionRule("com.sun.jersey", "jersey-servlet"),
-  ExclusionRule("com.sun.jersey", "jersey-server")
-)
 
-lazy val `ohara-common` = (project in file("ohara-common"))
-  .settings(commonSettings)
+lazy val `common` = (project in file("ohara-common"))
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.commonsNet,
+            libs.commonsLang,
+            libs.scalaLogging,
+            libs.slf4jApi,
+            libs.slf4jLog4j,
+            libs.akkaHttp,
+            libs.akkaStream,
+            libs.akkaActor,
+            libs.akkaHttpSprayJson
+          )
+        )
 
-lazy val `ohara-core` = (project in file("ohara-core"))
-  .settings(commonSettings)
 
-lazy val `ohara-data` = (project in file("ohara-data"))
-  .dependsOn(`ohara-common` % "compile->compile; compile->test")
-  .settings(commonSettings)
+lazy val `testing-util` = (project in file("ohara-testing-util"))
+        .dependsOn(
+          `common` % "compile->compile; test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.kafkaCore,
+            libs.kafkaConnectJson,
+            libs.kafkaConnectRuntime,
+            libs.hadoopCommon excludeAll(libs.hadoopExclusionRules:_*),
+            libs.hadoopHdfs excludeAll(libs.hadoopExclusionRules:_*),
+            libs.mysql,
+            libs.embeddedsql,
+            libs.ftpServer
+          ),
+          excludeDependencies ++= libs.hadoopExclusionRules
+        )
 
-lazy val `ohara-kafka-data` = (project in file("ohara-kafka-data"))
-  .settings(commonSettings)
-  .dependsOn(
-    `ohara-common` % "compile->compile; compile->test",
-    `ohara-core`,
-    `ohara-data` % "compile->compile; compile->test",
-    `ohara-testing-util` % "compile->compile; compile->test")
 
-lazy val `ohara-manager` = (project in file("ohara-manager"))
-  .settings(commonSettings)
-  .dependsOn(`ohara-configurator`)
-  .dependsOn(
-    `ohara-configurator` % "compile->compile; compile->test"
-  )
+lazy val `kafka` = (project in file("ohara-kafka"))
+        .dependsOn(
+          `common` % "compile->compile; test->test",
+          `testing-util` % "test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.kafkaClient,
+            libs.kafkaConnectFile,
+            libs.kafkaConnectRuntime,
+            libs.zookeeper,
+            libs.scalaLogging,
+            libs.slf4jApi,
+            libs.slf4jLog4j,
+            libs.akkaHttpSprayJson % Test
+          )
+        )
 
-lazy val `ohara-configurator` = (project in file("ohara-configurator"))
-  .settings(commonSettings)
-  .dependsOn(
-    `ohara-data`, `ohara-kafka-data`, `ohara-testing-util`,
-    `ohara-common` % "compile->compile; compile->test",
-  )
 
-lazy val `ohara-hdfs-connector` = (project in file("ohara-hdfs-connector"))
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= hadoopDependencies)
-  .settings(excludeDependencies ++= exclusionRules)
-  .dependsOn(`ohara-data`, `ohara-kafka-data`)
-  .dependsOn(
-    `ohara-data`, `ohara-kafka-data`,
-    `ohara-common` % "compile->compile; compile->test"
-  )
+lazy val `hdfs-connector` = (project in file("ohara-hdfs-connector"))
+        .dependsOn(
+          `kafka` % "compile->compile",
+          `common` % "test->test",
+          `testing-util` % "test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.hadoopCommon excludeAll(libs.hadoopExclusionRules:_*),
+            libs.hadoopHdfs excludeAll(libs.hadoopExclusionRules:_*)
+          )
+        )
 
-lazy val `ohara-http` = (project in file("ohara-http"))
-  .settings(commonSettings)
-  .settings(excludeDependencies ++= exclusionRules)
-  .dependsOn(
-    `ohara-data`, `ohara-kafka-data`, `ohara-testing-util`,
-    `ohara-common` % "compile->compile; compile->test"
-  )
+lazy val `jdbc-connector` = (project in file("ohara-jdbc-connector"))
+        .dependsOn(
+          `kafka` % "compile->compile",
+          `common` % "test->test",
+          `testing-util` % "test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+          )
+        )
 
-lazy val `ohara-testing-util` = (project in file("ohara-testing-util"))
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= hadoopDependencies)
-  .settings(excludeDependencies ++= exclusionRules)
-  .dependsOn(`ohara-common` % "compile->compile; compile->test")
+lazy val `ftp-connector` = (project in file("ohara-ftp-connector"))
+        .dependsOn(
+          `kafka` % "compile->compile",
+          `common` % "test->test",
+          `testing-util` % "test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+          )
+        )
+
+lazy val `configurator` = (project in file("ohara-configurator"))
+        .dependsOn(
+          `common` % "compile->compile; test->test",
+          `kafka` % "compile->compile",
+          `testing-util` % "test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.hadoopCommon excludeAll(libs.hadoopExclusionRules:_*),
+            libs.hadoopHdfs excludeAll(libs.hadoopExclusionRules:_*),
+            libs.kafkaClient,
+            libs.kafkaConnectFile,
+            libs.kafkaConnectRuntime,
+
+            libs.zookeeper,
+            libs.scalaLogging,
+            libs.slf4jApi,
+            libs.slf4jLog4j,
+            libs.akkaHttpSprayJson
+          )
+        )
+
+
+lazy val `http` = (project in file("ohara-http"))
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.akkaHttp,
+            libs.akkaStream,
+            libs.akkaHttpSprayJson,
+            libs.kafkaClient,
+
+            libs.akkaHttpTestKit % Test
+          )
+        )
+        .dependsOn(
+          `common` % "compile->compile; test->test",
+          `kafka`,
+          `testing-util` % "test->test",
+        )
+
