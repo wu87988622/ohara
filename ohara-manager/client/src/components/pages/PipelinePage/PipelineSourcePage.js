@@ -315,9 +315,7 @@ class PipelineSourcePage extends React.Component {
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const { updateGraph } = this.props;
-      const update = { isActive: true };
-      updateGraph(update, 'separator-1');
+      this.props.updateGraph({ isActive: true }, 'separator-1');
     }
   };
 

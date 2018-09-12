@@ -9,7 +9,13 @@ import { lightBlue } from '../../../theme/variables';
 import { Input, Select, FormGroup, Label } from '../../common/Form';
 import { fetchTopics } from '../../../apis/topicApis';
 import { fetchHdfs } from '../../../apis/configurationApis';
-import { createSink, updateSink, fetchSink } from '../../../apis/pipelinesApis';
+import {
+  createSink,
+  updateSink,
+  fetchSink,
+  updatePipeline,
+  fetchPipelines,
+} from '../../../apis/pipelinesApis';
 import * as MESSAGES from '../../../constants/messages';
 import * as _ from '../../../utils/helpers';
 
@@ -37,15 +43,35 @@ class PipelineSinkPage extends React.Component {
     hdfses: [],
     currHdfs: {},
     writePath: '',
+    pipelines: {},
   };
 
   componentDidMount() {
     this.fetchData();
   }
 
-  componentDidUpdate() {
-    if (this.props.hasChanges) {
+  componentDidUpdate(prevProps) {
+    const { hasChanges, match } = this.props;
+
+    const prevSinkId = _.get(prevProps.match, 'params.sinkId', null);
+    const currSinkId = _.get(this.props.match, 'params.sinkId', null);
+    const topicId = _.get(match, 'params.topicId');
+    const hasTopicId = !_.isNull(topicId);
+    const isUpdate = prevSinkId !== currSinkId;
+
+    if (hasChanges) {
       this.save();
+    }
+
+    if (isUpdate && hasTopicId) {
+      const { name, uuid, rules } = this.state.pipelines;
+
+      const params = {
+        name,
+        rules: { ...rules, [topicId]: currSinkId },
+      };
+
+      this.updatePipeline(uuid, params);
     }
   }
 
@@ -53,11 +79,17 @@ class PipelineSinkPage extends React.Component {
     const { match } = this.props;
     const topicId = _.get(match, 'params.topicId', null);
     const sinkId = _.get(match, 'params.sinkId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
 
     if (sinkId) {
       const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchHdfsPromise = this.fetchHdfs(sinkId);
-      Promise.all([fetchTopicsPromise, fetchHdfsPromise]).then(() => {
+      const fetchPipelinePromise = this.fetchPipelines(pipelineId);
+      Promise.all([
+        fetchTopicsPromise,
+        fetchHdfsPromise,
+        fetchPipelinePromise,
+      ]).then(() => {
         this.fetchSink(sinkId);
       });
 
@@ -65,6 +97,7 @@ class PipelineSinkPage extends React.Component {
     }
 
     this.fetchTopics(topicId);
+    this.fetchPipelines(pipelineId);
     this.fetchHdfs();
   };
 
@@ -110,6 +143,26 @@ class PipelineSinkPage extends React.Component {
         currHdfs,
         writePath,
       });
+    }
+  };
+
+  fetchPipelines = async pipelineId => {
+    if (!_.isUuid(pipelineId)) return;
+
+    const res = await fetchPipelines(pipelineId);
+    const pipelines = _.get(res, 'data.result', null);
+
+    if (pipelines) {
+      this.setState({ pipelines });
+    }
+  };
+
+  updatePipeline = async (uuid, params) => {
+    const res = await updatePipeline({ uuid, params });
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      this.props.updateGraph({ isActive: true }, 'separator-2');
     }
   };
 
