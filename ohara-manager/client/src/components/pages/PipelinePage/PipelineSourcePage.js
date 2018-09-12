@@ -21,6 +21,7 @@ import {
   fetchPipeline,
   updatePipeline,
 } from '../../../apis/pipelinesApis';
+import { fetchCluster } from '../../../apis/clusterApis';
 import * as URLS from '../../../constants/urls';
 import * as _ from '../../../utils/helpers';
 import * as MESSAGES from '../../../constants/messages';
@@ -112,7 +113,7 @@ class PipelineSourcePage extends React.Component {
   dbSchemasHeader = ['Column name', 'Column type'];
 
   state = {
-    databases: [{ name: 'mysql', uuid: '1' }, { name: 'oracle', uuid: '2' }],
+    databases: [],
     currDatabase: {},
     tables: [],
     currTable: {},
@@ -134,7 +135,7 @@ class PipelineSourcePage extends React.Component {
     const pipelineId = _.get(match, 'params.pipelineId', null);
     const topicId = _.get(match, 'params.topicId', null);
 
-    this.setState(({ databases }) => ({ currDatabase: databases[0] }));
+    this.fetchCluster();
 
     if (!_.isNull(sourceId)) {
       this.fetchSource(sourceId);
@@ -255,6 +256,15 @@ class PipelineSourcePage extends React.Component {
 
     if (tables) {
       this.setState({ tables: this.fakeTables, currTable: this.fakeTables[0] });
+    }
+  };
+
+  fetchCluster = async () => {
+    const res = await fetchCluster();
+    const databases = _.get(res, 'data.result.supportedDatabases', null);
+
+    if (databases) {
+      this.setState({ databases, currDatabase: databases[0] });
     }
   };
 
@@ -443,6 +453,7 @@ class PipelineSourcePage extends React.Component {
 
                   <TableWrapper>
                     <Select
+                      isObject
                       name="tables"
                       list={tables}
                       selected={currTable}
@@ -477,6 +488,7 @@ class PipelineSourcePage extends React.Component {
                 <FormGroup>
                   <Label>Write topic</Label>
                   <Select
+                    isObject
                     name="writeTopics"
                     list={writeTopics}
                     selected={currWriteTopic}

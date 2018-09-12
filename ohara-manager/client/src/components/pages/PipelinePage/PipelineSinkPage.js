@@ -235,6 +235,7 @@ class PipelineSinkPage extends React.Component {
           <FormGroup>
             <Label>Read from topic</Label>
             <Select
+              isObject
               name="topics"
               list={topics}
               selected={currTopic}
@@ -247,6 +248,7 @@ class PipelineSinkPage extends React.Component {
           <FormGroup>
             <Label>HDFS</Label>
             <Select
+              isObject
               name="hdfses"
               list={hdfses}
               selected={currHdfs}

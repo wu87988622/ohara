@@ -214,6 +214,7 @@ class PipelinePage extends React.Component {
             <Inner>
               <Warning text="Please select a topic for the new pipeline" />
               <Select
+                isObject
                 list={topics}
                 selected={currentTopic}
                 handleChange={this.handleSelectChange}

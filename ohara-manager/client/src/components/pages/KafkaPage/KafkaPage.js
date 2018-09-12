@@ -6,7 +6,7 @@ import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
 import { H2 } from '../../common/Headings';
-import { fetchCluster } from '../../../apis/kafkaApis';
+import { fetchCluster } from '../../../apis/clusterApis';
 import { createTopics, fetchTopics } from '../../../apis/topicApis';
 import { Input, Button } from '../../common/Form';
 import { ListTable } from '../../common/Table';

@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import * as _ from '../../../utils/helpers';
+
 import {
   white,
   blue,
@@ -32,21 +34,36 @@ const SelectWrapper = styled.select`
 
 SelectWrapper.displayName = 'Select';
 
-const Select = ({ list, selected, handleChange, width = '100%', ...rest }) => {
+const Select = ({
+  list,
+  selected,
+  handleChange,
+  isObject = false,
+  width = '100%',
+  ...rest
+}) => {
+  if (_.isEmpty(list)) return null;
+
+  const _selected = isObject ? selected.name : selected;
+
   return (
     <SelectWrapper
-      value={selected.name}
+      value={_selected}
       onChange={handleChange}
       width={width}
       {...rest}
     >
-      {list.map(({ uuid, name }, idx) => {
-        return (
-          <option key={idx} data-uuid={uuid}>
-            {name}
-          </option>
-        );
-      })}
+      {isObject
+        ? list.map(({ uuid, name }, idx) => {
+            return (
+              <option key={idx} data-uuid={uuid}>
+                {name}
+              </option>
+            );
+          })
+        : list.map((name, idx) => {
+            return <option key={idx}>{name}</option>;
+          })}
     </SelectWrapper>
   );
 };

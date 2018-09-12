@@ -25,7 +25,7 @@ require('./routes/authRoutes')(app);
 require('./routes/topicRoutes')(app);
 require('./routes/schemaRoutes')(app);
 require('./routes/configurationRoutes')(app);
-require('./routes/kafkaRoutes')(app);
+require('./routes/clusterRoutes')(app);
 require('./routes/pipelineRoutes')(app);
 
 app.get('*', (req, res) => {
