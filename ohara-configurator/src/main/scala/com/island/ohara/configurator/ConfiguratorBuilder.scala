@@ -9,7 +9,8 @@ import com.island.ohara.client.ConnectorJson.{
   CreateConnectorRequest,
   CreateConnectorResponse,
   Plugin,
-  State
+  State,
+  TaskStatus
 }
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.configurator.Configurator.Store
@@ -151,6 +152,12 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
     val config = cachedConnectors.get(name)
     if (config == null) throw new IllegalArgumentException(s"$name doesn't exist")
     config
+  }
+
+  override def taskStatus(name: String, id: Int): TaskStatus = {
+    if (cachedConnectors.contains(name) && id >= 0) {
+      TaskStatus(0, State.RUNNING, "worker_id", None)
+    } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
   }
 }
 

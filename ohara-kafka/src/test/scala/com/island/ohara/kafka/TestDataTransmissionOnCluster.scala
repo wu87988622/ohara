@@ -1,7 +1,7 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.ConnectorJson.State
+import com.island.ohara.client.ConnectorJson.{CreateConnectorResponse, State}
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce._
@@ -191,5 +191,48 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
       meta.topic shouldBe topicName
     }
+  }
+
+  /**
+    * Test for ConnectorClient
+    * @see ConnectorClient
+    */
+  @Test
+  def connectorClientTest(): Unit = {
+    val connectorName = "connectorClientTest"
+    val topic = "connectorClientTest_topic"
+    val topic2 = "connectorClientTest_topic2"
+    val taskNum = 3
+
+    val connectorClient = testUtil.connectorClient;
+
+    connectorClient
+      .connectorCreator()
+      .name(connectorName)
+      .connectorClass(classOf[SimpleRowSinkConnector])
+      .topic(topic)
+      .numberOfTasks(2)
+      .disableConverter()
+      .schema(schema)
+      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> topic2))
+      .create()
+
+    val activeConnectors = connectorClient.activeConnectors()
+    activeConnectors.contains(connectorName) shouldBe true
+
+    var status = connectorClient.status(connectorName)
+    OharaTestUtil.await(() => {
+      status = connectorClient.status(connectorName)
+      connectorClient.status(connectorName).tasks != Nil
+    }, 10 second)
+    status.tasks(0) should not be null
+
+    var task = connectorClient.taskStatus(connectorName, status.tasks(0).id)
+    task should not be null
+    task == status.tasks(0) shouldBe true
+    task.worker_id.isEmpty shouldBe false
+
+    connectorClient.delete(connectorName)
+    connectorClient.activeConnectors().contains(connectorName) shouldBe false
   }
 }
