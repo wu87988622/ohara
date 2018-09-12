@@ -575,27 +575,30 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clients.foreach(client => {
       def compareRequestAndResponse(request: SinkRequest, response: Sink): Sink = {
         request.name shouldBe response.name
-        request.configs.sameElements(response.configs) shouldBe true
+        request.configs shouldBe response.configs
         response
       }
 
       def compare2Response(lhs: Sink, rhs: Sink): Unit = {
         lhs.uuid shouldBe rhs.uuid
         lhs.name shouldBe rhs.name
-        lhs.configs.sameElements(rhs.configs) shouldBe true
+        lhs.schema shouldBe rhs.schema
+        lhs.configs shouldBe rhs.configs
         lhs.lastModified shouldBe rhs.lastModified
       }
 
+      val schema = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2))
+
       // test add
       client.list[Sink].size shouldBe 0
-      val request = SinkRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1"))
+      val request = SinkRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1"))
       val response = compareRequestAndResponse(request, client.add[SinkRequest, Sink](request))
 
       // test get
       compare2Response(response, client.get[Sink](response.uuid))
 
       // test update
-      val anotherRequest = SinkRequest(methodName, "jdbc", Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val anotherRequest = SinkRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.uuid, anotherRequest))
 
@@ -614,6 +617,23 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testInvalidSink(): Unit = {
+    clients.foreach(client => {
+      client.list[Source].size shouldBe 0
+
+      val illegalOrder = Seq(Column("cf", DataType.BOOLEAN, 0), Column("cf", DataType.BOOLEAN, 2))
+      an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
+        SinkRequest(methodName, "jdbc", illegalOrder, Map("c0" -> "v0", "c1" -> "v1")))
+      client.list[Source].size shouldBe 0
+
+      val duplicateOrder = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 1))
+      an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
+        SinkRequest(methodName, "jdbc", duplicateOrder, Map("c0" -> "v0", "c1" -> "v1")))
+      client.list[Source].size shouldBe 0
+    })
+  }
+
+  @Test
   def testModifySourceAndSinkFromPipeline(): Unit = {
     clients.foreach(client => {
 
@@ -621,8 +641,14 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .add[SourceRequest, Source](
           SourceRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b")))
         .uuid
-      val uuid_1 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("b" -> "b"))).uuid
-      val uuid_2 = client.add[SinkRequest, Sink](SinkRequest(methodName, "jdbc", Map("c" -> "b"))).uuid
+      val uuid_1 = client
+        .add[SinkRequest, Sink](
+          SinkRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("b" -> "b")))
+        .uuid
+      val uuid_2 = client
+        .add[SinkRequest, Sink](
+          SinkRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("c" -> "b")))
+        .uuid
       client.list[Source].size shouldBe 1
       client.list[Sink].size shouldBe 2
 
@@ -639,8 +665,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         SourceRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b")))
 
       client.start[Pipeline](response.uuid)
-      an[IllegalArgumentException] should be thrownBy client
-        .update[SinkRequest, Sink](uuid_0, SinkRequest(methodName, "jdbc", Map("d" -> "b")))
+      an[IllegalArgumentException] should be thrownBy client.update[SinkRequest, Sink](
+        uuid_0,
+        SinkRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 2)), Map("d" -> "b")))
 
       // update the pipeline to use another sink (uuid_2)
       client.stop[Pipeline](response.uuid)

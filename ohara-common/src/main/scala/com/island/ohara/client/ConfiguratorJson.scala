@@ -239,21 +239,33 @@ object ConfiguratorJson {
     }
   //------------------------------------------------[DATA-SINK]------------------------------------------------//
   val SINK_PATH = "sinks"
-  final case class SinkRequest(name: String, className: String, configs: Map[String, String])
+  final case class SinkRequest(name: String, className: String, schema: Seq[Column], configs: Map[String, String])
   implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = new RootJsonFormat[SinkRequest] {
     override def write(obj: SinkRequest): JsValue = JsObject(
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) })
     )
-    override def read(json: JsValue): SinkRequest = json.asJsObject.getFields("name", "class", "configs") match {
-      case Seq(JsString(m), JsString(clz), JsObject(c)) =>
-        SinkRequest(m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) })
-      case _ => throw new UnsupportedOperationException(s"invalid format of ${SinkRequest.getClass.getSimpleName}")
-    }
+    override def read(json: JsValue): SinkRequest =
+      json.asJsObject.getFields("name", "class", "schema", "configs") match {
+        case Seq(JsString(m), JsString(clz), JsArray(cs), JsObject(c)) =>
+          SinkRequest(m, clz, cs.map(COLUMN_JSON_FORMAT.read), c.map {
+            case (k, v) => (k, v.asInstanceOf[JsString].value)
+          })
+        // null schema is valid in SOURCE
+        case Seq(JsString(m), JsString(clz), JsNull, JsObject(c)) =>
+          SinkRequest(m, clz, Seq.empty, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) })
+        case _ => throw new UnsupportedOperationException(s"invalid format of ${SinkRequest.getClass.getSimpleName}")
+      }
   }
 
-  final case class Sink(uuid: String, name: String, className: String, configs: Map[String, String], lastModified: Long)
+  final case class Sink(uuid: String,
+                        name: String,
+                        className: String,
+                        schema: Seq[Column],
+                        configs: Map[String, String],
+                        lastModified: Long)
       extends Data {
     override def kind: String = "sink"
   }
@@ -262,13 +274,19 @@ object ConfiguratorJson {
       "uuid" -> JsString(obj.uuid),
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) }),
       "lastModified" -> JsNumber(obj.lastModified)
     )
     override def read(json: JsValue): Sink =
-      json.asJsObject.getFields("uuid", "name", "class", "configs", "lastModified") match {
-        case Seq(JsString(u), JsString(m), JsString(clz), JsObject(c), JsNumber(t)) =>
-          Sink(u, m, clz, c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) }, t.toLong)
+      json.asJsObject.getFields("uuid", "name", "class", "schema", "configs", "lastModified") match {
+        case Seq(JsString(u), JsString(m), JsString(clz), JsArray(cs), JsObject(c), JsNumber(t)) =>
+          Sink(u,
+               m,
+               clz,
+               cs.map(COLUMN_JSON_FORMAT.read),
+               c.map { case (k, v) => (k, v.asInstanceOf[JsString].value) },
+               t.toLong)
         case _ => throw new UnsupportedOperationException(s"invalid format of ${Sink.getClass.getSimpleName}")
       }
   }

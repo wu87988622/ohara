@@ -11,14 +11,22 @@ import spray.json.DefaultJsonProtocol._
 private[configurator] object SinkRoute extends SprayJsonSupport {
 
   private[this] def toRes(uuid: String, request: SinkRequest) =
-    Sink(uuid, request.name, request.className, request.configs, System.currentTimeMillis())
+    Sink(uuid, request.name, request.className, request.schema, request.configs, System.currentTimeMillis())
+
+  private[this] def verify(request: SinkRequest): SinkRequest = {
+    if (request.schema.exists(_.order < 1))
+      throw new IllegalArgumentException(s"invalid order of column:${request.schema.map(_.order)}")
+    if (request.schema.map(_.order).toSet.size != request.schema.size)
+      throw new IllegalArgumentException(s"duplicate order:${request.schema.map(_.order)}")
+    request
+  }
 
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route = pathPrefix(SINK_PATH) {
     pathEnd {
       // add
       post {
         entity(as[SinkRequest]) { req =>
-          val data = toRes(uuidGenerator(), req)
+          val data = toRes(uuidGenerator(), verify(req))
           store.add(data.uuid, data)
           complete(data)
         }
@@ -35,7 +43,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
         put {
           entity(as[SinkRequest]) { req =>
             assertNotRelated2RunningPipeline(uuid)
-            val newData = toRes(uuid, req)
+            val newData = toRes(uuid, verify(req))
             store.update(uuid, newData)
             complete(newData)
           }
