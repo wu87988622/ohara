@@ -10,7 +10,6 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestConsumerAndProducer extends With3Brokers with Matchers {
-  private[this] val data = Row(Cell("a", "abc"), Cell("b", 123), Cell("c", true))
 
   @Test
   def testSendAndReceiveString(): Unit = {
@@ -32,4 +31,24 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     }
   }
 
+  @Test
+  def testSendAndReceiveRow(): Unit = {
+    val topicName = methodName
+    val data = Row(Cell("a", "abc"), Cell("b", 123), Cell("c", true))
+
+    CloseOnce.doClose(KafkaClient(testUtil.brokers)) { client =>
+      if (client.exist(topicName)) client.deleteTopic(topicName)
+      client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
+      OharaTestUtil.await(() => client.exist(topicName), 10 seconds)
+    }
+    CloseOnce.doClose(Producer.builder().brokers(testUtil.brokers).build[String, Row])(
+      _.sender().key("key").value(data).send(topicName))
+
+    CloseOnce.doClose(
+      Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[String, Row]) {
+      consumer =>
+        val record = consumer.poll(20 seconds, 1)
+        record.head.value.get shouldBe data
+    }
+  }
 }
