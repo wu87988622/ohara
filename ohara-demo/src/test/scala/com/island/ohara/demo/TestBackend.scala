@@ -42,12 +42,19 @@ class TestBackend extends LargeTest with Matchers {
 
   @Test
   def testCreation(): Unit = {
+    testCreation(
+      Seq(
+        Creation(methodName, Seq(RdbColumn("cf", "integer", true))),
+        Creation(methodName + "_2", Seq(RdbColumn("cf", "integer", true), RdbColumn("cf2", "integer", false)))
+      ))
+  }
+
+  private[this] def testCreation(creations: Seq[Creation]): Unit = {
     Backend.run(
       0,
       (configurator, db) => {
-        val creation = Creation(methodName, Seq(RdbColumn("cf", "integer", true)))
         implicit val actorSystem: ActorSystem = ActorSystem(methodName)
-        try {
+        try creations.foreach(creation => {
           Await.result(
             Marshal(creation)
               .to[RequestEntity]
@@ -64,20 +71,24 @@ class TestBackend extends LargeTest with Matchers {
                         new IllegalArgumentException(s"Failed to create table. error:${res.status.intValue()}"))
                   })
               }),
-            10 seconds
+            20 seconds
           )
-        } finally actorSystem.terminate()
-        val client = ConfiguratorClient("localhost", configurator.port)
-        try {
-          val r = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None))
-          r.tables.size shouldBe 1
-          r.tables.head.name shouldBe creation.name
-          r.tables.head.schema.size shouldBe creation.schema.size
-          r.tables.head.schema.head.name shouldBe creation.schema.head.name
-          // the following check is disabled because different database may use different name to describe data type...
-          // r.tables.head.columns.head.typeName shouldBe creation.schema.head.typeName
-          r.tables.head.schema.head.pk shouldBe creation.schema.head.pk
-        } finally client.close()
+          val client = ConfiguratorClient("localhost", configurator.port)
+          try {
+            val r = client.query[RdbQuery, RdbInformation](
+              RdbQuery(db.url, db.user, db.password, None, None, Some(creation.name)))
+            r.tables.size shouldBe 1
+            r.tables.head.name shouldBe creation.name
+            r.tables.head.schema.size shouldBe creation.schema.size
+            r.tables.head.schema.foreach(lhs => {
+              val e = creation.schema.find(_.name == lhs.name).get
+              e.pk shouldBe lhs.pk
+              // the following check is disabled because different database may use different name to describe data type...
+              // e.typeName shouldBe lhs.typeName
+            })
+          } finally client.close()
+        })
+        finally actorSystem.terminate()
       }
     )
   }
