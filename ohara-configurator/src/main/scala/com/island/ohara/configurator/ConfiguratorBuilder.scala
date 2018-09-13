@@ -77,7 +77,7 @@ class ConfiguratorBuilder {
     * @param store used to maintain the ohara data.
     * @return this builder
     */
-  def store(store: com.island.ohara.configurator.store.Store[String, Any]): ConfiguratorBuilder = {
+  def store(store: com.island.ohara.configurator.store.BlockingStore[String, Any]): ConfiguratorBuilder = {
     this.store = Some(new Store(store))
     this
   }

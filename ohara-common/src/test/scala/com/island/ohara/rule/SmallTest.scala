@@ -1,5 +1,6 @@
 package com.island.ohara.rule
 
+import com.island.ohara.io.UuidUtil
 import com.typesafe.scalalogging.Logger
 import org.junit.Rule
 import org.junit.rules.{TestName, Timeout}
@@ -25,4 +26,6 @@ trait SmallTest extends JUnitSuiteLike {
   def testName: TestName = _testName
 
   def methodName: String = testName.getMethodName
+
+  def random(): String = UuidUtil.uuid()
 }

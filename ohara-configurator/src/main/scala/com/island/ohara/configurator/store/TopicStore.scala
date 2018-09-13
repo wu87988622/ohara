@@ -1,8 +1,9 @@
 package com.island.ohara.configurator.store
 
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
+import com.island.ohara.configurator.store.Consistency._
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
 import com.island.ohara.serialization.Serializer
@@ -10,11 +11,12 @@ import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.config.TopicConfig
 import org.apache.kafka.common.errors.WakeupException
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
+import scala.concurrent._
+import scala.concurrent.duration.{Duration, _}
+import scala.util.{Failure, Success}
 
 /**
-  * This class implements the OStroe through the kafka topic. The config passed to this class will be added with All data persist in the kafka topic.
+  * This class implements the Store through the kafka topic. The config passed to this class will be added with All data persist in the kafka topic.
   * In order to reduce the seek to topic, this class have a local cache to store the data polled from kafak consumer. The data stored to this class
   * will be sync to kafka topic. It means both update and remove methods invoke the kafka operations.
   *
@@ -56,7 +58,7 @@ private class TopicStore[K, V](
   val uuid: String = UuidUtil.uuid()
 
   implicit val executor: ExecutionContextExecutorService =
-    ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+    ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
   /**
     * Used to sort the change to topic. We shouldn't worry about the overflow since it is not update-heavy.
@@ -98,36 +100,45 @@ private class TopicStore[K, V](
     Producer.builder().brokers(brokers).build[K, V]
   }
 
-  private[this] val updateLock = new Object
-  private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
+  private[this] val consumerNotifier = new Object
+  private[this] val commitResult = new ConcurrentHashMap[String, Promise[Option[V]]]()
   private[this] val cache: Store[K, V] = newOrClose(Store.inMemory(keySerializer, valueSerializer))
 
   /**
     * true if poller haven't grab any data recently.
     */
-  private[this] val initializeConsumerLatch = new CountDownLatch(1)
   private[this] val poller = Future[Unit] {
     try {
       while (!this.isClosed) {
         try {
           val records = consumer.poll(pollTimeout)
-          initializeConsumerLatch.countDown()
           records
-            .filter(_.topic == topicName)
+            .withFilter(_.topic == topicName)
+            .withFilter(_.headers.size == 1)
             .foreach(record => {
-              if (record.headers.size != 1) throw new IllegalArgumentException(s"The number of header should be 1")
               record.key.foreach(k => {
-                // If no value exist, remove the key. Otherwise, update the value mapped to the key
-                val previous: Option[V] = record.value.fold(cache.remove(k))(cache.update(k, _))
-
                 val index = record.headers.head.key
-                // response the update sent by this topic store
-                if (index.startsWith(uuid)) {
-                  commitResult.put(index, previous)
-                  updateLock.synchronized {
-                    updateLock.notifyAll()
-                  }
+                // only handle the value from this topic store
+                val p: Promise[Option[V]] = if (index.startsWith(uuid)) commitResult.remove(index) else null
+                // If no value exist, remove the key. Otherwise, update the value mapped to the key
+                record.value.fold(cache.remove(k, Consistency.NONE))(cache.update(k, _, Consistency.NONE)).onComplete {
+                  case Success(previous) =>
+                    if (p != null) {
+                      p.success(previous)
+                      consumerNotifier.synchronized {
+                        consumerNotifier.notifyAll()
+                      }
+                    }
+                  case Failure(exception) =>
+                    if (p != null) {
+                      p.failure(exception)
+                      consumerNotifier.synchronized {
+                        consumerNotifier.notifyAll()
+                      }
+                    }
+
                 }
+
               })
             })
         } catch {
@@ -136,22 +147,43 @@ private class TopicStore[K, V](
       }
     } catch {
       case e: Throwable => logger.error("failure when running the poller", e)
-    } finally {
-      initializeConsumerLatch.countDown()
-      TopicStore.this.close()
+    } finally TopicStore.this.close()
+  }
+
+  private[this] def createHeader() = Header(s"$uuid-${headerIndexer.getAndIncrement().toString}", Array.emptyByteArray)
+  private[this] def send(key: K, value: V, sync: Consistency): Future[Option[V]] = {
+    val header = createHeader()
+    val promise = Promise[Option[V]]
+    sync match {
+      case STRICT =>
+        producer.sender().header(header).key(key).value(value).send(topicName)
+        commitResult.put(header.key, promise)
+      case WEAK =>
+        producer
+          .sender()
+          .header(header)
+          .key(key)
+          .value(value)
+          .send(
+            topicName, {
+              case Left(e) => promise.failure(e)
+              // it is ok to call blocking method since the cache is in-memory.
+              case Right(_) => promise.success(Await.result(cache.get(key), 5 seconds))
+            }
+          )
+      case NONE =>
+        producer.sender().header(header).key(key).value(value).send(topicName)
+        // it is ok to call blocking method since the cache is in-memory.
+        promise.success(Await.result(cache.get(key), 5 seconds))
     }
+    promise.future
   }
 
-  if (!initializeConsumerLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
-    close()
-    throw new IllegalArgumentException(s"timeout to initialize the queue")
-  }
+  override def update(key: K, value: V, sync: Consistency): Future[Option[V]] = send(key, value, sync)
 
-  override def update(key: K, value: V): Option[V] = waitCallback(send(key, value))
+  override def get(key: K): Future[Option[V]] = cache.get(key)
 
-  override def get(key: K): Option[V] = cache.get(key)
-
-  override def remove(key: K): Option[V] = waitCallback(send(key))
+  override def remove(key: K, sync: Consistency): Future[Option[V]] = send(key, null.asInstanceOf[V], sync)
 
   override protected def doClose(): Unit = {
     import scala.concurrent.duration._
@@ -177,35 +209,5 @@ private class TopicStore[K, V](
     */
   override def size: Int = cache.size
 
-  private[this] def waitCallback(index: String): Option[V] = {
-    while (!commitResult.containsKey(index) && !isClosed) {
-      updateLock.synchronized {
-        // wait to poll the data from kafka consumer
-        updateLock.wait(1000)
-      }
-    }
-    checkClose()
-    commitResult.remove(index)
-  }
-
-  private[this] def send(key: K, value: V = null.asInstanceOf[V]): String = {
-    val header = Header(s"$uuid-${headerIndexer.getAndIncrement().toString}", Array.emptyByteArray)
-    producer.sender().header(header).key(key).value(value).send(topicName)
-    producer.flush()
-    header.key
-  }
-
-  override def take(timeout: Duration): Option[(K, V)] = {
-    // first - remove the element from cache
-    val rval = cache.take(timeout)
-    // second - remove the element from kafka topic
-    rval.foreach {
-      case (k, _) => remove(k)
-    }
-    rval
-  }
-
-  override def clear(): Unit = cache.iterator.map(_._1).foreach(remove)
-
-  override def exist(key: K): Boolean = cache.exist(key)
+  override def exist(key: K): Future[Boolean] = cache.exist(key)
 }

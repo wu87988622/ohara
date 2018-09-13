@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.serialization.Serializer
 
-import scala.concurrent.duration._
+import scala.concurrent.Future
 
 /**
   * All data are stored in memory. If user have set the comparator to properties, MemStore will use the ConcurrentSkipListMap
@@ -16,7 +16,7 @@ import scala.concurrent.duration._
   * @tparam V value
   */
 private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V])
-    extends Store[K, V]
+    extends BlockingStore[K, V]
     with CloseOnce {
   private[this] val store =
     new ConcurrentSkipListMap[Array[Byte], Array[Byte]](ByteUtil.COMPARATOR)
@@ -25,34 +25,17 @@ private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSeriali
   private[this] def fromKey(key: Array[Byte]) = keySerializer.from(Objects.requireNonNull(key))
   private[this] def toValue(value: V) = valueSerializer.to(Objects.requireNonNull(value))
   private[this] def fromValue(value: Array[Byte]) = valueSerializer.from(Objects.requireNonNull(value))
-  private[this] val updateLock = new Object
-  override def update(key: K, value: V): Option[V] = {
-    try {
-      checkClose()
-      Option(store.put(toKey(key), toValue(value))).map(fromValue)
-    } finally {
-      updateLock.synchronized {
-        updateLock.notifyAll()
-      }
-    }
-  }
+  override def update(key: K, value: V, consistency: Consistency): Future[Option[V]] =
+    Future.successful(_update(key, value, consistency))
 
-  override def get(key: K): Option[V] = {
-    checkClose()
-    Option(store.get(toKey(key))).map(fromValue)
-  }
+  override def get(key: K): Future[Option[V]] = Future.successful(_get(key))
 
   override protected def doClose(): Unit = {
     store.clear()
-    updateLock.synchronized {
-      updateLock.notify()
-    }
   }
 
-  override def remove(key: K): Option[V] = {
-    checkClose()
-    Option(store.remove(toKey(key))).map(fromValue)
-  }
+  override def remove(key: K, consistency: Consistency): Future[Option[V]] =
+    Future.successful(_remove(key, consistency))
 
   override def iterator: Iterator[(K, V)] = {
     checkClose()
@@ -73,26 +56,21 @@ private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSeriali
     */
   override def size: Int = store.size()
 
-  /**
-    * Removes and returns a key-value mapping associated with the least key in this map, or null if the map is empty.
-    *
-    * @return he removed first entry of this map, or null if this map is empty
-    */
-  override def take(timeout: Duration): Option[(K, V)] = {
-    val end = timeout + (System.currentTimeMillis milliseconds)
-    while (end.toMillis >= System.currentTimeMillis && !isClosed) {
-      val first = store.pollFirstEntry()
-      if (first != null) return Some((fromKey(first.getKey), fromValue(first.getValue)))
-      updateLock.synchronized {
-        updateLock.wait(timeout.toMillis)
-      }
-    }
-    val first = store.pollFirstEntry()
-    if (first != null) Some((fromKey(first.getKey), fromValue(first.getValue)))
-    else None
+  override def exist(key: K): Future[Boolean] = Future.successful(_exist(key))
+
+  //---------------------------------------[blocking method]---------------------------------------//
+  // all methods in MemStore don't need to wait so we implement all blcking methods and then wrap them into Future-like.
+  override def _get(key: K): Option[V] = {
+    checkClose()
+    Option(store.get(toKey(key))).map(fromValue)
   }
-
-  override def clear(): Unit = store.clear()
-
-  override def exist(key: K): Boolean = store.containsKey(toKey(key))
+  override def _update(key: K, value: V, consistency: Consistency): Option[V] = {
+    checkClose()
+    Option(store.put(toKey(key), toValue(value))).map(fromValue)
+  }
+  override def _remove(key: K, consistency: Consistency): Option[V] = {
+    checkClose()
+    Option(store.remove(toKey(key))).map(fromValue)
+  }
+  override def _exist(key: K): Boolean = store.containsKey(toKey(key))
 }

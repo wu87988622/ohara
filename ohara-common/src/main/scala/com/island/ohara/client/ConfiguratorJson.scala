@@ -1,6 +1,7 @@
 package com.island.ohara.client
 
 import com.island.ohara.serialization.DataType
+import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -421,5 +422,19 @@ object ConfiguratorJson {
     }
   //------------------------------------------------[ERROR]------------------------------------------------//
   final case class Error(code: String, message: String, stack: String)
-  implicit val ERROR_JSON_FORMAT: RootJsonFormat[Error] = jsonFormat3(Error)
+  implicit val ERROR_JSON_FORMAT: RootJsonFormat[Error] = new RootJsonFormat[Error] {
+    override def read(json: JsValue): Error = json.asJsObject.getFields("code", "message", "stack") match {
+      case Seq(JsString(c), JsString(m), JsString(s)) => Error(c, m, s)
+      case _                                          => throw new UnsupportedOperationException(s"invalid format of ${classOf[Error].getSimpleName}")
+    }
+    override def write(obj: Error): JsValue = JsObject(
+      "code" -> JsString(obj.code),
+      "message" -> JsString(obj.message),
+      "stack" -> JsString(obj.stack)
+    )
+  }
+  object Error {
+    def of(e: Throwable): Error =
+      Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
+  }
 }

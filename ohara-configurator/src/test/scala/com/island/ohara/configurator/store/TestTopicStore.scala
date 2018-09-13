@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.store
 
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
-import com.island.ohara.io.CloseOnce.{close, _}
+import com.island.ohara.io.CloseOnce.close
 import org.junit._
 import org.scalatest.Matchers
 
@@ -9,18 +9,17 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 class TestTopicStore extends With3Brokers with Matchers {
 
-  private[this] var store: Store[String, String] = _
-
+  private[this] var store: BlockingStore[String, String] = _
   @Test
   def testRestart(): Unit = {
-    store.update("aa", "bb") shouldBe None
-    store.get("aa") shouldBe Some("bb")
+    store._update("aa", "bb", Consistency.STRICT) shouldBe None
+    store._get("aa") shouldBe Some("bb")
     store.close()
     val another =
-      Store.builder().brokers(testUtil.brokers).topicName(methodName).build[String, String]
+      Store.builder().brokers(testUtil.brokers).topicName(methodName).buildBlocking[String, String]
     try {
-      OharaTestUtil.await(() => another.get("aa").isDefined, 10 seconds)
-      another.get("aa") shouldBe Some("bb")
+      OharaTestUtil.await(() => another._get("aa").isDefined, 10 seconds)
+      another._get("aa") shouldBe Some("bb")
     } finally another.close()
 
   }
@@ -33,20 +32,20 @@ class TestTopicStore extends With3Brokers with Matchers {
   def testMultiStore(): Unit = {
     val numberOfStore = 5
     val stores = 0 until numberOfStore map (_ =>
-      Store.builder().brokers(testUtil.brokers).topicName(methodName).build[String, String])
-    0 until 10 foreach (index => store.update(index.toString, index.toString))
+      Store.builder().brokers(testUtil.brokers).topicName(methodName).buildBlocking[String, String])
+    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
     store.size shouldBe 10
 
     // make sure all stores have synced the updated data
     OharaTestUtil.await(() => stores.count(_.size == 10) == numberOfStore, 30 second)
 
     stores.foreach(s => {
-      0 until 10 foreach (index => s.get(index.toString) shouldBe Some(index.toString))
+      0 until 10 foreach (index => s._get(index.toString) shouldBe Some(index.toString))
     })
 
     // remove all data
     val randomStore = stores.iterator.next()
-    0 until 10 foreach (index => randomStore.remove(index.toString) shouldBe Some(index.toString))
+    0 until 10 foreach (index => randomStore._remove(index.toString, Consistency.STRICT) shouldBe Some(index.toString))
 
     // make sure all stores have synced the updated data
     OharaTestUtil.await(() => stores.count(_.isEmpty) == numberOfStore, 30 second)
@@ -56,64 +55,41 @@ class TestTopicStore extends With3Brokers with Matchers {
       Store.builder().brokers(testUtil.brokers).topicName(methodName + "copy").build[String, String]
     anotherStore.size shouldBe 0
   }
-  @Test
-  def testTake(): Unit = {
-    0 until 10 foreach (index => store.update(index.toString, index.toString))
-    store.size shouldBe 10
-    val data: Seq[(String, String)] = Iterator.continually(store.take()).takeWhile(_.isDefined).map(_.get).toSeq
-    data.size shouldBe 10
-    data.zipWithIndex.foreach {
-      case (d, index) =>
-        d._1 shouldBe index.toString
-        d._2 shouldBe index.toString
-    }
-
-    doClose(Store.builder().brokers(testUtil.brokers).topicName(s"$methodName-copy").build[String, String])(
-      _.size shouldBe 0)
-  }
 
   @Test
   def testUpdate(): Unit = {
-    0 until 10 foreach (index => store.update(index.toString, index.toString) shouldBe None)
-    0 until 10 foreach (index => store.update(index.toString, index.toString) shouldBe Some(index.toString))
-    0 until 10 foreach (index => store.get(index.toString) shouldBe Some(index.toString))
+    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT) shouldBe None)
+    0 until 10 foreach (index =>
+      store._update(index.toString, index.toString, Consistency.STRICT) shouldBe Some(index.toString))
+    0 until 10 foreach (index => store._get(index.toString) shouldBe Some(index.toString))
   }
 
   @Test
   def testRemove(): Unit = {
-    0 until 10 foreach (index => store.update(index.toString, index.toString))
+    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
 
     val removed = new ArrayBuffer[String]
     for (index <- 0 until 10) {
-      store.get(index.toString) shouldBe Some(index.toString)
+      store._get(index.toString) shouldBe Some(index.toString)
       if (index % 2 == 0) {
-        store.remove(index.toString)
+        store._remove(index.toString, Consistency.STRICT)
         removed += index.toString
       }
     }
-    removed.foreach(store.get(_) shouldBe None)
+    removed.foreach(store._get(_) shouldBe None)
   }
 
   @Test
   def testIterable(): Unit = {
-    0 until 10 foreach (index => store.update(index.toString, index.toString))
+    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
     store.size shouldBe 10
     store.foreach {
       case (k, v) => k shouldBe v
     }
   }
-
-  @Test
-  def testClear(): Unit = {
-    0 until 100 foreach (index => store.update(index.toString, index.toString))
-    store.size shouldBe 100
-    store.clear()
-    store.size shouldBe 0
-  }
-
   @Before
   def before(): Unit = {
-    store = Store.builder().brokers(testUtil.brokers).topicName(methodName).build[String, String]
+    store = Store.builder().brokers(testUtil.brokers).topicName(methodName).buildBlocking[String, String]
   }
 
   @After

@@ -87,7 +87,7 @@ object Backend {
             .topicName(topicName)
             .numberOfReplications(1)
             .numberOfPartitions(1)
-            .build[String, Any])
+            .buildBlocking[String, Any])
         .kafkaClient(KafkaClient(util.brokers))
         .connectClient(ConnectorClient(util.workers))
         .hostname("0.0.0.0")

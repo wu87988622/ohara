@@ -12,18 +12,18 @@ import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Futu
 import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
-  val store: Store[String, String] =
-    Store.builder().brokers(testUtil.brokers).topicName("TestTopicStoreAcid").build[String, String]
-  val elapsedTime = 30 // second
-  val readerCount = 5
-  val updaterCount = 5
-  val removerCount = 5
+  private[this] val store =
+    Store.builder().brokers(testUtil.brokers).topicName("TestTopicStoreAcid").buildBlocking[String, String]
+  private[this] val elapsedTime = 30 // second
+  private[this] val readerCount = 5
+  private[this] val updaterCount = 5
+  private[this] val removerCount = 5
   // use custom executor in order to make sure all threads can run parallel
-  implicit val executor: ExecutionContextExecutor =
+  private[this] implicit val executor: ExecutionContextExecutor =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(readerCount + updaterCount + removerCount))
-  def takeBreak(): Unit = TimeUnit.MILLISECONDS.sleep(300)
+  private[this] def takeBreak(): Unit = TimeUnit.MILLISECONDS.sleep(300)
 
-  def needDelete(): Boolean = Random.nextBoolean()
+  private[this] def needDelete(): Boolean = Random.nextBoolean()
 
   /**
     * The write and read ops shouldn't make the data inconsistent. This test will create many threads to change the data stored in Store.
@@ -51,7 +51,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
     close(store)
   }
 
-  private[this] def createRemover(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
+  private[this] def createRemover(closed: AtomicBoolean, store: BlockingStore[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
@@ -61,7 +61,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
           val (key, _) = iter.next()
           if (needDelete()) {
             count += 1
-            store.remove(key)
+            store._remove(key, Consistency.STRICT)
             done = true
           }
         }
@@ -71,11 +71,11 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
     }
   }
 
-  private[this] def createUpdater(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
+  private[this] def createUpdater(closed: AtomicBoolean, store: BlockingStore[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
-        store.update(count.toString, count.toString)
+        store._update(count.toString, count.toString, Consistency.STRICT)
         count += 1
         takeBreak()
       }

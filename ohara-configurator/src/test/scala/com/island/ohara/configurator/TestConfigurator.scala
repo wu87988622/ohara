@@ -21,6 +21,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class TestConfigurator extends With3Brokers3Workers with Matchers {
 
+  private[this] val topicName = random()
   private[this] val configurator0 =
     Configurator
       .builder()
@@ -31,9 +32,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .builder()
           .numberOfPartitions(1)
           .numberOfReplications(1)
-          .topicName(classOf[TestConfigurator].getSimpleName)
+          .topicName(topicName)
           .brokers(testUtil.brokers)
-          .build[String, Any])
+          .buildBlocking[String, Any])
       .kafkaClient(KafkaClient(testUtil.brokers))
       .connectClient(ConnectorClient(testUtil.workers))
       .build()
@@ -461,18 +462,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0", Configurator.TOPIC_KEY))
     } finally Configurator.closeRunningConfigurator = false
   }
-
-  @Test
-  def testClear(): Unit = {
-    clients.foreach(client => {
-      client.list[TopicInfo].size shouldBe 0
-      (0 until 10).map(index => client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(index.toString, 1, 1)))
-      client.list[TopicInfo].size shouldBe 10
-      configurators.foreach(_.clear())
-      client.list[TopicInfo].size shouldBe 0
-    })
-  }
-
   @Test
   def testQueryDb(): Unit = {
     val tableName = methodName
@@ -681,9 +670,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   @After
   def tearDown(): Unit = {
     clients.foreach(CloseOnce.close)
-    configurators.foreach(c => {
-      c.clear()
-      c.close()
-    })
+    configurators.foreach(_.close())
   }
 }

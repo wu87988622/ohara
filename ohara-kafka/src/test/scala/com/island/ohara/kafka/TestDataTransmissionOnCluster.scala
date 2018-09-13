@@ -1,7 +1,7 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.ConnectorJson.{CreateConnectorResponse, State}
+import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce._

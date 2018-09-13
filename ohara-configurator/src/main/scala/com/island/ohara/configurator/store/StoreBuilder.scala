@@ -95,4 +95,15 @@ class StoreBuilder {
     initializationTimeout.get,
     topicOptions.get
   )
+
+  def buildBlocking[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): BlockingStore[K, V] =
+    new TopicStore(
+      brokers.get,
+      topicName.get,
+      numberOfPartitions.get,
+      numberOfReplications.get,
+      pollTimeout.get,
+      initializationTimeout.get,
+      topicOptions.get
+    )(keySerializer, valueSerializer) with BlockingStore[K, V]
 }

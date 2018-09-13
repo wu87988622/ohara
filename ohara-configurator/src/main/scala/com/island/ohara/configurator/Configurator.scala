@@ -13,10 +13,10 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
+import com.island.ohara.configurator.store.Consistency
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
@@ -43,18 +43,15 @@ class Configurator private[configurator] (configuredHostname: String,
 
   private val log = Logger(classOf[Configurator])
 
-  private[this] def toResponse(e: Throwable) =
-    Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
-
   private[this] val exceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
       extractUri { uri =>
         log.error(s"Request to $uri could not be handled normally because ${e.getMessage}")
-        complete(StatusCodes.BadRequest -> toResponse(e))
+        complete(StatusCodes.BadRequest -> Error.of(e))
       }
     case e: Throwable =>
       log.error("What happens here?", e)
-      complete(StatusCodes.ServiceUnavailable -> toResponse(e))
+      complete(StatusCodes.ServiceUnavailable -> Error.of(e))
   }
 
   /**
@@ -110,17 +107,6 @@ class Configurator private[configurator] (configuredHostname: String,
   val port: Int = httpServer.localAddress.getPort
 
   def size: Int = store.size
-
-  def clear(): Unit = {
-    // remove all topics first
-    store
-      .raw()
-      .filter(_.isInstanceOf[TopicInfo])
-      .foreach(topicInfo => {
-        kafkaClient.deleteTopic(topicInfo.uuid)
-      })
-    store.clear()
-  }
 }
 
 object Configurator {
@@ -188,7 +174,7 @@ object Configurator {
               .topicName(topicName)
               .numberOfReplications(numberOfReplications)
               .numberOfPartitions(numberOfPartitions)
-              .build[String, Any])
+              .buildBlocking[String, Any])
           .kafkaClient(KafkaClient(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
@@ -221,7 +207,9 @@ object Configurator {
     */
   @volatile private[configurator] var closeRunningConfigurator = false
 
-  private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, Any]) extends CloseOnce {
+  private[configurator] class Store(store: com.island.ohara.configurator.store.BlockingStore[String, Any])
+      extends CloseOnce {
+    private[this] val consistency = Consistency.STRICT
 
     /**
       * Remove a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
@@ -232,9 +220,9 @@ object Configurator {
       * @return the removed data
       */
     def remove[T <: Data: ClassTag](uuid: String): T = store
-      .get(uuid)
+      ._get(uuid)
       .filter(classTag[T].runtimeClass.isInstance(_))
-      .flatMap(_ => store.remove(uuid))
+      .flatMap(_ => store._remove(uuid, consistency))
       .getOrElse(throw new IllegalArgumentException(s"Failed to remove $uuid since it doesn't exist"))
       .asInstanceOf[T]
 
@@ -247,7 +235,8 @@ object Configurator {
       * @return the removed data
       */
     def update[T <: Data: ClassTag](uuid: String, data: T): T =
-      if (store.get(uuid).exists(classTag[T].runtimeClass.isInstance(_))) store.update(uuid, data).get.asInstanceOf[T]
+      if (store._get(uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+        store._update(uuid, data, consistency).get.asInstanceOf[T]
       else throw new IllegalArgumentException(s"Failed to update $uuid since it doesn't exist")
 
     /**
@@ -258,9 +247,9 @@ object Configurator {
       * @tparam T type of data
       */
     def add[T <: Data: ClassTag](uuid: String, data: T): Unit =
-      if (store.get(uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+      if (store._get(uuid).exists(classTag[T].runtimeClass.isInstance(_)))
         throw new IllegalArgumentException(s"The object:$uuid exists")
-      else store.update(uuid, data)
+      else store._update(uuid, data, consistency)
 
     /**
       * Iterate the specified type. The unrelated type will be ignored.
@@ -269,7 +258,7 @@ object Configurator {
       * @return iterator
       */
     def data[T <: Data: ClassTag]: Iterator[T] =
-      store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance(_)).map(_.asInstanceOf[T])
+      store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 
     /**
       * Retrieve a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
@@ -281,7 +270,7 @@ object Configurator {
       */
     def data[T <: Data: ClassTag](uuid: String): T =
       store
-        .get(uuid)
+        ._get(uuid)
         .filter(classTag[T].runtimeClass.isInstance(_))
         .getOrElse(throw new IllegalArgumentException(
           s"Failed to find ${classTag[T].runtimeClass.getSimpleName} by $uuid since it doesn't exist"))
@@ -290,7 +279,7 @@ object Configurator {
     def raw(): Iterator[Data] = store.iterator.map(_._2).filter(_.isInstanceOf[Data]).map(_.asInstanceOf[Data])
 
     def raw(uuid: String): Data = store
-      .get(uuid)
+      ._get(uuid)
       .filter(_.isInstanceOf[Data])
       .map(_.asInstanceOf[Data])
       .getOrElse(throw new IllegalArgumentException(s"Failed to find raw data by $uuid since it doesn't exist"))
@@ -299,9 +288,7 @@ object Configurator {
 
     override protected def doClose(): Unit = store.close()
 
-    def clear(): Unit = store.clear()
-
-    def exist(uuid: String): Boolean = store.exist(uuid)
+    def exist(uuid: String): Boolean = store._exist(uuid)
   }
 
 }

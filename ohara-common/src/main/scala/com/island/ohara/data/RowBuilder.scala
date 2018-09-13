@@ -1,6 +1,5 @@
 package com.island.ohara.data
 
-import scala.collection.TraversableOnce
 import scala.collection.immutable.Set
 
 abstract class RowBuilder {

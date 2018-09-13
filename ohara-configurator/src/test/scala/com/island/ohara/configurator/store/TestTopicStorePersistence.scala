@@ -23,14 +23,15 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
         // make small retention so as to trigger log clear
         .topicOptions(
           Map(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG -> "1000", TopicConfig.SEGMENT_BYTES_CONFIG -> "1024"))
-        .build[String, String]) { store =>
+        .buildBlocking[String, String]) { store =>
       {
-        0 until 10 foreach (index => store.update(specifiedKey, index.toString))
+        0 until 10 foreach (index => store._update(specifiedKey, index.toString, Consistency.STRICT))
         // the local cache do the de-duplicate
         store.size shouldBe 1
         store.iterator.next()._2 shouldBe 9.toString
 
-        0 until numberOfOtherMessages foreach (index => store.update(index.toString, index.toString))
+        0 until numberOfOtherMessages foreach (index =>
+          store._update(index.toString, index.toString, Consistency.STRICT))
         store.size shouldBe (numberOfOtherMessages + 1)
       }
     }

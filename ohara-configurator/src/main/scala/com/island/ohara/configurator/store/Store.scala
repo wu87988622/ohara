@@ -2,6 +2,7 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.serialization.Serializer
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 /**
@@ -17,36 +18,37 @@ trait Store[K, V] extends AutoCloseable with Iterable[(K, V)] {
     * @param value value
     * @return Some[V] if the previous value exist
     */
-  def update(key: K, value: V): Option[V]
+  def update(key: K, value: V, sync: Consistency): Future[Option[V]]
 
   /**
     * Retrieve the value by specified key.
     * @param key key mapped to the value
     * @return None if no key exist.
     */
-  def get(key: K): Option[V]
+  def get(key: K): Future[Option[V]]
 
   /**
     * Remove the value by specified key.
     * @param key key mapped to the value
     * @return previous value or None if no key exist.
     */
-  def remove(key: K): Option[V]
+  def remove(key: K, sync: Consistency): Future[Option[V]]
 
-  /**
-    * Removes and returns a key-value mapping associated with the least key in this map, or null if the map is empty.
-    * @param timeout to poll
-    * @return he removed first entry of this map, or null if this map is empty
-    */
-  def take(timeout: Duration = Store.DEFAULT_TAKE_TIMEOUT): Option[(K, V)]
+  def exist(key: K): Future[Boolean]
+}
 
-  /**
-    * remove all data from this store.
-    * NOTED: this operation is expensive when the store is based on kafka topic.
-    */
-  def clear(): Unit
-
-  def exist(key: K): Boolean
+/**
+  * a helper interface to make all public methods in Store blocking
+  * @tparam K key
+  * @tparam V value
+  */
+trait BlockingStore[K, V] extends Store[K, V] {
+  private[this] val timeout: Duration = 10 seconds
+  def _get(key: K): Option[V] = Await.result(get(key), timeout)
+  def _update(key: K, value: V, consistency: Consistency): Option[V] =
+    Await.result(update(key, value, consistency), timeout)
+  def _remove(key: K, consistency: Consistency): Option[V] = Await.result(remove(key, consistency), timeout)
+  def _exist(key: K): Boolean = Await.result(exist(key), timeout)
 }
 
 object Store {
@@ -59,7 +61,7 @@ object Store {
     * @tparam V value type
     * @return a in-memory store
     */
-  def inMemory[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] =
+  def inMemory[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): BlockingStore[K, V] =
     new MemStore[K, V]
 
   def builder() = new StoreBuilder
@@ -69,4 +71,11 @@ object Store {
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_POLL_TIMEOUT: Duration = 5 seconds
   val DEFAULT_TAKE_TIMEOUT: Duration = 1 seconds
+}
+
+abstract sealed class Consistency
+object Consistency {
+  case object STRICT extends Consistency
+  case object WEAK extends Consistency
+  case object NONE extends Consistency
 }
