@@ -49,7 +49,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] def checkConnector(name: String): Unit = {
     OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().contains(name), 30 seconds)
-    OharaTestUtil.await(() => testUtil.connectorClient.config(name)("name") == name, 30 seconds)
+    OharaTestUtil.await(() => testUtil.connectorClient.config(name).topics.isEmpty == false, 30 seconds)
     OharaTestUtil.await(() =>
                           try testUtil.connectorClient.status(name).connector.state == State.RUNNING
                           catch {

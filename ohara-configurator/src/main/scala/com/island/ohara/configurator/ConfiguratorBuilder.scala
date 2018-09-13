@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import akka.http.scaladsl.server
 import com.island.ohara.client.ConnectorJson.{
+  ConnectorConfig,
   ConnectorInformation,
   ConnectorStatus,
   CreateConnectorRequest,
@@ -148,10 +149,11 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
     } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
   }
 
-  override def config(name: String): Map[String, String] = {
-    val config = cachedConnectors.get(name)
-    if (config == null) throw new IllegalArgumentException(s"$name doesn't exist")
-    config
+  override def config(name: String): ConnectorConfig = {
+    val map = cachedConnectors.get(name)
+    if (map == null) throw new IllegalArgumentException(s"$name doesn't exist")
+    val prop: Seq[String] = Seq("tasks.max", "topics", "connector.class")
+    ConnectorConfig(map.get(prop(0)).get, map.get(prop(1)).get, map.get(prop(2)).get, map -- (prop))
   }
 
   override def taskStatus(name: String, id: Int): TaskStatus = {

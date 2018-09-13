@@ -36,7 +36,7 @@ trait ConnectorClient extends CloseOnce {
 
   def status(name: String): ConnectorInformation
 
-  def config(name: String): Map[String, String]
+  def config(name: String): ConnectorConfig
 
   def taskStatus(name: String, id: Int): TaskStatus
 }
@@ -129,10 +129,10 @@ object ConnectorClient {
         TIMEOUT
       )
 
-      override def config(name: String): Map[String, String] = Await.result(
+      override def config(name: String): ConnectorConfig = Await.result(
         Http()
           .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connectors/$name/config"))
-          .flatMap(unmarshal[Map[String, String]]),
+          .flatMap(unmarshal[ConnectorConfig]),
         TIMEOUT
       )
 

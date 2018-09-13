@@ -123,4 +123,29 @@ object ConnectorJson {
 
   final case class ErrorResponse(error_code: Int, message: String)
   implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[ErrorResponse] = jsonFormat2(ErrorResponse)
+
+  final case class ConnectorConfig(tasksMax: String, topics: String, connectorClass: String, args: Map[String, String])
+
+  implicit val Connector_Config_FORMAT: RootJsonFormat[ConnectorConfig] = new RootJsonFormat[ConnectorConfig] {
+    final val prop: Seq[String] = Seq("tasks.max", "topics", "connector.class")
+
+    override def read(json: JsValue): ConnectorConfig = {
+      val map: Map[String, String] = json.convertTo[Map[String, String]]
+      ConnectorConfig(map.get(prop(0)).get, map.get(prop(1)).get, map.get(prop(2)).get, map -- (prop))
+    }
+    override def write(config: ConnectorConfig) = {
+      val map: Map[String, JsString] = config.args.map { f =>
+        {
+          f._1 -> JsString(f._2)
+        }
+      }
+      JsObject(
+        map + (prop(0) -> JsString(config.tasksMax),
+        prop(1) -> JsString(config.topics),
+        prop(2) -> JsString(config.connectorClass))
+      )
+    }
+
+  }
+
 }
