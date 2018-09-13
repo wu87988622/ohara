@@ -15,7 +15,7 @@ const FormGroup = ({ children, ...rest }) => {
 };
 
 FormGroup.propTypes = {
-  children: PropTypes.array,
+  children: PropTypes.any,
 };
 
 export default FormGroup;

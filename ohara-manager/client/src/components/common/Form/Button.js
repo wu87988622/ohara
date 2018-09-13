@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import cx from 'classnames';
 
-import { defaultBtn } from '../../../theme/btnTheme';
+import { defaultBtn } from 'theme/btnTheme';
 import {
   radiusNormal,
   durationNormal,
@@ -11,7 +11,7 @@ import {
   lightGray,
   white,
   blue,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const BtnWrapper = styled.button`
   font-size: 13px;
@@ -46,11 +46,13 @@ const BtnWrapper = styled.button`
   }
 `;
 
-BtnWrapper.displayName = 'BtnWrapper';
+BtnWrapper.displayName = 'Button';
 
 const IconWrapper = styled.i`
   margin-left: 5px;
 `;
+
+IconWrapper.displayName = 'Icon';
 
 const Button = ({
   text,
@@ -60,7 +62,7 @@ const Button = ({
   width = 'auto',
   disabled = false,
   isWorking = false,
-  className,
+  className = '',
   ...rest
 }) => {
   const cls = cx({ 'is-working': isWorking }, { 'is-disabled': disabled });

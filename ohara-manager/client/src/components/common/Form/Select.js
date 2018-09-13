@@ -2,8 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import * as _ from '../../../utils/helpers';
-
 import {
   white,
   blue,
@@ -11,7 +9,7 @@ import {
   lighterGray,
   radiusNormal,
   durationNormal,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const SelectWrapper = styled.select`
   font-size: 13px;
@@ -35,16 +33,14 @@ const SelectWrapper = styled.select`
 SelectWrapper.displayName = 'Select';
 
 const Select = ({
-  list,
-  selected,
+  list = [],
+  selected = '',
   handleChange,
   isObject = false,
   width = '100%',
   ...rest
 }) => {
-  if (_.isEmpty(list)) return null;
-
-  const _selected = isObject ? selected.name : selected;
+  const _selected = isObject ? selected && selected.name : selected;
 
   return (
     <SelectWrapper
@@ -69,10 +65,11 @@ const Select = ({
 };
 
 Select.propTypes = {
-  list: PropTypes.array.isRequired,
-  selected: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
-    .isRequired,
+  selected: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   handleChange: PropTypes.func.isRequired,
+  isObject: PropTypes.bool,
+  width: PropTypes.string,
+  list: PropTypes.array,
 };
 
 export default Select;

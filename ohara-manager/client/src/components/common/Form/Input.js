@@ -9,7 +9,7 @@ import {
   radiusNormal,
   durationNormal,
   lightBlue,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const InputWrapper = styled.input`
   font-size: 13px;

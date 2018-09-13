@@ -4,14 +4,14 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
-import { Box } from '../../common/Layout';
-import { Warning } from '../../common/Messages';
-import { H5 } from '../../common/Headings';
-import { DataTable } from '../../common/Table';
-import { lightBlue, whiteSmoke } from '../../../theme/variables';
-import { primaryBtn } from '../../../theme/btnTheme';
-import { Input, Select, FormGroup, Label, Button } from '../../common/Form';
-import { fetchTopics } from '../../../apis/topicApis';
+import { Box } from 'common/Layout';
+import { Warning } from 'common/Messages';
+import { H5 } from 'common/Headings';
+import { DataTable } from 'common/Table';
+import { lightBlue, whiteSmoke } from 'theme/variables';
+import { primaryBtn } from 'theme/btnTheme';
+import { Input, Select, FormGroup, Label, Button } from 'common/Form';
+import { fetchTopics } from 'apis/topicApis';
 import {
   queryRdb,
   createSource,
@@ -20,11 +20,11 @@ import {
   updateSource,
   fetchPipeline,
   updatePipeline,
-} from '../../../apis/pipelinesApis';
-import { fetchCluster } from '../../../apis/clusterApis';
-import * as URLS from '../../../constants/urls';
-import * as _ from '../../../utils/helpers';
-import * as MESSAGES from '../../../constants/messages';
+} from 'apis/pipelinesApis';
+import { fetchCluster } from 'apis/clusterApis';
+import * as URLS from 'constants/urls';
+import * as _ from 'utils/helpers';
+import * as MESSAGES from 'constants/messages';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
@@ -82,27 +82,6 @@ class PipelineSourcePage extends React.Component {
     updateHasChanges: PropTypes.func,
     updateGraph: PropTypes.func,
   };
-
-  fakeTables = [
-    {
-      name: 'table-1',
-      uuid: 1,
-      schema: [
-        { uuid: '1', name: 'col_1', type: 'INT' },
-        { uuid: '2', name: 'col_2', type: 'STRING' },
-        { uuid: '3', name: 'col_3', type: 'DATE' },
-      ],
-    },
-    {
-      name: 'table-2',
-      uuid: 2,
-      schema: [
-        { uuid: '4', name: 'New_col_1', type: 'STRING' },
-        { uuid: '5', name: 'New_col_2', type: 'INT' },
-        { uuid: '6', name: 'New_col_3', type: 'BOOLEAN' },
-      ],
-    },
-  ];
 
   selectMaps = {
     databases: 'currDatabase',
@@ -250,12 +229,13 @@ class PipelineSourcePage extends React.Component {
   };
 
   fetchRdbTables = async () => {
-    const { url, username, password } = this.state;
+    const { url, username, password, currTable } = this.state;
     const res = await queryRdb({ url, user: username, password });
-    const tables = _.get(res, 'data.result', null);
+    const tables = _.get(res, 'data.result.tables', null);
+    const _currTable = _.isEmpty(currTable) ? tables[0] : currTable;
 
     if (tables) {
-      this.setState({ tables: this.fakeTables, currTable: this.fakeTables[0] });
+      this.setState({ tables, currTable: _currTable });
     }
   };
 
@@ -281,7 +261,7 @@ class PipelineSourcePage extends React.Component {
     const current = this.selectMaps[name];
     const isTable = name.toLowerCase() === 'tables';
     const schema = isTable
-      ? this.fakeTables.find(f => f.name === value).schema
+      ? this.state.tables.find(table => table.name === value).schema
       : undefined;
 
     this.setState(
@@ -425,7 +405,7 @@ class PipelineSourcePage extends React.Component {
                   <Input
                     name="username"
                     width="250px"
-                    placeholder="John doe"
+                    placeholder="John Doe"
                     value={username}
                     data-testid="username-input"
                     handleChange={this.handleChangeInput}
@@ -508,9 +488,9 @@ class PipelineSourcePage extends React.Component {
           <Box>
             <H5Wrapper>Database schemas</H5Wrapper>
             <DataTable headers={this.dbSchemasHeader}>
-              {currTable.schema.map(({ name, type, uuid }) => {
+              {currTable.schema.map(({ name, type }, idx) => {
                 return (
-                  <tr key={uuid}>
+                  <tr key={idx}>
                     <td>{name}</td>
                     <td>{type}</td>
                   </tr>

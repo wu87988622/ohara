@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import Nav from '../Nav';
-import { HOME } from '../../../constants/urls';
+import { HOME } from 'constants/urls';
 
 describe('<Nav />', () => {
   let wrapper;
