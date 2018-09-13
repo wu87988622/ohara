@@ -100,7 +100,7 @@ private class TopicStore[K, V](
 
   private[this] val updateLock = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Option[V]]()
-  private[this] val cache = newOrClose(Store.inMemory(keySerializer, valueSerializer))
+  private[this] val cache: Store[K, V] = newOrClose(Store.inMemory(keySerializer, valueSerializer))
 
   /**
     * true if poller haven't grab any data recently.
@@ -206,4 +206,6 @@ private class TopicStore[K, V](
   }
 
   override def clear(): Unit = cache.iterator.map(_._1).foreach(remove)
+
+  override def exist(key: K): Boolean = cache.exist(key)
 }

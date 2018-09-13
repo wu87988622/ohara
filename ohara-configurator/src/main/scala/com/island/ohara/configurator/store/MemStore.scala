@@ -51,7 +51,7 @@ private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSeriali
 
   override def remove(key: K): Option[V] = {
     checkClose()
-    Option(store.remove(toKey(key))).map(fromValue(_))
+    Option(store.remove(toKey(key))).map(fromValue)
   }
 
   override def iterator: Iterator[(K, V)] = {
@@ -93,4 +93,6 @@ private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSeriali
   }
 
   override def clear(): Unit = store.clear()
+
+  override def exist(key: K): Boolean = store.containsKey(toKey(key))
 }

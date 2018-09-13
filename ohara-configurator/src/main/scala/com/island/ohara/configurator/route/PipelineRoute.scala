@@ -16,9 +16,7 @@ private[configurator] object PipelineRoute {
     Pipeline(uuid, request.name, Status.STOPPED, request.rules, abstracts(request), System.currentTimeMillis())
 
   private[this] def checkExist(uuids: Set[String])(implicit store: Store): Unit = {
-    val existedUuids = store.raw().map(_.uuid)
-    uuids.foreach(uuid =>
-      if (!existedUuids.contains(uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
+    uuids.foreach(uuid => if (!store.exist(uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
   }
 
   private[this] def abstracts(request: PipelineRequest)(implicit store: Store): Seq[ComponentAbstract] = {

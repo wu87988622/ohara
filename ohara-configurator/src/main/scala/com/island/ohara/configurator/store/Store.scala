@@ -45,6 +45,8 @@ trait Store[K, V] extends AutoCloseable with Iterable[(K, V)] {
     * NOTED: this operation is expensive when the store is based on kafka topic.
     */
   def clear(): Unit
+
+  def exist(key: K): Boolean
 }
 
 object Store {

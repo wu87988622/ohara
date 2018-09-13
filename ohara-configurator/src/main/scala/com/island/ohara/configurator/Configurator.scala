@@ -300,6 +300,8 @@ object Configurator {
     override protected def doClose(): Unit = store.close()
 
     def clear(): Unit = store.clear()
+
+    def exist(uuid: String): Boolean = store.exist(uuid)
   }
 
 }
