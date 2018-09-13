@@ -11,6 +11,8 @@ import com.island.ohara.rule.MediumTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.collection.mutable.ListBuffer
+
 class TestDBTableDataProvider extends MediumTest with Matchers {
 
   private[this] val db = LocalDataBase.mysql()
@@ -20,21 +22,23 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
   @Before
   def setup(): Unit = {
     val column1 = RdbColumn("column1", "TIMESTAMP", true)
-    val column2 = RdbColumn("column2", "VARCHAR(45)", false)
+    val column2 = RdbColumn("column2", "varchar(45)", false)
     val column3 = RdbColumn("column3", "VARCHAR(45)", false)
-    client.createTable(tableName, Seq(column1, column2, column3))
+    val column4 = RdbColumn("column4", "integer", false)
+
+    client.createTable(tableName, Seq(column1, column2, column3, column4))
     val statement: Statement = db.connection.createStatement()
 
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3) VALUES('2018-09-01 00:00:00', 'a11', 'a12')")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:00', 'a11', 'a12', 1)")
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3) VALUES('2018-09-01 00:00:01', 'a21', 'a22')")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:01', 'a21', 'a22', 2)")
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3) VALUES('2018-09-01 00:00:02', 'a31', 'a32')")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES('2018-09-01 00:00:02', 'a31', 'a32', 3)")
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42')")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 3 MINUTE, 'a41', 'a42', 4)")
     statement.executeUpdate(
-      s"INSERT INTO $tableName(column1,column2,column3) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52')")
+      s"INSERT INTO $tableName(column1,column2,column3,column4) VALUES(NOW() + INTERVAL 1 DAY, 'a51', 'a52', 5)")
   }
 
   @Test
@@ -43,11 +47,16 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
     val results: QueryResultIterator = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0)) //0 is 1970-01-01 00:00:00
 
     var count = 0
+    val resultList: ListBuffer[Seq[ColumnInfo]] = new ListBuffer[Seq[ColumnInfo]]
     while (results.hasNext()) {
-      val listBuffer: Seq[Object] = results.next()
+      val listBuffer: Seq[ColumnInfo] = results.next()
+      resultList += listBuffer
       count = count + 1
     }
     count shouldBe 3
+    resultList(0)(3).columnName shouldBe "column4"
+    resultList(0)(3).columnType shouldBe "INT"
+    resultList(0)(3).value shouldBe 1
   }
 
   @Test
@@ -62,10 +71,11 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
   @Test
   def testColumnList(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
-    val columns = dbTableDataProvider.columns(db.connection, tableName)
-    columns(0) shouldBe "column1"
-    columns(1) shouldBe "column2"
-    columns(2) shouldBe "column3"
+    val columns: Seq[RdbColumn] = dbTableDataProvider.columns(db.connection, tableName)
+    columns(0).name shouldBe "column1"
+    columns(1).name shouldBe "column2"
+    columns(2).name shouldBe "column3"
+    columns(3).name shouldBe "column4"
   }
 
   @After

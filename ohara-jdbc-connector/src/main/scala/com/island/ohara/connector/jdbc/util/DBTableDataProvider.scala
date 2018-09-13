@@ -34,10 +34,9 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     return new QueryResultIterator(preparedStatement, columnNames)
   }
 
-  protected[util] def columns(connection: Connection, tableName: String): Seq[String] = { //TODO Return object is ColumnInfo
+  protected[util] def columns(connection: Connection, tableName: String): Seq[RdbColumn] = {
     val rdbTables: Seq[RdbTable] = client.tables(null, null, tableName)
-    val schema: Seq[RdbColumn] = rdbTables.head.schema
-    schema.map(column => column.name)
+    rdbTables.head.schema
   }
 
   protected[util] def dbCurrentTime(cal: Calendar): Timestamp = {

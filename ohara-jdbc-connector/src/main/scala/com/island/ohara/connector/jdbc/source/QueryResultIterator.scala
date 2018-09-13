@@ -1,19 +1,21 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.{PreparedStatement, ResultSet}
+
+import com.island.ohara.client.ConfiguratorJson.RdbColumn
+import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.io.CloseOnce
 
-class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[String])
-    extends Iterator[Seq[Object]]
+class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[RdbColumn])
+    extends Iterator[Seq[ColumnInfo]]
     with CloseOnce {
   private[this] val resultSet: ResultSet = preparedStatement.executeQuery()
-  private[this] var cache: Seq[Object] = null
+  private[this] var cache: Seq[ColumnInfo] = null
 
   def hasNext(): Boolean = {
     if (cache == null) {
       if (resultSet.next()) {
-        //TODO ResultSet converter dataType OHARA-412
-        cache = columns.map(resultSet.getString).toSeq
+        cache = ResultSetDataConverter.converterRecord(resultSet, columns)
         true
       } else {
         false
@@ -23,7 +25,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Str
     }
   }
 
-  def next(): Seq[Object] = {
+  def next(): Seq[ColumnInfo] = {
     if (hasNext() == false) throw new NoSuchElementException("Cache no data")
     else {
       try {
