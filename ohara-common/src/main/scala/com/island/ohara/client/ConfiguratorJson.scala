@@ -189,7 +189,7 @@ object ConfiguratorJson {
     override def write(obj: SourceRequest): JsValue = JsObject(
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
-      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toVector),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) })
     )
     override def read(json: JsValue): SourceRequest =
@@ -219,7 +219,7 @@ object ConfiguratorJson {
       "uuid" -> JsString(obj.uuid),
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
-      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toVector),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) }),
       "lastModified" -> JsNumber(obj.lastModified)
     )
@@ -244,7 +244,7 @@ object ConfiguratorJson {
     override def write(obj: SinkRequest): JsValue = JsObject(
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
-      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toVector),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) })
     )
     override def read(json: JsValue): SinkRequest =
@@ -274,7 +274,7 @@ object ConfiguratorJson {
       "uuid" -> JsString(obj.uuid),
       "name" -> JsString(obj.name),
       "class" -> JsString(obj.className),
-      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toList),
+      "schema" -> JsArray(obj.schema.map(COLUMN_JSON_FORMAT.write).toVector),
       "configs" -> JsObject(obj.configs.map { case (k, v) => (k, JsString(v)) }),
       "lastModified" -> JsNumber(obj.lastModified)
     )
