@@ -116,43 +116,57 @@ final class ConsumerBuilder {
     Objects.requireNonNull(topicNames)
     Objects.requireNonNull(groupId)
     Objects.requireNonNull(brokers)
-    new Consumer[K, V] {
-      private[this] val consumerConfig = {
-        val props = new Properties()
-        props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
-        // kafka demand us to pass lowe case words...
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase)
-        props
-      }
-      private[this] val kafkaConsumer = new KafkaConsumer[K, V](consumerConfig,
-                                                                KafkaUtil.wrapDeserializer(keySerializer),
-                                                                KafkaUtil.wrapDeserializer(valueSerializer))
-      import scala.collection.JavaConverters._
-      override def poll(timeout: Duration): Seq[ConsumerRecord[K, V]] = {
-        if (subscription().isEmpty) kafkaConsumer.subscribe(topicNames.asJava)
-        val r = kafkaConsumer.poll(timeout.toMillis)
-        if (r == null || r.isEmpty) Seq.empty
-        else
-          r.iterator()
-            .asScala
-            .map(cr =>
-              ConsumerRecord(
-                cr.topic(),
-                Option(cr.headers())
-                  .map(headers => headers.asScala.map(header => Header(header.key(), header.value())).toSeq)
-                  .getOrElse(Seq.empty),
-                Option(cr.key()),
-                Option(cr.value())
-            ))
-            .toList
-      }
-
-      override protected def doClose(): Unit = kafkaConsumer.close()
-      override def subscription(): Set[String] = kafkaConsumer.subscription().asScala.toSet
-
-      override def wakeup(): Unit = kafkaConsumer.wakeup()
+    val consumerConfig = {
+      val props = new Properties()
+      props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
+      props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+      // kafka demand us to pass lowe case words...
+      props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase)
+      props
     }
+
+    val kafkaConsumer = new KafkaConsumer[K, V](consumerConfig,
+                                                KafkaUtil.wrapDeserializer(keySerializer),
+                                                KafkaUtil.wrapDeserializer(valueSerializer))
+    try {
+      import scala.collection.JavaConverters._
+      // Kafka doesn't complete the subscription truly until we do the first poll.
+      kafkaConsumer.subscribe(topicNames.asJava)
+      var firstPoll = kafkaConsumer.poll(0)
+      new Consumer[K, V] {
+        override def poll(timeout: Duration): Seq[ConsumerRecord[K, V]] = {
+          val r =
+            if (firstPoll == null || firstPoll.isEmpty) kafkaConsumer.poll(timeout.toMillis)
+            else
+              try firstPoll
+              finally firstPoll = null
+          if (r == null || r.isEmpty) Seq.empty
+          else
+            r.iterator()
+              .asScala
+              .map(cr =>
+                ConsumerRecord(
+                  cr.topic(),
+                  Option(cr.headers())
+                    .map(headers => headers.asScala.map(header => Header(header.key(), header.value())).toSeq)
+                    .getOrElse(Seq.empty),
+                  Option(cr.key()),
+                  Option(cr.value())
+              ))
+              .toList
+        }
+        override protected def doClose(): Unit = kafkaConsumer.close()
+        override def subscription(): Set[String] = kafkaConsumer.subscription().asScala.toSet
+
+        override def wakeup(): Unit = kafkaConsumer.wakeup()
+      }
+    } catch {
+      case e: Throwable => {
+        kafkaConsumer.close()
+        throw e
+      }
+    }
+
   }
 }
 

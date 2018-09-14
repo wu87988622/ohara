@@ -26,6 +26,7 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     CloseOnce.doClose(
       Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[String, String]) {
       consumer =>
+        consumer.subscription() shouldBe Set(topicName)
         val data = consumer.poll(20 seconds, 1)
         data.head.value.get shouldBe "value"
     }
@@ -47,6 +48,7 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     CloseOnce.doClose(
       Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[String, Row]) {
       consumer =>
+        consumer.subscription() shouldBe Set(topicName)
         val record = consumer.poll(20 seconds, 1)
         record.head.value.get shouldBe data
     }
