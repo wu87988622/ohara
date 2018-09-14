@@ -10,9 +10,9 @@ import scala.reflect.ClassTag
 class CallQueueClientBuilder private[call] {
 
   private[this] var brokers: Option[String] = None
-  private[this] var topicName: Option[String] = None
+  private[this] var requestTopic: Option[String] = None
+  private[this] var responseTopic: Option[String] = None
   private[this] var pollTimeout: Option[Duration] = Some(CallQueue.DEFAULT_POLL_TIMEOUT)
-  private[this] var initializationTimeout: Option[Duration] = Some(CallQueue.DEFAULT_INITIALIZATION_TIMEOUT)
   private[this] var expirationCleanupTime: Option[Duration] = Some(CallQueue.DEFAULT_EXPIRATION_CLEANUP_TIME)
 
   /**
@@ -26,12 +26,22 @@ class CallQueueClientBuilder private[call] {
   }
 
   /**
-    * set the topic used to send/receive the request/response
-    * @param topicName topic name
+    * set the topic used to send request
+    * @param requestTopic topic name
     * @return this builder
     */
-  def topicName(topicName: String): CallQueueClientBuilder = {
-    this.topicName = Some(topicName)
+  def requestTopic(requestTopic: String): CallQueueClientBuilder = {
+    this.requestTopic = Some(requestTopic)
+    this
+  }
+
+  /**
+    * set the topic used to receive response
+    * @param responseTopic topic name
+    * @return this builder
+    */
+  def responseTopic(responseTopic: String): CallQueueClientBuilder = {
+    this.responseTopic = Some(responseTopic)
     this
   }
 
@@ -42,16 +52,6 @@ class CallQueueClientBuilder private[call] {
     */
   def pollTimeout(pollTimeout: Duration): CallQueueClientBuilder = {
     this.pollTimeout = Some(pollTimeout)
-    this
-  }
-
-  /**
-    * set the timeout of initializing the call queue client
-    * @param initializationTimeout initial timeout
-    * @return this builder
-    */
-  def initializationTimeout(initializationTimeout: Duration): CallQueueClientBuilder = {
-    this.initializationTimeout = Some(initializationTimeout)
     this
   }
 
@@ -74,9 +74,9 @@ class CallQueueClientBuilder private[call] {
   def build[REQUEST, RESPONSE: ClassTag](): CallQueueClient[REQUEST, RESPONSE] =
     new CallQueueClientImpl[REQUEST, RESPONSE](
       brokers.get,
-      topicName.get,
+      requestTopic.get,
+      responseTopic.get,
       pollTimeout.get,
-      initializationTimeout.get,
       expirationCleanupTime.get
     )
 }

@@ -1,11 +1,11 @@
 package com.island.ohara.configurator.call
 
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.{ConcurrentSkipListMap, CountDownLatch, Executors, TimeUnit}
+import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.{CloseOnce, UuidUtil}
-import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
+import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.errors.WakeupException
@@ -22,15 +22,14 @@ import scala.reflect.ClassTag
   * @param brokers               KAFKA server
   * @param topicName             topic name. the topic will be created automatically if it doesn't exist
   * @param pollTimeout           the specified waiting time elapses to poll the consumer
-  * @param initializationTimeout the specified waiting time to initialize this call queue client
   * @param expirationCleanupTime the time to call the lease dustman
   * @tparam Request  the supported request type
   * @tparam Response the supported response type
   */
 private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
-                                                               topicName: String,
+                                                               requestTopic: String,
+                                                               responseTopic: String,
                                                                pollTimeout: Duration,
-                                                               initializationTimeout: Duration,
                                                                expirationCleanupTime: Duration)
     extends CallQueueClient[Request, Response] {
 
@@ -52,8 +51,15 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     */
   private[this] val uuid: String = UuidUtil.uuid()
 
-  if (!KafkaUtil.exist(brokers, topicName, initializationTimeout))
-    throw new IllegalArgumentException(s"The topic:$topicName doesn't exist")
+  /**
+    * check the topics
+    */
+  CloseOnce.doClose(KafkaClient(brokers)) { client =>
+    def check(topicName: String): Unit =
+      if (!client.exist(topicName)) throw new IllegalArgumentException(s"$topicName doesn't exist")
+    check(requestTopic)
+    check(responseTopic)
+  }
 
   /**
     * used to publish the request.
@@ -72,14 +78,9 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
       // the uuid of requestConsumer is random since we want to check all response.
       .groupId(uuid)
       .offsetAfterLatest()
-      .topicName(topicName)
+      .topicName(responseTopic)
       .build[Any, Any]
   }
-
-  /**
-    * Used to check whether consumer have completed the first poll.
-    */
-  private[this] val initializationLatch = new CountDownLatch(1)
 
   /**
     * store the response handler against the CallQueueResponse.
@@ -97,9 +98,8 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
       while (!this.isClosed) {
         try {
           val records = consumer.poll(pollTimeout)
-          initializationLatch.countDown()
           records
-            .filter(_.topic == topicName)
+            .filter(_.topic == responseTopic)
             .foreach(record => {
               record.key.foreach {
                 case internalResponse: CallQueueResponse =>
@@ -125,10 +125,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
       }
     } catch {
       case e: Throwable => logger.error("failure when running the responseWorker", e)
-    } finally {
-      initializationLatch.countDown()
-      close()
-    }
+    } finally close()
   }
 
   private[this] def toError(e: Throwable) =
@@ -167,25 +164,19 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     notifierOfDustman.notifyAll()
   }
 
-  if (!initializationLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
-    close()
-    throw new IllegalArgumentException(s"timeout to initialize the call queue server")
-  }
-
-  private[this] def requestUuid = s"$uuid-request-${indexer.getAndIncrement()}"
+  private[this] def requestUuid() = s"$uuid-request-${indexer.getAndIncrement()}"
 
   override def request(request: Request, timeout: Duration): Future[Either[Error, Response]] = {
     checkClose()
     val lease = timeout + (System.currentTimeMillis() milliseconds)
-    val internalRequest = CallQueueRequest(requestUuid, lease)
+    val internalRequest = CallQueueRequest(requestUuid(), lease)
     val receiver = new ResponseReceiver(internalRequest.uuid, lease)
     responseReceivers.put(internalRequest.uuid, receiver)
     try {
-      producer.sender().key(internalRequest).value(request).send(topicName)
+      producer.sender().key(internalRequest).value(request).send(requestTopic)
       producer.flush()
     } catch {
-      case exception: Throwable =>
-        responseReceivers.remove(internalRequest.uuid).complete(toError(exception))
+      case exception: Throwable => responseReceivers.remove(internalRequest.uuid).complete(toError(exception))
     }
     // an new request so it is time to invoke dustman to check the previous requests
     wakeupDustman()

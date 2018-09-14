@@ -1,18 +1,16 @@
 package com.island.ohara.configurator.call
 
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.{CountDownLatch, Executors, LinkedBlockingQueue, TimeUnit}
+import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.kafka.common.config.TopicConfig
-import org.apache.kafka.common.errors.WakeupException
+import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
+import scala.concurrent._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService, Future}
 import scala.reflect.ClassTag
 
 /**
@@ -27,28 +25,19 @@ import scala.reflect.ClassTag
   * be bigger than zero. The kafak balancer can make the request to call queue server be balanced
   *
   * @param brokers KAFKA server
-  * @param topicName topic name. the topic will be created automatically if it doesn't exist
   * @param groupId used to create the consumer to accept the request from client
-  * @param numberOfPartitions the number of topic partition. Used to build the topic
-  * @param numberOfReplications the number of topic partition. Used to build the topic
   * @param pollTimeout the specified waiting time elapses to poll the consumer
-  * @param initializationTimeout the specified waiting time to ini
-  *                             tialize this call queue server
-  * @param topicOptions configuration
   * @tparam Request the supported request type
   * @tparam Response the supported response type
   */
 private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
-                                                               topicName: String,
+                                                               requestTopic: String,
+                                                               responseTopic: String,
                                                                groupId: String,
-                                                               numberOfPartitions: Int,
-                                                               numberOfReplications: Short,
-                                                               pollTimeout: Duration,
-                                                               initializationTimeout: Duration,
-                                                               topicOptions: Map[String, String])
+                                                               pollTimeout: Duration)
     extends CallQueueServer[Request, Response] {
 
-  private[this] val logger = Logger(getClass.getName)
+  private[this] val log = Logger(getClass.getName)
 
   /**
     * requestWorker thread.
@@ -66,25 +55,28 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
     */
   private[this] val uuid = UuidUtil.uuid()
 
-  if (topicOptions.get(TopicConfig.CLEANUP_POLICY_CONFIG).fold(false)(_ != TopicConfig.CLEANUP_POLICY_DELETE))
-    throw new IllegalArgumentException(
-      s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_DELETE}")
-
   /**
     * Initialize the topic
     */
   CloseOnce.doClose(KafkaClient(brokers)) { client =>
-    if (!client.exist(topicName))
-      client
+    def createIfNeed(topicName: String): Unit = if (!client.exist(topicName))
+      try client
         .topicCreator()
-        .numberOfPartitions(numberOfPartitions)
-        .numberOfReplications(numberOfReplications)
-        .options(topicOptions)
-        // enable kafka delete all stale requests
+        .numberOfPartitions(CallQueueServerImpl.NUMBER_OF_PARTITIONS)
+        .numberOfReplications(CallQueueServerImpl.NUMBER_OF_REPLICATIONS)
+        // enable kafka save the latest message for each key
         .deleted()
-        .timeout(initializationTimeout)
+        .timeout(CallQueueServerImpl.TIMEOUT)
         .create(topicName)
-
+      catch {
+        case e: ExecutionException =>
+          e.getCause match {
+            case _: TopicExistsException => log.error(s"$topicName exists but we didn't notice this fact")
+            case _                       => if (e.getCause == null) throw e else throw e.getCause
+          }
+      }
+    createIfNeed(requestTopic)
+    createIfNeed(responseTopic)
   }
 
   private[this] val producer = newOrClose {
@@ -99,7 +91,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
       // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
       // distribute the request.
       .groupId(groupId)
-      .topicName(topicName)
+      .topicName(requestTopic)
       .build[Any, Any]
   }
 
@@ -107,12 +99,9 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   private[call] val processingTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
 
   private[this] def sendToKafka(key: Any, value: Any): Unit = {
-    producer.sender().key(key).value(value).send(topicName)
+    producer.sender().key(key).value(value).send(responseTopic)
     producer.flush()
   }
-
-  private[this] def toError(e: Throwable) =
-    Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
 
   private[this] def createCallQueueTask(internalRequest: CallQueueRequest, clientRequest: Request) =
     new CallQueueTask[Request, Response]() {
@@ -123,14 +112,14 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
         throw new IllegalArgumentException(s"you have assigned the response:$response")
       else {
         response = _res
-        send(CallQueueResponse(responseUuid, internalRequest.uuid), response)
+        send(CallQueueResponse(responseUuid(), internalRequest.uuid), response)
       }
 
       override def complete(exception: Throwable): Unit = if (response != null)
         throw new IllegalArgumentException(s"you have assigned the response:$response")
       else {
-        response = toError(exception)
-        send(CallQueueResponse(responseUuid, internalRequest.uuid), response)
+        response = Error(exception)
+        send(CallQueueResponse(responseUuid(), internalRequest.uuid), response)
       }
 
       def send(key: Any, value: Any): Unit = try {
@@ -138,7 +127,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
         sendToKafka(key, value)
       } catch {
         case e: Throwable =>
-          logger.error("Failed to send the response back to client", e)
+          log.error("Failed to send the response back to client", e)
           // put back this task
           response = null
           undealtTasks.put(this)
@@ -146,62 +135,48 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
     }
 
   /**
-    * Used to check whether consumer have completed the first poll.
-    */
-  private[this] val initializeConsumerLatch = new CountDownLatch(1)
-
-  /**
     * a single thread to handle the request and response. For call queue server, the supported consumer's key is CallQueueRequest,
     * and the supported consumer's value is REQUEST. the supported producer's key is CallQueueResponse,
     * the supported producer's value is RESPONSE.
     */
-  private[this] val requestWorker = Future[Unit] {
+  private[this] val requestWorker: Future[Unit] = Future[Unit] {
     try {
       while (!this.isClosed) {
         try {
           val records = consumer.poll(pollTimeout)
-          initializeConsumerLatch.countDown()
           records
-            .filter(_.topic == topicName)
+            .filter(_.topic == requestTopic)
             .foreach(record => {
               record.key.foreach {
                 case internalRequest: CallQueueRequest =>
                   if (internalRequest.lease.toMillis <= System.currentTimeMillis)
-                    logger.debug(s"the lease of request is violated")
+                    log.debug(s"the lease of request is violated")
                   else
                     record.value.foreach {
                       case clientRequest: Request =>
                         undealtTasks.put(createCallQueueTask(internalRequest, clientRequest))
                       case _ =>
-                        try sendToKafka(CallQueueResponse.apply(responseUuid, internalRequest.uuid),
-                                        toError(new IllegalArgumentException(s"Unsupported type")))
+                        try sendToKafka(CallQueueResponse(responseUuid(), internalRequest.uuid),
+                                        Error(new IllegalArgumentException(s"Unsupported type")))
                         catch {
-                          case _: Throwable => logger.error("Failed to response the unsupported request")
+                          case _: Throwable => log.error("Failed to response the unsupported request")
                         }
                     }
                 case _: CallQueueResponse => // this is for the call queue client
                 case _ =>
-                  logger.error(s"unsupported key. The supported key by call queue server is CallQueueRequest")
+                  log.error(s"unsupported key. The supported key by call queue server is CallQueueRequest")
               }
             })
         } catch {
-          case _: WakeupException => logger.debug("interrupted by ourself")
+          case _: WakeupException => log.debug("interrupted by ourself")
         }
       }
     } catch {
-      case e: Throwable => logger.error("failure when running the requestWorker", e)
-    } finally {
-      initializeConsumerLatch.countDown()
-      close()
-    }
+      case e: Throwable => log.error("failure when running the requestWorker", e)
+    } finally close()
   }
 
-  if (!initializeConsumerLatch.await(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)) {
-    close()
-    throw new IllegalArgumentException(s"timeout to initialize the call queue server")
-  }
-
-  private[this] def responseUuid = s"$uuid-response${indexer.getAndIncrement()}"
+  private[this] def responseUuid() = s"$uuid-response${indexer.getAndIncrement()}"
 
   override def take(timeout: Duration): Option[CallQueueTask[Request, Response]] = {
     val task = undealtTasks.poll(timeout.toMillis, TimeUnit.MILLISECONDS)
@@ -248,4 +223,10 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   override def countOfUndealtTasks: Int = undealtTasks.size()
   override def countOfProcessingTasks: Int = processingTasks.size()
 
+}
+
+object CallQueueServerImpl {
+  val NUMBER_OF_PARTITIONS: Int = 3
+  val NUMBER_OF_REPLICATIONS: Short = 3
+  val TIMEOUT: Duration = 30 seconds
 }

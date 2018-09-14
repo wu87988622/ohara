@@ -47,11 +47,11 @@ class Configurator private[configurator] (configuredHostname: String,
     case e: IllegalArgumentException =>
       extractUri { uri =>
         log.error(s"Request to $uri could not be handled normally because ${e.getMessage}")
-        complete(StatusCodes.BadRequest -> Error.of(e))
+        complete(StatusCodes.BadRequest -> Error(e))
       }
     case e: Throwable =>
       log.error("What happens here?", e)
-      complete(StatusCodes.ServiceUnavailable -> Error.of(e))
+      complete(StatusCodes.ServiceUnavailable -> Error(e))
   }
 
   /**

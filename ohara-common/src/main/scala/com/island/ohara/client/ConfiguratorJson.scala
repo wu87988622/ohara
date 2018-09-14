@@ -434,7 +434,7 @@ object ConfiguratorJson {
     )
   }
   object Error {
-    def of(e: Throwable): Error =
+    def apply(e: Throwable): Error =
       Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
   }
 }

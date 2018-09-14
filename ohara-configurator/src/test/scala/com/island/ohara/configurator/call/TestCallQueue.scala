@@ -6,20 +6,24 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.io.UuidUtil
-import com.island.ohara.kafka.KafkaUtil
+import com.island.ohara.kafka.{Consumer, KafkaUtil}
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
+import com.island.ohara.io.CloseOnce._
 class TestCallQueue extends With3Brokers with Matchers {
 
-  private[this] val topicName = getClass.getSimpleName
-  private[this] val groupId = UuidUtil.uuid()
+  private[this] val requestTopicName = random()
+  private[this] val responseTopicName = random()
   private[this] val defaultServerBuilder =
-    CallQueue.serverBuilder.brokers(testUtil.brokers).topicName(topicName).groupId(groupId)
+    CallQueue.serverBuilder
+      .brokers(testUtil.brokers)
+      .requestTopic(requestTopicName)
+      .responseTopic(responseTopicName)
+      .groupId(UuidUtil.uuid())
   private[this] val server0: CallQueueServer[SourceRequest, Source] =
     defaultServerBuilder.build[SourceRequest, Source]()
   private[this] val server1: CallQueueServer[SourceRequest, Source] =
@@ -27,7 +31,11 @@ class TestCallQueue extends With3Brokers with Matchers {
   private[this] val server2: CallQueueServer[SourceRequest, Source] =
     defaultServerBuilder.build[SourceRequest, Source]()
   private[this] val client: CallQueueClient[SourceRequest, Source] =
-    CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[SourceRequest, Source]()
+    CallQueue.clientBuilder
+      .brokers(testUtil.brokers)
+      .requestTopic(requestTopicName)
+      .responseTopic(responseTopicName)
+      .build[SourceRequest, Source]()
 
   private[this] val servers = Seq(server0, server1, server2)
 
@@ -49,7 +57,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     // get the task and assign a response
     val task = servers.find(_.countOfUndealtTasks == 1).get.take()
     task.complete(responseData)
-    Await.result(request, 3 second) shouldBe Right(responseData)
+    Await.result(request, 10 second) shouldBe Right(responseData)
   }
 
   @Test
@@ -94,7 +102,8 @@ class TestCallQueue extends With3Brokers with Matchers {
   def testSendInvalidRequest(): Unit = {
     val invalidClient: CallQueueClient[TopicInfoRequest, Source] = CallQueue.clientBuilder
       .brokers(testUtil.brokers)
-      .topicName(topicName)
+      .requestTopic(requestTopicName)
+      .responseTopic(responseTopicName)
       .expirationCleanupTime(3 seconds)
       .build[TopicInfoRequest, Source]()
     try {
@@ -111,22 +120,14 @@ class TestCallQueue extends With3Brokers with Matchers {
   }
 
   @Test
-  def testSendNoTopic(): Unit = {
-    an[IllegalArgumentException] should be thrownBy CallQueue.clientBuilder
-      .brokers(testUtil.brokers)
-      .topicName("aNonExistedTopic")
-      .build[SourceRequest, Source]()
-  }
-
-  @Test
   def testLease(): Unit = {
-    val anotherTopic = "testLease"
+    val requestTopic = newTopic()
+    val responseTopic = newTopic()
     val leaseCleanupFreq: Duration = 5 seconds
-
-    KafkaUtil.createTopic(testUtil.brokers, anotherTopic, 1, 1)
     val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue.clientBuilder
       .brokers(testUtil.brokers)
-      .topicName(anotherTopic)
+      .requestTopic(requestTopic)
+      .responseTopic(responseTopic)
       .expirationCleanupTime(leaseCleanupFreq)
       .build[SourceRequest, Source]()
     val request = timeoutClient.request(requestData, leaseCleanupFreq)
@@ -162,7 +163,11 @@ class TestCallQueue extends With3Brokers with Matchers {
   def testMultiRequestFromDifferentClients(): Unit = {
     val clientCount = 10
     val clients = 0 until clientCount map { _ =>
-      CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[SourceRequest, Source]()
+      CallQueue.clientBuilder
+        .brokers(testUtil.brokers)
+        .requestTopic(requestTopicName)
+        .responseTopic(responseTopicName)
+        .build[SourceRequest, Source]()
     }
     val requests = clients.map(_.request(requestData))
     // wait the one of servers receive the request
@@ -183,10 +188,14 @@ class TestCallQueue extends With3Brokers with Matchers {
   @Test
   def testCloseClientWithOnFlyRequests(): Unit = {
     val requestCount = 10
-    val topicName = methodName
-    KafkaUtil.createTopic(testUtil.brokers, topicName, 1, 1)
+    val requestTopic = newTopic()
+    val responseTopic = newTopic()
     val invalidClient: CallQueueClient[SourceRequest, Source] =
-      CallQueue.clientBuilder.brokers(testUtil.brokers).topicName(topicName).build[SourceRequest, Source]()
+      CallQueue.clientBuilder
+        .brokers(testUtil.brokers)
+        .requestTopic(requestTopic)
+        .responseTopic(responseTopic)
+        .build[SourceRequest, Source]()
     val requests = try 0 until requestCount map { _ =>
       invalidClient.request(requestData)
     } finally invalidClient.close()
@@ -194,6 +203,12 @@ class TestCallQueue extends With3Brokers with Matchers {
       case Left(exception) => exception.message shouldBe CallQueue.TERMINATE_TIMEOUT_EXCEPTION.getMessage
       case _               => throw new RuntimeException("All requests should fail")
     })
+  }
+
+  private[this] def newTopic(): String = {
+    val name = random()
+    KafkaUtil.createTopic(testUtil.brokers, name, 1, 1)
+    name
   }
 
   @After

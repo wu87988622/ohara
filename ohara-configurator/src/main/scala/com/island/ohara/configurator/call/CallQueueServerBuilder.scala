@@ -11,13 +11,10 @@ import scala.reflect.ClassTag
   */
 class CallQueueServerBuilder private[call] {
   private[this] var brokers: Option[String] = None
-  private[this] var topicName: Option[String] = None
+  private[this] var requestTopic: Option[String] = None
+  private[this] var responseTopic: Option[String] = None
   private[this] var groupId: Option[String] = None
-  private[this] var numberOfPartitions: Option[Int] = Some(CallQueue.DEFAULT_PARTITION_NUMBER)
-  private[this] var numberOfReplications: Option[Short] = Some(CallQueue.DEFAULT_REPLICATION_NUMBER)
   private[this] var pollTimeout: Option[Duration] = Some(CallQueue.DEFAULT_POLL_TIMEOUT)
-  private[this] var initializationTimeout: Option[Duration] = Some(CallQueue.DEFAULT_INITIALIZATION_TIMEOUT)
-  private[this] var topicOptions: Option[Map[String, String]] = Some(Map[String, String]())
 
   /**
     * set the kafka brokers information.
@@ -31,35 +28,22 @@ class CallQueueServerBuilder private[call] {
   }
 
   /**
-    * set the topic used to send/receive the request/response
-    *
-    * @param topicName topic name
+    * set the topic used to receive request
+    * @param requestTopic topic name
     * @return this builder
     */
-  def topicName(topicName: String): CallQueueServerBuilder = {
-    this.topicName = Some(topicName)
+  def requestTopic(requestTopic: String): CallQueueServerBuilder = {
+    this.requestTopic = Some(requestTopic)
     this
   }
 
   /**
-    * set the number of partition of initializing the topic
-    *
-    * @param numberOfPartitions the number of partition
+    * set the topic used to send response
+    * @param responseTopic topic name
     * @return this builder
     */
-  def numberOfPartitions(numberOfPartitions: Int): CallQueueServerBuilder = {
-    this.numberOfPartitions = Some(numberOfPartitions)
-    this
-  }
-
-  /**
-    * set the number of replications of initializing the topic
-    *
-    * @param numberOfReplications the number of partition
-    * @return this builder
-    */
-  def numberOfReplications(numberOfReplications: Short): CallQueueServerBuilder = {
-    this.numberOfReplications = Some(numberOfReplications)
+  def responseTopic(responseTopic: String): CallQueueServerBuilder = {
+    this.responseTopic = Some(responseTopic)
     this
   }
 
@@ -71,26 +55,6 @@ class CallQueueServerBuilder private[call] {
     */
   def pollTimeout(pollTimeout: Duration): CallQueueServerBuilder = {
     this.pollTimeout = Some(pollTimeout)
-    this
-  }
-
-  /**
-    * set the timeout of initializing the call queue client
-    *
-    * @param initializationTimeout initial timeout
-    * @return this builder
-    */
-  def initializationTimeout(initializationTimeout: Duration): CallQueueServerBuilder = {
-    this.initializationTimeout = Some(initializationTimeout)
-    this
-  }
-
-  /**
-    * @param topicOptions extra configuration passed to call queue client to build the topic
-    * @return this builder
-    */
-  def topicOptions(topicOptions: Map[String, String]): CallQueueServerBuilder = {
-    this.topicOptions = Some(topicOptions)
     this
   }
 
@@ -115,12 +79,9 @@ class CallQueueServerBuilder private[call] {
   def build[REQUEST: ClassTag, RESPONSE](): CallQueueServer[REQUEST, RESPONSE] =
     new CallQueueServerImpl[REQUEST, RESPONSE](
       brokers.get,
-      topicName.get,
+      requestTopic.get,
+      responseTopic.get,
       groupId.get,
-      numberOfPartitions.get,
-      numberOfReplications.get,
-      pollTimeout.get,
-      initializationTimeout.get,
-      topicOptions.get
+      pollTimeout.get
     )
 }

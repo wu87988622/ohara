@@ -15,11 +15,11 @@ class TestCallQueueClientBuilder extends MediumTest with Matchers {
   def testIncompleteArguments(): Unit = {
     var builder = CallQueueClient.builder()
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.initializationTimeout(10 seconds)
-    an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.pollTimeout(1 seconds)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.topicName(methodName)
+    builder = builder.requestTopic(methodName)
+    an[NoSuchElementException] should be thrownBy builder.build()
+    builder = builder.responseTopic(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.brokers(testUtil.brokers)
     // we haven't created the topic
