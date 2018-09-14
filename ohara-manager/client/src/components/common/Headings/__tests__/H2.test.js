@@ -15,7 +15,7 @@ describe('<H2 />', () => {
 
   it('renders self', () => {
     expect(wrapper).toHaveLength(1);
-    expect(wrapper.name()).toBe('H2Wrapper');
+    expect(wrapper.name()).toBe('H2');
     expect(wrapper.children().text()).toBe(props.children);
   });
 });

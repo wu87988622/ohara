@@ -6,7 +6,7 @@ const H5Wrapper = styled.h5`
   font-size: 18px;
 `;
 
-H5Wrapper.displayName = 'H5Wrapper';
+H5Wrapper.displayName = 'H5';
 
 const H5 = ({ children, ...rest }) => {
   return <H5Wrapper {...rest}>{children}</H5Wrapper>;

@@ -14,7 +14,7 @@ import {
   updateSink,
   fetchSink,
   updatePipeline,
-  fetchPipelines,
+  fetchPipeline,
 } from '../../../apis/pipelinesApis';
 import * as MESSAGES from '../../../constants/messages';
 import * as _ from '../../../utils/helpers';
@@ -84,7 +84,7 @@ class PipelineSinkPage extends React.Component {
     if (sinkId) {
       const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchHdfsPromise = this.fetchHdfs(sinkId);
-      const fetchPipelinePromise = this.fetchPipelines(pipelineId);
+      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
       Promise.all([
         fetchTopicsPromise,
         fetchHdfsPromise,
@@ -97,7 +97,7 @@ class PipelineSinkPage extends React.Component {
     }
 
     this.fetchTopics(topicId);
-    this.fetchPipelines(pipelineId);
+    this.fetchPipeline(pipelineId);
     this.fetchHdfs();
   };
 
@@ -146,10 +146,10 @@ class PipelineSinkPage extends React.Component {
     }
   };
 
-  fetchPipelines = async pipelineId => {
+  fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipelines(pipelineId);
+    const res = await fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
@@ -204,6 +204,7 @@ class PipelineSinkPage extends React.Component {
 
     const params = {
       name: 'untitled sink',
+      schema: null,
       class: 'jdbc',
       configs: {
         topic: JSON.stringify(currTopic),

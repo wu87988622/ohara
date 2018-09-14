@@ -43,6 +43,10 @@ class App extends React.Component {
               path="/pipeline/new/:page/:pipelineId/:topicId/:sourceId?/:sinkId?"
               component={PipelineNew}
             />
+            <Route
+              path="/pipeline/edit/:page/:pipelineId/:topicId/:sourceId?/:sinkId?"
+              component={PipelineNew}
+            />
             <Route path="/pipeline" component={Pipeline} />
             <Route path="/kafka" component={Kafka} />
             <Route path="/configuration" component={Configuration} />

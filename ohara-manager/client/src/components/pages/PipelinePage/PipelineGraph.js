@@ -157,14 +157,15 @@ class PipelineGraph extends React.Component {
 
     if (page && isUpdate) {
       resetGraph(graph);
-      const baseUrl = `/pipeline/new/${page}/${pipelineId}`;
+      const action = match.url.includes('/edit/') ? 'edit' : 'new';
+      const baseUrl = `/pipeline/${action}/${page}/${pipelineId}/${topicId}`;
 
       if (sinkId) {
-        history.push(`${baseUrl}/${topicId}/${sourceId}/${sinkId}`);
+        history.push(`${baseUrl}/${sourceId}/${sinkId}`);
       } else if (sourceId) {
-        history.push(`${baseUrl}/${topicId}/${sourceId}`);
+        history.push(`${baseUrl}/${sourceId}`);
       } else {
-        history.push(`${baseUrl}/${topicId}`);
+        history.push(`${baseUrl}`);
       }
     }
   };

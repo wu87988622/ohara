@@ -194,7 +194,9 @@ class PipelineNewPage extends React.Component {
         <React.Fragment>
           <ConfirmModal
             isActive={isModalActive}
-            title="Delete pipeline"
+            title="Delete pipeline?"
+            confirmBtnText="Yes, Delete this pipeline"
+            cancelBtnText="No, Keep it"
             handleCancel={this.handleModalClose}
             handleConfirm={this.handlePipelineDelete}
             message="Are you sure you want to delete this pipeline? This action cannot be redo!"
@@ -230,7 +232,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path="/pipeline/new/source"
+              path="/pipeline/(new|edit)/source"
               render={() => (
                 <PipelineSourcePage
                   {...this.props}
@@ -242,13 +244,13 @@ class PipelineNewPage extends React.Component {
               )}
             />
             <Route
-              path="/pipeline/new/topic"
+              path="/pipeline/(new|edit)/topic"
               render={() => (
                 <PipelineTopicPage isLoading={isLoading} name={topicName} />
               )}
             />
             <Route
-              path="/pipeline/new/sink"
+              path="/pipeline/(new|edit)/sink"
               render={() => (
                 <PipelineSinkPage
                   {...this.props}

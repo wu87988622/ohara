@@ -3,15 +3,21 @@ import { shallow } from 'enzyme';
 
 import PipelinePage from '../PipelinePage';
 
-const data = [
-  { name: 'a', status: 'stopped', uuid: '1' },
-  { name: 'b', status: 'start', uuid: '2' },
+const pipelines = [
+  { name: 'a', status: 'stopped', uuid: '1', objects: [{ abc: 'def' }] },
+  { name: 'b', status: 'start', uuid: '2', objects: [{ def: 'abc' }] },
 ];
+
+const props = {
+  match: {
+    url: '/to/a/new/page',
+  },
+};
 
 describe('<PipelinePage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<PipelinePage />);
+    wrapper = shallow(<PipelinePage {...props} />);
   });
 
   it('renders correctly', () => {
@@ -57,7 +63,7 @@ describe('<PipelinePage />', () => {
   });
 
   it('toggles <ConfirmModal />', () => {
-    wrapper.setState({ pipelines: data });
+    wrapper.setState({ pipelines });
 
     const uuid = '1234';
     wrapper.instance().handleDeletePipelineModalOpen(uuid);
@@ -72,7 +78,7 @@ describe('<PipelinePage />', () => {
   });
 
   it('renders <DataTable />', () => {
-    wrapper.setState({ pipelines: data });
+    wrapper.setState({ pipelines });
 
     const table = wrapper.find('DataTable');
     const _props = table.props();
@@ -81,7 +87,7 @@ describe('<PipelinePage />', () => {
     expect(_props.align).toBe('center');
 
     const trs = table.find('tr');
-    expect(trs.length).toBe(data.length);
+    expect(trs.length).toBe(pipelines.length);
 
     const rows = table.find('tr');
 
@@ -89,8 +95,8 @@ describe('<PipelinePage />', () => {
     const secondRow = rows.at(1).find('td');
 
     const expected = [
-      ['0', data[0].name, data[0].status],
-      ['1', data[1].name, data[1].status],
+      ['0', pipelines[0].name, pipelines[0].status],
+      ['1', pipelines[1].name, pipelines[1].status],
     ];
 
     firstRow.forEach((x, idx) => {

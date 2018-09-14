@@ -43,7 +43,7 @@ const H3Wrapper = styled(H3)`
 
 const Actions = styled.div`
   display: flex;
-  padding: 15px;
+  padding: 20px;
   justify-content: flex-end;
 `;
 
@@ -55,8 +55,8 @@ CancelBtn.displayName = 'CancelBtn';
 
 const CloseBtn = styled.div`
   position: absolute;
-  right: 22px;
-  top: 22px;
+  right: 20px;
+  top: 20px;
   cursor: pointer;
   color: ${lightGray};
   padding: 5px;

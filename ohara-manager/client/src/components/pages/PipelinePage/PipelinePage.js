@@ -186,6 +186,30 @@ class PipelinePage extends React.Component {
     });
   };
 
+  getEditUrl = pipeline => {
+    const { match } = this.props;
+    const { uuid: pipelineId, objects } = pipeline;
+
+    const { topic: topicId, source: sourceId, sink: sinkId } = objects.reduce(
+      (acc, { uuid, kind }) => {
+        acc[kind] = uuid;
+        return acc;
+      },
+      {},
+    );
+
+    const baseUrl = `${match.url}/edit/source/${pipelineId}/${topicId}`;
+    let url = baseUrl;
+
+    if (sinkId) {
+      url = `${baseUrl}/${sourceId}/${sinkId}`;
+    } else if (sourceId) {
+      url = `${baseUrl}/${sourceId}/`;
+    }
+
+    return url;
+  };
+
   reset = () => {
     this.setCurrentTopic();
   };
@@ -224,7 +248,9 @@ class PipelinePage extends React.Component {
 
           <ConfirmModal
             isActive={isDeletePipelineModalActive}
-            title="Delete pipeline"
+            title="Delete pipeline?"
+            confirmBtnText="Yes, Delete this pipeline"
+            cancelBtnText="No, Keep it"
             handleCancel={this.handleDeletePipelineModalClose}
             handleConfirm={this.handleDeletePipelineConfirm}
             message="Are you sure you want to delete this pipeline? This action cannot be redo!"
@@ -242,9 +268,12 @@ class PipelinePage extends React.Component {
             </TopWrapper>
             <Box>
               <DataTable headers={this.headers} align="center">
-                {pipelines.map(({ uuid, name, status }, idx) => {
+                {pipelines.map((pipeline, idx) => {
+                  const { uuid, name, status } = pipeline;
                   const startStopCls =
                     status === 'running' ? 'fa-stop-circle' : 'fa-play-circle';
+
+                  const editUrl = this.getEditUrl(pipeline);
 
                   // TODO: replace the Link URLs with the correct ones
                   return (
@@ -259,7 +288,7 @@ class PipelinePage extends React.Component {
                       </td>
 
                       <td className="has-icon">
-                        <LinkIcon to="/">
+                        <LinkIcon to={editUrl}>
                           <i className="far fa-edit" />
                         </LinkIcon>
                       </td>
