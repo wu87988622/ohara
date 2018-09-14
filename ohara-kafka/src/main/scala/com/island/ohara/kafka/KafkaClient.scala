@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaClient._
-import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException

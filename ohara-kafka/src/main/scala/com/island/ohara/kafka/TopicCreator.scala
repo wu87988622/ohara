@@ -48,7 +48,7 @@ abstract class TopicCreator {
     else {
       this.options
         .filter {
-          case (k, v) => options.contains(k)
+          case (k, _) => options.contains(k)
         }
         .foreach {
           case (k, v) =>

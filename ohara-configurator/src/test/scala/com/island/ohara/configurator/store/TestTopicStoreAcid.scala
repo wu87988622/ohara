@@ -5,6 +5,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.io.CloseOnce._
+import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -12,8 +13,12 @@ import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Futu
 import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
+  private[this] val topicName = "TestTopicStoreAcid"
+  doClose(KafkaClient(testUtil.brokers))(
+    _.topicCreator().numberOfReplications(1).numberOfPartitions(1).compacted().create(topicName))
+
   private[this] val store =
-    Store.builder().brokers(testUtil.brokers).topicName("TestTopicStoreAcid").buildBlocking[String, String]
+    Store.builder().brokers(testUtil.brokers).topicName(topicName).buildBlocking[String, String]
   private[this] val elapsedTime = 30 // second
   private[this] val readerCount = 5
   private[this] val updaterCount = 5

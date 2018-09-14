@@ -22,19 +22,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   private[this] val topicName = random()
+  doClose(KafkaClient(testUtil.brokers))(
+    _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
   private[this] val configurator0 =
     Configurator
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(
-        Store
-          .builder()
-          .numberOfPartitions(1)
-          .numberOfReplications(1)
-          .topicName(topicName)
-          .brokers(testUtil.brokers)
-          .buildBlocking[String, Any])
+      .store(Store.builder().topicName(topicName).brokers(testUtil.brokers).buildBlocking[String, Any])
       .kafkaClient(KafkaClient(testUtil.brokers))
       .connectClient(ConnectorClient(testUtil.workers))
       .build()

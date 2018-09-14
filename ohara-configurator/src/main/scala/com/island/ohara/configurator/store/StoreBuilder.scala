@@ -11,11 +11,7 @@ import scala.concurrent.duration.Duration
 class StoreBuilder {
   private[this] var brokers: Option[String] = None
   private[this] var topicName: Option[String] = None
-  private[this] var numberOfPartitions: Option[Int] = Some(Store.DEFAULT_NUMBER_OF_PARTITIONS)
-  private[this] var numberOfReplications: Option[Short] = Some(Store.DEFAULT_NUMBER_OF_REPLICATIONS)
   private[this] var pollTimeout: Option[Duration] = Some(Store.DEFAULT_POLL_TIMEOUT)
-  private[this] var initializationTimeout: Option[Duration] = Some(Store.DEFAULT_INITIALIZATION_TIMEOUT)
-  private[this] var topicOptions: Option[Map[String, String]] = Some(Map[String, String]())
 
   /**
     * set the kafka brokers information.
@@ -38,26 +34,6 @@ class StoreBuilder {
   }
 
   /**
-    * set the number of partition of initializing the topic
-    * @param numberOfPartitions the number of partition
-    * @return this builder
-    */
-  def numberOfPartitions(numberOfPartitions: Int): StoreBuilder = {
-    this.numberOfPartitions = Some(numberOfPartitions)
-    this
-  }
-
-  /**
-    * set the number of replications of initializing the topic
-    * @param numberOfReplications the number of partition
-    * @return this builder
-    */
-  def numberOfReplications(numberOfReplications: Short): StoreBuilder = {
-    this.numberOfReplications = Some(numberOfReplications)
-    this
-  }
-
-  /**
     * the time to poll the consumer to receive the response.
     * @param pollTimeout poll time in millisecond
     * @return this builder
@@ -67,43 +43,16 @@ class StoreBuilder {
     this
   }
 
-  /**
-    * set the timeout of initializing the StoreBuilder
-    * @param initializationTimeout initial timeout
-    * @return this builder
-    */
-  def initializationTimeout(initializationTimeout: Duration): StoreBuilder = {
-    this.initializationTimeout = Some(initializationTimeout)
-    this
-  }
-
-  /**
-    * @param topicOptions extra configuration passed to StoreBuilder to build the topic
-    * @return this builder
-    */
-  def topicOptions(topicOptions: Map[String, String]): StoreBuilder = {
-    this.topicOptions = Some(topicOptions)
-    this
-  }
-
   def build[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] = new TopicStore(
     brokers.get,
     topicName.get,
-    numberOfPartitions.get,
-    numberOfReplications.get,
-    pollTimeout.get,
-    initializationTimeout.get,
-    topicOptions.get
+    pollTimeout.get
   )
 
   def buildBlocking[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): BlockingStore[K, V] =
     new TopicStore(
       brokers.get,
       topicName.get,
-      numberOfPartitions.get,
-      numberOfReplications.get,
       pollTimeout.get,
-      initializationTimeout.get,
-      topicOptions.get
     )(keySerializer, valueSerializer) with BlockingStore[K, V]
 }

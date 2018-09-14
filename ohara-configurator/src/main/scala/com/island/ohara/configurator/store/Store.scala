@@ -2,8 +2,8 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.serialization.Serializer
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
   * A key-value store. It is used to save the component information

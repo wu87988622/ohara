@@ -1,5 +1,7 @@
 package com.island.ohara.rule
 
+import java.util.Objects
+
 import com.island.ohara.io.UuidUtil
 import com.typesafe.scalalogging.Logger
 import org.junit.Rule
@@ -24,7 +26,7 @@ trait LargeTest extends JUnitSuiteLike {
   @Rule
   def testName: TestName = _testName
 
-  def methodName: String = testName.getMethodName
+  def methodName: String = Objects.requireNonNull(testName.getMethodName)
 
   def random(): String = UuidUtil.uuid()
 }

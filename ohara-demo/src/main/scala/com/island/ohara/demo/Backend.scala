@@ -78,16 +78,12 @@ object Backend {
         }
       }
       val topicName = s"demo-${System.currentTimeMillis()}"
+      doClose(KafkaClient(util.brokers))(
+        _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
+      )
       val configurator = Configurator
         .builder()
-        .store(
-          Store
-            .builder()
-            .brokers(util.brokers)
-            .topicName(topicName)
-            .numberOfReplications(1)
-            .numberOfPartitions(1)
-            .buildBlocking[String, Any])
+        .store(Store.builder().brokers(util.brokers).topicName(topicName).buildBlocking[String, Any])
         .kafkaClient(KafkaClient(util.brokers))
         .connectClient(ConnectorClient(util.workers))
         .hostname("0.0.0.0")

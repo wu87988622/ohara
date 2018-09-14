@@ -8,8 +8,7 @@ import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.common.config.TopicConfig
-import org.apache.kafka.common.errors.WakeupException
+import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
 import scala.concurrent._
 import scala.concurrent.duration.{Duration, _}
@@ -38,14 +37,9 @@ import scala.util.{Failure, Success}
   * @tparam K key type
   * @tparam V value type
   */
-private class TopicStore[K, V](
-  brokers: String,
-  topicName: String,
-  numberOfPartitions: Int,
-  numberOfReplications: Short,
-  pollTimeout: Duration,
-  initializationTimeout: Duration,
-  topicOptions: Map[String, String])(implicit keySerializer: Serializer[K], valueSerializer: Serializer[V])
+private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: Duration)(
+  implicit keySerializer: Serializer[K],
+  valueSerializer: Serializer[V])
     extends Store[K, V]
     with CloseOnce {
 
@@ -66,31 +60,27 @@ private class TopicStore[K, V](
   private[this] val headerIndexer = new AtomicLong(0)
   private[this] val logger = Logger(getClass.getName)
 
-  if (topicOptions.get(TopicConfig.CLEANUP_POLICY_CONFIG).fold(false)(_ != TopicConfig.CLEANUP_POLICY_COMPACT))
-    throw new IllegalArgumentException(
-      s"The topic store require the ${TopicConfig.CLEANUP_POLICY_CONFIG}=${TopicConfig.CLEANUP_POLICY_COMPACT}")
-
-  log.info(
-    s"start to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")
-
   /**
     * Initialize the topic
     */
   CloseOnce.doClose(KafkaClient(brokers)) { client =>
     if (!client.exist(topicName))
-      client
+      try client
         .topicCreator()
-        .numberOfPartitions(numberOfPartitions)
-        .numberOfReplications(numberOfReplications)
-        .options(topicOptions)
+        .numberOfPartitions(TopicStore.NUMBER_OF_PARTITIONS)
+        .numberOfReplications(TopicStore.NUMBER_OF_REPLICATIONS)
         // enable kafka save the latest message for each key
         .compacted()
-        .timeout(initializationTimeout)
+        .timeout(TopicStore.TIMEOUT)
         .create(topicName)
+      catch {
+        case e: ExecutionException =>
+          e.getCause match {
+            case _: TopicExistsException => log.error(s"$topicName exists but we didn't notice this fact")
+            case _                       => if (e.getCause == null) throw e else throw e.getCause
+          }
+      }
   }
-
-  log.info(
-    s"succeed to initialize the topic:$topicName partitions:$numberOfPartitions replications:$numberOfReplications")
 
   private[this] val consumer = newOrClose {
     Consumer.builder().topicName(topicName).brokers(brokers).offsetFromBegin().groupId(uuid).build[K, V]
@@ -210,4 +200,10 @@ private class TopicStore[K, V](
   override def size: Int = cache.size
 
   override def exist(key: K): Future[Boolean] = cache.exist(key)
+}
+
+object TopicStore {
+  val NUMBER_OF_PARTITIONS: Int = 3
+  val NUMBER_OF_REPLICATIONS: Short = 3
+  val TIMEOUT: Duration = 30 seconds
 }

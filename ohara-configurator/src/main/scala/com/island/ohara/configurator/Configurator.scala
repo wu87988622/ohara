@@ -164,7 +164,14 @@ object Configurator {
       if (brokers.isEmpty || workers.isEmpty) {
         standalone = true
         Configurator.builder().noCluster.hostname(hostname).port(port).build()
-      } else
+      } else {
+        val kafkaClient = KafkaClient(brokers.get)
+        kafkaClient
+          .topicCreator()
+          .numberOfReplications(numberOfReplications)
+          .numberOfPartitions(numberOfPartitions)
+          .compacted()
+          .create(topicName)
         Configurator
           .builder()
           .store(
@@ -172,14 +179,13 @@ object Configurator {
               .builder()
               .brokers(brokers.get)
               .topicName(topicName)
-              .numberOfReplications(numberOfReplications)
-              .numberOfPartitions(numberOfPartitions)
               .buildBlocking[String, Any])
-          .kafkaClient(KafkaClient(brokers.get))
+          .kafkaClient(kafkaClient)
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
           .port(port)
           .build()
+      }
     hasRunningConfigurator = true
     try {
       LOG.info(
