@@ -1,13 +1,13 @@
 package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 
+import com.island.ohara.client.FtpClient
+import com.island.ohara.connector.ftp.FtpSinkTask._
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
-import FtpSinkTask._
-import com.island.ohara.client.FtpClient
 class FtpSinkTask extends RowSinkTask {
   private[this] var config: TaskConfig = _
   private[this] var props: FtpSinkTaskProps = _
