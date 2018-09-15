@@ -46,30 +46,36 @@ class FtpSourceTask extends RowSourceTask {
     def list(folder: String): Seq[String] =
       ftpClient.listFileNames(folder).map(IoUtil.path(folder, _)).filter(_.hashCode % props.total == props.hash)
 
-    def toRow(line: String): Row = {
+    def toRow(line: String, header: Map[String, Int]): Row = {
       val splits = line.split(",")
-      if (splits.length < schema.size) throw new IllegalStateException(s"schema doesn't match to $line")
+      header.values.foreach(
+        index =>
+          if (index >= splits.size)
+            throw new IllegalStateException(s"$line doesn't match to header:${header.keys.mkString(",")}"))
       Row(
         schema
-          .sortBy(_.order)
-          .map(column => {
-            // column order start from 1 rather than 0
-            val item = splits(column.order - 1)
-            Cell(
-              column.name,
-              column.typeName match {
-                case DataType.BOOLEAN => item.toBoolean
-                case DataType.SHORT   => item.toShort
-                case DataType.INT     => item.toInt
-                case DataType.LONG    => item.toLong
-                case DataType.FLOAT   => item.toFloat
-                case DataType.DOUBLE  => item.toDouble
-                case DataType.STRING  => item
-                // TODO: should we convert bytes?
-                case _ => throw new IllegalArgumentException("Unsupported type...")
-              }
-            )
-          }): _*)
+          .map(c => (c, header(c.name)))
+          .map {
+            case (column, fromIndex) =>
+              val item = splits(fromIndex)
+              (column.order,
+               Cell(
+                 column.name,
+                 column.typeName match {
+                   case DataType.BOOLEAN => item.toBoolean
+                   case DataType.SHORT   => item.toShort
+                   case DataType.INT     => item.toInt
+                   case DataType.LONG    => item.toLong
+                   case DataType.FLOAT   => item.toFloat
+                   case DataType.DOUBLE  => item.toDouble
+                   case DataType.STRING  => item
+                   // TODO: should we convert bytes?
+                   case _ => throw new IllegalArgumentException("Unsupported type...")
+                 }
+               ))
+          }
+          .sortBy(_._1)
+          .map(_._2): _*)
     }
 
     try if (files.isEmpty) files ++= list(props.input)
@@ -82,17 +88,23 @@ class FtpSourceTask extends RowSourceTask {
         val path = files.dequeue()
         try {
           val lineAndIndex = ftpClient.readLines(path, props.encode.getOrElse("UTF-8")).zipWithIndex.filter {
-            case (_, index) => offsets.predicate(path, index)
+            // first line is "header" so it is unnecessary to skip it
+            case (_, index) => if (index == 0) true else offsets.predicate(path, index)
           }
-          val records: Seq[RowSourceRecord] = lineAndIndex.flatMap {
-            case (line, index) =>
-              val p = partition(path)
-              val o = offset(index)
-              val r = toRow(line)
-              topics.map(t => {
-                RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).row(r).build(t)
-              })
-          }
+          val records: Seq[RowSourceRecord] = if (lineAndIndex.length > 1) {
+            val header: Map[String, Int] = lineAndIndex.head._1.split(",").zipWithIndex.toMap
+            schema
+              .map(_.name)
+              .foreach(name =>
+                if (!header.contains(name)) throw new IllegalArgumentException(s"schema $name doesn't exist"))
+            lineAndIndex.filter(_._2 >= 1).flatMap {
+              case (line, index) =>
+                val p = partition(path)
+                val o = offset(index)
+                val r = toRow(line, header)
+                topics.map(t => RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).row(r).build(t))
+            }
+          } else Seq.empty
           if (records.nonEmpty) {
             // update cache
             lineAndIndex.map(_._2).foreach(offsets.update(path, _))

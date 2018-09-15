@@ -23,6 +23,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     Row(Cell("name", "chia"), Cell("ranking", 1), Cell("single", false)),
     Row(Cell("name", "jack"), Cell("ranking", 99), Cell("single", true))
   )
+  private[this] val header: String = rows.head.map(_.name).mkString(",")
   private[this] val data: Seq[String] = rows.map(row => {
     row.map(_.value.toString).mkString(",")
   })
@@ -62,6 +63,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
     val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.input, "abc"))))
     try {
+      writer.append(header)
+      writer.newLine()
       data.foreach(line => {
         writer.append(line)
         writer.newLine()
