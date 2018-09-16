@@ -38,10 +38,16 @@ class FtpSinkTask extends RowSinkTask {
       .map(record => {
         (record,
          record.row
-           .filter(c => config.schema.exists(_.name == c.name))
-           .map(c => (config.schema.find(_.name == c.name).get, c.value))
+         // pass if there is no schema
+           .filter(c => config.schema.isEmpty || config.schema.exists(_.name == c.name))
+           //
+           .zipWithIndex
+           .map {
+             case (c, index) =>
+               (if (config.schema.isEmpty) index else config.schema.find(_.name == c.name).get.order, c.value)
+           }
            .toSeq
-           .sortBy(_._1.order)
+           .sortBy(_._1)
            .map(_._2.toString)
            .mkString(","))
       })

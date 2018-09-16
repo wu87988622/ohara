@@ -62,9 +62,10 @@ object ConfiguratorJson {
     val COLUMN_KEY: String = "__row_connector_schema"
     def toString(schema: Seq[Column]): String =
       schema.map(c => s"${c.name},${c.typeName.name},${c.order}").mkString(",")
-    def toColumns(columnsString: String): Seq[Column] = {
+    def toColumns(columnsString: String): Seq[Column] = if (columnsString == null || columnsString.isEmpty) Seq.empty
+    else {
       val splits = columnsString.split(",")
-      if (splits.length % 3 != 0) throw new IllegalArgumentException("invalid format of columns string")
+      if (splits.length % 3 != 0) throw new IllegalArgumentException(s"invalid format of columns string:$columnsString")
       splits
         .grouped(3)
         .map {

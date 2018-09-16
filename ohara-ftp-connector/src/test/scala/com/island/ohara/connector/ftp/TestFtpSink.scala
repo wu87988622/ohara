@@ -135,6 +135,34 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testNormalCaseWithoutSchema(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    setupData(topicName)
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSink])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .config(props.toMap)
+      .create()
+
+    try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
+      OharaTestUtil.await(() => ftpClient.listFileNames(props.output).size == 1, 10 seconds)
+      val lines = ftpClient.readLines(IoUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      lines.length shouldBe 1
+      val items = lines.head.split(",")
+      items.length shouldBe data.size
+      items(0) shouldBe data.cell(0).value.toString
+      items(1) shouldBe data.cell(1).value.toString
+      items(2) shouldBe data.cell(2).value.toString
+    } finally testUtil.connectorClient.delete(methodName)
+  }
+
+  @Test
   def testPartialColumns(): Unit = {
     val topicName = methodName
     val connectorName = methodName

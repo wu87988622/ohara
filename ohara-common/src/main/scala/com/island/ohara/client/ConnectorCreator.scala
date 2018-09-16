@@ -17,7 +17,7 @@ abstract class ConnectorCreator {
   private[this] var config: mutable.HashMap[String, String] = _
   private[this] var _disableKeyConverter: Boolean = false
   private[this] var _disableValueConverter: Boolean = false
-  private[this] var schema: Seq[Column] = _
+  private[this] var schema: Seq[Column] = Seq.empty
 
   /**
     * config the key converter be org.apache.kafka.connect.converters.ByteArrayConverter. It is useful if the data in topic
