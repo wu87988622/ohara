@@ -52,8 +52,14 @@ class FtpSourceTask extends RowSourceTask {
         index =>
           if (index >= splits.size)
             throw new IllegalStateException(s"$line doesn't match to header:${header.keys.mkString(",")}"))
+
+      val newSchema: Seq[Column] = if (schema.isEmpty) header.map {
+        case (name, order) => Column(name = name, order = order, typeName = DataType.STRING)
+      }.toSeq
+      else schema
+
       Row(
-        schema
+        newSchema
           .map(c => (c, header(c.name)))
           .map {
             case (column, fromIndex) =>

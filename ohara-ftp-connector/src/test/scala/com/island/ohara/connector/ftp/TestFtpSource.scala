@@ -111,6 +111,42 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testNormalCaseWithoutSchema(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSource])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .config(props.toMap)
+      .create()
+    try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
+      val consumer =
+        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+      val records = consumer.poll(20 seconds, data.length)
+      records.size shouldBe data.length
+      val row0 = records(0).value.get
+      row0.size shouldBe 3
+      // NOTED: without schema all value are converted to string
+      row0.cell(0) shouldBe Cell(rows(0).cell(0).name, rows(0).cell(0).value.toString)
+      row0.cell(1) shouldBe Cell(rows(0).cell(1).name, rows(0).cell(1).value.toString)
+      row0.cell(2) shouldBe Cell(rows(0).cell(2).name, rows(0).cell(2).value.toString)
+      val row1 = records(1).value.get
+      row1.size shouldBe 3
+      row1.cell(0) shouldBe Cell(rows(1).cell(0).name, rows(1).cell(0).value.toString)
+      row1.cell(1) shouldBe Cell(rows(1).cell(1).name, rows(1).cell(1).value.toString)
+      row1.cell(2) shouldBe Cell(rows(1).cell(2).name, rows(1).cell(2).value.toString)
+    } finally testUtil.connectorClient.delete(methodName)
+    ftpClient.listFileNames(props.input).size shouldBe 0
+    ftpClient.listFileNames(props.output).size shouldBe 1
+    ftpClient.listFileNames(props.error).size shouldBe 0
+  }
+
+  @Test
   def testPartialColumns(): Unit = {
     val topicName = methodName
     val connectorName = methodName
