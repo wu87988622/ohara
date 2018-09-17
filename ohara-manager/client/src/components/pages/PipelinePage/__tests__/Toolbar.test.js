@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import Toolbar from '../Toolbar';
-import { getTestById } from '../../../../utils/testHelpers';
+import { getTestById } from 'utils/testHelpers';
 
 const props = {
   match: {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-import { handleError } from '../utils/apiHelpers';
-import * as _ from '../utils/helpers';
+import { handleError } from 'utils/apiHelpers';
+import * as _ from 'utils/helpers';
 
 export const login = async ({ username, password }) => {
   try {

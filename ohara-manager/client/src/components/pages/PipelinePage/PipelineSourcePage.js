@@ -4,6 +4,9 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
+import * as URLS from 'constants/urls';
+import * as _ from 'utils/helpers';
+import * as MESSAGES from 'constants/messages';
 import { Box } from 'common/Layout';
 import { Warning } from 'common/Messages';
 import { H5 } from 'common/Headings';
@@ -12,6 +15,7 @@ import { lightBlue, whiteSmoke } from 'theme/variables';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
+import { fetchCluster } from 'apis/clusterApis';
 import {
   queryRdb,
   createSource,
@@ -21,10 +25,6 @@ import {
   fetchPipeline,
   updatePipeline,
 } from 'apis/pipelinesApis';
-import { fetchCluster } from 'apis/clusterApis';
-import * as URLS from 'constants/urls';
-import * as _ from 'utils/helpers';
-import * as MESSAGES from 'constants/messages';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;

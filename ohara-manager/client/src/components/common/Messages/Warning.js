@@ -7,7 +7,7 @@ import {
   lightYellow,
   lightOrange,
   radiusCompact,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const WarningWrapper = styled.p`
   font-size: 13px;

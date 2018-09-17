@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { H2 } from '../../common/Headings';
+import { H2 } from 'common/Headings';
 import { white, radiusNormal, shadowNormal } from '../../../theme/variables';
 
 const Wrapper = styled.div`

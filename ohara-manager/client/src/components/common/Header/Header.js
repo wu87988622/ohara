@@ -2,9 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
-import { white, lighterGray } from '../../../theme/variables';
-import { deleteUserKey } from '../../../utils/authHelpers';
-import * as URLS from '../../../constants/urls';
+import * as URLS from 'constants/urls';
+import { white, lighterGray } from 'theme/variables';
+import { deleteUserKey } from 'utils/authHelpers';
 
 const HeaderWrapper = styled.header`
   background-color: ${white};

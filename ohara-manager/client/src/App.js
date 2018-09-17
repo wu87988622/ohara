@@ -1,17 +1,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
-import Header from './components/common/Header';
-import Nav from './components/common/Nav';
-import HomePage from './components/pages/HomePage';
-import Pipeline from './components/pages/PipelinePage';
-import PipelineNew from './components/pages/PipelinePage/PipelineNewPage';
-import Kafka from './components/pages/KafkaPage';
-import Configuration from './components/pages/ConfigurationPage';
-import LoginPage from './components/pages/LoginPage';
-import LogoutPage from './components/pages/LogoutPage';
-import NotFoundPage from './components/pages/NotFoundPage';
-import { getUserKey } from './utils/authHelpers';
+import Header from 'components/common/Header';
+import Nav from 'components/common/Nav';
+import HomePage from 'components/pages/HomePage';
+import Pipeline from 'components/pages/PipelinePage';
+import PipelineNew from 'components/pages/PipelinePage/PipelineNewPage';
+import Kafka from 'components/pages/KafkaPage';
+import Configuration from 'components/pages/ConfigurationPage';
+import LoginPage from 'components/pages/LoginPage';
+import LogoutPage from 'components/pages/LogoutPage';
+import NotFoundPage from 'components/pages/NotFoundPage';
+import { getUserKey } from 'utils/authHelpers';
 
 class App extends React.Component {
   state = {

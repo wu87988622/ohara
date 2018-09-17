@@ -3,16 +3,16 @@ import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import styled from 'styled-components';
 
-import { Input, Button } from '../../common/Form';
-import { H2 } from '../../common/Headings';
-import { cancelBtn, primaryBtn } from '../../../theme/btnTheme';
+import { Input, Button } from 'common/Form';
+import { H2 } from 'common/Headings';
+import { cancelBtn, primaryBtn } from 'theme/btnTheme';
 import {
   lightBlue,
   lightGray,
   lighterGray,
   red,
   durationNormal,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const modalStyles = {
   content: {

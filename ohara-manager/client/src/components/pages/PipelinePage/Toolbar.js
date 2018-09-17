@@ -2,7 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { HadoopIcon } from '../../common/Icons';
+import * as _ from 'utils/helpers';
+import { HadoopIcon } from 'common/Icons';
 import {
   lightestBlue,
   lighterBlue,
@@ -10,8 +11,7 @@ import {
   radiusNormal,
   durationNormal,
   blue,
-} from '../../../theme/variables';
-import * as _ from '../../../utils/helpers';
+} from 'theme/variables';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;

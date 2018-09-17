@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import KafkaPage from '../KafkaPage';
-import { LEAVE_WITHOUT_SAVE } from '../../../constants/messages';
+import { LEAVE_WITHOUT_SAVE } from 'constants/messages';
 
 describe('<KafkaPage />', () => {
   let wrapper;

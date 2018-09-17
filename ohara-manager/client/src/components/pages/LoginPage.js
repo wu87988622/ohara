@@ -4,24 +4,22 @@ import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
 import { Redirect } from 'react-router-dom';
 
-import { Input, Button } from '../common/Form';
-import { setUserKey } from '../../utils/authHelpers';
-import { login } from '../../apis/authApis';
-import { LOGIN } from '../../constants/documentTitles';
-import * as URL from '../../constants/urls';
+import * as URL from 'constants/urls';
+import * as _ from 'utils/helpers';
+import * as LOGIN_PAGE from 'constants/login';
+import * as MESSAGES from 'constants/messages';
+import { Input, Button } from 'common/Form';
+import { setUserKey } from 'utils/authHelpers';
+import { login } from 'apis/authApis';
+import { LOGIN } from 'constants/documentTitles';
+import { primaryBtn } from 'theme/btnTheme';
 import {
   white,
   radiusNormal,
   lighterGray,
   darkerBlue,
   shadowNormal,
-} from '../../theme/variables';
-import * as _ from '../../utils/helpers';
-
-import { primaryBtn } from '../../theme/btnTheme';
-
-import * as LOGIN_PAGE from '../../constants/login';
-import * as MESSAGES from '../../constants/messages';
+} from 'theme/variables';
 
 const FormContainer = styled.div`
   display: flex;

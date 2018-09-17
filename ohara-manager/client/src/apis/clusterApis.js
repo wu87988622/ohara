@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-import { handleError } from '../utils/apiHelpers';
-import { get } from '../utils/helpers';
+import { handleError } from 'utils/apiHelpers';
+import { get } from 'utils/helpers';
 
 export const fetchCluster = async () => {
   try {

@@ -5,17 +5,17 @@ import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
-import { H2 } from '../../common/Headings';
-import { fetchCluster } from '../../../apis/clusterApis';
-import { createTopics, fetchTopics } from '../../../apis/topicApis';
-import { Input, Button } from '../../common/Form';
-import { ListTable } from '../../common/Table';
-import { primaryBtn } from '../../../theme/btnTheme';
-import { get } from '../../../utils/helpers';
-import { KAFKA } from '../../../constants/documentTitles';
-import { lightBlue } from '../../../theme/variables';
-import { Box } from '../../common/Layout';
-import * as MESSAGES from '../../../constants/messages';
+import * as MESSAGES from 'constants/messages';
+import { H2 } from 'common/Headings';
+import { fetchCluster } from 'apis/clusterApis';
+import { createTopics, fetchTopics } from 'apis/topicApis';
+import { Input, Button } from 'common/Form';
+import { ListTable } from 'common/Table';
+import { primaryBtn } from 'theme/btnTheme';
+import { get } from 'utils/helpers';
+import { KAFKA } from 'constants/documentTitles';
+import { lightBlue } from 'theme/variables';
+import { Box } from 'common/Layout';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;

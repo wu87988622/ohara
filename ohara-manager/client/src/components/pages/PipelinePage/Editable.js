@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Input } from '../../common/Form';
-import * as _ from '../../../utils/helpers';
+import * as _ from 'utils/helpers';
+import { Input } from 'common/Form';
 
 class EditableLabel extends React.Component {
   static propTypes = {

@@ -3,11 +3,10 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import cx from 'classnames';
 
-import { Box } from '../../common/Layout';
-import { H5 } from '../../common/Headings';
-import { HadoopIcon } from '../../common/Icons';
-import * as _ from '../../../utils/helpers';
-
+import * as _ from 'utils/helpers';
+import { Box } from 'common/Layout';
+import { H5 } from 'common/Headings';
+import { HadoopIcon } from 'common/Icons';
 import {
   white,
   radiusRounded,
@@ -17,7 +16,7 @@ import {
   blue,
   blueHover,
   durationNormal,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;

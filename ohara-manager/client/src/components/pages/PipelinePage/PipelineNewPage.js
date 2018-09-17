@@ -4,22 +4,22 @@ import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import { Route, Redirect } from 'react-router-dom';
 
+import * as _ from 'utils/helpers';
+import * as MESSAGES from 'constants/messages';
 import PipelineSourcePage from './PipelineSourcePage';
 import PipelineTopicPage from './PipelineTopicPage';
 import PipelineSinkPage from './PipelineSinkPage';
 import Toolbar from './Toolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
-import { ConfirmModal } from '../../common/Modal';
-import { deleteBtn } from '../../../theme/btnTheme';
-import { Button } from '../../common/Form';
-import { fetchTopic } from '../../../apis/topicApis';
-import { deletePipeline } from '../../../apis/pipelinesApis';
-import { H2 } from '../../common/Headings';
-import { PIPELINE } from '../../../constants/urls';
-import { PIPELINE_NEW } from '../../../constants/documentTitles';
-import * as _ from '../../../utils/helpers';
-import * as MESSAGES from '../../../constants/messages';
+import { ConfirmModal } from 'common/Modal';
+import { deleteBtn } from 'theme/btnTheme';
+import { Button } from 'common/Form';
+import { fetchTopic } from 'apis/topicApis';
+import { deletePipeline } from 'apis/pipelinesApis';
+import { H2 } from 'common/Headings';
+import { PIPELINE } from 'constants/urls';
+import { PIPELINE_NEW } from 'constants/documentTitles';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;

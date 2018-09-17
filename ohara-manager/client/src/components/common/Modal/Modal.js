@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import styled from 'styled-components';
 
-import { Button } from '../../common/Form';
-import { H2 } from '../../common/Headings';
-import { cancelBtn, primaryBtn } from '../../../theme/btnTheme';
+import { Button } from 'common/Form';
+import { H2 } from 'common/Headings';
+import { cancelBtn, primaryBtn } from 'theme/btnTheme';
 import {
   lightGray,
   lighterGray,
@@ -13,7 +13,7 @@ import {
   red,
   durationNormal,
   radiusNormal,
-} from '../../../theme/variables';
+} from 'theme/variables';
 
 const ModalWrapper = styled(ReactModal)`
   top: 15%;

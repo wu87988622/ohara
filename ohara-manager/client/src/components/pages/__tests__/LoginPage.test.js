@@ -2,15 +2,14 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import { shallow } from 'enzyme';
 
-import localStorageMock from '../../../__mocks__/localStorage';
-
+import localStorageMock from '__mocks__/localStorage';
 import LoginPage from '../LoginPage';
-import * as LOGIN_PAGE from '../../../constants/login';
+import * as LOGIN_PAGE from 'constants/login';
 import {
   PAGE_HEADING,
   USERNAME_PLACEHOLDER,
   PASSWORD_PLACEHOLDER,
-} from '../../../constants/login';
+} from 'constants/login';
 
 window.localStorage = localStorageMock;
 

@@ -4,23 +4,23 @@ import DocumentTitle from 'react-document-title';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
-import { Modal, ConfirmModal } from '../../common/Modal';
-import { DataTable } from '../../common/Table';
-import { Box } from '../../common/Layout';
-import { Warning } from '../../common/Messages';
-import { fetchTopics } from '../../../apis/topicApis';
+import * as _ from 'utils/helpers';
+import * as MESSAGES from 'constants/messages';
+import { Modal, ConfirmModal } from 'common/Modal';
+import { DataTable } from 'common/Table';
+import { Box } from 'common/Layout';
+import { Warning } from 'common/Messages';
+import { fetchTopics } from 'apis/topicApis';
+import { H2 } from 'common/Headings';
+import { Button, Select } from 'common/Form';
+import { primaryBtn } from 'theme/btnTheme';
+import { PIPELINE } from 'constants/documentTitles';
+import { lightBlue, blue, red } from 'theme/variables';
 import {
   createPipeline,
   fetchPipelines,
   deletePipeline,
-} from '../../../apis/pipelinesApis';
-import { H2 } from '../../common/Headings';
-import { Button, Select } from '../../common/Form';
-import { primaryBtn } from '../../../theme/btnTheme';
-import { PIPELINE } from '../../../constants/documentTitles';
-import { lightBlue, blue, red } from '../../../theme/variables';
-import * as _ from '../../../utils/helpers';
-import * as MESSAGES from '../../../constants/messages';
+} from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;

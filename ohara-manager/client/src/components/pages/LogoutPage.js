@@ -2,10 +2,10 @@ import React from 'react';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
-import { logout } from '../../apis/authApis';
-import { deleteUserKey } from '../../utils/authHelpers';
-import { HOME } from '../../constants/urls';
-import { LOGOUT_SUCCESS } from '../../constants/messages';
+import { logout } from 'apis/authApis';
+import { deleteUserKey } from 'utils/authHelpers';
+import { HOME } from 'constants/urls';
+import { LOGOUT_SUCCESS } from 'constants/messages';
 
 class LogoutPage extends React.Component {
   state = {

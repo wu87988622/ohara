@@ -4,18 +4,14 @@ import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
+import * as _ from 'utils/helpers';
+import * as MESSAGES from 'constants/messages';
 import { AppWrapper } from 'common/Layout';
 import { Input, Button, FormGroup, Label } from 'common/Form';
 import { primaryBtn, cancelBtn } from 'theme/btnTheme';
 import { lighterGray } from 'theme/variables';
 import { CONFIGURATION } from 'constants/documentTitles';
-import * as _ from 'utils/helpers';
-import * as MESSAGES from 'constants/messages';
-import {
-  validateHdfs,
-  saveHdfs,
-  fetchHdfs,
-} from '../../apis/configurationApis';
+import { validateHdfs, saveHdfs, fetchHdfs } from 'apis/configurationApis';
 
 const FormInner = styled.div`
   padding: 45px 30px;

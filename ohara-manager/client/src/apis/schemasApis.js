@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { handleError } from '../utils/apiHelpers';
+import { handleError } from 'utils/apiHelpers';
 
 export const fetchSchemas = async () => {
   try {

@@ -3,21 +3,21 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
-import { Box } from '../../common/Layout';
-import { H5 } from '../../common/Headings';
-import { lightBlue } from '../../../theme/variables';
-import { Input, Select, FormGroup, Label } from '../../common/Form';
-import { fetchTopics } from '../../../apis/topicApis';
-import { fetchHdfs } from '../../../apis/configurationApis';
+import * as MESSAGES from 'constants/messages';
+import * as _ from 'utils/helpers';
+import { Box } from 'common/Layout';
+import { H5 } from 'common/Headings';
+import { lightBlue } from 'theme/variables';
+import { Input, Select, FormGroup, Label } from 'common/Form';
+import { fetchTopics } from 'apis/topicApis';
+import { fetchHdfs } from 'apis/configurationApis';
 import {
   createSink,
   updateSink,
   fetchSink,
   updatePipeline,
   fetchPipeline,
-} from '../../../apis/pipelinesApis';
-import * as MESSAGES from '../../../constants/messages';
-import * as _ from '../../../utils/helpers';
+} from 'apis/pipelinesApis';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
