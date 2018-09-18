@@ -25,7 +25,6 @@ dependencies {
   compile libs.kafkaConnectFile
   compile libs.kafkaConnectRuntime
   compile libs.scala
-  compile libs.zookeeper
   compile libs.scalaLogging
   compile libs.slf4jApi
   compile libs.slf4jlog4j
