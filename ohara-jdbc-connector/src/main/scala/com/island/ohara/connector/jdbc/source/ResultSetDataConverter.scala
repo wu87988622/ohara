@@ -4,8 +4,7 @@ import java.sql.ResultSet
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.connector.jdbc.datatype.{RDBDataTypeConverter, RDBDataTypeConverterFactory}
-import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
-
+import com.island.ohara.connector.jdbc.util.ColumnInfo
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -20,7 +19,7 @@ object ResultSetDataConverter {
     * @return
     */
   def converterRecord(resultSet: ResultSet, columns: Seq[RdbColumn]): Seq[ColumnInfo] = {
-    var columnInfos = new ListBuffer[ColumnInfo]
+    val columnInfos = new ListBuffer[ColumnInfo]
     val rdbDataTypeConverter: RDBDataTypeConverter = RDBDataTypeConverterFactory.dataTypeConverter()
     columns
       .map(column => {

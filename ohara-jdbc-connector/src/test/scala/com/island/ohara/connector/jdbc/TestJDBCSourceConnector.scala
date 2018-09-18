@@ -12,8 +12,8 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def testJDBCSourceConnector(): Unit = {
-    val connectorName = "JDBC-Source-Connector-Test"
-    var topicName = "topic-test-1"
+    val connectorName: String = "JDBC-Source-Connector-Test"
+    val topicName: String = "topic-test-1"
 
     connectorClient
       .connectorCreator()

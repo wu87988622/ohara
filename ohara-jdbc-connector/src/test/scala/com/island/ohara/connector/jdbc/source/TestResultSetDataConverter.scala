@@ -22,7 +22,7 @@ class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSu
     when(resultSet.getString("column2")).thenReturn("aaa")
     when(resultSet.getInt("column3")).thenReturn(10)
 
-    var columnList = new ListBuffer[RdbColumn]
+    val columnList = new ListBuffer[RdbColumn]
     columnList += new RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_TIMESTAMP, true)
     columnList += new RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_INTEGER, false)

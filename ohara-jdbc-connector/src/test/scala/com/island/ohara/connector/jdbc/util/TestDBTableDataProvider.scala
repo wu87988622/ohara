@@ -71,7 +71,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
   @Test
   def testColumnList(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
-    val columns: Seq[RdbColumn] = dbTableDataProvider.columns(db.connection, tableName)
+    val columns: Seq[RdbColumn] = dbTableDataProvider.columns(tableName)
     columns(0).name shouldBe "column1"
     columns(1).name shouldBe "column2"
     columns(2).name shouldBe "column3"

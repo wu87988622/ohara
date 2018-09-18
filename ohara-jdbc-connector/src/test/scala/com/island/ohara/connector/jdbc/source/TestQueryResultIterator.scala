@@ -20,12 +20,12 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     val resultSet = mock[ResultSet]
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
 
-    var columnList = new ListBuffer[RdbColumn]
+    val columnList = new ListBuffer[RdbColumn]
     columnList += new RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    var it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
     intercept[NoSuchElementException] {
       it.next()
     }.getMessage() shouldBe "Cache no data"
@@ -41,12 +41,12 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     when(resultSet.getString("column2")).thenReturn("value1-2")
     when(resultSet.getString("column3")).thenReturn("value1-3")
 
-    var columnList = new ListBuffer[RdbColumn]
+    val columnList = new ListBuffer[RdbColumn]
     columnList += new RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    var it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
     var count: Int = 0
     while (it.hasNext) {
       it.next()
@@ -65,12 +65,12 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     when(resultSet.getString("column2")).thenReturn("value1-2").thenReturn("value2-2").thenReturn("value2-3")
     when(resultSet.getString("column3")).thenReturn("value1-3").thenReturn("value2-3").thenReturn("value3-3")
 
-    var columnList = new ListBuffer[RdbColumn]
+    val columnList = new ListBuffer[RdbColumn]
     columnList += new RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    var it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
     var count: Int = 0
     while (it.hasNext) {
       it.next()
@@ -86,12 +86,12 @@ class TestQueryResultIterator extends MediumTest with Matchers with MockitoSugar
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
     when(resultSet.next()).thenReturn(false)
 
-    var columnList = new ListBuffer[RdbColumn]
+    val columnList = new ListBuffer[RdbColumn]
     columnList += new RdbColumn("column1", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
 
-    var it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
+    val it: Iterator[Seq[Object]] = new QueryResultIterator(preparedStatement, columnList)
     var count: Int = 0
     while (it.hasNext) {
       it.next()

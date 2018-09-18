@@ -12,7 +12,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
   private[this] val resultSet: ResultSet = preparedStatement.executeQuery()
   private[this] var cache: Seq[ColumnInfo] = null
 
-  def hasNext(): Boolean = {
+  override def hasNext(): Boolean = {
     if (cache == null) {
       if (resultSet.next()) {
         cache = ResultSetDataConverter.converterRecord(resultSet, columns)
@@ -25,7 +25,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
     }
   }
 
-  def next(): Seq[ColumnInfo] = {
+  override def next(): Seq[ColumnInfo] = {
     if (hasNext() == false) throw new NoSuchElementException("Cache no data")
     else {
       try {

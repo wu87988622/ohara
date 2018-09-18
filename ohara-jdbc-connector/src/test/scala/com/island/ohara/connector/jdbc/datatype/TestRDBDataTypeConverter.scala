@@ -1,7 +1,6 @@
 package com.island.ohara.connector.jdbc.datatype
 
 import java.sql.{ResultSet, Timestamp}
-
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 import com.island.ohara.rule.MediumTest

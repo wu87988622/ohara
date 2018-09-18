@@ -6,7 +6,6 @@ import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.source.QueryResultIterator
 import com.island.ohara.io.CloseOnce
-import scala.collection.mutable.ListBuffer
 
 /**
   * Connection to database and query data
@@ -23,8 +22,7 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
   protected[util] def executeQuery(tableName: String,
                                    timeStampColumnName: String,
                                    tsOffset: Timestamp): QueryResultIterator = {
-    var dataBuffer: ListBuffer[ListBuffer[Object]] = new ListBuffer[ListBuffer[Object]]
-    val columnNames = columns(connection, tableName)
+    val columnNames = columns(tableName)
     val sql = s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? and $timeStampColumnName < ?"
     val preparedStatement: PreparedStatement = connection.prepareStatement(sql)
 
@@ -34,7 +32,7 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     return new QueryResultIterator(preparedStatement, columnNames)
   }
 
-  protected[util] def columns(connection: Connection, tableName: String): Seq[RdbColumn] = {
+  protected[util] def columns(tableName: String): Seq[RdbColumn] = {
     val rdbTables: Seq[RdbTable] = client.tables(null, null, tableName)
     rdbTables.head.schema
   }
