@@ -49,7 +49,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] def checkConnector(name: String): Unit = {
     OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().contains(name), 30 seconds)
-    OharaTestUtil.await(() => testUtil.connectorClient.config(name).topics.isEmpty == false, 30 seconds)
+    OharaTestUtil.await(() => !testUtil.connectorClient.config(name).topics.isEmpty, 30 seconds)
     OharaTestUtil.await(() =>
                           try testUtil.connectorClient.status(name).connector.state == State.RUNNING
                           catch {
@@ -200,36 +200,39 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   @Test
   def connectorClientTest(): Unit = {
     val connectorName = "connectorClientTest"
-    val topic = "connectorClientTest_topic"
-    val topic2 = "connectorClientTest_topic2"
+    val topics = Seq("connectorClientTest_topic", "connectorClientTest_topic2")
+    val output_topic = "connectorClientTest_topic_output"
     val taskNum = 3
 
-    val connectorClient = testUtil.connectorClient;
+    val connectorClient = testUtil.connectorClient
 
     connectorClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
-      .topic(topic)
+      .topics(topics)
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> topic2))
+      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> output_topic))
       .create()
 
     val activeConnectors = connectorClient.activeConnectors()
     activeConnectors.contains(connectorName) shouldBe true
+
+    val config = connectorClient.config(connectorName)
+    config.topics shouldBe topics
 
     var status = connectorClient.status(connectorName)
     OharaTestUtil.await(() => {
       status = connectorClient.status(connectorName)
       connectorClient.status(connectorName).tasks != Nil
     }, 10 second)
-    status.tasks(0) should not be null
+    status.tasks.head should not be null
 
-    var task = connectorClient.taskStatus(connectorName, status.tasks(0).id)
+    val task = connectorClient.taskStatus(connectorName, status.tasks.head.id)
     task should not be null
-    task == status.tasks(0) shouldBe true
+    task == status.tasks.head shouldBe true
     task.worker_id.isEmpty shouldBe false
 
     connectorClient.delete(connectorName)

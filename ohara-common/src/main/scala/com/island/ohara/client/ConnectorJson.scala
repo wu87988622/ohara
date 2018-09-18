@@ -124,14 +124,20 @@ object ConnectorJson {
   final case class ErrorResponse(error_code: Int, message: String)
   implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[ErrorResponse] = jsonFormat2(ErrorResponse)
 
-  final case class ConnectorConfig(tasksMax: String, topics: String, connectorClass: String, args: Map[String, String])
+  final case class ConnectorConfig(tasksMax: String,
+                                   topics: Seq[String],
+                                   connectorClass: String,
+                                   args: Map[String, String])
 
-  implicit val Connector_Config_FORMAT: RootJsonFormat[ConnectorConfig] = new RootJsonFormat[ConnectorConfig] {
-    final val prop: Seq[String] = Seq("tasks.max", "topics", "connector.class")
+  implicit val CONNECTOR_CONFIG_FORMAT: RootJsonFormat[ConnectorConfig] = new RootJsonFormat[ConnectorConfig] {
+    final val taskMax: String = "tasks.max"
+    final val topics: String = "topics"
+    final val connectClass: String = "connector.class"
 
     override def read(json: JsValue): ConnectorConfig = {
       val map: Map[String, String] = json.convertTo[Map[String, String]]
-      ConnectorConfig(map.get(prop(0)).get, map.get(prop(1)).get, map.get(prop(2)).get, map -- (prop))
+      val seqTopics: Seq[String] = map(topics).split(",")
+      ConnectorConfig(map(taskMax), seqTopics, map(connectClass), map - (taskMax, topics, connectClass))
     }
     override def write(config: ConnectorConfig) = {
       val map: Map[String, JsString] = config.args.map { f =>
@@ -140,12 +146,11 @@ object ConnectorJson {
         }
       }
       JsObject(
-        map + (prop(0) -> JsString(config.tasksMax),
-        prop(1) -> JsString(config.topics),
-        prop(2) -> JsString(config.connectorClass))
+        map + (taskMax -> JsString(config.tasksMax),
+        topics -> JsString(config.topics.mkString(",")),
+        connectClass -> JsString(config.connectorClass))
       )
     }
 
   }
-
 }

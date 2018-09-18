@@ -13,6 +13,8 @@ import com.island.ohara.client.ConnectorJson.{
   State,
   TaskStatus
 }
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicCreator, TopicDescription}
@@ -152,8 +154,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   override def config(name: String): ConnectorConfig = {
     val map = cachedConnectors.get(name)
     if (map == null) throw new IllegalArgumentException(s"$name doesn't exist")
-    val prop: Seq[String] = Seq("tasks.max", "topics", "connector.class")
-    ConnectorConfig(map.get(prop(0)).get, map.get(prop(1)).get, map.get(prop(2)).get, map -- (prop))
+    map.toJson.convertTo[ConnectorConfig];
   }
 
   override def taskStatus(name: String, id: Int): TaskStatus = {
