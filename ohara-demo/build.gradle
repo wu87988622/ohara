@@ -2,11 +2,19 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
-  compile project(':ohara-testing-util')
-  compile project(':ohara-configurator')
-  testCompile project(":ohara-common").sourceSets.test.output
-  testCompile libs.scalatest
-  testCompile libs.junit
+  implementation project(':ohara-testing-util')
+  implementation project(':ohara-configurator')
+  implementation project(':ohara-common')
+  implementation project(':ohara-kafka')
+  implementation libs.scalaLogging
+  implementation libs.scala
+  implementation libs.akkaHttp
+  implementation libs.akkaStream
+  implementation libs.akkaActor
+  implementation libs.sprayJson
+  testImplementation project(":ohara-common").sourceSets.test.output
+  testImplementation libs.scalatest
+  testImplementation libs.junit
 }
 
 distributions {

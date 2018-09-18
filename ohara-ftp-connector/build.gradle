@@ -2,11 +2,16 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
-  compile project(':ohara-kafka')
-  testCompile project(":ohara-testing-util")
-  testCompile project(":ohara-common").sourceSets.test.output
-  testCompile project(":ohara-testing-util").sourceSets.test.output
-  testCompile libs.scalatest
-  testCompile libs.mockito
-  testCompile libs.junit
+  implementation libs.scala
+  implementation libs.scalaLogging
+  implementation libs.sprayJson
+  implementation project(':ohara-common')
+  implementation project(':ohara-kafka')
+  implementation libs.kafkaConnectRuntime
+  testImplementation project(":ohara-testing-util")
+  testImplementation project(":ohara-common").sourceSets.test.output
+  testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation libs.scalatest
+  testImplementation libs.mockito
+  testImplementation libs.junit
 }

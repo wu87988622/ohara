@@ -2,20 +2,21 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
-  compile project(':ohara-common')
-  compile project(':ohara-kafka')
-  compile project(':ohara-hdfs-connector')
-  compile project(':ohara-configurator')
+  implementation project(':ohara-common')
+  implementation project(':ohara-kafka')
+  implementation project(':ohara-hdfs-connector')
+  implementation project(':ohara-configurator')
   // the following dependencies is required in runtime
-  compile libs.akkaSlf4j
-  testCompile project(path: ':ohara-common', configuration: 'tests')
-  testCompile project(path: ':ohara-kafka', configuration: 'tests')
-  testCompile project(path: ':ohara-testing-util', configuration: 'tests')
-  testCompile project(path: ':ohara-hdfs-connector', configuration: 'tests')
-  testCompile project(path: ':ohara-configurator', configuration: 'tests')
-  testCompile libs.typesafeConfig
-  testCompile libs.scalatest
-  testCompile libs.junit
+  implementation libs.akkaSlf4j
+  implementation libs.scalaLogging
+  testImplementation project(path: ':ohara-common', configuration: 'tests')
+  testImplementation project(path: ':ohara-kafka', configuration: 'tests')
+  testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
+  testImplementation project(path: ':ohara-hdfs-connector', configuration: 'tests')
+  testImplementation project(path: ':ohara-configurator', configuration: 'tests')
+  testImplementation libs.typesafeConfig
+  testImplementation libs.scalatest
+  testImplementation libs.junit
 }
 
 distributions {

@@ -2,35 +2,36 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
-  compile project(':ohara-common')
-  compile libs.scala
-  compile libs.kafkaCore
-  compile libs.kafkaConnectJson
-  compile libs.kafkaConnectRuntime
-  compile libs.mysql
-  compile libs.embeddedsql
-  compile libs.ftpServer
+  implementation project(':ohara-common')
+  implementation libs.scala
+  implementation libs.kafkaCore
+  implementation libs.kafkaConnectJson
+  implementation libs.kafkaConnectRuntime
+  implementation libs.mysql
+  implementation libs.embeddedsql
+  implementation libs.ftpServer
+  implementation libs.scalaLogging
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *
    * Solve running Kafka Connect mini cluster failed. OHARA-103
    */
-  compile (libs.hadoopCommon) {
+  implementation (libs.hadoopCommon) {
     exclude group: 'com.sun.jersey', module: 'jersey-core'
     exclude group: 'com.sun.jersey', module: 'jersey-json'
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
-  compile (libs.hadoopHDFS) {
+  implementation (libs.hadoopHDFS) {
     exclude group: 'com.sun.jersey', module: 'jersey-core'
     exclude group: 'com.sun.jersey', module: 'jersey-json'
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
-  testCompile libs.scalatest
-  testCompile project(':ohara-common').sourceSets.test.output
-  testCompile libs.mockito
-  testCompile libs.junit
+  testImplementation libs.scalatest
+  testImplementation project(':ohara-common').sourceSets.test.output
+  testImplementation libs.mockito
+  testImplementation libs.junit
 }
 
 /**
