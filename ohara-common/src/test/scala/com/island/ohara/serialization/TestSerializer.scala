@@ -1,5 +1,7 @@
 package com.island.ohara.serialization
 
+import java.sql.{Date, Time, Timestamp}
+
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.reflection.ReflectionUtil
@@ -22,22 +24,34 @@ class TestSerializer extends SmallTest with Matchers {
     ReflectionUtil.instantiate(DoubleSerializer.getClass.getName, classOf[Serializer[Double]])
     ReflectionUtil.instantiate(BytesSerializer.getClass.getName, classOf[Serializer[Array[Byte]]])
     ReflectionUtil.instantiate(StringSerializer.getClass.getName, classOf[Serializer[Array[String]]])
+    ReflectionUtil.instantiate(ObjectSerializer.getClass.getName, classOf[Serializer[Array[Object]]])
   }
 
   @Test
   def testRowSerializer(): Unit = {
     0 until 10 foreach { _ =>
-      {
-        val row = Row
-          .builder()
-          .tags(Set("tag0", "tag1"))
-          .cells(values.zipWithIndex.map {
-            case (v, cellIndex) => Cell(cellIndex.toString, v)
-          })
-          .build()
-        row shouldBe RowSerializer.from(RowSerializer.to(row))
-      }
+      val row = Row
+        .builder()
+        .tags(Set("tag0", "tag1"))
+        .cells(values.zipWithIndex.map {
+          case (v, cellIndex) => Cell(cellIndex.toString, v)
+        })
+        .build()
+      row shouldBe RowSerializer.from(RowSerializer.to(row))
     }
+  }
+
+  @Test
+  def testSerializableObject(): Unit = {
+    val row = Row(
+      Cell("c0", new Timestamp(System.currentTimeMillis())),
+      Cell("c1", new Date(System.currentTimeMillis())),
+      Cell("c2", new Time(System.currentTimeMillis())),
+      Cell("c3", JustTest("123", 4))
+    )
+
+    val copy = Serializer.ROW.from(Serializer.ROW.to(row))
+    copy shouldBe row
   }
 
   @Test
@@ -55,3 +69,5 @@ class TestSerializer extends SmallTest with Matchers {
     }
   }
 }
+
+case class JustTest(name: String, value: Int)
