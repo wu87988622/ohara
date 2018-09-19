@@ -75,6 +75,7 @@ class FtpSourceTask extends RowSourceTask {
                    case DataType.FLOAT   => item.toFloat
                    case DataType.DOUBLE  => item.toDouble
                    case DataType.STRING  => item
+                   case DataType.OBJECT  => item
                    // TODO: should we convert bytes?
                    case _ => throw new IllegalArgumentException("Unsupported type...")
                  }

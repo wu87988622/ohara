@@ -75,6 +75,47 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testObjectType(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSource])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .schema(
+        Seq(
+          Column("name", DataType.OBJECT, 1),
+          Column("ranking", DataType.INT, 2),
+          Column("single", DataType.BOOLEAN, 3)
+        ))
+      .config(props.toMap)
+      .create()
+    try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
+      val consumer =
+        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+      val records = consumer.poll(20 seconds, data.length)
+      records.size shouldBe data.length
+      val row0 = records(0).value.get
+      row0.size shouldBe 3
+      row0.cell(0) shouldBe rows(0).cell(0)
+      row0.cell(1) shouldBe rows(0).cell(1)
+      row0.cell(2) shouldBe rows(0).cell(2)
+      val row1 = records(1).value.get
+      row1.size shouldBe 3
+      row1.cell(0) shouldBe rows(1).cell(0)
+      row1.cell(1) shouldBe rows(1).cell(1)
+      row1.cell(2) shouldBe rows(1).cell(2)
+    } finally testUtil.connectorClient.delete(methodName)
+    ftpClient.listFileNames(props.input).size shouldBe 0
+    ftpClient.listFileNames(props.output).size shouldBe 1
+    ftpClient.listFileNames(props.error).size shouldBe 0
+  }
+
+  @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
