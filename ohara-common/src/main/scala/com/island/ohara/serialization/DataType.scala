@@ -50,10 +50,14 @@ object DataType {
     override def name: String = "object"
   }
 
+  case object ROW extends DataType(10) {
+    override def name: String = "row"
+  }
+
   /**
     * @return a array of all supported data type
     */
-  val all: Seq[DataType] = Seq(BYTES, BOOLEAN, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, STRING, OBJECT)
+  val all: Seq[DataType] = Seq(BYTES, BOOLEAN, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, STRING, OBJECT, ROW)
 
   /**
     * seek the data type by the index

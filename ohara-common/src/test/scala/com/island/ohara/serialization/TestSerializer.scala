@@ -55,6 +55,24 @@ class TestSerializer extends SmallTest with Matchers {
   }
 
   @Test
+  def testNestedRow(): Unit = {
+    val row = Row(
+      Cell("a", 13),
+      Cell("b",
+           Row(
+             Cell("c0", new Timestamp(System.currentTimeMillis())),
+             Cell("c1", new Date(System.currentTimeMillis())),
+             Cell("c3", JustTest("123", 4))
+           )),
+      Cell("c", false),
+      Cell("d", "Asdasd"),
+      Cell("e", 123.345)
+    )
+    val copy = Serializer.ROW.from(Serializer.ROW.to(row))
+    copy shouldBe row
+  }
+
+  @Test
   def testPrimitiveSerializer(): Unit = {
     values.foreach {
       case v: String      => StringSerializer.from(StringSerializer.to(v)) shouldBe v

@@ -17,14 +17,10 @@ object RowSerializer extends Serializer[Row] {
     */
   override def to(obj: Row): Array[Byte] = {
     doClose(new ByteArrayOutputStream()) { output =>
-      {
-        doClose(new DataStreamWriter(output)) { writer =>
-          {
-            writer.write(0)
-            toV0(obj, writer)
-            output.toByteArray
-          }
-        }
+      doClose(new DataStreamWriter(output)) { writer =>
+        writer.write(0)
+        toV0(obj, writer)
+        output.toByteArray
       }
     }
   }
@@ -37,11 +33,9 @@ object RowSerializer extends Serializer[Row] {
     */
   override def from(serial: Array[Byte]): Row = {
     doClose(new DataStreamReader(new ByteArrayInputStream(serial))) { reader =>
-      {
-        reader.readInt() match {
-          case 0      => fromV0(reader)
-          case v: Int => throw new UnsupportedOperationException(s"unsupported version:$v")
-        }
+      reader.readInt() match {
+        case 0      => fromV0(reader)
+        case v: Int => throw new UnsupportedOperationException(s"unsupported version:$v")
       }
     }
   }
@@ -57,7 +51,7 @@ object RowSerializer extends Serializer[Row] {
         // TODO: we know the size of cell so it is doable to locate the cell at single byte array. by chia
         reader.readInt()
         val name = ByteUtil.toString(reader.forceRead(reader.readShort()))
-        DataType.of(reader.readByte()) match {
+        val cell = DataType.of(reader.readByte()) match {
           case BYTES   => Cell(name, reader.forceRead(reader.readShort()))
           case BOOLEAN => Cell(name, Serializer.BOOLEAN.from(reader.forceRead(reader.readShort())))
           case SHORT   => Cell(name, Serializer.SHORT.from(reader.forceRead(reader.readShort())))
@@ -67,8 +61,10 @@ object RowSerializer extends Serializer[Row] {
           case DOUBLE  => Cell(name, Serializer.DOUBLE.from(reader.forceRead(reader.readShort())))
           case STRING  => Cell(name, Serializer.STRING.from(reader.forceRead(reader.readShort())))
           case OBJECT  => Cell(name, Serializer.OBJECT.from(reader.forceRead(reader.readShort())))
+          case ROW     => Cell(name, Serializer.ROW.from(reader.forceRead(reader.readShort())))
           case e: Any  => throw new UnsupportedClassVersionError(s"${e.getClass.getName}")
         }
+        cell
       })
     }
     .tags((0 until reader.readShort()).map(_ => ByteUtil.toString(reader.forceRead(reader.readShort()))).toSet)
@@ -99,9 +95,14 @@ object RowSerializer extends Serializer[Row] {
         case v: Double               => (DOUBLE, Serializer.DOUBLE.to(v))
         case v: String               => (STRING, Serializer.STRING.to(v))
         case v: java.io.Serializable => (OBJECT, Serializer.OBJECT.to(v))
+        case v: Row                  => (ROW, Serializer.ROW.to(v))
         case v: Any                  => throw new UnsupportedClassVersionError(s"class:${v.getClass.getName}")
       }
+      if (valueBytes.length > Short.MaxValue)
+        throw new IllegalArgumentException(s"the max size of value is ${Short.MaxValue}. current:${valueBytes.length}")
       val nameBytes = ByteUtil.toBytes(cell.name)
+      if (nameBytes.length > Short.MaxValue)
+        throw new IllegalArgumentException(s"the max size of name is ${Short.MaxValue}. current:${nameBytes.length}")
       val cellSize = CELL_OVERHEAD_V0 + nameBytes.length + valueBytes.length
       writer.write(cellSize)
       // convert the int to short
@@ -121,8 +122,10 @@ object RowSerializer extends Serializer[Row] {
       writer.write(bytes)
     })
   }
-  val CELL_OVERHEAD_V0: Int = ByteUtil.SIZE_OF_INT // cell length
-  +ByteUtil.SIZE_OF_SHORT // cell name length
-  +ByteUtil.SIZE_OF_BYTE // cell value type
-  +ByteUtil.SIZE_OF_SHORT // cell value length
+
+  /**
+    *  cell length + cell name length + cell value type +cell value length
+    */
+  val CELL_OVERHEAD_V0
+    : Int = ByteUtil.SIZE_OF_INT + ByteUtil.SIZE_OF_SHORT + ByteUtil.SIZE_OF_BYTE + ByteUtil.SIZE_OF_SHORT
 }
