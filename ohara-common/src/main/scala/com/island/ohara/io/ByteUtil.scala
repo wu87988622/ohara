@@ -13,17 +13,17 @@ object ByteUtil {
   val COMPARATOR: Ordering[Array[Byte]] = (o1: Array[Byte], o2: Array[Byte]) => ByteUtil.compare(o1, o2)
 
   // pre-defined constants
-  def SIZE_OF_BYTE: Int = java.lang.Byte.SIZE / java.lang.Byte.SIZE
+  val SIZE_OF_BYTE: Int = java.lang.Byte.SIZE / java.lang.Byte.SIZE
 
-  def SIZE_OF_SHORT: Int = java.lang.Short.SIZE / java.lang.Byte.SIZE
+  val SIZE_OF_SHORT: Int = java.lang.Short.SIZE / java.lang.Byte.SIZE
 
-  def SIZE_OF_INT: Int = java.lang.Integer.SIZE / java.lang.Byte.SIZE
+  val SIZE_OF_INT: Int = java.lang.Integer.SIZE / java.lang.Byte.SIZE
 
-  def SIZE_OF_LONG: Int = java.lang.Long.SIZE / java.lang.Byte.SIZE
+  val SIZE_OF_LONG: Int = java.lang.Long.SIZE / java.lang.Byte.SIZE
 
-  def SIZE_OF_FLOAT: Int = SIZE_OF_INT
+  val SIZE_OF_FLOAT: Int = SIZE_OF_INT
 
-  def SIZE_OF_DOUBLE: Int = SIZE_OF_LONG
+  val SIZE_OF_DOUBLE: Int = SIZE_OF_LONG
 
   // -------------[string]------------- //
   implicit def toBytes(value: String): Array[Byte] = value.getBytes(StandardCharsets.UTF_8)
@@ -141,11 +141,7 @@ object ByteUtil {
 
   implicit def toShort(data: Array[Byte], offset: Int = 0): Short = {
     checkSize(SIZE_OF_SHORT, data.length - offset)
-    var value: Short = 0
-    value = ((value ^ data(offset)) & 0xFF).toShort
-    value = (value << 8).toShort
-    value = ((value ^ data(offset + 1)) & 0xFF).toShort
-    value
+    (((data(offset) & 0xFF) << 8).toShort | (data(offset + 1) & 0xFF)).toShort
   }
 
   // -------------[double]------------- //

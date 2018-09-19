@@ -107,4 +107,34 @@ class TestByteUtil extends SmallTest with Matchers {
         }
     }
   }
+
+  @Test
+  def testShort(): Unit = {
+    val numbers = Seq[Short](Short.MinValue, -100, 0, 333, Short.MaxValue)
+    numbers.foreach(n => n shouldBe ByteUtil.toShort(ByteUtil.toBytes(n)))
+  }
+
+  @Test
+  def testInt(): Unit = {
+    val numbers = Seq[Int](Int.MinValue, -100, 0, 333, Int.MaxValue)
+    numbers.foreach(n => n shouldBe ByteUtil.toInt(ByteUtil.toBytes(n)))
+  }
+
+  @Test
+  def testLong(): Unit = {
+    val numbers = Seq[Long](Long.MinValue, -100, 0, 333, Long.MaxValue)
+    numbers.foreach(n => n shouldBe ByteUtil.toLong(ByteUtil.toBytes(n)))
+  }
+
+  @Test
+  def testFloat(): Unit = {
+    val numbers = Seq[Float](Float.MinValue, -100.1f, 0.0f, 333.12f, Float.MaxValue)
+    numbers.foreach(n => n shouldBe ByteUtil.toFloat(ByteUtil.toBytes(n)))
+  }
+
+  @Test
+  def testDouble(): Unit = {
+    val numbers = Seq[Double](Double.MinValue, -100.1D, 0.0D, 333.12D, Double.MaxValue)
+    numbers.foreach(n => n shouldBe ByteUtil.toDouble(ByteUtil.toBytes(n)))
+  }
 }
