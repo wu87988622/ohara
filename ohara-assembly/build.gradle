@@ -2,13 +2,14 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
-  implementation project(':ohara-common')
-  implementation project(':ohara-kafka')
-  implementation project(':ohara-hdfs-connector')
-  implementation project(':ohara-configurator')
+  // using compile enable java-library-distribution to include all dependencies in binary file
+  compile project(':ohara-common')
+  compile project(':ohara-kafka')
+  compile project(':ohara-hdfs-connector')
+  compile project(':ohara-configurator')
   // the following dependencies is required in runtime
-  implementation libs.akkaSlf4j
-  implementation libs.scalaLogging
+  compile libs.akkaSlf4j
+  compile libs.scalaLogging
   testImplementation project(path: ':ohara-common', configuration: 'tests')
   testImplementation project(path: ':ohara-kafka', configuration: 'tests')
   testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
