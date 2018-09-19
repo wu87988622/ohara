@@ -4,11 +4,9 @@ ext {
 }
 if (project.hasProperty('cdh')) {
   versions["hadoop"] = "2.6.0-cdh5.14.0"
-  versions["zookeeper"] = "3.4.5-cdh5.14.0"
   versions["kafka"] = "0.11.0-kafka-3.0.0"
 } else {
   versions["hadoop"] = project.hasProperty('hadoop.version') ? project.properties['hadoop.version'] : "2.7.0"
-  versions["zookeeper"] = project.hasProperty('zookeeper.version') ? project.properties['zookeeper.version'] : "3.4.10"
   versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "1.0.1"
 }
 versions["mockito"] = project.hasProperty('mockito.version') ? project.properties['mockito.version'] : "1.10.19"
@@ -42,7 +40,6 @@ libs += [
   slf4jlog4j         : "org.slf4j:slf4j-log4j12:$versions.slf4j",
   hadoopCommon       : "org.apache.hadoop:hadoop-common:$versions.hadoop",
   hadoopHDFS         : "org.apache.hadoop:hadoop-hdfs:$versions.hadoop",
-  zookeeper          : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
   scalatest          : "org.scalatest:scalatest_2.12:$versions.scalatest",
   akkaHttpTestKit    : "com.typesafe.akka:akka-http-testkit_2.12:$versions.akkaHttp",
   akkaTestKit        : "com.typesafe.akka:akka-testkit_2.12:$versions.akka",
