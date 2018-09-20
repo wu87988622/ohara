@@ -44,6 +44,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val clients = Seq(client0, client1)
 
   private[this] val db = testUtil.dataBase
+  private[this] val ftpServer = testUtil.ftpServer
 
   @Test
   def testTopic(): Unit = {
@@ -360,6 +361,20 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clients.foreach(client => {
       val report =
         client.validate[RdbValidationRequest, ValidationReport](RdbValidationRequest(db.url, db.user, db.password))
+      report.isEmpty shouldBe false
+      report.foreach(_.pass shouldBe true)
+    })
+  }
+
+  @Test
+  def testValidationOfFtp(): Unit = {
+    clients.foreach(client => {
+      val report =
+        client.validate[FtpValidationRequest, ValidationReport](
+          FtpValidationRequest(ftpServer.host,
+                               ftpServer.port,
+                               ftpServer.writableUser.name,
+                               ftpServer.writableUser.password))
       report.isEmpty shouldBe false
       report.foreach(_.pass shouldBe true)
     })

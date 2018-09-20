@@ -16,21 +16,25 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         case HDFS_VALIDATION_PATH =>
           put {
             entity(as[HdfsValidationRequest]) { req =>
-              {
-                val reports = Validator.run(connectClient, kafkaClient, req, DEFAULT_NUMBER_OF_VALIDATION)
-                if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
-                complete(reports)
-              }
+              val reports = Validator.run(connectClient, kafkaClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+              if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the hdfs validation")
+              complete(reports)
             }
           }
         case RDB_VALIDATION_PATH =>
           put {
             entity(as[RdbValidationRequest]) { req =>
-              {
-                val reports = Validator.run(connectClient, kafkaClient, req, DEFAULT_NUMBER_OF_VALIDATION)
-                if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the validation")
-                complete(reports)
-              }
+              val reports = Validator.run(connectClient, kafkaClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+              if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the rdb validation")
+              complete(reports)
+            }
+          }
+        case FTP_VALIDATION_PATH =>
+          put {
+            entity(as[FtpValidationRequest]) { req =>
+              val reports = Validator.run(connectClient, kafkaClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+              if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run the ftp validation")
+              complete(reports)
             }
           }
         case _ =>
