@@ -1,10 +1,11 @@
-package com.island.ohara.connector.jdbc.util
+package com.island.ohara.connector.jdbc.source
 
 import java.sql._
 import java.util.Calendar
+
 import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
-import com.island.ohara.connector.jdbc.source.QueryResultIterator
+import com.island.ohara.connector.jdbc.util.DateTimeUtils
 import com.island.ohara.io.CloseOnce
 
 /**
@@ -19,11 +20,10 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
   private[this] val connection: Connection = DriverManager.getConnection(url, userName, password)
   private[this] val client: DatabaseClient = DatabaseClient(url, userName, password)
 
-  protected[util] def executeQuery(tableName: String,
-                                   timeStampColumnName: String,
-                                   tsOffset: Timestamp): QueryResultIterator = {
+  def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
     val columnNames = columns(tableName)
     val sql = s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? and $timeStampColumnName < ?"
+
     val preparedStatement: PreparedStatement = connection.prepareStatement(sql)
 
     val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
@@ -32,12 +32,12 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     return new QueryResultIterator(preparedStatement, columnNames)
   }
 
-  protected[util] def columns(tableName: String): Seq[RdbColumn] = {
+  def columns(tableName: String): Seq[RdbColumn] = {
     val rdbTables: Seq[RdbTable] = client.tables(null, null, tableName)
     rdbTables.head.schema
   }
 
-  protected[util] def dbCurrentTime(cal: Calendar): Timestamp = {
+  def dbCurrentTime(cal: Calendar): Timestamp = {
     val dbProduct: String = connection.getMetaData().getDatabaseProductName()
     var query = ""
     var currentTimestamp: Timestamp = new Timestamp(0)

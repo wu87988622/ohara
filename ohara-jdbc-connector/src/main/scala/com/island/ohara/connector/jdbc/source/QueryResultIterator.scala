@@ -1,7 +1,6 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.{PreparedStatement, ResultSet}
-
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.io.CloseOnce

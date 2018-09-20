@@ -1,8 +1,12 @@
 package com.island.ohara.connector.jdbc.source
+import java.sql.Timestamp
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.jdbc.Version
-import com.island.ohara.connector.jdbc.util.DBTableDataProvider
+import com.island.ohara.connector.jdbc.util.ColumnInfo
+import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.serialization.DataType
 import com.typesafe.scalalogging.Logger
 
 class JDBCSourceTask extends RowSourceTask {
@@ -11,13 +15,15 @@ class JDBCSourceTask extends RowSourceTask {
 
   private[this] var jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = _
   private[this] var dbTableDataProvider: DBTableDataProvider = _
+  private[this] var schema: Seq[Column] = _
+  private[this] var topics: Seq[String] = _
 
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
     *
     * @param config initial configuration
     */
-  override protected def _start(config: TaskConfig): Unit = {
+  override protected[source] def _start(config: TaskConfig): Unit = {
     logger.info("starting JDBC Source Connector")
     val props = config.options
     jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(props)
@@ -26,6 +32,9 @@ class JDBCSourceTask extends RowSourceTask {
     val dbUserName = jdbcSourceConnectorConfig.dbUserName
     val dbPassword = jdbcSourceConnectorConfig.dbPassword
     dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
+
+    schema = config.schema
+    topics = config.topics
   }
 
   /**
@@ -33,10 +42,31 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @return a array of RowSourceRecord
     */
-  override protected def _poll(): Seq[RowSourceRecord] = {
-    //TODO loadOffset, call dbTableDataProvider#rowList, converter ohara datatype, return Seq[RowSourceRecord]
-    //TODO OHARA-413, OHARA-414
-    throw new RuntimeException("Not implement to poll database table data")
+  override protected[source] def _poll(): Seq[RowSourceRecord] = {
+    val tableName: String = jdbcSourceConnectorConfig.dbTableName
+    val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
+
+    val resultSet: QueryResultIterator =
+      dbTableDataProvider.executeQuery(tableName, timestampColumnName, new Timestamp(0)) //TODO offset OHARA-413
+
+    try resultSet
+    //Create Ohara Schema
+      .map(columns =>
+        (if (schema.isEmpty) columns.map(c => Column(c.columnName, DataType.OBJECT, 0)) else schema, columns))
+      .flatMap {
+        case (newSchema, columns) =>
+          topics.map(
+            RowSourceRecord
+              .builder()
+              .sourcePartition(JDBCSourceTask.partition(tableName))
+              //TODO offset OHARA-413
+              .sourceOffset(JDBCSourceTask.offset(0))
+              //Create Ohara Row
+              .row(row(newSchema, columns))
+              .build(_))
+      }
+      .toList
+    finally resultSet.close()
   }
 
   /**
@@ -54,4 +84,48 @@ class JDBCSourceTask extends RowSourceTask {
     * @return the version, formatted as a String
     */
   override protected def _version: String = Version.getVersion()
+
+  private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo]): Row = {
+    Row
+      .builder()
+      .cells(
+        schema.map(s => (s, values(s.name, columns))).map {
+          case (schema, value) =>
+            schema.order
+            Cell(
+              schema.name,
+              schema.typeName match {
+                case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
+                case DataType.SHORT                   => value.asInstanceOf[Short]
+                case DataType.INT                     => value.asInstanceOf[Int]
+                case DataType.LONG                    => value.asInstanceOf[Long]
+                case DataType.FLOAT                   => value.asInstanceOf[Float]
+                case DataType.DOUBLE                  => value.asInstanceOf[Double]
+                case DataType.BYTE                    => value.asInstanceOf[Byte]
+                case DataType.STRING                  => value.asInstanceOf[String]
+                case DataType.BYTES | DataType.OBJECT => value
+                case _                                => throw new IllegalArgumentException("Unsupported type...")
+              }
+            )
+        }
+      )
+      .build()
+  }
+
+  private[this] def values(schemaColumnName: String, dbColumnInfos: Seq[ColumnInfo]): Any = {
+    dbColumnInfos.foreach(dbColumn => {
+      if (dbColumn.columnName == schemaColumnName) {
+        return dbColumn.value
+      }
+    })
+    throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
+  }
+}
+
+object JDBCSourceTask {
+  private[this] val DB_TABLE_NAME_KEY = "db.table.name"
+  private[this] val DB_TABLE_OFFSET_KEY = "db.table.offset"
+
+  def partition(tableName: String): Map[String, _] = Map(DB_TABLE_NAME_KEY -> tableName)
+  def offset(timestamp: Long): Map[String, _] = Map(DB_TABLE_OFFSET_KEY -> timestamp)
 }

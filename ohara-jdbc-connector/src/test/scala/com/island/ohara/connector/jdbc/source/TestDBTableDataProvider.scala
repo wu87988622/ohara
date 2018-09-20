@@ -1,10 +1,10 @@
-package com.island.ohara.connector.jdbc.util
+package com.island.ohara.connector.jdbc.source
 
 import java.sql.{Statement, Timestamp}
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
-import com.island.ohara.connector.jdbc.source.QueryResultIterator
+import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.integration.LocalDataBase
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rule.MediumTest
