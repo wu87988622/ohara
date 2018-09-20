@@ -44,32 +44,35 @@ object ConfiguratorJson {
     def format(address: String, uuid: String): String
   }
 
-  final case class Column(name: String, typeName: DataType, order: Int)
+  final case class Column(name: String, newName: String, typeName: DataType, order: Int)
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
-    override def read(json: JsValue): Column = json.asJsObject.getFields("name", "type", "order") match {
-      case Seq(JsString(n), JsString(t), JsNumber(o)) => Column(n, DataType.of(t), o.toInt)
-      case _                                          => throw new UnsupportedOperationException(s"invalid format of ${Column.getClass.getSimpleName}")
+    override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "type", "order") match {
+      case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column(n, nn, DataType.of(t), o.toInt)
+      case Seq(JsString(n), JsNull, JsString(t), JsNumber(o))       => Column(n, n, DataType.of(t), o.toInt)
+      case _                                                        => throw new UnsupportedOperationException(s"invalid format of ${Column.getClass.getSimpleName}")
     }
     override def write(obj: Column): JsValue = JsObject(
       "name" -> JsString(obj.name),
+      "newName" -> JsString(obj.newName),
       "type" -> JsString(obj.typeName.name),
       "order" -> JsNumber(obj.order)
     )
   }
   object Column {
+    def apply(name: String, typeName: DataType, order: Int): Column = Column(name, name, typeName, order)
     // kafka connector accept only Map[String, String] as input arguments so we have to serialize the column to a string
     // TODO: Personally, I hate this ugly workaround...by chia
     val COLUMN_KEY: String = "__row_connector_schema"
     def toString(schema: Seq[Column]): String =
-      schema.map(c => s"${c.name},${c.typeName.name},${c.order}").mkString(",")
+      schema.map(c => s"${c.name},${c.newName},${c.typeName.name},${c.order}").mkString(",")
     def toColumns(columnsString: String): Seq[Column] = if (columnsString == null || columnsString.isEmpty) Seq.empty
     else {
       val splits = columnsString.split(",")
-      if (splits.length % 3 != 0) throw new IllegalArgumentException(s"invalid format of columns string:$columnsString")
+      if (splits.length % 4 != 0) throw new IllegalArgumentException(s"invalid format of columns string:$columnsString")
       splits
-        .grouped(3)
+        .grouped(4)
         .map {
-          case Array(name, typeName, order) => Column(name, DataType.of(typeName), order.toInt)
+          case Array(name, newName, typeName, order) => Column(name, newName, DataType.of(typeName), order.toInt)
         }
         .toSeq
     }
