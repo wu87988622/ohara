@@ -15,7 +15,6 @@ dependencies {
   testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation project(path: ':ohara-hdfs-connector', configuration: 'tests')
   testImplementation project(path: ':ohara-configurator', configuration: 'tests')
-  testImplementation libs.typesafeConfig
   testImplementation libs.scalatest
   testImplementation libs.junit
 }

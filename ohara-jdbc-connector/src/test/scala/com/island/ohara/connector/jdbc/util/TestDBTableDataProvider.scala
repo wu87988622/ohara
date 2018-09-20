@@ -48,7 +48,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
 
     var count = 0
     val resultList: ListBuffer[Seq[ColumnInfo]] = new ListBuffer[Seq[ColumnInfo]]
-    while (results.hasNext()) {
+    while (results.hasNext) {
       val listBuffer: Seq[ColumnInfo] = results.next()
       resultList += listBuffer
       count = count + 1

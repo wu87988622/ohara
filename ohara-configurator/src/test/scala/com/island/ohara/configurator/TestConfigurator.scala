@@ -412,31 +412,29 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
     def runDist() = {
       doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
-        {
-          Configurator.closeRunningConfigurator = false
-          val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
-          Future[Unit] {
-            Configurator.main(
-              Array[String](
-                Configurator.HOSTNAME_KEY,
-                "localhost",
-                Configurator.PORT_KEY,
-                "0",
-                Configurator.BROKERS_KEY,
-                util.brokers,
-                Configurator.WORKERS_KEY,
-                util.workers,
-                Configurator.TOPIC_KEY,
-                methodName
-              ))
-          }(service)
-          import scala.concurrent.duration._
-          try OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 30 seconds)
-          finally {
-            Configurator.closeRunningConfigurator = true
-            service.shutdownNow()
-            service.awaitTermination(60, TimeUnit.SECONDS)
-          }
+        Configurator.closeRunningConfigurator = false
+        val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
+        Future[Unit] {
+          Configurator.main(
+            Array[String](
+              Configurator.HOSTNAME_KEY,
+              "localhost",
+              Configurator.PORT_KEY,
+              "0",
+              Configurator.BROKERS_KEY,
+              util.brokers,
+              Configurator.WORKERS_KEY,
+              util.workers,
+              Configurator.TOPIC_KEY,
+              methodName
+            ))
+        }(service)
+        import scala.concurrent.duration._
+        try OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 30 seconds)
+        finally {
+          Configurator.closeRunningConfigurator = true
+          service.shutdownNow()
+          service.awaitTermination(60, TimeUnit.SECONDS)
         }
       }
     }
@@ -461,33 +459,31 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testQueryDb(): Unit = {
     val tableName = methodName
     doClose(DatabaseClient(db.url, db.user, db.password)) { dbClient =>
-      {
-        clients.foreach(client => {
-          val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None))
-          result.name shouldBe "mysql"
-          result.tables.isEmpty shouldBe true
+      clients.foreach(client => {
+        val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None))
+        result.name shouldBe "mysql"
+        result.tables.isEmpty shouldBe true
 
-          val cf0 = RdbColumn("cf0", "INTEGER", true)
-          val cf1 = RdbColumn("cf1", "INTEGER", false)
-          def verify(info: RdbInformation): Unit = {
-            info.tables.count(_.name == tableName) shouldBe 1
-            val table = info.tables.filter(_.name == tableName).head
-            table.schema.size shouldBe 2
-            table.schema.count(_.name == cf0.name) shouldBe 1
-            table.schema.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
-            table.schema.count(_.name == cf1.name) shouldBe 1
-            table.schema.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
-          }
-          dbClient.createTable(tableName, Seq(cf0, cf1))
+        val cf0 = RdbColumn("cf0", "INTEGER", true)
+        val cf1 = RdbColumn("cf1", "INTEGER", false)
+        def verify(info: RdbInformation): Unit = {
+          info.tables.count(_.name == tableName) shouldBe 1
+          val table = info.tables.filter(_.name == tableName).head
+          table.schema.size shouldBe 2
+          table.schema.count(_.name == cf0.name) shouldBe 1
+          table.schema.filter(_.name == cf0.name).head.pk shouldBe cf0.pk
+          table.schema.count(_.name == cf1.name) shouldBe 1
+          table.schema.filter(_.name == cf1.name).head.pk shouldBe cf1.pk
+        }
+        dbClient.createTable(tableName, Seq(cf0, cf1))
 
-          verify(client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None)))
-          verify(
-            client.query[RdbQuery, RdbInformation](
-              RdbQuery(db.url, db.user, db.password, Some(db.catalog), None, Some(tableName))))
+        verify(client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None)))
+        verify(
+          client.query[RdbQuery, RdbInformation](
+            RdbQuery(db.url, db.user, db.password, Some(db.catalog), None, Some(tableName))))
 
-          dbClient.dropTable(tableName)
-        })
-      }
+        dbClient.dropTable(tableName)
+      })
     }
   }
 

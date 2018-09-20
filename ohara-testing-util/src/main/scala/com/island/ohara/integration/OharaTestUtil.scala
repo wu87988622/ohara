@@ -89,7 +89,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @return true if the topic exists
     */
   def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(admin =>
-    admin.listTopics().names().thenApply(_.stream().anyMatch((_ == topic))).get())
+    admin.listTopics().names().thenApply(_.stream().anyMatch(_ == topic)).get())
 
   import scala.collection.JavaConverters._
 
@@ -150,10 +150,10 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
         while (!stopConsumer) {
           val records = consumer.poll(pollTimeout)
           if (records != null) {
-            records.forEach(((record: ConsumerRecord[K, V]) => {
+            records.asScala.foreach(record => {
               if (record.key != null) keyQueue.put(record.key)
               if (record.value != null) valueQueue.put(record.value)
-            }))
+            })
           }
         }
       } finally consumer.close()

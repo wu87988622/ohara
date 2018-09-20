@@ -117,4 +117,21 @@ object CloseOnce {
       case Failure(e) => throw e
     }
   }
+
+  def doClose2[A <: java.lang.AutoCloseable, B <: java.lang.AutoCloseable, C](generator_0: => A)(generator_1: A => B)(
+    worker: (A, B) => C): C = {
+    Try(generator_0) match {
+      case Success(a) =>
+        Try(generator_1(a)) match {
+          case Success(b) =>
+            try worker(a, b)
+            finally try b.close()
+            finally a.close()
+          case Failure(e) =>
+            a.close()
+            throw e
+        }
+      case Failure(e) => throw e
+    }
+  }
 }

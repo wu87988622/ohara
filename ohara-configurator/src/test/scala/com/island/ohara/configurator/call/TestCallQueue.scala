@@ -6,14 +6,13 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.io.UuidUtil
-import com.island.ohara.kafka.{Consumer, KafkaUtil}
+import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import com.island.ohara.io.CloseOnce._
 class TestCallQueue extends With3Brokers with Matchers {
 
   private[this] val requestTopicName = random()

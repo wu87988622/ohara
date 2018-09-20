@@ -3,7 +3,7 @@ package com.island.ohara.serialization
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.CloseOnce.doClose
+import com.island.ohara.io.CloseOnce._
 import com.island.ohara.io.{ByteUtil, DataStreamReader, DataStreamWriter}
 import com.island.ohara.serialization.DataType._
 
@@ -15,14 +15,11 @@ object RowSerializer extends Serializer[Row] {
     * @param obj object
     * @return a serializable type
     */
-  override def to(obj: Row): Array[Byte] = {
-    doClose(new ByteArrayOutputStream()) { output =>
-      doClose(new DataStreamWriter(output)) { writer =>
-        writer.write(0)
-        toV0(obj, writer)
-        output.toByteArray
-      }
-    }
+  override def to(obj: Row): Array[Byte] = doClose2(new ByteArrayOutputStream())(new DataStreamWriter(_)) {
+    case (buf, writer) =>
+      writer.write(0)
+      toV0(obj, writer)
+      buf.toByteArray
   }
 
   /**

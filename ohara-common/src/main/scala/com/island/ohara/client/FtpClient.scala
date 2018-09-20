@@ -29,8 +29,8 @@ trait FtpClient extends CloseOnce {
   def append(path: String, messages: Seq[String]): Unit = {
     // add room to buffer data
     val size = messages.map(_.length).sum * 2
-    CloseOnce.doClose(new BufferedWriter(new OutputStreamWriter(create(path), StandardCharsets.UTF_8), size)) {
-      writer =>
+    CloseOnce.doClose2(new OutputStreamWriter(create(path), StandardCharsets.UTF_8))(new BufferedWriter(_, size)) {
+      case (_, writer) =>
         messages.foreach(line => {
           writer.append(line)
           writer.newLine()

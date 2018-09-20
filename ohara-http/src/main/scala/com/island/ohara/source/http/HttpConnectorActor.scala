@@ -8,7 +8,6 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
 import com.island.ohara.data.Row
 import com.island.ohara.kafka.Producer
-import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.producer.ProducerConfig
 
 import scala.collection.JavaConverters._

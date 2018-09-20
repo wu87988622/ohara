@@ -91,13 +91,11 @@ object KafkaUtil {
                   topicName: String,
                   numberOfPartitions: Int,
                   numberOfReplications: Short,
-                  timeout: Duration = DEFAULT_TIMEOUT): Unit = doClose(KafkaClient(brokers)) { client =>
-    client
-      .topicCreator()
+                  timeout: Duration = DEFAULT_TIMEOUT): Unit = doClose(KafkaClient(brokers))(
+    _.topicCreator()
       .timeout(timeout)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
-      .create(topicName)
-  }
+      .create(topicName))
 
 }

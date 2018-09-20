@@ -52,22 +52,18 @@ class TestFtpClient extends MediumTest with Matchers {
   def testReadWrite(): Unit = {
     val content = "abcdefg--------1235"
     val bytes = content.getBytes(Charset.forName("UTF-8"))
-    doClose(client.create(tmpPath(client))) { output =>
-      output.write(bytes)
-    }
+    doClose(client.create(tmpPath(client)))(_.write(bytes))
 
     doClose(client.open(tmpPath(client))) { input =>
-      {
-        val buf = new Array[Byte](bytes.length)
-        var offset = 0
-        while (offset != buf.length) {
-          val rval = input.read(buf, offset, buf.length - offset)
-          if (rval == -1) throw new IllegalArgumentException(s"Failed to read data from ${tmpPath(client)}")
-          offset += rval
-        }
-        val copy = new String(buf, Charset.forName("UTF-8"))
-        copy shouldBe content
+      val buf = new Array[Byte](bytes.length)
+      var offset = 0
+      while (offset != buf.length) {
+        val rval = input.read(buf, offset, buf.length - offset)
+        if (rval == -1) throw new IllegalArgumentException(s"Failed to read data from ${tmpPath(client)}")
+        offset += rval
       }
+      val copy = new String(buf, Charset.forName("UTF-8"))
+      copy shouldBe content
     }
   }
 

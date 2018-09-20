@@ -94,10 +94,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
     doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
-      {
-        0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
-        producer.flush()
-      }
+      0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+      producer.flush()
     }
 
     val localURL = s"file://${testUtil.tmpDirectory}"
@@ -160,10 +158,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
     doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
-      {
-        0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
-        producer.flush()
-      }
+      0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+      producer.flush()
     }
 
     val localURL = s"file://${testUtil.tmpDirectory}"

@@ -57,18 +57,17 @@ object ConnectorClient {
 
       private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-      override def connectorCreator(): ConnectorCreator = (request: CreateConnectorRequest) => send(request)
-
-      private[this] def send(request: CreateConnectorRequest): CreateConnectorResponse = Await.result(
-        Marshal(request)
-          .to[RequestEntity]
-          .flatMap(entity => {
-            Http()
-              .singleRequest(
-                HttpRequest(method = HttpMethods.POST, uri = s"http://$workerAddress/connectors", entity = entity))
-              .flatMap(unmarshal[CreateConnectorResponse])
-          }),
-        TIMEOUT
+      override def connectorCreator(): ConnectorCreator = (request: CreateConnectorRequest) =>
+        Await.result(
+          Marshal(request)
+            .to[RequestEntity]
+            .flatMap(
+              entity =>
+                Http()
+                  .singleRequest(
+                    HttpRequest(method = HttpMethods.POST, uri = s"http://$workerAddress/connectors", entity = entity))
+                  .flatMap(unmarshal[CreateConnectorResponse])),
+          TIMEOUT
       )
 
       override def delete(name: String): Unit = Await.result(

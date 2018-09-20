@@ -8,9 +8,7 @@ dependencies {
   implementation project(':ohara-kafka')
   implementation libs.scalaLogging
   implementation libs.scala
-  implementation libs.akkaHttp
   implementation libs.akkaStream
-  implementation libs.akkaActor
   implementation libs.sprayJson
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation libs.scalatest

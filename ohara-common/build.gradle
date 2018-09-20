@@ -8,9 +8,7 @@ dependencies {
   implementation libs.scalaLogging
   implementation libs.slf4jApi
   implementation libs.slf4jlog4j
-  implementation libs.akkaHttp
   implementation libs.akkaStream
-  implementation libs.akkaActor
   implementation libs.sprayJson
   testImplementation libs.scalatest
   testImplementation libs.mockito

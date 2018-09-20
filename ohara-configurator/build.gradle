@@ -28,10 +28,7 @@ dependencies {
   implementation libs.scalaLogging
   implementation libs.slf4jApi
   implementation libs.slf4jlog4j
-  implementation libs.sprayJson
-  implementation libs.akkaHttp
   implementation libs.akkaStream
-  implementation libs.akkaActor
   implementation libs.sprayJson
   testImplementation project(':ohara-testing-util')
   testImplementation project(":ohara-testing-util").sourceSets.test.output

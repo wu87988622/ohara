@@ -10,28 +10,23 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
     extends Iterator[Seq[ColumnInfo]]
     with CloseOnce {
   private[this] val resultSet: ResultSet = preparedStatement.executeQuery()
-  private[this] var cache: Seq[ColumnInfo] = null
+  private[this] var cache: Seq[ColumnInfo] = _
 
-  override def hasNext(): Boolean = {
-    if (cache == null) {
-      if (resultSet.next()) {
-        cache = ResultSetDataConverter.converterRecord(resultSet, columns)
-        true
-      } else {
-        false
-      }
-    } else {
-      true
-    }
+  /**
+    * this method bring side effect the first time since we have to "touch" remote db to retrieve the "data information"
+    * to check the existence of data...
+    * @return true if there are some data. otherwise false
+    */
+  override def hasNext: Boolean = {
+    if (cache == null && resultSet.next()) cache = ResultSetDataConverter.converterRecord(resultSet, columns)
+    cache != null
   }
 
   override def next(): Seq[ColumnInfo] = {
-    if (hasNext() == false) throw new NoSuchElementException("Cache no data")
-    else {
-      try {
-        cache
-      } finally cache = null
-    }
+    if (!hasNext) throw new NoSuchElementException("Cache no data")
+    else
+      try cache
+      finally cache = null
   }
 
   /**

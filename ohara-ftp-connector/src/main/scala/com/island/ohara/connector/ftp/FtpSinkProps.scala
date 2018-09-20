@@ -23,6 +23,6 @@ object FtpSinkProps {
     host = props(FTP_HOST),
     port = props(FTP_PORT).toInt,
     user = props(FTP_USER_NAME),
-    password = props(FTP_PASSWORD),
+    password = props(FTP_PASSWORD)
   )
 }

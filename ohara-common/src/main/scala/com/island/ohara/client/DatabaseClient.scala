@@ -53,11 +53,9 @@ object DatabaseClient {
 
       CloseOnce
         .doClose(md.getTables(catalog, schema, name, null)) { implicit rs =>
-          {
-            val buf = new ArrayBuffer[(String, String, String)]()
-            while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableSchema, tableName))
-            buf
-          }
+          val buf = new ArrayBuffer[(String, String, String)]()
+          while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableSchema, tableName))
+          buf
         }
         .map {
           case (c, s, t) =>
@@ -72,15 +70,13 @@ object DatabaseClient {
         .map {
           case (c, s, t, pks) =>
             val columns = CloseOnce.doClose(md.getColumns(c, null, t, null)) { implicit rs =>
-              {
-                val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
-                while (rs.next()) {
-                  buf += ConfiguratorJson.RdbColumn(name = columnName,
-                                                    typeName = columnType,
-                                                    pk = pks.contains(columnName))
-                }
-                buf
+              val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
+              while (rs.next()) {
+                buf += ConfiguratorJson.RdbColumn(name = columnName,
+                                                  typeName = columnType,
+                                                  pk = pks.contains(columnName))
               }
+              buf
             }
             RdbTable(Option(c), Option(s), t, columns)
         }
@@ -103,15 +99,11 @@ object DatabaseClient {
           s"${c.name} ${c.typeName}"
         })
         .mkString(",") + ", PRIMARY KEY (" + columns.filter(_.pk).map(_.name).mkString(",") + "))"
-      CloseOnce.doClose(conn.createStatement()) { state =>
-        state.execute(query)
-      }
+      CloseOnce.doClose(conn.createStatement())(_.execute(query))
     }
     override def dropTable(name: String): Unit = {
       val query = s"DROP TABLE $name"
-      CloseOnce.doClose(conn.createStatement()) { state =>
-        state.execute(query)
-      }
+      CloseOnce.doClose(conn.createStatement())(_.execute(query))
     }
   }
 }

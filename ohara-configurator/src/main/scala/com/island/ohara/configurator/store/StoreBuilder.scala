@@ -53,6 +53,6 @@ class StoreBuilder {
     new TopicStore(
       brokers.get,
       topicName.get,
-      pollTimeout.get,
+      pollTimeout.get
     )(keySerializer, valueSerializer) with BlockingStore[K, V]
 }

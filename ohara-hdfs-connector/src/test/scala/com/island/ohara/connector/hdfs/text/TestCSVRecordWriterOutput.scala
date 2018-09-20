@@ -1,6 +1,5 @@
 package com.island.ohara.connector.hdfs.text
 
-import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.OharaTestUtil
@@ -15,8 +14,6 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   @Test
   def testWriteData(): Unit = {
     val testUtil = OharaTestUtil.localHDFS(1)
-    val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = new HDFSSinkConnectorConfig(
-      Map(HDFSSinkConnectorConfig.HDFS_URL -> testUtil.tmpDirectory))
     val fileSystem: FileSystem = testUtil.fileSystem
     val storage: Storage = new HDFSStorage(fileSystem)
     val tempFilePath: String = s"${testUtil.tmpDirectory}/file1.txt"
@@ -29,16 +26,14 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     storage.exists(tempFilePath) shouldBe true
 
     doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
-      {
-        val result: StringBuilder = new StringBuilder()
-        Stream
-          .continually(inputStream.read())
-          .takeWhile(_ != -1)
-          .foreach(x => {
-            result.append(x.toChar)
-          })
-        result.toString shouldBe "value1,value2\n"
-      }
+      val result: StringBuilder = new StringBuilder()
+      Stream
+        .continually(inputStream.read())
+        .takeWhile(_ != -1)
+        .foreach(x => {
+          result.append(x.toChar)
+        })
+      result.toString shouldBe "value1,value2\n"
     }
   }
 }
