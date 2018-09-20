@@ -2,8 +2,6 @@ FROM chia7712/ubuntu:18 AS deps
 
 # add credentials on build
 ARG SSH_PRIVATE_KEY
-ARG BRANCH=master
-ARG GRADLE_COMMAND="gradle clean build"
 RUN mkdir /root/.ssh/
 RUN echo "-----BEGIN RSA PRIVATE KEY-----" > /root/.ssh/id_rsa
 RUN echo "${SSH_PRIVATE_KEY}" >> /root/.ssh/id_rsa
@@ -21,8 +19,11 @@ RUN mkdir /root/.gradle
 # copy repo
 RUN mkdir /root/ohara
 RUN git clone git@bitbucket.org:is-land/ohara.git /root/ohara
-RUN cd /root/ohara && git checkout $BRANCH
-RUN cd /root/ohara && $GRADLE_COMMAND
+WORKDIR /root/ohara
+RUN git checkout master
+RUN gradle clean build
+RUN git checkout cdh5
+RUN gradle clean build
 
 # setup scripts
 RUN cp -r /root/ohara/quickstart /root/
