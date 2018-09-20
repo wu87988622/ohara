@@ -75,6 +75,53 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testColumnRename(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSource])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .schema(
+        Seq(
+          Column("name", "newName", DataType.STRING, 1),
+          Column("ranking", "newRanking", DataType.INT, 2),
+          Column("single", "newSingle", DataType.BOOLEAN, 3)
+        ))
+      .config(props.toMap)
+      .create()
+    try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
+      val consumer =
+        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+      val records = consumer.poll(20 seconds, data.length)
+      records.size shouldBe data.length
+      val row0 = records(0).value.get
+      row0.size shouldBe 3
+      row0.cell(0).name shouldBe "newName"
+      row0.cell(0).value shouldBe rows(0).cell(0).value
+      row0.cell(1).name shouldBe "newRanking"
+      row0.cell(1).value shouldBe rows(0).cell(1).value
+      row0.cell(2).name shouldBe "newSingle"
+      row0.cell(2).value shouldBe rows(0).cell(2).value
+      val row1 = records(1).value.get
+      row1.size shouldBe 3
+      row0.cell(0).name shouldBe "newName"
+      row1.cell(0).value shouldBe rows(1).cell(0).value
+      row0.cell(1).name shouldBe "newRanking"
+      row1.cell(1).value shouldBe rows(1).cell(1).value
+      row0.cell(2).name shouldBe "newSingle"
+      row1.cell(2).value shouldBe rows(1).cell(2).value
+    } finally testUtil.connectorClient.delete(methodName)
+    ftpClient.listFileNames(props.input).size shouldBe 0
+    ftpClient.listFileNames(props.output).size shouldBe 1
+    ftpClient.listFileNames(props.error).size shouldBe 0
+  }
+
+  @Test
   def testObjectType(): Unit = {
     val topicName = methodName
     val connectorName = methodName

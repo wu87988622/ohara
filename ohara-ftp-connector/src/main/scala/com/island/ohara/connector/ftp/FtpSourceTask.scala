@@ -60,13 +60,12 @@ class FtpSourceTask extends RowSourceTask {
 
       Row(
         newSchema
-          .map(c => (c, header(c.name)))
+          .map(c => (c, splits(header(c.name))))
           .map {
-            case (column, fromIndex) =>
-              val item = splits(fromIndex)
+            case (column, item) =>
               (column.order,
                Cell(
-                 column.name,
+                 column.newName,
                  column.typeName match {
                    case DataType.BOOLEAN => item.toBoolean
                    case DataType.SHORT   => item.toShort
