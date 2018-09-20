@@ -34,6 +34,8 @@ class FtpSinkTask extends RowSinkTask {
         case _: String                                     => true
         case _                                             => false
       }))
+      // process only matched column name
+      .filter(record => config.schema.map(_.name).forall(name => record.row.exists(_.name == name)))
       // to line
       .map(record => {
         (record,
@@ -54,8 +56,13 @@ class FtpSinkTask extends RowSinkTask {
       // NOTED: we don't want to write an "empty" line
       .filter(_._2.nonEmpty)
     if (result.nonEmpty) {
+      val needHeader = config.schema.nonEmpty && props.header && !ftpClient.exist(props.output)
       val writer = new BufferedWriter(
         new OutputStreamWriter(ftpClient.create(props.output), props.encode.getOrElse("UTF-8")))
+      if (needHeader) {
+        writer.append(config.schema.sortBy(_.order).map(_.name).mkString(","))
+        writer.newLine()
+      }
       try result.foreach {
         case (r, line) => {
           writer.append(line)

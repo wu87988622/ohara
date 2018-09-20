@@ -18,6 +18,7 @@ class FtpSink extends RowSinkConnector {
           config.schema,
           FtpSinkTaskProps(
             output = IoUtil.path(props.output, s"${config.name}_$index"),
+            header = props.header,
             encode = props.encode,
             host = props.host,
             port = props.port,
@@ -33,7 +34,7 @@ class FtpSink extends RowSinkConnector {
     if (config.schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
-      FtpClient.builder.host(props.host).port(props.port).user(props.user).password(props.password).build()
+      FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
     try if (!ftpClient.exist(props.output)) throw new IllegalArgumentException(s"output:${props.output} doesn't exist")
     finally ftpClient.close()
   }

@@ -12,6 +12,7 @@ package object ftp {
   val FTP_USER_NAME = "ftp.user.name"
   val FTP_PASSWORD = "ftp.user.password"
   val FTP_ENCODE = "ftp.encode"
+  val FTP_HEADER = "ftp.header"
 
   //TODO: how to define the version of this module?
   val VERSION: String = "0.1-SNAPSHOT"
