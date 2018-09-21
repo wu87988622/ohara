@@ -30,7 +30,7 @@ object JDBCSourceConnectorConfig {
       dbTableName = props(DB_TABLENAME),
       dbSchemaPattern = props(DB_SCHEMA_PATTERN),
       mode = props.getOrElse(MODE, MODE_DEFAULT),
-      timestampColumnName = props(TIMESTAMP_COLUMN_NAME),
+      timestampColumnName = props(TIMESTAMP_COLUMN_NAME)
     )
   }
 }

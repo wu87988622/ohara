@@ -5,6 +5,7 @@ plugins {
 allprojects {
   repositories {
     mavenCentral()
+    maven { url "https://repository.cloudera.com/artifactory/cloudera-repos/" }
     maven { url "https://dl.bintray.com/cakesolutions/maven/" }
   }
 }
@@ -14,7 +15,8 @@ ext {
 }
 
 subprojects {
-  version = '0.1-SNAPSHOT'
+  if (project.hasProperty('cdh')) version = '0.1-cdh5-SNAPSHOT'
+  else version = '0.1-SNAPSHOT'
 
   if (it.name != 'ohara-manager') {
     apply plugin: 'scala'
@@ -85,14 +87,7 @@ subprojects {
       "-feature",
       "-unchecked",
       "-Xlint",
-      "-Ywarn-dead-code",
-      "-Ywarn-unused:implicits",
-      "-Ywarn-unused:imports",
-      "-Ywarn-unused:locals",
-      "-Ywarn-unused:params",
-      "-Ywarn-unused:patvars",
-      "-Ywarn-unused:privates",
-      "-Ybackend-parallelism", "4"
+      "-Ywarn-dead-code"
     ]
 
     configure(scalaCompileOptions.forkOptions) {

@@ -129,12 +129,15 @@ class ConfiguratorBuilder {
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
 
-  override def connectorCreator(): ConnectorCreator = (request: CreateConnectorRequest) =>
-    if (cachedConnectors.contains(request.name))
-      throw new IllegalStateException(s"the connector:${request.name} exists!")
-    else {
-      cachedConnectors.put(request.name, request.config)
-      CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
+  override def connectorCreator(): ConnectorCreator = new ConnectorCreator {
+    override protected def send(request: CreateConnectorRequest): CreateConnectorResponse =
+      if (cachedConnectors.contains(request.name))
+        throw new IllegalStateException(s"the connector:${request.name} exists!")
+      else {
+        cachedConnectors.put(request.name, request.config)
+        CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
+      }
+
   }
 
   override def delete(name: String): Unit =
@@ -179,10 +182,12 @@ private class FakeKafkaClient extends KafkaClient {
     printDebugMessage()
   }
 
-  override def topicCreator(): TopicCreator = request => {
-    printDebugMessage()
-    cachedTopics
-      .put(request.name, TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications))
+  override def topicCreator(): TopicCreator = new TopicCreator {
+    override protected def doCreate(request: TopicCreator.Request): Unit = {
+      printDebugMessage()
+      cachedTopics
+        .put(request.name, TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications))
+    }
   }
 
   override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {

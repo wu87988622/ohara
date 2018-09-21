@@ -10,7 +10,9 @@ object ByteUtil {
   /**
     * used to sort the byte array in collection.
     */
-  val COMPARATOR: Ordering[Array[Byte]] = (o1: Array[Byte], o2: Array[Byte]) => ByteUtil.compare(o1, o2)
+  val COMPARATOR: Ordering[Array[Byte]] = new Ordering[Array[Byte]] {
+    override def compare(x: Array[Byte], y: Array[Byte]): Int = ByteUtil.compare(x, y)
+  }
 
   // pre-defined constants
   val SIZE_OF_BYTE: Int = java.lang.Byte.SIZE / java.lang.Byte.SIZE

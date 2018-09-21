@@ -2,6 +2,8 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'scala'
 
 dependencies {
+  implementation libs.akkaStream
+  implementation libs.sprayJson
   implementation libs.scala
   implementation libs.scalaLogging
   implementation project(':ohara-kafka')

@@ -11,6 +11,7 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
 import org.apache.kafka.clients.consumer._
+import org.apache.kafka.common.KafkaFuture
 import org.apache.kafka.common.serialization.Deserializer
 
 import scala.collection.mutable.ArrayBuffer
@@ -88,8 +89,15 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     * @param topic topic name
     * @return true if the topic exists
     */
-  def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(admin =>
-    admin.listTopics().names().thenApply(_.stream().anyMatch(_ == topic)).get())
+  def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(
+    admin =>
+      admin
+        .listTopics()
+        .names()
+        .thenApply(new KafkaFuture.Function[util.Set[String], Boolean] {
+          override def apply(a: util.Set[String]): Boolean = a.contains(topic)
+        })
+        .get())
 
   import scala.collection.JavaConverters._
 

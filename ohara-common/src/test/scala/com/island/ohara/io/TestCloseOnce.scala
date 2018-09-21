@@ -31,7 +31,11 @@ class TestCloseOnce extends SmallTest with Matchers {
       case _: IOException =>
     }
 
-    def validString: CloseOnce = () => {}
+    def validString: CloseOnce = new CloseOnce {
+      override protected def doClose(): Unit = {
+        // do nothing
+      }
+    }
 
     doClose(validString)(_ => true) shouldBe true
     try {

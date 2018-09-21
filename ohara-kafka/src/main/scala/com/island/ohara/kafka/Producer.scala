@@ -4,7 +4,7 @@ import java.util.{Objects, Properties}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.serialization.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord}
 
 import scala.concurrent.{Future, Promise}
 
@@ -65,41 +65,47 @@ final class ProducerBuilder {
                                 KafkaUtil.wrapSerializer(valueSerializer)))
 
       import scala.collection.JavaConverters._
-      override def sender(): Sender[K, V] = (request, callback) => {
-        val record = new ProducerRecord[K, V](
-          request.topic,
-          request.partition.map(new Integer(_)).orNull,
-          request.timestamp.map(new java.lang.Long(_)).orNull,
-          request.key.getOrElse(null.asInstanceOf[K]),
-          request.value.getOrElse(null.asInstanceOf[V]),
-          request.headers.map(toKafkaHeader).asJava
-        )
-        producer.send(
-          record,
-          (metadata: org.apache.kafka.clients.producer.RecordMetadata, exception: Exception) => {
-            if (metadata == null && exception == null)
-              callback(
-                Left(new IllegalStateException("no meta and exception from kafka producer...It should be impossible")))
+      override def sender(): Sender[K, V] = new Sender[K, V] {
+        override protected def doSend(request: Sender.Request[K, V],
+                                      callback: Either[Throwable, RecordMetadata] => Unit): Unit = {
+          val record = new ProducerRecord[K, V](
+            request.topic,
+            request.partition.map(new Integer(_)).orNull,
+            request.timestamp.map(new java.lang.Long(_)).orNull,
+            request.key.getOrElse(null.asInstanceOf[K]),
+            request.value.getOrElse(null.asInstanceOf[V]),
+            request.headers.map(toKafkaHeader).asJava
+          )
 
-            if (metadata != null && exception != null)
-              callback(
-                Left(
-                  new IllegalStateException("Both meta and exception from kafka producer...It should be impossible")))
+          producer.send(
+            record,
+            new Callback {
+              override def onCompletion(metadata: org.apache.kafka.clients.producer.RecordMetadata,
+                                        exception: Exception): Unit = {
+                if (metadata == null && exception == null)
+                  callback(
+                    Left(
+                      new IllegalStateException("no meta and exception from kafka producer...It should be impossible")))
 
-            if (metadata != null)
-              callback(
-                Right(
-                  RecordMetadata(metadata.topic(),
-                                 metadata.partition(),
-                                 metadata.offset(),
-                                 metadata.timestamp(),
-                                 metadata.serializedKeySize(),
-                                 metadata.serializedValueSize())))
-            if (exception != null) callback(Left(exception))
-          }
-        )
+                if (metadata != null && exception != null)
+                  callback(Left(
+                    new IllegalStateException("Both meta and exception from kafka producer...It should be impossible")))
+
+                if (metadata != null)
+                  callback(
+                    Right(
+                      RecordMetadata(metadata.topic(),
+                                     metadata.partition(),
+                                     metadata.offset(),
+                                     metadata.timestamp(),
+                                     metadata.serializedKeySize(),
+                                     metadata.serializedValueSize())))
+                if (exception != null) callback(Left(exception))
+              }
+            }
+          )
+        }
       }
-
       override def flush(): Unit = producer.flush()
 
       override protected def doClose(): Unit = producer.close()

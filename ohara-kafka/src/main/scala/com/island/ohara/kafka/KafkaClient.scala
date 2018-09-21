@@ -8,6 +8,7 @@ import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaClient._
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
+import org.apache.kafka.common.KafkaFuture
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 
 import scala.concurrent.ExecutionException
@@ -48,13 +49,19 @@ object KafkaClient {
     private[this] val admin = AdminClient.create(toAdminProps(_brokers))
 
     override def exist(topicName: String, timeout: Duration): Boolean =
-      admin.listTopics().names().thenApply(_.contains(topicName)).get(timeout.toMillis, TimeUnit.MILLISECONDS)
+      admin
+        .listTopics()
+        .names()
+        .thenApply(new KafkaFuture.Function[util.Set[String], Boolean] {
+          override def apply(a: util.Set[String]): Boolean = a.contains(topicName)
+        })
+        .get(timeout.toMillis, TimeUnit.MILLISECONDS)
 
     override protected def doClose(): Unit = admin.close()
 
     import scala.collection.JavaConverters._
-    override def topicCreator(): TopicCreator = request => {
-      admin
+    override def topicCreator(): TopicCreator = new TopicCreator {
+      override protected def doCreate(request: TopicCreator.Request): Unit = admin
         .createTopics(
           util.Arrays.asList(new NewTopic(request.name, request.numberOfPartitions, request.numberOfReplications)
             .configs(request.options.asJava)))
