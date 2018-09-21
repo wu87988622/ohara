@@ -2,7 +2,14 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.client.ConfiguratorJson._
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+import com.island.ohara.client.ConfiguratorJson.{Column, _}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
@@ -12,8 +19,12 @@ import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.DefaultJsonProtocol._
+import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
   * this test includes two configurators - with/without cluster.
@@ -39,8 +50,11 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   private[this] val configurators = Seq(configurator0, configurator1)
 
-  private[this] val client0 = ConfiguratorClient(s"${configurator0.hostname}:${configurator0.port}")
-  private[this] val client1 = ConfiguratorClient(s"${configurator1.hostname}:${configurator1.port}")
+  private[this] val ip0 = s"${configurator0.hostname}:${configurator0.port}"
+  private[this] val ip1 = s"${configurator1.hostname}:${configurator1.port}"
+
+  private[this] val client0 = ConfiguratorClient(ip0)
+  private[this] val client1 = ConfiguratorClient(ip1)
   private[this] val clients = Seq(client0, client1)
 
   private[this] val db = testUtil.dataBase
@@ -670,6 +684,195 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       // it is ok to remove the sink (uuid_1) since we have updated the pipeline to use another sink (uuid_2)
       client.delete[Sink](uuid_1).uuid shouldBe uuid_1
+    })
+  }
+//   .......................test for error request........................
+  trait Excuter {
+    val domain = ip0
+    val uuid = random()
+    type Formatter[O]
+    def excute[O](implicit formatter: Formatter[O])
+  }
+
+  final case class MyRequest(s: String, s2: Int, s3: String)
+  implicit val MY_REQUEST_JSON_FORMAT: RootJsonFormat[MyRequest] = jsonFormat3(MyRequest)
+  val request = MyRequest("5", 5, "testttt")
+
+  object testClient extends SprayJsonSupport with DefaultJsonProtocol {
+    implicit val actorSystem: ActorSystem = ActorSystem("TestConfigurator")
+    implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+    val TIMEOUT = 10 seconds
+    def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
+      if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
+      else
+        Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
+
+    def doRequest3[T](url: String, req: T, method: HttpMethod)(implicit rm: RootJsonFormat[T]) = {
+      //list
+      Await.result(
+        Marshal(req)
+          .to[RequestEntity]
+          .flatMap(entity => {
+            Http().singleRequest(HttpRequest(method, url, entity = entity)).flatMap(unmarshal[T])
+
+          }),
+        TIMEOUT
+      )
+    }
+  }
+
+  object ReturnType {
+    type topic = TopicInfo
+    type hdfs = HdfsInformation
+    type pipe = Pipeline
+    type validation = ValidationReport
+    type sink = Sink
+    type source = Source
+    type rdb = RdbInformation
+    type cluster = ClusterInformation
+  }
+
+  object RequestType {
+    type topic = TopicInfoRequest
+    type hdfs = HdfsInformationRequest
+    type pipe = PipelineRequest
+    type hdfsValidation = HdfsValidationRequest
+    type rdbValidation = RdbValidationRequest
+    type ftpValidation = FtpValidationRequest
+    type sink = SinkRequest
+    type source = SourceRequest
+    type rdb = RdbQuery
+  }
+
+  object ExceptionType {
+    type parse_exception = spray.json.DeserializationException
+    type error_exception = IllegalArgumentException
+  }
+
+  @Test
+  def DataTest(): Unit = {
+    object DataExcuter extends Excuter {
+      type Formatter[T] = DataCommandFormat[T]
+      override def excute[O](implicit formatter: Formatter[O]) {
+        val url = formatter.format(domain)
+        val url2 = formatter.format(domain, uuid)
+
+        an[ExceptionType.parse_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url, request, HttpMethods.GET)
+        //add
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url, request, HttpMethods.POST)
+        //get
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url2, request, HttpMethods.GET)
+        //delete
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url2, request, HttpMethods.DELETE)
+        //update
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url2, request, HttpMethods.PUT)
+
+      }
+    }
+    DataExcuter.excute[ReturnType.topic]
+    DataExcuter.excute[ReturnType.hdfs]
+    DataExcuter.excute[ReturnType.pipe]
+    DataExcuter.excute[ReturnType.sink]
+    DataExcuter.excute[ReturnType.source]
+  }
+
+  @Test
+  def ValidateTest(): Unit = {
+
+    object ValidateExcuter extends Excuter {
+      type Formatter[T] = ValidationCommandFormat[T]
+      override def excute[O](implicit formatter: Formatter[O]) {
+        val url = formatter.format(domain)
+        //validate
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url, request, HttpMethods.PUT)
+
+      }
+    }
+    ValidateExcuter.excute[RequestType.rdbValidation]
+    ValidateExcuter.excute[RequestType.hdfsValidation]
+    ValidateExcuter.excute[RequestType.ftpValidation]
+
+  }
+  @Test
+  def ClusterTest(): Unit = {
+
+    object ClusterExcuter extends Excuter {
+      type Formatter[T] = ClusterCommandFormat[T]
+      override def excute[O](implicit formatter: Formatter[O]) {
+        val url = formatter.format(domain)
+        //cluster
+        an[ExceptionType.parse_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url, request, HttpMethods.GET)
+      }
+    }
+    ClusterExcuter.excute[ReturnType.cluster]
+  }
+  @Test
+  def ControlCommandTest(): Unit = {
+
+    object ControlCommandExcuter extends Excuter {
+      type Formatter[T] = ControlCommandFormat[T]
+      override def excute[O](implicit formatter: Formatter[O]) {
+        val url = formatter.start(domain, uuid)
+        val url2 = formatter.stop(domain, uuid)
+        //start
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url, request, HttpMethods.PUT)
+        //stop
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url2, request, HttpMethods.PUT)
+      }
+    }
+    ControlCommandExcuter.excute[ReturnType.pipe]
+  }
+
+  @Test
+  def QueryCommandTest(): Unit = {
+
+    object QueryCommandExcuter extends Excuter {
+      type Formatter[T] = QueryCommandFormat[T]
+      override def excute[O](implicit formatter: Formatter[O]) {
+        val url = formatter.format(domain)
+        //query
+        an[ExceptionType.error_exception] should be thrownBy testClient
+          .doRequest3[MyRequest](url, request, HttpMethods.POST)
+      }
+    }
+    QueryCommandExcuter.excute[RequestType.rdb]
+  }
+
+  @Test
+  def errorRequestWithConfiguratorClient(): Unit = {
+
+    clients.foreach(client => {
+
+      an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.topic](request)
+      an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.hdfs](request)
+      an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.pipe](request)
+      //   an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.validation](request)
+      an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.sink](request)
+      an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.source](request)
+      //   an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ReturnType.rdb](request)
+
+      an[IllegalArgumentException] should be thrownBy client
+        .update[MyRequest, ReturnType.topic](Long.MaxValue.toString(), request)
+      an[IllegalArgumentException] should be thrownBy client
+        .update[MyRequest, ReturnType.hdfs](Long.MaxValue.toString(), request)
+      an[IllegalArgumentException] should be thrownBy client
+        .update[MyRequest, ReturnType.pipe](Long.MaxValue.toString(), request)
+      //   an[IllegalArgumentException] should be thrownBy client.update[MyRequest, ReturnType.validation](Long.MaxValue.toString(),request)
+      an[IllegalArgumentException] should be thrownBy client
+        .update[MyRequest, ReturnType.sink](Long.MaxValue.toString(), request)
+      an[IllegalArgumentException] should be thrownBy client
+        .update[MyRequest, ReturnType.source](Long.MaxValue.toString(), request)
+      //   an[IllegalArgumentException] should be thrownBy client.update[MyRequest, ReturnType.rdb](Long.MaxValue.toString(),request)
+
     })
   }
 
