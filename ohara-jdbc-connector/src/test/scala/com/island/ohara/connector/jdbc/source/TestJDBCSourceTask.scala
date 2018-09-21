@@ -86,4 +86,17 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value shouldBe 100
   }
+
+  @Test
+  def testCellOrder(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val schema: Seq[Column] = Seq(Column("c1", DataType.INT, 1), Column("c0", DataType.INT, 0))
+    val columnInfo: Seq[ColumnInfo] =
+      Seq(ColumnInfo("c1", "int", new Integer(100)), ColumnInfo("c0", "int", new Integer(50)))
+    val cells = jdbcSourceTask.row(schema, columnInfo).toSeq
+    cells(0).name shouldBe "c0"
+    cells(0).value shouldBe 50
+    cells(1).name shouldBe "c1"
+    cells(1).value shouldBe 100
+  }
 }

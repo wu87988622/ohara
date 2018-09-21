@@ -89,25 +89,28 @@ class JDBCSourceTask extends RowSourceTask {
     Row
       .builder()
       .cells(
-        schema.map(s => (s, values(s.name, columns))).map {
-          case (schema, value) =>
-            schema.order
-            Cell(
-              schema.name,
-              schema.typeName match {
-                case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
-                case DataType.SHORT                   => value.asInstanceOf[Short]
-                case DataType.INT                     => value.asInstanceOf[Int]
-                case DataType.LONG                    => value.asInstanceOf[Long]
-                case DataType.FLOAT                   => value.asInstanceOf[Float]
-                case DataType.DOUBLE                  => value.asInstanceOf[Double]
-                case DataType.BYTE                    => value.asInstanceOf[Byte]
-                case DataType.STRING                  => value.asInstanceOf[String]
-                case DataType.BYTES | DataType.OBJECT => value
-                case _                                => throw new IllegalArgumentException("Unsupported type...")
-              }
-            )
-        }
+        schema
+          .sortBy(_.order)
+          .map(s => (s, values(s.name, columns)))
+          .map {
+            case (schema, value) =>
+              schema.order
+              Cell(
+                schema.name,
+                schema.typeName match {
+                  case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
+                  case DataType.SHORT                   => value.asInstanceOf[Short]
+                  case DataType.INT                     => value.asInstanceOf[Int]
+                  case DataType.LONG                    => value.asInstanceOf[Long]
+                  case DataType.FLOAT                   => value.asInstanceOf[Float]
+                  case DataType.DOUBLE                  => value.asInstanceOf[Double]
+                  case DataType.BYTE                    => value.asInstanceOf[Byte]
+                  case DataType.STRING                  => value.asInstanceOf[String]
+                  case DataType.BYTES | DataType.OBJECT => value
+                  case _                                => throw new IllegalArgumentException("Unsupported type...")
+                }
+              )
+          }
       )
       .build()
   }
