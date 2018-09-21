@@ -203,7 +203,6 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val topics = Seq("connectorClientTest_topic", "connectorClientTest_topic2")
     val output_topic = "connectorClientTest_topic_output"
     val connectorClient = testUtil.connectorClient
-
     connectorClient
       .connectorCreator()
       .name(connectorName)
@@ -221,11 +220,8 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val config = connectorClient.config(connectorName)
     config.topics shouldBe topics
 
+    OharaTestUtil.await(() => connectorClient.status(connectorName).tasks != Nil, 10 second)
     var status = connectorClient.status(connectorName)
-    OharaTestUtil.await(() => {
-      status = connectorClient.status(connectorName)
-      connectorClient.status(connectorName).tasks != Nil
-    }, 10 second)
     status.tasks.head should not be null
 
     val task = connectorClient.taskStatus(connectorName, status.tasks.head.id)
