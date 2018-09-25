@@ -2,26 +2,27 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
-  implementation project(':ohara-testing-util')
-  implementation project(':ohara-configurator')
-  implementation project(':ohara-common')
-  implementation project(':ohara-kafka')
-  implementation libs.kafkaClient
+  compile project(':ohara-testing-util')
+  compile project(':ohara-configurator')
+  compile project(':ohara-common')
+  compile project(':ohara-kafka')
+  compile libs.kafkaClient
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *
    * Solve running Kafka Connect mini cluster failed. OHARA-103
    */
-  implementation (libs.hadoopHDFS) {
+  compile (libs.hadoopHDFS) {
     exclude group: 'com.sun.jersey', module: 'jersey-core'
     exclude group: 'com.sun.jersey', module: 'jersey-json'
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
-  implementation libs.scalaLogging
-  implementation libs.scala
-  implementation libs.akkaStream
-  implementation libs.sprayJson
+  compile libs.scalaLogging
+  compile libs.scala
+  compile libs.akkaStream
+  compile libs.sprayJson
+  compile libs.akkaSlf4j
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation libs.scalatest
   testImplementation libs.junit
@@ -30,5 +31,16 @@ dependencies {
 distributions {
   main {
     baseName = "ohara"
+    contents {
+      into("conf") {
+        // ref to root module
+        from { "$projectDir/../conf" }
+      }
+      into("bin") {
+        // ref to root module
+        from { "$projectDir/../bin" }
+        fileMode 0755
+      }
+    }
   }
 }

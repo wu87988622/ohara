@@ -16,30 +16,12 @@ a powerful ETL tool
 
 [TODO]
 
-## Build ohara images for CI
+## run all backend-services
 ```
-cd ohara/docker
-docker build --no-cache --build-arg SSH_PRIVATE_KEY={access key} -t haredata/ohara:latest -f ./ohara.latest.dockerfile .
+docker run -ti --rm -p 12345:12345 islandsystems/backend:0.1-SNAPSHOT start-service.sh backend --port 12345 --ttl 123
 ```
-* #####SSH_PRIVARY_KEY
-used to pull ohara repository (required)
-* #####BRANCH
-source code sued to to build image (default is master)
-* #####GRADLE_COMMAND
-run before completing image (default is "gradle clean build -x test")
-
-## run ohara backend-services by ohara image
-```
-docker run -e SSH_PRIVATE_KEY="" -e BRANCH=master -e HEAP_SIZE=4000m -e CONFIGURATOR_PORT=12345 -p 12345:12345 --rm -t -d chia7712/ohara:latest runBackend.sh
-```
-* #####SSH_PRIVARY_KEY
-used to pull ohara repository (required)
-* #####BRANCH
-source code used to run the backend-service (default is master)
-* #####CONFIGURATOR_PORT
+* #####port
 used by Configurator (default is random)
-* #####HEAP_SIZE
-used by JVM (default is -Xmx4000m)
 * #####TTL
 time to terminate backend-service (default is 365 days)
 

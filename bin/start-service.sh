@@ -13,10 +13,10 @@ BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 PROJECT_HOME="$(dirname "$BIN_DIR")"
 
 if [ "$1" == "configurator" ]; then
-  CLASS="com.island.ohara.configurator.ConfiguratorBuilder"
+  CLASS="com.island.ohara.configurator.Configurator"
   shift 1
-elif [ "$1" == "manager" ]; then
-  CLASS="com.island.ohara.manager.HttpServer"
+elif [ "$1" == "backend" ]; then
+  CLASS="com.island.ohara.demo.Backend"
   shift 1
 else
   echo "Usage: <configurator> [<args>]"
@@ -32,4 +32,4 @@ do
 done
 
 #----------[EXECUTION]----------#
-"$BIN_DIR/run_java.sh" $CLASS $ARGS > /dev/null 2>&1 &
+"$BIN_DIR/run_java.sh" $CLASS $ARGS
