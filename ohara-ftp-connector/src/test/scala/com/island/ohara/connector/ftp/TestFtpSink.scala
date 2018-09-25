@@ -137,6 +137,41 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testColumnRename(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    val schema = Seq(
+      Column("a", "aa", DataType.STRING, 1),
+      Column("b", "bb", DataType.INT, 2),
+      Column("c", "cc", DataType.BOOLEAN, 3)
+    )
+    setupData(topicName)
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSink])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .schema(schema)
+      .config(props.copy(header = true).toMap)
+      .create()
+
+    try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
+      OharaTestUtil.await(() => ftpClient.listFileNames(props.output).size == 1, 10 seconds)
+      val lines = ftpClient.readLines(IoUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      lines.length shouldBe 2
+      lines.head shouldBe schema.sortBy(_.order).map(_.newName).mkString(",")
+      val items = lines(1).split(",")
+      items.length shouldBe data.size
+      items(0) shouldBe data.cell(0).value.toString
+      items(1) shouldBe data.cell(1).value.toString
+      items(2) shouldBe data.cell(2).value.toString
+    } finally testUtil.connectorClient.delete(methodName)
+  }
+
+  @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName

@@ -60,7 +60,7 @@ class FtpSinkTask extends RowSinkTask {
       val writer = new BufferedWriter(
         new OutputStreamWriter(ftpClient.create(props.output), props.encode.getOrElse("UTF-8")))
       if (needHeader) {
-        writer.append(config.schema.sortBy(_.order).map(_.name).mkString(","))
+        writer.append(config.schema.sortBy(_.order).map(_.newName).mkString(","))
         writer.newLine()
       }
       try result.foreach {
