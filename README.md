@@ -9,7 +9,7 @@ a powerful ETL tool
 ### Prerequisites
 
 * JDK 1.8+
-* Scala 2.12
+* Scala 2.11
 * gradle 4.5+
 
 ### Installing
