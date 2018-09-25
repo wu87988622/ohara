@@ -96,7 +96,7 @@ class JDBCSourceTask extends RowSourceTask {
             case (schema, value) =>
               schema.order
               Cell(
-                schema.name,
+                schema.newName,
                 schema.typeName match {
                   case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
                   case DataType.SHORT                   => value.asInstanceOf[Short]

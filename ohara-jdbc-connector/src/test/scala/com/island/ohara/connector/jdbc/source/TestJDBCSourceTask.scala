@@ -67,6 +67,10 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     rows(0).row.cell(0).value.toString() shouldBe "2018-09-01 00:00:00.0"
     rows(0).row.cell(1).value shouldBe "a11"
     rows(0).row.cell(2).value shouldBe 1
+
+    rows(0).row.cell(0).name shouldBe "COLUMN1"
+    rows(1).row.cell(1).name shouldBe "COLUMN2"
+    rows(2).row.cell(2).name shouldBe "COLUMN4"
   }
 
   @Test
@@ -98,5 +102,45 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     cells(0).value shouldBe 50
     cells(1).name shouldBe "c1"
     cells(1).value shouldBe 100
+  }
+
+  @Test
+  def testRowNewName(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val schema: Seq[Column] = Seq(Column("COLUMN1", "COLUMN100", DataType.INT, 0))
+    val columnInfo: Seq[ColumnInfo] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
+    val row0: Row = jdbcSourceTask.row(schema, columnInfo)
+    row0.cell("COLUMN100").value shouldBe 100
+  }
+
+  @Test
+  def testPollNewName(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val taskConfig: TaskConfig = mock[TaskConfig]
+    val maps: Map[String, String] = Map(DB_URL -> db.url,
+                                        DB_USERNAME -> db.user,
+                                        DB_PASSWORD -> db.password,
+                                        DB_TABLENAME -> tableName,
+                                        DB_SCHEMA_PATTERN -> "",
+                                        TIMESTAMP_COLUMN_NAME -> timestampColumnName)
+    when(taskConfig.options).thenReturn(maps)
+
+    val columns: Seq[Column] = Seq(Column("COLUMN1", "COLUMN100", DataType.OBJECT, 0),
+                                   Column("COLUMN2", "COLUMN200", DataType.STRING, 1),
+                                   Column("COLUMN4", "COLUMN400", DataType.INT, 3))
+
+    when(taskConfig.schema).thenReturn(columns)
+    when(taskConfig.topics).thenReturn(Seq("topic1"))
+
+    jdbcSourceTask._start(taskConfig)
+
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll()
+    rows(0).row.cell(0).value.toString() shouldBe "2018-09-01 00:00:00.0"
+    rows(0).row.cell(1).value shouldBe "a11"
+    rows(0).row.cell(2).value shouldBe 1
+
+    rows(0).row.cell(0).name shouldBe "COLUMN100"
+    rows(1).row.cell(1).name shouldBe "COLUMN200"
+    rows(2).row.cell(2).name shouldBe "COLUMN400"
   }
 }
