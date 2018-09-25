@@ -63,7 +63,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     CloseOnce.doClose(
       Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]) {
       consumer =>
-        val records = consumer.poll(20 seconds, 1)
+        val records = consumer.poll(60 seconds, 1)
         val row = records.head.value.get
         row.size shouldBe data.size
         row.cell("a").value shouldBe "abc"
