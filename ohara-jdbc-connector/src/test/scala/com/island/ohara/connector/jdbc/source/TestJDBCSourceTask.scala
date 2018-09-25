@@ -1,6 +1,8 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.{Statement, Timestamp}
+import java.util
+
 import com.island.ohara.client.ConfiguratorJson.{Column, RdbColumn}
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.util.ColumnInfo
@@ -9,10 +11,14 @@ import com.island.ohara.integration.LocalDataBase
 import com.island.ohara.kafka.connector.{RowSourceRecord, TaskConfig}
 import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.DataType
+import org.apache.kafka.connect.source.SourceTaskContext
+import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
+
+import scala.collection.JavaConverters._
 
 class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   private[this] val db = LocalDataBase.mysql()
@@ -45,6 +51,11 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testPoll(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val taskContext: SourceTaskContext = mock[SourceTaskContext]
+    val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
+    when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
+    jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
+
     val taskConfig: TaskConfig = mock[TaskConfig]
     val maps: Map[String, String] = Map(DB_URL -> db.url,
                                         DB_USERNAME -> db.user,
@@ -60,7 +71,6 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
 
     when(taskConfig.schema).thenReturn(columns)
     when(taskConfig.topics).thenReturn(Seq("topic1"))
-
     jdbcSourceTask._start(taskConfig)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll()
@@ -71,6 +81,17 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     rows(0).row.cell(0).name shouldBe "COLUMN1"
     rows(1).row.cell(1).name shouldBe "COLUMN2"
     rows(2).row.cell(2).name shouldBe "COLUMN4"
+
+    //Test row 1 offset
+    rows(0).sourceOffset.foreach(x => {
+      x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
+      x._2 shouldBe 1535731200000L
+    })
+    //Test row 2 offset
+    rows(1).sourceOffset.foreach(x => {
+      x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
+      x._2 shouldBe 1535731201000L
+    })
   }
 
   @Test
@@ -116,6 +137,11 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testPollNewName(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val taskContext: SourceTaskContext = mock[SourceTaskContext]
+    val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
+    when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
+    jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
+
     val taskConfig: TaskConfig = mock[TaskConfig]
     val maps: Map[String, String] = Map(DB_URL -> db.url,
                                         DB_USERNAME -> db.user,
@@ -142,5 +168,45 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     rows(0).row.cell(0).name shouldBe "COLUMN100"
     rows(1).row.cell(1).name shouldBe "COLUMN200"
     rows(2).row.cell(2).name shouldBe "COLUMN400"
+  }
+
+  @Test
+  def testReadOffsetSize0(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
+    val taskContext: SourceTaskContext = mock[SourceTaskContext]
+    when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
+    jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
+
+    val timestamp: Timestamp = jdbcSourceTask.readOffset("table1")
+    timestamp.toString() shouldBe "1970-01-01 08:00:00.0"
+  }
+
+  @Test
+  def testReadOffsetSize1(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val taskContext: SourceTaskContext = mock[SourceTaskContext]
+    val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
+
+    val maps = new util.HashMap[String, Object]
+    when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
+
+    maps.put(JDBCSourceTask.DB_TABLE_OFFSET_KEY, java.lang.Long.valueOf(1537510989378L))
+    when(offsetStorageReader.offset(JDBCSourceTask.partition("table1").asJava)).thenReturn(maps)
+
+    jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
+
+    val timestamp: Timestamp = jdbcSourceTask.readOffset("table1")
+    timestamp.toString() shouldBe "2018-09-21 14:23:09.378"
+  }
+
+  @Test
+  def testDbTimestampColumnValue(): Unit = {
+    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
+    val dbColumnInfo: Seq[ColumnInfo] = Seq(ColumnInfo("column1", "string", "value1"),
+                                            ColumnInfo("column2", "timestamp", new Timestamp(1537510900000L)),
+                                            ColumnInfo("column3", "string", "value3"))
+    val timestamp: Long = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
+    timestamp shouldBe 1537510900000L
   }
 }

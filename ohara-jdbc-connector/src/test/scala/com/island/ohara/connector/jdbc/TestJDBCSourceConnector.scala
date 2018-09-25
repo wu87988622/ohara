@@ -68,6 +68,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       row0.cell(1) shouldBe Cell("column2", "a11")
       row0.cell(2) shouldBe Cell("column3", "a12")
       row0.cell(3).toString() shouldBe Cell("column4", "1").toString()
+
     } finally consumer.close()
   }
 

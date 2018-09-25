@@ -1,8 +1,9 @@
 package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
+
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.jdbc.Version
-import com.island.ohara.connector.jdbc.util.ColumnInfo
+import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
@@ -47,7 +48,7 @@ class JDBCSourceTask extends RowSourceTask {
     val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
 
     val resultSet: QueryResultIterator =
-      dbTableDataProvider.executeQuery(tableName, timestampColumnName, new Timestamp(0)) //TODO offset OHARA-413
+      dbTableDataProvider.executeQuery(tableName, timestampColumnName, readOffset(tableName))
 
     try resultSet
     //Create Ohara Schema
@@ -59,8 +60,8 @@ class JDBCSourceTask extends RowSourceTask {
             RowSourceRecord
               .builder()
               .sourcePartition(JDBCSourceTask.partition(tableName))
-              //TODO offset OHARA-413
-              .sourceOffset(JDBCSourceTask.offset(0))
+              //Writer Offset
+              .sourceOffset(JDBCSourceTask.offset(dbTimestampColumnValue(columns, timestampColumnName)))
               //Create Ohara Row
               .row(row(newSchema, columns))
               .build(_))
@@ -123,11 +124,29 @@ class JDBCSourceTask extends RowSourceTask {
     })
     throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
   }
+
+  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo], timestampColumnName: String): Long = {
+    dbColumnInfo.foreach(columnInfo => {
+      if (columnInfo.columnName == timestampColumnName) {
+        return columnInfo.value.asInstanceOf[Timestamp].getTime()
+      }
+    })
+    throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table.")
+  }
+
+  private[source] def readOffset(tableName: String): Timestamp = {
+    val offsets = rowContext.offset(JDBCSourceTask.partition(tableName))
+    if (offsets.isEmpty) {
+      new Timestamp(0)
+    } else {
+      new Timestamp(offsets.get(JDBCSourceTask.DB_TABLE_OFFSET_KEY).get.asInstanceOf[Long])
+    }
+  }
 }
 
 object JDBCSourceTask {
-  private[this] val DB_TABLE_NAME_KEY = "db.table.name"
-  private[this] val DB_TABLE_OFFSET_KEY = "db.table.offset"
+  private[source] val DB_TABLE_NAME_KEY = "db.table.name"
+  private[source] val DB_TABLE_OFFSET_KEY = "db.table.offset"
 
   def partition(tableName: String): Map[String, _] = Map(DB_TABLE_NAME_KEY -> tableName)
   def offset(timestamp: Long): Map[String, _] = Map(DB_TABLE_OFFSET_KEY -> timestamp)
