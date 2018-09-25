@@ -37,8 +37,12 @@ class FtpSourceTask extends RowSourceTask {
     }
 
     def handleOutput(path: String): Unit = try {
-      ftpClient.moveFile(path, IoUtil.path(props.output, IoUtil.name(path)))
-      offsets.remove(path)
+      val outputPath = IoUtil.path(props.output, IoUtil.name(path))
+      if (ftpClient.exist(outputPath)) {
+        val newPath = outputPath + s".${System.currentTimeMillis()}"
+        if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
+        else ftpClient.moveFile(path, newPath)
+      } else ftpClient.moveFile(path, outputPath)
     } catch {
       case e: Throwable => LOG.error(s"failed to move $path to ${props.output}", e)
     }
@@ -143,8 +147,6 @@ class FtpSourceTask extends RowSourceTask {
   private class Offsets(context: RowSourceContext) {
 
     private[this] val cache = new mutable.HashMap[String, Int]()
-
-    def remove(path: String): Unit = cache.remove(path)
 
     def update(path: String, index: Int): Unit = {
       val previous = cache.getOrElseUpdate(path, index)

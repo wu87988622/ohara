@@ -4,9 +4,9 @@ import java.io.{BufferedWriter, OutputStreamWriter}
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.{CloseOnce, IoUtil}
-import com.island.ohara.kafka.Consumer
+import com.island.ohara.kafka.{Consumer, ConsumerRecord}
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -46,6 +46,18 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     encode = Some("UTF-8")
   )
 
+  private[this] def setupInput(): Unit = {
+    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.input, "abc"))))
+    try {
+      writer.append(header)
+      writer.newLine()
+      data.foreach(line => {
+        writer.append(line)
+        writer.newLine()
+      })
+    } finally writer.close()
+  }
+
   @Before
   def setup(): Unit = {
     def rebuild(path: String): Unit = {
@@ -60,18 +72,54 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     rebuild(props.input)
     rebuild(props.error)
     rebuild(props.output)
-
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.input, "abc"))))
-    try {
-      writer.append(header)
-      writer.newLine()
-      data.foreach(line => {
-        writer.append(line)
-        writer.newLine()
-      })
-    } finally writer.close()
-
+    setupInput()
     ftpClient.listFileNames(props.input).isEmpty shouldBe false
+  }
+
+  private[this] def pollData(topicName: String,
+                             timeout: Duration = 60 seconds,
+                             size: Int = data.length): Seq[ConsumerRecord[Array[Byte], Row]] = {
+    val consumer =
+      Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+    try consumer.poll(timeout, size)
+    finally consumer.close()
+  }
+
+  @Test
+  def testDuplicateInput(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSource])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .schema(schema)
+      .config(props.toMap)
+      .create()
+    try {
+      TestFtpUtil.checkConnector(testUtil, connectorName)
+      var records = pollData(topicName)
+      records.size shouldBe data.length
+      val row0 = records(0).value.get
+      row0.size shouldBe 3
+      row0.cell(0) shouldBe rows(0).cell(0)
+      row0.cell(1) shouldBe rows(0).cell(1)
+      row0.cell(2) shouldBe rows(0).cell(2)
+      val row1 = records(1).value.get
+      row1.size shouldBe 3
+      row1.cell(0) shouldBe rows(1).cell(0)
+      row1.cell(1) shouldBe rows(1).cell(1)
+      row1.cell(2) shouldBe rows(1).cell(2)
+      // put a duplicate file
+      setupInput()
+      OharaTestUtil.await(() => ftpClient.listFileNames(props.input).isEmpty, 30 seconds)
+      OharaTestUtil.await(() => ftpClient.listFileNames(props.output).size == 2, 30 seconds)
+      records = pollData(topicName, timeout = 30 seconds, size = data.length * 2)
+      records.size shouldBe data.length
+    } finally testUtil.connectorClient.delete(methodName)
   }
 
   @Test
@@ -95,9 +143,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-      val records = consumer.poll(20 seconds, data.length)
+      val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
       row0.size shouldBe 3
@@ -142,9 +188,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-      val records = consumer.poll(20 seconds, data.length)
+      val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
       row0.size shouldBe 3
@@ -178,9 +222,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-      val records = consumer.poll(20 seconds, data.length)
+      val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
       row0.size shouldBe 3
@@ -213,9 +255,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-      val records = consumer.poll(20 seconds, data.length)
+      val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
       row0.size shouldBe 3
@@ -251,9 +291,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-      val records = consumer.poll(20 seconds, data.length)
+      val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
       row0.size shouldBe 2
@@ -286,9 +324,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-      val records = consumer.poll(10 seconds, data.length)
+      val records = pollData(topicName)
       records.size shouldBe 0
     } finally testUtil.connectorClient.delete(methodName)
     ftpClient.listFileNames(props.input).size shouldBe 0
