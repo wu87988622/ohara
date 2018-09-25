@@ -18,7 +18,7 @@ a powerful ETL tool
 
 ## run all backend-services
 ```
-docker run -ti --rm -p 12345:12345 islandsystems/backend:0.1-SNAPSHOT start-service.sh backend --port 12345 --ttl 123
+docker run -ti --rm -p 12345:12345 islandsystems/ohara:backend start-service.sh backend --port 12345 --ttl 123
 ```
 * #####port
 used by Configurator (default is random)

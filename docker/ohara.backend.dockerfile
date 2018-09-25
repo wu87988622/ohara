@@ -1,15 +1,23 @@
 FROM ubuntu:18.04 AS deps
 
 ARG BRANCH=master
+ARG USER=""
+ARG PASSWORD=""
 
 # update
 RUN apt-get -y update
+
+# copy repo
+RUN apt-get -q install --no-install-recommends -y git
+RUN apt-get -q install --no-install-recommends -y ca-certificates
+WORKDIR /testpatch
+RUN git clone https://$USER:$PASSWORD@bitbucket.org/is-land/ohara.git
+
+# install build tool
 RUN apt-get -q install --no-install-recommends -y apt-utils
 RUN apt-get -q install --no-install-recommends -y openjdk-8-jdk
-RUN apt-get -q install --no-install-recommends -y git
 RUN apt-get -q install --no-install-recommends -y wget
 RUN apt-get -q install --no-install-recommends -y unzip
-RUN apt-get -q install --no-install-recommends -y openssh-client
 RUN apt-get -q install --no-install-recommends -y curl
 RUN apt-get -q install --no-install-recommends -y gnupg
 RUN apt-get -q install --no-install-recommends -y gnupg1
@@ -36,21 +44,7 @@ RUN ln -s /opt/gradle/gradle-4.10 /opt/gradle/default
 ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
-# add credentials on build
-ARG SSH_PRIVATE_KEY
-RUN mkdir /root/.ssh/
-RUN echo "-----BEGIN RSA PRIVATE KEY-----" > /root/.ssh/id_rsa
-RUN echo "${SSH_PRIVATE_KEY}" >> /root/.ssh/id_rsa
-RUN echo "-----END RSA PRIVATE KEY-----" >> /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa
-
-# make sure your domain is accepted
-RUN ssh-keyscan bitbucket.org > /root/.ssh/known_hosts
-RUN chmod 644 /root/.ssh/known_hosts
-
-# copy repo
-WORKDIR /testpatch
-RUN git clone git@bitbucket.org:is-land/ohara.git
+# build ohara
 WORKDIR /testpatch/ohara
 RUN git checkout $BRANCH
 # Running this test case make gradle download mysql binary code
