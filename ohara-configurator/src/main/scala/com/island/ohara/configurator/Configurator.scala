@@ -140,7 +140,6 @@ object Configurator {
       println(USAGE)
       return
     }
-    if (args.length < 2 || args.length % 2 != 0) throw new IllegalArgumentException(USAGE)
     // TODO: make the parse more friendly
     var hostname = "0.0.0.0"
     var port: Int = 0
