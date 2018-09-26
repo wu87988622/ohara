@@ -1,5 +1,6 @@
 package com.island.ohara.connector.hdfs
 
+import com.island.ohara.io.VersionUtil
 import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskConfig, TopicOffset, TopicPartition}
 import com.typesafe.scalalogging.Logger
 
@@ -46,5 +47,5 @@ class HDFSSinkTask extends RowSinkTask {
     hdfsWriter.stop()
   }
 
-  override val _version: String = Version.getVersion
+  override val _version: String = VersionUtil.VERSION
 }

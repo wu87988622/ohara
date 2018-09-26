@@ -1,7 +1,7 @@
 package com.island.ohara.kafka.connector
 
 import com.island.ohara.data.Row
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, VersionUtil}
 import com.island.ohara.kafka.Producer
 import Constants._
 
@@ -26,5 +26,5 @@ class SimpleRowSinkTask extends RowSinkTask {
 
   override def _stop(): Unit = CloseOnce.close(producer)
 
-  override val _version: String = "100"
+  override val _version: String = VersionUtil.VERSION
 }

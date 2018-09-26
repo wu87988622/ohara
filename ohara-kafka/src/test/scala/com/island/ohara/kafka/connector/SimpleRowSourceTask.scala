@@ -4,7 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.data.Row
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, VersionUtil}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.Constants._
 
@@ -50,5 +50,5 @@ class SimpleRowSourceTask extends RowSourceTask {
     closed.set(true)
     consumer.wakeup()
   }
-  override val _version: String = "100"
+  override val _version: String = VersionUtil.VERSION
 }

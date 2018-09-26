@@ -15,9 +15,6 @@ ext {
 }
 
 subprojects {
-  if (project.hasProperty('cdh')) version = '0.1-cdh5-SNAPSHOT'
-  else version = '0.1-SNAPSHOT'
-
   if (it.name != 'ohara-manager') {
     apply plugin: 'scala'
     test {

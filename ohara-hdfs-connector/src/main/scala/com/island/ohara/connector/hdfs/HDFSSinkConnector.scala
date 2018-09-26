@@ -1,5 +1,6 @@
 package com.island.ohara.connector.hdfs
 
+import com.island.ohara.io.VersionUtil
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskConfig}
 
 /**
@@ -25,5 +26,5 @@ class HDFSSinkConnector extends RowSinkConnector {
     Seq.fill(maxTasks) { props }
   }
 
-  override val _version: String = Version.getVersion
+  override val _version: String = VersionUtil.VERSION
 }

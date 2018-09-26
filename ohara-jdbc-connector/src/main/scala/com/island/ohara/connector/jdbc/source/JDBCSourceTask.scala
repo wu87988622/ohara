@@ -2,10 +2,9 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.connector.jdbc.Version
-import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
+import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, VersionUtil}
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
 import com.typesafe.scalalogging.Logger
@@ -84,7 +83,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @return the version, formatted as a String
     */
-  override protected def _version: String = Version.getVersion()
+  override protected def _version: String = VersionUtil.VERSION
 
   private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo]): Row = {
     Row

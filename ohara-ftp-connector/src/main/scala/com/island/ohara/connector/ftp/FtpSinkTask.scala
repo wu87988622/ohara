@@ -3,7 +3,7 @@ import java.io.{BufferedWriter, OutputStreamWriter}
 
 import com.island.ohara.client.FtpClient
 import com.island.ohara.connector.ftp.FtpSinkTask._
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, VersionUtil}
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
 
@@ -80,7 +80,7 @@ class FtpSinkTask extends RowSinkTask {
       case (p, _) => committedOffsets.remove(p)
     }
 
-  override protected def _version: String = VERSION
+  override protected def _version: String = VersionUtil.VERSION
 }
 
 object FtpSinkTask {

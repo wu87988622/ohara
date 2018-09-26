@@ -1,7 +1,7 @@
 package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.FtpClient
-import com.island.ohara.io.IoUtil
+import com.island.ohara.io.{IoUtil, VersionUtil}
 import com.island.ohara.kafka.connector._
 
 class FtpSink extends RowSinkConnector {
@@ -43,5 +43,5 @@ class FtpSink extends RowSinkConnector {
     // do nothing
   }
 
-  override protected def _version: String = VERSION
+  override protected def _version: String = VersionUtil.VERSION
 }
