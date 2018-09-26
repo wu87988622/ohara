@@ -1,2 +1,2 @@
 include 'ohara-testing-util', 'ohara-common', 'ohara-kafka', 'ohara-assembly',
-  'ohara-manager', 'ohara-ftp-connector', 'ohara-hdfs-connector', 'ohara-jdbc-connector', 'ohara-http', 'ohara-configurator', 'ohara-demo'
+  'ohara-manager', 'ohara-ftp-connector', 'ohara-hdfs-connector', 'ohara-jdbc-connector', 'ohara-http', 'ohara-configurator', 'ohara-demo', 'ohara-it'

@@ -1,0 +1,37 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'scala'
+
+/**
+ * Noted: this module should NOT have any production code!!! by chia
+ */
+dependencies {
+  testImplementation libs.scala
+  testImplementation libs.scalaLogging
+  testImplementation libs.sprayJson
+  testImplementation libs.kafkaConnectRuntime
+  testImplementation project(':ohara-common')
+  testImplementation project(':ohara-kafka')
+  testImplementation project(':ohara-ftp-connector')
+  testImplementation project(':ohara-testing-util')
+  /**
+   * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
+   *
+   * Solve running Kafka Connect mini cluster failed. OHARA-103
+   */
+  testImplementation (libs.hadoopCommon) {
+    exclude group: 'com.sun.jersey', module: 'jersey-core'
+    exclude group: 'com.sun.jersey', module: 'jersey-json'
+    exclude group: 'com.sun.jersey', module: 'jersey-servlet'
+    exclude group: 'com.sun.jersey', module: 'jersey-server'
+  }
+  testImplementation (libs.hadoopHDFS) {
+    exclude group: 'com.sun.jersey', module: 'jersey-core'
+    exclude group: 'com.sun.jersey', module: 'jersey-json'
+    exclude group: 'com.sun.jersey', module: 'jersey-servlet'
+    exclude group: 'com.sun.jersey', module: 'jersey-server'
+  }
+  testImplementation libs.scalatest
+  testImplementation project(":ohara-common").sourceSets.test.output
+  testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation libs.junit
+}
