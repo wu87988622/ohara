@@ -27,7 +27,9 @@ import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTask}
 import spray.json.{JsNumber, JsObject, JsString}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * This class is used to verify the connection to 1) HDFS, 2) KAFKA and 3) RDB. Since ohara have many sources/sinks implemented
@@ -79,7 +81,7 @@ object Validator {
   def run(connectorClient: ConnectorClient,
           kafkaClient: KafkaClient,
           request: RdbValidationRequest,
-          taskCount: Int): Seq[ValidationReport] = run(
+          taskCount: Int): Future[Seq[ValidationReport]] = run(
     connectorClient,
     kafkaClient,
     TARGET_RDB,
@@ -92,7 +94,7 @@ object Validator {
   def run(connectorClient: ConnectorClient,
           kafkaClient: KafkaClient,
           request: HdfsValidationRequest,
-          taskCount: Int): Seq[ValidationReport] = run(
+          taskCount: Int): Future[Seq[ValidationReport]] = run(
     connectorClient,
     kafkaClient,
     TARGET_HDFS,
@@ -105,7 +107,7 @@ object Validator {
   def run(connectorClient: ConnectorClient,
           kafkaClient: KafkaClient,
           request: FtpValidationRequest,
-          taskCount: Int): Seq[ValidationReport] = run(
+          taskCount: Int): Future[Seq[ValidationReport]] = run(
     connectorClient,
     kafkaClient,
     TARGET_FTP,
@@ -134,34 +136,36 @@ object Validator {
                         kafkaClient: KafkaClient,
                         target: String,
                         config: Map[String, String],
-                        taskCount: Int): Seq[ValidationReport] = connectorClient match {
+                        taskCount: Int): Future[Seq[ValidationReport]] = connectorClient match {
     // we expose the fake component...ugly way (TODO) by chia
     case _: FakeConnectorClient =>
-      (0 until taskCount).map(_ => ValidationReport(IoUtil.hostname, "a fake report", true))
+      Future.successful((0 until taskCount).map(_ => ValidationReport(IoUtil.hostname, "a fake report", true)))
     case _ =>
-      val requestId: String = UuidUtil.uuid()
-      val validationName = s"Validator-${INDEXER.getAndIncrement()}"
-      connectorClient
-        .connectorCreator()
-        .name(validationName)
-        .disableConverter()
-        .connectorClass(classOf[Validator].getName)
-        .numberOfTasks(taskCount)
-        .topic(INTERNAL_TOPIC)
-        .config(config)
-        .config(REQUEST_ID, requestId)
-        .config(TARGET, target)
-        .create()
-      // TODO: receiving all messages may be expensive...by chia
-      try doClose(kafkaClient.consumerBuilder().offsetFromBegin().topicName(INTERNAL_TOPIC).build[String, Any])(
-        _.poll(TIMEOUT,
-               taskCount,
-               filter = (records: Seq[ConsumerRecord[String, Any]]) => records.filter(_.key.contains(requestId)))
-          .map(_.value.get match {
-            case report: ValidationReport => report
-            case _                        => throw new IllegalStateException(s"Unknown report")
-          }))
-      finally connectorClient.delete(validationName)
+      Future {
+        val requestId: String = UuidUtil.uuid()
+        val validationName = s"Validator-${INDEXER.getAndIncrement()}"
+        connectorClient
+          .connectorCreator()
+          .name(validationName)
+          .disableConverter()
+          .connectorClass(classOf[Validator].getName)
+          .numberOfTasks(taskCount)
+          .topic(INTERNAL_TOPIC)
+          .config(config)
+          .config(REQUEST_ID, requestId)
+          .config(TARGET, target)
+          .create()
+        // TODO: receiving all messages may be expensive...by chia
+        try doClose(kafkaClient.consumerBuilder().offsetFromBegin().topicName(INTERNAL_TOPIC).build[String, Any])(
+          _.poll(TIMEOUT,
+                 taskCount,
+                 filter = (records: Seq[ConsumerRecord[String, Any]]) => records.filter(_.key.contains(requestId)))
+            .map(_.value.get match {
+              case report: ValidationReport => report
+              case _                        => throw new IllegalStateException(s"Unknown report")
+            }))
+        finally connectorClient.delete(validationName)
+      }
   }
 
   val CONFIG_DEF: ConfigDef = new ConfigDef().define(TARGET, Type.STRING, null, Importance.HIGH, "target type")

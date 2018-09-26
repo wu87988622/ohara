@@ -12,6 +12,8 @@ import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val kafkaClient = KafkaClient(testUtil.brokers)
@@ -23,7 +25,8 @@ class TestValidator extends With3Brokers3Workers with Matchers {
     testUtil.connectorClient.plugins().exists(_.className == classOf[Validator].getName) shouldBe true
   }
 
-  private[this] def evaluate(reports: Seq[ValidationReport]): Unit = {
+  private[this] def evaluate(f: Future[Seq[ValidationReport]]): Unit = {
+    val reports = Await.result(f, 60 seconds)
     reports.isEmpty shouldBe false
     reports.foreach(_.pass shouldBe true)
   }
