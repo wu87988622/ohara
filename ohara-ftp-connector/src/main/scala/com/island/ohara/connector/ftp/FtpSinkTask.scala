@@ -56,11 +56,14 @@ class FtpSinkTask extends RowSinkTask {
       // NOTED: we don't want to write an "empty" line
       .filter(_._2.nonEmpty)
     if (result.nonEmpty) {
-      val needHeader = config.schema.nonEmpty && props.header && !ftpClient.exist(props.output)
+      val needHeader = props.header && !ftpClient.exist(props.output)
       val writer = new BufferedWriter(
         new OutputStreamWriter(ftpClient.create(props.output), props.encode.getOrElse("UTF-8")))
       if (needHeader) {
-        writer.append(config.schema.sortBy(_.order).map(_.newName).mkString(","))
+        val header =
+          if (config.schema.nonEmpty) config.schema.sortBy(_.order).map(_.newName).mkString(",")
+          else result.head._1.row.map(_.name).mkString(",")
+        writer.append(header)
         writer.newLine()
       }
       try result.foreach {
