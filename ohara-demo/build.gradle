@@ -32,6 +32,8 @@ distributions {
   main {
     baseName = "ohara"
     contents {
+      // TODO: we can't exclude the jar from root of project since it also reject the jar in lib folder... by chia
+      // exclude "ohara-demo-${version}.jar"
       into("conf") {
         // ref to root module
         from { "$projectDir/../conf" }
@@ -40,6 +42,9 @@ distributions {
         // ref to root module
         from { "$projectDir/../bin" }
         fileMode 0755
+      }
+      into("lib") {
+        from { "$projectDir/build/libs/ohara-demo-${version}.jar" }
       }
     }
   }
