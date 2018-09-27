@@ -7,6 +7,7 @@ import { Route, Redirect } from 'react-router-dom';
 import * as _ from 'utils/helpers';
 import * as MESSAGES from 'constants/messages';
 import PipelineSourcePage from './PipelineSourcePage';
+import PipelineSourceFtpPage from './PipelineSourceFtpPage';
 import PipelineTopicPage from './PipelineTopicPage';
 import PipelineSinkPage from './PipelineSinkPage';
 import Toolbar from './Toolbar';
@@ -123,6 +124,9 @@ class PipelineNewPage extends React.Component {
   };
 
   updateGraph = (update, type) => {
+    // TODO: remove this when pipeline new graph is ready!
+    if (type === 'source-ftp') return;
+
     this.setState(({ graph }) => {
       const idx = graph.findIndex(g => g.type === type);
       const _graph = [
@@ -235,6 +239,19 @@ class PipelineNewPage extends React.Component {
               path="/pipeline/(new|edit)/source"
               render={() => (
                 <PipelineSourcePage
+                  {...this.props}
+                  graph={graph}
+                  updateGraph={this.updateGraph}
+                  hasChanges={hasChanges}
+                  updateHasChanges={this.updateHasChanges}
+                />
+              )}
+            />
+
+            <Route
+              path="/pipeline/(new|edit)/source-ftp"
+              render={() => (
+                <PipelineSourceFtpPage
                   {...this.props}
                   graph={graph}
                   updateGraph={this.updateGraph}

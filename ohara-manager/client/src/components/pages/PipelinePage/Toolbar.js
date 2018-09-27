@@ -24,13 +24,27 @@ const ToolbarWrapper = styled.div`
 
 ToolbarWrapper.displayName = 'ToolbarWrapper';
 
-const IconWrapper = styled.i`
+const Sources = styled.div`
+  padding: 10px 20px;
+  border-right: 1px solid ${lightestBlue};
+`;
+
+const Topics = styled.div`
+  padding: 10px 20px;
+  border-right: 1px solid ${lightestBlue};
+`;
+
+const Sinks = styled.div`
+  padding: 10px 20px;
+  border-right: 1px solid ${lightestBlue};
+`;
+
+const Icon = styled.i`
   color: ${lighterBlue};
   font-size: 25px;
-  padding: 10px 20px;
+  margin-right: 20px;
   transition: ${durationNormal} all;
   cursor: pointer;
-  border-right: 1px solid ${lightestBlue};
 
   &:hover,
   &.is-active {
@@ -40,18 +54,17 @@ const IconWrapper = styled.i`
 
   &:last-child {
     border-right: none;
+    margin-right: 0;
   }
 `;
 
-IconWrapper.displayName = 'IconWrapper';
+Icon.displayName = 'Icon';
 
 const HadoopIconContainer = styled.i`
   color: ${lighterBlue};
-  padding: 10px 20px;
   transition: ${durationNormal} all;
   vertical-align: middle;
   cursor: pointer;
-  border-right: 1px solid ${lightestBlue};
 
   &:hover svg,
   &.is-active svg {
@@ -103,6 +116,9 @@ class Toolbar extends React.Component {
     let type = _.get(e, 'target.dataset.id', null);
     type = type ? type : 'sink';
 
+    // TODO: remove this when pipeline new graph is ready!
+    if (type === 'source-ftp') return;
+
     updateGraph(update, type);
   };
 
@@ -110,26 +126,37 @@ class Toolbar extends React.Component {
     const { hasChanges } = this.props;
     return (
       <ToolbarWrapper>
-        <IconWrapper
-          className="fa fa-database"
-          onClick={this.update}
-          data-id="source"
-          data-testid="toolbar-source"
-        />
-        <HadoopIconContainer
-          onClick={this.update}
-          data-id="sink"
-          data-testid="toolbar-sink"
-        >
-          <HadoopIconWrapper width={28} height={28} fillColor={lightBlue} />
-        </HadoopIconContainer>
-        <IconWrapper
-          className="fa fa-list-ul"
-          onClick={this.update}
-          data-id="topic"
-          data-testid="toolbar-topic"
-        />
-
+        <Sources>
+          <Icon
+            className="fa fa-upload"
+            onClick={this.update}
+            data-id="source-ftp"
+            data-testid="toolbar-source-ftp"
+          />
+          <Icon
+            className="fa fa-database"
+            onClick={this.update}
+            data-id="source"
+            data-testid="toolbar-source"
+          />
+        </Sources>
+        <Sinks>
+          <HadoopIconContainer
+            onClick={this.update}
+            data-id="sink"
+            data-testid="toolbar-sink"
+          >
+            <HadoopIconWrapper width={28} height={28} fillColor={lightBlue} />
+          </HadoopIconContainer>
+        </Sinks>
+        <Topics>
+          <Icon
+            className="fa fa-list-ul"
+            onClick={this.update}
+            data-id="topic"
+            data-testid="toolbar-topic"
+          />
+        </Topics>
         <FileSavingStatus>
           {hasChanges ? 'Saving...' : 'All changes saved'}
         </FileSavingStatus>
