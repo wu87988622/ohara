@@ -62,25 +62,15 @@ private class LocalKafkaWorkers private[integration] (brokersConn: String,
       config += ("internal.value.converter.schemas.enable" -> false.toString)
       // TODO: REST_PORT_CONFIG is deprecated in kafka-1.1.0. Use LISTENERS_CONFIG instead. by chia
       config += (WorkerConfig.REST_PORT_CONFIG -> port.toString)
-      config += (WorkerConfig.PLUGIN_PATH_CONFIG -> "")
       config ++= baseConfig
       import scala.collection.JavaConverters._
       val distConfig = new DistributedConfig(config.asJava)
-
-      def createPlugins: Plugins = {
-        val pluginProps = new util.HashMap[String, String]
-
-        // Set up the plugins to have no additional plugin directories.
-        // This won't allow us to test classpath isolation, but it will allow us to test some of the utility methods.
-        pluginProps.put(WorkerConfig.PLUGIN_PATH_CONFIG, "")
-        new Plugins(pluginProps)
-      }
       val rest = new RestServer(distConfig)
       val workerId = s"${IoUtil.hostname}:${rest.advertisedUrl().getPort}"
       val offsetBackingStore = new KafkaOffsetBackingStore
       offsetBackingStore.configure(distConfig)
       val time = Time.SYSTEM
-      val worker = new Worker(workerId, time, createPlugins, distConfig, offsetBackingStore)
+      val worker = new Worker(workerId, time, new Plugins(util.Collections.emptyMap()), distConfig, offsetBackingStore)
       val internalValueConverter = worker.getInternalValueConverter
       val statusBackingStore = new KafkaStatusBackingStore(time, internalValueConverter)
       statusBackingStore.configure(distConfig)
