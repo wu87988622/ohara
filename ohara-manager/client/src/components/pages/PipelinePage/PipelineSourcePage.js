@@ -86,7 +86,7 @@ class PipelineSourcePage extends React.Component {
   selectMaps = {
     databases: 'currDatabase',
     tables: 'currTable',
-    wirteTopics: 'currWriteTopic',
+    writeTopics: 'currWriteTopic',
   };
 
   dbSchemasHeader = ['Column name', 'Column type'];
@@ -116,15 +116,15 @@ class PipelineSourcePage extends React.Component {
 
     this.fetchCluster();
 
-    if (!_.isNull(sourceId)) {
+    if (sourceId) {
       this.fetchSource(sourceId);
     }
 
-    if (!_.isNull(pipelineId)) {
+    if (pipelineId) {
       this.fetchPipeline(pipelineId);
     }
 
-    if (!_.isNull(topicId)) {
+    if (topicId) {
       this.fetchTopics(topicId);
     }
   }
