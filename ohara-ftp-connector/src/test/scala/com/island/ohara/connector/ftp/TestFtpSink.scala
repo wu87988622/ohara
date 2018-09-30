@@ -324,7 +324,8 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .schema(schema)
       .config(props.copy(output = "/abc").toMap)
       .create()
-    TestFtpUtil.assertFailedConnector(testUtil, connectorName)
+    try TestFtpUtil.assertFailedConnector(testUtil, connectorName)
+    finally testUtil.connectorClient.delete(methodName)
   }
 
 }
