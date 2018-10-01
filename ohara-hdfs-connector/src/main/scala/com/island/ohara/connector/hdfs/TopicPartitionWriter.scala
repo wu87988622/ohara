@@ -1,5 +1,6 @@
 package com.island.ohara.connector.hdfs
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.island.ohara.connector.hdfs.text.{CSVRecordWriterOutput, RecordWriterOutput}
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
@@ -27,6 +28,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   val filePrefixName: String = config.dataFilePrefixName()
   val flushLineCount: Int = config.flushLineCount()
   val rotateInterval: Long = config.rotateIntervalMS()
+  val dataFileNeedHeader: Boolean = config.dataFileNeedHeader()
   var startTimeMS: Long = 0
   var processLineCount: Int = 0
 
@@ -41,12 +43,14 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     recoveryOffset()
   }
 
-  def write(rowSinkRecord: RowSinkRecord): Unit = {
+  def write(schema: Seq[Column], rowSinkRecord: RowSinkRecord): Unit = {
     //Open Temp File
     openTempFile(processLineCount)
 
     //Write Data to Temp File
-    writeData(rowSinkRecord)
+    var needHeader: Boolean = processLineCount == 0 && dataFileNeedHeader
+
+    writeData(needHeader, schema, rowSinkRecord)
     processLineCount = processLineCount + 1
 
     //Temp file commit to data dir
@@ -81,8 +85,8 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     }
   }
 
-  def writeData(rowSinkRecord: RowSinkRecord): Unit = {
-    recordWriterOutput.write(rowSinkRecord.row)
+  def writeData(needHeader: Boolean, schema: Seq[Column], rowSinkRecord: RowSinkRecord): Unit = {
+    recordWriterOutput.write(needHeader, schema, rowSinkRecord.row)
   }
 
   def commitFile(recordWriterProvider: RecordWriterOutput, tmpFilePath: String): Unit = {

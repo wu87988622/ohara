@@ -1,5 +1,6 @@
 package com.island.ohara.connector.hdfs
 
+import java.io.{BufferedInputStream, BufferedReader, InputStream, InputStreamReader}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Column
@@ -22,7 +23,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
-  private[this] val schema = Seq(Column("cf", DataType.BOOLEAN, 1))
+  private[this] val schema = Seq(Column("cf0", DataType.BOOLEAN, 1))
   @Test
   def testTaskConfigs(): Unit = {
     val maxTasks = 5
@@ -81,6 +82,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val flushLineCount = "10"
     val tmpDirName = HDFSSinkConnectorConfig.TMP_DIR
     val dataDirName = HDFSSinkConnectorConfig.DATA_DIR
+    val isHeader = HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER
     val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
     val connectorName = methodName
     val topicName = methodName
@@ -111,7 +113,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
         tmpDirName -> tmpDirPath,
         hdfsURLName -> localURL,
         hdfsCreatorClassName -> hdfsCreatorClassNameValue,
-        dataDirName -> dataDirPath
+        dataDirName -> dataDirPath,
+        isHeader -> "false"
       ))
       .schema(schema)
       .create()
@@ -131,6 +134,19 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
                             .map(FileUtils.fileName)
                             .contains("part-000000090-000000099.csv"),
                         10 seconds)
+
+    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000090-000000099.csv")
+    val file: InputStream = testUtil.fileSystem.open(path)
+    val streamReader: InputStreamReader = new InputStreamReader(file)
+    val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
+    try {
+      val rowDataCount = Stream.continually(bufferedReaderStream.readLine()).takeWhile(_ != null).toList.size
+      rowDataCount shouldBe 10
+    } finally {
+      bufferedReaderStream.close()
+      streamReader.close()
+      file.close()
+    }
   }
 
   @Test
@@ -141,6 +157,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
     val tmpDirName = HDFSSinkConnectorConfig.TMP_DIR
     val dataDirName = HDFSSinkConnectorConfig.DATA_DIR
     val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
+    val needHeader = HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 200
@@ -175,6 +192,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
         tmpDirName -> tmpDirPath,
         hdfsURLName -> localURL,
         hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+        needHeader -> "true",
         dataDirName -> dataDirPath
       ))
       .schema(schema)
@@ -199,7 +217,21 @@ class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers
                             .map(FileUtils.fileName)
                             .contains("part-000000100-000000199.csv"),
                         10 seconds)
+
+    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000100-000000199.csv")
+    val file: InputStream = testUtil.fileSystem.open(path)
+    val streamReader: InputStreamReader = new InputStreamReader(file)
+    val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
+    try {
+      val rowDataCount = Stream.continually(bufferedReaderStream.readLine()).takeWhile(_ != null).toList.size
+      rowDataCount shouldBe 101
+    } finally {
+      bufferedReaderStream.close()
+      streamReader.close()
+      file.close()
+    }
   }
+
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {

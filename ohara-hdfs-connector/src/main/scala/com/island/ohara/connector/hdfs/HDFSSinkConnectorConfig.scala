@@ -60,6 +60,13 @@ class HDFSSinkConnectorConfig(props: Map[String, String]) {
     prefixFileName
   }
 
+  def dataFileNeedHeader(): Boolean = {
+    props
+      .getOrElse(HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER,
+                 HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER_DEFAULT.toString())
+      .toBoolean
+  }
+
   def offsetInconsistentSkip(): Boolean = {
     props
       .getOrElse(HDFSSinkConnectorConfig.OFFSET_INCONSISTENT_SKIP,
@@ -92,6 +99,8 @@ object HDFSSinkConnectorConfig {
   val DATA_DIR: String = "data.dir"
   val DATA_DIR_DEFAULT = "/data"
   val DATAFILE_PREFIX_NAME: String = "datafile.prefix.name"
+  val DATAFILE_NEEDHEADER: String = "datafile.isheader"
+  val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
   val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
   val OFFSET_INCONSISTENT_SKIP: String = "offset.inconsistent.skip"
   val OFFSET_INCONSISTENT_SKIP_DEFAULT: Boolean = false

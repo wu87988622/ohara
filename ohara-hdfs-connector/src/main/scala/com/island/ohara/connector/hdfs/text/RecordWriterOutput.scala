@@ -1,5 +1,6 @@
 package com.island.ohara.connector.hdfs.text
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.data.Row
 
 /**
@@ -11,7 +12,7 @@ abstract class RecordWriterOutput {
     * The data write to file
     * @param row
     */
-  def write(row: Row): Unit
+  def write(isHeader: Boolean, schema: Seq[Column], row: Row): Unit
 
   /**
     * close file connection

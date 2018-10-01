@@ -17,7 +17,7 @@ class HDFSSinkTask extends RowSinkTask {
   override def _start(props: TaskConfig): Unit = {
     logger.info("starting HDFS Sink Connector")
     hdfsSinkConnectorConfig = new HDFSSinkConnectorConfig(props.options)
-    hdfsWriter = new DataWriter(hdfsSinkConnectorConfig, rowContext)
+    hdfsWriter = new DataWriter(hdfsSinkConnectorConfig, rowContext, props.schema)
   }
 
   override protected def _open(partitions: Seq[TopicPartition]): Unit = {

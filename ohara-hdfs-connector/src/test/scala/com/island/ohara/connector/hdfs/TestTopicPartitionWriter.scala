@@ -2,6 +2,7 @@ package com.island.ohara.connector.hdfs
 
 import java.io.OutputStream
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.text.RecordWriterOutput
 import com.island.ohara.data.{Cell, Row}
@@ -50,10 +51,11 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val rowSinkRecord = mock[RowSinkRecord]
     when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
 
+    val schema: Seq[Column] = Seq()
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
-    topicPartitionWriter.write(rowSinkRecord)
+    topicPartitionWriter.write(schema, rowSinkRecord)
     topicPartitionWriter.processLineCount shouldBe 1
-    topicPartitionWriter.write(rowSinkRecord)
+    topicPartitionWriter.write(schema, rowSinkRecord)
     topicPartitionWriter.processLineCount shouldBe 2
   }
 
@@ -76,12 +78,13 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val rowSinkRecord = mock[RowSinkRecord]
     when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
 
+    val schema: Seq[Column] = Seq()
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     for (i <- 1 to 998) {
-      topicPartitionWriter.write(rowSinkRecord)
+      topicPartitionWriter.write(schema, rowSinkRecord)
       topicPartitionWriter.processLineCount shouldBe i
     }
-    topicPartitionWriter.write(rowSinkRecord)
+    topicPartitionWriter.write(schema, rowSinkRecord)
     topicPartitionWriter.processLineCount shouldBe 999
   }
 
@@ -147,7 +150,9 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     topicPartitionWriter.processLineCount = 0
-    topicPartitionWriter.write(rowSinkRecord)
+
+    val schema: Seq[Column] = Seq()
+    topicPartitionWriter.write(schema, rowSinkRecord)
   }
 
   @Test

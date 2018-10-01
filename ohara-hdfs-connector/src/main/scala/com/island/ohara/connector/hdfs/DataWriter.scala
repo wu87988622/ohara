@@ -1,5 +1,6 @@
 package com.island.ohara.connector.hdfs
 
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
@@ -11,7 +12,7 @@ import scala.collection.mutable
   * @param config
   * @param context
   */
-class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext) {
+class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schema: Seq[Column]) {
 
   private[this] val createStorage: StorageCreator = Class
     .forName(config.hdfsStorageCreatorClass())
@@ -45,7 +46,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext) {
       val topicName: String = record.topic
       val partition: Int = record.partition
       val oharaTopicPartition: TopicPartition = TopicPartition(topicName, partition)
-      topicPartitionWriters(oharaTopicPartition).write(record)
+      topicPartitionWriters(oharaTopicPartition).write(schema, record)
     })
 
     //When topic data is empty for check the flush time to commit temp file to data dir.
