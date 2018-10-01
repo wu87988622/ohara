@@ -33,6 +33,13 @@ gradle test
 ```
 The test report is in ./ohara-{module}/build/reports/tests/test/.
 
+## build project without manager
+```
+gradle clean build -PskipManager
+```
+if you don't care about manager, running the gradle command with "-PskipManager" can skip process of manager
+
+
 ## Building a binary release
 
 *gzipped ball*
