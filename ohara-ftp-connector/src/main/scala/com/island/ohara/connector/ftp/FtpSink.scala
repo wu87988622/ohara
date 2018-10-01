@@ -18,7 +18,7 @@ class FtpSink extends RowSinkConnector {
           config.schema,
           FtpSinkTaskProps(
             output = IoUtil.path(props.output, s"${config.name}_$index"),
-            header = props.header,
+            needHeader = props.needHeader,
             encode = props.encode,
             host = props.host,
             port = props.port,

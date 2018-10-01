@@ -23,7 +23,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private[this] val props = FtpSinkProps(
     output = "/output",
-    header = false,
+    needHeader = false,
     user = testUtil.ftpServer.writableUser.name,
     password = testUtil.ftpServer.writableUser.password,
     host = testUtil.ftpServer.host,
@@ -119,7 +119,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(header = true).toMap)
+      .config(props.copy(needHeader = true).toMap)
       .create()
 
     try {
@@ -148,7 +148,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .numberOfTasks(1)
       .disableConverter()
       .name(connectorName)
-      .config(props.copy(header = true).toMap)
+      .config(props.copy(needHeader = true).toMap)
       .create()
 
     try {
@@ -183,7 +183,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(header = true).toMap)
+      .config(props.copy(needHeader = true).toMap)
       .create()
 
     try {

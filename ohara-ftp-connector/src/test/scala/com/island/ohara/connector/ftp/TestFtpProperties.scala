@@ -9,7 +9,7 @@ class TestFtpProperties extends SmallTest with Matchers {
   def testFtpSinkProps(): Unit = {
     val props = FtpSinkProps(
       output = "/output",
-      header = false,
+      needHeader = false,
       user = "user",
       password = "pwd",
       host = "host",
@@ -24,7 +24,7 @@ class TestFtpProperties extends SmallTest with Matchers {
   def testFtpSinkTaskProps(): Unit = {
     val props = FtpSinkTaskProps(
       output = "/output",
-      header = false,
+      needHeader = false,
       user = "user",
       password = "pwd",
       host = "host",

@@ -52,7 +52,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   private[this] val sinkProps = FtpSinkProps(
     output = "/output",
-    header = true,
+    needHeader = true,
     user = testUtil.ftpServer.writableUser.name,
     password = testUtil.ftpServer.writableUser.password,
     host = testUtil.ftpServer.host,
