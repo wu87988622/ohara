@@ -64,7 +64,7 @@ DeleteIcon.displayName = 'DeleteIcon';
 class PipelinePage extends React.Component {
   headers = ['#', 'name', 'status', 'start/stop', 'edit', 'delete'];
   state = {
-    isSelectTopicModal: false,
+    isSelectTopicModalActive: false,
     isDeletePipelineModalActive: false,
     deletePipelineUuid: '',
     pipelines: [],
@@ -126,7 +126,7 @@ class PipelinePage extends React.Component {
 
   handleSelectTopicModalOpen = e => {
     e.preventDefault();
-    this.setState({ isSelectTopicModal: true });
+    this.setState({ isSelectTopicModalActive: true });
 
     if (_.isEmpty(this.state.topics)) {
       toastr.error(MESSAGES.NO_TOPICS_FOUND_ERROR);
@@ -134,7 +134,7 @@ class PipelinePage extends React.Component {
   };
 
   handleSelectTopicModalClose = () => {
-    this.setState({ isSelectTopicModal: false });
+    this.setState({ isSelectTopicModalActive: false });
   };
 
   handleDeletePipelineModalOpen = uuid => {
@@ -216,7 +216,7 @@ class PipelinePage extends React.Component {
 
   render() {
     const {
-      isSelectTopicModal,
+      isSelectTopicModalActive,
       isDeletePipelineModalActive,
       topics,
       currentTopic,
@@ -227,7 +227,7 @@ class PipelinePage extends React.Component {
       <DocumentTitle title={PIPELINE}>
         <React.Fragment>
           <Modal
-            isActive={isSelectTopicModal}
+            isActive={isSelectTopicModalActive}
             title="Select topic"
             width="370px"
             confirmBtnText="Next"
