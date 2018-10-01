@@ -1,4 +1,5 @@
 package com.island.ohara.demo
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -15,30 +16,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestBackend extends LargeTest with Matchers {
-
-  @Test
-  def testTtl(): Unit = {
-    val f = Future {
-      Backend.main(Array(Backend.TTL_KEY, "1"))
-    }
-    // we have to wait all service to be closed so 60 seconds is a safe limit.
-    Await.result(f, 120 seconds)
-  }
-
-  @Test
-  def testConfigurator(): Unit = {
-    Backend.run(
-      0,
-      (configurator, db) => {
-        val client = ConfiguratorClient("localhost", configurator.port)
-        try {
-          // it should pass
-          client.cluster[ClusterInformation]
-        } finally client.close()
-      }
-    )
-  }
+class TestBackendCreation extends LargeTest with Matchers {
 
   @Test
   def testCreation(): Unit = {
