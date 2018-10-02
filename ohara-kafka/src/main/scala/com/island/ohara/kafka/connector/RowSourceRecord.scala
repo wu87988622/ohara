@@ -26,6 +26,7 @@ object RowSourceRecord {
   def apply(topic: String, row: Row): RowSourceRecord = builder().row(row).build(topic)
   def builder() = new RowSourceRecordBuilder
 }
+
 class RowSourceRecordBuilder {
   private[this] var sourcePartition: Map[String, _] = Map.empty
   private[this] var sourceOffset: Map[String, _] = Map.empty
@@ -48,6 +49,14 @@ class RowSourceRecordBuilder {
     this
   }
 
+  /**
+    * this is a helper method for RowSourceTask
+    */
+  private[connector] def _partition(partition: Option[Int]): RowSourceRecordBuilder = {
+    this.partition = partition
+    this
+  }
+
   def row(row: Row): RowSourceRecordBuilder = {
     this.row = Objects.requireNonNull(row)
     this
@@ -55,6 +64,14 @@ class RowSourceRecordBuilder {
 
   def timestamp(timestamp: Long): RowSourceRecordBuilder = {
     this.timestamp = Some(timestamp)
+    this
+  }
+
+  /**
+    * this is a helper method for RowSourceTask
+    */
+  private[connector] def _timestamp(timestamp: Option[Long]): RowSourceRecordBuilder = {
+    this.timestamp = timestamp
     this
   }
 
