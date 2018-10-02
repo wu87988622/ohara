@@ -29,7 +29,7 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
     preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)
     preparedStatement.setTimestamp(2, currentTimestamp, DateTimeUtils.CALENDAR)
-    return new QueryResultIterator(preparedStatement, columnNames)
+    new QueryResultIterator(preparedStatement, columnNames)
   }
 
   def columns(tableName: String): Seq[RdbColumn] = {
@@ -38,24 +38,24 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
   }
 
   def dbCurrentTime(cal: Calendar): Timestamp = {
-    val dbProduct: String = connection.getMetaData().getDatabaseProductName()
+    val dbProduct: String = connection.getMetaData.getDatabaseProductName
     var query = ""
     var currentTimestamp: Timestamp = new Timestamp(0)
     if (DBTableDataProvider.ORACLE_DB_NAME == dbProduct) {
-      query = "select CURRENT_TIMESTAMP from dual";
+      query = "select CURRENT_TIMESTAMP from dual"
     } else {
-      query = "select CURRENT_TIMESTAMP;";
+      query = "select CURRENT_TIMESTAMP;"
     }
 
     val stmt: Statement = connection.createStatement()
     try {
-      val resultSet: ResultSet = stmt.executeQuery(query);
+      val resultSet: ResultSet = stmt.executeQuery(query)
       if (resultSet.next()) {
-        currentTimestamp = resultSet.getTimestamp(1, cal);
+        currentTimestamp = resultSet.getTimestamp(1, cal)
       } else {
         throw new RuntimeException(
           s"Unable to get current time from DB using query $query on database $dbProduct"
-        );
+        )
       }
     } finally stmt.close()
     currentTimestamp

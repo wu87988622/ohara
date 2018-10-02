@@ -94,7 +94,6 @@ class JDBCSourceTask extends RowSourceTask {
           .map(s => (s, values(s.name, columns)))
           .map {
             case (schema, value) =>
-              schema.order
               Cell(
                 schema.newName,
                 schema.typeName match {
@@ -127,7 +126,7 @@ class JDBCSourceTask extends RowSourceTask {
   private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): Long = {
     dbColumnInfo.foreach(columnInfo => {
       if (columnInfo.columnName == timestampColumnName) {
-        return columnInfo.value.asInstanceOf[Timestamp].getTime()
+        return columnInfo.value.asInstanceOf[Timestamp].getTime
       }
     })
     throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table.")
@@ -138,7 +137,7 @@ class JDBCSourceTask extends RowSourceTask {
     if (offsets.isEmpty) {
       new Timestamp(0)
     } else {
-      new Timestamp(offsets.get(JDBCSourceTask.DB_TABLE_OFFSET_KEY).get.asInstanceOf[Long])
+      new Timestamp(offsets(JDBCSourceTask.DB_TABLE_OFFSET_KEY).asInstanceOf[Long])
     }
   }
 }

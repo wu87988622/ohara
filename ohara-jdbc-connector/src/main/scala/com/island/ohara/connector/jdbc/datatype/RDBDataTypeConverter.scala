@@ -42,7 +42,7 @@ class RDBDataTypeConverter {
         resultSet.getTime(columnName, DateTimeUtils.CALENDAR)
 
       case _ =>
-        throw new RuntimeException(s"Data type '${typeName}' not support on column '${columnName}'.")
+        throw new RuntimeException(s"Data type '$typeName' not support on column '$columnName'.")
     }
     value
   }
