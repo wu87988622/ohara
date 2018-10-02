@@ -47,9 +47,9 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
     val results: QueryResultIterator = dbTableDataProvider.executeQuery(tableName, "column1", new Timestamp(0)) //0 is 1970-01-01 00:00:00
 
     var count = 0
-    val resultList: ListBuffer[Seq[ColumnInfo]] = new ListBuffer[Seq[ColumnInfo]]
+    val resultList: ListBuffer[Seq[ColumnInfo[_]]] = new ListBuffer[Seq[ColumnInfo[_]]]
     while (results.hasNext) {
-      val listBuffer: Seq[ColumnInfo] = results.next()
+      val listBuffer: Seq[ColumnInfo[_]] = results.next()
       resultList += listBuffer
       count = count + 1
     }

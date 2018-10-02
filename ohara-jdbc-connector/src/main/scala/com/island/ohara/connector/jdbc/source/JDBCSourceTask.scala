@@ -85,7 +85,7 @@ class JDBCSourceTask extends RowSourceTask {
     */
   override protected def _version: String = VersionUtil.VERSION
 
-  private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo]): Row = {
+  private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo[_]]): Row = {
     Row
       .builder()
       .cells(
@@ -115,7 +115,7 @@ class JDBCSourceTask extends RowSourceTask {
       .build()
   }
 
-  private[this] def values(schemaColumnName: String, dbColumnInfos: Seq[ColumnInfo]): Any = {
+  private[this] def values(schemaColumnName: String, dbColumnInfos: Seq[ColumnInfo[_]]): Any = {
     dbColumnInfos.foreach(dbColumn => {
       if (dbColumn.columnName == schemaColumnName) {
         return dbColumn.value
@@ -124,7 +124,7 @@ class JDBCSourceTask extends RowSourceTask {
     throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
   }
 
-  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo], timestampColumnName: String): Long = {
+  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): Long = {
     dbColumnInfo.foreach(columnInfo => {
       if (columnInfo.columnName == timestampColumnName) {
         return columnInfo.value.asInstanceOf[Timestamp].getTime()

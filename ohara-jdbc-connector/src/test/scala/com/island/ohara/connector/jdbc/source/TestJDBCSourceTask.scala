@@ -98,7 +98,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   def testRowTimestamp(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val schema: Seq[Column] = Seq(Column("COLUMN1", DataType.OBJECT, 0))
-    val columnInfo: Seq[ColumnInfo] = Seq(ColumnInfo("COLUMN1", "timestamp", new Timestamp(0)))
+    val columnInfo: Seq[ColumnInfo[Timestamp]] = Seq(ColumnInfo("COLUMN1", "timestamp", new Timestamp(0)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value.toString() shouldBe "1970-01-01 08:00:00.0"
   }
@@ -107,7 +107,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   def testRowInt(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val schema: Seq[Column] = Seq(Column("COLUMN1", DataType.INT, 0))
-    val columnInfo: Seq[ColumnInfo] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
+    val columnInfo: Seq[ColumnInfo[Int]] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value shouldBe 100
   }
@@ -116,7 +116,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   def testCellOrder(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val schema: Seq[Column] = Seq(Column("c1", DataType.INT, 1), Column("c0", DataType.INT, 0))
-    val columnInfo: Seq[ColumnInfo] =
+    val columnInfo: Seq[ColumnInfo[Int]] =
       Seq(ColumnInfo("c1", "int", new Integer(100)), ColumnInfo("c0", "int", new Integer(50)))
     val cells = jdbcSourceTask.row(schema, columnInfo).toSeq
     cells(0).name shouldBe "c0"
@@ -129,7 +129,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   def testRowNewName(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val schema: Seq[Column] = Seq(Column("COLUMN1", "COLUMN100", DataType.INT, 0))
-    val columnInfo: Seq[ColumnInfo] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
+    val columnInfo: Seq[ColumnInfo[Int]] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN100").value shouldBe 100
   }
@@ -203,9 +203,9 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testDbTimestampColumnValue(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val dbColumnInfo: Seq[ColumnInfo] = Seq(ColumnInfo("column1", "string", "value1"),
-                                            ColumnInfo("column2", "timestamp", new Timestamp(1537510900000L)),
-                                            ColumnInfo("column3", "string", "value3"))
+    val dbColumnInfo: Seq[ColumnInfo[_]] = Seq(ColumnInfo("column1", "string", "value1"),
+                                               ColumnInfo("column2", "timestamp", new Timestamp(1537510900000L)),
+                                               ColumnInfo("column3", "string", "value3"))
     val timestamp: Long = jdbcSourceTask.dbTimestampColumnValue(dbColumnInfo, "column2")
     timestamp shouldBe 1537510900000L
   }

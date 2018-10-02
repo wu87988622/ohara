@@ -18,16 +18,13 @@ object ResultSetDataConverter {
     * @param columns
     * @return
     */
-  def converterRecord(resultSet: ResultSet, columns: Seq[RdbColumn]): Seq[ColumnInfo] = {
-    val columnInfos = new ListBuffer[ColumnInfo]
+  def converterRecord(resultSet: ResultSet, columns: Seq[RdbColumn]): Seq[ColumnInfo[_]] = {
     val rdbDataTypeConverter: RDBDataTypeConverter = RDBDataTypeConverterFactory.dataTypeConverter()
     columns
       .map(column => {
         val value: Object = rdbDataTypeConverter.converterValue(resultSet, column)
-        val columnInfo: ColumnInfo = new ColumnInfo(column.name, column.typeName, value)
-        columnInfos += columnInfo
+        ColumnInfo(column.name, column.typeName, value)
       })
       .toSeq
-    columnInfos
   }
 }

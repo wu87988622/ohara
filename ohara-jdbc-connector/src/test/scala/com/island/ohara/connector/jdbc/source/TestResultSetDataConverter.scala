@@ -27,7 +27,7 @@ class TestResultSetDataConverter extends MediumTest with Matchers with MockitoSu
     columnList += new RdbColumn("column2", RDBDataTypeConverter.RDB_TYPE_VARCHAR, false)
     columnList += new RdbColumn("column3", RDBDataTypeConverter.RDB_TYPE_INTEGER, false)
 
-    val result: Seq[ColumnInfo] = ResultSetDataConverter.converterRecord(resultSet, columnList)
+    val result: Seq[ColumnInfo[_]] = ResultSetDataConverter.converterRecord(resultSet, columnList)
     result(0).columnName shouldBe "column1"
     result(0).columnType shouldBe RDBDataTypeConverter.RDB_TYPE_TIMESTAMP
     result(0).value.toString() shouldBe "1970-01-01 08:00:00.0"

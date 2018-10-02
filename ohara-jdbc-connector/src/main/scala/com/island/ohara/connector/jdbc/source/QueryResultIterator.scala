@@ -6,10 +6,10 @@ import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.io.CloseOnce
 
 class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[RdbColumn])
-    extends Iterator[Seq[ColumnInfo]]
+    extends Iterator[Seq[ColumnInfo[_]]]
     with CloseOnce {
   private[this] val resultSet: ResultSet = preparedStatement.executeQuery()
-  private[this] var cache: Seq[ColumnInfo] = _
+  private[this] var cache: Seq[ColumnInfo[_]] = _
 
   /**
     * this method bring side effect the first time since we have to "touch" remote db to retrieve the "data information"
@@ -21,7 +21,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
     cache != null
   }
 
-  override def next(): Seq[ColumnInfo] = {
+  override def next(): Seq[ColumnInfo[_]] = {
     if (!hasNext) throw new NoSuchElementException("Cache no data")
     else
       try cache
