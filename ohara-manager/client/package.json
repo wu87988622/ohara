@@ -9,13 +9,13 @@
   },
   "scripts": {
     "setup": "yarn && yarn build",
-    "start": "react-scripts start",
+    "start": "cross-env NODE_PATH=src:src/components react-scripts start",
     "start:ci": "forever start node_modules/react-scripts/scripts/start.js",
-    "build": "react-scripts build",
+    "build": "cross-env NODE_PATH=src:src/components react-scripts build",
     "lint": "node_modules/eslint/bin/eslint.js src cypress",
-    "test": "react-scripts test --env=jsdom",
+    "test": "cross-env NODE_PATH=src:src/components react-scripts test --env=jsdom",
     "test:watch": "yarn test",
-    "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",
+    "test:report": "cross-env CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
     "cypress": "cypress open",
     "cypress:ci": "cypress run"
@@ -47,6 +47,7 @@
   "devDependencies": {
     "babel-core": "6.26.3",
     "babel-runtime": "6.26.0",
+    "cross-env": "5.2.0",
     "cypress": "3.1.0",
     "eslint-plugin-cypress": "2.0.1",
     "jest-junit": "5.1.0"
