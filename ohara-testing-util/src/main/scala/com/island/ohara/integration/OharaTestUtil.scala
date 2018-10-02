@@ -1,5 +1,6 @@
 package com.island.ohara.integration
 
+import java.io.File
 import java.util
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 import java.util.{Properties, Random}
@@ -7,6 +8,7 @@ import java.util.{Properties, Random}
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
@@ -45,6 +47,12 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   private[this] var localDb: LocalDataBase = _
   private[this] var _connectorClient: ConnectorClient = _
   private[this] var localFtpServer: FtpServer = _
+
+  /**
+    * NOTED: DON'T close this object since we share the same object with other threads.
+    */
+  private[this] var localFs: FileSystem = _
+  private[this] var _tmpDirectory: File = _
 
   /**
     * @return zookeeper connection used to create zk services
@@ -182,14 +190,20 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     *
     * @return
     */
-  def fileSystem: FileSystem = componentBox.hdfs.fs
+  def fileSystem: FileSystem = {
+    if (localFs == null) localFs = FileSystem.getLocal(new Configuration())
+    localFs
+  }
 
   /**
     *Get to temp dir path
     *
     * @return
     */
-  def tmpDirectory: String = componentBox.hdfs.tmpDirectory
+  def tmpDirectory: String = {
+    if (_tmpDirectory == null) _tmpDirectory = createTempDir(this.getClass.getSimpleName)
+    _tmpDirectory.getAbsolutePath
+  }
 
   def dataBase: LocalDataBase = {
     if (localDb == null) localDb = LocalDataBase.mysql()
@@ -209,6 +223,7 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     componentBox.close()
     CloseOnce.close(localDb)
     CloseOnce.close(localFtpServer)
+    if (_tmpDirectory != null) deleteFile(_tmpDirectory)
   }
 
 }
@@ -299,19 +314,16 @@ private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: I
   private[this] val localWorkerCluster =
     if (numberOfWorkers > 0) newOrClose(new LocalKafkaWorkers(localBrokerCluster.brokers, ports(numberOfWorkers)))
     else null
-  private[this] val localHDFSCluster = if (numberOfDataNodes > 0) newOrClose(new LocalHDFS(numberOfDataNodes)) else null
 
   def zookeeper: LocalZk = require(zk, "You haven't started zookeeper")
   def brokerCluster: LocalKafkaBrokers = require(localBrokerCluster, "You haven't started brokers")
   def workerCluster: LocalKafkaWorkers = require(localWorkerCluster, "You haven't started workers")
-  def hdfs: LocalHDFS = require(localHDFSCluster, "You haven't started hdfs")
 
   private[this] def require[T](obj: T, message: String) =
     if (obj == null) throw new NullPointerException(message) else obj
   override protected def doClose(): Unit = {
     CloseOnce.close(localWorkerCluster)
     CloseOnce.close(localBrokerCluster)
-    CloseOnce.close(localHDFSCluster)
     CloseOnce.close(zk)
   }
 }

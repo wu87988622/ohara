@@ -19,7 +19,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 
-class TestHDFSSinkConnector extends With3Brokers3Workers3DataNodes with Matchers {
+class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
