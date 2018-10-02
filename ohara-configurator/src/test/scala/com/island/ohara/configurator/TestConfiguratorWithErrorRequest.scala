@@ -33,21 +33,20 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
 
   private[this] val client = ConfiguratorClient(ip)
 
-  final case class MyRequest(s: String, s2: Int, s3: String)
-  implicit val MY_REQUEST_JSON_FORMAT: RootJsonFormat[MyRequest] = jsonFormat3(MyRequest)
+  private[this] implicit val MY_REQUEST_JSON_FORMAT: RootJsonFormat[MyRequest] = jsonFormat3(MyRequest)
 
   private[this] val request = MyRequest("5", 5, "testttt")
 
-  object TestClient extends SprayJsonSupport with DefaultJsonProtocol {
+  private[this] object TestClient extends SprayJsonSupport with DefaultJsonProtocol {
     implicit val actorSystem: ActorSystem = ActorSystem("TestConfigurator")
     implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
-    val TIMEOUT = 10 seconds
+    val TIMEOUT: Duration = 10 seconds
     def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else
         Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
 
-    def doRequest[T](url: String, req: T, method: HttpMethod)(implicit rm: RootJsonFormat[T]) = {
+    def doRequest[T](url: String, req: T, method: HttpMethod)(implicit rm: RootJsonFormat[T]): T = {
       //list
       Await.result(
         Marshal(req)
@@ -185,5 +184,8 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
   def tearDown(): Unit = {
     CloseOnce.close(client)
     CloseOnce.close(configurator)
+    TestClient.actorSystem.terminate()
   }
 }
+
+private final case class MyRequest(s: String, s2: Int, s3: String)
