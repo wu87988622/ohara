@@ -1,102 +1,52 @@
-# Ohara
+## Ohara
 
 a powerful ETL tool
 
-## Getting Started
+### Getting Started
 
 [TODO]
 
 ### Prerequisites
 
 * JDK 1.8+
-* Scala 2.11
+* Scala 2.11+
 * gradle 4.5+
 
 ### Installing
 
 [TODO]
 
-## run all backend-services
+### Running all backend-services by docker
+(3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 ```
 docker run -ti --rm -p 12345:12345 islandsystems/ohara:backend start-service.sh backend --port 12345 --ttl 123
 ```
-* #####port
-used by Configurator (default is random)
-* #####TTL
-time to terminate backend-service (default is 365 days)
+* port: used by Configurator (default is random)
+* TTL: time to terminate backend-service (default is 365 days)
 
+### Running configurator by docker
+```
+docker run -ti --rm -p 12345:12345 islandsystems/ohara:0.1-SNAPSHOT start-service.sh configurator --port 12345
+```
+* port: used by Configurator (default is random)
 
-## Running the tests
+### Running manager by docker
+```
+docker run -ti --rm -p 5050:5050 -e "CONFIGURATOR_API=http://localhost:9999/v0" islandsystems/ohara:0.1-SNAPSHOT start-service.sh manager
+```
+
+### Running all tests
 
 ```
-gradle test
+gradle clean test
 ```
-The test report is in ./ohara-{module}/build/reports/tests/test/.
 
-## build project without manager
+### Building project without manager
 ```
 gradle clean build -PskipManager
 ```
-if you don't care about manager, running the gradle command with "-PskipManager" can skip process of manager
 
-
-## Building a binary release
-
-*gzipped ball*
-
-```
-gradle clean distZip
-```
-
-*tarred ball*
-
-```
-gradle clean distTar
-```
-
-*ZIP and TAR*
-
-```
-gradle clean build
-```
-
-The release files are in ./ohara-assembly/build/.
-
-## quick start kafka cluster
-
-```
-gradle runKafka
-```
-NOTED: the above command will run 3 brokers and 3 workers
-
-## quick start configurator
-
-```
-gradle runConfigurator
-```
-use -Pbrokers to specify the service url of broker cluster 
-
-## quick start manager
-
-```
-gradle runManger
-```
-use -PconfiguratorPort to specify the port of configurator 
-
-## quick start ohara-http
-```bash
-gradle :ohara-http:runMain
-```
-
-* argument description:
--Phostname: Running ohara-manager HTTP server hostname. default is localhost
--Pport: Running ohara-manager HTTP server port. default is random
--Pttl: Assign server timeout time. default is 60 seconds
-
-NOTED: a full ohara service consists of 1) manager, 2) configurator and 3) kafka cluster. The above command starts
-a local kafka cluster with 3 brokers.
-
-## Built With
+### Built With
 
 * [Kafka](https://github.com/apache/kafka) - streaming tool
 * [AKKA](https://akka.io/) - message-driven tool
@@ -105,11 +55,11 @@ a local kafka cluster with 3 brokers.
 * [SCALALOGGING](https://github.com/typesafehub/scalalogging) - LOG wrapper
 * [LOG4J](https://logging.apache.org/log4j/2.x/) - log plugin default
 
-## Versioning
+### Versioning
 
 [TODO]
 
-## Authors
+### Authors
 
 * **Vito Jeng (vito@is-land.com.tw)** - leader
 * **Yung-An He (stana@is-land.com.tw)** - manager
@@ -119,7 +69,7 @@ a local kafka cluster with 3 brokers.
 * **Joshua_Lin (joshua@is-land.com.tw)** - committer
 * **Geordie Mai (geordie@is-land.com.tw)** - committer
 
-## License
+### License
 
 [TODO] This project is licensed under the is-land License
 

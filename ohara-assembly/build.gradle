@@ -24,6 +24,19 @@ distributions {
     baseName = "ohara"
     contents {
       exclude "ohara-assembly-${version}.jar"
+      /**
+       * exclude useless files from ohara-manager
+       */
+      exclude "node_modules"
+      exclude "cypress"
+      exclude "build"
+      exclude "cypress.json"
+      exclude ".env.test"
+      exclude ".eslintrc"
+      exclude ".gitignore"
+      exclude ".eslintignore"
+      exclude ".prettierignore"
+      exclude ".build.gradle"
       into("conf") {
         // ref to root module
         from { "$projectDir/../conf" }
@@ -32,6 +45,24 @@ distributions {
         // ref to root module
         from { "$projectDir/../bin" }
         fileMode 0755
+      }
+      into("manager/client") {
+        from { "$projectDir/../ohara-manager/client" }
+      }
+      into("manager/constants") {
+        from { "$projectDir/../ohara-manager/constants" }
+      }
+      into("manager/routes") {
+        from { "$projectDir/../ohara-manager/routes" }
+      }
+      into("manager/utils") {
+        from { "$projectDir/../ohara-manager/utils" }
+      }
+      into("manager") {
+        from { "$projectDir/../ohara-manager/index.js" }
+      }
+      into("manager") {
+        from { "$projectDir/../ohara-manager/package.json" }
       }
     }
   }

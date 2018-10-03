@@ -1,6 +1,12 @@
+defaultTasks 'clean', 'build'
+
+/**
+ * clean all processes and files, and then install all dependencies
+ */
 task clean {
   if(!project.hasProperty('skipManager')) {
     doLast {
+      // we have to install "cleanup" process first...
       exec {
         commandLine 'yarn', 'setup'
       }
@@ -9,6 +15,9 @@ task clean {
       }
       exec {
         commandLine 'yarn', 'clean'
+      }
+      exec {
+        commandLine 'yarn', 'setup'
       }
     }
   }

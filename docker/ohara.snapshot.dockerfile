@@ -54,6 +54,18 @@ FROM ubuntu:18.04
 RUN apt-get -y update
 RUN apt-get -q install --no-install-recommends -y apt-utils
 RUN apt-get -q install --no-install-recommends -y openjdk-8-jdk
+RUN apt-get -q install --no-install-recommends -y curl
+RUN apt-get -q install --no-install-recommends -y gnupg
+RUN apt-get -q install --no-install-recommends -y gnupg1
+RUN apt-get -q install --no-install-recommends -y gnupg2
+RUN apt-get -q install --no-install-recommends -y node.js
+
+# INSTALL yarn
+RUN apt install --no-install-recommends -y gpg-agent
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get -y update
+RUN apt-get -q install --no-install-recommends -y yarn
 
 # clone ohara binary
 RUN mkdir /opt/ohara
