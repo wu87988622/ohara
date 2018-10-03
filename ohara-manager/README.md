@@ -6,9 +6,14 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
 
 1.  Install [Node.js](https://nodejs.org/en/) 8.10.0 or greater.
 
-2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0 or greater.
+2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0. Note that you must install the exact version (`1.7.0`) of yarn
 
 3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
+
+4.  Install forever via npm, **this step is optional**
+    ```sh
+    npm install -g forever
+    ```
 
 Have issues while setting up? Try the **Having issues** section to troubleshoot.
 
@@ -151,6 +156,54 @@ yarn build
 ```
 
 > These static files will be build and put into the **/build** directory.
+
+## Ohara manager image
+
+Run the following command to get the production ready build of both **Server** and **Client**. This command will only install **production needed dependencies**.
+
+```sh
+yarn setup:prod
+```
+
+After the build, copy/use these files and directories to the destination directory
+
+- index.js
+- package.json
+- client -- only node_modules and build directories are needed
+  - node_modules
+  - build
+- constants
+- node_modules
+- routes
+- utils
+
+**From the Ohara manager project root**, use the following command to start the manager:
+
+```sh
+CONFIGURATOR_API=http://hostname:port/v0 yarn start
+```
+
+If you have forever installed on your machine globally with npm, you can then check the server logs with:
+
+```sh
+forever logs -f 0
+```
+
+> Here the 0 means the process index
+
+Use forever to see the running processes:
+
+```sh
+forever listall
+```
+
+Or stop them
+
+```sh
+forever stopall
+```
+
+For more info, check out the forever [docs](https://github.com/foreverjs/forever)
 
 ## CI server integration
 
