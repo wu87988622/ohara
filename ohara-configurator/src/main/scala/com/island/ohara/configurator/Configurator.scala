@@ -61,6 +61,7 @@ class Configurator private[configurator] (configuredHostname: String,
     Seq[server.Route](
       TopicInfoRoute.apply,
       HdfsInformationRoute.apply,
+      FtpInformationRoute.apply,
       PipelineRoute.apply,
       ValidationRoute.apply,
       QueryRoute(),

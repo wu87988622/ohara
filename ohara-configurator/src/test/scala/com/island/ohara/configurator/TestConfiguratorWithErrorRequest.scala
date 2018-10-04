@@ -91,6 +91,7 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
     }
     verify[TopicInfo]
     verify[HdfsInformation]
+    verify[FtpInformation]
     verify[Pipeline]
     verify[Sink]
     verify[Source]

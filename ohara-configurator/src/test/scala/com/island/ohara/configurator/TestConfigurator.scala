@@ -179,6 +179,58 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   }
 
   @Test
+  def testFtpInformation(): Unit = {
+    clients.foreach(client => {
+      def compareRequestAndResponse(request: FtpInformationRequest, response: FtpInformation): FtpInformation = {
+        request.name shouldBe response.name
+        request.ip shouldBe response.ip
+        request.port shouldBe response.port
+        request.user shouldBe response.user
+        request.password shouldBe response.password
+        response
+      }
+
+      def compare2Response(lhs: FtpInformation, rhs: FtpInformation): Unit = {
+        lhs.uuid shouldBe rhs.uuid
+        lhs.name shouldBe lhs.name
+        lhs.ip shouldBe lhs.ip
+        lhs.port shouldBe lhs.port
+        lhs.user shouldBe lhs.user
+        lhs.password shouldBe lhs.password
+        lhs.lastModified shouldBe rhs.lastModified
+      }
+
+      // test add
+      client.list[FtpInformation].size shouldBe 0
+
+      val request = FtpInformationRequest("test", "152.22.23.12", Some(5), "test", "test")
+      val response = compareRequestAndResponse(request, client.add[FtpInformationRequest, FtpInformation](request))
+
+      // test get
+      compare2Response(response, client.get[FtpInformation](response.uuid))
+
+      // test update
+      val anotherRequest = FtpInformationRequest("test2", "152.22.23.125", Some(1222), "test", "test")
+      val newResponse =
+        compareRequestAndResponse(anotherRequest,
+                                  client.update[FtpInformationRequest, FtpInformation](response.uuid, anotherRequest))
+
+      // test get
+      compare2Response(newResponse, client.get[FtpInformation](newResponse.uuid))
+
+      // test delete
+      client.list[FtpInformation].size shouldBe 1
+      client.delete[FtpInformation](response.uuid)
+      client.list[FtpInformation].size shouldBe 0
+
+      // test nonexistent data
+      an[IllegalArgumentException] should be thrownBy client.get[FtpInformation]("123")
+      an[IllegalArgumentException] should be thrownBy client
+        .update[FtpInformationRequest, FtpInformation]("777", anotherRequest)
+
+    })
+  }
+  @Test
   def testPipeline(): Unit = {
     clients.foreach(client => {
       def compareRequestAndResponse(request: PipelineRequest, response: Pipeline): Pipeline = {

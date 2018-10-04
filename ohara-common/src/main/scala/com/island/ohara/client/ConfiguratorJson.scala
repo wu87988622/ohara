@@ -112,6 +112,29 @@ object ConfiguratorJson {
       override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$HDFS_PATH/$uuid"
     }
 
+  //------------------------------------------------[DATA-FTP]------------------------------------------------//
+  val FTP_PATH = "ftp"
+  final case class FtpInformationRequest(name: String, ip: String, port: Option[Int], user: String, password: String)
+  implicit val FTP_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpInformationRequest] = jsonFormat5(
+    FtpInformationRequest)
+
+  final case class FtpInformation(uuid: String,
+                                  name: String,
+                                  ip: String,
+                                  port: Option[Int],
+                                  user: String,
+                                  password: String,
+                                  lastModified: Long)
+      extends Data {
+    override def kind: String = "ftp"
+  }
+  implicit val FTP_INFORMATION_JSON_FORMAT: RootJsonFormat[FtpInformation] = jsonFormat7(FtpInformation)
+  implicit val FTP_INFORMATION_COMMAND_FORMAT: DataCommandFormat[FtpInformation] =
+    new DataCommandFormat[FtpInformation] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$FTP_PATH"
+      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$FTP_PATH/$uuid"
+    }
+
   //------------------------------------------------[DATA-PIPELINE]------------------------------------------------//
   sealed abstract class Status extends Serializable {
     def name: String
