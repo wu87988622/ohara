@@ -1,11 +1,10 @@
 package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
-
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.{CloseOnce, VersionUtil}
-import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
 import com.typesafe.scalalogging.Logger
 
@@ -17,6 +16,7 @@ class JDBCSourceTask extends RowSourceTask {
   private[this] var dbTableDataProvider: DBTableDataProvider = _
   private[this] var schema: Seq[Column] = _
   private[this] var topics: Seq[String] = _
+  private[this] var offsets: Offsets = _
 
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
@@ -31,10 +31,12 @@ class JDBCSourceTask extends RowSourceTask {
     val dbURL = jdbcSourceConnectorConfig.dbURL
     val dbUserName = jdbcSourceConnectorConfig.dbUserName
     val dbPassword = jdbcSourceConnectorConfig.dbPassword
+    val tableName = jdbcSourceConnectorConfig.dbTableName
     dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
 
     schema = config.schema
     topics = config.topics
+    offsets = new Offsets(rowContext, tableName)
   }
 
   /**
@@ -47,7 +49,7 @@ class JDBCSourceTask extends RowSourceTask {
     val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
 
     val resultSet: QueryResultIterator =
-      dbTableDataProvider.executeQuery(tableName, timestampColumnName, readOffset(tableName))
+      dbTableDataProvider.executeQuery(tableName, timestampColumnName, new Timestamp(offsets.readInMemoryOffset()))
 
     try resultSet
     //Create Ohara Schema
@@ -55,12 +57,14 @@ class JDBCSourceTask extends RowSourceTask {
         (if (schema.isEmpty) columns.map(c => Column(c.columnName, DataType.OBJECT, 0)) else schema, columns))
       .flatMap {
         case (newSchema, columns) =>
+          val offsetTimestampValue = dbTimestampColumnValue(columns, timestampColumnName)
+          offsets.updateInMemOffset(offsetTimestampValue)
           topics.map(
             RowSourceRecord
               .builder()
               .sourcePartition(JDBCSourceTask.partition(tableName))
               //Writer Offset
-              .sourceOffset(JDBCSourceTask.offset(dbTimestampColumnValue(columns, timestampColumnName)))
+              .sourceOffset(JDBCSourceTask.offset(offsetTimestampValue))
               //Create Ohara Row
               .row(row(newSchema, columns))
               .build(_))
@@ -132,12 +136,18 @@ class JDBCSourceTask extends RowSourceTask {
     throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table.")
   }
 
-  private[source] def readOffset(tableName: String): Timestamp = {
-    val offsets = rowContext.offset(JDBCSourceTask.partition(tableName))
-    if (offsets.isEmpty) {
-      new Timestamp(0)
-    } else {
-      new Timestamp(offsets(JDBCSourceTask.DB_TABLE_OFFSET_KEY).asInstanceOf[Long])
+  private class Offsets(context: RowSourceContext, tableName: String) {
+    private[this] val offsets: Map[String, _] = context.offset(JDBCSourceTask.partition(tableName))
+    private[this] var cache: Map[String, Long] =
+      if (offsets.isEmpty) Map(tableName -> 0)
+      else Map(tableName -> offsets(JDBCSourceTask.DB_TABLE_OFFSET_KEY).asInstanceOf[Long])
+
+    private[source] def updateInMemOffset(timestamp: Long): Unit = {
+      this.cache = Map(tableName -> timestamp)
+    }
+
+    private[source] def readInMemoryOffset(): Long = {
+      return this.cache(tableName)
     }
   }
 }

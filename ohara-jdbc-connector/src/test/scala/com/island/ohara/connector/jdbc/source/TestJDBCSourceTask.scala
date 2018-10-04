@@ -8,7 +8,7 @@ import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.data.Row
 import com.island.ohara.integration.LocalDataBase
-import com.island.ohara.kafka.connector.{RowSourceRecord, TaskConfig}
+import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, TaskConfig}
 import com.island.ohara.rule.MediumTest
 import com.island.ohara.serialization.DataType
 import org.apache.kafka.connect.source.SourceTaskContext
@@ -168,36 +168,6 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     rows(0).row.cell(0).name shouldBe "COLUMN100"
     rows(1).row.cell(1).name shouldBe "COLUMN200"
     rows(2).row.cell(2).name shouldBe "COLUMN400"
-  }
-
-  @Test
-  def testReadOffsetSize0(): Unit = {
-    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
-    val taskContext: SourceTaskContext = mock[SourceTaskContext]
-    when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
-    jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
-
-    val timestamp: Timestamp = jdbcSourceTask.readOffset("table1")
-    timestamp.toString() shouldBe "1970-01-01 08:00:00.0"
-  }
-
-  @Test
-  def testReadOffsetSize1(): Unit = {
-    val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val taskContext: SourceTaskContext = mock[SourceTaskContext]
-    val offsetStorageReader: OffsetStorageReader = mock[OffsetStorageReader]
-
-    val maps = new util.HashMap[String, Object]
-    when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
-
-    maps.put(JDBCSourceTask.DB_TABLE_OFFSET_KEY, java.lang.Long.valueOf(1537510989378L))
-    when(offsetStorageReader.offset(JDBCSourceTask.partition("table1").asJava)).thenReturn(maps)
-
-    jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
-
-    val timestamp: Timestamp = jdbcSourceTask.readOffset("table1")
-    timestamp.toString() shouldBe "2018-09-21 14:23:09.378"
   }
 
   @Test
