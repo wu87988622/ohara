@@ -230,6 +230,58 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
     })
   }
+
+  @Test
+  def testJdbcInformation(): Unit = {
+    clients.foreach(client => {
+      def compareRequestAndResponse(request: JdbcInformationRequest, response: JdbcInformation): JdbcInformation = {
+        request.name shouldBe response.name
+        request.uri shouldBe response.uri
+        request.user shouldBe response.user
+        request.password shouldBe response.password
+        response
+      }
+
+      def compare2Response(lhs: JdbcInformation, rhs: JdbcInformation): Unit = {
+        lhs.uuid shouldBe rhs.uuid
+        lhs.name shouldBe lhs.name
+        lhs.uri shouldBe lhs.uri
+        lhs.user shouldBe lhs.user
+        lhs.password shouldBe lhs.password
+        lhs.lastModified shouldBe rhs.lastModified
+      }
+
+      // test add
+      client.list[JdbcInformation].size shouldBe 0
+
+      val request = JdbcInformationRequest("test", "oracle://152.22.23.12:4222", "test", "test")
+      val response = compareRequestAndResponse(request, client.add[JdbcInformationRequest, JdbcInformation](request))
+
+      // test get
+      compare2Response(response, client.get[JdbcInformation](response.uuid))
+
+      // test update
+      val anotherRequest = JdbcInformationRequest("test2", "msSQL://152.22.23.12:4222", "test", "test")
+      val newResponse =
+        compareRequestAndResponse(anotherRequest,
+                                  client.update[JdbcInformationRequest, JdbcInformation](response.uuid, anotherRequest))
+
+      // test get
+      compare2Response(newResponse, client.get[JdbcInformation](newResponse.uuid))
+
+      // test delete
+      client.list[JdbcInformation].size shouldBe 1
+      client.delete[JdbcInformation](response.uuid)
+      client.list[JdbcInformation].size shouldBe 0
+
+      // test nonexistent data
+      an[IllegalArgumentException] should be thrownBy client.get[JdbcInformation]("123")
+      an[IllegalArgumentException] should be thrownBy client
+        .update[JdbcInformationRequest, JdbcInformation]("777", anotherRequest)
+
+    })
+  }
+
   @Test
   def testPipeline(): Unit = {
     clients.foreach(client => {

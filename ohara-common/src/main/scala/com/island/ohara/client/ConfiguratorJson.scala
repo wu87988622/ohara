@@ -135,6 +135,28 @@ object ConfiguratorJson {
       override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$FTP_PATH/$uuid"
     }
 
+  //------------------------------------------------[DATA-JDBC]------------------------------------------------//
+  val JDBC_PATH = "jdbc"
+  final case class JdbcInformationRequest(name: String, uri: String, user: String, password: String)
+  implicit val JDBC_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[JdbcInformationRequest] = jsonFormat4(
+    JdbcInformationRequest)
+
+  final case class JdbcInformation(uuid: String,
+                                   name: String,
+                                   uri: String,
+                                   user: String,
+                                   password: String,
+                                   lastModified: Long)
+      extends Data {
+    override def kind: String = "jdbc"
+  }
+  implicit val JDBC_INFORMATION_JSON_FORMAT: RootJsonFormat[JdbcInformation] = jsonFormat6(JdbcInformation)
+  implicit val JDBC_INFORMATION_COMMAND_FORMAT: DataCommandFormat[JdbcInformation] =
+    new DataCommandFormat[JdbcInformation] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$JDBC_PATH"
+      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$JDBC_PATH/$uuid"
+    }
+
   //------------------------------------------------[DATA-PIPELINE]------------------------------------------------//
   sealed abstract class Status extends Serializable {
     def name: String
