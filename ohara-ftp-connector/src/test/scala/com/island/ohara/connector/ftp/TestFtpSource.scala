@@ -14,6 +14,8 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestFtpSource extends With3Brokers3Workers with Matchers {
+  var consumer: Consumer[Array[Byte], Row] = _
+
   private[this] val schema: Seq[Column] = Seq(
     Column("name", DataType.STRING, 1),
     Column("ranking", DataType.INT, 2),
@@ -79,10 +81,22 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   private[this] def pollData(topicName: String,
                              timeout: Duration = 60 seconds,
                              size: Int = data.length): Seq[ConsumerRecord[Array[Byte], Row]] = {
-    val consumer =
-      Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
-    try consumer.poll(timeout, size)
-    finally consumer.close()
+    if (consumer == null)
+      consumer =
+        Consumer.builder().topicName(methodName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+
+    consumer.poll(timeout, size)
+  }
+
+  private[this] def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
+    OharaTestUtil.await(
+      () => {
+        ftpClient.listFileNames(props.input).size == inputCount &&
+        ftpClient.listFileNames(props.output).size == outputCount &&
+        ftpClient.listFileNames(props.error).size == errorCount
+      },
+      10 seconds
+    )
   }
 
   @Test
@@ -101,6 +115,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
+
+      checkFileCount(0, 1, 0)
       var records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -113,13 +129,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
+
       // put a duplicate file
       setupInput()
-      OharaTestUtil.await(() => ftpClient.listFileNames(props.input).isEmpty, 30 seconds)
-      OharaTestUtil.await(() => ftpClient.listFileNames(props.output).size == 2, 30 seconds)
-      records = pollData(topicName, timeout = 30 seconds, size = data.length * 2)
-      records.size shouldBe data.length
-    } finally testUtil.connectorClient.delete(methodName)
+      checkFileCount(0, 2, 0)
+      records = pollData(topicName, 5 second)
+      records.size shouldBe 0
+
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
@@ -143,6 +160,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 1, 0)
+
       val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -161,10 +180,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1).value shouldBe rows(1).cell(1).value
       row0.cell(2).name shouldBe "newSingle"
       row1.cell(2).value shouldBe rows(1).cell(2).value
-    } finally testUtil.connectorClient.delete(methodName)
-    ftpClient.listFileNames(props.input).size shouldBe 0
-    ftpClient.listFileNames(props.output).size shouldBe 1
-    ftpClient.listFileNames(props.error).size shouldBe 0
+
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
@@ -188,6 +205,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 1, 0)
+
       val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -200,10 +219,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-    } finally testUtil.connectorClient.delete(methodName)
-    ftpClient.listFileNames(props.input).size shouldBe 0
-    ftpClient.listFileNames(props.output).size shouldBe 1
-    ftpClient.listFileNames(props.error).size shouldBe 0
+
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
@@ -222,6 +239,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 1, 0)
+
       val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -234,10 +253,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-    } finally testUtil.connectorClient.delete(methodName)
-    ftpClient.listFileNames(props.input).size shouldBe 0
-    ftpClient.listFileNames(props.output).size shouldBe 1
-    ftpClient.listFileNames(props.error).size shouldBe 0
+
+    } finally testUtil.connectorClient.delete(connectorName)
+
   }
 
   @Test
@@ -255,6 +273,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 1, 0)
+
       val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -268,10 +288,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(0) shouldBe Cell(rows(1).cell(0).name, rows(1).cell(0).value.toString)
       row1.cell(1) shouldBe Cell(rows(1).cell(1).name, rows(1).cell(1).value.toString)
       row1.cell(2) shouldBe Cell(rows(1).cell(2).name, rows(1).cell(2).value.toString)
-    } finally testUtil.connectorClient.delete(methodName)
-    ftpClient.listFileNames(props.input).size shouldBe 0
-    ftpClient.listFileNames(props.output).size shouldBe 1
-    ftpClient.listFileNames(props.error).size shouldBe 0
+
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
@@ -291,6 +309,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 1, 0)
+
       val records = pollData(topicName)
       records.size shouldBe data.length
       val row0 = records(0).value.get
@@ -301,10 +321,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.size shouldBe 2
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
-    } finally testUtil.connectorClient.delete(methodName)
-    ftpClient.listFileNames(props.input).size shouldBe 0
-    ftpClient.listFileNames(props.output).size shouldBe 1
-    ftpClient.listFileNames(props.error).size shouldBe 0
+
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
@@ -324,12 +342,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
-      val records = pollData(topicName)
+      checkFileCount(0, 0, 1)
+
+      val records = pollData(topicName, 5 second)
       records.size shouldBe 0
-    } finally testUtil.connectorClient.delete(methodName)
-    ftpClient.listFileNames(props.input).size shouldBe 0
-    ftpClient.listFileNames(props.output).size shouldBe 0
-    ftpClient.listFileNames(props.error).size shouldBe 1
+
+    } finally testUtil.connectorClient.delete(connectorName)
   }
 
   @Test
@@ -409,5 +427,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @After
   def tearDown(): Unit = {
     CloseOnce.close(ftpClient)
+    CloseOnce.close(consumer)
+    consumer = null
   }
 }
