@@ -161,10 +161,9 @@ final class ConsumerBuilder {
         override def wakeup(): Unit = kafkaConsumer.wakeup()
       }
     } catch {
-      case e: Throwable => {
+      case e: Throwable =>
         kafkaConsumer.close()
         throw e
-      }
     }
 
   }

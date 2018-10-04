@@ -50,7 +50,7 @@ object FileUtils {
           if (checkFileNameFormat(fileName)) {
             fileName.split(FILENAME_SEPARATOR)(STOP_OFFSET_INDEX).replace(FILENAME_ENDSWITH, "").toLong
           } else {
-            throw new IllegalArgumentException(s"$fileName does not match ${COMMITTED_FILENAME_PATTERN} pattern")
+            throw new IllegalArgumentException(s"$fileName does not match $COMMITTED_FILENAME_PATTERN pattern")
           }
         })
         .max

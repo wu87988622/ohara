@@ -192,7 +192,7 @@ object ByteUtil {
     if (buf1 == buf2 && offset1 == offset2 && len1 == len2) 0
     else {
       val end1 = offset1 + len1
-      for (index1 <- offset1 until end1 if (index1 - offset1 < len2)) {
+      for (index1 <- offset1 until end1 if index1 - offset1 < len2) {
         val index2 = index1 - offset1 + offset2
         val a = buf1(index1) & 0xff
         val b = buf2(index2) & 0xff

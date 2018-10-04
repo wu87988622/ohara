@@ -124,11 +124,10 @@ class FtpSourceTask extends RowSourceTask {
             handleOutput(path)
           }
         } catch {
-          case e: Throwable => {
+          case e: Throwable =>
             LOG.error(s"failed to handle $path", e)
             handleError(path)
             Seq.empty
-          }
         }
       }
     }

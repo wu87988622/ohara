@@ -67,11 +67,10 @@ class FtpSinkTask extends RowSinkTask {
         writer.newLine()
       }
       try result.foreach {
-        case (r, line) => {
+        case (r, line) =>
           writer.append(line)
           writer.newLine()
           committedOffsets += TopicPartition(r.topic, r.partition)
-        }
       } finally writer.close()
     }
   } catch {

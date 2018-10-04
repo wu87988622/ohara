@@ -48,7 +48,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     openTempFile(processLineCount)
 
     //Write Data to Temp File
-    var needHeader: Boolean = processLineCount == 0 && dataFileNeedHeader
+    val needHeader: Boolean = processLineCount == 0 && dataFileNeedHeader
 
     writeData(needHeader, schema, rowSinkRecord)
     processLineCount = processLineCount + 1

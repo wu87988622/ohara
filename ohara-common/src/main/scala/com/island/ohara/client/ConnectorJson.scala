@@ -139,7 +139,7 @@ object ConnectorJson {
       val seqTopics: Seq[String] = map(topics).split(",")
       ConnectorConfig(map(taskMax), seqTopics, map(connectClass), map - (taskMax, topics, connectClass))
     }
-    override def write(config: ConnectorConfig) = {
+    override def write(config: ConnectorConfig): JsValue = {
       val map: Map[String, JsString] = config.args.map { f =>
         {
           f._1 -> JsString(f._2)
