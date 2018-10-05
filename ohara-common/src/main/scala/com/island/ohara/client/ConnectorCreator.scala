@@ -13,7 +13,7 @@ abstract class ConnectorCreator {
   private[this] var name: String = _
   private[this] var clzName: String = _
   private[this] var topicNames: Seq[String] = _
-  private[this] var numberOfTasks: Int = -1
+  private[this] var numberOfTasks: Int = 1
   private[this] var config: mutable.HashMap[String, String] = _
   private[this] var _disableKeyConverter: Boolean = false
   private[this] var _disableValueConverter: Boolean = false
