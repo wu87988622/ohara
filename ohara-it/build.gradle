@@ -12,6 +12,8 @@ dependencies {
   testImplementation project(':ohara-common')
   testImplementation project(':ohara-kafka')
   testImplementation project(':ohara-ftp-connector')
+  testImplementation project(':ohara-jdbc-connector')
+  testImplementation project(':ohara-hdfs-connector')
   testImplementation project(':ohara-testing-util')
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
