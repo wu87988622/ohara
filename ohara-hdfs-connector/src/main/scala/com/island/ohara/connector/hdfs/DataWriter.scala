@@ -15,7 +15,7 @@ import scala.collection.mutable
 class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schema: Seq[Column]) {
 
   private[this] val createStorage: StorageCreator = Class
-    .forName(config.hdfsStorageCreatorClass())
+    .forName(config.hdfsStorageCreateClass)
     .getConstructor(classOf[HDFSSinkConnectorConfig])
     .newInstance(config)
     .asInstanceOf[StorageCreator]

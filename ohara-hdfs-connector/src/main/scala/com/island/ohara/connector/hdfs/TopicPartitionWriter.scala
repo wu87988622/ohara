@@ -22,13 +22,13 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   var tmpFilePath: String = _
   val partitionName: String = s"partition${partition.partition}"
 
-  val tmpDir: String = s"${config.tmpDir()}/${partition.topic}/$partitionName"
-  val dataDir: String = s"${config.dataDir()}/${partition.topic}/$partitionName"
+  val tmpDir: String = s"${config.tmpDir}/${partition.topic}/$partitionName"
+  val dataDir: String = s"${config.dataDir}/${partition.topic}/$partitionName"
 
-  val filePrefixName: String = config.dataFilePrefixName()
-  val flushLineCount: Int = config.flushLineCount()
-  val rotateInterval: Long = config.rotateIntervalMS()
-  val dataFileNeedHeader: Boolean = config.dataFileNeedHeader()
+  val filePrefixName: String = config.dataFilePrefixName
+  val flushLineCount: Int = config.flushLineCount
+  val rotateInterval: Long = config.rotateIntervalMS
+  val dataFileNeedHeader: Boolean = config.dataFileNeedHeader
   var startTimeMS: Long = 0
   var processLineCount: Int = 0
 

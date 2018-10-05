@@ -1,6 +1,6 @@
 package com.island.ohara.connector.hdfs
 
-import java.io.{BufferedInputStream, BufferedReader, InputStream, InputStreamReader}
+import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Column
@@ -29,17 +29,13 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val maxTasks = 5
     val hdfsSinkConnector = new HDFSSinkConnector()
 
-    hdfsSinkConnector._start(
-      TaskConfig("test",
-                 Seq("topic"),
-                 Seq.empty,
-                 Map(HDFSSinkConnectorConfig.HDFS_URL -> hdfsURL, HDFSSinkConnectorConfig.TMP_DIR -> tmpDir)))
+    hdfsSinkConnector._start(TaskConfig("test", Seq("topic"), Seq.empty, Map(HDFS_URL -> hdfsURL, TMP_DIR -> tmpDir)))
     val result = hdfsSinkConnector._taskConfigs(maxTasks)
 
     result.size shouldBe maxTasks
     result.foreach(r => {
-      r.options(HDFSSinkConnectorConfig.HDFS_URL) shouldBe hdfsURL
-      r.options(HDFSSinkConnectorConfig.TMP_DIR) shouldBe tmpDir
+      r.options(HDFS_URL) shouldBe hdfsURL
+      r.options(TMP_DIR) shouldBe tmpDir
     })
   }
 
@@ -48,12 +44,12 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val connectorName = methodName
     val topicName = methodName
     val sinkTasks = 2
-    val flushLineCountName = HDFSSinkConnectorConfig.FLUSH_LINE_COUNT
+    val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "2000"
-    val rotateIntervalMSName = HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS
-    val tmpDirName = HDFSSinkConnectorConfig.TMP_DIR
+    val rotateIntervalMSName = ROTATE_INTERVAL_MS
+    val tmpDirName = TMP_DIR
     val tmpDirPath = "/home/tmp"
-    val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
+    val hdfsURLName = HDFS_URL
 
     val localURL = s"file://${testUtil.tmpDirectory}"
     testUtil.connectorClient
@@ -70,25 +66,24 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, 20 second)
     OharaTestUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, 10 second)
-    OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir() == "/data", 20 second)
-    OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount() == 2000, 20 second)
-    OharaTestUtil.await(() => !SimpleHDFSSinkTask.sinkConnectorConfig.offsetInconsistentSkip(), 20 second)
+    OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == "/data", 20 second)
+    OharaTestUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount == 2000, 20 second)
   }
 
   @Test
   def testHDFSSinkConnector(): Unit = {
     val sinkTasks = 1
-    val flushLineCountName = HDFSSinkConnectorConfig.FLUSH_LINE_COUNT
+    val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "10"
-    val tmpDirName = HDFSSinkConnectorConfig.TMP_DIR
-    val dataDirName = HDFSSinkConnectorConfig.DATA_DIR
-    val isHeader = HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER
-    val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
+    val tmpDirName = TMP_DIR
+    val dataDirName = DATA_DIR
+    val isHeader = DATAFILE_NEEDHEADER
+    val hdfsURLName = HDFS_URL
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 100
     val row = Row(Cell("cf0", 10), Cell("cf1", 11))
-    val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
+    val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
     val fileSystem = testUtil.fileSystem
@@ -152,17 +147,17 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   @Test
   def testRecoverOffset(): Unit = {
     val sinkTasks = 1
-    val flushLineCountName = HDFSSinkConnectorConfig.FLUSH_LINE_COUNT
+    val flushLineCountName = FLUSH_LINE_COUNT
     val flushLineCount = "100"
-    val tmpDirName = HDFSSinkConnectorConfig.TMP_DIR
-    val dataDirName = HDFSSinkConnectorConfig.DATA_DIR
-    val hdfsURLName = HDFSSinkConnectorConfig.HDFS_URL
-    val needHeader = HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER
+    val tmpDirName = TMP_DIR
+    val dataDirName = DATA_DIR
+    val hdfsURLName = HDFS_URL
+    val needHeader = DATAFILE_NEEDHEADER
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 200
     val row = Row(Cell("cf0", 10), Cell("cf1", 11))
-    val hdfsCreatorClassName = HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS
+    val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
     val fileSystem = testUtil.fileSystem

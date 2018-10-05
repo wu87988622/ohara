@@ -3,109 +3,60 @@ package com.island.ohara.connector.hdfs
 import com.island.ohara.connector.hdfs.creator.HDFSStorageCreator
 import org.apache.hadoop.conf.Configuration
 
-/**
-  * This class for props Map convert to object for convenient get data
-  * @param props
-  */
-class HDFSSinkConnectorConfig(props: Map[String, String]) {
-  val PREFIX_FILENAME_PATTERN: String = "[a-zA-Z0-9]*"
-
-  if (props.get(HDFSSinkConnectorConfig.HDFS_URL) == null) {
-    throw new RuntimeException(
-      "Please assign the " +
-        HDFSSinkConnectorConfig.HDFS_URL + " properties")
-  }
+case class HDFSSinkConnectorConfig(hdfsURL: String,
+                                   flushLineCount: Int,
+                                   rotateIntervalMS: Long,
+                                   tmpDir: String,
+                                   dataDir: String,
+                                   dataFilePrefixName: String,
+                                   dataFileNeedHeader: Boolean,
+                                   dataBufferCount: Long,
+                                   hdfsStorageCreateClass: String) {
+  def toMap: Map[String, String] = Map(
+    HDFS_URL -> hdfsURL,
+    FLUSH_LINE_COUNT -> flushLineCount.toString(),
+    ROTATE_INTERVAL_MS -> rotateIntervalMS.toString(),
+    TMP_DIR -> tmpDir,
+    DATA_DIR -> dataDir,
+    DATAFILE_PREFIX_NAME -> dataFilePrefixName,
+    DATAFILE_NEEDHEADER -> dataFileNeedHeader.toString(),
+    DATA_BUFFER_COUNT -> dataBufferCount.toString(),
+    HDFS_STORAGE_CREATOR_CLASS -> hdfsStorageCreateClass
+  )
 
   def hadoopConfiguration(): Configuration = {
     val config = new Configuration()
-    config.set(HadoopConfigurationConstants.FS_DEFAULTFS, hdfsURL())
+    config.set(HadoopConfigurationConstants.FS_DEFAULTFS, hdfsURL)
     config
-  }
-
-  def hdfsURL(): String = props(HDFSSinkConnectorConfig.HDFS_URL)
-
-  def flushLineCount(): Int = {
-    props
-      .getOrElse(HDFSSinkConnectorConfig.FLUSH_LINE_COUNT, HDFSSinkConnectorConfig.FLUSH_LINE_COUNT_DEFAULT.toString)
-      .toInt
-  }
-
-  def rotateIntervalMS(): Long = {
-    props
-      .getOrElse(HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS,
-                 HDFSSinkConnectorConfig.ROTATE_INTERVAL_MS_DEFAULT.toString)
-      .toLong
-  }
-
-  def tmpDir(): String = {
-    props.getOrElse(HDFSSinkConnectorConfig.TMP_DIR, HDFSSinkConnectorConfig.TMP_DIR_DEFAULT.toString)
-  }
-
-  def offsetDir(): String = {
-    props.getOrElse(HDFSSinkConnectorConfig.OFFSET_DIR, HDFSSinkConnectorConfig.OFFSET_DIR_DEFAULT)
-  }
-
-  def dataDir(): String = {
-    props.getOrElse(HDFSSinkConnectorConfig.DATA_DIR, HDFSSinkConnectorConfig.DATA_DIR_DEFAULT)
-  }
-
-  def dataFilePrefixName(): String = {
-    val prefixFileName: String = props
-      .getOrElse(HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME, HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME_DEFAULT)
-
-    if (!prefixFileName.matches(PREFIX_FILENAME_PATTERN)) {
-      throw new RuntimeException(
-        "The " + HDFSSinkConnectorConfig.DATAFILE_PREFIX_NAME + " value only a-z or A-Z or 0-9")
-    }
-    prefixFileName
-  }
-
-  def dataFileNeedHeader(): Boolean = {
-    props
-      .getOrElse(HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER,
-                 HDFSSinkConnectorConfig.DATAFILE_NEEDHEADER_DEFAULT.toString())
-      .toBoolean
-  }
-
-  def offsetInconsistentSkip(): Boolean = {
-    props
-      .getOrElse(HDFSSinkConnectorConfig.OFFSET_INCONSISTENT_SKIP,
-                 HDFSSinkConnectorConfig.OFFSET_INCONSISTENT_SKIP_DEFAULT.toString)
-      .toBoolean
-  }
-
-  def dataBufferCount(): Long = {
-    props
-      .getOrElse(HDFSSinkConnectorConfig.DATA_BUFFER_COUNT, HDFSSinkConnectorConfig.DATA_BUFFER_COUNT_DEFAULT.toString)
-      .toLong
-  }
-
-  def hdfsStorageCreatorClass(): String = {
-    props.getOrElse(HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS,
-                    HDFSSinkConnectorConfig.HDFS_STORAGE_CREATOR_CLASS_DEFAULT)
   }
 }
 
 object HDFSSinkConnectorConfig {
-  val HDFS_URL: String = "hdfs.url"
-  val FLUSH_LINE_COUNT: String = "flush.line.count"
-  val FLUSH_LINE_COUNT_DEFAULT: Int = 1000
-  val ROTATE_INTERVAL_MS: String = "rotate.interval.ms"
-  val ROTATE_INTERVAL_MS_DEFAULT: Long = 60000
-  val TMP_DIR: String = "tmp.dir"
-  val TMP_DIR_DEFAULT: String = "/tmp"
-  val OFFSET_DIR: String = "offset.dir"
-  val OFFSET_DIR_DEFAULT: String = "/offset"
-  val DATA_DIR: String = "data.dir"
-  val DATA_DIR_DEFAULT = "/data"
-  val DATAFILE_PREFIX_NAME: String = "datafile.prefix.name"
-  val DATAFILE_NEEDHEADER: String = "datafile.isheader"
-  val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
-  val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
-  val OFFSET_INCONSISTENT_SKIP: String = "offset.inconsistent.skip"
-  val OFFSET_INCONSISTENT_SKIP_DEFAULT: Boolean = false
-  val DATA_BUFFER_COUNT: String = "data.buffer.size"
-  val DATA_BUFFER_COUNT_DEFAULT: Long = 100
-  val HDFS_STORAGE_CREATOR_CLASS: String = "hdfs.storage.creator.class"
-  val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName()
+  private[this] val FLUSH_LINE_COUNT_DEFAULT: Int = 1000
+  private[this] val ROTATE_INTERVAL_MS_DEFAULT: Long = 60000
+  private[this] val TMP_DIR_DEFAULT: String = "/tmp"
+  private[this] val DATA_DIR_DEFAULT = "/data"
+  private[this] val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
+  private[this] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
+  private[this] val DATA_BUFFER_COUNT_DEFAULT: Long = 100
+  private[this] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName()
+
+  def apply(props: Map[String, String]): HDFSSinkConnectorConfig = {
+    val prefixFileName: String = props.getOrElse(DATAFILE_PREFIX_NAME, DATAFILE_PREFIX_NAME_DEFAULT)
+    if (!prefixFileName.matches(PREFIX_FILENAME_PATTERN)) {
+      throw new RuntimeException("The " + DATAFILE_PREFIX_NAME + " value only a-z or A-Z or 0-9")
+    }
+
+    HDFSSinkConnectorConfig(
+      hdfsURL = props(HDFS_URL),
+      flushLineCount = props.getOrElse(FLUSH_LINE_COUNT, FLUSH_LINE_COUNT_DEFAULT.toString).toInt,
+      rotateIntervalMS = props.getOrElse(ROTATE_INTERVAL_MS, ROTATE_INTERVAL_MS_DEFAULT.toString).toLong,
+      tmpDir = props.getOrElse(TMP_DIR, TMP_DIR_DEFAULT.toString),
+      dataDir = props.getOrElse(DATA_DIR, DATA_DIR_DEFAULT),
+      dataFilePrefixName = prefixFileName,
+      dataFileNeedHeader = props.getOrElse(DATAFILE_NEEDHEADER, DATAFILE_NEEDHEADER_DEFAULT.toString()).toBoolean,
+      dataBufferCount = props.getOrElse(DATA_BUFFER_COUNT, DATA_BUFFER_COUNT_DEFAULT.toString).toLong,
+      hdfsStorageCreateClass = props.getOrElse(HDFS_STORAGE_CREATOR_CLASS, HDFS_STORAGE_CREATOR_CLASS_DEFAULT)
+    )
+  }
 }

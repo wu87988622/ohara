@@ -5,7 +5,7 @@ import java.io.OutputStream
 import com.island.ohara.serialization.DataType
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.storage.Storage
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.data.Row
 import com.island.ohara.io.ByteUtil
 import com.typesafe.scalalogging.Logger
 

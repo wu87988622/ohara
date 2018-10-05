@@ -12,7 +12,7 @@ import org.apache.hadoop.fs.FileSystem
   * @param config
   */
 class HDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
-  private[this] val hdfsURL: String = config.hdfsURL()
+  private[this] val hdfsURL: String = config.hdfsURL
   private[this] val fileSystem: FileSystem = FileSystem.newInstance(URI.create(hdfsURL), config.hadoopConfiguration())
   private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
 
