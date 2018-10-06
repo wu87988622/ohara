@@ -161,7 +161,7 @@ abstract class ConnectorCreator {
     config += ("connector.class" -> clzName)
     config += ("topics" -> topicNames.mkString(","))
     config += ("tasks.max" -> numberOfTasks.toString)
-    if (schema != null) config += (Column.COLUMN_KEY -> Column.toString(schema))
+    if (schema != null && schema.nonEmpty) config += (Column.COLUMN_KEY -> Column.toString(schema))
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)
       config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
