@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import { Route, Redirect } from 'react-router-dom';
+import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/helpers';
 import * as MESSAGES from 'constants/messages';
@@ -39,43 +40,17 @@ class PipelineNewPage extends React.Component {
   state = {
     title: 'Untitled pipeline',
     topicName: '',
-    graph: [
-      {
-        type: 'source',
-        isExist: false,
-        isActive: false,
-        uuid: null,
-        icon: 'fa-database',
-      },
-      {
-        type: 'separator-1',
-        isExist: true,
-        isActive: false,
-      },
-      {
-        type: 'topic',
-        isExist: false,
-        isActive: false,
-        uuid: null,
-        icon: 'fa-list-ul',
-      },
-      {
-        type: 'separator-2',
-        isExist: true,
-        isActive: false,
-      },
-      {
-        type: 'sink',
-        isExist: false,
-        isActive: false,
-        uuid: null,
-        icon: 'hadoop',
-      },
-    ],
+    graph: [],
     isRedirect: false,
     isLoading: true,
     isModalActive: false,
     hasChanges: false,
+  };
+
+  iconMaps = {
+    source: 'fa-database',
+    topic: 'fa-list-ul',
+    sink: 'icon-hadoop',
   };
 
   componentDidMount() {
@@ -83,16 +58,6 @@ class PipelineNewPage extends React.Component {
 
     if (isValid) {
       this.fetchData();
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    const prevPage = _.get(prevProps.match, 'params.page', null);
-    const currPage = _.get(this.props.match, 'params.page', null);
-
-    if (currPage !== prevPage) {
-      const update = { isActive: true };
-      this.updateGraph(update, currPage);
     }
   }
 
@@ -116,39 +81,81 @@ class PipelineNewPage extends React.Component {
       toastr.error(MESSAGES.TOPIC_ID_REQUIRED_ERROR);
       this.setState(() => ({ isRedirect: true }));
       return false;
-    } else {
-      const update = { uuid: topicId };
-      this.updateGraph(update, 'topic');
-      return true;
     }
+
+    return true;
   };
 
-  updateGraph = (update, type) => {
-    // TODO: remove this when pipeline new graph is ready!
-    if (type === 'source-ftp') return;
-
+  updateGraph = (update, id) => {
     this.setState(({ graph }) => {
-      const idx = graph.findIndex(g => g.type === type);
-      const _graph = [
-        ...graph.slice(0, idx),
-        { ...graph[idx], ...update },
-        ...graph.slice(idx + 1),
-      ];
+      const idx = graph.findIndex(g => g.id === id);
+      let _graph = [];
+
+      if (idx === -1) {
+        _graph = [...graph, update];
+      } else {
+        _graph = [
+          ...graph.slice(0, idx),
+          { ...graph[idx], ...update },
+          ...graph.slice(idx + 1),
+        ];
+      }
       return {
         graph: _graph,
       };
     });
   };
 
-  resetGraph = graph => {
-    const update = graph.map(g => {
-      if (g.type.indexOf('separator') === -1) {
-        return { ...g, isActive: false };
-      }
+  loadGraph = pipelines => {
+    if (!pipelines) return;
 
-      return g;
+    const { objects, rules } = pipelines;
+    const { graph } = this.state;
+
+    const _graph = objects.map(({ kind: type, uuid, name }, idx) => {
+      return {
+        name,
+        type,
+        uuid,
+        icon: this.iconMaps[type],
+        id: graph[idx] ? graph[idx].id : uuid4(),
+        isActive: graph[idx] ? graph[idx].isActive : false,
+        to: '?',
+      };
     });
-    this.setState({ graph: update });
+
+    const forms = Object.keys(rules);
+
+    const results = forms.map(form => {
+      const source = _graph.filter(g => g.uuid === form);
+      const target = _graph.filter(g => g.uuid === rules[form]);
+
+      return {
+        ...source[0],
+        to: target[0] ? target[0].id : '',
+      };
+    });
+
+    this.setState(
+      () => {
+        return { graph: _graph };
+      },
+      () => {
+        results.forEach(result => this.updateGraph(result, result.id));
+      },
+    );
+  };
+
+  resetGraph = () => {
+    this.setState(({ graph }) => {
+      const update = graph.map(g => {
+        return { ...g, isActive: false };
+      });
+
+      return {
+        graph: update,
+      };
+    });
   };
 
   handleTitleChange = ({ target: { value: title } }) => {
@@ -223,6 +230,7 @@ class PipelineNewPage extends React.Component {
             </Header>
             <Toolbar
               {...this.props}
+              iconMaps={this.iconMaps}
               updateGraph={this.updateGraph}
               graph={graph}
               hasChanges={hasChanges}
@@ -241,6 +249,7 @@ class PipelineNewPage extends React.Component {
                 <PipelineSourcePage
                   {...this.props}
                   graph={graph}
+                  loadGraph={this.loadGraph}
                   updateGraph={this.updateGraph}
                   hasChanges={hasChanges}
                   updateHasChanges={this.updateHasChanges}
@@ -254,6 +263,7 @@ class PipelineNewPage extends React.Component {
                 <PipelineSourceFtpPage
                   {...this.props}
                   graph={graph}
+                  loadGraph={this.loadGraph}
                   updateGraph={this.updateGraph}
                   hasChanges={hasChanges}
                   updateHasChanges={this.updateHasChanges}
@@ -263,7 +273,14 @@ class PipelineNewPage extends React.Component {
             <Route
               path="/pipeline/(new|edit)/topic"
               render={() => (
-                <PipelineTopicPage isLoading={isLoading} name={topicName} />
+                <PipelineTopicPage
+                  {...this.props}
+                  graph={graph}
+                  loadGraph={this.loadGraph}
+                  updateGraph={this.updateGraph}
+                  isLoading={isLoading}
+                  name={topicName}
+                />
               )}
             />
             <Route
@@ -271,9 +288,11 @@ class PipelineNewPage extends React.Component {
               render={() => (
                 <PipelineSinkPage
                   {...this.props}
+                  graph={graph}
                   hasChanges={hasChanges}
-                  updateHasChanges={this.updateHasChanges}
+                  loadGraph={this.loadGraph}
                   updateGraph={this.updateGraph}
+                  updateHasChanges={this.updateHasChanges}
                 />
               )}
             />

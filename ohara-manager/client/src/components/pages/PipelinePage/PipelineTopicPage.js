@@ -3,9 +3,11 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { Facebook } from 'react-content-loader';
 
+import * as _ from 'utils/helpers';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';
+import { fetchPipeline } from 'apis/pipelinesApis';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
@@ -13,23 +15,46 @@ const H5Wrapper = styled(H5)`
   color: ${lightBlue};
 `;
 
-const PipelineTopicPage = ({ name, isLoading }) => {
-  return (
-    <Box>
-      {isLoading ? (
-        <Facebook style={{ width: '70%', height: 'auto' }} />
-      ) : (
-        <React.Fragment>
-          <H5Wrapper>Topic : {name}</H5Wrapper>
-        </React.Fragment>
-      )}
-    </Box>
-  );
-};
+class PipelineTopicPage extends React.Component {
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    isLoading: PropTypes.bool.isRequired,
+    updateGraph: PropTypes.func,
+    loadGraph: PropTypes.func,
+  };
 
-PipelineTopicPage.propTypes = {
-  name: PropTypes.string.isRequired,
-  isLoading: PropTypes.bool.isRequired,
-};
+  componentDidMount() {
+    const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
+    if (pipelineId) {
+      this.fetchPipeline(pipelineId);
+    }
+  }
+
+  fetchPipeline = async pipelineId => {
+    if (!_.isUuid(pipelineId)) return;
+
+    const res = await fetchPipeline(pipelineId);
+    const pipelines = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(pipelines)) {
+      this.props.loadGraph(pipelines);
+    }
+  };
+
+  render() {
+    const { name, isLoading } = this.props;
+    return (
+      <Box>
+        {isLoading ? (
+          <Facebook style={{ width: '70%', height: 'auto' }} />
+        ) : (
+          <React.Fragment>
+            <H5Wrapper>Topic : {name}</H5Wrapper>
+          </React.Fragment>
+        )}
+      </Box>
+    );
+  }
+}
 
 export default PipelineTopicPage;

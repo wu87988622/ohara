@@ -81,6 +81,7 @@ class PipelineSourcePage extends React.Component {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func,
     updateGraph: PropTypes.func,
+    loadGraph: PropTypes.func,
   };
 
   selectMaps = {
@@ -105,7 +106,7 @@ class PipelineSourcePage extends React.Component {
     isBtnWorking: false,
     isFormDisabled: false,
     isRedirect: false,
-    pipelines: {},
+    pipelines: [],
   };
 
   componentDidMount() {
@@ -126,6 +127,7 @@ class PipelineSourcePage extends React.Component {
 
     if (topicId) {
       this.fetchTopics(topicId);
+      this.props.updateHasChanges(true);
     }
   }
 
@@ -143,11 +145,11 @@ class PipelineSourcePage extends React.Component {
     }
 
     if (isUpdate && hasTopicId) {
-      const { name, uuid } = this.state.pipelines;
+      const { name, uuid, rules } = this.state.pipelines;
 
       const params = {
         name,
-        rules: { [currSourceId]: topicId },
+        rules: { ...rules, [currSourceId]: topicId },
       };
 
       this.updatePipeline(uuid, params);
@@ -225,6 +227,12 @@ class PipelineSourcePage extends React.Component {
 
     if (!_.isEmpty(pipelines)) {
       this.setState({ pipelines });
+
+      const sourceId = _.get(this.props.match, 'params.sourceId', null);
+
+      if (sourceId && sourceId !== '__') {
+        this.props.loadGraph(pipelines);
+      }
     }
   };
 
@@ -302,10 +310,11 @@ class PipelineSourcePage extends React.Component {
 
   updatePipeline = async (uuid, params) => {
     const res = await updatePipeline({ uuid, params });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const pipelines = _.get(res, 'data.result', []);
 
-    if (isSuccess) {
-      this.props.updateGraph({ isActive: true }, 'separator-1');
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
+      this.props.loadGraph(pipelines);
     }
   };
 
@@ -321,7 +330,8 @@ class PipelineSourcePage extends React.Component {
       url,
     } = this.state;
     const sourceId = _.get(match, 'params.sourceId', null);
-    const isCreate = _.isNull(sourceId) ? true : false;
+    const hasSink = sourceId === '__';
+    const isCreate = _.isNull(sourceId) || hasSink ? true : false;
 
     const params = {
       name: 'untitled source',
@@ -342,11 +352,18 @@ class PipelineSourcePage extends React.Component {
       ? await createSource(params)
       : await updateSource({ uuid: sourceId, params });
 
-    const uuid = _.get(res, 'data.result.uuid', null);
+    const _sourceId = _.get(res, 'data.result.uuid', null);
 
-    if (uuid) {
+    if (_sourceId) {
       this.props.updateHasChanges(false);
-      if (isCreate) history.push(`${match.url}/${uuid}`);
+      if (isCreate && !hasSink) {
+        history.push(`${match.url}/${_sourceId}`);
+      } else {
+        const { page, pipelineId, sinkId, topicId } = match.params;
+        history.push(
+          `/pipeline/new/${page}/${pipelineId}/${topicId}/${_sourceId}/${sinkId}`,
+        );
+      }
     }
   }, 1000);
 

@@ -73,6 +73,10 @@ class PipelineSinkPage extends React.Component {
 
       this.updatePipeline(uuid, params);
     }
+
+    if (this.props.graph !== prevProps.graph) {
+      console.log(this.props.graph);
+    }
   }
 
   fetchData = () => {
@@ -81,10 +85,15 @@ class PipelineSinkPage extends React.Component {
     const sinkId = _.get(match, 'params.sinkId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
+    if (topicId) {
+      this.props.updateHasChanges(true);
+    }
+
     if (sinkId) {
       const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchHdfsPromise = this.fetchHdfs(sinkId);
       const fetchPipelinePromise = this.fetchPipeline(pipelineId);
+
       Promise.all([
         fetchTopicsPromise,
         fetchHdfsPromise,
@@ -122,7 +131,6 @@ class PipelineSinkPage extends React.Component {
     if (!_.isEmpty(topics)) {
       const currTopic = topics.find(topic => topic.uuid === topicId);
       this.setState({ topics, currTopic });
-      this.props.updateGraph({ isActive: true }, 'separator-2');
     } else {
       toastr.error(MESSAGES.INVALID_TOPIC_ID);
       this.setState({ isRedirect: true });
@@ -154,15 +162,22 @@ class PipelineSinkPage extends React.Component {
 
     if (pipelines) {
       this.setState({ pipelines });
+
+      const sinkId = _.get(this.props.match, 'params.sinkId', null);
+
+      if (sinkId) {
+        this.props.loadGraph(pipelines);
+      }
     }
   };
 
   updatePipeline = async (uuid, params) => {
     const res = await updatePipeline({ uuid, params });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const pipelines = _.get(res, 'data.result', []);
 
-    if (isSuccess) {
-      this.props.updateGraph({ isActive: true }, 'separator-2');
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
+      this.props.loadGraph(pipelines);
     }
   };
 

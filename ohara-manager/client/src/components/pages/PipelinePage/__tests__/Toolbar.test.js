@@ -22,6 +22,7 @@ const props = {
   ],
   updateGraph: jest.fn(),
   hasChanges: false,
+  iconMaps: {},
 };
 
 describe('<Toolbar />', () => {

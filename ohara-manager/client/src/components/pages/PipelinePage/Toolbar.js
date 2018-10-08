@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/helpers';
 import { HadoopIcon } from 'common/Icons';
@@ -107,14 +108,27 @@ class Toolbar extends React.Component {
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
+    iconMaps: PropTypes.shape({
+      source: PropTypes.string,
+      topic: PropTypes.string,
+      sink: PropTypes.string,
+    }).isRequired,
   };
 
   update = e => {
-    const { updateGraph } = this.props;
-    const update = { isExist: true };
+    const { updateGraph, iconMaps } = this.props;
 
     let type = _.get(e, 'target.dataset.id', null);
     type = type ? type : 'sink';
+
+    const update = {
+      name: `Untitled ${type}`,
+      type,
+      to: '?',
+      isActive: false,
+      icon: iconMaps[type],
+      id: uuid4(),
+    };
 
     // TODO: remove this when pipeline new graph is ready!
     if (type === 'source-ftp') return;

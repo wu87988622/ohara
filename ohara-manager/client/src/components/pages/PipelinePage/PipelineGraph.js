@@ -1,15 +1,14 @@
 import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import cx from 'classnames';
+import * as d3 from 'd3v4';
+import dagreD3 from 'dagre-d3';
 
 import * as _ from 'utils/helpers';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import { HadoopIcon } from 'common/Icons';
 import {
   white,
-  radiusRounded,
   lightBlue,
   lightestBlue,
   whiteSmoke,
@@ -26,24 +25,7 @@ const H5Wrapper = styled(H5)`
 
 H5Wrapper.displayName = 'H5Wrapper';
 
-const Graph = styled.ul`
-  display: flex;
-  position: relative;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-Graph.displayName = 'Graph';
-
 const Node = styled.li`
-  width: 60px;
-  height: 60px;
-  border-radius: ${radiusRounded};
-  background-color: ${whiteSmoke};
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
   z-index: 50;
   visibility: ${props => (props.isExist ? 'visible' : 'hidden')};
 
@@ -83,30 +65,54 @@ const Node = styled.li`
 
 Node.displayName = 'Node';
 
-const Separator = styled.div`
-  height: 3px;
-  flex: 1;
-  background: ${blue};
-  margin: 0 5px;
-  visibility: ${props => (props.isActive ? 'visible' : 'hidden')};
-`;
+const Svg = styled.svg`
+  width: 100%;
+  height: 300px;
 
-const IconWrapper = styled.i`
-  position: relative;
-  z-index: 50;
-  color: ${lightestBlue};
-`;
+  .node circle {
+    fill: ${whiteSmoke};
+    cursor: pointer;
 
-IconWrapper.displayName = 'IconWrapper';
+    &:hover {
+      fill: ${blue};
+      transition: ${durationNormal} all;
+    }
+  }
+
+  .node.is-active circle {
+    fill: ${blue};
+  }
+
+  .fa {
+    cursor: pointer;
+    color: ${lightestBlue};
+    font-size: 16px;
+  }
+
+  .icon-hadoop {
+    font-size: 25px;
+  }
+
+  text {
+    fill: white;
+    text-transform: uppercase;
+  }
+
+  path {
+    stroke: ${blue};
+    fill: ${blue};
+    stroke-width: 2px;
+  }
+`;
 
 class PipelineGraph extends React.Component {
   static propTypes = {
     graph: PropTypes.arrayOf(
       PropTypes.shape({
         type: PropTypes.string,
+        name: PropTypes.string,
         uuid: PropTypes.string,
         isActive: PropTypes.bool,
-        isExist: PropTypes.bool,
         icon: PropTypes.string,
       }),
     ).isRequired,
@@ -115,95 +121,104 @@ class PipelineGraph extends React.Component {
   };
 
   componentDidMount() {
-    const { match, updateGraph } = this.props;
-    const page = _.get(match, 'params.page', null);
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const topicId = _.get(match, 'params.topicId', null);
-    const sinkId = _.get(match, 'params.sinkId', null);
+    this.renderGraph();
+  }
 
-    if (page) {
-      updateGraph({ isActive: true, isExist: true }, page);
-    }
-
-    if (topicId) {
-      updateGraph({ isExist: true }, 'topic');
-    }
-
-    if (sourceId && sourceId !== '__') {
-      updateGraph({ isExist: true }, 'source');
-      updateGraph({ isActive: true }, 'separator-1');
-    }
-
-    if (sinkId) {
-      updateGraph({ isExist: true }, 'sink');
-      updateGraph({ isActive: true }, 'separator-2');
+  componentDidUpdate(prevProps) {
+    if (this.props.graph !== prevProps.graph) {
+      this.renderGraph();
     }
   }
 
-  handleClick = e => {
-    const { nodeName } = e.target;
-    const { history, resetGraph, graph, match } = this.props;
+  handleNodeClick = id => {
+    const { history, resetGraph, updateGraph, graph, match } = this.props;
     const { topicId, pipelineId, sourceId, sinkId } = match.params;
 
-    const path =
-      nodeName !== 'LI'
-        ? 'target.parentElement.dataset.id'
-        : 'target.dataset.id';
-    const page = _.get(e, path, null);
+    console.log(this.props.graph);
 
-    const activePage = graph.find(g => g.isActive === true);
-    const isUpdate = activePage.type !== page;
+    resetGraph();
+    updateGraph({ isActive: true }, id);
 
-    if (page && isUpdate) {
-      resetGraph(graph);
-      const action = match.url.includes('/edit/') ? 'edit' : 'new';
-      const baseUrl = `/pipeline/${action}/${page}/${pipelineId}/${topicId}`;
+    const [_graph] = graph.filter(g => g.id === id);
 
-      if (sinkId) {
-        history.push(`${baseUrl}/${sourceId}/${sinkId}`);
-      } else if (sourceId) {
-        history.push(`${baseUrl}/${sourceId}`);
-      } else {
-        history.push(`${baseUrl}`);
-      }
+    const action = match.url.includes('/edit/') ? 'edit' : 'new';
+    const baseUrl = `/pipeline/${action}/${
+      _graph.type
+    }/${pipelineId}/${topicId}`;
+
+    if (sinkId) {
+      history.push(`${baseUrl}/${sourceId}/${sinkId}`);
+    } else if (sourceId) {
+      history.push(`${baseUrl}/${sourceId}`);
+    } else {
+      history.push(`${baseUrl}`);
     }
   };
 
-  renderGraph = ({ type, isExist, isActive, icon }, idx) => {
-    const nodeCls = cx({ 'is-exist': isExist, 'is-active': isActive });
-    const separatorCls = cx({ 'is-exist': true });
-    const iconCls = `fas ${icon}`;
+  renderGraph = () => {
+    const g = new dagreD3.graphlib.Graph().setGraph({});
 
-    if (type.indexOf('separator') > -1) {
-      return (
-        <Separator className={separatorCls} isActive={isActive} key={idx} />
-      );
-    } else {
-      return (
-        <Node
-          key={idx}
-          className={nodeCls}
-          onClick={this.handleClick}
-          data-id={type}
-          data-testid={`graph-${type}`}
-        >
-          {type === 'sink' ? (
-            <HadoopIcon width={28} height={28} fillColor={lightestBlue} />
-          ) : (
-            <IconWrapper className={iconCls} />
-          )}
-        </Node>
-      );
-    }
+    this.props.graph.forEach(({ to, id, icon, isActive }) => {
+      const props = { width: 60, height: 60, shape: 'circle' };
+
+      const isActiveCls = isActive ? 'is-active' : '';
+      const html = `<div class="node-graph ${isActiveCls}">
+        <i class="fa ${icon}"></i>
+      </div>`;
+
+      g.setNode(id, {
+        ...props,
+        lable: id,
+        labelType: 'html',
+        label: html,
+        class: isActiveCls,
+      });
+
+      if (to) {
+        const dests = this.props.graph.map(x => x.id);
+
+        if (!dests.includes(to)) return;
+
+        if (Array.isArray(to)) {
+          to.forEach(t => {
+            g.setEdge(id, t, {});
+          });
+          return;
+        }
+
+        g.setEdge(id, to, {});
+      }
+    });
+
+    const svg = d3.select('.pipeline-graph');
+    const inner = svg.select('g');
+
+    const zoom = d3.zoom().on('zoom', () => {
+      inner.attr('transform', d3.event.transform);
+    });
+
+    svg.call(zoom);
+
+    const render = new dagreD3.render();
+
+    g.setGraph({
+      rankdir: 'LR',
+      marginx: 50,
+      marginy: 50,
+    });
+
+    render(inner, g);
+
+    svg.selectAll('.node').on('click', this.handleNodeClick);
   };
 
   render() {
     return (
       <Box>
         <H5Wrapper>Pipeline graph</H5Wrapper>
-        <Graph data-testid="graph-list">
-          {this.props.graph.map((g, idx) => this.renderGraph(g, idx))}
-        </Graph>
+        <Svg className="pipeline-graph">
+          <g />
+        </Svg>
       </Box>
     );
   }
