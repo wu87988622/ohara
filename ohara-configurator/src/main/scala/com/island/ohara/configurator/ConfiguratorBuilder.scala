@@ -128,6 +128,7 @@ class ConfiguratorBuilder {
   */
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
+  private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
 
   override def connectorCreator(): ConnectorCreator = new ConnectorCreator {
     override protected def send(request: CreateConnectorRequest): CreateConnectorResponse =
@@ -135,23 +136,28 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
         throw new IllegalStateException(s"the connector:${request.name} exists!")
       else {
         cachedConnectors.put(request.name, request.config)
+        cachedConnectorsState.put(request.name, State.RUNNING)
         CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
       }
 
   }
 
   override def delete(name: String): Unit =
-    if (cachedConnectors.remove(name) == null) throw new IllegalStateException(s"the connector:$name doesn't exist!")
+    try if (cachedConnectors.remove(name) == null)
+      throw new IllegalStateException(s"the connector:$name doesn't exist!")
+    finally cachedConnectorsState.remove(name)
   import scala.collection.JavaConverters._
   // TODO; does this work? by chia
   override def plugins(): Seq[Plugin] = cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
-  override protected def doClose(): Unit = cachedConnectors.clear()
+  override protected def doClose(): Unit = {
+    cachedConnectors.clear()
+    cachedConnectorsState.clear()
+  }
   override def activeConnectors(): Seq[String] = cachedConnectors.keys.asScala.toSeq
   override def workers: String = "Unknown"
   override def status(name: String): ConnectorInformation = {
-    if (cachedConnectors.contains(name)) {
-      ConnectorInformation(name, ConnectorStatus(State.RUNNING, "fake id", None), Seq.empty)
-    } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
+    checkExist(name)
+    ConnectorInformation(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty)
   }
 
   override def config(name: String): ConnectorConfig = {
@@ -161,10 +167,21 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   }
 
   override def taskStatus(name: String, id: Int): TaskStatus = {
-    if (cachedConnectors.contains(name) && id >= 0) {
-      TaskStatus(0, State.RUNNING, "worker_id", None)
-    } else throw new IllegalStateException(s"the connector:$name doesn't exist!")
+    checkExist(name)
+    TaskStatus(0, cachedConnectorsState.get(name), "worker_id", None)
   }
+  override def pause(name: String): Unit = {
+    checkExist(name)
+    cachedConnectorsState.put(name, State.PAUSED)
+  }
+
+  override def resume(name: String): Unit = {
+    checkExist(name)
+    cachedConnectorsState.put(name, State.RUNNING)
+  }
+
+  private[this] def checkExist(name: String): Unit =
+    if (!cachedConnectors.contains(name)) throw new IllegalArgumentException(s"$name doesn't exist")
 }
 
 /**

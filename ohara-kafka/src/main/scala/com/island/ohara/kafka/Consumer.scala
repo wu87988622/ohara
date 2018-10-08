@@ -34,7 +34,9 @@ trait Consumer[K, V] extends CloseOnce {
            stop: () => Boolean = () => false,
            filter: Seq[ConsumerRecord[K, V]] => Seq[ConsumerRecord[K, V]] = (i: Seq[ConsumerRecord[K, V]]) => i)
     : Seq[ConsumerRecord[K, V]] = {
-    val buf = new ArrayBuffer[ConsumerRecord[K, V]](expectedSize)
+    val buf =
+      if (expectedSize == Int.MaxValue) new ArrayBuffer[ConsumerRecord[K, V]]()
+      else new ArrayBuffer[ConsumerRecord[K, V]](expectedSize)
     val endtime = System.currentTimeMillis() + timeout.toMillis
     var ramaining = endtime - System.currentTimeMillis()
     while (!stop() && buf.size < expectedSize && ramaining > 0) {

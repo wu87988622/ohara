@@ -28,6 +28,10 @@ trait ConnectorClient extends CloseOnce {
 
   def delete(name: String): Unit
 
+  def pause(name: String): Unit
+
+  def resume(name: String): Unit
+
   def plugins(): Seq[Plugin]
 
   def activeConnectors(): Seq[String]
@@ -140,6 +144,31 @@ object ConnectorClient {
         Http()
           .singleRequest(HttpRequest(HttpMethods.GET, uri = s"http://$workerAddress/connectors/$name/tasks/$id/status"))
           .flatMap(unmarshal[TaskStatus]),
+        TIMEOUT
+      )
+      override def pause(name: String): Unit = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.PUT, uri = s"http://$workerAddress/connectors/$name/pause"))
+          .flatMap(
+            res =>
+              if (res.status.isFailure())
+                Unmarshal(res.entity)
+                  .to[ErrorResponse]
+                  .flatMap(error => Future.failed(new IllegalStateException(error.toString)))
+              else Future.successful((): Unit)),
+        TIMEOUT
+      )
+
+      override def resume(name: String): Unit = Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.PUT, uri = s"http://$workerAddress/connectors/$name/resume"))
+          .flatMap(
+            res =>
+              if (res.status.isFailure())
+                Unmarshal(res.entity)
+                  .to[ErrorResponse]
+                  .flatMap(error => Future.failed(new IllegalStateException(error.toString)))
+              else Future.successful((): Unit)),
         TIMEOUT
       )
     }
