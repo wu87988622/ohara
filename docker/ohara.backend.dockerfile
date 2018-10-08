@@ -33,7 +33,7 @@ RUN apt install --no-install-recommends -y gpg-agent
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 RUN apt-get -y update
-RUN apt-get -q install --no-install-recommends -y yarn
+RUN apt-get -q install --no-install-recommends -y yarn=1.7.0-1
 
 # download gradle
 WORKDIR /opt/gradle
@@ -48,8 +48,8 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 WORKDIR /testpatch/ohara
 RUN git checkout $BRANCH
 # Running this test case make gradle download mysql binary code
-RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient
-RUN gradle clean build -x test
+RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient -PskipManager
+RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
