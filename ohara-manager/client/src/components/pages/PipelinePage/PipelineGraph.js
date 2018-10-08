@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import * as d3 from 'd3v4';
 import dagreD3 from 'dagre-d3';
 
-import * as _ from 'utils/helpers';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import {
@@ -133,8 +132,6 @@ class PipelineGraph extends React.Component {
   handleNodeClick = id => {
     const { history, resetGraph, updateGraph, graph, match } = this.props;
     const { topicId, pipelineId, sourceId, sinkId } = match.params;
-
-    console.log(this.props.graph);
 
     resetGraph();
     updateGraph({ isActive: true }, id);

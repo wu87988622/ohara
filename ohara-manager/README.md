@@ -6,7 +6,7 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
 
 1.  Install [Node.js](https://nodejs.org/en/) 8.10.0 or greater.
 
-2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0. Note that you must install the exact version (`1.7.0`) of yarn
+2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0. (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)
 
 3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
 
