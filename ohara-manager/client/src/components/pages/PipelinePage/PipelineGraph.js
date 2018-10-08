@@ -7,13 +7,10 @@ import dagreD3 from 'dagre-d3';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import {
-  white,
   lightBlue,
   lightestBlue,
   whiteSmoke,
   blue,
-  blueHover,
-  durationNormal,
 } from 'theme/variables';
 
 const H5Wrapper = styled(H5)`
@@ -24,58 +21,13 @@ const H5Wrapper = styled(H5)`
 
 H5Wrapper.displayName = 'H5Wrapper';
 
-const Node = styled.li`
-  z-index: 50;
-  visibility: ${props => (props.isExist ? 'visible' : 'hidden')};
-
-  &:hover {
-    background-color: ${blue};
-    transition: ${durationNormal} all;
-
-    .fas {
-      color: ${white};
-    }
-  }
-
-  &.is-exist {
-    visibility: visible;
-  }
-
-  &.is-active {
-    background-color: ${blue};
-    transition: ${durationNormal} all;
-
-    .fas {
-      color: ${white};
-    }
-
-    &:hover {
-      transition: ${durationNormal} all;
-      background-color: ${blueHover};
-    }
-  }
-
-  &:last-child {
-    &:after {
-      display: none;
-    }
-  }
-`;
-
-Node.displayName = 'Node';
-
 const Svg = styled.svg`
   width: 100%;
-  height: 300px;
+  height: 260px;
 
   .node circle {
     fill: ${whiteSmoke};
     cursor: pointer;
-
-    &:hover {
-      fill: ${blue};
-      transition: ${durationNormal} all;
-    }
   }
 
   .node.is-active circle {

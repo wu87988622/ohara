@@ -73,10 +73,6 @@ class PipelineSinkPage extends React.Component {
 
       this.updatePipeline(uuid, params);
     }
-
-    if (this.props.graph !== prevProps.graph) {
-      console.log(this.props.graph);
-    }
   }
 
   fetchData = () => {
