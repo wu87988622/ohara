@@ -11,7 +11,8 @@ case class HDFSSinkConnectorConfig(hdfsURL: String,
                                    dataFilePrefixName: String,
                                    dataFileNeedHeader: Boolean,
                                    dataBufferCount: Long,
-                                   hdfsStorageCreateClass: String) {
+                                   hdfsStorageCreateClass: String,
+                                   dataFileEncode: String) {
   def toMap: Map[String, String] = Map(
     HDFS_URL -> hdfsURL,
     FLUSH_LINE_COUNT -> flushLineCount.toString(),
@@ -40,6 +41,7 @@ object HDFSSinkConnectorConfig {
   private[this] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
   private[this] val DATA_BUFFER_COUNT_DEFAULT: Long = 100
   private[this] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName()
+  private[this] val DATAFILE_ENCODE_DEFAULT = "UTF-8"
 
   def apply(props: Map[String, String]): HDFSSinkConnectorConfig = {
     val prefixFileName: String = props.getOrElse(DATAFILE_PREFIX_NAME, DATAFILE_PREFIX_NAME_DEFAULT)
@@ -56,7 +58,8 @@ object HDFSSinkConnectorConfig {
       dataFilePrefixName = prefixFileName,
       dataFileNeedHeader = props.getOrElse(DATAFILE_NEEDHEADER, DATAFILE_NEEDHEADER_DEFAULT.toString()).toBoolean,
       dataBufferCount = props.getOrElse(DATA_BUFFER_COUNT, DATA_BUFFER_COUNT_DEFAULT.toString).toLong,
-      hdfsStorageCreateClass = props.getOrElse(HDFS_STORAGE_CREATOR_CLASS, HDFS_STORAGE_CREATOR_CLASS_DEFAULT)
+      hdfsStorageCreateClass = props.getOrElse(HDFS_STORAGE_CREATOR_CLASS, HDFS_STORAGE_CREATOR_CLASS_DEFAULT),
+      dataFileEncode = props.getOrElse(DATAFILE_ENCODE, DATAFILE_ENCODE_DEFAULT)
     )
   }
 }

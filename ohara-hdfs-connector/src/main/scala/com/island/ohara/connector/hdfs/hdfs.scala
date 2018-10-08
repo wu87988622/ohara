@@ -11,4 +11,5 @@ package object hdfs {
   val DATAFILE_NEEDHEADER: String = "datafile.isheader"
   val DATA_BUFFER_COUNT: String = "data.buffer.size"
   val HDFS_STORAGE_CREATOR_CLASS: String = "hdfs.storage.creator.class"
+  val DATAFILE_ENCODE = "datafile.encode"
 }

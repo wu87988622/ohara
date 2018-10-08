@@ -80,7 +80,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     if (processLineCount == 0) {
       val tmpFilePath = s"$tmpDir/${System.currentTimeMillis()}${FileUtils.FILENAME_ENDSWITH}"
       logger.info(s"create temp file path: $tmpFilePath")
-      recordWriterOutput = new CSVRecordWriterOutput(storage, tmpFilePath)
+      recordWriterOutput = new CSVRecordWriterOutput(config, storage, tmpFilePath)
       this.tmpFilePath = tmpFilePath
     }
   }

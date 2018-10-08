@@ -1,22 +1,23 @@
 package com.island.ohara.connector.hdfs.text
 
-import java.io.OutputStream
-
+import java.io.{BufferedWriter, OutputStreamWriter}
 import com.island.ohara.serialization.DataType
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.island.ohara.data.Row
-import com.island.ohara.io.ByteUtil
 import com.typesafe.scalalogging.Logger
 
 /**
   * Data write to temp file for csv file format
   * @param storage
   */
-class CSVRecordWriterOutput(storage: Storage, filePath: String) extends RecordWriterOutput {
+class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, storage: Storage, filePath: String)
+    extends RecordWriterOutput {
   private[this] lazy val logger = Logger(getClass.getName)
   logger.info("open temp file")
-  val outputStream: OutputStream = storage.open(filePath, false)
+  val encode = hdfsSinkConnectorConfig.dataFileEncode
+  val writer: BufferedWriter = new BufferedWriter(new OutputStreamWriter(storage.open(filePath, false), encode))
 
   /**
     * Write file for csv format
@@ -26,7 +27,8 @@ class CSVRecordWriterOutput(storage: Storage, filePath: String) extends RecordWr
     val newSchema: Seq[Column] = if (schema.isEmpty) row.map(r => Column(r.name, DataType.OBJECT, 0)).toSeq else schema
     if (isHeader) {
       val header: String = newSchema.sortBy(_.order).map(s => s.newName).mkString(",")
-      this.outputStream.write(ByteUtil.toBytes(header + "\n"))
+      this.writer.append(header)
+      this.writer.newLine()
     }
 
     val line = newSchema
@@ -44,7 +46,8 @@ class CSVRecordWriterOutput(storage: Storage, filePath: String) extends RecordWr
       .mkString(",")
 
     this.logger.debug(s"data line: $line")
-    this.outputStream.write(ByteUtil.toBytes(line + "\n"))
+    this.writer.append(line)
+    this.writer.newLine()
   }
 
   /**
@@ -52,6 +55,6 @@ class CSVRecordWriterOutput(storage: Storage, filePath: String) extends RecordWr
     */
   override def close(): Unit = {
     logger.info("close temp file")
-    this.outputStream.close()
+    this.writer.close()
   }
 }
