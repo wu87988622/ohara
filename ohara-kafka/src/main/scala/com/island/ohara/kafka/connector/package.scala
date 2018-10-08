@@ -15,7 +15,9 @@ package object connector {
       .get(TOPICS_KEY)
       .map(_.split(","))
       .getOrElse(throw new IllegalArgumentException(s"topics doesn't exist!!!"))
-    val name = options.remove(NAME_KEY).getOrElse(throw new IllegalArgumentException(s"name doesn't exist!!!"))
+    // TODO: the passed props is not a "copy" so any changes to props will impact props itself.
+    // see OHARA-588 for more details...by chia
+    val name = options.getOrElse(NAME_KEY, throw new IllegalArgumentException(s"name doesn't exist!!!"))
     TaskConfig(name, topics, schema, options.toMap)
   }
 
