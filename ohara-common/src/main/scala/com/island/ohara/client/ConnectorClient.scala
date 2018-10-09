@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, RequestEntity, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConnectorJson._
@@ -43,6 +43,14 @@ trait ConnectorClient extends CloseOnce {
   def config(name: String): ConnectorConfig
 
   def taskStatus(name: String, id: Int): TaskStatus
+
+  /**
+    * Check whether a connector name is used in creating connector (even if the connector fails to start, this method
+    * still return true)
+    * @param name connector name
+    * @return true if connector exists
+    */
+  def exist(name: String): Boolean = activeConnectors().contains(name)
 }
 
 object ConnectorClient {
