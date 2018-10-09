@@ -45,8 +45,9 @@ class Configurator private[configurator] (configuredHostname: String,
 
   private[this] val exceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
-      extractUri { uri =>
-        log.error(s"Request to $uri could not be handled normally because ${e.getMessage}")
+      extractRequest { request =>
+        log.error(
+          s"Request to ${request.uri} with ${request.entity} could not be handled normally because ${e.getMessage}")
         complete(StatusCodes.BadRequest -> Error(e))
       }
     case e: Throwable =>

@@ -335,8 +335,8 @@ class PipelineSourcePage extends React.Component {
 
     const params = {
       name: 'untitled source',
-      schema: null,
-      class: 'jdbc',
+      schema: [],
+      className: 'jdbc',
       configs: {
         database: JSON.stringify(currDatabase),
         topic: currWriteTopic.name,

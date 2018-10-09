@@ -215,8 +215,8 @@ class PipelineSinkPage extends React.Component {
 
     const params = {
       name: 'untitled sink',
-      schema: null,
-      class: 'jdbc',
+      schema: [],
+      className: 'jdbc',
       configs: {
         topic: JSON.stringify(currTopic),
         hdfs: JSON.stringify(currHdfs),

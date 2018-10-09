@@ -256,7 +256,7 @@ class PipelineSourceFtpPage extends React.Component {
     const params = {
       name: 'untitled source',
       schema: _schema,
-      class: 'ftp',
+      className: 'ftp',
       configs: {
         name,
         host,
