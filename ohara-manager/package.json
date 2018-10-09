@@ -8,7 +8,7 @@
   },
   "scripts": {
     "checkYarnVersion": "node ./scripts/yarnVersionCheck.js",
-    "setup": "yarn checkYarnVersion && yarn && yarn --cwd client setup",
+    "setup": "yarn && yarn --cwd client setup",
     "setup:prod": "yarn --prod && yarn --cwd client setup:prod",
     "start": "forever start index.js",
     "dev": "nodemon index.js --exec 'yarn lint:server && node'",
