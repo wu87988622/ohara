@@ -37,6 +37,9 @@ task test {
 }
 
 task build {
+  exec {
+    commandLine 'yarn', 'checkYarnVersion'
+  }
   dependsOn test
 }
 
