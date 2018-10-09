@@ -16,9 +16,6 @@ task clean {
       exec {
         commandLine 'yarn', 'clean'
       }
-      exec {
-        commandLine 'yarn', 'setup'
-      }
     }
   }
 }
@@ -26,6 +23,9 @@ task clean {
 task test {
   if(!project.hasProperty('skipManager')) {
     doLast {
+      exec {
+        commandLine 'yarn', 'setup'
+      }
       exec {
         commandLine 'yarn', 'test:ci'
       }
