@@ -18,7 +18,7 @@ import org.apache.kafka.common.serialization.Deserializer
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 /**
@@ -239,11 +239,11 @@ object OharaTestUtil {
     * @param useException true make this method throw exception after timeout.
     * @return false if timeout and (useException = true). Otherwise, the return value is true
     */
-  def await(f: () => Boolean, d: Duration, freq: Int = 100, useException: Boolean = true): Boolean = {
+  def await(f: () => Boolean, d: Duration, freq: Duration = 500 millis, useException: Boolean = true): Boolean = {
     val startTs = System.currentTimeMillis()
     while (d.toMillis >= (System.currentTimeMillis() - startTs)) {
       if (f()) return true
-      else TimeUnit.MILLISECONDS.sleep(freq)
+      else TimeUnit.MILLISECONDS.sleep(freq.toMillis)
     }
     if (useException) throw new IllegalStateException("timeout") else false
   }

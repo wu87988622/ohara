@@ -94,7 +94,7 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
 
         OharaTestUtil.await(() => testUtil.connectorClient.status(connectorName).connector.state == State.RUNNING,
                             50 seconds,
-                            2000)
+                            2 seconds)
 
         // since connector is resumed so some data are generated
         result = consumer.poll(20 seconds, 1)
