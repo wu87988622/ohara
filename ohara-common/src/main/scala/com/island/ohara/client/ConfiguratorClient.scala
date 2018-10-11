@@ -39,8 +39,10 @@ trait ConfiguratorClient extends CloseOnce {
   //------------------------------------------------[CLUSTER]------------------------------------------------//
   def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res
   //------------------------------------------------[CONTROL]------------------------------------------------//
-  def start[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T
-  def stop[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T
+  def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
+  def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
+  def pause[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
+  def resume[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
   //------------------------------------------------[QUERY]------------------------------------------------//
   def query[Req, Res](
     query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
@@ -116,19 +118,37 @@ object ConfiguratorClient {
       else
         Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
 
+    private[this] def unmarshal2(res: HttpResponse): Future[Unit] =
+      if (res.status.isSuccess()) Future.successful(Unit)
+      else
+        Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
+
     // it is unnecessary to use the implicit imports here
     override def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res =
       Await.result(
         Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress))).flatMap(unmarshal[Res](_)),
         TIMEOUT
       )
-    override def start[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(configuratorAddress, uuid))).flatMap(unmarshal[T](_)),
-      TIMEOUT)
+    override def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
+      Await.result(
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(configuratorAddress, uuid))).flatMap(unmarshal2),
+        TIMEOUT)
 
-    override def stop[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: ControlCommandFormat[T]): T = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(configuratorAddress, uuid))).flatMap(unmarshal[T](_)),
-      TIMEOUT)
+    override def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
+      Await.result(
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(configuratorAddress, uuid))).flatMap(unmarshal2),
+        TIMEOUT)
+
+    override def pause[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
+      Await.result(
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.pause(configuratorAddress, uuid))).flatMap(unmarshal2),
+        TIMEOUT)
+
+    override def resume[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
+      Await.result(
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.resume(configuratorAddress, uuid))).flatMap(unmarshal2),
+        TIMEOUT)
+
     override def query[Req, Res](
       query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res =
       Await.result(
@@ -141,5 +161,6 @@ object ConfiguratorClient {
           }),
         TIMEOUT
       )
+
   }
 }

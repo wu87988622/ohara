@@ -237,27 +237,25 @@ object Configurator {
     /**
       * update an existed object in the store. If the uuid doesn't  exists, an exception will be thrown.
       *
-      * @param uuid uuid
       * @param data data
       * @tparam T type of data
       * @return the removed data
       */
-    def update[T <: Data: ClassTag](uuid: String, data: T): T =
-      if (store._get(uuid).exists(classTag[T].runtimeClass.isInstance(_)))
-        store._update(uuid, data, consistency).get.asInstanceOf[T]
-      else throw new IllegalArgumentException(s"Failed to update $uuid since it doesn't exist")
+    def update[T <: Data: ClassTag](data: T): T =
+      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+        store._update(data.uuid, data, consistency).get.asInstanceOf[T]
+      else throw new IllegalArgumentException(s"Failed to update ${data.uuid} since it doesn't exist")
 
     /**
       * add an new object to the store. If the uuid already exists, an exception will be thrown.
       *
-      * @param uuid uuid
       * @param data data
       * @tparam T type of data
       */
-    def add[T <: Data: ClassTag](uuid: String, data: T): Unit =
-      if (store._get(uuid).exists(classTag[T].runtimeClass.isInstance(_)))
-        throw new IllegalArgumentException(s"The object:$uuid exists")
-      else store._update(uuid, data, consistency)
+    def add[T <: Data: ClassTag](data: T): Unit =
+      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+        throw new IllegalArgumentException(s"The object:${data.uuid} exists")
+      else store._update(data.uuid, data, consistency)
 
     /**
       * Iterate the specified type. The unrelated type will be ignored.

@@ -151,7 +151,7 @@ object Validator {
           .connectorClass(classOf[Validator].getName)
           .numberOfTasks(taskCount)
           .topic(INTERNAL_TOPIC)
-          .config(config)
+          .configs(config)
           .config(REQUEST_ID, requestId)
           .config(TARGET, target)
           .create()

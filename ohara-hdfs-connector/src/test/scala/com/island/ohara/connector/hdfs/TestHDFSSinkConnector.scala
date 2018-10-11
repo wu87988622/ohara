@@ -59,7 +59,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       .topic(topicName)
       .numberOfTasks(sinkTasks)
       .disableConverter()
-      .config(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
+      .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
       .schema(schema)
       .create()
 
@@ -103,7 +103,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       .topic(topicName)
       .numberOfTasks(sinkTasks)
       .disableConverter()
-      .config(Map(
+      .configs(Map(
         flushLineCountName -> flushLineCount,
         tmpDirName -> tmpDirPath,
         hdfsURLName -> localURL,
@@ -182,7 +182,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       .topic(topicName)
       .numberOfTasks(sinkTasks)
       .disableConverter()
-      .config(Map(
+      .configs(Map(
         flushLineCountName -> flushLineCount,
         tmpDirName -> tmpDirPath,
         hdfsURLName -> localURL,

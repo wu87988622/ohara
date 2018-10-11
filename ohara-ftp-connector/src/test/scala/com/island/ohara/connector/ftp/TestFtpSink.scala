@@ -106,7 +106,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(newSchema)
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
 
     try {
@@ -134,7 +134,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(needHeader = true).toMap)
+      .configs(props.copy(needHeader = true).toMap)
       .create()
 
     try {
@@ -162,7 +162,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .numberOfTasks(1)
       .disableConverter()
       .name(connectorName)
-      .config(props.copy(needHeader = true).toMap)
+      .configs(props.copy(needHeader = true).toMap)
       .create()
 
     try {
@@ -196,7 +196,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(needHeader = true).toMap)
+      .configs(props.copy(needHeader = true).toMap)
       .create()
 
     try {
@@ -225,7 +225,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
 
     try {
@@ -252,7 +252,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .numberOfTasks(1)
       .disableConverter()
       .name(connectorName)
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
 
     try {
@@ -281,7 +281,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       // skip last column
       .schema(schema.slice(0, schema.length - 1))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
 
     try {
@@ -309,7 +309,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       // the name can't be casted to int
       .schema(Seq(Column("name", DataType.INT, 1)))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
 
     try {
@@ -331,7 +331,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(output = "/abc").toMap)
+      .configs(props.copy(output = "/abc").toMap)
       .create()
     try TestFtpUtil.assertFailedConnector(testUtil, connectorName)
     finally testUtil.connectorClient.delete(connectorName)

@@ -29,7 +29,7 @@ private[configurator] object TopicInfoRoute {
                 .numberOfReplications(topicInfo.numberOfReplications)
                 // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
                 .create(topicInfo.uuid)
-              store.add(topicInfo.uuid, topicInfo)
+              store.add(topicInfo)
               complete(topicInfo)
             }
           }
@@ -48,13 +48,12 @@ private[configurator] object TopicInfoRoute {
           put {
             entity(as[TopicInfoRequest]) { req =>
               val newTopicInfo = toRes(uuid, req)
-              assertNotRelated2RunningPipeline(uuid)
               val oldData = store.data[TopicInfo](uuid)
               if (oldData.numberOfReplications != newTopicInfo.numberOfReplications)
                 throw new IllegalArgumentException("Non-support to change the number of replications")
               if (oldData.numberOfPartitions != newTopicInfo.numberOfPartitions)
                 kafkaClient.addPartition(uuid, newTopicInfo.numberOfPartitions)
-              store.update(uuid, newTopicInfo)
+              store.update(newTopicInfo)
               complete(newTopicInfo)
             }
           }

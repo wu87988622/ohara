@@ -337,6 +337,9 @@ class PipelineSourcePage extends React.Component {
       name: 'untitled source',
       schema: [],
       className: 'jdbc',
+      // TODO add related UI (OHARA-610)
+      topics: [],
+      numberOfTasks: 1,
       configs: {
         database: JSON.stringify(currDatabase),
         topic: currWriteTopic.name,

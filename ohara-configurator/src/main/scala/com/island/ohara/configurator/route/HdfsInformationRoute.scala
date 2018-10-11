@@ -19,7 +19,7 @@ private[configurator] object HdfsInformationRoute {
         post {
           entity(as[HdfsInformationRequest]) { req =>
             val data = toRes(uuidGenerator(), req)
-            store.add(data.uuid, data)
+            store.add(data)
             complete(data)
           }
         } ~ get(complete(store.data[HdfsInformation].toSeq)) // list
@@ -34,7 +34,7 @@ private[configurator] object HdfsInformationRoute {
           put {
             entity(as[HdfsInformationRequest]) { req =>
               val newData = toRes(uuid, req)
-              store.update(uuid, newData)
+              store.update(newData)
               complete(newData)
             }
           }

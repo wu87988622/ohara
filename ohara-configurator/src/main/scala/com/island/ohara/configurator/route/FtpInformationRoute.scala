@@ -21,7 +21,7 @@ private[configurator] object FtpInformationRoute {
         post {
           entity(as[FtpInformationRequest]) { req =>
             val data = toRes(uuidGenerator(), req)
-            store.add(data.uuid, data)
+            store.add(data)
             complete(data)
           }
         } ~ get(complete(store.data[FtpInformation].toSeq)) // list
@@ -36,7 +36,7 @@ private[configurator] object FtpInformationRoute {
           put {
             entity(as[FtpInformationRequest]) { req =>
               val newData = toRes(uuid, req)
-              store.update(uuid, newData)
+              store.update(newData)
               complete(newData)
             }
           }

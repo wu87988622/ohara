@@ -71,7 +71,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       .connectorClass(classOf[JDBCSourceConnector])
       .topic(topicName)
       .numberOfTasks(1)
-      .config(jdbcProps.toMap)
+      .configs(jdbcProps.toMap)
       .disableConverter()
       .create()
 
@@ -80,7 +80,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       .name(hdfsSinkConnectorName)
       .connectorClass(classOf[HDFSSinkConnector])
       .topic(topicName)
-      .config(hdfsProps.toMap)
+      .configs(hdfsProps.toMap)
       .numberOfTasks(1)
       .disableConverter()
       .create()

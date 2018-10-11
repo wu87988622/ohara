@@ -2,13 +2,6 @@ package com.island.ohara.configurator
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson.{Column, _}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.store.Store
@@ -19,23 +12,18 @@ import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-import spray.json.DefaultJsonProtocol._
-import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * this test includes two configurators - with/without cluster.
   * All test cases should work with all configurators.
   */
 class TestConfigurator extends With3Brokers3Workers with Matchers {
-
-  private[this] val topicName = random()
-  doClose(KafkaClient(testUtil.brokers))(
-    _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
-  private[this] val configurator0 =
+  private[this] val configurator0 = {
+    val topicName = random()
+    doClose(KafkaClient(testUtil.brokers))(
+      _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
     Configurator
       .builder()
       .hostname("localhost")
@@ -44,6 +32,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .kafkaClient(KafkaClient(testUtil.brokers))
       .connectClient(ConnectorClient(testUtil.workers))
       .build()
+  }
 
   private[this] val configurator1 =
     Configurator.builder().hostname("localhost").port(0).noCluster.build()
@@ -287,15 +276,15 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clients.foreach(client => {
       def compareRequestAndResponse(request: PipelineRequest, response: Pipeline): Pipeline = {
         request.name shouldBe response.name
-        request.rules.sameElements(response.rules) shouldBe true
+        request.rules shouldBe response.rules
         response
       }
 
       def compare2Response(lhs: Pipeline, rhs: Pipeline): Unit = {
         lhs.uuid shouldBe rhs.uuid
         lhs.name shouldBe rhs.name
-        lhs.rules.sameElements(rhs.rules) shouldBe true
-        lhs.objects.sameElements(rhs.objects) shouldBe true
+        lhs.rules shouldBe rhs.rules
+        lhs.objects shouldBe rhs.objects
         lhs.lastModified shouldBe rhs.lastModified
       }
 
@@ -308,7 +297,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       val request = PipelineRequest(methodName, Map(uuid_0 -> uuid_1))
       val response = compareRequestAndResponse(request, client.add[PipelineRequest, Pipeline](request))
-      response.status shouldBe Status.STOPPED
 
       // test get
       compare2Response(response, client.get[Pipeline](response.uuid))
@@ -333,72 +321,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       // test invalid request: nonexistent uuid
       val invalidRequest = PipelineRequest(methodName, Map("invalid" -> uuid_2))
       an[IllegalArgumentException] should be thrownBy client.add[PipelineRequest, Pipeline](invalidRequest)
-    })
-  }
-
-  @Test
-  def testControlPipeline(): Unit = {
-    clients.foreach(client => {
-      // test add
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-
-      val response =
-        client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
-
-      // the pipeline is already stopped
-      an[IllegalArgumentException] should be thrownBy client.stop[Pipeline](response.uuid)
-
-      val newResponse = client.start[Pipeline](response.uuid)
-      response.uuid shouldBe newResponse.uuid
-      response.name shouldBe newResponse.name
-      response.status shouldBe Status.STOPPED
-      newResponse.status shouldBe Status.RUNNING
-      response.rules.sameElements(newResponse.rules) shouldBe true
-      response.objects.sameElements(newResponse.objects) shouldBe true
-      response.lastModified <= newResponse.lastModified shouldBe true
-
-      // the pipeline is already running
-      an[IllegalArgumentException] should be thrownBy client.start[Pipeline](response.uuid)
-    })
-  }
-
-  @Test
-  def testModifyTopicFromPipeline(): Unit = {
-    clients.foreach(client => {
-
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      val uuid_2 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      client.list[TopicInfo].size shouldBe 3
-
-      val response =
-        client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
-      response.status shouldBe Status.STOPPED
-
-      // the uuid_1 is used by pipeline so configurator disallow us to remove it
-      an[IllegalArgumentException] should be thrownBy client.delete[TopicInfo](uuid_1)
-
-      // the pipeline is not running so it is ok to update the topic
-      client.update[TopicInfoRequest, TopicInfo](uuid_0, TopicInfoRequest(methodName, 2, 1))
-
-      client.start[Pipeline](response.uuid)
-      an[IllegalArgumentException] should be thrownBy client
-        .update[TopicInfoRequest, TopicInfo](uuid_0, TopicInfoRequest(methodName, 2, 1))
-
-      // fail to update a running pipeline
-      an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
-      // fail to delete a running pipeline
-      an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
-
-      // update the pipeline to use another topic (uuid_2)
-      client.stop[Pipeline](response.uuid)
-      client.update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
-
-      // it is ok to remove the topic (uuid_1) since we have updated the pipeline to use another topic (uuid_2)
-      client.delete[TopicInfo](uuid_1).uuid shouldBe uuid_1
     })
   }
 
@@ -437,31 +359,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       // good case
       client.update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_3)))
-    })
-  }
-
-  @Test
-  def testUnreadyRules2Pipeline(): Unit = {
-    clients.foreach(client => {
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      client.list[TopicInfo].size shouldBe 2
-      var res = client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> UNKNOWN)))
-      res.rules.size shouldBe 1
-      res.rules(uuid_0) shouldBe UNKNOWN
-      res.status shouldBe Status.STOPPED
-      // the rules are unready so it fails to start the pipeline
-      an[IllegalArgumentException] should be thrownBy client.start[Pipeline](res.uuid)
-
-      // complete the rules
-      res = client.update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
-      res.rules.size shouldBe 1
-      res.rules(uuid_0) shouldBe uuid_1
-      res.status shouldBe Status.STOPPED
-      res = client.start[Pipeline](res.uuid)
-      res.rules.size shouldBe 1
-      res.rules(uuid_0) shouldBe uuid_1
-      res.status shouldBe Status.RUNNING
     })
   }
 
@@ -641,14 +538,24 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val schema = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2))
       // test add
       client.list[Source].size shouldBe 0
-      val request = SourceRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1"))
+      val request = SourceRequest(name = methodName,
+                                  className = "jdbc",
+                                  schema = schema,
+                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                  topics = Seq.empty,
+                                  numberOfTasks = 1)
       val response = compareRequestAndResponse(request, client.add[SourceRequest, Source](request))
 
       // test get
       compare2Response(response, client.get[Source](response.uuid))
 
       // test update
-      val anotherRequest = SourceRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val anotherRequest = SourceRequest(name = methodName,
+                                         className = "jdbc",
+                                         schema = schema,
+                                         configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                         topics = Seq.empty,
+                                         numberOfTasks = 1)
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.uuid, anotherRequest))
 
@@ -673,12 +580,22 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       val illegalOrder = Seq(Column("cf", DataType.BOOLEAN, 0), Column("cf", DataType.BOOLEAN, 2))
       an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
-        SourceRequest(methodName, "jdbc", illegalOrder, Map("c0" -> "v0", "c1" -> "v1")))
+        SourceRequest(name = methodName,
+                      className = "jdbc",
+                      schema = illegalOrder,
+                      configs = Map("c0" -> "v0", "c1" -> "v1"),
+                      topics = Seq.empty,
+                      numberOfTasks = 1))
       client.list[Source].size shouldBe 0
 
       val duplicateOrder = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 1))
       an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
-        SourceRequest(methodName, "jdbc", duplicateOrder, Map("c0" -> "v0", "c1" -> "v1")))
+        SourceRequest(name = methodName,
+                      className = "jdbc",
+                      schema = duplicateOrder,
+                      configs = Map("c0" -> "v0", "c1" -> "v1"),
+                      topics = Seq.empty,
+                      numberOfTasks = 1))
       client.list[Source].size shouldBe 0
     })
   }
@@ -743,51 +660,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
         SinkRequest(methodName, "jdbc", duplicateOrder, Map("c0" -> "v0", "c1" -> "v1")))
       client.list[Source].size shouldBe 0
-    })
-  }
-
-  @Test
-  def testModifySourceAndSinkFromPipeline(): Unit = {
-    clients.foreach(client => {
-
-      val uuid_0 = client
-        .add[SourceRequest, Source](
-          SourceRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b")))
-        .uuid
-      val uuid_1 = client
-        .add[SinkRequest, Sink](
-          SinkRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("b" -> "b")))
-        .uuid
-      val uuid_2 = client
-        .add[SinkRequest, Sink](
-          SinkRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("c" -> "b")))
-        .uuid
-      client.list[Source].size shouldBe 1
-      client.list[Sink].size shouldBe 2
-
-      val response =
-        client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
-      response.status shouldBe Status.STOPPED
-
-      // the uuid_1 is used by pipeline so configurator disallow us to remove it
-      an[IllegalArgumentException] should be thrownBy client.delete[Sink](uuid_1)
-
-      // the pipeline is not running so it is ok to update the sink
-      client.update[SourceRequest, Source](
-        uuid_0,
-        SourceRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b")))
-
-      client.start[Pipeline](response.uuid)
-      an[IllegalArgumentException] should be thrownBy client.update[SinkRequest, Sink](
-        uuid_0,
-        SinkRequest(methodName, "jdbc", Seq(Column("cf", DataType.BOOLEAN, 2)), Map("d" -> "b")))
-
-      // update the pipeline to use another sink (uuid_2)
-      client.stop[Pipeline](response.uuid)
-      client.update[PipelineRequest, Pipeline](response.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
-
-      // it is ok to remove the sink (uuid_1) since we have updated the pipeline to use another sink (uuid_2)
-      client.delete[Sink](uuid_1).uuid shouldBe uuid_1
     })
   }
 

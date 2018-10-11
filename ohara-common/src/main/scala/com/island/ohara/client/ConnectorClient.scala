@@ -51,6 +51,8 @@ trait ConnectorClient extends CloseOnce {
     * @return true if connector exists
     */
   def exist(name: String): Boolean = activeConnectors().contains(name)
+
+  def nonExist(name: String): Boolean = !exist(name)
 }
 
 object ConnectorClient {

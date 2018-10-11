@@ -14,7 +14,7 @@ private[configurator] object PipelineRoute {
   private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink])
 
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
-    Pipeline(uuid, request.name, Status.STOPPED, request.rules, abstracts(request), SystemUtil.current())
+    Pipeline(uuid, request.name, request.rules, abstracts(request), SystemUtil.current())
 
   private[this] def checkExist(uuids: Set[String])(implicit store: Store): Unit = {
     uuids.foreach(uuid => if (!store.exist(uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
@@ -31,15 +31,6 @@ private[configurator] object PipelineRoute {
       .map(data => ComponentAbstract(data.uuid, data.name, data.kind))
       .toList // NOTED: we have to return a "serializable" list!!!
   }
-
-  private[this] def assertNotRunning(pipeline: Pipeline): Unit = if (pipeline.status == Status.RUNNING)
-    throw new IllegalArgumentException(s"the pipeline:${pipeline.uuid} is already running")
-
-  private[this] def assertNotStopped(pipeline: Pipeline): Unit = if (pipeline.status == Status.STOPPED)
-    throw new IllegalArgumentException(s"the pipeline:${pipeline.uuid} is already stopped")
-
-  private[this] def verifyReady(pipeline: Pipeline): Unit =
-    if (!pipeline.ready()) throw new IllegalArgumentException(s"pipeline has unready rules:${pipeline.rules}")
 
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Unit = {
     def verifyFrom(uuid: String): Unit = {
@@ -71,7 +62,7 @@ private[configurator] object PipelineRoute {
           entity(as[PipelineRequest]) { req =>
             val pipeline = toRes(uuidGenerator(), req)
             verifyRules(pipeline)
-            store.add(pipeline.uuid, pipeline)
+            store.add(pipeline)
             complete(pipeline)
           }
         } ~ get(complete(store.data[Pipeline].toSeq)) // list
@@ -81,39 +72,18 @@ private[configurator] object PipelineRoute {
           get(complete(store.data[Pipeline](uuid))) ~
             // delete
             delete(complete {
-              assertNotRunning(store.data[Pipeline](uuid))
               store.remove[Pipeline](uuid)
             }) ~
             // update
             put {
               entity(as[PipelineRequest]) { req =>
                 val pipeline = toRes(uuid, req)
-                assertNotRunning(store.data[Pipeline](uuid))
                 verifyRules(pipeline)
-                store.update(uuid, pipeline)
+                store.update(pipeline)
                 complete(pipeline)
               }
             }
-        } ~ path("start") {
-          put {
-            val oldPipeline = store.data[Pipeline](uuid)
-            assertNotRunning(oldPipeline)
-            verifyRules(oldPipeline)
-            verifyReady(oldPipeline)
-            val newPipeline = oldPipeline.copy(status = Status.RUNNING, lastModified = SystemUtil.current())
-            store.update(uuid, newPipeline)
-            complete(newPipeline)
-          }
-        } ~ path("stop") {
-          put {
-            val oldPipeline = store.data[Pipeline](uuid)
-            assertNotStopped(oldPipeline)
-            val newPipeline = oldPipeline.copy(status = Status.STOPPED, lastModified = SystemUtil.current())
-            store.update(uuid, newPipeline)
-            complete(newPipeline)
-          }
         }
-
       }
     }
 }

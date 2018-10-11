@@ -123,7 +123,7 @@ abstract class ConnectorCreator {
     * @param config config
     * @return this one
     */
-  def config(config: Map[String, String]): this.type = {
+  def configs(config: Map[String, String]): this.type = {
     this.config = new mutable.HashMap[String, String]()
     this.config ++= config
     this

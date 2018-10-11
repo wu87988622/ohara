@@ -20,7 +20,7 @@ private[configurator] object JdbcInformationRoute {
         post {
           entity(as[JdbcInformationRequest]) { req =>
             val data = toRes(uuidGenerator(), req)
-            store.add(data.uuid, data)
+            store.add(data)
             complete(data)
           }
         } ~ get(complete(store.data[JdbcInformation].toSeq)) // list
@@ -35,7 +35,7 @@ private[configurator] object JdbcInformationRoute {
           put {
             entity(as[JdbcInformationRequest]) { req =>
               val newData = toRes(uuid, req)
-              store.update(uuid, newData)
+              store.update(newData)
               complete(newData)
             }
           }

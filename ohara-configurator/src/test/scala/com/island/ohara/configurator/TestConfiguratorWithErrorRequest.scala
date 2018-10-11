@@ -130,24 +130,6 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
     verify[ClusterInformation]
 
   }
-  @Test
-  def controlCommandTest(): Unit = {
-
-    def verify[T](implicit formatter: ControlCommandFormat[T]): Unit = {
-      val domain = ip
-      val uuid = random()
-
-      val url = formatter.start(domain, uuid)
-      val url2 = formatter.stop(domain, uuid)
-      //start
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url, request, HttpMethods.PUT)
-      //stop
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url2, request, HttpMethods.PUT)
-    }
-    verify[Pipeline]
-  }
 
   @Test
   def queryCommandTest(): Unit = {

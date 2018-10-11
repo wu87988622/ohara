@@ -114,7 +114,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> topicName2))
+      .configs(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> topicName2))
       .create()
 
     try {
@@ -154,7 +154,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.INPUT -> topicName))
+      .configs(Map(Constants.BROKER -> testUtil.brokers, Constants.INPUT -> topicName))
       .create()
 
     try {
@@ -211,7 +211,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .config(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> output_topic))
+      .configs(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> output_topic))
       .create()
 
     val activeConnectors = connectorClient.activeConnectors()

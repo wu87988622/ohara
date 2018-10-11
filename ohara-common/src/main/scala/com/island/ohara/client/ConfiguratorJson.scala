@@ -1,9 +1,10 @@
 package com.island.ohara.client
 
+import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.serialization.DataType
 import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection of marshalling/unmarshalling configurator data to/from json.
@@ -23,6 +24,10 @@ object ConfiguratorJson {
   val PRIVATE_API = "_private"
   val UNKNOWN = "?"
 
+  val START_COMMAND: String = "start"
+  val STOP_COMMAND: String = "stop"
+  val PAUSE_COMMAND: String = "pause"
+  val RESUME_COMMAND: String = "resume"
   //------------------------------------------------[DATA]------------------------------------------------//
   sealed trait Data {
     def uuid: String
@@ -158,44 +163,44 @@ object ConfiguratorJson {
     }
 
   //------------------------------------------------[DATA-PIPELINE]------------------------------------------------//
-  sealed abstract class Status extends Serializable {
-    def name: String
-  }
-
-  object Status {
-    case object RUNNING extends Status {
-      override def name: String = "running"
-    }
-    case object STOPPED extends Status {
-      override def name: String = "stopped"
-    }
-
-    /**
-      * @return a array of all supported data type
-      */
-    def all = Seq(RUNNING, STOPPED)
-
-    /**
-      * seek the data type by the type name
-      * @param name index of data type
-      * @return Data type
-      */
-    def of(name: String): Status = all.find(_.name.equalsIgnoreCase(name)).get
-  }
-
-  implicit val STATUS_JSON_FORMAT: RootJsonFormat[Status] = new RootJsonFormat[Status] {
-    override def write(obj: Status): JsValue = JsString(obj.name)
-    override def read(json: JsValue): Status = Status.of(json.asInstanceOf[JsString].value)
-  }
-
   val PIPELINE_PATH = "pipelines"
 
   /**
     * used to control data
     */
   sealed trait ControlCommandFormat[T] {
+
+    /**
+      * used to generate uri to send start request
+      * @param address basic address
+      * @param uuid uuid of data
+      * @return uri
+      */
     def start(address: String, uuid: String): String
+
+    /**
+      * used to generate uri to send stop request
+      * @param address basic address
+      * @param uuid uuid of data
+      * @return uri
+      */
     def stop(address: String, uuid: String): String
+
+    /**
+      * used to generate uri to send resume request
+      * @param address basic address
+      * @param uuid uuid of data
+      * @return uri
+      */
+    def resume(address: String, uuid: String): String
+
+    /**
+      * used to generate uri to send pause request
+      * @param address basic address
+      * @param uuid uuid of data
+      * @return uri
+      */
+    def pause(address: String, uuid: String): String
   }
 
   final case class PipelineRequest(name: String, rules: Map[String, String])
@@ -207,50 +212,57 @@ object ConfiguratorJson {
 
   final case class Pipeline(uuid: String,
                             name: String,
-                            status: Status,
                             rules: Map[String, String],
                             objects: Seq[ComponentAbstract],
                             lastModified: Long)
       extends Data {
     override def kind: String = "pipeline"
-
-    /**
-      * @return true if all values have specified uuid. otherwise, false
-      */
-    def ready(): Boolean = rules.values.forall(_ != UNKNOWN)
   }
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
+  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat5(Pipeline)
   implicit val PIPELINE_COMMAND_FORMAT: DataCommandFormat[Pipeline] =
     new DataCommandFormat[Pipeline] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH"
       override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid"
     }
-  implicit val PIPELINE_CONTROL_FORMAT: ControlCommandFormat[Pipeline] =
-    new ControlCommandFormat[Pipeline] {
-      override def start(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid/start"
-      override def stop(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid/stop"
-    }
   //------------------------------------------------[DATA-SOURCE]------------------------------------------------//
   val SOURCE_PATH = "sources"
-  final case class SourceRequest(name: String, className: String, schema: Seq[Column], configs: Map[String, String])
-  implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = jsonFormat4(SourceRequest)
+  final case class SourceRequest(name: String,
+                                 className: String,
+                                 schema: Seq[Column],
+                                 topics: Seq[String],
+                                 numberOfTasks: Int,
+                                 configs: Map[String, String])
+  implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = jsonFormat6(SourceRequest)
 
   final case class Source(uuid: String,
                           name: String,
                           className: String,
                           schema: Seq[Column],
+                          topics: Seq[String],
+                          numberOfTasks: Int,
                           configs: Map[String, String],
+                          state: Option[State],
                           lastModified: Long)
       extends Data {
     override def kind: String = "source"
   }
-  implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat6(Source)
+  implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat9(Source)
   implicit val SOURCE_COMMAND_FORMAT: DataCommandFormat[Source] =
     new DataCommandFormat[Source] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH"
       override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid"
+    }
+
+  implicit val SOURCE_CONTROL_FORMAT: ControlCommandFormat[Source] =
+    new ControlCommandFormat[Source] {
+      override def start(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$START_COMMAND"
+      override def stop(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$STOP_COMMAND"
+      override def resume(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$RESUME_COMMAND"
+      override def pause(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$PAUSE_COMMAND"
     }
   //------------------------------------------------[DATA-SINK]------------------------------------------------//
   val SINK_PATH = "sinks"

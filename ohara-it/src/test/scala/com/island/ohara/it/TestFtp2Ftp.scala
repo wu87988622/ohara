@@ -60,35 +60,13 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     encode = Some("UTF-8")
   )
 
-  private[this] def setupInput(): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(sourceProps.input, "abc"))))
-    try {
-      writer.append(header)
-      writer.newLine()
-      data.foreach(line => {
-        writer.append(line)
-        writer.newLine()
-      })
-    } finally writer.close()
-  }
-
   @Before
   def setup(): Unit = {
-    def rebuild(path: String): Unit = {
-      if (ftpClient.exist(path)) {
-        ftpClient.listFileNames(path).map(IoUtil.path(path, _)).foreach(ftpClient.delete)
-        ftpClient.listFileNames(path).size shouldBe 0
-        ftpClient.delete(path)
-      }
-      ftpClient.mkdir(path)
-    }
-    // cleanup all files in order to avoid corrupted files
-    rebuild(sourceProps.input)
-    rebuild(sourceProps.error)
-    rebuild(sourceProps.output)
-    rebuild(sinkProps.output)
-    setupInput()
-    ftpClient.listFileNames(sourceProps.input).isEmpty shouldBe false
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.input)
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.output)
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.error)
+    TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
+    TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
   }
 
   @Test
@@ -105,7 +83,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(sinkName)
       .schema(schema)
-      .config(sinkProps.toMap)
+      .configs(sinkProps.toMap)
       .create()
 
     try {
@@ -118,7 +96,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
           .disableConverter()
           .name(sourceName)
           .schema(schema)
-          .config(sourceProps.toMap)
+          .configs(sourceProps.toMap)
           .create()
         OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.input).isEmpty, 30 seconds)
         OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.output).size == 1, 30 seconds)
@@ -135,5 +113,34 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   @After
   def tearDown(): Unit = {
     CloseOnce.close(ftpClient)
+  }
+}
+
+private[it] object TestFtp2Ftp extends Matchers {
+
+  /**
+    * delete all stuffs in the path and then recreate it as a folder
+    * @param ftpClient ftp client
+    * @param path path on ftp server
+    */
+  def rebuild(ftpClient: FtpClient, path: String): Unit = {
+    if (ftpClient.exist(path)) {
+      ftpClient.listFileNames(path).map(IoUtil.path(path, _)).foreach(ftpClient.delete)
+      ftpClient.listFileNames(path).size shouldBe 0
+      ftpClient.delete(path)
+    }
+    ftpClient.mkdir(path)
+  }
+
+  def setupInput(ftpClient: FtpClient, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
+    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.input, "abc"))))
+    try {
+      writer.append(header)
+      writer.newLine()
+      data.foreach(line => {
+        writer.append(line)
+        writer.newLine()
+      })
+    } finally writer.close()
   }
 }

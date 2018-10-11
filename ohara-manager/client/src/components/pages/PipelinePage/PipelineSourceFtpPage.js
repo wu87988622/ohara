@@ -257,6 +257,9 @@ class PipelineSourceFtpPage extends React.Component {
       name: 'untitled source',
       schema: _schema,
       className: 'ftp',
+      // TODO add related UI (OHARA-610)
+      topics: [],
+      numberOfTasks: 1,
       configs: {
         name,
         host,

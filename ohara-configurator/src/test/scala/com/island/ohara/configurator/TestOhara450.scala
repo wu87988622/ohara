@@ -16,7 +16,13 @@ class TestOhara450 extends SmallTest with Matchers {
 
   @Test
   def testUncreatablePipelin(): Unit = {
-    val source = client.add[SourceRequest, Source](SourceRequest("abc", "aaa.class", Seq.empty, Map.empty))
+    val source = client.add[SourceRequest, Source](
+      SourceRequest(name = "abc",
+                    className = "aaa.class",
+                    topics = Seq.empty,
+                    numberOfTasks = 1,
+                    schema = Seq.empty,
+                    configs = Map.empty))
     val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest("abc", 1, 1))
     val sink = client.add[SinkRequest, Sink](SinkRequest("abc", "aaa.class", Seq.empty, Map.empty))
 

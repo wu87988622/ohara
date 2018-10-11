@@ -11,6 +11,7 @@ dependencies {
   testImplementation libs.kafkaConnectRuntime
   testImplementation project(':ohara-common')
   testImplementation project(':ohara-kafka')
+  testImplementation project(':ohara-configurator')
   testImplementation project(':ohara-ftp-connector')
   testImplementation project(':ohara-jdbc-connector')
   testImplementation project(':ohara-hdfs-connector')
@@ -36,4 +37,6 @@ dependencies {
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
   testImplementation libs.junit
+  implementation libs.akkaStream
+  implementation libs.sprayJson
 }

@@ -28,7 +28,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
       post {
         entity(as[SinkRequest]) { req =>
           val data = toRes(uuidGenerator(), verify(req))
-          store.add(data.uuid, data)
+          store.add(data)
           complete(data)
         }
       } ~ get(complete(store.data[Sink].toSeq)) // list
@@ -43,9 +43,8 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
         // update
         put {
           entity(as[SinkRequest]) { req =>
-            assertNotRelated2RunningPipeline(uuid)
             val newData = toRes(uuid, verify(req))
-            store.update(uuid, newData)
+            store.update(newData)
             complete(newData)
           }
         }

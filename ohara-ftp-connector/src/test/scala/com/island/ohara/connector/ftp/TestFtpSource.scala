@@ -111,7 +111,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -156,7 +156,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column("ranking", "newRanking", DataType.INT, 2),
           Column("single", "newSingle", DataType.BOOLEAN, 3)
         ))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -201,7 +201,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column("ranking", DataType.INT, 2),
           Column("single", DataType.BOOLEAN, 3)
         ))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -235,7 +235,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -269,7 +269,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .numberOfTasks(1)
       .disableConverter()
       .name(connectorName)
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -305,7 +305,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       // skip last column
       .schema(schema.slice(0, schema.length - 1))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -338,7 +338,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       // the name can't be casted to int
       .schema(Seq(Column("name", DataType.INT, 1)))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     try {
       TestFtpUtil.checkConnector(testUtil, connectorName)
@@ -362,7 +362,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(input = "/abc").toMap)
+      .configs(props.copy(input = "/abc").toMap)
       .create()
     TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
@@ -379,7 +379,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(output = "/abc").toMap)
+      .configs(props.copy(output = "/abc").toMap)
       .create()
     TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
@@ -396,7 +396,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .config(props.copy(error = "/abc").toMap)
+      .configs(props.copy(error = "/abc").toMap)
       .create()
     TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
@@ -419,7 +419,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column("ranking", DataType.INT, 2),
           Column("single", DataType.BOOLEAN, 3)
         ))
-      .config(props.toMap)
+      .configs(props.toMap)
       .create()
     TestFtpUtil.assertFailedConnector(testUtil, connectorName)
   }
