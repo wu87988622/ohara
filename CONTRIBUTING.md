@@ -2,6 +2,10 @@
 
 All we love is only Pull Request so we have some rules used to make your PR lovely for reviewers.
 
+## pull request command
+* retry: trigger QA.
+* run: make jenkins execute a manager and a configurator. The UI link will be attached to PR if jenkins receive the command successfully.
+
 # A pull request MUST:
 
 ## pass all tests
