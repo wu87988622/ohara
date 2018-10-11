@@ -24,7 +24,13 @@ class TestOhara450 extends SmallTest with Matchers {
                     schema = Seq.empty,
                     configs = Map.empty))
     val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest("abc", 1, 1))
-    val sink = client.add[SinkRequest, Sink](SinkRequest("abc", "aaa.class", Seq.empty, Map.empty))
+    val sink = client.add[SinkRequest, Sink](
+      SinkRequest(name = "abc",
+                  className = "aaa.class",
+                  schema = Seq.empty,
+                  configs = Map.empty,
+                  topics = Seq.empty,
+                  numberOfTasks = 1))
 
     client.list[Source].size shouldBe 1
     client.list[TopicInfo].size shouldBe 1

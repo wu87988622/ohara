@@ -108,12 +108,12 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 }
 
 class DumbSource extends RowSourceConnector {
-  private[this] val columns = Seq(Column("cf0", DataType.BOOLEAN, 0), Column("cf1", DataType.BOOLEAN, 1))
+  private[this] var config: TaskConfig = _
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[DumbSourceTask]
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
-    Seq(TaskConfig("test", Seq("topic"), columns, Map(Column.COLUMN_KEY -> Column.toString(columns))))
+  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = Seq.fill(maxTasks)(config)
+  override protected def _start(config: TaskConfig): Unit = {
+    this.config = config
   }
-  override protected def _start(config: TaskConfig): Unit = {}
   override protected def _stop(): Unit = {}
 
   override protected def _version: String = VersionUtil.VERSION

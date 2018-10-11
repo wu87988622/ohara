@@ -1,14 +1,14 @@
 package com.island.ohara.it
-import com.island.ohara.client.ConfiguratorJson.{Column, Source, SourceRequest}
+import com.island.ohara.client.ConfiguratorJson.{Column, Sink, SinkRequest, Source, SourceRequest}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.connector.ftp.FtpSourceProps
+import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce._
-import com.island.ohara.kafka.{Consumer, KafkaClient}
+import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.kafka.{Consumer, KafkaClient, KafkaUtil, Producer}
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -16,8 +16,6 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestConfigurator extends With3Brokers3Workers with Matchers {
-  private[this] val topicName = random()
-
   private[this] val configurator =
     Configurator
       .builder()
@@ -34,6 +32,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRunFtpSource(): Unit = {
+    val topicName = methodName
     val sourceProps = FtpSourceProps(
       input = "/input",
       output = "/backup",
@@ -62,11 +61,11 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .port(ftpServer.port)
         .user(ftpServer.writableUser.name)
         .password(ftpServer.writableUser.password)
-        .build()) { client =>
-      TestFtp2Ftp.rebuild(client, sourceProps.input)
-      TestFtp2Ftp.rebuild(client, sourceProps.output)
-      TestFtp2Ftp.rebuild(client, sourceProps.error)
-      TestFtp2Ftp.setupInput(client, sourceProps, header, data)
+        .build()) { ftpClient =>
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.input)
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.output)
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.error)
+      TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
     }
 
     val request = SourceRequest(
@@ -97,6 +96,71 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       client.stop[Source](source.uuid)
       client.delete[Source](source.uuid)
     } finally if (testUtil.connectorClient.exist(source.uuid)) testUtil.connectorClient.delete(source.uuid)
+  }
+
+  @Test
+  def testRunFtpSink(): Unit = {
+    val topicName = methodName
+    val sinkProps = FtpSinkProps(
+      output = "/backup",
+      needHeader = false,
+      user = testUtil.ftpServer.writableUser.name,
+      password = testUtil.ftpServer.writableUser.password,
+      host = testUtil.ftpServer.host,
+      port = testUtil.ftpServer.port,
+      encode = Some("UTF-8")
+    )
+
+    val rows: Seq[Row] = Seq(
+      Row(Cell("name", "chia"), Cell("ranking", 1), Cell("single", false)),
+      Row(Cell("name", "jack"), Cell("ranking", 99), Cell("single", true))
+    )
+    val data: Seq[String] = rows.map(row => {
+      row.map(_.value.toString).mkString(",")
+    })
+
+    KafkaUtil.createTopic(testUtil.brokers, topicName, 1, 1)
+
+    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
+      rows.foreach(row => producer.sender().value(row).send(topicName))
+    }
+
+    // setup env
+    doClose(
+      FtpClient
+        .builder()
+        .host(ftpServer.host)
+        .port(ftpServer.port)
+        .user(ftpServer.writableUser.name)
+        .password(ftpServer.writableUser.password)
+        .build()) { ftpClient =>
+      TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
+
+      val request = SinkRequest(
+        name = methodName,
+        className = "ftp",
+        schema = Seq.empty,
+        topics = Seq(topicName),
+        numberOfTasks = 1,
+        configs = sinkProps.toMap
+      )
+
+      val sink = client.add[SinkRequest, Sink](request)
+      client.start[Sink](sink.uuid)
+      try {
+        OharaTestUtil.await(() => ftpClient.listFileNames(sinkProps.output).nonEmpty, 30 seconds)
+        ftpClient
+          .listFileNames(sinkProps.output)
+          .foreach(name => {
+            val lines = ftpClient.readLines(IoUtil.path(sinkProps.output, name))
+            lines.length shouldBe 2
+            lines(0) shouldBe data(0)
+            lines(1) shouldBe data(1)
+          })
+        client.stop[Sink](sink.uuid)
+        client.delete[Sink](sink.uuid)
+      } finally if (testUtil.connectorClient.exist(sink.uuid)) testUtil.connectorClient.delete(sink.uuid)
+    }
   }
 
   @After

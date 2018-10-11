@@ -266,23 +266,43 @@ object ConfiguratorJson {
     }
   //------------------------------------------------[DATA-SINK]------------------------------------------------//
   val SINK_PATH = "sinks"
-  final case class SinkRequest(name: String, className: String, schema: Seq[Column], configs: Map[String, String])
-  implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = jsonFormat4(SinkRequest)
+  final case class SinkRequest(name: String,
+                               className: String,
+                               schema: Seq[Column],
+                               topics: Seq[String],
+                               numberOfTasks: Int,
+                               configs: Map[String, String])
+  implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = jsonFormat6(SinkRequest)
 
   final case class Sink(uuid: String,
                         name: String,
                         className: String,
                         schema: Seq[Column],
+                        topics: Seq[String],
+                        numberOfTasks: Int,
                         configs: Map[String, String],
+                        state: Option[State],
                         lastModified: Long)
       extends Data {
     override def kind: String = "sink"
   }
-  implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat6(Sink)
+  implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat9(Sink)
   implicit val SINK_COMMAND_FORMAT: DataCommandFormat[Sink] =
     new DataCommandFormat[Sink] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$SINK_PATH"
       override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SINK_PATH/$uuid"
+    }
+
+  implicit val SINK_CONTROL_FORMAT: ControlCommandFormat[Sink] =
+    new ControlCommandFormat[Sink] {
+      override def start(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$START_COMMAND"
+      override def stop(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$STOP_COMMAND"
+      override def resume(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$RESUME_COMMAND"
+      override def pause(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$PAUSE_COMMAND"
     }
   //------------------------------------------------[VALIDATION]------------------------------------------------//
   val VALIDATION_PATH = "validate"

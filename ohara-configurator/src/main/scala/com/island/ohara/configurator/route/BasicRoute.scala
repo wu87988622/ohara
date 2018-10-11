@@ -29,4 +29,10 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
     case "ftp"  => "com.island.ohara.connector.ftp.FtpSource"
     case _      => name
   }
+
+  def sinkAlias(name: String): String = name.toLowerCase match {
+    case "hdfs" => "com.island.ohara.connector.hdfs.HDFSSinkConnector"
+    case "ftp"  => "com.island.ohara.connector.ftp.FtpSink"
+    case _      => name
+  }
 }

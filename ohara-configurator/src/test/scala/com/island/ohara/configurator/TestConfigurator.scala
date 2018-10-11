@@ -621,14 +621,24 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       // test add
       client.list[Sink].size shouldBe 0
-      val request = SinkRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1"))
+      val request = SinkRequest(name = methodName,
+                                className = "jdbc",
+                                schema = schema,
+                                configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                topics = Seq.empty,
+                                numberOfTasks = 1)
       val response = compareRequestAndResponse(request, client.add[SinkRequest, Sink](request))
 
       // test get
       compare2Response(response, client.get[Sink](response.uuid))
 
       // test update
-      val anotherRequest = SinkRequest(methodName, "jdbc", schema, Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"))
+      val anotherRequest = SinkRequest(name = methodName,
+                                       className = "jdbc",
+                                       schema = schema,
+                                       configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                       topics = Seq.empty,
+                                       numberOfTasks = 1)
       val newResponse =
         compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.uuid, anotherRequest))
 
@@ -653,12 +663,22 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
       val illegalOrder = Seq(Column("cf", DataType.BOOLEAN, 0), Column("cf", DataType.BOOLEAN, 2))
       an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
-        SinkRequest(methodName, "jdbc", illegalOrder, Map("c0" -> "v0", "c1" -> "v1")))
+        SinkRequest(name = methodName,
+                    className = "jdbc",
+                    schema = illegalOrder,
+                    configs = Map("c0" -> "v0", "c1" -> "v1"),
+                    topics = Seq.empty,
+                    numberOfTasks = 1))
       client.list[Source].size shouldBe 0
 
       val duplicateOrder = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 1))
       an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
-        SinkRequest(methodName, "jdbc", duplicateOrder, Map("c0" -> "v0", "c1" -> "v1")))
+        SinkRequest(name = methodName,
+                    className = "jdbc",
+                    schema = duplicateOrder,
+                    configs = Map("c0" -> "v0", "c1" -> "v1"),
+                    topics = Seq.empty,
+                    numberOfTasks = 1))
       client.list[Source].size shouldBe 0
     })
   }
