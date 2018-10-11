@@ -3,6 +3,7 @@ import java.util.{Objects, Properties}
 
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.serialization.Serializer
+import com.island.ohara.util.SystemUtil
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 
@@ -34,15 +35,17 @@ trait Consumer[K, V] extends CloseOnce {
            stop: () => Boolean = () => false,
            filter: Seq[ConsumerRecord[K, V]] => Seq[ConsumerRecord[K, V]] = (i: Seq[ConsumerRecord[K, V]]) => i)
     : Seq[ConsumerRecord[K, V]] = {
+
     val buf =
       if (expectedSize == Int.MaxValue) new ArrayBuffer[ConsumerRecord[K, V]]()
       else new ArrayBuffer[ConsumerRecord[K, V]](expectedSize)
     val endtime = System.currentTimeMillis() + timeout.toMillis
-    var ramaining = endtime - System.currentTimeMillis()
+    var ramaining = endtime - SystemUtil.current()
+
     while (!stop() && buf.size < expectedSize && ramaining > 0) {
       import scala.concurrent.duration._
       buf ++= filter(poll(ramaining millis))
-      ramaining = endtime - System.currentTimeMillis()
+      ramaining = endtime - SystemUtil.current()
     }
     buf
   }

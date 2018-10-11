@@ -5,11 +5,12 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
 import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object TopicInfoRoute {
   private[this] def toRes(uuid: String, request: TopicInfoRequest) =
-    TopicInfo(uuid, request.name, request.numberOfPartitions, request.numberOfReplications, System.currentTimeMillis())
+    TopicInfo(uuid, request.name, request.numberOfPartitions, request.numberOfReplications, SystemUtil.current())
 
   def apply(implicit store: Store, uuidGenerator: () => String, kafkaClient: KafkaClient): server.Route =
     pathPrefix(TOPIC_INFO_PATH) {

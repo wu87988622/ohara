@@ -8,6 +8,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.{CloseOnce, IoUtil, VersionUtil}
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.SystemUtil
 
 import scala.collection.mutable
 
@@ -39,7 +40,7 @@ class FtpSourceTask extends RowSourceTask {
     def handleOutput(path: String): Unit = try {
       val outputPath = IoUtil.path(props.output, IoUtil.name(path))
       if (ftpClient.exist(outputPath)) {
-        val newPath = outputPath + s".${System.currentTimeMillis()}"
+        val newPath = outputPath + s".${SystemUtil.current()}"
         if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
         else ftpClient.moveFile(path, newPath)
       } else ftpClient.moveFile(path, outputPath)

@@ -8,6 +8,7 @@ import com.island.ohara.io.CloseOnce.close
 import com.island.ohara.io.UuidUtil
 import com.island.ohara.kafka.KafkaUtil
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.SystemUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -41,7 +42,7 @@ class TestCallQueue extends With3Brokers with Matchers {
   private[this] val requestData: SourceRequest =
     SourceRequest("name", "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b"))
   private[this] val responseData: Source =
-    Source("uuid", "name2", "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b"), System.currentTimeMillis())
+    Source("uuid", "name2", "jdbc", Seq(Column("cf", DataType.BOOLEAN, 1)), Map("a" -> "b"), SystemUtil.current())
   private[this] val error = new IllegalArgumentException("YOU SHOULD NOT PASS")
 
   @Test

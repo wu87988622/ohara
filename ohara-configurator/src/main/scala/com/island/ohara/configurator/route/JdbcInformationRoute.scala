@@ -5,12 +5,13 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
+import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object JdbcInformationRoute {
 
   private[this] def toRes(uuid: String, request: JdbcInformationRequest) = {
-    JdbcInformation(uuid, request.name, request.uri, request.user, request.password, System.currentTimeMillis())
+    JdbcInformation(uuid, request.name, request.uri, request.user, request.password, SystemUtil.current())
   }
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
     pathPrefix(JDBC_PATH) {

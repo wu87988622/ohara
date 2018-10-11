@@ -5,6 +5,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson.{Pipeline, _}
 import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object PipelineRoute {
@@ -13,7 +14,7 @@ private[configurator] object PipelineRoute {
   private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink])
 
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
-    Pipeline(uuid, request.name, Status.STOPPED, request.rules, abstracts(request), System.currentTimeMillis())
+    Pipeline(uuid, request.name, Status.STOPPED, request.rules, abstracts(request), SystemUtil.current())
 
   private[this] def checkExist(uuids: Set[String])(implicit store: Store): Unit = {
     uuids.foreach(uuid => if (!store.exist(uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
@@ -99,7 +100,7 @@ private[configurator] object PipelineRoute {
             assertNotRunning(oldPipeline)
             verifyRules(oldPipeline)
             verifyReady(oldPipeline)
-            val newPipeline = oldPipeline.copy(status = Status.RUNNING, lastModified = System.currentTimeMillis())
+            val newPipeline = oldPipeline.copy(status = Status.RUNNING, lastModified = SystemUtil.current())
             store.update(uuid, newPipeline)
             complete(newPipeline)
           }
@@ -107,7 +108,7 @@ private[configurator] object PipelineRoute {
           put {
             val oldPipeline = store.data[Pipeline](uuid)
             assertNotStopped(oldPipeline)
-            val newPipeline = oldPipeline.copy(status = Status.STOPPED, lastModified = System.currentTimeMillis())
+            val newPipeline = oldPipeline.copy(status = Status.STOPPED, lastModified = SystemUtil.current())
             store.update(uuid, newPipeline)
             complete(newPipeline)
           }

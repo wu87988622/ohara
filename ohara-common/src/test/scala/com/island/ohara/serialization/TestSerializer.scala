@@ -6,6 +6,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.reflection.ReflectionUtil
 import com.island.ohara.rule.SmallTest
+import com.island.ohara.util.SystemUtil
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -44,9 +45,9 @@ class TestSerializer extends SmallTest with Matchers {
   @Test
   def testSerializableObject(): Unit = {
     val row = Row(
-      Cell("c0", new Timestamp(System.currentTimeMillis())),
-      Cell("c1", new Date(System.currentTimeMillis())),
-      Cell("c2", new Time(System.currentTimeMillis())),
+      Cell("c0", new Timestamp(SystemUtil.current())),
+      Cell("c1", new Date(SystemUtil.current())),
+      Cell("c2", new Time(SystemUtil.current())),
       Cell("c3", JustTest("123", 4))
     )
 
@@ -60,8 +61,8 @@ class TestSerializer extends SmallTest with Matchers {
       Cell("a", 13),
       Cell("b",
            Row(
-             Cell("c0", new Timestamp(System.currentTimeMillis())),
-             Cell("c1", new Date(System.currentTimeMillis())),
+             Cell("c0", new Timestamp(SystemUtil.current())),
+             Cell("c1", new Date(SystemUtil.current())),
              Cell("c3", JustTest("123", 4))
            )),
       Cell("c", false),

@@ -8,6 +8,7 @@ import java.util.{Properties, Random}
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
+import com.island.ohara.util.SystemUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.CommonClientConfigs
@@ -240,7 +241,7 @@ object OharaTestUtil {
     * @return false if timeout and (useException = true). Otherwise, the return value is true
     */
   def await(f: () => Boolean, d: Duration, freq: Duration = 500 millis, useException: Boolean = true): Boolean = {
-    val startTs = System.currentTimeMillis()
+    val startTs = SystemUtil.current()
     while (d.toMillis >= (System.currentTimeMillis() - startTs)) {
       if (f()) return true
       else TimeUnit.MILLISECONDS.sleep(freq.toMillis)

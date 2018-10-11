@@ -6,12 +6,13 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
+import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object SinkRoute extends SprayJsonSupport {
 
   private[this] def toRes(uuid: String, request: SinkRequest) =
-    Sink(uuid, request.name, request.className, request.schema, request.configs, System.currentTimeMillis())
+    Sink(uuid, request.name, request.className, request.schema, request.configs, SystemUtil.current())
 
   private[this] def verify(request: SinkRequest): SinkRequest = {
     if (request.schema.exists(_.order < 1))

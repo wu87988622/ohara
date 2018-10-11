@@ -12,6 +12,7 @@ import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{LocalDataBase, OharaTestUtil}
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -77,7 +78,7 @@ object Backend {
           }
         }
       }
-      val topicName = s"demo-${System.currentTimeMillis()}"
+      val topicName = s"demo-${SystemUtil.current()}"
       doClose(KafkaClient(util.brokers))(
         _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
       )

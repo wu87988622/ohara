@@ -6,6 +6,7 @@ import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
+import com.island.ohara.util.SystemUtil
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
@@ -149,7 +150,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
             .foreach(record => {
               record.key.foreach {
                 case internalRequest: CallQueueRequest =>
-                  if (internalRequest.lease.toMillis <= System.currentTimeMillis)
+                  if (internalRequest.lease.toMillis <= SystemUtil.current())
                     log.debug(s"the lease of request is violated")
                   else
                     record.value.foreach {

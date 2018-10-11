@@ -8,6 +8,7 @@ import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.integration.LocalDataBase
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rule.MediumTest
+import com.island.ohara.util.SystemUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -64,7 +65,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
     val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
     val dbCurrentTime = dbTableDataProvider.dbCurrentTime(DateTimeUtils.CALENDAR)
     val dbCurrentTimestamp = dbCurrentTime.getTime()
-    val systemCurrentTimestamp = System.currentTimeMillis()
+    val systemCurrentTimestamp = SystemUtil.current()
     ((systemCurrentTimestamp - dbCurrentTimestamp) < 5000) shouldBe true
   }
 

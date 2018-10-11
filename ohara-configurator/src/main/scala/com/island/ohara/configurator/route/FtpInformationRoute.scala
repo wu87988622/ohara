@@ -5,19 +5,14 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
+import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object FtpInformationRoute {
 
   private[this] def toRes(uuid: String, request: FtpInformationRequest) = {
     validateField(request)
-    FtpInformation(uuid,
-                   request.name,
-                   request.ip,
-                   request.port,
-                   request.user,
-                   request.password,
-                   System.currentTimeMillis())
+    FtpInformation(uuid, request.name, request.ip, request.port, request.user, request.password, SystemUtil.current())
   }
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
     pathPrefix(FTP_PATH) {

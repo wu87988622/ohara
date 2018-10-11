@@ -9,6 +9,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
 import com.island.ohara.rule.MediumTest
+import com.island.ohara.util.SystemUtil
 import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -117,7 +118,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
-    val startTime: Long = System.currentTimeMillis() - 1000
+    val startTime: Long = SystemUtil.current() - 1000
     topicPartitionWriter.isTimeCommit(startTime, 2000) shouldBe false //Not commit
     topicPartitionWriter.isTimeCommit(startTime, 1000) shouldBe true
   }

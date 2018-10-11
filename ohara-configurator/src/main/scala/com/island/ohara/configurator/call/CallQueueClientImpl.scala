@@ -6,6 +6,7 @@ import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
+import com.island.ohara.util.SystemUtil
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.errors.WakeupException
@@ -168,7 +169,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
 
   override def request(request: Request, timeout: Duration): Future[Either[Error, Response]] = {
     checkClose()
-    val lease = timeout + (System.currentTimeMillis() milliseconds)
+    val lease = timeout + (SystemUtil.current() milliseconds)
     val internalRequest = CallQueueRequest(requestUuid(), lease)
     val receiver = new ResponseReceiver(internalRequest.uuid, lease)
     responseReceivers.put(internalRequest.uuid, receiver)
@@ -240,7 +241,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     /**
       * @return true if this request is expired. false otherwise.
       */
-    def isTimeout: Boolean = lease.toMillis <= System.currentTimeMillis
+    def isTimeout: Boolean = lease.toMillis <= SystemUtil.current()
 
     def future: Future[Either[Error, Response]] = promise.future
   }
