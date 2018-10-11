@@ -2,7 +2,6 @@ FROM ubuntu:18.04 AS deps
 
 ARG BITBUCKET_USER=""
 ARG BITBUCKET_PASSWORD=""
-ARG USER=jenkins
 ARG GRADLE_VERSION=4.10.2
 
 # update
@@ -48,21 +47,14 @@ RUN unzip gradle-$GRADLE_VERSION-bin.zip
 RUN rm -f gradle-$GRADLE_VERSION-bin.zip
 RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
 
-# change user
-RUN useradd -ms /bin/bash $USER
-USER $USER:$USER
-
 # add gradle to path
 ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
-# see https://github.com/NixOS/nixpkgs/issues/20802
-ENV GRADLE_USER_HOME=/home/$USER/.gradle
-
 # build ohara
-WORKDIR /home/$USER
+WORKDIR /testpatch
 RUN git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
-WORKDIR /home/$USER/ohara
+WORKDIR /testpatch/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
@@ -117,17 +109,17 @@ RUN useradd -ms /bin/bash -g $USER $USER
 # copy gradle dependencies
 RUN mkdir /home/$USER/.gradle
 # TODO: use --chown if https://github.com/moby/moby/issues/35018 is fixed
-COPY --from=deps /home/$USER/.gradle /home/$USER/.gradle
+COPY --from=deps /root/.gradle /home/$USER/.gradle
 RUN chown -R $USER:$USER /home/$USER/.gradle
 
 # clone yarn dependencies
 RUN mkdir -p /home/$USER/.cache
-COPY --from=deps /home/$USER/.cache /home/$USER/.cache
+COPY --from=deps /root/.cache /home/$USER/.cache
 RUN chown -R $USER:$USER /home/$USER/.cache
 
 # clone database instance
 RUN mkdir -p /home/$USER/.embedmysql
-COPY --from=deps /home/$USER/.embedmysql /home/$USER/.embedmysql
+COPY --from=deps /root/.embedmysql /home/$USER/.embedmysql
 RUN chown -R $USER:$USER /home/$USER/.embedmysql
 
 # change to user
