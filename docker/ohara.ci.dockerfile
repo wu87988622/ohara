@@ -1,16 +1,12 @@
 FROM ubuntu:18.04 AS deps
 
-ARG USER=""
-ARG PASSWORD=""
+ARG BITBUCKET_USER=""
+ARG BITBUCKET_PASSWORD=""
+ARG USER=jenkins
+ARG GRADLE_VERSION=4.10.2
 
 # update
 RUN apt-get -y update
-
-# copy repo
-RUN apt-get -q install --no-install-recommends -y git
-RUN apt-get -q install --no-install-recommends -y ca-certificates
-WORKDIR /testpatch
-RUN git clone https://$USER:$PASSWORD@bitbucket.org/is-land/ohara.git
 
 # install build tool
 RUN apt-get -q install --no-install-recommends -y apt-utils
@@ -22,6 +18,8 @@ RUN apt-get -q install --no-install-recommends -y gnupg
 RUN apt-get -q install --no-install-recommends -y gnupg1
 RUN apt-get -q install --no-install-recommends -y gnupg2
 RUN apt-get -q install --no-install-recommends -y node.js
+RUN apt-get -q install --no-install-recommends -y git
+RUN apt-get -q install --no-install-recommends -y ca-certificates
 
 # native libraries of mysql
 RUN apt-get -q install --no-install-recommends -y libaio1
@@ -45,15 +43,26 @@ RUN apt-get -q install --no-install-recommends -y yarn=1.7.0-1
 
 # download gradle
 WORKDIR /opt/gradle
-RUN wget https://downloads.gradle.org/distributions/gradle-4.10-bin.zip
-RUN unzip gradle-4.10-bin.zip
-RUN rm -f gradle-4.10-bin.zip
-RUN ln -s /opt/gradle/gradle-4.10 /opt/gradle/default
+RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
+RUN unzip gradle-$GRADLE_VERSION-bin.zip
+RUN rm -f gradle-$GRADLE_VERSION-bin.zip
+RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
+
+# change user
+RUN useradd -ms /bin/bash $USER
+USER $USER:$USER
+
+# add gradle to path
 ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
+# see https://github.com/NixOS/nixpkgs/issues/20802
+ENV GRADLE_USER_HOME=/home/$USER/.gradle
+
 # build ohara
-WORKDIR /testpatch/ohara
+WORKDIR /home/$USER
+RUN git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+WORKDIR /home/$USER/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
@@ -61,6 +70,9 @@ RUN gradle clean build -x test -PskipManager
 RUN gradle -Pcdh clean build -x test
 
 FROM ubuntu:18.04
+
+ARG USER=jenkins
+ARG GRADLE_VERSION=4.10.2
 
 # update
 RUN apt-get -y update
@@ -94,20 +106,37 @@ RUN apt-get -y update
 RUN apt-get -q install --no-install-recommends -y yarn=1.7.0-1
 
 # copy gradle
-RUN mkdir -p /opt/gradle/gradle-4.10
-COPY --from=deps /opt/gradle/gradle-4.10 /opt/gradle/gradle-4.10
-RUN ln -s /opt/gradle/gradle-4.10 /opt/gradle/default
+RUN mkdir -p /opt/gradle/gradle-$GRADLE_VERSION
+COPY --from=deps /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/gradle-$GRADLE_VERSION
+RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
+
+# change user
+RUN groupadd $USER
+RUN useradd -ms /bin/bash -g $USER $USER
+
+# copy gradle dependencies
+RUN mkdir /home/$USER/.gradle
+# TODO: use --chown if https://github.com/moby/moby/issues/35018 is fixed
+COPY --from=deps /home/$USER/.gradle /home/$USER/.gradle
+RUN chown -R $USER:$USER /home/$USER/.gradle
+
+# clone yarn dependencies
+RUN mkdir -p /home/$USER/.cache
+COPY --from=deps /home/$USER/.cache /home/$USER/.cache
+RUN chown -R $USER:$USER /home/$USER/.cache
+
+# clone database instance
+RUN mkdir -p /home/$USER/.embedmysql
+COPY --from=deps /home/$USER/.embedmysql /home/$USER/.embedmysql
+RUN chown -R $USER:$USER /home/$USER/.embedmysql
+
+# change to user
+USER $USER
+WORKDIR /home/$USER
+
+# add gradle to path
 ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
-# clone gradle dependencies
-RUN mkdir /root/.gradle
-COPY --from=deps /root/.gradle /root/.gradle
-
-# clone yarn dependencies
-RUN mkdir -p /root/.cache
-COPY --from=deps /root/.cache /root/.cache
-
-# clone database
-RUN mkdir -p /root/.embedmysql
-COPY --from=deps /root/.embedmysql /root/.embedmysql
+# see https://github.com/NixOS/nixpkgs/issues/20802
+ENV GRADLE_USER_HOME=/home/$USER/.gradle
