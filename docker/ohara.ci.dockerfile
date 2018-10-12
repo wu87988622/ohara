@@ -7,6 +7,12 @@ ARG GRADLE_VERSION=4.10.2
 # update
 RUN apt-get -y update
 
+# copy repo
+RUN apt-get -q install --no-install-recommends -y git
+RUN apt-get -q install --no-install-recommends -y ca-certificates
+WORKDIR /testpatch
+RUN git clone https://BITBUCKET_USER:BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+
 # install build tool
 RUN apt-get -q install --no-install-recommends -y apt-utils
 RUN apt-get -q install --no-install-recommends -y openjdk-8-jdk
@@ -17,8 +23,6 @@ RUN apt-get -q install --no-install-recommends -y gnupg
 RUN apt-get -q install --no-install-recommends -y gnupg1
 RUN apt-get -q install --no-install-recommends -y gnupg2
 RUN apt-get -q install --no-install-recommends -y node.js
-RUN apt-get -q install --no-install-recommends -y git
-RUN apt-get -q install --no-install-recommends -y ca-certificates
 
 # native libraries of mysql
 RUN apt-get -q install --no-install-recommends -y libaio1
@@ -52,8 +56,6 @@ ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
-WORKDIR /testpatch
-RUN git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
 WORKDIR /testpatch/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient -PskipManager
