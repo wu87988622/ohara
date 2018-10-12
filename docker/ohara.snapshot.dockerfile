@@ -52,6 +52,8 @@ RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxde
 
 FROM ubuntu:18.04
 
+ARG USER=ohara
+
 # update
 RUN apt-get -y update
 RUN apt-get -q install --no-install-recommends -y apt-utils
@@ -74,6 +76,10 @@ RUN mkdir /opt/ohara
 COPY --from=deps /opt/ohara /opt/ohara
 RUN ln -s $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*") /opt/ohara/default
 
+# add user
+RUN groupadd $USER
+RUN useradd -ms /bin/bash -g $USER $USER
+
 # change to user
 USER $USER
 WORKDIR /home/$USER
@@ -81,4 +87,3 @@ WORKDIR /home/$USER
 # Set ENV
 ENV OHARA_HOME=/opt/ohara/default
 ENV PATH=$PATH:$OHARA_HOME/bin
-

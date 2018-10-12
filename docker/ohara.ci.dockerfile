@@ -104,7 +104,7 @@ RUN mkdir -p /opt/gradle/gradle-$GRADLE_VERSION
 COPY --from=deps /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/gradle-$GRADLE_VERSION
 RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
 
-# change user
+# add user
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
