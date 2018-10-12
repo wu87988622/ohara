@@ -11,6 +11,8 @@ dependencies {
   implementation libs.embeddedsql
   implementation libs.ftpServer
   implementation libs.scalaLogging
+  implementation libs.slf4jApi
+  implementation libs.slf4jlog4j
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *
@@ -29,9 +31,9 @@ dependencies {
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
   testImplementation libs.scalatest
-  testImplementation project(':ohara-common').sourceSets.test.output
   testImplementation libs.mockito
   testImplementation libs.junit
+  testImplementation project(':ohara-common').sourceSets.test.output
 }
 
 /**

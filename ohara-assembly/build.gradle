@@ -6,6 +6,8 @@ dependencies {
   compile project(':ohara-common')
   compile project(':ohara-kafka')
   compile project(':ohara-hdfs-connector')
+  compile project(':ohara-ftp-connector')
+  compile project(':ohara-jdbc-connector')
   compile project(':ohara-configurator')
   // the following dependencies is required in runtime
   compile libs.akkaSlf4j

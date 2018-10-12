@@ -6,8 +6,8 @@ dependencies {
   implementation libs.sprayJson
   implementation libs.scala
   implementation libs.scalaLogging
-  implementation project(':ohara-kafka')
-  implementation project(":ohara-common")
+  implementation libs.slf4jApi
+  implementation libs.slf4jlog4j
   implementation libs.kafkaConnectRuntime
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
@@ -26,6 +26,8 @@ dependencies {
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
+  implementation project(':ohara-kafka')
+  implementation project(":ohara-common")
   testImplementation project(":ohara-testing-util")
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
