@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 #----------[LOCATE PROJECT]----------#
-date
-START_TIME=$(date +'%s')
 SOURCE="${BASH_SOURCE[0]}"
 BIN_DIR="$( dirname "$SOURCE" )"
 while [ -h "$SOURCE" ]
@@ -46,7 +44,3 @@ done
 
 #----------[EXECUTION]----------#
 $JAVA $CLASSPATH $LOG4J $CLASS $ARGS
-
-date
-END_TIME=$(date +%s)
-echo "It takes $(($END_TIME - $START_TIME)) seconds to complete this task..."
