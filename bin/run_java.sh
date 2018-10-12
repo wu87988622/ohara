@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #----------[LOCATE PROJECT]----------#
 date
-STARTTIME=$(date +'%s')
+START_TIME=$(date +'%s')
 SOURCE="${BASH_SOURCE[0]}"
 BIN_DIR="$( dirname "$SOURCE" )"
 while [ -h "$SOURCE" ]
@@ -13,14 +13,12 @@ done
 BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 PROJECT_HOME="$(dirname "$BIN_DIR")"
 
-#----------[IPV4]----------#
-IPV4_PREFER="-Djava.net.preferIPv4Stack=true"
-
-#----------[HEAP SIZE]----------#
-HEAPSIZE="-Xmx4000m"
-
 #----------[JAVA]----------#
-JAVA="java $HEAPSIZE -cp"
+if [ -z "$OHARA_OPTS" ]; then
+  JAVA="java -cp"
+else
+  JAVA="java $OHARA_OPTS -cp"
+fi
 
 #----------[CLASSPATH]----------#
 CLASSPATH="${PROJECT_HOME}/lib/*:${PROJECT_HOME}/conf/:"
@@ -50,5 +48,5 @@ done
 $JAVA $CLASSPATH $LOG4J $CLASS $ARGS
 
 date
-ENDTIME=$(date +%s)
-echo "It takes $(($ENDTIME - $STARTTIME)) seconds to complete this task..."
+END_TIME=$(date +%s)
+echo "It takes $(($END_TIME - $START_TIME)) seconds to complete this task..."

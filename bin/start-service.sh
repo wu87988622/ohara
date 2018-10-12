@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #----------[LOCATE PROJECT]----------#
-STARTTIME=$(date +'%s')
 SOURCE="${BASH_SOURCE[0]}"
 BIN_DIR="$( dirname "$SOURCE" )"
 while [ -h "$SOURCE" ]
