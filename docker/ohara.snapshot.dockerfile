@@ -11,7 +11,7 @@ RUN apt-get -y update
 RUN apt-get -q install --no-install-recommends -y git
 RUN apt-get -q install --no-install-recommends -y ca-certificates
 WORKDIR /testpatch
-RUN git clone https://BITBUCKET_USER:BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+RUN git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
 
 # install build tool
 RUN apt-get -q install --no-install-recommends -y apt-utils
