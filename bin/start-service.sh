@@ -22,8 +22,20 @@ else
   elif [ "$1" == "backend" ]; then
     CLASS="com.island.ohara.demo.Backend"
     shift 1
+  elif [ "$1" == "help" ]; then
+    echo "Usage:"
+    echo "Option                                   Description"
+    echo "-----------                              -----------"
+    echo "configurator                             Ohara Configurator provides the service "
+    echo "                                         for user and Ohara Manager to use."
+    echo ""
+    echo "backend                                  Used for a testing purpose. It doesn't work in production."
+    echo ""
+    echo "manager                                  Running Ohara Manager. After run this command, you can "
+    echo "                                         connect to http://\${HostName or IP}:5050 url by browser."
+    exit 1
   else
-    echo "Usage: (configurator|backend|manager) [<args>]"
+    echo "Usage: (configurator|backend|manager|help) [<args>]"
     exit 1
   fi
   ARGS=""

@@ -16,7 +16,12 @@ if [ "$1" == "manager" ]; then
   cd "$PROJECT_HOME/manager"
   yarn clean:process
   exit
+elif [ "$1" == "help" ]; then
+  echo "Usage:"
+  echo "Option                                   Description"
+  echo "--------                                 -----------"
+  echo "manager                                  Stop the Ohara Manager."
 else
-  echo "Usage: (manager)"
+  echo "Usage: (manager|help)"
   exit 1
 fi
