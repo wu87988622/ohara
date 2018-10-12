@@ -37,12 +37,14 @@ task test {
 }
 
 task build {
-  doLast {
-    exec {
-      commandLine 'yarn', 'checkYarnVersion'
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        commandLine 'yarn', 'checkYarnVersion'
+      }
     }
+    dependsOn test
   }
-  dependsOn test
 }
 
 task runManager {
