@@ -253,11 +253,9 @@ yarn prepush
 
 After the installation is completed, start the server again.
 
-- **Got an error while starting up the server on a Linux machine**
+- **Got an error while starting up the server or client on a Linux machine: ENOSPC**
 
-  [TODO] Test this on a linux machine and add the error message:
-
-  You can run this command to increase the limit on the number of files Linux will watch.
+  You can run this command to increase the limit on the number of files Linux will watch. Read more [here](https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers#the-technical-details).
 
   ```sh
   echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p.
