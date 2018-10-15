@@ -10,13 +10,13 @@
   "scripts": {
     "setup": "yarn && yarn build",
     "setup:prod": "yarn --prod && yarn build",
-    "start": "cross-env NODE_PATH=src:src/components react-scripts start",
+    "start": "react-scripts start",
     "start:ci": "forever start node_modules/react-scripts/scripts/start.js",
-    "build": "cross-env NODE_PATH=src:src/components react-scripts build",
+    "build": "react-scripts build",
     "lint": "node_modules/eslint/bin/eslint.js src cypress",
-    "test": "cross-env NODE_PATH=src:src/components react-scripts test --env=jsdom",
+    "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
-    "test:report": "cross-env CI=true yarn test --reporters=default --reporters=jest-junit",
+    "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
     "cypress": "cypress open",
     "cypress:ci": "cypress run"
@@ -24,7 +24,6 @@
   "dependencies": {
     "axios": "0.18.0",
     "classnames": "2.2.6",
-    "cross-env": "5.2.0",
     "d3v4": "4.2.2",
     "dagre-d3": "0.6.1",
     "forever": "0.15.3",
