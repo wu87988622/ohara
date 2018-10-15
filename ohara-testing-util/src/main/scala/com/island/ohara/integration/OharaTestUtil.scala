@@ -2,8 +2,8 @@ package com.island.ohara.integration
 
 import java.io.File
 import java.util
-import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
-import java.util.{Properties, Random}
+import java.util.Properties
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.io.CloseOnce
@@ -13,14 +13,9 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
-import org.apache.kafka.clients.consumer._
 import org.apache.kafka.common.KafkaFuture
-import org.apache.kafka.common.serialization.Deserializer
 
-import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 /**
   * This class create a kafka services having 1 zk instance and 1 broker default. Also, this class have many helper methods to make
@@ -43,8 +38,6 @@ import scala.concurrent.{Await, Future}
   *
   */
 class OharaTestUtil private[integration] (componentBox: ComponentBox) extends CloseOnce {
-  @volatile private[this] var stopConsumer = false
-  private[this] val consumerThreads = new ArrayBuffer[Future[_]]()
   private[this] var localDb: LocalDataBase = _
   private[this] var _connectorClient: ConnectorClient = _
   private[this] var localFtpServer: FtpServer = _
@@ -123,62 +116,6 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     }
   }
 
-  /**
-    * Run a consumer with specified deserializer, and all received data will be stored to queue.
-    *
-    * @param topic           topic to subscribe
-    * @param seekToBegin true if you want to reset the offset
-    * @param keySerializer   key serializer
-    * @param valueSerializer value serializer
-    * @tparam K type of key
-    * @tparam V type of value
-    * @return a pair of blocking queue storing the data of key and value
-    */
-  def run[K, V](topic: String,
-                seekToBegin: Boolean,
-                keySerializer: Deserializer[K],
-                valueSerializer: Deserializer[V]): (BlockingQueue[K], BlockingQueue[V]) = {
-    val props = new Properties()
-    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, s"testing-consumer-${new Random().nextInt(100000)}")
-    if (seekToBegin) props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name.toLowerCase)
-    else props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name.toLowerCase)
-    val consumer = new KafkaConsumer[K, V](props, keySerializer, valueSerializer)
-    consumer.subscribe(util.Arrays.asList(topic))
-    run(consumer)
-  }
-
-  /**
-    * Run a existed consumer with specified deserializer, and all received data will be stored to queue.
-    * NOTED: kafka consumer is not thread-safe so please don't use the consumer after passing it to this method. The passed consumers
-    * will be closed automatically.
-    *
-    * @param consumer    the consumer to run background
-    * @param pollTimeout timeout to poll
-    * @tparam K key type
-    * @tparam V value type
-    * @return a pair of blocking queue storing the data of key and value
-    */
-  def run[K, V](consumer: KafkaConsumer[K, V], pollTimeout: Int = 1000): (BlockingQueue[K], BlockingQueue[V]) = {
-    val keyQueue = new LinkedBlockingQueue[K](100)
-    val valueQueue = new LinkedBlockingQueue[V](100)
-    val consumerThread = Future {
-      try {
-        while (!stopConsumer) {
-          val records = consumer.poll(pollTimeout)
-          if (records != null) {
-            records.asScala.foreach(record => {
-              if (record.key != null) keyQueue.put(record.key)
-              if (record.value != null) valueQueue.put(record.value)
-            })
-          }
-        }
-      } finally consumer.close()
-    }
-    consumerThreads += consumerThread
-    (keyQueue, valueQueue)
-  }
-
   def connectorClient: ConnectorClient = {
     // throw exception if there is no worker cluster
     workers
@@ -217,9 +154,6 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   }
 
   override protected def doClose(): Unit = {
-    stopConsumer = true
-    CloseOnce.release(() => consumerThreads.foreach(Await.result(_, 1 minute)))
-    consumerThreads.clear()
     CloseOnce.close(_connectorClient)
     componentBox.close()
     CloseOnce.close(localDb)

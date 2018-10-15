@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.island.ohara.data.Row
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
-import com.island.ohara.kafka.{KafkaUtil, Producer}
+import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
 import com.island.ohara.serialization.DataType._
 import com.island.ohara.serialization._
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -83,16 +83,18 @@ class TestKafkaRouteWithMiniCluster
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
 
-        val (_, valueQueue) =
-          testUtil.run(topic, true, new StringDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
-        OharaTestUtil.await(() => valueQueue.size() == 1, 10 seconds)
-        val row = valueQueue.take()
-
-        status should ===(StatusCodes.OK)
-        for (((value, (colName, _)), i) <- (csv zip schema).zipWithIndex) {
-          row.cell(i).name shouldBe colName
-          row.cell(i).value shouldBe value
-        }
+        val consumer =
+          Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topic).build[String, Row]
+        try {
+          val fromKafka = consumer.poll(30 seconds, 1)
+          fromKafka.isEmpty shouldBe false
+          val row = fromKafka.head.value.get
+          status should ===(StatusCodes.OK)
+          for (((value, (colName, _)), i) <- (csv zip schema).zipWithIndex) {
+            row.cell(i).name shouldBe colName
+            row.cell(i).value shouldBe value
+          }
+        } finally consumer.close()
       }
     } finally producer.close()
   }

@@ -178,14 +178,18 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       producer.flush()
     }
 
-    val (_, valueQueue) =
-      testUtil.run(topicName, true, new StringDeserializer, KafkaUtil.wrapDeserializer(RowSerializer))
-    OharaTestUtil.await(() => valueQueue.size() == 1, 10 seconds)
-    val fromKafka = valueQueue.take()
+    val consumer =
+      Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[String, Row]
 
-    fromKafka.cell(0).name shouldBe "c"
-    fromKafka.cell(1).name shouldBe "b"
-    fromKafka.cell(2).name shouldBe "a"
+    try {
+      val fromKafka = consumer.poll(30 seconds, 1)
+      fromKafka.isEmpty shouldBe false
+      val row = fromKafka.head.value.get
+      row.cell(0).name shouldBe "c"
+      row.cell(1).name shouldBe "b"
+      row.cell(2).name shouldBe "a"
+
+    } finally consumer.close()
 
     doClose(Producer.builder().brokers(testUtil.brokers).build[String, Row]) { producer =>
       val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
