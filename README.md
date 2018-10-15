@@ -20,16 +20,23 @@ a powerful ETL tool
 ### Running all backend-services by docker
 (3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 ```
-docker run -ti --rm -p 12345:12345 islandsystems/ohara:backend start-service.sh backend --port 12345 --ttl 123
+docker run -ti --rm -p 12345:12345 islandsystems/ohara:backend ohara start backend --port 12345 --ttl 123
 ```
-* port: used by Configurator (default is random)
-* TTL: time to terminate backend-service (default is 365 days)
+* port: bound by Configurator (default is random)
+* ttl: time to terminate backend-service (default is 365 days)
+
+The backend image is not in production release. Hence, there is no any guarantees to backend image.
 
 ### Running configurator by docker
 ```
-docker run -ti --rm -p 12345:12345 islandsystems/ohara:0.1-SNAPSHOT start-service.sh configurator --port 12345
+docker run -ti --rm -p 12345:12345 islandsystems/ohara:0.1-SNAPSHOT ohara start configurator --port 12345
 ```
-* port: used by Configurator (default is random)
+* port: bound by Configurator (default is random)
+* brokers: broker information (ex. host0:port0,host1:port1)
+* workers: worker information (ex. host0:port0,host1:port1)
+
+If either brokers or workers is not defined, the configurator will be run with no-cluster mode. It means all data are 
+stored in memory. And connector-related commands are executed by nothing.
 
 ### Running manager by docker
 ```
