@@ -8,6 +8,7 @@ dependencies {
   compile project(':ohara-hdfs-connector')
   compile project(':ohara-ftp-connector')
   compile project(':ohara-jdbc-connector')
+  compile project(':ohara-perf-connector')
   compile project(':ohara-configurator')
   // the following dependencies is required in runtime
   compile libs.akkaSlf4j
@@ -16,6 +17,9 @@ dependencies {
   testImplementation project(path: ':ohara-kafka', configuration: 'tests')
   testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation project(path: ':ohara-hdfs-connector', configuration: 'tests')
+  testImplementation project(path: ':ohara-ftp-connector', configuration: 'tests')
+  testImplementation project(path: ':ohara-jdbc-connector', configuration: 'tests')
+  testImplementation project(path: ':ohara-perf-connector', configuration: 'tests')
   testImplementation project(path: ':ohara-configurator', configuration: 'tests')
   testImplementation libs.scalatest
   testImplementation libs.junit

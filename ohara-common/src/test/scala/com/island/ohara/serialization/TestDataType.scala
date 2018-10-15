@@ -1,5 +1,6 @@
 package com.island.ohara.serialization
 
+import com.island.ohara.data.Row
 import com.island.ohara.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers

@@ -4,7 +4,7 @@ import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.integration.OharaTestUtil
 
 import scala.concurrent.duration._
-object TestFtpUtil {
+object FtpUtil {
   private[this] val TIMEOUT = 60 seconds
   def assertFailedConnector(testUtil: OharaTestUtil, name: String): Unit = OharaTestUtil.await(
     () =>
