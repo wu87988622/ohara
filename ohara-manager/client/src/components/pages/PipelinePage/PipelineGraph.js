@@ -6,12 +6,7 @@ import dagreD3 from 'dagre-d3';
 
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import {
-  lightBlue,
-  lightestBlue,
-  whiteSmoke,
-  blue,
-} from 'theme/variables';
+import { lightBlue, lightestBlue, whiteSmoke, blue } from 'theme/variables';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;

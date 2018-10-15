@@ -6,6 +6,7 @@ import {
   lighterGray,
   lightestBlue,
   red,
+  redHover,
   white,
   dimBlue,
   darkBlue,
@@ -16,6 +17,15 @@ export const primaryBtn = {
   bgColor: blue,
   border: 0,
   bgHover: blueHover,
+  colorHover: white,
+  borderHover: 0,
+};
+
+export const dangerBtn = {
+  color: white,
+  bgColor: red,
+  border: 0,
+  bgHover: redHover,
   colorHover: white,
   borderHover: 0,
 };

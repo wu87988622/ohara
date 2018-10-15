@@ -211,6 +211,7 @@ class PipelineNewPage extends React.Component {
             handleCancel={this.handleModalClose}
             handleConfirm={this.handlePipelineDelete}
             message="Are you sure you want to delete this pipeline? This action cannot be redo!"
+            isDelete
           />
 
           <Wrapper>

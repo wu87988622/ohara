@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import { Button } from 'common/Form';
 import { H3 } from 'common/Headings';
-import { cancelBtn, primaryBtn } from 'theme/btnTheme';
+import { cancelBtn, primaryBtn, dangerBtn } from 'theme/btnTheme';
 import {
   lightGray,
   lightBlue,
@@ -99,6 +99,7 @@ const ConfirmModal = ({
   confirmBtnText = 'Delete',
   cancelBtnText = 'Cancel',
   isConfirmDisabled = false,
+  isDelete = false,
 }) => {
   return (
     <ModalWrapper
@@ -125,7 +126,7 @@ const ConfirmModal = ({
         />
         <Button
           text={confirmBtnText}
-          theme={primaryBtn}
+          theme={isDelete ? dangerBtn : primaryBtn}
           handleClick={handleConfirm}
           data-testid="confirm-modal-confirm-btn"
           disabled={isConfirmDisabled}
