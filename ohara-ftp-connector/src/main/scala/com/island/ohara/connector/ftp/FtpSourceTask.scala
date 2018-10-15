@@ -71,7 +71,7 @@ class FtpSourceTask extends RowSourceTask {
               (column.order,
                Cell(
                  column.newName,
-                 column.typeName match {
+                 column.dataType match {
                    case DataType.BOOLEAN => item.toBoolean
                    case DataType.SHORT   => item.toShort
                    case DataType.INT     => item.toInt

@@ -49,9 +49,9 @@ object ConfiguratorJson {
     def format(address: String, uuid: String): String
   }
 
-  final case class Column(name: String, newName: String, typeName: DataType, order: Int)
+  final case class Column(name: String, newName: String, dataType: DataType, order: Int)
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
-    override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "type", "order") match {
+    override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
       case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column(n, nn, DataType.of(t), o.toInt)
       case Seq(JsString(n), JsNull, JsString(t), JsNumber(o))       => Column(n, n, DataType.of(t), o.toInt)
       case _                                                        => throw new UnsupportedOperationException(s"invalid format of ${Column.getClass.getSimpleName}")
@@ -59,7 +59,7 @@ object ConfiguratorJson {
     override def write(obj: Column): JsValue = JsObject(
       "name" -> JsString(obj.name),
       "newName" -> JsString(obj.newName),
-      "type" -> JsString(obj.typeName.name),
+      "dataType" -> JsString(obj.dataType.name),
       "order" -> JsNumber(obj.order)
     )
   }
@@ -69,7 +69,7 @@ object ConfiguratorJson {
     // TODO: Personally, I hate this ugly workaround...by chia
     val COLUMN_KEY: String = "__row_connector_schema"
     def toString(schema: Seq[Column]): String =
-      schema.map(c => s"${c.name},${c.newName},${c.typeName.name},${c.order}").mkString(",")
+      schema.map(c => s"${c.name},${c.newName},${c.dataType.name},${c.order}").mkString(",")
     def toColumns(columnsString: String): Seq[Column] = if (columnsString == null || columnsString.isEmpty) Seq.empty
     else {
       val splits = columnsString.split(",")

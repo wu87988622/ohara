@@ -72,7 +72,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
             schema.foreach(c => {
               val cell: Cell[_] = row.cell(c.order - 1)
               cell.name shouldBe c.name
-              matchType(cell.value.getClass, c.typeName)
+              matchType(cell.value.getClass, c.dataType)
             })
 
           })

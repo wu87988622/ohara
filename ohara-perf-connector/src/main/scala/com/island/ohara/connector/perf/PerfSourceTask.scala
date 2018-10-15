@@ -26,7 +26,7 @@ class PerfSourceTask extends RowSourceTask {
         schema.sortBy(_.order).map { c =>
           Cell(
             c.name,
-            c.typeName match {
+            c.dataType match {
               case DataType.BOOLEAN => false
               case DataType.BYTE    => ByteUtil.toBytes(current).head
               case DataType.BYTES   => ByteUtil.toBytes(current)

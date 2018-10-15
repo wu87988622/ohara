@@ -100,7 +100,7 @@ class JDBCSourceTask extends RowSourceTask {
             case (schema, value) =>
               Cell(
                 schema.newName,
-                schema.typeName match {
+                schema.dataType match {
                   case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
                   case DataType.SHORT                   => value.asInstanceOf[Short]
                   case DataType.INT                     => value.asInstanceOf[Int]

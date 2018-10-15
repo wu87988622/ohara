@@ -36,9 +36,9 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
       .map(n => (n, row.filter(r => n.name == r.name)))
       .flatMap({
         case (n, cell) =>
-          n.typeName match {
+          n.dataType match {
             case DataType.BYTES | DataType.BYTE =>
-              throw new RuntimeException(s"hdfs sink connector not support ${n.typeName} type")
+              throw new RuntimeException(s"hdfs sink connector not support ${n.dataType} type")
             case _ => cell
           }
       })
