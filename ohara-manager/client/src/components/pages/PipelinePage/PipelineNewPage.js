@@ -18,10 +18,14 @@ import { ConfirmModal } from 'common/Modal';
 import { deleteBtn } from 'theme/btnTheme';
 import { Button } from 'common/Form';
 import { fetchTopic } from 'apis/topicApis';
-import { deletePipeline } from 'apis/pipelinesApis';
 import { H2 } from 'common/Headings';
 import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW } from 'constants/documentTitles';
+import {
+  fetchPipeline,
+  deletePipeline,
+  updatePipeline,
+} from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
@@ -38,13 +42,13 @@ const Actions = styled.div`
 
 class PipelineNewPage extends React.Component {
   state = {
-    title: 'Untitled pipeline',
     topicName: '',
     graph: [],
     isRedirect: false,
     isLoading: true,
     isModalActive: false,
     hasChanges: false,
+    pipelines: {},
   };
 
   iconMaps = {
@@ -61,8 +65,26 @@ class PipelineNewPage extends React.Component {
     }
   }
 
+  componentDidUpdate() {
+    if (this.state.hasChanges) {
+      this.save();
+    }
+  }
+
   fetchData = async () => {
-    const { topicId } = this.props.match.params;
+    const { match } = this.props;
+    const topicId = _.get(match, 'params.topicId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
+
+    const fetchTopicsPromise = this.fetchTopics(topicId);
+    const fetchPipelinePromise = this.fetchPipeline(pipelineId);
+
+    Promise.all([fetchTopicsPromise, fetchPipelinePromise]);
+  };
+
+  fetchTopics = async topicId => {
+    if (!_.isUuid(topicId)) return;
+
     const res = await fetchTopic(topicId);
     this.setState(() => ({ isLoading: false }));
 
@@ -70,6 +92,17 @@ class PipelineNewPage extends React.Component {
 
     if (!_.isNull(result)) {
       this.setState({ topicName: result.name });
+    }
+  };
+
+  fetchPipeline = async pipelineId => {
+    if (!_.isUuid(pipelineId)) return;
+
+    const res = await fetchPipeline(pipelineId);
+    const pipelines = _.get(res, 'data.result', null);
+
+    if (pipelines) {
+      this.setState({ pipelines });
     }
   };
 
@@ -158,8 +191,11 @@ class PipelineNewPage extends React.Component {
     });
   };
 
-  handleTitleChange = ({ target: { value: title } }) => {
-    this.setState(() => ({ title }));
+  handlePipelineTitleChange = ({ target: { value: title } }) => {
+    this.setState(({ pipelines }) => {
+      const _pipelines = { ...pipelines, name: title };
+      return { hasChanges: true, pipelines: _pipelines };
+    });
   };
 
   handleModalOpen = () => {
@@ -185,19 +221,42 @@ class PipelineNewPage extends React.Component {
     this.setState({ hasChanges: update });
   };
 
+  save = _.debounce(async () => {
+    console.log('saving');
+
+    const { name, uuid, rules } = this.state.pipelines;
+    const params = {
+      name,
+      rules,
+    };
+
+    const res = await updatePipeline({ uuid, params });
+    const pipelines = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
+    }
+  }, 1000);
+
   render() {
     const {
-      title,
       isLoading,
       graph,
       isRedirect,
       topicName,
       isModalActive,
       hasChanges,
+      pipelines,
     } = this.state;
+
+    const pipelineTitle = _.get(pipelines, 'name', null);
 
     if (isRedirect) {
       return <Redirect to={PIPELINE} />;
+    }
+
+    if (!pipelineTitle) {
+      return null;
     }
 
     return (
@@ -217,7 +276,10 @@ class PipelineNewPage extends React.Component {
           <Wrapper>
             <Header>
               <H2>
-                <Editable title={title} handleChange={this.handleTitleChange} />
+                <Editable
+                  title={pipelineTitle}
+                  handleChange={this.handlePipelineTitleChange}
+                />
               </H2>
 
               <Actions>
