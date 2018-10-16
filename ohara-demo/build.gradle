@@ -2,10 +2,16 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 apply plugin: 'scala'
 dependencies {
+  //----------------------[ohara modules]----------------------//
   compile project(':ohara-testing-util')
-  compile project(':ohara-configurator')
   compile project(':ohara-common')
   compile project(':ohara-kafka')
+  compile project(':ohara-hdfs-connector')
+  compile project(':ohara-ftp-connector')
+  compile project(':ohara-jdbc-connector')
+  compile project(':ohara-perf-connector')
+  compile project(':ohara-configurator')
+  //--------------------------[other]--------------------------//
   compile libs.kafkaClient
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
@@ -23,6 +29,7 @@ dependencies {
   compile libs.akkaStream
   compile libs.sprayJson
   compile libs.akkaSlf4j
+  //--------------------------[tests]--------------------------//
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation libs.scalatest
   testImplementation libs.junit
