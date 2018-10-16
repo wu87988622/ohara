@@ -33,16 +33,16 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     .builder()
     .host(testUtil.ftpServer.host)
     .port(testUtil.ftpServer.port)
-    .user(testUtil.ftpServer.writableUser.name)
-    .password(testUtil.ftpServer.writableUser.password)
+    .user(testUtil.ftpServer.user)
+    .password(testUtil.ftpServer.password)
     .build()
 
   private[this] val props = FtpSourceProps(
     input = "/input",
     output = "/output",
     error = "/error",
-    user = testUtil.ftpServer.writableUser.name,
-    password = testUtil.ftpServer.writableUser.password,
+    user = testUtil.ftpServer.user,
+    password = testUtil.ftpServer.password,
     host = testUtil.ftpServer.host,
     port = testUtil.ftpServer.port,
     encode = Some("UTF-8")

@@ -14,12 +14,8 @@ class TestFtpClient extends MediumTest with Matchers {
 
   private[this] val server = FtpServer()
 
-  private[this] val client = FtpClient.builder
-    .host(server.host)
-    .port(server.port)
-    .user(server.writableUser.name)
-    .password(server.writableUser.password)
-    .build()
+  private[this] val client =
+    FtpClient.builder().host(server.host).port(server.port).user(server.user).password(server.password).build()
 
   private[this] def tmpPath(client: FtpClient) = s"${client.tmpFolder}/$methodName"
 

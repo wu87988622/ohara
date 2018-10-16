@@ -37,8 +37,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       input = "/input",
       output = "/backup",
       error = "/error",
-      user = testUtil.ftpServer.writableUser.name,
-      password = testUtil.ftpServer.writableUser.password,
+      user = testUtil.ftpServer.user,
+      password = testUtil.ftpServer.password,
       host = testUtil.ftpServer.host,
       port = testUtil.ftpServer.port,
       encode = Some("UTF-8")
@@ -59,8 +59,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .builder()
         .host(ftpServer.host)
         .port(ftpServer.port)
-        .user(ftpServer.writableUser.name)
-        .password(ftpServer.writableUser.password)
+        .user(ftpServer.user)
+        .password(ftpServer.password)
         .build()) { ftpClient =>
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.input)
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.output)
@@ -104,8 +104,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     val sinkProps = FtpSinkProps(
       output = "/backup",
       needHeader = false,
-      user = testUtil.ftpServer.writableUser.name,
-      password = testUtil.ftpServer.writableUser.password,
+      user = testUtil.ftpServer.user,
+      password = testUtil.ftpServer.password,
       host = testUtil.ftpServer.host,
       port = testUtil.ftpServer.port,
       encode = Some("UTF-8")
@@ -131,8 +131,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .builder()
         .host(ftpServer.host)
         .port(ftpServer.port)
-        .user(ftpServer.writableUser.name)
-        .password(ftpServer.writableUser.password)
+        .user(ftpServer.user)
+        .password(ftpServer.password)
         .build()) { ftpClient =>
       TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
 
