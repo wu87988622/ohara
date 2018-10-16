@@ -217,6 +217,8 @@ class PipelineSinkPage extends React.Component {
       name: 'untitled sink',
       schema: [],
       className: 'jdbc',
+      topics: [currTopic.uuid],
+      numberOfTasks: 1,
       configs: {
         topic: JSON.stringify(currTopic),
         hdfs: JSON.stringify(currHdfs),
