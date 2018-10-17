@@ -21,7 +21,7 @@ private[configurator] object PipelineRoute {
   }
 
   private[this] def abstracts(request: PipelineRequest)(implicit store: Store): Seq[ObjectAbstract] = {
-    val keys = request.rules.keys.toSet
+    val keys = request.rules.keys.filterNot(_ == UNKNOWN).toSet
     checkExist(keys)
     val values = request.rules.values.filterNot(_ == UNKNOWN).toSet
     checkExist(values)
@@ -51,7 +51,7 @@ private[configurator] object PipelineRoute {
           s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
             s" accepted type:${ACCEPTED_TYPES_TO.map(_.getSimpleName).mkString(",")}")
     }
-    pipeline.rules.keys.foreach(verifyFrom)
+    pipeline.rules.keys.filterNot(_ == UNKNOWN).foreach(verifyFrom)
     pipeline.rules.values.filterNot(_ == UNKNOWN).foreach(verifyTo)
     pipeline.rules.foreach {
       case (k, v) => if (k == v) throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
