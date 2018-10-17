@@ -44,25 +44,25 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
 
     val sink = client.add[SinkRequest, Sink](request)
 
-    // test start
-    client.start[Sink](sink.uuid)
+    // test idempotent start
+    (0 until 3).foreach(_ => client.start[Sink](sink.uuid))
     try {
       OharaTestUtil.await(() => testUtil.connectorClient.exist(sink.uuid), 30 seconds)
       OharaTestUtil.await(() => testUtil.connectorClient.status(sink.uuid).connector.state == State.RUNNING, 20 seconds)
       client.get[Sink](sink.uuid).state.get shouldBe State.RUNNING
 
-      // test pause
-      client.pause[Sink](sink.uuid)
+      // test idempotent pause
+      (0 until 3).foreach(_ => client.pause[Sink](sink.uuid))
       OharaTestUtil.await(() => testUtil.connectorClient.status(sink.uuid).connector.state == State.PAUSED, 20 seconds)
       client.get[Sink](sink.uuid).state.get shouldBe State.PAUSED
 
-      // test resume
-      client.resume[Sink](sink.uuid)
+      // test idempotent resume
+      (0 until 3).foreach(_ => client.resume[Sink](sink.uuid))
       OharaTestUtil.await(() => testUtil.connectorClient.status(sink.uuid).connector.state == State.RUNNING, 20 seconds)
       client.get[Sink](sink.uuid).state.get shouldBe State.RUNNING
 
-      // test stop. the connector should be removed
-      client.stop[Sink](sink.uuid)
+      // test idempotent stop. the connector should be removed
+      (0 until 3).foreach(_ => client.stop[Sink](sink.uuid))
       OharaTestUtil.await(() => testUtil.connectorClient.nonExist(sink.uuid), 20 seconds)
       client.get[Sink](sink.uuid).state shouldBe None
     } finally if (testUtil.connectorClient.exist(sink.uuid)) testUtil.connectorClient.delete(sink.uuid)

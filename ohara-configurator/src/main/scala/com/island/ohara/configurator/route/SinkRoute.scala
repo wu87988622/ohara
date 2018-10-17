@@ -72,42 +72,42 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
             }
           } ~ path(START_COMMAND) {
           put {
-            val sink = store.data[Sink](uuid)
-            if (connectorClient.exist(sink.uuid)) throw new IllegalArgumentException(s"$uuid exists!!!")
-            if (sink.topics.isEmpty) throw new IllegalArgumentException("topics is required")
-            connectorClient
-              .connectorCreator()
-              .name(sink.uuid)
-              .disableConverter()
-              .connectorClass(sinkAlias(sink.className))
-              .schema(sink.schema)
-              .configs(sink.configs)
-              .topics(sink.topics)
-              .numberOfTasks(sink.numberOfTasks)
-              .create()
+            if (connectorClient.nonExist(uuid)) {
+              val sink = store.data[Sink](uuid)
+              if (sink.topics.isEmpty) throw new IllegalArgumentException("topics is required")
+              connectorClient
+                .connectorCreator()
+                .name(sink.uuid)
+                .disableConverter()
+                .connectorClass(sinkAlias(sink.className))
+                .schema(sink.schema)
+                .configs(sink.configs)
+                .topics(sink.topics)
+                .numberOfTasks(sink.numberOfTasks)
+                .create()
+            }
             // we don't update state of sink since it will be updated by GET API
             complete(StatusCodes.OK)
           }
         } ~ path(STOP_COMMAND) {
           put {
-            val sink = store.data[Sink](uuid)
-            if (connectorClient.nonExist(sink.uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
-            connectorClient.delete(sink.uuid)
+            if (connectorClient.exist(uuid)) {
+              val sink = store.data[Sink](uuid)
+              connectorClient.delete(sink.uuid)
+            }
             complete(StatusCodes.OK)
           }
         } ~ path(PAUSE_COMMAND) {
           put {
+            if (connectorClient.nonExist(uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
             val sink = store.data[Sink](uuid)
-            if (connectorClient.nonExist(sink.uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
             connectorClient.pause(sink.uuid)
             complete(StatusCodes.OK)
           }
         } ~ path(RESUME_COMMAND) {
           put {
+            if (connectorClient.nonExist(uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
             val sink = store.data[Sink](uuid)
-            if (connectorClient.nonExist(sink.uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
-            val state = connectorClient.status(sink.uuid).connector.state
-            if (state != ConnectorJson.State.PAUSED) throw new IllegalArgumentException(s"$uuid is in a $state")
             connectorClient.resume(sink.uuid)
             complete(StatusCodes.OK)
           }

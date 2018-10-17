@@ -72,42 +72,42 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             }
           } ~ path(START_COMMAND) {
           put {
-            val source = store.data[Source](uuid)
-            if (connectorClient.exist(source.uuid)) throw new IllegalArgumentException(s"$uuid exists!!!")
-            if (source.topics.isEmpty) throw new IllegalArgumentException("topics is required")
-            connectorClient
-              .connectorCreator()
-              .name(source.uuid)
-              .disableConverter()
-              .connectorClass(sourceAlias(source.className))
-              .schema(source.schema)
-              .configs(source.configs)
-              .topics(source.topics)
-              .numberOfTasks(source.numberOfTasks)
-              .create()
+            if (connectorClient.nonExist(uuid)) {
+              val source = store.data[Source](uuid)
+              if (source.topics.isEmpty) throw new IllegalArgumentException("topics is required")
+              connectorClient
+                .connectorCreator()
+                .name(source.uuid)
+                .disableConverter()
+                .connectorClass(sourceAlias(source.className))
+                .schema(source.schema)
+                .configs(source.configs)
+                .topics(source.topics)
+                .numberOfTasks(source.numberOfTasks)
+                .create()
+            }
             // we don't update state of source since it will be updated by GET API
             complete(StatusCodes.OK)
           }
         } ~ path(STOP_COMMAND) {
           put {
-            val source = store.data[Source](uuid)
-            if (connectorClient.nonExist(source.uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
-            connectorClient.delete(source.uuid)
+            if (connectorClient.exist(uuid)) {
+              val source = store.data[Source](uuid)
+              connectorClient.delete(source.uuid)
+            }
             complete(StatusCodes.OK)
           }
         } ~ path(PAUSE_COMMAND) {
           put {
+            if (connectorClient.nonExist(uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
             val source = store.data[Source](uuid)
-            if (connectorClient.nonExist(source.uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
             connectorClient.pause(source.uuid)
             complete(StatusCodes.OK)
           }
         } ~ path(RESUME_COMMAND) {
           put {
+            if (connectorClient.nonExist(uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
             val source = store.data[Source](uuid)
-            if (connectorClient.nonExist(source.uuid)) throw new IllegalArgumentException(s"$uuid doesn't exist!!!")
-            val state = connectorClient.status(source.uuid).connector.state
-            if (state != ConnectorJson.State.PAUSED) throw new IllegalArgumentException(s"$uuid is in a $state")
             connectorClient.resume(source.uuid)
             complete(StatusCodes.OK)
           }

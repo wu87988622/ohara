@@ -44,28 +44,30 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 
     val source = client.add[SourceRequest, Source](request)
 
-    // test start
-    client.start[Source](source.uuid)
+    // test idempotent start
+    (0 until 3).foreach(_ => client.start[Source](source.uuid))
     try {
       OharaTestUtil.await(() => testUtil.connectorClient.exist(source.uuid), 30 seconds)
       OharaTestUtil
         .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
       client.get[Source](source.uuid).state.get shouldBe State.RUNNING
 
-      // test pause
-      client.pause[Source](source.uuid)
+      // test idempotent pause
+      (0 until 3).foreach(_ => client.pause[Source](source.uuid))
+
       OharaTestUtil
         .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.PAUSED, 20 seconds)
       client.get[Source](source.uuid).state.get shouldBe State.PAUSED
 
-      // test resume
-      client.resume[Source](source.uuid)
+      // test idempotent resume
+      (0 until 3).foreach(_ => client.resume[Source](source.uuid))
       OharaTestUtil
         .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
       client.get[Source](source.uuid).state.get shouldBe State.RUNNING
 
-      // test stop. the connector should be removed
-      client.stop[Source](source.uuid)
+      // test idempotent stop. the connector should be removed
+      (0 until 3).foreach(_ => client.stop[Source](source.uuid))
+
       OharaTestUtil.await(() => testUtil.connectorClient.nonExist(source.uuid), 20 seconds)
       client.get[Source](source.uuid).state shouldBe None
     } finally if (testUtil.connectorClient.exist(source.uuid)) testUtil.connectorClient.delete(source.uuid)
