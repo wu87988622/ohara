@@ -181,7 +181,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   }
 
   private[this] def checkExist(name: String): Unit =
-    if (!cachedConnectors.contains(name)) throw new IllegalArgumentException(s"$name doesn't exist")
+    if (!cachedConnectors.containsKey(name)) throw new IllegalArgumentException(s"$name doesn't exist")
 }
 
 /**
