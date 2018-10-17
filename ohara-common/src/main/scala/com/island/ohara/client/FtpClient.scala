@@ -5,7 +5,7 @@ import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Files
 import java.util.Objects
 
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{CloseOnce, IoUtil}
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
 /**
@@ -79,6 +79,8 @@ trait FtpClient extends CloseOnce {
   def fileType(path: String): FileType
 
   def status(): String
+
+  def workingFolder(): String
 }
 
 object FtpClient {
@@ -228,11 +230,24 @@ class FtpClientBuilder {
 
       }
 
-      override def tmpFolder: String = "tmp"
+      override def tmpFolder: String = "/tmp"
       override def exist(path: String): Boolean = {
         connectIfNeeded()
-        client.getStatus(path) != null
+        val result = client.getStatus(path)
+        println(s"[CHIA] path$path")
+        println(result)
+
+        // different ftp implementations have different return value...
+        if (result == null) false
+        else {
+          // if path references to folder, some ftp servers return "212-"
+          if (result.startsWith("212-")) true
+          else
+            result.contains(IoUtil.name(path)) || // if path references to file, result will show the meta of files
+            result.contains(IoUtil.name("..")) // if path references to folder, result will show meta of all files with "." and "..
+        }
       }
+
       override def fileType(path: String): FileType = if (exist(path)) {
         val current = client.printWorkingDirectory()
         try client.cwd(path) match {
@@ -244,6 +259,11 @@ class FtpClientBuilder {
       override def status(): String = {
         connectIfNeeded()
         client.getStatus
+      }
+
+      override def workingFolder(): String = {
+        connectIfNeeded()
+        client.printWorkingDirectory()
       }
     }
   }

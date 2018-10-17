@@ -9,15 +9,15 @@ import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory
 import org.apache.ftpserver.usermanager.impl.{BaseUser, WritePermission}
 
 /**
-  * a simple embedded ftp server providing 2 user (readonly and normal) in testing. There are some bound resources used
-  * by this ftp server.
-  * 1) home folder -> based on java.io.tmpdir with prefix - ftp
-  * 2) port -> a random port
-  * 3) host -> "localhost"
-  * 4) writable user -> random user name and password
-  * 5) readonly user -> random user name and password but the home folder is same as writable user
+  * a simple embedded ftp server providing 1 writable user. The home folder is based on java.io.tmpdir with prefix - ftp
+  * 1) port -> a random port
+  * 2) host -> "localhost"
+  * 3) user -> a writable account
+  * 4) password -> a writable account
   *
   * all resources will be released by FtpServer#close(). For example, all data in home folder will be deleted
+  *
+  * If ohara.it.ftp exists in env variables, local ftp server is not created.
   */
 trait FtpServer extends CloseOnce {
   def host: String
@@ -27,8 +27,27 @@ trait FtpServer extends CloseOnce {
 }
 
 object FtpServer {
+  private[integration] val FTP_SERVER: String = "ohara.it.ftp"
+
   private[this] val COUNT = new AtomicInteger(0)
-  def apply(): FtpServer = {
+
+  def apply(): FtpServer = if (sys.env.contains(FTP_SERVER)) {
+    // pre-check the value from environment variables
+    // format => user:password@host:port
+    val ftpString = sys.env(FTP_SERVER)
+    val _user = ftpString.split(":").head
+    val _password = ftpString.split("@").head.split(":").last
+    val _host = ftpString.split("@").last.split(":").head
+    val _port = ftpString.split("@").last.split(":").last.toInt
+
+    new FtpServer {
+      override def host: String = _host
+      override def port: Int = _port
+      override def user: String = _user
+      override def password: String = _password
+      override protected def doClose(): Unit = {}
+    }
+  } else {
     val _port = availablePort
     val homeFolder = createTempDir("ftp")
     val userManagerFactory = new PropertiesUserManagerFactory()

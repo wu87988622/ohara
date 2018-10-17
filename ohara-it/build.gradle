@@ -40,3 +40,9 @@ dependencies {
   implementation libs.akkaStream
   implementation libs.sprayJson
 }
+
+
+test {
+  String FTP_SERVER = "ohara.it.ftp"
+  if(project.hasProperty(FTP_SERVER)) environment FTP_SERVER, project.getProperty(FTP_SERVER)
+}
