@@ -243,7 +243,7 @@ object ConfiguratorJson {
                           state: Option[State],
                           lastModified: Long)
       extends Data {
-    override def kind: String = "source"
+    override def kind: String = className
   }
   implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat9(Source)
   implicit val SOURCE_COMMAND_FORMAT: DataCommandFormat[Source] =
@@ -283,7 +283,7 @@ object ConfiguratorJson {
                         state: Option[State],
                         lastModified: Long)
       extends Data {
-    override def kind: String = "sink"
+    override def kind: String = className
   }
   implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat9(Sink)
   implicit val SINK_COMMAND_FORMAT: DataCommandFormat[Sink] =

@@ -23,16 +23,4 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
 
   private[this] def toResponse(e: Throwable) =
     Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
-
-  def sourceAlias(name: String): String = name.toLowerCase match {
-    case "jdbc" => "com.island.ohara.connector.jdbc.JDBCSourceConnector"
-    case "ftp"  => "com.island.ohara.connector.ftp.FtpSource"
-    case _      => name
-  }
-
-  def sinkAlias(name: String): String = name.toLowerCase match {
-    case "hdfs" => "com.island.ohara.connector.hdfs.HDFSSinkConnector"
-    case "ftp"  => "com.island.ohara.connector.ftp.FtpSink"
-    case _      => name
-  }
 }

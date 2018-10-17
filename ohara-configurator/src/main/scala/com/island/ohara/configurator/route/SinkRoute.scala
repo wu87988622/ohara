@@ -14,11 +14,18 @@ import spray.json.DefaultJsonProtocol._
 
 private[configurator] object SinkRoute extends SprayJsonSupport {
 
+  // TODO: hard code...by chia
+  private[this] def sinkAlias(name: String): String = name.toLowerCase match {
+    case "hdfs" => "com.island.ohara.connector.hdfs.HDFSSinkConnector"
+    case "ftp"  => "com.island.ohara.connector.ftp.FtpSink"
+    case _      => name
+  }
+
   private[this] def toRes(uuid: String, request: SinkRequest) =
     Sink(
       uuid = uuid,
       name = request.name,
-      className = request.className,
+      className = sinkAlias(request.className),
       schema = request.schema,
       topics = request.topics,
       numberOfTasks = request.numberOfTasks,
@@ -80,7 +87,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
                 .connectorCreator()
                 .name(sink.uuid)
                 .disableConverter()
-                .connectorClass(sinkAlias(sink.className))
+                .connectorClass(sink.className)
                 .schema(sink.schema)
                 .configs(sink.configs)
                 .topics(sink.topics)

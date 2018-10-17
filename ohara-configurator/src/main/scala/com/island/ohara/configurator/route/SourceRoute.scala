@@ -5,8 +5,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.client.{ConnectorClient, ConnectorJson}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
 import com.island.ohara.util.SystemUtil
@@ -14,11 +14,18 @@ import spray.json.DefaultJsonProtocol._
 
 private[configurator] object SourceRoute extends SprayJsonSupport {
 
+  // TODO: hard code...by chia
+  private[this] def sourceAlias(name: String): String = name.toLowerCase match {
+    case "jdbc" => "com.island.ohara.connector.jdbc.JDBCSourceConnector"
+    case "ftp"  => "com.island.ohara.connector.ftp.FtpSource"
+    case _      => name
+  }
+
   private[this] def toRes(uuid: String, request: SourceRequest) =
     Source(
       uuid = uuid,
       name = request.name,
-      className = request.className,
+      className = sourceAlias(request.className),
       schema = request.schema,
       topics = request.topics,
       numberOfTasks = request.numberOfTasks,
@@ -80,7 +87,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
                 .connectorCreator()
                 .name(source.uuid)
                 .disableConverter()
-                .connectorClass(sourceAlias(source.className))
+                .connectorClass(source.className)
                 .schema(source.schema)
                 .configs(source.configs)
                 .topics(source.topics)
