@@ -306,6 +306,10 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val newResponse =
         compareRequestAndResponse(anotherRequest,
                                   client.update[PipelineRequest, Pipeline](response.uuid, anotherRequest))
+
+      // topics should have no state
+      newResponse.objects.foreach(_.state shouldBe None)
+
       // test get
       compare2Response(newResponse, client.get[Pipeline](newResponse.uuid))
 

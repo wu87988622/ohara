@@ -42,6 +42,13 @@ object ConfiguratorJson {
   }
 
   /**
+    * Some data (source and sink) have "state"
+    */
+  sealed trait StatableData extends Data {
+    def state: Option[State]
+  }
+
+  /**
     * used to send data command
     */
   sealed trait DataCommandFormat[T] {
@@ -206,14 +213,13 @@ object ConfiguratorJson {
   final case class PipelineRequest(name: String, rules: Map[String, String])
   implicit val PIPELINE_REQUEST_JSON_FORMAT: RootJsonFormat[PipelineRequest] = jsonFormat2(PipelineRequest)
 
-  final case class ComponentAbstract(uuid: String, name: String, kind: String)
-  val UNKNOWN_COMPONENT = ComponentAbstract(UNKNOWN, "unknown", "unknown")
-  implicit val COMPONENT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ComponentAbstract] = jsonFormat3(ComponentAbstract)
+  final case class ObjectAbstract(uuid: String, name: String, kind: String, state: Option[State])
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat4(ObjectAbstract)
 
   final case class Pipeline(uuid: String,
                             name: String,
                             rules: Map[String, String],
-                            objects: Seq[ComponentAbstract],
+                            objects: Seq[ObjectAbstract],
                             lastModified: Long)
       extends Data {
     override def kind: String = "pipeline"
@@ -243,7 +249,7 @@ object ConfiguratorJson {
                           configs: Map[String, String],
                           state: Option[State],
                           lastModified: Long)
-      extends Data {
+      extends StatableData {
     override def kind: String = "source"
   }
   implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat9(Source)
@@ -283,7 +289,7 @@ object ConfiguratorJson {
                         configs: Map[String, String],
                         state: Option[State],
                         lastModified: Long)
-      extends Data {
+      extends StatableData {
     override def kind: String = "sink"
   }
   implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat9(Sink)

@@ -20,7 +20,7 @@ private[configurator] object PipelineRoute {
     uuids.foreach(uuid => if (!store.exist(uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
   }
 
-  private[this] def abstracts(request: PipelineRequest)(implicit store: Store): Seq[ComponentAbstract] = {
+  private[this] def abstracts(request: PipelineRequest)(implicit store: Store): Seq[ObjectAbstract] = {
     val keys = request.rules.keys.toSet
     checkExist(keys)
     val values = request.rules.values.filterNot(_ == UNKNOWN).toSet
@@ -28,7 +28,11 @@ private[configurator] object PipelineRoute {
     store
       .raw()
       .filter(data => keys.contains(data.uuid) || values.contains(data.uuid))
-      .map(data => ComponentAbstract(data.uuid, data.name, data.kind))
+      .map {
+        case statableData: StatableData =>
+          ObjectAbstract(statableData.uuid, statableData.name, statableData.kind, statableData.state)
+        case data => ObjectAbstract(data.uuid, data.name, data.kind, None)
+      }
       .toList // NOTED: we have to return a "serializable" list!!!
   }
 
