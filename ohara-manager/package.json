@@ -14,7 +14,7 @@
     "dev": "nodemon index.js --exec 'yarn lint:server && node'",
     "start:client": "BROWSER=none yarn --cwd client start:ci",
     "lint": "yarn lint:server && yarn lint:client",
-    "lint:server": "eslint \"**/*.js\"",
+    "lint:server": "eslint --ignore-pattern \"/client\" --ignore-pattern \"/coverage\" \"**/*.js\"",
     "lint:client": "yarn --cwd client lint",
     "test": "jest",
     "test:report": "JEST_JUNIT_OUTPUT=\"./test-reports/serverUnits.xml\" yarn test --reporters=default --reporters=jest-junit",

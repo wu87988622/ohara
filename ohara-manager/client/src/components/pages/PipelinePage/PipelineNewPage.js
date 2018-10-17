@@ -222,8 +222,6 @@ class PipelineNewPage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    console.log('saving');
-
     const { name, uuid, rules } = this.state.pipelines;
     const params = {
       name,

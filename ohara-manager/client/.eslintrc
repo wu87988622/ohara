@@ -4,5 +4,9 @@
   "env": {
     "cypress/globals": true
   },
-  "rules": {}
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "warn",
+    "no-alert": "warn"
+  }
 }

@@ -333,7 +333,6 @@ class PipelineSourcePage extends React.Component {
     const hasSink = sourceId === '__';
     const isCreate = _.isNull(sourceId) || hasSink ? true : false;
 
-    console.log('saving');
     const params = {
       name: 'untitled source',
       schema: [],
