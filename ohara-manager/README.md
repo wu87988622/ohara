@@ -10,10 +10,11 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
 
 3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
 
-4.  Install forever via npm, **this step is optional**
+4.  **Optional**: Install [forever](https://github.com/foreverjs/forever#readme) via npm:
     ```sh
     npm install -g forever
     ```
+5.  **Optional**: If you're using Visual Studio Code as your editor, have a look at our Editors section at the bottom of this README.md.
 
 Have issues while setting up? Try the **Having issues** section to troubleshoot.
 
@@ -240,6 +241,43 @@ We also provide a npm script to run all the tests(both client and server unit te
 ```sh
 yarn prepush
 ```
+
+## Editors
+
+We would highly recommend that you use [Visual Studio Code](https://code.visualstudio.com/) (or vscode for short) to edit and author Ohara manager code.
+
+#### Recommend vscode settings:
+
+```json
+{
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveTimeout": 2000,
+  "editor.tabCompletion": true,
+  "emmet.triggerExpansionOnTab": true,
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "markdown": "html"
+  },
+  "prettier.printWidth": 80,
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all",
+  "prettier.semi": true,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/coverage": true
+  },
+  "prettier.eslintIntegration": true,
+  "javascript.updateImportsOnFileMove.enabled": "always"
+}
+```
+
+#### Recommend extensions:
+
+- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) - install this so vscode can display linting errors right in the editor
+- [vscode-styled-components](https://marketplace.visualstudio.com/items?itemName=jpoissonnier.vscode-styled-components) - syntax highlight support for [styled component](https://github.com/styled-components/styled-components)
+- [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) - code formatter, please use the recommend the settings above to ensure that our format rules are aligned
 
 ## Having issues?
 
