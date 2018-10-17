@@ -34,7 +34,7 @@ yarn start
 You can start the server and set the configurator API like this:
 
 ```sh
-CONFIGURATOR_API=http://localhost:1000/v0 yarn start
+CONFIGURATOR_API=http://localhost:1000/v0 OHARA_MANAGER_PORT＝5050 yarn start
 ```
 
 > Double check the configurator spelling and the API url
@@ -180,7 +180,7 @@ After the build, copy/use these files and directories to the destination directo
 **From the Ohara manager project root**, use the following command to start the manager:
 
 ```sh
-CONFIGURATOR_API=http://hostname:port/v0 yarn start
+CONFIGURATOR_API=http://hostname:port/v0 OHARA_MANAGER_PORT＝5050 yarn start
 ```
 
 If you have forever installed on your machine globally with npm, you can then check the server logs with:

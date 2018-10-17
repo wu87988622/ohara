@@ -7,7 +7,7 @@ const morgan = require('morgan');
 
 /* eslint-disable no-console */
 
-const PORT = process.env.PORT || 5050;
+const OHARA_MANAGER_PORT = process.env.OHARA_MANAGER_PORT || 5050;
 const API_ROOT = process.env.CONFIGURATOR_API;
 const app = express();
 
@@ -32,8 +32,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(chalk.green(`Ohara manager is running at port: ${PORT}`));
+app.listen(OHARA_MANAGER_PORT, () => {
+  console.log(chalk.green(`Ohara manager is running at port: ${OHARA_MANAGER_PORT}`));
 
   if (!API_ROOT) {
     console.log(chalk.red(`CONFIGURATOR_API_ROOT did not specify!`));
