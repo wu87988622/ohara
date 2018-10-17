@@ -42,13 +42,6 @@ object ConfiguratorJson {
   }
 
   /**
-    * Some data (source and sink) have "state"
-    */
-  sealed trait StatableData extends Data {
-    def state: Option[State]
-  }
-
-  /**
     * used to send data command
     */
   sealed trait DataCommandFormat[T] {
@@ -249,7 +242,7 @@ object ConfiguratorJson {
                           configs: Map[String, String],
                           state: Option[State],
                           lastModified: Long)
-      extends StatableData {
+      extends Data {
     override def kind: String = "source"
   }
   implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat9(Source)
@@ -289,7 +282,7 @@ object ConfiguratorJson {
                         configs: Map[String, String],
                         state: Option[State],
                         lastModified: Long)
-      extends StatableData {
+      extends Data {
     override def kind: String = "sink"
   }
   implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat9(Sink)

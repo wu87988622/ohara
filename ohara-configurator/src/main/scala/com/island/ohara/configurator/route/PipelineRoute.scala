@@ -1,10 +1,10 @@
 package com.island.ohara.configurator.route
 
-import BasicRoute._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson.{Pipeline, _}
 import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.route.BasicRoute._
 import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
@@ -14,22 +14,24 @@ private[configurator] object PipelineRoute {
   private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink])
 
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
-    Pipeline(uuid, request.name, request.rules, abstracts(request), SystemUtil.current())
+    Pipeline(uuid, request.name, request.rules, abstracts(request.rules), SystemUtil.current())
 
   private[this] def checkExist(uuids: Set[String])(implicit store: Store): Unit = {
     uuids.foreach(uuid => if (!store.exist(uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
   }
 
-  private[this] def abstracts(request: PipelineRequest)(implicit store: Store): Seq[ObjectAbstract] = {
-    val keys = request.rules.keys.filterNot(_ == UNKNOWN).toSet
+  private[this] def abstracts(rules: Map[String, String])(implicit store: Store): Seq[ObjectAbstract] = {
+    val keys = rules.keys.filterNot(_ == UNKNOWN).toSet
     checkExist(keys)
-    val values = request.rules.values.filterNot(_ == UNKNOWN).toSet
+    val values = rules.values.filterNot(_ == UNKNOWN).toSet
     checkExist(values)
     store
       .raw()
       .filter(data => keys.contains(data.uuid) || values.contains(data.uuid))
       .map {
-        case statableData: StatableData =>
+        case statableData: Source =>
+          ObjectAbstract(statableData.uuid, statableData.name, statableData.kind, statableData.state)
+        case statableData: Sink =>
           ObjectAbstract(statableData.uuid, statableData.name, statableData.kind, statableData.state)
         case data => ObjectAbstract(data.uuid, data.name, data.kind, None)
       }
@@ -58,6 +60,13 @@ private[configurator] object PipelineRoute {
     }
   }
 
+  private[this] def update(pipeline: Pipeline)(implicit store: Store): Pipeline = {
+    val newAbstracts = abstracts(pipeline.rules)
+    val newOne = pipeline.copy(objects = newAbstracts)
+    store.update(newOne)
+    newOne
+  }
+
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
     pathPrefix(PIPELINE_PATH) {
       pathEnd {
@@ -69,11 +78,11 @@ private[configurator] object PipelineRoute {
             store.add(pipeline)
             complete(pipeline)
           }
-        } ~ get(complete(store.data[Pipeline].toSeq)) // list
+        } ~ get(complete(store.data[Pipeline].map(update(_)).toSeq)) // list
       } ~ pathPrefix(Segment) { uuid =>
         pathEnd {
           // get
-          get(complete(store.data[Pipeline](uuid))) ~
+          get(complete(update(store.data[Pipeline](uuid)))) ~
             // delete
             delete(complete {
               store.remove[Pipeline](uuid)
