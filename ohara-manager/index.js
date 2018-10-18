@@ -33,7 +33,9 @@ app.get('*', (req, res) => {
 });
 
 app.listen(OHARA_MANAGER_PORT, () => {
-  console.log(chalk.green(`Ohara manager is running at port: ${OHARA_MANAGER_PORT}`));
+  console.log(
+    chalk.green(`Ohara manager is running at port: ${OHARA_MANAGER_PORT}`),
+  );
 
   if (!API_ROOT) {
     console.log(chalk.red(`CONFIGURATOR_API_ROOT did not specify!`));

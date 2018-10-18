@@ -247,14 +247,10 @@ class PipelineNewPage extends React.Component {
       pipelines,
     } = this.state;
 
-    const pipelineTitle = _.get(pipelines, 'name', null);
+    const pipelineTitle = _.get(pipelines, 'name', '');
 
     if (isRedirect) {
       return <Redirect to={PIPELINE} />;
-    }
-
-    if (!pipelineTitle) {
-      return null;
     }
 
     return (

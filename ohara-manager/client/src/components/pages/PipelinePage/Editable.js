@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import toastr from 'toastr';
 
 import * as _ from 'utils/helpers';
 import { Input } from 'common/Form';
@@ -8,7 +9,6 @@ class EditableLabel extends React.Component {
   static propTypes = {
     title: PropTypes.string.isRequired,
     labelClassName: PropTypes.string,
-    onFocus: PropTypes.func,
     handleFocusOut: PropTypes.func,
     handleChange: PropTypes.func.isRequired,
   };
@@ -18,19 +18,14 @@ class EditableLabel extends React.Component {
   };
 
   handleFocus = () => {
-    const { onFocus, handleFocusOut } = this.props;
-    const { isEditing, title } = this.state;
+    const { handleFocusOut, title } = this.props;
+    const { isEditing } = this.state;
 
     if (isEditing) {
-      if (_.isFunction(handleFocusOut)) {
-        handleFocusOut(title);
-
-        console.log('out right now!');
+      if (_.isEmpty(title)) {
+        return toastr.error('Pipeline title cannot be empty!');
       }
-    } else {
-      if (_.isFunction(onFocus)) {
-        onFocus(title);
-      }
+      handleFocusOut(title);
     }
 
     this.setState(({ isEditing }) => ({ isEditing: !isEditing }));
