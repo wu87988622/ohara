@@ -47,7 +47,12 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
     // test idempotent start
     (0 until 3).foreach(_ => client.start[Sink](sink.uuid))
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(sink.uuid), 30 seconds)
+      OharaTestUtil.await(() =>
+                            try testUtil.connectorClient.exist(sink.uuid)
+                            catch {
+                              case _: Throwable => false
+                          },
+                          30 seconds)
       OharaTestUtil.await(() => testUtil.connectorClient.status(sink.uuid).connector.state == State.RUNNING, 20 seconds)
       client.get[Sink](sink.uuid).state.get shouldBe State.RUNNING
 
@@ -82,7 +87,12 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
     // test start
     client.start[Sink](sink.uuid)
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(sink.uuid), 30 seconds)
+      OharaTestUtil.await(() =>
+                            try testUtil.connectorClient.exist(sink.uuid)
+                            catch {
+                              case _: Throwable => false
+                          },
+                          30 seconds)
       OharaTestUtil.await(() => testUtil.connectorClient.status(sink.uuid).connector.state == State.RUNNING, 20 seconds)
 
       an[IllegalArgumentException] should be thrownBy client

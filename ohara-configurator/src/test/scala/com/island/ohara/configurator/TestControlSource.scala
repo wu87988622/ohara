@@ -47,7 +47,12 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
     // test idempotent start
     (0 until 3).foreach(_ => client.start[Source](source.uuid))
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(source.uuid), 30 seconds)
+      OharaTestUtil.await(() =>
+                            try testUtil.connectorClient.exist(source.uuid)
+                            catch {
+                              case _: Throwable => false
+                          },
+                          30 seconds)
       OharaTestUtil
         .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
       client.get[Source](source.uuid).state.get shouldBe State.RUNNING
@@ -87,7 +92,12 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
     // test start
     client.start[Source](source.uuid)
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(source.uuid), 30 seconds)
+      OharaTestUtil.await(() =>
+                            try testUtil.connectorClient.exist(source.uuid)
+                            catch {
+                              case _: Throwable => false
+                          },
+                          30 seconds)
       OharaTestUtil
         .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
 
