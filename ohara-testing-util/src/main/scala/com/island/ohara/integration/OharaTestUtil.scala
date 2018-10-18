@@ -49,11 +49,6 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
   private[this] var _tmpDirectory: File = _
 
   /**
-    * @return zookeeper connection used to create zk services
-    */
-  def zkConnection: String = componentBox.zookeeper.connection
-
-  /**
     * Exposing the brokers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
     *
     * @return brokers connection information
@@ -183,8 +178,6 @@ object OharaTestUtil {
     if (useException) throw new IllegalStateException("timeout") else false
   }
 
-  def builder() = new OharaTestUtilBuilder()
-
   /**
     * Create a test util with multi-brokers.
     * NOTED: don't call the worker and hdfs service. otherwise you will get exception
@@ -192,7 +185,7 @@ object OharaTestUtil {
     * @param numberOfBrokers the number of brokers you want to run locally
     * @return a test util
     */
-  def localBrokers(numberOfBrokers: Int) = new OharaTestUtil(new ComponentBox(numberOfBrokers, -1, -1))
+  def localBrokers(numberOfBrokers: Int) = new OharaTestUtil(new ComponentBox(numberOfBrokers, -1))
 
   /**
     * Create a test util with multi-brokers and multi-workers.
@@ -203,16 +196,15 @@ object OharaTestUtil {
     * @return a test util
     */
   def localWorkers(numberOfBrokers: Int, numberOfWorkers: Int) = new OharaTestUtil(
-    new ComponentBox(numberOfBrokers, numberOfWorkers, -1))
+    new ComponentBox(numberOfBrokers, numberOfWorkers))
 
   /**
-    * Create a test util with single namenode and multi-datanode
+    * Create a test util with local file system.
     * NOTED: don't call the workers and brokers service. otherwise you will get exception
     *
-    * @param numOfNode the number of data nodes you want to run locally
     * @return a test util
     */
-  def localHDFS(numOfNode: Int): OharaTestUtil = new OharaTestUtil(new ComponentBox(-1, -1, numOfNode))
+  def localHDFS(): OharaTestUtil = new OharaTestUtil(new ComponentBox(-1, -1))
 
   val HELP_KEY = "--help"
   val TTL_KEY = "--ttl"
@@ -240,8 +232,7 @@ object OharaTestUtil {
   }
 }
 
-private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: Int, numberOfDataNodes: Int)
-    extends CloseOnce {
+private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: Int) extends CloseOnce {
   private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
   private[this] val zk = if (numberOfBrokers > 0) newOrClose(new LocalZk()) else null
   private[this] val localBrokerCluster =
@@ -250,7 +241,6 @@ private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: I
     if (numberOfWorkers > 0) newOrClose(new LocalKafkaWorkers(localBrokerCluster.brokers, ports(numberOfWorkers)))
     else null
 
-  def zookeeper: LocalZk = require(zk, "You haven't started zookeeper")
   def brokerCluster: LocalKafkaBrokers = require(localBrokerCluster, "You haven't started brokers")
   def workerCluster: LocalKafkaWorkers = require(localWorkerCluster, "You haven't started workers")
 
@@ -261,52 +251,4 @@ private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: I
     CloseOnce.close(localBrokerCluster)
     CloseOnce.close(zk)
   }
-}
-
-/**
-  * As we integrate more services into test util, the constructor of test util will get more complicated.
-  * This builder helps us to add services and it handle the dependency between services.
-  */
-class OharaTestUtilBuilder private[integration] {
-  private[this] var numberOfBrokers: Option[Int] = Some(3)
-  private[this] var numberOfWorkers: Option[Int] = Some(0)
-  private[this] var numberOfDataNodes: Option[Int] = Some(0)
-
-  private[this] def validate(number: Int): Int = if (number <= 0)
-    throw new IllegalArgumentException(s"the number:$number should be bigger than zero")
-  else number
-
-  /**
-    * @param numberOfBrokers the number of brokers you want to run
-    * @return this builder
-    */
-  def numberOfBrokers(numberOfBrokers: Int): OharaTestUtilBuilder = {
-    this.numberOfBrokers = Some(validate(numberOfBrokers))
-    this
-  }
-
-  /**
-    * @param numberOfWorkers the number of workers you want to run
-    * @return this builder
-    */
-  def numberOfWorkers(numberOfWorkers: Int): OharaTestUtilBuilder = {
-    this.numberOfWorkers = Some(validate(numberOfWorkers))
-    // We can't run the workers without brokers
-    if (numberOfBrokers.isEmpty) numberOfBrokers(1)
-    this
-  }
-
-  /**
-    * @param numberOfDatanodes the number of data node you want to run
-    * @return this builder
-    */
-  def numberOfDataNodes(numberOfDatanodes: Int): OharaTestUtilBuilder = {
-    this.numberOfDataNodes = Some(validate(numberOfDatanodes))
-    this
-  }
-
-  /**
-    * @return a test util with specified services
-    */
-  def build() = new OharaTestUtil(new ComponentBox(numberOfBrokers.get, numberOfWorkers.get, numberOfDataNodes.get))
 }

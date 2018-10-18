@@ -23,7 +23,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
     val sinkTaskContext = mock[RowSinkContext]
     val topicPartition = TopicPartition("topic1", 0)
-    val testUtil = OharaTestUtil.localHDFS(1)
+    val testUtil = OharaTestUtil.localHDFS()
     val storage = new HDFSStorage(testUtil.fileSystem)
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)

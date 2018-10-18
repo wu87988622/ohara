@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 
 class TestHDFSStorage extends LargeTest with Matchers {
 
-  private[this] val testUtil = OharaTestUtil.localHDFS(1)
+  private[this] val testUtil = OharaTestUtil.localHDFS()
   @Test
   def testHdfsStorage(): Unit = {
     val fileSystem: FileSystem = testUtil.fileSystem

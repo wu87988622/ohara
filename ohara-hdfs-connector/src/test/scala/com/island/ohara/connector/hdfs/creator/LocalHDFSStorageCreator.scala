@@ -7,7 +7,7 @@ import com.island.ohara.io.CloseOnce
 import org.apache.hadoop.fs.FileSystem
 
 class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
-  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS(1).fileSystem
+  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS().fileSystem
   private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
 
   override def storage(): Storage = {

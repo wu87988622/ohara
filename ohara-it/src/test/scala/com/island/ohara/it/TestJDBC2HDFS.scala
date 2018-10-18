@@ -116,7 +116,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
 }
 
 class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
-  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS(1).fileSystem
+  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS().fileSystem
   private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
 
   override def storage(): Storage = {

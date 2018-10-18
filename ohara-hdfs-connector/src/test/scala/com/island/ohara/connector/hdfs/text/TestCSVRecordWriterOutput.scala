@@ -13,7 +13,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 class TestCSVRecordWriterOutput extends MediumTest with Matchers {
-  val testUtil = OharaTestUtil.localHDFS(1)
+  val testUtil = OharaTestUtil.localHDFS()
   val fileSystem: FileSystem = testUtil.fileSystem
   val HDFS_URL_VALUE = "hdfs://test:9000"
   val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, FLUSH_LINE_COUNT -> "2000"))
