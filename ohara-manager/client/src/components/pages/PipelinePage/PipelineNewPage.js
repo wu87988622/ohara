@@ -65,12 +65,6 @@ class PipelineNewPage extends React.Component {
     }
   }
 
-  componentDidUpdate() {
-    if (this.state.hasChanges) {
-      this.save();
-    }
-  }
-
   fetchData = async () => {
     const { match } = this.props;
     const topicId = _.get(match, 'params.topicId', null);
@@ -102,7 +96,9 @@ class PipelineNewPage extends React.Component {
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
-      this.setState({ pipelines });
+      this.setState({ pipelines }, () => {
+        this.loadGraph(pipelines);
+      });
     }
   };
 
@@ -194,7 +190,7 @@ class PipelineNewPage extends React.Component {
   handlePipelineTitleChange = ({ target: { value: title } }) => {
     this.setState(({ pipelines }) => {
       const _pipelines = { ...pipelines, name: title };
-      return { hasChanges: true, pipelines: _pipelines };
+      return { pipelines: _pipelines };
     });
   };
 
@@ -221,7 +217,11 @@ class PipelineNewPage extends React.Component {
     this.setState({ hasChanges: update });
   };
 
-  save = _.debounce(async () => {
+  handleFocusOut = async () => {
+    this.updatePipeline();
+  };
+
+  updatePipeline = async () => {
     const { name, uuid, rules } = this.state.pipelines;
     const params = {
       name,
@@ -234,7 +234,7 @@ class PipelineNewPage extends React.Component {
     if (!_.isEmpty(pipelines)) {
       this.setState({ pipelines });
     }
-  }, 1000);
+  };
 
   render() {
     const {
@@ -276,6 +276,7 @@ class PipelineNewPage extends React.Component {
               <H2>
                 <Editable
                   title={pipelineTitle}
+                  handleFocusOut={this.handleFocusOut}
                   handleChange={this.handlePipelineTitleChange}
                 />
               </H2>

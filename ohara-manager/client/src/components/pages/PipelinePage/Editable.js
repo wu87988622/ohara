@@ -9,7 +9,7 @@ class EditableLabel extends React.Component {
     title: PropTypes.string.isRequired,
     labelClassName: PropTypes.string,
     onFocus: PropTypes.func,
-    onFocusOut: PropTypes.func,
+    handleFocusOut: PropTypes.func,
     handleChange: PropTypes.func.isRequired,
   };
 
@@ -18,12 +18,14 @@ class EditableLabel extends React.Component {
   };
 
   handleFocus = () => {
-    const { onFocus, onFocusOut } = this.props;
+    const { onFocus, handleFocusOut } = this.props;
     const { isEditing, title } = this.state;
 
     if (isEditing) {
-      if (_.isFunction(onFocusOut)) {
-        onFocusOut(title);
+      if (_.isFunction(handleFocusOut)) {
+        handleFocusOut(title);
+
+        console.log('out right now!');
       }
     } else {
       if (_.isFunction(onFocus)) {
