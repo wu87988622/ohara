@@ -44,7 +44,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
       .create()
 
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().contains(connectorName), 30 seconds)
+      PerfUtil.checkConnector(testUtil, connectorName)
       val consumer =
         Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[Array[Byte], Row]
       try {
@@ -64,7 +64,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         }
         // it is hard to evaluate number of records in topics so we just fetch some records here.
         val records = consumer.poll(props.freq * 3, props.batch)
-        records.size shouldBe props.batch
+        records.size >= props.batch shouldBe true
         records
           .map(_.value.get)
           .foreach(row => {
