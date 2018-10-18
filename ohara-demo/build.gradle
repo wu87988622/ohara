@@ -56,3 +56,14 @@ distributions {
     }
   }
 }
+
+/**
+ * run backend
+ */
+task runBackend(type: JavaExec, dependsOn: 'classes') {
+  classpath = sourceSets.main.runtimeClasspath
+  main = "com.island.ohara.demo.Backend"
+  String port = 12345
+  if(project.hasProperty('port')) port = "${project.getProperty('port')}"
+  args = Arrays.asList("--port", port)
+}
