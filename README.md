@@ -77,6 +77,7 @@ gradle clean build -PskipManager
 * **Joshua_Lin (joshua@is-land.com.tw)** - committer
 * **Geordie Mai (geordie@is-land.com.tw)** - committer
 * **Yu-Chen Cheng (yuchen@is-land.com.tw)** - committer
+* **Sam Cho (sam@is-land.com.tw)** - committer
 
 ### License
 
