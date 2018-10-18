@@ -234,9 +234,6 @@ class FtpClientBuilder {
       override def exist(path: String): Boolean = {
         connectIfNeeded()
         val result = client.getStatus(path)
-        println(s"[CHIA] path$path")
-        println(result)
-
         // different ftp implementations have different return value...
         if (result == null) false
         else {
