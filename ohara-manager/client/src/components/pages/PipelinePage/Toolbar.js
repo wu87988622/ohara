@@ -115,42 +115,58 @@ class Toolbar extends React.Component {
     }).isRequired,
   };
 
+  checkExist = (type, graph) => {
+    return graph.find(g => {
+      const hasSource =
+        g.type === type ||
+        (g.type.includes('Source') && type.includes('Source'));
+
+      if (hasSource) {
+        return g;
+      }
+
+      return false;
+    });
+  };
+
   update = e => {
-    const { updateGraph, iconMaps } = this.props;
+    const { updateGraph, iconMaps, graph } = this.props;
 
     let type = _.get(e, 'target.dataset.id', null);
     type = type ? type : 'sink';
 
-    const update = {
-      name: `Untitled ${type}`,
-      type,
-      to: '?',
-      isActive: false,
-      icon: iconMaps[type],
-      id: uuid4(),
-    };
+    const isTypeExist = this.checkExist(type, graph);
 
-    // TODO: remove this when pipeline new graph is ready!
-    if (type === 'source-ftp') return;
+    if (_.isEmpty(isTypeExist)) {
+      const update = {
+        name: `Untitled ${type}`,
+        type,
+        to: '?',
+        isActive: false,
+        icon: iconMaps[type],
+        id: uuid4(),
+      };
 
-    updateGraph(update, type);
+      updateGraph(update, type);
+    }
   };
 
   render() {
-    const { hasChanges } = this.props;
+    const { hasChanges, iconKeys } = this.props;
+    const { jdbcSource, ftpSource } = iconKeys;
     return (
       <ToolbarWrapper>
         <Sources>
           <Icon
             className="fa fa-upload"
             onClick={this.update}
-            data-id="source-ftp"
+            data-id={ftpSource}
             data-testid="toolbar-source-ftp"
           />
           <Icon
             className="fa fa-database"
             onClick={this.update}
-            data-id="source"
+            data-id={jdbcSource}
             data-testid="toolbar-source"
           />
         </Sources>

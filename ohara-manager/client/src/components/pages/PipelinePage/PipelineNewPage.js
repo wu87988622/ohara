@@ -51,8 +51,14 @@ class PipelineNewPage extends React.Component {
     pipelines: {},
   };
 
+  iconKeys = {
+    jdbcSource: 'com.island.ohara.connector.jdbc.JDBCSourceConnector',
+    ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
+  };
+
   iconMaps = {
-    source: 'fa-database',
+    [this.iconKeys.jdbcSource]: 'fa-database',
+    [this.iconKeys.ftpSource]: 'fa-upload',
     topic: 'fa-list-ul',
     sink: 'icon-hadoop',
   };
@@ -135,6 +141,10 @@ class PipelineNewPage extends React.Component {
     });
   };
 
+  getIcon = type => {
+    return this.iconMaps[type];
+  };
+
   loadGraph = pipelines => {
     if (!pipelines) return;
 
@@ -146,7 +156,7 @@ class PipelineNewPage extends React.Component {
         name,
         type,
         uuid,
-        icon: this.iconMaps[type],
+        icon: this.getIcon(graph[idx] ? graph[idx].type : type),
         id: graph[idx] ? graph[idx].id : uuid4(),
         isActive: graph[idx] ? graph[idx].isActive : false,
         to: '?',
@@ -247,6 +257,8 @@ class PipelineNewPage extends React.Component {
       pipelines,
     } = this.state;
 
+    const { jdbcSource, ftpSource } = this.iconKeys;
+
     const pipelineTitle = _.get(pipelines, 'name', '');
 
     if (isRedirect) {
@@ -288,6 +300,7 @@ class PipelineNewPage extends React.Component {
             </Header>
             <Toolbar
               {...this.props}
+              iconKeys={this.iconKeys}
               iconMaps={this.iconMaps}
               updateGraph={this.updateGraph}
               graph={graph}
@@ -302,7 +315,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path="/pipeline/(new|edit)/source"
+              path={`/pipeline/(new|edit)/${jdbcSource}`}
               render={() => (
                 <PipelineSourcePage
                   {...this.props}
@@ -316,7 +329,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path="/pipeline/(new|edit)/source-ftp"
+              path={`/pipeline/(new|edit)/${ftpSource}`}
               render={() => (
                 <PipelineSourceFtpPage
                   {...this.props}

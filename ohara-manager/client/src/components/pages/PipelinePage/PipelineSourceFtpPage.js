@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
@@ -12,7 +13,13 @@ import { primaryBtn } from 'theme/btnTheme';
 import { lightBlue, whiteSmoke } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
-import { createSource, updateSource, fetchSource } from 'apis/pipelinesApis';
+import {
+  createSource,
+  updateSource,
+  fetchSource,
+  fetchPipeline,
+  updatePipeline,
+} from 'apis/pipelinesApis';
 
 const H5Wrapper = styled(H5)`
   margin: 0;
@@ -56,6 +63,13 @@ const FormInner = styled.div`
 `;
 
 class PipelineSourceFtpPage extends React.Component {
+  static propTypes = {
+    hasChanges: PropTypes.bool.isRequired,
+    updateHasChanges: PropTypes.func,
+    updateGraph: PropTypes.func,
+    loadGraph: PropTypes.func,
+  };
+
   selectMaps = {
     tasks: 'currTask',
     writeTopics: 'currWriteTopic',
@@ -97,11 +111,13 @@ class PipelineSourceFtpPage extends React.Component {
     columnName: '',
     newColumnName: '',
     currType: '',
+    pipelines: {},
   };
 
   componentDidMount() {
     const { match } = this.props;
     const sourceId = _.get(match, 'params.sourceId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
     const topicId = _.get(match, 'params.topicId', null);
 
     this.setDefaults();
@@ -110,16 +126,36 @@ class PipelineSourceFtpPage extends React.Component {
       this.fetchSource(sourceId);
     }
 
+    if (pipelineId) {
+      this.fetchPipeline(pipelineId);
+    }
+
     if (topicId) {
       this.fetchTopics(topicId);
+      this.props.updateHasChanges(true);
     }
   }
 
-  componentDidUpdate() {
-    const { hasChanges } = this.props;
+  componentDidUpdate(prevProps) {
+    const { hasChanges, match } = this.props;
+    const prevSourceId = _.get(prevProps.match, 'params.sourceId', null);
+    const currSourceId = _.get(match, 'params.sourceId', null);
+    const topicId = _.get(match, 'params.topicId');
+    const isUpdate = prevSourceId !== currSourceId;
 
     if (hasChanges) {
       this.save();
+    }
+
+    if (isUpdate) {
+      const { name, uuid, rules } = this.state.pipelines;
+
+      const params = {
+        name,
+        rules: { ...rules, [currSourceId]: topicId },
+      };
+
+      this.updatePipeline(uuid, params);
     }
   }
 
@@ -184,6 +220,33 @@ class PipelineSourceFtpPage extends React.Component {
     }
   };
 
+  fetchPipeline = async pipelineId => {
+    if (!_.isUuid(pipelineId)) return;
+
+    const res = await fetchPipeline(pipelineId);
+    const pipelines = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
+
+      const sourceId = _.get(this.props.match, 'params.sourceId', null);
+
+      if (sourceId && sourceId !== '__') {
+        this.props.loadGraph(pipelines);
+      }
+    }
+  };
+
+  updatePipeline = async (uuid, params) => {
+    const res = await updatePipeline({ uuid, params });
+    const pipelines = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
+      this.props.loadGraph(pipelines);
+    }
+  };
+
   handleInputChange = ({ target: { name, value } }) => {
     this.setState({ [name]: value }, () => {
       const targets = ['columnName', 'newColumnName'];
@@ -232,59 +295,6 @@ class PipelineSourceFtpPage extends React.Component {
       },
     );
   };
-
-  save = _.debounce(async () => {
-    const { match, history } = this.props;
-    const {
-      name,
-      host,
-      port,
-      username,
-      password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      currWriteTopic,
-      currFileEncoding,
-      currTask,
-      schema,
-    } = this.state;
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const isCreate = _.isNull(sourceId) ? true : false;
-    const _schema = _.isEmpty(schema) ? null : schema;
-
-    const params = {
-      name: 'untitled source',
-      schema: _schema,
-      className: 'ftp',
-      topics: [currWriteTopic.uuid],
-      numberOfTasks: 1,
-      configs: {
-        name,
-        host,
-        port,
-        username,
-        password,
-        inputFolder,
-        completeFolder,
-        errorFolder,
-        topic: currWriteTopic.name,
-        currFileEncoding,
-        currTask,
-      },
-    };
-
-    const res = isCreate
-      ? await createSource(params)
-      : await updateSource({ uuid: sourceId, params });
-
-    const uuid = _.get(res, 'data.result.uuid', null);
-
-    if (uuid) {
-      this.props.updateHasChanges(false);
-      if (isCreate) history.push(`${match.url}/${uuid}`);
-    }
-  }, 1000);
 
   handleDeleteSchemaModalOpen = (e, order) => {
     e.preventDefault();
@@ -432,6 +442,59 @@ class PipelineSourceFtpPage extends React.Component {
 
     this.props.updateHasChanges(true);
   };
+
+  save = _.debounce(async () => {
+    const { match, history } = this.props;
+    const {
+      name,
+      host,
+      port,
+      username,
+      password,
+      inputFolder,
+      completeFolder,
+      errorFolder,
+      currWriteTopic,
+      currFileEncoding,
+      currTask,
+      schema,
+    } = this.state;
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const isCreate = _.isNull(sourceId) ? true : false;
+    const _schema = _.isEmpty(schema) ? [] : schema;
+
+    const params = {
+      name: 'untitled source',
+      schema: _schema,
+      className: 'ftp',
+      topics: [currWriteTopic.uuid],
+      numberOfTasks: 1,
+      configs: {
+        name,
+        host,
+        port,
+        username,
+        password,
+        inputFolder,
+        completeFolder,
+        errorFolder,
+        topic: currWriteTopic.name,
+        currFileEncoding,
+        currTask,
+      },
+    };
+
+    const res = isCreate
+      ? await createSource(params)
+      : await updateSource({ uuid: sourceId, params });
+
+    const uuid = _.get(res, 'data.result.uuid', null);
+
+    if (uuid) {
+      this.props.updateHasChanges(false);
+      if (isCreate) history.push(`${match.url}/${uuid}`);
+    }
+  }, 1000);
 
   render() {
     const {

@@ -135,7 +135,7 @@ class PipelineSourcePage extends React.Component {
     const { hasChanges, match } = this.props;
 
     const prevSourceId = _.get(prevProps.match, 'params.sourceId', null);
-    const currSourceId = _.get(this.props.match, 'params.sourceId', null);
+    const currSourceId = _.get(match, 'params.sourceId', null);
     const topicId = _.get(match, 'params.topicId');
     const hasTopicId = !_.isNull(topicId);
     const isUpdate = prevSourceId !== currSourceId;
