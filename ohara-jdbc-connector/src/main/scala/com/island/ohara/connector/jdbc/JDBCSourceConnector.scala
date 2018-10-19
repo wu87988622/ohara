@@ -2,6 +2,7 @@ package com.island.ohara.connector.jdbc
 import com.island.ohara.connector.jdbc.source.JDBCSourceTask
 import com.island.ohara.io.VersionUtil
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * This class for JDBC Source connector plugin
@@ -52,4 +53,8 @@ class JDBCSourceConnector extends RowSourceConnector {
     * @return the version, formatted as a String
     */
   override protected def _version: String = VersionUtil.VERSION
+}
+
+object JDBCSourceConnector {
+  val LOG: Logger = LoggerFactory.getLogger(classOf[JDBCSourceConnector])
 }

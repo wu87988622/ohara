@@ -38,7 +38,7 @@ import scala.concurrent.duration._
   *
   */
 class OharaTestUtil private[integration] (componentBox: ComponentBox) extends CloseOnce {
-  private[this] var localDb: LocalDataBase = _
+  private[this] var localDb: DataBase = _
   private[this] var _connectorClient: ConnectorClient = _
   private[this] var localFtpServer: FtpServer = _
 
@@ -138,8 +138,8 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     _tmpDirectory.getAbsolutePath
   }
 
-  def dataBase: LocalDataBase = {
-    if (localDb == null) localDb = LocalDataBase.mysql()
+  def dataBase: DataBase = {
+    if (localDb == null) localDb = DataBase()
     localDb
   }
 

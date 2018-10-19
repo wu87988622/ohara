@@ -1,16 +1,16 @@
 package com.island.ohara.it
 import java.io.{BufferedReader, InputStreamReader}
-import java.sql.Statement
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
-import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
+import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector
 import com.island.ohara.connector.jdbc.source._
-import com.island.ohara.connector.hdfs._
-import com.island.ohara.integration.{LocalDataBase, OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.{DataBase, OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
@@ -19,7 +19,7 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
-  private[this] val db = LocalDataBase.mysql()
+  private[this] val db = DataBase()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "testtable"
   private[this] val timestampColumnName = "CREATE_DATE"
@@ -51,12 +51,24 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     val address = RdbColumn("ADDRESS", "VARCHAR(45)", false)
     val createDateTimestamp = RdbColumn("CREATE_DATE", "TIMESTAMP", true)
     client.createTable(tableName, Seq(createDateTimestamp, id, name, address))
-    val statement: Statement = db.connection.createStatement()
 
-    for (i <- 1 to 100) {
-      statement.executeUpdate(
-        s"INSERT INTO $tableName(CREATE_DATE, ID, NAME, ADDRESS) VALUES('2018-09-01 00:00:00' - INTERVAL $i DAY, $i, 'NAME-$i', 'ADDRESS-$i')")
-    }
+    val initTime = new Timestamp(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-09-01 00:00:00").getTime)
+    def subtract(t: Duration): Timestamp = new Timestamp(initTime.getTime - t.toMillis)
+    import scala.concurrent.duration._
+    val state =
+      db.connection.prepareStatement(
+        s"""INSERT INTO \"$tableName\" (\"CREATE_DATE\", \"ID\", \"NAME\", \"ADDRESS\") VALUES(?, ?, ?, ?)""")
+    try {
+      (1 to 100).foreach(index => {
+        state.setTimestamp(1, subtract(index days))
+        state.setInt(2, index)
+        state.setString(3, s"NAME-$index")
+        state.setString(4, s"ADDRESS-$index")
+        state.addBatch()
+      })
+      state.executeBatch()
+      if (!db.connection.getAutoCommit) db.connection.commit()
+    } finally state.close()
   }
 
   @Test
@@ -85,32 +97,38 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .create()
 
-    val storage = new HDFSStorage(testUtil.fileSystem)
-    val hdfsResultFolder = s"${testUtil.tmpDirectory}/data/$topicName/partition0"
-    OharaTestUtil.await(() => storage.list(hdfsResultFolder).size == 2, 10 seconds)
+    try {
+      val storage = new HDFSStorage(testUtil.fileSystem)
+      val hdfsResultFolder = s"${testUtil.tmpDirectory}/data/$topicName/partition0"
+      OharaTestUtil.await(() => storage.list(hdfsResultFolder).size == 2, 10 seconds)
 
-    val fileSystem: FileSystem = testUtil.fileSystem
-    val resultPath1: String = s"${hdfsResultFolder}/part-000000050-000000099.csv"
-    val lineCountFile1 =
-      CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath1))))) { reader =>
-        Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
-      }
-    lineCountFile1.length shouldBe 51
+      val fileSystem: FileSystem = testUtil.fileSystem
+      val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000099.csv"
+      val lineCountFile1 =
+        CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath1))))) { reader =>
+          Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+        }
+      lineCountFile1.length shouldBe 51
 
-    val resultPath2: String = s"${hdfsResultFolder}/part-000000000-000000049.csv"
-    val lineCountFile2 =
-      CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath2))))) { reader =>
-        Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
-      }
-    lineCountFile2.length shouldBe 51
-    val header: String = lineCountFile1(0)
-    header shouldBe "CREATE_DATE,ID,NAME,ADDRESS"
-    lineCountFile1(1) shouldBe "2018-07-13 00:00:00.0,50,NAME-50,ADDRESS-50"
-    lineCountFile1(50) shouldBe "2018-08-31 00:00:00.0,1,NAME-1,ADDRESS-1"
+      val resultPath2: String = s"$hdfsResultFolder/part-000000000-000000049.csv"
+      val lineCountFile2 =
+        CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath2))))) { reader =>
+          Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+        }
+      lineCountFile2.length shouldBe 51
+      val header: String = lineCountFile1(0)
+      header shouldBe "CREATE_DATE,ID,NAME,ADDRESS"
+      lineCountFile1(1) shouldBe "2018-07-13 00:00:00.0,50,NAME-50,ADDRESS-50"
+      lineCountFile1(50) shouldBe "2018-08-31 00:00:00.0,1,NAME-1,ADDRESS-1"
+    } finally {
+      testUtil.connectorClient.delete(jdbcSourceConnectorName)
+      testUtil.connectorClient.delete(hdfsSinkConnectorName)
+    }
   }
 
   @After
   def afterTest(): Unit = {
+    client.dropTable(tableName)
     CloseOnce.close(client)
   }
 }

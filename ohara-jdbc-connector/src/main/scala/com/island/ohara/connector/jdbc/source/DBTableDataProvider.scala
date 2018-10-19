@@ -7,24 +7,21 @@ import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.CloseOnce._
 
 /**
   * Connection to database and query data
   *
-  * @param url
-  * @param userName
-  * @param password
   */
 class DBTableDataProvider(url: String, userName: String, password: String) extends CloseOnce {
-
-  private[this] val connection: Connection = DriverManager.getConnection(url, userName, password)
   private[this] val client: DatabaseClient = DatabaseClient(url, userName, password)
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
     val columnNames = columns(tableName)
-    val sql = s"SELECT * FROM $tableName WHERE $timeStampColumnName > ? and $timeStampColumnName < ?"
+    val sql =
+      s"""SELECT * FROM \"$tableName\" WHERE \"$timeStampColumnName\" > ? and \"$timeStampColumnName\" < ? ORDER BY \"$timeStampColumnName\""""
 
-    val preparedStatement: PreparedStatement = connection.prepareStatement(sql)
+    val preparedStatement: PreparedStatement = client.connection.prepareStatement(sql)
 
     val currentTimestamp: Timestamp = dbCurrentTime(DateTimeUtils.CALENDAR)
     preparedStatement.setTimestamp(1, tsOffset, DateTimeUtils.CALENDAR)
@@ -38,27 +35,19 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
   }
 
   def dbCurrentTime(cal: Calendar): Timestamp = {
-    val dbProduct: String = connection.getMetaData.getDatabaseProductName
-    var query = ""
-    var currentTimestamp: Timestamp = new Timestamp(0)
-    if (DBTableDataProvider.ORACLE_DB_NAME == dbProduct) {
-      query = "select CURRENT_TIMESTAMP from dual"
-    } else {
-      query = "select CURRENT_TIMESTAMP;"
+    val dbProduct: String = client.connection.getMetaData.getDatabaseProductName
+    import DBTableDataProvider._
+    val query = dbProduct.toLowerCase match {
+      case ORACLE_DB_NAME => "SELECT CURRENT_TIMESTAMP FROM dual"
+      case _              => "SELECT CURRENT_TIMESTAMP;"
     }
-
-    val stmt: Statement = connection.createStatement()
-    try {
-      val resultSet: ResultSet = stmt.executeQuery(query)
-      if (resultSet.next()) {
-        currentTimestamp = resultSet.getTimestamp(1, cal)
-      } else {
+    doClose2(client.connection.createStatement())(stmt => stmt.executeQuery(query)) { (_, resultSet) =>
+      if (resultSet.next()) resultSet.getTimestamp(1, cal)
+      else
         throw new RuntimeException(
           s"Unable to get current time from DB using query $query on database $dbProduct"
         )
-      }
-    } finally stmt.close()
-    currentTimestamp
+    }
   }
 
   /**
@@ -66,10 +55,9 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     */
   override def doClose(): Unit = {
     CloseOnce.close(client)
-    this.connection.close()
   }
 }
 
 object DBTableDataProvider {
-  val ORACLE_DB_NAME = "Oracle"
+  val ORACLE_DB_NAME = "oracle"
 }

@@ -31,15 +31,21 @@ object FtpServer {
 
   private[this] val COUNT = new AtomicInteger(0)
 
-  def apply(): FtpServer = if (sys.env.contains(FTP_SERVER)) {
-    // pre-check the value from environment variables
+  private[integration] def parseString(ftpString: String): (String, String, String, Int) = {
     // format => user:password@host:port
-    val ftpString = sys.env(FTP_SERVER)
-    val _user = ftpString.split(":").head
-    val _password = ftpString.split("@").head.split(":").last
-    val _host = ftpString.split("@").last.split(":").head
-    val _port = ftpString.split("@").last.split(":").last.toInt
+    try {
+      val user = ftpString.split(":").head
+      val password = ftpString.split("@").head.split(":").last
+      val host = ftpString.split("@").last.split(":").head
+      val port = ftpString.split("@").last.split(":").last.toInt
+      (user, password, host, port)
+    } catch {
+      case e: Throwable => throw new IllegalArgumentException(s"invalid value of $FTP_SERVER", e)
+    }
+  }
 
+  def apply(): FtpServer = if (sys.env.contains(FTP_SERVER)) {
+    val (_user, _password, _host, _port) = parseString(sys.env(FTP_SERVER))
     new FtpServer {
       override def host: String = _host
       override def port: Int = _port

@@ -1,5 +1,5 @@
 package com.island.ohara.client
-import java.sql.{DriverManager, ResultSet}
+import java.sql.{Connection, DriverManager, ResultSet}
 
 import com.island.ohara.client.ConfiguratorJson.RdbTable
 import com.island.ohara.io.CloseOnce
@@ -25,6 +25,8 @@ trait DatabaseClient extends CloseOnce {
   def dropTable(name: String): Unit
 
   def closed: Boolean
+
+  def connection: Connection
 }
 
 object DatabaseClient {
@@ -50,7 +52,6 @@ object DatabaseClient {
 
     override def tables(catalog: String, schema: String, name: String): Seq[RdbTable] = {
       val md = conn.getMetaData
-
       CloseOnce
         .doClose(md.getTables(catalog, schema, name, null)) { implicit rs =>
           val buf = new ArrayBuffer[(String, String, String)]()
@@ -60,22 +61,18 @@ object DatabaseClient {
         .map {
           case (c, s, t) =>
             (c, s, t, CloseOnce.doClose(md.getPrimaryKeys(c, null, t)) { implicit rs =>
-              {
-                val buf = new ArrayBuffer[String]()
-                while (rs.next()) buf += columnName
-                buf.toSet
-              }
+              val buf = new ArrayBuffer[String]()
+              while (rs.next()) buf += columnName
+              buf.toSet
             })
         }
         .map {
           case (c, s, t, pks) =>
             val columns = CloseOnce.doClose(md.getColumns(c, null, t, null)) { implicit rs =>
               val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
-              while (rs.next()) {
-                buf += ConfiguratorJson.RdbColumn(name = columnName,
-                                                  typeName = columnType,
-                                                  pk = pks.contains(columnName))
-              }
+              while (rs.next()) buf += ConfiguratorJson.RdbColumn(name = columnName,
+                                                                  typeName = columnType,
+                                                                  pk = pks.contains(columnName))
               buf
             }
             RdbTable(Option(c), Option(s), t, columns)
@@ -94,16 +91,16 @@ object DatabaseClient {
     }
     override def createTable(name: String, columns: Seq[ConfiguratorJson.RdbColumn]): Unit = {
       if (columns.map(_.name).toSet.size != columns.size) throw new IllegalArgumentException(s"duplicate order!!!")
-      val query = s"CREATE TABLE $name (" + columns
-        .map(c => {
-          s"${c.name} ${c.typeName}"
-        })
-        .mkString(",") + ", PRIMARY KEY (" + columns.filter(_.pk).map(_.name).mkString(",") + "))"
+      val query = s"""CREATE TABLE \"$name\" (""" + columns
+        .map(c => s"""\"${c.name}\" ${c.typeName}""")
+        .mkString(",") + ", PRIMARY KEY (" + columns.filter(_.pk).map(c => s"""\"${c.name}\"""").mkString(",") + "))"
       CloseOnce.doClose(conn.createStatement())(_.execute(query))
     }
     override def dropTable(name: String): Unit = {
-      val query = s"DROP TABLE $name"
+      val query = s"""DROP TABLE \"$name\""""
       CloseOnce.doClose(conn.createStatement())(_.execute(query))
     }
+
+    override def connection: Connection = conn
   }
 }

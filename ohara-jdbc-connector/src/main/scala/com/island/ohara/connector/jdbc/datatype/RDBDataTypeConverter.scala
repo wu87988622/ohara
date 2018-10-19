@@ -9,42 +9,42 @@ class RDBDataTypeConverter {
     val columnName = column.name
     val typeName = column.typeName
 
-    val value: Object = typeName match {
-      case RDBDataTypeConverter.RDB_TYPE_BOOLEAN =>
+    // the type name of postgresql is lower case...
+    import RDBDataTypeConverter._
+    typeName.toUpperCase match {
+      case RDB_TYPE_BOOLEAN =>
         java.lang.Boolean.valueOf(resultSet.getBoolean(columnName))
 
-      case RDBDataTypeConverter.RDB_TYPE_BIT =>
+      case RDB_TYPE_BIT =>
         java.lang.Byte.valueOf(resultSet.getByte(columnName))
 
-      case RDBDataTypeConverter.RDB_TYPE_INTEGER =>
+      case RDB_TYPE_INTEGER | RDB_TYPE_INTEGER_2 =>
         java.lang.Integer.valueOf(resultSet.getInt(columnName))
 
-      case RDBDataTypeConverter.RDB_TYPE_BIGINT =>
+      case RDB_TYPE_BIGINT =>
         java.lang.Long.valueOf(resultSet.getLong(columnName))
 
-      case RDBDataTypeConverter.RDB_TYPE_FLOAT =>
+      case RDB_TYPE_FLOAT =>
         java.lang.Float.valueOf(resultSet.getFloat(columnName))
 
-      case RDBDataTypeConverter.RDB_TYPE_DOUBLE =>
+      case RDB_TYPE_DOUBLE =>
         java.lang.Double.valueOf(resultSet.getDouble(columnName))
 
-      case RDBDataTypeConverter.RDB_TYPE_CHAR | RDBDataTypeConverter.RDB_TYPE_VARCHAR |
-          RDBDataTypeConverter.RDB_TYPE_LONGVARCHAR =>
+      case RDB_TYPE_CHAR | RDB_TYPE_VARCHAR | RDB_TYPE_LONGVARCHAR =>
         resultSet.getString(columnName)
 
-      case RDBDataTypeConverter.RDB_TYPE_TIMESTAMP =>
+      case RDB_TYPE_TIMESTAMP =>
         resultSet.getTimestamp(columnName, DateTimeUtils.CALENDAR)
 
-      case RDBDataTypeConverter.RDB_TYPE_DATE =>
+      case RDB_TYPE_DATE =>
         resultSet.getDate(columnName, DateTimeUtils.CALENDAR)
 
-      case RDBDataTypeConverter.RDB_TYPE_TIME =>
+      case RDB_TYPE_TIME =>
         resultSet.getTime(columnName, DateTimeUtils.CALENDAR)
 
       case _ =>
         throw new RuntimeException(s"Data type '$typeName' not support on column '$columnName'.")
     }
-    value
   }
 }
 
@@ -52,6 +52,8 @@ object RDBDataTypeConverter {
   val RDB_TYPE_BOOLEAN: String = "BOOLEAN"
   val RDB_TYPE_BIT: String = "BIT"
   val RDB_TYPE_INTEGER: String = "INT"
+  // a name from postgresql
+  val RDB_TYPE_INTEGER_2: String = "INT4"
   val RDB_TYPE_BIGINT: String = "BIGINT"
   val RDB_TYPE_FLOAT: String = "FLOAT"
   val RDB_TYPE_DOUBLE: String = "DOUBLE"

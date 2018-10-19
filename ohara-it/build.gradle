@@ -9,6 +9,8 @@ dependencies {
   testImplementation libs.scalaLogging
   testImplementation libs.sprayJson
   testImplementation libs.kafkaConnectRuntime
+  // our it env use postgresql
+  testImplementation libs.postgresql
   testImplementation project(':ohara-common')
   testImplementation project(':ohara-kafka')
   testImplementation project(':ohara-configurator')
@@ -45,4 +47,8 @@ dependencies {
 test {
   String FTP_SERVER = "ohara.it.ftp"
   if(project.hasProperty(FTP_SERVER)) environment FTP_SERVER, project.getProperty(FTP_SERVER)
+
+  String DB_SERVER = "ohara.it.db"
+  if(project.hasProperty(DB_SERVER)) environment DB_SERVER, project.getProperty(DB_SERVER)
+
 }

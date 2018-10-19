@@ -1,13 +1,14 @@
 package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
+
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.{CloseOnce, VersionUtil}
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
 import com.typesafe.scalalogging.Logger
-
 class JDBCSourceTask extends RowSourceTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
@@ -44,7 +45,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @return a array of RowSourceRecord
     */
-  override protected[source] def _poll(): Seq[RowSourceRecord] = {
+  override protected[source] def _poll(): Seq[RowSourceRecord] = try {
     val tableName: String = jdbcSourceConnectorConfig.dbTableName
     val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
 
@@ -71,6 +72,11 @@ class JDBCSourceTask extends RowSourceTask {
       }
       .toList
     finally resultSet.close()
+  } catch {
+    case e: Throwable => {
+      LOG.error("something is wrong...", e)
+      Seq.empty
+    }
   }
 
   /**
@@ -78,9 +84,7 @@ class JDBCSourceTask extends RowSourceTask {
     * trying to poll for new data and interrupt any outstanding poll() requests. It is not required that the task has
     * fully stopped. Note that this method necessarily may be invoked from a different thread than _poll() and _commit()
     */
-  override protected def _stop(): Unit = {
-    CloseOnce.close(dbTableDataProvider)
-  }
+  override protected def _stop(): Unit = CloseOnce.close(dbTableDataProvider)
 
   /**
     * Get the version of this task. Usually this should be the same as the corresponding Connector class's version.
@@ -127,14 +131,12 @@ class JDBCSourceTask extends RowSourceTask {
     throw new RuntimeException(s"Database Table not have the $schemaColumnName column")
   }
 
-  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): Long = {
-    dbColumnInfo.foreach(columnInfo => {
-      if (columnInfo.columnName == timestampColumnName) {
-        return columnInfo.value.asInstanceOf[Timestamp].getTime
-      }
-    })
-    throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table.")
-  }
+  private[source] def dbTimestampColumnValue(dbColumnInfo: Seq[ColumnInfo[_]], timestampColumnName: String): Long =
+    dbColumnInfo
+      .find(_.columnName == timestampColumnName)
+      .map(_.value.asInstanceOf[Timestamp].getTime)
+      .getOrElse(
+        throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table."))
 
   private class Offsets(context: RowSourceContext, tableName: String) {
     private[this] val offsets: Map[String, _] = context.offset(JDBCSourceTask.partition(tableName))
@@ -146,9 +148,7 @@ class JDBCSourceTask extends RowSourceTask {
       this.cache = Map(tableName -> timestamp)
     }
 
-    private[source] def readInMemoryOffset(): Long = {
-      return this.cache(tableName)
-    }
+    private[source] def readInMemoryOffset(): Long = this.cache(tableName)
   }
 }
 

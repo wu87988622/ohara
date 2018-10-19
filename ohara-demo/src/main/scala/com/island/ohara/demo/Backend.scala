@@ -9,7 +9,7 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{LocalDataBase, OharaTestUtil}
+import com.island.ohara.integration.{DataBase, OharaTestUtil}
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.util.SystemUtil
@@ -56,7 +56,7 @@ object Backend {
     )
   }
 
-  def run(port: Int, stopped: (Configurator, LocalDataBase) => Unit): Unit = {
+  def run(port: Int, stopped: (Configurator, DataBase) => Unit): Unit = {
     doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)

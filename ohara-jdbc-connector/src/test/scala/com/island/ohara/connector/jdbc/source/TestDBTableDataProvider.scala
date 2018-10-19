@@ -5,7 +5,7 @@ import java.sql.{Statement, Timestamp}
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
-import com.island.ohara.integration.LocalDataBase
+import com.island.ohara.integration.DataBase
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rule.MediumTest
 import com.island.ohara.util.SystemUtil
@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends MediumTest with Matchers {
 
-  private[this] val db = LocalDataBase.mysql()
+  private[this] val db = DataBase()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "table1"
 

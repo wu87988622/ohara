@@ -32,6 +32,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
-    preparedStatement.close()
+    CloseOnce.close(resultSet)
+    CloseOnce.close(preparedStatement)
   }
 }

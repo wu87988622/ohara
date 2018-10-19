@@ -511,7 +511,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         verify(client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None)))
         verify(
           client.query[RdbQuery, RdbInformation](
-            RdbQuery(db.url, db.user, db.password, Some(db.catalog), None, Some(tableName))))
+            RdbQuery(db.url, db.user, db.password, Some(db.databaseName), None, Some(tableName))))
 
         dbClient.dropTable(tableName)
       })
