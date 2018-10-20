@@ -58,7 +58,7 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 # build ohara
 WORKDIR /testpatch/ohara
 # Running this test case make gradle download mysql binary code
-RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient -PskipManager
+RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
 # for cdh dependencies
 RUN gradle -Pcdh clean build -x test
