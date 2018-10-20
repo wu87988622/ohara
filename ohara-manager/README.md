@@ -29,18 +29,20 @@ You need to start both **Server** and **Client** servers before you can start yo
 Make sure you're in the ohara-manager root and start the server with:
 
 ```sh
-yarn start
+yarn start --configurator http://host:port/v0
 ```
 
-You can start the server and set the configurator API like this:
+- Note that the `--configurator` argument is required, you should pass in the
+  Ohara configurator API url.
+- You can override the default port `5050` by passing in `--port` like the following:
 
 ```sh
-CONFIGURATOR_API=http://localhost:1000/v0 OHARA_MANAGER_PORT＝5050 yarn start
+yarn start --configurator http://host:port/v0 --port 1234
 ```
 
-> Double check the configurator spelling and the API url
+After starting the server, visit `http://localhost:${PORT}` in your browser.
 
-After starting the server, visit `http://localhost:5050` in your browser.
+> Double check the configurator spelling and the API url, it should contain the API version number, for example `/v0`
 
 **Client**:
 
@@ -125,7 +127,7 @@ yarn lint
 It's usually helpful to run linting while developing, that's why we also provide a npm script to do so:
 
 ```sh
-yarn dev
+yarn dev --configurator http://host:port/v0
 ```
 
 This will start the server with `nodemon` and run the linting script whenever nodemon reloads.
@@ -181,7 +183,7 @@ After the build, copy/use these files and directories to the destination directo
 **From the Ohara manager project root**, use the following command to start the manager:
 
 ```sh
-CONFIGURATOR_API=http://hostname:port/v0 OHARA_MANAGER_PORT＝5050 yarn start
+ yarn start --configurator http://host:port/v0
 ```
 
 If you have forever installed on your machine globally with npm, you can then check the server logs with:

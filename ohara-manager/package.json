@@ -23,7 +23,7 @@
     "test:ci": "yarn setup && yarn test:all && yarn clean:process",
     "test:all": "yarn test:report && yarn test:client:unit && yarn test:client:e2e",
     "test:client:unit": "yarn --cwd client test:report",
-    "test:client:e2e": "yarn start:client & wait-on http://localhost:3000 && yarn start & wait-on http://localhost:5050 && yarn --cwd client cypress:ci",
+    "test:client:e2e": "yarn start:client & wait-on http://localhost:3000 && yarn start --configurator http://fakehost:7777/v0 & wait-on http://localhost:5050 && yarn --cwd client cypress:ci",
     "clean": "yarn clean:client && yarn clean:server",
     "clean:process": "forever stopall",
     "clean:server": "rm -rf ./test-reports node_modules",
@@ -39,7 +39,8 @@
     "express": "4.16.3",
     "forever": "0.15.3",
     "lodash": "4.17.10",
-    "morgan": "1.9.0"
+    "morgan": "1.9.0",
+    "yargs": "12.0.2"
   },
   "devDependencies": {
     "babel-eslint": "8.2.6",
