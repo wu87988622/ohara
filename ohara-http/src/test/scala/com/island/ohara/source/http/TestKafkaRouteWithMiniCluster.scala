@@ -32,7 +32,7 @@ class TestKafkaRouteWithMiniCluster
   @Test
   def shouldReturnNotFoundWhenUrlNotExist(): Unit = {
     val request = HttpRequest(uri = "/abcd")
-    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
 
     try {
       val route = kafkaRoute(producer, map)
@@ -45,7 +45,7 @@ class TestKafkaRouteWithMiniCluster
   @Test
   def shouldReturnOkWhenUrlExist(): Unit = {
     val request = HttpRequest(uri = "/test")
-    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
 
     try {
       val route = kafkaRoute(producer, map)
@@ -64,7 +64,8 @@ class TestKafkaRouteWithMiniCluster
     val isHuman = true
     val csv = List[Any](name, year, month, isHuman)
 
-    testUtil.createTopic(topic)
+    if (!KafkaUtil.exist(testUtil.brokersConnProps, topic))
+      KafkaUtil.createTopic(testUtil.brokersConnProps, topic, 1, 1)
 
     val jsonString =
       s"""
@@ -78,13 +79,13 @@ class TestKafkaRouteWithMiniCluster
         |}
       """.stripMargin
 
-    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
 
         val consumer =
-          Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topic).build[String, Row]
+          Consumer.builder().brokers(testUtil.brokersConnProps).offsetFromBegin().topicName(topic).build[String, Row]
         try {
           val fromKafka = consumer.poll(30 seconds, 1)
           fromKafka.isEmpty shouldBe false
@@ -107,7 +108,8 @@ class TestKafkaRouteWithMiniCluster
     val month: Short = 8
     val isHuman = true
 
-    testUtil.createTopic(topic)
+    if (!KafkaUtil.exist(testUtil.brokersConnProps, topic))
+      KafkaUtil.createTopic(testUtil.brokersConnProps, topic, 1, 1)
 
     val jsonString =
       s"""
@@ -122,7 +124,7 @@ class TestKafkaRouteWithMiniCluster
          |}
       """.stripMargin
 
-    val producer = Producer.builder().brokers(testUtil.brokers).allAcks().build[String, Row]
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {

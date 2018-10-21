@@ -10,19 +10,19 @@ import scala.concurrent.duration._
 
 class TestTopicStoreBuilder extends MediumTest with Matchers {
 
-  private[this] val testUtil = OharaTestUtil.localBrokers(1)
+  private[this] val testUtil = OharaTestUtil.brokers()
 
   @Test
   def testIncompleteArguments(): Unit = {
     val topicName = methodName
-    KafkaUtil.createTopic(testUtil.brokers, topicName, 1, 1)
+    KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
     var builder = Store.builder()
     an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.pollTimeout(1 seconds)
     an[NoSuchElementException] should be thrownBy builder.build[String, String]
     builder = builder.topicName(topicName)
     an[NoSuchElementException] should be thrownBy builder.build[String, String]
-    builder = builder.brokers(testUtil.brokers)
+    builder = builder.brokers(testUtil.brokersConnProps)
     builder.build[String, String].close()
   }
 

@@ -10,7 +10,7 @@ import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector
 import com.island.ohara.connector.jdbc.source._
-import com.island.ohara.integration.{DataBase, OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.{Database, OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
@@ -19,7 +19,7 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
-  private[this] val db = DataBase()
+  private[this] val db = Database()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "testtable"
   private[this] val timestampColumnName = "CREATE_DATE"

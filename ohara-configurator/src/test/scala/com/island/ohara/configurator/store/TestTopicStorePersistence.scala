@@ -15,7 +15,7 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
     val specifiedKey = "specifiedKey"
     val topicName = methodName
     val numberOfOtherMessages = 2048
-    doClose(KafkaClient(testUtil.brokers)) {
+    doClose(KafkaClient(testUtil.brokersConnProps)) {
       _.topicCreator()
         .numberOfReplications(1)
         .numberOfPartitions(1)
@@ -24,20 +24,22 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
         .compacted()
         .create(topicName)
     }
-    doClose(Store.builder().brokers(testUtil.brokers).topicName(topicName).buildBlocking[String, String]) { store =>
-      0 until 10 foreach (index => store._update(specifiedKey, index.toString, Consistency.STRICT))
-      // the local cache do the de-duplicate
-      store.size shouldBe 1
-      store.iterator.next()._2 shouldBe 9.toString
+    doClose(Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String]) {
+      store =>
+        0 until 10 foreach (index => store._update(specifiedKey, index.toString, Consistency.STRICT))
+        // the local cache do the de-duplicate
+        store.size shouldBe 1
+        store.iterator.next()._2 shouldBe 9.toString
 
-      0 until numberOfOtherMessages foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
-      store.size shouldBe (numberOfOtherMessages + 1)
+        0 until numberOfOtherMessages foreach (index =>
+          store._update(index.toString, index.toString, Consistency.STRICT))
+        store.size shouldBe (numberOfOtherMessages + 1)
     }
     import scala.concurrent.duration._
     def verifyTopicContent(timeout: Duration): Boolean = doClose(
       Consumer
         .builder()
-        .brokers(testUtil.brokers)
+        .brokers(testUtil.brokersConnProps)
         .offsetFromBegin()
         .groupId(UuidUtil.uuid())
         .topicName(topicName)

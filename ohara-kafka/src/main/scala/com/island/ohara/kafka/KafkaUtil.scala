@@ -61,15 +61,17 @@ object KafkaUtil {
   /**
     * check whether the specified topic exist
     *
-    * @param brokers the location of kafka brokers
+    * @param brokersConnProps the location of kafka brokersConnProps
     * @param topicName topic nameHDFSStorage
     * @return true if the topic exist. Otherwise, false
     */
-  def exist(brokers: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean =
-    doClose(KafkaClient(brokers))(_.exist(topicName, timeout))
+  def exist(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean =
+    doClose(KafkaClient(brokersConnProps))(_.exist(topicName, timeout))
 
-  def topicInfo(brokers: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription] =
-    doClose(KafkaClient(brokers))(_.topicInfo(topicName, timeout))
+  def topicInfo(brokersConnProps: String,
+                topicName: String,
+                timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription] =
+    doClose(KafkaClient(brokersConnProps))(_.topicInfo(topicName, timeout))
 
   /**
     * Increate the number of partitions. This method check the number before doing the alter. If the number is equal
@@ -77,21 +79,21 @@ object KafkaUtil {
     * an IllegalArgumentException. Otherwise, this method use kafka AdminClient to send the request to increase the
     * number of partitions.
     *
-    * @param brokers brokers information
+    * @param brokersConnProps brokersConnProps information
     * @param topicName topic name
     * @param numberOfPartitions if this number is s
     */
-  def addPartitions(brokers: String,
+  def addPartitions(brokersConnProps: String,
                     topicName: String,
                     numberOfPartitions: Int,
                     timeout: Duration = DEFAULT_TIMEOUT): Unit =
-    doClose(KafkaClient(brokers))(_.addPartition(topicName, numberOfPartitions, timeout))
+    doClose(KafkaClient(brokersConnProps))(_.addPartition(topicName, numberOfPartitions, timeout))
 
-  def createTopic(brokers: String,
+  def createTopic(brokersConnProps: String,
                   topicName: String,
                   numberOfPartitions: Int,
                   numberOfReplications: Short,
-                  timeout: Duration = DEFAULT_TIMEOUT): Unit = doClose(KafkaClient(brokers))(
+                  timeout: Duration = DEFAULT_TIMEOUT): Unit = doClose(KafkaClient(brokersConnProps))(
     _.topicCreator()
       .timeout(timeout)
       .numberOfPartitions(numberOfPartitions)

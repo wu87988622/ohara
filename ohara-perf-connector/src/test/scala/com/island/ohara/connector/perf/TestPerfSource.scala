@@ -46,7 +46,12 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
     try {
       PerfUtil.checkConnector(testUtil, connectorName)
       val consumer =
-        Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[Array[Byte], Row]
+        Consumer
+          .builder()
+          .brokers(testUtil.brokersConnProps)
+          .offsetFromBegin()
+          .topicName(topicName)
+          .build[Array[Byte], Row]
       try {
         def matchType(lhs: Class[_], dataType: DataType): Unit = {
           dataType match {

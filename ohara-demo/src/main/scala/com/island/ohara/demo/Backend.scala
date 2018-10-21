@@ -9,7 +9,7 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{DataBase, OharaTestUtil}
+import com.island.ohara.integration.{Database, OharaTestUtil}
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.util.SystemUtil
@@ -56,11 +56,11 @@ object Backend {
     )
   }
 
-  def run(port: Int, stopped: (Configurator, DataBase) => Unit): Unit = {
-    doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
+  def run(port: Int, stopped: (Configurator, Database) => Unit): Unit = {
+    doClose(OharaTestUtil.workers()) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokers} and workers:${util.workers}")
+      println(s"Succeed to run the mini brokers: ${util.brokersConnProps} and workers:${util.workersConnProps}")
       println(
         s"Succeed to run a database url:${util.dataBase.url} user:${util.dataBase.user} password:${util.dataBase.password}")
       val dbRoute: server.Route = path("creation" / "rdb") {
@@ -79,14 +79,14 @@ object Backend {
         }
       }
       val topicName = s"demo-${SystemUtil.current()}"
-      doClose(KafkaClient(util.brokers))(
+      doClose(KafkaClient(util.brokersConnProps))(
         _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
       )
       val configurator = Configurator
         .builder()
-        .store(Store.builder().brokers(util.brokers).topicName(topicName).buildBlocking[String, Any])
-        .kafkaClient(KafkaClient(util.brokers))
-        .connectClient(ConnectorClient(util.workers))
+        .store(Store.builder().brokers(util.brokersConnProps).topicName(topicName).buildBlocking[String, Any])
+        .kafkaClient(KafkaClient(util.brokersConnProps))
+        .connectClient(ConnectorClient(util.workersConnProps))
         .hostname("0.0.0.0")
         .port(port)
         .extraRoute(dbRoute)

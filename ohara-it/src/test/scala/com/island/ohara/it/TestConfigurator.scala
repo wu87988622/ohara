@@ -21,9 +21,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(Store.builder().topicName(random()).brokers(testUtil.brokers).buildBlocking[String, Any])
-      .kafkaClient(KafkaClient(testUtil.brokers))
-      .connectClient(ConnectorClient(testUtil.workers))
+      .store(Store.builder().topicName(random()).brokers(testUtil.brokersConnProps).buildBlocking[String, Any])
+      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+      .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
 
   private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
@@ -86,12 +86,16 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
     try {
       doClose(
-        Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[Array[Byte], Row]) {
-        consumer =>
-          val records = consumer.poll(20 seconds, rows.length)
-          records.length shouldBe rows.length
-          records(0).value.get shouldBe rows(0)
-          records(1).value.get shouldBe rows(1)
+        Consumer
+          .builder()
+          .brokers(testUtil.brokersConnProps)
+          .offsetFromBegin()
+          .topicName(topicName)
+          .build[Array[Byte], Row]) { consumer =>
+        val records = consumer.poll(20 seconds, rows.length)
+        records.length shouldBe rows.length
+        records(0).value.get shouldBe rows(0)
+        records(1).value.get shouldBe rows(1)
       }
       client.stop[Source](source.uuid)
       client.delete[Source](source.uuid)
@@ -119,9 +123,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       row.map(_.value.toString).mkString(",")
     })
 
-    KafkaUtil.createTopic(testUtil.brokers, topicName, 1, 1)
+    KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
 
-    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
       rows.foreach(row => producer.sender().value(row).send(topicName))
     }
 

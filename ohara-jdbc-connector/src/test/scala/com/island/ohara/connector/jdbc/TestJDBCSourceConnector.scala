@@ -5,7 +5,7 @@ import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.{DataBase, With3Brokers3Workers}
+import com.island.ohara.integration.{Database, With3Brokers3Workers}
 import com.island.ohara.kafka.Consumer
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
@@ -15,7 +15,7 @@ import scala.concurrent.duration._
   * Test the JDBC Source Connector
   */
 class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
-  private[this] val db = DataBase()
+  private[this] val db = Database()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "table1"
   private[this] val timestampColumnName = "column1"
@@ -58,7 +58,12 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
       .create()
 
     val consumer =
-      Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+      Consumer
+        .builder()
+        .topicName(topicName)
+        .offsetFromBegin()
+        .brokers(testUtil.brokersConnProps)
+        .build[Array[Byte], Row]
     try {
       val record = consumer.poll(30 seconds, 3)
       val row0: Row = record(0).value.get

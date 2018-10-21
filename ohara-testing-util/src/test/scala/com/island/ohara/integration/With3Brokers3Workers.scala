@@ -16,7 +16,7 @@ object With3Brokers3Workers {
 
   @BeforeClass
   def beforeAll(): Unit = {
-    util = OharaTestUtil.localWorkers(3, 3)
+    util = OharaTestUtil.workers()
   }
 
   @AfterClass

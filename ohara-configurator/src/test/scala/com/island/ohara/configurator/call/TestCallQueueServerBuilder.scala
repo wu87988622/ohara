@@ -17,7 +17,7 @@ class TestCallQueueServerBuilder extends With3Brokers with Matchers {
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.requestTopic(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.brokers(testUtil.brokers)
+    builder = builder.brokers(testUtil.brokersConnProps)
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.groupId("xxx")
     builder.build().close()

@@ -15,7 +15,7 @@ object With3Brokers {
 
   @BeforeClass
   def beforeAll(): Unit = {
-    util = OharaTestUtil.localBrokers(3)
+    util = OharaTestUtil.brokers()
   }
 
   @AfterClass

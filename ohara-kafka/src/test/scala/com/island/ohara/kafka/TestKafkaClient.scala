@@ -8,21 +8,23 @@ class TestKafkaClient extends With3Brokers3Workers with Matchers {
   import scala.concurrent.duration._
   private[this] val timeout = 10 seconds
 
-  private[this] val client = KafkaClient(testUtil.brokers)
+  private[this] val client = KafkaClient(testUtil.brokersConnProps)
 
   @Test
   def testAddPartitions(): Unit = {
     val topicName = methodName
-    KafkaUtil.createTopic(testUtil.brokers, topicName, 1, 1)
-    KafkaUtil.topicInfo(testUtil.brokers, topicName, timeout).get.numberOfPartitions shouldBe 1
+    KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
+    KafkaUtil.topicInfo(testUtil.brokersConnProps, topicName, timeout).get.numberOfPartitions shouldBe 1
 
-    KafkaUtil.addPartitions(testUtil.brokers, topicName, 2, timeout)
-    KafkaUtil.topicInfo(testUtil.brokers, topicName, timeout).get.numberOfPartitions shouldBe 2
+    KafkaUtil.addPartitions(testUtil.brokersConnProps, topicName, 2, timeout)
+    KafkaUtil.topicInfo(testUtil.brokersConnProps, topicName, timeout).get.numberOfPartitions shouldBe 2
 
     // decrease the number
-    an[IllegalArgumentException] should be thrownBy KafkaUtil.addPartitions(testUtil.brokers, topicName, 1, timeout)
+    an[IllegalArgumentException] should be thrownBy KafkaUtil
+      .addPartitions(testUtil.brokersConnProps, topicName, 1, timeout)
     // alter an nonexistent topic
-    an[IllegalArgumentException] should be thrownBy KafkaUtil.addPartitions(testUtil.brokers, "Xxx", 2, timeout)
+    an[IllegalArgumentException] should be thrownBy KafkaUtil
+      .addPartitions(testUtil.brokersConnProps, "Xxx", 2, timeout)
   }
 
   @Test

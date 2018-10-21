@@ -24,6 +24,11 @@ trait FtpServer extends CloseOnce {
   def port: Int
   def user: String
   def password: String
+
+  /**
+    * @return true if this ftp server is generated locally.
+    */
+  def isLocal: Boolean
 }
 
 object FtpServer {
@@ -44,51 +49,58 @@ object FtpServer {
     }
   }
 
-  def apply(): FtpServer = if (sys.env.contains(FTP_SERVER)) {
-    val (_user, _password, _host, _port) = parseString(sys.env(FTP_SERVER))
-    new FtpServer {
-      override def host: String = _host
-      override def port: Int = _port
-      override def user: String = _user
-      override def password: String = _password
-      override protected def doClose(): Unit = {}
-    }
-  } else {
-    val _port = availablePort
-    val homeFolder = createTempDir("ftp")
-    val userManagerFactory = new PropertiesUserManagerFactory()
-    val userManager = userManagerFactory.createUserManager
-    val _user = new BaseUser()
-    _user.setName(s"user-${COUNT.getAndIncrement()}")
-    _user.setAuthorities(util.Arrays.asList(new WritePermission()))
-    _user.setEnabled(true)
-    _user.setPassword(s"password-${COUNT.getAndIncrement()}")
-    _user.setHomeDirectory(homeFolder.getAbsolutePath)
-    userManager.save(_user)
+  def apply(): FtpServer = apply(sys.env.get(FTP_SERVER))
 
-    val listenerFactory = new ListenerFactory()
-    listenerFactory.setPort(_port)
-
-    val factory = new FtpServerFactory()
-    factory.setUserManager(userManager)
-    factory.addListener("default", listenerFactory.createListener)
-
-    val server = factory.createServer
-    server.start()
-
-    new FtpServer {
-      override protected def doClose(): Unit = {
-        server.stop()
-        deleteFile(homeFolder)
+  private[integration] def apply(ftpServer: Option[String]): FtpServer =
+    ftpServer
+      .map { s =>
+        val (_user, _password, _host, _port) = parseString(s)
+        new FtpServer {
+          override def host: String = _host
+          override def port: Int = _port
+          override def user: String = _user
+          override def password: String = _password
+          override protected def doClose(): Unit = {}
+          override def isLocal: Boolean = false
+        }
       }
+      .getOrElse {
+        val _port = availablePort()
+        val homeFolder = createTempDir("ftp")
+        val userManagerFactory = new PropertiesUserManagerFactory()
+        val userManager = userManagerFactory.createUserManager
+        val _user = new BaseUser()
+        _user.setName(s"user-${COUNT.getAndIncrement()}")
+        _user.setAuthorities(util.Arrays.asList(new WritePermission()))
+        _user.setEnabled(true)
+        _user.setPassword(s"password-${COUNT.getAndIncrement()}")
+        _user.setHomeDirectory(homeFolder.getAbsolutePath)
+        userManager.save(_user)
 
-      override def host: String = "localhost"
+        val listenerFactory = new ListenerFactory()
+        listenerFactory.setPort(_port)
 
-      override def port: Int = _port
+        val factory = new FtpServerFactory()
+        factory.setUserManager(userManager)
+        factory.addListener("default", listenerFactory.createListener)
 
-      override def user: String = _user.getName
+        val server = factory.createServer
+        server.start()
 
-      override def password: String = _user.getPassword
-    }
-  }
+        new FtpServer {
+          override protected def doClose(): Unit = {
+            server.stop()
+            deleteFile(homeFolder)
+          }
+
+          override def host: String = "localhost"
+
+          override def port: Int = _port
+
+          override def user: String = _user.getName
+
+          override def password: String = _user.getPassword
+          override def isLocal: Boolean = true
+        }
+      }
 }

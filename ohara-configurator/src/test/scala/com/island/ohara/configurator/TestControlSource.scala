@@ -18,15 +18,15 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 
   private[this] val configurator = {
     val topicName = random()
-    doClose(KafkaClient(testUtil.brokers))(
+    doClose(KafkaClient(testUtil.brokersConnProps))(
       _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
     Configurator
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(Store.builder().topicName(topicName).brokers(testUtil.brokers).buildBlocking[String, Any])
-      .kafkaClient(KafkaClient(testUtil.brokers))
-      .connectClient(ConnectorClient(testUtil.workers))
+      .store(Store.builder().topicName(topicName).brokers(testUtil.brokersConnProps).buildBlocking[String, Any])
+      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+      .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
   }
 

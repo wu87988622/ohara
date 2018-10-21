@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
-  private[this] val kafkaClient = KafkaClient(testUtil.brokers)
+  private[this] val kafkaClient = KafkaClient(testUtil.brokersConnProps)
   private[this] val row = Row(Cell("cf0", 10), Cell("cf1", 11))
   private[this] val schema = Seq(Column("cf", DataType.BOOLEAN, 1))
   private[this] val numberOfRows = 20
@@ -33,18 +33,22 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def setupData(topicName: String): Unit = {
-    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
       0 until numberOfRows foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
     }
     checkData(topicName)
   }
 
   private[this] def checkData(topicName: String): Unit = doClose(
-    Consumer.builder().offsetFromBegin().brokers(testUtil.brokers).topicName(topicName).build[Array[Byte], Row]) {
-    consumer =>
-      val data = consumer.poll(30 seconds, numberOfRows)
-      data.size shouldBe numberOfRows
-      data.foreach(_.value.get shouldBe row)
+    Consumer
+      .builder()
+      .offsetFromBegin()
+      .brokers(testUtil.brokersConnProps)
+      .topicName(topicName)
+      .build[Array[Byte], Row]) { consumer =>
+    val data = consumer.poll(30 seconds, numberOfRows)
+    data.size shouldBe numberOfRows
+    data.foreach(_.value.get shouldBe row)
   }
 
   private[this] def checkConnector(name: String): Unit = {
@@ -76,11 +80,16 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     */
   private[this] def testRowProducer2RowConsumer(topicName: String): Unit = {
     setupData(topicName)
-    doClose(Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[Array[Byte], Row]) {
-      consumer =>
-        val data = consumer.poll(10 seconds, numberOfRows)
-        data.size shouldBe numberOfRows
-        data.foreach(r => r.value.get shouldBe row)
+    doClose(
+      Consumer
+        .builder()
+        .brokers(testUtil.brokersConnProps)
+        .offsetFromBegin()
+        .topicName(topicName)
+        .build[Array[Byte], Row]) { consumer =>
+      val data = consumer.poll(10 seconds, numberOfRows)
+      data.size shouldBe numberOfRows
+      data.foreach(r => r.value.get shouldBe row)
     }
   }
 
@@ -114,7 +123,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .configs(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> topicName2))
+      .configs(Map(Constants.BROKER -> testUtil.brokersConnProps, Constants.OUTPUT -> topicName2))
       .create()
 
     try {
@@ -154,7 +163,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .configs(Map(Constants.BROKER -> testUtil.brokers, Constants.INPUT -> topicName))
+      .configs(Map(Constants.BROKER -> testUtil.brokersConnProps, Constants.INPUT -> topicName))
       .create()
 
     try {
@@ -170,16 +179,16 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
     val topicName = methodName
-    testUtil.createTopic(topicName)
+    KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
 
     val row = Row(Cell("c", 3), Cell("b", 2), Cell("a", 1))
-    doClose(Producer.builder().brokers(testUtil.brokers).build[String, Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[String, Row]) { producer =>
       producer.sender().key(topicName).value(row).send(topicName)
       producer.flush()
     }
 
     val consumer =
-      Consumer.builder().brokers(testUtil.brokers).offsetFromBegin().topicName(topicName).build[String, Row]
+      Consumer.builder().brokers(testUtil.brokersConnProps).offsetFromBegin().topicName(topicName).build[String, Row]
 
     try {
       val fromKafka = consumer.poll(30 seconds, 1)
@@ -191,7 +200,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
     } finally consumer.close()
 
-    doClose(Producer.builder().brokers(testUtil.brokers).build[String, Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[String, Row]) { producer =>
       val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
       meta.topic shouldBe topicName
     }
@@ -215,7 +224,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .numberOfTasks(2)
       .disableConverter()
       .schema(schema)
-      .configs(Map(Constants.BROKER -> testUtil.brokers, Constants.OUTPUT -> output_topic))
+      .configs(Map(Constants.BROKER -> testUtil.brokersConnProps, Constants.OUTPUT -> output_topic))
       .create()
 
     val activeConnectors = connectorClient.activeConnectors()

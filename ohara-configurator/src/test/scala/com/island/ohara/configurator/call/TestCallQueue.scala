@@ -20,7 +20,7 @@ class TestCallQueue extends With3Brokers with Matchers {
   private[this] val responseTopicName = random()
   private[this] val defaultServerBuilder =
     CallQueue.serverBuilder
-      .brokers(testUtil.brokers)
+      .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .groupId(UuidUtil.uuid())
@@ -32,7 +32,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     defaultServerBuilder.build[SourceRequest, Source]()
   private[this] val client: CallQueueClient[SourceRequest, Source] =
     CallQueue.clientBuilder
-      .brokers(testUtil.brokers)
+      .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .build[SourceRequest, Source]()
@@ -116,7 +116,7 @@ class TestCallQueue extends With3Brokers with Matchers {
   @Test
   def testSendInvalidRequest(): Unit = {
     val invalidClient: CallQueueClient[TopicInfoRequest, Source] = CallQueue.clientBuilder
-      .brokers(testUtil.brokers)
+      .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .expirationCleanupTime(3 seconds)
@@ -140,7 +140,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     val responseTopic = newTopic()
     val leaseCleanupFreq: Duration = 5 seconds
     val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue.clientBuilder
-      .brokers(testUtil.brokers)
+      .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopic)
       .responseTopic(responseTopic)
       .expirationCleanupTime(leaseCleanupFreq)
@@ -179,7 +179,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     val clientCount = 10
     val clients = 0 until clientCount map { _ =>
       CallQueue.clientBuilder
-        .brokers(testUtil.brokers)
+        .brokers(testUtil.brokersConnProps)
         .requestTopic(requestTopicName)
         .responseTopic(responseTopicName)
         .build[SourceRequest, Source]()
@@ -207,7 +207,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     val responseTopic = newTopic()
     val invalidClient: CallQueueClient[SourceRequest, Source] =
       CallQueue.clientBuilder
-        .brokers(testUtil.brokers)
+        .brokers(testUtil.brokersConnProps)
         .requestTopic(requestTopic)
         .responseTopic(responseTopic)
         .build[SourceRequest, Source]()
@@ -222,7 +222,7 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   private[this] def newTopic(): String = {
     val name = random()
-    KafkaUtil.createTopic(testUtil.brokers, name, 1, 1)
+    KafkaUtil.createTopic(testUtil.brokersConnProps, name, 1, 1)
     name
   }
 

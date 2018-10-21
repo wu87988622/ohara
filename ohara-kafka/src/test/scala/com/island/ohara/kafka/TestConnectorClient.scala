@@ -69,7 +69,12 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
     try {
       OharaTestUtil.await(() => testUtil.connectorClient.exist(connectorName), 50 seconds)
       val consumer =
-        Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+        Consumer
+          .builder()
+          .topicName(topicName)
+          .offsetFromBegin()
+          .brokers(testUtil.brokersConnProps)
+          .build[Array[Byte], Row]
       try {
         // try to receive some data from topic
         var result = consumer.poll(10 seconds, 1)

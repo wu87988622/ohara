@@ -26,23 +26,27 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
 
   def setupData(topicName: String): Unit = {
 
-    CloseOnce.doClose(KafkaClient(testUtil.brokers)) { client =>
+    CloseOnce.doClose(KafkaClient(testUtil.brokersConnProps)) { client =>
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
     }
 
-    CloseOnce.doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row])(
+    CloseOnce.doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row])(
       _.sender().key(ByteUtil.toBytes("key")).value(data).send(topicName))
 
     CloseOnce.doClose(
-      Consumer.builder().topicName(topicName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]) {
-      consumer =>
-        val records = consumer.poll(60 seconds, 1)
-        val row = records.head.value.get
-        row.size shouldBe data.size
-        row.cell("a").value shouldBe "abc"
-        row.cell("b").value shouldBe 123
-        row.cell("c").value shouldBe true
+      Consumer
+        .builder()
+        .topicName(topicName)
+        .offsetFromBegin()
+        .brokers(testUtil.brokersConnProps)
+        .build[Array[Byte], Row]) { consumer =>
+      val records = consumer.poll(60 seconds, 1)
+      val row = records.head.value.get
+      row.size shouldBe data.size
+      row.cell("a").value shouldBe "abc"
+      row.cell("b").value shouldBe 123
+      row.cell("c").value shouldBe true
     }
   }
 

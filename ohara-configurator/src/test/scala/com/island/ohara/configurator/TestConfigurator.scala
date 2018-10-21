@@ -22,15 +22,15 @@ import scala.concurrent.{ExecutionContext, Future}
 class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val configurator0 = {
     val topicName = random()
-    doClose(KafkaClient(testUtil.brokers))(
+    doClose(KafkaClient(testUtil.brokersConnProps))(
       _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
     Configurator
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(Store.builder().topicName(topicName).brokers(testUtil.brokers).buildBlocking[String, Any])
-      .kafkaClient(KafkaClient(testUtil.brokers))
-      .connectClient(ConnectorClient(testUtil.workers))
+      .store(Store.builder().topicName(topicName).brokers(testUtil.brokersConnProps).buildBlocking[String, Any])
+      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+      .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
   }
 
@@ -74,9 +74,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       // verify the topic from kafka
       if (client == client0) {
         // the "name" used to create topic is uuid rather than name of request
-        KafkaUtil.exist(testUtil.brokers, request.name) shouldBe false
-        KafkaUtil.exist(testUtil.brokers, response.uuid) shouldBe true
-        val topicInfo = KafkaUtil.topicInfo(testUtil.brokers, response.uuid).get
+        KafkaUtil.exist(testUtil.brokersConnProps, request.name) shouldBe false
+        KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
+        val topicInfo = KafkaUtil.topicInfo(testUtil.brokersConnProps, response.uuid).get
         topicInfo.numberOfPartitions shouldBe 1
         topicInfo.numberOfReplications shouldBe 1
       }
@@ -91,8 +91,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
                                   client.update[TopicInfoRequest, TopicInfo](response.uuid, anotherRequest))
       // verify the topic from kafka
       if (client == client0) {
-        KafkaUtil.exist(testUtil.brokers, response.uuid) shouldBe true
-        val topicInfo = KafkaUtil.topicInfo(testUtil.brokers, response.uuid).get
+        KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
+        val topicInfo = KafkaUtil.topicInfo(testUtil.brokersConnProps, response.uuid).get
         topicInfo.numberOfPartitions shouldBe 2
         topicInfo.numberOfReplications shouldBe 1
       }
@@ -105,8 +105,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       client.delete[TopicInfo](response.uuid)
       client.list[TopicInfo].size shouldBe 0
       if (client == client0) {
-        KafkaUtil.exist(testUtil.brokers, response.uuid) shouldBe false
-        KafkaUtil.topicInfo(testUtil.brokers, response.uuid).isEmpty shouldBe true
+        KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe false
+        KafkaUtil.topicInfo(testUtil.brokersConnProps, response.uuid).isEmpty shouldBe true
       }
 
       // test nonexistent data
@@ -418,8 +418,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testClusterInformation(): Unit = {
     // only test the configurator based on mini cluster
     val clusterInformation = client0.cluster[ClusterInformation]
-    clusterInformation.brokers shouldBe testUtil.brokers
-    clusterInformation.workers shouldBe testUtil.workers
+    clusterInformation.brokers shouldBe testUtil.brokersConnProps
+    clusterInformation.workers shouldBe testUtil.workersConnProps
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
     clusterInformation.supportedDataTypes shouldBe DataType.all
   }
@@ -442,7 +442,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     }
 
     def runDist() = {
-      doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
+      doClose(OharaTestUtil.workers()) { util =>
         Configurator.closeRunningConfigurator = false
         val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
         Future[Unit] {
@@ -453,9 +453,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
               Configurator.PORT_KEY,
               "0",
               Configurator.BROKERS_KEY,
-              util.brokers,
+              util.brokersConnProps,
               Configurator.WORKERS_KEY,
-              util.workers,
+              util.workersConnProps,
               Configurator.TOPIC_KEY,
               methodName
             ))

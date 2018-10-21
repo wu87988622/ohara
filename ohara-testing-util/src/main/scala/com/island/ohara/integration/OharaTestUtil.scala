@@ -1,8 +1,6 @@
 package com.island.ohara.integration
 
 import java.io.File
-import java.util
-import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.ConnectorClient
@@ -11,9 +9,6 @@ import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.util.SystemUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.admin.{AdminClient, NewTopic}
-import org.apache.kafka.common.KafkaFuture
 
 import scala.concurrent.duration._
 
@@ -37,8 +32,8 @@ import scala.concurrent.duration._
   * NOTED: the close() will shutdown all services including the passed consumers (see run())
   *
   */
-class OharaTestUtil private[integration] (componentBox: ComponentBox) extends CloseOnce {
-  private[this] var localDb: DataBase = _
+class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, workers: Workers) extends CloseOnce {
+  private[this] var localDb: Database = _
   private[this] var _connectorClient: ConnectorClient = _
   private[this] var localFtpServer: FtpServer = _
 
@@ -53,68 +48,18 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     *
     * @return brokers connection information
     */
-  def brokers: String = componentBox.brokerCluster.brokers
+  def brokersConnProps: String = brokers.connectionProps
 
   /**
     * Exposing the workers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
     *
     * @return workers connection information
     */
-  def workers: String = componentBox.workerCluster.workers
-
-  import scala.concurrent.duration._
-
-  private[this] def kafkaAdmin(): AdminClient = {
-    val props = new Properties()
-    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    AdminClient.create(props)
-  }
-
-  /**
-    * Create the topic and wait the procedure to succeed
-    *
-    * @param topic topic name
-    */
-  def createTopic(topic: String): Unit = {
-    CloseOnce.doClose(kafkaAdmin())(admin => admin.createTopics(util.Arrays.asList(new NewTopic(topic, 1, 1))))
-    if (!OharaTestUtil.await(() => exist(topic), 10 second))
-      throw new IllegalStateException(
-        s"$topic isn't created successfully after 10 seconds. Perhaps we should increase the wait time?")
-  }
-
-  /**
-    * @param topic topic name
-    * @return true if the topic exists
-    */
-  def exist(topic: String): Boolean = CloseOnce.doClose(kafkaAdmin())(
-    admin =>
-      admin
-        .listTopics()
-        .names()
-        .thenApply(new KafkaFuture.Function[util.Set[String], Boolean] {
-          override def apply(a: util.Set[String]): Boolean = a.contains(topic)
-        })
-        .get())
-
-  import scala.collection.JavaConverters._
-
-  /**
-    * topic name and partition infos
-    *
-    * @param topic topic name
-    * @return a pair of topic name and partition number
-    */
-  def partitions(topic: String): (String, Array[Int]) = CloseOnce.doClose(kafkaAdmin()) { admin =>
-    {
-      val desc = admin.describeTopics(util.Arrays.asList(topic)).all().get().get(topic)
-      (desc.name(), desc.partitions().asScala.map(_.partition()).toArray)
-    }
-  }
+  def workersConnProps: String = workers.connectionProps
 
   def connectorClient: ConnectorClient = {
     // throw exception if there is no worker cluster
-    workers
-    if (_connectorClient == null) _connectorClient = ConnectorClient(workers)
+    if (_connectorClient == null) _connectorClient = ConnectorClient(workers.connectionProps)
     _connectorClient
   }
 
@@ -138,8 +83,8 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
     _tmpDirectory.getAbsolutePath
   }
 
-  def dataBase: DataBase = {
-    if (localDb == null) localDb = DataBase()
+  def dataBase: Database = {
+    if (localDb == null) localDb = Database()
     localDb
   }
 
@@ -150,10 +95,12 @@ class OharaTestUtil private[integration] (componentBox: ComponentBox) extends Cl
 
   override protected def doClose(): Unit = {
     CloseOnce.close(_connectorClient)
-    componentBox.close()
     CloseOnce.close(localDb)
     CloseOnce.close(localFtpServer)
     if (_tmpDirectory != null) deleteFile(_tmpDirectory)
+    CloseOnce.close(workers)
+    CloseOnce.close(brokers)
+    CloseOnce.close(zk)
   }
 
 }
@@ -182,21 +129,35 @@ object OharaTestUtil {
     * Create a test util with multi-brokers.
     * NOTED: don't call the worker and hdfs service. otherwise you will get exception
     *
-    * @param numberOfBrokers the number of brokers you want to run locally
     * @return a test util
     */
-  def localBrokers(numberOfBrokers: Int) = new OharaTestUtil(new ComponentBox(numberOfBrokers, -1))
+  def brokers(): OharaTestUtil = {
+    var zk: Zookeepers = null
+    val brokers = Brokers {
+      if (zk == null) zk = Zookeepers()
+      zk
+    }
+    new OharaTestUtil(zk, brokers, null)
+  }
 
   /**
     * Create a test util with multi-brokers and multi-workers.
     * NOTED: don't call the hdfs service. otherwise you will get exception
     *
-    * @param numberOfBrokers the number of brokers you want to run locally
-    * @param numberOfWorkers the number of workers you want to run locally
     * @return a test util
     */
-  def localWorkers(numberOfBrokers: Int, numberOfWorkers: Int) = new OharaTestUtil(
-    new ComponentBox(numberOfBrokers, numberOfWorkers))
+  def workers(): OharaTestUtil = {
+    var zk: Zookeepers = null
+    var brokers: Brokers = null
+    val workers = Workers {
+      if (brokers == null) brokers = Brokers {
+        if (zk == null) zk = Zookeepers()
+        zk
+      }
+      brokers
+    }
+    new OharaTestUtil(zk, brokers, workers)
+  }
 
   /**
     * Create a test util with local file system.
@@ -204,7 +165,7 @@ object OharaTestUtil {
     *
     * @return a test util
     */
-  def localHDFS(): OharaTestUtil = new OharaTestUtil(new ComponentBox(-1, -1))
+  def localHDFS(): OharaTestUtil = new OharaTestUtil(null, null, null)
 
   val HELP_KEY = "--help"
   val TTL_KEY = "--ttl"
@@ -221,34 +182,13 @@ object OharaTestUtil {
       case Array(TTL_KEY, value) => ttl = value.toInt
       case _                     => throw new IllegalArgumentException(USAGE)
     }
-    doClose(OharaTestUtil.localWorkers(3, 3)) { util =>
+    doClose(OharaTestUtil.workers()) { util =>
       println("wait for the mini kafka cluster")
       TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokers} and workers:${util.workers}")
+      println(s"Succeed to run the mini brokers: ${util.brokersConnProps} and workers:${util.workersConnProps}")
       println(
         s"enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after $ttl seconds")
       TimeUnit.SECONDS.sleep(ttl)
     }
-  }
-}
-
-private[integration] class ComponentBox(numberOfBrokers: Int, numberOfWorkers: Int) extends CloseOnce {
-  private[this] def ports(brokers: Int): Seq[Int] = for (_ <- 0 until brokers) yield -1
-  private[this] val zk = if (numberOfBrokers > 0) newOrClose(new LocalZk()) else null
-  private[this] val localBrokerCluster =
-    if (numberOfBrokers > 0) newOrClose(new LocalKafkaBrokers(zk.connection, ports(numberOfBrokers))) else null
-  private[this] val localWorkerCluster =
-    if (numberOfWorkers > 0) newOrClose(new LocalKafkaWorkers(localBrokerCluster.brokers, ports(numberOfWorkers)))
-    else null
-
-  def brokerCluster: LocalKafkaBrokers = require(localBrokerCluster, "You haven't started brokers")
-  def workerCluster: LocalKafkaWorkers = require(localWorkerCluster, "You haven't started workers")
-
-  private[this] def require[T](obj: T, message: String) =
-    if (obj == null) throw new NullPointerException(message) else obj
-  override protected def doClose(): Unit = {
-    CloseOnce.close(localWorkerCluster)
-    CloseOnce.close(localBrokerCluster)
-    CloseOnce.close(zk)
   }
 }

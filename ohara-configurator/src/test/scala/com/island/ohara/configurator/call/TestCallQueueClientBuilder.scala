@@ -9,7 +9,7 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestCallQueueClientBuilder extends MediumTest with Matchers {
-  private[this] val testUtil = OharaTestUtil.localBrokers(1)
+  private[this] val testUtil = OharaTestUtil.brokers()
 
   @Test
   def testIncompleteArguments(): Unit = {
@@ -21,10 +21,10 @@ class TestCallQueueClientBuilder extends MediumTest with Matchers {
     an[NoSuchElementException] should be thrownBy builder.build()
     builder = builder.responseTopic(methodName)
     an[NoSuchElementException] should be thrownBy builder.build()
-    builder = builder.brokers(testUtil.brokers)
+    builder = builder.brokers(testUtil.brokersConnProps)
     // we haven't created the topic
     an[IllegalArgumentException] should be thrownBy builder.build()
-    KafkaUtil.createTopic(testUtil.brokers, methodName, 1, 1)
+    KafkaUtil.createTopic(testUtil.brokersConnProps, methodName, 1, 1)
     builder.build().close()
   }
 

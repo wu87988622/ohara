@@ -82,8 +82,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
                              timeout: Duration = 60 seconds,
                              size: Int = data.length): Seq[ConsumerRecord[Array[Byte], Row]] = {
     if (consumer == null)
-      consumer =
-        Consumer.builder().topicName(methodName).offsetFromBegin().brokers(testUtil.brokers).build[Array[Byte], Row]
+      consumer = Consumer
+        .builder()
+        .topicName(methodName)
+        .offsetFromBegin()
+        .brokers(testUtil.brokersConnProps)
+        .build[Array[Byte], Row]
 
     consumer.poll(timeout, size)
   }

@@ -2,7 +2,7 @@ package com.island.ohara.it
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.DatabaseClient
-import com.island.ohara.integration.DataBase
+import com.island.ohara.integration.Database
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rule.MediumTest
 import org.junit.{After, Test}
@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 
 class TestDatabaseClient extends MediumTest with Matchers {
 
-  private[this] val db = DataBase()
+  private[this] val db = Database()
 
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
 

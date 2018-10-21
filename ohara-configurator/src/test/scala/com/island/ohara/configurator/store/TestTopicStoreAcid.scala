@@ -14,11 +14,11 @@ import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
   private[this] val topicName = "TestTopicStoreAcid"
-  doClose(KafkaClient(testUtil.brokers))(
+  doClose(KafkaClient(testUtil.brokersConnProps))(
     _.topicCreator().numberOfReplications(1).numberOfPartitions(1).compacted().create(topicName))
 
   private[this] val store =
-    Store.builder().brokers(testUtil.brokers).topicName(topicName).buildBlocking[String, String]
+    Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String]
   private[this] val elapsedTime = 30 // second
   private[this] val readerCount = 5
   private[this] val updaterCount = 5

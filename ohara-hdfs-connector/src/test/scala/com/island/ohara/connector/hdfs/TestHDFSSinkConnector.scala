@@ -90,7 +90,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.tmpDirectory}/data"
-    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }
@@ -169,7 +169,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    doClose(Producer.builder().brokers(testUtil.brokers).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }
