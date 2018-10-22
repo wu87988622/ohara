@@ -380,7 +380,7 @@ class PipelineSourceFtpPage extends React.Component {
         const newSchema = {
           name,
           newName,
-          type,
+          dataType: type,
           order: _order,
         };
 
