@@ -102,7 +102,7 @@ class PipelineSourceFtpPage extends React.Component {
     currWriteTopic: {},
     fileEncodings: ['UTF-8'],
     currFileEncoding: {},
-    tasks: ['1-10', '11-20', '21-30'],
+    tasks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
     currTask: {},
     schema: [],
     isDeleteSchemaModalActive: false,
