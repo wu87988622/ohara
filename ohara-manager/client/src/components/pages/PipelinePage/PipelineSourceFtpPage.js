@@ -531,6 +531,7 @@ class PipelineSourceFtpPage extends React.Component {
             handleCancel={this.handleDeleteSchemaModalClose}
             handleConfirm={this.handleSchemaDelete}
             message="Are you sure you want to delete this schema? This action cannot be redo!"
+            isDelete
           />
 
           <Modal
