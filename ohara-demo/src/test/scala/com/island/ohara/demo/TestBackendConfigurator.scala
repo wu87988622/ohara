@@ -12,7 +12,7 @@ class TestBackendConfigurator extends LargeTest with Matchers {
   def testConfigurator(): Unit = {
     Backend.run(
       0,
-      (configurator, db) => {
+      (configurator, _, _) => {
         val client = ConfiguratorClient("localhost", configurator.port)
         try {
           // it should pass

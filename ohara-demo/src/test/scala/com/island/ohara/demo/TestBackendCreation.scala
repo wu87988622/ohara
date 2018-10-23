@@ -30,7 +30,7 @@ class TestBackendCreation extends LargeTest with Matchers {
   private[this] def testCreation(creations: Seq[Creation]): Unit = {
     Backend.run(
       0,
-      (configurator, db) => {
+      (configurator, db, _) => {
         implicit val actorSystem: ActorSystem = ActorSystem(methodName)
         try creations.foreach(creation => {
           Await.result(
