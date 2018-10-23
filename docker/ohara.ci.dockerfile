@@ -3,6 +3,7 @@ FROM ubuntu:18.04 AS deps
 ARG BITBUCKET_USER=""
 ARG BITBUCKET_PASSWORD=""
 ARG GRADLE_VERSION=4.10.2
+ARG BRANCH="master"
 
 # update
 RUN apt-get -y update
@@ -11,7 +12,7 @@ RUN apt-get -y update
 RUN apt-get -q install --no-install-recommends -y git
 RUN apt-get -q install --no-install-recommends -y ca-certificates
 WORKDIR /testpatch
-RUN git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
 
 # install build tool
 RUN apt-get -q install --no-install-recommends -y apt-utils

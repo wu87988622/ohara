@@ -3,6 +3,7 @@ FROM ubuntu:18.04 AS deps
 ARG BITBUCKET_USER=""
 ARG BITBUCKET_PASSWORD=""
 ARG GRADLE_VERSION=4.10.2
+ARG BRANCH="master"
 
 # update
 RUN apt-get -y update
@@ -11,7 +12,7 @@ RUN apt-get -y update
 RUN apt-get -q install --no-install-recommends -y git
 RUN apt-get -q install --no-install-recommends -y ca-certificates
 WORKDIR /testpatch
-RUN git clone https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
 
 # install build tool
 RUN apt-get -q install --no-install-recommends -y apt-utils
@@ -50,7 +51,7 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 WORKDIR /testpatch/ohara
 RUN git checkout $BRANCH
 # Running this test case make gradle download mysql binary code
-RUN gradle clean ohara-configurator:test --tests *TestDatabaseClient -PskipManager
+RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
@@ -58,6 +59,7 @@ RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 
 FROM ubuntu:18.04
 
 ARG USER=ohara
+ARG TINI_VERSION=v0.18.0
 
 # update
 RUN apt-get -y update
@@ -68,24 +70,34 @@ RUN apt-get -q install --no-install-recommends -y openjdk-8-jdk
 RUN apt-get -q install --no-install-recommends -y libaio1
 RUN apt-get -q install --no-install-recommends -y libnuma1
 
+# add user
+RUN groupadd $USER
+RUN useradd -ms /bin/bash -g $USER $USER
+
 # clone ohara binary
 RUN mkdir /opt/ohara
 COPY --from=deps /opt/ohara /opt/ohara
 RUN ln -s $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*") /opt/ohara/default
+# (TODO) manager has got to write something to binary folder...we should keep the permission if OHARA-669 is resolved
+RUN chown -R $USER:$USER /opt/ohara
 
-# add user
-RUN groupadd $USER
-RUN useradd -ms /bin/bash -g $USER $USER
+# clone database
+RUN mkdir -p /home/$USER/.embedmysql
+COPY --from=deps /root/.embedmysql /home/$USER/.embedmysql
+RUN chown -R $USER:$USER /home/$USER/.embedmysql
+
+# Add Tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 # change to user
 USER $USER
 WORKDIR /home/$USER
 
-# clone database
-RUN mkdir -p /home/$USER/.embedmysql
-COPY --from=deps /root/.embedmysql /home/$USER/.embedmysql
-
 # Set ENV
 ENV OHARA_HOME=/opt/ohara/default
 ENV PATH=$PATH:$OHARA_HOME/bin
 
+ENTRYPOINT ["/tini", "--", "/opt/ohara/default/bin/ohara", "start"]
+
+CMD ["help"]

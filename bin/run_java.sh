@@ -43,4 +43,4 @@ do
 done
 
 #----------[EXECUTION]----------#
-$JAVA $CLASSPATH $LOG4J $CLASS $ARGS
+exec $JAVA $CLASSPATH $LOG4J $CLASS $ARGS

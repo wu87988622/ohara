@@ -11,18 +11,30 @@ done
 BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 PROJECT_HOME="$(dirname "$BIN_DIR")"
 
-if [ "$1" == "manager" ]; then
+service=$1
+shift 1
+ARGS=""
+i=0
+while [ -n "$1" ]
+do
+  ARGS=$ARGS" "$1
+  i=$(($i+1))
+  shift
+done
+
+if [ "$service" == "manager" ]; then
   cd "$PROJECT_HOME/manager"
-  yarn setup && yarn start
-  bash
+  # setup dependencies. TODO: remove this if OHARA-590 is resolved
+  yarn setup
+  exec node index.js $ARGS
 else
-  if [ "$1" == "configurator" ]; then
+  if [ "$service" == "configurator" ]; then
     CLASS="com.island.ohara.configurator.Configurator"
     shift 1
-  elif [ "$1" == "backend" ]; then
+  elif [ "$service" == "backend" ]; then
     CLASS="com.island.ohara.demo.Backend"
     shift 1
-  elif [ "$1" == "help" ]; then
+  elif [ "$service" == "help" ]; then
     echo "Usage:"
     echo "Option                                   Description"
     echo "-----------                              -----------"
@@ -38,15 +50,6 @@ else
     echo "Usage: (configurator|backend|manager|help) [<args>]"
     exit 1
   fi
-  ARGS=""
-  i=0
-  while [ -n "$1" ]
-  do
-    ARGS=$ARGS" "$1
-    i=$(($i+1))
-    shift
-  done
-
   #----------[EXECUTION]----------#
-  "$BIN_DIR/run_java.sh" $CLASS $ARGS
+  exec "$BIN_DIR/run_java.sh" $CLASS $ARGS
 fi

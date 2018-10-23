@@ -20,7 +20,7 @@ a powerful ETL tool
 ### Running all backend-services by docker
 (3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 ```
-docker run -ti --rm -p 12345:12345 islandsystems/ohara:backend ohara start backend --port 12345 --ttl 123
+docker run --rm -p 12345:12345 islandsystems/ohara:backend backend --port 12345 --ttl 123
 ```
 * port: bound by Configurator (default is random)
 * ttl: time to terminate backend-service (default is 365 days)
@@ -29,7 +29,7 @@ The backend image is not in production release. Hence, there is no any guarantee
 
 ### Running configurator by docker
 ```
-docker run -ti --rm -p 12345:12345 islandsystems/ohara:0.1-SNAPSHOT ohara start configurator --port 12345
+docker run --rm -p 12345:12345 islandsystems/ohara:0.1-SNAPSHOT configurator --port 12345
 ```
 * port: bound by Configurator (default is random)
 * brokers: broker information (ex. host0:port0,host1:port1)
@@ -40,8 +40,10 @@ stored in memory. And connector-related commands are executed by nothing.
 
 ### Running manager by docker
 ```
-docker run -ti --rm -p 5050:5050 -e "CONFIGURATOR_API=http://localhost:9999/v0" islandsystems/ohara:0.1-SNAPSHOT start-service.sh manager
+docker run --rm -p 5050:5050 islandsystems/ohara:0.1-SNAPSHOT manager --port 5050 --configurator http://localhost:9999/v0
 ```
+* port: bound by manager (default is 5050)
+* configurator: basic form of restful API of configurator
 
 ### Running all tests
 

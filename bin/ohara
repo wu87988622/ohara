@@ -37,4 +37,4 @@ done
 
 # load envs
 . "$BIN_DIR/ohara-env.sh"
-$SCRIPT $ARGS
+exec $SCRIPT $ARGS
