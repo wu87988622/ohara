@@ -25,7 +25,7 @@ class SchemaTable extends React.Component {
         order: PropTypes.number,
         name: PropTypes.string,
         newName: PropTypes.string,
-        type: PropTypes.string,
+        dataType: PropTypes.string,
       }),
     ),
     types: PropTypes.array,
@@ -43,7 +43,7 @@ class SchemaTable extends React.Component {
       handleTypeChange,
       handleUp,
       handleDown,
-      types,
+      dataTypes,
     } = this.props;
 
     return (
@@ -52,7 +52,7 @@ class SchemaTable extends React.Component {
           <tr>{headers.map(header => <th key={header}>{header}</th>)}</tr>
         </thead>
         <tbody>
-          {schema.map(({ order, name, newName, type: currType }) => {
+          {schema.map(({ order, name, newName, dataType: currType }) => {
             return (
               <tr key={order}>
                 <td>{order}</td>
@@ -63,8 +63,8 @@ class SchemaTable extends React.Component {
                     onChange={e => handleTypeChange(e, order)}
                     value={currType}
                   >
-                    {types.map(type => {
-                      return <option key={type}>{type}</option>;
+                    {dataTypes.map(dataType => {
+                      return <option key={dataType}>{dataType}</option>;
                     })}
                   </select>
                 </td>

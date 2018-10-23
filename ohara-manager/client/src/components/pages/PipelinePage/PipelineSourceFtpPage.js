@@ -311,11 +311,11 @@ class PipelineSourceFtpPage extends React.Component {
 
     this.setState(({ schema }) => {
       const idx = schema.findIndex(schema => schema.order === order);
-      const { value: type } = e.target;
+      const { value: dataType } = e.target;
 
       const update = {
         ...schema[idx],
-        type,
+        dataType,
       };
 
       const _schema = [
@@ -737,7 +737,7 @@ class PipelineSourceFtpPage extends React.Component {
           <SchemaTable
             headers={this.schemaHeader}
             schema={schema}
-            types={this.schemaTypes}
+            dataTypes={this.schemaTypes}
             handleTypeChange={this.handleTypeChange}
             handleModalOpen={this.handleDeleteSchemaModalOpen}
             handleUp={this.handleUp}
