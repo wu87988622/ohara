@@ -25,8 +25,10 @@ class HDFSSinkTask extends RowSinkTask {
     hdfsWriter.createPartitionDataWriters(partitions)
   }
 
-  override protected def _put(records: Seq[RowSinkRecord]): Unit = {
+  override protected def _put(records: Seq[RowSinkRecord]): Unit = try {
     hdfsWriter.write(records)
+  } catch {
+    case e: Throwable => logger.error("failed to write to HDFS", e)
   }
 
   override protected def _preCommit(offsets: Map[TopicPartition, TopicOffset]): Map[TopicPartition, TopicOffset] = {
