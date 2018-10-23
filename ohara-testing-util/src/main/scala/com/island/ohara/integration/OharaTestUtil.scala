@@ -36,11 +36,6 @@ class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, work
   private[this] var localDb: Database = _
   private[this] var _connectorClient: ConnectorClient = _
   private[this] var localFtpServer: FtpServer = _
-
-  /**
-    * NOTED: DON'T close this object since we share the same object with other threads.
-    */
-  private[this] var localFs: FileSystem = _
   private[this] var _tmpDirectory: File = _
 
   /**
@@ -68,10 +63,7 @@ class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, work
     *
     * @return
     */
-  def fileSystem: FileSystem = {
-    if (localFs == null) localFs = FileSystem.getLocal(new Configuration())
-    localFs
-  }
+  def fileSystem: FileSystem = FileSystem.get(new Configuration())
 
   /**
     *Get to temp dir path

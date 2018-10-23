@@ -51,4 +51,9 @@ test {
   String DB_SERVER = "ohara.it.db"
   if(project.hasProperty(DB_SERVER)) environment DB_SERVER, project.getProperty(DB_SERVER)
 
+  String BROKERS = "ohara.it.brokers"
+  if(project.hasProperty(BROKERS)) environment BROKERS, project.getProperty(BROKERS)
+
+  String WORKERS = "ohara.it.workers"
+  if(project.hasProperty(WORKERS)) environment WORKERS, project.getProperty(WORKERS)
 }
