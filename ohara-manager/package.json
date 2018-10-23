@@ -11,6 +11,7 @@
     "setup": "yarn && yarn --cwd client setup",
     "setup:prod": "yarn --prod && yarn --cwd client setup:prod",
     "start": "forever start index.js",
+    "start:prod": "node index.js",
     "dev": "nodemon index.js --exec 'yarn lint:server && node'",
     "start:client": "BROWSER=none yarn --cwd client start:ci",
     "lint": "yarn lint:server && yarn lint:client",

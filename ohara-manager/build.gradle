@@ -6,9 +6,9 @@ defaultTasks 'clean', 'build'
 task clean {
   if(!project.hasProperty('skipManager')) {
     doLast {
-      // we have to install "cleanup" process first...
+      // Need to install node packages before running "cleanup" process
       exec {
-        commandLine 'yarn', 'setup'
+        commandLine 'yarn'
       }
       exec {
         commandLine 'yarn', 'clean:process'
@@ -24,7 +24,7 @@ task test {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'setup'
+        commandLine 'yarn'
       }
       exec {
         commandLine 'yarn', 'test:ci'
@@ -50,9 +50,9 @@ task build {
 task runManager {
   description 'run a manager'
   doLast {
-    // we have to install the "clean" process
+    // Need to install node packages before running the "cleanup" process
     exec {
-      commandLine 'yarn', 'setup'
+      commandLine 'yarn'
     }
     exec {
       commandLine 'yarn', 'clean:process'
@@ -64,12 +64,15 @@ task runManager {
       commandLine 'yarn', 'setup'
     }
     exec {
+      // TODO: Chia please help refactor the following commands if needed, thanks! -- Joshua OCT. 22
       String configuratorPort = 9999
       if(project.hasProperty('configuratorPort')) configuratorPort = "${project.getProperty('configuratorPort')}"
       String configuratorHost = "localhost"
       if(project.hasProperty('configuratorHost')) configuratorHost = "${project.getProperty('configuratorHost')}"
       environment "CONFIGURATOR_API", "http://" + configuratorHost + ":" + configuratorPort + "/v0"
-      commandLine 'yarn', 'start'
+
+      // Run the gradle command like this: gradle runManager -PconfiguratorHost=http://10.1.0.161:7777/v0
+      commandLine 'yarn', 'start:prod', '--configurator', configuratorHost
     }
   }
 }
