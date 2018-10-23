@@ -163,10 +163,12 @@ object Configurator {
     }
     var standalone = false
     val configurator =
-      if (brokers.isEmpty || workers.isEmpty) {
+      if (brokers.isEmpty && workers.isEmpty) {
         standalone = true
         Configurator.builder().noCluster.hostname(hostname).port(port).build()
-      } else {
+      } else if (brokers.isEmpty ^ workers.isEmpty)
+        throw new IllegalArgumentException(s"brokers:$brokers workers:$workers")
+      else {
         val kafkaClient = KafkaClient(brokers.get)
         kafkaClient
           .topicCreator()
