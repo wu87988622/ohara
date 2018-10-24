@@ -80,8 +80,8 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             }
           } ~ path(START_COMMAND) {
           put {
+            val source = store.data[Source](uuid)
             if (connectorClient.nonExist(uuid)) {
-              val source = store.data[Source](uuid)
               if (source.topics.isEmpty) throw new IllegalArgumentException("topics is required")
               connectorClient
                 .connectorCreator()
@@ -101,8 +101,8 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
           }
         } ~ path(STOP_COMMAND) {
           put {
+            val source = store.data[Source](uuid)
             if (connectorClient.exist(uuid)) {
-              val source = store.data[Source](uuid)
               connectorClient.delete(source.uuid)
               // update the stats manually. Connector request is executed async so we can't get the "real-time" state of
               // connector from kafka
