@@ -417,16 +417,21 @@ object ConfiguratorJson {
   sealed trait ClusterCommandFormat[T] {
     def format(address: String): String
   }
+  final case class ConnectorInfo(className: String, version: String)
+  implicit val ConnectorInfo_JSON_FORMAT: RootJsonFormat[ConnectorInfo] = jsonFormat2(ConnectorInfo)
 
   final case class ClusterInformation(brokers: String,
                                       workers: String,
+                                      sources: Seq[ConnectorInfo],
+                                      sinks: Seq[ConnectorInfo],
                                       supportedDatabases: Seq[String],
                                       supportedDataTypes: Seq[DataType])
-  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat4(ClusterInformation)
+  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat6(ClusterInformation)
   implicit val CLUSTER_INFORMATION_COMMAND_FORMAT: ClusterCommandFormat[ClusterInformation] =
     new ClusterCommandFormat[ClusterInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$CLUSTER_PATH"
     }
+
   //------------------------------------------------[ERROR]------------------------------------------------//
   final case class Error(code: String, message: String, stack: String)
   implicit val ERROR_JSON_FORMAT: RootJsonFormat[Error] = new RootJsonFormat[Error] {

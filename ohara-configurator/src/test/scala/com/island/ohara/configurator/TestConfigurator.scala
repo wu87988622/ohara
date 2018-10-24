@@ -422,6 +422,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clusterInformation.workers shouldBe testUtil.workersConnProps
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
     clusterInformation.supportedDataTypes shouldBe DataType.all
+    clusterInformation.sources.filter(x => x.className.contains("com.island")).length > 0 shouldBe true
+    clusterInformation.sinks.filter(x => x.className.contains("com.island")).length > 0 shouldBe true
   }
 
   @Test
