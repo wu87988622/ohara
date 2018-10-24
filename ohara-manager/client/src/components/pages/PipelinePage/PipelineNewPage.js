@@ -217,8 +217,10 @@ class PipelineNewPage extends React.Component {
     this.setState({ hasChanges: update });
   };
 
-  handleFocusOut = async () => {
-    this.updatePipeline();
+  handleFocusOut = async isUpdate => {
+    if (isUpdate) {
+      return this.updatePipeline();
+    }
   };
 
   updatePipeline = async () => {
@@ -247,9 +249,9 @@ class PipelineNewPage extends React.Component {
       pipelines,
     } = this.state;
 
-    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
-
     const pipelineTitle = _.get(pipelines, 'name', '');
+
+    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
 
     if (isRedirect) {
       return <Redirect to={PIPELINE} />;

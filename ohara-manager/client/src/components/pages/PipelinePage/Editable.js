@@ -17,7 +17,7 @@ class EditableLabel extends React.Component {
     isEditing: false,
   };
 
-  handleFocus = () => {
+  handleFocus = (isUpdate = true) => {
     const { handleFocusOut, title } = this.props;
     const { isEditing } = this.state;
 
@@ -25,10 +25,23 @@ class EditableLabel extends React.Component {
       if (_.isEmpty(title)) {
         return toastr.error('Pipeline title cannot be empty!');
       }
-      handleFocusOut(title);
+      handleFocusOut(isUpdate);
     }
 
-    this.setState(({ isEditing }) => ({ isEditing: !isEditing }));
+    this.setState({ isEditing: !isEditing });
+  };
+
+  handleKeyDown = e => {
+    const enterKey = 13;
+    const escKey = 27;
+
+    if (e.keyCode === enterKey) {
+      return this.handleFocus();
+    }
+
+    if (e.keyCode === escKey) {
+      return this.handleFocus(false);
+    }
   };
 
   render() {
@@ -40,6 +53,7 @@ class EditableLabel extends React.Component {
         <Input
           value={title}
           onChange={handleChange}
+          onKeyDown={this.handleKeyDown}
           onBlur={this.handleFocus}
           width="400px"
           autoFocus
