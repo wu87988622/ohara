@@ -62,28 +62,24 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
           }
         } ~ get(complete(store.data[Source].map(update(_)).toSeq)) // list
       } ~ pathPrefix(Segment) { uuid =>
-        pathEnd {
-          // get
-          get(complete(update(store.data[Source](uuid)))) ~
-            // delete
-            delete {
-              assertNotRelated2Pipeline(uuid)
-              if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
-              complete(store.remove[Source](uuid))
-            } ~
-            // update
-            put {
-              entity(as[SourceRequest]) { req =>
-                println(s"[CHIA] update $uuid by $req")
-                if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
-                val newData = toRes(uuid, verify(req))
-                store.update(newData)
-                complete(newData)
-              }
-            }
-        } ~ path(START_COMMAND) {
+        // get
+        get(complete(update(store.data[Source](uuid)))) ~
+          // delete
+          delete {
+            assertNotRelated2Pipeline(uuid)
+            if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
+            complete(store.remove[Source](uuid))
+          } ~
+          // update
           put {
-            println("[CHIA] start")
+            entity(as[SourceRequest]) { req =>
+              if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
+              val newData = toRes(uuid, verify(req))
+              store.update(newData)
+              complete(newData)
+            }
+          } ~ path(START_COMMAND) {
+          put {
             val source = store.data[Source](uuid)
             if (connectorClient.nonExist(uuid)) {
               if (source.topics.isEmpty) throw new IllegalArgumentException("topics is required")
