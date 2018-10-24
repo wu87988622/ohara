@@ -25,8 +25,8 @@ done
 if [ "$service" == "manager" ]; then
   cd "$PROJECT_HOME/manager"
   # setup dependencies. TODO: remove this if OHARA-590 is resolved
-  yarn setup
-  exec node index.js $ARGS
+  yarn setup:prod
+  exec yarn start:prod $ARGS
 else
   if [ "$service" == "configurator" ]; then
     CLASS="com.island.ohara.configurator.Configurator"
