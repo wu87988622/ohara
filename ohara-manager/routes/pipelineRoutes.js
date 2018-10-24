@@ -92,6 +92,20 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.put('/api/sources/:uuid/start', (req, res) => {
+    axios
+      .put(`${API_ROOT}/sources/${req.params.uuid}/start`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.put('/api/sources/:uuid/stop', (req, res) => {
+    axios
+      .put(`${API_ROOT}/sources/${req.params.uuid}/stop`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   app.post('/api/sinks/create', (req, res) => {
     axios
       .post(`${API_ROOT}/sinks`, req.body)
@@ -116,6 +130,20 @@ module.exports = app => {
   app.get('/api/sinks/:uuid', (req, res) => {
     axios
       .get(`${API_ROOT}/sinks/${req.params.uuid}`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.put('/api/sinks/:uuid/start', (req, res) => {
+    axios
+      .put(`${API_ROOT}/sinks/${req.params.uuid}/start`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
+  app.put('/api/sinks/:uuid/stop', (req, res) => {
+    axios
+      .put(`${API_ROOT}/sinks/${req.params.uuid}/stop`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });

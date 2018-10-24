@@ -26,6 +26,7 @@ const props = {
   iconKeys: {
     jdbcSource: 'com.island.ohara.connector.jdbc.JDBCSourceConnector',
     ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
+    hdfsSink: 'com.island.ohara.connector.hdfs.HDFSSinkConnector',
   },
 };
 
@@ -49,7 +50,7 @@ describe('<Toolbar />', () => {
   it('renders hadoop icon', () => {
     const hadoop = wrapper.find(getTestById('toolbar-sink'));
     expect(hadoop.length).toBe(1);
-    expect(hadoop.prop('data-id')).toBe('sink');
+    expect(hadoop.prop('data-id')).toBe(props.iconKeys.hdfsSink);
     expect(hadoop.find('HadoopIconWrapper').length).toBe(1);
   });
 

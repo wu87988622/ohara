@@ -80,11 +80,9 @@ describe('<PipelinePage />', () => {
   it('renders <DataTable />', () => {
     wrapper.setState({ pipelines });
 
-    const table = wrapper.find('DataTable');
-    const _props = table.props();
+    const table = wrapper.find('Table');
 
     expect(table.length).toBe(1);
-    expect(_props.align).toBe('center');
 
     const trs = table.find('tr');
     expect(trs.length).toBe(pipelines.length);

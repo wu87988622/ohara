@@ -15,11 +15,16 @@ import { H2 } from 'common/Headings';
 import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import { lightBlue, blue, red } from 'theme/variables';
+import { ICON_KEYS } from 'constants/pipelines';
+import { lightBlue, blue, red, redHover, trBgColor } from 'theme/variables';
 import {
   createPipeline,
   fetchPipelines,
   deletePipeline,
+  startSource,
+  startSink,
+  stopSource,
+  stopSink,
 } from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
@@ -42,6 +47,16 @@ const NewPipelineBtn = styled(Button)`
 
 NewPipelineBtn.displayName = 'NewPipelineBtn';
 
+const Table = styled(DataTable)`
+  text-align: center;
+
+  .is-running {
+    background: ${trBgColor};
+  }
+`;
+
+Table.displayName = 'Table';
+
 const LinkIcon = styled(Link)`
   color: ${lightBlue};
 
@@ -50,8 +65,22 @@ const LinkIcon = styled(Link)`
   }
 `;
 
-const DeleteIcon = styled.a`
+const StartStopIcon = styled.button`
+  color: ${({ status }) => (status === 'Running' ? red : lightBlue)};
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover {
+    color: ${({ status }) => (status === 'Running' ? redHover : blue)};
+  }
+`;
+
+const DeleteIcon = styled.button`
   color: ${lightBlue};
+  border: 0;
+  font-size: 20px;
   cursor: pointer;
 
   &:hover {
@@ -82,7 +111,8 @@ class PipelinePage extends React.Component {
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
-      this.setState({ pipelines });
+      const _pipelines = this.addPipelineStatus(pipelines);
+      this.setState({ pipelines: _pipelines });
     }
   };
 
@@ -94,6 +124,23 @@ class PipelinePage extends React.Component {
       this.setState({ topics: result });
       this.setCurrentTopic();
     }
+  };
+
+  addPipelineStatus = pipelines => {
+    const _pipelines = pipelines.reduce((acc, pipeline) => {
+      const status = pipeline.objects.filter(p => p.state === 'RUNNING');
+      const _status = status.length >= 2 ? 'Running' : 'Stopped';
+
+      return [
+        ...acc,
+        {
+          ...pipeline,
+          status: _status,
+        },
+      ];
+    }, []);
+
+    return _pipelines;
   };
 
   handleSelectChange = ({ target }) => {
@@ -135,6 +182,81 @@ class PipelinePage extends React.Component {
 
   handleSelectTopicModalClose = () => {
     this.setState({ isSelectTopicModalActive: false });
+  };
+
+  handleStartStopBtnClick = async uuid => {
+    const target = this.state.pipelines.filter(
+      pipeline => pipeline.uuid === uuid,
+    );
+
+    if (_.isEmpty(target)) return;
+
+    const { objects: connectors, status } = target[0];
+
+    if (!status) {
+      toastr.error(
+        'Failed to start the pipeline, please check your connectors settings',
+      );
+
+      return;
+    }
+
+    if (status === 'Stopped') {
+      const res = await this.startConnectors(connectors);
+      const isSuccess = res.filter(r => r.data.isSuccess);
+      this.handleConnectorResponse(isSuccess, 'started');
+    } else {
+      const res = await this.stopConnectors(connectors);
+      const isSuccess = res.filter(r => r.data.isSuccess);
+      this.handleConnectorResponse(isSuccess, 'stopped');
+    }
+  };
+
+  handleConnectorResponse = (isSuccess, action) => {
+    if (isSuccess.length >= 2) {
+      toastr.success(`Pipeline has been successfully ${action}!`);
+      this.fetchPipelines();
+    } else {
+      toastr.error(
+        'Cannot complete your action, please check your connector settings',
+      );
+    }
+  };
+
+  startConnectors = async connectors => {
+    const { sources, sinks } = this.getConnectors(connectors);
+    const sourcePromise = sources.map(source => startSource(source));
+    const sinkPromise = sinks.map(sink => startSink(sink));
+    return Promise.all([...sourcePromise, ...sinkPromise]).then(
+      result => result,
+    );
+  };
+
+  stopConnectors = connectors => {
+    const { sources, sinks } = this.getConnectors(connectors);
+    const sourcePromise = sources.map(source => stopSource(source));
+    const sinkPromise = sinks.map(sink => stopSink(sink));
+    return Promise.all([...sourcePromise, ...sinkPromise]).then(
+      result => result,
+    );
+  };
+
+  getConnectors = connectors => {
+    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
+
+    const sources = connectors
+      .filter(({ kind }) => {
+        return kind === jdbcSource || kind === ftpSource;
+      })
+      .map(({ uuid }) => uuid);
+
+    const sinks = connectors
+      .filter(({ kind }) => {
+        return kind === hdfsSink;
+      })
+      .map(({ uuid }) => uuid);
+
+    return { sources, sinks };
   };
 
   handleDeletePipelineModalOpen = uuid => {
@@ -268,24 +390,27 @@ class PipelinePage extends React.Component {
               />
             </TopWrapper>
             <Box>
-              <DataTable headers={this.headers} align="center">
+              <Table headers={this.headers}>
                 {pipelines.map((pipeline, idx) => {
                   const { uuid, name, status } = pipeline;
+                  const trCls = status === 'Running' ? 'is-running' : '';
                   const startStopCls =
-                    status === 'running' ? 'fa-stop-circle' : 'fa-play-circle';
+                    status === 'Running' ? 'fa-stop-circle' : 'fa-play-circle';
 
                   const editUrl = this.getEditUrl(pipeline);
 
-                  // TODO: replace the Link URLs with the correct ones
                   return (
-                    <tr key={uuid}>
+                    <tr key={uuid} className={trCls}>
                       <td>{idx}</td>
                       <td>{name}</td>
                       <td>{status}</td>
                       <td className="has-icon">
-                        <LinkIcon to="/">
+                        <StartStopIcon
+                          status={status}
+                          onClick={() => this.handleStartStopBtnClick(uuid)}
+                        >
                           <i className={`far ${startStopCls}`} />
-                        </LinkIcon>
+                        </StartStopIcon>
                       </td>
 
                       <td className="has-icon">
@@ -305,7 +430,7 @@ class PipelinePage extends React.Component {
                     </tr>
                   );
                 })}
-              </DataTable>
+              </Table>
             </Box>
           </Wrapper>
         </React.Fragment>

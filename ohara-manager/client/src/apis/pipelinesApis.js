@@ -227,3 +227,63 @@ export const fetchSink = async uuid => {
     handleError(err);
   }
 };
+
+export const startSource = async uuid => {
+  try {
+    const res = await axios.put(`/api/sources/${uuid}/start`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const stopSource = async uuid => {
+  try {
+    const res = await axios.put(`/api/sources/${uuid}/stop`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const startSink = async uuid => {
+  try {
+    const res = await axios.put(`/api/sinks/${uuid}/start`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const stopSink = async uuid => {
+  try {
+    const res = await axios.put(`/api/sinks/${uuid}/stop`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

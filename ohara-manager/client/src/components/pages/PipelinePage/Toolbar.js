@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/helpers';
+import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 import { HadoopIcon } from 'common/Icons';
 import {
   lightestBlue,
@@ -108,11 +109,6 @@ class Toolbar extends React.Component {
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
-    iconMaps: PropTypes.shape({
-      source: PropTypes.string,
-      topic: PropTypes.string,
-      sink: PropTypes.string,
-    }).isRequired,
   };
 
   checkExist = (type, graph) => {
@@ -130,10 +126,12 @@ class Toolbar extends React.Component {
   };
 
   update = e => {
-    const { updateGraph, iconMaps, graph } = this.props;
+    const { updateGraph, graph } = this.props;
 
     let type = _.get(e, 'target.dataset.id', null);
-    type = type ? type : 'sink';
+
+    // TODO: replace the svg icon with the HTML one and so we'll get the target.dataset.id back
+    type = type ? type : ICON_KEYS.hdfsSink;
 
     const isTypeExist = this.checkExist(type, graph);
 
@@ -143,7 +141,7 @@ class Toolbar extends React.Component {
         type,
         to: '?',
         isActive: false,
-        icon: iconMaps[type],
+        icon: ICON_MAPS[type],
         id: uuid4(),
       };
 
@@ -152,8 +150,8 @@ class Toolbar extends React.Component {
   };
 
   render() {
-    const { hasChanges, iconKeys } = this.props;
-    const { jdbcSource, ftpSource } = iconKeys;
+    const { hasChanges } = this.props;
+    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
     return (
       <ToolbarWrapper>
         <Sources>
@@ -173,7 +171,7 @@ class Toolbar extends React.Component {
         <Sinks>
           <HadoopIconContainer
             onClick={this.update}
-            data-id="sink"
+            data-id={hdfsSink}
             data-testid="toolbar-sink"
           >
             <HadoopIconWrapper width={28} height={28} fillColor={lightBlue} />

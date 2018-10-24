@@ -23,6 +23,8 @@ export const gray = 'gray';
 export const lightGray = '#ccc';
 export const lighterGray = '#ececf0';
 
+export const trBgColor = '#f9fbff';
+
 // Units
 export const radiusNormal = '4px';
 export const radiusCompact = '2px';

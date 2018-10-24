@@ -22,6 +22,7 @@ import { fetchTopic } from 'apis/topicApis';
 import { H2 } from 'common/Headings';
 import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW } from 'constants/documentTitles';
+import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 import {
   fetchPipeline,
   deletePipeline,
@@ -50,18 +51,6 @@ class PipelineNewPage extends React.Component {
     isModalActive: false,
     hasChanges: false,
     pipelines: {},
-  };
-
-  iconKeys = {
-    jdbcSource: 'com.island.ohara.connector.jdbc.JDBCSourceConnector',
-    ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
-  };
-
-  iconMaps = {
-    [this.iconKeys.jdbcSource]: 'fa-database',
-    [this.iconKeys.ftpSource]: 'fa-upload',
-    topic: 'fa-list-ul',
-    sink: 'icon-hadoop',
   };
 
   componentDidMount() {
@@ -143,7 +132,7 @@ class PipelineNewPage extends React.Component {
   };
 
   getIcon = type => {
-    return this.iconMaps[type];
+    return ICON_MAPS[type];
   };
 
   loadGraph = pipelines => {
@@ -258,7 +247,7 @@ class PipelineNewPage extends React.Component {
       pipelines,
     } = this.state;
 
-    const { jdbcSource, ftpSource } = this.iconKeys;
+    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
 
     const pipelineTitle = _.get(pipelines, 'name', '');
 
@@ -301,8 +290,6 @@ class PipelineNewPage extends React.Component {
             </Header>
             <Toolbar
               {...this.props}
-              iconKeys={this.iconKeys}
-              iconMaps={this.iconMaps}
               updateGraph={this.updateGraph}
               graph={graph}
               hasChanges={hasChanges}
@@ -368,7 +355,7 @@ class PipelineNewPage extends React.Component {
               )}
             />
             <Route
-              path="/pipeline/(new|edit)/sink"
+              path={`/pipeline/(new|edit)/${hdfsSink}`}
               render={() => (
                 <PipelineSinkPage
                   {...this.props}
