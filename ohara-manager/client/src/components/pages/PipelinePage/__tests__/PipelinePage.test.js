@@ -4,8 +4,18 @@ import { shallow } from 'enzyme';
 import PipelinePage from '../PipelinePage';
 
 const pipelines = [
-  { name: 'a', status: 'stopped', uuid: '1', objects: [{ abc: 'def' }] },
-  { name: 'b', status: 'start', uuid: '2', objects: [{ def: 'abc' }] },
+  {
+    name: 'a',
+    status: 'stopped',
+    uuid: '1',
+    objects: [{ abc: 'def', kind: 'a' }],
+  },
+  {
+    name: 'b',
+    status: 'start',
+    uuid: '2',
+    objects: [{ def: 'abc', kind: 'b' }],
+  },
 ];
 
 const props = {
