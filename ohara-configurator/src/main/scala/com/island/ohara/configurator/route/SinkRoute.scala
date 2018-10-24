@@ -62,23 +62,25 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
           }
         } ~ get(complete(store.data[Sink].map(update(_)).toSeq)) // list
       } ~ pathPrefix(Segment) { uuid =>
-        // get
-        get(complete(update(store.data[Sink](uuid)))) ~
-          // delete
-          delete {
-            assertNotRelated2Pipeline(uuid)
-            if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
-            complete(store.remove[Sink](uuid))
-          } ~
-          // update
-          put {
-            entity(as[SinkRequest]) { req =>
+        pathEnd {
+          // get
+          get(complete(update(store.data[Sink](uuid)))) ~
+            // delete
+            delete {
+              assertNotRelated2Pipeline(uuid)
               if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
-              val newData = toRes(uuid, verify(req))
-              store.update(newData)
-              complete(newData)
+              complete(store.remove[Sink](uuid))
+            } ~
+            // update
+            put {
+              entity(as[SinkRequest]) { req =>
+                if (connectorClient.exist(uuid)) throw new IllegalArgumentException(s"$uuid is not stopped")
+                val newData = toRes(uuid, verify(req))
+                store.update(newData)
+                complete(newData)
+              }
             }
-          } ~ path(START_COMMAND) {
+        } ~ path(START_COMMAND) {
           put {
             val sink = store.data[Sink](uuid)
             if (connectorClient.nonExist(uuid)) {
