@@ -81,10 +81,6 @@ class PipelineSinkPage extends React.Component {
     const sinkId = _.get(match, 'params.sinkId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
-    if (topicId) {
-      this.props.updateHasChanges(true);
-    }
-
     if (sinkId) {
       const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchHdfsPromise = this.fetchHdfs(sinkId);

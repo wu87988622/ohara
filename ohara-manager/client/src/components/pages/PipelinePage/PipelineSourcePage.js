@@ -127,7 +127,6 @@ class PipelineSourcePage extends React.Component {
 
     if (topicId) {
       this.fetchTopics(topicId);
-      this.props.updateHasChanges(true);
     }
   }
 
@@ -330,8 +329,8 @@ class PipelineSourcePage extends React.Component {
       url,
     } = this.state;
     const sourceId = _.get(match, 'params.sourceId', null);
-    const hasSink = sourceId === '__';
-    const isCreate = _.isNull(sourceId) || hasSink ? true : false;
+    const hasSinkPlaceholder = sourceId === '__';
+    const isCreate = _.isNull(sourceId) || hasSinkPlaceholder ? true : false;
 
     const params = {
       name: 'untitled source',
@@ -358,13 +357,8 @@ class PipelineSourcePage extends React.Component {
 
     if (_sourceId) {
       this.props.updateHasChanges(false);
-      if (isCreate && !hasSink) {
+      if (isCreate) {
         history.push(`${match.url}/${_sourceId}`);
-      } else {
-        const { page, pipelineId, sinkId, topicId } = match.params;
-        history.push(
-          `/pipeline/new/${page}/${pipelineId}/${topicId}/${_sourceId}/${sinkId}`,
-        );
       }
     }
   }, 1000);

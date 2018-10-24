@@ -459,7 +459,7 @@ class PipelineSourceFtpPage extends React.Component {
     const { host, port, username: user, password } = this.state;
 
     this.updateIsBtnWorking(true);
-    const res = await checkSource({ host, port, user, password } );
+    const res = await checkSource({ host, port, user, password });
     this.updateIsBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
@@ -472,7 +472,7 @@ class PipelineSourceFtpPage extends React.Component {
   updateIsBtnWorking = update => {
     this.setState({ isBtnWorking: update });
   };
-  
+
   save = _.debounce(async () => {
     const { match, history } = this.props;
     const {
