@@ -57,6 +57,13 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.put('/api/pipelines/validate/ftp', (req, res) => {
+    axios
+      .put(`${API_ROOT}/validate/ftp`, req.body)
+      .then(result => onValidateSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   app.get('/api/sources/:uuid', (req, res) => {
     axios
       .get(`${API_ROOT}/sources/${req.params.uuid}`)

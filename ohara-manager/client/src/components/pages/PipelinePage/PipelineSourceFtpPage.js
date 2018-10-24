@@ -14,6 +14,7 @@ import { lightBlue, whiteSmoke } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
 import {
+  checkSource,
   createSource,
   updateSource,
   fetchSource,
@@ -43,6 +44,10 @@ const RightCol = styled.div`
   width: 250px;
 `;
 
+const TableWrapper = styled.div`
+  display: flex;
+`;
+
 const FormGroupWrapper = styled.div`
   display: flex;
   justify-content: space-between;
@@ -60,6 +65,12 @@ const SchemaBtn = styled(Button)`
 
 const FormInner = styled.div`
   padding: 20px;
+`;
+
+const TestConnBtn = styled(Button)`
+  align-self: flex-start;
+  margin-left: 20px;
+  white-space: nowrap;
 `;
 
 class PipelineSourceFtpPage extends React.Component {
@@ -443,6 +454,25 @@ class PipelineSourceFtpPage extends React.Component {
     this.props.updateHasChanges(true);
   };
 
+  handleTestConn = async e => {
+    e.preventDefault();
+    const { host, port, username: user, password } = this.state;
+
+    this.updateIsBtnWorking(true);
+    const res = await checkSource({ host, port, user, password } );
+    this.updateIsBtnWorking(false);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (isSuccess) {
+      toastr.success(MESSAGES.TEST_SUCCESS);
+      this.setState({ isFormDisabled: false });
+    }
+  };
+
+  updateIsBtnWorking = update => {
+    this.setState({ isBtnWorking: update });
+  };
+  
   save = _.debounce(async () => {
     const { match, history } = this.props;
     const {
@@ -511,6 +541,7 @@ class PipelineSourceFtpPage extends React.Component {
       fileEncodings,
       currFileEncoding,
       tasks,
+      isBtnWorking,
       currTask,
       schema,
       isDeleteSchemaModalActive,
@@ -662,14 +693,24 @@ class PipelineSourceFtpPage extends React.Component {
 
                 <FormGroup>
                   <Label>Task</Label>
-                  <Select
-                    name="tasks"
-                    list={tasks}
-                    selected={currTask}
-                    width="85px"
-                    data-testid="task-select"
-                    handleChange={this.handleSelectChange}
-                  />
+                  <TableWrapper>
+                    <Select
+                      name="tasks"
+                      list={tasks}
+                      selected={currTask}
+                      width="85px"
+                      data-testid="task-select"
+                      handleChange={this.handleSelectChange}
+                    />
+                    <TestConnBtn
+                      theme={primaryBtn}
+                      text="Test Connection"
+                      isWorking={isBtnWorking}
+                      disabled={isBtnWorking}
+                      data-testid="test-conn-btn"
+                      handleClick={this.handleTestConn}
+                    />
+                  </TableWrapper>
                 </FormGroup>
               </FormGroupWrapper>
 
