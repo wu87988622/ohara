@@ -78,6 +78,21 @@ export const validateRdb = async params => {
   }
 };
 
+export const validateFtp = async params => {
+  try {
+    const res = await axios.put('/api/pipelines/validate/ftp', params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const queryRdb = async params => {
   try {
     const res = await axios.post('/api/pipelines/query/rdb', params);

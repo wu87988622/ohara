@@ -11,6 +11,7 @@ import PipelineSourcePage from './PipelineSourcePage';
 import PipelineSourceFtpPage from './PipelineSourceFtpPage';
 import PipelineTopicPage from './PipelineTopicPage';
 import PipelineSinkPage from './PipelineSinkPage';
+import PipelineSinkFtpPage from './PipelineSinkFtpPage';
 import Toolbar from './Toolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
@@ -341,6 +342,18 @@ class PipelineNewPage extends React.Component {
                 />
               )}
             />
+
+            <Route
+              path="/pipeline/(new|edit)/sink-ftp"
+              render={() => (
+                <PipelineSinkFtpPage
+                  {...this.props}
+                  hasChanges={hasChanges}
+                  updateHasChanges={this.updateHasChanges}
+                />
+              )}
+            />
+
             <Route
               path="/pipeline/(new|edit)/topic"
               render={() => (

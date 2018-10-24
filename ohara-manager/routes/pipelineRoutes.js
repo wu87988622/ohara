@@ -50,6 +50,13 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.put('/api/pipelines/validate/ftp', (req, res) => {
+    axios
+      .put(`${API_ROOT}/validate/ftp`, req.body)
+      .then(result => onValidateSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   app.post('/api/pipelines/query/rdb', (req, res) => {
     axios
       .post(`${API_ROOT}/query/rdb`, req.body)
