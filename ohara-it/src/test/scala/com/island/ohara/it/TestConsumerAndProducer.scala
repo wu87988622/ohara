@@ -1,8 +1,9 @@
-package com.island.ohara.kafka
+package com.island.ohara.it
 
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.island.ohara.serialization.Serializer._
 import org.junit.Test
 import org.scalatest.Matchers
