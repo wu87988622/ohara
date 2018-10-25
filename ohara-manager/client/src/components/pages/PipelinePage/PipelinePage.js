@@ -16,7 +16,7 @@ import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
 import { ICON_KEYS } from 'constants/pipelines';
-import { isSource } from 'utils/pipelineHelpers';
+import { isSource, isSink } from 'utils/pipelineHelpers';
 import { lightBlue, blue, red, redHover, trBgColor } from 'theme/variables';
 import {
   createPipeline,
@@ -317,20 +317,30 @@ class PipelinePage extends React.Component {
       if (isSource(connector.kind)) {
         acc += connector.kind;
       }
-
       return acc;
     }, '');
-
-    const pageName = _.isEmptyStr(source) ? 'topic' : source;
 
     const {
       topic: topicId,
       source: sourceId,
       sink: sinkId,
     } = connectors.reduce((acc, { uuid, kind }) => {
-      acc[kind] = uuid;
+      if (kind === 'topic') {
+        acc[kind] = uuid;
+      }
+
+      if (isSource(kind)) {
+        acc['source'] = uuid;
+      }
+
+      if (isSink(kind)) {
+        acc['sink'] = uuid;
+      }
+
       return acc;
     }, {});
+
+    const pageName = _.isEmptyStr(source) ? 'topic' : source;
 
     const baseUrl = `${match.url}/edit/${pageName}/${pipelineId}/${topicId}`;
     let url = baseUrl;
