@@ -39,6 +39,8 @@ const Topics = styled.div`
 const Sinks = styled.div`
   padding: 10px 20px;
   border-right: 1px solid ${lightestBlue};
+  position: relative;
+  top: -4px;
 `;
 
 const Icon = styled.i`
@@ -67,6 +69,9 @@ const HadoopIconContainer = styled.i`
   transition: ${durationNormal} all;
   vertical-align: middle;
   cursor: pointer;
+  margin-right: 20px;
+  position: relative;
+  top: 5px;
 
   &:hover svg,
   &.is-active svg {
@@ -151,7 +156,7 @@ class Toolbar extends React.Component {
 
   render() {
     const { hasChanges } = this.props;
-    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
+    const { jdbcSource, ftpSource, hdfsSink, ftpSink } = ICON_KEYS;
     return (
       <ToolbarWrapper>
         <Sources>
@@ -176,6 +181,12 @@ class Toolbar extends React.Component {
           >
             <HadoopIconWrapper width={28} height={28} fillColor={lightBlue} />
           </HadoopIconContainer>
+          <Icon
+            className="fa fa-download"
+            onClick={this.update}
+            data-id={ftpSink}
+            data-testid="toolbar-source-ftp"
+          />
         </Sinks>
         <Topics>
           <Icon

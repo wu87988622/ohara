@@ -251,7 +251,7 @@ class PipelineNewPage extends React.Component {
 
     const pipelineTitle = _.get(pipelines, 'name', '');
 
-    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
+    const { jdbcSource, ftpSource, hdfsSink, ftpSink } = ICON_KEYS;
 
     if (isRedirect) {
       return <Redirect to={PIPELINE} />;
@@ -333,10 +333,13 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path="/pipeline/(new|edit)/sink-ftp"
+              path={`/pipeline/(new|edit)/${ftpSink}`}
               render={() => (
                 <PipelineSinkFtpPage
                   {...this.props}
+                  graph={graph}
+                  loadGraph={this.loadGraph}
+                  updateGraph={this.updateGraph}
                   hasChanges={hasChanges}
                   updateHasChanges={this.updateHasChanges}
                 />

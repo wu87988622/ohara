@@ -469,7 +469,7 @@ class PipelineSourceFtpPage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history } = this.props;
+    const { match, history, updateHasChanges } = this.props;
     const {
       name,
       host,
@@ -485,7 +485,9 @@ class PipelineSourceFtpPage extends React.Component {
       schema,
     } = this.state;
     const sourceId = _.get(match, 'params.sourceId', null);
-    const isCreate = _.isNull(sourceId) ? true : false;
+    const sourceIdPlaceHolder = '__';
+    const isCreate =
+      _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
     const _schema = _.isEmpty(schema) ? [] : schema;
 
     const params = {
@@ -513,11 +515,16 @@ class PipelineSourceFtpPage extends React.Component {
       ? await createSource(params)
       : await updateSource({ uuid: sourceId, params });
 
-    const uuid = _.get(res, 'data.result.uuid', null);
+    const _sourceId = _.get(res, 'data.result.uuid', null);
 
-    if (uuid) {
-      this.props.updateHasChanges(false);
-      if (isCreate) history.push(`${match.url}/${uuid}`);
+    if (_sourceId) {
+      updateHasChanges(false);
+      if (isCreate && !sourceId) {
+        history.push(`${match.url}/${_sourceId}`);
+      } else if (isCreate && sourceId) {
+        const paths = match.url.split(sourceIdPlaceHolder);
+        history.push(`${paths[0]}${_sourceId}${paths[1]}`);
+      }
     }
   }, 1000);
 

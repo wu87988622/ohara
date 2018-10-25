@@ -318,7 +318,7 @@ class PipelineSourcePage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history } = this.props;
+    const { match, history, updateHasChanges } = this.props;
     const {
       currDatabase,
       currWriteTopic,
@@ -329,8 +329,9 @@ class PipelineSourcePage extends React.Component {
       url,
     } = this.state;
     const sourceId = _.get(match, 'params.sourceId', null);
-    const hasSinkPlaceholder = sourceId === '__';
-    const isCreate = _.isNull(sourceId) || hasSinkPlaceholder ? true : false;
+    const sourceIdPlaceHolder = '__';
+    const isCreate =
+      _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
 
     const params = {
       name: 'untitled source',
@@ -356,9 +357,12 @@ class PipelineSourcePage extends React.Component {
     const _sourceId = _.get(res, 'data.result.uuid', null);
 
     if (_sourceId) {
-      this.props.updateHasChanges(false);
-      if (isCreate) {
+      updateHasChanges(false);
+      if (isCreate && !sourceId) {
         history.push(`${match.url}/${_sourceId}`);
+      } else if (isCreate && sourceId) {
+        const paths = match.url.split(sourceIdPlaceHolder);
+        history.push(`${paths[0]}${_sourceId}${paths[1]}`);
       }
     }
   }, 1000);

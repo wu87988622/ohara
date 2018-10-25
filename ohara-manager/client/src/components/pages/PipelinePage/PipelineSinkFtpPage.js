@@ -16,6 +16,8 @@ import {
   createSink,
   updateSink,
   fetchSink,
+  updatePipeline,
+  fetchPipeline,
   validateFtp,
 } from 'apis/pipelinesApis';
 
@@ -101,71 +103,24 @@ class PipelineSinkFtpPage extends React.Component {
     newColumnName: '',
   };
 
-  save = _.debounce(async () => {
-    const { match, history } = this.props;
-    const {
-      name,
-      host,
-      port,
-      username,
-      password,
-      outputfolder,
-      needHeader,
-      currReadTopic,
-      currFileEncoding,
-      currTask,
-      schema,
-    } = this.state;
-
-    const sinkId = _.get(match, 'params.sinkId', null);
-    const isCreate = _.isNull(sinkId) ? true : false;
-    const _schema = _.isEmpty(schema) ? [] : schema;
-    const params = {
-      name: 'untitled sink',
-      schema: _schema,
-      className: 'ftp',
-      // TODO add related UI (OHARA-610)
-      topics: [],
-      numberOfTasks: 1,
-      configs: {
-        name,
-        host,
-        port,
-        username,
-        password,
-        outputfolder,
-        currTask,
-        currReadTopic: currReadTopic.name,
-        currFileEncoding,
-        needHeader: needHeader,
-      },
-    };
-
-    const res = isCreate
-      ? await createSink(params)
-      : await updateSink({ uuid: sinkId, params });
-
-    const uuid = _.get(res, 'data.result.uuid', null);
-
-    if (uuid) {
-      this.props.updateHasChanges(false);
-      if (isCreate) history.push(`${match.url}/${uuid}`);
-    }
-  }, 1000);
-
   componentDidMount() {
     const { match } = this.props;
     const sinkId = _.get(match, 'params.sinkId', null);
     const topicId = _.get(match, 'params.topicId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
 
     this.setDefaults();
+
+    if (sinkId) {
+      this.fetchSink(sinkId);
+    }
 
     if (topicId) {
       this.fetchTopics(topicId);
     }
 
-    if (sinkId) {
-      this.fetchSink(sinkId);
+    if (pipelineId) {
+      this.fetchPipeline(pipelineId);
     }
   }
 
@@ -176,11 +131,28 @@ class PipelineSinkFtpPage extends React.Component {
     }));
   };
 
-  componentDidUpdate() {
-    const { hasChanges } = this.props;
+  componentDidUpdate(prevProps) {
+    const { hasChanges, match } = this.props;
+
+    const prevSinkId = _.get(prevProps.match, 'params.sinkId', null);
+    const currSinkId = _.get(this.props.match, 'params.sinkId', null);
+    const topicId = _.get(match, 'params.topicId');
+    const hasTopicId = !_.isNull(topicId);
+    const isUpdate = prevSinkId !== currSinkId;
 
     if (hasChanges) {
       this.save();
+    }
+
+    if (isUpdate && hasTopicId) {
+      const { name, uuid, rules } = this.state.pipelines;
+
+      const params = {
+        name,
+        rules: { ...rules, [topicId]: currSinkId },
+      };
+
+      this.updatePipeline(uuid, params);
     }
   }
 
@@ -233,6 +205,33 @@ class PipelineSinkFtpPage extends React.Component {
       needHeader,
       schema,
     });
+  };
+
+  fetchPipeline = async pipelineId => {
+    if (!_.isUuid(pipelineId)) return;
+
+    const res = await fetchPipeline(pipelineId);
+    const pipelines = _.get(res, 'data.result', null);
+
+    if (pipelines) {
+      this.setState({ pipelines });
+
+      const sinkId = _.get(this.props.match, 'params.sinkId', null);
+
+      if (sinkId) {
+        this.props.loadGraph(pipelines);
+      }
+    }
+  };
+
+  updatePipeline = async (uuid, params) => {
+    const res = await updatePipeline({ uuid, params });
+    const pipelines = _.get(res, 'data.result', []);
+
+    if (!_.isEmpty(pipelines)) {
+      this.setState({ pipelines });
+      this.props.loadGraph(pipelines);
+    }
   };
 
   handleInputChange = ({ target: { name, value } }) => {
@@ -450,6 +449,60 @@ class PipelineSinkFtpPage extends React.Component {
       },
     );
   };
+
+  save = _.debounce(async () => {
+    const { match, history } = this.props;
+    const {
+      name,
+      host,
+      port,
+      username,
+      password,
+      outputfolder,
+      needHeader,
+      currReadTopic,
+      currFileEncoding,
+      currTask,
+      schema,
+    } = this.state;
+
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const sinkId = _.get(match, 'params.sinkId', null);
+    const isCreate = _.isNull(sinkId) ? true : false;
+    const hasSourceId = _.isNull(sourceId) ? false : true;
+    const _schema = _.isEmpty(schema) ? [] : schema;
+
+    const params = {
+      name: 'untitled sink',
+      schema: _schema,
+      className: 'ftp',
+      topics: [],
+      numberOfTasks: 1,
+      configs: {
+        name,
+        host,
+        port,
+        username,
+        password,
+        outputfolder,
+        currTask,
+        currReadTopic: currReadTopic.name,
+        currFileEncoding,
+        needHeader: needHeader,
+      },
+    };
+
+    const res = isCreate
+      ? await createSink(params)
+      : await updateSink({ uuid: sinkId, params });
+
+    const uuid = _.get(res, 'data.result.uuid', null);
+
+    if (uuid) {
+      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${uuid}`);
+      if (isCreate && hasSourceId) history.push(`${match.url}/${uuid}`);
+    }
+  }, 1000);
 
   render() {
     const {
