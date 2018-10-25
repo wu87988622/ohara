@@ -27,6 +27,7 @@ const H5Wrapper = styled(H5)`
   font-weight: normal;
   color: ${lightBlue};
 `;
+H5Wrapper.displayName = 'H5';
 
 const Form = styled.form`
   display: flex;
@@ -62,6 +63,7 @@ const SectionHeader = styled.div`
 const SchemaBtn = styled(Button)`
   margin-left: auto;
 `;
+SchemaBtn.displayName = 'SchemaBtn';
 
 const FormInner = styled.div`
   padding: 20px;
@@ -319,7 +321,6 @@ class PipelineSourceFtpPage extends React.Component {
   handleTypeChange = (e, order) => {
     // https://reactjs.org/docs/events.html#event-pooling
     e.persist();
-
     this.setState(({ schema }) => {
       const idx = schema.findIndex(schema => schema.order === order);
       const { value: dataType } = e.target;
