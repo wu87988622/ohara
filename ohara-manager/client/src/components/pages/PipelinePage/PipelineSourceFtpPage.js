@@ -69,12 +69,6 @@ const FormInner = styled.div`
   padding: 20px;
 `;
 
-const TestConnBtn = styled(Button)`
-  align-self: flex-start;
-  margin-left: 20px;
-  white-space: nowrap;
-`;
-
 class PipelineSourceFtpPage extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
@@ -677,6 +671,17 @@ class PipelineSourceFtpPage extends React.Component {
                   handleChange={this.handleInputChange}
                 />
               </FormGroup>
+
+              <FormGroup>
+                <Button
+                  theme={primaryBtn}
+                  text="Test Connection"
+                  isWorking={isBtnWorking}
+                  disabled={isBtnWorking}
+                  data-testid="test-conn-btn"
+                  handleClick={this.handleTestConn}
+                />
+              </FormGroup>
             </LeftCol>
             <RightCol>
               <FormGroupWrapper>
@@ -702,14 +707,6 @@ class PipelineSourceFtpPage extends React.Component {
                       width="85px"
                       data-testid="task-select"
                       handleChange={this.handleSelectChange}
-                    />
-                    <TestConnBtn
-                      theme={primaryBtn}
-                      text="Test Connection"
-                      isWorking={isBtnWorking}
-                      disabled={isBtnWorking}
-                      data-testid="test-conn-btn"
-                      handleClick={this.handleTestConn}
                     />
                   </TableWrapper>
                 </FormGroup>
