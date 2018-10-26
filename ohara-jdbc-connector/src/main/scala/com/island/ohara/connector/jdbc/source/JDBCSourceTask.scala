@@ -5,9 +5,10 @@ import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.{CloseOnce, VersionUtil}
+import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 import com.typesafe.scalalogging.Logger
 class JDBCSourceTask extends RowSourceTask {
 

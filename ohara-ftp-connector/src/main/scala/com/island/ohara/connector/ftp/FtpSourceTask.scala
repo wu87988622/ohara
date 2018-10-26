@@ -5,10 +5,10 @@ import com.island.ohara.client.FtpClient
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.{CloseOnce, IoUtil, VersionUtil}
+import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
-import com.island.ohara.util.SystemUtil
+import com.island.ohara.util.{SystemUtil, VersionUtil}
 
 import scala.collection.mutable
 

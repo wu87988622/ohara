@@ -1,7 +1,6 @@
 package com.island.ohara.connector.hdfs
-
-import com.island.ohara.io.VersionUtil
 import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskConfig, TopicOffset, TopicPartition}
+import com.island.ohara.util.VersionUtil
 import com.typesafe.scalalogging.Logger
 
 /**

@@ -8,3 +8,4 @@ target/
 .DS_Store
 build
 out
+ohara-common/src/main/scala/com/island/ohara/util/VersionUtil.scala

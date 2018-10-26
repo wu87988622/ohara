@@ -1,9 +1,10 @@
 package com.island.ohara.kafka.connector
 
 import com.island.ohara.data.Row
-import com.island.ohara.io.{CloseOnce, VersionUtil}
+import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.Producer
 import Constants._
+import com.island.ohara.util.VersionUtil
 
 /**
   * Used for testing.

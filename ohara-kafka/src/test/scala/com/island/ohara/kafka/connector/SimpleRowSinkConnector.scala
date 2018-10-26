@@ -1,7 +1,7 @@
 package com.island.ohara.kafka.connector
 
 import Constants._
-import com.island.ohara.io.VersionUtil
+import com.island.ohara.util.VersionUtil
 
 /**
   * Used for testing.

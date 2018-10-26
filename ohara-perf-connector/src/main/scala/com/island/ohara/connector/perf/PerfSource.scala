@@ -1,6 +1,6 @@
 package com.island.ohara.connector.perf
-import com.island.ohara.io.VersionUtil
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.util.VersionUtil
 
 class PerfSource extends RowSourceConnector {
   private[this] var config: TaskConfig = _

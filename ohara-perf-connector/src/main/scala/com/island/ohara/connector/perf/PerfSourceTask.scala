@@ -1,10 +1,10 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.{ByteUtil, VersionUtil}
+import com.island.ohara.io.ByteUtil
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
-import com.island.ohara.util.SystemUtil
+import com.island.ohara.util.{SystemUtil, VersionUtil}
 
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _

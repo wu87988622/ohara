@@ -1,5 +1,5 @@
 package com.island.ohara.kafka.connector
-import com.island.ohara.io.VersionUtil
+import com.island.ohara.util.VersionUtil
 
 /**
   * Used for testing.

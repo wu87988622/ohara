@@ -2,9 +2,9 @@ package com.island.ohara.kafka.connector
 import java.util
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.io.VersionUtil
 import com.island.ohara.rule.SmallTest
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 import org.junit.Test
 import org.scalatest.Matchers
 

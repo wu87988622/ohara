@@ -1,4 +1,4 @@
-package com.island.ohara.io
+package com.island.ohara.util
 
 import java.io.{File, FileInputStream}
 import java.util.Properties

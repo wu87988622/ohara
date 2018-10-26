@@ -6,10 +6,11 @@ import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.io.{CloseOnce, VersionUtil}
+import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

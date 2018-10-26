@@ -3,9 +3,9 @@ package com.island.ohara.kafka
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.VersionUtil
 import com.island.ohara.kafka.TestConnectorClient._
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.util.VersionUtil
 import org.junit.{Ignore, Test}
 import org.scalatest.Matchers
 
