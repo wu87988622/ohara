@@ -21,8 +21,12 @@ export const TOPIC_ID_REQUIRED_ERROR =
   'You need to select a topi before creating a new pipeline!';
 export const NO_TOPICS_FOUND_ERROR = `You don't have any topics!`;
 export const INVALID_TOPIC_ID = `The selected topic doesn't exist!`;
+
+// Pipelines
 export const PIPELINE_DELETION_ERROR =
   'Oops, something went wrong, we cannot delete the selected pipeline:';
+export const CANNOT_START_PIPELINE_ERROR =
+  'Cannot complete your action, please check your connector settings';
 
 export const GENERIC_ERROR = 'Oops, something went wrong 😱 😱 😱';
 

@@ -15,7 +15,6 @@ import { H2 } from 'common/Headings';
 import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import { ICON_KEYS } from 'constants/pipelines';
 import { isSource, isSink } from 'utils/pipelineHelpers';
 import { lightBlue, blue, red, redHover, trBgColor } from 'theme/variables';
 import {
@@ -218,9 +217,7 @@ class PipelinePage extends React.Component {
       toastr.success(`Pipeline has been successfully ${action}!`);
       this.fetchPipelines();
     } else {
-      toastr.error(
-        'Cannot complete your action, please check your connector settings',
-      );
+      toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
     }
   };
 
@@ -243,17 +240,15 @@ class PipelinePage extends React.Component {
   };
 
   getConnectors = connectors => {
-    const { jdbcSource, ftpSource, hdfsSink } = ICON_KEYS;
-
     const sources = connectors
       .filter(({ kind }) => {
-        return kind === jdbcSource || kind === ftpSource;
+        return isSource(kind);
       })
       .map(({ uuid }) => uuid);
 
     const sinks = connectors
       .filter(({ kind }) => {
-        return kind === hdfsSink;
+        return isSink(kind);
       })
       .map(({ uuid }) => uuid);
 
