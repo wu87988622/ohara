@@ -160,7 +160,7 @@ class PipelinePage extends React.Component {
     const { history, match } = this.props;
     const { uuid: topicUuid } = this.state.currentTopic;
 
-    const params = { name: 'untitled pipeline', rules: { [topicUuid]: '?' } };
+    const params = { name: 'Untitled pipeline', rules: { [topicUuid]: '?' } };
     const res = await createPipeline(params);
 
     const pipelineUuid = _.get(res, 'data.result.uuid', null);
