@@ -452,13 +452,13 @@ class PipelineSourceFtpPage extends React.Component {
     this.props.updateHasChanges(true);
   };
 
-  handleTestConn = async e => {
+  handleTestConnection = async e => {
     e.preventDefault();
     const { host, port, username: user, password } = this.state;
 
-    this.updateIsBtnWorking(true);
+    this.updateIsTestConnectionBtnWorking(true);
     const res = await checkSource({ host, port, user, password });
-    this.updateIsBtnWorking(false);
+    this.updateIsTestConnectionBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -467,8 +467,8 @@ class PipelineSourceFtpPage extends React.Component {
     }
   };
 
-  updateIsBtnWorking = update => {
-    this.setState({ isBtnWorking: update });
+  updateIsTestConnectionBtnWorking = update => {
+    this.setState({ IsTestConnectionBtnWorking: update });
   };
 
   save = _.debounce(async () => {
@@ -546,7 +546,7 @@ class PipelineSourceFtpPage extends React.Component {
       fileEncodings,
       currFileEncoding,
       tasks,
-      isBtnWorking,
+      IsTestConnectionBtnWorking,
       currTask,
       schema,
       isDeleteSchemaModalActive,
@@ -686,10 +686,10 @@ class PipelineSourceFtpPage extends React.Component {
                 <Button
                   theme={primaryBtn}
                   text="Test Connection"
-                  isWorking={isBtnWorking}
-                  disabled={isBtnWorking}
-                  data-testid="test-conn-btn"
-                  handleClick={this.handleTestConn}
+                  isWorking={IsTestConnectionBtnWorking}
+                  disabled={IsTestConnectionBtnWorking}
+                  data-testid="test-connection-btn"
+                  handleClick={this.handleTestConnection}
                 />
               </FormGroup>
             </LeftCol>

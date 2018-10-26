@@ -97,7 +97,7 @@ class ConfigurationPage extends React.Component {
     }
   };
 
-  handleTest = async e => {
+  handleTestConnection = async e => {
     e.preventDefault();
     const { connectionUrl: uri } = this.state;
     this.updateBtn(true);
@@ -171,7 +171,7 @@ class ConfigurationPage extends React.Component {
                   text="Test connection"
                   isWorking={isWorking}
                   data-testid="test-connection-btn"
-                  handleClick={this.handleTest}
+                  handleClick={this.handleTestConnection}
                   disabled={isBtnDisabled}
                 />
               </ActionGroup>

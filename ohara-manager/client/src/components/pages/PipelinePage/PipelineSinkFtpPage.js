@@ -101,6 +101,7 @@ class PipelineSinkFtpPage extends React.Component {
     isDeleteSchemaModalActive: false,
     columnName: '',
     newColumnName: '',
+    IsTestConnectionBtnWorking: false,
   };
 
   componentDidMount() {
@@ -397,22 +398,28 @@ class PipelineSinkFtpPage extends React.Component {
     this.props.updateHasChanges(true);
   };
 
-  handleTest = async e => {
+  handleTestConnection = async e => {
     e.preventDefault();
     const { host, port, username, password } = this.state;
 
+    this.updateIsTestConnectionBtnWorking(true);
     const res = await validateFtp({
       host,
       port,
       user: username,
       password,
     });
+    this.updateIsTestConnectionBtnWorking(false);
 
     const _res = _.get(res, 'data.isSuccess', false);
 
     if (_res) {
       toastr.success(MESSAGES.TEST_SUCCESS);
     }
+  };
+
+  updateIsTestConnectionBtnWorking = update => {
+    this.setState({ IsTestConnectionBtnWorking: update });
   };
 
   handleSelectChange = ({ target }) => {
@@ -531,6 +538,7 @@ class PipelineSinkFtpPage extends React.Component {
       newColumnName,
       currType,
       isDeleteSchemaModalActive,
+      IsTestConnectionBtnWorking,
     } = this.state;
 
     return (
@@ -658,10 +666,10 @@ class PipelineSinkFtpPage extends React.Component {
                 <Button
                   theme={primaryBtn}
                   text="Test connection"
-                  //isWorking={isWorking}
+                  isWorking={IsTestConnectionBtnWorking}
+                  disabled={IsTestConnectionBtnWorking}
                   data-testid="test-connection-btn"
-                  handleClick={this.handleTest}
-                  //disabled={isBtnDisabled}
+                  handleClick={this.handleTestConnection}
                 />
               </FormGroup>
             </LeftCol>
