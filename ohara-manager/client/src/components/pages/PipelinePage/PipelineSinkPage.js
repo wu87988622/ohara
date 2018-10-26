@@ -44,6 +44,7 @@ class PipelineSinkPage extends React.Component {
     currHdfs: {},
     writePath: '',
     pipelines: {},
+    needHeader: '',
   };
 
   componentDidMount() {
@@ -107,7 +108,7 @@ class PipelineSinkPage extends React.Component {
     const isSuccess = _.get(res, 'data.isSuccess', null);
 
     if (isSuccess) {
-      const { topic, hdfs, writePath } = res.data.result.configs;
+      const { topic, hdfs, writePath, needHeader } = res.data.result.configs;
       const currTopic = JSON.parse(topic);
       const currHdfs = JSON.parse(hdfs);
 
@@ -115,6 +116,7 @@ class PipelineSinkPage extends React.Component {
         currTopic,
         currHdfs,
         writePath,
+        needHeader,
       });
     }
   };
@@ -179,6 +181,13 @@ class PipelineSinkPage extends React.Component {
     });
   };
 
+  handleCheckboxChange = ({ target }) => {
+    const { name, checked } = target;
+    this.setState({ [name]: checked.toString() }, () => {
+      this.props.updateHasChanges(true);
+    });
+  };
+
   handleChangeSelect = ({ target }) => {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
@@ -203,9 +212,9 @@ class PipelineSinkPage extends React.Component {
 
   save = _.debounce(async () => {
     const { updateHasChanges, history, match } = this.props;
-    const { currHdfs, currTopic, writePath } = this.state;
-    const sourceId = _.get(match, 'params.sourceId', null);
+    const { currHdfs, currTopic, writePath, needHeader } = this.state;
     const sinkId = _.get(match, 'params.sinkId', null);
+    const sourceId = _.get(match, 'params.sourceId', null);
     const isCreate = _.isNull(sinkId) ? true : false;
     const hasSourceId = _.isNull(sourceId) ? false : true;
 
@@ -219,6 +228,7 @@ class PipelineSinkPage extends React.Component {
         topic: JSON.stringify(currTopic),
         hdfs: JSON.stringify(currHdfs),
         writePath,
+        needHeader,
       },
     };
 
@@ -236,7 +246,14 @@ class PipelineSinkPage extends React.Component {
   }, 1000);
 
   render() {
-    const { topics, currTopic, hdfses, currHdfs, writePath } = this.state;
+    const {
+      topics,
+      currTopic,
+      hdfses,
+      currHdfs,
+      writePath,
+      needHeader,
+    } = this.state;
 
     return (
       <Box>
@@ -278,6 +295,20 @@ class PipelineSinkPage extends React.Component {
               data-testid="write-path-input"
               handleChange={this.handleChangeInput}
             />
+          </FormGroup>
+
+          <FormGroup>
+            <div>
+              <Input
+                type="checkbox"
+                name="needHeader"
+                width="25px"
+                checked={needHeader}
+                data-testid="needheader-input"
+                handleChange={this.handleCheckboxChange}
+              />
+              <Label>Include header</Label>
+            </div>
           </FormGroup>
         </form>
       </Box>
