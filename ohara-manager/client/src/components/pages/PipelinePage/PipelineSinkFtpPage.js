@@ -104,32 +104,8 @@ class PipelineSinkFtpPage extends React.Component {
   };
 
   componentDidMount() {
-    const { match } = this.props;
-    const sinkId = _.get(match, 'params.sinkId', null);
-    const topicId = _.get(match, 'params.topicId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-
-    this.setDefaults();
-
-    if (sinkId) {
-      this.fetchSink(sinkId);
-    }
-
-    if (topicId) {
-      this.fetchTopics(topicId);
-    }
-
-    if (pipelineId) {
-      this.fetchPipeline(pipelineId);
-    }
+    this.fetchData();
   }
-
-  setDefaults = () => {
-    this.setState(({ fileEncodings, tasks }) => ({
-      currFileEncoding: fileEncodings[0],
-      currTask: tasks[0],
-    }));
-  };
 
   componentDidUpdate(prevProps) {
     const { hasChanges, match } = this.props;
@@ -155,6 +131,36 @@ class PipelineSinkFtpPage extends React.Component {
       this.updatePipeline(uuid, params);
     }
   }
+
+  setDefaults = () => {
+    this.setState(({ fileEncodings, tasks }) => ({
+      currFileEncoding: fileEncodings[0],
+      currTask: tasks[0],
+    }));
+  };
+
+  fetchData = () => {
+    const { match } = this.props;
+    const sinkId = _.get(match, 'params.sinkId', null);
+    const topicId = _.get(match, 'params.topicId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
+
+    this.setDefaults();
+
+    if (sinkId) {
+      const fetchTopicsPromise = this.fetchTopics(topicId);
+      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
+
+      Promise.all([fetchPipelinePromise, fetchTopicsPromise]).then(() => {
+        this.fetchSink(sinkId);
+      });
+
+      return;
+    }
+
+    this.fetchTopics(topicId);
+    this.fetchPipeline(pipelineId);
+  };
 
   fetchTopics = async topicId => {
     if (!_.isUuid(topicId)) return;
@@ -186,7 +192,6 @@ class PipelineSinkFtpPage extends React.Component {
       username,
       password,
       outputfolder,
-      currReadTopic,
       currFileEncoding,
       currTask,
       needHeader,
@@ -199,7 +204,6 @@ class PipelineSinkFtpPage extends React.Component {
       username,
       password,
       outputfolder,
-      currReadTopic,
       currFileEncoding,
       currTask,
       needHeader,
@@ -451,7 +455,7 @@ class PipelineSinkFtpPage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history } = this.props;
+    const { match, history, updateHasChanges } = this.props;
     const {
       name,
       host,
@@ -476,7 +480,7 @@ class PipelineSinkFtpPage extends React.Component {
       name: 'untitled sink',
       schema: _schema,
       className: 'ftp',
-      topics: [],
+      topics: [currReadTopic.uuid],
       numberOfTasks: 1,
       configs: {
         name,
@@ -486,7 +490,7 @@ class PipelineSinkFtpPage extends React.Component {
         password,
         outputfolder,
         currTask,
-        currReadTopic: currReadTopic.name,
+        topic: currReadTopic.name,
         currFileEncoding,
         needHeader: needHeader,
       },
@@ -496,11 +500,13 @@ class PipelineSinkFtpPage extends React.Component {
       ? await createSink(params)
       : await updateSink({ uuid: sinkId, params });
 
-    const uuid = _.get(res, 'data.result.uuid', null);
+    const _sinkId = _.get(res, 'data.result.uuid', null);
 
-    if (uuid) {
-      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${uuid}`);
-      if (isCreate && hasSourceId) history.push(`${match.url}/${uuid}`);
+    if (_sinkId) {
+      updateHasChanges(false);
+
+      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${_sinkId}`);
+      if (isCreate && hasSourceId) history.push(`${match.url}/${_sinkId}`);
     }
   }, 1000);
 

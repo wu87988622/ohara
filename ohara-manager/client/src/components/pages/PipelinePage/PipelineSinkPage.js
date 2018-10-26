@@ -102,6 +102,23 @@ class PipelineSinkPage extends React.Component {
     this.fetchHdfs();
   };
 
+  fetchSink = async sinkId => {
+    const res = await fetchSink(sinkId);
+    const isSuccess = _.get(res, 'data.isSuccess', null);
+
+    if (isSuccess) {
+      const { topic, hdfs, writePath } = res.data.result.configs;
+      const currTopic = JSON.parse(topic);
+      const currHdfs = JSON.parse(hdfs);
+
+      this.setState({
+        currTopic,
+        currHdfs,
+        writePath,
+      });
+    }
+  };
+
   fetchHdfs = async sinkId => {
     const { currHdfs } = this.state;
     const res = await fetchHdfs();
@@ -126,23 +143,6 @@ class PipelineSinkPage extends React.Component {
     } else {
       toastr.error(MESSAGES.INVALID_TOPIC_ID);
       this.setState({ isRedirect: true });
-    }
-  };
-
-  fetchSink = async sinkId => {
-    const res = await fetchSink(sinkId);
-    const isSuccess = _.get(res, 'data.isSuccess', null);
-
-    if (isSuccess) {
-      const { topic, hdfs, writePath } = res.data.result.configs;
-      const currTopic = JSON.parse(topic);
-      const currHdfs = JSON.parse(hdfs);
-
-      this.setState({
-        currTopic,
-        currHdfs,
-        writePath,
-      });
     }
   };
 

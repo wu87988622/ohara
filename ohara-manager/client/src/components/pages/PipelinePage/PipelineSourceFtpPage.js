@@ -122,25 +122,7 @@ class PipelineSourceFtpPage extends React.Component {
   };
 
   componentDidMount() {
-    const { match } = this.props;
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-    const topicId = _.get(match, 'params.topicId', null);
-
-    this.setDefaults();
-
-    if (sourceId) {
-      this.fetchSource(sourceId);
-    }
-
-    if (pipelineId) {
-      this.fetchPipeline(pipelineId);
-    }
-
-    if (topicId) {
-      this.fetchTopics(topicId);
-      this.props.updateHasChanges(true);
-    }
+    this.fetchData();
   }
 
   componentDidUpdate(prevProps) {
@@ -173,6 +155,29 @@ class PipelineSourceFtpPage extends React.Component {
     }));
   };
 
+  fetchData = () => {
+    const { match } = this.props;
+    const topicId = _.get(match, 'params.topicId', null);
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
+
+    this.setDefaults();
+
+    if (sourceId) {
+      const fetchTopicsPromise = this.fetchTopics(topicId);
+      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
+
+      Promise.all([fetchTopicsPromise, fetchPipelinePromise]).then(() => {
+        this.fetchSource(sourceId);
+      });
+
+      return;
+    }
+
+    this.fetchTopics(topicId);
+    this.fetchPipeline(pipelineId);
+  };
+
   fetchSource = async sourceId => {
     if (!_.isUuid(sourceId)) return;
 
@@ -191,7 +196,6 @@ class PipelineSourceFtpPage extends React.Component {
       inputFolder,
       completeFolder,
       errorFolder,
-      currWriteTopic,
       currFileEncoding,
       currTask,
     } = configs;
@@ -205,7 +209,6 @@ class PipelineSourceFtpPage extends React.Component {
       inputFolder,
       completeFolder,
       errorFolder,
-      currWriteTopic,
       currFileEncoding,
       currTask,
       schema,

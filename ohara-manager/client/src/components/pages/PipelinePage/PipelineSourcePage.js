@@ -110,24 +110,7 @@ class PipelineSourcePage extends React.Component {
   };
 
   componentDidMount() {
-    const { match } = this.props;
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-    const topicId = _.get(match, 'params.topicId', null);
-
-    this.fetchCluster();
-
-    if (sourceId) {
-      this.fetchSource(sourceId);
-    }
-
-    if (pipelineId) {
-      this.fetchPipeline(pipelineId);
-    }
-
-    if (topicId) {
-      this.fetchTopics(topicId);
-    }
+    this.fetchData();
   }
 
   async componentDidUpdate(prevProps) {
@@ -155,6 +138,33 @@ class PipelineSourcePage extends React.Component {
     }
   }
 
+  fetchData = () => {
+    const { match } = this.props;
+    const topicId = _.get(match, 'params.topicId', null);
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
+
+    if (sourceId) {
+      const fetchTopicsPromise = this.fetchTopics(topicId);
+      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
+      const fetchClusterPromise = this.fetchCluster();
+
+      Promise.all([
+        fetchTopicsPromise,
+        fetchPipelinePromise,
+        fetchClusterPromise,
+      ]).then(() => {
+        this.fetchSource(sourceId);
+      });
+
+      return;
+    }
+
+    this.fetchCluster();
+    this.fetchTopics(topicId);
+    this.fetchPipeline(pipelineId);
+  };
+
   fetchTopics = async topicId => {
     if (!_.isUuid(topicId)) return;
 
@@ -175,6 +185,12 @@ class PipelineSourcePage extends React.Component {
 
     const res = await fetchSource(sourceId);
     const isSuccess = _.get(res, 'data.isSuccess', false);
+    const topicId = _.get(this.props.match, 'params.topicId');
+
+    if (topicId) {
+      this.fetchTopics(topicId);
+    }
+
     if (isSuccess) {
       const {
         database,
