@@ -6,44 +6,35 @@ ARG GRADLE_VERSION=4.10.2
 ARG BRANCH="master"
 
 # update
-RUN apt-get -y update
+RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
+  git \
+  ca-certificates \
+  apt-utils \
+  openjdk-8-jdk \
+  wget \
+  unzip \
+  gnupg \
+  gnupg1 \
+  gnupg2 \
+  node.js \
+  libaio1 \
+  libnuma1 \
+  gpg-agent \
+  npm \
+  xvfb \
+  libgtk2.0-0 \
+  libnotify-dev \
+  libgconf-2-4 \
+  libnss3 \
+  libxss1 \
+  libasound2
 
 # copy repo
-RUN apt-get -q install --no-install-recommends -y git
-RUN apt-get -q install --no-install-recommends -y ca-certificates
 WORKDIR /testpatch
 RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
 
-# install build tool
-RUN apt-get -q install --no-install-recommends -y apt-utils
-RUN apt-get -q install --no-install-recommends -y openjdk-8-jdk
-RUN apt-get -q install --no-install-recommends -y wget
-RUN apt-get -q install --no-install-recommends -y unzip
-RUN apt-get -q install --no-install-recommends -y curl
-RUN apt-get -q install --no-install-recommends -y gnupg
-RUN apt-get -q install --no-install-recommends -y gnupg1
-RUN apt-get -q install --no-install-recommends -y gnupg2
-RUN apt-get -q install --no-install-recommends -y node.js
-
-# native libraries of mysql
-RUN apt-get -q install --no-install-recommends -y libaio1
-RUN apt-get -q install --no-install-recommends -y libnuma1
-
-# dependencies for cypress
-RUN apt-get -q install --no-install-recommends -y xvfb
-RUN apt-get -q install --no-install-recommends -y libgtk2.0-0
-RUN apt-get -q install --no-install-recommends -y libnotify-dev
-RUN apt-get -q install --no-install-recommends -y libgconf-2-4
-RUN apt-get -q install --no-install-recommends -y libnss3
-RUN apt-get -q install --no-install-recommends -y libxss1
-RUN apt-get -q install --no-install-recommends -y libasound2
-
 # INSTALL yarn
-RUN apt install --no-install-recommends -y gpg-agent
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt-get -y update
-RUN apt-get -q install --no-install-recommends -y yarn=1.7.0-1
+RUN npm install -g yarn@1.7.0
 
 # download gradle
 WORKDIR /opt/gradle
@@ -59,8 +50,8 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 # build ohara
 WORKDIR /testpatch/ohara
 # Running this test case make gradle download mysql binary code
-RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
+RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 # for cdh dependencies
 RUN gradle -Pcdh clean build -x test
 
@@ -70,35 +61,29 @@ ARG USER=jenkins
 ARG GRADLE_VERSION=4.10.2
 
 # update
-RUN apt-get -y update
-RUN apt-get -q install --no-install-recommends -y apt-utils
-RUN apt-get -q install --no-install-recommends -y openjdk-8-jdk
-RUN apt-get -q install --no-install-recommends -y git
-RUN apt-get -q install --no-install-recommends -y curl
-RUN apt-get -q install --no-install-recommends -y gnupg
-RUN apt-get -q install --no-install-recommends -y gnupg1
-RUN apt-get -q install --no-install-recommends -y gnupg2
-RUN apt-get -q install --no-install-recommends -y node.js
-
-# native libraries of mysql
-RUN apt-get -q install --no-install-recommends -y libaio1
-RUN apt-get -q install --no-install-recommends -y libnuma1
-
-# dependencies for cypress
-RUN apt-get -q install --no-install-recommends -y xvfb
-RUN apt-get -q install --no-install-recommends -y libgtk2.0-0
-RUN apt-get -q install --no-install-recommends -y libnotify-dev
-RUN apt-get -q install --no-install-recommends -y libgconf-2-4
-RUN apt-get -q install --no-install-recommends -y libnss3
-RUN apt-get -q install --no-install-recommends -y libxss1
-RUN apt-get -q install --no-install-recommends -y libasound2
+RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
+  git \
+  ca-certificates \
+  apt-utils \
+  openjdk-8-jdk \
+  gnupg \
+  gnupg1 \
+  gnupg2 \
+  node.js \
+  libaio1 \
+  libnuma1 \
+  gpg-agent \
+  npm \
+  xvfb \
+  libgtk2.0-0 \
+  libnotify-dev \
+  libgconf-2-4 \
+  libnss3 \
+  libxss1 \
+  libasound2
 
 # INSTALL yarn
-RUN apt install --no-install-recommends -y gpg-agent
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt-get -y update
-RUN apt-get -q install --no-install-recommends -y yarn=1.7.0-1
+RUN npm install -g yarn@1.7.0
 
 # copy gradle
 RUN mkdir -p /opt/gradle/gradle-$GRADLE_VERSION
@@ -114,11 +99,6 @@ RUN mkdir /home/$USER/.gradle
 # TODO: use --chown if https://github.com/moby/moby/issues/35018 is fixed
 COPY --from=deps /root/.gradle /home/$USER/.gradle
 RUN chown -R $USER:$USER /home/$USER/.gradle
-
-# clone yarn dependencies
-RUN mkdir -p /home/$USER/.cache
-COPY --from=deps /root/.cache /home/$USER/.cache
-RUN chown -R $USER:$USER /home/$USER/.cache
 
 # clone database instance
 RUN mkdir -p /home/$USER/.embedmysql
