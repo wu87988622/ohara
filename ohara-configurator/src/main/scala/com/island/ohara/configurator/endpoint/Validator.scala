@@ -18,6 +18,7 @@ import com.island.ohara.io.CloseOnce._
 import com.island.ohara.io.{IoUtil, UuidUtil}
 import com.island.ohara.kafka.{ConsumerRecord, KafkaClient}
 import com.island.ohara.serialization.Serializer
+import com.island.ohara.util.VersionUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.common.config.ConfigDef
@@ -39,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 class Validator extends SourceConnector {
   private[this] var props: util.Map[String, String] = _
-  override def version(): String = VERSION
+  override def version(): String = VersionUtil.VERSION
   override def start(props: util.Map[String, String]): Unit = {
     this.props = new util.HashMap[String, String](props)
     // we don't want to make any exception here
@@ -71,8 +72,6 @@ object Validator {
     * add this to config and then the key pushed to topic will be same with the value
     */
   private[endpoint] val REQUEST_ID = "requestId"
-
-  private[endpoint] val VERSION = "0.1"
   private[endpoint] val TARGET = "target"
   private[endpoint] val TARGET_HDFS = "hdfs"
   private[endpoint] val TARGET_RDB = "rdb"
@@ -201,7 +200,7 @@ class ValidatorTask extends SourceTask {
     // do nothing
   }
 
-  override def version(): String = VERSION
+  override def version(): String = VersionUtil.VERSION
 
   private[this] def validate(info: HdfsValidationRequest): String = {
     val config = new Configuration()
