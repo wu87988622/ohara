@@ -48,6 +48,18 @@ const FormGroupWrapper = styled.div`
   justify-content: space-between;
 `;
 
+const FormGroupCheckbox = styled(FormGroup)`
+  flex-direction: row;
+  align-items: center;
+  color: ${lightBlue};
+`;
+
+const Checkbox = styled(Input)`
+  height: auto;
+  width: auto;
+  margin-right: 8px;
+`;
+
 const SectionHeader = styled.div`
   display: flex;
   align-items: center;
@@ -198,6 +210,8 @@ class PipelineSinkFtpPage extends React.Component {
       needHeader,
     } = configs;
 
+    const _needHeader = needHeader === 'true' ? true : false;
+
     this.setState({
       name,
       host,
@@ -207,7 +221,7 @@ class PipelineSinkFtpPage extends React.Component {
       outputfolder,
       currFileEncoding,
       currTask,
-      needHeader,
+      needHeader: _needHeader,
       schema,
     });
   };
@@ -245,9 +259,9 @@ class PipelineSinkFtpPage extends React.Component {
     });
   };
 
-  handleChecboxChange = ({ target }) => {
+  handleCheckboxChange = ({ target }) => {
     const { name, checked } = target;
-    this.setState({ [name]: checked.toString() }, () => {
+    this.setState({ [name]: checked }, () => {
       this.props.updateHasChanges(true);
     });
   };
@@ -499,7 +513,7 @@ class PipelineSinkFtpPage extends React.Component {
         currTask,
         topic: currReadTopic.name,
         currFileEncoding,
-        needHeader: needHeader,
+        needHeader: String(needHeader),
       },
     };
 
@@ -726,20 +740,18 @@ class PipelineSinkFtpPage extends React.Component {
                 />
               </FormGroup>
 
-              <FormGroup>
-                <div>
-                  <Input
-                    type="checkbox"
-                    name="needHeader"
-                    width="25px"
-                    value=""
-                    checked={needHeader}
-                    data-testid="needheader-input"
-                    handleChange={this.handleChecboxChange}
-                  />
-                  <Label>Include header</Label>
-                </div>
-              </FormGroup>
+              <FormGroupCheckbox>
+                <Checkbox
+                  type="checkbox"
+                  name="needHeader"
+                  width="25px"
+                  value=""
+                  checked={needHeader}
+                  data-testid="needheader-input"
+                  handleChange={this.handleCheckboxChange}
+                />
+                Include header
+              </FormGroupCheckbox>
             </RightCol>
           </Form>
         </Box>

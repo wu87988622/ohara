@@ -27,6 +27,18 @@ const H5Wrapper = styled(H5)`
   color: ${lightBlue};
 `;
 
+const FormGroupCheckbox = styled(FormGroup)`
+  flex-direction: row;
+  align-items: center;
+  color: ${lightBlue};
+`;
+
+const Checkbox = styled(Input)`
+  height: auto;
+  width: auto;
+  margin-right: 8px;
+`;
+
 class PipelineSinkPage extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
@@ -114,12 +126,13 @@ class PipelineSinkPage extends React.Component {
       const { topic, hdfs, writePath, needHeader } = res.data.result.configs;
       const currTopic = JSON.parse(topic);
       const currHdfs = JSON.parse(hdfs);
+      const _needHeader = needHeader === 'true' ? true : false;
 
       this.setState({
         currTopic,
         currHdfs,
         writePath,
-        needHeader,
+        needHeader: _needHeader,
       });
     }
   };
@@ -189,7 +202,7 @@ class PipelineSinkPage extends React.Component {
 
   handleCheckboxChange = ({ target }) => {
     const { name, checked } = target;
-    this.setState({ [name]: checked.toString() }, () => {
+    this.setState({ [name]: checked }, () => {
       this.props.updateHasChanges(true);
     });
   };
@@ -234,7 +247,7 @@ class PipelineSinkPage extends React.Component {
         topic: JSON.stringify(currTopic),
         hdfs: JSON.stringify(currHdfs),
         writePath,
-        needHeader,
+        needHeader: String(needHeader),
       },
     };
 
@@ -308,19 +321,18 @@ class PipelineSinkPage extends React.Component {
             />
           </FormGroup>
 
-          <FormGroup>
-            <div>
-              <Input
-                type="checkbox"
-                name="needHeader"
-                width="25px"
-                checked={needHeader}
-                data-testid="needheader-input"
-                handleChange={this.handleCheckboxChange}
-              />
-              <Label>Include header</Label>
-            </div>
-          </FormGroup>
+          <FormGroupCheckbox>
+            <Checkbox
+              type="checkbox"
+              name="needHeader"
+              width="25px"
+              value=""
+              checked={needHeader}
+              data-testid="needheader-input"
+              handleChange={this.handleCheckboxChange}
+            />
+            Include header
+          </FormGroupCheckbox>
         </form>
       </Box>
     );
