@@ -20,9 +20,14 @@ a powerful ETL tool
 ### Running all backend-services by docker
 (3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 ```
-docker run --rm -p 12345:12345 islandsystems/ohara:backend backend --port 12345 --ttl 123
+docker run --rm -p 12345:12345 islandsystems/ohara:backend backend --configuratorPort 12345
 ```
-* port: bound by Configurator (default is random)
+* configuratorPort: bound by Configurator (default is random)
+* zkPort: bound by zookeeper (default is random)
+* brokersPort: bound by brokers (default is random). form: port_0,port_1
+* workersPort: bound by workers (default is random). form: port_0,port_1
+* dbPort: bound by mysql (default is random)
+* ftpPort: bound by ftp server (default is random)
 * ttl: time to terminate backend-service (default is 365 days)
 
 The backend image is not in production release. Hence, there is no any guarantees to backend image.
