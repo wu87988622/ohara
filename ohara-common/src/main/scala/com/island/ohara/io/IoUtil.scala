@@ -5,6 +5,8 @@ import java.util.Calendar
 object IoUtil {
   def hostname: String = InetAddress.getLocalHost.getHostName
 
+  def anyLocalAddress: String = "0.0.0.0"
+
   def timezone: String = Calendar.getInstance.getTimeZone.getID
 
   def path(parent: String, name: String): String = if (parent.endsWith("/")) parent + name else s"$parent/$name"

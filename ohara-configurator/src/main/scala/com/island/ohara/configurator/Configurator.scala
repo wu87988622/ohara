@@ -14,7 +14,7 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.Consistency
-import com.island.ohara.io.{CloseOnce, UuidUtil}
+import com.island.ohara.io.{CloseOnce, IoUtil, UuidUtil}
 import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
 
@@ -109,6 +109,8 @@ class Configurator private[configurator] (configuredHostname: String,
 
   val port: Int = httpServer.localAddress.getPort
 
+  val connectionProps: String = s"$hostname:$port"
+
   def size: Int = store.size
 }
 
@@ -144,7 +146,7 @@ object Configurator {
       return
     }
     // TODO: make the parse more friendly
-    var hostname = "0.0.0.0"
+    var hostname = IoUtil.anyLocalAddress
     var port: Int = 0
     var brokers: Option[String] = None
     var workers: Option[String] = None

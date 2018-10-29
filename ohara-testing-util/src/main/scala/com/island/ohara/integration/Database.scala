@@ -44,6 +44,52 @@ object Database {
     }
   }
 
+  /**
+    * create an embedded mysql with specific port
+    * @param port bound port
+    * @return an embedded mysql
+    */
+  def local(port: Int): Database = {
+    val config = aMysqldConfig(v5_7_latest)
+      .withCharset(UTF8)
+      .withUser(s"user-${COUNT.getAndIncrement()}", s"password-${COUNT.getAndIncrement()}")
+      .withTimeZone(IoUtil.timezone)
+      .withTimeout(2, TimeUnit.MINUTES)
+      .withServerVariable("max_connect_errors", 666)
+      .withTempDir(createTempDir("my_sql").getAbsolutePath)
+      .withPort(if (port <= 0) availablePort() else port)
+      // make mysql use " replace '
+      // see https://stackoverflow.com/questions/13884854/mysql-double-quoted-table-names
+      .withServerVariable("sql-mode", "ANSI_QUOTES")
+      .build()
+    val _dbName = s"db-${COUNT.getAndIncrement()}"
+    val mysqld = anEmbeddedMysql(config).addSchema(_dbName).start()
+    new Database {
+      private[this] var _connection: Connection = _
+      override def host: String = IoUtil.hostname
+
+      override def port: Int = config.getPort
+
+      override def databaseName: String = _dbName
+
+      override def user: String = config.getUsername
+
+      override def password: String = config.getPassword
+
+      override protected def doClose(): Unit = {
+        CloseOnce.close(_connection)
+        mysqld.stop()
+      }
+
+      override def url: String = s"jdbc:mysql://$host:$port/$databaseName"
+      override def connection: Connection = {
+        if (_connection == null) _connection = DriverManager.getConnection(url, user, password)
+        _connection
+      }
+      override def isLocal: Boolean = true
+    }
+  }
+
   def apply(): Database = apply(sys.env.get(DB_SERVER))
 
   private[integration] def apply(db: Option[String]): Database = db
@@ -72,45 +118,5 @@ object Database {
         override def isLocal: Boolean = false
       }
     }
-    .getOrElse {
-      val config = aMysqldConfig(v5_7_latest)
-        .withCharset(UTF8)
-        .withUser(s"user-${COUNT.getAndIncrement()}", s"password-${COUNT.getAndIncrement()}")
-        .withTimeZone(IoUtil.timezone)
-        .withTimeout(2, TimeUnit.MINUTES)
-        .withServerVariable("max_connect_errors", 666)
-        .withFreePort()
-        .withTempDir(createTempDir("my_sql").getAbsolutePath)
-        // make mysql use " replace '
-        // see https://stackoverflow.com/questions/13884854/mysql-double-quoted-table-names
-        .withServerVariable("sql-mode", "ANSI_QUOTES")
-        .build()
-
-      val _dbName = s"db-${COUNT.getAndIncrement()}"
-      val mysqld = anEmbeddedMysql(config).addSchema(_dbName).start()
-      new Database {
-        private[this] var _connection: Connection = _
-        override def host: String = IoUtil.hostname
-
-        override def port: Int = config.getPort
-
-        override def databaseName: String = _dbName
-
-        override def user: String = config.getUsername
-
-        override def password: String = config.getPassword
-
-        override protected def doClose(): Unit = {
-          CloseOnce.close(_connection)
-          mysqld.stop()
-        }
-
-        override def url: String = s"jdbc:mysql://$host:$port/$databaseName"
-        override def connection: Connection = {
-          if (_connection == null) _connection = DriverManager.getConnection(url, user, password)
-          _connection
-        }
-        override def isLocal: Boolean = true
-      }
-    }
+    .getOrElse(local(0))
 }

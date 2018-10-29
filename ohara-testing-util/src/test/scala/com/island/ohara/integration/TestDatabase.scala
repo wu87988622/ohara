@@ -53,4 +53,11 @@ class TestDatabase extends MediumTest with Matchers {
     try localdb.isLocal shouldBe true
     finally localdb.close()
   }
+
+  @Test
+  def testRandomPort(): Unit = {
+    val db = Database.local(0)
+    try db.port should not be 0
+    finally db.close()
+  }
 }

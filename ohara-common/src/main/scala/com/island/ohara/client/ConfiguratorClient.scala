@@ -54,7 +54,7 @@ object ConfiguratorClient {
   private[this] val TIMEOUT = 10 seconds
 
   def apply(host: String, port: Int): ConfiguratorClient = apply(s"$host:$port")
-  def apply(configuratorAddress: String): ConfiguratorClient = new ConfiguratorClient with SprayJsonSupport
+  def apply(connectionProps: String): ConfiguratorClient = new ConfiguratorClient with SprayJsonSupport
   with DefaultJsonProtocol {
     private[this] implicit val actorSystem: ActorSystem = ActorSystem(
       s"${classOf[ConfiguratorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
@@ -62,15 +62,15 @@ object ConfiguratorClient {
     override protected def doClose(): Unit = Await.result(actorSystem.terminate(), 60 seconds)
 
     override def list[T](implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T] = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress))).flatMap(unmarshal[Seq[T]](_)),
+      Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(connectionProps))).flatMap(unmarshal[Seq[T]](_)),
       TIMEOUT)
 
     override def delete[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.DELETE, cf.format(configuratorAddress, uuid))).flatMap(unmarshal[T]),
+      Http().singleRequest(HttpRequest(HttpMethods.DELETE, cf.format(connectionProps, uuid))).flatMap(unmarshal[T]),
       TIMEOUT)
 
     override def get[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress, uuid))).flatMap(unmarshal[T](_)),
+      Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(connectionProps, uuid))).flatMap(unmarshal[T](_)),
       TIMEOUT)
     override def add[Req, Res](
       request: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: DataCommandFormat[Res]): Res =
@@ -79,7 +79,7 @@ object ConfiguratorClient {
           .to[RequestEntity]
           .flatMap(entity => {
             Http()
-              .singleRequest(HttpRequest(HttpMethods.POST, cf.format(configuratorAddress), entity = entity))
+              .singleRequest(HttpRequest(HttpMethods.POST, cf.format(connectionProps), entity = entity))
               .flatMap(unmarshal[Res](_))
           }),
         TIMEOUT
@@ -92,7 +92,7 @@ object ConfiguratorClient {
         .to[RequestEntity]
         .flatMap(entity => {
           Http()
-            .singleRequest(HttpRequest(HttpMethods.PUT, cf.format(configuratorAddress, uuid), entity = entity))
+            .singleRequest(HttpRequest(HttpMethods.PUT, cf.format(connectionProps, uuid), entity = entity))
             .flatMap(unmarshal[Res](_))
         }),
       TIMEOUT
@@ -106,7 +106,7 @@ object ConfiguratorClient {
           .to[RequestEntity]
           .flatMap(entity => {
             Http()
-              .singleRequest(HttpRequest(HttpMethods.PUT, cf.format(configuratorAddress), entity = entity))
+              .singleRequest(HttpRequest(HttpMethods.PUT, cf.format(connectionProps), entity = entity))
               .flatMap(unmarshal[Seq[Res]])
           }),
         TIMEOUT
@@ -126,27 +126,27 @@ object ConfiguratorClient {
     // it is unnecessary to use the implicit imports here
     override def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res =
       Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(configuratorAddress))).flatMap(unmarshal[Res](_)),
+        Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(connectionProps))).flatMap(unmarshal[Res](_)),
         TIMEOUT
       )
     override def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
       Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(configuratorAddress, uuid))).flatMap(unmarshal2),
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(connectionProps, uuid))).flatMap(unmarshal2),
         TIMEOUT)
 
     override def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
       Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(configuratorAddress, uuid))).flatMap(unmarshal2),
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(connectionProps, uuid))).flatMap(unmarshal2),
         TIMEOUT)
 
     override def pause[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
       Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.pause(configuratorAddress, uuid))).flatMap(unmarshal2),
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.pause(connectionProps, uuid))).flatMap(unmarshal2),
         TIMEOUT)
 
     override def resume[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
       Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.resume(configuratorAddress, uuid))).flatMap(unmarshal2),
+        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.resume(connectionProps, uuid))).flatMap(unmarshal2),
         TIMEOUT)
 
     override def query[Req, Res](
@@ -156,7 +156,7 @@ object ConfiguratorClient {
           .to[RequestEntity]
           .flatMap(entity => {
             Http()
-              .singleRequest(HttpRequest(HttpMethods.POST, cf.format(configuratorAddress), entity = entity))
+              .singleRequest(HttpRequest(HttpMethods.POST, cf.format(connectionProps), entity = entity))
               .flatMap(unmarshal[Res](_))
           }),
         TIMEOUT

@@ -25,4 +25,8 @@ class TestWorkers extends MediumTest with Matchers {
         finally local.close()
     }
   }
+  @Test
+  def testRandomPort(): Unit = doClose3(Zookeepers.local(0))(Brokers.local(_, Seq(0)))(Workers.local(_, Seq(0))) {
+    case (_, _, workers) => workers.connectionProps.split(",").head.split(":")(1).toInt should not be 0
+  }
 }

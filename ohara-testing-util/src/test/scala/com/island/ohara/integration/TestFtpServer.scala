@@ -42,4 +42,11 @@ class TestFtpServer extends MediumTest with Matchers {
     try localFtpServer.isLocal shouldBe true
     finally localFtpServer.close()
   }
+
+  @Test
+  def testRandomPort(): Unit = {
+    val ftpServer = FtpServer.local(0)
+    try ftpServer.port should not be 0
+    finally ftpServer.close()
+  }
 }

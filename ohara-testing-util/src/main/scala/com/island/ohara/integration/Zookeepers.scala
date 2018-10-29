@@ -21,6 +21,31 @@ object Zookeepers {
   private[integration] val ZOOKEEPER_CONNECTION_PROPS: String = "ohara.it.zookeepers"
   def apply(): Zookeepers = apply(sys.env.get(ZOOKEEPER_CONNECTION_PROPS))
 
+  /**
+    * create an embedded zookeeper with specific port
+    * @param port bound port
+    * @return an embedded zookeeper
+    */
+  def local(port: Int): Zookeepers = {
+    val factory = new NIOServerCnxnFactory()
+    val snapshotDir = createTempDir("standalone-zk/snapshot")
+    val logDir = createTempDir("standalone-zk/log")
+    factory.configure(new InetSocketAddress(IoUtil.anyLocalAddress, port), 1024)
+    factory.startup(new ZooKeeperServer(snapshotDir, logDir, 500))
+
+    new Zookeepers {
+      override def connectionProps: String = s"${IoUtil.hostname}:${factory.getLocalPort}"
+
+      override protected def doClose(): Unit = {
+        factory.shutdown()
+        if (!deleteFile(snapshotDir))
+          throw new IllegalStateException(s"Fail to delete ${snapshotDir.getAbsolutePath}")
+        if (!deleteFile(logDir)) throw new IllegalStateException(s"Fail to delete ${logDir.getAbsolutePath}")
+      }
+      override def isLocal: Boolean = true
+    }
+  }
+
   private[integration] def apply(zookeepers: Option[String]): Zookeepers = zookeepers
     .map { s =>
       new Zookeepers {
@@ -29,24 +54,5 @@ object Zookeepers {
         override def isLocal: Boolean = false
       }
     }
-    .getOrElse {
-      val port: Int = availablePort()
-      val factory = new NIOServerCnxnFactory()
-      val snapshotDir = createTempDir("standalone-zk/snapshot")
-      val logDir = createTempDir("standalone-zk/log")
-      factory.configure(new InetSocketAddress("0.0.0.0", port), 1024)
-      factory.startup(new ZooKeeperServer(snapshotDir, logDir, 500))
-
-      new Zookeepers {
-        override def connectionProps: String = s"${IoUtil.hostname}:$port"
-
-        override protected def doClose(): Unit = {
-          factory.shutdown()
-          if (!deleteFile(snapshotDir))
-            throw new IllegalStateException(s"Fail to delete ${snapshotDir.getAbsolutePath}")
-          if (!deleteFile(logDir)) throw new IllegalStateException(s"Fail to delete ${logDir.getAbsolutePath}")
-        }
-        override def isLocal: Boolean = true
-      }
-    }
+    .getOrElse(local(availablePort()))
 }

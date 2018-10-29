@@ -3,6 +3,7 @@ import com.island.ohara.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
 
+import com.island.ohara.io.CloseOnce._
 class TestBrokers extends MediumTest with Matchers {
 
   @Test
@@ -22,5 +23,10 @@ class TestBrokers extends MediumTest with Matchers {
       try local.isLocal shouldBe true
       finally local.close()
     } finally zk.close()
+  }
+
+  @Test
+  def testRandomPort(): Unit = doClose2(Zookeepers.local(0))(Brokers.local(_, Seq(0))) {
+    case (_, brokers) => brokers.connectionProps.split(",").head.split(":")(1).toInt should not be 0
   }
 }

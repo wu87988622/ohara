@@ -18,4 +18,11 @@ class TestZookeepers extends MediumTest with Matchers {
     try local.isLocal shouldBe true
     finally local.close()
   }
+
+  @Test
+  def testRandomPort(): Unit = {
+    val zk = Zookeepers.local(0)
+    try zk.connectionProps.split(":")(1).toInt should not be 0
+    finally zk.close()
+  }
 }

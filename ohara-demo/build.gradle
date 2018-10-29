@@ -63,7 +63,22 @@ distributions {
 task runBackend(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.demo.Backend"
-  String port = 12345
-  if(project.hasProperty('port')) port = "${project.getProperty('port')}"
-  args = Arrays.asList("--port", port)
+  def configuratorPort = 0
+  if(project.hasProperty('configuratorPort')) configuratorPort = "${project.getProperty('configuratorPort')}"
+  def zkPort = 0
+  if(project.hasProperty('zkPort')) zkPort = "${project.getProperty('zkPort')}"
+  def brokersPort = "0,0,0"
+  if(project.hasProperty('brokersPort')) brokersPort = "${project.getProperty('brokersPort')}"
+  def workersPort = "0,0,0"
+  if(project.hasProperty('workersPort')) workersPort = "${project.getProperty('workersPort')}"
+  def dbPort = 0
+  if(project.hasProperty('dbPort')) dbPort = "${project.getProperty('dbPort')}"
+  def ftpPort = 0
+  if(project.hasProperty('ftpPort')) ftpPort = "${project.getProperty('ftpPort')}"
+  args = Arrays.asList("--configuratorPort", configuratorPort,
+    "--zkPort", zkPort,
+    "--brokersPort", brokersPort,
+    "--workersPort", workersPort,
+    "--dbPort", dbPort,
+    "--ftpPort", ftpPort)
 }

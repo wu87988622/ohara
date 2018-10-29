@@ -9,8 +9,9 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{Database, FtpServer, OharaTestUtil}
-import com.island.ohara.io.CloseOnce.doClose
+import com.island.ohara.integration._
+import com.island.ohara.io.CloseOnce._
+import com.island.ohara.io.IoUtil
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
@@ -31,13 +32,42 @@ object Backend {
   final case class FtpServerInformation(host: String, port: Int, user: String, password: String)
   implicit val FTP_SERVER_JSON_FORMAT: RootJsonFormat[FtpServerInformation] = jsonFormat4(FtpServerInformation)
 
-  final case class Services(ftpServer: FtpServerInformation, database: DbInformation)
-  implicit val SERVICES_JSON_FORMAT: RootJsonFormat[Services] = jsonFormat2(Services)
+  final case class Services(zookeeper: String,
+                            brokers: String,
+                            workers: String,
+                            ftpServer: FtpServerInformation,
+                            database: DbInformation)
+  implicit val SERVICES_JSON_FORMAT: RootJsonFormat[Services] = jsonFormat5(Services)
 
   val HELP_KEY = "--help"
-  val PORT_KEY = "--port"
+  val CONFIGURATOR_PORT_KEY = "--configuratorPort"
+  val ZOOKEEPER_PORT_KEY = "--zkPort"
+  val BROKERS_PORT_KEY = "--brokersPort"
+  val WORKERS_PORT_KEY = "--workersPort"
+  val DB_PORT_KEY = "--dbPort"
+  val FTP_PORT_KEY = "--ftpPort"
   val TTL_KEY = "--ttl"
-  val USAGE = s"[Usage] $TTL_KEY $PORT_KEY"
+  val USAGE =
+    s"[Usage] $TTL_KEY $CONFIGURATOR_PORT_KEY $ZOOKEEPER_PORT_KEY $BROKERS_PORT_KEY $WORKERS_PORT_KEY $DB_PORT_KEY $FTP_PORT_KEY"
+
+  final case class ServicePorts(configuratorPort: Int,
+                                dbPort: Int,
+                                ftpPort: Int,
+                                workersPort: Seq[Int],
+                                brokersPort: Seq[Int],
+                                zkPort: Int)
+
+  object ServicePorts {
+    val default = ServicePorts(
+      configuratorPort = 0,
+      dbPort = 0,
+      ftpPort = 0,
+      workersPort = Seq.fill(3)(0),
+      brokersPort = Seq.fill(3)(0),
+      zkPort = 0
+    )
+  }
+
   def main(args: Array[String]): Unit = {
     if (args.length == 1 && args(0) == HELP_KEY) {
       println(USAGE)
@@ -49,15 +79,32 @@ object Backend {
     }
     // TODO: make the parse more friendly
     var ttl: Duration = 365 days
-    var port: Int = 0
+    var configuratorPort: Int = 0
+    var zkPort: Int = 0
+    var brokersPort: Seq[Int] = Seq.fill(3)(0)
+    var workersPort: Seq[Int] = Seq.fill(3)(0)
+    var dbPort: Int = 0
+    var ftpPort: Int = 0
     args.sliding(2, 2).foreach {
-      case Array(PORT_KEY, value) => port = value.toInt
-      case Array(TTL_KEY, value)  => ttl = value.toInt seconds
-      case _                      => throw new IllegalArgumentException(USAGE)
+      case Array(CONFIGURATOR_PORT_KEY, value) => configuratorPort = value.toInt
+      case Array(ZOOKEEPER_PORT_KEY, value)    => zkPort = value.toInt
+      case Array(BROKERS_PORT_KEY, value)      => brokersPort = value.split(",").map(_.toInt)
+      case Array(WORKERS_PORT_KEY, value)      => workersPort = value.split(",").map(_.toInt)
+      case Array(DB_PORT_KEY, value)           => dbPort = value.toInt
+      case Array(FTP_PORT_KEY, value)          => ftpPort = value.toInt
+      case Array(TTL_KEY, value)               => ttl = value.toInt seconds
+      case _                                   => throw new IllegalArgumentException(USAGE)
     }
     run(
-      port,
-      (configurator, _, _) => {
+      ServicePorts(
+        configuratorPort = configuratorPort,
+        zkPort = zkPort,
+        brokersPort = brokersPort,
+        workersPort = workersPort,
+        dbPort = dbPort,
+        ftpPort = ftpPort
+      ),
+      (configurator, _, _, _, _, _) => {
         println(s"run a configurator at ${configurator.hostname}:${configurator.port}")
         println(
           s"enter ctrl+c to terminate all processes (or all processes will be terminated after ${ttl.toSeconds} seconds")
@@ -66,64 +113,69 @@ object Backend {
     )
   }
 
-  def run(port: Int, stopped: (Configurator, Database, FtpServer) => Unit): Unit = {
-    doClose(OharaTestUtil.workers()) { util =>
-      println("wait for the mini kafka cluster")
-      TimeUnit.SECONDS.sleep(5)
-      println(s"Succeed to run the mini brokers: ${util.brokersConnProps} and workers:${util.workersConnProps}")
-      println(
-        s"Succeed to run a database url:${util.dataBase.url} user:${util.dataBase.user} password:${util.dataBase.password}")
-      println(
-        s"Succeed to run a ftp server host:${util.ftpServer.host} port:${util.ftpServer.port} user:${util.ftpServer.user} password:${util.ftpServer.password}")
-      val dbRoute: server.Route = path("creation" / "rdb") {
-        pathEnd {
-          post {
-            entity(as[Creation]) { creation =>
-              complete {
-                val client = DatabaseClient(util.dataBase.url, util.dataBase.user, util.dataBase.password)
-                try {
-                  client.createTable(creation.name, creation.schema)
-                } finally client.close()
-                StatusCodes.OK
+  def run(ports: ServicePorts,
+          stopped: (Configurator, Zookeepers, Brokers, Workers, Database, FtpServer) => Unit): Unit = {
+    doClose5(Zookeepers.local(ports.zkPort))(Brokers.local(_, ports.brokersPort))(Workers.local(_, ports.workersPort))(
+      _ => Database.local(ports.dbPort))(_ => FtpServer.local(ports.ftpPort)) {
+      case (zk, brokers, workers, dataBase, ftpServer) =>
+        println("wait for the mini kafka cluster")
+        TimeUnit.SECONDS.sleep(5)
+        println(s"Succeed to run the mini brokers: ${brokers.connectionProps} and workers:${workers.connectionProps}")
+        println(s"Succeed to run a database url:${dataBase.url} user:${dataBase.user} password:${dataBase.password}")
+        println(
+          s"Succeed to run a ftp server host:${ftpServer.host} port:${ftpServer.port} user:${ftpServer.user} password:${ftpServer.password}")
+        val dbRoute: server.Route = path("creation" / "rdb") {
+          pathEnd {
+            post {
+              entity(as[Creation]) { creation =>
+                complete {
+                  val client = DatabaseClient(dataBase.url, dataBase.user, dataBase.password)
+                  try {
+                    client.createTable(creation.name, creation.schema)
+                  } finally client.close()
+                  StatusCodes.OK
+                }
               }
             }
           }
         }
-      }
-      val servicesRoute: server.Route = path("services") {
-        pathEnd {
-          get {
-            complete {
-              Services(
-                ftpServer = FtpServerInformation(host = util.ftpServer.host,
-                                                 port = util.ftpServer.port,
-                                                 user = util.ftpServer.user,
-                                                 password = util.ftpServer.password),
-                database = DbInformation(
-                  url = util.dataBase.url,
-                  user = util.dataBase.user,
-                  password = util.dataBase.password
+        val servicesRoute: server.Route = path("services") {
+          pathEnd {
+            get {
+              complete {
+                Services(
+                  zookeeper = zk.connectionProps,
+                  brokers = brokers.connectionProps,
+                  workers = workers.connectionProps,
+                  ftpServer = FtpServerInformation(host = ftpServer.host,
+                                                   port = ftpServer.port,
+                                                   user = ftpServer.user,
+                                                   password = ftpServer.password),
+                  database = DbInformation(
+                    url = dataBase.url,
+                    user = dataBase.user,
+                    password = dataBase.password
+                  )
                 )
-              )
+              }
             }
           }
         }
-      }
-      val topicName = s"demo-${SystemUtil.current()}"
-      doClose(KafkaClient(util.brokersConnProps))(
-        _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
-      )
-      val configurator = Configurator
-        .builder()
-        .store(Store.builder().brokers(util.brokersConnProps).topicName(topicName).buildBlocking[String, Any])
-        .kafkaClient(KafkaClient(util.brokersConnProps))
-        .connectClient(ConnectorClient(util.workersConnProps))
-        .hostname("0.0.0.0")
-        .port(port)
-        .extraRoute(dbRoute ~ servicesRoute)
-        .build()
-      try stopped(configurator, util.dataBase, util.ftpServer)
-      finally configurator.close()
+        val topicName = s"demo-${SystemUtil.current()}"
+        doClose(KafkaClient(brokers.connectionProps))(
+          _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
+        )
+        val configurator = Configurator
+          .builder()
+          .store(Store.builder().brokers(brokers.connectionProps).topicName(topicName).buildBlocking[String, Any])
+          .kafkaClient(KafkaClient(brokers.connectionProps))
+          .connectClient(ConnectorClient(workers.connectionProps))
+          .hostname(IoUtil.anyLocalAddress)
+          .port(ports.configuratorPort)
+          .extraRoute(dbRoute ~ servicesRoute)
+          .build()
+        try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)
+        finally configurator.close()
     }
   }
 }
