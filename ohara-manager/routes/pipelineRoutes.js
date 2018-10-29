@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const { API_ROOT } = require('../constants/url');
+const { API_ROOT } = require('../constants/config');
 const {
   onSuccess,
   onError,

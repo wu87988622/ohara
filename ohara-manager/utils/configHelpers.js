@@ -1,8 +1,7 @@
 const yargs = require('yargs');
+const _ = require('./helpers');
 
-const _ = require('../utils/helpers');
-
-const argv = yargs
+const getConfig = yargs
   .options({
     configurator: {
       demandOption: true,
@@ -27,5 +26,4 @@ const argv = yargs
     return true;
   }).argv;
 
-exports.API_ROOT = argv.configurator;
-exports.PORT = argv.port;
+module.exports = getConfig;
