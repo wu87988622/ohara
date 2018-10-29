@@ -1,4 +1,5 @@
-const _ = require('lodash');
+const _ = require('../utils/helpers');
+const MESSAGES = require('../constants/messages');
 
 const getErrors = data => {
   const errors = data.reduce((acc, r) => {
@@ -9,14 +10,14 @@ const getErrors = data => {
   return errors;
 };
 
-exports.onValidateSuccess = (res, result) => {
+const onValidateSuccess = (res, result) => {
   const errors = getErrors(result.data);
 
   if (errors.length > 0) {
     return res.json({
       isSuccess: false,
       errorMessage: {
-        message: 'Test failed, please check you configs and try again later!',
+        message: MESSAGES.VALIDATION_ERROR,
       },
     });
   }
@@ -29,7 +30,7 @@ exports.onValidateSuccess = (res, result) => {
   return res.json(_res);
 };
 
-exports.onSuccess = (res, result) => {
+const onSuccess = (res, result) => {
   const data = _.get(result, 'data', null);
 
   if (data) {
@@ -41,10 +42,17 @@ exports.onSuccess = (res, result) => {
   }
 };
 
-exports.onError = (res, err) => {
+const onError = (res, err) => {
   if (err.response) {
     const { data: errorMessage } = err.response;
     res.json({ errorMessage, isSuccess: false });
     return;
   }
+};
+
+module.exports = {
+  onValidateSuccess,
+  onSuccess,
+  onError,
+  getErrors, // for unit tests
 };
