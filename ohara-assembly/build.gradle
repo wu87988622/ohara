@@ -25,6 +25,13 @@ dependencies {
   testImplementation libs.junit
 }
 
+task uberJar(type: Jar) {
+  classifier = 'uber'
+  // TODO: should we exclude kafka-related jars?
+  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+  with jar
+}
+
 distributions {
   main {
     baseName = "ohara"

@@ -67,6 +67,12 @@ all integration tests currently live under the ohara-it. Without actual systems 
 * ftp: ohara.it.ftp
 * db: ohara.it.db
 
+### build uber jar
+```
+gralde clean uberJar
+```
+the uber jar is under ohara-assembly/build/libs/
+
 ### Built With
 
 * [Kafka](https://github.com/apache/kafka) - streaming tool
