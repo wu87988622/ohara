@@ -43,14 +43,21 @@ class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, work
     *
     * @return brokers connection information
     */
-  def brokersConnProps: String = brokers.connectionProps
+  def brokersConnProps: String = {
+    Option(brokers).getOrElse(throw new RuntimeException(
+      s"Brokers do not exist. Because Workers exist in supply environment, then we don't create embedded Brokers. Please do not operate it"))
+    brokers.connectionProps
+  }
 
   /**
     * Exposing the workers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
     *
     * @return workers connection information
     */
-  def workersConnProps: String = workers.connectionProps
+  def workersConnProps: String = {
+    Option(brokers).getOrElse(throw new RuntimeException(s"Workers do not exist"))
+    workers.connectionProps
+  }
 
   def connectorClient: ConnectorClient = {
     // throw exception if there is no worker cluster
