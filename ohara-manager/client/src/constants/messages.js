@@ -28,6 +28,8 @@ export const PIPELINE_DELETION_ERROR =
 export const CANNOT_START_PIPELINE_ERROR =
   'Cannot complete your action, please check your connector settings';
 
+export const NO_CONFIGURATION_FOUND_ERROR = `You don't any configuration set up yet, please create one before you can proceed`;
+
 export const GENERIC_ERROR = 'Oops, something went wrong 😱 😱 😱';
 
 // Warning

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { Redirect } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
 import * as _ from 'utils/helpers';
@@ -11,6 +12,7 @@ import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
 import { fetchHdfs } from 'apis/configurationApis';
+import { CONFIGURATION } from 'constants/urls';
 import {
   createSink,
   updateSink,
@@ -45,6 +47,7 @@ class PipelineSinkPage extends React.Component {
     writePath: '',
     pipelines: {},
     needHeader: '',
+    isRedirect: false,
   };
 
   componentDidMount() {
@@ -124,12 +127,15 @@ class PipelineSinkPage extends React.Component {
   fetchHdfs = async sinkId => {
     const { currHdfs } = this.state;
     const res = await fetchHdfs();
-    const hdfses = await _.get(res, 'data.result', null);
+    const hdfses = await _.get(res, 'data.result', []);
 
     const _currHdfs = _.isEmpty(currHdfs) ? hdfses[0] : currHdfs;
 
-    if (hdfses) {
+    if (!_.isEmpty(hdfses)) {
       this.setState({ hdfses, currHdfs: _currHdfs });
+    } else {
+      this.setState({ isRedirect: true });
+      toastr.error(MESSAGES.NO_CONFIGURATION_FOUND_ERROR);
     }
   };
 
@@ -253,7 +259,12 @@ class PipelineSinkPage extends React.Component {
       currHdfs,
       writePath,
       needHeader,
+      isRedirect,
     } = this.state;
+
+    if (isRedirect) {
+      return <Redirect to={CONFIGURATION} />;
+    }
 
     return (
       <Box>
