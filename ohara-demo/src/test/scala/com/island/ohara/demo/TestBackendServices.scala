@@ -58,6 +58,7 @@ class TestBackendServices extends LargeTest with Matchers {
     val ports = ServicePorts(
       dbPort = availablePort(),
       ftpPort = availablePort(),
+      ftpDataPort = availablePort(),
       configuratorPort = availablePort(),
       zkPort = availablePort(),
       brokersPort = Seq.fill(3)(availablePort()),
@@ -84,6 +85,7 @@ class TestBackendServices extends LargeTest with Matchers {
 
         result.ftpServer.host shouldBe ftp.host
         result.ftpServer.port shouldBe ports.ftpPort
+        result.ftpServer.dataPort shouldBe ports.ftpDataPort
         result.ftpServer.user shouldBe ftp.user
         result.ftpServer.password shouldBe ftp.password
 

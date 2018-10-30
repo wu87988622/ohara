@@ -75,10 +75,13 @@ task runBackend(type: JavaExec, dependsOn: 'classes') {
   if(project.hasProperty('dbPort')) dbPort = "${project.getProperty('dbPort')}"
   def ftpPort = 0
   if(project.hasProperty('ftpPort')) ftpPort = "${project.getProperty('ftpPort')}"
+  def ftpDataPort = 0
+  if(project.hasProperty('ftpDataPort')) ftpDataPort = "${project.getProperty('ftpDataPort')}"
   args = Arrays.asList("--configuratorPort", configuratorPort,
     "--zkPort", zkPort,
     "--brokersPort", brokersPort,
     "--workersPort", workersPort,
     "--dbPort", dbPort,
-    "--ftpPort", ftpPort)
+    "--ftpPort", ftpPort,
+    "--ftpDataPort", ftpDataPort)
 }

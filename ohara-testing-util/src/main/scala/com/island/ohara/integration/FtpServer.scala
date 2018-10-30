@@ -3,7 +3,7 @@ import java.util
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.io.{CloseOnce, IoUtil}
-import org.apache.ftpserver.FtpServerFactory
+import org.apache.ftpserver.{DataConnectionConfigurationFactory, FtpServerFactory}
 import org.apache.ftpserver.listener.ListenerFactory
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory
 import org.apache.ftpserver.usermanager.impl.{BaseUser, WritePermission}
@@ -24,6 +24,12 @@ trait FtpServer extends CloseOnce {
   def port: Int
   def user: String
   def password: String
+
+  /**
+    * If the ftp server is in passive mode, the port is used to transfer data
+    * @return data port
+    */
+  def dataPort: Int
 
   /**
     * @return true if this ftp server is generated locally.
@@ -51,10 +57,11 @@ object FtpServer {
 
   /**
     * create an embedded ftp server with specific port
-    * @param port bound port
+    * @param commandPort bound port used to control
+    * @param dataPort bound port used to transfer data
     * @return an embedded ftp server
     */
-  def local(port: Int): FtpServer = {
+  def local(commandPort: Int, dataPort: Int): FtpServer = {
     val homeFolder = createTempDir("ftp")
     val userManagerFactory = new PropertiesUserManagerFactory()
     val userManager = userManagerFactory.createUserManager
@@ -67,7 +74,11 @@ object FtpServer {
     userManager.save(_user)
 
     val listenerFactory = new ListenerFactory()
-    listenerFactory.setPort(port)
+    listenerFactory.setPort(commandPort)
+    val connectionConfig = new DataConnectionConfigurationFactory()
+    connectionConfig.setActiveEnabled(false)
+    connectionConfig.setPassivePorts(if (dataPort <= 0) availablePort().toString else dataPort.toString)
+    listenerFactory.setDataConnectionConfiguration(connectionConfig.createDataConnectionConfiguration())
 
     val listener = listenerFactory.createListener
     val factory = new FtpServerFactory()
@@ -89,6 +100,7 @@ object FtpServer {
 
       override def password: String = _user.getPassword
       override def isLocal: Boolean = true
+      override def dataPort: Int = connectionConfig.getPassivePorts.toInt
     }
   }
 
@@ -105,7 +117,9 @@ object FtpServer {
           override def password: String = _password
           override protected def doClose(): Unit = {}
           override def isLocal: Boolean = false
+          override def dataPort: Int =
+            throw new UnsupportedOperationException("TODO: can't get data port from actual ftp server")
         }
       }
-      .getOrElse(local(0))
+      .getOrElse(local(0, 0))
 }
