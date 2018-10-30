@@ -33,6 +33,8 @@ const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
 `;
 
+Wrapper.displayName = 'Wrapper';
+
 const Header = styled.div`
   display: flex;
   align-items: center;
@@ -104,7 +106,7 @@ class PipelineNewPage extends React.Component {
 
     if (!isValid) {
       toastr.error(MESSAGES.TOPIC_ID_REQUIRED_ERROR);
-      this.setState(() => ({ isRedirect: true }));
+      this.setState({ isRedirect: true });
       return false;
     }
 
@@ -131,10 +133,6 @@ class PipelineNewPage extends React.Component {
     });
   };
 
-  getIcon = type => {
-    return ICON_MAPS[type];
-  };
-
   loadGraph = pipelines => {
     if (!pipelines) return;
 
@@ -146,19 +144,18 @@ class PipelineNewPage extends React.Component {
         name,
         type,
         uuid,
-        icon: this.getIcon(graph[idx] ? graph[idx].type : type),
+        icon: ICON_MAPS[type],
         id: graph[idx] ? graph[idx].id : uuid4(),
         isActive: graph[idx] ? graph[idx].isActive : false,
         to: '?',
       };
     });
 
-    const forms = Object.keys(rules);
+    const froms = Object.keys(rules);
 
-    const results = forms.map(form => {
-      const source = _graph.filter(g => g.uuid === form);
-      const target = _graph.filter(g => g.uuid === rules[form]);
-
+    const results = froms.map(from => {
+      const source = _graph.filter(g => g.uuid === from);
+      const target = _graph.filter(g => g.uuid === rules[from]);
       return {
         ...source[0],
         to: target[0] ? target[0].id : '',
@@ -359,6 +356,7 @@ class PipelineNewPage extends React.Component {
                 />
               )}
             />
+
             <Route
               path={`/pipeline/(new|edit)/${hdfsSink}`}
               render={() => (

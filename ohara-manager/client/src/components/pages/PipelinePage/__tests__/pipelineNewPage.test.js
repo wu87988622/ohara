@@ -1,0 +1,65 @@
+import React from 'react';
+import uuid from 'uuid';
+import { shallow } from 'enzyme';
+
+import PipelineNewPage from '../PipelineNewPage';
+import { PIPELINE } from 'constants/urls';
+import { PIPELINE_NEW } from 'constants/documentTitles';
+
+const props = {
+  match: {
+    params: {
+      topicId: uuid.v4(),
+    },
+  },
+};
+
+describe('<PipelineNewPage />', () => {
+  let wrapper;
+  beforeEach(() => {
+    wrapper = shallow(<PipelineNewPage {...props} />);
+  });
+
+  it('renders', () => {
+    expect(wrapper.find('Wrapper').length).toBe(1);
+  });
+
+  it('renders the correct document title', () => {
+    expect(wrapper.props().title).toBe(PIPELINE_NEW);
+  });
+
+  it('should render <Redirect /> when topicUuid is not present', () => {
+    const match = {};
+    wrapper = shallow(<PipelineNewPage match={match} />);
+    expect(wrapper.props().to).toBe(PIPELINE);
+  });
+
+  it('renders the <H2 />', () => {
+    expect(wrapper.find('H2').length).toBe(1);
+  });
+
+  it('renders <Toolbar />', () => {
+    expect(wrapper.find('Toolbar').length).toBe(1);
+  });
+
+  it('renders <PipelineGraph />', () => {
+    expect(wrapper.find('Toolbar').length).toBe(1);
+  });
+
+  it('renders 5 <Route />', () => {
+    expect(wrapper.find('Route').length).toBe(5);
+  });
+
+  it('renders <ConfirmModal />', () => {
+    expect(wrapper.find('ConfirmModal').length).toBe(1);
+    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
+  });
+
+  it('toggles <ConfirmModal />', () => {
+    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
+    wrapper.instance().handleModalOpen();
+    expect(wrapper.find('ConfirmModal').props().isActive).toBe(true);
+    wrapper.instance().handleModalClose();
+    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
+  });
+});
