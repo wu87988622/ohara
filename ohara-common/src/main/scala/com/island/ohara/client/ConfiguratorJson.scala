@@ -54,6 +54,7 @@ object ConfiguratorJson {
     override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
       case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column(n, nn, DataType.of(t), o.toInt)
       case Seq(JsString(n), JsNull, JsString(t), JsNumber(o))       => Column(n, n, DataType.of(t), o.toInt)
+      case Seq(JsString(n), JsString(t), JsNumber(o))               => Column(n, n, DataType.of(t), o.toInt)
       case _                                                        => throw new UnsupportedOperationException(s"invalid format of ${Column.getClass.getSimpleName}")
     }
     override def write(obj: Column): JsValue = JsObject(

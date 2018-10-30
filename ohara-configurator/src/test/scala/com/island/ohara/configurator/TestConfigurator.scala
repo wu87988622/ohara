@@ -1,19 +1,15 @@
 package com.island.ohara.configurator
 
-import java.util.concurrent.{Executors, TimeUnit}
-
 import com.island.ohara.client.ConfiguratorJson.{Column, _}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import com.island.ohara.serialization.DataType
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * this test includes two configurators - with/without cluster.

@@ -18,4 +18,9 @@ class TestDataType extends SmallTest with Matchers {
     DataType.all.foreach(dataType => DataType.of(dataType.name))
     DataType.all.foreach(dataType => DataType.of(dataType.name.toLowerCase))
   }
+
+  @Test
+  def testAlias(): Unit = {
+    DataType.all.foreach(dataType => DataType.of(dataType.alias))
+  }
 }

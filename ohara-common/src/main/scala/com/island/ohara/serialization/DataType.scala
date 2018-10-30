@@ -6,12 +6,19 @@ package com.island.ohara.serialization
   */
 sealed abstract class DataType(val index: Byte) extends Serializable {
   def name: String
+
+  /**
+    * customary name of type. see BYTES and INT. default, the alias is equal with name.
+    * @return alias name
+    */
+  def alias: String = name
 }
 
 object DataType {
 
   case object BYTES extends DataType(0) {
     override def name: String = "byte array"
+    override def alias: String = "bytes"
   }
 
   case object BOOLEAN extends DataType(1) {
@@ -28,6 +35,7 @@ object DataType {
 
   case object INT extends DataType(4) {
     override def name: String = "integer"
+    override def alias: String = "int"
   }
 
   case object LONG extends DataType(5) {
@@ -71,5 +79,6 @@ object DataType {
     * @param name index of data type
     * @return Data type
     */
-  def of(name: String): DataType = all.find(_.name.equalsIgnoreCase(name)).get
+  def of(name: String): DataType =
+    all.find(dataType => dataType.name.equalsIgnoreCase(name) || dataType.alias.equalsIgnoreCase(name)).get
 }
