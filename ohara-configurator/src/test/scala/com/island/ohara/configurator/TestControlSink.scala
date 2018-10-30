@@ -107,6 +107,25 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
     } finally if (testUtil.connectorClient.exist(sink.uuid)) testUtil.connectorClient.delete(sink.uuid)
   }
 
+  @Test
+  def testCommandMsg(): Unit = {
+    val topicName = methodName
+    val request = SinkRequest(name = methodName,
+                              className = classOf[DumbSink].getName,
+                              schema = Seq.empty,
+                              topics = Seq(topicName),
+                              numberOfTasks = 1,
+                              configs = Map.empty)
+
+    val fakeUUID = random()
+    (the[IllegalArgumentException] thrownBy client.pause[Sink](fakeUUID)).getMessage should include("exist")
+    (the[IllegalArgumentException] thrownBy client.resume[Sink](fakeUUID)).getMessage should include("exist")
+
+    val sink = client.add[SinkRequest, Sink](request)
+
+    (the[IllegalArgumentException] thrownBy client.pause[Sink](sink.uuid)).getMessage should include("start")
+    (the[IllegalArgumentException] thrownBy client.resume[Sink](sink.uuid)).getMessage should include("start")
+  }
   @After
   def tearDown(): Unit = {
     CloseOnce.close(client)

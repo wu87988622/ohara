@@ -113,6 +113,26 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
     } finally if (testUtil.connectorClient.exist(source.uuid)) testUtil.connectorClient.delete(source.uuid)
   }
 
+  @Test
+  def testCommandMsg(): Unit = {
+    val topicName = methodName
+    val request = SourceRequest(name = methodName,
+                                className = classOf[DumbSource].getName,
+                                schema = Seq.empty,
+                                topics = Seq(topicName),
+                                numberOfTasks = 1,
+                                configs = Map.empty)
+
+    val fakeUUID = random()
+    (the[IllegalArgumentException] thrownBy client.pause[Source](fakeUUID)).getMessage should include("exist")
+    (the[IllegalArgumentException] thrownBy client.resume[Source](fakeUUID)).getMessage should include("exist")
+
+    val source = client.add[SourceRequest, Source](request)
+
+    (the[IllegalArgumentException] thrownBy client.pause[Source](source.uuid)).getMessage should include("start")
+    (the[IllegalArgumentException] thrownBy client.resume[Source](source.uuid)).getMessage should include("start")
+  }
+
   @After
   def tearDown(): Unit = {
     CloseOnce.close(client)
