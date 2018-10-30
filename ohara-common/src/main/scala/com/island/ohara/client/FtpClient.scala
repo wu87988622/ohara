@@ -14,9 +14,26 @@ import org.apache.commons.net.ftp.{FTP, FTPClient}
 trait FtpClient extends CloseOnce {
   def listFileNames(dir: String): Seq[String]
 
+  /**
+    * open a input stream from a existent file. If file doesn't exist, an IllegalArgumentException will be thrown.
+    * @param path file path
+    * @return input stream
+    */
   def open(path: String): InputStream
 
+  /**
+    * create an new file. If file already exists, an IllegalArgumentException will be thrown.
+    * @param path file path
+    * @return file output stream
+    */
   def create(path: String): OutputStream
+
+  /**
+    * create output stream from an existent file. If file doesn't exist, an IllegalArgumentException will be thrown.
+    * @param path file path
+    * @return file output stream
+    */
+  def append(path: String): OutputStream
 
   def moveFile(from: String, to: String): Unit
 
@@ -24,12 +41,23 @@ trait FtpClient extends CloseOnce {
 
   def delete(path: String): Unit
 
-  def append(path: String, message: String): Unit = append(path, Seq(message))
+  /**
+    * append message to the end of file. If the file doesn't exist, it will create an new file.
+    * @param path file path
+    * @param message message
+    */
+  def attach(path: String, message: String): Unit = attach(path, Seq(message))
 
-  def append(path: String, messages: Seq[String]): Unit = {
+  /**
+    * append messages to the end of file. If the file doesn't exist, it will create an new file.
+    * @param path file path
+    * @param messages messages
+    */
+  def attach(path: String, messages: Seq[String]): Unit = {
     // add room to buffer data
     val size = messages.map(_.length).sum * 2
-    CloseOnce.doClose2(new OutputStreamWriter(create(path), StandardCharsets.UTF_8))(new BufferedWriter(_, size)) {
+    CloseOnce.doClose2(new OutputStreamWriter(if (exist(path)) append(path) else create(path), StandardCharsets.UTF_8))(
+      new BufferedWriter(_, size)) {
       case (_, writer) =>
         messages.foreach(line => {
           writer.append(line)
@@ -58,23 +86,18 @@ trait FtpClient extends CloseOnce {
   }
 
   def download(path: String): Array[Byte] = {
-    CloseOnce.doClose(open(path)) { input =>
-      {
-        val output = new ByteArrayOutputStream()
-        val buf = new Array[Byte](128)
-        var rval: Int = Int.MaxValue
-        while (rval > 0) {
-          rval = input.read(buf)
-          if (rval > 0) output.write(buf, 0, rval)
-        }
-        output.toByteArray
-      }
+    CloseOnce.doClose2(open(path))(_ => new ByteArrayOutputStream()) { (input, output) =>
+      val buf = new Array[Byte](128)
+      Iterator.continually(input.read(buf)).takeWhile(_ > 0).foreach(output.write(buf, 0, _))
+      output.toByteArray
     }
   }
 
   def tmpFolder: String
 
   def exist(path: String): Boolean
+
+  def nonExist(path: String): Boolean = !exist(path)
 
   def fileType(path: String): FileType
 
@@ -143,6 +166,7 @@ class FtpClientBuilder {
       override def open(path: String): InputStream = {
         connectIfNeeded()
         client.setFileType(FTP.BINARY_FILE_TYPE)
+        if (nonExist(path)) throw new IllegalArgumentException(s"$path doesn't exist")
         val inputStream = client.retrieveFileStream(path)
         if (inputStream == null)
           throw new IllegalStateException(s"Failed to open $path because of ${client.getReplyCode}")
@@ -193,6 +217,7 @@ class FtpClientBuilder {
       override def create(path: String): OutputStream = {
         connectIfNeeded()
         client.setFileType(FTP.BINARY_FILE_TYPE)
+        if (exist(path)) throw new IllegalArgumentException(s"$path exists")
         val outputStream = client.storeFileStream(path)
         if (outputStream == null)
           throw new IllegalStateException(s"Failed to create $path because of ${client.getReplyCode}")
@@ -216,7 +241,35 @@ class FtpClientBuilder {
 
           override def toString: String = outputStream.toString
         }
+      }
 
+      override def append(path: String): OutputStream = {
+        connectIfNeeded()
+        client.setFileType(FTP.BINARY_FILE_TYPE)
+        if (nonExist(path)) throw new IllegalArgumentException(s"$path doesn't exist")
+        val outputStream = client.appendFileStream(path)
+        if (outputStream == null)
+          throw new IllegalStateException(s"Failed to create $path because of ${client.getReplyCode}")
+        new OutputStream {
+          override def write(b: Int): Unit = outputStream.write(b)
+
+          override def close(): Unit = {
+            outputStream.close()
+            if (!client.completePendingCommand()) throw new IllegalStateException("Failed to complete pending command")
+          }
+
+          override def flush(): Unit = outputStream.flush()
+
+          override def write(b: Array[Byte]): Unit = outputStream.write(b)
+
+          override def write(b: Array[Byte], off: Int, len: Int): Unit = outputStream.write(b, off, len)
+
+          override def equals(obj: scala.Any): Boolean = outputStream.equals(obj)
+
+          override def hashCode(): Int = outputStream.hashCode()
+
+          override def toString: String = outputStream.toString
+        }
       }
 
       override def delete(path: String): Unit = fileType(path) match {

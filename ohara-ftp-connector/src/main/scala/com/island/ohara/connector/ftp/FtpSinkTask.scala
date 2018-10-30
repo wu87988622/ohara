@@ -7,13 +7,10 @@ import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector._
 import com.island.ohara.util.VersionUtil
 import com.typesafe.scalalogging.Logger
-
-import scala.collection.mutable
 class FtpSinkTask extends RowSinkTask {
   private[this] var config: TaskConfig = _
   private[this] var props: FtpSinkTaskProps = _
   private[this] var ftpClient: FtpClient = _
-  private[this] val committedOffsets = new mutable.HashSet[TopicPartition]()
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
     this.props = FtpSinkTaskProps(config.options)
@@ -59,7 +56,9 @@ class FtpSinkTask extends RowSinkTask {
     if (result.nonEmpty) {
       val needHeader = props.needHeader && !ftpClient.exist(props.output)
       val writer = new BufferedWriter(
-        new OutputStreamWriter(ftpClient.create(props.output), props.encode.getOrElse("UTF-8")))
+        new OutputStreamWriter(if (ftpClient.exist(props.output)) ftpClient.append(props.output)
+                               else ftpClient.create(props.output),
+                               props.encode.getOrElse("UTF-8")))
       if (needHeader) {
         val header =
           if (config.schema.nonEmpty) config.schema.sortBy(_.order).map(_.newName).mkString(",")
@@ -71,17 +70,11 @@ class FtpSinkTask extends RowSinkTask {
         case (r, line) =>
           writer.append(line)
           writer.newLine()
-          committedOffsets += TopicPartition(r.topic, r.partition)
       } finally writer.close()
     }
   } catch {
     case e: Throwable => LOG.error("failed to parse records", e)
   }
-
-  override protected def _preCommit(offsets: Map[TopicPartition, TopicOffset]): Map[TopicPartition, TopicOffset] =
-    offsets.filter {
-      case (p, _) => committedOffsets.remove(p)
-    }
 
   override protected def _version: String = VersionUtil.VERSION
 }

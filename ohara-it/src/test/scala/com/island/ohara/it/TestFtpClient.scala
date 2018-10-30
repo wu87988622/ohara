@@ -4,7 +4,7 @@ import java.nio.charset.Charset
 
 import com.island.ohara.client.{FileType, FtpClient}
 import com.island.ohara.integration.FtpServer
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.{ByteUtil, CloseOnce}
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.rule.MediumTest
 import org.junit.{After, Before, Test}
@@ -21,10 +21,11 @@ class TestFtpClient extends MediumTest with Matchers {
 
   @Before
   def setup(): Unit = if (!client.exist(client.tmpFolder)) client.mkdir(client.tmpFolder)
+
   @Test
   def testDelete(): Unit = {
     val before = client.listFileNames(client.tmpFolder).size
-    client.append(tmpPath(), "hello world")
+    client.attach(tmpPath(), "hello world")
     val after = client.listFileNames(client.tmpFolder).size
     after - before shouldBe 1
 
@@ -36,7 +37,7 @@ class TestFtpClient extends MediumTest with Matchers {
   def testList(): Unit = {
     if (client.exist(tmpPath())) client.delete(tmpPath())
     val before = client.listFileNames(client.tmpFolder).size
-    client.append(tmpPath(), "message")
+    client.attach(tmpPath(), "message")
     val after = client.listFileNames(client.tmpFolder).size
     after - before shouldBe 1
   }
@@ -67,14 +68,14 @@ class TestFtpClient extends MediumTest with Matchers {
   def testReadLine(): Unit = {
     if (client.exist(tmpPath())) client.delete(tmpPath())
     val lineCount = 100
-    client.append(tmpPath(), (0 until lineCount).map(_.toString))
+    client.attach(tmpPath(), (0 until lineCount).map(_.toString))
     client.readLines(tmpPath()).length shouldBe lineCount
   }
 
   @Test
   def testMove(): Unit = {
     val lineCount = 100
-    client.append(tmpPath(), (0 until lineCount).map(_.toString))
+    client.attach(tmpPath(), (0 until lineCount).map(_.toString))
 
     val folder = s"${client.tmpFolder}/hello"
     if (client.exist(folder)) {
@@ -101,7 +102,7 @@ class TestFtpClient extends MediumTest with Matchers {
     if (client.exist(path)) client.delete(path)
     client.fileType(path) shouldBe FileType.NONEXISTENT
 
-    client.append(path, "abc")
+    client.attach(path, "abc")
     withClue(s"client:${client.getClass.getName}")(client.fileType(path) shouldBe FileType.FILE)
 
     client.delete(path)
@@ -109,6 +110,45 @@ class TestFtpClient extends MediumTest with Matchers {
 
     client.mkdir(path)
     client.fileType(path) shouldBe FileType.FOLDER
+  }
+
+  @Test
+  def testDeleteFolder(): Unit = {
+    val data = ByteUtil.toBytes(methodName)
+    val folder = s"/$methodName"
+    client.mkdir(folder)
+    client.upload(s"$folder/file", data)
+    client.listFileNames(folder).size shouldBe 1
+
+    an[IllegalStateException] should be thrownBy client.delete(folder)
+    client.delete(s"$folder/file")
+    client.delete(folder)
+    client.listFileNames(folder).size shouldBe 0
+  }
+
+  @Test
+  def testAppend(): Unit = {
+    val path = methodName
+    client.fileType(path) shouldBe FileType.NONEXISTENT
+
+    client.attach(path, "abc")
+    client.attach(path, "ccc")
+    val results = client.readLines(path)
+    results.length shouldBe 2
+    results(0) shouldBe "abc"
+    results(1) shouldBe "ccc"
+  }
+
+  @Test
+  def testCreateAndAppend(): Unit = {
+    val path = methodName
+
+    an[IllegalArgumentException] should be thrownBy client.append(path)
+
+    client.attach(path, "abc")
+    an[IllegalArgumentException] should be thrownBy client.create(path)
+    client.append(path).close()
+    client.delete(path)
   }
 
   @After
