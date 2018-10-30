@@ -29,14 +29,14 @@ class FtpSink extends RowSinkConnector {
       ))
   }
 
-  override protected def _start(config: TaskConfig): Unit = {
+  override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.config = config
     this.props = FtpSinkProps(config.options)
     if (config.schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
       FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
-    try if (!ftpClient.exist(props.output)) throw new IllegalArgumentException(s"output:${props.output} doesn't exist")
+    try if (!ftpClient.exist(props.output)) ftpClient.mkdir(props.output)
     finally ftpClient.close()
   }
 

@@ -322,22 +322,4 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       ftpClient.listFileNames(props.output).size shouldBe 0
     } finally testUtil.connectorClient.delete(connectorName)
   }
-
-  @Test
-  def testInvalidOutput(): Unit = {
-    val topicName = methodName
-    val connectorName = methodName
-    testUtil.connectorClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(output = "/abc").toMap)
-      .create()
-    try FtpUtil.assertFailedConnector(testUtil, connectorName)
-    finally testUtil.connectorClient.delete(connectorName)
-  }
 }
