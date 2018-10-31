@@ -34,7 +34,7 @@ class FtpSource extends RowSourceConnector {
       ))
   }
 
-  override protected def _start(config: TaskConfig): Unit = {
+  override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.config = config
     this.props = FtpSourceProps(config.options)
     this.schema = config.schema
@@ -43,11 +43,9 @@ class FtpSource extends RowSourceConnector {
     val ftpClient =
       FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
     try {
-      def check(path: String, prefix: String): Unit =
-        if (!ftpClient.exist(path)) throw new IllegalArgumentException(s"$prefix:$path doesn't exist")
-      check(props.input, "input")
-      check(props.error, "error")
-      check(props.output, "output")
+      if (ftpClient.nonExist(props.input)) throw new IllegalArgumentException(s"${props.input} doesn't exist")
+      if (ftpClient.nonExist(props.error)) ftpClient.mkdir(props.error)
+      if (ftpClient.nonExist(props.output)) ftpClient.mkdir(props.output)
     } finally ftpClient.close()
   }
 

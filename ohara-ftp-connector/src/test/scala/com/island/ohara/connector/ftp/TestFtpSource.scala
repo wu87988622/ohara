@@ -372,40 +372,6 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   @Test
-  def testInvalidOutput(): Unit = {
-    val topicName = methodName
-    val connectorName = methodName
-    testUtil.connectorClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(output = "/abc").toMap)
-      .create()
-    FtpUtil.assertFailedConnector(testUtil, connectorName)
-  }
-
-  @Test
-  def testInvalidError(): Unit = {
-    val topicName = methodName
-    val connectorName = methodName
-    testUtil.connectorClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(error = "/abc").toMap)
-      .create()
-    FtpUtil.assertFailedConnector(testUtil, connectorName)
-  }
-
-  @Test
   def testInvalidSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
