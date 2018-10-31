@@ -222,7 +222,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clients.foreach(client => {
       def compareRequestAndResponse(request: JdbcInformationRequest, response: JdbcInformation): JdbcInformation = {
         request.name shouldBe response.name
-        request.uri shouldBe response.uri
+        request.url shouldBe response.url
         request.user shouldBe response.user
         request.password shouldBe response.password
         response
@@ -231,7 +231,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       def compare2Response(lhs: JdbcInformation, rhs: JdbcInformation): Unit = {
         lhs.uuid shouldBe rhs.uuid
         lhs.name shouldBe lhs.name
-        lhs.uri shouldBe lhs.uri
+        lhs.url shouldBe lhs.url
         lhs.user shouldBe lhs.user
         lhs.password shouldBe lhs.password
         lhs.lastModified shouldBe rhs.lastModified

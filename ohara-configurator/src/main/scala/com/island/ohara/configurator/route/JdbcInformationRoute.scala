@@ -11,7 +11,7 @@ import spray.json.DefaultJsonProtocol._
 private[configurator] object JdbcInformationRoute {
 
   private[this] def toRes(uuid: String, request: JdbcInformationRequest) = {
-    JdbcInformation(uuid, request.name, request.uri, request.user, request.password, SystemUtil.current())
+    JdbcInformation(uuid, request.name, request.url, request.user, request.password, SystemUtil.current())
   }
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
     pathPrefix(JDBC_PATH) {

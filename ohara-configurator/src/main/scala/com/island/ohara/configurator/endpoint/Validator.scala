@@ -212,8 +212,8 @@ class ValidatorTask extends SourceTask {
   import com.island.ohara.io.CloseOnce._
 
   private[this] def validate(info: RdbValidationRequest): String =
-    doClose(DriverManager.getConnection(info.uri, info.user, info.password)) { _ =>
-      s"succeed to establish the connection:${info.uri}"
+    doClose(DriverManager.getConnection(info.url, info.user, info.password)) { _ =>
+      s"succeed to establish the connection:${info.url}"
     }
 
   private[this] def validate(info: FtpValidationRequest): String =

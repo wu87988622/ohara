@@ -143,13 +143,13 @@ object ConfiguratorJson {
 
   //------------------------------------------------[DATA-JDBC]------------------------------------------------//
   val JDBC_PATH = "jdbc"
-  final case class JdbcInformationRequest(name: String, uri: String, user: String, password: String)
+  final case class JdbcInformationRequest(name: String, url: String, user: String, password: String)
   implicit val JDBC_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[JdbcInformationRequest] = jsonFormat4(
     JdbcInformationRequest)
 
   final case class JdbcInformation(uuid: String,
                                    name: String,
-                                   uri: String,
+                                   url: String,
                                    user: String,
                                    password: String,
                                    lastModified: Long)
@@ -325,7 +325,7 @@ object ConfiguratorJson {
     }
 
   val RDB_VALIDATION_PATH = "rdb"
-  final case class RdbValidationRequest(uri: String, user: String, password: String)
+  final case class RdbValidationRequest(url: String, user: String, password: String)
   implicit val RDB_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[RdbValidationRequest] = jsonFormat3(
     RdbValidationRequest)
   implicit val RDB_VALIDATION_REQUEST_COMMAND_FORMAT: ValidationCommandFormat[RdbValidationRequest] =
