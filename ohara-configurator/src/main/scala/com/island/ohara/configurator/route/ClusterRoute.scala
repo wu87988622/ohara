@@ -2,10 +2,11 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{complete, get, path}
-import com.island.ohara.client.ConfiguratorJson.{CLUSTER_PATH, ClusterInformation, ConnectorInfo}
+import com.island.ohara.client.ConfiguratorJson.{CLUSTER_PATH, ClusterInformation, ConnectorInfo, VersionInformation}
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 
 object ClusterRoute extends SprayJsonSupport {
 
@@ -19,12 +20,20 @@ object ClusterRoute extends SprayJsonSupport {
       val sinks = plugin.filter(x => x.typeName.toLowerCase() == "sink").map(x => ConnectorInfo(x.className, x.version))
 
       complete(
-        ClusterInformation(kafkaClient.brokers,
-                           connectorClient.workers,
-                           sources.toSeq,
-                           sinks.toSeq,
-                           SUPPORTED_DATABASES,
-                           DataType.all))
+        ClusterInformation(
+          kafkaClient.brokers,
+          connectorClient.workers,
+          sources,
+          sinks,
+          SUPPORTED_DATABASES,
+          DataType.all,
+          VersionInformation(
+            version = VersionUtil.VERSION,
+            user = VersionUtil.USER,
+            revision = VersionUtil.REVISION,
+            date = VersionUtil.DATE
+          )
+        ))
     }
   }
 }

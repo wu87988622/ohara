@@ -8,6 +8,7 @@ import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -418,8 +419,12 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clusterInformation.workers shouldBe testUtil.workersConnProps
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
     clusterInformation.supportedDataTypes shouldBe DataType.all
-    clusterInformation.sources.filter(x => x.className.contains("com.island")).length > 0 shouldBe true
-    clusterInformation.sinks.filter(x => x.className.contains("com.island")).length > 0 shouldBe true
+    clusterInformation.sources.exists(x => x.className.contains("com.island")) shouldBe true
+    clusterInformation.sinks.exists(x => x.className.contains("com.island")) shouldBe true
+    clusterInformation.versionInfo.version shouldBe VersionUtil.VERSION
+    clusterInformation.versionInfo.user shouldBe VersionUtil.USER
+    clusterInformation.versionInfo.revision shouldBe VersionUtil.REVISION
+    clusterInformation.versionInfo.date shouldBe VersionUtil.DATE
   }
 
   @Test

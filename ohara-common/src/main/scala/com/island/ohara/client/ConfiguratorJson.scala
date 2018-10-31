@@ -410,6 +410,9 @@ object ConfiguratorJson {
   implicit val RDB_INFORMATION_JSON_FORMAT: RootJsonFormat[RdbInformation] = jsonFormat2(RdbInformation)
 
   //------------------------------------------------[CLUSTER]------------------------------------------------//
+  final case class VersionInformation(version: String, user: String, revision: String, date: String)
+  implicit val VERSION_JSON_FORMAT: RootJsonFormat[VersionInformation] = jsonFormat4(VersionInformation)
+
   val CLUSTER_PATH = "cluster"
 
   /**
@@ -426,8 +429,9 @@ object ConfiguratorJson {
                                       sources: Seq[ConnectorInfo],
                                       sinks: Seq[ConnectorInfo],
                                       supportedDatabases: Seq[String],
-                                      supportedDataTypes: Seq[DataType])
-  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat6(ClusterInformation)
+                                      supportedDataTypes: Seq[DataType],
+                                      versionInfo: VersionInformation)
+  implicit val CLUSTER_INFORMATION_JSON_FORMAT: RootJsonFormat[ClusterInformation] = jsonFormat7(ClusterInformation)
   implicit val CLUSTER_INFORMATION_COMMAND_FORMAT: ClusterCommandFormat[ClusterInformation] =
     new ClusterCommandFormat[ClusterInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$CLUSTER_PATH"
