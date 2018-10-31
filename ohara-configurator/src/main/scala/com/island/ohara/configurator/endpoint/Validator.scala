@@ -217,9 +217,9 @@ class ValidatorTask extends SourceTask {
     }
 
   private[this] def validate(info: FtpValidationRequest): String =
-    doClose(FtpClient.builder().host(info.host).port(info.port).user(info.user).password(info.password).build()) {
+    doClose(FtpClient.builder().host(info.hostname).port(info.port).user(info.user).password(info.password).build()) {
       client =>
-        s"succeed to establish the connection:${info.host}:${info.port} with status:${client.status()}"
+        s"succeed to establish the connection:${info.hostname}:${info.port} with status:${client.status()}"
     }
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })

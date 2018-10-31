@@ -120,14 +120,14 @@ object ConfiguratorJson {
 
   //------------------------------------------------[DATA-FTP]------------------------------------------------//
   val FTP_PATH = "ftp"
-  final case class FtpInformationRequest(name: String, ip: String, port: Option[Int], user: String, password: String)
+  final case class FtpInformationRequest(name: String, hostname: String, port: Int, user: String, password: String)
   implicit val FTP_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpInformationRequest] = jsonFormat5(
     FtpInformationRequest)
 
   final case class FtpInformation(uuid: String,
                                   name: String,
-                                  ip: String,
-                                  port: Option[Int],
+                                  hostname: String,
+                                  port: Int,
                                   user: String,
                                   password: String,
                                   lastModified: Long)
@@ -335,22 +335,22 @@ object ConfiguratorJson {
     }
 
   val FTP_VALIDATION_PATH = "ftp"
-  final case class FtpValidationRequest(host: String, port: Int, user: String, password: String)
+  final case class FtpValidationRequest(hostname: String, port: Int, user: String, password: String)
   implicit val FTP_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpValidationRequest] =
     new RootJsonFormat[FtpValidationRequest] {
       override def read(json: JsValue): FtpValidationRequest =
-        json.asJsObject.getFields("host", "port", "user", "password") match {
-          case Seq(JsString(host), JsNumber(port), JsString(user), JsString(password)) =>
-            FtpValidationRequest(host, port.toInt, user, password)
+        json.asJsObject.getFields("hostname", "port", "user", "password") match {
+          case Seq(JsString(hostname), JsNumber(port), JsString(user), JsString(password)) =>
+            FtpValidationRequest(hostname, port.toInt, user, password)
           // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
-          case Seq(JsString(host), JsString(port), JsString(user), JsString(password)) =>
-            FtpValidationRequest(host, port.toInt, user, password)
+          case Seq(JsString(hostname), JsString(port), JsString(user), JsString(password)) =>
+            FtpValidationRequest(hostname, port.toInt, user, password)
           case _ =>
             throw new UnsupportedOperationException(s"invalid format of ${classOf[FtpValidationRequest].getSimpleName}")
         }
 
       override def write(obj: FtpValidationRequest): JsValue = JsObject(
-        "host" -> JsString(obj.host),
+        "hostname" -> JsString(obj.hostname),
         "port" -> JsNumber(obj.port),
         "user" -> JsString(obj.user),
         "password" -> JsString(obj.password)

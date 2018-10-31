@@ -29,7 +29,7 @@ object Backend {
   final case class DbInformation(url: String, user: String, password: String)
   implicit val DB_INFO_JSON_FORMAT: RootJsonFormat[DbInformation] = jsonFormat3(DbInformation)
 
-  final case class FtpServerInformation(host: String, port: Int, dataPort: Int, user: String, password: String)
+  final case class FtpServerInformation(hostname: String, port: Int, dataPort: Int, user: String, password: String)
   implicit val FTP_SERVER_JSON_FORMAT: RootJsonFormat[FtpServerInformation] = jsonFormat5(FtpServerInformation)
 
   final case class Services(zookeeper: String,
@@ -153,7 +153,7 @@ object Backend {
                   zookeeper = zk.connectionProps,
                   brokers = brokers.connectionProps,
                   workers = workers.connectionProps,
-                  ftpServer = FtpServerInformation(host = ftpServer.host,
+                  ftpServer = FtpServerInformation(hostname = ftpServer.host,
                                                    port = ftpServer.port,
                                                    dataPort = ftpServer.dataPort,
                                                    user = ftpServer.user,

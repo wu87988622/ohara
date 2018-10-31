@@ -12,7 +12,13 @@ private[configurator] object FtpInformationRoute {
 
   private[this] def toRes(uuid: String, request: FtpInformationRequest) = {
     validateField(request)
-    FtpInformation(uuid, request.name, request.ip, request.port, request.user, request.password, SystemUtil.current())
+    FtpInformation(uuid,
+                   request.name,
+                   request.hostname,
+                   request.port,
+                   request.user,
+                   request.password,
+                   SystemUtil.current())
   }
   def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
     pathPrefix(FTP_PATH) {
@@ -43,22 +49,16 @@ private[configurator] object FtpInformationRoute {
       }
     }
 
-  val IP_REGEX =
-    raw"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$$"
-
-  def validateField(ftpInfo: FtpInformationRequest): Unit = {
-    val FtpInformationRequest(name, ip, port, user, password) = ftpInfo
+  private[route] def validateField(ftpInfo: FtpInformationRequest): Unit = {
+    val FtpInformationRequest(name, hostname, port, user, password) = ftpInfo
     val msg =
-      if (!ip.matches(IP_REGEX))
-        s"ip can not parse ,ip: $ip "
-      else if (!(port.exists(_ <= 65535) || port.isEmpty))
-        s"port needs below 65535 or be Empty ,port: $port"
-      else if (user.isEmpty)
-        s"user is empty"
+      if (name.isEmpty) "empty name is illegal"
+      else if (port <= 0 || port > 65535) s"illegal port:$port"
+      else if (hostname.isEmpty) "empty hostname is illegal"
+      else if (user.isEmpty) "empty user is illegal"
+      else if (password.isEmpty) "empty password is illegal"
       else ""
-
-    if (!msg.isEmpty())
-      throw new IllegalArgumentException(s"validate error - $msg")
+    if (msg.nonEmpty) throw new IllegalArgumentException(s"validate error - $msg")
   }
 
 }
