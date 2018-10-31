@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.ExceptionHandler
+import akka.http.scaladsl.server.Directives.{handleRejections, _}
+import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
@@ -17,6 +17,7 @@ import com.island.ohara.configurator.store.Consistency
 import com.island.ohara.io.{CloseOnce, IoUtil, UuidUtil}
 import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
+import spray.json.{DeserializationException, JsonParser}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
@@ -83,12 +84,28 @@ class Configurator private[configurator] (configuredHostname: String,
   private[this] val httpServer: Http.ServerBinding =
     Await.result(
       Http().bindAndHandle(
-        handleExceptions(exceptionHandler)(basicRoute ~ privateRoute ~ finalRoute),
+        handleExceptions(exceptionHandler)(handleRejections(rejectionHandler)(basicRoute ~ privateRoute) ~ finalRoute),
         configuredHostname,
         configuredPort
       ),
       initializationTimeout.toMillis milliseconds
     )
+
+  private[this] val rejectionHandler =
+    RejectionHandler
+      .newBuilder()
+      .handle {
+        case MalformedRequestContentRejection(_, cause) =>
+          cause match {
+            case e: DeserializationException =>
+              throw new IllegalArgumentException(s"Ohara Deserialized Error :${e.getMessage}", e)
+            case e: JsonParser.ParsingException =>
+              throw new IllegalArgumentException(s"Ohara JSON Parse Error :${e.getMessage}", e)
+            case e: Throwable =>
+              throw new IllegalArgumentException(s"Ohata Error occur :${e.getMessage}.")
+          }
+      }
+      .result()
 
   /**
     * Do what you want to do when calling closing.
