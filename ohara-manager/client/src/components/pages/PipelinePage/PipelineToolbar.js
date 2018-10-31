@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { v4 as uuid4 } from 'uuid';
 
-import * as _ from 'utils/helpers';
-import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
+import { ICON_KEYS } from 'constants/pipelines';
 import { HadoopIcon } from 'common/Icons';
+import { update } from 'utils/pipelineToolbarUtil';
 import {
   lightestBlue,
   lighterBlue,
@@ -95,7 +94,9 @@ const FileSavingStatus = styled.div`
   color: ${lighterBlue};
 `;
 
-class Toolbar extends React.Component {
+FileSavingStatus.displayName = 'FileSavingStatus';
+
+class PipelineToolbar extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
       isExact: PropTypes.bool,
@@ -116,42 +117,9 @@ class Toolbar extends React.Component {
     hasChanges: PropTypes.bool.isRequired,
   };
 
-  checkExist = (type, graph) => {
-    return graph.find(g => {
-      const hasSource =
-        g.type === type ||
-        (g.type.includes('Source') && type.includes('Source'));
-
-      if (hasSource) {
-        return g;
-      }
-
-      return false;
-    });
-  };
-
-  update = e => {
+  update = evtObj => {
     const { updateGraph, graph } = this.props;
-
-    let type = _.get(e, 'target.dataset.id', null);
-
-    // TODO: replace the svg icon with the HTML one and so we'll get the target.dataset.id back
-    type = type ? type : ICON_KEYS.hdfsSink;
-
-    const isTypeExist = this.checkExist(type, graph);
-
-    if (_.isEmpty(isTypeExist)) {
-      const update = {
-        name: `Untitled ${type}`,
-        type,
-        to: '?',
-        isActive: false,
-        icon: ICON_MAPS[type],
-        id: uuid4(),
-      };
-
-      updateGraph(update, type);
-    }
+    update({ graph, updateGraph, evtObj });
   };
 
   render() {
@@ -185,7 +153,7 @@ class Toolbar extends React.Component {
             className="fa fa-download"
             onClick={this.update}
             data-id={ftpSink}
-            data-testid="toolbar-source-ftp"
+            data-testid="toolbar-sink-ftp"
           />
         </Sinks>
         <Topics>
@@ -204,4 +172,4 @@ class Toolbar extends React.Component {
   }
 }
 
-export default Toolbar;
+export default PipelineToolbar;

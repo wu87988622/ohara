@@ -7,7 +7,7 @@ jest.mock('toastr', () => {
   };
 });
 
-describe('handleError', () => {
+describe('handleError()', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });

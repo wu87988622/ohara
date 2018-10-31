@@ -12,7 +12,7 @@ import PipelineSourceFtpPage from './PipelineSourceFtpPage';
 import PipelineTopicPage from './PipelineTopicPage';
 import PipelineSinkPage from './PipelineSinkPage';
 import PipelineSinkFtpPage from './PipelineSinkFtpPage';
-import Toolbar from './Toolbar';
+import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
 import { ConfirmModal } from 'common/Modal';
@@ -287,7 +287,7 @@ class PipelineNewPage extends React.Component {
                 />
               </Actions>
             </Header>
-            <Toolbar
+            <PipelineToolbar
               {...this.props}
               updateGraph={this.updateGraph}
               graph={graph}

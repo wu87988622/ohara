@@ -39,11 +39,11 @@ describe('<PipelineNewPage />', () => {
   });
 
   it('renders <Toolbar />', () => {
-    expect(wrapper.find('Toolbar').length).toBe(1);
+    expect(wrapper.find('PipelineToolbar').length).toBe(1);
   });
 
   it('renders <PipelineGraph />', () => {
-    expect(wrapper.find('Toolbar').length).toBe(1);
+    expect(wrapper.find('PipelineGraph').length).toBe(1);
   });
 
   it('renders 5 <Route />', () => {

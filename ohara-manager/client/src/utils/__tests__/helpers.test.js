@@ -1,6 +1,6 @@
 import { isNumber, isDefined, isUuid } from '../helpers';
 
-describe('isDefined', () => {
+describe('isDefined()', () => {
   it('returns true if the given value type is defined', () => {
     expect(isDefined('')).toBe(true);
     expect(isDefined(1)).toBe(true);
@@ -16,7 +16,7 @@ describe('isDefined', () => {
   });
 });
 
-describe('isNumber', () => {
+describe('isNumber()', () => {
   it('returns true if the given value type is number', () => {
     expect(isNumber(10)).toBe(true);
   });
@@ -26,7 +26,7 @@ describe('isNumber', () => {
   });
 });
 
-describe('isUuid', () => {
+describe('isUuid()', () => {
   it('returns true if the given value is a valid uuid', () => {
     const uuid = 'c0398bff-72f6-4080-985b-5a0c5feb911f';
     expect(isUuid(uuid)).toBe(true);
