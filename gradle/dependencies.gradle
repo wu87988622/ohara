@@ -31,6 +31,7 @@ libs += [
   kafkaConnectFile   : "org.apache.kafka:connect-file:$versions.kafka",
   kafkaConnectRuntime: "org.apache.kafka:connect-runtime:$versions.kafka",
   kafkaConnectJson   : "org.apache.kafka:connect-json:$versions.kafka",
+  kafkaStream        : "org.apache.kafka:kafka-streams:$versions.kafka",
   akkaStream         : "com.typesafe.akka:akka-stream_2.11:$versions.akka",
   sprayJson          : "com.typesafe.akka:akka-http-spray-json_2.11:$versions.akkaHttp",
   akkaSlf4j          : "com.typesafe.akka:akka-slf4j_2.11:$versions.akka",

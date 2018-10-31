@@ -221,3 +221,22 @@ lazy val `http` = (project in file("ohara-http"))
           `testing-util` % "test->test",
         )
 
+lazy val `streams` = (project in file("ohara-streams"))
+        .dependsOn(
+          `common` % "compile->compile; test->test",
+          `kafka` % "compile->compile",
+          `testing-util` % "test->test"
+        )
+        .settings(
+          commonSettings,
+          libraryDependencies ++= Seq(
+            libs.scalaLogging,
+            libs.slf4jApi,
+            libs.slf4jLog4j,
+            libs.akkaHttpSprayJson,
+            libs.kafkaStreams,
+
+            libs.hadoopCommon % Test excludeAll(libs.hadoopExclusionRules:_*),
+            libs.hadoopHdfs %Test excludeAll(libs.hadoopExclusionRules:_*),
+          )
+        )

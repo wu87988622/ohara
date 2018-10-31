@@ -38,6 +38,7 @@ object libs {
   lazy val kafkaConnectFile = "org.apache.kafka" % "connect-file" % kafkaV
   lazy val kafkaConnectRuntime = "org.apache.kafka" % "connect-runtime" % kafkaV
   lazy val kafkaConnectJson = "org.apache.kafka" % "connect-json" % kafkaV
+  lazy val kafkaStreams = "org.apache.kafka" % "kafka-streams" % kafkaV
 
   // Apache commons
   lazy val commonsNet = "commons-net" % "commons-net" % commonsNetV
