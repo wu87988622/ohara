@@ -74,10 +74,10 @@ class Configurator private[configurator] (configuredHostname: String,
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
-    throw new IllegalArgumentException(s"you have to buy the license for advanced APIs of $path"))))
+    complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path"))))
 
-  private[this] val finalRoute: server.Route = path(Remaining)(path =>
-    throw new IllegalArgumentException(s"Unsupported restful api:$path. Or the request is invalid to the $path"))
+  private[this] val finalRoute: server.Route =
+    path(Remaining)(path => complete(StatusCodes.NotFound -> s"Unsupported API: $path"))
 
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
