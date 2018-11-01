@@ -253,8 +253,19 @@ class PipelineSinkPage extends React.Component {
       configs: {
         topic: JSON.stringify(currTopic),
         hdfs: JSON.stringify(currHdfs),
-        writePath,
         needHeader: String(needHeader),
+        writePath,
+
+        // TODO: add the following fields,
+        // 'hdfs.url': currHdfs.uri,
+        'hdfs.url': 'file:///tmp/temp',
+        'tmp.dir': '/tmp',
+        'data.dir': writePath,
+        'flush.line.count': '10',
+        'rotate.interval.ms': '60000',
+        'datafile.prefix.name': 'part',
+        'datafile.needheader': String(needHeader),
+        'data.econde': 'UTF-8',
       },
     };
 

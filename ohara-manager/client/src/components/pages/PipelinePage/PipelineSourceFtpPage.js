@@ -194,15 +194,15 @@ class PipelineSourceFtpPage extends React.Component {
 
     const { schema, configs } = res.data.result;
     const {
+      'ftp.user.name': username,
+      'ftp.user.password': password,
+      'ftp.port': port,
+      'ftp.host': host,
+      'ftp.input.folder': inputFolder,
+      'ftp.completed.folder': completeFolder,
+      'ftp.error.folder': errorFolder,
+      'ftp.encode': currFileEncoding,
       name,
-      host,
-      port,
-      username,
-      password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      currFileEncoding,
       currTask,
     } = configs;
 
@@ -460,10 +460,10 @@ class PipelineSourceFtpPage extends React.Component {
 
   handleTestConnection = async e => {
     e.preventDefault();
-    const { host, port, username: user, password } = this.state;
+    const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await checkSource({ host, port, user, password });
+    const res = await checkSource({ hostname, port, user, password });
     this.updateIsTestConnectionBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
@@ -506,16 +506,17 @@ class PipelineSourceFtpPage extends React.Component {
       topics: [currWriteTopic.uuid],
       numberOfTasks: 1,
       configs: {
-        name,
-        host,
-        port,
-        username,
-        password,
-        inputFolder,
-        completeFolder,
-        errorFolder,
+        'ftp.input.folder': inputFolder,
+        'ftp.completed.folder': completeFolder,
+        'ftp.error.folder': errorFolder,
+        'ftp.encode': currFileEncoding,
+        'ftp.host': host,
+        'ftp.port': port,
+        'ftp.user.name': username,
+        'ftp.user.password': password,
+
         topic: currWriteTopic.name,
-        currFileEncoding,
+        name,
         currTask,
       },
     };

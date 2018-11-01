@@ -199,13 +199,12 @@ class PipelineSourcePage extends React.Component {
 
     if (isSuccess) {
       const {
-        database,
-        timestamp,
+        'source.timestamp.column.name': timestamp,
+        'source.db.username': username,
+        'source.db.password': password,
+        'source.db.url': url,
         table,
-        username,
-        password,
-        topic,
-        url,
+        database,
       } = res.data.result.configs;
 
       let currTable = null;
@@ -229,7 +228,6 @@ class PipelineSourcePage extends React.Component {
       this.setState({
         isFormDisabled,
         currDatabase,
-        topic: [topic],
         tables,
         currTable,
         timestamp,
@@ -311,10 +309,10 @@ class PipelineSourcePage extends React.Component {
 
   handleGetTables = async e => {
     e.preventDefault();
-    const { username: user, password, url: uri } = this.state;
+    const { username: user, password, url } = this.state;
 
     this.updateIsBtnWorking(true);
-    const res = await validateRdb({ user, password, uri });
+    const res = await validateRdb({ user, password, url });
     this.updateIsBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
@@ -362,13 +360,14 @@ class PipelineSourcePage extends React.Component {
       topics: [currWriteTopic.uuid],
       numberOfTasks: 1,
       configs: {
+        'source.table.name': currTable.name,
+        'source.db.url': url,
+        'source.db.username': username,
+        'source.db.password': password,
+        'source.timestamp.column.name': timestamp,
+        'source.schema.pattern': '',
         database: JSON.stringify(currDatabase),
-        topic: currWriteTopic.name,
         table: JSON.stringify(currTable),
-        username,
-        password,
-        timestamp,
-        url,
       },
     };
 
@@ -528,11 +527,11 @@ class PipelineSourcePage extends React.Component {
           <Box>
             <H5Wrapper>Database schemas</H5Wrapper>
             <DataTable headers={this.dbSchemasHeader}>
-              {currTable.schema.map(({ name, type }, idx) => {
+              {currTable.schema.map(({ name, dataType }, idx) => {
                 return (
                   <tr key={idx}>
                     <td>{name}</td>
-                    <td>{type}</td>
+                    <td>{dataType}</td>
                   </tr>
                 );
               })}

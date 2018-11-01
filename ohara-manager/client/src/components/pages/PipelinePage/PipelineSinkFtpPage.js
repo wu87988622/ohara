@@ -213,15 +213,16 @@ class PipelineSinkFtpPage extends React.Component {
 
     const { schema, configs } = res.data.result;
     const {
+      'ftp.host': host,
+      'ftp.port': port,
+      'ftp.user.name': username,
+      'ftp.user.password': password,
+      'ftp.output.folder': outputfolder,
+      'ftp.encode': currFileEncoding,
+      'ftp.needHeader': needHeader,
+
       name,
-      host,
-      port,
-      username,
-      password,
-      outputfolder,
-      currFileEncoding,
       currTask,
-      needHeader,
     } = configs;
 
     const _needHeader = needHeader === 'true' ? true : false;
@@ -428,13 +429,13 @@ class PipelineSinkFtpPage extends React.Component {
 
   handleTestConnection = async e => {
     e.preventDefault();
-    const { host, port, username, password } = this.state;
+    const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
     const res = await validateFtp({
-      host,
+      hostname,
       port,
-      user: username,
+      user,
       password,
     });
     this.updateIsTestConnectionBtnWorking(false);
@@ -518,16 +519,17 @@ class PipelineSinkFtpPage extends React.Component {
       topics: [currReadTopic.uuid],
       numberOfTasks: 1,
       configs: {
+        'ftp.output.folder': outputfolder,
+        'ftp.encode': currFileEncoding,
+        'ftp.host': host,
+        'ftp.port': port,
+        'ftp.user.name': username,
+        'ftp.user.password': password,
+        'ftp.needHeader': String(needHeader),
+
         name,
-        host,
-        port,
-        username,
-        password,
-        outputfolder,
         currTask,
         topic: currReadTopic.name,
-        currFileEncoding,
-        needHeader: String(needHeader),
       },
     };
 
