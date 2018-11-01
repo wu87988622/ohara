@@ -59,7 +59,7 @@ class FtpSourceTask extends RowSourceTask {
             throw new IllegalStateException(s"$line doesn't match to header:${header.keys.mkString(",")}"))
 
       val newSchema: Seq[Column] = if (schema.isEmpty) header.map {
-        case (name, order) => Column(name = name, order = order, typeName = DataType.STRING)
+        case (name, order) => Column(name = name, order = order, dataType = DataType.STRING)
       }.toSeq
       else schema
 

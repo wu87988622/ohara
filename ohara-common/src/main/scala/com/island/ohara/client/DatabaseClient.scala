@@ -71,7 +71,7 @@ object DatabaseClient {
             val columns = CloseOnce.doClose(md.getColumns(c, null, t, null)) { implicit rs =>
               val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
               while (rs.next()) buf += ConfiguratorJson.RdbColumn(name = columnName,
-                                                                  typeName = columnType,
+                                                                  dataType = columnType,
                                                                   pk = pks.contains(columnName))
               buf
             }
@@ -92,7 +92,7 @@ object DatabaseClient {
     override def createTable(name: String, columns: Seq[ConfiguratorJson.RdbColumn]): Unit = {
       if (columns.map(_.name).toSet.size != columns.size) throw new IllegalArgumentException(s"duplicate order!!!")
       val query = s"""CREATE TABLE \"$name\" (""" + columns
-        .map(c => s"""\"${c.name}\" ${c.typeName}""")
+        .map(c => s"""\"${c.name}\" ${c.dataType}""")
         .mkString(",") + ", PRIMARY KEY (" + columns.filter(_.pk).map(c => s"""\"${c.name}\"""").mkString(",") + "))"
       CloseOnce.doClose(conn.createStatement())(_.execute(query))
     }

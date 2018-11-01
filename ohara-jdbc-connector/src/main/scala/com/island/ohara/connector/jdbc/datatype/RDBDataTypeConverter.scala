@@ -7,7 +7,7 @@ import com.island.ohara.connector.jdbc.util.DateTimeUtils
 class RDBDataTypeConverter {
   def converterValue(resultSet: ResultSet, column: RdbColumn): Object = {
     val columnName = column.name
-    val typeName = column.typeName
+    val typeName = column.dataType
 
     // the type name of postgresql is lower case...
     import RDBDataTypeConverter._

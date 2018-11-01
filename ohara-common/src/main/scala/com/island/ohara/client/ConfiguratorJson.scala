@@ -65,7 +65,7 @@ object ConfiguratorJson {
     )
   }
   object Column {
-    def apply(name: String, typeName: DataType, order: Int): Column = Column(name, name, typeName, order)
+    def apply(name: String, dataType: DataType, order: Int): Column = Column(name, name, dataType, order)
     // kafka connector accept only Map[String, String] as input arguments so we have to serialize the column to a string
     // TODO: Personally, I hate this ugly workaround...by chia
     val COLUMN_KEY: String = "__row_connector_schema"
@@ -78,7 +78,7 @@ object ConfiguratorJson {
       splits
         .grouped(4)
         .map {
-          case Array(name, newName, typeName, order) => Column(name, newName, DataType.of(typeName), order.toInt)
+          case Array(name, newName, dataType, order) => Column(name, newName, DataType.of(dataType), order.toInt)
         }
         .toSeq
     }
@@ -377,18 +377,8 @@ object ConfiguratorJson {
     def format(address: String): String
   }
 
-  final case class RdbColumn(name: String, typeName: String, pk: Boolean)
-  implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = new RootJsonFormat[RdbColumn] {
-    override def read(json: JsValue): RdbColumn = json.asJsObject.getFields("name", "type", "pk") match {
-      case Seq(JsString(n), JsString(t), JsBoolean(pk)) => RdbColumn(n, t, pk)
-      case _                                            => throw new UnsupportedOperationException(s"invalid format of ${RdbColumn.getClass.getSimpleName}")
-    }
-    override def write(obj: RdbColumn): JsValue = JsObject(
-      "name" -> JsString(obj.name),
-      "type" -> JsString(obj.typeName),
-      "pk" -> JsBoolean(obj.pk)
-    )
-  }
+  final case class RdbColumn(name: String, dataType: String, pk: Boolean)
+  implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
   final case class RdbTable(catalogPattern: Option[String],
                             schemaPattern: Option[String],
                             name: String,
