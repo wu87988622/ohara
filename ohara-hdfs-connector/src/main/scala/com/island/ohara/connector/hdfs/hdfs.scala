@@ -8,7 +8,7 @@ package object hdfs {
   val TMP_DIR: String = "tmp.dir"
   val DATA_DIR: String = "data.dir"
   val DATAFILE_PREFIX_NAME: String = "datafile.prefix.name"
-  val DATAFILE_NEEDHEADER: String = "datafile.isheader"
+  val DATAFILE_NEEDHEADER: String = "datafile.needheader"
   val DATA_BUFFER_COUNT: String = "data.buffer.size"
   val HDFS_STORAGE_CREATOR_CLASS: String = "hdfs.storage.creator.class"
   val DATAFILE_ENCODE = "datafile.encode"
