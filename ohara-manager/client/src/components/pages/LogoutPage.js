@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
@@ -8,6 +9,10 @@ import { HOME } from 'constants/urls';
 import { LOGOUT_SUCCESS } from 'constants/messages';
 
 class LogoutPage extends React.Component {
+  static propTypes = {
+    updateLoginState: PropTypes.func.isRequired,
+  };
+
   state = {
     redirect: false,
   };

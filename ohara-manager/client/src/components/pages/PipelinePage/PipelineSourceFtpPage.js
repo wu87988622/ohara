@@ -72,9 +72,15 @@ const FormInner = styled.div`
 class PipelineSourceFtpPage extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
-    updateHasChanges: PropTypes.func,
-    updateGraph: PropTypes.func,
-    loadGraph: PropTypes.func,
+    updateHasChanges: PropTypes.func.isRequired,
+    updateGraph: PropTypes.func.isRequired,
+    loadGraph: PropTypes.func.isRequired,
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
   };
 
   selectMaps = {

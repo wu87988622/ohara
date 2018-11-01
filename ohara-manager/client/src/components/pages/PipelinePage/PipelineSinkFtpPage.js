@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import PropTypes from 'prop-types';
 
 import * as _ from 'utils/helpers';
 import * as MESSAGES from 'constants/messages';
@@ -75,6 +76,19 @@ const FormInner = styled.div`
 `;
 
 class PipelineSinkFtpPage extends React.Component {
+  static propTypes = {
+    hasChanges: PropTypes.bool.isRequired,
+    updateHasChanges: PropTypes.func.isRequired,
+    updateGraph: PropTypes.func.isRequired,
+    loadGraph: PropTypes.func.isRequired,
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
+  };
+
   selectMaps = {
     tasks: 'currTask',
     fileEncodings: 'currFileEncoding',

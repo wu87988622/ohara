@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { Link } from 'react-router-dom';
 
 import * as _ from 'utils/helpers';
 import * as MESSAGES from 'constants/messages';
@@ -91,6 +92,15 @@ const DeleteIcon = styled.button`
 DeleteIcon.displayName = 'DeleteIcon';
 
 class PipelinePage extends React.Component {
+  static propTypes = {
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
+  };
+
   headers = ['#', 'name', 'status', 'start/stop', 'edit', 'delete'];
   state = {
     isSelectTopicModalActive: false,

@@ -64,6 +64,13 @@ class PipelineGraph extends React.Component {
     ).isRequired,
     resetGraph: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
+    history: PropTypes.object,
   };
 
   componentDidMount() {

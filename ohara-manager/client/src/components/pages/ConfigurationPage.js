@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
@@ -32,6 +33,10 @@ const CancelBtn = styled(Button)`
 `;
 
 class ConfigurationPage extends React.Component {
+  static propTypes = {
+    history: PropTypes.object.isRequired,
+  };
+
   state = {
     connectionName: '',
     connectionUrl: '',

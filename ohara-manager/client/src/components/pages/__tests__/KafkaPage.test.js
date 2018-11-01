@@ -4,10 +4,16 @@ import { shallow } from 'enzyme';
 import KafkaPage from '../KafkaPage';
 import { LEAVE_WITHOUT_SAVE } from 'constants/messages';
 
+const props = {
+  history: {
+    push: jest.fn(),
+  },
+};
+
 describe('<KafkaPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<KafkaPage />);
+    wrapper = shallow(<KafkaPage {...props} />);
   });
 
   it('renders correctly', () => {

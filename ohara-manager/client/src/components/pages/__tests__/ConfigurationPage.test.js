@@ -3,10 +3,12 @@ import { shallow } from 'enzyme';
 
 import Configuration from '../ConfigurationPage.js';
 
+const props = { history: { goBack: jest.fn() } };
+
 describe('<Configuration />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<Configuration />);
+    wrapper = shallow(<Configuration {...props} />);
   });
 
   it('renders correctly', () => {

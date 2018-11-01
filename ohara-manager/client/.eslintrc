@@ -7,6 +7,7 @@
   "rules": {
     "no-console": "warn",
     "no-debugger": "warn",
-    "no-alert": "warn"
+    "no-alert": "warn",
+    "react/prop-types": "warn"
   }
 }

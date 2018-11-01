@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
+import PropTypes from 'prop-types';
 import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
@@ -55,6 +56,10 @@ const H3 = styled.h3`
 `;
 
 class KafkaPage extends React.Component {
+  static propTypes = {
+    history: PropTypes.object.isRequired,
+  };
+
   state = {
     brokerList: '',
     workerList: '',

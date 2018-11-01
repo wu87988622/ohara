@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
+import PropTypes from 'prop-types';
 import { Route, Redirect } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 
@@ -45,6 +46,15 @@ const Actions = styled.div`
 `;
 
 class PipelineNewPage extends React.Component {
+  static propTypes = {
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
+  };
+
   state = {
     topicName: '',
     graph: [],

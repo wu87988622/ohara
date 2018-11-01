@@ -21,6 +21,12 @@ class PipelineTopicPage extends React.Component {
     isLoading: PropTypes.bool.isRequired,
     updateGraph: PropTypes.func,
     loadGraph: PropTypes.func,
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
   };
 
   componentDidMount() {

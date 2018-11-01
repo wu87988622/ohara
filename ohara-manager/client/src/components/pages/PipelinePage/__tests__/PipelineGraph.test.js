@@ -30,6 +30,7 @@ const props = {
   ],
   resetGraph: jest.fn(),
   updateGraph: jest.fn(),
+  match: {},
 };
 
 describe('<PipelineGraph />', () => {

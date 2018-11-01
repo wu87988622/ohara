@@ -136,6 +136,8 @@ This will start the server with `nodemon` and run the linting script whenever no
 
 Since our client is bootstrapped with create-react-app, so the linting part is already taken care. When starting the **Client** dev server with `yarn start`, the linting will be starting automatically.
 
+Note that due to create-react-app doesn't support custom eslint rules. You need to use your text editor plugin to display the custom linting rule warnings or errors. For more info about this, please take a look at the create-react-app [docs](https://facebook.github.io/create-react-app/docs/setting-up-your-editor#displaying-lint-output-in-the-editor)
+
 ## Format
 
 We use [Prettier](https://github.com/prettier/prettier) to format our code. You can format all `.js` files with:

@@ -6,6 +6,9 @@ import PipelineSourceFtp from '../PipelineSourceFtpPage';
 const props = {
   hasChanges: false,
   updateHasChanges: jest.fn(),
+  updateGraph: jest.fn(),
+  loadGraph: jest.fn(),
+  match: {},
   schema: [],
 };
 

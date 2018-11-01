@@ -13,10 +13,14 @@ import {
 
 window.localStorage = localStorageMock;
 
+const props = {
+  updateLoginState: jest.fn(),
+};
+
 describe('<LoginPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<LoginPage />);
+    wrapper = shallow(<LoginPage {...props} />);
   });
 
   it('renders self', () => {

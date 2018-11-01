@@ -145,6 +145,8 @@ ConfirmModal.propTypes = {
   confirmBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
   isConfirmDisabled: PropTypes.bool,
+  width: PropTypes.string,
+  isDelete: PropTypes.bool,
 };
 
 export default ConfirmModal;

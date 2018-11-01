@@ -28,7 +28,7 @@ class SchemaTable extends React.Component {
         dataType: PropTypes.string,
       }),
     ),
-    types: PropTypes.array,
+    dataTypes: PropTypes.array,
     handleModalOpen: PropTypes.func,
     handleTypeChange: PropTypes.func,
     handleUp: PropTypes.func,

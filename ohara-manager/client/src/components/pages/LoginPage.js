@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
@@ -64,6 +65,10 @@ const PasswordInput = styled(Input)`
 PasswordInput.displayName = 'PasswordInput';
 
 class LoginPage extends React.Component {
+  static propTypes = {
+    updateLoginState: PropTypes.func.isRequired,
+  };
+
   state = {
     username: '',
     password: '',

@@ -121,6 +121,7 @@ Modal.propTypes = {
   confirmBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
   isConfirmDisabled: PropTypes.bool,
+  width: PropTypes.string,
 };
 
 export default Modal;

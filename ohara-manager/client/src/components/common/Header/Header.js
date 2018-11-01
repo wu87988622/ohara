@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 
 import * as URLS from 'constants/urls';
@@ -29,6 +30,10 @@ const Ul = styled.ul`
 // you need to refresh the page.
 
 class Header extends React.Component {
+  static propTypes = {
+    isLogin: PropTypes.bool.isRequired,
+  };
+
   handleLogout = () => {
     deleteUserKey();
   };

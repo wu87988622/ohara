@@ -168,6 +168,11 @@ Modal.propTypes = {
   isActive: PropTypes.bool.isRequired,
   handleChange: PropTypes.func.isRequired,
   handleClose: PropTypes.func.isRequired,
+  handleCreate: PropTypes.func.isRequired,
+  topicName: PropTypes.string,
+  partitions: PropTypes.string,
+  replicationFactor: PropTypes.string,
+  isCreateTopicWorking: PropTypes.bool,
 };
 
 export default Modal;

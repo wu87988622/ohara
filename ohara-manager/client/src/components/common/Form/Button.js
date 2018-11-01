@@ -97,6 +97,7 @@ Button.propTypes = {
   width: PropTypes.string,
   disabled: PropTypes.bool,
   isWorking: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 export default Button;
