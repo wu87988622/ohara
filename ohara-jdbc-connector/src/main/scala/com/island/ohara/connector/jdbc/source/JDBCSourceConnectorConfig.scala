@@ -7,7 +7,8 @@ case class JDBCSourceConnectorConfig(dbURL: String,
                                      dbUserName: String,
                                      dbPassword: String,
                                      dbTableName: String,
-                                     dbSchemaPattern: String,
+                                     dbCatalogPattern: Option[String],
+                                     dbSchemaPattern: Option[String],
                                      mode: String,
                                      timestampColumnName: String) {
   def toMap: Map[String, String] = Map(
@@ -15,10 +16,11 @@ case class JDBCSourceConnectorConfig(dbURL: String,
     DB_USERNAME -> dbUserName,
     DB_PASSWORD -> dbPassword,
     DB_TABLENAME -> dbTableName,
-    DB_SCHEMA_PATTERN -> dbSchemaPattern,
     MODE -> mode,
     TIMESTAMP_COLUMN_NAME -> timestampColumnName
-  )
+  ) ++ dbCatalogPattern.map(s => Map(DB_CATALOG_PATTERN -> s)).getOrElse(Map.empty) ++ dbSchemaPattern
+    .map(s => Map(DB_SCHEMA_PATTERN -> s))
+    .getOrElse(Map.empty)
 }
 
 object JDBCSourceConnectorConfig {
@@ -28,7 +30,8 @@ object JDBCSourceConnectorConfig {
       dbUserName = props(DB_USERNAME),
       dbPassword = props(DB_PASSWORD),
       dbTableName = props(DB_TABLENAME),
-      dbSchemaPattern = props(DB_SCHEMA_PATTERN),
+      dbCatalogPattern = props.get(DB_CATALOG_PATTERN).filter(_.nonEmpty),
+      dbSchemaPattern = props.get(DB_SCHEMA_PATTERN).filter(_.nonEmpty),
       mode = props.getOrElse(MODE, MODE_DEFAULT),
       timestampColumnName = props(TIMESTAMP_COLUMN_NAME)
     )

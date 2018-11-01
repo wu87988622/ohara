@@ -5,6 +5,7 @@ package object source {
   val DB_USERNAME: String = "source.db.username"
   val DB_PASSWORD: String = "source.db.password"
   val DB_TABLENAME: String = "source.table.name"
+  val DB_CATALOG_PATTERN: String = "source.schema.catalog"
   val DB_SCHEMA_PATTERN: String = "source.schema.pattern"
   val MODE: String = "mode"
   val MODE_DEFAULT = "timestamp"
