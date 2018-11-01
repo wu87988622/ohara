@@ -24,15 +24,7 @@ class FtpSinkTask extends RowSinkTask {
 
   override protected def _put(records: Seq[RowSinkRecord]): Unit = try {
     val result = records
-    // process only primitive type
-      .filter(_.row.forall(_.value match {
-        case Short | Int | Long | Float | Double | Boolean => true
-        case _: java.lang.Number                           => true
-        case _: java.lang.Boolean                          => true
-        case _: String                                     => true
-        case _                                             => false
-      }))
-      // process only matched column name
+    // process only matched column name
       .filter(record => config.schema.map(_.name).forall(name => record.row.exists(_.name == name)))
       // to line
       .map(record => {
