@@ -8,7 +8,7 @@ import * as MESSAGES from 'constants/messages';
 import * as _ from 'utils/helpers';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import { lightBlue } from 'theme/variables';
+import { lightBlue, whiteSmoke } from 'theme/variables';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
 import { fetchHdfs } from 'apis/configurationApis';
@@ -25,6 +25,20 @@ const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
   font-weight: normal;
   color: ${lightBlue};
+`;
+const Form = styled.form`
+  display: flex;
+`;
+const LeftCol = styled.div`
+  width: 250px;
+  padding-right: 45px;
+  margin-right: 45px;
+  border-right: 2px solid ${whiteSmoke};
+  box-sizing: content-box;
+`;
+
+const RightCol = styled.div`
+  width: 250px;
 `;
 
 const FormGroupCheckbox = styled(FormGroup)`
@@ -65,7 +79,12 @@ class PipelineSinkPage extends React.Component {
     currHdfs: {},
     writePath: '',
     pipelines: {},
-    needHeader: '',
+    fileEncodings: ['UTF-8'],
+    currFileEncoding: {},
+    flushLineCount: '',
+    rotateInterval: '',
+    tempDirectory: '',
+    needHeader: true,
     isRedirect: false,
   };
 
@@ -130,17 +149,39 @@ class PipelineSinkPage extends React.Component {
     const isSuccess = _.get(res, 'data.isSuccess', null);
 
     if (isSuccess) {
-      const { topic, hdfs, writePath, needHeader } = res.data.result.configs;
+      const { currHdfs } = this.state;
+      const {
+        topic,
+        hdfs,
+        writePath,
+        needHeader,
+        'tmp.dir': tempDirectory,
+        'flush.line.count': flushLineCount,
+        'rotate.interval.ms': rotateInterval,
+        'data.econde': currFileEncoding,
+      } = res.data.result.configs;
+
       const currTopic = JSON.parse(topic);
-      const currHdfs = JSON.parse(hdfs);
+      const prevHdfs = JSON.parse(hdfs);
+
+      const isDiffHdfs = prevHdfs !== currHdfs ? true : false;
+      const _currHdfs = isDiffHdfs ? currHdfs : prevHdfs;
       const _needHeader = needHeader === 'true' ? true : false;
 
       this.setState({
         currTopic,
-        currHdfs,
         writePath,
+        currHdfs: _currHdfs,
         needHeader: _needHeader,
+        tempDirectory,
+        flushLineCount,
+        rotateInterval,
+        currFileEncoding,
       });
+
+      if (isDiffHdfs) {
+        this.save();
+      }
     }
   };
 
@@ -149,10 +190,14 @@ class PipelineSinkPage extends React.Component {
     const res = await fetchHdfs();
     const hdfses = await _.get(res, 'data.result', []);
 
-    const _currHdfs = _.isEmpty(currHdfs) ? hdfses[0] : currHdfs;
+    const mostRecent = hdfses.reduce(
+      (prev, curr) => (prev.lastModified > curr.lastModified ? prev : curr),
+    );
 
-    if (!_.isEmpty(hdfses)) {
-      this.setState({ hdfses, currHdfs: _currHdfs });
+    const _currHdfs = _.isEmpty(currHdfs) ? mostRecent : currHdfs;
+
+    if (!_.isEmpty(_currHdfs)) {
+      this.setState({ hdfses: [_currHdfs], currHdfs: _currHdfs });
     } else {
       this.setState({ isRedirect: true });
       toastr.error(MESSAGES.NO_CONFIGURATION_FOUND_ERROR);
@@ -214,7 +259,7 @@ class PipelineSinkPage extends React.Component {
     });
   };
 
-  handleChangeSelect = ({ target }) => {
+  handleSelectChange = ({ target }) => {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
     const { uuid } = options[selectedIdx].dataset;
@@ -238,7 +283,17 @@ class PipelineSinkPage extends React.Component {
 
   save = _.debounce(async () => {
     const { updateHasChanges, history, match } = this.props;
-    const { currHdfs, currTopic, writePath, needHeader } = this.state;
+    const {
+      currHdfs,
+      currTopic,
+      writePath,
+      needHeader,
+      tempDirectory,
+      flushLineCount,
+      rotateInterval,
+      currFileEncoding,
+    } = this.state;
+
     const sinkId = _.get(match, 'params.sinkId', null);
     const sourceId = _.get(match, 'params.sourceId', null);
     const isCreate = _.isNull(sinkId) ? true : false;
@@ -255,17 +310,17 @@ class PipelineSinkPage extends React.Component {
         hdfs: JSON.stringify(currHdfs),
         needHeader: String(needHeader),
         writePath,
+        'datafile.needheader': String(needHeader),
+        'datafile.prefix.name': 'part',
+        'data.dir': writePath,
+        'hdfs.url': currHdfs.uri,
 
         // TODO: add the following fields,
         // 'hdfs.url': currHdfs.uri,
-        'hdfs.url': 'file:///tmp/temp',
-        'tmp.dir': '/tmp',
-        'data.dir': writePath,
-        'flush.line.count': '10',
-        'rotate.interval.ms': '60000',
-        'datafile.prefix.name': 'part',
-        'datafile.needheader': String(needHeader),
-        'data.econde': 'UTF-8',
+        'tmp.dir': tempDirectory,
+        'flush.line.count': flushLineCount,
+        'rotate.interval.ms': rotateInterval,
+        'data.econde': currFileEncoding,
       },
     };
 
@@ -291,6 +346,11 @@ class PipelineSinkPage extends React.Component {
       writePath,
       needHeader,
       isRedirect,
+      fileEncodings,
+      currFileEncoding,
+      tempDirectory,
+      rotateInterval,
+      flushLineCount,
     } = this.state;
 
     if (isRedirect) {
@@ -300,58 +360,109 @@ class PipelineSinkPage extends React.Component {
     return (
       <Box>
         <H5Wrapper>HDFS</H5Wrapper>
-        <form>
-          <FormGroup>
-            <Label>Read from topic</Label>
-            <Select
-              isObject
-              name="topics"
-              list={topics}
-              selected={currTopic}
-              width="250px"
-              data-testid="topic-select"
-              handleChange={this.handleChangeSelect}
-            />
-          </FormGroup>
+        <Form>
+          <LeftCol>
+            <FormGroup>
+              <Label>Read from topic</Label>
+              <Select
+                isObject
+                name="topics"
+                list={topics}
+                selected={currTopic}
+                width="250px"
+                data-testid="topic-select"
+                handleChange={this.handleSelectChange}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>HDFS</Label>
-            <Select
-              isObject
-              name="hdfses"
-              list={hdfses}
-              selected={currHdfs}
-              width="250px"
-              data-testid="hdfses-select"
-              handleChange={this.handleChangeSelect}
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>HDFS</Label>
+              <Select
+                isObject
+                name="hdfses"
+                list={hdfses}
+                selected={currHdfs}
+                width="250px"
+                data-testid="hdfses-select"
+                handleChange={this.handleSelectChange}
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>Write path</Label>
-            <Input
-              name="writePath"
-              width="250px"
-              placeholder="file://"
-              value={writePath}
-              data-testid="write-path-input"
-              handleChange={this.handleChangeInput}
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>Write path</Label>
+              <Input
+                name="writePath"
+                width="250px"
+                placeholder="file://"
+                value={writePath}
+                data-testid="write-path-input"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
 
-          <FormGroupCheckbox>
-            <Checkbox
-              type="checkbox"
-              name="needHeader"
-              width="25px"
-              value=""
-              checked={needHeader}
-              data-testid="needheader-input"
-              handleChange={this.handleCheckboxChange}
-            />
-            Include header
-          </FormGroupCheckbox>
-        </form>
+            <FormGroup>
+              <Label>Temp directory</Label>
+              <Input
+                name="tempDirectory"
+                width="250px"
+                placeholder="/tmp"
+                value={tempDirectory}
+                data-testid="temp-directory"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
+
+            <FormGroupCheckbox>
+              <Checkbox
+                type="checkbox"
+                name="needHeader"
+                width="25px"
+                value=""
+                checked={needHeader}
+                data-testid="needheader-input"
+                handleChange={this.handleCheckboxChange}
+              />
+              Include header
+            </FormGroupCheckbox>
+          </LeftCol>
+          <RightCol>
+            <FormGroup>
+              <Label>File encoding</Label>
+              <Select
+                name="fileEnconding"
+                width="250px"
+                data-testid="file-enconding-select"
+                selected={currFileEncoding}
+                list={fileEncodings}
+                handleChange={this.handleSelectChange}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Rotate interval (ms)</Label>
+              <Input
+                name="rotateInterval"
+                width="250px"
+                placeholder="60000"
+                value={rotateInterval}
+                data-testid="rotate-interval"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Flush line count</Label>
+              <Input
+                name="flushLineCount"
+                width="250px"
+                placeholder="10"
+                value={flushLineCount}
+                data-testid="flush-line-count"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
+          </RightCol>
+        </Form>
       </Box>
     );
   }

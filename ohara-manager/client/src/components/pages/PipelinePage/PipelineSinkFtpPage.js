@@ -122,7 +122,7 @@ class PipelineSinkFtpPage extends React.Component {
     currFileEncoding: {},
     tasks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
     currTask: {},
-    needHeader: '',
+    needHeader: true,
     isNewSchemaModalActive: false,
     isDeleteSchemaModalActive: false,
     columnName: '',
