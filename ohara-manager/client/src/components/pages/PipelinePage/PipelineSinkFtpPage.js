@@ -213,7 +213,7 @@ class PipelineSinkFtpPage extends React.Component {
 
     const { schema, configs } = res.data.result;
     const {
-      'ftp.host': host,
+      'ftp.hostname': host,
       'ftp.port': port,
       'ftp.user.name': username,
       'ftp.user.password': password,
@@ -521,7 +521,7 @@ class PipelineSinkFtpPage extends React.Component {
       configs: {
         'ftp.output.folder': outputfolder,
         'ftp.encode': currFileEncoding,
-        'ftp.host': host,
+        'ftp.hostname': host,
         'ftp.port': port,
         'ftp.user.name': username,
         'ftp.user.password': password,

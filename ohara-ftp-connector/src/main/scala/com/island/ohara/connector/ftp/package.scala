@@ -7,7 +7,7 @@ package object ftp {
   val FTP_ERROR = "ftp.error.folder"
   val FTP_HASH = "ftp.task.hash"
   val FTP_TOTAL = "ftp.task.count"
-  val FTP_HOST = "ftp.host"
+  val FTP_HOST = "ftp.hostname"
   val FTP_PORT = "ftp.port"
   val FTP_USER_NAME = "ftp.user.name"
   val FTP_PASSWORD = "ftp.user.password"
