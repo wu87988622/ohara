@@ -117,11 +117,19 @@ class PipelineSinkPage extends React.Component {
     }
   }
 
+  setDefaults = () => {
+    this.setState(({ fileEncodings }) => ({
+      currFileEncoding: fileEncodings[0],
+    }));
+  };
+
   fetchData = () => {
     const { match } = this.props;
     const topicId = _.get(match, 'params.topicId', null);
     const sinkId = _.get(match, 'params.sinkId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
+
+    this.setDefaults();
 
     if (sinkId) {
       const fetchTopicsPromise = this.fetchTopics(topicId);
