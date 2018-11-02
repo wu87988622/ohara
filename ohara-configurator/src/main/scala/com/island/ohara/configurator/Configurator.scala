@@ -250,7 +250,7 @@ object Configurator {
       */
     def remove[T <: Data: ClassTag](uuid: String): T = store
       ._get(uuid)
-      .filter(classTag[T].runtimeClass.isInstance(_))
+      .filter(classTag[T].runtimeClass.isInstance)
       .flatMap(_ => store._remove(uuid, consistency))
       .getOrElse(throw new IllegalArgumentException(s"Failed to remove $uuid since it doesn't exist"))
       .asInstanceOf[T]
@@ -263,7 +263,7 @@ object Configurator {
       * @return the removed data
       */
     def update[T <: Data: ClassTag](data: T): T =
-      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance))
         store._update(data.uuid, data, consistency).get.asInstanceOf[T]
       else throw new IllegalArgumentException(s"Failed to update ${data.uuid} since it doesn't exist")
 
@@ -274,7 +274,7 @@ object Configurator {
       * @tparam T type of data
       */
     def add[T <: Data: ClassTag](data: T): Unit =
-      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance(_)))
+      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance))
         throw new IllegalArgumentException(s"The object:${data.uuid} exists")
       else store._update(data.uuid, data, consistency)
 
@@ -288,7 +288,7 @@ object Configurator {
       store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 
     /**
-      * Retrieve a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
+      * Retrieve a "specified" subclass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
       * type, the None will be returned.
       *
       * @param uuid of ohara data
@@ -298,10 +298,14 @@ object Configurator {
     def data[T <: Data: ClassTag](uuid: String): T =
       store
         ._get(uuid)
-        .filter(classTag[T].runtimeClass.isInstance(_))
+        .filter(classTag[T].runtimeClass.isInstance)
         .getOrElse(throw new IllegalArgumentException(
           s"Failed to find ${classTag[T].runtimeClass.getSimpleName} by $uuid since it doesn't exist"))
         .asInstanceOf[T]
+
+    def exist[T <: Data: ClassTag](uuid: String): Boolean = store._get(uuid).exists(classTag[T].runtimeClass.isInstance)
+
+    def nonExist[T <: Data: ClassTag](uuid: String): Boolean = !exist[T](uuid)
 
     def raw(): Iterator[Data] = store.iterator.map(_._2).filter(_.isInstanceOf[Data]).map(_.asInstanceOf[Data])
 
@@ -314,8 +318,5 @@ object Configurator {
     def size: Int = store.size
 
     override protected def doClose(): Unit = store.close()
-
-    def exist(uuid: String): Boolean = store._exist(uuid)
   }
-
 }

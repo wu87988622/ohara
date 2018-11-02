@@ -1,5 +1,5 @@
 package com.island.ohara.it
-import com.island.ohara.client.ConfiguratorJson.{Column, Sink, SinkRequest, Source, SourceRequest}
+import com.island.ohara.client.ConfiguratorJson.{Column, Sink, SinkRequest, Source, SourceRequest, TopicInfo, TopicInfoRequest}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
@@ -32,7 +32,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRunFtpSource(): Unit = {
-    val topicName = methodName
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1))
     val sourceProps = FtpSourceProps(
       inputFolder = "/input",
       completedFolder = "/backup",
@@ -76,7 +76,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         Column("ranking", DataType.INT, 2),
         Column("single", DataType.BOOLEAN, 3)
       ),
-      topics = Seq(topicName),
+      topics = Seq(topic.uuid),
       numberOfTasks = 1,
       configs = sourceProps.toMap
     )
@@ -90,7 +90,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .builder()
           .brokers(testUtil.brokersConnProps)
           .offsetFromBegin()
-          .topicName(topicName)
+          .topicName(topic.uuid)
           .build[Array[Byte], Row]) { consumer =>
         val records = consumer.poll(20 seconds, rows.length)
         records.length shouldBe rows.length
@@ -104,7 +104,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRunFtpSink(): Unit = {
-    val topicName = methodName
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1))
     val sinkProps = FtpSinkProps(
       output = "/backup",
       needHeader = false,
@@ -123,10 +123,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       row.map(_.value.toString).mkString(",")
     })
 
-    KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
-
     doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
-      rows.foreach(row => producer.sender().value(row).send(topicName))
+      rows.foreach(row => producer.sender().value(row).send(topic.uuid))
     }
 
     // setup env
@@ -144,7 +142,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         name = methodName,
         className = "ftp",
         schema = Seq.empty,
-        topics = Seq(topicName),
+        topics = Seq(topic.uuid),
         numberOfTasks = 1,
         configs = sinkProps.toMap
       )

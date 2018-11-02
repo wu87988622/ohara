@@ -1,7 +1,16 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.{ConfiguratorClient, ConfiguratorJson}
-import com.island.ohara.client.ConfiguratorJson.{Pipeline, PipelineRequest, Sink, SinkRequest, Source, SourceRequest}
+import com.island.ohara.client.ConfiguratorJson.{
+  Pipeline,
+  PipelineRequest,
+  Sink,
+  SinkRequest,
+  Source,
+  SourceRequest,
+  TopicInfo,
+  TopicInfoRequest
+}
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.rule.SmallTest
@@ -16,11 +25,12 @@ class TestPipelineRule extends SmallTest with Matchers {
 
   @Test
   def testPipelineStateAfterStartingSource(): Unit = {
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1))
     val sourceRequest = SourceRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
-      topics = Seq("abc"),
+      topics = Seq(topic.uuid),
       configs = Map.empty,
       numberOfTasks = 1
     )

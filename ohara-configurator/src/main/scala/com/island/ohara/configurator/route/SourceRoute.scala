@@ -85,6 +85,8 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             val source = store.data[Source](uuid)
             if (connectorClient.nonExist(uuid)) {
               if (source.topics.isEmpty) throw new IllegalArgumentException("topics is required")
+              source.topics.foreach(t =>
+                if (store.nonExist[TopicInfo](t)) throw new IllegalArgumentException(s"$t does not exist in ohara"))
               connectorClient
                 .connectorCreator()
                 .name(source.uuid)

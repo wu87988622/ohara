@@ -85,6 +85,8 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
             val sink = store.data[Sink](uuid)
             if (connectorClient.nonExist(uuid)) {
               if (sink.topics.isEmpty) throw new IllegalArgumentException("topics is required")
+              sink.topics.foreach(t =>
+                if (store.nonExist[TopicInfo](t)) throw new IllegalArgumentException(s"$t does not exist in ohara"))
               connectorClient
                 .connectorCreator()
                 .name(sink.uuid)

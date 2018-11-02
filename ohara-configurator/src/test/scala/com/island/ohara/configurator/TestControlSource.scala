@@ -34,10 +34,11 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(topicName, 1, 1))
     val request = SourceRequest(name = methodName,
                                 className = classOf[DumbSource].getName,
                                 schema = Seq.empty,
-                                topics = Seq(topicName),
+                                topics = Seq(topic.uuid),
                                 numberOfTasks = 1,
                                 configs = Map.empty)
 
@@ -80,10 +81,11 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
   @Test
   def testUpdateRunningSource(): Unit = {
     val topicName = methodName
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(topicName, 1, 1))
     val request = SourceRequest(name = methodName,
                                 className = classOf[DumbSource].getName,
                                 schema = Seq.empty,
-                                topics = Seq(topicName),
+                                topics = Seq(topic.uuid),
                                 numberOfTasks = 1,
                                 configs = Map.empty)
 

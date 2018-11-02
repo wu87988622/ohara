@@ -34,10 +34,11 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(topicName, 1, 1))
     val request = SinkRequest(name = methodName,
                               className = classOf[DumbSink].getName,
                               schema = Seq.empty,
-                              topics = Seq(topicName),
+                              topics = Seq(topic.uuid),
                               numberOfTasks = 1,
                               configs = Map.empty)
 
@@ -75,10 +76,11 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
   @Test
   def testUpdateRunningSink(): Unit = {
     val topicName = methodName
+    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(topicName, 1, 1))
     val request = SinkRequest(name = methodName,
                               className = classOf[DumbSink].getName,
                               schema = Seq.empty,
-                              topics = Seq(topicName),
+                              topics = Seq(topic.uuid),
                               numberOfTasks = 1,
                               configs = Map.empty)
 
