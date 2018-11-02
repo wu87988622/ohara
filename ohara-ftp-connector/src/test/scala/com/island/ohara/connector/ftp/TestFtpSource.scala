@@ -38,9 +38,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     .build()
 
   private[this] val props = FtpSourceProps(
-    input = "/input",
-    output = "/output",
-    error = "/error",
+    inputFolder = "/input",
+    completedFolder = "/output",
+    errorFolder = "/error",
     user = testUtil.ftpServer.user,
     password = testUtil.ftpServer.password,
     host = testUtil.ftpServer.host,
@@ -49,7 +49,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   )
 
   private[this] def setupInput(): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.input, "abc"))))
+    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()
@@ -71,11 +71,11 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       ftpClient.mkdir(path)
     }
     // cleanup all files in order to avoid corrupted files
-    rebuild(props.input)
-    rebuild(props.error)
-    rebuild(props.output)
+    rebuild(props.inputFolder)
+    rebuild(props.errorFolder)
+    rebuild(props.completedFolder)
     setupInput()
-    ftpClient.listFileNames(props.input).isEmpty shouldBe false
+    ftpClient.listFileNames(props.inputFolder).isEmpty shouldBe false
   }
 
   private[this] def pollData(topicName: String,
@@ -95,9 +95,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   private[this] def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
     OharaTestUtil.await(
       () => {
-        ftpClient.listFileNames(props.input).size == inputCount &&
-        ftpClient.listFileNames(props.output).size == outputCount &&
-        ftpClient.listFileNames(props.error).size == errorCount
+        ftpClient.listFileNames(props.inputFolder).size == inputCount &&
+        ftpClient.listFileNames(props.completedFolder).size == outputCount &&
+        ftpClient.listFileNames(props.errorFolder).size == errorCount
       },
       10 seconds
     )
@@ -366,7 +366,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       .schema(schema)
-      .configs(props.copy(input = "/abc").toMap)
+      .configs(props.copy(inputFolder = "/abc").toMap)
       .create()
     FtpUtil.assertFailedConnector(testUtil, connectorName)
   }

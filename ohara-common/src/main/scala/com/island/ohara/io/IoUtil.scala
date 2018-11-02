@@ -11,6 +11,14 @@ object IoUtil {
 
   def path(parent: String, name: String): String = if (parent.endsWith("/")) parent + name else s"$parent/$name"
 
+  /**
+    * replace the path's parent path by new parent
+    * @param parent new parent
+    * @param path original path
+    * @return new path
+    */
+  def replaceParent(parent: String, path: String): String = IoUtil.path(parent, IoUtil.name(path))
+
   def name(path: String): String = {
     if (path == "/") throw new IllegalArgumentException(s"no file name for path:$path")
     val last = path.lastIndexOf("/")

@@ -13,20 +13,22 @@ class DataStreamReader(input: InputStream) extends AutoCloseable {
 
   }
 
-  def forceRead(length: Int): Array[Byte] = {
-    if (length <= 0) throw new IllegalStateException(s"length:$length should be bigger than zero")
-    var remaining = length
-    val buf = new Array[Byte](length)
-    while (remaining != 0) {
-      val rval = input.read(buf, buf.length - remaining, remaining)
-      if (rval < 0) throw new IllegalStateException(s"required $length bytes but actual ${length - remaining} bytes")
-      else {
-        if (rval > remaining) throw new IllegalStateException(s"ask $remaining bytes but actual $rval bytes")
-        remaining -= rval
-        if (remaining == 0) return buf
+  def forceRead(length: Int): Array[Byte] = length match {
+    case 0          => Array.emptyByteArray
+    case x if x < 0 => throw new IllegalStateException(s"length:$length should be bigger than zero")
+    case _ =>
+      var remaining = length
+      val buf = new Array[Byte](length)
+      while (remaining != 0) {
+        val rval = input.read(buf, buf.length - remaining, remaining)
+        if (rval < 0) throw new IllegalStateException(s"required $length bytes but actual ${length - remaining} bytes")
+        else {
+          if (rval > remaining) throw new IllegalStateException(s"ask $remaining bytes but actual $rval bytes")
+          remaining -= rval
+          if (remaining == 0) return buf
+        }
       }
-    }
-    throw new IllegalStateException("you are at the end of world...")
+      throw new IllegalStateException("you are at the end of world...")
   }
 
   def readShort(): Short = ByteUtil.toShort(forceRead(ByteUtil.SIZE_OF_SHORT))

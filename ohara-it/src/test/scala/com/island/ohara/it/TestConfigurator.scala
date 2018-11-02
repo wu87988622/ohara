@@ -34,9 +34,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   def testRunFtpSource(): Unit = {
     val topicName = methodName
     val sourceProps = FtpSourceProps(
-      input = "/input",
-      output = "/backup",
-      error = "/error",
+      inputFolder = "/input",
+      completedFolder = "/backup",
+      errorFolder = "/error",
       user = testUtil.ftpServer.user,
       password = testUtil.ftpServer.password,
       host = testUtil.ftpServer.host,
@@ -62,9 +62,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .user(ftpServer.user)
         .password(ftpServer.password)
         .build()) { ftpClient =>
-      TestFtp2Ftp.rebuild(ftpClient, sourceProps.input)
-      TestFtp2Ftp.rebuild(ftpClient, sourceProps.output)
-      TestFtp2Ftp.rebuild(ftpClient, sourceProps.error)
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder)
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
       TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
     }
 

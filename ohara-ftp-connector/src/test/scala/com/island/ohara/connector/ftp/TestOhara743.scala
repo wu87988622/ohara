@@ -15,9 +15,9 @@ class TestOhara743 extends SmallTest with Matchers {
   @Test
   def testAutoCreateOutput(): Unit = {
     val props = FtpSourceProps(
-      input = "/input",
-      output = "/output",
-      error = "/error",
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error",
       user = ftpServer.user,
       password = ftpServer.password,
       host = ftpServer.host,
@@ -41,11 +41,11 @@ class TestOhara743 extends SmallTest with Matchers {
       .build()
 
     try {
-      ftpClient.mkdir(props.input)
+      ftpClient.mkdir(props.inputFolder)
       val source = new FtpSource
       source._start(taskConfig)
-      ftpClient.exist(props.error) shouldBe true
-      ftpClient.exist(props.output) shouldBe true
+      ftpClient.exist(props.errorFolder) shouldBe true
+      ftpClient.exist(props.completedFolder) shouldBe true
     } finally ftpClient.close()
   }
 

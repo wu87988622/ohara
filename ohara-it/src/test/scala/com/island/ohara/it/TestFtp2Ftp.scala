@@ -40,9 +40,9 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     .build()
 
   private[this] val sourceProps = FtpSourceProps(
-    input = "/input",
-    output = "/backup",
-    error = "/error",
+    inputFolder = "/input",
+    completedFolder = "/backup",
+    errorFolder = "/error",
     user = testUtil.ftpServer.user,
     password = testUtil.ftpServer.password,
     host = testUtil.ftpServer.host,
@@ -62,9 +62,9 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit = {
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.input)
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.output)
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.error)
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder)
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
     TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
     TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
   }
@@ -98,8 +98,8 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
           .schema(schema)
           .configs(sourceProps.toMap)
           .create()
-        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.input).isEmpty, 30 seconds)
-        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.output).size == 1, 30 seconds)
+        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, 30 seconds)
+        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.completedFolder).size == 1, 30 seconds)
         OharaTestUtil.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, 30 seconds)
         val lines = ftpClient.readLines(IoUtil.path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
         lines.length shouldBe rows.length + 1 // header
@@ -133,7 +133,7 @@ private[it] object TestFtp2Ftp extends Matchers {
   }
 
   def setupInput(ftpClient: FtpClient, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.input, "abc"))))
+    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()

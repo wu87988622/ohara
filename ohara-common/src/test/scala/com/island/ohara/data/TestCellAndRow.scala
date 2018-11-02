@@ -8,6 +8,12 @@ import org.scalatest.Matchers
 class TestCellAndRow extends SmallTest with Matchers {
 
   @Test
+  def testEmptyCell(): Unit = {
+    val cell = Cell("abc", "")
+    Row(cell) shouldBe Serializer.ROW.from(Serializer.ROW.to(Row(cell)))
+  }
+
+  @Test
   def testEmptyRow(): Unit = {
     val copy = Serializer.ROW.from(Serializer.ROW.to(Row.empty))
     copy shouldBe Row.empty

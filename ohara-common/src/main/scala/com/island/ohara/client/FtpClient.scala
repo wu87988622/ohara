@@ -37,7 +37,20 @@ trait FtpClient extends CloseOnce {
 
   def moveFile(from: String, to: String): Unit
 
+  /**
+    * create folder. It throw exception if there is already a folder
+    * @param path folder path
+    */
   def mkdir(path: String): Unit
+
+  /**
+    * recreate a folder. It will delete all stuff under the path.
+    * @param path folder path
+    */
+  def reMkdir(path: String): Unit = {
+    if (exist(path)) delete(path)
+    mkdir(path)
+  }
 
   def delete(path: String): Unit
 
@@ -54,16 +67,14 @@ trait FtpClient extends CloseOnce {
     * @param messages messages
     */
   def attach(path: String, messages: Seq[String]): Unit = {
-    // add room to buffer data
-    val size = messages.map(_.length).sum * 2
-    CloseOnce.doClose2(new OutputStreamWriter(if (exist(path)) append(path) else create(path), StandardCharsets.UTF_8))(
-      new BufferedWriter(_, size)) {
-      case (_, writer) =>
-        messages.foreach(line => {
-          writer.append(line)
-          writer.newLine()
-        })
-    }
+    val writer = new BufferedWriter(
+      new OutputStreamWriter(if (exist(path)) append(path) else create(path), StandardCharsets.UTF_8),
+      messages.map(_.length).sum * 2)
+    try messages.foreach(line => {
+      writer.append(line)
+      writer.newLine()
+    })
+    finally writer.close()
   }
 
   /**

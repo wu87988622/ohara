@@ -38,9 +38,9 @@ class TestFtpProperties extends SmallTest with Matchers {
   @Test
   def testFtpSourceProps(): Unit = {
     val props = FtpSourceProps(
-      input = "/input",
-      output = "/output",
-      error = "/error/",
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error/",
       user = "user",
       password = "pwd",
       host = "host",
@@ -56,9 +56,9 @@ class TestFtpProperties extends SmallTest with Matchers {
     val props = FtpSourceTaskProps(
       hash = 123,
       total = 4,
-      input = "/input",
-      output = "/output",
-      error = "/error/",
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error/",
       user = "user",
       password = "pwd",
       host = "host",

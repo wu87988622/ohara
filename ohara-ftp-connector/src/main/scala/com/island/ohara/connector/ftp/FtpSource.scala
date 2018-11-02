@@ -22,9 +22,9 @@ class FtpSource extends RowSourceConnector {
           FtpSourceTaskProps(
             total = maxTasks,
             hash = index,
-            input = props.input,
-            output = props.output,
-            error = props.error,
+            inputFolder = props.inputFolder,
+            completedFolder = props.completedFolder,
+            errorFolder = props.errorFolder,
             encode = props.encode,
             host = props.host,
             port = props.port,
@@ -43,9 +43,10 @@ class FtpSource extends RowSourceConnector {
     val ftpClient =
       FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
     try {
-      if (ftpClient.nonExist(props.input)) throw new IllegalArgumentException(s"${props.input} doesn't exist")
-      if (ftpClient.nonExist(props.error)) ftpClient.mkdir(props.error)
-      if (ftpClient.nonExist(props.output)) ftpClient.mkdir(props.output)
+      if (ftpClient.nonExist(props.inputFolder))
+        throw new IllegalArgumentException(s"${props.inputFolder} doesn't exist")
+      if (ftpClient.nonExist(props.errorFolder)) ftpClient.mkdir(props.errorFolder)
+      if (ftpClient.nonExist(props.completedFolder)) ftpClient.mkdir(props.completedFolder)
     } finally ftpClient.close()
   }
 
