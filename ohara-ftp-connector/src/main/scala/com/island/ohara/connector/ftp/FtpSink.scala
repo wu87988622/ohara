@@ -3,7 +3,6 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.client.FtpClient
 import com.island.ohara.io.IoUtil
 import com.island.ohara.kafka.connector._
-import com.island.ohara.util.VersionUtil
 
 class FtpSink extends RowSinkConnector {
   private[this] var config: TaskConfig = _
@@ -43,6 +42,4 @@ class FtpSink extends RowSinkConnector {
   override protected def _stop(): Unit = {
     // do nothing
   }
-
-  override protected def _version: String = VersionUtil.VERSION
 }

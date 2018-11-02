@@ -7,7 +7,6 @@ import com.island.ohara.data.Row
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.Constants._
-import com.island.ohara.util.VersionUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -51,5 +50,4 @@ class SimpleRowSourceTask extends RowSourceTask {
     closed.set(true)
     consumer.wakeup()
   }
-  override val _version: String = VersionUtil.VERSION
 }

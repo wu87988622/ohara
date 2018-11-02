@@ -3,6 +3,7 @@ package com.island.ohara.kafka.connector
 import java.util
 
 import com.island.ohara.serialization.RowSerializer
+import com.island.ohara.util.VersionUtil
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask, SinkTaskContext}
 
@@ -42,7 +43,7 @@ abstract class RowSinkTask extends SinkTask {
     *
     * @return the version, formatted as a String
     */
-  protected def _version: String
+  protected def _version: String = VERSION
 
   /**
     * The SinkTask use this method to create writers for newly assigned partitions in case of partition

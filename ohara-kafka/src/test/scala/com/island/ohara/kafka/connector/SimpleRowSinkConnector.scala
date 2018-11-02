@@ -1,15 +1,12 @@
 package com.island.ohara.kafka.connector
 
-import Constants._
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.kafka.connector.Constants._
 
 /**
   * Used for testing.
   */
 class SimpleRowSinkConnector extends RowSinkConnector {
   private[this] var config: TaskConfig = _
-  override val _version = VersionUtil.VERSION
-
   override def _start(props: TaskConfig): Unit = {
     this.config = props
     // check the option

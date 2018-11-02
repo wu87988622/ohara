@@ -5,8 +5,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.kafka.TestConnectorClient._
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
-import com.island.ohara.util.VersionUtil
-import org.junit.{Ignore, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
@@ -124,8 +123,6 @@ class MyConnector extends RowSourceConnector {
   }
 
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class MyConnectorTask extends RowSourceTask {
@@ -145,8 +142,6 @@ class MyConnectorTask extends RowSourceTask {
       Seq(RowSourceRecord(topicName, TestConnectorClient.ROW))
     } else Seq.empty
   }
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class UnrunnableConnector extends RowSourceConnector {
@@ -160,8 +155,6 @@ class UnrunnableConnector extends RowSourceConnector {
   }
 
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class UnrunnableConnectorTask extends RowSourceTask {
@@ -170,6 +163,4 @@ class UnrunnableConnectorTask extends RowSourceTask {
   override protected def _stop(): Unit = {}
 
   override protected def _poll(): Seq[RowSourceRecord] = Seq.empty
-
-  override protected def _version: String = VersionUtil.VERSION
 }

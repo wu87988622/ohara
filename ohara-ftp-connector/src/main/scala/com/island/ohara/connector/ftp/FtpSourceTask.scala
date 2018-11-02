@@ -8,7 +8,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
-import com.island.ohara.util.{SystemUtil, VersionUtil}
+import com.island.ohara.util.SystemUtil
 
 import scala.collection.mutable
 
@@ -169,7 +169,6 @@ class FtpSourceTask extends RowSourceTask {
     })
     .getOrElse(Seq.empty)
 
-  override protected def _version: String = VersionUtil.VERSION
   override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.props = FtpSourceTaskProps(config.options)
     this.schema = config.schema

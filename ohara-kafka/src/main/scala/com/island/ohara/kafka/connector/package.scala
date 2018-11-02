@@ -2,6 +2,8 @@ package com.island.ohara.kafka
 import java.util
 
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.util.VersionUtil
+
 import scala.collection.JavaConverters._
 package object connector {
   private[this] val NAME_KEY: String = "name"
@@ -35,4 +37,12 @@ package object connector {
       + (TOPICS_KEY -> taskConfig.topics.mkString(","))
       + (NAME_KEY -> taskConfig.name)).asJava
   }
+
+  /**
+    * this version is exposed to kafka connector. Kafka connector's version mechanism carry a string used to
+    * represent the "version" only. It is a such weak function which can't carry other information - ex. revision.
+    * Hence, we do a magic way to combine the revision with version and then parse it manually in order to provide
+    * more powerful CLUSTER APIs (see ClusterRoute)
+    */
+  val VERSION: String = VersionUtil.VERSION + "_" + VersionUtil.REVISION
 }

@@ -4,7 +4,6 @@ import java.util
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.rule.SmallTest
 import com.island.ohara.serialization.DataType
-import com.island.ohara.util.VersionUtil
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -47,8 +46,6 @@ class DumbSource extends RowSourceConnector {
   }
   override protected def _start(config: TaskConfig): Unit = {}
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class DumbSourceTask extends RowSourceTask {
@@ -57,8 +54,6 @@ class DumbSourceTask extends RowSourceTask {
   override protected def _stop(): Unit = {}
 
   override protected def _poll(): Seq[RowSourceRecord] = Seq.empty
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class DumbSink extends RowSinkConnector {
@@ -69,16 +64,12 @@ class DumbSink extends RowSinkConnector {
   }
   override protected def _start(config: TaskConfig): Unit = {}
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class DumbSinkTask extends RowSinkTask {
   override protected def _start(config: TaskConfig): Unit = {}
 
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 
   override protected def _put(records: Seq[RowSinkRecord]): Unit = {}
 }

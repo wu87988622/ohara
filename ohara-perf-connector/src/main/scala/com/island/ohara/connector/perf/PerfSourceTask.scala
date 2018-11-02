@@ -4,7 +4,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.ByteUtil
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
-import com.island.ohara.util.{SystemUtil, VersionUtil}
+import com.island.ohara.util.SystemUtil
 
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _
@@ -46,6 +46,4 @@ class PerfSourceTask extends RowSourceTask {
       (0 until props.batch).flatMap(_ => records)
     } else Seq.empty
   }
-
-  override protected def _version: String = VersionUtil.VERSION
 }

@@ -3,7 +3,6 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
-import com.island.ohara.util.VersionUtil
 import org.slf4j.{Logger, LoggerFactory}
 
 class FtpSource extends RowSourceConnector {
@@ -53,8 +52,6 @@ class FtpSource extends RowSourceConnector {
   override protected def _stop(): Unit = {
     // do nothing
   }
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 object FtpSource {

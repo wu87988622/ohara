@@ -5,12 +5,10 @@ import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.io.CloseOnce
+import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkRecord, RowSinkTask, TaskConfig}
-import com.island.ohara.serialization.DataType
-import com.island.ohara.util.VersionUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -141,16 +139,12 @@ class DumbSink extends RowSinkConnector {
     this.config = config
   }
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 class DumbSinkTask extends RowSinkTask {
   override protected def _start(config: TaskConfig): Unit = {}
 
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 
   override protected def _put(records: Seq[RowSinkRecord]): Unit = {}
 }

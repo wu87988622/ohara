@@ -5,7 +5,6 @@ import com.island.ohara.client.FtpClient
 import com.island.ohara.connector.ftp.FtpSinkTask._
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector._
-import com.island.ohara.util.VersionUtil
 import com.typesafe.scalalogging.Logger
 class FtpSinkTask extends RowSinkTask {
   private[this] var config: TaskConfig = _
@@ -67,8 +66,6 @@ class FtpSinkTask extends RowSinkTask {
   } catch {
     case e: Throwable => LOG.error("failed to parse records", e)
   }
-
-  override protected def _version: String = VersionUtil.VERSION
 }
 
 object FtpSinkTask {

@@ -2,6 +2,7 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
+import com.island.ohara.util.VersionUtil
 import org.apache.kafka.common.config.{Config, ConfigDef}
 import org.apache.kafka.connect.connector.{ConnectorContext, Task}
 import org.apache.kafka.connect.source.SourceConnector
@@ -52,7 +53,7 @@ abstract class RowSourceConnector extends SourceConnector {
     *
     * @return the version, formatted as a String
     */
-  protected def _version: String
+  protected def _version: String = VERSION
 
   //-------------------------------------------------[WRAPPED]-------------------------------------------------//
 

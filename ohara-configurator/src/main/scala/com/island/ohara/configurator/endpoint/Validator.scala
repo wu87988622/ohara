@@ -40,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 class Validator extends SourceConnector {
   private[this] var props: util.Map[String, String] = _
-  override def version(): String = VersionUtil.VERSION
+  override def version(): String = com.island.ohara.kafka.connector.VERSION
   override def start(props: util.Map[String, String]): Unit = {
     this.props = new util.HashMap[String, String](props)
     // we don't want to make any exception here
@@ -200,7 +200,7 @@ class ValidatorTask extends SourceTask {
     // do nothing
   }
 
-  override def version(): String = VersionUtil.VERSION
+  override def version(): String = com.island.ohara.kafka.connector.VERSION
 
   private[this] def validate(info: HdfsValidationRequest): String = {
     val config = new Configuration()

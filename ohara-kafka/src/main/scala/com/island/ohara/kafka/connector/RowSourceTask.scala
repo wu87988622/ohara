@@ -3,6 +3,7 @@ package com.island.ohara.kafka.connector
 import java.util
 
 import com.island.ohara.serialization.RowSerializer
+import com.island.ohara.util.VersionUtil
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceRecord, SourceTask, SourceTaskContext}
 
@@ -16,8 +17,6 @@ abstract class RowSourceTask extends SourceTask {
   /**
     * Start the Task. This should handle any configuration parsing and one-time setup of the task.
     * @param config initial configuration
-    * @param schema the schema should be used in this connector task
-    * @param topics the target topics
     */
   protected def _start(config: TaskConfig): Unit
 
@@ -64,7 +63,7 @@ abstract class RowSourceTask extends SourceTask {
     *
     * @return the version, formatted as a String
     */
-  protected def _version: String
+  protected def _version: String = VERSION
 
   /**
     * @return RowSourceContext is provided to RowSourceTask to allow them to interact with the underlying runtime.

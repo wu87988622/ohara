@@ -1,6 +1,5 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
-import com.island.ohara.util.VersionUtil
 
 class PerfSource extends RowSourceConnector {
   private[this] var config: TaskConfig = _
@@ -21,6 +20,4 @@ class PerfSource extends RowSourceConnector {
   }
 
   override protected def _stop(): Unit = {}
-
-  override protected def _version: String = VersionUtil.VERSION
 }
