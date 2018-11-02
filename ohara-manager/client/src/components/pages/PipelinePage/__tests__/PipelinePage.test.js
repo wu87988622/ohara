@@ -6,15 +6,15 @@ import PipelinePage from '../PipelinePage';
 const pipelines = [
   {
     name: 'a',
-    status: 'stopped',
+    status: 'Stopped',
     uuid: '1',
-    objects: [{ abc: 'def', kind: 'a' }],
+    objects: [{ abc: 'def', kind: 'topic', uuid: '123' }],
   },
   {
     name: 'b',
-    status: 'start',
+    status: 'Running',
     uuid: '2',
-    objects: [{ def: 'abc', kind: 'b' }],
+    objects: [{ def: 'abc', kind: 'topic', uuid: '456' }],
   },
 ];
 
@@ -30,12 +30,18 @@ describe('<PipelinePage />', () => {
     wrapper = shallow(<PipelinePage {...props} />);
   });
 
-  it('renders correctly', () => {
+  it('renders self', () => {
     expect(wrapper.length).toBe(1);
   });
 
   it('renders <H2 />', () => {
     expect(wrapper.find('H2').length).toBe(1);
+    expect(
+      wrapper
+        .find('H2')
+        .children()
+        .text(),
+    ).toBe('Pipeline');
   });
 
   it('renders <NewPipelineBtn>', () => {
@@ -49,7 +55,7 @@ describe('<PipelinePage />', () => {
     expect(modal.props().isActive).toBe(false);
   });
 
-  it('toggles the <Modal />', () => {
+  it('toggles <Modal />', () => {
     const evt = { preventDefault: jest.fn() };
 
     wrapper.instance().handleSelectTopicModalOpen(evt);
@@ -87,40 +93,64 @@ describe('<PipelinePage />', () => {
     expect(wrapper.state().deletePipelineUuid).toBe('');
   });
 
-  it('renders <DataTable />', () => {
-    wrapper.setState({ pipelines });
-
-    const table = wrapper.find('Table');
-
-    expect(table.length).toBe(1);
-
-    const trs = table.find('tr');
-    expect(trs.length).toBe(pipelines.length);
-
-    const rows = table.find('tr');
-
-    const firstRow = rows.at(0).find('td');
-    const secondRow = rows.at(1).find('td');
-
-    const expected = [
-      ['0', pipelines[0].name, pipelines[0].status],
-      ['1', pipelines[1].name, pipelines[1].status],
-    ];
-
-    firstRow.forEach((x, idx) => {
-      if (!x.props().className) {
-        expect(x.text()).toBe(expected[0][idx]);
-      }
+  describe('<DataTable />', () => {
+    let table;
+    beforeEach(() => {
+      wrapper.setState({ pipelines });
+      table = wrapper.find('Table');
     });
 
-    expect(firstRow.find('.has-icon').length).toBe(3);
-
-    secondRow.forEach((x, idx) => {
-      if (!x.props().className) {
-        expect(x.text()).toBe(expected[1][idx]);
-      }
+    it('renders self', () => {
+      expect(table.length).toBe(1);
     });
 
-    expect(secondRow.find('.has-icon').length).toBe(3);
+    it('renders the correct rows', () => {
+      const rows = table.find('tr');
+      expect(rows.length).toBe(pipelines.length);
+    });
+
+    it('renders <tr /> and <td />', () => {
+      const table = wrapper.find('Table');
+      const rows = table.find('tr');
+
+      const firstRow = rows.at(0).find('td');
+      const secondRow = rows.at(1).find('td');
+
+      const createExpects = pipelines => {
+        return pipelines.map(({ name, status }, idx) => {
+          return [
+            String(idx),
+            name,
+            status,
+            'StartStopIcon',
+            'LinkIcon',
+            'DeleteIcon',
+          ];
+        });
+      };
+
+      const expected = createExpects(pipelines);
+
+      firstRow.forEach((x, idx) => {
+        if (!x.props().className) {
+          expect(x.text()).toBe(expected[0][idx]);
+        } else if (x.props().className === 'has-icon') {
+          expect(x.children().name()).toBe(expected[0][idx]);
+        }
+      });
+
+      const startStopIcon = firstRow.find('StartStopIcon');
+      expect(startStopIcon.props().isRunning).toBe(false);
+      expect(startStopIcon.find('i').hasClass('fa-stop-circle'));
+
+      // TODO: add tests for LinkIcon and DeleteIcon
+      secondRow.forEach((x, idx) => {
+        if (!x.props().className) {
+          expect(x.text()).toBe(expected[1][idx]);
+        } else if (x.props().className === 'has-icon') {
+          expect(x.children().name()).toBe(expected[1][idx]);
+        }
+      });
+    });
   });
 });

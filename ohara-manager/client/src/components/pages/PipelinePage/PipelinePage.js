@@ -17,7 +17,14 @@ import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
 import { isSource, isSink } from 'utils/pipelineHelpers';
-import { lightBlue, blue, red, redHover, trBgColor } from 'theme/variables';
+import {
+  lightBlue,
+  blue,
+  red,
+  redHover,
+  trBgColor,
+  lightestBlue,
+} from 'theme/variables';
 import {
   createPipeline,
   fetchPipelines,
@@ -64,19 +71,28 @@ const LinkIcon = styled(Link)`
   &:hover {
     color: ${blue};
   }
+
+  &.is-running {
+    cursor: not-allowed;
+    color: ${lightestBlue};
+  }
 `;
 
+LinkIcon.displayName = 'LinkIcon';
+
 const StartStopIcon = styled.button`
-  color: ${({ status }) => (status === 'Running' ? red : lightBlue)};
+  color: ${({ isRunning }) => (isRunning ? red : lightBlue)};
   border: 0;
   font-size: 20px;
   cursor: pointer;
   background-color: transparent;
 
   &:hover {
-    color: ${({ status }) => (status === 'Running' ? redHover : blue)};
+    color: ${({ isRunning }) => (isRunning ? redHover : blue)};
   }
 `;
+
+StartStopIcon.displayName = 'StartStopIcon';
 
 const DeleteIcon = styled.button`
   color: ${lightBlue};
@@ -420,9 +436,13 @@ class PipelinePage extends React.Component {
               <Table headers={this.headers}>
                 {pipelines.map((pipeline, idx) => {
                   const { uuid, name, status } = pipeline;
-                  const trCls = status === 'Running' ? 'is-running' : '';
-                  const startStopCls =
-                    status === 'Running' ? 'fa-stop-circle' : 'fa-play-circle';
+                  const isRunning = status === 'Running' ? true : false;
+
+                  const trCls = isRunning ? 'is-running' : '';
+                  const linkIconCls = isRunning ? 'is-running' : '';
+                  const startStopCls = isRunning
+                    ? 'fa-stop-circle'
+                    : 'fa-play-circle';
 
                   const editUrl = this.getEditUrl(pipeline);
 
@@ -433,7 +453,7 @@ class PipelinePage extends React.Component {
                       <td>{status}</td>
                       <td className="has-icon">
                         <StartStopIcon
-                          status={status}
+                          isRunning={isRunning}
                           onClick={() => this.handleStartStopBtnClick(uuid)}
                         >
                           <i className={`far ${startStopCls}`} />
@@ -441,7 +461,10 @@ class PipelinePage extends React.Component {
                       </td>
 
                       <td className="has-icon">
-                        <LinkIcon to={editUrl}>
+                        <LinkIcon
+                          to={isRunning ? this.props.match.url : editUrl}
+                          className={linkIconCls}
+                        >
                           <i className="far fa-edit" />
                         </LinkIcon>
                       </td>
