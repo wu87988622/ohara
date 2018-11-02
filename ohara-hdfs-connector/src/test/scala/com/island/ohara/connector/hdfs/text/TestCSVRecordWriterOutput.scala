@@ -145,4 +145,29 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
       result.toString shouldBe "COL1,COL3,COL2\nvalue1,value3,value2\n"
     }
   }
+
+  @Test
+  def testEmptyLineWithHeader(): Unit = {
+    testEmptyLine(true)
+  }
+
+  @Test
+  def testEmptyLineWithoutHeader(): Unit = {
+    testEmptyLine(false)
+  }
+
+  private[this] def testEmptyLine(needHeader: Boolean): Unit = {
+    val storage: Storage = new HDFSStorage(fileSystem)
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/$methodName"
+    val csvRecordWriter: RecordWriterOutput =
+      new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
+
+    try {
+      val row = Row(Cell("cf0", 123), Cell("cf1", false))
+      csvRecordWriter.write(needHeader, Seq(Column("c", "c", DataType.DOUBLE, 0)), row)
+    } finally csvRecordWriter.close()
+    println("tempfilepath:" + tempFilePath)
+    storage.exists(tempFilePath) shouldBe false
+  }
+
 }

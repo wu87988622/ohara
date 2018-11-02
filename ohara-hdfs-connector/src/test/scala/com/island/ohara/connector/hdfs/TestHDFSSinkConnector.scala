@@ -227,6 +227,55 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     }
   }
 
+  @Test
+  def testDataNotMappingSchema(): Unit = {
+
+    val sinkTasks = 1
+    val flushLineCountName = FLUSH_LINE_COUNT
+    val flushLineCount = "10"
+    val tmpDirName = TMP_DIR
+    val dataDirName = DATA_DIR
+    val isHeader = DATAFILE_NEEDHEADER
+    val hdfsURLName = HDFS_URL
+    val connectorName = methodName
+    val topicName = methodName
+    val rowCount = 100
+    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
+    val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
+    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
+
+    val fileSystem = testUtil.fileSystem
+    val storage = new HDFSStorage(fileSystem)
+    val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
+    val dataDirPath = s"${testUtil.tmpDirectory}/data"
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
+      0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+      producer.flush()
+    }
+
+    val localURL = s"file://${testUtil.tmpDirectory}"
+    testUtil.connectorClient
+      .connectorCreator()
+      .name(connectorName)
+      .connectorClass(classOf[HDFSSinkConnector])
+      .topic(topicName)
+      .numberOfTasks(sinkTasks)
+      .disableConverter()
+      .configs(Map(
+        flushLineCountName -> flushLineCount,
+        tmpDirName -> tmpDirPath,
+        hdfsURLName -> localURL,
+        hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+        dataDirName -> dataDirPath,
+        isHeader -> "false"
+      ))
+      .schema(Seq(Column("cccc", DataType.BOOLEAN, 1)))
+      .create()
+
+    TimeUnit.SECONDS.sleep(5)
+    val partitionID: String = "partition0"
+    OharaTestUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 0, 10 seconds)
+  }
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {

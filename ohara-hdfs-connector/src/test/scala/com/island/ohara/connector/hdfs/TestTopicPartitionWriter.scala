@@ -31,7 +31,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
     topicPartitionWriter.openTempFile(0)
     topicPartitionWriter.processLineCount shouldBe 0
-    storage.exists(topicPartitionWriter.tmpFilePath) shouldBe true
+    storage.exists(topicPartitionWriter.tmpFilePath) shouldBe false
   }
 
   @Test

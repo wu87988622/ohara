@@ -1,11 +1,13 @@
 package com.island.ohara.connector.hdfs.text
 
-import java.io.{BufferedWriter, OutputStreamWriter}
+import java.io.{BufferedWriter, OutputStreamWriter, Writer}
+
 import com.island.ohara.serialization.DataType
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.island.ohara.data.Row
+import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
 
 /**
@@ -15,9 +17,8 @@ import com.typesafe.scalalogging.Logger
 class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, storage: Storage, filePath: String)
     extends RecordWriterOutput {
   private[this] lazy val logger = Logger(getClass.getName)
-  logger.info("open temp file")
+  private[this] var writer: BufferedWriter = _
   val encode = hdfsSinkConnectorConfig.dataFileEncode
-  val writer: BufferedWriter = new BufferedWriter(new OutputStreamWriter(storage.open(filePath, false), encode))
 
   /**
     * Write file for csv format
@@ -25,13 +26,7 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     */
   override def write(isHeader: Boolean, schema: Seq[Column], row: Row): Unit = {
     val newSchema: Seq[Column] = if (schema.isEmpty) row.map(r => Column(r.name, DataType.OBJECT, 0)).toSeq else schema
-    if (isHeader) {
-      val header: String = newSchema.sortBy(_.order).map(s => s.newName).mkString(",")
-      this.writer.append(header)
-      this.writer.newLine()
-    }
-
-    val line = newSchema
+    val line: String = newSchema
       .sortBy(_.order)
       .map(n => (n, row.filter(r => n.name == r.name)))
       .flatMap({
@@ -45,9 +40,16 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
       .map(x => x.value)
       .mkString(",")
 
-    this.logger.debug(s"data line: $line")
-    this.writer.append(line)
-    this.writer.newLine()
+    if (this.writer == null && line.nonEmpty) {
+      logger.info("open temp file")
+      this.writer = new BufferedWriter(new OutputStreamWriter(storage.open(filePath, false), encode))
+      writerHeader(this.writer, newSchema, isHeader)
+    }
+
+    if (line.nonEmpty) {
+      this.writer.append(line)
+      this.writer.newLine()
+    }
   }
 
   /**
@@ -55,6 +57,14 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     */
   override def close(): Unit = {
     logger.info("close temp file")
-    this.writer.close()
+    CloseOnce.close(writer)
+  }
+
+  private[this] def writerHeader(writer: Writer, newSchema: Seq[Column], isHeader: Boolean): Unit = {
+    if (isHeader) {
+      val header: String = newSchema.sortBy(_.order).map(s => s.newName).mkString(",")
+      this.writer.append(header)
+      this.writer.newLine()
+    }
   }
 }
