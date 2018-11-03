@@ -3,6 +3,7 @@ import java.util.Objects
 
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorJson.{CreateConnectorRequest, CreateConnectorResponse}
+import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 
@@ -165,14 +166,16 @@ abstract class ConnectorCreator {
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)
       config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
+    // NOTED: If configs.name exists, kafka will use it to replace the outside name.
+    // for exampe: {"name":"abc", "configs":{"name":"c"}} is converted to map("name", "c")...
+    // Hence, we have to filter out the name here...
+    config.remove("name").foreach(v => ConnectorCreator.LOG.error(s"(name, $v) is removed from configs"))
     send(CreateConnectorRequest(name, config.toMap))
   }
 
   /**
     * send the request to kafka worker
     *
-    * @param cmd related path
-    * @param body body
     * @return response
     */
   protected def send(request: CreateConnectorRequest): CreateConnectorResponse
@@ -185,4 +188,8 @@ abstract class ConnectorCreator {
     if (numberOfTasks <= 0)
       throw new IllegalArgumentException(s"taskMax should be bigger than zero, current:$numberOfTasks")
   }
+}
+
+object ConnectorCreator {
+  private lazy val LOG = Logger(ConnectorCreator.getClass)
 }

@@ -1,5 +1,13 @@
 package com.island.ohara.it
-import com.island.ohara.client.ConfiguratorJson.{Column, Sink, SinkRequest, Source, SourceRequest, TopicInfo, TopicInfoRequest}
+import com.island.ohara.client.ConfiguratorJson.{
+  Column,
+  Sink,
+  SinkRequest,
+  Source,
+  SourceRequest,
+  TopicInfo,
+  TopicInfoRequest
+}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
