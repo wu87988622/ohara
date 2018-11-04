@@ -1,5 +1,6 @@
 package com.island.ohara.it
 import com.island.ohara.client.ConfiguratorJson.{
+  ClusterInformation,
   Column,
   Sink,
   SinkRequest,
@@ -14,15 +15,15 @@ import com.island.ohara.configurator.store.Store
 import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.CloseOnce._
 import com.island.ohara.io.{CloseOnce, IoUtil}
-import com.island.ohara.kafka.{Consumer, KafkaClient, KafkaUtil, Producer}
+import com.island.ohara.io.CloseOnce._
+import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
-
 class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
     Configurator
@@ -171,6 +172,23 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         client.delete[Sink](sink.uuid)
       } finally if (testUtil.connectorClient.exist(sink.uuid)) testUtil.connectorClient.delete(sink.uuid)
     }
+  }
+
+  @Test
+  def testCluster(): Unit = {
+    val cluster = client.cluster[ClusterInformation]
+    cluster.sources
+      .filter(_.className.startsWith("com.island"))
+      .foreach(s => {
+        s.version shouldBe VersionUtil.VERSION
+        s.revision shouldBe VersionUtil.REVISION
+      })
+    cluster.sinks
+      .filter(_.className.startsWith("com.island"))
+      .foreach(s => {
+        s.version shouldBe VersionUtil.VERSION
+        s.revision shouldBe VersionUtil.REVISION
+      })
   }
 
   @After

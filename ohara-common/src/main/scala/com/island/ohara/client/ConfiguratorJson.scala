@@ -411,8 +411,8 @@ object ConfiguratorJson {
   sealed trait ClusterCommandFormat[T] {
     def format(address: String): String
   }
-  final case class ConnectorInfo(className: String, version: String)
-  implicit val ConnectorInfo_JSON_FORMAT: RootJsonFormat[ConnectorInfo] = jsonFormat2(ConnectorInfo)
+  final case class ConnectorInfo(className: String, version: String, revision: String)
+  implicit val ConnectorInfo_JSON_FORMAT: RootJsonFormat[ConnectorInfo] = jsonFormat3(ConnectorInfo)
 
   final case class ClusterInformation(brokers: String,
                                       workers: String,
