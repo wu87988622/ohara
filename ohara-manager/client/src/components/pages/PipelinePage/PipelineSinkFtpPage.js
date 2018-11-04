@@ -211,7 +211,7 @@ class PipelineSinkFtpPage extends React.Component {
 
     if (!isSuccess) return;
 
-    const { schema, configs } = res.data.result;
+    const { schema, name, configs } = res.data.result;
     const {
       'ftp.hostname': host,
       'ftp.port': port,
@@ -220,8 +220,6 @@ class PipelineSinkFtpPage extends React.Component {
       'ftp.output.folder': outputfolder,
       'ftp.encode': currFileEncoding,
       'ftp.needHeader': needHeader,
-
-      name,
       currTask,
     } = configs;
 
@@ -513,7 +511,7 @@ class PipelineSinkFtpPage extends React.Component {
     const _schema = _.isEmpty(schema) ? [] : schema;
 
     const params = {
-      name: 'untitled sink',
+      name,
       schema: _schema,
       className: 'ftp',
       topics: [currReadTopic.uuid],
@@ -526,8 +524,6 @@ class PipelineSinkFtpPage extends React.Component {
         'ftp.user.name': username,
         'ftp.user.password': password,
         'ftp.needHeader': String(needHeader),
-
-        name,
         currTask,
         topic: currReadTopic.name,
       },

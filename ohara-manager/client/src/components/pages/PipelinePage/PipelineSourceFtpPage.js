@@ -192,7 +192,7 @@ class PipelineSourceFtpPage extends React.Component {
 
     if (!isSuccess) return;
 
-    const { schema, configs } = res.data.result;
+    const { schema, name, configs } = res.data.result;
     const {
       'ftp.user.name': username,
       'ftp.user.password': password,
@@ -202,7 +202,6 @@ class PipelineSourceFtpPage extends React.Component {
       'ftp.completed.folder': completeFolder,
       'ftp.error.folder': errorFolder,
       'ftp.encode': currFileEncoding,
-      name,
       currTask,
     } = configs;
 
@@ -500,7 +499,7 @@ class PipelineSourceFtpPage extends React.Component {
     const _schema = _.isEmpty(schema) ? [] : schema;
 
     const params = {
-      name: 'untitled source',
+      name,
       schema: _schema,
       className: 'ftp',
       topics: [currWriteTopic.uuid],
@@ -516,7 +515,6 @@ class PipelineSourceFtpPage extends React.Component {
         'ftp.user.password': password,
 
         topic: currWriteTopic.name,
-        name,
         currTask,
       },
     };
