@@ -26,9 +26,13 @@ const H5Wrapper = styled(H5)`
   font-weight: normal;
   color: ${lightBlue};
 `;
+
+H5Wrapper.displayName = 'H5';
+
 const Form = styled.form`
   display: flex;
 `;
+
 const LeftCol = styled.div`
   width: 250px;
   padding-right: 45px;
@@ -52,6 +56,8 @@ const Checkbox = styled(Input)`
   width: auto;
   margin-right: 8px;
 `;
+
+Checkbox.displayName = 'Checkbox';
 
 class PipelineSinkPage extends React.Component {
   static propTypes = {
@@ -193,18 +199,18 @@ class PipelineSinkPage extends React.Component {
     }
   };
 
-  fetchHdfs = async sinkId => {
+  fetchHdfs = async () => {
     const { currHdfs } = this.state;
     const res = await fetchHdfs();
     const hdfses = await _.get(res, 'data.result', []);
 
-    const mostRecent = hdfses.reduce(
-      (prev, curr) => (prev.lastModified > curr.lastModified ? prev : curr),
-    );
+    if (!_.isEmpty(hdfses)) {
+      const mostRecent = hdfses.reduce(
+        (prev, curr) => (prev.lastModified > curr.lastModified ? prev : curr),
+      );
 
-    const _currHdfs = _.isEmpty(currHdfs) ? mostRecent : currHdfs;
+      const _currHdfs = _.isEmpty(currHdfs) ? mostRecent : currHdfs;
 
-    if (!_.isEmpty(_currHdfs)) {
       this.setState({ hdfses: [_currHdfs], currHdfs: _currHdfs });
     } else {
       this.setState({ isRedirect: true });
@@ -322,9 +328,6 @@ class PipelineSinkPage extends React.Component {
         'datafile.prefix.name': 'part',
         'data.dir': writePath,
         'hdfs.url': currHdfs.uri,
-
-        // TODO: add the following fields,
-        // 'hdfs.url': currHdfs.uri,
         'tmp.dir': tempDirectory,
         'flush.line.count': flushLineCount,
         'rotate.interval.ms': rotateInterval,
@@ -370,7 +373,7 @@ class PipelineSinkPage extends React.Component {
         <H5Wrapper>HDFS</H5Wrapper>
         <Form>
           <LeftCol>
-            <FormGroup>
+            <FormGroup data-testid="read-from-topic">
               <Label>Read from topic</Label>
               <Select
                 isObject
@@ -383,7 +386,7 @@ class PipelineSinkPage extends React.Component {
               />
             </FormGroup>
 
-            <FormGroup>
+            <FormGroup data-testid="hdfses">
               <Label>HDFS</Label>
               <Select
                 isObject
@@ -396,7 +399,7 @@ class PipelineSinkPage extends React.Component {
               />
             </FormGroup>
 
-            <FormGroup>
+            <FormGroup data-testid="write-path">
               <Label>Write path</Label>
               <Input
                 name="writePath"
@@ -408,7 +411,7 @@ class PipelineSinkPage extends React.Component {
               />
             </FormGroup>
 
-            <FormGroup>
+            <FormGroup data-testid="temp-directory">
               <Label>Temp directory</Label>
               <Input
                 name="tempDirectory"
@@ -420,7 +423,7 @@ class PipelineSinkPage extends React.Component {
               />
             </FormGroup>
 
-            <FormGroupCheckbox>
+            <FormGroupCheckbox data-testid="need-header">
               <Checkbox
                 type="checkbox"
                 name="needHeader"
@@ -434,10 +437,10 @@ class PipelineSinkPage extends React.Component {
             </FormGroupCheckbox>
           </LeftCol>
           <RightCol>
-            <FormGroup>
+            <FormGroup data-testid="file-encoding">
               <Label>File encoding</Label>
               <Select
-                name="fileEnconding"
+                name="fileEncoding"
                 width="250px"
                 data-testid="file-enconding-select"
                 selected={currFileEncoding}
@@ -446,7 +449,7 @@ class PipelineSinkPage extends React.Component {
               />
             </FormGroup>
 
-            <FormGroup>
+            <FormGroup data-testid="rotate-interval">
               <Label>Rotate interval (ms)</Label>
               <Input
                 name="rotateInterval"
@@ -458,7 +461,7 @@ class PipelineSinkPage extends React.Component {
               />
             </FormGroup>
 
-            <FormGroup>
+            <FormGroup data-testid="flush-line-count">
               <Label>Flush line count</Label>
               <Input
                 name="flushLineCount"
