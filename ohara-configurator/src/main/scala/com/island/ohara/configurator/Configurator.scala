@@ -187,14 +187,7 @@ object Configurator {
         Configurator.builder().noCluster.hostname(hostname).port(port).build()
       } else if (brokers.isEmpty ^ workers.isEmpty)
         throw new IllegalArgumentException(s"brokers:$brokers workers:$workers")
-      else {
-        val kafkaClient = KafkaClient(brokers.get)
-        kafkaClient
-          .topicCreator()
-          .numberOfReplications(numberOfReplications)
-          .numberOfPartitions(numberOfPartitions)
-          .compacted()
-          .create(topicName)
+      else
         Configurator
           .builder()
           .store(
@@ -203,12 +196,11 @@ object Configurator {
               .brokers(brokers.get)
               .topicName(topicName)
               .buildBlocking[String, Any])
-          .kafkaClient(kafkaClient)
+          .kafkaClient(KafkaClient(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
           .port(port)
           .build()
-      }
     hasRunningConfigurator = true
     try {
       LOG.info(

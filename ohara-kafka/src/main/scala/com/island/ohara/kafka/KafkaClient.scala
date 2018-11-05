@@ -23,6 +23,8 @@ trait KafkaClient extends CloseOnce {
 
   def exist(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean
 
+  def nonExist(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean = !exist(topicName, timeout)
+
   def topicInfo(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription]
 
   def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration = DEFAULT_TIMEOUT): Unit
