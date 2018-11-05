@@ -16,6 +16,9 @@ if [ "$1" == "manager" ]; then
   cd "$PROJECT_HOME/manager"
   yarn clean:process
   exit
+elif [ "$1" == "-v" ] || [ "$1" == "version" ] || [ "$1" == "-version" ]; then
+  "$BIN_DIR/run_java.sh" com.island.ohara.util.VersionUtil
+  exit 1
 elif [ "$1" == "help" ]; then
   echo "Usage:"
   echo "Option                                   Description"
