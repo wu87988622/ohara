@@ -244,16 +244,16 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
-    val fileSystem = testUtil.fileSystem
+    val fileSystem = testUtil.hdfs.fileSystem
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
-    val dataDirPath = s"${testUtil.tmpDirectory}/data"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
     doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }
 
-    val localURL = s"file://${testUtil.tmpDirectory}"
+    val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
