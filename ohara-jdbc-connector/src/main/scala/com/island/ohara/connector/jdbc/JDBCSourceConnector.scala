@@ -1,5 +1,5 @@
 package com.island.ohara.connector.jdbc
-import com.island.ohara.connector.jdbc.source.JDBCSourceTask
+import com.island.ohara.connector.jdbc.source.{DBTableDataProvider, JDBCSourceConnectorConfig, JDBCSourceTask}
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -18,6 +18,22 @@ class JDBCSourceConnector extends RowSourceConnector {
     */
   override protected def _start(taskConfig: TaskConfig): Unit = {
     this.taskConfig = taskConfig
+
+    val props = taskConfig.options
+    val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(props)
+
+    val dbURL = jdbcSourceConnectorConfig.dbURL
+    val dbUserName = jdbcSourceConnectorConfig.dbUserName
+    val dbPassword = jdbcSourceConnectorConfig.dbPassword
+    val tableName = jdbcSourceConnectorConfig.dbTableName
+    val dbTableDataProvider: DBTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
+    try {
+      if (!dbTableDataProvider.isTableExists(tableName))
+        throw new NoSuchElementException(s"$tableName table is not found")
+
+    } finally {
+      dbTableDataProvider.close()
+    }
   }
 
   /**
