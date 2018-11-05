@@ -11,6 +11,7 @@ dependencies {
   compile project(':ohara-perf-connector')
   compile project(':ohara-configurator')
   // the following dependencies is required in runtime
+  compile libs.postgresql
   compile libs.akkaSlf4j
   compile libs.scalaLogging
   testImplementation project(path: ':ohara-common', configuration: 'tests')
