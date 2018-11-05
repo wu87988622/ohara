@@ -6,9 +6,7 @@ include 'ohara-testing-util',
         'ohara-hdfs-connector',
         'ohara-jdbc-connector',
         'ohara-perf-connector',
-        'ohara-http',
         'ohara-configurator',
         'ohara-assembly',
         'ohara-demo',
-        'ohara-it',
-        'ohara-streams'
+        'ohara-it'
