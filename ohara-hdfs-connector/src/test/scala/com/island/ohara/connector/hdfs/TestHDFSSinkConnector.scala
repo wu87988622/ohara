@@ -51,7 +51,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val tmpDirPath = "/home/tmp"
     val hdfsURLName = HDFS_URL
 
-    val localURL = s"file://${testUtil.tmpDirectory}"
+    val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
@@ -86,16 +86,16 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
-    val fileSystem = testUtil.fileSystem
+    val fileSystem = testUtil.hdfs.fileSystem
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
-    val dataDirPath = s"${testUtil.tmpDirectory}/data"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
     doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }
 
-    val localURL = s"file://${testUtil.tmpDirectory}"
+    val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
@@ -131,7 +131,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
                         10 seconds)
 
     val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000090-000000099.csv")
-    val file: InputStream = testUtil.fileSystem.open(path)
+    val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
     try {
@@ -160,10 +160,10 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
-    val fileSystem = testUtil.fileSystem
+    val fileSystem = testUtil.hdfs.fileSystem
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.tmpDirectory}/tmp"
-    val dataDirPath = s"${testUtil.tmpDirectory}/data"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
 
     //Before running the Kafka Connector, create the file to local hdfs for test recover offset
     val partitionID: String = "partition0"
@@ -174,7 +174,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       producer.flush()
     }
 
-    val localURL = s"file://${testUtil.tmpDirectory}"
+    val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     testUtil.connectorClient
       .connectorCreator()
       .name(connectorName)
@@ -214,7 +214,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
                         10 seconds)
 
     val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000100-000000199.csv")
-    val file: InputStream = testUtil.fileSystem.open(path)
+    val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
     try {

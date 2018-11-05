@@ -1,14 +1,11 @@
 package com.island.ohara.integration
 
-import java.io.File
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.io.CloseOnce.doClose
 import com.island.ohara.util.SystemUtil
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
 
 import scala.concurrent.duration._
 
@@ -36,7 +33,7 @@ class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, work
   private[this] var localDb: Database = _
   private[this] var _connectorClient: ConnectorClient = _
   private[this] var localFtpServer: FtpServer = _
-  private[this] var _tmpDirectory: File = _
+  private[this] var localHdfs: Hdfs = _
 
   /**
     * Exposing the brokers connection. This list should be in the form <code>host1:port1,host2:port2,...</code>.
@@ -65,21 +62,9 @@ class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, work
     _connectorClient
   }
 
-  /**
-    * Get to HDFS FileSystem
-    *
-    * @return
-    */
-  def fileSystem: FileSystem = FileSystem.get(new Configuration())
-
-  /**
-    *Get to temp dir path
-    *
-    * @return
-    */
-  def tmpDirectory: String = {
-    if (_tmpDirectory == null) _tmpDirectory = createTempDir(this.getClass.getSimpleName)
-    _tmpDirectory.getAbsolutePath
+  def hdfs: Hdfs = {
+    if (localHdfs == null) localHdfs = Hdfs()
+    localHdfs
   }
 
   def dataBase: Database = {
@@ -96,7 +81,7 @@ class OharaTestUtil private[integration] (zk: Zookeepers, brokers: Brokers, work
     CloseOnce.close(_connectorClient)
     CloseOnce.close(localDb)
     CloseOnce.close(localFtpServer)
-    if (_tmpDirectory != null) deleteFile(_tmpDirectory)
+    CloseOnce.close(hdfs)
     CloseOnce.close(workers)
     CloseOnce.close(brokers)
     CloseOnce.close(zk)
