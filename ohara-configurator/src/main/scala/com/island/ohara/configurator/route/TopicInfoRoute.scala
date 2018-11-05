@@ -52,7 +52,7 @@ private[configurator] object TopicInfoRoute {
               if (oldData.numberOfReplications != newTopicInfo.numberOfReplications)
                 throw new IllegalArgumentException("Non-support to change the number of replications")
               if (oldData.numberOfPartitions != newTopicInfo.numberOfPartitions)
-                kafkaClient.addPartition(uuid, newTopicInfo.numberOfPartitions)
+                kafkaClient.addPartitions(uuid, newTopicInfo.numberOfPartitions)
               store.update(newTopicInfo)
               complete(newTopicInfo)
             }

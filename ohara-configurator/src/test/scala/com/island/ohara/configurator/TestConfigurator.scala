@@ -73,7 +73,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         // the "name" used to create topic is uuid rather than name of request
         KafkaUtil.exist(testUtil.brokersConnProps, request.name) shouldBe false
         KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
-        val topicInfo = KafkaUtil.topicInfo(testUtil.brokersConnProps, response.uuid).get
+        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.uuid)
         topicInfo.numberOfPartitions shouldBe 1
         topicInfo.numberOfReplications shouldBe 1
       }
@@ -89,7 +89,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       // verify the topic from kafka
       if (client == client0) {
         KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
-        val topicInfo = KafkaUtil.topicInfo(testUtil.brokersConnProps, response.uuid).get
+        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.uuid)
         topicInfo.numberOfPartitions shouldBe 2
         topicInfo.numberOfReplications shouldBe 1
       }
@@ -101,10 +101,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       client.list[TopicInfo].size shouldBe 1
       client.delete[TopicInfo](response.uuid)
       client.list[TopicInfo].size shouldBe 0
-      if (client == client0) {
-        KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe false
-        KafkaUtil.topicInfo(testUtil.brokersConnProps, response.uuid).isEmpty shouldBe true
-      }
+      if (client == client0) KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe false
 
       // test nonexistent data
       an[IllegalArgumentException] should be thrownBy client.get[TopicInfo]("123")

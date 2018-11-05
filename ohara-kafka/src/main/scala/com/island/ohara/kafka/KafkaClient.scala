@@ -9,6 +9,7 @@ import com.island.ohara.kafka.KafkaClient._
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
 import org.apache.kafka.common.KafkaFuture
+import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 
 import scala.concurrent.ExecutionException
@@ -25,9 +26,15 @@ trait KafkaClient extends CloseOnce {
 
   def nonExist(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean = !exist(topicName, timeout)
 
-  def topicInfo(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription]
+  /**
+    * describe the topic existing in kafka. If the topic doesn't exist, exception will be thrown
+    * @param topicName topic name
+    * @param timeout timeout
+    * @return TopicDescription
+    */
+  def topicDescription(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): TopicDescription
 
-  def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration = DEFAULT_TIMEOUT): Unit
+  def addPartitions(topicName: String, numberOfPartitions: Int, timeout: Duration = DEFAULT_TIMEOUT): Unit
 
   def deleteTopic(topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Unit
 
@@ -72,28 +79,47 @@ object KafkaClient {
         .get(request.timeout.toMillis, TimeUnit.MILLISECONDS)
     }
 
-    override def topicInfo(topicName: String, timeout: Duration): Option[TopicDescription] =
-      try Option(admin.describeTopics(util.Arrays.asList(topicName)).values().get(topicName))
-        .map(_.get(timeout.toMillis, TimeUnit.MILLISECONDS))
-        .map(topicPartitionInfo =>
-          TopicDescription(
-            topicPartitionInfo.name(),
-            topicPartitionInfo.partitions().size(),
-            // TODO: seems it has chance that each partition has different number of replications. by chia
-            topicPartitionInfo.partitions().get(0).replicas().size().toShort
-        ))
-      catch {
+    override def topicDescription(topicName: String, timeout: Duration): TopicDescription =
+      try {
+        val configKey = new ConfigResource(ConfigResource.Type.TOPIC, topicName)
+        val options = admin
+          .describeConfigs(util.Arrays.asList(configKey))
+          .values()
+          .get(configKey)
+          .get()
+          .entries()
+          .asScala
+          .map(
+            o =>
+              TopicOption(key = o.name(),
+                          value = o.value(),
+                          isDefault = o.isDefault,
+                          isSensitive = o.isSensitive,
+                          isReadOnly = o.isReadOnly))
+          .toSeq
+        Option(admin.describeTopics(util.Arrays.asList(topicName)).values().get(topicName))
+          .map(_.get(timeout.toMillis, TimeUnit.MILLISECONDS))
+          .map(topicPartitionInfo =>
+            TopicDescription(
+              topicPartitionInfo.name(),
+              topicPartitionInfo.partitions().size(),
+              // TODO: seems it has chance that each partition has different number of replications. by chia
+              topicPartitionInfo.partitions().get(0).replicas().size().toShort,
+              options
+          ))
+          .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName isn't existed"))
+      } catch {
         case e: ExecutionException =>
           e.getCause match {
             // substitute None for UnknownTopicOrPartitionException
-            case _: UnknownTopicOrPartitionException => None
-            case other: Throwable                    => throw other
+            case _: UnknownTopicOrPartitionException =>
+              throw new IllegalArgumentException(s"the $topicName doesn't exist")
+            case other: Throwable => throw other
           }
       }
 
-    override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
-      val current = topicInfo(topicName, timeout).getOrElse(
-        throw new IllegalArgumentException(s"the topic:$topicName isn't existed"))
+    override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
+      val current = topicDescription(topicName, timeout)
       if (current.numberOfPartitions > numberOfPartitions)
         throw new IllegalArgumentException("Reducing the number of partitions is disallowed")
       if (current.numberOfPartitions < numberOfPartitions) {
@@ -128,5 +154,8 @@ object KafkaClient {
     adminProps
   }
 }
-
-case class TopicDescription(name: String, numberOfPartitions: Int, numberOfReplications: Short)
+case class TopicOption(key: String, value: String, isDefault: Boolean, isSensitive: Boolean, isReadOnly: Boolean)
+case class TopicDescription(name: String,
+                            numberOfPartitions: Int,
+                            numberOfReplications: Short,
+                            options: Seq[TopicOption])
