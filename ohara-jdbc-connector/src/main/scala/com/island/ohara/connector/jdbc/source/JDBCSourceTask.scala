@@ -8,6 +8,7 @@ import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
+import com.island.ohara.util.VersionUtil
 import com.typesafe.scalalogging.Logger
 class JDBCSourceTask extends RowSourceTask {
 
@@ -74,7 +75,7 @@ class JDBCSourceTask extends RowSourceTask {
     finally resultSet.close()
   } catch {
     case e: Throwable => {
-      LOG.error("something is wrong...", e)
+      LOG.error(e.getMessage(), e)
       Seq.empty
     }
   }
@@ -85,6 +86,13 @@ class JDBCSourceTask extends RowSourceTask {
     * fully stopped. Note that this method necessarily may be invoked from a different thread than _poll() and _commit()
     */
   override protected def _stop(): Unit = CloseOnce.close(dbTableDataProvider)
+
+  /**
+    * Get the version of this task. Usually this should be the same as the corresponding Connector class's version.
+    *
+    * @return the version, formatted as a String
+    */
+  override protected def _version: String = VersionUtil.VERSION
 
   private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo[_]]): Row = {
     Row

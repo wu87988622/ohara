@@ -11,7 +11,6 @@ import com.island.ohara.rule.MediumTest
 import com.island.ohara.util.SystemUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
 import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends MediumTest with Matchers {
@@ -79,6 +78,17 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
     columns(3).name shouldBe "column4"
   }
 
+  @Test
+  def testTableISNotExists(): Unit = {
+    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+    dbTableDataProvider.isTableExists("table100") shouldBe false
+  }
+
+  @Test
+  def testColumnHaveTable(): Unit = {
+    val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
+    dbTableDataProvider.isTableExists(tableName) shouldBe true
+  }
   @After
   def tearDown(): Unit = {
     CloseOnce.close(client)

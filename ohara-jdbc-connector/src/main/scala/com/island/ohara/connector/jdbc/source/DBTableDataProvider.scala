@@ -34,6 +34,8 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     rdbTables.head.schema
   }
 
+  def isTableExists(tableName: String): Boolean = client.tables(null, null, tableName).nonEmpty
+
   def dbCurrentTime(cal: Calendar): Timestamp = {
     val dbProduct: String = client.connection.getMetaData.getDatabaseProductName
     import DBTableDataProvider._

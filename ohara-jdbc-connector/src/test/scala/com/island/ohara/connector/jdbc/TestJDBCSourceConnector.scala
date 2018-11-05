@@ -1,14 +1,17 @@
 package com.island.ohara.connector.jdbc
 
 import java.sql.Statement
+
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{Database, With3Brokers3Workers}
 import com.island.ohara.kafka.Consumer
+import com.island.ohara.kafka.connector.TaskConfig
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
+
 import scala.concurrent.duration._
 
 /**
