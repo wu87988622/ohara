@@ -17,7 +17,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.kafka.{ConsumerBuilder, KafkaClient, TopicCreator, TopicDescription}
+import com.island.ohara.kafka._
 import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 
@@ -163,7 +163,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   override def config(name: String): ConnectorConfig = {
     val map = cachedConnectors.get(name)
     if (map == null) throw new IllegalArgumentException(s"$name doesn't exist")
-    map.toJson.convertTo[ConnectorConfig];
+    map.toJson.convertTo[ConnectorConfig]
   }
 
   override def taskStatus(name: String, id: Int): TaskStatus = {
@@ -202,23 +202,27 @@ private class FakeKafkaClient extends KafkaClient {
   override def topicCreator(): TopicCreator = new TopicCreator {
     override protected def doCreate(request: TopicCreator.Request): Unit = {
       printDebugMessage()
-      cachedTopics
-        .put(request.name, TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications))
+      cachedTopics.put(
+        request.name,
+        TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications, request.options.map {
+          case (k, v) => TopicOption(k, v, false, false, false)
+        }.toSeq)
+      )
     }
   }
 
-  override def addPartition(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
+  override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
     printDebugMessage()
     Option(cachedTopics.get(topicName))
-      .map(previous => TopicDescription(topicName, numberOfPartitions, previous.numberOfReplications))
+      .map(previous => TopicDescription(topicName, numberOfPartitions, previous.numberOfReplications, Seq.empty))
       .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
   }
 
   private[this] def printDebugMessage(): Unit =
     log.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
 
-  override def topicInfo(topicName: String, timeout: Duration): Option[TopicDescription] = Option(
-    cachedTopics.get(topicName))
+  override def topicDescription(topicName: String, timeout: Duration): TopicDescription = Option(
+    cachedTopics.get(topicName)).get
   override def deleteTopic(topicName: String, timeout: Duration): Unit =
     if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
 

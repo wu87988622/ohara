@@ -68,10 +68,10 @@ object KafkaUtil {
   def exist(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean =
     doClose(KafkaClient(brokersConnProps))(_.exist(topicName, timeout))
 
-  def topicInfo(brokersConnProps: String,
-                topicName: String,
-                timeout: Duration = DEFAULT_TIMEOUT): Option[TopicDescription] =
-    doClose(KafkaClient(brokersConnProps))(_.topicInfo(topicName, timeout))
+  def topicDescription(brokersConnProps: String,
+                       topicName: String,
+                       timeout: Duration = DEFAULT_TIMEOUT): TopicDescription =
+    doClose(KafkaClient(brokersConnProps))(_.topicDescription(topicName, timeout))
 
   /**
     * Increate the number of partitions. This method check the number before doing the alter. If the number is equal
@@ -87,17 +87,21 @@ object KafkaUtil {
                     topicName: String,
                     numberOfPartitions: Int,
                     timeout: Duration = DEFAULT_TIMEOUT): Unit =
-    doClose(KafkaClient(brokersConnProps))(_.addPartition(topicName, numberOfPartitions, timeout))
+    doClose(KafkaClient(brokersConnProps))(_.addPartitions(topicName, numberOfPartitions, timeout))
 
   def createTopic(brokersConnProps: String,
                   topicName: String,
                   numberOfPartitions: Int,
                   numberOfReplications: Short,
+                  options: Map[String, String] = Map.empty,
                   timeout: Duration = DEFAULT_TIMEOUT): Unit = doClose(KafkaClient(brokersConnProps))(
     _.topicCreator()
       .timeout(timeout)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
+      .options(options)
       .create(topicName))
 
+  def deleteTopic(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Unit =
+    doClose(KafkaClient(brokersConnProps))(_.deleteTopic(topicName, timeout))
 }
