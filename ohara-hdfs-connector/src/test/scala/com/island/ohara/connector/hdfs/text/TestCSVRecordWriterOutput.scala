@@ -158,7 +158,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
 
   private[this] def testEmptyLine(needHeader: Boolean): Unit = {
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.tmpDirectory}/$methodName"
+    val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/$methodName"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
