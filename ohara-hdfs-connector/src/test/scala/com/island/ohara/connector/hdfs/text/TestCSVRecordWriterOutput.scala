@@ -14,14 +14,14 @@ import org.scalatest.Matchers
 
 class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   val testUtil = OharaTestUtil.localHDFS()
-  val fileSystem: FileSystem = testUtil.hdfs.fileSystem
+  val fileSystem: FileSystem = testUtil.fileSystem
   val HDFS_URL_VALUE = "hdfs://test:9000"
   val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, FLUSH_LINE_COUNT -> "2000"))
 
   @Test
   def testWriteData(): Unit = {
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/file1.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/file1.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
@@ -46,7 +46,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   @Test
   def testNeedHeader(): Unit = {
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/file2.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/file2.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
@@ -71,7 +71,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   @Test
   def testNeedHeaderNewColumn(): Unit = {
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/file2.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/file2.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
@@ -97,7 +97,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   @Test
   def testNeedHeaderSchemaEmpty(): Unit = {
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/file2.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/file2.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
@@ -122,7 +122,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
   @Test
   def testOrder(): Unit = {
     val storage: Storage = new HDFSStorage(fileSystem)
-    val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/file2.txt"
+    val tempFilePath: String = s"${testUtil.tmpDirectory}/file2.txt"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
