@@ -14,7 +14,7 @@ class TestDataWriter extends MediumTest with Matchers with MockitoSugar {
   def testCreatePartitionDataWriters(): Unit = {
     val testUtil = OharaTestUtil.localHDFS()
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = HDFSSinkConnectorConfig(
-      Map(HDFS_URL -> s"file://${testUtil.tmpDirectory}"))
+      Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
     val context: RowSinkContext = mock[RowSinkContext]
     val schema: Seq[Column] = Seq.empty
     val dataWriter: DataWriter = new DataWriter(hdfsSinkConnectorConfig, context, schema)
@@ -31,7 +31,7 @@ class TestDataWriter extends MediumTest with Matchers with MockitoSugar {
   def testWriterEmpty(): Unit = {
     val testUtil = OharaTestUtil.localHDFS()
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = HDFSSinkConnectorConfig(
-      Map(HDFS_URL -> s"file://${testUtil.tmpDirectory}"))
+      Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
     val context: RowSinkContext = mock[RowSinkContext]
     val schema: Seq[Column] = Seq.empty
     val dataWriter: DataWriter = new DataWriter(hdfsSinkConnectorConfig, context, schema)

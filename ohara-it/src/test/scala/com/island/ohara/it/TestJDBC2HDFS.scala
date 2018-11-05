@@ -36,11 +36,11 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val hdfsProps = HDFSSinkConnectorConfig(
     Map(
       FLUSH_LINE_COUNT -> "50",
-      TMP_DIR -> s"${testUtil.tmpDirectory}/tmp",
-      HDFS_URL -> s"file://${testUtil.tmpDirectory}",
+      TMP_DIR -> s"${testUtil.hdfs.tmpDirectory}/tmp",
+      HDFS_URL -> s"file://${testUtil.hdfs.tmpDirectory}",
       HDFS_STORAGE_CREATOR_CLASS -> classOf[LocalHDFSStorageCreator].getName,
       DATAFILE_NEEDHEADER -> "true",
-      DATA_DIR -> s"${testUtil.tmpDirectory}/data"
+      DATA_DIR -> s"${testUtil.hdfs.tmpDirectory}/data"
     )
   )
 
@@ -98,11 +98,11 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       .create()
 
     try {
-      val storage = new HDFSStorage(testUtil.fileSystem)
-      val hdfsResultFolder = s"${testUtil.tmpDirectory}/data/$topicName/partition0"
+      val storage = new HDFSStorage(testUtil.hdfs.fileSystem)
+      val hdfsResultFolder = s"${testUtil.hdfs.tmpDirectory}/data/$topicName/partition0"
       OharaTestUtil.await(() => storage.list(hdfsResultFolder).size == 2, 10 seconds)
 
-      val fileSystem: FileSystem = testUtil.fileSystem
+      val fileSystem: FileSystem = testUtil.hdfs.fileSystem
       val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000099.csv"
       val lineCountFile1 =
         CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath1))))) { reader =>
@@ -134,7 +134,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
 }
 
 class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
-  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS().fileSystem
+  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS().hdfs.fileSystem
   private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
 
   override def storage(): Storage = {
