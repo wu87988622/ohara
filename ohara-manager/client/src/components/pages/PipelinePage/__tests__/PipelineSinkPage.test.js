@@ -24,7 +24,6 @@ describe('<PipelineSinkPage />', () => {
 
   it('renders self', () => {
     expect(wrapper.length).toBe(1);
-    // console.log(wrapper.debug());
   });
 
   it('renders <H5 /> ', () => {
