@@ -62,8 +62,6 @@ ARG GRADLE_VERSION=4.10.2
 
 # update
 RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
-  git \
-  ca-certificates \
   apt-utils \
   openjdk-8-jdk \
   gnupg \
