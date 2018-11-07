@@ -58,14 +58,22 @@ class FtpSourceTask extends RowSourceTask {
     * @param path file under input folder
     */
   private[ftp] def handleCompletedFile(path: String): Unit = try {
-    val outputPath = IoUtil.replaceParent(props.completedFolder, path)
-    if (ftpClient.exist(outputPath)) {
-      val newPath = outputPath + s".${SystemUtil.current()}"
-      if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
-      else ftpClient.moveFile(path, newPath)
-    } else ftpClient.moveFile(path, outputPath)
+    props.completedFolder
+      .map(folder =>
+        () => {
+          val outputPath = IoUtil.replaceParent(folder, path)
+          if (ftpClient.exist(outputPath)) {
+            val newPath = outputPath + s".${SystemUtil.current()}"
+            if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
+            else ftpClient.moveFile(path, newPath)
+          } else ftpClient.moveFile(path, outputPath)
+      })
+      .getOrElse(() => ftpClient.delete(path))
+      .apply()
   } catch {
-    case e: Throwable => LOG.error(s"failed to move $path to ${props.completedFolder}", e)
+    case e: Throwable =>
+      if (props.completedFolder.isDefined) LOG.error(s"failed to move $path to ${props.completedFolder}", e)
+      else LOG.error(s"failed to remove $path", e)
   }
 
   /**

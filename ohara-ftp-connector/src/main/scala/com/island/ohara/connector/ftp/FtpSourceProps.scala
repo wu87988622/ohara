@@ -1,7 +1,7 @@
 package com.island.ohara.connector.ftp
 
 case class FtpSourceProps(inputFolder: String,
-                          completedFolder: String,
+                          completedFolder: Option[String],
                           errorFolder: String,
                           encode: Option[String],
                           host: String,
@@ -10,7 +10,7 @@ case class FtpSourceProps(inputFolder: String,
                           password: String) {
   def toMap: Map[String, String] = Map(
     FTP_INPUT -> inputFolder,
-    FTP_COMPLETED_FOLDER -> completedFolder,
+    FTP_COMPLETED_FOLDER -> completedFolder.getOrElse("null"),
     FTP_ERROR -> errorFolder,
     FTP_ENCODE -> encode.getOrElse("null"),
     FTP_HOST -> host,
@@ -21,9 +21,26 @@ case class FtpSourceProps(inputFolder: String,
 }
 
 object FtpSourceProps {
+  def apply(inputFolder: String,
+            completedFolder: String,
+            errorFolder: String,
+            encode: Option[String],
+            host: String,
+            port: Int,
+            user: String,
+            password: String): FtpSourceProps = FtpSourceProps(
+    inputFolder = inputFolder,
+    completedFolder = Some(completedFolder),
+    errorFolder = errorFolder,
+    encode = encode,
+    host = host,
+    port = port,
+    user = user,
+    password = password
+  )
   def apply(props: Map[String, String]): FtpSourceProps = FtpSourceProps(
     inputFolder = props(FTP_INPUT),
-    completedFolder = props(FTP_COMPLETED_FOLDER),
+    completedFolder = props.get(FTP_COMPLETED_FOLDER).filter(_.toLowerCase != "null"),
     errorFolder = props(FTP_ERROR),
     encode = props.get(FTP_ENCODE).filter(_.toLowerCase != "null"),
     host = props(FTP_HOST),

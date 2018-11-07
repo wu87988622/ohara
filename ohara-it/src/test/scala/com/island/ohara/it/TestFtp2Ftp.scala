@@ -63,7 +63,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   @Before
   def setup(): Unit = {
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
-    TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder)
+    TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder.get)
     TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
     TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
     TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
@@ -99,7 +99,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
           .configs(sourceProps.toMap)
           .create()
         OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, 30 seconds)
-        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.completedFolder).size == 1, 30 seconds)
+        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, 30 seconds)
         OharaTestUtil.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, 30 seconds)
         val lines = ftpClient.readLines(IoUtil.path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
         lines.length shouldBe rows.length + 1 // header

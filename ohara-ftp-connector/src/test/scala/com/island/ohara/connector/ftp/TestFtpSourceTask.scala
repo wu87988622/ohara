@@ -39,7 +39,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
     try {
       ftpClient.reMkdir(props.inputFolder)
-      ftpClient.reMkdir(props.completedFolder)
+      ftpClient.reMkdir(props.completedFolder.get)
       ftpClient.reMkdir(props.errorFolder)
     } finally ftpClient.close()
   }
@@ -101,7 +101,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
       .build()
     try {
       ftpClient.listFileNames(props.inputFolder).size shouldBe numberOfInput
-      ftpClient.listFileNames(props.completedFolder).size shouldBe numberOfCompleted
+      ftpClient.listFileNames(props.completedFolder.get).size shouldBe numberOfCompleted
       ftpClient.listFileNames(props.errorFolder).size shouldBe numberOfError
     } finally ftpClient.close()
   }

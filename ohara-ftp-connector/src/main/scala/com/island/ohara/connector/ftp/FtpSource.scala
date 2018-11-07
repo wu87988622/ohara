@@ -45,7 +45,7 @@ class FtpSource extends RowSourceConnector {
       if (ftpClient.nonExist(props.inputFolder))
         throw new IllegalArgumentException(s"${props.inputFolder} doesn't exist")
       if (ftpClient.nonExist(props.errorFolder)) ftpClient.mkdir(props.errorFolder)
-      if (ftpClient.nonExist(props.completedFolder)) ftpClient.mkdir(props.completedFolder)
+      props.completedFolder.foreach(folder => if (ftpClient.nonExist(folder)) ftpClient.mkdir(folder))
     } finally ftpClient.close()
   }
 

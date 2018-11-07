@@ -45,7 +45,7 @@ class TestOhara743 extends SmallTest with Matchers {
       val source = new FtpSource
       source._start(taskConfig)
       ftpClient.exist(props.errorFolder) shouldBe true
-      ftpClient.exist(props.completedFolder) shouldBe true
+      ftpClient.exist(props.completedFolder.get) shouldBe true
     } finally ftpClient.close()
   }
 

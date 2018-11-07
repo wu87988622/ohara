@@ -72,7 +72,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .password(ftpServer.password)
         .build()) { ftpClient =>
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
-      TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder)
+      TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder.get)
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
       TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
     }

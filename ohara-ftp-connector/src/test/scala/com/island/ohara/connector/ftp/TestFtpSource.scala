@@ -73,7 +73,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     // cleanup all files in order to avoid corrupted files
     rebuild(props.inputFolder)
     rebuild(props.errorFolder)
-    rebuild(props.completedFolder)
+    rebuild(props.completedFolder.get)
     setupInput()
     ftpClient.listFileNames(props.inputFolder).isEmpty shouldBe false
   }
@@ -96,7 +96,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     OharaTestUtil.await(
       () => {
         ftpClient.listFileNames(props.inputFolder).size == inputCount &&
-        ftpClient.listFileNames(props.completedFolder).size == outputCount &&
+        ftpClient.listFileNames(props.completedFolder.get).size == outputCount &&
         ftpClient.listFileNames(props.errorFolder).size == errorCount
       },
       10 seconds
@@ -392,6 +392,41 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .configs(props.toMap)
       .create()
     FtpUtil.assertFailedConnector(testUtil, connectorName)
+  }
+
+  @Test
+  def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
+    val topicName = methodName
+    val connectorName = methodName
+    testUtil.connectorClient
+      .connectorCreator()
+      .topic(topicName)
+      .connectorClass(classOf[FtpSource])
+      .numberOfTasks(1)
+      .disableConverter()
+      .name(connectorName)
+      .schema(schema)
+      .configs(props.copy(completedFolder = None).toMap)
+      .create()
+    try {
+      FtpUtil.checkConnector(testUtil, connectorName)
+      checkFileCount(0, 0, 0)
+
+      val records = pollData(topicName)
+      records.size shouldBe data.length
+      val row0 = records(0).value.get
+      row0.size shouldBe 3
+      row0.cell(0) shouldBe rows(0).cell(0)
+      row0.cell(1) shouldBe rows(0).cell(1)
+      row0.cell(2) shouldBe rows(0).cell(2)
+      val row1 = records(1).value.get
+      row1.size shouldBe 3
+      row1.cell(0) shouldBe rows(1).cell(0)
+      row1.cell(1) shouldBe rows(1).cell(1)
+      row1.cell(2) shouldBe rows(1).cell(2)
+
+    } finally testUtil.connectorClient.delete(connectorName)
+
   }
 
   @After
