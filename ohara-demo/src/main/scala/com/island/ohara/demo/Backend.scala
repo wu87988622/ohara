@@ -29,7 +29,7 @@ object Backend {
   final case class DbInformation(url: String, user: String, password: String)
   implicit val DB_INFO_JSON_FORMAT: RootJsonFormat[DbInformation] = jsonFormat3(DbInformation)
 
-  final case class FtpServerInformation(hostname: String, port: Int, dataPort: Int, user: String, password: String)
+  final case class FtpServerInformation(hostname: String, port: Int, dataPort: Seq[Int], user: String, password: String)
   implicit val FTP_SERVER_JSON_FORMAT: RootJsonFormat[FtpServerInformation] = jsonFormat5(FtpServerInformation)
 
   final case class Services(zookeeper: String,
@@ -54,7 +54,7 @@ object Backend {
   final case class ServicePorts(configuratorPort: Int,
                                 dbPort: Int,
                                 ftpPort: Int,
-                                ftpDataPort: Int,
+                                ftpDataPorts: Seq[Int],
                                 workersPort: Seq[Int],
                                 brokersPort: Seq[Int],
                                 zkPort: Int)
@@ -64,7 +64,7 @@ object Backend {
       configuratorPort = 0,
       dbPort = 0,
       ftpPort = 0,
-      ftpDataPort = 0,
+      ftpDataPorts = Seq.fill(3)(0),
       workersPort = Seq.fill(3)(0),
       brokersPort = Seq.fill(3)(0),
       zkPort = 0
@@ -88,7 +88,7 @@ object Backend {
     var workersPort: Seq[Int] = Seq.fill(3)(0)
     var dbPort: Int = 0
     var ftpPort: Int = 0
-    var ftpDataPort: Int = 0
+    var ftpDataPorts: Seq[Int] = Seq.fill(3)(0)
     args.sliding(2, 2).foreach {
       case Array(CONFIGURATOR_PORT_KEY, value) => configuratorPort = value.toInt
       case Array(ZOOKEEPER_PORT_KEY, value)    => zkPort = value.toInt
@@ -96,7 +96,7 @@ object Backend {
       case Array(WORKERS_PORT_KEY, value)      => workersPort = value.split(",").map(_.toInt)
       case Array(DB_PORT_KEY, value)           => dbPort = value.toInt
       case Array(FTP_PORT_KEY, value)          => ftpPort = value.toInt
-      case Array(FTP_DATA_PORT_KEY, value)     => ftpDataPort = value.toInt
+      case Array(FTP_DATA_PORT_KEY, value)     => ftpDataPorts = value.split(",").map(_.toInt)
       case Array(TTL_KEY, value)               => ttl = value.toInt seconds
       case _                                   => throw new IllegalArgumentException(USAGE)
     }
@@ -104,7 +104,7 @@ object Backend {
       ServicePorts(
         configuratorPort = configuratorPort,
         zkPort = zkPort,
-        ftpDataPort = ftpDataPort,
+        ftpDataPorts = ftpDataPorts,
         brokersPort = brokersPort,
         workersPort = workersPort,
         dbPort = dbPort,
@@ -122,7 +122,7 @@ object Backend {
   def run(ports: ServicePorts,
           stopped: (Configurator, Zookeepers, Brokers, Workers, Database, FtpServer) => Unit): Unit = {
     doClose5(Zookeepers.local(ports.zkPort))(Brokers.local(_, ports.brokersPort))(Workers.local(_, ports.workersPort))(
-      _ => Database.local(ports.dbPort))(_ => FtpServer.local(ports.ftpPort, ports.ftpDataPort)) {
+      _ => Database.local(ports.dbPort))(_ => FtpServer.local(ports.ftpPort, ports.ftpDataPorts)) {
       case (zk, brokers, workers, dataBase, ftpServer) =>
         println("wait for the mini kafka cluster")
         TimeUnit.SECONDS.sleep(5)

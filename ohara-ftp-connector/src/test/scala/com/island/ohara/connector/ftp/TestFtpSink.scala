@@ -76,7 +76,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private[this] val ftpClient = FtpClient
     .builder()
-    .host(testUtil.ftpServer.host)
+    .hostname(testUtil.ftpServer.host)
     .port(testUtil.ftpServer.port)
     .user(testUtil.ftpServer.user)
     .password(testUtil.ftpServer.password)

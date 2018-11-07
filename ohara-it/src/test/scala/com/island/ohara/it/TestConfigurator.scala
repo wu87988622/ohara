@@ -66,7 +66,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     doClose(
       FtpClient
         .builder()
-        .host(ftpServer.host)
+        .hostname(ftpServer.host)
         .port(ftpServer.port)
         .user(ftpServer.user)
         .password(ftpServer.password)
@@ -140,7 +140,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     doClose(
       FtpClient
         .builder()
-        .host(ftpServer.host)
+        .hostname(ftpServer.host)
         .port(ftpServer.port)
         .user(ftpServer.user)
         .password(ftpServer.password)

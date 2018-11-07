@@ -29,7 +29,7 @@ trait FtpServer extends CloseOnce {
     * If the ftp server is in passive mode, the port is used to transfer data
     * @return data port
     */
-  def dataPort: Int
+  def dataPort: Seq[Int]
 
   /**
     * @return true if this ftp server is generated locally.
@@ -58,10 +58,10 @@ object FtpServer {
   /**
     * create an embedded ftp server with specific port
     * @param commandPort bound port used to control
-    * @param dataPort bound port used to transfer data
+    * @param dataPorts bound port used to transfer data
     * @return an embedded ftp server
     */
-  def local(commandPort: Int, dataPort: Int): FtpServer = {
+  def local(commandPort: Int, dataPorts: Seq[Int]): FtpServer = {
     val homeFolder = createTempDir("ftp")
     val userManagerFactory = new PropertiesUserManagerFactory()
     val userManager = userManagerFactory.createUserManager
@@ -76,8 +76,9 @@ object FtpServer {
     val listenerFactory = new ListenerFactory()
     listenerFactory.setPort(commandPort)
     val connectionConfig = new DataConnectionConfigurationFactory()
+    val availableDataPorts = dataPorts.map(port => if (port <= 0) availablePort() else port)
     connectionConfig.setActiveEnabled(false)
-    connectionConfig.setPassivePorts(if (dataPort <= 0) availablePort().toString else dataPort.toString)
+    connectionConfig.setPassivePorts(availableDataPorts.mkString(","))
     listenerFactory.setDataConnectionConfiguration(connectionConfig.createDataConnectionConfiguration())
 
     val listener = listenerFactory.createListener
@@ -100,7 +101,7 @@ object FtpServer {
 
       override def password: String = _user.getPassword
       override def isLocal: Boolean = true
-      override def dataPort: Int = connectionConfig.getPassivePorts.toInt
+      override def dataPort: Seq[Int] = availableDataPorts
     }
   }
 
@@ -117,9 +118,9 @@ object FtpServer {
           override def password: String = _password
           override protected def doClose(): Unit = {}
           override def isLocal: Boolean = false
-          override def dataPort: Int =
+          override def dataPort: Seq[Int] =
             throw new UnsupportedOperationException("TODO: can't get data port from actual ftp server")
         }
       }
-      .getOrElse(local(0, 0))
+      .getOrElse(local(0, Seq.fill(3)(0)))
 }

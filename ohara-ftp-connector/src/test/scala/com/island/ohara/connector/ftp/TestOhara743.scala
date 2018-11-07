@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 
 class TestOhara743 extends SmallTest with Matchers {
 
-  private[this] val ftpServer = FtpServer.local(0, 0)
+  private[this] val ftpServer = FtpServer.local(0, Seq(0))
 
   @Test
   def testAutoCreateOutput(): Unit = {
@@ -34,7 +34,7 @@ class TestOhara743 extends SmallTest with Matchers {
 
     val ftpClient = FtpClient
       .builder()
-      .host(ftpServer.host)
+      .hostname(ftpServer.host)
       .port(ftpServer.port)
       .user(ftpServer.user)
       .password(ftpServer.password)

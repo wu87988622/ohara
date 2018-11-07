@@ -12,7 +12,7 @@ import org.scalatest.Matchers
 
 class TestFtpSourceTask extends SmallTest with Matchers {
 
-  private[this] val ftpServer = FtpServer.local(0, 0)
+  private[this] val ftpServer = FtpServer.local(0, Seq(0))
 
   private[this] val props = FtpSourceTaskProps(
     hash = 0,
@@ -31,7 +31,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   def setup(): Unit = {
     val ftpClient = FtpClient
       .builder()
-      .host(ftpServer.host)
+      .hostname(ftpServer.host)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -68,7 +68,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
          |${line2.mkString(",")}""".stripMargin
     val ftpClient = FtpClient
       .builder()
-      .host(ftpServer.host)
+      .hostname(ftpServer.host)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -94,7 +94,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   private[this] def assertNumberOfFiles(numberOfInput: Int, numberOfCompleted: Int, numberOfError: Int) = {
     val ftpClient = FtpClient
       .builder()
-      .host(ftpServer.host)
+      .hostname(ftpServer.host)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -110,7 +110,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   def testListNonexistentInput(): Unit = {
     val ftpClient = FtpClient
       .builder()
-      .host(ftpServer.host)
+      .hostname(ftpServer.host)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -128,7 +128,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val numberOfInputs = 3
     val ftpClient = FtpClient
       .builder()
-      .host(ftpServer.host)
+      .hostname(ftpServer.host)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)

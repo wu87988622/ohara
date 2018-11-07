@@ -15,7 +15,7 @@ class TestFtpClient extends MediumTest with Matchers {
   private[this] val server = FtpServer()
 
   private[this] val client =
-    FtpClient.builder().user(server.user).password(server.password).host(server.host).port(server.port).build()
+    FtpClient.builder().user(server.user).password(server.password).hostname(server.host).port(server.port).build()
 
   private[this] def tmpPath() = s"${client.tmpFolder}/$methodName"
 
@@ -120,7 +120,7 @@ class TestFtpClient extends MediumTest with Matchers {
     client.upload(s"$folder/file", data)
     client.listFileNames(folder).size shouldBe 1
 
-    an[IllegalStateException] should be thrownBy client.delete(folder)
+    an[IllegalArgumentException] should be thrownBy client.delete(folder)
     client.delete(s"$folder/file")
     client.delete(folder)
     client.listFileNames(folder).size shouldBe 0

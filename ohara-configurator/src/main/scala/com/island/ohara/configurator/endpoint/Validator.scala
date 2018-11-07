@@ -209,7 +209,7 @@ class ValidatorTask extends SourceTask {
     }
 
   private[this] def validate(info: FtpValidationRequest): String =
-    doClose(FtpClient.builder().host(info.hostname).port(info.port).user(info.user).password(info.password).build()) {
+    doClose(FtpClient.builder().hostname(info.hostname).port(info.port).user(info.user).password(info.password).build()) {
       client =>
         s"succeed to establish the connection:${info.hostname}:${info.port} with status:${client.status()}"
     }

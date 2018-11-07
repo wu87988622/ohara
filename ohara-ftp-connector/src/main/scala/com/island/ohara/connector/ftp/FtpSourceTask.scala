@@ -188,7 +188,8 @@ class FtpSourceTask extends RowSourceTask {
     if (props.inputFolder.isEmpty)
       throw new IllegalArgumentException(s"invalid input:${props.inputFolder.mkString(",")}")
     topics = config.topics
-    ftpClient = FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
+    ftpClient =
+      FtpClient.builder().hostname(props.host).port(props.port).user(props.user).password(props.password).build()
     cache = OffsetCache()
   }
 }

@@ -14,7 +14,7 @@ class FtpSinkTask extends RowSinkTask {
     this.config = config
     this.props = FtpSinkTaskProps(config.options)
     this.ftpClient =
-      FtpClient.builder().host(props.host).port(props.port).user(props.user).password(props.password).build()
+      FtpClient.builder().hostname(props.host).port(props.port).user(props.user).password(props.password).build()
   }
 
   override protected def _stop(): Unit = {
