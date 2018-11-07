@@ -351,6 +351,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       val records = pollData(topicName, 5 second)
       records.size shouldBe 0
 
+      // add a file to input again
+      setupInput()
+      checkFileCount(0, 0, 2)
     } finally testUtil.connectorClient.delete(connectorName)
   }
 

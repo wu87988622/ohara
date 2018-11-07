@@ -5,7 +5,7 @@ import com.island.ohara.client.FtpClient
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.io.{CloseOnce, IoUtil, UuidUtil}
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.island.ohara.serialization.DataType
 import com.island.ohara.util.SystemUtil
@@ -48,7 +48,12 @@ class FtpSourceTask extends RowSourceTask {
     * @param path file under input folder
     */
   private[ftp] def handleErrorFile(path: String): Unit = try {
-    ftpClient.moveFile(path, IoUtil.replaceParent(props.errorFolder, path))
+    val outputPath = IoUtil.replaceParent(props.errorFolder, path)
+    if (ftpClient.exist(outputPath)) {
+      val newPath = outputPath + s".${UuidUtil.uuid()}"
+      if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
+      else ftpClient.moveFile(path, newPath)
+    } else ftpClient.moveFile(path, outputPath)
   } catch {
     case e: Throwable => LOG.error(s"failed to move $path to ${props.errorFolder}", e)
   }
@@ -63,7 +68,7 @@ class FtpSourceTask extends RowSourceTask {
         () => {
           val outputPath = IoUtil.replaceParent(folder, path)
           if (ftpClient.exist(outputPath)) {
-            val newPath = outputPath + s".${SystemUtil.current()}"
+            val newPath = outputPath + s".${UuidUtil.uuid()}"
             if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
             else ftpClient.moveFile(path, newPath)
           } else ftpClient.moveFile(path, outputPath)
