@@ -80,36 +80,9 @@ object Backend {
       println(USAGE)
       System.exit(1)
     }
-    // TODO: make the parse more friendly
-    var ttl: Duration = 365 days
-    var configuratorPort: Int = 0
-    var zkPort: Int = 0
-    var brokersPort: Seq[Int] = Seq.fill(3)(0)
-    var workersPort: Seq[Int] = Seq.fill(3)(0)
-    var dbPort: Int = 0
-    var ftpPort: Int = 0
-    var ftpDataPorts: Seq[Int] = Seq.fill(3)(0)
-    args.sliding(2, 2).foreach {
-      case Array(CONFIGURATOR_PORT_KEY, value) => configuratorPort = value.toInt
-      case Array(ZOOKEEPER_PORT_KEY, value)    => zkPort = value.toInt
-      case Array(BROKERS_PORT_KEY, value)      => brokersPort = value.split(",").map(_.toInt)
-      case Array(WORKERS_PORT_KEY, value)      => workersPort = value.split(",").map(_.toInt)
-      case Array(DB_PORT_KEY, value)           => dbPort = value.toInt
-      case Array(FTP_PORT_KEY, value)          => ftpPort = value.toInt
-      case Array(FTP_DATA_PORT_KEY, value)     => ftpDataPorts = value.split(",").map(_.toInt)
-      case Array(TTL_KEY, value)               => ttl = value.toInt seconds
-      case _                                   => throw new IllegalArgumentException(USAGE)
-    }
+    val (ttl, ports) = parse(args)
     run(
-      ServicePorts(
-        configuratorPort = configuratorPort,
-        zkPort = zkPort,
-        ftpDataPorts = ftpDataPorts,
-        brokersPort = brokersPort,
-        workersPort = workersPort,
-        dbPort = dbPort,
-        ftpPort = ftpPort
-      ),
+      ports,
       (configurator, _, _, _, _, _) => {
         println(s"run a configurator at ${configurator.hostname}:${configurator.port}")
         println(
@@ -119,8 +92,48 @@ object Backend {
     )
   }
 
-  def run(ports: ServicePorts,
-          stopped: (Configurator, Zookeepers, Brokers, Workers, Database, FtpServer) => Unit): Unit = {
+  private[demo] def parse(args: Array[String]): (Duration, ServicePorts) = {
+    // TODO: make the parse more friendly
+    var ttl: Duration = 365 days
+    var configuratorPort: Int = 0
+    var zkPort: Int = 0
+    var brokersPort: Seq[Int] = Seq.fill(3)(0)
+    var workersPort: Seq[Int] = Seq.fill(3)(0)
+    var dbPort: Int = 0
+    var ftpPort: Int = 0
+    var ftpDataPorts: Seq[Int] = Seq.fill(3)(0)
+
+    def parsePortRange(s: String): Seq[Int] = if (s.contains("-")) {
+      val min = s.split("-").head.toInt
+      val max = s.split("-").last.toInt
+      min to max
+    } else s.split(",").map(_.toInt)
+
+    args.sliding(2, 2).foreach {
+      case Array(CONFIGURATOR_PORT_KEY, value) => configuratorPort = value.toInt
+      case Array(ZOOKEEPER_PORT_KEY, value)    => zkPort = value.toInt
+      case Array(BROKERS_PORT_KEY, value)      => brokersPort = parsePortRange(value)
+      case Array(WORKERS_PORT_KEY, value)      => workersPort = parsePortRange(value)
+      case Array(DB_PORT_KEY, value)           => dbPort = value.toInt
+      case Array(FTP_PORT_KEY, value)          => ftpPort = value.toInt
+      case Array(FTP_DATA_PORT_KEY, value)     => ftpDataPorts = parsePortRange(value)
+      case Array(TTL_KEY, value)               => ttl = value.toInt seconds
+      case _                                   => throw new IllegalArgumentException(USAGE)
+    }
+    (ttl,
+     ServicePorts(
+       configuratorPort = configuratorPort,
+       zkPort = zkPort,
+       ftpDataPorts = ftpDataPorts,
+       brokersPort = brokersPort,
+       workersPort = workersPort,
+       dbPort = dbPort,
+       ftpPort = ftpPort
+     ))
+  }
+
+  private[demo] def run(ports: ServicePorts,
+                        stopped: (Configurator, Zookeepers, Brokers, Workers, Database, FtpServer) => Unit): Unit = {
     doClose5(Zookeepers.local(ports.zkPort))(Brokers.local(_, ports.brokersPort))(Workers.local(_, ports.workersPort))(
       _ => Database.local(ports.dbPort))(_ => FtpServer.local(ports.ftpPort, ports.ftpDataPorts)) {
       case (zk, brokers, workers, dataBase, ftpServer) =>

@@ -66,32 +66,35 @@ class TestBackendServices extends LargeTest with Matchers {
     )
     Backend.run(
       ports,
-      (configurator, zk, brokers, workers, database, ftp) => {
+      (configurator, _, _, _, database, ftp) => {
         implicit val actorSystem: ActorSystem = ActorSystem(methodName)
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
-        val result = Await.result(
-          Http()
-            .singleRequest(HttpRequest(HttpMethods.GET, s"http://localhost:${configurator.port}/$PRIVATE_API/services"))
-            .flatMap(res => {
-              if (res.status.isSuccess()) Unmarshal(res.entity).to[Services]
-              else
-                Future.failed(new IllegalArgumentException(s"Failed to create table. error:${res.status.intValue()}"))
-            }),
-          20 seconds
-        )
-        result.zookeeper shouldBe s"${IoUtil.hostname}:${ports.zkPort}"
-        result.brokers shouldBe ports.brokersPort.map(p => s"${IoUtil.hostname}:$p").mkString(",")
-        result.workers shouldBe ports.workersPort.map(p => s"${IoUtil.hostname}:$p").mkString(",")
+        try {
+          implicit val materializer: ActorMaterializer = ActorMaterializer()
+          val result = Await.result(
+            Http()
+              .singleRequest(
+                HttpRequest(HttpMethods.GET, s"http://localhost:${configurator.port}/$PRIVATE_API/services"))
+              .flatMap(res => {
+                if (res.status.isSuccess()) Unmarshal(res.entity).to[Services]
+                else
+                  Future.failed(new IllegalArgumentException(s"Failed to create table. error:${res.status.intValue()}"))
+              }),
+            20 seconds
+          )
+          result.zookeeper shouldBe s"${IoUtil.hostname}:${ports.zkPort}"
+          result.brokers shouldBe ports.brokersPort.map(p => s"${IoUtil.hostname}:$p").mkString(",")
+          result.workers shouldBe ports.workersPort.map(p => s"${IoUtil.hostname}:$p").mkString(",")
 
-        result.ftpServer.hostname shouldBe ftp.host
-        result.ftpServer.port shouldBe ports.ftpPort
-        result.ftpServer.dataPort shouldBe ports.ftpDataPorts
-        result.ftpServer.user shouldBe ftp.user
-        result.ftpServer.password shouldBe ftp.password
+          result.ftpServer.hostname shouldBe ftp.host
+          result.ftpServer.port shouldBe ports.ftpPort
+          result.ftpServer.dataPort shouldBe ports.ftpDataPorts
+          result.ftpServer.user shouldBe ftp.user
+          result.ftpServer.password shouldBe ftp.password
 
-        result.database.url shouldBe database.url
-        result.database.user shouldBe database.user
-        result.database.password shouldBe database.password
+          result.database.url shouldBe database.url
+          result.database.user shouldBe database.user
+          result.database.password shouldBe database.password
+        } finally actorSystem.terminate()
       }
     )
   }
