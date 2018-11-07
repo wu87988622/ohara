@@ -3,7 +3,6 @@ package com.island.ohara.configurator.endpoint
 import java.sql.DriverManager
 import java.util
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
 
 import com.island.ohara.client.ConfiguratorJson.{
   FtpValidationRequest,
@@ -18,7 +17,6 @@ import com.island.ohara.io.CloseOnce._
 import com.island.ohara.io.{IoUtil, UuidUtil}
 import com.island.ohara.kafka.{ConsumerRecord, KafkaClient}
 import com.island.ohara.serialization.Serializer
-import com.island.ohara.util.VersionUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.common.config.ConfigDef
@@ -28,9 +26,10 @@ import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTask}
 import spray.json.{JsNumber, JsObject, JsString}
 
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * This class is used to verify the connection to 1) HDFS, 2) KAFKA and 3) RDB. Since ohara have many sources/sinks implemented
@@ -48,13 +47,8 @@ class Validator extends SourceConnector {
 
   override def taskClass(): Class[_ <: Task] = classOf[ValidatorTask]
 
-  override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
-    val rval = new util.ArrayList[util.Map[String, String]](maxTasks)
-    0 until maxTasks foreach { _ =>
-      rval.add(new util.HashMap[String, String](props))
-    }
-    rval
-  }
+  override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] =
+    Seq.fill(maxTasks)(new util.HashMap[String, String](props)).map(_.asInstanceOf[util.Map[String, String]]).asJava
 
   override def stop(): Unit = {
     // do nothing
@@ -65,7 +59,6 @@ class Validator extends SourceConnector {
 
 object Validator {
   private[this] val TIMEOUT = 30 seconds
-  private[this] val INDEXER = new AtomicLong()
   private[endpoint] val INTERNAL_TOPIC = "_Validator_topic"
 
   /**
@@ -142,7 +135,7 @@ object Validator {
     case _ =>
       Future {
         val requestId: String = UuidUtil.uuid()
-        val validationName = s"Validator-${INDEXER.getAndIncrement()}"
+        val validationName = s"Validator-${UuidUtil.uuid()}"
         connectorClient
           .connectorCreator()
           .name(validationName)
@@ -170,7 +163,6 @@ object Validator {
   val CONFIG_DEF: ConfigDef = new ConfigDef().define(TARGET, Type.STRING, null, Importance.HIGH, "target type")
 }
 
-import scala.collection.JavaConverters._
 class ValidatorTask extends SourceTask {
   private[this] var done = false
   private[this] var props: Map[String, String] = _
