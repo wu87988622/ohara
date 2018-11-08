@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
+import * as _ from 'utils/helpers';
 import { logout } from 'apis/authApis';
 import { deleteUserKey } from 'utils/authHelpers';
 import { HOME } from 'constants/urls';
@@ -19,8 +20,9 @@ class LogoutPage extends React.Component {
 
   async componentDidMount() {
     const res = await logout();
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (res) {
+    if (isSuccess) {
       this.setState({ redirect: true });
       this.props.updateLoginState(false);
       deleteUserKey();
@@ -32,7 +34,7 @@ class LogoutPage extends React.Component {
     if (this.state.redirect) {
       return <Redirect to={HOME} />;
     }
-    return <div>Logging you out…</div>;
+    return <div>Logging you out...</div>;
   }
 }
 

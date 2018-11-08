@@ -75,8 +75,8 @@ class LoginPage extends React.Component {
     isRedirect: false,
   };
 
-  handleChange = ({ target: { value, id: field } }) => {
-    this.setState({ [field]: value });
+  handleChange = ({ target: { value, name } }) => {
+    this.setState({ [name]: value });
   };
 
   handleSubmit = async e => {
@@ -88,9 +88,9 @@ class LoginPage extends React.Component {
       password,
     });
 
-    const isSuccess = _.get(res, 'data.isSuccess', undefined);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (_.isDefined(isSuccess) && isSuccess) {
+    if (isSuccess) {
       this.setState({ isRedirect: true });
       setUserKey(res.data.token);
       this.props.updateLoginState(true);
@@ -113,7 +113,7 @@ class LoginPage extends React.Component {
               <Heading3>{LOGIN_PAGE.PAGE_HEADING}</Heading3>
 
               <UsernameInput
-                id="username"
+                name="username"
                 type="text"
                 placeholder={LOGIN_PAGE.USERNAME_PLACEHOLDER}
                 value={username}
@@ -124,7 +124,7 @@ class LoginPage extends React.Component {
               />
 
               <PasswordInput
-                id="password"
+                name="password"
                 type="password"
                 placeholder={LOGIN_PAGE.PASSWORD_PLACEHOLDER}
                 value={password}
