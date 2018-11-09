@@ -7,13 +7,13 @@ import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
 import * as MESSAGES from 'constants/messages';
+import * as _ from 'utils/helpers';
 import { H2 } from 'common/Headings';
 import { fetchCluster } from 'apis/clusterApis';
 import { createTopics, fetchTopics } from 'apis/topicApis';
 import { Input, Button } from 'common/Form';
 import { ListTable } from 'common/Table';
 import { primaryBtn } from 'theme/btnTheme';
-import { get } from 'utils/helpers';
 import { KAFKA } from 'constants/documentTitles';
 import { lightBlue } from 'theme/variables';
 import { Box } from 'common/Layout';
@@ -74,22 +74,25 @@ class KafkaPage extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchData();
+    this.fetchTopics();
+    this.fetchCluster();
   }
 
-  fetchData = async () => {
+  fetchTopics = async () => {
     const topicRes = await fetchTopics();
-    const clusterRes = await fetchCluster();
+    const result = _.get(topicRes, 'data.result', null);
 
-    const _topicResult = get(topicRes, 'data.result', null);
-    const _clusterResult = get(clusterRes, 'data.result', null);
-
-    if (_topicResult && _topicResult.length > 0) {
-      this.setState({ topics: _topicResult, isLoading: false });
+    if (result && result.length > 0) {
+      this.setState({ topics: result, isLoading: false });
     }
+  };
 
-    if (_clusterResult) {
-      const { brokers: brokerList, workers: workerList } = _clusterResult;
+  fetchCluster = async () => {
+    const clusterRes = await fetchCluster();
+    const result = _.get(clusterRes, 'data.result', null);
+
+    if (result) {
+      const { brokers: brokerList, workers: workerList } = result;
 
       this.setState({ brokerList, workerList });
     }
@@ -116,22 +119,17 @@ class KafkaPage extends React.Component {
     });
     this.setState({ isCreateTopicWorking: false });
 
-    const result = get(res, 'data.isSuccess', undefined);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (result) {
+    if (isSuccess) {
       toastr.success(MESSAGES.TOPIC_CREATION_SUCCESS);
       this.handleModalClose();
-      this.fetchData();
+      this.fetchTopics();
     }
   };
 
   handleChange = ({ target: { id, value } }) => {
     this.setState({ [id]: value, isFormDirty: true });
-  };
-
-  handleCancel = e => {
-    e.preventDefault();
-    this.props.history.goBack();
   };
 
   resetModal = () => {
