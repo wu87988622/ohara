@@ -1,10 +1,22 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { shallow } from 'enzyme';
 
 import HomePage from '../HomePage';
+import { HOME } from 'constants/documentTitles';
 
-it('renders without crashing', () => {
-  const div = document.createElement('div');
-  ReactDOM.render(<HomePage />, div);
-  ReactDOM.unmountComponentAtNode(div);
+describe('<HomePage />', () => {
+  let wrapper;
+  beforeEach(() => {
+    wrapper = shallow(<HomePage />);
+  });
+
+  it('renders <DocumentTitle />', () => {
+    expect(wrapper.dive().name()).toBe('DocumentTitle');
+    expect(wrapper.dive().props().title).toBe(HOME);
+  });
+
+  it('renders <AppWrapper />', () => {
+    expect(wrapper.find('AppWrapper').length).toBe(1);
+    expect(wrapper.find('AppWrapper').props().title).toBe('Ohara home');
+  });
 });

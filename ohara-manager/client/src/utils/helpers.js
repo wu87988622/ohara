@@ -16,8 +16,17 @@ const isNumber = val => typeof val === 'number';
 
 const isUuid = val => uuidValidate(val);
 
+const reduceByProp = (data, prop) => {
+  const result = data.reduce(
+    (prev, curr) => (prev[prop] > curr[prop] ? prev : curr),
+  );
+
+  return result;
+};
+
 export {
   get,
+  reduceByProp,
   debounce,
   isEmpty,
   isString,

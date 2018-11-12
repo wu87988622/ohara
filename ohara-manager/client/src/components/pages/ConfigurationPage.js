@@ -47,43 +47,36 @@ class ConfigurationPage extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchData();
+    this.fetchHdfs();
   }
 
-  fetchData = async () => {
+  fetchHdfs = async () => {
     const res = await fetchHdfs();
+    const result = _.get(res, 'data.result', []);
 
-    const _result = _.get(res, 'data.result', []);
-
-    if (!_.isEmptyArr(_result)) {
-      const mostRecent = res.data.result.reduce(
-        (prev, curr) => (prev.lastModified > curr.lastModified ? prev : curr),
-      );
-
+    if (!_.isEmptyArr(result)) {
+      const mostRecent = _.reduceByProp(res.data.result, 'lastModified');
       const { name: connectionName, uri: connectionUrl } = mostRecent;
-      const isBtnDisabled = !this.confirmFormStatus(
-        connectionName,
-        connectionUrl,
-      );
+      const isBtnDisabled = this.hasEmptyInput([connectionName, connectionUrl]);
 
       this.setState({ connectionName, connectionUrl, isBtnDisabled });
     }
   };
 
-  handleChange = ({ target: { value, id } }) => {
+  handleChange = ({ target: { value, name } }) => {
     this.setState(
-      { [id]: value, isFormDirty: true, isBtnDisabled: true },
+      { [name]: value, isFormDirty: true, isBtnDisabled: true },
       () => {
         const { connectionName, connectionUrl } = this.state;
-        if (this.confirmFormStatus(connectionName, connectionUrl)) {
+        if (!this.hasEmptyInput([connectionName, connectionUrl])) {
           this.setState({ isBtnDisabled: false });
         }
       },
     );
   };
 
-  confirmFormStatus = (name, url) => {
-    return !_.isEmptyStr(name) && !_.isEmptyStr(url);
+  hasEmptyInput = inputs => {
+    return inputs.some(input => _.isEmptyStr(input));
   };
 
   handleCancel = e => {
@@ -94,10 +87,9 @@ class ConfigurationPage extends React.Component {
   handleSave = async () => {
     const { connectionName: name, connectionUrl: uri } = this.state;
     const res = await saveHdfs({ name, uri });
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    const _res = _.get(res, 'data.isSuccess', false);
-
-    if (_.isDefined(_res)) {
+    if (isSuccess) {
       toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
     }
   };
@@ -109,9 +101,9 @@ class ConfigurationPage extends React.Component {
     const res = await validateHdfs({ uri });
     this.updateBtn(false);
 
-    const _res = _.get(res, 'data.isSuccess', false);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (_res) {
+    if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
       this.setState({ isFormDirty: false });
       this.handleSave();
@@ -139,10 +131,10 @@ class ConfigurationPage extends React.Component {
           />
           <form>
             <FormInner>
-              <FormGroup>
+              <FormGroup data-testid="connection-name">
                 <Label>Name</Label>
                 <Input
-                  id="connectionName"
+                  name="connectionName"
                   width="250px"
                   placeholder="Connection name"
                   value={connectionName}
@@ -151,10 +143,10 @@ class ConfigurationPage extends React.Component {
                 />
               </FormGroup>
 
-              <FormGroup>
+              <FormGroup data-testid="connection-url">
                 <Label>HDFS connection URL</Label>
                 <Input
-                  id="connectionUrl"
+                  name="connectionUrl"
                   width="250px"
                   placeholder="http://localhost:5050"
                   value={connectionUrl}
@@ -170,6 +162,7 @@ class ConfigurationPage extends React.Component {
                   text="Cancel"
                   theme={cancelBtn}
                   handleClick={this.handleCancel}
+                  data-testid="cancel-btn"
                 />
                 <Button
                   theme={primaryBtn}
