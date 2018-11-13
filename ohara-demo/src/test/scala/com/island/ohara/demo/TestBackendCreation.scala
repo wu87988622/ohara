@@ -7,8 +7,8 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity}
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.demo.Backend.{Creation, _}
-import com.island.ohara.rule.LargeTest
 import org.junit.Test
 import org.scalatest.Matchers
 

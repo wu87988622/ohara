@@ -1,7 +1,8 @@
 package com.island.ohara.integration
 import java.util.Properties
 
-import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CommonUtil
 import kafka.server.{KafkaConfig, KafkaServer}
 import org.apache.kafka.common.network.ListenerName
 import org.apache.kafka.common.utils.SystemTime
@@ -36,7 +37,7 @@ object Brokers {
       case (port, index) =>
         val logDir = createTempDir("kafka-local")
         val config = new Properties()
-        // reduce the number of partitions and replicas to speedup the mini cluster
+        // reduce the number from partitions and replicas to speedup the mini cluster
         config.setProperty(KafkaConfig.OffsetsTopicPartitionsProp, 1.toString)
         config.setProperty(KafkaConfig.OffsetsTopicReplicationFactorProp, 1.toString)
         config.setProperty(KafkaConfig.ZkConnectProp, zk.connectionProps)
@@ -52,7 +53,7 @@ object Brokers {
 
     new Brokers {
       override def connectionProps: String =
-        brokerAndLogDir.map(_._3).map(p => s"${IoUtil.hostname}:$p").mkString(",")
+        brokerAndLogDir.map(_._3).map(p => s"${CommonUtil.hostname}:$p").mkString(",")
       override protected def doClose(): Unit = {
         brokerAndLogDir
           .map(_._1)

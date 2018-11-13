@@ -7,9 +7,9 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson.PRIVATE_API
+import com.island.ohara.common.rule.LargeTest
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.demo.Backend._
-import com.island.ohara.io.IoUtil
-import com.island.ohara.rule.LargeTest
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -81,9 +81,9 @@ class TestBackendServices extends LargeTest with Matchers {
               }),
             20 seconds
           )
-          result.zookeeper shouldBe s"${IoUtil.hostname}:${ports.zkPort}"
-          result.brokers shouldBe ports.brokersPort.map(p => s"${IoUtil.hostname}:$p").mkString(",")
-          result.workers shouldBe ports.workersPort.map(p => s"${IoUtil.hostname}:$p").mkString(",")
+          result.zookeeper shouldBe s"${CommonUtil.hostname}:${ports.zkPort}"
+          result.brokers shouldBe ports.brokersPort.map(p => s"${CommonUtil.hostname}:$p").mkString(",")
+          result.workers shouldBe ports.workersPort.map(p => s"${CommonUtil.hostname}:$p").mkString(",")
 
           result.ftpServer.hostname shouldBe ftp.host
           result.ftpServer.port shouldBe ports.ftpPort

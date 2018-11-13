@@ -3,9 +3,9 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson.{Pipeline, _}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
-import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object PipelineRoute {
@@ -14,7 +14,7 @@ private[configurator] object PipelineRoute {
   private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink])
 
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
-    Pipeline(uuid, request.name, request.rules, abstracts(request.rules), SystemUtil.current())
+    Pipeline(uuid, request.name, request.rules, abstracts(request.rules), CommonUtil.current())
 
   private[this] def checkExist(uuids: Set[String])(implicit store: Store): Unit = {
     uuids.foreach(uuid =>

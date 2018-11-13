@@ -5,11 +5,11 @@ import java.io.OutputStream
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.text.RecordWriterOutput
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, Row}
+import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
-import com.island.ohara.rule.MediumTest
-import com.island.ohara.util.SystemUtil
 import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -24,7 +24,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val sinkTaskContext = mock[RowSinkContext]
     val topicPartition = TopicPartition("topic1", 0)
     val testUtil = OharaTestUtil.localHDFS()
-    val storage = new HDFSStorage(testUtil.hdfs.fileSystem)
+    val storage = new HDFSStorage(testUtil.hdfs.fileSystem())
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
     new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
@@ -48,7 +48,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
+    when(rowSinkRecord.row).thenReturn(Row.of(Cell.of("column1", "value")))
 
     val schema: Seq[Column] = Seq()
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
@@ -74,7 +74,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
+    when(rowSinkRecord.row).thenReturn(Row.of(Cell.of("column1", "value")))
 
     val schema: Seq[Column] = Seq()
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
@@ -118,7 +118,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
-    val startTime: Long = SystemUtil.current() - 1000
+    val startTime: Long = CommonUtil.current() - 1000
     topicPartitionWriter.isTimeCommit(startTime, 2000) shouldBe false //Not commit
     topicPartitionWriter.isTimeCommit(startTime, 1000) shouldBe true
   }
@@ -140,7 +140,7 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
     val rowSinkRecord = mock[RowSinkRecord]
-    when(rowSinkRecord.row).thenReturn(Row(Cell("column1", "value")))
+    when(rowSinkRecord.row).thenReturn(Row.of(Cell.of("column1", "value")))
 
     topicPartitionWriter.recordWriterOutput = recordWriterOutput
     topicPartitionWriter.processLineCount = 0

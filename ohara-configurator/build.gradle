@@ -1,8 +1,8 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 dependencies {
   implementation project(':ohara-common')
+  implementation project(':ohara-client')
   implementation project(':ohara-kafka')
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict

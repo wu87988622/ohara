@@ -1,7 +1,7 @@
 package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.FtpClient
-import com.island.ohara.io.IoUtil
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.connector._
 
 class FtpSink extends RowSinkConnector {
@@ -17,7 +17,7 @@ class FtpSink extends RowSinkConnector {
           config.topics,
           config.schema,
           FtpSinkTaskProps(
-            output = IoUtil.path(props.output, s"${config.name}_$index"),
+            output = CommonUtil.path(props.output, s"${config.name}_$index"),
             needHeader = props.needHeader,
             encode = props.encode,
             host = props.host,

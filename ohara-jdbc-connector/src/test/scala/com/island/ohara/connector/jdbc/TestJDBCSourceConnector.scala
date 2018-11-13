@@ -4,11 +4,10 @@ import java.sql.Statement
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.connector.jdbc.source._
-import com.island.ohara.data.{Cell, Row}
 import com.island.ohara.integration.{Database, With3Brokers3Workers}
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.TaskConfig
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
@@ -66,29 +65,29 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .offsetFromBegin()
         .brokers(testUtil.brokersConnProps)
-        .build[Array[Byte], Row]
+        .build(Serializer.BYTES, Serializer.ROW)
     try {
       val record = consumer.poll(30 seconds, 3)
       val row0: Row = record(0).value.get
       row0.size shouldBe 4
-      row0.cell(0).toString shouldBe Cell("column1", "2018-09-01 00:00:00.0").toString
-      row0.cell(1) shouldBe Cell("column2", "a11")
-      row0.cell(2) shouldBe Cell("column3", "a12")
-      row0.cell(3).toString shouldBe Cell("column4", "1").toString
+      row0.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:00.0").toString
+      row0.cell(1) shouldBe Cell.of("column2", "a11")
+      row0.cell(2) shouldBe Cell.of("column3", "a12")
+      row0.cell(3).toString shouldBe Cell.of("column4", "1").toString
 
       val row1: Row = record(1).value.get
       row1.size shouldBe 4
-      row1.cell(0).toString shouldBe Cell("column1", "2018-09-01 00:00:01.0").toString
-      row1.cell(1) shouldBe Cell("column2", "a21")
-      row1.cell(2) shouldBe Cell("column3", "a22")
-      row1.cell(3).toString shouldBe Cell("column4", "2").toString
+      row1.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:01.0").toString
+      row1.cell(1) shouldBe Cell.of("column2", "a21")
+      row1.cell(2) shouldBe Cell.of("column3", "a22")
+      row1.cell(3).toString shouldBe Cell.of("column4", "2").toString
 
       val row2: Row = record(2).value.get
       row2.size shouldBe 4
-      row2.cell(0).toString shouldBe Cell("column1", "2018-09-01 00:00:02.0").toString
-      row2.cell(1) shouldBe Cell("column2", "a31")
-      row2.cell(2) shouldBe Cell("column3", "a32")
-      row2.cell(3).toString shouldBe Cell("column4", "3").toString
+      row2.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:02.0").toString
+      row2.cell(1) shouldBe Cell.of("column2", "a31")
+      row2.cell(2) shouldBe Cell.of("column3", "a32")
+      row2.cell(3).toString shouldBe Cell.of("column4", "3").toString
       record.size shouldBe 3
 
     } finally consumer.close()

@@ -1,10 +1,10 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 test.systemProperty("user.timezone", "Asia/Taipei")
 
 dependencies {
     implementation project(':ohara-common')
+    implementation project(':ohara-client')
     implementation project(':ohara-kafka')
     implementation libs.scala
     implementation libs.scalaLogging

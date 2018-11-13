@@ -3,8 +3,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.io.CloseOnce._
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.util.CloseOnce._
 
 /**
   * used to handle the "QUERY" APIs

@@ -8,10 +8,9 @@ import akka.dispatch.MessageDispatcher
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.DataType._
+import com.island.ohara.common.data.{Cell, DataType, Row}
 import com.island.ohara.kafka.Producer
-import com.island.ohara.serialization.DataType._
-import com.island.ohara.serialization._
 import spray.json.{JsBoolean, JsString, JsValue}
 
 import scala.concurrent.Future
@@ -21,7 +20,7 @@ final case class CSV(row: List[JsValue])
 final case class SchemaException(private val message: String) extends Exception(message)
 
 /**
-  * Use to construct routing logic of HTTP post to Kafka Producer
+  * Use to construct routing logic from HTTP post to Kafka Producer
   */
 trait KafkaRoute extends Directives with CsvSupport {
 
@@ -65,7 +64,7 @@ trait KafkaRoute extends Directives with CsvSupport {
 
     def create(jsValue: JsValue, cellInfo: (String, DataType)): Cell[Any] = {
       val (cellName, cellType) = cellInfo
-      Cell(
+      Cell.of(
         cellName,
         (cellType, jsValue) match {
           case (STRING, JsString(str))       => str
@@ -86,7 +85,7 @@ trait KafkaRoute extends Directives with CsvSupport {
       log.info(s"JSON didn't match supported schema.")
       Failure(SchemaException("JSON didn't match supported schema."))
     } else {
-      Try(Row(rows.zipWithIndex.map {
+      Try(Row.of(rows.zipWithIndex.map {
         case (jsValue, index) => create(jsValue, types(index))
       }: _*))
     }

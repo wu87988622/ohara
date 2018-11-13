@@ -2,13 +2,12 @@ package com.island.ohara.kafka
 
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.io.{ByteUtil, CloseOnce}
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.ByteUtil
 import com.island.ohara.kafka.connector._
-import com.island.ohara.serialization.{DataType, RowSerializer}
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -18,7 +17,7 @@ import scala.concurrent.duration._
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] val kafkaClient = KafkaClient(testUtil.brokersConnProps)
-  private[this] val row = Row(Cell("cf0", 10), Cell("cf1", 11))
+  private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
   private[this] val schema = Seq(Column("cf", DataType.BOOLEAN, 1))
   private[this] val numberOfRows = 20
 
@@ -33,7 +32,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def setupData(topicName: String): Unit = {
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
       0 until numberOfRows foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
     }
     checkData(topicName)
@@ -45,7 +44,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .offsetFromBegin()
       .brokers(testUtil.brokersConnProps)
       .topicName(topicName)
-      .build[Array[Byte], Row]) { consumer =>
+      .build(Serializer.BYTES, Serializer.ROW)) { consumer =>
     val data = consumer.poll(30 seconds, numberOfRows)
     data.size shouldBe numberOfRows
     data.foreach(_.value.get shouldBe row)
@@ -86,7 +85,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .brokers(testUtil.brokersConnProps)
         .offsetFromBegin()
         .topicName(topicName)
-        .build[Array[Byte], Row]) { consumer =>
+        .build(Serializer.BYTES, Serializer.ROW)) { consumer =>
       val data = consumer.poll(10 seconds, numberOfRows)
       data.size shouldBe numberOfRows
       data.foreach(r => r.value.get shouldBe row)
@@ -181,14 +180,20 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val topicName = methodName
     KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
 
-    val row = Row(Cell("c", 3), Cell("b", 2), Cell("a", 1))
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[String, Row]) { producer =>
-      producer.sender().key(topicName).value(row).send(topicName)
-      producer.flush()
+    val row = Row.of(Cell.of("c", 3), Cell.of("b", 2), Cell.of("a", 1))
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW)) {
+      producer =>
+        producer.sender().key(topicName).value(row).send(topicName)
+        producer.flush()
     }
 
     val consumer =
-      Consumer.builder().brokers(testUtil.brokersConnProps).offsetFromBegin().topicName(topicName).build[String, Row]
+      Consumer
+        .builder()
+        .brokers(testUtil.brokersConnProps)
+        .offsetFromBegin()
+        .topicName(topicName)
+        .build(Serializer.STRING, Serializer.ROW)
 
     try {
       val fromKafka = consumer.poll(30 seconds, 1)
@@ -200,9 +205,10 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
     } finally consumer.close()
 
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[String, Row]) { producer =>
-      val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
-      meta.topic shouldBe topicName
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW)) {
+      producer =>
+        val meta = Await.result(producer.sender().key(topicName).value(row).send(topicName), 10 seconds)
+        meta.topic shouldBe topicName
     }
   }
 

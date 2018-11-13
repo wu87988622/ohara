@@ -4,7 +4,7 @@ import java.net.{InetAddress, NetworkInterface}
 import java.nio.file.{Path, Paths}
 import java.util.Properties
 
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.kafka.Producer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
@@ -45,10 +45,11 @@ object AirlineImporter {
     }
 
     // Note: value is ohara's Row type
-    val oharaProducer: Producer[Array[Byte], Row] = Producer.builder().brokers(bootstrapServers).build
+    val oharaProducer: Producer[Array[Byte], Row] =
+      Producer.builder().brokers(bootstrapServers).build(Serializer.BYTES, Serializer.ROW)
     val oharaSendLine: SendLine = (line, topicName) => {
       val sender = oharaProducer.sender()
-      val row = Row(Cell("cf0", line))
+      val row = Row.of(Cell.of("cf0", line))
       sender
         .key(null)
         .value(row)

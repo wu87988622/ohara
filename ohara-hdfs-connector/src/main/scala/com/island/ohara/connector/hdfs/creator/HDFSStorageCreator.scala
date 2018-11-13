@@ -2,9 +2,9 @@ package com.island.ohara.connector.hdfs.creator
 
 import java.net.URI
 
+import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
-import com.island.ohara.io.CloseOnce
 import org.apache.hadoop.fs.FileSystem
 
 /**

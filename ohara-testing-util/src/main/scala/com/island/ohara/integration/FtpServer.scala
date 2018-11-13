@@ -2,11 +2,12 @@ package com.island.ohara.integration
 import java.util
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.island.ohara.io.{CloseOnce, IoUtil}
-import org.apache.ftpserver.{DataConnectionConfigurationFactory, FtpServerFactory}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CommonUtil
 import org.apache.ftpserver.listener.ListenerFactory
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory
 import org.apache.ftpserver.usermanager.impl.{BaseUser, WritePermission}
+import org.apache.ftpserver.{DataConnectionConfigurationFactory, FtpServerFactory}
 
 /**
   * a simple embedded ftp server providing 1 writable user. The home folder is based on java.io.tmpdir with prefix - ftp
@@ -51,7 +52,7 @@ object FtpServer {
       val port = ftpString.split("@").last.split(":").last.toInt
       (user, password, host, port)
     } catch {
-      case e: Throwable => throw new IllegalArgumentException(s"invalid value of $FTP_SERVER", e)
+      case e: Throwable => throw new IllegalArgumentException(s"invalid value from $FTP_SERVER", e)
     }
   }
 
@@ -93,7 +94,7 @@ object FtpServer {
         deleteFile(homeFolder)
       }
 
-      override def host: String = IoUtil.hostname
+      override def host: String = CommonUtil.hostname
 
       override def port: Int = listener.getPort
 

@@ -1,15 +1,15 @@
 package com.island.ohara.kafka
 import java.util.{Objects, Properties}
 
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord}
 
 import scala.concurrent.{Future, Promise}
 
 /**
-  * a simple wrap of kafka producer.
+  * a simple wrap from kafka producer.
   * @tparam K key type
   * @tparam V value type
   */
@@ -121,7 +121,7 @@ final class ProducerBuilder {
 }
 
 /**
-  * a fluent-style sender. kafak.ProducerRecord has many fields and most of them are nullable. It makes kafak.ProducerRecord's
+  * a fluent-style sender. kafak.ProducerRecord has many fields and most from them are nullable. It makes kafak.ProducerRecord's
   * constructor complicated. This class has fluent-style methods helping user to fill the fields they have.
   * @tparam K key type
   * @tparam V value type

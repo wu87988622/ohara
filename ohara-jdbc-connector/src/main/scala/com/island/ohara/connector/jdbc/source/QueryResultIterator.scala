@@ -1,9 +1,10 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.{PreparedStatement, ResultSet}
+
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
+import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.connector.jdbc.util.ColumnInfo
-import com.island.ohara.io.CloseOnce
 
 class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[RdbColumn])
     extends Iterator[Seq[ColumnInfo[_]]]
@@ -13,7 +14,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
 
   /**
     * this method bring side effect the first time since we have to "touch" remote db to retrieve the "data information"
-    * to check the existence of data...
+    * to check the existence from data...
     * @return true if there are some data. otherwise false
     */
   override def hasNext: Boolean = {

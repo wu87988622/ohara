@@ -1,7 +1,8 @@
 package com.island.ohara.configurator.store
 
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
-import com.island.ohara.io.CloseOnce.close
+import com.island.ohara.client.util.CloseOnce.close
+import com.island.ohara.common.data.Serializer
 import org.junit._
 import org.scalatest.Matchers
 
@@ -11,14 +12,22 @@ import scala.concurrent.duration._
 class TestTopicStore extends With3Brokers with Matchers {
   private[this] val topicName = random()
   private[this] val store: BlockingStore[String, String] =
-    Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String]
+    Store
+      .builder()
+      .brokers(testUtil.brokersConnProps)
+      .topicName(topicName)
+      .buildBlocking(Serializer.STRING, Serializer.STRING)
   @Test
   def testRestart(): Unit = {
     store._update("aa", "bb", Consistency.STRICT) shouldBe None
     store._get("aa") shouldBe Some("bb")
     store.close()
     val another =
-      Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String]
+      Store
+        .builder()
+        .brokers(testUtil.brokersConnProps)
+        .topicName(topicName)
+        .buildBlocking(Serializer.STRING, Serializer.STRING)
     try {
       OharaTestUtil.await(() => another._get("aa").isDefined, 10 seconds)
       another._get("aa") shouldBe Some("bb")
@@ -27,14 +36,18 @@ class TestTopicStore extends With3Brokers with Matchers {
   }
 
   /**
-    * In this test we create extra 10 stores to test the data synchronization. All of them are based on the same kafka topic so any change
-    * to one of them should be synced to other stores.
+    * In this test we create extra 10 stores to test the data synchronization. All from them are based on the same kafka topic so any change
+    * to one from them should be synced to other stores.
     */
   @Test
   def testMultiStore(): Unit = {
     val numberOfStore = 5
     val stores = 0 until numberOfStore map (_ =>
-      Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String])
+      Store
+        .builder()
+        .brokers(testUtil.brokersConnProps)
+        .topicName(topicName)
+        .buildBlocking(Serializer.STRING, Serializer.STRING))
     0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
     store.size shouldBe 10
 
@@ -54,7 +67,11 @@ class TestTopicStore extends With3Brokers with Matchers {
 
     // This store is based on another topic so it should have no data
     val anotherStore =
-      Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName + "copy").build[String, String]
+      Store
+        .builder()
+        .brokers(testUtil.brokersConnProps)
+        .topicName(topicName + "copy")
+        .build(Serializer.STRING, Serializer.STRING)
     anotherStore.size shouldBe 0
   }
 

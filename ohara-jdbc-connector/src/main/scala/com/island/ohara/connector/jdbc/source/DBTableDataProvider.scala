@@ -6,8 +6,8 @@ import java.util.Calendar
 import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.io.CloseOnce._
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce._
 
 /**
   * Connection to database and query data

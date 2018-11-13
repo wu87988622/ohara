@@ -10,13 +10,13 @@ import com.island.ohara.client.ConfiguratorJson.{
   RdbValidationRequest,
   ValidationReport
 }
+import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, FtpClient}
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.FakeConnectorClient
 import com.island.ohara.configurator.endpoint.Validator._
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.io.{IoUtil, UuidUtil}
 import com.island.ohara.kafka.{ConsumerRecord, KafkaClient}
-import com.island.ohara.serialization.Serializer
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.common.config.ConfigDef
@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 
 /**
   * This class is used to verify the connection to 1) HDFS, 2) KAFKA and 3) RDB. Since ohara have many sources/sinks implemented
-  * by kafak connector, the verification of connection should be run at the worker nodes. This class is implemented by kafka
+  * by kafak connector, the verification from connection should be run at the worker nodes. This class is implemented by kafka
   * souce connector in order to run the validation on all worker nodes.
   * TODO: refactor this one...it is ugly I'd say... by chia
   */
@@ -121,7 +121,7 @@ object Validator {
     * @param connectorClient connector client
     * @param kafkaClient kafka client
     * @param config config used to test
-    * @param taskCount the number of task. It implies how many worker nodes should be verified
+    * @param taskCount the number from task. It implies how many worker nodes should be verified
     * @return reports
     */
   private[this] def run(connectorClient: ConnectorClient,
@@ -131,11 +131,11 @@ object Validator {
                         taskCount: Int): Future[Seq[ValidationReport]] = connectorClient match {
     // we expose the fake component...ugly way (TODO) by chia
     case _: FakeConnectorClient =>
-      Future.successful((0 until taskCount).map(_ => ValidationReport(IoUtil.hostname, "a fake report", true)))
+      Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtil.hostname, "a fake report", true)))
     case _ =>
       Future {
-        val requestId: String = UuidUtil.uuid()
-        val validationName = s"Validator-${UuidUtil.uuid()}"
+        val requestId: String = CommonUtil.uuid()
+        val validationName = s"Validator-${CommonUtil.uuid()}"
         connectorClient
           .connectorCreator()
           .name(validationName)
@@ -148,10 +148,15 @@ object Validator {
           .config(TARGET, target)
           .create()
         // TODO: receiving all messages may be expensive...by chia
-        try doClose(kafkaClient.consumerBuilder().offsetFromBegin().topicName(INTERNAL_TOPIC).build[String, Any])(
+        try doClose(
+          kafkaClient
+            .consumerBuilder()
+            .offsetFromBegin()
+            .topicName(INTERNAL_TOPIC)
+            .build(Serializer.STRING, Serializer.OBJECT))(
           _.poll(TIMEOUT,
                  taskCount,
-                 filter = (records: Seq[ConsumerRecord[String, Any]]) => records.filter(_.key.contains(requestId)))
+                 filter = (records: Seq[ConsumerRecord[String, AnyRef]]) => records.filter(_.key.contains(requestId)))
             .map(_.value.get match {
               case report: ValidationReport => report
               case _                        => throw new IllegalStateException(s"Unknown report")
@@ -201,7 +206,6 @@ class ValidatorTask extends SourceTask {
     val home = fs.getHomeDirectory
     s"check the hdfs:${info.uri} by getting the home:$home"
   }
-  import com.island.ohara.io.CloseOnce._
 
   private[this] def validate(info: RdbValidationRequest): String =
     doClose(DriverManager.getConnection(info.url, info.user, info.password)) { _ =>
@@ -236,7 +240,7 @@ class ValidatorTask extends SourceTask {
   private[this] def require(key: String): String =
     props.getOrElse(key, throw new IllegalArgumentException(s"the $key is required"))
 
-  private[this] def hostname: String = try IoUtil.hostname
+  private[this] def hostname: String = try CommonUtil.hostname
   catch {
     case _: Throwable => "unknown"
   }

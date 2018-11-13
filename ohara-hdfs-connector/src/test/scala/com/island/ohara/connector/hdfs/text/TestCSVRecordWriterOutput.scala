@@ -3,11 +3,10 @@ package com.island.ohara.connector.hdfs.text
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.{FLUSH_LINE_COUNT, HDFSSinkConnectorConfig, HDFS_URL}
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, DataType, Row}
 import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.rule.MediumTest
-import com.island.ohara.serialization.DataType
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.rule.MediumTest
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.Test
 import org.scalatest.Matchers
@@ -26,7 +25,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
     val schema = Seq(Column("column1", DataType.STRING, 0), Column("column2", DataType.STRING, 1))
-    val row = Row(Cell("column1", "value1"), Cell("column2", "value2"))
+    val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(false, schema, row)
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
@@ -51,7 +50,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
     val schema = Seq(Column("column1", DataType.STRING, 0), Column("column2", DataType.STRING, 1))
-    val row = Row(Cell("column1", "value1"), Cell("column2", "value2"))
+    val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
@@ -77,7 +76,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
 
     val schema =
       Seq(Column("column1", "COLUMN100", DataType.STRING, 0), Column("column2", "COLUMN200", DataType.STRING, 1))
-    val row = Row(Cell("column1", "value1"), Cell("column2", "value2"))
+    val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
@@ -102,7 +101,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
     val schema = Seq()
-    val row = Row(Cell("column1", "value1"), Cell("column2", "value2"))
+    val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
@@ -129,7 +128,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val schema = Seq(Column("column1", "COL1", DataType.STRING, 0),
                      Column("column2", "COL2", DataType.STRING, 2),
                      Column("column3", "COL3", DataType.STRING, 1))
-    val row = Row(Cell("column1", "value1"), Cell("column2", "value2"), Cell("column3", "value3"))
+    val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"), Cell.of("column3", "value3"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
@@ -163,7 +162,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
     try {
-      val row = Row(Cell("cf0", 123), Cell("cf1", false))
+      val row = Row.of(Cell.of("cf0", 123), Cell.of("cf1", false))
       csvRecordWriter.write(needHeader, Seq(Column("c", "c", DataType.DOUBLE, 0)), row)
     } finally csvRecordWriter.close()
     println("tempfilepath:" + tempFilePath)

@@ -3,8 +3,8 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.{PreparedStatement, ResultSet}
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
-import com.island.ohara.rule.MediumTest
 import org.junit.Test
 import org.mockito.Mockito._
 import org.scalatest.Matchers

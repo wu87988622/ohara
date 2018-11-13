@@ -1,6 +1,6 @@
 package com.island.ohara.demo
 
-import com.island.ohara.rule.LargeTest
+import com.island.ohara.common.rule.LargeTest
 import org.junit.Test
 import org.scalatest.Matchers
 

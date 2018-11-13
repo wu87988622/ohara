@@ -3,8 +3,9 @@ package com.island.ohara.configurator.store
 import java.util.Objects
 import java.util.concurrent.ConcurrentSkipListMap
 
-import com.island.ohara.io.{ByteUtil, CloseOnce}
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.ByteUtil
 
 import scala.concurrent.Future
 
@@ -19,7 +20,7 @@ private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSeriali
     extends BlockingStore[K, V]
     with CloseOnce {
   private[this] val store =
-    new ConcurrentSkipListMap[Array[Byte], Array[Byte]](ByteUtil.COMPARATOR)
+    new ConcurrentSkipListMap[Array[Byte], Array[Byte]](ByteUtil.BYTES_COMPARATOR)
 
   private[this] def toKey(key: K) = keySerializer.to(Objects.requireNonNull(key))
   private[this] def fromKey(key: Array[Byte]) = keySerializer.from(Objects.requireNonNull(key))
@@ -52,7 +53,7 @@ private class MemStore[K, V](implicit keySerializer: Serializer[K], valueSeriali
 
   /**
     * Overrride the size to provide the efficient implementation
-    * @return size of this store
+    * @return size from this store
     */
   override def size: Int = store.size()
 

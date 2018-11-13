@@ -1,16 +1,17 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.ConfiguratorJson.{Column, _}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
+import com.island.ohara.common.data.{DataType, Serializer}
+import com.island.ohara.common.util.VersionUtil
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.io.CloseOnce._
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
-import com.island.ohara.serialization.DataType
-import com.island.ohara.util.VersionUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import scala.collection.JavaConverters._
 
 /**
   * this test includes two configurators - with/without cluster.
@@ -25,7 +26,12 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(Store.builder().topicName(topicName).brokers(testUtil.brokersConnProps).buildBlocking[String, Any])
+      .store(
+        Store
+          .builder()
+          .topicName(topicName)
+          .brokers(testUtil.brokersConnProps)
+          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
@@ -70,7 +76,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val response = compareRequestAndResponse(request, client.add[TopicInfoRequest, TopicInfo](request))
       // verify the topic from kafka
       if (client == client0) {
-        // the "name" used to create topic is uuid rather than name of request
+        // the "name" used to create topic is uuid rather than name from request
         KafkaUtil.exist(testUtil.brokersConnProps, request.name) shouldBe false
         KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
         val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.uuid)
@@ -415,7 +421,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clusterInformation.brokers shouldBe testUtil.brokersConnProps
     clusterInformation.workers shouldBe testUtil.workersConnProps
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
-    clusterInformation.supportedDataTypes shouldBe DataType.all
+    clusterInformation.supportedDataTypes shouldBe DataType.all.asScala
     clusterInformation.sources.exists(x => x.className.contains("com.island")) shouldBe true
     clusterInformation.sinks.exists(x => x.className.contains("com.island")) shouldBe true
     clusterInformation.versionInfo.version shouldBe VersionUtil.VERSION
@@ -426,7 +432,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testInvalidMain(): Unit = {
-    // enable this flag to make sure the instance of Configurator is always die.
+    // enable this flag to make sure the instance from Configurator is always die.
     Configurator.closeRunningConfigurator = true
     try {
       an[IllegalArgumentException] should be thrownBy Configurator.main(Array[String]("localhost"))

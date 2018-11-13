@@ -2,8 +2,7 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
-import com.island.ohara.serialization.RowSerializer
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.common.data.Serializer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.connect.sink.{SinkRecord, SinkTask, SinkTaskContext}
 
@@ -17,7 +16,7 @@ import scala.collection.JavaConverters._
 abstract class RowSinkTask extends SinkTask {
 
   /**
-    * Start the Task. This should handle any configuration parsing and one-time setup of the task.
+    * Start the Task. This should handle any configuration parsing and one-time setup from the task.
     * @param props initial configuration
     */
   protected def _start(config: TaskConfig): Unit
@@ -25,7 +24,7 @@ abstract class RowSinkTask extends SinkTask {
   /**
     * Perform any cleanup to stop this task. In SinkTasks, this method is invoked only once outstanding calls to other
     * methods have completed (e.g., _put() has returned) and a final flush() and offset
-    * commit has completed. Implementations of this method should only need to perform final cleanup operations, such
+    * commit has completed. Implementations from this method should only need to perform final cleanup operations, such
     * as closing network connections to the sink system.
     */
   protected def _stop(): Unit
@@ -39,17 +38,17 @@ abstract class RowSinkTask extends SinkTask {
   protected def _put(records: Seq[RowSinkRecord]): Unit
 
   /**
-    * Get the version of this task. Usually this should be the same as the corresponding Connector class's version.
+    * Get the version from this task. Usually this should be the same as the corresponding Connector class's version.
     *
     * @return the version, formatted as a String
     */
   protected def _version: String = VERSION
 
   /**
-    * The SinkTask use this method to create writers for newly assigned partitions in case of partition
+    * The SinkTask use this method to create writers for newly assigned partitions in case from partition
     * rebalance. This method will be called after partition re-assignment completes and before the SinkTask starts
     * fetching data. Note that any errors raised from this method will cause the task to stop.
-    * @param partitions The list of partitions that are now assigned to the task (may include
+    * @param partitions The list from partitions that are now assigned to the task (may include
     *                   partitions previously assigned to the task)
     */
   protected def _open(partitions: Seq[TopicPartition]): Unit = {
@@ -60,9 +59,9 @@ abstract class RowSinkTask extends SinkTask {
     * The SinkTask use this method to close writers for partitions that are no
     * longer assigned to the SinkTask. This method will be called before a rebalance operation starts
     * and after the SinkTask stops fetching data. After being closed, Connect will not write
-    * any records to the task until a new set of partitions has been opened. Note that any errors raised
+    * any records to the task until a new set from partitions has been opened. Note that any errors raised
     * from this method will cause the task to stop.
-    * @param partitions The list of partitions that should be closed
+    * @param partitions The list from partitions that should be closed
     */
   protected def _close(partitions: Seq[TopicPartition]): Unit = {
     // do nothing
@@ -73,10 +72,10 @@ abstract class RowSinkTask extends SinkTask {
     *
     * The default implementation simply return the offsets and is thus able to assume all offsets are safe to commit.
     *
-    * @param offsets the current offset state as of the last call to _put,
+    * @param offsets the current offset state as from the last call to _put,
     *                       provided for convenience but could also be determined by tracking all offsets included in the RowSourceRecord's
     *                       passed to _put.
-    * @return an empty map if Connect-managed offset commit is not desired, otherwise a map of offsets by topic-partition that are safe to commit.
+    * @return an empty map if Connect-managed offset commit is not desired, otherwise a map from offsets by topic-partition that are safe to commit.
     */
   protected def _preCommit(offsets: Map[TopicPartition, TopicOffset]): Map[TopicPartition, TopicOffset] = offsets
 
@@ -95,7 +94,7 @@ abstract class RowSinkTask extends SinkTask {
             RowSinkRecord(
               topic = r.topic(),
               key = r.key().asInstanceOf[Array[Byte]],
-              row = RowSerializer.from(r.value().asInstanceOf[Array[Byte]]),
+              row = Serializer.ROW.from(r.value().asInstanceOf[Array[Byte]]),
               partition = r.kafkaPartition(),
               offset = r.kafkaOffset(),
               timestamp = r.timestamp(),
@@ -138,7 +137,7 @@ abstract class RowSinkTask extends SinkTask {
 
   final override def flush(
     currentOffsets: util.Map[org.apache.kafka.common.TopicPartition, OffsetAndMetadata]): Unit = {
-    // this API in connector is embarrassing since it is a part of default implementation of preCommit...
+    // this API in connector is embarrassing since it is a part from default implementation from preCommit...
   }
 }
 case class TopicPartition(topic: String, partition: Int)

@@ -2,8 +2,8 @@ package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.rule.LargeTest
+import com.island.ohara.client.util.CloseOnce.doClose
+import com.island.ohara.common.rule.LargeTest
 import org.junit.Test
 import org.scalatest.Matchers
 

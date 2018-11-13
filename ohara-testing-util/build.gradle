@@ -1,8 +1,8 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 dependencies {
   implementation project(':ohara-common')
+  implementation project(':ohara-client')
   implementation libs.scala
   implementation libs.kafkaCore
   implementation libs.kafkaConnectJson
@@ -30,10 +30,10 @@ dependencies {
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
+  testImplementation project(':ohara-common').sourceSets.test.output
   testImplementation libs.scalatest
   testImplementation libs.mockito
   testImplementation libs.junit
-  testImplementation project(':ohara-common').sourceSets.test.output
 }
 
 /**

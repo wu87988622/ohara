@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.client.util.CloseOnce
 
 import scala.concurrent.duration.Duration
 
@@ -12,7 +12,7 @@ trait CallQueueServer[Request, Response] extends CloseOnce {
 
   /**
     * get and remove the latest undealt task.
-    * @param timeout how long to wait before giving up, in units of milliseconds
+    * @param timeout how long to wait before giving up, in units from milliseconds
     * @return None if specified waiting time elapses before an undealt task is available. Otherwise, a undealt task
     */
   def take(timeout: Duration): Option[CallQueueTask[Request, Response]]
@@ -24,12 +24,12 @@ trait CallQueueServer[Request, Response] extends CloseOnce {
   def take(): CallQueueTask[Request, Response]
 
   /**
-    * @return number of undealt task
+    * @return number from undealt task
     */
   def countOfUndealtTasks: Int
 
   /**
-    * @return number of processing task
+    * @return number from processing task
     */
   def countOfProcessingTasks: Int
 }

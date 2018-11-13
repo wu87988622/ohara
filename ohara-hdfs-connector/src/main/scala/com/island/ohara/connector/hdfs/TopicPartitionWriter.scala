@@ -1,10 +1,10 @@
 package com.island.ohara.connector.hdfs
 
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.island.ohara.connector.hdfs.text.{CSVRecordWriterOutput, RecordWriterOutput}
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
-import com.island.ohara.util.SystemUtil
 import com.typesafe.scalalogging.Logger
 
 /**
@@ -63,7 +63,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   def writer(): Unit = {
     //Use time commit from tmp file to data dir
     if (startTimeMS == TopicPartitionWriter.START_TIME_MILLIS_ZERO) {
-      startTimeMS = SystemUtil.current()
+      startTimeMS = CommonUtil.current()
     }
 
     //Time is up and have the tmp file then running commit file
@@ -79,7 +79,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     */
   def openTempFile(processLineCount: Int): Unit = {
     if (processLineCount == 0) {
-      val tmpFilePath = s"$tmpDir/${SystemUtil.current()}${FileUtils.FILENAME_ENDSWITH}"
+      val tmpFilePath = s"$tmpDir/${CommonUtil.current()}${FileUtils.FILENAME_ENDSWITH}"
       logger.info(s"create temp file path: $tmpFilePath")
       recordWriterOutput = new CSVRecordWriterOutput(config, storage, tmpFilePath)
       this.tmpFilePath = tmpFilePath
@@ -126,7 +126,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   }
 
   protected[hdfs] def isTimeCommit(startTimeMS: Long, rotateInterval: Long): Boolean = {
-    (SystemUtil.current() - startTimeMS) >= rotateInterval
+    (CommonUtil.current() - startTimeMS) >= rotateInterval
   }
 
   protected def commit(sourcePath: String, destPath: String): Unit = {

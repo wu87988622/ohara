@@ -11,10 +11,12 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.Consistency
-import com.island.ohara.io.{CloseOnce, IoUtil, UuidUtil}
 import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsonParser}
@@ -24,11 +26,11 @@ import scala.concurrent.duration.{Duration, _}
 import scala.reflect.{ClassTag, classTag}
 
 /**
-  * A simple impl of Configurator. This impl maintains all subclass of ohara data in a single ohara store.
+  * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
   * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
   *
-  * @param configuredHostname hostname of rest server
-  * @param configuredPort    port of rest server
+  * @param configuredHostname hostname from rest server
+  * @param configuredPort    port from rest server
   * @param store    store
   */
 class Configurator private[configurator] (configuredHostname: String,
@@ -57,7 +59,7 @@ class Configurator private[configurator] (configuredHostname: String,
   }
 
   /**
-    * the full route consists of all routes against all subclass of ohara data and a final route used to reject other requests.
+    * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
   private[this] val basicRoute: server.Route = pathPrefix(VERSION_V0)(
     Seq[server.Route](
@@ -134,7 +136,7 @@ class Configurator private[configurator] (configuredHostname: String,
 object Configurator {
   def builder() = new ConfiguratorBuilder()
 
-  val DEFAULT_UUID_GENERATOR: () => String = () => UuidUtil.uuid()
+  val DEFAULT_UUID_GENERATOR: () => String = () => CommonUtil.uuid()
   val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
   val DEFAULT_TERMINATION_TIMEOUT: Duration = 10 seconds
 
@@ -152,7 +154,7 @@ object Configurator {
 
   /**
     * Running a standalone configurator.
-    * NOTED: this main is exposed to build.gradle. If you want to move the main out of this class, please update the
+    * NOTED: this main is exposed to build.gradle. If you want to move the main out from this class, please update the
     * build.gradle also.
     *
     * @param args the first element is hostname and the second one is port
@@ -163,7 +165,7 @@ object Configurator {
       return
     }
     // TODO: make the parse more friendly
-    var hostname = IoUtil.anyLocalAddress
+    var hostname = CommonUtil.anyLocalAddress
     var port: Int = 0
     var brokers: Option[String] = None
     var workers: Option[String] = None
@@ -195,7 +197,7 @@ object Configurator {
               .builder()
               .brokers(brokers.get)
               .topicName(topicName)
-              .buildBlocking[String, Any])
+              .buildBlocking(Serializer.STRING, Serializer.OBJECT))
           .kafkaClient(KafkaClient(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
@@ -228,15 +230,15 @@ object Configurator {
     */
   @volatile private[configurator] var closeRunningConfigurator = false
 
-  private[configurator] class Store(store: com.island.ohara.configurator.store.BlockingStore[String, Any])
+  private[configurator] class Store(store: com.island.ohara.configurator.store.BlockingStore[String, AnyRef])
       extends CloseOnce {
     private[this] val consistency = Consistency.STRICT
 
     /**
-      * Remove a "specified" sublcass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
+      * Remove a "specified" sublcass from ohara data mapping the uuid. If the data mapping to the uuid is not the specified
       * type, an exception will be thrown.
       *
-      * @param uuid of ohara data
+      * @param uuid from ohara data
       * @tparam T subclass type
       * @return the removed data
       */
@@ -251,7 +253,7 @@ object Configurator {
       * update an existed object in the store. If the uuid doesn't  exists, an exception will be thrown.
       *
       * @param data data
-      * @tparam T type of data
+      * @tparam T type from data
       * @return the removed data
       */
     def update[T <: Data: ClassTag](data: T): T =
@@ -263,7 +265,7 @@ object Configurator {
       * add an new object to the store. If the uuid already exists, an exception will be thrown.
       *
       * @param data data
-      * @tparam T type of data
+      * @tparam T type from data
       */
     def add[T <: Data: ClassTag](data: T): Unit =
       if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance))
@@ -280,12 +282,12 @@ object Configurator {
       store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 
     /**
-      * Retrieve a "specified" subclass of ohara data mapping the uuid. If the data mapping to the uuid is not the specified
+      * Retrieve a "specified" subclass from ohara data mapping the uuid. If the data mapping to the uuid is not the specified
       * type, the None will be returned.
       *
-      * @param uuid of ohara data
+      * @param uuid from ohara data
       * @tparam T subclass type
-      * @return a subclass of ohara data
+      * @return a subclass from ohara data
       */
     def data[T <: Data: ClassTag](uuid: String): T =
       store

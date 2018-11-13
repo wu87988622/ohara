@@ -4,9 +4,11 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.io.{CloseOnce, UuidUtil}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
-import com.island.ohara.util.SystemUtil
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
@@ -22,7 +24,7 @@ import scala.reflect.ClassTag
   *
   * User can use this class to send the (action, ohara data) to another node.
   * (If the store is a distributed impl, the another node can be a remote node). If you want to make a distributed
-  * call queue server service, passing the same group id build the call queue server, and make the number of topic partition
+  * call queue server service, passing the same group id build the call queue server, and make the number from topic partition
   * be bigger than zero. The kafak balancer can make the request to call queue server be balanced
   *
   * @param brokers KAFKA server
@@ -31,11 +33,11 @@ import scala.reflect.ClassTag
   * @tparam Request the supported request type
   * @tparam Response the supported response type
   */
-private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
-                                                               requestTopic: String,
-                                                               responseTopic: String,
-                                                               groupId: String,
-                                                               pollTimeout: Duration)
+private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers: String,
+                                                                         requestTopic: String,
+                                                                         responseTopic: String,
+                                                                         groupId: String,
+                                                                         pollTimeout: Duration)
     extends CallQueueServer[Request, Response] {
 
   private[this] val log = Logger(getClass.getName)
@@ -54,7 +56,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   /**
     * the uuid for this instance
     */
-  private[this] val uuid = UuidUtil.uuid()
+  private[this] val uuid = CommonUtil.uuid()
 
   /**
     * Initialize the topic
@@ -81,7 +83,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
   }
 
   private[this] val producer = newOrClose {
-    Producer.builder().brokers(brokers).build[Any, Any]
+    Producer.builder().brokers(brokers).build(Serializer.OBJECT, Serializer.OBJECT)
   }
 
   private[this] val consumer = newOrClose {
@@ -89,24 +91,24 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
       .builder()
       .brokers(brokers)
       .offsetAfterLatest()
-      // the uuid of requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
+      // the uuid from requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
       // distribute the request.
       .groupId(groupId)
       .topicName(requestTopic)
-      .build[Any, Any]
+      .build(Serializer.OBJECT, Serializer.OBJECT)
   }
 
   private[call] val undealtTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
   private[call] val processingTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
 
-  private[this] def sendToKafka(key: Any, value: Any): Unit = {
+  private[this] def sendToKafka(key: AnyRef, value: AnyRef): Unit = {
     producer.sender().key(key).value(value).send(responseTopic)
     producer.flush()
   }
 
   private[this] def createCallQueueTask(internalRequest: CallQueueRequest, clientRequest: Request) =
     new CallQueueTask[Request, Response]() {
-      private[this] var response: Any = _
+      private[this] var response: AnyRef = _
       override def request: Request = clientRequest
 
       override def complete(_res: Response): Unit = if (response != null)
@@ -123,7 +125,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
         send(CallQueueResponse(responseUuid(), internalRequest.uuid), response)
       }
 
-      def send(key: Any, value: Any): Unit = try {
+      def send(key: AnyRef, value: AnyRef): Unit = try {
         processingTasks.remove(this)
         sendToKafka(key, value)
       } catch {
@@ -150,8 +152,8 @@ private class CallQueueServerImpl[Request: ClassTag, Response](brokers: String,
             .foreach(record => {
               record.key.foreach {
                 case internalRequest: CallQueueRequest =>
-                  if (internalRequest.lease.toMillis <= SystemUtil.current())
-                    log.debug(s"the lease of request is violated")
+                  if (internalRequest.lease.toMillis <= CommonUtil.current())
+                    log.debug(s"the lease from request is violated")
                   else
                     record.value.foreach {
                       case clientRequest: Request =>

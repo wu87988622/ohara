@@ -3,10 +3,11 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.store.Consistency._
-import com.island.ohara.io.{CloseOnce, UuidUtil}
 import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
-import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
@@ -22,9 +23,9 @@ import scala.util.{Failure, Success}
   * NOTED: This class require the kafka serializer and deserializer. They are used to convert the object to byte array.
   * Without the requried configs, you will fail to instantiate this class
   *
-  * NOTED: There are two kind of execution order in this class. 1) the caller order happening in update/remove. 2) data commit order. We take later
+  * NOTED: There are two kind from execution order in this class. 1) the caller order happening in update/remove. 2) data commit order. We take later
   * to complete the consistent order. For example, there are two callers A) and B). A call the update before B. However, the data updated by
-  * B is committed before A. So the TopicStore#update will return the data of B to A.
+  * B is committed before A. So the TopicStore#update will return the data from B to A.
   *
   * NOTED: Since we view the topic as persistent storage, this class will reset the offset to the beginner to load all data from topic. If
   * you try to change the offset, the side-effect is that the data may be loss.
@@ -49,7 +50,7 @@ private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: 
     * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
     * TODO: make sure this uuid is unique in a distributed cluster. by chia
     */
-  val uuid: String = UuidUtil.uuid()
+  val uuid: String = CommonUtil.uuid()
 
   implicit val executor: ExecutionContextExecutorService =
     ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
@@ -195,7 +196,7 @@ private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: 
   /**
     * Override the size to provide the efficient implementation
     *
-    * @return size of this store
+    * @return size from this store
     */
   override def size: Int = cache.size
 

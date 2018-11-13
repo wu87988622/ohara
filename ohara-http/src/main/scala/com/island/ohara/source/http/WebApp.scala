@@ -4,11 +4,11 @@ import java.util.concurrent.ConcurrentHashMap
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Route
-import com.island.ohara.data.Row
+import com.island.ohara.common.data.Row
 import com.island.ohara.kafka.Producer
 
 /**
-  * Use for creating the center of the routing directive
+  * Use for creating the center from the routing directive
   *
   * @param producer Producer
   * @param schemaMap

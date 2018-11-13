@@ -2,8 +2,8 @@ package com.island.ohara.connector.hdfs.storage
 
 import java.io.{InputStream, OutputStream}
 
+import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.rule.LargeTest
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Test}
 import org.scalatest.Matchers

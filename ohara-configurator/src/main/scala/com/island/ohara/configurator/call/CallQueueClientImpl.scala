@@ -4,9 +4,10 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.io.{CloseOnce, UuidUtil}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
-import com.island.ohara.util.SystemUtil
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.errors.WakeupException
@@ -27,11 +28,11 @@ import scala.reflect.ClassTag
   * @tparam Request  the supported request type
   * @tparam Response the supported response type
   */
-private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
-                                                               requestTopic: String,
-                                                               responseTopic: String,
-                                                               pollTimeout: Duration,
-                                                               expirationCleanupTime: Duration)
+private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag](brokers: String,
+                                                                         requestTopic: String,
+                                                                         responseTopic: String,
+                                                                         pollTimeout: Duration,
+                                                                         expirationCleanupTime: Duration)
     extends CallQueueClient[Request, Response] {
 
   private[this] val logger = Logger(getClass.getName)
@@ -50,7 +51,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
   /**
     * the uuid for this instance
     */
-  private[this] val uuid: String = UuidUtil.uuid()
+  private[this] val uuid: String = CommonUtil.uuid()
 
   /**
     * check the topics
@@ -66,7 +67,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     * used to publish the request.
     */
   private[this] val producer = newOrClose {
-    Producer.builder().brokers(brokers).build[Any, Any]
+    Producer.builder().brokers(brokers).build(Serializer.OBJECT, Serializer.OBJECT)
   }
 
   /**
@@ -76,16 +77,16 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     Consumer
       .builder()
       .brokers(brokers)
-      // the uuid of requestConsumer is random since we want to check all response.
+      // the uuid from requestConsumer is random since we want to check all response.
       .groupId(uuid)
       .offsetAfterLatest()
       .topicName(responseTopic)
-      .build[Any, Any]
+      .build(Serializer.OBJECT, Serializer.OBJECT)
   }
 
   /**
     * store the response handler against the CallQueueResponse.
-    * We use ConcurrentSkipListMap rather than ConcurrentHashMap because we need the method of polling the first element.
+    * We use ConcurrentSkipListMap rather than ConcurrentHashMap because we need the method from polling the first element.
     */
   private[this] val responseReceivers = new ConcurrentSkipListMap[String, ResponseReceiver]()
 
@@ -169,7 +170,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
 
   override def request(request: Request, timeout: Duration): Future[Either[Error, Response]] = {
     checkClose()
-    val lease = timeout + (SystemUtil.current() milliseconds)
+    val lease = timeout + (CommonUtil.current() milliseconds)
     val internalRequest = CallQueueRequest(requestUuid(), lease)
     val receiver = new ResponseReceiver(internalRequest.uuid, lease)
     responseReceivers.put(internalRequest.uuid, receiver)
@@ -241,7 +242,7 @@ private class CallQueueClientImpl[Request, Response: ClassTag](brokers: String,
     /**
       * @return true if this request is expired. false otherwise.
       */
-    def isTimeout: Boolean = lease.toMillis <= SystemUtil.current()
+    def isTimeout: Boolean = lease.toMillis <= CommonUtil.current()
 
     def future: Future[Either[Error, Response]] = promise.future
   }

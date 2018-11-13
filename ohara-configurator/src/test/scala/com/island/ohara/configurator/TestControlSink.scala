@@ -5,8 +5,9 @@ import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.io.CloseOnce.doClose
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce.doClose
+import com.island.ohara.common.data.Serializer
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkRecord, RowSinkTask, TaskConfig}
 import org.junit.{After, Test}
@@ -23,7 +24,12 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(Store.builder().topicName(topicName).brokers(testUtil.brokersConnProps).buildBlocking[String, Any])
+      .store(
+        Store
+          .builder()
+          .topicName(topicName)
+          .brokers(testUtil.brokersConnProps)
+          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()

@@ -1,7 +1,8 @@
 package com.island.ohara.integration
 import java.util
 
-import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CommonUtil
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.utils.Time
 import org.apache.kafka.connect.runtime.{Connect, Worker, WorkerConfig}
@@ -40,8 +41,8 @@ object Workers {
     val availablePorts = ports.map(port => if (port <= 0) availablePort() else port)
     val connects = availablePorts.map { port =>
       val config = new mutable.HashMap[String, String]()
-      // reduce the number of partitions and replicas to speedup the mini cluster
-      // for config storage. the partition of config topic is always 1 so we needn't to set it to 1 here.
+      // reduce the number from partitions and replicas to speedup the mini cluster
+      // for config storage. the partition from config topic is always 1 so we needn't to set it to 1 here.
       config += (DistributedConfig.CONFIG_TOPIC_CONFIG -> "connect-configs")
       config += (DistributedConfig.CONFIG_STORAGE_REPLICATION_FACTOR_CONFIG -> 1.toString)
       // for offset storage
@@ -70,7 +71,7 @@ object Workers {
       import scala.collection.JavaConverters._
       val distConfig = new DistributedConfig(config.asJava)
       val rest = new RestServer(distConfig)
-      val workerId = s"${IoUtil.hostname}:${rest.advertisedUrl().getPort}"
+      val workerId = s"${CommonUtil.hostname}:${rest.advertisedUrl().getPort}"
       val offsetBackingStore = new KafkaOffsetBackingStore
       offsetBackingStore.configure(distConfig)
       val time = Time.SYSTEM
@@ -92,7 +93,7 @@ object Workers {
       connect
     }
     new Workers {
-      override def connectionProps: String = availablePorts.map(p => s"${IoUtil.hostname}:$p").mkString(",")
+      override def connectionProps: String = availablePorts.map(p => s"${CommonUtil.hostname}:$p").mkString(",")
       override protected def doClose(): Unit = {
         connects.foreach(_.stop())
         connects.foreach(_.awaitStop())

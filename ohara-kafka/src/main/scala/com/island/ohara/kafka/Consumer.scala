@@ -1,9 +1,9 @@
 package com.island.ohara.kafka
 import java.util.{Objects, Properties}
 
-import com.island.ohara.io.{CloseOnce, UuidUtil}
-import com.island.ohara.serialization.Serializer
-import com.island.ohara.util.SystemUtil
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 
@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 
 /**
-  * a simple scala wrap of kafka consumer.
+  * a simple scala wrap from kafka consumer.
   * @tparam K key type
   * @tparam V value type
   */
@@ -25,10 +25,10 @@ trait Consumer[K, V] extends CloseOnce {
   def poll(timeout: Duration): Seq[ConsumerRecord[K, V]]
 
   /**
-    * It accept another condition - expected size of records. Somethins it is helpful if you already know
-    * the number of records which should be returned.
+    * It accept another condition - expected size from records. Somethins it is helpful if you already know
+    * the number from records which should be returned.
     * @param timeout timeout
-    * @param expectedSize the number of records should be returned
+    * @param expectedSize the number from records should be returned
     */
   def poll(timeout: Duration,
            expectedSize: Int,
@@ -40,12 +40,12 @@ trait Consumer[K, V] extends CloseOnce {
       if (expectedSize == Int.MaxValue) new ArrayBuffer[ConsumerRecord[K, V]]()
       else new ArrayBuffer[ConsumerRecord[K, V]](expectedSize)
     val endtime = System.currentTimeMillis() + timeout.toMillis
-    var ramaining = endtime - SystemUtil.current()
+    var ramaining = endtime - CommonUtil.current()
 
     while (!stop() && buf.size < expectedSize && ramaining > 0) {
       import scala.concurrent.duration._
       buf ++= filter(poll(ramaining millis))
-      ramaining = endtime - SystemUtil.current()
+      ramaining = endtime - CommonUtil.current()
     }
     buf
   }
@@ -68,7 +68,7 @@ object Consumer {
 final class ConsumerBuilder {
   protected var fromBegin: OffsetResetStrategy = OffsetResetStrategy.LATEST
   protected var topicNames: Seq[String] = _
-  protected var groupId: String = s"ohara-consumer-${UuidUtil.uuid}"
+  protected var groupId: String = s"ohara-consumer-${CommonUtil.uuid}"
   protected var brokers: String = _
 
   /**
@@ -175,7 +175,7 @@ final class ConsumerBuilder {
 }
 
 /**
-  * a scala wrap of kafka's consumer record.
+  * a scala wrap from kafka's consumer record.
   * @param topic topic name
   * @param key key (nullable)
   * @param value value

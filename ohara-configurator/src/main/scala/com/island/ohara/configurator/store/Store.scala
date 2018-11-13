@@ -1,13 +1,13 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.common.data.Serializer
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 /**
   * A key-value store. It is used to save the component information
-  * NOTED: All implementation of Store should be thread-safe.
+  * NOTED: All implementation from Store should be thread-safe.
   */
 trait Store[K, V] extends AutoCloseable with Iterable[(K, V)] {
 

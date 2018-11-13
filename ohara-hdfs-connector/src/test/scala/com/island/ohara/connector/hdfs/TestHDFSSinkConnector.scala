@@ -6,13 +6,12 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.integration._
-import com.island.ohara.io.ByteUtil
-import com.island.ohara.io.CloseOnce._
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.util.ByteUtil
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
-import com.island.ohara.serialization.DataType
 import org.apache.hadoop.fs.Path
 import org.junit.Test
 import org.scalatest.Matchers
@@ -82,15 +81,15 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 100
-    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
+    val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
-    val fileSystem = testUtil.hdfs.fileSystem
+    val fileSystem = testUtil.hdfs.fileSystem()
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }
@@ -156,11 +155,11 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 200
-    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
+    val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
-    val fileSystem = testUtil.hdfs.fileSystem
+    val fileSystem = testUtil.hdfs.fileSystem()
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
@@ -169,7 +168,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }
@@ -240,7 +239,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val connectorName = methodName
     val topicName = methodName
     val rowCount = 100
-    val row = Row(Cell("cf0", 10), Cell("cf1", 11))
+    val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
     val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
     val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
 
@@ -248,7 +247,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
     }

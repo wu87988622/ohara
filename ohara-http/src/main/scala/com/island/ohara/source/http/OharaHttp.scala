@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 /**
-  * The entry point of Ohara-HTTP
+  * The entry point from Ohara-HTTP
   */
 object OharaHttp {
 
@@ -26,7 +26,7 @@ object OharaHttp {
       // TODO: implement receiving real Ohara HTTP Command
 
       // This is just a example.
-      // After knowing how to pull the command of start and stop, it can implement the rest.
+      // After knowing how to pull the command from start and stop, it can implement the rest.
       val httpCommand = "start"
       httpCommand match {
         case "start" =>

@@ -35,7 +35,7 @@ else
     CLASS="com.island.ohara.demo.Backend"
     shift 1
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
-    CLASS="com.island.ohara.util.VersionUtil"
+    CLASS="com.island.ohara.common.util.VersionUtil"
     shift 1
   elif [ "$service" == "help" ]; then
     echo "Usage:"

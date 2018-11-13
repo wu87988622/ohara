@@ -1,15 +1,15 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 dependencies {
+  implementation project(':ohara-common')
+  implementation project(':ohara-client')
+  implementation project(':ohara-kafka')
   implementation libs.scala
   implementation libs.scalaLogging
   implementation libs.slf4jApi
   implementation libs.slf4jlog4j
   implementation libs.sprayJson
   implementation libs.kafkaConnectRuntime
-  implementation project(':ohara-common')
-  implementation project(':ohara-kafka')
   testImplementation project(":ohara-testing-util")
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output

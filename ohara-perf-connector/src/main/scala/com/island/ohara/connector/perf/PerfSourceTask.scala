@@ -1,10 +1,8 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.ByteUtil
+import com.island.ohara.common.data.{Cell, DataType, Row}
+import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
-import com.island.ohara.serialization.DataType
-import com.island.ohara.util.SystemUtil
 
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _
@@ -20,11 +18,11 @@ class PerfSourceTask extends RowSourceTask {
   override protected def _stop(): Unit = {}
 
   override protected def _poll(): Seq[RowSourceRecord] = {
-    val current = SystemUtil.current()
+    val current = CommonUtil.current()
     if (current - lastPoll > props.freq.toMillis) {
-      val row: Row = Row(
+      val row: Row = Row.of(
         schema.sortBy(_.order).map { c =>
-          Cell(
+          Cell.of(
             c.name,
             c.dataType match {
               case DataType.BOOLEAN => false

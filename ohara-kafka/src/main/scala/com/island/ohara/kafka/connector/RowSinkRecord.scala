@@ -1,6 +1,6 @@
 package com.island.ohara.kafka.connector
 
-import com.island.ohara.data.Row
+import com.island.ohara.common.data.Row
 
 /**
   * The methods it have are almost same with SinkRecord.

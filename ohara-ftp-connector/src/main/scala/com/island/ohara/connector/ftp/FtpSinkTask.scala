@@ -2,10 +2,12 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 
 import com.island.ohara.client.FtpClient
+import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.connector.ftp.FtpSinkTask._
-import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
+
+import scala.collection.JavaConverters._
 class FtpSinkTask extends RowSinkTask {
   private[this] var config: TaskConfig = _
   private[this] var props: FtpSinkTaskProps = _
@@ -24,12 +26,14 @@ class FtpSinkTask extends RowSinkTask {
   override protected def _put(records: Seq[RowSinkRecord]): Unit = try {
     val result = records
     // process only matched column name
-      .filter(record => config.schema.map(_.name).forall(name => record.row.exists(_.name == name)))
+      .filter(record => config.schema.map(_.name).forall(name => record.row.cells().asScala.exists(_.name == name)))
       // to line
       .map(record => {
         (record,
          record.row
-         // pass if there is no schema
+           .cells()
+           .asScala
+           // pass if there is no schema
            .filter(c => config.schema.isEmpty || config.schema.exists(_.name == c.name))
            //
            .zipWithIndex
@@ -37,7 +41,6 @@ class FtpSinkTask extends RowSinkTask {
              case (c, index) =>
                (if (config.schema.isEmpty) index else config.schema.find(_.name == c.name).get.order, c.value)
            }
-           .toSeq
            .sortBy(_._1)
            .map(_._2.toString)
            .mkString(","))
@@ -53,7 +56,7 @@ class FtpSinkTask extends RowSinkTask {
       if (needHeader) {
         val header =
           if (config.schema.nonEmpty) config.schema.sortBy(_.order).map(_.newName).mkString(",")
-          else result.head._1.row.map(_.name).mkString(",")
+          else result.head._1.row.cells().asScala.map(_.name).mkString(",")
         writer.append(header)
         writer.newLine()
       }

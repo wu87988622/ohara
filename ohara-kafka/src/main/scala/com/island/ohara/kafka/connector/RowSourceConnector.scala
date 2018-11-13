@@ -2,7 +2,7 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.common.util.VersionUtil
 import org.apache.kafka.common.config.{Config, ConfigDef}
 import org.apache.kafka.connect.connector.{ConnectorContext, Task}
 import org.apache.kafka.connect.source.SourceConnector
@@ -24,7 +24,7 @@ abstract class RowSourceConnector extends SourceConnector {
   /**
     * Return the configs for source task.
     *
-    * @return a seq of configs
+    * @return a seq from configs
     */
   protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig]
 
@@ -49,7 +49,7 @@ abstract class RowSourceConnector extends SourceConnector {
   protected def _config: ConfigDef = new ConfigDef()
 
   /**
-    * Get the version of this connector.
+    * Get the version from this connector.
     *
     * @return the version, formatted as a String
     */

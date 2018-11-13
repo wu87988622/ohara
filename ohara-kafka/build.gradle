@@ -1,8 +1,8 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 dependencies {
   implementation project(':ohara-common')
+  implementation project(':ohara-client')
   implementation libs.akkaStream
   implementation libs.sprayJson
   implementation libs.kafkaClient

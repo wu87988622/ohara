@@ -4,9 +4,10 @@ import java.nio.charset.Charset
 
 import com.island.ohara.client.{FileType, FtpClient}
 import com.island.ohara.integration.FtpServer
-import com.island.ohara.io.{ByteUtil, CloseOnce}
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.rule.MediumTest
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.ByteUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 

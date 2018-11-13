@@ -13,16 +13,15 @@ import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.{CloseOnce, IoUtil}
-import com.island.ohara.io.CloseOnce._
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
-import com.island.ohara.serialization.DataType
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
@@ -30,7 +29,12 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(Store.builder().topicName(random()).brokers(testUtil.brokersConnProps).buildBlocking[String, Any])
+      .store(
+        Store
+          .builder()
+          .topicName(random())
+          .brokers(testUtil.brokersConnProps)
+          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
@@ -54,12 +58,12 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     )
 
     val rows: Seq[Row] = Seq(
-      Row(Cell("name", "chia"), Cell("ranking", 1), Cell("single", false)),
-      Row(Cell("name", "jack"), Cell("ranking", 99), Cell("single", true))
+      Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
+      Row.of(Cell.of("name", "jack"), Cell.of("ranking", 99), Cell.of("single", true))
     )
-    val header: String = rows.head.map(_.name).mkString(",")
+    val header: String = rows.head.cells().asScala.map(_.name).mkString(",")
     val data: Seq[String] = rows.map(row => {
-      row.map(_.value.toString).mkString(",")
+      row.cells().asScala.map(_.value.toString).mkString(",")
     })
 
     // setup env
@@ -100,7 +104,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .brokers(testUtil.brokersConnProps)
           .offsetFromBegin()
           .topicName(topic.uuid)
-          .build[Array[Byte], Row]) { consumer =>
+          .build(Serializer.BYTES, Serializer.ROW)) { consumer =>
         val records = consumer.poll(20 seconds, rows.length)
         records.length shouldBe rows.length
         records(0).value.get shouldBe rows(0)
@@ -125,14 +129,14 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     )
 
     val rows: Seq[Row] = Seq(
-      Row(Cell("name", "chia"), Cell("ranking", 1), Cell("single", false)),
-      Row(Cell("name", "jack"), Cell("ranking", 99), Cell("single", true))
+      Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
+      Row.of(Cell.of("name", "jack"), Cell.of("ranking", 99), Cell.of("single", true))
     )
     val data: Seq[String] = rows.map(row => {
-      row.map(_.value.toString).mkString(",")
+      row.cells().asScala.map(_.value.toString).mkString(",")
     })
 
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build[Array[Byte], Row]) { producer =>
+    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
       rows.foreach(row => producer.sender().value(row).send(topic.uuid))
     }
 
@@ -163,7 +167,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         ftpClient
           .listFileNames(sinkProps.output)
           .foreach(name => {
-            val lines = ftpClient.readLines(IoUtil.path(sinkProps.output, name))
+            val lines = ftpClient.readLines(CommonUtil.path(sinkProps.output, name))
             lines.length shouldBe 2
             lines(0) shouldBe data(0)
             lines(1) shouldBe data(1)

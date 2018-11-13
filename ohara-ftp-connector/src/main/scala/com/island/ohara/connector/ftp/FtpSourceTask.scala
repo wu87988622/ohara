@@ -2,13 +2,12 @@ package com.island.ohara.connector.ftp
 
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.{Cell, DataType, Row}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
-import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.{CloseOnce, IoUtil, UuidUtil}
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
-import com.island.ohara.serialization.DataType
-import com.island.ohara.util.SystemUtil
 
 import scala.collection.mutable
 
@@ -35,7 +34,7 @@ class FtpSourceTask extends RowSourceTask {
     */
   private[ftp] def listInputFiles(): Seq[String] = try ftpClient
     .listFileNames(props.inputFolder)
-    .map(IoUtil.path(props.inputFolder, _))
+    .map(CommonUtil.path(props.inputFolder, _))
     .filter(_.hashCode % props.total == props.hash)
   catch {
     case e: Throwable =>
@@ -48,9 +47,9 @@ class FtpSourceTask extends RowSourceTask {
     * @param path file under input folder
     */
   private[ftp] def handleErrorFile(path: String): Unit = try {
-    val outputPath = IoUtil.replaceParent(props.errorFolder, path)
+    val outputPath = CommonUtil.replaceParent(props.errorFolder, path)
     if (ftpClient.exist(outputPath)) {
-      val newPath = outputPath + s".${UuidUtil.uuid()}"
+      val newPath = outputPath + s".${CommonUtil.uuid()}"
       if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
       else ftpClient.moveFile(path, newPath)
     } else ftpClient.moveFile(path, outputPath)
@@ -66,9 +65,9 @@ class FtpSourceTask extends RowSourceTask {
     props.completedFolder
       .map(folder =>
         () => {
-          val outputPath = IoUtil.replaceParent(folder, path)
+          val outputPath = CommonUtil.replaceParent(folder, path)
           if (ftpClient.exist(outputPath)) {
-            val newPath = outputPath + s".${UuidUtil.uuid()}"
+            val newPath = outputPath + s".${CommonUtil.uuid()}"
             if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
             else ftpClient.moveFile(path, newPath)
           } else ftpClient.moveFile(path, outputPath)
@@ -84,7 +83,7 @@ class FtpSourceTask extends RowSourceTask {
   /**
     * read all lines from a ftp file, and then convert them to cells.
     * @param path ftp file
-    * @return a map of (offset, cells)
+    * @return a map from (offset, cells)
     */
   private[ftp] def toRow(path: String): Map[Int, Seq[Cell[String]]] = {
     val lineAndIndex =
@@ -109,7 +108,7 @@ class FtpSourceTask extends RowSourceTask {
                .split(CSV_REGEX)
                .zipWithIndex
                .map {
-                 case (item, index) => Cell(header(index), item)
+                 case (item, index) => Cell.of(header(index), item)
                }
                .toSeq)
         }
@@ -124,23 +123,25 @@ class FtpSourceTask extends RowSourceTask {
     * 3) convert the string to specified type
     *
     * @param input input cells
-    * @return map of (order, row)
+    * @return map from (order, row)
     */
+  import scala.collection.JavaConverters._
   private[ftp] def transform(input: Map[Int, Seq[Cell[String]]]): Map[Int, Row] = if (schema.isEmpty) input.map {
-    case (index, cells) => (index, Row(cells: _*))
+    case (index, cells) => (index, Row.of(cells: _*))
   } else
     input.map {
       case (index, cells) =>
         (index,
-         Row(
+         Row.of(
            schema
              .sortBy(_.order)
              .map(column => {
                val value = cells.find(_.name == column.name).get.value
-               Cell(
+               Cell.of(
                  column.newName,
                  column.dataType match {
                    case DataType.BOOLEAN => value.toBoolean
+                   case DataType.BYTE    => value.toByte
                    case DataType.SHORT   => value.toShort
                    case DataType.INT     => value.toInt
                    case DataType.LONG    => value.toLong
@@ -195,7 +196,7 @@ class FtpSourceTask extends RowSourceTask {
 }
 
 /**
-  * used to manage the offset of files
+  * used to manage the offset from files
   */
 trait OffsetCache {
 
@@ -209,15 +210,15 @@ trait OffsetCache {
   /**
     * add (index, path) to the cache
     * @param path file path
-    * @param index index of line
+    * @param index index from line
     */
   def update(path: String, index: Int): Unit
 
   /**
-    * check whether the index of path is processed.
+    * check whether the index from path is processed.
     * @param path file path
-    * @param index index of line
-    * @return true if the index of line isn't processed. otherwise, false
+    * @param index index from line
+    * @return true if the index from line isn't processed. otherwise, false
     */
   def predicate(path: String, index: Int): Boolean
 }

@@ -1,7 +1,7 @@
 package com.island.ohara.integration
 
-import com.island.ohara.io.CloseOnce.close
-import com.island.ohara.rule.MediumTest
+import com.island.ohara.client.util.CloseOnce.close
+import com.island.ohara.common.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
 

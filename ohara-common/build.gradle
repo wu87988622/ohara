@@ -1,5 +1,4 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 dependencies {
   implementation libs.commonsNet
@@ -54,23 +53,25 @@ def date() {
 
 task initializer {
   doLast {
-    def file = new File("$projectDir" + "/src/main/scala/com/island/ohara/util/VersionUtil.scala")
+    def file = new File("$projectDir" + "/src/main/java/com/island/ohara/common/util/VersionUtil.java")
     if (file.exists()) file.delete()
     def writer = new FileWriter(file)
     try {
-      def code = """package com.island.ohara.util
+      def code = """package com.island.ohara.common.util;
+// DON'T touch this file!!! It is generated dynamically. see ohara-common/build.gradle
+public final class VersionUtil {
+  public static final String VERSION = \"${project.version}\";
+  public static final String USER = \"${user()}\";
+  public static final String REVISION = \"${revision()}\";
+  public static final String DATE = \"${date()}\";
 
-object VersionUtil {
-  val VERSION: String = \"${project.version}\"
-  val USER: String = \"${user()}\"
-  val REVISION: String = \"${revision()}\"
-  val DATE: String = \"${date()}\"
-
-  def main(args: Array[String]): Unit = {
-    println(s\"ohara \$VERSION\")
-    println(s\"revision=\$REVISION\")
-    println(s\"Compiled by \$USER on \$DATE\")
+  public static void main(String[] args) {
+    System.out.println(\"ohara \" + VERSION);
+    System.out.println(\"revision=\" + REVISION);
+    System.out.println(\"Compiled by \" + USER + \" on \" + DATE);
   }
+
+  private VersionUtil() {}
 }
 """
       writer.write(code)

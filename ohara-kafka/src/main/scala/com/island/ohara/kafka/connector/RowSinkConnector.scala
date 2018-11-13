@@ -2,7 +2,7 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.common.util.VersionUtil
 import org.apache.kafka.common.config.{Config, ConfigDef}
 import org.apache.kafka.connect.connector.{ConnectorContext, Task}
 import org.apache.kafka.connect.sink.SinkConnector
@@ -37,7 +37,7 @@ abstract class RowSinkConnector extends SinkConnector {
   /**
     * Return the configs for source task.
     * NOTED: It is illegal to assign different topics to RowSinkTask
-    * @return a seq of configs
+    * @return a seq from configs
     */
   protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig]
 
@@ -49,7 +49,7 @@ abstract class RowSinkConnector extends SinkConnector {
   protected def _config: ConfigDef = new ConfigDef()
 
   /**
-    * Get the version of this connector.
+    * Get the version from this connector.
     *
     * @return the version, formatted as a String
     */
@@ -63,7 +63,7 @@ abstract class RowSinkConnector extends SinkConnector {
     */
   final override def taskConfigs(maxTasks: Int): util.List[util.Map[String, String]] = {
     val tasks = _taskConfigs(maxTasks: Int)
-    // kafka always overwrite the topics of task so we throw a exception early in order to mislead the usage of task configuration
+    // kafka always overwrite the topics from task so we throw a exception early in order to mislead the usage from task configuration
     tasks.foreach(
       t =>
         if (t.topics != internalConfig.topics)

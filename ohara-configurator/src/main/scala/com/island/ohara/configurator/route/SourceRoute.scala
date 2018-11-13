@@ -7,9 +7,9 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
-import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 
 private[configurator] object SourceRoute extends SprayJsonSupport {
@@ -31,12 +31,12 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
       numberOfTasks = request.numberOfTasks,
       state = None,
       configs = request.configs,
-      lastModified = SystemUtil.current()
+      lastModified = CommonUtil.current()
     )
 
   private[this] def verify(request: SourceRequest): SourceRequest = {
     if (request.schema.exists(_.order < 1))
-      throw new IllegalArgumentException(s"invalid order of column:${request.schema.map(_.order)}")
+      throw new IllegalArgumentException(s"invalid order from column:${request.schema.map(_.order)}")
     if (request.schema.map(_.order).toSet.size != request.schema.size)
       throw new IllegalArgumentException(s"duplicate order:${request.schema.map(_.order)}")
     request
@@ -97,7 +97,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
                 .topics(source.topics)
                 .numberOfTasks(source.numberOfTasks)
                 .create()
-              // update the stats manually. Connector request is executed async so we can't get the "real-time" state of
+              // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
               // connector from kafka
               store.update[Source](source.copy(state = Some(State.RUNNING)))
             }
@@ -108,7 +108,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             val source = store.data[Source](uuid)
             if (connectorClient.exist(uuid)) {
               connectorClient.delete(source.uuid)
-              // update the stats manually. Connector request is executed async so we can't get the "real-time" state of
+              // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
               // connector from kafka
               store.update[Source](source.copy(state = None))
             }
@@ -121,7 +121,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
               throw new IllegalArgumentException(
                 s"Connector is not running , using start command first . UUID: $uuid !!!")
             connectorClient.pause(source.uuid)
-            // update the stats manually. Connector request is executed async so we can't get the "real-time" state of
+            // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
             store.update[Source](source.copy(state = Some(State.PAUSED)))
             complete(StatusCodes.OK)
@@ -133,7 +133,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
               throw new IllegalArgumentException(
                 s"Connector is not running , using start command first . UUID: $uuid !!!")
             connectorClient.resume(source.uuid)
-            // update the stats manually. Connector request is executed async so we can't get the "real-time" state of
+            // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
             store.update[Source](source.copy(state = Some(State.RUNNING)))
             complete(StatusCodes.OK)

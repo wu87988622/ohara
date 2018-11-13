@@ -1,12 +1,12 @@
 package com.island.ohara.connector.ftp
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, DataType, Row}
 import com.island.ohara.integration.FtpServer
-import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
-import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.DataType
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -80,13 +80,13 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     // start with 1 since the 0 is header
     Map(
       1 -> header.zipWithIndex.map {
-        case (h, index) => Cell(h, line0(index))
+        case (h, index) => Cell.of(h, line0(index))
       },
       2 -> header.zipWithIndex.map {
-        case (h, index) => Cell(h, line1(index))
+        case (h, index) => Cell.of(h, line1(index))
       },
       3 -> header.zipWithIndex.map {
-        case (h, index) => Cell(h, line2(index))
+        case (h, index) => Cell.of(h, line2(index))
       }
     )
   }
@@ -135,7 +135,8 @@ class TestFtpSourceTask extends SmallTest with Matchers {
       .build()
     try {
       val data = (0 to 100).map(_.toString)
-      (0 until numberOfInputs).foreach(index => ftpClient.attach(IoUtil.path(props.inputFolder, index.toString), data))
+      (0 until numberOfInputs).foreach(index =>
+        ftpClient.attach(CommonUtil.path(props.inputFolder, index.toString), data))
     } finally ftpClient.close()
 
     val task = createTask()
@@ -144,7 +145,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testToRow(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val task = createTask()
     task.cache = new FakeOffsetCache
@@ -154,7 +155,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testToRowIfAllCached(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val task = createTask()
     task.cache = new OffsetCache {
@@ -170,7 +171,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testHandleCompletedFile(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     setupInputData(path)
     val task = createTask()
     task.handleCompletedFile(path)
@@ -179,7 +180,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testHandleErrorFile(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     setupInputData(path)
     val task = createTask()
     task.handleErrorFile(path)
@@ -188,17 +189,17 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testTransform(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val task = createTask()
     task.transform(data) shouldBe data.map {
-      case (index, cells) => (index, Row(cells: _*))
+      case (index, cells) => (index, Row.of(cells: _*))
     }
   }
 
   @Test
   def testTransformWithFullSchema(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val schema = data.head._2.map(_.name).zipWithIndex.map {
       case (name: String, index: Int) => Column(name, DataType.STRING, index)
@@ -212,13 +213,13 @@ class TestFtpSourceTask extends SmallTest with Matchers {
         options = props.toMap
       ))
     task.transform(data) shouldBe data.map {
-      case (index, cells) => (index, Row(cells: _*))
+      case (index, cells) => (index, Row.of(cells: _*))
     }
   }
 
   @Test
   def testTransformWithSingleColumn(): Unit = {
-    val path = IoUtil.path(props.inputFolder, methodName)
+    val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val schema = data.head._2
       .map(_.name)

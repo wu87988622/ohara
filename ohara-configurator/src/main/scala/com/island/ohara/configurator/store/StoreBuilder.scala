@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.common.data.Serializer
 
 import scala.concurrent.duration.Duration
 

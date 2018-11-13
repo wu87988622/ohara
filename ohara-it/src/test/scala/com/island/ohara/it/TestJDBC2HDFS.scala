@@ -11,7 +11,7 @@ import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConf
 import com.island.ohara.connector.jdbc.JDBCSourceConnector
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.integration.{Database, OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.client.util.CloseOnce
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers

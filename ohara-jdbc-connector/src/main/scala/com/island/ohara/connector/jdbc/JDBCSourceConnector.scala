@@ -48,7 +48,7 @@ class JDBCSourceConnector extends RowSourceConnector {
   /**
     * Return the configs for source task.
     *
-    * @return a seq of configs
+    * @return a seq from configs
     */
   override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
     //TODO

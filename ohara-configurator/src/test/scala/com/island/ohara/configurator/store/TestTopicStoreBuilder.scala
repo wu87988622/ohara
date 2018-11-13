@@ -1,8 +1,9 @@
 package com.island.ohara.configurator.store
 
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.KafkaUtil
-import com.island.ohara.rule.MediumTest
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -17,13 +18,13 @@ class TestTopicStoreBuilder extends MediumTest with Matchers {
     val topicName = methodName
     KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, 1, 1)
     var builder = Store.builder()
-    an[NoSuchElementException] should be thrownBy builder.build[String, String]
+    an[NoSuchElementException] should be thrownBy builder.build(Serializer.STRING, Serializer.STRING)
     builder = builder.pollTimeout(1 seconds)
-    an[NoSuchElementException] should be thrownBy builder.build[String, String]
+    an[NoSuchElementException] should be thrownBy builder.build(Serializer.STRING, Serializer.STRING)
     builder = builder.topicName(topicName)
-    an[NoSuchElementException] should be thrownBy builder.build[String, String]
+    an[NoSuchElementException] should be thrownBy builder.build(Serializer.STRING, Serializer.STRING)
     builder = builder.brokers(testUtil.brokersConnProps)
-    builder.build[String, String].close()
+    builder.build(Serializer.STRING, Serializer.STRING).close()
   }
 
   @After

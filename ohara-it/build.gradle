@@ -1,5 +1,4 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
-apply plugin: 'scala'
 
 /**
  * Noted: this module should NOT have any production code!!! by chia
@@ -12,6 +11,7 @@ dependencies {
   // our it env use postgresql
   testImplementation libs.postgresql
   testImplementation project(':ohara-common')
+  testImplementation project(':ohara-client')
   testImplementation project(':ohara-kafka')
   testImplementation project(':ohara-configurator')
   testImplementation project(':ohara-ftp-connector')
@@ -35,9 +35,9 @@ dependencies {
     exclude group: 'com.sun.jersey', module: 'jersey-servlet'
     exclude group: 'com.sun.jersey', module: 'jersey-server'
   }
-  testImplementation libs.scalatest
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation libs.scalatest
   testImplementation libs.junit
   implementation libs.akkaStream
   implementation libs.sprayJson

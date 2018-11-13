@@ -3,9 +3,9 @@ package com.island.ohara.integration
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.io.CloseOnce.doClose
-import com.island.ohara.util.SystemUtil
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.duration._
 
@@ -14,7 +14,7 @@ import scala.concurrent.duration._
   * test more friendly.
   *
   * How to use this class:
-  * 1) create the OharaTestUtil with 1 broker (you can assign arbitrary number of brokers)
+  * 1) create the OharaTestUtil with 1 broker (you can assign arbitrary number from brokers)
   * val testUtil = OharaTestUtil.localBrokers(1)
   * 2) get the basic|producer|consumer OharaConfiguration
   * val config = testUtil.producerConfig
@@ -101,7 +101,7 @@ object OharaTestUtil {
     * @return false if timeout and (useException = true). Otherwise, the return value is true
     */
   def await(f: () => Boolean, d: Duration, freq: Duration = 500 millis, useException: Boolean = true): Boolean = {
-    val startTs = SystemUtil.current()
+    val startTs = CommonUtil.current()
     while (d.toMillis >= (System.currentTimeMillis() - startTs)) {
       if (f()) return true
       else TimeUnit.MILLISECONDS.sleep(freq.toMillis)

@@ -3,8 +3,8 @@ package com.island.ohara
 import java.net.URL
 import java.util.regex.Pattern
 
+import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
 import com.island.ohara.integration.{With3Brokers, With3Brokers3Workers}
-import com.island.ohara.rule.{LargeTest, MediumTest, SmallTest}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -66,7 +66,7 @@ class TestTestCases extends MediumTest with Matchers {
               val clz = Class.forName(clzName)
               if (clz.getSimpleName.startsWith("Test")) {
                 val validClzs = listSuperClassName(clz).filter(c => validTestName.contains(c))
-                withClue(s"$clzName should extend one of ${validTestName.mkString(", ")}") {
+                withClue(s"$clzName should extend one from ${validTestName.mkString(", ")}") {
                   validClzs.length shouldBe 1
                 }
                 logger.info(s"$clzName matches ${validClzs.head}")

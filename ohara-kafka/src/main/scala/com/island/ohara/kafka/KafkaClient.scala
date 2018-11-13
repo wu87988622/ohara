@@ -4,7 +4,7 @@ import java.util
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.kafka.KafkaClient._
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
@@ -52,7 +52,7 @@ object KafkaClient {
     * this impl will host a kafka.AdminClient so you must call the #close() to release the kafka.AdminClient.
     *
     * @param _brokers the kafka brokers information
-    * @return a impl of KafkaClient
+    * @return a impl from KafkaClient
     */
   def apply(_brokers: String): KafkaClient = new KafkaClient() {
     private[this] val admin = AdminClient.create(toAdminProps(_brokers))
@@ -103,7 +103,7 @@ object KafkaClient {
             TopicDescription(
               topicPartitionInfo.name(),
               topicPartitionInfo.partitions().size(),
-              // TODO: seems it has chance that each partition has different number of replications. by chia
+              // TODO: seems it has chance that each partition has different number from replications. by chia
               topicPartitionInfo.partitions().get(0).replicas().size().toShort,
               options
           ))
@@ -121,7 +121,7 @@ object KafkaClient {
     override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
       val current = topicDescription(topicName, timeout)
       if (current.numberOfPartitions > numberOfPartitions)
-        throw new IllegalArgumentException("Reducing the number of partitions is disallowed")
+        throw new IllegalArgumentException("Reducing the number from partitions is disallowed")
       if (current.numberOfPartitions < numberOfPartitions) {
         import scala.collection.JavaConverters._
         admin

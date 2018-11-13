@@ -2,13 +2,12 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
 
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.{Cell, DataType, Row}
+import com.island.ohara.common.util.VersionUtil
 import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
-import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.io.CloseOnce
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
-import com.island.ohara.serialization.DataType
-import com.island.ohara.util.VersionUtil
 import com.typesafe.scalalogging.Logger
 class JDBCSourceTask extends RowSourceTask {
 
@@ -21,7 +20,7 @@ class JDBCSourceTask extends RowSourceTask {
   private[this] var offsets: Offsets = _
 
   /**
-    * Start the Task. This should handle any configuration parsing and one-time setup of the task.
+    * Start the Task. This should handle any configuration parsing and one-time setup from the task.
     *
     * @param config initial configuration
     */
@@ -44,7 +43,7 @@ class JDBCSourceTask extends RowSourceTask {
   /**
     * Poll this SourceTask for new records. This method should block if no data is currently available.
     *
-    * @return a array of RowSourceRecord
+    * @return a array from RowSourceRecord
     */
   override protected[source] def _poll(): Seq[RowSourceRecord] = try {
     val tableName: String = jdbcSourceConnectorConfig.dbTableName
@@ -75,7 +74,7 @@ class JDBCSourceTask extends RowSourceTask {
     finally resultSet.close()
   } catch {
     case e: Throwable => {
-      LOG.error(e.getMessage(), e)
+      LOG.error(e.getMessage, e)
       Seq.empty
     }
   }
@@ -88,39 +87,35 @@ class JDBCSourceTask extends RowSourceTask {
   override protected def _stop(): Unit = CloseOnce.close(dbTableDataProvider)
 
   /**
-    * Get the version of this task. Usually this should be the same as the corresponding Connector class's version.
+    * Get the version from this task. Usually this should be the same as the corresponding Connector class's version.
     *
     * @return the version, formatted as a String
     */
   override protected def _version: String = VersionUtil.VERSION
 
   private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo[_]]): Row = {
-    Row
-      .builder()
-      .cells(
-        schema
-          .sortBy(_.order)
-          .map(s => (s, values(s.name, columns)))
-          .map {
-            case (schema, value) =>
-              Cell(
-                schema.newName,
-                schema.dataType match {
-                  case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
-                  case DataType.SHORT                   => value.asInstanceOf[Short]
-                  case DataType.INT                     => value.asInstanceOf[Int]
-                  case DataType.LONG                    => value.asInstanceOf[Long]
-                  case DataType.FLOAT                   => value.asInstanceOf[Float]
-                  case DataType.DOUBLE                  => value.asInstanceOf[Double]
-                  case DataType.BYTE                    => value.asInstanceOf[Byte]
-                  case DataType.STRING                  => value.asInstanceOf[String]
-                  case DataType.BYTES | DataType.OBJECT => value
-                  case _                                => throw new IllegalArgumentException("Unsupported type...")
-                }
-              )
-          }
-      )
-      .build()
+    Row.of(
+      schema
+        .sortBy(_.order)
+        .map(s => (s, values(s.name, columns)))
+        .map {
+          case (schema, value) =>
+            Cell.of(
+              schema.newName,
+              schema.dataType match {
+                case DataType.BOOLEAN                 => value.asInstanceOf[Boolean]
+                case DataType.SHORT                   => value.asInstanceOf[Short]
+                case DataType.INT                     => value.asInstanceOf[Int]
+                case DataType.LONG                    => value.asInstanceOf[Long]
+                case DataType.FLOAT                   => value.asInstanceOf[Float]
+                case DataType.DOUBLE                  => value.asInstanceOf[Double]
+                case DataType.BYTE                    => value.asInstanceOf[Byte]
+                case DataType.STRING                  => value.asInstanceOf[String]
+                case DataType.BYTES | DataType.OBJECT => value
+                case _                                => throw new IllegalArgumentException("Unsupported type...")
+              }
+            )
+        }: _*)
   }
 
   private[this] def values(schemaColumnName: String, dbColumnInfos: Seq[ColumnInfo[_]]): Any = {

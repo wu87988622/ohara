@@ -12,8 +12,8 @@ import com.island.ohara.client.ConfiguratorJson.{
   TopicInfoRequest
 }
 import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.rule.SmallTest
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.rule.SmallTest
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

@@ -16,7 +16,8 @@ ext {
 
 subprojects {
   if (it.name != 'ohara-manager') {
-    apply plugin: 'scala'
+    if (it.name == 'ohara-common') apply plugin: 'java'
+    else apply plugin: 'scala'
     test {
       maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()
       minHeapSize = "256m"
@@ -44,10 +45,18 @@ subprojects {
   // All sub-projects have applied the scala checkstyle.
   if (it.name != 'ohara-manager') {
     apply plugin: "com.diffplug.gradle.spotless"
-    spotless {
-      scala {
-        // DON'T change the scalafmt version since the rules may be changed in newer version.
-        scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+    if (it.name == 'ohara-common') {
+      spotless {
+        java {
+          googleJavaFormat()
+        }
+      }
+    } else {
+      spotless {
+        scala {
+          // DON'T change the scalafmt version since the rules may be changed in newer version.
+          scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+        }
       }
     }
   }

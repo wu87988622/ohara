@@ -1,7 +1,7 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.kafka.TestConnectorClient._
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
@@ -73,7 +73,7 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
           .topicName(topicName)
           .offsetFromBegin()
           .brokers(testUtil.brokersConnProps)
-          .build[Array[Byte], Row]
+          .build(Serializer.BYTES, Serializer.ROW)
       try {
         // try to receive some data from topic
         var result = consumer.poll(10 seconds, 1)
@@ -109,7 +109,7 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
 }
 
 private object TestConnectorClient {
-  val ROW = Row(Cell("f0", 13), Cell("f1", false))
+  val ROW = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 }
 
 class MyConnector extends RowSourceConnector {

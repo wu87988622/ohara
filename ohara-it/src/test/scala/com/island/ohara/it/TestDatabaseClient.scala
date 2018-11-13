@@ -2,9 +2,9 @@ package com.island.ohara.it
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.integration.Database
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.rule.MediumTest
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

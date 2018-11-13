@@ -1,13 +1,15 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.ConfiguratorJson.{Data, Source, SourceRequest}
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.rule.MediumTest
-import com.island.ohara.util.SystemUtil
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.CommonUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 class TestConfiguratorStore extends MediumTest with Matchers {
 
-  private[this] val store = new Configurator.Store(com.island.ohara.configurator.store.Store.inMemory[String, Any])
+  private[this] val store =
+    new Configurator.Store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
 
   @Test
   def testAdd(): Unit = {
@@ -20,7 +22,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
-      lastModified = SystemUtil.current()
+      lastModified = CommonUtil.current()
     )
     store.add(s)
 
@@ -39,7 +41,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
-      lastModified = SystemUtil.current()
+      lastModified = CommonUtil.current()
     )
     store.add(s)
 
@@ -60,7 +62,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
-      lastModified = SystemUtil.current()
+      lastModified = CommonUtil.current()
     )
     store.add(s)
 
@@ -82,7 +84,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
-      lastModified = SystemUtil.current()
+      lastModified = CommonUtil.current()
     )
     store.add(s)
 

@@ -1,10 +1,10 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
-apply plugin: 'scala'
 dependencies {
   //----------------------[ohara modules]----------------------//
   compile project(':ohara-testing-util')
   compile project(':ohara-common')
+  compile project(':ohara-client')
   compile project(':ohara-kafka')
   compile project(':ohara-hdfs-connector')
   compile project(':ohara-ftp-connector')

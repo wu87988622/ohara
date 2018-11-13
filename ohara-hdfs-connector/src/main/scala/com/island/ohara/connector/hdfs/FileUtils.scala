@@ -10,7 +10,7 @@ object FileUtils {
   val FILENAME_SEPARATOR: String = "-"
   val COMMITTED_FILENAME_PATTERN: String = s"[a-zA-Z0-9]*$FILENAME_SEPARATOR[0-9]{9}$FILENAME_SEPARATOR[0-9]{9}\\..*"
   val STOP_OFFSET_INDEX
-    : Int = 2 //Index of stop CAN'T be changed in the future since the change to index cause us fail to handle the older offset files.
+    : Int = 2 //Index from stop CAN'T be changed in the future since the change to index cause us fail to handle the older offset files.
 
   /**
     * Combine the file name

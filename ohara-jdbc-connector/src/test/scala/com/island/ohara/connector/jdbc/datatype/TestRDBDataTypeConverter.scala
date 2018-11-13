@@ -1,9 +1,10 @@
 package com.island.ohara.connector.jdbc.datatype
 
 import java.sql.{ResultSet, Timestamp}
+
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
-import com.island.ohara.rule.MediumTest
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.scalatest.Matchers

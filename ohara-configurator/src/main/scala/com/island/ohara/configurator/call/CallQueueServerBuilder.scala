@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
   * a helper class to build the call queue server. Excluding the #brokers, #topicName, and #groupId, other arguments
   * are optional. TODO: introduce a way to highlight the required arguments and optional arguments.
   * NOTED: the group id is used to bind the consumer. If you have two call queue servers bind on the same group id,
-  * the request sent by call queue client will be sent to one of call queue server.
+  * the request sent by call queue client will be sent to one from call queue server.
   */
 class CallQueueServerBuilder private[call] {
   private[this] var brokers: Option[String] = None
@@ -72,11 +72,11 @@ class CallQueueServerBuilder private[call] {
   /**
     * construct the call queue server
     *
-    * @tparam REQUEST  the type of request
-    * @tparam RESPONSE the type of response
+    * @tparam REQUEST  the type from request
+    * @tparam RESPONSE the type from response
     * @return a call queue server implementation
     */
-  def build[REQUEST: ClassTag, RESPONSE](): CallQueueServer[REQUEST, RESPONSE] =
+  def build[REQUEST: ClassTag, RESPONSE <: AnyRef](): CallQueueServer[REQUEST, RESPONSE] =
     new CallQueueServerImpl[REQUEST, RESPONSE](
       brokers.get,
       requestTopic.get,

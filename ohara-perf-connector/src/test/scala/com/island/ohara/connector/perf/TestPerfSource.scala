@@ -1,9 +1,8 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.data.{Cell, Row}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.common.data.{Cell, DataType, Serializer}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.serialization.DataType
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -51,7 +50,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
           .brokers(testUtil.brokersConnProps)
           .offsetFromBegin()
           .topicName(topicName)
-          .build[Array[Byte], Row]
+          .build(Serializer.BYTES, Serializer.ROW)
       try {
         def matchType(lhs: Class[_], dataType: DataType): Unit = {
           dataType match {
@@ -67,7 +66,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
             case _                => throw new IllegalArgumentException("unsupported type in testing TestPerfSource")
           }
         }
-        // it is hard to evaluate number of records in topics so we just fetch some records here.
+        // it is hard to evaluate number from records in topics so we just fetch some records here.
         val records = consumer.poll(props.freq * 3, props.batch)
         records.size >= props.batch shouldBe true
         records

@@ -1,7 +1,7 @@
 package com.island.ohara.kafka
 
 import com.island.ohara.integration.With3Brokers
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.client.util.CloseOnce
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers

@@ -14,7 +14,7 @@ trait RowSinkContext {
     *
     * SinkTasks that do not manage their own offsets do not need to use this method.
     *
-    * @param offsets map of offsets for topic partitions
+    * @param offsets map from offsets for topic partitions
     */
   def offset(offsets: Map[TopicPartition, Long]): Unit
 

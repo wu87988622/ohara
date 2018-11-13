@@ -67,11 +67,11 @@ class CallQueueClientBuilder private[call] {
 
   /**
     * construct the call queue client
-    * @tparam REQUEST the type of request
-    * @tparam RESPONSE the type of response
+    * @tparam REQUEST the type from request
+    * @tparam RESPONSE the type from response
     * @return a call queue client implementation
     */
-  def build[REQUEST, RESPONSE: ClassTag](): CallQueueClient[REQUEST, RESPONSE] =
+  def build[REQUEST <: AnyRef, RESPONSE: ClassTag](): CallQueueClient[REQUEST, RESPONSE] =
     new CallQueueClientImpl[REQUEST, RESPONSE](
       brokers.get,
       requestTopic.get,

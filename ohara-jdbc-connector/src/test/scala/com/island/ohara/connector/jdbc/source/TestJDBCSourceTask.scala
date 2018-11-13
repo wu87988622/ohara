@@ -1,22 +1,20 @@
 package com.island.ohara.connector.jdbc.source
 
 import java.sql.{Statement, Timestamp}
-import java.util
 
 import com.island.ohara.client.ConfiguratorJson.{Column, RdbColumn}
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.common.data.{DataType, Row}
+import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.connector.jdbc.util.ColumnInfo
-import com.island.ohara.data.Row
 import com.island.ohara.integration.Database
-import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, TaskConfig}
-import com.island.ohara.rule.MediumTest
-import com.island.ohara.serialization.DataType
+import com.island.ohara.kafka.connector.{RowSourceRecord, TaskConfig}
 import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{Before, Test}
+import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
-import org.mockito.Mockito._
 
 import scala.collection.JavaConverters._
 
@@ -118,7 +116,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     val schema: Seq[Column] = Seq(Column("c1", DataType.INT, 1), Column("c0", DataType.INT, 0))
     val columnInfo: Seq[ColumnInfo[Int]] =
       Seq(ColumnInfo("c1", "int", new Integer(100)), ColumnInfo("c0", "int", new Integer(50)))
-    val cells = jdbcSourceTask.row(schema, columnInfo).toSeq
+    val cells = jdbcSourceTask.row(schema, columnInfo).cells().asScala
     cells(0).name shouldBe "c0"
     cells(0).value shouldBe 50
     cells(1).name shouldBe "c1"

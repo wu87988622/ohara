@@ -10,10 +10,10 @@ import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration._
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.io.IoUtil
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaClient
-import com.island.ohara.util.SystemUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -181,16 +181,21 @@ object Backend {
             }
           }
         }
-        val topicName = s"demo-${SystemUtil.current()}"
+        val topicName = s"demo-${CommonUtil.current()}"
         doClose(KafkaClient(brokers.connectionProps))(
           _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
         )
         val configurator = Configurator
           .builder()
-          .store(Store.builder().brokers(brokers.connectionProps).topicName(topicName).buildBlocking[String, Any])
+          .store(
+            Store
+              .builder()
+              .brokers(brokers.connectionProps)
+              .topicName(topicName)
+              .buildBlocking(Serializer.STRING, Serializer.OBJECT))
           .kafkaClient(KafkaClient(brokers.connectionProps))
           .connectClient(ConnectorClient(workers.connectionProps))
-          .hostname(IoUtil.anyLocalAddress)
+          .hostname(CommonUtil.anyLocalAddress)
           .port(ports.configuratorPort)
           .extraRoute(dbRoute ~ servicesRoute)
           .build()

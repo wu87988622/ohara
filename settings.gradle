@@ -1,5 +1,6 @@
 include 'ohara-testing-util',
         'ohara-common',
+        'ohara-client',
         'ohara-kafka',
         'ohara-manager',
         'ohara-ftp-connector',

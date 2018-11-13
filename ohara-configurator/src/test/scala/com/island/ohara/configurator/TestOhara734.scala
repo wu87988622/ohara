@@ -1,8 +1,8 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.ConfiguratorJson
 import com.island.ohara.client.ConfiguratorJson.{Column, SourceRequest}
-import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.DataType
+import com.island.ohara.common.data.DataType
+import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 

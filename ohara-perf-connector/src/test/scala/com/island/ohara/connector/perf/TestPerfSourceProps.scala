@@ -1,8 +1,8 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.common.data.DataType
+import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.kafka.connector.TaskConfig
-import com.island.ohara.rule.SmallTest
-import com.island.ohara.serialization.DataType
 import org.junit.Test
 import org.scalatest.Matchers
 

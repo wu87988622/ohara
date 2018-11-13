@@ -3,8 +3,8 @@ package com.island.ohara.kafka.connector
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.island.ohara.data.Row
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.common.data.{Row, Serializer}
+import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.Constants._
 
@@ -29,7 +29,7 @@ class SimpleRowSourceTask extends RowSourceTask {
       .groupId(config.name)
       .topicName(config.options(INPUT))
       .offsetFromBegin()
-      .build[Array[Byte], Row]
+      .build(Serializer.BYTES, Serializer.ROW)
     Future {
       try {
         while (!closed.get) {

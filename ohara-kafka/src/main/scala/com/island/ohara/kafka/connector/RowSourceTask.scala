@@ -2,8 +2,7 @@ package com.island.ohara.kafka.connector
 
 import java.util
 
-import com.island.ohara.serialization.RowSerializer
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.common.data.Serializer
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceRecord, SourceTask, SourceTaskContext}
 
@@ -15,7 +14,7 @@ import scala.collection.JavaConverters._
 abstract class RowSourceTask extends SourceTask {
 
   /**
-    * Start the Task. This should handle any configuration parsing and one-time setup of the task.
+    * Start the Task. This should handle any configuration parsing and one-time setup from the task.
     * @param config initial configuration
     */
   protected def _start(config: TaskConfig): Unit
@@ -30,7 +29,7 @@ abstract class RowSourceTask extends SourceTask {
   /**
     * Poll this SourceTask for new records. This method should block if no data is currently available.
     *
-    * @return a array of RowSourceRecord
+    * @return a array from RowSourceRecord
     */
   protected def _poll(): Seq[RowSourceRecord]
 
@@ -59,7 +58,7 @@ abstract class RowSourceTask extends SourceTask {
   }
 
   /**
-    * Get the version of this task. Usually this should be the same as the corresponding Connector class's version.
+    * Get the version from this task. Usually this should be the same as the corresponding Connector class's version.
     *
     * @return the version, formatted as a String
     */
@@ -85,7 +84,7 @@ abstract class RowSourceTask extends SourceTask {
             Schema.BYTES_SCHEMA,
             s.key,
             Schema.BYTES_SCHEMA,
-            RowSerializer.to(s.row),
+            Serializer.ROW.to(s.row),
             s.timestamp.map(new java.lang.Long(_)).orNull
           )
         })
@@ -104,7 +103,7 @@ abstract class RowSourceTask extends SourceTask {
       .builder()
       .sourcePartition(if (record.sourcePartition() == null) Map.empty else record.sourcePartition().asScala.toMap)
       .sourceOffset(if (record.sourceOffset() == null) Map.empty else record.sourceOffset().asScala.toMap)
-      .row(RowSerializer.from(record.value().asInstanceOf[Array[Byte]]))
+      .row(Serializer.ROW.from(record.value().asInstanceOf[Array[Byte]]))
       ._timestamp(Option[java.lang.Long](record.timestamp()).map(_.longValue()))
       ._partition(Option[java.lang.Integer](record.kafkaPartition()).map(_.intValue()))
       .build(record.topic()))

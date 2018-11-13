@@ -16,9 +16,9 @@ import com.island.ohara.client.ConnectorJson.{
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
+import com.island.ohara.common.data.Serializer
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._
-import com.island.ohara.serialization.Serializer
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration.Duration
@@ -79,7 +79,7 @@ class ConfiguratorBuilder {
     * @param store used to maintain the ohara data.
     * @return this builder
     */
-  def store(store: com.island.ohara.configurator.store.BlockingStore[String, Any]): ConfiguratorBuilder = {
+  def store(store: com.island.ohara.configurator.store.BlockingStore[String, AnyRef]): ConfiguratorBuilder = {
     this.store = Some(new Store(store))
     this
   }
@@ -185,7 +185,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
 }
 
 /**
-  * A do-nothing impl of KafkaClient.
+  * A do-nothing impl from KafkaClient.
   * NOTED: It should be used in testing only.
   */
 private class FakeKafkaClient extends KafkaClient {

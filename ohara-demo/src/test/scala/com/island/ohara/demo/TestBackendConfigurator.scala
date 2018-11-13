@@ -2,8 +2,8 @@ package com.island.ohara.demo
 
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.demo.Backend.ServicePorts
-import com.island.ohara.rule.LargeTest
 import org.junit.Test
 import org.scalatest.Matchers
 

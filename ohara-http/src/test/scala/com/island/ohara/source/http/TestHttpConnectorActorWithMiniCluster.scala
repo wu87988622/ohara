@@ -5,9 +5,9 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import akka.testkit.TestKit
+import akka.testkit.{TestKit, TestKitBase}
+import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.rule.SmallTest
 import com.typesafe.config.ConfigFactory
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -21,8 +21,7 @@ import scala.concurrent.Await
 class TestHttpConnectorActorWithMiniCluster
     extends TestKit(ActorSystem("testing", ConfigFactory.load()))
     with Matchers
-    with ScaledTimeSpans
-    with SmallTest {
+    with ScaledTimeSpans {
 
   private val testUtil = OharaTestUtil.brokers()
   private implicit val materializer: ActorMaterializer = ActorMaterializer()

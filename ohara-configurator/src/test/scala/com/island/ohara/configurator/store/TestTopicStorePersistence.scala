@@ -1,8 +1,9 @@
 package com.island.ohara.configurator.store
 
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.io.UuidUtil
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.{Consumer, KafkaClient}
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.Test
@@ -24,16 +25,19 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
         .compacted()
         .create(topicName)
     }
-    doClose(Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String]) {
-      store =>
-        0 until 10 foreach (index => store._update(specifiedKey, index.toString, Consistency.STRICT))
-        // the local cache do the de-duplicate
-        store.size shouldBe 1
-        store.iterator.next()._2 shouldBe 9.toString
+    doClose(
+      Store
+        .builder()
+        .brokers(testUtil.brokersConnProps)
+        .topicName(topicName)
+        .buildBlocking(Serializer.STRING, Serializer.STRING)) { store =>
+      0 until 10 foreach (index => store._update(specifiedKey, index.toString, Consistency.STRICT))
+      // the local cache do the de-duplicate
+      store.size shouldBe 1
+      store.iterator.next()._2 shouldBe 9.toString
 
-        0 until numberOfOtherMessages foreach (index =>
-          store._update(index.toString, index.toString, Consistency.STRICT))
-        store.size shouldBe (numberOfOtherMessages + 1)
+      0 until numberOfOtherMessages foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
+      store.size shouldBe (numberOfOtherMessages + 1)
     }
     import scala.concurrent.duration._
     def verifyTopicContent(timeout: Duration): Boolean = doClose(
@@ -41,9 +45,9 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
         .builder()
         .brokers(testUtil.brokersConnProps)
         .offsetFromBegin()
-        .groupId(UuidUtil.uuid())
+        .groupId(CommonUtil.uuid())
         .topicName(topicName)
-        .build[String, String]) { consumer =>
+        .build(Serializer.STRING, Serializer.STRING)) { consumer =>
       val keys = consumer.poll(timeout, numberOfOtherMessages + 1).map(_.key.get)
       keys.count(_ == specifiedKey) == 1 && keys.count(_ != specifiedKey) == numberOfOtherMessages
     }

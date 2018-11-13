@@ -9,8 +9,8 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.io.CloseOnce
-import com.island.ohara.rule.SmallTest
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.rule.SmallTest
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 import spray.json.DefaultJsonProtocol._

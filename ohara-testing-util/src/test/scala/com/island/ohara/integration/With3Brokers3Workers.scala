@@ -1,7 +1,7 @@
 package com.island.ohara.integration
 
-import com.island.ohara.io.CloseOnce.close
-import com.island.ohara.rule.LargeTest
+import com.island.ohara.client.util.CloseOnce.close
+import com.island.ohara.common.rule.LargeTest
 import org.junit.{AfterClass, BeforeClass}
 
 /**

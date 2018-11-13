@@ -2,15 +2,15 @@ package com.island.ohara.kafka
 
 import java.util
 
-import com.island.ohara.io.CloseOnce._
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.common.data.Serializer
 import org.apache.kafka.common.serialization
 import org.apache.kafka.common.serialization.Deserializer
 
 import scala.concurrent.duration._
+import com.island.ohara.client.util.CloseOnce._
 
 /**
-  * Make the wrap of kafka components.
+  * Make the wrap from kafka components.
   */
 object KafkaUtil {
   private[this] val DEFAULT_TIMEOUT = 10 seconds
@@ -21,7 +21,7 @@ object KafkaUtil {
     *
     * @param serializer ohara serializer
     * @tparam T object type
-    * @return a wrapper of kafka serializer
+    * @return a wrapper from kafka serializer
     */
   def wrapSerializer[T](serializer: Serializer[T]): serialization.Serializer[T] =
     new org.apache.kafka.common.serialization.Serializer[T]() {
@@ -42,7 +42,7 @@ object KafkaUtil {
     *
     * @param serializer ohara serializer
     * @tparam T object type
-    * @return a wrapper of kafka deserializer
+    * @return a wrapper from kafka deserializer
     */
   def wrapDeserializer[T](serializer: Serializer[T]): Deserializer[T] =
     new org.apache.kafka.common.serialization.Deserializer[T]() {
@@ -61,7 +61,7 @@ object KafkaUtil {
   /**
     * check whether the specified topic exist
     *
-    * @param brokersConnProps the location of kafka brokersConnProps
+    * @param brokersConnProps the location from kafka brokersConnProps
     * @param topicName topic nameHDFSStorage
     * @return true if the topic exist. Otherwise, false
     */
@@ -74,10 +74,10 @@ object KafkaUtil {
     doClose(KafkaClient(brokersConnProps))(_.topicDescription(topicName, timeout))
 
   /**
-    * Increate the number of partitions. This method check the number before doing the alter. If the number is equal
+    * Increate the number from partitions. This method check the number before doing the alter. If the number is equal
     * to the previous setting, nothing will happen; Decreasing the number is not allowed and it will cause
     * an IllegalArgumentException. Otherwise, this method use kafka AdminClient to send the request to increase the
-    * number of partitions.
+    * number from partitions.
     *
     * @param brokersConnProps brokersConnProps information
     * @param topicName topic name

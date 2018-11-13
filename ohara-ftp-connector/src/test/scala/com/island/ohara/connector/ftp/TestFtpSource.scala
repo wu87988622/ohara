@@ -3,18 +3,17 @@ import java.io.{BufferedWriter, OutputStreamWriter}
 
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
-import com.island.ohara.data.{Cell, Row}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.io.{CloseOnce, IoUtil}
 import com.island.ohara.kafka.{Consumer, ConsumerRecord}
-import com.island.ohara.serialization.DataType
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 class TestFtpSource extends With3Brokers3Workers with Matchers {
-  var consumer: Consumer[Array[Byte], Row] = _
 
   private[this] val schema: Seq[Column] = Seq(
     Column("name", DataType.STRING, 1),
@@ -22,12 +21,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     Column("single", DataType.BOOLEAN, 3)
   )
   private[this] val rows: Seq[Row] = Seq(
-    Row(Cell("name", "chia"), Cell("ranking", 1), Cell("single", false)),
-    Row(Cell("name", "jack"), Cell("ranking", 99), Cell("single", true))
+    Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
+    Row.of(Cell.of("name", "jack"), Cell.of("ranking", 99), Cell.of("single", true))
   )
-  private[this] val header: String = rows.head.map(_.name).mkString(",")
+  private[this] val header: String = rows.head.cells().asScala.map(_.name).mkString(",")
   private[this] val data: Seq[String] = rows.map(row => {
-    row.map(_.value.toString).mkString(",")
+    row.cells().asScala.map(_.value.toString).mkString(",")
   })
   private[this] val ftpClient = FtpClient
     .builder()
@@ -49,7 +48,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   )
 
   private[this] def setupInput(): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(IoUtil.path(props.inputFolder, "abc"))))
+    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(CommonUtil.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()
@@ -64,7 +63,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def setup(): Unit = {
     def rebuild(path: String): Unit = {
       if (ftpClient.exist(path)) {
-        ftpClient.listFileNames(path).map(IoUtil.path(path, _)).foreach(ftpClient.delete)
+        ftpClient.listFileNames(path).map(CommonUtil.path(path, _)).foreach(ftpClient.delete)
         ftpClient.listFileNames(path).size shouldBe 0
         ftpClient.delete(path)
       }
@@ -79,17 +78,16 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def pollData(topicName: String,
-                             timeout: Duration = 60 seconds,
+                             timeout: Duration = 100 seconds,
                              size: Int = data.length): Seq[ConsumerRecord[Array[Byte], Row]] = {
-    if (consumer == null)
-      consumer = Consumer
-        .builder()
-        .topicName(methodName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokersConnProps)
-        .build[Array[Byte], Row]
-
-    consumer.poll(timeout, size)
+    val consumer = Consumer
+      .builder()
+      .topicName(methodName)
+      .offsetFromBegin()
+      .brokers(testUtil.brokersConnProps)
+      .build(Serializer.BYTES, Serializer.ROW)
+    try consumer.poll(timeout, size)
+    finally consumer.close()
   }
 
   private[this] def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
@@ -138,7 +136,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       setupInput()
       checkFileCount(0, 2, 0)
       records = pollData(topicName, 5 second)
-      records.size shouldBe 0
+      records.size shouldBe data.length
 
     } finally testUtil.connectorClient.delete(connectorName)
   }
@@ -284,14 +282,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       val row0 = records(0).value.get
       row0.size shouldBe 3
       // NOTED: without schema all value are converted to string
-      row0.cell(0) shouldBe Cell(rows(0).cell(0).name, rows(0).cell(0).value.toString)
-      row0.cell(1) shouldBe Cell(rows(0).cell(1).name, rows(0).cell(1).value.toString)
-      row0.cell(2) shouldBe Cell(rows(0).cell(2).name, rows(0).cell(2).value.toString)
+      row0.cell(0) shouldBe Cell.of(rows(0).cell(0).name, rows(0).cell(0).value.toString)
+      row0.cell(1) shouldBe Cell.of(rows(0).cell(1).name, rows(0).cell(1).value.toString)
+      row0.cell(2) shouldBe Cell.of(rows(0).cell(2).name, rows(0).cell(2).value.toString)
       val row1 = records(1).value.get
       row1.size shouldBe 3
-      row1.cell(0) shouldBe Cell(rows(1).cell(0).name, rows(1).cell(0).value.toString)
-      row1.cell(1) shouldBe Cell(rows(1).cell(1).name, rows(1).cell(1).value.toString)
-      row1.cell(2) shouldBe Cell(rows(1).cell(2).name, rows(1).cell(2).value.toString)
+      row1.cell(0) shouldBe Cell.of(rows(1).cell(0).name, rows(1).cell(0).value.toString)
+      row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
+      row1.cell(2) shouldBe Cell.of(rows(1).cell(2).name, rows(1).cell(2).value.toString)
 
     } finally testUtil.connectorClient.delete(connectorName)
   }
@@ -435,7 +433,5 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @After
   def tearDown(): Unit = {
     CloseOnce.close(ftpClient)
-    CloseOnce.close(consumer)
-    consumer = null
   }
 }

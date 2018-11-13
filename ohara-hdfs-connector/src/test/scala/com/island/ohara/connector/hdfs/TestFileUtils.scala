@@ -1,6 +1,6 @@
 package com.island.ohara.connector.hdfs
 
-import com.island.ohara.rule.MediumTest
+import com.island.ohara.common.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar

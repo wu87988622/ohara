@@ -1,9 +1,8 @@
 package com.island.ohara.integration
-import com.island.ohara.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
-
-import com.island.ohara.io.CloseOnce._
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.rule.MediumTest
 class TestBrokers extends MediumTest with Matchers {
 
   @Test

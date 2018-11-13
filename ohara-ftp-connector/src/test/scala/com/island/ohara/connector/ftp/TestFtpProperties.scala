@@ -1,5 +1,5 @@
 package com.island.ohara.connector.ftp
-import com.island.ohara.rule.SmallTest
+import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 

@@ -9,7 +9,7 @@ class RDBDataTypeConverter {
     val columnName = column.name
     val typeName = column.dataType
 
-    // the type name of postgresql is lower case...
+    // the type name from postgresql is lower case...
     import RDBDataTypeConverter._
     typeName.toUpperCase match {
       case RDB_TYPE_BOOLEAN =>

@@ -2,7 +2,7 @@ package com.island.ohara.integration
 
 import java.io.IOException
 
-import com.island.ohara.rule.MediumTest
+import com.island.ohara.common.rule.MediumTest
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.Test

@@ -1,7 +1,7 @@
 package com.island.ohara.kafka.connector
 
-import com.island.ohara.data.Row
-import com.island.ohara.io.CloseOnce
+import com.island.ohara.common.data.{Row, Serializer}
+import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.Constants._
 
@@ -15,7 +15,7 @@ class SimpleRowSinkTask extends RowSinkTask {
   override def _start(props: TaskConfig): Unit = {
     this.config = props
     outputTopic = config.options(OUTPUT)
-    producer = Producer.builder().brokers(config.options(BROKER)).build[Array[Byte], Row]
+    producer = Producer.builder().brokers(config.options(BROKER)).build(Serializer.BYTES, Serializer.ROW)
   }
 
   override def _put(records: Seq[RowSinkRecord]): Unit = {

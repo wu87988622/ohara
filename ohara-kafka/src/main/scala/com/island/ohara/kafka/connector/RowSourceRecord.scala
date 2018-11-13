@@ -2,8 +2,7 @@ package com.island.ohara.kafka.connector
 
 import java.util.Objects
 
-import com.island.ohara.data.Row
-import com.island.ohara.serialization.Serializer
+import com.island.ohara.common.data.{Row, Serializer}
 
 /**
   * A wrap to SourceRecord. Currently, only value schema and value are changed.
@@ -16,8 +15,8 @@ case class RowSourceRecord(sourcePartition: Map[String, _],
                            timestamp: Option[Long]) {
 
   /**
-    * TODO: we don't discuss the key of row yet...
-    * @return byte array of row
+    * TODO: we don't discuss the key from row yet...
+    * @return byte array from row
     */
   def key: Array[Byte] = Serializer.ROW.to(row)
 }
@@ -31,7 +30,7 @@ class RowSourceRecordBuilder {
   private[this] var sourcePartition: Map[String, _] = Map.empty
   private[this] var sourceOffset: Map[String, _] = Map.empty
   private[this] var partition: Option[Int] = None
-  private[this] var row: Row = Row.empty
+  private[this] var row: Row = Row.EMPTY
   private[this] var timestamp: Option[Long] = None
 
   def sourcePartition(sourcePartition: Map[String, _]): RowSourceRecordBuilder = {

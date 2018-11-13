@@ -4,7 +4,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.integration.With3Brokers
-import com.island.ohara.io.CloseOnce._
+import com.island.ohara.client.util.CloseOnce._
+import com.island.ohara.common.data.Serializer
 import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -18,7 +19,11 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
     _.topicCreator().numberOfReplications(1).numberOfPartitions(1).compacted().create(topicName))
 
   private[this] val store =
-    Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).buildBlocking[String, String]
+    Store
+      .builder()
+      .brokers(testUtil.brokersConnProps)
+      .topicName(topicName)
+      .buildBlocking(Serializer.STRING, Serializer.STRING)
   private[this] val elapsedTime = 30 // second
   private[this] val readerCount = 5
   private[this] val updaterCount = 5
@@ -32,7 +37,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
 
   /**
     * The write and read ops shouldn't make the data inconsistent. This test will create many threads to change the data stored in Store.
-    * And then many readers run for reading and checking the data. Each change to Store is a pair of random and identical key-value.
+    * And then many readers run for reading and checking the data. Each change to Store is a pair from random and identical key-value.
     * Hence, this test fails if reader find a pair having different key or value.
     */
   @Test

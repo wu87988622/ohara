@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.route
 import com.island.ohara.client.ConfiguratorJson.FtpInformationRequest
-import com.island.ohara.rule.SmallTest
+import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 

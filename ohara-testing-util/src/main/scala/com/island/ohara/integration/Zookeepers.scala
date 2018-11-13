@@ -1,7 +1,8 @@
 package com.island.ohara.integration
 import java.net.InetSocketAddress
 
-import com.island.ohara.io.{CloseOnce, IoUtil}
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CommonUtil
 import org.apache.zookeeper.server.{NIOServerCnxnFactory, ZooKeeperServer}
 
 trait Zookeepers extends CloseOnce {
@@ -30,11 +31,11 @@ object Zookeepers {
     val factory = new NIOServerCnxnFactory()
     val snapshotDir = createTempDir("standalone-zk/snapshot")
     val logDir = createTempDir("standalone-zk/log")
-    factory.configure(new InetSocketAddress(IoUtil.anyLocalAddress, port), 1024)
+    factory.configure(new InetSocketAddress(CommonUtil.anyLocalAddress, port), 1024)
     factory.startup(new ZooKeeperServer(snapshotDir, logDir, 500))
 
     new Zookeepers {
-      override def connectionProps: String = s"${IoUtil.hostname}:${factory.getLocalPort}"
+      override def connectionProps: String = s"${CommonUtil.hostname}:${factory.getLocalPort}"
 
       override protected def doClose(): Unit = {
         factory.shutdown()

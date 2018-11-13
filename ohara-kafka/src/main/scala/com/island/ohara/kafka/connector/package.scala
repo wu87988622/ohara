@@ -2,7 +2,7 @@ package com.island.ohara.kafka
 import java.util
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.util.VersionUtil
+import com.island.ohara.common.util.VersionUtil
 
 import scala.collection.JavaConverters._
 package object connector {

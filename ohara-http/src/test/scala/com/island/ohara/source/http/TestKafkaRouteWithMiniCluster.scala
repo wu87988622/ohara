@@ -5,34 +5,39 @@ import java.util.concurrent.ConcurrentHashMap
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.island.ohara.data.Row
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
+import com.island.ohara.common.data.DataType._
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
-import com.island.ohara.serialization.DataType._
-import com.island.ohara.serialization._
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.junit.JUnitSuiteLike
 
 import scala.concurrent.duration._
 
 class TestKafkaRouteWithMiniCluster
-    extends With3Brokers
-    with Matchers
+    extends JUnitSuiteLike
     with ScalaFutures
     with ScalatestRouteTest
-    with KafkaRoute {
-
+    with KafkaRoute
+    with Matchers {
   val schema = Vector(("name", STRING), ("year", INT), ("month", SHORT), ("isHuman", BOOLEAN))
   val map: ConcurrentHashMap[String, (String, RowSchema)] = new ConcurrentHashMap[String, (String, RowSchema)]() {
     this.put("test", ("test", RowSchema(schema)))
   }
 
+  /**
+    * we can't use With3Brokers3Workers since With3Brokers3Workers is not a "trait" now. It is illegal to extend multi
+    * abstract classes...by chia
+    */
+  private[this] val testUtil = OharaTestUtil.workers()
+
   @Test
   def shouldReturnNotFoundWhenUrlNotExist(): Unit = {
     val request = HttpRequest(uri = "/abcd")
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
+    val producer =
+      Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build(Serializer.STRING, Serializer.ROW)
 
     try {
       val route = kafkaRoute(producer, map)
@@ -45,7 +50,8 @@ class TestKafkaRouteWithMiniCluster
   @Test
   def shouldReturnOkWhenUrlExist(): Unit = {
     val request = HttpRequest(uri = "/test")
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
+    val producer =
+      Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build(Serializer.STRING, Serializer.ROW)
 
     try {
       val route = kafkaRoute(producer, map)
@@ -79,13 +85,19 @@ class TestKafkaRouteWithMiniCluster
         |}
       """.stripMargin
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
+    val producer =
+      Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build(Serializer.STRING, Serializer.ROW)
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
 
         val consumer =
-          Consumer.builder().brokers(testUtil.brokersConnProps).offsetFromBegin().topicName(topic).build[String, Row]
+          Consumer
+            .builder()
+            .brokers(testUtil.brokersConnProps)
+            .offsetFromBegin()
+            .topicName(topic)
+            .build(Serializer.STRING, Serializer.ROW)
         try {
           val fromKafka = consumer.poll(30 seconds, 1)
           fromKafka.isEmpty shouldBe false
@@ -124,12 +136,18 @@ class TestKafkaRouteWithMiniCluster
          |}
       """.stripMargin
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build[String, Row]
+    val producer =
+      Producer.builder().brokers(testUtil.brokersConnProps).allAcks().build(Serializer.STRING, Serializer.ROW)
 
     try {
       Post(s"/$url", HttpEntity(ContentTypes.`application/json`, jsonString)) ~> Route.seal(kafkaRoute(producer, map)) ~> check {
         status should ===(StatusCodes.BadRequest)
       }
     } finally producer.close()
+  }
+
+  @After
+  def tearDown(): Unit = {
+    testUtil.close()
   }
 }

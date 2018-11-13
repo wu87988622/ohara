@@ -2,13 +2,13 @@ package com.island.ohara.connector.hdfs.text
 
 import java.io.{BufferedWriter, OutputStreamWriter, Writer}
 
-import com.island.ohara.serialization.DataType
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.data.{DataType, Row}
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.Storage
-import com.island.ohara.data.Row
-import com.island.ohara.io.CloseOnce
 import com.typesafe.scalalogging.Logger
+import scala.collection.JavaConverters._
 
 /**
   * Data write to temp file for csv file format
@@ -25,14 +25,15 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     * @param row
     */
   override def write(isHeader: Boolean, schema: Seq[Column], row: Row): Unit = {
-    val newSchema: Seq[Column] = if (schema.isEmpty) row.map(r => Column(r.name, DataType.OBJECT, 0)).toSeq else schema
+    val newSchema: Seq[Column] =
+      if (schema.isEmpty) row.cells().asScala.map(r => Column(r.name, DataType.OBJECT, 0)).toSeq else schema
     val line: String = newSchema
       .sortBy(_.order)
-      .map(n => (n, row.filter(r => n.name == r.name)))
+      .map(n => (n, row.cells().asScala.filter(r => n.name == r.name)))
       .flatMap({
         case (n, cell) =>
           n.dataType match {
-            case DataType.BYTES | DataType.BYTE =>
+            case DataType.BYTES =>
               throw new RuntimeException(s"hdfs sink connector not support ${n.dataType} type")
             case _ => cell
           }

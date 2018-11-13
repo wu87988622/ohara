@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorLogging, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
-import com.island.ohara.data.Row
+import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.kafka.Producer
 import org.apache.kafka.clients.producer.ProducerConfig
 
@@ -40,7 +40,7 @@ class HttpConnectorActor extends Actor with ActorLogging {
             .builder()
             .brokers(config.getStringList(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG).asScala.mkString(","))
             .allAcks()
-            .build[String, Row]
+            .build(Serializer.STRING, Serializer.ROW)
 
           schemaMap = new ConcurrentHashMap[String, (String, RowSchema)]()
 
