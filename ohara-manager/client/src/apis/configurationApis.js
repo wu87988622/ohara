@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-import { handleError } from 'utils/apiHelpers';
-import * as _ from 'utils/helpers';
+import { handleError } from 'utils/apiUtils';
+import * as _ from 'utils/commonUtils';
 
 export const fetchHdfs = async () => {
   try {

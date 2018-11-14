@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import { ICON_KEYS } from 'constants/pipelines';
 import { HadoopIcon } from 'common/Icons';
-import { update } from 'utils/pipelineToolbarUtil';
+import { update } from 'utils/pipelineToolbarUtils';
 import {
   lightestBlue,
   lighterBlue,

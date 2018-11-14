@@ -6,13 +6,13 @@ import localStorageMock from '__mocks__/localStorage';
 import LogoutPage from '../LogoutPage';
 import { HOME } from 'constants/urls';
 import { LOGOUT_SUCCESS } from 'constants/messages';
-import { deleteUserKey } from 'utils/authHelpers';
+import { deleteUserKey } from 'utils/authUtils';
 import { logout } from 'apis/authApis';
 
 window.localStorage = localStorageMock;
 
 jest.mock('axios');
-jest.mock('utils/authHelpers');
+jest.mock('utils/authUtils');
 jest.mock('apis/authApis');
 
 const props = {

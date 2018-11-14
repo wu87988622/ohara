@@ -1,6 +1,6 @@
 import { ICON_KEYS } from 'constants/pipelines';
 
-import { checkTypeExist, update } from '../pipelineToolbarUtil';
+import { checkTypeExist, update } from '../pipelineToolbarUtils';
 
 describe('checkTypeExist()', () => {
   it('should get the item that matches the same type', () => {

@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 
 import KafkaPage from '../KafkaPage';
 import * as MESSAGES from 'constants/messages';
-import { getTestById } from 'utils/testHelpers';
+import { getTestById } from 'utils/testUtils';
 import { LEAVE_WITHOUT_SAVE } from 'constants/messages';
 import { KAFKA } from 'constants/documentTitles';
 import { createTopics, fetchTopics } from 'apis/topicApis';

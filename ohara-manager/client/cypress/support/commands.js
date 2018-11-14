@@ -1,6 +1,6 @@
-import { setUserKey } from '../../src/utils/authHelpers';
+import { setUserKey } from '../../src/utils/authUtils';
 import { VALID_USER } from '../../src/constants/cypress';
-import * as _ from '../../src/utils/helpers';
+import * as _ from '../../src/utils/commonUtils';
 
 Cypress.Commands.add('loginWithUi', () => {
   cy.get('[data-testid="username"]').type(VALID_USER.username);

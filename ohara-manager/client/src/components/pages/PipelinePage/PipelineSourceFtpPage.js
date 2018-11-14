@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';

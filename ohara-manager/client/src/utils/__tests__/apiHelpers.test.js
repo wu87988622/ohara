@@ -1,5 +1,5 @@
 import toastr from 'toastr';
-import { handleError } from '../apiHelpers';
+import { handleError } from '../apiUtils';
 
 jest.mock('toastr', () => {
   return {

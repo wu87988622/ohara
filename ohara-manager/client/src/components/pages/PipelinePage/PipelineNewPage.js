@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Route, Redirect } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import PipelineSourcePage from './PipelineSourcePage';
 import PipelineSourceFtpPage from './PipelineSourceFtpPage';

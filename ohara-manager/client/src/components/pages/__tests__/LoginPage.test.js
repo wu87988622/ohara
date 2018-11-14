@@ -5,7 +5,7 @@ import { shallow } from 'enzyme';
 import * as LOGIN_PAGE from 'constants/login';
 import localStorageMock from '__mocks__/localStorage';
 import LoginPage from '../LoginPage';
-import { setUserKey } from 'utils/authHelpers';
+import { setUserKey } from 'utils/authUtils';
 import { login } from 'apis/authApis';
 import { LOGIN_SUCCESS } from 'constants/messages';
 import { HOME } from 'constants/urls';
@@ -14,7 +14,7 @@ import { LOGIN } from 'constants/documentTitles';
 window.localStorage = localStorageMock;
 
 jest.mock('apis/authApis');
-jest.mock('utils/authHelpers');
+jest.mock('utils/authUtils');
 
 const props = {
   updateLoginState: jest.fn(),

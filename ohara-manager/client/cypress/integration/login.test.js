@@ -1,5 +1,5 @@
 import { INVALID_USER } from '../../src/constants/cypress';
-import { getTestById } from '../../src/utils/testHelpers';
+import { getTestById } from '../../src/utils/testUtils';
 import * as MESSAGES from '../../src/constants/messages';
 import * as URLS from '../../src/constants/urls';
 

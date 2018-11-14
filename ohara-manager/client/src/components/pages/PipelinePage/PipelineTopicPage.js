@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { Facebook } from 'react-content-loader';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';

@@ -5,7 +5,7 @@ import {
   deleteUserKey,
   getUserKey,
   isLoggedin,
-} from '../authHelpers';
+} from '../authUtils';
 
 window.localStorage = localStorageMock;
 const userKey = '123456abc';

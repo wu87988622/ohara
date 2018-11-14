@@ -1,5 +1,5 @@
 import * as URLS from '../../src/constants/urls';
-import { getTestById } from '../../src/utils/testHelpers';
+import { getTestById } from '../../src/utils/testUtils';
 
 describe.skip('configuration page', () => {
   beforeEach(() => {

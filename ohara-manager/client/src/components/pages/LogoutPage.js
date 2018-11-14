@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import { logout } from 'apis/authApis';
-import { deleteUserKey } from 'utils/authHelpers';
+import { deleteUserKey } from 'utils/authUtils';
 import { HOME } from 'constants/urls';
 import { LOGOUT_SUCCESS } from 'constants/messages';
 

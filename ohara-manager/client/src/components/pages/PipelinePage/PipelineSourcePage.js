@@ -5,7 +5,7 @@ import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
 import * as URLS from 'constants/urls';
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { Box } from 'common/Layout';
 import { Warning } from 'common/Messages';

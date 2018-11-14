@@ -5,7 +5,7 @@ import { NavLink } from 'react-router-dom';
 
 import * as URLS from 'constants/urls';
 import { white, lighterGray } from 'theme/variables';
-import { deleteUserKey } from 'utils/authHelpers';
+import { deleteUserKey } from 'utils/authUtils';
 
 const HeaderWrapper = styled.header`
   background-color: ${white};

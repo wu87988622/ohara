@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 import { Link } from 'react-router-dom';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { Modal, ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
@@ -16,7 +16,7 @@ import { H2 } from 'common/Headings';
 import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import { isSource, isSink } from 'utils/pipelineHelpers';
+import { isSource, isSink } from 'utils/pipelineUtils';
 import {
   lightBlue,
   blue,

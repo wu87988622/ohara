@@ -6,7 +6,7 @@ import Configuration from '../ConfigurationPage.js';
 import * as MESSAGES from 'constants/messages';
 import { CONFIGURATION } from 'constants/documentTitles';
 import { primaryBtn, cancelBtn } from 'theme/btnTheme';
-import { getTestById } from 'utils/testHelpers';
+import { getTestById } from 'utils/testUtils';
 import { validateHdfs, saveHdfs, fetchHdfs } from 'apis/configurationApis';
 
 jest.mock('apis/configurationApis');

@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
-import { getTestById } from 'utils/testHelpers';
+import { getTestById } from 'utils/testUtils';
 
 const props = {
   match: {

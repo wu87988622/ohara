@@ -5,7 +5,7 @@ import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue, whiteSmoke } from 'theme/variables';

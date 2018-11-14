@@ -5,7 +5,7 @@ import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
 import { Prompt } from 'react-router-dom';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { AppWrapper } from 'common/Layout';
 import { Input, Button, FormGroup, Label } from 'common/Form';

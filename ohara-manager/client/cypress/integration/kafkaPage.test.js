@@ -1,5 +1,5 @@
 import { KAFKA } from '../../src/constants/urls';
-import { getTestById } from '../../src/utils/testHelpers';
+import { getTestById } from '../../src/utils/testUtils';
 
 // TODO: skip these tests for now since this will hit the real APIs
 // Need to start the Configurator when running on CI

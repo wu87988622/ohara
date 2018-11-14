@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import { Input } from 'common/Form';
 
 class EditableLabel extends React.Component {

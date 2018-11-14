@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import PipelineSinkPage from '../PipelineSinkPage';
-import { getTestById } from 'utils/testHelpers';
+import { getTestById } from 'utils/testUtils';
 import { CONFIGURATION } from 'constants/urls';
 
 const props = {

@@ -11,7 +11,7 @@ import Configuration from 'components/pages/ConfigurationPage';
 import LoginPage from 'components/pages/LoginPage';
 import LogoutPage from 'components/pages/LogoutPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
-import { getUserKey } from 'utils/authHelpers';
+import { getUserKey } from 'utils/authUtils';
 
 class App extends React.Component {
   state = {

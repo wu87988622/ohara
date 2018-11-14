@@ -1,6 +1,6 @@
 import { v4 as uuid4 } from 'uuid';
 
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 
 /* eslint-disable array-callback-return */

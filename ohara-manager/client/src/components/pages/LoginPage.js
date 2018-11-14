@@ -6,11 +6,11 @@ import DocumentTitle from 'react-document-title';
 import { Redirect } from 'react-router-dom';
 
 import * as URL from 'constants/urls';
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import * as LOGIN_PAGE from 'constants/login';
 import * as MESSAGES from 'constants/messages';
 import { Input, Button } from 'common/Form';
-import { setUserKey } from 'utils/authHelpers';
+import { setUserKey } from 'utils/authUtils';
 import { login } from 'apis/authApis';
 import { LOGIN } from 'constants/documentTitles';
 import { primaryBtn } from 'theme/btnTheme';

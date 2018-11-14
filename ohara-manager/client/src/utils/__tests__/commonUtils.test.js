@@ -4,7 +4,7 @@ import {
   isUuid,
   reduceByProp,
   isEmptyStr,
-} from '../helpers';
+} from '../commonUtils';
 
 describe('isEmptyStr()', () => {
   it('returns true if the given string is an empty string', () => {

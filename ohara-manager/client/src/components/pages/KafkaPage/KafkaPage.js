@@ -7,7 +7,7 @@ import { Prompt } from 'react-router-dom';
 
 import Modal from './Modal';
 import * as MESSAGES from 'constants/messages';
-import * as _ from 'utils/helpers';
+import * as _ from 'utils/commonUtils';
 import { H2 } from 'common/Headings';
 import { fetchCluster } from 'apis/clusterApis';
 import { createTopics, fetchTopics } from 'apis/topicApis';
