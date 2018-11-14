@@ -49,17 +49,4 @@ describe('<PipelineNewPage />', () => {
   it('renders 5 <Route />', () => {
     expect(wrapper.find('Route').length).toBe(5);
   });
-
-  it('renders <ConfirmModal />', () => {
-    expect(wrapper.find('ConfirmModal').length).toBe(1);
-    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
-  });
-
-  it('toggles <ConfirmModal />', () => {
-    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
-    wrapper.instance().handleModalOpen();
-    expect(wrapper.find('ConfirmModal').props().isActive).toBe(true);
-    wrapper.instance().handleModalClose();
-    expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
-  });
 });

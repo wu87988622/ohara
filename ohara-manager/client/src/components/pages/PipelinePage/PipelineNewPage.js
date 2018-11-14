@@ -16,19 +16,12 @@ import PipelineSinkFtpPage from './PipelineSinkFtpPage';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
-import { ConfirmModal } from 'common/Modal';
-import { deleteBtn } from 'theme/btnTheme';
-import { Button } from 'common/Form';
 import { fetchTopic } from 'apis/topicApis';
 import { H2 } from 'common/Headings';
 import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW } from 'constants/documentTitles';
 import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
-import {
-  fetchPipeline,
-  deletePipeline,
-  updatePipeline,
-} from 'apis/pipelinesApis';
+import { fetchPipeline, updatePipeline } from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
   padding: 100px 30px 0 240px;
@@ -39,10 +32,6 @@ Wrapper.displayName = 'Wrapper';
 const Header = styled.div`
   display: flex;
   align-items: center;
-`;
-
-const Actions = styled.div`
-  margin-left: auto;
 `;
 
 class PipelineNewPage extends React.Component {
@@ -60,7 +49,6 @@ class PipelineNewPage extends React.Component {
     graph: [],
     isRedirect: false,
     isLoading: true,
-    isModalActive: false,
     hasChanges: false,
     pipelines: {},
   };
@@ -201,25 +189,6 @@ class PipelineNewPage extends React.Component {
     });
   };
 
-  handleModalOpen = () => {
-    this.setState({ isModalActive: true });
-  };
-
-  handleModalClose = () => {
-    this.setState({ isModalActive: false });
-  };
-
-  handlePipelineDelete = async () => {
-    const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
-    const res = await deletePipeline(pipelineId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
-
-    if (isSuccess) {
-      toastr.success(MESSAGES.PIPELINE_DELETION_SUCCESS);
-      this.setState(() => ({ isRedirect: true }));
-    }
-  };
-
   updateHasChanges = update => {
     this.setState({ hasChanges: update });
   };
@@ -251,7 +220,6 @@ class PipelineNewPage extends React.Component {
       graph,
       isRedirect,
       topicName,
-      isModalActive,
       hasChanges,
       pipelines,
     } = this.state;
@@ -267,17 +235,6 @@ class PipelineNewPage extends React.Component {
     return (
       <DocumentTitle title={PIPELINE_NEW}>
         <React.Fragment>
-          <ConfirmModal
-            isActive={isModalActive}
-            title="Delete pipeline?"
-            confirmBtnText="Yes, Delete this pipeline"
-            cancelBtnText="No, Keep it"
-            handleCancel={this.handleModalClose}
-            handleConfirm={this.handlePipelineDelete}
-            message="Are you sure you want to delete this pipeline? This action cannot be redo!"
-            isDelete
-          />
-
           <Wrapper>
             <Header>
               <H2>
@@ -287,15 +244,6 @@ class PipelineNewPage extends React.Component {
                   handleChange={this.handlePipelineTitleChange}
                 />
               </H2>
-
-              <Actions>
-                <Button
-                  theme={deleteBtn}
-                  text="Delete pipeline"
-                  data-testid="delete-pipeline-btn"
-                  handleClick={this.handleModalOpen}
-                />
-              </Actions>
             </Header>
             <PipelineToolbar
               {...this.props}
