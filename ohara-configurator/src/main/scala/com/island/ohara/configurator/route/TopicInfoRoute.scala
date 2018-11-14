@@ -41,7 +41,7 @@ private[configurator] object TopicInfoRoute {
           delete {
             assertNotRelated2Pipeline(uuid)
             val d = store.remove[TopicInfo](uuid)
-            kafkaClient.deleteTopic(uuid)
+            if (kafkaClient.exist(uuid)) kafkaClient.deleteTopic(uuid)
             complete(d)
           } ~
           // update
