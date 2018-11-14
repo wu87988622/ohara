@@ -7,13 +7,13 @@
     "node": ">=8.10.0"
   },
   "scripts": {
-    "checkYarnVersion": "node ./scripts/yarnVersionCheck.js",
+    "checkYarnVersion": "node ./scripts/checkYarnVersion.js",
     "setup": "yarn && yarn --cwd client setup",
     "setup:prod": "yarn --prod && yarn --cwd client setup:prod",
     "start": "forever start index.js",
     "start:prod": "node index.js",
-    "dev": "nodemon index.js --exec 'yarn lint:server && node'",
     "start:client": "BROWSER=none yarn --cwd client start:ci",
+    "dev": "nodemon index.js --exec 'yarn lint:server && node'",
     "lint": "yarn lint:server && yarn lint:client",
     "lint:server": "eslint --ignore-pattern \"/client\" --ignore-pattern \"/coverage\" \"**/*.js\"",
     "lint:client": "yarn --cwd client lint",
@@ -25,12 +25,14 @@
     "test:all": "yarn test:report && yarn test:client:unit && yarn test:client:e2e",
     "test:client:unit": "yarn --cwd client test:report",
     "test:client:e2e": "yarn start:client & wait-on http://localhost:3000 && yarn start --configurator http://fakehost:7777/v0 & wait-on http://localhost:5050 && yarn --cwd client cypress:ci",
-    "clean": "yarn clean:client && yarn clean:server",
+    "clean": "yarn clean:process:all && yarn clean:client && yarn clean:server",
     "clean:process": "forever stopall",
     "clean:server": "rm -rf ./test-reports node_modules",
     "clean:client": "rm -rf ./client/node_modules ./client/build",
+    "clean:process:all": "node ./scripts/cleanAllProcesses",
     "format": "prettier --single-quote --trailing-comma all --write \"**/*.js\"",
-    "prepush": "yarn lint && yarn test:all && yarn format"
+    "prepush": "yarn clean:process:all && yarn lint && yarn test:all && yarn format",
+    "postprepush": "yarn clean:process"
   },
   "dependencies": {
     "axios": "0.18.0",
