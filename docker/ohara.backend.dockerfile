@@ -1,33 +1,24 @@
-FROM ubuntu:18.04 AS deps
+FROM centos:7.5.1804 AS deps
 
 ARG BITBUCKET_USER=""
 ARG BITBUCKET_PASSWORD=""
 ARG GRADLE_VERSION=4.10.2
 ARG BRANCH="master"
 
-# update
-RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
+# install tools
+RUN yum install -y \
   git \
-  ca-certificates \
-  apt-utils \
-  openjdk-8-jdk \
+  java-1.8.0-openjdk-devel \
   wget \
-  unzip \
-  gnupg \
-  gnupg1 \
-  gnupg2 \
-  node.js \
-  libaio1 \
-  libnuma1 \
-  gpg-agent \
-  npm
+  unzip
 
-# copy repo
-WORKDIR /testpatch
-RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+# export JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java
 
-# INSTALL yarn
-RUN npm install -g yarn@1.7.0
+# install dependencies for mysql
+RUN yum install -y \
+  libaio \
+  numactl
 
 # download gradle
 WORKDIR /opt/gradle
@@ -42,25 +33,32 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
 WORKDIR /testpatch/ohara
-RUN git checkout $BRANCH
+RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git /testpatch/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
-FROM ubuntu:18.04
+FROM centos:7.5.1804
 
 ARG USER=ohara
 ARG TINI_VERSION=v0.18.0
 
-# update
-RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
-  apt-utils \
-  openjdk-8-jdk \
-  libaio1 \
-  libnuma1 \
-  wget
+# install tools
+RUN yum install -y \
+  git \
+  java-1.8.0-openjdk-devel \
+  wget \
+  unzip
+
+# export JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java
+
+# install dependencies for mysql
+RUN yum install -y \
+  libaio \
+  numactl
 
 # add user
 RUN groupadd $USER
@@ -79,7 +77,7 @@ COPY --from=deps /root/.embedmysql /home/$USER/.embedmysql
 RUN chown -R $USER:$USER /home/$USER/.embedmysql
 
 # Add Tini
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /
+RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 RUN chmod +x /tini
 
 # change to user

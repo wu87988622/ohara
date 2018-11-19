@@ -1,32 +1,26 @@
-FROM ubuntu:18.04 AS deps
+FROM centos:7.5.1804 AS deps
 
 ARG BITBUCKET_USER=""
 ARG BITBUCKET_PASSWORD=""
 ARG GRADLE_VERSION=4.10.2
 ARG BRANCH="master"
 
-# update
-RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
+# install tools
+RUN yum install -y \
   git \
-  ca-certificates \
-  apt-utils \
-  openjdk-8-jdk \
+  java-1.8.0-openjdk-devel \
   wget \
-  unzip \
-  gnupg \
-  gnupg1 \
-  gnupg2 \
-  node.js \
-  libaio1 \
-  libnuma1 \
-  gpg-agent \
-  npm
+  unzip
 
-# copy repo
-WORKDIR /testpatch
-RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git
+# export JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java
 
-# INSTALL yarn
+# install nodejs
+# NOTED: ohara-manager requires nodejs 8.x
+RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash -
+RUN yum install -y nodejs
+
+# install yarn
 RUN npm install -g yarn@1.7.0
 
 # download gradle
@@ -42,29 +36,32 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
 WORKDIR /testpatch/ohara
-RUN git checkout $BRANCH
-# Running this test case make gradle download mysql binary code
+RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git /testpatch/ohara
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
-FROM ubuntu:18.04
+FROM centos:7.5.1804
 
 ARG USER=ohara
 ARG TINI_VERSION=v0.18.0
 
-# update
-RUN apt-get -y update && apt-get -q install --no-install-recommends -y \
-  apt-utils \
-  openjdk-8-jdk \
-  gnupg \
-  gnupg1 \
-  gnupg2 \
-  node.js \
-  npm \
-  wget
+# install tools
+RUN yum install -y \
+  git \
+  java-1.8.0-openjdk-devel \
+  wget \
+  unzip
 
-# INSTALL yarn
+# export JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java
+
+# install nodejs
+# NOTED: ohara-manager requires nodejs 8.x
+RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash -
+RUN yum install -y nodejs
+
+# install yarn
 RUN npm install -g yarn@1.7.0
 
 # add user
@@ -79,7 +76,7 @@ RUN ln -s $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*") /opt/ohara/d
 RUN chown -R $USER:$USER /opt/ohara
 
 # Add Tini
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /
+RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 RUN chmod +x /tini
 
 # change to user
