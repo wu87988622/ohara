@@ -8,6 +8,7 @@ import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
 import DeploymentPage from 'components/pages/DeploymentPage';
 import ConfigurationPage from 'components/pages/ConfigurationPage';
 import MonitoringPage from 'components/pages/MonitoringPage';
+import KafkaPage from 'components/pages/KafkaPage';
 import LoginPage from 'components/pages/LoginPage';
 import LogoutPage from 'components/pages/LogoutPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
@@ -67,6 +68,11 @@ class App extends React.Component {
               path="/monitoring"
               component={MonitoringPage}
               data-testid="monitoring-page"
+            />
+            <Route
+              path="/kafka"
+              component={KafkaPage}
+              data-testid="kafka-page"
             />
             <Route
               path="/login"

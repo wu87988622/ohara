@@ -19,7 +19,7 @@ import { lightBlue } from 'theme/variables';
 import { Box } from 'common/Layout';
 
 const Wrapper = styled.div`
-  padding: 100px 30px 0 240px;
+  padding: 100px 50px;
 `;
 
 const FormInner = styled.div`
