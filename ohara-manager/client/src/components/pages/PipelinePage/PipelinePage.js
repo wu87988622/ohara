@@ -117,7 +117,7 @@ class PipelinePage extends React.Component {
     }).isRequired,
   };
 
-  headers = ['#', 'name', 'status', 'start/stop', 'edit', 'delete'];
+  headers = ['#', 'name', 'status', 'edit', 'delete'];
   state = {
     isSelectTopicModalActive: false,
     isDeletePipelineModalActive: false,
@@ -208,34 +208,6 @@ class PipelinePage extends React.Component {
 
   handleSelectTopicModalClose = () => {
     this.setState({ isSelectTopicModalActive: false });
-  };
-
-  handleStartStopBtnClick = async uuid => {
-    const target = this.state.pipelines.filter(
-      pipeline => pipeline.uuid === uuid,
-    );
-
-    if (_.isEmpty(target)) return;
-
-    const { objects: connectors, status } = target[0];
-
-    if (!status) {
-      toastr.error(
-        'Failed to start the pipeline, please check your connectors settings',
-      );
-
-      return;
-    }
-
-    if (status === 'Stopped') {
-      const res = await this.startConnectors(connectors);
-      const isSuccess = res.filter(r => r.data.isSuccess);
-      this.handleConnectorResponse(isSuccess, 'started');
-    } else {
-      const res = await this.stopConnectors(connectors);
-      const isSuccess = res.filter(r => r.data.isSuccess);
-      this.handleConnectorResponse(isSuccess, 'stopped');
-    }
   };
 
   handleConnectorResponse = (isSuccess, action) => {
@@ -440,9 +412,6 @@ class PipelinePage extends React.Component {
 
                   const trCls = isRunning ? 'is-running' : '';
                   const linkIconCls = isRunning ? 'is-running' : '';
-                  const startStopCls = isRunning
-                    ? 'fa-stop-circle'
-                    : 'fa-play-circle';
 
                   const editUrl = this.getEditUrl(pipeline);
 
@@ -451,15 +420,6 @@ class PipelinePage extends React.Component {
                       <td>{idx}</td>
                       <td>{name}</td>
                       <td>{status}</td>
-                      <td className="has-icon">
-                        <StartStopIcon
-                          isRunning={isRunning}
-                          onClick={() => this.handleStartStopBtnClick(uuid)}
-                        >
-                          <i className={`far ${startStopCls}`} />
-                        </StartStopIcon>
-                      </td>
-
                       <td className="has-icon">
                         <LinkIcon
                           to={isRunning ? this.props.match.url : editUrl}

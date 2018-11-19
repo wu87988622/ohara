@@ -118,14 +118,7 @@ describe('<PipelinePage />', () => {
 
       const createExpects = pipelines => {
         return pipelines.map(({ name, status }, idx) => {
-          return [
-            String(idx),
-            name,
-            status,
-            'StartStopIcon',
-            'LinkIcon',
-            'DeleteIcon',
-          ];
+          return [String(idx), name, status, 'LinkIcon', 'DeleteIcon'];
         });
       };
 
@@ -138,10 +131,6 @@ describe('<PipelinePage />', () => {
           expect(x.children().name()).toBe(expected[0][idx]);
         }
       });
-
-      const startStopIcon = firstRow.find('StartStopIcon');
-      expect(startStopIcon.props().isRunning).toBe(false);
-      expect(startStopIcon.find('i').hasClass('fa-stop-circle'));
 
       // TODO: add tests for LinkIcon and DeleteIcon
       secondRow.forEach((x, idx) => {
