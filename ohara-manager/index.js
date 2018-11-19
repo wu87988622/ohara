@@ -5,7 +5,7 @@ const chalk = require('chalk');
 const path = require('path');
 const morgan = require('morgan');
 
-const { API_ROOT, PORT } = require('./constants/config');
+const { API_ROOT, PORT } = require('./config');
 
 /* eslint-disable no-console */
 const app = express();

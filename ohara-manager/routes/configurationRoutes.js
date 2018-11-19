@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 
-const { API_ROOT } = require('../constants/config');
+const { API_ROOT } = require('../config');
 const {
   onSuccess,
   onValidateSuccess,
