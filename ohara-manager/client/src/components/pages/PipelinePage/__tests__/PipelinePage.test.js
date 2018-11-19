@@ -35,13 +35,9 @@ describe('<PipelinePage />', () => {
   });
 
   it('renders <H2 />', () => {
-    expect(wrapper.find('H2').length).toBe(1);
-    expect(
-      wrapper
-        .find('H2')
-        .children()
-        .text(),
-    ).toBe('Pipeline');
+    const h2 = wrapper.find('H2');
+    expect(h2.length).toBe(1);
+    expect(h2.children().text()).toBe('Pipelines');
   });
 
   it('renders <NewPipelineBtn>', () => {

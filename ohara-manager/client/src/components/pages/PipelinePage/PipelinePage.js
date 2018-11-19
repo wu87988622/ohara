@@ -396,7 +396,7 @@ class PipelinePage extends React.Component {
 
           <Wrapper>
             <TopWrapper>
-              <H2>Pipeline</H2>
+              <H2>Pipelines</H2>
               <NewPipelineBtn
                 theme={primaryBtn}
                 text="New pipeline"
