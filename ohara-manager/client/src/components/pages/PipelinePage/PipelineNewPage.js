@@ -24,7 +24,7 @@ import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 import { fetchPipeline, updatePipeline } from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
-  padding: 100px 30px 0 240px;
+  padding: 100px 50px;
 `;
 
 Wrapper.displayName = 'Wrapper';

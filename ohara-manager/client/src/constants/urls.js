@@ -4,6 +4,8 @@ export const HOME = '/';
 export const PIPELINE = '/pipeline';
 
 export const KAFKA = '/kafka';
+export const DEPLOYMENT = '/deployment';
+export const MONITORING = '/monitoring';
 export const CONFIGURATION = '/configuration';
 
 // Auth

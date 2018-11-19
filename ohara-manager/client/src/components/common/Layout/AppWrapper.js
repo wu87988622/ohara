@@ -6,7 +6,7 @@ import { H2 } from 'common/Headings';
 import { white, radiusNormal, shadowNormal } from '../../../theme/variables';
 
 const Wrapper = styled.div`
-  padding: 100px 30px 0 240px;
+  padding: 100px 50px;
 `;
 
 Wrapper.displayName = 'Wrapper';

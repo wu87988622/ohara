@@ -2,12 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import Header from 'components/common/Header';
-import Nav from 'components/common/Nav';
 import HomePage from 'components/pages/HomePage';
-import Pipeline from 'components/pages/PipelinePage';
-import PipelineNew from 'components/pages/PipelinePage/PipelineNewPage';
-import Kafka from 'components/pages/KafkaPage';
-import Configuration from 'components/pages/ConfigurationPage';
+import PipelinePage from 'components/pages/PipelinePage';
+import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
+import DeploymentPage from 'components/pages/DeploymentPage';
+import ConfigurationPage from 'components/pages/ConfigurationPage';
+import MonitoringPage from 'components/pages/MonitoringPage';
 import LoginPage from 'components/pages/LoginPage';
 import LogoutPage from 'components/pages/LogoutPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
@@ -37,21 +37,40 @@ class App extends React.Component {
       <Router>
         <React.Fragment>
           <Header isLogin={isLogin} />
-          <Nav />
           <Switch>
             <Route
               path="/pipeline/new/:page/:pipelineId/:topicId/:sourceId?/:sinkId?"
-              component={PipelineNew}
+              component={PipelineNewPage}
+              data-testid="pipeline-new-page"
             />
             <Route
               path="/pipeline/edit/:page/:pipelineId/:topicId/:sourceId?/:sinkId?"
-              component={PipelineNew}
+              component={PipelineNewPage}
+              data-testid="pipeline-edit-page"
             />
-            <Route path="/pipeline" component={Pipeline} />
-            <Route path="/kafka" component={Kafka} />
-            <Route path="/configuration" component={Configuration} />
+            <Route
+              path="/pipeline"
+              component={PipelinePage}
+              data-testid="pipeline-page"
+            />
+            <Route
+              path="/configuration"
+              component={ConfigurationPage}
+              data-testid="configuration-page"
+            />
+            <Route
+              path="/deployment"
+              component={DeploymentPage}
+              data-testid="deployment-page"
+            />
+            <Route
+              path="/monitoring"
+              component={MonitoringPage}
+              data-testid="monitoring-page"
+            />
             <Route
               path="/login"
+              data-testid="login-page"
               render={props => (
                 <LoginPage
                   updateLoginState={this.updateLoginState}
@@ -61,6 +80,7 @@ class App extends React.Component {
             />
             <Route
               path="/logout"
+              data-testid="logout-page"
               render={props => (
                 <LogoutPage
                   updateLoginState={this.updateLoginState}
@@ -68,8 +88,13 @@ class App extends React.Component {
                 />
               )}
             />
-            <Route exact path="/" component={HomePage} />
-            <Route component={NotFoundPage} />
+            <Route
+              exact
+              path="/"
+              data-testid="home-page"
+              component={HomePage}
+            />
+            <Route component={NotFoundPage} data-testid="not-found-page" />
           </Switch>
         </React.Fragment>
       </Router>

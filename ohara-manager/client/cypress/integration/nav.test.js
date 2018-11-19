@@ -3,19 +3,18 @@ import { getTestById } from '../../src/utils/testUtils';
 
 describe('Nav', () => {
   it('matches the correct routes', () => {
-    cy.visit('/');
-    cy.location('pathname').should('eq', URLS.HOME);
+    cy.visit(URLS.HOME);
 
-    cy.get(getTestById('nav-pipeline')).click();
+    cy.get(getTestById('pipelines-link')).click();
     cy.location('pathname').should('eq', URLS.PIPELINE);
 
-    cy.get(getTestById('nav-kafka')).click();
-    cy.location('pathname').should('eq', URLS.KAFKA);
-
-    cy.get(getTestById('nav-configuration')).click();
+    cy.get(getTestById('configuration-link')).click();
     cy.location('pathname').should('eq', URLS.CONFIGURATION);
 
-    cy.get(getTestById('brand')).click();
-    cy.location('pathname').should('eq', URLS.HOME);
+    cy.get(getTestById('deployment-link')).click();
+    cy.location('pathname').should('eq', URLS.DEPLOYMENT);
+
+    cy.get(getTestById('monitoring-link')).click();
+    cy.location('pathname').should('eq', URLS.MONITORING);
   });
 });
