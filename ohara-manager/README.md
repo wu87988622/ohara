@@ -16,7 +16,15 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
     ```
 5.  **Optional**: If you're using Visual Studio Code as your editor, have a look at our Editors section at the bottom of this README.md.
 
-Have issues while setting up? Try the **Having issues** section to troubleshoot.
+### Linux
+
+install these dependencies for cypress:
+
+```sh
+yum install -y xorg-x11-server-Xvfb gtk2-2.24* libXtst* libXScrnSaver* GConf2* alsa-lib*
+```
+
+> Have issues while setting up? Try the **Having issues** section to troubleshoot.
 
 ## Development
 
