@@ -1,6 +1,6 @@
 # Ohara Manager
 
-This repository contains Ohara manager itself (an HTTP server built with node.js) and Ohara manager client (Ohara fastdata UIs built with React.js ). In the following docs, we refer **Server** as Ohara manager and **Client** as Ohara manager client.
+This repository contains Ohara manager itself (an HTTP server built with node.js) and Ohara manager client (Ohara UIs built with React.js ). In the following docs, we refer **Server** as Ohara manager and **Client** as Ohara manager client.
 
 ## Initial machine setup
 
@@ -10,11 +10,7 @@ This repository contains Ohara manager itself (an HTTP server built with node.js
 
 3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
 
-4.  **Optional**: Install [forever](https://github.com/foreverjs/forever#readme) via npm:
-    ```sh
-    npm install -g forever
-    ```
-5.  **Optional**: If you're using Visual Studio Code as your editor, have a look at our Editors section at the bottom of this README.md.
+4.  **Optional**: If you're using Visual Studio Code as your editor, have a look at our Editors section.
 
 ### Linux
 
@@ -41,7 +37,7 @@ yarn start --configurator http://host:port/v0
 ```
 
 - Note that the `--configurator` argument is required, you should pass in the
-  Ohara configurator API url.
+  Ohara configurator API URL.
 - You can override the default port `5050` by passing in `--port` like the following:
 
 ```sh
@@ -50,39 +46,31 @@ yarn start --configurator http://host:port/v0 --port 1234
 
 After starting the server, visit `http://localhost:${PORT}` in your browser.
 
-> Double check the configurator spelling and the API url, it should contain the API version number, for example `/v0`
+> Double check the configurator spelling and the API URL, it should contain the API version number: `/v0`
 
 **Client**:
 
-Make you're in the **client** directory and start the dev server with:
-
 ```sh
-yarn start
+yarn start:client
 ```
 
 After starting the dev server, visit `http://localhost:3000` in your browser.
 
 ## Test
 
-You can run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End test with a single npm script:
-
-> Note that this command won't generate test reports for you
-
-```sh
-yarn test:all
-```
-
-**Server:**
-
-Make sure you're in the ohara-manager root, and use the following commands:
-
-Run the test
+You can run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End test with one single npm script:
 
 ```sh
 yarn test
 ```
 
-Run the test and stay in Jest watch mode, **this is usually what you want to do when developing:**
+You can also run them separately as:
+
+**Server:**
+
+Make sure you're in the ohara-manager root, and use the following commands:
+
+Run the test and stay in Jest watch mode
 
 ```sh
 yarn test:watch
@@ -90,7 +78,7 @@ yarn test:watch
 
 Generate a test coverage report
 
-> The coverage reports can be found in `ohara-manager/client/coverage/`
+> The coverage reports can be found in `ohara-manager/coverage/`
 
 ```sh
 yarn test:coverage
@@ -98,12 +86,10 @@ yarn test:coverage
 
 **Client:**
 
-Make sure you're in the **client** directory, and use the following commands:
-
 Run the tests and stay in Jest watch mode
 
 ```sh
-yarn test:watch # or simply yarn:test
+yarn test:client:watch
 ```
 
 Generate test coverage reports
@@ -111,38 +97,38 @@ Generate test coverage reports
 > The coverage reports can be found in `ohara-manager/client/coverage/`
 
 ```sh
-yarn test:coverage
+yarn test:client:coverage
 ```
 
 **Client** also has End-to-End tests, you can run them via the following command:
 
 ```sh
-yarn cypress
+yarn test:client:cypress
 ```
 
 This will open cypress test runner, you can then run your test manually through the UIs.
 
 ## Linting
 
-We use [ESLint](https://github.com/eslint/eslint) to ensure our code quality:
+We use [ESLint](https://github.com/eslint/eslint) to lint all the JavaScript:
 
 **Server:**
 
 ```sh
-yarn lint
+yarn lint:server
 ```
 
-It's usually helpful to run linting while developing, that's why we also provide a npm script to do so:
+It's usually helpful to run linting while developing and that's included in `yarn start` command:
 
 ```sh
-yarn dev --configurator http://host:port/v0
+yarn start --configurator http://host:port/v0
 ```
 
 This will start the server with `nodemon` and run the linting script whenever nodemon reloads.
 
 **Client:**
 
-Since our client is bootstrapped with create-react-app, so the linting part is already taken care. When starting the **Client** dev server with `yarn start`, the linting will be starting automatically.
+Since our client is bootstrapped with create-react-app, so the linting part is already taken care. When starting the **Client** dev server with `yarn start:client`, the linting will be starting automatically.
 
 Note that due to create-react-app doesn't support custom eslint rules. You need to use your text editor plugin to display the custom linting rule warnings or errors. For more info about this, please take a look at the create-react-app [docs](https://facebook.github.io/create-react-app/docs/setting-up-your-editor#displaying-lint-output-in-the-editor)
 
@@ -165,10 +151,10 @@ yarn format
 You can get the production-ready static files by using the following command:
 
 ```sh
-yarn build
+yarn build:client
 ```
 
-> These static files will be build and put into the **/build** directory.
+> These static files will be build and put into the **/ohara-manager/client/build** directory.
 
 ## Ohara manager image
 
@@ -193,30 +179,8 @@ After the build, copy/use these files and directories to the destination directo
 **From the Ohara manager project root**, use the following command to start the manager:
 
 ```sh
- yarn start --configurator http://host:port/v0
+ yarn start:prod --configurator http://host:port/v0
 ```
-
-If you have forever installed on your machine globally with npm, you can then check the server logs with:
-
-```sh
-forever logs -f 0
-```
-
-> Here the 0 means the process index
-
-Use forever to see the running processes:
-
-```sh
-forever listall
-```
-
-Or stop them
-
-```sh
-forever stopall
-```
-
-For more info, check out the forever [docs](https://github.com/foreverjs/forever)
 
 ## CI server integration
 
@@ -225,14 +189,16 @@ In order to work with Graddle on Jenkins, Ohara manager provides a few npm scrip
 Run tests on CI:
 
 ```sh
-yarn test:ci
+yarn test
 ```
 
 - Run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End tests. The test reports can be found in `ohara-manager/test-reports/`
 
-- This npm script will also run `yarn setup` to ensure that all necessary packages are correctly installed prior to running tests.
+- Note you should run `yarn setup` to ensure that all necessary packages are correctly installed prior to running tests.
 
-Clean `test-reports/` on the **Server**, `node_moduels/` on both **Server** and **Client** directories:
+## Clean
+
+Clean up all running processes as well as `test-reports/` on the **Server**, `node_moduels/` on both **Server** and **Client** directories:
 
 ```sh
 yarn clean
@@ -244,11 +210,11 @@ Clean all running processes started with node.js
 yarn clean:process
 ```
 
-This is useful when you want to kill all node.js processes, alternatively, use `pkill node` or simply `kill -9 ${PID}` to stop process
+This is useful when you want to kill all node.js processes
 
 ## Prepush
 
-We also provide a npm script to run all the tests(both client and server unit tests and e2e tests) lint, and format all the JS files with:
+We also provide a npm script to run all the tests(both client and server unit tests and e2e tests) lint, and format all the JS files with. **Ideally, you'd run this before pushing your code to the remote repo:**
 
 ```sh
 yarn prepush

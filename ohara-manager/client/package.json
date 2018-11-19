@@ -13,7 +13,7 @@
     "start": "react-scripts start",
     "start:ci": "forever start node_modules/react-scripts/scripts/start.js",
     "build": "react-scripts build",
-    "lint": "node_modules/eslint/bin/eslint.js src cypress",
+    "lint": "$(npm bin)/eslint src cypress",
     "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
     "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",

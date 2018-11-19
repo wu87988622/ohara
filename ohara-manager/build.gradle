@@ -20,7 +20,10 @@ task test {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'test:ci'
+        commandLine 'yarn', 'setup'
+      }
+      exec {
+        commandLine 'yarn', 'test'
       }
     }
   }
