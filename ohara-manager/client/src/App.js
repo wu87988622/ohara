@@ -50,7 +50,7 @@ class App extends React.Component {
               data-testid="pipeline-edit-page"
             />
             <Route
-              path="/pipeline"
+              path="/pipelines"
               component={PipelinePage}
               data-testid="pipeline-page"
             />

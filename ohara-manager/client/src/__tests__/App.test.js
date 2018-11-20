@@ -48,7 +48,7 @@ describe('<App />', () => {
         testId: 'pipeline-edit-page',
       },
       {
-        path: '/pipeline',
+        path: '/pipelines',
         testId: 'pipeline-page',
       },
       {

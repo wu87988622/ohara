@@ -1,7 +1,7 @@
 export const HOME = '/';
 
-// Pipeline
-export const PIPELINE = '/pipeline';
+// Pipelines
+export const PIPELINE = '/pipelines';
 
 export const KAFKA = '/kafka';
 export const DEPLOYMENT = '/deployment';
