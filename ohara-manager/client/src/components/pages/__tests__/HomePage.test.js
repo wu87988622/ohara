@@ -2,21 +2,26 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import HomePage from '../HomePage';
-import { HOME } from 'constants/documentTitles';
+
+const props = { match: {} };
 
 describe('<HomePage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<HomePage />);
+    wrapper = shallow(<HomePage {...props} />);
   });
 
-  it('renders <DocumentTitle />', () => {
-    expect(wrapper.dive().name()).toBe('DocumentTitle');
-    expect(wrapper.dive().props().title).toBe(HOME);
+  it('should render', () => {
+    expect(wrapper.length).toBe(1);
   });
 
-  it('renders <AppWrapper />', () => {
-    expect(wrapper.find('AppWrapper').length).toBe(1);
-    expect(wrapper.find('AppWrapper').props().title).toBe('Ohara home');
+  it('should render the correct h2', () => {
+    expect(wrapper.find('H2').length).toBe(1);
+    expect(
+      wrapper
+        .find('H2')
+        .children()
+        .text(),
+    ).toBe('Pipeline');
   });
 });
