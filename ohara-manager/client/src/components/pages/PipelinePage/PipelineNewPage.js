@@ -260,7 +260,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path={`/pipeline/(new|edit)/${jdbcSource}`}
+              path={`/pipelines/(new|edit)/${jdbcSource}`}
               render={() => (
                 <PipelineSourcePage
                   {...this.props}
@@ -274,7 +274,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path={`/pipeline/(new|edit)/${ftpSource}`}
+              path={`/pipelines/(new|edit)/${ftpSource}`}
               render={() => (
                 <PipelineSourceFtpPage
                   {...this.props}
@@ -288,7 +288,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path={`/pipeline/(new|edit)/${ftpSink}`}
+              path={`/pipelines/(new|edit)/${ftpSink}`}
               render={() => (
                 <PipelineSinkFtpPage
                   {...this.props}
@@ -302,7 +302,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path="/pipeline/(new|edit)/topic"
+              path="/pipelines/(new|edit)/topic"
               render={() => (
                 <PipelineTopicPage
                   {...this.props}
@@ -316,7 +316,7 @@ class PipelineNewPage extends React.Component {
             />
 
             <Route
-              path={`/pipeline/(new|edit)/${hdfsSink}`}
+              path={`/pipelines/(new|edit)/${hdfsSink}`}
               render={() => (
                 <PipelineSinkPage
                   {...this.props}

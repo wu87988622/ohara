@@ -93,7 +93,7 @@ class PipelineGraph extends React.Component {
     const [_graph] = graph.filter(g => g.id === id);
 
     const action = match.url.includes('/edit/') ? 'edit' : 'new';
-    const baseUrl = `/pipeline/${action}/${
+    const baseUrl = `/pipelines/${action}/${
       _graph.type
     }/${pipelineId}/${topicId}`;
 
