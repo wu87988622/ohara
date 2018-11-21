@@ -4,7 +4,7 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=8.10.0"
+    "node": "^8.12.0"
   },
   "scripts": {
     "checkYarnVersion": "node ./scripts/checkYarnVersion.js",

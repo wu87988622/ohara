@@ -2,6 +2,9 @@
   "name": "ohara-manager-client",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "^8.12.0"
+  },
   "proxy": {
     "/api/*": {
       "target": "http://localhost:5050"
