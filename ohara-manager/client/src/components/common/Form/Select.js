@@ -20,7 +20,7 @@ const SelectWrapper = styled.select`
   border-radius: ${radiusNormal};
   background-color: ${white};
   width: ${({ width }) => width};
-  height: 40px;
+  height: ${({ height }) => height};
   outline: 0;
 
   &:focus {
@@ -37,6 +37,7 @@ const Select = ({
   selected = '',
   handleChange,
   isObject = false,
+  height = '32px',
   width = '100%',
   ...rest
 }) => {
@@ -47,6 +48,7 @@ const Select = ({
       value={_selected}
       onChange={handleChange}
       width={width}
+      height={height}
       {...rest}
     >
       {isObject
@@ -69,6 +71,7 @@ Select.propTypes = {
   handleChange: PropTypes.func.isRequired,
   isObject: PropTypes.bool,
   width: PropTypes.string,
+  height: PropTypes.string,
   list: PropTypes.array,
 };
 

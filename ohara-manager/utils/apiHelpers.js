@@ -32,7 +32,6 @@ const onValidateSuccess = (res, result) => {
 
 const onSuccess = (res, result) => {
   const data = _.get(result, 'data', null);
-
   if (data) {
     const _result = {
       result: data,

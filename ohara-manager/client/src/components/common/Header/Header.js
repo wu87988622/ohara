@@ -7,7 +7,7 @@ import * as URLS from 'constants/urls';
 import NAVS from 'constants/navs';
 import { white, blue, dimBlue, lighterGray } from 'theme/variables';
 
-const Wrapper = styled.header`
+const Wrapper = styled.div`
   background-color: ${white};
   position: fixed;
   left: 0;
@@ -15,13 +15,22 @@ const Wrapper = styled.header`
   right: 0;
   height: 59px;
   border-bottom: 1px solid ${lighterGray};
-  display: flex;
-  align-items: center;
   padding: 0 50px;
   z-index: 100;
 `;
 
-Wrapper.displayName = 'Header';
+Wrapper.displayName = 'Wrapper';
+
+const HeaderWrapper = styled.header`
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  margin: auto;
+`;
+
+HeaderWrapper.displayName = 'Header';
 
 const Brand = styled(NavLink)`
   font-family: Merriweather, sans-serif;
@@ -78,30 +87,32 @@ class Header extends React.Component {
 
     return (
       <Wrapper>
-        <Brand to={URLS.HOME}>Ohara</Brand>
-        <Nav>
-          {NAVS.map(({ testId, to, iconCls, text }) => {
-            return (
-              <Link
-                exact
-                activeClassName="active"
-                key={testId}
-                data-testid={testId}
-                to={to}
-              >
-                <Icon className={`fas ${iconCls}`} />
-                <span>{text}</span>
-              </Link>
-            );
-          })}
-        </Nav>
+        <HeaderWrapper>
+          <Brand to={URLS.HOME}>Ohara</Brand>
+          <Nav>
+            {NAVS.map(({ testId, to, iconCls, text }) => {
+              return (
+                <Link
+                  exact
+                  activeClassName="active"
+                  key={testId}
+                  data-testid={testId}
+                  to={to}
+                >
+                  <Icon className={`fas ${iconCls}`} />
+                  <span>{text}</span>
+                </Link>
+              );
+            })}
+          </Nav>
 
-        <Login
-          data-testid="login-state"
-          to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
-        >
-          {isLogin ? 'Log out' : 'Log in'}
-        </Login>
+          <Login
+            data-testid="login-state"
+            to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
+          >
+            {isLogin ? 'Log out' : 'Log in'}
+          </Login>
+        </HeaderWrapper>
       </Wrapper>
     );
   }

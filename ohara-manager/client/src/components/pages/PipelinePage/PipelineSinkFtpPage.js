@@ -5,13 +5,12 @@ import PropTypes from 'prop-types';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
-import { lightBlue, whiteSmoke } from 'theme/variables';
+import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
+import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { fetchTopics } from 'apis/topicApis';
 import {
   createSink,
@@ -21,28 +20,6 @@ import {
   fetchPipeline,
   validateFtp,
 } from 'apis/pipelinesApis';
-
-const H5Wrapper = styled(H5)`
-  margin: 0;
-  font-weight: normal;
-  color: ${lightBlue};
-`;
-
-const Form = styled.form`
-  display: flex;
-`;
-
-const LeftCol = styled.div`
-  width: 250px;
-  padding-right: 45px;
-  margin-right: 45px;
-  border-right: 2px solid ${whiteSmoke};
-  box-sizing: content-box;
-`;
-
-const RightCol = styled.div`
-  width: 250px;
-`;
 
 const FormGroupWrapper = styled.div`
   display: flex;
@@ -59,12 +36,6 @@ const Checkbox = styled(Input)`
   height: auto;
   width: auto;
   margin-right: 8px;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 25px;
 `;
 
 const SchemaBtn = styled(Button)`
@@ -569,7 +540,12 @@ class PipelineSinkFtpPage extends React.Component {
 
     return (
       <React.Fragment>
-        <Box>
+        <Tabs>
+          <TabList>
+            <Tab>FTP Sink 1/2</Tab>
+            <Tab>FTP Sink 2/2</Tab>
+            <Tab>Output schema</Tab>
+          </TabList>
           <ConfirmModal
             isActive={isDeleteSchemaModalActive}
             title="Delete schema?"
@@ -595,7 +571,7 @@ class PipelineSinkFtpPage extends React.Component {
                   <Label>Column name</Label>
                   <Input
                     name="columnName"
-                    width="250px"
+                    width="100%"
                     placeholder="Column name"
                     value={columnName}
                     data-testid="column-name-modal"
@@ -606,7 +582,7 @@ class PipelineSinkFtpPage extends React.Component {
                   <Label>New column name</Label>
                   <Input
                     name="newColumnName"
-                    width="250px"
+                    width="100%"
                     placeholder="New column name"
                     value={newColumnName}
                     data-testid="new-column-name-modal"
@@ -617,7 +593,7 @@ class PipelineSinkFtpPage extends React.Component {
                   <Label>Type</Label>
                   <Select
                     name="types"
-                    width="250px"
+                    width="100%"
                     list={this.schemaTypes}
                     selected={currType}
                     handleChange={this.handleSelectChange}
@@ -626,14 +602,14 @@ class PipelineSinkFtpPage extends React.Component {
               </FormInner>
             </form>
           </Modal>
-          <H5Wrapper>FTP Sink</H5Wrapper>
-          <Form>
-            <LeftCol>
+
+          <TabPanel>
+            <form>
               <FormGroup>
                 <Label>Name</Label>
                 <Input
                   name="name"
-                  width="250px"
+                  width="100%"
                   placeholder="FTP sink name"
                   value={name}
                   data-testid="name-input"
@@ -645,7 +621,7 @@ class PipelineSinkFtpPage extends React.Component {
                 <Label>FTP host</Label>
                 <Input
                   name="host"
-                  width="250px"
+                  width="100%"
                   placeholder="ftp://localhost"
                   value={host}
                   data-testid="host-input"
@@ -657,7 +633,7 @@ class PipelineSinkFtpPage extends React.Component {
                 <Label>FTP port</Label>
                 <Input
                   name="port"
-                  width="250px"
+                  width="100%"
                   placeholder="21"
                   value={port}
                   data-testid="port-input"
@@ -668,7 +644,7 @@ class PipelineSinkFtpPage extends React.Component {
                 <Label>User name</Label>
                 <Input
                   name="username"
-                  width="250px"
+                  width="100%"
                   placeholder="John Doe"
                   value={username}
                   data-testid="username-input"
@@ -681,7 +657,7 @@ class PipelineSinkFtpPage extends React.Component {
                 <Input
                   type="password"
                   name="password"
-                  width="250px"
+                  width="100%"
                   placeholder="password"
                   value={password}
                   data-testid="password-input"
@@ -698,9 +674,11 @@ class PipelineSinkFtpPage extends React.Component {
                   handleClick={this.handleTestConnection}
                 />
               </FormGroup>
-            </LeftCol>
+            </form>
+          </TabPanel>
 
-            <RightCol>
+          <TabPanel>
+            <form>
               <FormGroupWrapper>
                 <FormGroup>
                   <Label>File encoding</Label>
@@ -732,7 +710,7 @@ class PipelineSinkFtpPage extends React.Component {
                 <Select
                   isObject
                   name="readTopics"
-                  width="250px"
+                  width="100%"
                   data-testid="read-topic-select"
                   selected={currReadTopic}
                   list={readTopics}
@@ -744,7 +722,7 @@ class PipelineSinkFtpPage extends React.Component {
                 <Label>Output Folder</Label>
                 <Input
                   name="outputfolder"
-                  width="250px"
+                  width="100%"
                   placeholder="/home/user1"
                   value={outputfolder}
                   data-testid="outputfolder-input"
@@ -764,29 +742,26 @@ class PipelineSinkFtpPage extends React.Component {
                 />
                 Include header
               </FormGroupCheckbox>
-            </RightCol>
-          </Form>
-        </Box>
-        <Box>
-          <SectionHeader>
-            <H5Wrapper>Output schema</H5Wrapper>
+            </form>
+          </TabPanel>
+          <TabPanel>
             <SchemaBtn
               text="New schema"
               theme={primaryBtn}
               data-testid="new-topic"
               handleClick={this.handleNewSchemaModalOpen}
             />
-          </SectionHeader>
-          <SchemaTable
-            headers={this.schemaHeader}
-            schema={schema}
-            dataTypes={this.schemaTypes}
-            handleTypeChange={this.handleTypeChange}
-            handleModalOpen={this.handleDeleteSchemaModalOpen}
-            handleUp={this.handleUp}
-            handleDown={this.handleDown}
-          />
-        </Box>
+            <SchemaTable
+              headers={this.schemaHeader}
+              schema={schema}
+              dataTypes={this.schemaTypes}
+              handleTypeChange={this.handleTypeChange}
+              handleModalOpen={this.handleDeleteSchemaModalOpen}
+              handleUp={this.handleUp}
+              handleDown={this.handleDown}
+            />
+          </TabPanel>
+        </Tabs>
       </React.Fragment>
     );
   }

@@ -14,6 +14,7 @@ import {
 } from './variables';
 
 import '../../node_modules/toastr/build/toastr.css';
+import 'react-tabs/style/react-tabs.css';
 
 // Global styles for ReactModal
 // TODO: use styled-component to style ReactModal
@@ -64,6 +65,7 @@ export default injectGlobal`
     cursor: pointer;
   }
 
+  /* toastr */
   #toast-container > div.toast {
     opacity: 0.98;
     padding: 20px 25px;

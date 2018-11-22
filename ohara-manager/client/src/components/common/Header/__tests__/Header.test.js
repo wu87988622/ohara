@@ -17,7 +17,7 @@ describe('<Header />', () => {
 
   it('renders self', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.name()).toBe('Header');
+    expect(wrapper.name()).toBe('Wrapper');
   });
 
   it('renders <Brand />', () => {

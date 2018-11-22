@@ -36,7 +36,10 @@ import {
 } from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
-  padding: 100px 50px;
+  padding-top: 75px;
+  max-width: 1200px;
+  width: calc(100% - 100px);
+  margin: auto;
 `;
 
 const Inner = styled.div`

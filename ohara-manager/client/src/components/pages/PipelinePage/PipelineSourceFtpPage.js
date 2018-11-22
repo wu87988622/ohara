@@ -5,13 +5,13 @@ import toastr from 'toastr';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
-import { lightBlue, whiteSmoke } from 'theme/variables';
+import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
+import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { fetchTopics } from 'apis/topicApis';
 import {
   checkSource,
@@ -28,22 +28,6 @@ const H5Wrapper = styled(H5)`
   color: ${lightBlue};
 `;
 H5Wrapper.displayName = 'H5';
-
-const Form = styled.form`
-  display: flex;
-`;
-
-const LeftCol = styled.div`
-  width: 250px;
-  padding-right: 45px;
-  margin-right: 45px;
-  border-right: 2px solid ${whiteSmoke};
-  box-sizing: content-box;
-`;
-
-const RightCol = styled.div`
-  width: 250px;
-`;
 
 const TableWrapper = styled.div`
   display: flex;
@@ -563,7 +547,12 @@ class PipelineSourceFtpPage extends React.Component {
 
     return (
       <React.Fragment>
-        <Box>
+        <Tabs>
+          <TabList>
+            <Tab>FTP Source 1/2</Tab>
+            <Tab>FTP Source 2/2</Tab>
+            <Tab>Output schema</Tab>
+          </TabList>
           <ConfirmModal
             isActive={isDeleteSchemaModalActive}
             title="Delete schema?"
@@ -601,7 +590,7 @@ class PipelineSourceFtpPage extends React.Component {
                   <Label>New column name</Label>
                   <Input
                     name="newColumnName"
-                    width="250px"
+                    width="100%"
                     placeholder="New column name"
                     value={newColumnName}
                     data-testid="new-column-name-modal"
@@ -613,7 +602,7 @@ class PipelineSourceFtpPage extends React.Component {
                   <Label>Type</Label>
                   <Select
                     name="types"
-                    width="250px"
+                    width="100%"
                     list={this.schemaTypes}
                     selected={currType}
                     handleChange={this.handleSelectChange}
@@ -622,15 +611,13 @@ class PipelineSourceFtpPage extends React.Component {
               </FormInner>
             </form>
           </Modal>
-
-          <H5Wrapper>FTP Source</H5Wrapper>
-          <Form>
-            <LeftCol>
+          <TabPanel>
+            <form>
               <FormGroup>
                 <Label>Name</Label>
                 <Input
                   name="name"
-                  width="250px"
+                  width="100%"
                   placeholder="FTP source name"
                   value={name}
                   data-testid="name-input"
@@ -642,7 +629,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Label>FTP host</Label>
                 <Input
                   name="host"
-                  width="250px"
+                  width="100%"
                   placeholder="http://localhost"
                   value={host}
                   data-testid="host-input"
@@ -654,7 +641,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Label>FTP port</Label>
                 <Input
                   name="port"
-                  width="250px"
+                  width="100%"
                   placeholder="21"
                   value={port}
                   data-testid="port-input"
@@ -666,7 +653,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Label>User name</Label>
                 <Input
                   name="username"
-                  width="250px"
+                  width="100%"
                   placeholder="John Doe"
                   value={username}
                   data-testid="username-input"
@@ -679,7 +666,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Input
                   type="password"
                   name="password"
-                  width="250px"
+                  width="100%"
                   placeholder="password"
                   value={password}
                   data-testid="password-input"
@@ -697,8 +684,11 @@ class PipelineSourceFtpPage extends React.Component {
                   handleClick={this.handleTestConnection}
                 />
               </FormGroup>
-            </LeftCol>
-            <RightCol>
+            </form>
+          </TabPanel>
+
+          <TabPanel>
+            <form>
               <FormGroupWrapper>
                 <FormGroup>
                   <Label>File encoding</Label>
@@ -726,7 +716,6 @@ class PipelineSourceFtpPage extends React.Component {
                   </TableWrapper>
                 </FormGroup>
               </FormGroupWrapper>
-
               <FormGroup>
                 <Label>Write topic</Label>
                 <Select
@@ -734,7 +723,7 @@ class PipelineSourceFtpPage extends React.Component {
                   name="writeTopics"
                   list={writeTopics}
                   selected={currWriteTopic}
-                  width="250px"
+                  width="100%"
                   data-testid="write-topic-select"
                   handleChange={this.handleSelectChange}
                 />
@@ -744,7 +733,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Label>Input folder</Label>
                 <Input
                   name="inputFolder"
-                  width="250px"
+                  width="100%"
                   placeholder="/path/to/the/input/folder"
                   value={inputFolder}
                   data-testid="input-folder-input"
@@ -756,7 +745,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Label>Complete folder</Label>
                 <Input
                   name="completeFolder"
-                  width="250px"
+                  width="100%"
                   placeholder="/path/to/the/complete/folder"
                   value={completeFolder}
                   data-testid="complete-folder-input"
@@ -768,36 +757,35 @@ class PipelineSourceFtpPage extends React.Component {
                 <Label>Error folder</Label>
                 <Input
                   name="errorFolder"
-                  width="250px"
+                  width="100%"
                   placeholder="/path/to/the/error/folder"
                   value={errorFolder}
                   data-testid="error-folder-input"
                   handleChange={this.handleInputChange}
                 />
               </FormGroup>
-            </RightCol>
-          </Form>
-        </Box>
-        <Box>
-          <SectionHeader>
-            <H5Wrapper>Output schema</H5Wrapper>
-            <SchemaBtn
-              text="New schema"
-              theme={primaryBtn}
-              data-testid="new-topic"
-              handleClick={this.handleNewSchemaModalOpen}
+            </form>
+          </TabPanel>
+          <TabPanel>
+            <SectionHeader>
+              <SchemaBtn
+                text="New schema"
+                theme={primaryBtn}
+                data-testid="new-topic"
+                handleClick={this.handleNewSchemaModalOpen}
+              />
+            </SectionHeader>
+            <SchemaTable
+              headers={this.schemaHeader}
+              schema={schema}
+              dataTypes={this.schemaTypes}
+              handleTypeChange={this.handleTypeChange}
+              handleModalOpen={this.handleDeleteSchemaModalOpen}
+              handleUp={this.handleUp}
+              handleDown={this.handleDown}
             />
-          </SectionHeader>
-          <SchemaTable
-            headers={this.schemaHeader}
-            schema={schema}
-            dataTypes={this.schemaTypes}
-            handleTypeChange={this.handleTypeChange}
-            handleModalOpen={this.handleDeleteSchemaModalOpen}
-            handleUp={this.handleUp}
-            handleDown={this.handleDown}
-          />
-        </Box>
+          </TabPanel>
+        </Tabs>
       </React.Fragment>
     );
   }

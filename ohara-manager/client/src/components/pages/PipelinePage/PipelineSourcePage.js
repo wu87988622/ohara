@@ -8,10 +8,9 @@ import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { Box } from 'common/Layout';
-import { Warning } from 'common/Messages';
 import { H5 } from 'common/Headings';
 import { DataTable } from 'common/Table';
-import { lightBlue, whiteSmoke } from 'theme/variables';
+import { lightBlue } from 'theme/variables';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
@@ -32,18 +31,6 @@ const H5Wrapper = styled(H5)`
   color: ${lightBlue};
 `;
 
-const Form = styled.form`
-  display: flex;
-`;
-
-const LeftCol = styled.div`
-  width: 250px;
-  padding-right: 45px;
-  margin-right: 45px;
-  border-right: 2px solid ${whiteSmoke};
-  box-sizing: content-box;
-`;
-
 const Fieldset = styled.fieldset`
   border: none;
   position: relative;
@@ -60,10 +47,6 @@ const Fieldset = styled.fieldset`
     background: rgba(255, 255, 255, 0.5);
     cursor: not-allowed;
   }
-`;
-
-const RightCol = styled.div`
-  width: 250px;
 `;
 
 const TableWrapper = styled.div`
@@ -412,115 +395,107 @@ class PipelineSourcePage extends React.Component {
       <React.Fragment>
         <Box>
           <H5Wrapper>JDBC connection</H5Wrapper>
-          <Form>
-            <LeftCol>
-              <Fieldset disabled={isBtnWorking}>
-                <FormGroup>
-                  <Label>Database</Label>
-                  <Select
-                    name="databases"
-                    list={databases}
-                    selected={currDatabase}
-                    width="250px"
-                    data-testid="dataset-select"
-                    handleChange={this.handleChangeSelect}
-                  />
-                </FormGroup>
+          <Fieldset disabled={isBtnWorking}>
+            <FormGroup>
+              <Label>Database</Label>
+              <Select
+                name="databases"
+                list={databases}
+                selected={currDatabase}
+                width="100%"
+                data-testid="dataset-select"
+                handleChange={this.handleChangeSelect}
+              />
+            </FormGroup>
 
-                <FormGroup>
-                  <Label>URL</Label>
-                  <Input
-                    name="url"
-                    width="250px"
-                    placeholder="jdbc:mysql://localhost:3030/my-db"
-                    value={url}
-                    data-testid="url-input"
-                    handleChange={this.handleChangeInput}
-                  />
-                </FormGroup>
+            <FormGroup>
+              <Label>URL</Label>
+              <Input
+                name="url"
+                width="100%"
+                placeholder="jdbc:mysql://localhost:3030/my-db"
+                value={url}
+                data-testid="url-input"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
 
-                <FormGroup>
-                  <Label>User name</Label>
-                  <Input
-                    name="username"
-                    width="250px"
-                    placeholder="John Doe"
-                    value={username}
-                    data-testid="username-input"
-                    handleChange={this.handleChangeInput}
-                  />
-                </FormGroup>
+            <FormGroup>
+              <Label>User name</Label>
+              <Input
+                name="username"
+                width="100%"
+                placeholder="John Doe"
+                value={username}
+                data-testid="username-input"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
 
-                <FormGroup>
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
-                    name="password"
-                    width="250px"
-                    placeholder="password"
-                    value={password}
-                    data-testid="password-input"
-                    handleChange={this.handleChangeInput}
-                  />
-                </FormGroup>
-              </Fieldset>
-            </LeftCol>
-            <RightCol>
-              <Fieldset disabled={isBtnWorking}>
-                <FormGroup>
-                  <Label>Table</Label>
+            <FormGroup>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                name="password"
+                width="100%"
+                placeholder="password"
+                value={password}
+                data-testid="password-input"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
+          </Fieldset>
+          <Fieldset disabled={isBtnWorking}>
+            <FormGroup>
+              <Label>Table</Label>
 
-                  <TableWrapper>
-                    <Select
-                      isObject
-                      name="tables"
-                      list={tables}
-                      selected={currTable}
-                      width="250px"
-                      data-testid="table-select"
-                      handleChange={this.handleChangeSelect}
-                    />
+              <TableWrapper>
+                <Select
+                  isObject
+                  name="tables"
+                  list={tables}
+                  selected={currTable}
+                  width="100%"
+                  data-testid="table-select"
+                  handleChange={this.handleChangeSelect}
+                />
 
-                    <GetTablesBtn
-                      theme={primaryBtn}
-                      text="Get tables"
-                      isWorking={isBtnWorking}
-                      disabled={isBtnWorking}
-                      data-testid="get-tables-btn"
-                      handleClick={this.handleGetTables}
-                    />
-                  </TableWrapper>
-                </FormGroup>
+                <GetTablesBtn
+                  theme={primaryBtn}
+                  text="Get tables"
+                  isWorking={isBtnWorking}
+                  disabled={isBtnWorking}
+                  data-testid="get-tables-btn"
+                  handleClick={this.handleGetTables}
+                />
+              </TableWrapper>
+            </FormGroup>
 
-                <FormGroup>
-                  <Label>Timestamp column</Label>
-                  <Input
-                    name="timestamp"
-                    width="250px"
-                    placeholder="120"
-                    value={timestamp}
-                    data-testid="timestamp-input"
-                    handleChange={this.handleChangeInput}
-                  />
-                </FormGroup>
+            <FormGroup>
+              <Label>Timestamp column</Label>
+              <Input
+                name="timestamp"
+                width="100%"
+                placeholder="120"
+                value={timestamp}
+                data-testid="timestamp-input"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
 
-                <FormGroup>
-                  <Label>Write topic</Label>
-                  <Select
-                    isObject
-                    name="writeTopics"
-                    list={writeTopics}
-                    selected={currWriteTopic}
-                    width="250px"
-                    data-testid="write-topic-select"
-                    handleChange={this.handleChangeSelect}
-                  />
-                </FormGroup>
-              </Fieldset>
-
-              <Warning text="You need to test JDBC connection before filling out the above form" />
-            </RightCol>
-          </Form>
+            <FormGroup>
+              <Label>Write topic</Label>
+              <Select
+                isObject
+                name="writeTopics"
+                list={writeTopics}
+                selected={currWriteTopic}
+                width="100%"
+                data-testid="write-topic-select"
+                handleChange={this.handleChangeSelect}
+              />
+            </FormGroup>
+          </Fieldset>
         </Box>
 
         {!_.isEmpty(currTable) && (

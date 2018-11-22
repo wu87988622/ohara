@@ -44,7 +44,7 @@ describe('<PipelineSinkPage />', () => {
     expect(_props).toHaveProperty('isObject');
     expect(_props.name).toBe('topics');
     expect(_props.selected).toBe(wrapper.state().currTopic);
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.handleChange).toBeDefined();
   });
 
@@ -61,7 +61,7 @@ describe('<PipelineSinkPage />', () => {
     expect(_props.name).toBe('hdfses');
     expect(_props.list).toEqual(wrapper.state().topics);
     expect(_props.selected).toEqual(wrapper.state().currTopic);
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.handleChange).toBeDefined();
   });
 
@@ -75,7 +75,7 @@ describe('<PipelineSinkPage />', () => {
     expect(input.length).toBe(1);
     expect(input.name()).toBe('Input');
     expect(_props.name).toBe('writePath');
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.placeholder).toBe('file://');
     expect(_props.value).toEqual(wrapper.state().writePath);
     expect(_props.handleChange).toBeDefined();
@@ -91,7 +91,7 @@ describe('<PipelineSinkPage />', () => {
     expect(input.length).toBe(1);
     expect(input.name()).toBe('Input');
     expect(_props.name).toBe('tempDirectory');
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.placeholder).toBe('/tmp');
     expect(_props.value).toEqual(wrapper.state().tempDirectory);
     expect(_props.handleChange).toBeDefined();
@@ -120,7 +120,7 @@ describe('<PipelineSinkPage />', () => {
     expect(select.length).toBe(1);
     expect(select.name()).toBe('Select');
     expect(_props.name).toBe('fileEncoding');
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.list).toEqual(wrapper.state().fileEncodings);
     expect(_props.selected).toBe(wrapper.state().currFileEncoding);
     expect(_props.handleChange).toBeDefined();
@@ -136,7 +136,7 @@ describe('<PipelineSinkPage />', () => {
     expect(input.length).toBe(1);
     expect(input.name()).toBe('Input');
     expect(_props.name).toBe('rotateInterval');
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.placeholder).toBe('60000');
     expect(_props.value).toEqual(wrapper.state().rotateInterval);
     expect(_props.handleChange).toBeDefined();
@@ -152,7 +152,7 @@ describe('<PipelineSinkPage />', () => {
     expect(input.length).toBe(1);
     expect(input.name()).toBe('Input');
     expect(_props.name).toBe('flushLineCount');
-    expect(_props.width).toBe('250px');
+    expect(_props.width).toBe('100%');
     expect(_props.placeholder).toBe('10');
     expect(_props.value).toEqual(wrapper.state().flushLineCount);
     expect(_props.handleChange).toBeDefined();

@@ -8,7 +8,7 @@ import * as MESSAGES from 'constants/messages';
 import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import { lightBlue, whiteSmoke } from 'theme/variables';
+import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchTopics } from 'apis/topicApis';
 import { fetchHdfs } from 'apis/configurationApis';
@@ -28,22 +28,6 @@ const H5Wrapper = styled(H5)`
 `;
 
 H5Wrapper.displayName = 'H5';
-
-const Form = styled.form`
-  display: flex;
-`;
-
-const LeftCol = styled.div`
-  width: 250px;
-  padding-right: 45px;
-  margin-right: 45px;
-  border-right: 2px solid ${whiteSmoke};
-  box-sizing: content-box;
-`;
-
-const RightCol = styled.div`
-  width: 250px;
-`;
 
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
@@ -371,109 +355,106 @@ class PipelineSinkPage extends React.Component {
     return (
       <Box>
         <H5Wrapper>HDFS</H5Wrapper>
-        <Form>
-          <LeftCol>
-            <FormGroup data-testid="read-from-topic">
-              <Label>Read from topic</Label>
-              <Select
-                isObject
-                name="topics"
-                list={topics}
-                selected={currTopic}
-                width="250px"
-                data-testid="topic-select"
-                handleChange={this.handleSelectChange}
-              />
-            </FormGroup>
+        <form>
+          <FormGroup data-testid="read-from-topic">
+            <Label>Read from topic</Label>
+            <Select
+              isObject
+              name="topics"
+              list={topics}
+              selected={currTopic}
+              width="100%"
+              data-testid="topic-select"
+              handleChange={this.handleSelectChange}
+            />
+          </FormGroup>
 
-            <FormGroup data-testid="hdfses">
-              <Label>HDFS</Label>
-              <Select
-                isObject
-                name="hdfses"
-                list={hdfses}
-                selected={currHdfs}
-                width="250px"
-                data-testid="hdfses-select"
-                handleChange={this.handleSelectChange}
-              />
-            </FormGroup>
+          <FormGroup data-testid="hdfses">
+            <Label>HDFS</Label>
+            <Select
+              isObject
+              name="hdfses"
+              list={hdfses}
+              selected={currHdfs}
+              width="100%"
+              data-testid="hdfses-select"
+              handleChange={this.handleSelectChange}
+            />
+          </FormGroup>
 
-            <FormGroup data-testid="write-path">
-              <Label>Write path</Label>
-              <Input
-                name="writePath"
-                width="250px"
-                placeholder="file://"
-                value={writePath}
-                data-testid="write-path-input"
-                handleChange={this.handleChangeInput}
-              />
-            </FormGroup>
+          <FormGroup data-testid="write-path">
+            <Label>Write path</Label>
+            <Input
+              name="writePath"
+              width="100%"
+              placeholder="file://"
+              value={writePath}
+              data-testid="write-path-input"
+              handleChange={this.handleChangeInput}
+            />
+          </FormGroup>
 
-            <FormGroup data-testid="temp-directory">
-              <Label>Temp directory</Label>
-              <Input
-                name="tempDirectory"
-                width="250px"
-                placeholder="/tmp"
-                value={tempDirectory}
-                data-testid="temp-directory"
-                handleChange={this.handleChangeInput}
-              />
-            </FormGroup>
+          <FormGroup data-testid="temp-directory">
+            <Label>Temp directory</Label>
+            <Input
+              name="tempDirectory"
+              width="100%"
+              placeholder="/tmp"
+              value={tempDirectory}
+              data-testid="temp-directory"
+              handleChange={this.handleChangeInput}
+            />
+          </FormGroup>
 
-            <FormGroupCheckbox data-testid="need-header">
-              <Checkbox
-                type="checkbox"
-                name="needHeader"
-                width="25px"
-                value=""
-                checked={needHeader}
-                data-testid="needheader-input"
-                handleChange={this.handleCheckboxChange}
-              />
-              Include header
-            </FormGroupCheckbox>
-          </LeftCol>
-          <RightCol>
-            <FormGroup data-testid="file-encoding">
-              <Label>File encoding</Label>
-              <Select
-                name="fileEncoding"
-                width="250px"
-                data-testid="file-enconding-select"
-                selected={currFileEncoding}
-                list={fileEncodings}
-                handleChange={this.handleSelectChange}
-              />
-            </FormGroup>
+          <FormGroup data-testid="file-encoding">
+            <Label>File encoding</Label>
+            <Select
+              name="fileEncoding"
+              width="100%"
+              data-testid="file-enconding-select"
+              selected={currFileEncoding}
+              list={fileEncodings}
+              handleChange={this.handleSelectChange}
+            />
+          </FormGroup>
 
-            <FormGroup data-testid="rotate-interval">
-              <Label>Rotate interval (ms)</Label>
-              <Input
-                name="rotateInterval"
-                width="250px"
-                placeholder="60000"
-                value={rotateInterval}
-                data-testid="rotate-interval"
-                handleChange={this.handleChangeInput}
-              />
-            </FormGroup>
+          <FormGroup data-testid="rotate-interval">
+            <Label>Rotate interval (ms)</Label>
+            <Input
+              name="rotateInterval"
+              width="100%"
+              placeholder="60000"
+              value={rotateInterval}
+              data-testid="rotate-interval"
+              handleChange={this.handleChangeInput}
+            />
+          </FormGroup>
 
-            <FormGroup data-testid="flush-line-count">
-              <Label>Flush line count</Label>
-              <Input
-                name="flushLineCount"
-                width="250px"
-                placeholder="10"
-                value={flushLineCount}
-                data-testid="flush-line-count"
-                handleChange={this.handleChangeInput}
-              />
-            </FormGroup>
-          </RightCol>
-        </Form>
+          <FormGroup data-testid="flush-line-count">
+            <Label>Flush line count</Label>
+            <Input
+              name="flushLineCount"
+              width="100%"
+              placeholder="10"
+              value={flushLineCount}
+              data-testid="flush-line-count"
+              handleChange={this.handleChangeInput}
+            />
+          </FormGroup>
+
+          <FormGroupCheckbox data-testid="need-header">
+            <Checkbox
+              type="checkbox"
+              name="needHeader"
+              width="25px"
+              value=""
+              checked={needHeader}
+              data-testid="needheader-input"
+              handleChange={this.handleCheckboxChange}
+            />
+            Include header
+          </FormGroupCheckbox>
+        </form>
       </Box>
     );
   }

@@ -23,10 +23,6 @@ describe('<PipelineSourceFtp />', () => {
     expect(wrapper.length).toBe(1);
   });
 
-  it('renders <H5 />', () => {
-    expect(wrapper.find('H5').length).toBe(2);
-  });
-
   it('renders <SchemaBtn />', () => {
     expect(wrapper.find('SchemaBtn').length).toBe(1);
     expect(wrapper.find('SchemaBtn').props().text).toBe('New schema');

@@ -12,7 +12,7 @@ import {
 } from 'theme/variables';
 
 const InputWrapper = styled.input`
-  font-size: 13px;
+  font-size: 12px;
   font-family: inherit;
   color: ${lightBlue};
   border: 1px solid ${lighterGray};
@@ -44,7 +44,7 @@ const Input = ({
   handleChange,
   placeholder = '',
   width = '120px',
-  height = '40px',
+  height = '32px',
   disabled = false,
   ...rest
 }) => {

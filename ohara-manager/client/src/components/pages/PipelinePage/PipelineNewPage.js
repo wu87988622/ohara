@@ -18,21 +18,40 @@ import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
 import { fetchTopic } from 'apis/topicApis';
 import { H2 } from 'common/Headings';
+import { lightBlue } from 'theme/variables';
 import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW } from 'constants/documentTitles';
 import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 import { fetchPipeline, updatePipeline } from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
-  padding: 100px 50px;
+  padding-top: 75px;
+  max-width: 1200px;
+  width: calc(100% - 100px);
+  margin: auto;
 `;
 
 Wrapper.displayName = 'Wrapper';
 
-const Header = styled.div`
+const Main = styled.div`
   display: flex;
-  align-items: center;
 `;
+
+const LeftCol = styled.div`
+  width: 65%;
+  margin-right: 20px;
+`;
+
+const RightCol = styled.div`
+  width: 35%;
+`;
+
+const Heading2 = styled(H2)`
+  font-size: 16px;
+  color: ${lightBlue};
+`;
+
+Heading2.displayName = 'H2';
 
 class PipelineNewPage extends React.Component {
   static propTypes = {
@@ -236,98 +255,103 @@ class PipelineNewPage extends React.Component {
       <DocumentTitle title={PIPELINE_NEW}>
         <React.Fragment>
           <Wrapper>
-            <Header>
-              <H2>
-                <Editable
-                  title={pipelineTitle}
-                  handleFocusOut={this.handleFocusOut}
-                  handleChange={this.handlePipelineTitleChange}
-                />
-              </H2>
-            </Header>
             <PipelineToolbar
               {...this.props}
               updateGraph={this.updateGraph}
               graph={graph}
               hasChanges={hasChanges}
             />
-            <PipelineGraph
-              {...this.props}
-              graph={graph}
-              updateGraph={this.updateGraph}
-              updateG={this.updateG}
-              resetGraph={this.resetGraph}
-            />
 
-            <Route
-              path={`/pipelines/(new|edit)/${jdbcSource}`}
-              render={() => (
-                <PipelineSourcePage
+            <Main>
+              <LeftCol>
+                <PipelineGraph
                   {...this.props}
                   graph={graph}
-                  loadGraph={this.loadGraph}
                   updateGraph={this.updateGraph}
-                  hasChanges={hasChanges}
-                  updateHasChanges={this.updateHasChanges}
+                  updateG={this.updateG}
+                  resetGraph={this.resetGraph}
                 />
-              )}
-            />
+              </LeftCol>
 
-            <Route
-              path={`/pipelines/(new|edit)/${ftpSource}`}
-              render={() => (
-                <PipelineSourceFtpPage
-                  {...this.props}
-                  graph={graph}
-                  loadGraph={this.loadGraph}
-                  updateGraph={this.updateGraph}
-                  hasChanges={hasChanges}
-                  updateHasChanges={this.updateHasChanges}
+              <RightCol>
+                <Heading2>
+                  <Editable
+                    title={pipelineTitle}
+                    handleFocusOut={this.handleFocusOut}
+                    handleChange={this.handlePipelineTitleChange}
+                  />
+                </Heading2>
+                <Route
+                  path={`/pipelines/(new|edit)/${jdbcSource}`}
+                  render={() => (
+                    <PipelineSourcePage
+                      {...this.props}
+                      graph={graph}
+                      loadGraph={this.loadGraph}
+                      updateGraph={this.updateGraph}
+                      hasChanges={hasChanges}
+                      updateHasChanges={this.updateHasChanges}
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Route
-              path={`/pipelines/(new|edit)/${ftpSink}`}
-              render={() => (
-                <PipelineSinkFtpPage
-                  {...this.props}
-                  graph={graph}
-                  loadGraph={this.loadGraph}
-                  updateGraph={this.updateGraph}
-                  hasChanges={hasChanges}
-                  updateHasChanges={this.updateHasChanges}
+                <Route
+                  path={`/pipelines/(new|edit)/${ftpSource}`}
+                  render={() => (
+                    <PipelineSourceFtpPage
+                      {...this.props}
+                      graph={graph}
+                      loadGraph={this.loadGraph}
+                      updateGraph={this.updateGraph}
+                      hasChanges={hasChanges}
+                      updateHasChanges={this.updateHasChanges}
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Route
-              path="/pipelines/(new|edit)/topic"
-              render={() => (
-                <PipelineTopicPage
-                  {...this.props}
-                  graph={graph}
-                  loadGraph={this.loadGraph}
-                  updateGraph={this.updateGraph}
-                  isLoading={isLoading}
-                  name={topicName}
+                <Route
+                  path={`/pipelines/(new|edit)/${ftpSink}`}
+                  render={() => (
+                    <PipelineSinkFtpPage
+                      {...this.props}
+                      graph={graph}
+                      loadGraph={this.loadGraph}
+                      updateGraph={this.updateGraph}
+                      hasChanges={hasChanges}
+                      updateHasChanges={this.updateHasChanges}
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Route
-              path={`/pipelines/(new|edit)/${hdfsSink}`}
-              render={() => (
-                <PipelineSinkPage
-                  {...this.props}
-                  graph={graph}
-                  hasChanges={hasChanges}
-                  loadGraph={this.loadGraph}
-                  updateGraph={this.updateGraph}
-                  updateHasChanges={this.updateHasChanges}
+                <Route
+                  path="/pipelines/(new|edit)/topic"
+                  render={() => (
+                    <PipelineTopicPage
+                      {...this.props}
+                      graph={graph}
+                      loadGraph={this.loadGraph}
+                      updateGraph={this.updateGraph}
+                      isLoading={isLoading}
+                      name={topicName}
+                    />
+                  )}
                 />
-              )}
-            />
+
+                <Route
+                  path={`/pipelines/(new|edit)/${hdfsSink}`}
+                  render={() => (
+                    <PipelineSinkPage
+                      {...this.props}
+                      graph={graph}
+                      hasChanges={hasChanges}
+                      loadGraph={this.loadGraph}
+                      updateGraph={this.updateGraph}
+                      updateHasChanges={this.updateHasChanges}
+                    />
+                  )}
+                />
+              </RightCol>
+            </Main>
           </Wrapper>
         </React.Fragment>
       </DocumentTitle>

@@ -1,14 +1,31 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
+import styled from 'styled-components';
 
 import * as _ from 'utils/commonUtils';
+import { EMPTY_PIPELINE_TITLE_ERROR } from 'constants/messages';
 import { Input } from 'common/Form';
+
+const EditInput = styled(Input)`
+  display: block;
+  width: 100%;
+`;
+
+EditInput.displayName = 'Input';
+
+const Icon = styled.i`
+  margin: 0 8px 0 4px;
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 class EditableLabel extends React.Component {
   static propTypes = {
     title: PropTypes.string.isRequired,
-    labelClassName: PropTypes.string,
     handleFocusOut: PropTypes.func,
     handleChange: PropTypes.func.isRequired,
   };
@@ -23,7 +40,7 @@ class EditableLabel extends React.Component {
 
     if (isEditing) {
       if (_.isEmpty(title)) {
-        return toastr.error('Pipeline title cannot be empty!');
+        return toastr.error(EMPTY_PIPELINE_TITLE_ERROR);
       }
       handleFocusOut(isUpdate);
     }
@@ -40,7 +57,7 @@ class EditableLabel extends React.Component {
     }
 
     if (e.keyCode === escKey) {
-      return this.handleFocus(false);
+      return this.handleFocus();
     }
   };
 
@@ -50,21 +67,27 @@ class EditableLabel extends React.Component {
 
     if (isEditing) {
       return (
-        <Input
-          value={title}
-          onChange={handleChange}
-          onKeyDown={this.handleKeyDown}
-          onBlur={this.handleFocus}
-          width="400px"
-          autoFocus
-        />
+        <InputWrapper>
+          <Icon className="fas fa-pencil-alt" />
+          <EditInput
+            value={title}
+            onChange={handleChange}
+            onKeyDown={this.handleKeyDown}
+            onBlur={this.handleFocus}
+            data-testid="title-input"
+            autoFocus
+          />
+        </InputWrapper>
       );
     }
 
     return (
-      <div>
-        <label onClick={this.handleFocus}>{title}</label>
-      </div>
+      <React.Fragment>
+        <Icon className="fas fa-pencil-alt" />
+        <label data-testid="title-label" onClick={this.handleFocus}>
+          {title}
+        </label>
+      </React.Fragment>
     );
   }
 }

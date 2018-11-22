@@ -16,7 +16,7 @@ import {
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
-  padding: 10px;
+  padding: 15px 30px;
   border: 1px solid ${lightestBlue};
   border-radius: ${radiusNormal};
   display: flex;
@@ -26,20 +26,18 @@ const ToolbarWrapper = styled.div`
 ToolbarWrapper.displayName = 'ToolbarWrapper';
 
 const Sources = styled.div`
-  padding: 10px 20px;
+  padding: 0 20px 0 0;
   border-right: 1px solid ${lightestBlue};
 `;
 
 const Topics = styled.div`
-  padding: 10px 20px;
+  padding: 0 20px;
   border-right: 1px solid ${lightestBlue};
 `;
 
 const Sinks = styled.div`
-  padding: 10px 20px;
+  padding: 0 20px;
   border-right: 1px solid ${lightestBlue};
-  position: relative;
-  top: -4px;
 `;
 
 const Icon = styled.i`
@@ -88,7 +86,7 @@ const HadoopIconWrapper = styled(HadoopIcon)`
 HadoopIconWrapper.displayName = 'HadoopIconWrapper';
 
 const FileSavingStatus = styled.div`
-  margin-left: 30px;
+  margin-left: auto;
   color: red;
   font-size: 12px;
   color: ${lighterBlue};

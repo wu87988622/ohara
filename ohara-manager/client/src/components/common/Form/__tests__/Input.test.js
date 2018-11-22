@@ -31,7 +31,7 @@ describe('<Input />', () => {
     expect(value).toBe(props.value);
     expect(placeholder).toBe(props.placeholder);
     expect(width).toBe('120px');
-    expect(height).toBe('40px');
+    expect(height).toBe('32px');
     expect(disabled).toBe(false);
   });
 
