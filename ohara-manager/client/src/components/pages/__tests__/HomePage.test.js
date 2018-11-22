@@ -22,6 +22,6 @@ describe('<HomePage />', () => {
         .find('H2')
         .children()
         .text(),
-    ).toBe('Pipeline');
+    ).toBe('Pipelines');
   });
 });
