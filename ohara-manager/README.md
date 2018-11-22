@@ -164,9 +164,10 @@ Run the following command to get the production ready build of both **Server** a
 yarn setup:prod
 ```
 
-After the build, copy/use these files and directories to the destination directory
+After the build, copy/use these files and directories to the destination directory (this step is automatically done by gradle):
 
 - index.js
+- config.js
 - package.json
 - client -- only node_modules and build directories are needed
   - node_modules
@@ -175,6 +176,8 @@ After the build, copy/use these files and directories to the destination directo
 - node_modules
 - routes
 - utils
+
+> Note that if you add new files or dirs to the **Server** or the **Client** and these files and dirs are required for production build, please list that file in the above list as well as editing the gradle file under `ohara/ohara-assembly/build.gradle`. **Skipping this step will cause production build failed!**
 
 **From the Ohara manager project root**, use the following command to start the manager:
 
