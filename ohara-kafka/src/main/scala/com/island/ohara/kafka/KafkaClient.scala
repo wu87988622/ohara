@@ -61,23 +61,20 @@ object KafkaClient {
       admin
         .listTopics()
         .names()
-        .thenApply(new KafkaFuture.Function[util.Set[String], Boolean] {
-          override def apply(a: util.Set[String]): Boolean = a.contains(topicName)
-        })
+        .thenApply((a: util.Set[String]) => a.contains(topicName))
         .get(timeout.toMillis, TimeUnit.MILLISECONDS)
 
     override protected def doClose(): Unit = admin.close()
 
     import scala.collection.JavaConverters._
-    override def topicCreator(): TopicCreator = new TopicCreator {
-      override protected def doCreate(request: TopicCreator.Request): Unit = admin
+    override def topicCreator(): TopicCreator = request =>
+      admin
         .createTopics(
           util.Arrays.asList(new NewTopic(request.name, request.numberOfPartitions, request.numberOfReplications)
             .configs(request.options.asJava)))
         .values()
         .get(request.name)
         .get(request.timeout.toMillis, TimeUnit.MILLISECONDS)
-    }
 
     override def topicDescription(topicName: String, timeout: Duration): TopicDescription =
       try {

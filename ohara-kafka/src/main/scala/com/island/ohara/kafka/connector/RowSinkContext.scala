@@ -34,10 +34,8 @@ trait RowSinkContext {
 
 object RowSinkContext {
   import scala.collection.JavaConverters._
-  def apply(context: SinkTaskContext): RowSinkContext = new RowSinkContext {
-
-    override def offset(offsets: Map[TopicPartition, Long]): Unit = context.offset(offsets.map {
+  def apply(context: SinkTaskContext): RowSinkContext = offsets =>
+    context.offset(offsets.map {
       case (p, o) => (new org.apache.kafka.common.TopicPartition(p.topic, p.partition), new java.lang.Long(o))
     }.asJava)
-  }
 }

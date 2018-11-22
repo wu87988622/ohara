@@ -71,8 +71,8 @@ object ConnectorClient {
 
       private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-      override def connectorCreator(): ConnectorCreator = new ConnectorCreator {
-        override protected def send(request: CreateConnectorRequest): CreateConnectorResponse = Await.result(
+      override def connectorCreator(): ConnectorCreator = request =>
+        Await.result(
           Marshal(request)
             .to[RequestEntity]
             .flatMap(
@@ -82,8 +82,7 @@ object ConnectorClient {
                     HttpRequest(method = HttpMethods.POST, uri = s"http://$workerAddress/connectors", entity = entity))
                   .flatMap(unmarshal[CreateConnectorResponse])),
           TIMEOUT
-        )
-      }
+      )
 
       override def delete(name: String): Unit = Await.result(
         Http()

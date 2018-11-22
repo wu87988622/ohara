@@ -7,19 +7,18 @@ import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
   ConnectorStatus,
-  CreateConnectorRequest,
   CreateConnectorResponse,
   Plugin,
   State,
   TaskStatus
 }
-import spray.json.DefaultJsonProtocol._
-import spray.json._
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._
 import com.typesafe.scalalogging.Logger
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.duration.Duration
 
@@ -130,16 +129,13 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
 
-  override def connectorCreator(): ConnectorCreator = new ConnectorCreator {
-    override protected def send(request: CreateConnectorRequest): CreateConnectorResponse =
-      if (cachedConnectors.contains(request.name))
-        throw new IllegalStateException(s"the connector:${request.name} exists!")
-      else {
-        cachedConnectors.put(request.name, request.config)
-        cachedConnectorsState.put(request.name, State.RUNNING)
-        CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
-      }
-
+  override def connectorCreator(): ConnectorCreator = request =>
+    if (cachedConnectors.contains(request.name))
+      throw new IllegalStateException(s"the connector:${request.name} exists!")
+    else {
+      cachedConnectors.put(request.name, request.config)
+      cachedConnectorsState.put(request.name, State.RUNNING)
+      CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
   }
 
   override def delete(name: String): Unit =
@@ -199,16 +195,14 @@ private class FakeKafkaClient extends KafkaClient {
     printDebugMessage()
   }
 
-  override def topicCreator(): TopicCreator = new TopicCreator {
-    override protected def doCreate(request: TopicCreator.Request): Unit = {
-      printDebugMessage()
-      cachedTopics.put(
-        request.name,
-        TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications, request.options.map {
-          case (k, v) => TopicOption(k, v, false, false, false)
-        }.toSeq)
-      )
-    }
+  override def topicCreator(): TopicCreator = request => {
+    printDebugMessage()
+    cachedTopics.put(
+      request.name,
+      TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications, request.options.map {
+        case (k, v) => TopicOption(k, v, false, false, false)
+      }.toSeq)
+    )
   }
 
   override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {

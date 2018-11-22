@@ -93,7 +93,11 @@ subprojects {
       "-feature",
       "-unchecked",
       "-Xlint",
-      "-Ywarn-dead-code"
+      "-Ywarn-dead-code",
+      // in order to enable SAM in scala 2.11.
+      // see https://github.com/scala/scala/pull/3037
+      // TODO: remove this flag after we are in scala 2.12.  by chia
+      "-Xexperimental"
     ]
 
     configure(scalaCompileOptions.forkOptions) {
