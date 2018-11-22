@@ -74,6 +74,9 @@ distributions {
         from { "$projectDir/../ohara-manager/utils" }
       }
       into("manager") {
+        from { "$projectDir/../ohara-manager/config.js" }
+      }
+      into("manager") {
         from { "$projectDir/../ohara-manager/index.js" }
       }
       into("manager") {
