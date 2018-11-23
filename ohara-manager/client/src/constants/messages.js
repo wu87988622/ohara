@@ -31,6 +31,7 @@ export const CANNOT_START_PIPELINE_ERROR =
 export const NO_CONFIGURATION_FOUND_ERROR = `You don't any configuration set up yet, please create one before you can proceed`;
 
 export const EMPTY_PIPELINE_TITLE_ERROR = 'Pipeline title cannot be empty!';
+export const CANNOT_UPDATE_WHILE_RUNNING_ERROR = `You cannot update the pipeline while it's running`;
 
 export const GENERIC_ERROR = 'Oops, something went wrong 😱 😱 😱';
 

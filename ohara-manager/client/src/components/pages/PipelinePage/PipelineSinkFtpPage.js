@@ -460,7 +460,7 @@ class PipelineSinkFtpPage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history, updateHasChanges } = this.props;
+    const { match, history, updateHasChanges, isPipelineRunning } = this.props;
     const {
       name,
       host,
@@ -474,6 +474,12 @@ class PipelineSinkFtpPage extends React.Component {
       currTask,
       schema,
     } = this.state;
+
+    if (isPipelineRunning) {
+      toastr.error(MESSAGES.CANNOT_UPDATE_WHILE_RUNNING_ERROR);
+      updateHasChanges(false);
+      return;
+    }
 
     const sourceId = _.get(match, 'params.sourceId', null);
     const sinkId = _.get(match, 'params.sinkId', null);

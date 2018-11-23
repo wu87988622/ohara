@@ -280,7 +280,7 @@ class PipelineSinkPage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { updateHasChanges, history, match } = this.props;
+    const { updateHasChanges, history, match, isPipelineRunning } = this.props;
     const {
       currHdfs,
       currTopic,
@@ -291,6 +291,12 @@ class PipelineSinkPage extends React.Component {
       rotateInterval,
       currFileEncoding,
     } = this.state;
+
+    if (isPipelineRunning) {
+      toastr.error(MESSAGES.CANNOT_UPDATE_WHILE_RUNNING_ERROR);
+      updateHasChanges(false);
+      return;
+    }
 
     const sinkId = _.get(match, 'params.sinkId', null);
     const sourceId = _.get(match, 'params.sourceId', null);

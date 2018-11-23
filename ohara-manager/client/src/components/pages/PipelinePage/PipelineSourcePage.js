@@ -321,7 +321,7 @@ class PipelineSourcePage extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history, updateHasChanges } = this.props;
+    const { match, history, updateHasChanges, isPipelineRunning } = this.props;
     const {
       currDatabase,
       currWriteTopic,
@@ -331,6 +331,13 @@ class PipelineSourcePage extends React.Component {
       password,
       url,
     } = this.state;
+
+    if (isPipelineRunning) {
+      toastr.error(MESSAGES.CANNOT_UPDATE_WHILE_RUNNING_ERROR);
+      updateHasChanges(false);
+      return;
+    }
+
     const sourceId = _.get(match, 'params.sourceId', null);
     const sourceIdPlaceHolder = '__';
     const isCreate =

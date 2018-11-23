@@ -18,9 +18,14 @@ describe('<PipelineNewPage />', () => {
   let wrapper;
   beforeEach(() => {
     wrapper = shallow(<PipelineNewPage {...props} />);
+
+    // TODO: change this to a more real world like case, e.g., mock data returns by some requests
+    wrapper.setState({
+      pipelines: { name: 'test' },
+    });
   });
 
-  it('renders', () => {
+  it('renders self', () => {
     expect(wrapper.find('Wrapper').length).toBe(1);
   });
 

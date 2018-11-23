@@ -17,14 +17,7 @@ import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
 import { isSource, isSink } from 'utils/pipelineUtils';
-import {
-  lightBlue,
-  blue,
-  red,
-  redHover,
-  trBgColor,
-  lightestBlue,
-} from 'theme/variables';
+import { lightBlue, blue, red, redHover, trBgColor } from 'theme/variables';
 import {
   createPipeline,
   fetchPipelines,
@@ -73,11 +66,6 @@ const LinkIcon = styled(Link)`
 
   &:hover {
     color: ${blue};
-  }
-
-  &.is-running {
-    cursor: not-allowed;
-    color: ${lightestBlue};
   }
 `;
 
@@ -414,8 +402,6 @@ class PipelinePage extends React.Component {
                   const isRunning = status === 'Running' ? true : false;
 
                   const trCls = isRunning ? 'is-running' : '';
-                  const linkIconCls = isRunning ? 'is-running' : '';
-
                   const editUrl = this.getEditUrl(pipeline);
 
                   return (
@@ -424,10 +410,7 @@ class PipelinePage extends React.Component {
                       <td>{name}</td>
                       <td>{status}</td>
                       <td className="has-icon">
-                        <LinkIcon
-                          to={isRunning ? this.props.match.url : editUrl}
-                          className={linkIconCls}
-                        >
+                        <LinkIcon to={editUrl}>
                           <i className="far fa-edit" />
                         </LinkIcon>
                       </td>

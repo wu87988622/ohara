@@ -17,12 +17,21 @@ import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
 import { fetchTopic } from 'apis/topicApis';
-import { H2 } from 'common/Headings';
-import { lightBlue } from 'theme/variables';
+import { H2, H3 } from 'common/Headings';
+import { Box } from 'common/Layout';
+import { isSource, isSink } from 'utils/pipelineUtils';
+import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW } from 'constants/documentTitles';
 import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
-import { fetchPipeline, updatePipeline } from 'apis/pipelinesApis';
+import {
+  fetchPipeline,
+  updatePipeline,
+  startSource,
+  startSink,
+  stopSource,
+  stopSink,
+} from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -52,6 +61,27 @@ const Heading2 = styled(H2)`
 `;
 
 Heading2.displayName = 'H2';
+
+const Heading3 = styled(H3)`
+  font-size: 15px;
+  font-weight: normal;
+  margin: 0 0 15px;
+  color: ${lightBlue};
+`;
+
+Heading3.displayName = 'H3';
+
+const StartStopIcon = styled.button`
+  color: ${({ isRunning }) => (isRunning ? red : lightBlue)};
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover {
+    color: ${({ isRunning }) => (isRunning ? redHover : blue)};
+  }
+`;
 
 class PipelineNewPage extends React.Component {
   static propTypes = {
@@ -111,10 +141,22 @@ class PipelineNewPage extends React.Component {
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
-      this.setState({ pipelines }, () => {
-        this.loadGraph(pipelines);
+      const _pipelines = this.addPipelineStatus(pipelines);
+
+      this.setState({ pipelines: _pipelines }, () => {
+        this.loadGraph(this.state.pipelines);
       });
     }
+  };
+
+  addPipelineStatus = pipeline => {
+    const status = pipeline.objects.filter(p => p.state === 'RUNNING');
+    const _status = status.length >= 2 ? 'Running' : 'Stopped';
+
+    return {
+      ...pipeline,
+      status: _status,
+    };
   };
 
   checkTopicId = match => {
@@ -233,6 +275,90 @@ class PipelineNewPage extends React.Component {
     }
   };
 
+  handleStartStopBtnClick = async pipeline => {
+    const { objects: connectors, status } = pipeline;
+
+    if (!status) {
+      toastr.error(
+        'Failed to start the pipeline, please check your connectors settings',
+      );
+
+      return;
+    }
+
+    if (status === 'Stopped') {
+      const res = await this.startConnectors(connectors);
+      const isSuccess = res.filter(r => r.data.isSuccess);
+      this.handleConnectorResponse(isSuccess, 'started');
+    } else {
+      const res = await this.stopConnectors(connectors);
+      const isSuccess = res.filter(r => r.data.isSuccess);
+      this.handleConnectorResponse(isSuccess, 'stopped');
+    }
+  };
+
+  startConnectors = async connectors => {
+    const { sources, sinks } = this.getConnectors(connectors);
+    const sourcePromise = sources.map(source => startSource(source));
+    const sinkPromise = sinks.map(sink => startSink(sink));
+    return Promise.all([...sourcePromise, ...sinkPromise]).then(
+      result => result,
+    );
+  };
+
+  stopConnectors = connectors => {
+    const { sources, sinks } = this.getConnectors(connectors);
+    const sourcePromise = sources.map(source => stopSource(source));
+    const sinkPromise = sinks.map(sink => stopSink(sink));
+    return Promise.all([...sourcePromise, ...sinkPromise]).then(
+      result => result,
+    );
+  };
+
+  handleConnectorResponse = (isSuccess, action) => {
+    if (isSuccess.length >= 2) {
+      toastr.success(`Pipeline has been successfully ${action}!`);
+
+      if (action === 'started') {
+        this.setState(({ pipelines }) => {
+          return {
+            pipelines: {
+              ...pipelines,
+              status: 'Running',
+            },
+          };
+        });
+      } else if (action === 'stopped') {
+        this.setState(({ pipelines }) => {
+          return {
+            pipelines: {
+              ...pipelines,
+              status: 'Stopped',
+            },
+          };
+        });
+      }
+    } else {
+      toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
+    }
+  };
+
+  getConnectors = connectors => {
+    const sources = connectors
+      .filter(({ kind }) => {
+        return isSource(kind);
+      })
+      .map(({ uuid }) => uuid);
+
+    const sinks = connectors
+      .filter(({ kind }) => {
+        return isSink(kind);
+      })
+      .map(({ uuid }) => uuid);
+
+    return { sources, sinks };
+  };
+
   render() {
     const {
       isLoading,
@@ -243,13 +369,20 @@ class PipelineNewPage extends React.Component {
       pipelines,
     } = this.state;
 
-    const pipelineTitle = _.get(pipelines, 'name', '');
-
-    const { jdbcSource, ftpSource, hdfsSink, ftpSink } = ICON_KEYS;
-
     if (isRedirect) {
       return <Redirect to={PIPELINE} />;
     }
+
+    if (_.isEmpty(pipelines)) return null;
+
+    const { name: pipelineTitle, status: pipelineStatus } = pipelines;
+
+    const isPipelineRunning = pipelineStatus === 'Running' ? true : false;
+    const startStopCls = isPipelineRunning
+      ? 'fa-stop-circle'
+      : 'fa-play-circle';
+
+    const { jdbcSource, ftpSource, hdfsSink, ftpSink } = ICON_KEYS;
 
     return (
       <DocumentTitle title={PIPELINE_NEW}>
@@ -281,6 +414,17 @@ class PipelineNewPage extends React.Component {
                     handleChange={this.handlePipelineTitleChange}
                   />
                 </Heading2>
+
+                <Box>
+                  <Heading3>Operate</Heading3>
+                  <StartStopIcon
+                    isRunning={isPipelineRunning}
+                    onClick={() => this.handleStartStopBtnClick(pipelines)}
+                  >
+                    <i className={`far ${startStopCls}`} />
+                  </StartStopIcon>
+                </Box>
+
                 <Route
                   path={`/pipelines/(new|edit)/${jdbcSource}`}
                   render={() => (
@@ -290,6 +434,7 @@ class PipelineNewPage extends React.Component {
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
                       hasChanges={hasChanges}
+                      isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
                     />
                   )}
@@ -304,6 +449,7 @@ class PipelineNewPage extends React.Component {
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
                       hasChanges={hasChanges}
+                      isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
                     />
                   )}
@@ -318,6 +464,7 @@ class PipelineNewPage extends React.Component {
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
                       hasChanges={hasChanges}
+                      isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
                     />
                   )}
@@ -333,6 +480,7 @@ class PipelineNewPage extends React.Component {
                       updateGraph={this.updateGraph}
                       isLoading={isLoading}
                       name={topicName}
+                      isPipelineRunning={isPipelineRunning}
                     />
                   )}
                 />
@@ -346,6 +494,7 @@ class PipelineNewPage extends React.Component {
                       hasChanges={hasChanges}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
+                      isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
                     />
                   )}
