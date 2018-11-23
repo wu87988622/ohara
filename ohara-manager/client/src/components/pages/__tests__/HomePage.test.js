@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-
 import HomePage from '../HomePage';
+import { PIPELINE } from '../../../constants/urls';
 
 const props = { match: {} };
 
@@ -15,13 +15,10 @@ describe('<HomePage />', () => {
     expect(wrapper.length).toBe(1);
   });
 
-  it('should render the correct h2', () => {
-    expect(wrapper.find('H2').length).toBe(1);
-    expect(
-      wrapper
-        .find('H2')
-        .children()
-        .text(),
-    ).toBe('Pipelines');
+  it('should render <Redirect /> and direct to /pipeline', () => {
+    const match = {};
+    wrapper = shallow(<HomePage match={match} />);
+    expect(wrapper.name()).toBe('Redirect');
+    expect(wrapper.props().to).toBe(PIPELINE);
   });
 });

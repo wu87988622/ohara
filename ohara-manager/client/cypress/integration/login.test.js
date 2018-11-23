@@ -24,7 +24,7 @@ describe('Login', () => {
     cy.loginWithUi();
 
     cy.get('.toast-success').should('contain', MESSAGES.LOGIN_SUCCESS);
-    cy.location('pathname').should('eq', URLS.HOME);
+    cy.location('pathname').should('eq', URLS.PIPELINE);
   });
 
   it('changes login text based on user login status', () => {
