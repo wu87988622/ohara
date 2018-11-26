@@ -292,6 +292,7 @@ class PipelineNewPage extends React.Component {
       this.handleConnectorResponse(isSuccess, 'started');
     } else {
       const res = await this.stopConnectors(connectors);
+
       const isSuccess = res.filter(r => r.data.isSuccess);
       this.handleConnectorResponse(isSuccess, 'stopped');
     }
@@ -301,6 +302,7 @@ class PipelineNewPage extends React.Component {
     const { sources, sinks } = this.getConnectors(connectors);
     const sourcePromise = sources.map(source => startSource(source));
     const sinkPromise = sinks.map(sink => startSink(sink));
+
     return Promise.all([...sourcePromise, ...sinkPromise]).then(
       result => result,
     );
@@ -401,7 +403,6 @@ class PipelineNewPage extends React.Component {
                   {...this.props}
                   graph={graph}
                   updateGraph={this.updateGraph}
-                  updateG={this.updateG}
                   resetGraph={this.resetGraph}
                 />
               </LeftCol>
@@ -420,8 +421,9 @@ class PipelineNewPage extends React.Component {
                   <StartStopIcon
                     isRunning={isPipelineRunning}
                     onClick={() => this.handleStartStopBtnClick(pipelines)}
+                    data-testid="start-stop-icon"
                   >
-                    <i className={`far ${startStopCls}`} />
+                    <i className={`fa ${startStopCls}`} />
                   </StartStopIcon>
                 </Box>
 

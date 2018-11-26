@@ -65,7 +65,7 @@ const Link = styled(NavLink)`
 
 Link.displayName = 'Link';
 
-const Login = styled(NavLink)`
+const Login = styled(Link)`
   margin-left: auto;
 `;
 
