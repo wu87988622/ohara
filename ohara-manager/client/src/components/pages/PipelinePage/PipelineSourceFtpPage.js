@@ -38,16 +38,10 @@ const FormGroupWrapper = styled.div`
   justify-content: space-between;
 `;
 
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 25px;
-`;
-
-const SchemaBtn = styled(Button)`
+const NewRowBtn = styled(Button)`
   margin-left: auto;
 `;
-SchemaBtn.displayName = 'SchemaBtn';
+NewRowBtn.displayName = 'NewRowBtn';
 
 const FormInner = styled.div`
   padding: 20px;
@@ -102,8 +96,8 @@ class PipelineSourceFtpPage extends React.Component {
     tasks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
     currTask: {},
     schema: [],
-    isDeleteSchemaModalActive: false,
-    isNewSchemaModalActive: false,
+    isDeleteRowModalActive: false,
+    isNewRowModalActive: false,
     workingRow: null,
     columnName: '',
     newColumnName: '',
@@ -295,13 +289,13 @@ class PipelineSourceFtpPage extends React.Component {
     );
   };
 
-  handleDeleteSchemaModalOpen = (e, order) => {
+  handleDeleteRowModalOpen = (e, order) => {
     e.preventDefault();
-    this.setState({ isDeleteSchemaModalActive: true, workingRow: order });
+    this.setState({ isDeleteRowModalActive: true, workingRow: order });
   };
 
-  handleDeleteSchemaModalClose = () => {
-    this.setState({ isDeleteSchemaModalActive: false, workingRow: null });
+  handleDeleteRowModalClose = () => {
+    this.setState({ isDeleteRowModalActive: false, workingRow: null });
   };
 
   handleTypeChange = (e, order) => {
@@ -330,7 +324,7 @@ class PipelineSourceFtpPage extends React.Component {
     this.props.updateHasChanges(true);
   };
 
-  handleSchemaDelete = () => {
+  handleRowDelete = () => {
     if (_.isNull(this.state.workingRow)) return;
 
     this.setState(({ schema, workingRow }) => {
@@ -340,30 +334,30 @@ class PipelineSourceFtpPage extends React.Component {
 
       return {
         schema: update,
-        isDeleteSchemaModalActive: false,
+        isDeleteRowModalActive: false,
       };
     });
 
     this.props.updateHasChanges(true);
   };
 
-  handleNewSchemaModalOpen = () => {
+  handleNewRowModalOpen = () => {
     this.setState({
-      isNewSchemaModalActive: true,
+      isNewRowModalActive: true,
       currType: this.schemaTypes[0],
     });
   };
 
-  handleNewSchemaModalClose = () => {
+  handleNewRowModalClose = () => {
     this.setState({
-      isNewSchemaModalActive: false,
+      isNewRowModalActive: false,
       currType: '',
       columnName: '',
       newColumnName: '',
     });
   };
 
-  handleSchemaCreate = () => {
+  handleRowCreate = () => {
     this.setState(
       ({
         schema,
@@ -383,7 +377,7 @@ class PipelineSourceFtpPage extends React.Component {
         };
 
         return {
-          isNewSchemaModalActive: false,
+          isNewRowModalActive: false,
           schema: [...schema, newSchema],
           columnName: '',
           newColumnName: '',
@@ -545,8 +539,8 @@ class PipelineSourceFtpPage extends React.Component {
       IsTestConnectionBtnWorking,
       currTask,
       schema,
-      isDeleteSchemaModalActive,
-      isNewSchemaModalActive,
+      isDeleteRowModalActive,
+      isNewRowModalActive,
       columnName,
       newColumnName,
       currType,
@@ -561,23 +555,23 @@ class PipelineSourceFtpPage extends React.Component {
             <Tab>Output schema</Tab>
           </TabList>
           <ConfirmModal
-            isActive={isDeleteSchemaModalActive}
-            title="Delete schema?"
-            confirmBtnText="Yes, Delete this schema"
+            isActive={isDeleteRowModalActive}
+            title="Delete row?"
+            confirmBtnText="Yes, Delete this row"
             cancelBtnText="No, Keep it"
-            handleCancel={this.handleDeleteSchemaModalClose}
-            handleConfirm={this.handleSchemaDelete}
-            message="Are you sure you want to delete this schema? This action cannot be redo!"
+            handleCancel={this.handleDeleteRowModalClose}
+            handleConfirm={this.handleRowDelete}
+            message="Are you sure you want to delete this row? This action cannot be redo!"
             isDelete
           />
 
           <Modal
-            isActive={isNewSchemaModalActive}
-            title="New schema"
+            isActive={isNewRowModalActive}
+            title="New row"
             width="290px"
             confirmBtnText="Create"
-            handleConfirm={this.handleSchemaCreate}
-            handleCancel={this.handleNewSchemaModalClose}
+            handleConfirm={this.handleRowCreate}
+            handleCancel={this.handleNewRowModalClose}
           >
             <form>
               <FormInner>
@@ -774,20 +768,18 @@ class PipelineSourceFtpPage extends React.Component {
             </form>
           </TabPanel>
           <TabPanel>
-            <SectionHeader>
-              <SchemaBtn
-                text="New schema"
-                theme={primaryBtn}
-                data-testid="new-topic"
-                handleClick={this.handleNewSchemaModalOpen}
-              />
-            </SectionHeader>
+            <NewRowBtn
+              text="New row"
+              theme={primaryBtn}
+              data-testid="new-row-btn"
+              handleClick={this.handleNewRowModalOpen}
+            />
             <SchemaTable
               headers={this.schemaHeader}
               schema={schema}
               dataTypes={this.schemaTypes}
               handleTypeChange={this.handleTypeChange}
-              handleModalOpen={this.handleDeleteSchemaModalOpen}
+              handleModalOpen={this.handleDeleteRowModalOpen}
               handleUp={this.handleUp}
               handleDown={this.handleDown}
             />

@@ -19,13 +19,13 @@ describe('<PipelineSourceFtp />', () => {
     wrapper = shallow(<PipelineSourceFtp {...props} />);
   });
 
-  it('renders correctly', () => {
+  it('renders self', () => {
     expect(wrapper.length).toBe(1);
   });
 
-  it('renders <SchemaBtn />', () => {
-    expect(wrapper.find('SchemaBtn').length).toBe(1);
-    expect(wrapper.find('SchemaBtn').props().text).toBe('New schema');
+  it('renders <NewRowBtn />', () => {
+    expect(wrapper.find('NewRowBtn').length).toBe(1);
+    expect(wrapper.find('NewRowBtn').props().text).toBe('New row');
   });
 
   it('renders <Modal />', () => {
@@ -36,73 +36,73 @@ describe('<PipelineSourceFtp />', () => {
 
   it('renders <ConfirmModal />', () => {
     expect(wrapper.find('ConfirmModal').length).toBe(1);
-    expect(wrapper.find('ConfirmModal').props().title).toBe('Delete schema?');
+    expect(wrapper.find('ConfirmModal').props().title).toBe('Delete row?');
     expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
   });
 
-  it('test handleDeleteSchemaModalOpen', () => {
+  it('calls handleDeleteRowModalOpen', () => {
     const evt = { preventDefault: jest.fn() };
-    wrapper.instance().handleDeleteSchemaModalOpen(evt);
+    wrapper.instance().handleDeleteRowModalOpen(evt);
     expect(wrapper.find('ConfirmModal').props().isActive).toBe(true);
   });
 
-  it('test handleDeleteSchemaModalClose', () => {
-    wrapper.instance().handleDeleteSchemaModalClose();
+  it('calls handleDeleteRowModalClose', () => {
+    wrapper.instance().handleDeleteRowModalClose();
     expect(wrapper.find('ConfirmModal').props().isActive).toBe(false);
   });
 
-  it('test handleTypeChange', () => {
+  it('calls handleTypeChange', () => {
     const evt = { persist: jest.fn(), target: { value: 'integer' } };
     wrapper.instance().handleTypeChange(evt);
     expect(wrapper.state().schema[0].dataType).toBe('integer');
   });
 
-  it('test handleSchemaDelete', () => {
+  it('calls handleRowDelete', () => {
     wrapper.setState({
       workingRow: 1,
       schema: [{ order: 0 }, { order: 1 }, { order: 2 }],
     });
-    wrapper.instance().handleSchemaDelete();
+    wrapper.instance().handleRowDelete();
     expect(wrapper.state().schema.length).toBe(2);
-    expect(wrapper.state().isDeleteSchemaModalActive).toBe(false);
+    expect(wrapper.state().isDeleteRowModalActive).toBe(false);
   });
 
-  it('test handleNewSchemaModalOpen', () => {
-    wrapper.instance().handleNewSchemaModalOpen();
-    expect(wrapper.state().isNewSchemaModalActive).toBe(true);
+  it('calls handleNewModalOpen', () => {
+    wrapper.instance().handleNewRowModalOpen();
+    expect(wrapper.state().isNewRowModalActive).toBe(true);
     expect(wrapper.state().currType).toBe('string');
   });
 
-  it('test handleNewSchemaModalClose', () => {
-    wrapper.instance().handleNewSchemaModalClose();
+  it('calls handleNewModalClose', () => {
+    wrapper.instance().handleNewRowModalClose();
     const {
-      isNewSchemaModalActive,
+      isNewRowModalActive,
       currType,
       columnName,
       newColumnName,
     } = wrapper.state();
 
-    expect(isNewSchemaModalActive).toBe(false);
+    expect(isNewRowModalActive).toBe(false);
     expect(currType).toBe('');
     expect(columnName).toBe('');
     expect(newColumnName).toBe('');
   });
 
-  it('test handleSchemaCreate', () => {
+  it('calls handleRowCreate', () => {
     wrapper.setState({
       schema: [],
       columnName: 'column1',
       newColumnName: 'COLUMN1',
       currType: 'string',
     });
-    wrapper.instance().handleSchemaCreate();
+    wrapper.instance().handleRowCreate();
     wrapper.setState({
       schema: wrapper.state().schema,
       columnName: 'column2',
       newColumnName: 'COLUMN2',
       currType: 'integer',
     });
-    wrapper.instance().handleSchemaCreate();
+    wrapper.instance().handleRowCreate();
     expect(wrapper.state().schema.length).toBe(2);
   });
 
