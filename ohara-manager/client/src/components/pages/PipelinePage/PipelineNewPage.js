@@ -261,22 +261,25 @@ class PipelineNewPage extends React.Component {
   };
 
   updatePipeline = async () => {
-    const { name, uuid, rules } = this.state.pipelines;
+    const { name, uuid, rules, status } = this.state.pipelines;
     const params = {
       name,
       rules,
     };
 
     const res = await updatePipeline({ uuid, params });
-    const pipelines = _.get(res, 'data.result', []);
+    const pipelines = _.get(res, 'data.result', null);
 
     if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
+      this.setState({ pipelines: { ...pipelines, status } });
     }
   };
 
-  handleStartStopBtnClick = async pipeline => {
-    const { objects: connectors, status } = pipeline;
+  handleStartStopBtnClick = async () => {
+    const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
+    await this.fetchPipeline(pipelineId);
+
+    const { status, objects: connectors } = this.state.pipelines;
 
     if (!status) {
       toastr.error(
@@ -292,7 +295,6 @@ class PipelineNewPage extends React.Component {
       this.handleConnectorResponse(isSuccess, 'started');
     } else {
       const res = await this.stopConnectors(connectors);
-
       const isSuccess = res.filter(r => r.data.isSuccess);
       this.handleConnectorResponse(isSuccess, 'stopped');
     }
@@ -300,6 +302,7 @@ class PipelineNewPage extends React.Component {
 
   startConnectors = async connectors => {
     const { sources, sinks } = this.getConnectors(connectors);
+
     const sourcePromise = sources.map(source => startSource(source));
     const sinkPromise = sinks.map(sink => startSink(sink));
 
@@ -420,7 +423,7 @@ class PipelineNewPage extends React.Component {
                   <Heading3>Operate</Heading3>
                   <StartStopIcon
                     isRunning={isPipelineRunning}
-                    onClick={() => this.handleStartStopBtnClick(pipelines)}
+                    onClick={this.handleStartStopBtnClick}
                     data-testid="start-stop-icon"
                   >
                     <i className={`fa ${startStopCls}`} />
