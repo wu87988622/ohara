@@ -2,6 +2,7 @@ export const HOME = 'Ohara - Home';
 export const LOGIN = 'Ohara - Login';
 export const PIPELINE = 'Ohara - Pipelines';
 export const PIPELINE_NEW = 'Ohara - New Pipeline';
+export const PIPELINE_EDIT = 'Ohara - Edit Pipeline';
 export const KAFKA = 'Ohara - Kafka';
 export const DEPLOYMENT = 'Ohara - Deployment';
 export const MONITORING = 'Ohara - Monitoring';

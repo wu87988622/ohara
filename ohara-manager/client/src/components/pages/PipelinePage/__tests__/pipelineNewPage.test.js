@@ -6,7 +6,7 @@ import toastr from 'toastr';
 import PipelineNewPage from '../PipelineNewPage';
 import { ICON_KEYS } from 'constants/pipelines';
 import { PIPELINE } from 'constants/urls';
-import { PIPELINE_NEW } from 'constants/documentTitles';
+import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
 import {
   startSink,
@@ -46,8 +46,20 @@ describe('<PipelineNewPage />', () => {
     expect(wrapper.find('Wrapper').length).toBe(1);
   });
 
-  it('renders the correct document title', () => {
+  it('renders new pipeline page document title', () => {
+    const match = {
+      params: {
+        pipelineId: null,
+      },
+    };
+    wrapper.setProps({ match });
+
+    expect(wrapper.dive().name()).toBe('DocumentTitle');
     expect(wrapper.props().title).toBe(PIPELINE_NEW);
+  });
+
+  it('renders edit pipeline page document title, if pipelineId is present', () => {
+    expect(wrapper.props().title).toBe(PIPELINE_EDIT);
   });
 
   it('should render <Redirect /> when topicUuid is not present', () => {

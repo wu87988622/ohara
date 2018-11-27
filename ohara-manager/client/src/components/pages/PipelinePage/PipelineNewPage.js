@@ -22,7 +22,7 @@ import { Box } from 'common/Layout';
 import { isSource, isSink } from 'utils/pipelineUtils';
 import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE } from 'constants/urls';
-import { PIPELINE_NEW } from 'constants/documentTitles';
+import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 import {
   fetchPipeline,
@@ -375,6 +375,7 @@ class PipelineNewPage extends React.Component {
 
     if (_.isEmpty(pipelines)) return null;
 
+    const pipelineId = _.get(this, 'props.match.params.pipelineId', null);
     const { name: pipelineTitle, status: pipelineStatus } = pipelines;
 
     const isPipelineRunning = pipelineStatus === 'Running' ? true : false;
@@ -385,7 +386,7 @@ class PipelineNewPage extends React.Component {
     const { jdbcSource, ftpSource, hdfsSink, ftpSink } = ICON_KEYS;
 
     return (
-      <DocumentTitle title={PIPELINE_NEW}>
+      <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>
         <React.Fragment>
           <Wrapper>
             <PipelineToolbar
