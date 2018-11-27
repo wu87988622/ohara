@@ -17,6 +17,7 @@ dependencies {
   testImplementation project(':ohara-ftp-connector')
   testImplementation project(':ohara-jdbc-connector')
   testImplementation project(':ohara-hdfs-connector')
+  testImplementation project(':ohara-agent')
   testImplementation project(':ohara-testing-util')
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
@@ -56,4 +57,7 @@ test {
 
   String WORKERS = "ohara.it.workers"
   if(project.hasProperty(WORKERS)) environment WORKERS, project.getProperty(WORKERS)
+
+  String DOCKER = "ohara.it.docker"
+  if(project.hasProperty(DOCKER)) environment DOCKER, project.getProperty(DOCKER)
 }

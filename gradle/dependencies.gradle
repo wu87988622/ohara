@@ -7,11 +7,15 @@ if (project.hasProperty('cdh')) {
   versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "1.0.1-kafka-3.1.0"
 } else {
   versions["hadoop"] = project.hasProperty('hadoop.version') ? project.properties['hadoop.version'] : "2.7.0"
-  versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "1.0.1"
+  versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "1.0.2"
 }
 versions["postgresql"] = project.hasProperty('postgresql.version') ? project.properties['postgresql.version'] : "9.1-901-1.jdbc4"
 versions["mockito"] = project.hasProperty('mockito.version') ? project.properties['mockito.version'] : "1.10.19"
+// NOTED: the whole project are in scala 2.11 now.
 versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : "2.11.12"
+if (versions["scala"].toString().startsWith("2.11")) versions["scalaMinor"] = "2.11"
+else if (versions["scala"].toString().startsWith("2.12")) versions["scalaMinor"] = "2.12"
+else throw new GradleException(versions["scala"] + " is not supported. choose either scala 2.11 or scala 2.12")
 versions["akka"] = project.hasProperty('akka.version') ? project.properties['akka.version'] : "2.5.12"
 versions["akkaHttp"] = project.hasProperty('akka.http.version') ? project.properties['akka.http.version'] : "10.1.3"
 versions["scalatest"] = project.hasProperty('scalatest.version') ? project.properties['scalatest.version'] : "3.0.5"
@@ -23,31 +27,33 @@ versions["embeddedsql"] = project.hasProperty('embeddedsql.version') ? project.p
 versions["mysql"] = project.hasProperty('mysql.version') ? project.properties['mysql.version'] : "8.0.12"
 versions["ftpServer"] = project.hasProperty('ftpServer.version') ? project.properties['ftpServer.version'] : "1.1.1"
 versions["commonNet"] = project.hasProperty('commonNet.version') ? project.properties['commonNet.version'] : "3.6"
+versions["sshd"] = project.hasProperty('sshd.version') ? project.properties['sshd.version'] : "2.0.0"
 libs += [
   postgresql         : "postgresql:postgresql:$versions.postgresql",
-  kafkaCore          : "org.apache.kafka:kafka_2.11:$versions.kafka",
+  kafkaCore          : "org.apache.kafka:kafka_${versions["scalaMinor"]}:$versions.kafka",
   kafkaClient        : "org.apache.kafka:kafka-clients:$versions.kafka",
   kafkaConnectApi    : "org.apache.kafka:connect-api:$versions.kafka",
   kafkaConnectFile   : "org.apache.kafka:connect-file:$versions.kafka",
   kafkaConnectRuntime: "org.apache.kafka:connect-runtime:$versions.kafka",
   kafkaConnectJson   : "org.apache.kafka:connect-json:$versions.kafka",
   kafkaStream        : "org.apache.kafka:kafka-streams:$versions.kafka",
-  akkaStream         : "com.typesafe.akka:akka-stream_2.11:$versions.akka",
-  sprayJson          : "com.typesafe.akka:akka-http-spray-json_2.11:$versions.akkaHttp",
-  akkaSlf4j          : "com.typesafe.akka:akka-slf4j_2.11:$versions.akka",
+  akkaStream         : "com.typesafe.akka:akka-stream_${versions["scalaMinor"]}:$versions.akka",
+  sprayJson          : "com.typesafe.akka:akka-http-spray-json_${versions["scalaMinor"]}:$versions.akkaHttp",
+  akkaSlf4j          : "com.typesafe.akka:akka-slf4j_${versions["scalaMinor"]}:$versions.akka",
   scala              : "org.scala-lang:scala-library:$versions.scala",
   slf4jApi           : "org.slf4j:slf4j-api:$versions.slf4j",
   slf4jlog4j         : "org.slf4j:slf4j-log4j12:$versions.slf4j",
   hadoopCommon       : "org.apache.hadoop:hadoop-common:$versions.hadoop",
   hadoopHDFS         : "org.apache.hadoop:hadoop-hdfs:$versions.hadoop",
-  scalatest          : "org.scalatest:scalatest_2.11:$versions.scalatest",
-  akkaHttpTestKit    : "com.typesafe.akka:akka-http-testkit_2.11:$versions.akkaHttp",
-  scalaLogging       : "com.typesafe.scala-logging:scala-logging_2.11:$versions.scalaLogging",
+  scalatest          : "org.scalatest:scalatest_${versions["scalaMinor"]}:$versions.scalatest",
+  akkaHttpTestKit    : "com.typesafe.akka:akka-http-testkit_${versions["scalaMinor"]}:$versions.akkaHttp",
+  scalaLogging       : "com.typesafe.scala-logging:scala-logging_${versions["scalaMinor"]}:$versions.scalaLogging",
   mockito            : "org.mockito:mockito-all:$versions.mockito",
   junit              : "junit:junit:$versions.junit",
   commonsLang        : "org.apache.commons:commons-lang3:$versions.commonLang",
   embeddedsql        : "com.wix:wix-embedded-mysql:$versions.embeddedsql",
   mysql              : "mysql:mysql-connector-java:$versions.mysql",
   ftpServer          : "org.apache.ftpserver:ftpserver-core:$versions.ftpServer",
-  commonsNet         : "commons-net:commons-net:$versions.commonNet"
+  commonsNet         : "commons-net:commons-net:$versions.commonNet",
+  sshd               : "org.apache.sshd:apache-sshd:$versions.sshd"
 ]

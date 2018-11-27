@@ -45,6 +45,20 @@ public final class CommonUtil {
     return java.util.UUID.randomUUID().toString();
   }
 
+  /**
+   * Determines the IP address of a host, given the host's name.
+   *
+   * @param hostname host's name
+   * @return the IP address string in textual presentation.
+   */
+  public static String address(String hostname) {
+    try {
+      return InetAddress.getByName(hostname).getHostAddress();
+    } catch (UnknownHostException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
   public static String hostname() {
     try {
       return InetAddress.getLocalHost().getHostName();

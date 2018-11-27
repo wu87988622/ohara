@@ -1,0 +1,29 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+
+dependencies {
+  implementation project(":ohara-common")
+  implementation project(':ohara-client')
+  implementation libs.scala
+  implementation libs.scalaLogging
+  implementation libs.slf4jApi
+  implementation libs.slf4jlog4j
+  implementation libs.akkaStream
+  implementation libs.sprayJson
+  implementation libs.sshd
+  testImplementation project(":ohara-testing-util")
+  testImplementation project(":ohara-common").sourceSets.test.output
+  testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation libs.scalatest
+  testImplementation libs.junit
+}
+
+task runAgent(type: JavaExec, dependsOn: 'classes') {
+  String port = 0
+  if(project.hasProperty('port')) {
+    port = "${project.getProperty('port')}"
+  }
+  classpath = sourceSets.main.runtimeClasspath
+  main = "com.island.ohara.agent.Agent"
+  args = Arrays.asList(port)
+
+}

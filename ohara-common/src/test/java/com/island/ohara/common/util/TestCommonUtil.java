@@ -42,4 +42,10 @@ public class TestCommonUtil extends SmallTest {
     Assert.assertEquals("/a/ddd", CommonUtil.replaceParent("/a", "/abc/ttt/ddd"));
     Assert.assertEquals("/a/ddd", CommonUtil.replaceParent("/a", "/abc/tt/t/ddd"));
   }
+
+  @Test
+  public void testGetAddress() {
+    Assert.assertEquals(CommonUtil.address("localhost"), "127.0.0.1");
+    Assert.assertEquals(CommonUtil.address("127.0.0.1"), "127.0.0.1");
+  }
 }
