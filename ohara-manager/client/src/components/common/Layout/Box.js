@@ -14,8 +14,8 @@ const BoxWrapper = styled.div`
 
 BoxWrapper.displayName = 'BoxWrapper';
 
-const Box = ({ children }) => {
-  return <BoxWrapper>{children}</BoxWrapper>;
+const Box = ({ children, ...rest }) => {
+  return <BoxWrapper {...rest}>{children}</BoxWrapper>;
 };
 
 Box.propTypes = {

@@ -46,12 +46,7 @@ const Main = styled.div`
   display: flex;
 `;
 
-const LeftCol = styled.div`
-  width: 65%;
-  margin-right: 20px;
-`;
-
-const RightCol = styled.div`
+const Sidebar = styled.div`
   width: 35%;
 `;
 
@@ -401,16 +396,14 @@ class PipelineNewPage extends React.Component {
             />
 
             <Main>
-              <LeftCol>
-                <PipelineGraph
-                  {...this.props}
-                  graph={graph}
-                  updateGraph={this.updateGraph}
-                  resetGraph={this.resetGraph}
-                />
-              </LeftCol>
+              <PipelineGraph
+                {...this.props}
+                graph={graph}
+                updateGraph={this.updateGraph}
+                resetGraph={this.resetGraph}
+              />
 
-              <RightCol>
+              <Sidebar>
                 <Heading2>
                   <Editable
                     title={pipelineTitle}
@@ -504,7 +497,7 @@ class PipelineNewPage extends React.Component {
                     />
                   )}
                 />
-              </RightCol>
+              </Sidebar>
             </Main>
           </Wrapper>
         </React.Fragment>

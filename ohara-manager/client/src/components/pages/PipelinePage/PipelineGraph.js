@@ -8,6 +8,14 @@ import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue, lightestBlue, whiteSmoke, blue } from 'theme/variables';
 
+const Wrapper = styled(Box)`
+  width: 65%;
+  margin-right: 20px;
+  min-height: 800px;
+`;
+
+Wrapper.displayName = 'Box';
+
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
   font-weight: normal;
@@ -18,7 +26,7 @@ H5Wrapper.displayName = 'H5Wrapper';
 
 const Svg = styled.svg`
   width: 100%;
-  height: 100vh;
+  height: 100%;
 
   .node circle {
     fill: ${whiteSmoke};
@@ -165,12 +173,12 @@ class PipelineGraph extends React.Component {
 
   render() {
     return (
-      <Box>
+      <Wrapper>
         <H5Wrapper>Pipeline graph</H5Wrapper>
         <Svg className="pipeline-graph">
           <g />
         </Svg>
-      </Box>
+      </Wrapper>
     );
   }
 }
