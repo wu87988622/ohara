@@ -1,8 +1,12 @@
 package com.island.ohara.kafka
 
+import java.time.Duration
+
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.TestConnectorClient._
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.Test
@@ -12,14 +16,15 @@ import scala.concurrent.duration._
 
 class TestConnectorClient extends With3Brokers3Workers with Matchers {
 
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 //  @Ignore
   @Test
   def testExist(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient.exist(connectorName) shouldBe false
+    connectorClient.exist(connectorName) shouldBe false
 
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[MyConnector])
@@ -29,17 +34,17 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
       .create()
 
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(connectorName), 50 seconds)
-    } finally testUtil.connectorClient.delete(connectorName)
+      CommonUtil.await(() => connectorClient.exist(connectorName), Duration.ofSeconds(50))
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient.exist(connectorName) shouldBe false
+    connectorClient.exist(connectorName) shouldBe false
 
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[UnrunnableConnector])
@@ -49,15 +54,15 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
       .create()
 
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(connectorName), 50 seconds)
-    } finally testUtil.connectorClient.delete(connectorName)
+      CommonUtil.await(() => connectorClient.exist(connectorName), Duration.ofSeconds(50))
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testPauseAndResumeSource(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[MyConnector])
@@ -66,7 +71,7 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .create()
     try {
-      OharaTestUtil.await(() => testUtil.connectorClient.exist(connectorName), 50 seconds)
+      CommonUtil.await(() => connectorClient.exist(connectorName), Duration.ofSeconds(50))
       val consumer =
         Consumer
           .builder()
@@ -81,9 +86,9 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
         result.foreach(_.value.get shouldBe ROW)
 
         // pause connector
-        testUtil.connectorClient.pause(connectorName)
-        OharaTestUtil
-          .await(() => testUtil.connectorClient.status(connectorName).connector.state == State.PAUSED, 50 seconds)
+        connectorClient.pause(connectorName)
+        CommonUtil
+          .await(() => connectorClient.status(connectorName).connector.state == State.PAUSED, Duration.ofSeconds(50))
 
         // try to receive all data from topic...10 seconds should be enough in this case
         result = consumer.poll(10 seconds, Int.MaxValue)
@@ -94,17 +99,18 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
         result.size shouldBe 0
 
         // resume connector
-        testUtil.connectorClient.resume(connectorName)
+        connectorClient.resume(connectorName)
 
-        OharaTestUtil.await(() => testUtil.connectorClient.status(connectorName).connector.state == State.RUNNING,
-                            50 seconds,
-                            2 seconds)
+        CommonUtil.await(() => connectorClient.status(connectorName).connector.state == State.RUNNING,
+                         Duration.ofSeconds(50),
+                         Duration.ofSeconds(2),
+                         true)
 
         // since connector is resumed so some data are generated
         result = consumer.poll(20 seconds, 1)
         result.size should not be 0
       } finally consumer.close()
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 }
 

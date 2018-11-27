@@ -1,5 +1,6 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.{Cell, DataType, Serializer}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
@@ -9,6 +10,7 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestPerfSource extends With3Brokers3Workers with Matchers {
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(
     batch = 5,
@@ -31,7 +33,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[PerfSource])
@@ -81,6 +83,6 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
 
           })
       } finally consumer.close()
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 }

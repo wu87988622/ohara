@@ -16,7 +16,7 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-
+import collection.JavaConverters._
 import scala.concurrent.duration._
 
 /**
@@ -134,8 +134,9 @@ object Backend {
 
   private[demo] def run(ports: ServicePorts,
                         stopped: (Configurator, Zookeepers, Brokers, Workers, Database, FtpServer) => Unit): Unit = {
-    doClose5(Zookeepers.local(ports.zkPort))(Brokers.local(_, ports.brokersPort))(Workers.local(_, ports.workersPort))(
-      _ => Database.local(ports.dbPort))(_ => FtpServer.local(ports.ftpPort, ports.ftpDataPorts)) {
+    doClose5(Zookeepers.local(ports.zkPort))(Brokers.local(_, ports.brokersPort.toArray))(
+      Workers.local(_, ports.workersPort.toArray))(_ => Database.local(ports.dbPort))(_ =>
+      FtpServer.local(ports.ftpPort, ports.ftpDataPorts.toArray)) {
       case (zk, brokers, workers, dataBase, ftpServer) =>
         println("wait for the mini kafka cluster")
         TimeUnit.SECONDS.sleep(5)
@@ -166,11 +167,13 @@ object Backend {
                   zookeeper = zk.connectionProps,
                   brokers = brokers.connectionProps,
                   workers = workers.connectionProps,
-                  ftpServer = FtpServerInformation(hostname = ftpServer.host,
-                                                   port = ftpServer.port,
-                                                   dataPort = ftpServer.dataPort,
-                                                   user = ftpServer.user,
-                                                   password = ftpServer.password),
+                  ftpServer = FtpServerInformation(
+                    hostname = ftpServer.host,
+                    port = ftpServer.port.toInt,
+                    dataPort = ftpServer.dataPort().asScala.map(x => x.toInt),
+                    user = ftpServer.user,
+                    password = ftpServer.password
+                  ),
                   database = DbInformation(
                     url = dataBase.url,
                     user = dataBase.user,

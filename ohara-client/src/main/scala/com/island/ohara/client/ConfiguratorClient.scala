@@ -51,7 +51,7 @@ trait ConfiguratorClient extends CloseOnce {
 object ConfiguratorClient {
   private[this] val COUNTER = new AtomicInteger(0)
   import scala.concurrent.duration._
-  private[this] val TIMEOUT = 10 seconds
+  private[this] val TIMEOUT = 20 seconds
 
   def apply(host: String, port: Int): ConfiguratorClient = apply(s"$host:$port")
   def apply(connectionProps: String): ConfiguratorClient = new ConfiguratorClient with SprayJsonSupport

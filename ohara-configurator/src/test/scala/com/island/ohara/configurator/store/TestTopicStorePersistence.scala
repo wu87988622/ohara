@@ -1,6 +1,8 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
+import java.time.Duration
+
+import com.island.ohara.integration.With3Brokers
 import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
@@ -40,7 +42,7 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
       store.size shouldBe (numberOfOtherMessages + 1)
     }
     import scala.concurrent.duration._
-    def verifyTopicContent(timeout: Duration): Boolean = doClose(
+    def verifyTopicContent(timeout: scala.concurrent.duration.Duration): Boolean = doClose(
       Consumer
         .builder()
         .brokers(testUtil.brokersConnProps)
@@ -51,6 +53,6 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
       val keys = consumer.poll(timeout, numberOfOtherMessages + 1).map(_.key.get)
       keys.count(_ == specifiedKey) == 1 && keys.count(_ != specifiedKey) == numberOfOtherMessages
     }
-    OharaTestUtil.await(() => verifyTopicContent(10 seconds), 20 seconds)
+    CommonUtil.await(() => verifyTopicContent(10 seconds), java.time.Duration.ofSeconds(20))
   }
 }

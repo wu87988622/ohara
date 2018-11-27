@@ -1,13 +1,15 @@
 package com.island.ohara.configurator.store
 
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
+import java.time.Duration
+
+import com.island.ohara.integration.With3Brokers
 import com.island.ohara.client.util.CloseOnce.close
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import org.junit._
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
 
 class TestTopicStore extends With3Brokers with Matchers {
   private[this] val topicName = random()
@@ -29,7 +31,7 @@ class TestTopicStore extends With3Brokers with Matchers {
         .topicName(topicName)
         .buildBlocking(Serializer.STRING, Serializer.STRING)
     try {
-      OharaTestUtil.await(() => another._get("aa").isDefined, 10 seconds)
+      CommonUtil.await(() => another._get("aa").isDefined, Duration.ofSeconds(10))
       another._get("aa") shouldBe Some("bb")
     } finally another.close()
 
@@ -52,7 +54,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     store.size shouldBe 10
 
     // make sure all stores have synced the updated data
-    OharaTestUtil.await(() => stores.count(_.size == 10) == numberOfStore, 30 second)
+    CommonUtil.await(() => stores.count(_.size == 10) == numberOfStore, Duration.ofSeconds(30))
 
     stores.foreach(s => {
       0 until 10 foreach (index => s._get(index.toString) shouldBe Some(index.toString))
@@ -63,7 +65,7 @@ class TestTopicStore extends With3Brokers with Matchers {
     0 until 10 foreach (index => randomStore._remove(index.toString, Consistency.STRICT) shouldBe Some(index.toString))
 
     // make sure all stores have synced the updated data
-    OharaTestUtil.await(() => stores.count(_.isEmpty) == numberOfStore, 30 second)
+    CommonUtil.await(() => stores.count(_.isEmpty) == numberOfStore, Duration.ofSeconds(30))
 
     // This store is based on another topic so it should have no data
     val anotherStore =

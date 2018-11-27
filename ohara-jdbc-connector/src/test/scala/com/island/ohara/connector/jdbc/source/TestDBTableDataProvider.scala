@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends MediumTest with Matchers {
 
-  private[this] val db = Database()
+  private[this] val db = Database.of()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "table1"
 

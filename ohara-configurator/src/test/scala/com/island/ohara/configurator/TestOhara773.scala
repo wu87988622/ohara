@@ -1,13 +1,14 @@
 package com.island.ohara.configurator
+import java.time.Duration
 import java.util.concurrent.Executors
 
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 
 class TestOhara773 extends With3Brokers3Workers with Matchers {
 
@@ -28,9 +29,9 @@ class TestOhara773 extends With3Brokers3Workers with Matchers {
       // first call - the topic $methodName should be created
       Configurator.main(args)
     }
-    OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 60 seconds)
+    CommonUtil.await(() => Configurator.hasRunningConfigurator, Duration.ofSeconds(60))
     Configurator.closeRunningConfigurator = true
-    OharaTestUtil.await(() => !Configurator.hasRunningConfigurator, 60 seconds)
+    CommonUtil.await(() => !Configurator.hasRunningConfigurator, Duration.ofSeconds(60))
 
     KafkaUtil.exist(testUtil.brokersConnProps, topicName) shouldBe true
 
@@ -40,8 +41,8 @@ class TestOhara773 extends With3Brokers3Workers with Matchers {
       // first call - the topic $methodName should be created
       Configurator.main(args)
     }
-    OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 60 seconds)
+    CommonUtil.await(() => Configurator.hasRunningConfigurator, Duration.ofSeconds(60))
     Configurator.closeRunningConfigurator = true
-    OharaTestUtil.await(() => !Configurator.hasRunningConfigurator, 60 seconds)
+    CommonUtil.await(() => !Configurator.hasRunningConfigurator, Duration.ofSeconds(60))
   }
 }

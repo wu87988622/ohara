@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
-import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
@@ -12,6 +12,7 @@ import com.island.ohara.connector.jdbc.JDBCSourceConnector
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.integration.{Database, OharaTestUtil, With3Brokers3Workers}
 import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CommonUtil
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -19,11 +20,11 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
-  private[this] val db = Database()
+  private[this] val db = Database.of()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "testtable"
   private[this] val timestampColumnName = "CREATE_DATE"
-  private[this] val connectorClient = testUtil.connectorClient
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   private[this] val jdbcProps = JDBCSourceConnectorConfig(
     Map(DB_URL -> db.url,
@@ -100,7 +101,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     try {
       val storage = new HDFSStorage(testUtil.hdfs.fileSystem)
       val hdfsResultFolder = s"${testUtil.hdfs.tmpDirectory}/data/$topicName/partition0"
-      OharaTestUtil.await(() => storage.list(hdfsResultFolder).size == 2, 10 seconds)
+      CommonUtil.await(() => storage.list(hdfsResultFolder).size == 2, java.time.Duration.ofSeconds(20))
 
       val fileSystem: FileSystem = testUtil.hdfs.fileSystem
       val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000099.csv"
@@ -121,8 +122,8 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       lineCountFile1(1) shouldBe "2018-07-13 00:00:00.0,50,NAME-50,ADDRESS-50"
       lineCountFile1(50) shouldBe "2018-08-31 00:00:00.0,1,NAME-1,ADDRESS-1"
     } finally {
-      testUtil.connectorClient.delete(jdbcSourceConnectorName)
-      testUtil.connectorClient.delete(hdfsSinkConnectorName)
+      connectorClient.delete(jdbcSourceConnectorName)
+      connectorClient.delete(hdfsSinkConnectorName)
     }
   }
 

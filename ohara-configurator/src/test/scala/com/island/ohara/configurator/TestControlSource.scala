@@ -1,13 +1,16 @@
 package com.island.ohara.configurator
 
+import java.time.Duration
+
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.client.util.CloseOnce.doClose
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
@@ -52,36 +55,37 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 
     // test idempotent start
     (0 until 3).foreach(_ => client.start[Source](source.uuid))
+    val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
-      OharaTestUtil.await(() =>
-                            try testUtil.connectorClient.exist(source.uuid)
-                            catch {
-                              case _: Throwable => false
-                          },
-                          30 seconds)
-      OharaTestUtil
-        .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
+      CommonUtil.await(() =>
+                         try connectorClient.exist(source.uuid)
+                         catch {
+                           case _: Throwable => false
+                       },
+                       Duration.ofSeconds(30))
+      CommonUtil
+        .await(() => connectorClient.status(source.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
       client.get[Source](source.uuid).state.get shouldBe State.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ => client.pause[Source](source.uuid))
 
-      OharaTestUtil
-        .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.PAUSED, 20 seconds)
+      CommonUtil
+        .await(() => connectorClient.status(source.uuid).connector.state == State.PAUSED, Duration.ofSeconds(20))
       client.get[Source](source.uuid).state.get shouldBe State.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ => client.resume[Source](source.uuid))
-      OharaTestUtil
-        .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
+      CommonUtil
+        .await(() => connectorClient.status(source.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
       client.get[Source](source.uuid).state.get shouldBe State.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => client.stop[Source](source.uuid))
 
-      OharaTestUtil.await(() => testUtil.connectorClient.nonExist(source.uuid), 20 seconds)
+      CommonUtil.await(() => connectorClient.nonExist(source.uuid), Duration.ofSeconds(20))
       client.get[Source](source.uuid).state shouldBe None
-    } finally if (testUtil.connectorClient.exist(source.uuid)) testUtil.connectorClient.delete(source.uuid)
+    } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
   }
 
   @Test
@@ -98,15 +102,16 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
     val source = client.add[SourceRequest, Source](request)
     // test start
     client.start[Source](source.uuid)
+    val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
-      OharaTestUtil.await(() =>
-                            try testUtil.connectorClient.exist(source.uuid)
-                            catch {
-                              case _: Throwable => false
-                          },
-                          30 seconds)
-      OharaTestUtil
-        .await(() => testUtil.connectorClient.status(source.uuid).connector.state == State.RUNNING, 20 seconds)
+      CommonUtil.await(() =>
+                         try connectorClient.exist(source.uuid)
+                         catch {
+                           case _: Throwable => false
+                       },
+                       Duration.ofSeconds(30))
+      CommonUtil
+        .await(() => connectorClient.status(source.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy client
         .update[SourceRequest, Source](source.uuid, request.copy(numberOfTasks = 2))
@@ -114,9 +119,9 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 
       // test stop. the connector should be removed
       client.stop[Source](source.uuid)
-      OharaTestUtil.await(() => testUtil.connectorClient.nonExist(source.uuid), 20 seconds)
+      CommonUtil.await(() => connectorClient.nonExist(source.uuid), Duration.ofSeconds(20))
       client.get[Source](source.uuid).state shouldBe None
-    } finally if (testUtil.connectorClient.exist(source.uuid)) testUtil.connectorClient.delete(source.uuid)
+    } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
   }
 
   @Test

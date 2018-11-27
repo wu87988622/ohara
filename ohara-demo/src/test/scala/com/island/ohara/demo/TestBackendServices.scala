@@ -16,7 +16,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import com.island.ohara.integration.availablePort
+import com.island.ohara.integration.{Integration}
 
 class TestBackendServices extends LargeTest with Matchers {
 
@@ -56,13 +56,13 @@ class TestBackendServices extends LargeTest with Matchers {
   @Test
   def testSpecificPorts(): Unit = {
     val ports = ServicePorts(
-      dbPort = availablePort(),
-      ftpPort = availablePort(),
-      ftpDataPorts = Seq(availablePort()),
-      configuratorPort = availablePort(),
-      zkPort = availablePort(),
-      brokersPort = Seq.fill(3)(availablePort()),
-      workersPort = Seq.fill(3)(availablePort())
+      dbPort = Integration.availablePort().toInt,
+      ftpPort = Integration.availablePort().toInt,
+      ftpDataPorts = Seq(Integration.availablePort()),
+      configuratorPort = Integration.availablePort().toInt,
+      zkPort = Integration.availablePort().toInt,
+      brokersPort = Seq.fill(3)(Integration.availablePort().toInt).toArray,
+      workersPort = Seq.fill(3)(Integration.availablePort().toInt).toArray
     )
     Backend.run(
       ports,

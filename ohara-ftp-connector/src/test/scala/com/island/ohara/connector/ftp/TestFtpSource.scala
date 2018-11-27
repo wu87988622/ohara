@@ -1,12 +1,13 @@
 package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
+import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{Consumer, ConsumerRecord}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -28,6 +29,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   private[this] val data: Seq[String] = rows.map(row => {
     row.cells().asScala.map(_.value.toString).mkString(",")
   })
+
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+
   private[this] val ftpClient = FtpClient
     .builder()
     .hostname(testUtil.ftpServer.host)
@@ -48,7 +52,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   )
 
   private[this] def setupInput(): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(CommonUtil.path(props.inputFolder, "abc"))))
+    val writer = new BufferedWriter(
+      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtil.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()
@@ -63,7 +68,10 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def setup(): Unit = {
     def rebuild(path: String): Unit = {
       if (ftpClient.exist(path)) {
-        ftpClient.listFileNames(path).map(CommonUtil.path(path, _)).foreach(ftpClient.delete)
+        ftpClient
+          .listFileNames(path)
+          .map(com.island.ohara.common.util.CommonUtil.path(path, _))
+          .foreach(ftpClient.delete)
         ftpClient.listFileNames(path).size shouldBe 0
         ftpClient.delete(path)
       }
@@ -78,7 +86,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def pollData(topicName: String,
-                             timeout: Duration = 100 seconds,
+                             timeout: scala.concurrent.duration.Duration = 100 seconds,
                              size: Int = data.length): Seq[ConsumerRecord[Array[Byte], Row]] = {
     val consumer = Consumer
       .builder()
@@ -91,13 +99,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
-    OharaTestUtil.await(
+    CommonUtil.await(
       () => {
         ftpClient.listFileNames(props.inputFolder).size == inputCount &&
         ftpClient.listFileNames(props.completedFolder.get).size == outputCount &&
         ftpClient.listFileNames(props.errorFolder).size == errorCount
       },
-      10 seconds
+      Duration.ofSeconds(20)
     )
   }
 
@@ -105,7 +113,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testDuplicateInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -138,14 +146,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       records = pollData(topicName, 5 second)
       records.size shouldBe data.length
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testColumnRename(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -183,14 +191,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row0.cell(2).name shouldBe "newSingle"
       row1.cell(2).value shouldBe rows(1).cell(2).value
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testObjectType(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -222,14 +230,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -256,7 +264,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
 
   }
 
@@ -264,7 +272,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testNormalCaseWithoutSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -291,14 +299,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
       row1.cell(2) shouldBe Cell.of(rows(1).cell(2).name, rows(1).cell(2).value.toString)
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testPartialColumns(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -324,14 +332,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testUnmatchedSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -352,14 +360,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // add a file to input again
       setupInput()
       checkFileCount(0, 0, 2)
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
   def testInvalidInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -376,7 +384,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -399,7 +407,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -426,7 +434,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
 
   }
 

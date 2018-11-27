@@ -1,12 +1,15 @@
 package com.island.ohara.kafka
 
+import java.time.Duration
+
 import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.common.util.ByteUtil
+import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.kafka.connector._
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -17,6 +20,7 @@ import scala.concurrent.duration._
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] val kafkaClient = KafkaClient(testUtil.brokersConnProps)
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
   private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
   private[this] val schema = Seq(Column("cf", DataType.BOOLEAN, 1))
   private[this] val numberOfRows = 20
@@ -51,14 +55,14 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def checkConnector(name: String): Unit = {
-    OharaTestUtil.await(() => testUtil.connectorClient.activeConnectors().contains(name), 30 seconds)
-    OharaTestUtil.await(() => testUtil.connectorClient.config(name).topics.nonEmpty, 30 seconds)
-    OharaTestUtil.await(() =>
-                          try testUtil.connectorClient.status(name).connector.state == State.RUNNING
-                          catch {
-                            case _: Throwable => false
-                        },
-                        30 second)
+    CommonUtil.await(() => connectorClient.activeConnectors().contains(name), Duration.ofSeconds(30))
+    CommonUtil.await(() => connectorClient.config(name).topics.nonEmpty, Duration.ofSeconds(30))
+    CommonUtil.await(() =>
+                       try connectorClient.status(name).connector.state == State.RUNNING
+                       catch {
+                         case _: Throwable => false
+                     },
+                     Duration.ofSeconds(30))
   }
 
   @Test
@@ -114,7 +118,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     */
   private[this] def testProducer2SinkConnector(topicName: String, topicName2: String): Unit = {
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
@@ -129,7 +133,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       checkConnector(connectorName)
       setupData(topicName)
       checkData(topicName2)
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   @Test
@@ -154,7 +158,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     */
   private[this] def testSourceConnector2Consumer(topicName: String, topicName2: String): Unit = {
     val connectorName = methodName
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
@@ -169,7 +173,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       checkConnector(connectorName)
       setupData(topicName)
       checkData(topicName2)
-    } finally testUtil.connectorClient.delete(connectorName)
+    } finally connectorClient.delete(connectorName)
   }
 
   /**
@@ -221,7 +225,6 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val connectorName = "connectorClientTest"
     val topics = Seq("connectorClientTest_topic", "connectorClientTest_topic2")
     val output_topic = "connectorClientTest_topic_output"
-    val connectorClient = testUtil.connectorClient
     connectorClient
       .connectorCreator()
       .name(connectorName)
@@ -239,7 +242,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val config = connectorClient.config(connectorName)
     config.topics shouldBe topics
 
-    OharaTestUtil.await(() => connectorClient.status(connectorName).tasks != Nil, 10 second)
+    CommonUtil.await(() => connectorClient.status(connectorName).tasks != Nil, Duration.ofSeconds(10))
     var status = connectorClient.status(connectorName)
     status.tasks.head should not be null
 

@@ -19,7 +19,7 @@ import org.scalatest.mockito.MockitoSugar
 import scala.collection.JavaConverters._
 
 class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
-  private[this] val db = Database()
+  private[this] val db = Database.of()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "TABLE1"
   private[this] val timestampColumnName = "COLUMN1"

@@ -3,7 +3,7 @@ package com.island.ohara.connector.jdbc
 import java.sql.Statement
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
-import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.integration.{Database, With3Brokers3Workers}
@@ -17,11 +17,11 @@ import scala.concurrent.duration._
   * Test the JDBC Source Connector
   */
 class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
-  private[this] val db = Database()
+  private[this] val db = Database.of()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val connectorClient = testUtil.connectorClient
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {

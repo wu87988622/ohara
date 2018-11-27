@@ -2,9 +2,15 @@ package com.island.ohara.common.util;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class CommonUtil {
+  private static final Logger logger = LoggerFactory.getLogger(CommonUtil.class);
 
   /** a interface used to represent current time. */
   @FunctionalInterface
@@ -91,6 +97,51 @@ public final class CommonUtil {
    */
   public static String replaceParent(String parent, String path) {
     return path(parent, name(path));
+  }
+
+  /**
+   * helper method. Loop the specified method until timeout or get true from method
+   *
+   * @param f function
+   * @param d duration
+   * @return false if timeout and (useException = true). Otherwise, the return value is true
+   */
+  public static Boolean await(Supplier<Boolean> f, Duration d) {
+    return await(f, d, Duration.ofMillis(5000), true);
+  }
+
+  /**
+   * helper method. Loop the specified method until timeout or get true from method
+   *
+   * @param f function
+   * @param d duration
+   * @param freq frequency to call the method
+   * @param useException true make this method throw exception after timeout.
+   * @return false if timeout and (useException = true). Otherwise, the return value is true
+   */
+  public static Boolean await(
+      Supplier<Boolean> f, Duration d, Duration freq, Boolean useException) {
+    long startTs = current();
+    long runningTime = System.currentTimeMillis() - startTs;
+    while (d.toMillis() >= runningTime) {
+      if (f.get()) return true;
+      else {
+        try {
+          TimeUnit.MILLISECONDS.sleep(freq.toMillis());
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    if (useException) {
+      logger.error(
+          "Running test method time is "
+              + runningTime
+              + " seconds more than the timeout time "
+              + d.getSeconds()
+              + " seconds. Please turning your timeout time.");
+      throw new IllegalStateException("timeout");
+    } else return false;
   }
 
   /** disable to instantiate CommonUtil. */

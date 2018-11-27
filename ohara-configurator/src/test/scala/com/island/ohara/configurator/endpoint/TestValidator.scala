@@ -8,6 +8,7 @@ import com.island.ohara.client.ConfiguratorJson.{
   RdbValidationRequest,
   ValidationReport
 }
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -19,10 +20,11 @@ class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val kafkaClient = KafkaClient(testUtil.brokersConnProps)
   private[this] val ftpServer = testUtil.ftpServer
   private[this] val rdb = testUtil.dataBase
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
-    testUtil.connectorClient.plugins().exists(_.className == classOf[Validator].getName) shouldBe true
+    connectorClient.plugins().exists(_.className == classOf[Validator].getName) shouldBe true
   }
 
   private[this] def evaluate(f: Future[Seq[ValidationReport]]): Unit = {
@@ -33,14 +35,14 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidationOfHdfs(): Unit = {
-    evaluate(Validator.run(testUtil.connectorClient, kafkaClient, HdfsValidationRequest("file:///tmp"), taskCount))
+    evaluate(Validator.run(connectorClient, kafkaClient, HdfsValidationRequest("file:///tmp"), taskCount))
   }
 
   @Test
   def testValidationOfFtp(): Unit = {
     evaluate(
       Validator.run(
-        testUtil.connectorClient,
+        connectorClient,
         kafkaClient,
         FtpValidationRequest(ftpServer.host, ftpServer.port, ftpServer.user, ftpServer.password),
         taskCount
@@ -51,7 +53,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
   def testValidationOfRdb(): Unit = {
     evaluate(
       Validator.run(
-        testUtil.connectorClient,
+        connectorClient,
         kafkaClient,
         RdbValidationRequest(rdb.url, rdb.user, rdb.password),
         taskCount

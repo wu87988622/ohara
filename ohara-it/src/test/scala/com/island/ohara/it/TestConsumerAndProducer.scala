@@ -1,8 +1,11 @@
 package com.island.ohara.it
 
+import java.time.Duration
+
 import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
+import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import org.junit.Test
 import org.scalatest.Matchers
@@ -18,7 +21,7 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     CloseOnce.doClose(KafkaClient(testUtil.brokersConnProps)) { client =>
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
-      OharaTestUtil.await(() => client.exist(topicName), 10 seconds)
+      CommonUtil.await(() => client.exist(topicName), Duration.ofSeconds(10))
     }
     CloseOnce.doClose(
       Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.STRING))(
@@ -45,7 +48,7 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     CloseOnce.doClose(KafkaClient(testUtil.brokersConnProps)) { client =>
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
-      OharaTestUtil.await(() => client.exist(topicName), 10 seconds)
+      CommonUtil.await(() => client.exist(topicName), Duration.ofSeconds(10))
     }
     CloseOnce.doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW))(
       _.sender().key("key").value(data).send(topicName))

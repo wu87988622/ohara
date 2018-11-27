@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val configurator0 = {
     val topicName = random()
-    doClose(KafkaClient(testUtil.brokersConnProps))(
+    doClose(KafkaClient(testUtil.brokersConnProps()))(
       _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
     Configurator
       .builder()

@@ -1,23 +1,24 @@
 package com.island.ohara.it
 import java.io.{BufferedWriter, OutputStreamWriter}
+import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.common.data.{Cell, DataType, Row}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.util.CommonUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 
 /**
   * ftp csv -> topic -> ftp csv
   */
 class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   private[this] val schema: Seq[Column] = Seq(
     Column("name", DataType.STRING, 1),
@@ -76,7 +77,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     val sinkName = methodName + "-sink"
     val sourceName = methodName + "-source"
     // start sink
-    testUtil.connectorClient
+    connectorClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -89,7 +90,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
     try {
       try {
-        testUtil.connectorClient
+        connectorClient
           .connectorCreator()
           .topic(topicName)
           .connectorClass(classOf[FtpSource])
@@ -99,17 +100,20 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
           .schema(schema)
           .configs(sourceProps.toMap)
           .create()
-        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, 30 seconds)
-        OharaTestUtil.await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, 30 seconds)
-        OharaTestUtil.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, 30 seconds)
+        CommonUtil.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
+        CommonUtil
+          .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
+        CommonUtil.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, Duration.ofSeconds(30))
         val lines =
-          ftpClient.readLines(CommonUtil.path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
+          ftpClient.readLines(
+            com.island.ohara.common.util.CommonUtil
+              .path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
         lines.length shouldBe rows.length + 1 // header
         lines(0) shouldBe header
         lines(1) shouldBe data(0)
         lines(2) shouldBe data(1)
-      } finally testUtil.connectorClient.delete(sourceName)
-    } finally testUtil.connectorClient.delete(sinkName)
+      } finally connectorClient.delete(sourceName)
+    } finally connectorClient.delete(sinkName)
   }
 
   @After
@@ -127,7 +131,7 @@ private[it] object TestFtp2Ftp extends Matchers {
     */
   def rebuild(ftpClient: FtpClient, path: String): Unit = {
     if (ftpClient.exist(path)) {
-      ftpClient.listFileNames(path).map(CommonUtil.path(path, _)).foreach(ftpClient.delete)
+      ftpClient.listFileNames(path).map(com.island.ohara.common.util.CommonUtil.path(path, _)).foreach(ftpClient.delete)
       ftpClient.listFileNames(path).size shouldBe 0
       ftpClient.delete(path)
     }
@@ -135,7 +139,8 @@ private[it] object TestFtp2Ftp extends Matchers {
   }
 
   def setupInput(ftpClient: FtpClient, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(ftpClient.create(CommonUtil.path(props.inputFolder, "abc"))))
+    val writer = new BufferedWriter(
+      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtil.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()

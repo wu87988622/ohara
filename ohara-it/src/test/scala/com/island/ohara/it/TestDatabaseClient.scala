@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 
 class TestDatabaseClient extends MediumTest with Matchers {
 
-  private[this] val db = Database()
+  private[this] val db = Database.of()
 
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
 

@@ -1,4 +1,5 @@
 package com.island.ohara.integration
+
 import com.island.ohara.common.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -8,13 +9,13 @@ class TestZookeepers extends MediumTest with Matchers {
   @Test
   def testLocalMethod(): Unit = {
     val url = "localhost:12345"
-    val external = Zookeepers(Some(url))
+    val external = Zookeepers.of(url)
     try {
       external.isLocal shouldBe false
       external.connectionProps shouldBe url
     } finally external.close()
 
-    val local = Zookeepers()
+    val local = Zookeepers.of()
     try local.isLocal shouldBe true
     finally local.close()
   }

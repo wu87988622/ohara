@@ -1,4 +1,5 @@
 package com.island.ohara.integration
+
 import com.island.ohara.common.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -15,12 +16,12 @@ class TestDatabase extends MediumTest with Matchers {
     val dbName = "dbName"
 
     val result = Database.parseString(s"jdbc:$dbInstance:$user:$password@//$host:$port/$dbName")
-    result._1 shouldBe dbInstance
-    result._2 shouldBe user
-    result._3 shouldBe password
-    result._4 shouldBe host
-    result._5 shouldBe port
-    result._6 shouldBe dbName
+    result.getDbInstance() shouldBe dbInstance
+    result.getUser() shouldBe user
+    result.getPassword() shouldBe password
+    result.getHost() shouldBe host
+    result.getPort() shouldBe port
+    result.getDbName() shouldBe dbName
 
     // the string should start with "jdbc"
     an[IllegalArgumentException] should be thrownBy Database.parseString(
@@ -39,7 +40,8 @@ class TestDatabase extends MediumTest with Matchers {
     val port = 123
     val dbName = "dbName"
 
-    val externaldb = Database(Some(s"jdbc:$dbInstance:$user:$password@//$host:$port/$dbName"))
+    //val externaldb = Database(Some(s"jdbc:$dbInstance:$user:$password@//$host:$port/$dbName"))
+    val externaldb = Database.of("jdbc:" + dbInstance + ":" + user + ":" + password + "@//" + host + ":" + port + "/" + dbName)
     try {
       externaldb.isLocal shouldBe false
       externaldb.user shouldBe user
@@ -49,7 +51,7 @@ class TestDatabase extends MediumTest with Matchers {
       externaldb.databaseName shouldBe dbName
     } finally externaldb.close()
 
-    val localdb = Database()
+    val localdb = Database.of()
     try localdb.isLocal shouldBe true
     finally localdb.close()
   }

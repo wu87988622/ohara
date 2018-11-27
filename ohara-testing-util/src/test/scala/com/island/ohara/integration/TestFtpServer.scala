@@ -14,10 +14,10 @@ class TestFtpServer extends MediumTest with Matchers {
     val port = 123
 
     val result = FtpServer.parseString(s"$user:$password@$host:$port")
-    result._1 shouldBe user
-    result._2 shouldBe password
-    result._3 shouldBe host
-    result._4 shouldBe port
+    result.getUser shouldBe user
+    result.getPassword shouldBe password
+    result.getHost shouldBe host
+    result.getPort shouldBe port
 
     // a random string
     an[IllegalArgumentException] should be thrownBy FtpServer.parseString("adadasdasd")
@@ -29,7 +29,7 @@ class TestFtpServer extends MediumTest with Matchers {
     val password = "password"
     val host = "host"
     val port = 123
-    val externalFtpServer = FtpServer(Some(s"$user:$password@$host:$port"))
+    val externalFtpServer = FtpServer.of(s"$user:$password@$host:$port")
     try {
       externalFtpServer.isLocal shouldBe false
       externalFtpServer.user shouldBe user
@@ -38,14 +38,14 @@ class TestFtpServer extends MediumTest with Matchers {
       externalFtpServer.port shouldBe port
     } finally externalFtpServer.close()
 
-    val localFtpServer = FtpServer()
+    val localFtpServer = FtpServer.of()
     try localFtpServer.isLocal shouldBe true
     finally localFtpServer.close()
   }
 
   @Test
   def testRandomPort(): Unit = {
-    val ftpServer = FtpServer.local(0, Seq(0))
+    val ftpServer = FtpServer.local(0, Array(0))
     try ftpServer.port should not be 0
     finally ftpServer.close()
   }

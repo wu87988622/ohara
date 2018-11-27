@@ -1,9 +1,10 @@
 package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.client.util.CloseOnce.doClose
+import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.rule.LargeTest
+import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.integration.OharaTestUtil
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -31,8 +32,8 @@ class TestConfiguratorMain extends LargeTest with Matchers {
     Future[Unit] {
       Configurator.main(Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0"))
     }(service)
-    import scala.concurrent.duration._
-    try OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 10 seconds)
+    import java.time.Duration
+    try CommonUtil.await(() => Configurator.hasRunningConfigurator, Duration.ofSeconds(20))
     finally {
       Configurator.closeRunningConfigurator = true
       service.shutdownNow()
@@ -60,8 +61,8 @@ class TestConfiguratorMain extends LargeTest with Matchers {
             methodName
           ))
       }(service)
-      import scala.concurrent.duration._
-      try OharaTestUtil.await(() => Configurator.hasRunningConfigurator, 30 seconds)
+      import java.time.Duration
+      try CommonUtil.await(() => Configurator.hasRunningConfigurator, Duration.ofSeconds(30))
       finally {
         Configurator.closeRunningConfigurator = true
         service.shutdownNow()

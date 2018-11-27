@@ -13,7 +13,7 @@ import org.scalatest.Matchers
 
 class TestFtpClient extends MediumTest with Matchers {
 
-  private[this] val server = FtpServer()
+  private[this] val server = FtpServer.of()
 
   private[this] val client =
     FtpClient.builder().user(server.user).password(server.password).hostname(server.host).port(server.port).build()

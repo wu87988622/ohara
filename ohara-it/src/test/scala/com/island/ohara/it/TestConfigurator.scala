@@ -1,4 +1,6 @@
 package com.island.ohara.it
+import java.time.Duration
+
 import com.island.ohara.client.ConfiguratorJson.{
   ClusterInformation,
   Column,
@@ -14,16 +16,19 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 class TestConfigurator extends With3Brokers3Workers with Matchers {
+  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+
   private[this] val configurator =
     Configurator
       .builder()
@@ -112,7 +117,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       }
       client.stop[Source](source.uuid)
       client.delete[Source](source.uuid)
-    } finally if (testUtil.connectorClient.exist(source.uuid)) testUtil.connectorClient.delete(source.uuid)
+    } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
   }
 
   @Test
@@ -163,18 +168,18 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val sink = client.add[SinkRequest, Sink](request)
       client.start[Sink](sink.uuid)
       try {
-        OharaTestUtil.await(() => ftpClient.listFileNames(sinkProps.output).nonEmpty, 30 seconds)
+        CommonUtil.await(() => ftpClient.listFileNames(sinkProps.output).nonEmpty, Duration.ofSeconds(30))
         ftpClient
           .listFileNames(sinkProps.output)
           .foreach(name => {
-            val lines = ftpClient.readLines(CommonUtil.path(sinkProps.output, name))
+            val lines = ftpClient.readLines(com.island.ohara.common.util.CommonUtil.path(sinkProps.output, name))
             lines.length shouldBe 2
             lines(0) shouldBe data(0)
             lines(1) shouldBe data(1)
           })
         client.stop[Sink](sink.uuid)
         client.delete[Sink](sink.uuid)
-      } finally if (testUtil.connectorClient.exist(sink.uuid)) testUtil.connectorClient.delete(sink.uuid)
+      } finally if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
     }
   }
 

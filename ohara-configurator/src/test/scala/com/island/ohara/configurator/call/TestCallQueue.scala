@@ -1,10 +1,11 @@
 package com.island.ohara.configurator.call
 
+import java.time.Duration
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.DataType
-import com.island.ohara.integration.{OharaTestUtil, With3Brokers}
+import com.island.ohara.integration.With3Brokers
 import com.island.ohara.client.util.CloseOnce.close
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaUtil
@@ -22,7 +23,7 @@ class TestCallQueue extends With3Brokers with Matchers {
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
-      .groupId(CommonUtil.uuid())
+      .groupId(com.island.ohara.common.util.CommonUtil.uuid())
   private[this] val server0: CallQueueServer[SourceRequest, Source] =
     defaultServerBuilder.build[SourceRequest, Source]()
   private[this] val server1: CallQueueServer[SourceRequest, Source] =
@@ -52,7 +53,7 @@ class TestCallQueue extends With3Brokers with Matchers {
       className = "jdbc",
       schema = Seq(Column("cf", DataType.BOOLEAN, 1)),
       configs = Map("a" -> "b"),
-      lastModified = CommonUtil.current(),
+      lastModified = com.island.ohara.common.util.CommonUtil.current(),
       numberOfTasks = 1,
       topics = Seq.empty,
       state = None
@@ -66,7 +67,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     an[TimeoutException] should be thrownBy Await.result(request, 3 second)
 
     // wait the one from servers receive the request
-    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
+    CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, Duration.ofSeconds(10))
 
     // get the task and assign a response
     val task = servers.find(_.countOfUndealtTasks == 1).get.take()
@@ -81,7 +82,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     an[TimeoutException] should be thrownBy Await.result(request, 3 second)
 
     // wait the one from servers receive the request
-    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
+    CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, Duration.ofSeconds(10))
 
     // get the task and assign a error
     val task = servers.find(_.countOfUndealtTasks == 1).get.take()
@@ -100,7 +101,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     an[TimeoutException] should be thrownBy Await.result(request, 3 second)
 
     // wait the one from servers receive the request
-    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, 10 second)
+    CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, Duration.ofSeconds(10))
 
     // get the server accepting the request
     val server = servers.find(_.countOfUndealtTasks == 1).get
@@ -137,7 +138,7 @@ class TestCallQueue extends With3Brokers with Matchers {
   def testLease(): Unit = {
     val requestTopic = newTopic()
     val responseTopic = newTopic()
-    val leaseCleanupFreq: Duration = 5 seconds
+    val leaseCleanupFreq: scala.concurrent.duration.Duration = 5 seconds
     val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue.clientBuilder
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopic)
@@ -159,7 +160,7 @@ class TestCallQueue extends With3Brokers with Matchers {
       client.request(requestData)
     }
     // wait the one from servers receive the request
-    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == requestCount, 10 second)
+    CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == requestCount, Duration.ofSeconds(10))
     val tasks = servers.flatMap(server => {
       Iterator.continually(server.take(1 second)).takeWhile(_.isDefined).map(_.get)
     })
@@ -185,7 +186,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     }
     val requests = clients.map(_.request(requestData))
     // wait the one from servers receive the request
-    OharaTestUtil.await(() => servers.map(_.countOfUndealtTasks).sum == clientCount, 10 second)
+    CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == clientCount, Duration.ofSeconds(10))
     val tasks = servers.flatMap(server => {
       Iterator.continually(server.take(1 second)).takeWhile(_.isDefined).map(_.get)
     })

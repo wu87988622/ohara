@@ -58,7 +58,7 @@ trait ConnectorClient extends CloseOnce {
 object ConnectorClient {
   private[this] val COUNTER = new AtomicInteger(0)
   import scala.concurrent.duration._
-  val TIMEOUT: FiniteDuration = 10 seconds
+  val TIMEOUT: FiniteDuration = 30 seconds
 
   def apply(_workers: String): ConnectorClient = {
     val workerList = _workers.split(",")

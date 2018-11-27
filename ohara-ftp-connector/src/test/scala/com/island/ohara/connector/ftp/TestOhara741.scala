@@ -9,7 +9,7 @@ import org.scalatest.Matchers
 
 class TestOhara741 extends SmallTest with Matchers {
 
-  private[this] val ftpServer = FtpServer.local(0, Seq(0))
+  private[this] val ftpServer = FtpServer.local(0, Array(0))
 
   @Test
   def testAutoCreateOutput(): Unit = {
