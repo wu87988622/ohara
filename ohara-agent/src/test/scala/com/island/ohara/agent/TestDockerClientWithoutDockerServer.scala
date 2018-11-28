@@ -192,7 +192,12 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
 
     val key = s"key-${methodName()}"
     val value = s"value-${methodName()}"
-    try client.executor().image("aaa").envs(Map(key -> value)).dockerCommand().contains(s"""-e \"$key=$value\"""") shouldBe true
+    try client
+      .executor()
+      .image("aaa")
+      .envs(Map(key -> value))
+      .dockerCommand()
+      .contains(s"""-e \"$key=$value\"""") shouldBe true
     finally client.close()
   }
 
