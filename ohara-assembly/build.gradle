@@ -77,6 +77,9 @@ distributions {
         from { "$projectDir/../ohara-manager/config.js" }
       }
       into("manager") {
+        from { "$projectDir/../ohara-manager/.yarnrc" }
+      }
+      into("manager") {
         from { "$projectDir/../ohara-manager/index.js" }
       }
       into("manager") {
