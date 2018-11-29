@@ -9,7 +9,7 @@
   "scripts": {
     "checkYarnVersion": "node ./scripts/checkYarnVersion.js",
     "setup": "yarn && yarn --cwd client setup",
-    "setup:prod": "yarn --prod && yarn --cwd client setup:prod",
+    "setup:prod": "yarn --prod --silent && yarn --cwd client setup:prod",
     "start": "nodemon index.js --exec 'yarn lint:server && node'",
     "start:ci": "forever start index.js --configurator http://fakehost:7777/v0 & wait-on http://localhost:5050",
     "start:prod": "node index.js",

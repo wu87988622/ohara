@@ -12,7 +12,7 @@
   },
   "scripts": {
     "setup": "yarn && yarn build",
-    "setup:prod": "yarn --prod && yarn build",
+    "setup:prod": "yarn --prod --silent && yarn build",
     "start": "react-scripts start",
     "start:ci": "forever start node_modules/react-scripts/scripts/start.js",
     "build": "react-scripts build",
