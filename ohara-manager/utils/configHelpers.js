@@ -1,5 +1,7 @@
 const yargs = require('yargs');
+
 const _ = require('./helpers');
+const getProjectVersion = require('./getProjectVersion');
 
 const getConfig = yargs
   .options({
@@ -17,6 +19,8 @@ const getConfig = yargs
   })
   .help()
   .alias('help', 'h')
+  .version(getProjectVersion())
+  .alias('version', 'v')
   .check(argv => {
     if (_.isEmptyStr(argv.configurator))
       throw Error('--configurator cannot be empty');

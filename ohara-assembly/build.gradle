@@ -85,6 +85,9 @@ distributions {
       into("manager") {
         from { "$projectDir/../ohara-manager/package.json" }
       }
+      into("manager") {
+        from { "$projectDir/../gradle.properties" }
+      }
     }
   }
 }
