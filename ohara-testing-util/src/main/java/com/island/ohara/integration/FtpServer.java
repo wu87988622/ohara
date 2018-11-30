@@ -3,7 +3,6 @@ package com.island.ohara.integration;
 import com.island.ohara.common.util.CommonUtil;
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
@@ -28,13 +27,11 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
 public interface FtpServer extends AutoCloseable {
   String FTP_SERVER = "ohara.it.ftp";
 
-  int NUMBER_OF_FTPSERVER = 3;
-
-  AtomicInteger COUNT = new AtomicInteger(0);
+  int NUMBER_OF_SERVERS = 3;
 
   String host();
 
-  Integer port();
+  int port();
 
   String user();
 
@@ -51,31 +48,31 @@ public interface FtpServer extends AutoCloseable {
   boolean isLocal();
 
   final class FtpServerInfo {
-    private static String user;
-    private static String password;
-    private static String host;
-    private static Integer port;
+    private final String user;
+    private final String password;
+    private final String host;
+    private final int port;
 
-    public FtpServerInfo(String user, String password, String host, Integer port) {
+    private FtpServerInfo(String user, String password, String host, int port) {
       this.user = user;
       this.password = password;
       this.host = host;
       this.port = port;
     }
 
-    public String getUser() {
+    public String user() {
       return user;
     }
 
-    public String getPassword() {
+    public String password() {
       return password;
     }
 
-    public String getHost() {
+    public String host() {
       return host;
     }
 
-    public Integer getPort() {
+    public int port() {
       return port;
     }
   }
@@ -86,7 +83,7 @@ public interface FtpServer extends AutoCloseable {
       String user = ftpString.split(":")[0];
       String password = ftpString.split("@")[0].split(":")[1];
       String host = ftpString.split("@")[1].split(":")[0];
-      Integer port = Integer.parseInt(ftpString.split("@")[1].split(":")[1]);
+      int port = Integer.parseInt(ftpString.split("@")[1].split(":")[1]);
       return new FtpServerInfo(user, password, host, port);
     } catch (Exception e) {
       throw new IllegalArgumentException("invalid value from " + FTP_SERVER, e);
@@ -100,15 +97,17 @@ public interface FtpServer extends AutoCloseable {
    * @param dataPorts bound port used to transfer data
    * @return an embedded ftp server
    */
-  static FtpServer local(Integer commandPort, int[] dataPorts) {
+  static FtpServer local(int commandPort, int[] dataPorts) {
+    int count = 0;
+
     File homeFolder = Integration.createTempDir("ftp");
     PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
     UserManager userManager = userManagerFactory.createUserManager();
     BaseUser _user = new BaseUser();
-    _user.setName("user-" + COUNT.getAndIncrement());
-    _user.setAuthorities(Arrays.asList(new WritePermission()));
+    _user.setName("user-" + (count++));
+    _user.setAuthorities(Collections.singletonList(new WritePermission()));
     _user.setEnabled(true);
-    _user.setPassword("password-" + COUNT.getAndIncrement());
+    _user.setPassword("password-" + (count++));
     _user.setHomeDirectory(homeFolder.getAbsolutePath());
     try {
       userManager.save(_user);
@@ -118,17 +117,10 @@ public interface FtpServer extends AutoCloseable {
     ListenerFactory listenerFactory = new ListenerFactory();
     listenerFactory.setPort(commandPort);
     DataConnectionConfigurationFactory connectionConfig = new DataConnectionConfigurationFactory();
-    List<Integer> portList = new ArrayList<Integer>();
-    for (Integer dataPort : dataPorts) {
-      portList.add(dataPort);
-    }
+
     List<Integer> availableDataPorts =
-        portList
-            .stream()
-            .map(
-                port -> {
-                  return (port <= 0) ? Integration.availablePort() : port;
-                })
+        Arrays.stream(dataPorts)
+            .mapToObj(port -> port <= 0 ? Integration.availablePort() : port)
             .collect(Collectors.toList());
 
     connectionConfig.setActiveEnabled(false);
@@ -160,7 +152,7 @@ public interface FtpServer extends AutoCloseable {
       }
 
       @Override
-      public Integer port() {
+      public int port() {
         return listener.getPort();
       }
 
@@ -204,22 +196,22 @@ public interface FtpServer extends AutoCloseable {
 
                     @Override
                     public String host() {
-                      return ftpServerInfo.getHost();
+                      return ftpServerInfo.host();
                     }
 
                     @Override
-                    public Integer port() {
-                      return ftpServerInfo.getPort();
+                    public int port() {
+                      return ftpServerInfo.port();
                     }
 
                     @Override
                     public String user() {
-                      return ftpServerInfo.getUser();
+                      return ftpServerInfo.user();
                     }
 
                     @Override
                     public String password() {
-                      return ftpServerInfo.getPassword();
+                      return ftpServerInfo.password();
                     }
 
                     @Override
@@ -234,10 +226,10 @@ public interface FtpServer extends AutoCloseable {
                     }
                   };
             })
-        .orElseGet(() -> local(0, IntStream.range(1, NUMBER_OF_FTPSERVER).map(x -> 0).toArray()));
+        .orElseGet(() -> local(0, IntStream.range(1, NUMBER_OF_SERVERS).map(x -> 0).toArray()));
   }
 
   static String mkPortString(List<Integer> ports) {
-    return ports.stream().map(p -> String.valueOf(p)).collect(Collectors.joining(","));
+    return ports.stream().map(String::valueOf).collect(Collectors.joining(","));
   }
 }

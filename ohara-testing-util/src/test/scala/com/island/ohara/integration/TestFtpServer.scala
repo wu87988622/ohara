@@ -14,10 +14,10 @@ class TestFtpServer extends MediumTest with Matchers {
     val port = 123
 
     val result = FtpServer.parseString(s"$user:$password@$host:$port")
-    result.getUser shouldBe user
-    result.getPassword shouldBe password
-    result.getHost shouldBe host
-    result.getPort shouldBe port
+    result.user shouldBe user
+    result.password shouldBe password
+    result.host shouldBe host
+    result.port shouldBe port
 
     // a random string
     an[IllegalArgumentException] should be thrownBy FtpServer.parseString("adadasdasd")
