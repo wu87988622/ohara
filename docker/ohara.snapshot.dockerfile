@@ -1,10 +1,5 @@
 FROM centos:7.5.1804 AS deps
 
-ARG BITBUCKET_USER=""
-ARG BITBUCKET_PASSWORD=""
-ARG GRADLE_VERSION=4.10.2
-ARG BRANCH="master"
-
 # install tools
 RUN yum install -y \
   git \
@@ -24,6 +19,7 @@ RUN yum install -y nodejs
 RUN npm install -g yarn@1.7.0
 
 # download gradle
+ARG GRADLE_VERSION=4.10.2
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
@@ -35,8 +31,11 @@ ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
+ARG GIT_USER=""
+ARG GIT_PWD=""
+ARG BRANCH="master"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/

@@ -1,10 +1,5 @@
 FROM centos:7.5.1804 AS deps
 
-ARG BITBUCKET_USER=""
-ARG BITBUCKET_PASSWORD=""
-ARG GRADLE_VERSION=4.10.2
-ARG BRANCH="master"
-
 # install tools
 RUN yum install -y \
   git \
@@ -38,19 +33,22 @@ RUN yum install -y \
   alsa-lib*
 
 # download gradle
+ARG GRADLE_VERSION=4.10.2
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
 RUN rm -f gradle-$GRADLE_VERSION-bin.zip
-RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
 
 # add gradle to path
-ENV GRADLE_HOME=/opt/gradle/default
+ENV GRADLE_HOME=/opt/gradle/gradle-$GRADLE_VERSION
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
+ARG GIT_USER=""
+ARG GIT_PWD=""
+ARG BRANCH="master"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean build -x test -PskipManager
 RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
@@ -60,7 +58,6 @@ RUN gradle -Pcdh clean build -x test
 FROM centos:7.5.1804
 
 ARG USER=jenkins
-ARG GRADLE_VERSION=4.10.2
 
 # install tools
 RUN yum install -y \
@@ -95,9 +92,11 @@ RUN yum install -y \
   alsa-lib*
 
 # copy gradle
-RUN mkdir -p /opt/gradle/gradle-$GRADLE_VERSION
-COPY --from=deps /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/gradle-$GRADLE_VERSION
-RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
+RUN mkdir -p /opt/gradle
+COPY --from=deps /opt/gradle /opt/gradle
+RUN ln -s $(find "/opt/gradle/" -maxdepth 1 -type d -name "gradle-*") /opt/gradle/default
+ENV GRADLE_HOME=/opt/gradle/default
+ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # add user
 RUN groupadd $USER
@@ -117,10 +116,6 @@ RUN chown -R $USER:$USER /home/$USER/.embedmysql
 # change to user
 USER $USER
 WORKDIR /home/$USER
-
-# add gradle to path
-ENV GRADLE_HOME=/opt/gradle/default
-ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # see https://github.com/NixOS/nixpkgs/issues/20802
 ENV GRADLE_USER_HOME=/home/$USER/.gradle

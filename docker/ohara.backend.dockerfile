@@ -1,10 +1,5 @@
 FROM centos:7.5.1804 AS deps
 
-ARG BITBUCKET_USER=""
-ARG BITBUCKET_PASSWORD=""
-ARG GRADLE_VERSION=4.10.2
-ARG BRANCH="master"
-
 # install tools
 RUN yum install -y \
   git \
@@ -21,6 +16,7 @@ RUN yum install -y \
   numactl
 
 # download gradle
+ARG GRADLE_VERSION=4.10.2
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
@@ -32,8 +28,11 @@ ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
+ARG GIT_USER=""
+ARG GIT_PWD=""
+ARG BRANCH="master"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH https://$BITBUCKET_USER:$BITBUCKET_PASSWORD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager

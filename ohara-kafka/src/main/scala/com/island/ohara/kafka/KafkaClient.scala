@@ -4,6 +4,7 @@ import java.util
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import com.google.common.collect.ImmutableMap
 import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.kafka.KafkaClient._
 import org.apache.kafka.clients.CommonClientConfigs
