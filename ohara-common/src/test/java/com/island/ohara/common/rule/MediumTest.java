@@ -12,7 +12,7 @@ public abstract class MediumTest {
   protected final Logger logger = LoggerFactory.getLogger(MediumTest.class);
   @Rule public final TestName name = new TestName();
 
-  @Rule public final Timeout globalTimeout = new Timeout(2, TimeUnit.MINUTES);
+  @Rule public final Timeout globalTimeout = new Timeout(5, TimeUnit.MINUTES);
 
   public String methodName() {
     return name.getMethodName();

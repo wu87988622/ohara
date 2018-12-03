@@ -12,7 +12,7 @@ public abstract class LargeTest {
   protected final Logger logger = LoggerFactory.getLogger(LargeTest.class);
   @Rule public final TestName name = new TestName();
 
-  @Rule public final Timeout globalTimeout = new Timeout(5, TimeUnit.MINUTES);
+  @Rule public final Timeout globalTimeout = new Timeout(10, TimeUnit.MINUTES);
 
   public String methodName() {
     return name.getMethodName();

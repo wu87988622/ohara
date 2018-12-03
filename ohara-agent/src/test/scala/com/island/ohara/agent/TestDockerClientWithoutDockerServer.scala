@@ -1,14 +1,16 @@
 package com.island.ohara.agent
 
+import com.island.ohara.agent.DockerClient.LIST_PROCESS_FORMAT
 import com.island.ohara.agent.DockerJson.{ContainerDescription, PortPair, State}
 import com.island.ohara.agent.SshdServer.CommandHandler
-import com.island.ohara.common.rule.SmallTest
-import org.junit.Test
+import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.rule.MediumTest
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.util.Random
 
-class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
+class TestDockerClientWithoutDockerServer extends MediumTest with Matchers {
 
   private[this] val containers = State.all.map(
     s =>
@@ -33,18 +35,15 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   private[this] val handlers = Seq(
     // handle normal
     new CommandHandler {
-      override def belong(command: String): Boolean = command.contains("docker ps -a") && !command.contains("--filter")
+      override def belong(command: String): Boolean = command == s"docker ps -a --format $LIST_PROCESS_FORMAT"
       override def execute(command: String): Seq[String] = if (belong(command)) containers.map(containerToString)
       else throw new IllegalArgumentException(s"$command doesn't support")
     },
-    // handle query
+    // final
     new CommandHandler {
-      override def belong(command: String): Boolean =
-        command.contains("docker ps -a") && command.contains("--filter status=")
-      override def execute(command: String): Seq[String] = if (belong(command)) {
-        val requiredState = State.all.find(s => command.contains(s"status=${s.name.toLowerCase}")).get
-        containers.filter(_.state == requiredState).map(containerToString)
-      } else throw new IllegalArgumentException(s"$command doesn't support")
+      override def belong(command: String): Boolean = true
+      override def execute(command: String): Seq[String] =
+        throw new IllegalArgumentException(s"$command doesn't support")
     }
   )
   private[this] val server = SshdServer.local(0, handlers)
@@ -275,4 +274,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
         ports.find(_.hostIp == ip).get.portPairs.find(_.hostPort == p).get.containerPort shouldBe containerPorts(index)
     }
   }
+
+  @After
+  def tearDown(): Unit = CloseOnce.close(server)
 }
