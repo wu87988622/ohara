@@ -691,26 +691,24 @@ class PipelineSourceFtpPage extends React.Component {
           <TabPanel>
             <form>
               <FormGroupWrapper>
-                <FormGroup>
+                <FormGroup width="70%" margin="0 20px 20px 0">
                   <Label>File encoding</Label>
                   <Select
                     name="fileEnconding"
                     list={fileEncodings}
                     selected={currFileEncoding}
-                    width="140px"
                     data-testid="file-enconding-select"
                     handleChange={this.handleSelectChange}
                   />
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup width="30%">
                   <Label>Task</Label>
                   <TableWrapper>
                     <Select
                       name="tasks"
                       list={tasks}
                       selected={currTask}
-                      width="85px"
                       data-testid="task-select"
                       handleChange={this.handleSelectChange}
                     />

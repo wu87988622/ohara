@@ -686,11 +686,10 @@ class PipelineSinkFtpPage extends React.Component {
           <TabPanel>
             <form>
               <FormGroupWrapper>
-                <FormGroup>
+                <FormGroup width="70%" margin="0 20px 20px 0">
                   <Label>File encoding</Label>
                   <Select
                     name="fileEnconding"
-                    width="140px"
                     data-testid="file-enconding-select"
                     selected={currFileEncoding}
                     list={fileEncodings}
@@ -698,11 +697,10 @@ class PipelineSinkFtpPage extends React.Component {
                   />
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup width="30%">
                   <Label>Task</Label>
                   <Select
                     name="tasks"
-                    width="85px"
                     data-testid="task-select"
                     selected={currTask}
                     list={tasks}
