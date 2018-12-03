@@ -1,12 +1,11 @@
 package com.island.ohara.connector.hdfs.text
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.connector.hdfs.{FLUSH_LINE_COUNT, HDFSSinkConnectorConfig, HDFS_URL}
-import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.common.data.{Cell, DataType, Row}
-import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
+import com.island.ohara.connector.hdfs.{FLUSH_LINE_COUNT, HDFSSinkConnectorConfig, HDFS_URL}
+import com.island.ohara.integration.OharaTestUtil
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.Test
 import org.scalatest.Matchers
@@ -30,7 +29,8 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
 
-    doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
+    val inputStream = fileSystem.open(new Path(tempFilePath))
+    try {
       val result: StringBuilder = new StringBuilder()
       Stream
         .continually(inputStream.read())
@@ -39,7 +39,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
           result.append(x.toChar)
         })
       result.toString shouldBe "value1,value2\n"
-    }
+    } finally inputStream.close()
   }
 
   @Test
@@ -55,7 +55,8 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
 
-    doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
+    val inputStream = fileSystem.open(new Path(tempFilePath))
+    try {
       val result: StringBuilder = new StringBuilder()
       Stream
         .continually(inputStream.read())
@@ -64,7 +65,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
           result.append(x.toChar)
         })
       result.toString shouldBe "column1,column2\nvalue1,value2\n"
-    }
+    } finally inputStream.close()
   }
 
   @Test
@@ -81,7 +82,8 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
 
-    doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
+    val inputStream = fileSystem.open(new Path(tempFilePath))
+    try {
       val result: StringBuilder = new StringBuilder()
       Stream
         .continually(inputStream.read())
@@ -90,7 +92,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
           result.append(x.toChar)
         })
       result.toString shouldBe "COLUMN100,COLUMN200\nvalue1,value2\n"
-    }
+    } finally inputStream.close()
   }
 
   @Test
@@ -106,7 +108,8 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
 
-    doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
+    val inputStream = fileSystem.open(new Path(tempFilePath))
+    try {
       val result: StringBuilder = new StringBuilder()
       Stream
         .continually(inputStream.read())
@@ -115,7 +118,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
           result.append(x.toChar)
         })
       result.toString shouldBe "column1,column2\nvalue1,value2\n"
-    }
+    } finally inputStream.close()
   }
 
   @Test
@@ -133,7 +136,8 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     csvRecordWriter.close()
     storage.exists(tempFilePath) shouldBe true
 
-    doClose(fileSystem.open(new Path(tempFilePath))) { inputStream =>
+    val inputStream = fileSystem.open(new Path(tempFilePath))
+    try {
       val result: StringBuilder = new StringBuilder()
       Stream
         .continually(inputStream.read())
@@ -142,7 +146,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
           result.append(x.toChar)
         })
       result.toString shouldBe "COL1,COL3,COL2\nvalue1,value3,value2\n"
-    }
+    } finally inputStream.close()
   }
 
   @Test

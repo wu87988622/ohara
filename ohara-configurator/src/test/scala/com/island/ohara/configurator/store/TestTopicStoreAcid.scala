@@ -3,10 +3,9 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.integration.With3Brokers
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.integration.With3Brokers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -15,15 +14,9 @@ import scala.util.Random
 
 class TestTopicStoreAcid extends With3Brokers with Matchers {
   private[this] val topicName = "TestTopicStoreAcid"
-  doClose(KafkaClient(testUtil.brokersConnProps))(
-    _.topicCreator().numberOfReplications(1).numberOfPartitions(1).compacted().create(topicName))
-
   private[this] val store =
-    Store
-      .builder()
-      .brokers(testUtil.brokersConnProps)
-      .topicName(topicName)
-      .buildBlocking(Serializer.STRING, Serializer.STRING)
+    Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).build(Serializer.STRING, Serializer.STRING)
+
   private[this] val elapsedTime = 30 // second
   private[this] val readerCount = 5
   private[this] val updaterCount = 5
@@ -58,10 +51,11 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    close(store)
+    CloseOnce.close(store)
   }
 
-  private[this] def createRemover(closed: AtomicBoolean, store: BlockingStore[String, String]): Future[Long] = {
+  import scala.concurrent.duration._
+  private[this] def createRemover(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
@@ -71,7 +65,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
           val (key, _) = iter.next()
           if (needDelete()) {
             count += 1
-            store._remove(key, Consistency.STRICT)
+            Await.result(store.remove(key, Consistency.STRICT), 30 seconds)
             done = true
           }
         }
@@ -81,11 +75,11 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
     }
   }
 
-  private[this] def createUpdater(closed: AtomicBoolean, store: BlockingStore[String, String]): Future[Long] = {
+  private[this] def createUpdater(closed: AtomicBoolean, store: Store[String, String]): Future[Long] = {
     Future[Long] {
       var count = 0L
       while (!closed.get()) {
-        store._update(count.toString, count.toString, Consistency.STRICT)
+        Await.result(store.update(count.toString, count.toString, Consistency.STRICT), 30 seconds)
         count += 1
         takeBreak()
       }

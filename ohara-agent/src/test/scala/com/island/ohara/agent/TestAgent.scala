@@ -1,8 +1,8 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.SshdServer.CommandHandler
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CloseOnce
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

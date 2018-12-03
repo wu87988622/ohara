@@ -2,7 +2,7 @@ package com.island.ohara.client
 import java.sql.{Connection, DriverManager, ResultSet}
 
 import com.island.ohara.client.ConfiguratorJson.RdbTable
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CloseOnce
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -46,35 +46,48 @@ object DatabaseClient {
     * @return a jdbc-based DatabaseClient
     */
   def apply(url: String, user: String, password: String): DatabaseClient = new DatabaseClient {
+
     private[this] val conn = DriverManager.getConnection(url, user, password)
 
     override def closed: Boolean = conn.isClosed
 
     override def tables(catalog: String, schema: String, name: String): Seq[RdbTable] = {
       val md = conn.getMetaData
-      CloseOnce
-        .doClose(md.getTables(catalog, schema, name, null)) { implicit rs =>
+
+      // catalog, schema, tableName
+      val data: Seq[(String, String, String)] = {
+        implicit val rs: ResultSet = md.getTables(catalog, schema, name, null)
+        try {
           val buf = new ArrayBuffer[(String, String, String)]()
           while (rs.next()) if (!systemTable(tableType)) buf.append((tableCatalog, tableSchema, tableName))
           buf
-        }
-        .map {
-          case (c, s, t) =>
-            (c, s, t, CloseOnce.doClose(md.getPrimaryKeys(c, null, t)) { implicit rs =>
+        } finally rs.close()
+      }
+
+      // catalog, schema, tableName, pks
+      val data2 = data.map {
+        case (c, s, t) =>
+          (c, s, t, {
+            implicit val rs: ResultSet = md.getPrimaryKeys(c, null, t)
+            try {
               val buf = new ArrayBuffer[String]()
               while (rs.next()) buf += columnName
               buf.toSet
-            })
-        }
+            } finally rs.close()
+          })
+      }
+
+      data2
         .map {
           case (c, s, t, pks) =>
-            val columns = CloseOnce.doClose(md.getColumns(c, null, t, null)) { implicit rs =>
+            implicit val rs: ResultSet = md.getColumns(c, null, t, null);
+            val columns = try {
               val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
               while (rs.next()) buf += ConfiguratorJson.RdbColumn(name = columnName,
                                                                   dataType = columnType,
                                                                   pk = pks.contains(columnName))
               buf
-            }
+            } finally rs.close()
             RdbTable(Option(c), Option(s), t, columns)
         }
         .filterNot(_.schema.isEmpty)
@@ -89,16 +102,20 @@ object DatabaseClient {
       if (r < 0) return url
       url.substring(l + 1, r)
     }
-    override def createTable(name: String, columns: Seq[ConfiguratorJson.RdbColumn]): Unit = {
-      if (columns.map(_.name).toSet.size != columns.size) throw new IllegalArgumentException(s"duplicate order!!!")
-      val query = s"""CREATE TABLE \"$name\" (""" + columns
-        .map(c => s"""\"${c.name}\" ${c.dataType}""")
-        .mkString(",") + ", PRIMARY KEY (" + columns.filter(_.pk).map(c => s"""\"${c.name}\"""").mkString(",") + "))"
-      CloseOnce.doClose(conn.createStatement())(_.execute(query))
-    }
-    override def dropTable(name: String): Unit = {
-      val query = s"""DROP TABLE \"$name\""""
-      CloseOnce.doClose(conn.createStatement())(_.execute(query))
+    override def createTable(name: String, columns: Seq[ConfiguratorJson.RdbColumn]): Unit =
+      if (columns.map(_.name).toSet.size != columns.size)
+        throw new IllegalArgumentException(s"duplicate order!!!")
+      else
+        execute(s"""CREATE TABLE \"$name\" (""" + columns
+          .map(c => s"""\"${c.name}\" ${c.dataType}""")
+          .mkString(",") + ", PRIMARY KEY (" + columns.filter(_.pk).map(c => s"""\"${c.name}\"""").mkString(",") + "))")
+
+    override def dropTable(name: String): Unit = execute(s"""DROP TABLE \"$name\"""")
+
+    private[this] def execute(query: String): Unit = {
+      val state = conn.createStatement()
+      try state.execute(query)
+      finally state.close()
     }
 
     override def connection: Connection = conn

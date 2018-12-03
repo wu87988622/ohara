@@ -11,7 +11,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.DockerJson.ContainerDescription
 import com.island.ohara.agent.KafkaJson._
-import com.island.ohara.client.util.CloseOnce.doClose2
 import com.island.ohara.common.util.CommonUtil
 import org.apache.log4j.spi.Configurator
 import org.apache.sshd.client.SshClient
@@ -134,12 +133,16 @@ object Agent {
       try {
         // TODO: This method can't set the timeout...It is not ok in production I'd say...by chia
         val session = client.sessionLogin(hostname, port, user, password)
-        doClose2(new ByteArrayOutputStream)(_ => new ByteArrayOutputStream) { (stdOut, stdError) =>
-          session.executeRemoteCommand(command, stdOut, stdError, charset)
-          if (stdOut.size() != 0) Some(new String(stdOut.toByteArray, charset))
-          else if (stdError.size() != 0) Some(new String(stdError.toByteArray, charset))
-          else None
-        }
+        val stdOut = new ByteArrayOutputStream
+        try {
+          val stdError = new ByteArrayOutputStream
+          try {
+            session.executeRemoteCommand(command, stdOut, stdError, charset)
+            if (stdOut.size() != 0) Some(new String(stdOut.toByteArray, charset))
+            else if (stdError.size() != 0) Some(new String(stdError.toByteArray, charset))
+            else None
+          } finally stdError.close()
+        } finally stdOut.close()
       } finally client.close()
     }
   }

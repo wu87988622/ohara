@@ -4,11 +4,10 @@ import java.sql.{Statement, Timestamp}
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.integration.Database
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.CommonUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 

@@ -12,15 +12,13 @@ import com.island.ohara.client.ConfiguratorJson.{
   TopicInfoRequest
 }
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
+import com.island.ohara.common.util.{CloseOnce, CommonUtil, VersionUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
-import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
-import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -39,7 +37,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .builder()
           .topicName(random())
           .brokers(testUtil.brokersConnProps)
-          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
+          .build(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
@@ -72,19 +70,19 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     })
 
     // setup env
-    doClose(
-      FtpClient
-        .builder()
-        .hostname(ftpServer.host)
-        .port(ftpServer.port)
-        .user(ftpServer.user)
-        .password(ftpServer.password)
-        .build()) { ftpClient =>
+    val ftpClient = FtpClient
+      .builder()
+      .hostname(ftpServer.host)
+      .port(ftpServer.port)
+      .user(ftpServer.user)
+      .password(ftpServer.password)
+      .build()
+    try {
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.inputFolder)
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.completedFolder.get)
       TestFtp2Ftp.rebuild(ftpClient, sourceProps.errorFolder)
       TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
-    }
+    } finally ftpClient.close()
 
     val request = SourceRequest(
       name = methodName,
@@ -102,22 +100,24 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     val source = client.add[SourceRequest, Source](request)
     client.start[Source](source.uuid)
 
+    val consumer = Consumer
+      .builder()
+      .brokers(testUtil.brokersConnProps)
+      .offsetFromBegin()
+      .topicName(topic.uuid)
+      .build(Serializer.BYTES, Serializer.ROW)
     try {
-      doClose(
-        Consumer
-          .builder()
-          .brokers(testUtil.brokersConnProps)
-          .offsetFromBegin()
-          .topicName(topic.uuid)
-          .build(Serializer.BYTES, Serializer.ROW)) { consumer =>
-        val records = consumer.poll(20 seconds, rows.length)
-        records.length shouldBe rows.length
-        records(0).value.get shouldBe rows(0)
-        records(1).value.get shouldBe rows(1)
-      }
+      val records = consumer.poll(20 seconds, rows.length)
+      records.length shouldBe rows.length
+      records(0).value.get shouldBe rows(0)
+      records(1).value.get shouldBe rows(1)
+    } finally consumer.close()
+
+    try {
       client.stop[Source](source.uuid)
       client.delete[Source](source.uuid)
     } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+
   }
 
   @Test
@@ -141,19 +141,19 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       row.cells().asScala.map(_.value.toString).mkString(",")
     })
 
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
-      rows.foreach(row => producer.sender().value(row).send(topic.uuid))
-    }
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    try rows.foreach(row => producer.sender().value(row).send(topic.uuid))
+    finally producer.close()
 
     // setup env
-    doClose(
-      FtpClient
-        .builder()
-        .hostname(ftpServer.host)
-        .port(ftpServer.port)
-        .user(ftpServer.user)
-        .password(ftpServer.password)
-        .build()) { ftpClient =>
+    val ftpClient = FtpClient
+      .builder()
+      .hostname(ftpServer.host)
+      .port(ftpServer.port)
+      .user(ftpServer.user)
+      .password(ftpServer.password)
+      .build()
+    try {
       TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
 
       val request = SinkRequest(
@@ -180,7 +180,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         client.stop[Sink](sink.uuid)
         client.delete[Sink](sink.uuid)
       } finally if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
-    }
+    } finally ftpClient.close()
   }
 
   @Test
@@ -202,6 +202,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
+    CloseOnce.close(connectorClient)
     CloseOnce.close(client)
     CloseOnce.close(configurator)
   }

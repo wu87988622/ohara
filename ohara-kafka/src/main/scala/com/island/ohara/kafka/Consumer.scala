@@ -1,9 +1,8 @@
 package com.island.ohara.kafka
 import java.util.{Objects, Properties}
 
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer, OffsetResetStrategy}
 

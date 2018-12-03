@@ -3,11 +3,12 @@ package com.island.ohara.connector.hdfs.text
 import java.io.{BufferedWriter, OutputStreamWriter, Writer}
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.{DataType, Row}
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.typesafe.scalalogging.Logger
+
 import scala.collection.JavaConverters._
 
 /**

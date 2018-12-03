@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.call
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CloseOnce
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration

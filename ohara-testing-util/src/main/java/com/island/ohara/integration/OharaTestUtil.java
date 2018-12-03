@@ -1,6 +1,6 @@
 package com.island.ohara.integration;
 
-import com.island.ohara.client.ConnectorClient;
+import com.island.ohara.common.util.CloseOnce;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,9 +20,8 @@ import java.util.stream.IntStream;
  * <p>see TestOharaTestUtil for more examples NOTED: the close() will shutdown all services
  * including the passed consumers (see run())
  */
-public class OharaTestUtil implements AutoCloseable {
+public class OharaTestUtil extends CloseOnce {
   private Database localDb;
-  private ConnectorClient _connectorClient;
   private FtpServer localFtpServer;
   private Hdfs localHdfs;
   private Zookeepers zk;
@@ -43,7 +42,7 @@ public class OharaTestUtil implements AutoCloseable {
    */
   public String brokersConnProps() {
     return Optional.ofNullable(brokers)
-        .map(b -> b.connectionProps())
+        .map(Brokers::connectionProps)
         .orElseThrow(
             () ->
                 new RuntimeException(
@@ -58,7 +57,7 @@ public class OharaTestUtil implements AutoCloseable {
    */
   public String workersConnProps() {
     return Optional.ofNullable(workers)
-        .map(w -> w.connectionProps())
+        .map(Workers::connectionProps)
         .orElseThrow(() -> new RuntimeException("Workers do not exist"));
   }
 
@@ -83,34 +82,13 @@ public class OharaTestUtil implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
-    if (_connectorClient != null) {
-      _connectorClient.close();
-    }
-
-    if (localDb != null) {
-      localDb.close();
-    }
-
-    if (localFtpServer != null) {
-      localFtpServer.close();
-    }
-
-    if (localHdfs != null) {
-      localHdfs.close();
-    }
-
-    if (workers != null) {
-      workers.close();
-    }
-
-    if (brokers != null) {
-      brokers.close();
-    }
-
-    if (zk != null) {
-      zk.close();
-    }
+  protected void doClose() {
+    CloseOnce.close(localDb);
+    CloseOnce.close(localFtpServer);
+    CloseOnce.close(localHdfs);
+    CloseOnce.close(workers);
+    CloseOnce.close(brokers);
+    CloseOnce.close(zk);
   }
 
   /**

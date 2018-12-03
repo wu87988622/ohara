@@ -7,7 +7,6 @@ import org.apache.kafka.common.serialization
 import org.apache.kafka.common.serialization.Deserializer
 
 import scala.concurrent.duration._
-import com.island.ohara.client.util.CloseOnce._
 
 /**
   * Make the wrap from kafka components.
@@ -65,13 +64,19 @@ object KafkaUtil {
     * @param topicName topic nameHDFSStorage
     * @return true if the topic exist. Otherwise, false
     */
-  def exist(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean =
-    doClose(KafkaClient(brokersConnProps))(_.exist(topicName, timeout))
+  def exist(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Boolean = {
+    val client = KafkaClient(brokersConnProps)
+    try client.exist(topicName, timeout)
+    finally client.close()
+  }
 
   def topicDescription(brokersConnProps: String,
                        topicName: String,
-                       timeout: Duration = DEFAULT_TIMEOUT): TopicDescription =
-    doClose(KafkaClient(brokersConnProps))(_.topicDescription(topicName, timeout))
+                       timeout: Duration = DEFAULT_TIMEOUT): TopicDescription = {
+    val client = KafkaClient(brokersConnProps)
+    try client.topicDescription(topicName, timeout)
+    finally client.close()
+  }
 
   /**
     * Increate the number from partitions. This method check the number before doing the alter. If the number is equal
@@ -86,22 +91,32 @@ object KafkaUtil {
   def addPartitions(brokersConnProps: String,
                     topicName: String,
                     numberOfPartitions: Int,
-                    timeout: Duration = DEFAULT_TIMEOUT): Unit =
-    doClose(KafkaClient(brokersConnProps))(_.addPartitions(topicName, numberOfPartitions, timeout))
+                    timeout: Duration = DEFAULT_TIMEOUT): Unit = {
+    val client = KafkaClient(brokersConnProps)
+    try client.addPartitions(topicName, numberOfPartitions, timeout)
+    finally client.close()
+  }
 
   def createTopic(brokersConnProps: String,
                   topicName: String,
                   numberOfPartitions: Int,
                   numberOfReplications: Short,
                   options: Map[String, String] = Map.empty,
-                  timeout: Duration = DEFAULT_TIMEOUT): Unit = doClose(KafkaClient(brokersConnProps))(
-    _.topicCreator()
+                  timeout: Duration = DEFAULT_TIMEOUT): Unit = {
+    val client = KafkaClient(brokersConnProps)
+    try client
+      .topicCreator()
       .timeout(timeout)
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
       .options(options)
-      .create(topicName))
+      .create(topicName)
+    finally client.close()
+  }
 
-  def deleteTopic(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Unit =
-    doClose(KafkaClient(brokersConnProps))(_.deleteTopic(topicName, timeout))
+  def deleteTopic(brokersConnProps: String, topicName: String, timeout: Duration = DEFAULT_TIMEOUT): Unit = {
+    val client = KafkaClient(brokersConnProps)
+    try client.deleteTopic(topicName, timeout)
+    finally client.close()
+  }
 }

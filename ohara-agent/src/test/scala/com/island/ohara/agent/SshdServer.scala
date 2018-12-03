@@ -3,8 +3,7 @@ package com.island.ohara.agent
 import java.io.{InputStream, OutputStream}
 import java.util
 
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import org.apache.sshd.server.command.Command
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider
 import org.apache.sshd.server.shell.{ProcessShellCommandFactory, ProcessShellFactory}

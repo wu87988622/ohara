@@ -1,6 +1,5 @@
 package com.island.ohara.integration
 import java.util.function.Supplier
-import com.island.ohara.client.util.CloseOnce._
 import org.junit.Test
 import org.scalatest.Matchers
 import com.island.ohara.common.rule.MediumTest
@@ -15,7 +14,7 @@ class TestBrokers extends MediumTest with Matchers {
 
     val external = Brokers.of(connProps, new Supplier[Zookeepers] {
       override def get(): Zookeepers = throw new IllegalArgumentException("you can't pass")
-    });
+    })
 
     try {
       external.connectionProps() shouldBe connProps
@@ -33,7 +32,11 @@ class TestBrokers extends MediumTest with Matchers {
   }
 
   @Test
-  def testRandomPort(): Unit = doClose2(Zookeepers.local(0))(Brokers.local(_, Array(0))) {
-    case (_, brokers) => brokers.connectionProps.split(",").head.split(":")(1).toInt should not be 0
+  def testRandomPort(): Unit = {
+    val zk = Zookeepers.local(0)
+    try {
+      val brokers = Brokers.local(zk, Array(0))
+      try brokers.connectionProps.split(",").head.split(":")(1).toInt should not be 0 finally brokers.close()
+    } finally zk.close()
   }
 }

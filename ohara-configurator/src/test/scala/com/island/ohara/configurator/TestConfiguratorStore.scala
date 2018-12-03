@@ -1,9 +1,8 @@
 package com.island.ohara.configurator
-import com.island.ohara.client.ConfiguratorJson.{Data, Source, SourceRequest}
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.ConfiguratorJson.{Data, Source}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 class TestConfiguratorStore extends MediumTest with Matchers {

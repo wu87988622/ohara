@@ -1,6 +1,5 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.client.{ConfiguratorClient, ConfiguratorJson}
 import com.island.ohara.client.ConfiguratorJson.{
   Pipeline,
   PipelineRequest,
@@ -12,8 +11,9 @@ import com.island.ohara.client.ConfiguratorJson.{
   TopicInfoRequest
 }
 import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.client.{ConfiguratorClient, ConfiguratorJson}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CloseOnce
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

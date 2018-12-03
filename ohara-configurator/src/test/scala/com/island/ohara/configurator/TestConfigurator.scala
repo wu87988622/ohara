@@ -1,16 +1,15 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.ConfiguratorJson.{Column, _}
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.common.data.{DataType, Serializer}
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.{CloseOnce, VersionUtil}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+
 import scala.collection.JavaConverters._
 
 /**
@@ -18,24 +17,19 @@ import scala.collection.JavaConverters._
   * All test cases should work with all configurators.
   */
 class TestConfigurator extends With3Brokers3Workers with Matchers {
-  private[this] val configurator0 = {
-    val topicName = random()
-    doClose(KafkaClient(testUtil.brokersConnProps()))(
-      _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
-    Configurator
-      .builder()
-      .hostname("localhost")
-      .port(0)
-      .store(
-        Store
-          .builder()
-          .topicName(topicName)
-          .brokers(testUtil.brokersConnProps)
-          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
-      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
-      .connectClient(ConnectorClient(testUtil.workersConnProps))
-      .build()
-  }
+  private[this] val configurator0 = Configurator
+    .builder()
+    .hostname("localhost")
+    .port(0)
+    .store(
+      Store
+        .builder()
+        .topicName(random())
+        .brokers(testUtil.brokersConnProps)
+        .build(Serializer.STRING, Serializer.OBJECT))
+    .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+    .connectClient(ConnectorClient(testUtil.workersConnProps))
+    .build()
 
   private[this] val configurator1 =
     Configurator.builder().hostname("localhost").port(0).noCluster.build()
@@ -445,7 +439,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   @Test
   def testQueryDb(): Unit = {
     val tableName = methodName
-    doClose(DatabaseClient(db.url, db.user, db.password)) { dbClient =>
+    val dbClient = DatabaseClient(db.url, db.user, db.password)
+    try {
       clients.foreach(client => {
         val result = client.query[RdbQuery, RdbInformation](RdbQuery(db.url, db.user, db.password, None, None, None))
         result.name shouldBe "mysql"
@@ -471,7 +466,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
         dbClient.dropTable(tableName)
       })
-    }
+    } finally dbClient.close()
   }
 
   @Test

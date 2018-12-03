@@ -5,12 +5,10 @@ import java.time.Duration
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce.doClose
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkRecord, RowSinkTask, TaskConfig}
 import org.junit.{After, Test}
@@ -20,8 +18,6 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
 
   private[this] val configurator = {
     val topicName = random()
-    doClose(KafkaClient(testUtil.brokersConnProps))(
-      _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
     Configurator
       .builder()
       .hostname("localhost")
@@ -31,7 +27,7 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
           .builder()
           .topicName(topicName)
           .brokers(testUtil.brokersConnProps)
-          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
+          .build(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
@@ -80,7 +76,10 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
       (0 until 3).foreach(_ => client.stop[Sink](sink.uuid))
       CommonUtil.await(() => connectorClient.nonExist(sink.uuid), Duration.ofSeconds(20))
       client.get[Sink](sink.uuid).state shouldBe None
-    } finally if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+    } finally {
+      if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+      connectorClient.close()
+    }
   }
 
   @Test
@@ -115,7 +114,10 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
       client.stop[Sink](sink.uuid)
       CommonUtil.await(() => connectorClient.nonExist(sink.uuid), Duration.ofSeconds(20))
       client.get[Sink](sink.uuid).state shouldBe None
-    } finally if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+    } finally {
+      if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+      connectorClient.close()
+    }
   }
 
   @Test

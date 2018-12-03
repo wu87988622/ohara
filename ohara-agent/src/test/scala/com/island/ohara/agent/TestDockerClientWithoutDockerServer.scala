@@ -3,8 +3,8 @@ package com.island.ohara.agent
 import com.island.ohara.agent.DockerClient.LIST_PROCESS_FORMAT
 import com.island.ohara.agent.DockerJson.{ContainerDescription, PortPair, State}
 import com.island.ohara.agent.SshdServer.CommandHandler
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.CloseOnce
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

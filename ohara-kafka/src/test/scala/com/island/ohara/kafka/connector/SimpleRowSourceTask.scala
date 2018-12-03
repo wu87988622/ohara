@@ -4,7 +4,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.Constants._
 

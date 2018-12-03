@@ -1,10 +1,10 @@
 package com.island.ohara.kafka
 import java.util.{Objects, Properties}
 
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CloseOnce
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 
 import scala.concurrent.{Future, Promise}
 
@@ -59,10 +59,9 @@ final class ProducerBuilder {
         props.put(ProducerConfig.ACKS_CONFIG, numberOfAcks.toString)
         props
       }
-      private[this] val producer = newOrClose(
-        new KafkaProducer[K, V](producerConfig,
-                                KafkaUtil.wrapSerializer(keySerializer),
-                                KafkaUtil.wrapSerializer(valueSerializer)))
+      private[this] val producer = new KafkaProducer[K, V](producerConfig,
+                                                           KafkaUtil.wrapSerializer(keySerializer),
+                                                           KafkaUtil.wrapSerializer(valueSerializer))
 
       import scala.collection.JavaConverters._
       override def sender(): Sender[K, V] = (request, callback) => {

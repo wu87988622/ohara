@@ -31,9 +31,7 @@ class JDBCSourceConnector extends RowSourceConnector {
       if (!dbTableDataProvider.isTableExists(tableName))
         throw new NoSuchElementException(s"$tableName table is not found")
 
-    } finally {
-      dbTableDataProvider.close()
-    }
+    } finally dbTableDataProvider.close()
   }
 
   /**

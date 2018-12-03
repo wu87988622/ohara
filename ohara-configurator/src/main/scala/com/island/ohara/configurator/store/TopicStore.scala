@@ -3,9 +3,8 @@ package com.island.ohara.configurator.store
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Consistency._
 import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
@@ -14,6 +13,54 @@ import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 import scala.concurrent._
 import scala.concurrent.duration.{Duration, _}
 import scala.util.{Failure, Success}
+
+private object TopicStore {
+  val NUMBER_OF_PARTITIONS: Int = 3
+  val NUMBER_OF_REPLICATIONS: Short = 3
+  val TIMEOUT: Duration = 30 seconds
+  val LOG = Logger(getClass.getName)
+
+  def apply[K, V](brokers: String, topicName: String, pollTimeout: Duration)(
+    implicit keySerializer: Serializer[K],
+    valueSerializer: Serializer[V]): TopicStore[K, V] = {
+    val client = KafkaClient(brokers)
+    try if (!client.exist(topicName))
+      client
+        .topicCreator()
+        .numberOfPartitions(TopicStore.NUMBER_OF_PARTITIONS)
+        .numberOfReplications(TopicStore.NUMBER_OF_REPLICATIONS)
+        // enable kafka save the latest message for each key
+        .compacted()
+        .timeout(TopicStore.TIMEOUT)
+        .create(topicName)
+    catch {
+      case e: ExecutionException =>
+        e.getCause match {
+          case _: TopicExistsException => LOG.error(s"$topicName exists but we didn't notice this fact")
+          case _                       => if (e.getCause == null) throw e else throw e.getCause
+        }
+    } finally client.close()
+
+    val uuid = CommonUtil.uuid()
+    val producer = Producer.builder().brokers(brokers).build[K, V]
+
+    val consumer =
+      try Consumer.builder().topicName(topicName).brokers(brokers).offsetFromBegin().groupId(uuid).build[K, V]
+      catch {
+        case e: Throwable =>
+          producer.close()
+          throw e
+      }
+    val cache = try Store.inMemory(keySerializer, valueSerializer)
+    catch {
+      case e: Throwable =>
+        CloseOnce.close(producer)
+        CloseOnce.close(consumer)
+        throw e
+    }
+    new TopicStore(topicName, pollTimeout, uuid, producer, consumer, cache)
+  }
+}
 
 /**
   * This class implements the Store through the kafka topic. The config passed to this class will be added with All data persist in the kafka topic.
@@ -38,20 +85,16 @@ import scala.util.{Failure, Success}
   * @tparam K key type
   * @tparam V value type
   */
-private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: Duration)(
-  implicit keySerializer: Serializer[K],
-  valueSerializer: Serializer[V])
-    extends Store[K, V]
-    with CloseOnce {
-
-  private[this] val log = Logger(classOf[TopicStore[_, _]])
-
-  /**
-    * The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
-    * TODO: make sure this uuid is unique in a distributed cluster. by chia
-    */
-  val uuid: String = CommonUtil.uuid()
-
+private class TopicStore[K, V] private (topicName: String,
+                                        pollTimeout: Duration,
+                                        // The ohara configurator is a distributed services. Hence, we need a uuid for each configurator in order to distinguish the records.
+                                        // TODO: make sure this uuid is unique in a distributed cluster. by chia
+                                        uuid: String,
+                                        producer: Producer[K, V],
+                                        consumer: Consumer[K, V],
+                                        cache: Store[K, V])
+    extends Store[K, V] {
+  import TopicStore._
   implicit val executor: ExecutionContextExecutorService =
     ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
@@ -59,41 +102,9 @@ private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: 
     * Used to sort the change to topic. We shouldn't worry about the overflow since it is not update-heavy.
     */
   private[this] val headerIndexer = new AtomicLong(0)
-  private[this] val logger = Logger(getClass.getName)
-
-  /**
-    * Initialize the topic
-    */
-  CloseOnce.doClose(KafkaClient(brokers)) { client =>
-    if (!client.exist(topicName))
-      try client
-        .topicCreator()
-        .numberOfPartitions(TopicStore.NUMBER_OF_PARTITIONS)
-        .numberOfReplications(TopicStore.NUMBER_OF_REPLICATIONS)
-        // enable kafka save the latest message for each key
-        .compacted()
-        .timeout(TopicStore.TIMEOUT)
-        .create(topicName)
-      catch {
-        case e: ExecutionException =>
-          e.getCause match {
-            case _: TopicExistsException => log.error(s"$topicName exists but we didn't notice this fact")
-            case _                       => if (e.getCause == null) throw e else throw e.getCause
-          }
-      }
-  }
-
-  private[this] val consumer = newOrClose {
-    Consumer.builder().topicName(topicName).brokers(brokers).offsetFromBegin().groupId(uuid).build[K, V]
-  }
-
-  private[this] val producer = newOrClose {
-    Producer.builder().brokers(brokers).build[K, V]
-  }
 
   private[this] val consumerNotifier = new Object
   private[this] val commitResult = new ConcurrentHashMap[String, Promise[Option[V]]]()
-  private[this] val cache: Store[K, V] = newOrClose(Store.inMemory(keySerializer, valueSerializer))
 
   /**
     * true if poller haven't grab any data recently.
@@ -133,11 +144,11 @@ private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: 
               })
             })
         } catch {
-          case _: WakeupException => logger.debug("interrupted by ourself")
+          case _: WakeupException => LOG.debug("interrupted by ourself")
         }
       }
     } catch {
-      case e: Throwable => logger.error("failure when running the poller", e)
+      case e: Throwable => LOG.error("failure when running the poller", e)
     } finally TopicStore.this.close()
   }
 
@@ -181,7 +192,7 @@ private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: 
     // notify the poller
     if (consumer != null) consumer.wakeup()
     // hardcode
-    if (poller != null) CloseOnce.release(() => Await.result(poller, 60 seconds))
+    if (poller != null) Await.result(poller, 60 seconds)
     CloseOnce.close(producer)
     CloseOnce.close(consumer)
     CloseOnce.close(cache)
@@ -201,10 +212,4 @@ private class TopicStore[K, V](brokers: String, topicName: String, pollTimeout: 
   override def size: Int = cache.size
 
   override def exist(key: K): Future[Boolean] = cache.exist(key)
-}
-
-object TopicStore {
-  val NUMBER_OF_PARTITIONS: Int = 3
-  val NUMBER_OF_REPLICATIONS: Short = 3
-  val TIMEOUT: Duration = 30 seconds
 }

@@ -3,11 +3,9 @@ package com.island.ohara.it
 import java.nio.charset.Charset
 
 import com.island.ohara.client.{FileType, FtpClient}
-import com.island.ohara.integration.FtpServer
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.ByteUtil
+import com.island.ohara.common.util.{ByteUtil, CloseOnce}
+import com.island.ohara.integration.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -47,11 +45,12 @@ class TestFtpClient extends MediumTest with Matchers {
   def testReadWrite(): Unit = {
     val content = "abcdefg--------1235"
     val bytes = content.getBytes(Charset.forName("UTF-8"))
-    doClose(client.create(tmpPath())) { output =>
-      output.write(bytes)
-    }
+    val output = client.create(tmpPath())
+    try output.write(bytes)
+    finally output.close()
 
-    doClose(client.open(tmpPath())) { input =>
+    val input = client.open(tmpPath())
+    try {
       val buf = new Array[Byte](bytes.length)
       var offset = 0
       while (offset != buf.length) {
@@ -61,8 +60,7 @@ class TestFtpClient extends MediumTest with Matchers {
       }
       val copy = new String(buf, Charset.forName("UTF-8"))
       copy shouldBe content
-    }
-
+    } finally input.close()
   }
 
   @Test

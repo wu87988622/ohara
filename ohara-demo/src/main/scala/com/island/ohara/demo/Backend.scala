@@ -7,16 +7,17 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration._
-import com.island.ohara.client.util.CloseOnce._
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-import collection.JavaConverters._
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 
 /**
@@ -132,78 +133,92 @@ object Backend {
      ))
   }
 
+  private[this] def resources(ports: ServicePorts): (Zookeepers, Brokers, Workers, Database, FtpServer) = {
+    val rs = new ArrayBuffer[AutoCloseable]
+    try {
+      val zk = Zookeepers.local(ports.zkPort)
+      rs += zk
+      val brokers = Brokers.local(zk, ports.brokersPort.toArray)
+      rs += brokers
+      val workers = Workers.local(brokers, ports.workersPort.toArray)
+      rs += workers
+      val database = Database.local(ports.dbPort)
+      rs += database
+      val ftpServer = FtpServer.local(ports.ftpPort, ports.ftpDataPorts.toArray)
+      rs += ftpServer
+      (zk, brokers, workers, database, ftpServer)
+    } catch {
+      case e: Throwable =>
+        rs.foreach(CloseOnce.close)
+        throw e
+    }
+  }
+
   private[demo] def run(ports: ServicePorts,
                         stopped: (Configurator, Zookeepers, Brokers, Workers, Database, FtpServer) => Unit): Unit = {
-    doClose5(Zookeepers.local(ports.zkPort))(Brokers.local(_, ports.brokersPort.toArray))(
-      Workers.local(_, ports.workersPort.toArray))(_ => Database.local(ports.dbPort))(_ =>
-      FtpServer.local(ports.ftpPort, ports.ftpDataPorts.toArray)) {
-      case (zk, brokers, workers, dataBase, ftpServer) =>
-        println("wait for the mini kafka cluster")
-        TimeUnit.SECONDS.sleep(5)
-        println(s"Succeed to run the mini brokers: ${brokers.connectionProps} and workers:${workers.connectionProps}")
-        println(s"Succeed to run a database url:${dataBase.url} user:${dataBase.user} password:${dataBase.password}")
-        println(
-          s"Succeed to run a ftp server host:${ftpServer.host} port:${ftpServer.port} user:${ftpServer.user} password:${ftpServer.password}")
-        val dbRoute: server.Route = path("creation" / "rdb") {
-          pathEnd {
-            post {
-              entity(as[Creation]) { creation =>
-                complete {
-                  val client = DatabaseClient(dataBase.url, dataBase.user, dataBase.password)
-                  try {
-                    client.createTable(creation.name, creation.schema)
-                  } finally client.close()
-                  StatusCodes.OK
-                }
-              }
+    val (zk, brokers, workers, dataBase, ftpServer) = resources(ports)
+    println("wait for the mini kafka cluster")
+    TimeUnit.SECONDS.sleep(5)
+    println(s"Succeed to run the mini brokers: ${brokers.connectionProps} and workers:${workers.connectionProps}")
+    println(s"Succeed to run a database url:${dataBase.url} user:${dataBase.user} password:${dataBase.password}")
+    println(
+      s"Succeed to run a ftp server host:${ftpServer.host} port:${ftpServer.port} user:${ftpServer.user} password:${ftpServer.password}")
+    val dbRoute: server.Route = path("creation" / "rdb") {
+      pathEnd {
+        post {
+          entity(as[Creation]) { creation =>
+            complete {
+              val client = DatabaseClient(dataBase.url, dataBase.user, dataBase.password)
+              try {
+                client.createTable(creation.name, creation.schema)
+              } finally client.close()
+              StatusCodes.OK
             }
           }
         }
-        val servicesRoute: server.Route = path("services") {
-          pathEnd {
-            get {
-              complete {
-                Services(
-                  zookeeper = zk.connectionProps,
-                  brokers = brokers.connectionProps,
-                  workers = workers.connectionProps,
-                  ftpServer = FtpServerInformation(
-                    hostname = ftpServer.host,
-                    port = ftpServer.port.toInt,
-                    dataPort = ftpServer.dataPort().asScala.map(x => x.toInt),
-                    user = ftpServer.user,
-                    password = ftpServer.password
-                  ),
-                  database = DbInformation(
-                    url = dataBase.url,
-                    user = dataBase.user,
-                    password = dataBase.password
-                  )
-                )
-              }
-            }
-          }
-        }
-        val topicName = s"demo-${CommonUtil.current()}"
-        doClose(KafkaClient(brokers.connectionProps))(
-          _.topicCreator().numberOfPartitions(3).numberOfReplications(3).compacted().create(topicName)
-        )
-        val configurator = Configurator
-          .builder()
-          .store(
-            Store
-              .builder()
-              .brokers(brokers.connectionProps)
-              .topicName(topicName)
-              .buildBlocking(Serializer.STRING, Serializer.OBJECT))
-          .kafkaClient(KafkaClient(brokers.connectionProps))
-          .connectClient(ConnectorClient(workers.connectionProps))
-          .hostname(CommonUtil.anyLocalAddress)
-          .port(ports.configuratorPort)
-          .extraRoute(dbRoute ~ servicesRoute)
-          .build()
-        try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)
-        finally configurator.close()
+      }
     }
+    val servicesRoute: server.Route = path("services") {
+      pathEnd {
+        get {
+          complete {
+            Services(
+              zookeeper = zk.connectionProps,
+              brokers = brokers.connectionProps,
+              workers = workers.connectionProps,
+              ftpServer = FtpServerInformation(
+                hostname = ftpServer.host,
+                port = ftpServer.port.toInt,
+                dataPort = ftpServer.dataPort().asScala.map(x => x.toInt),
+                user = ftpServer.user,
+                password = ftpServer.password
+              ),
+              database = DbInformation(
+                url = dataBase.url,
+                user = dataBase.user,
+                password = dataBase.password
+              )
+            )
+          }
+        }
+      }
+    }
+    val topicName = s"demo-${CommonUtil.current()}"
+    val configurator = Configurator
+      .builder()
+      .store(
+        Store
+          .builder()
+          .brokers(brokers.connectionProps)
+          .topicName(topicName)
+          .build(Serializer.STRING, Serializer.OBJECT))
+      .kafkaClient(KafkaClient(brokers.connectionProps))
+      .connectClient(ConnectorClient(workers.connectionProps))
+      .hostname(CommonUtil.anyLocalAddress)
+      .port(ports.configuratorPort)
+      .extraRoute(dbRoute ~ servicesRoute)
+      .build()
+    try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)
+    finally configurator.close()
   }
 }

@@ -1,7 +1,6 @@
 package com.island.ohara.configurator
 import java.util.concurrent.{Executors, TimeUnit}
 
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
@@ -43,7 +42,8 @@ class TestConfiguratorMain extends LargeTest with Matchers {
 
   @Test
   def testActualEnv(): Unit = {
-    doClose(OharaTestUtil.workers()) { util =>
+    val util = OharaTestUtil.workers()
+    try {
       Configurator.closeRunningConfigurator = false
       val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
       Future[Unit] {
@@ -68,6 +68,6 @@ class TestConfiguratorMain extends LargeTest with Matchers {
         service.shutdownNow()
         service.awaitTermination(60, TimeUnit.SECONDS)
       }
-    }
+    } finally util.close()
   }
 }

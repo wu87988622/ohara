@@ -2,10 +2,9 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
 import com.island.ohara.common.data.{Cell, DataType, Row}
-import com.island.ohara.integration.FtpServer
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.integration.FtpServer
 import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers

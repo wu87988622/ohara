@@ -2,7 +2,6 @@ package com.island.ohara.it
 
 import java.time.Duration
 
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.With3Brokers
@@ -17,27 +16,28 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
   @Test
   def testSendAndReceiveString(): Unit = {
     val topicName = methodName
-
-    CloseOnce.doClose(KafkaClient(testUtil.brokersConnProps)) { client =>
+    val client = KafkaClient(testUtil.brokersConnProps)
+    try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
       CommonUtil.await(() => client.exist(topicName), Duration.ofSeconds(10))
-    }
-    CloseOnce.doClose(
-      Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.STRING))(
-      _.sender().key("key").value("value").send(topicName))
+    } finally client.close()
 
-    CloseOnce.doClose(
-      Consumer
-        .builder()
-        .topicName(topicName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokersConnProps)
-        .build(Serializer.STRING, Serializer.STRING)) { consumer =>
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.STRING)
+    try producer.sender().key("key").value("value").send(topicName)
+    finally producer.close()
+
+    val consumer = Consumer
+      .builder()
+      .topicName(topicName)
+      .offsetFromBegin()
+      .brokers(testUtil.brokersConnProps)
+      .build(Serializer.STRING, Serializer.STRING)
+    try {
       consumer.subscription() shouldBe Set(topicName)
       val data = consumer.poll(20 seconds, 1)
       data.head.value.get shouldBe "value"
-    }
+    } finally consumer.close()
   }
 
   @Test
@@ -45,24 +45,26 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     val topicName = methodName
     val data = Row.of(Cell.of("a", "abc"), Cell.of("b", 123), Cell.of("c", true))
 
-    CloseOnce.doClose(KafkaClient(testUtil.brokersConnProps)) { client =>
+    val client = KafkaClient(testUtil.brokersConnProps)
+    try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
       CommonUtil.await(() => client.exist(topicName), Duration.ofSeconds(10))
-    }
-    CloseOnce.doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW))(
-      _.sender().key("key").value(data).send(topicName))
+    } finally client.close()
 
-    CloseOnce.doClose(
-      Consumer
-        .builder()
-        .topicName(topicName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokersConnProps)
-        .build(Serializer.STRING, Serializer.ROW)) { consumer =>
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW)
+    try producer.sender().key("key").value(data).send(topicName)
+    finally producer.close()
+    val consumer = Consumer
+      .builder()
+      .topicName(topicName)
+      .offsetFromBegin()
+      .brokers(testUtil.brokersConnProps)
+      .build(Serializer.STRING, Serializer.ROW)
+    try {
       consumer.subscription() shouldBe Set(topicName)
       val record = consumer.poll(20 seconds, 1)
       record.head.value.get shouldBe data
-    }
+    } finally consumer.close()
   }
 }

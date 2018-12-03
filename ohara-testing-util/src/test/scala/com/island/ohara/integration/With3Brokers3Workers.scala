@@ -1,7 +1,7 @@
 package com.island.ohara.integration
 
-import com.island.ohara.client.util.CloseOnce.close
 import com.island.ohara.common.rule.LargeTest
+import com.island.ohara.common.util.CloseOnce
 import org.junit.{AfterClass, BeforeClass}
 
 /**
@@ -21,6 +21,6 @@ object With3Brokers3Workers {
 
   @AfterClass
   def afterAll(): Unit = {
-    close(util)
+    CloseOnce.close(util)
   }
 }

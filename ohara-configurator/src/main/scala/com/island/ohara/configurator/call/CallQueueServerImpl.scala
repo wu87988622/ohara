@@ -4,10 +4,8 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
@@ -15,6 +13,57 @@ import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+
+private object CallQueueServerImpl {
+  val LOG = Logger(getClass.getName)
+  val NUMBER_OF_PARTITIONS: Int = 3
+  val NUMBER_OF_REPLICATIONS: Short = 3
+  val TIMEOUT: Duration = 30 seconds
+  def apply[Request: ClassTag, Response <: AnyRef](brokers: String,
+                                                   requestTopic: String,
+                                                   responseTopic: String,
+                                                   groupId: String,
+                                                   pollTimeout: Duration): CallQueueServerImpl[Request, Response] = {
+    val client = KafkaClient(brokers)
+    try {
+      def createIfNeed(topicName: String): Unit = if (!client.exist(topicName))
+        try client
+          .topicCreator()
+          .numberOfPartitions(CallQueueServerImpl.NUMBER_OF_PARTITIONS)
+          .numberOfReplications(CallQueueServerImpl.NUMBER_OF_REPLICATIONS)
+          // enable kafka save the latest message for each key
+          .deleted()
+          .timeout(CallQueueServerImpl.TIMEOUT)
+          .create(topicName)
+        catch {
+          case e: ExecutionException =>
+            e.getCause match {
+              case _: TopicExistsException => LOG.error(s"$topicName exists but we didn't notice this fact")
+              case _                       => if (e.getCause == null) throw e else throw e.getCause
+            }
+        }
+      createIfNeed(requestTopic)
+      createIfNeed(responseTopic)
+    } finally client.close()
+    val uuid = CommonUtil.uuid()
+    val producer = Producer.builder().brokers(brokers).build(Serializer.OBJECT, Serializer.OBJECT)
+    val consumer = try Consumer
+      .builder()
+      .brokers(brokers)
+      .offsetAfterLatest()
+      // the uuid from requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
+      // distribute the request.
+      .groupId(groupId)
+      .topicName(requestTopic)
+      .build(Serializer.OBJECT, Serializer.OBJECT)
+    catch {
+      case e: Throwable =>
+        producer.close()
+        throw e
+    }
+    new CallQueueServerImpl(requestTopic, responseTopic, groupId, pollTimeout, uuid, producer, consumer)
+  }
+}
 
 /**
   * A request-> response based call queue. This implementation is based on kafka topic. It have a kafka consumer and a
@@ -33,14 +82,16 @@ import scala.reflect.ClassTag
   * @tparam Request the supported request type
   * @tparam Response the supported response type
   */
-private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers: String,
-                                                                         requestTopic: String,
-                                                                         responseTopic: String,
-                                                                         groupId: String,
-                                                                         pollTimeout: Duration)
+private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef] private (requestTopic: String,
+                                                                                  responseTopic: String,
+                                                                                  groupId: String,
+                                                                                  pollTimeout: Duration,
+                                                                                  uuid: String,
+                                                                                  producer: Producer[AnyRef, AnyRef],
+                                                                                  consumer: Consumer[AnyRef, AnyRef])
     extends CallQueueServer[Request, Response] {
 
-  private[this] val log = Logger(getClass.getName)
+  import CallQueueServerImpl._
 
   /**
     * requestWorker thread.
@@ -52,51 +103,6 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers
     * We have to trace each request so we need a incrementable index.
     */
   private[this] val indexer = new AtomicLong(0)
-
-  /**
-    * the uuid for this instance
-    */
-  private[this] val uuid = CommonUtil.uuid()
-
-  /**
-    * Initialize the topic
-    */
-  CloseOnce.doClose(KafkaClient(brokers)) { client =>
-    def createIfNeed(topicName: String): Unit = if (!client.exist(topicName))
-      try client
-        .topicCreator()
-        .numberOfPartitions(CallQueueServerImpl.NUMBER_OF_PARTITIONS)
-        .numberOfReplications(CallQueueServerImpl.NUMBER_OF_REPLICATIONS)
-        // enable kafka save the latest message for each key
-        .deleted()
-        .timeout(CallQueueServerImpl.TIMEOUT)
-        .create(topicName)
-      catch {
-        case e: ExecutionException =>
-          e.getCause match {
-            case _: TopicExistsException => log.error(s"$topicName exists but we didn't notice this fact")
-            case _                       => if (e.getCause == null) throw e else throw e.getCause
-          }
-      }
-    createIfNeed(requestTopic)
-    createIfNeed(responseTopic)
-  }
-
-  private[this] val producer = newOrClose {
-    Producer.builder().brokers(brokers).build(Serializer.OBJECT, Serializer.OBJECT)
-  }
-
-  private[this] val consumer = newOrClose {
-    Consumer
-      .builder()
-      .brokers(brokers)
-      .offsetAfterLatest()
-      // the uuid from requestConsumer is configurable. If user assign multi node with same uuid, it means user want to
-      // distribute the request.
-      .groupId(groupId)
-      .topicName(requestTopic)
-      .build(Serializer.OBJECT, Serializer.OBJECT)
-  }
 
   private[call] val undealtTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
   private[call] val processingTasks = new LinkedBlockingQueue[CallQueueTask[Request, Response]]()
@@ -130,7 +136,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers
         sendToKafka(key, value)
       } catch {
         case e: Throwable =>
-          log.error("Failed to send the response back to client", e)
+          LOG.error("Failed to send the response back to client", e)
           // put back this task
           response = null
           undealtTasks.put(this)
@@ -153,7 +159,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers
               record.key.foreach {
                 case internalRequest: CallQueueRequest =>
                   if (internalRequest.lease.toMillis <= CommonUtil.current())
-                    log.debug(s"the lease from request is violated")
+                    LOG.debug(s"the lease from request is violated")
                   else
                     record.value.foreach {
                       case clientRequest: Request =>
@@ -162,20 +168,20 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers
                         try sendToKafka(CallQueueResponse(responseUuid(), internalRequest.uuid),
                                         Error(new IllegalArgumentException(s"Unsupported type")))
                         catch {
-                          case _: Throwable => log.error("Failed to response the unsupported request")
+                          case _: Throwable => LOG.error("Failed to response the unsupported request")
                         }
                     }
                 case _: CallQueueResponse => // this is for the call queue client
                 case _ =>
-                  log.error(s"unsupported key. The supported key by call queue server is CallQueueRequest")
+                  LOG.error(s"unsupported key. The supported key by call queue server is CallQueueRequest")
               }
             })
         } catch {
-          case _: WakeupException => log.debug("interrupted by ourself")
+          case _: WakeupException => LOG.debug("interrupted by ourself")
         }
       }
     } catch {
-      case e: Throwable => log.error("failure when running the requestWorker", e)
+      case e: Throwable => LOG.error("failure when running the requestWorker", e)
     } finally close()
   }
 
@@ -201,20 +207,16 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers
     */
   override protected def doClose(): Unit = {
     import scala.concurrent.duration._
-    CloseOnce.release(
-      () =>
-        Iterator
-          .continually(processingTasks.poll(1, TimeUnit.SECONDS))
-          .takeWhile(_ != null)
-          .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION)))
-    CloseOnce.release(
-      () =>
-        Iterator
-          .continually(undealtTasks.poll(1, TimeUnit.SECONDS))
-          .takeWhile(_ != null)
-          .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION)))
+    Iterator
+      .continually(processingTasks.poll(1, TimeUnit.SECONDS))
+      .takeWhile(_ != null)
+      .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION))
+    Iterator
+      .continually(undealtTasks.poll(1, TimeUnit.SECONDS))
+      .takeWhile(_ != null)
+      .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION))
     if (consumer != null) consumer.wakeup()
-    if (requestWorker != null) CloseOnce.release(() => Await.result(requestWorker, 60 seconds))
+    if (requestWorker != null) Await.result(requestWorker, 60 seconds)
     CloseOnce.close(producer)
     CloseOnce.close(consumer)
     if (executor != null) {
@@ -226,10 +228,4 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef](brokers
   override def countOfUndealtTasks: Int = undealtTasks.size()
   override def countOfProcessingTasks: Int = processingTasks.size()
 
-}
-
-object CallQueueServerImpl {
-  val NUMBER_OF_PARTITIONS: Int = 3
-  val NUMBER_OF_REPLICATIONS: Short = 3
-  val TIMEOUT: Duration = 30 seconds
 }

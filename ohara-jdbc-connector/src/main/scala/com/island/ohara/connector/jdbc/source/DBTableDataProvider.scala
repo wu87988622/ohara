@@ -5,9 +5,8 @@ import java.util.Calendar
 
 import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce._
 
 /**
   * Connection to database and query data
@@ -43,13 +42,16 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
       case ORACLE_DB_NAME => "SELECT CURRENT_TIMESTAMP FROM dual"
       case _              => "SELECT CURRENT_TIMESTAMP;"
     }
-    doClose2(client.connection.createStatement())(stmt => stmt.executeQuery(query)) { (_, resultSet) =>
-      if (resultSet.next()) resultSet.getTimestamp(1, cal)
+    val stmt = client.connection.createStatement()
+    try {
+      val rs = stmt.executeQuery(query)
+      try if (rs.next()) rs.getTimestamp(1, cal)
       else
         throw new RuntimeException(
           s"Unable to get current time from DB using query $query on database $dbProduct"
         )
-    }
+      finally rs.close()
+    } finally stmt.close()
   }
 
   /**

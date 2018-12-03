@@ -10,7 +10,6 @@ import com.island.ohara.client.ConfiguratorJson.{
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.util.CloseOnce._
 import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, FtpClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
@@ -148,19 +147,19 @@ object Validator {
           .config(TARGET, target)
           .create()
         // TODO: receiving all messages may be expensive...by chia
-        try doClose(
-          kafkaClient
-            .consumerBuilder()
-            .offsetFromBegin()
-            .topicName(INTERNAL_TOPIC)
-            .build(Serializer.STRING, Serializer.OBJECT))(
-          _.poll(TIMEOUT,
-                 taskCount,
-                 filter = (records: Seq[ConsumerRecord[String, AnyRef]]) => records.filter(_.key.contains(requestId)))
-            .map(_.value.get match {
-              case report: ValidationReport => report
-              case _                        => throw new IllegalStateException(s"Unknown report")
-            }))
+        val client = kafkaClient
+          .consumerBuilder()
+          .offsetFromBegin()
+          .topicName(INTERNAL_TOPIC)
+          .build(Serializer.STRING, Serializer.OBJECT)
+        try client
+          .poll(TIMEOUT,
+                taskCount,
+                filter = (records: Seq[ConsumerRecord[String, AnyRef]]) => records.filter(_.key.contains(requestId)))
+          .map(_.value.get match {
+            case report: ValidationReport => report
+            case _                        => throw new IllegalStateException(s"Unknown report")
+          })
         finally connectorClient.delete(validationName)
       }
   }
@@ -207,16 +206,17 @@ class ValidatorTask extends SourceTask {
     s"check the hdfs:${info.uri} by getting the home:$home"
   }
 
-  private[this] def validate(info: RdbValidationRequest): String =
-    doClose(DriverManager.getConnection(info.url, info.user, info.password)) { _ =>
-      s"succeed to establish the connection:${info.url}"
-    }
-
-  private[this] def validate(info: FtpValidationRequest): String =
-    doClose(FtpClient.builder().hostname(info.hostname).port(info.port).user(info.user).password(info.password).build()) {
-      client =>
-        s"succeed to establish the connection:${info.hostname}:${info.port} with status:${client.status()}"
-    }
+  private[this] def validate(info: RdbValidationRequest): String = {
+    val conn = DriverManager.getConnection(info.url, info.user, info.password)
+    try s"succeed to establish the connection:${info.url}"
+    finally conn.close()
+  }
+  private[this] def validate(info: FtpValidationRequest): String = {
+    val client =
+      FtpClient.builder().hostname(info.hostname).port(info.port).user(info.user).password(info.password).build()
+    try s"succeed to establish the connection:${info.hostname}:${info.port} with status:${client.status()}"
+    finally client.close()
+  }
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(TARGET) match {

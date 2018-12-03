@@ -5,15 +5,14 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
+import com.island.ohara.common.util.{ByteUtil, CloseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
-import org.junit.{Before, BeforeClass, Test}
+import org.junit.{After, Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
@@ -27,29 +26,30 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
   }
 
   def setupData(topicName: String): Unit = {
-
-    CloseOnce.doClose(KafkaClient(testUtil.brokersConnProps)) { client =>
+    val client = KafkaClient(testUtil.brokersConnProps)
+    try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
-    }
+    } finally client.close()
 
-    CloseOnce.doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW))(
-      _.sender().key(ByteUtil.toBytes("key")).value(data).send(topicName))
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    try producer.sender().key(ByteUtil.toBytes("key")).value(data).send(topicName)
+    finally producer.close()
 
-    CloseOnce.doClose(
-      Consumer
-        .builder()
-        .topicName(topicName)
-        .offsetFromBegin()
-        .brokers(testUtil.brokersConnProps)
-        .build(Serializer.BYTES, Serializer.ROW)) { consumer =>
+    val consumer = Consumer
+      .builder()
+      .topicName(topicName)
+      .offsetFromBegin()
+      .brokers(testUtil.brokersConnProps)
+      .build(Serializer.BYTES, Serializer.ROW)
+    try {
       val records = consumer.poll(60 seconds, 1)
       val row = records.head.value.get
       row.size shouldBe data.size
       row.cell("a").value shouldBe "abc"
       row.cell("b").value shouldBe 123
       row.cell("c").value shouldBe true
-    }
+    } finally consumer.close()
   }
 
 }
@@ -335,4 +335,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       ftpClient.listFileNames(props.output).size shouldBe 0
     } finally connectorClient.delete(connectorName)
   }
+
+  @After
+  def tearDown(): Unit = CloseOnce.close(connectorClient)
 }

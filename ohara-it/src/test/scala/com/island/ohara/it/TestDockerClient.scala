@@ -3,8 +3,8 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.agent.DockerJson.{PortPair, State}
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.util.CloseOnce
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 

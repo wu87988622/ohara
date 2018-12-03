@@ -1,13 +1,12 @@
 package com.island.ohara.integration
 
-import com.island.ohara.client.util.CloseOnce.close
 import com.island.ohara.common.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
 
 class TestOharaTestUtil extends MediumTest with Matchers {
 
-  def setEnv(key: String, value: String) = {
+  private[this] def setEnv(key: String, value: String) = {
     val field = System.getenv().getClass.getDeclaredField("m")
     field.setAccessible(true)
     val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
@@ -18,7 +17,6 @@ class TestOharaTestUtil extends MediumTest with Matchers {
   def testLocalMethod(): Unit = {
     setEnv("ohara.it.workers", "123")
     val util = OharaTestUtil.workers()
-    an[RuntimeException] should be thrownBy util.brokersConnProps
-    close(util)
+    try an[RuntimeException] should be thrownBy util.brokersConnProps finally util.close()
   }
 }

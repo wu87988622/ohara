@@ -1,10 +1,10 @@
 package com.island.ohara.integration
 
 import java.util.function.Supplier
+
+import com.island.ohara.common.rule.MediumTest
 import org.junit.Test
 import org.scalatest.Matchers
-import com.island.ohara.client.util.CloseOnce._
-import com.island.ohara.common.rule.MediumTest
 
 class TestWorkers extends MediumTest with Matchers {
 
@@ -21,20 +21,28 @@ class TestWorkers extends MediumTest with Matchers {
       external.isLocal shouldBe false
     } finally external.close()
 
-    doClose2(Zookeepers.of())(zk => Brokers.of(new Supplier[Zookeepers] {
-      override def get(): Zookeepers = zk
-    })) {
-      case (zk, brokers) =>
-        val local = Workers.of(new Supplier[Brokers] {
-          override def get(): Brokers = brokers
-        })
-        try local.isLocal shouldBe true
-        finally local.close()
-    }
+    val zk = Zookeepers.of()
+    try {
+      val brokers = Brokers.of(new Supplier[Zookeepers] {
+        override def get(): Zookeepers = zk
+      })
+      val local = Workers.of(new Supplier[Brokers] {
+        override def get(): Brokers = brokers
+      })
+      try local.isLocal shouldBe true
+      finally local.close()
+    } finally zk.close()
   }
 
   @Test
-  def testRandomPort(): Unit = doClose3(Zookeepers.local(0))(Brokers.local(_, Array(0)))(Workers.local(_, Array(0))) {
-    case (_, _, workers) => workers.connectionProps.split(",").head.split(":")(1).toInt should not be 0
+  def testRandomPort(): Unit = {
+    val zk = Zookeepers.local(0)
+    try {
+      val brokers = Brokers.local(zk, Array(0))
+      try {
+        val workers = Workers.local(brokers, Array(0))
+        try workers.connectionProps.split(",").head.split(":")(1).toInt should not be 0 finally workers.close()
+      } finally brokers.close()
+    } finally zk.close()
   }
 }

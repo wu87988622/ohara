@@ -1,20 +1,10 @@
 package com.island.ohara.client
 
-import java.io.{
-  BufferedReader,
-  BufferedWriter,
-  ByteArrayOutputStream,
-  File,
-  InputStream,
-  InputStreamReader,
-  OutputStream,
-  OutputStreamWriter
-}
+import java.io._
 import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.util.CommonUtil
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
@@ -97,25 +87,30 @@ trait FtpClient extends AutoCloseable {
     * @param encode encode (UTF-8 is default)
     * @return an array from lines
     */
-  def readLines(path: String, encode: String = "UTF-8"): Array[String] =
-    CloseOnce.doClose(new BufferedReader(new InputStreamReader(open(path), Charset.forName(encode)))) { reader =>
-      Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
-    }
+  def readLines(path: String, encode: String = "UTF-8"): Array[String] = {
+    val reader = new BufferedReader(new InputStreamReader(open(path), Charset.forName(encode)))
+    try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+    finally reader.close()
+  }
 
   def upload(path: String, file: File): Unit = upload(path, Files.readAllBytes(file.toPath))
 
   def upload(path: String, data: Array[Byte]): Unit = {
-    CloseOnce.doClose(create(path)) { output =>
-      output.write(data, 0, data.length)
-    }
+    val output = create(path)
+    try output.write(data, 0, data.length)
+    finally output.close()
   }
 
   def download(path: String): Array[Byte] = {
-    CloseOnce.doClose2(open(path))(_ => new ByteArrayOutputStream()) { (input, output) =>
-      val buf = new Array[Byte](128)
-      Iterator.continually(input.read(buf)).takeWhile(_ > 0).foreach(output.write(buf, 0, _))
-      output.toByteArray
-    }
+    val input = open(path)
+    try {
+      val output = new ByteArrayOutputStream()
+      try {
+        val buf = new Array[Byte](128)
+        Iterator.continually(input.read(buf)).takeWhile(_ > 0).foreach(output.write(buf, 0, _))
+        output.toByteArray
+      } finally output.close()
+    } finally input.close()
   }
 
   def tmpFolder: String

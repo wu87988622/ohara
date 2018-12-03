@@ -11,7 +11,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConnectorJson._
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CloseOnce
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 

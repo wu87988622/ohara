@@ -72,7 +72,7 @@ class CallQueueClientBuilder private[call] {
     * @return a call queue client implementation
     */
   def build[REQUEST <: AnyRef, RESPONSE: ClassTag](): CallQueueClient[REQUEST, RESPONSE] =
-    new CallQueueClientImpl[REQUEST, RESPONSE](
+    CallQueueClientImpl[REQUEST, RESPONSE](
       brokers.get,
       requestTopic.get,
       responseTopic.get,

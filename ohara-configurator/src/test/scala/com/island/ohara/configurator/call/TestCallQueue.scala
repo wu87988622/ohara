@@ -5,9 +5,8 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.DataType
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers
-import com.island.ohara.client.util.CloseOnce.close
-import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -19,7 +18,8 @@ class TestCallQueue extends With3Brokers with Matchers {
   private[this] val requestTopicName = random()
   private[this] val responseTopicName = random()
   private[this] val defaultServerBuilder =
-    CallQueue.serverBuilder
+    CallQueue
+      .serverBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
@@ -31,7 +31,8 @@ class TestCallQueue extends With3Brokers with Matchers {
   private[this] val server2: CallQueueServer[SourceRequest, Source] =
     defaultServerBuilder.build[SourceRequest, Source]()
   private[this] val client: CallQueueClient[SourceRequest, Source] =
-    CallQueue.clientBuilder
+    CallQueue
+      .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
@@ -115,7 +116,8 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @Test
   def testSendInvalidRequest(): Unit = {
-    val invalidClient: CallQueueClient[TopicInfoRequest, Source] = CallQueue.clientBuilder
+    val invalidClient: CallQueueClient[TopicInfoRequest, Source] = CallQueue
+      .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
@@ -139,7 +141,8 @@ class TestCallQueue extends With3Brokers with Matchers {
     val requestTopic = newTopic()
     val responseTopic = newTopic()
     val leaseCleanupFreq: scala.concurrent.duration.Duration = 5 seconds
-    val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue.clientBuilder
+    val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue
+      .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopic)
       .responseTopic(responseTopic)
@@ -178,7 +181,8 @@ class TestCallQueue extends With3Brokers with Matchers {
   def testMultiRequestFromDifferentClients(): Unit = {
     val clientCount = 10
     val clients = 0 until clientCount map { _ =>
-      CallQueue.clientBuilder
+      CallQueue
+        .clientBuilder()
         .brokers(testUtil.brokersConnProps)
         .requestTopic(requestTopicName)
         .responseTopic(responseTopicName)
@@ -206,7 +210,8 @@ class TestCallQueue extends With3Brokers with Matchers {
     val requestTopic = newTopic()
     val responseTopic = newTopic()
     val invalidClient: CallQueueClient[SourceRequest, Source] =
-      CallQueue.clientBuilder
+      CallQueue
+        .clientBuilder()
         .brokers(testUtil.brokersConnProps)
         .requestTopic(requestTopic)
         .responseTopic(responseTopic)
@@ -228,8 +233,8 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    servers.foreach(close)
-    close(client)
+    servers.foreach(CloseOnce.close)
+    CloseOnce.close(client)
   }
 
 }

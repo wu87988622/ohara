@@ -2,9 +2,10 @@ package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.{Cell, DataType, Serializer}
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
@@ -85,4 +86,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
       } finally consumer.close()
     } finally connectorClient.delete(connectorName)
   }
+
+  @After
+  def tearDown(): Unit = CloseOnce.close(connectorClient)
 }

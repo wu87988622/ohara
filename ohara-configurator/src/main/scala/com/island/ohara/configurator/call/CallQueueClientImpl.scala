@@ -4,9 +4,8 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -16,23 +15,57 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
+private object CallQueueClientImpl {
+  def apply[Request <: AnyRef, Response: ClassTag](
+    brokers: String,
+    requestTopic: String,
+    responseTopic: String,
+    pollTimeout: Duration,
+    expirationCleanupTime: Duration): CallQueueClientImpl[Request, Response] = {
+    // check topics
+    val client = KafkaClient(brokers)
+    try {
+      def check(topicName: String): Unit =
+        if (!client.exist(topicName)) throw new IllegalArgumentException(s"$topicName doesn't exist")
+      check(requestTopic)
+      check(responseTopic)
+    } finally client.close()
+    val uuid = CommonUtil.uuid()
+    val producer = Producer.builder().brokers(brokers).build(Serializer.OBJECT, Serializer.OBJECT)
+    val consumer = try Consumer
+      .builder()
+      .brokers(brokers)
+      // the uuid from requestConsumer is random since we want to check all response.
+      .groupId(uuid)
+      .offsetAfterLatest()
+      .topicName(responseTopic)
+      .build(Serializer.OBJECT, Serializer.OBJECT)
+    catch {
+      case e: Throwable =>
+        producer.close()
+        throw e
+    }
+    new CallQueueClientImpl(requestTopic, responseTopic, pollTimeout, expirationCleanupTime, uuid, producer, consumer)
+  }
+}
+
 /**
   * A request-> response based call queue. This implementation is based on kafka topic. It have a kafka consumer and a
   * kafka producer internally. The conumser is used to receive the RESPONSE or Error from call queue server.
   * The producer is used send the REQUEST to call queue server.
   *
-  * @param brokers               KAFKA server
-  * @param topicName             topic name. the topic will be created automatically if it doesn't exist
   * @param pollTimeout           the specified waiting time elapses to poll the consumer
   * @param expirationCleanupTime the time to call the lease dustman
   * @tparam Request  the supported request type
   * @tparam Response the supported response type
   */
-private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag](brokers: String,
-                                                                         requestTopic: String,
-                                                                         responseTopic: String,
-                                                                         pollTimeout: Duration,
-                                                                         expirationCleanupTime: Duration)
+private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag] private (requestTopic: String,
+                                                                                  responseTopic: String,
+                                                                                  pollTimeout: Duration,
+                                                                                  expirationCleanupTime: Duration,
+                                                                                  uuid: String,
+                                                                                  producer: Producer[AnyRef, AnyRef],
+                                                                                  consumer: Consumer[AnyRef, AnyRef])
     extends CallQueueClient[Request, Response] {
 
   private[this] val logger = Logger(getClass.getName)
@@ -47,42 +80,6 @@ private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag](brokers
     * We have to trace each request so we need a incrementable index.
     */
   private[this] val indexer = new AtomicLong(0)
-
-  /**
-    * the uuid for this instance
-    */
-  private[this] val uuid: String = CommonUtil.uuid()
-
-  /**
-    * check the topics
-    */
-  CloseOnce.doClose(KafkaClient(brokers)) { client =>
-    def check(topicName: String): Unit =
-      if (!client.exist(topicName)) throw new IllegalArgumentException(s"$topicName doesn't exist")
-    check(requestTopic)
-    check(responseTopic)
-  }
-
-  /**
-    * used to publish the request.
-    */
-  private[this] val producer = newOrClose {
-    Producer.builder().brokers(brokers).build(Serializer.OBJECT, Serializer.OBJECT)
-  }
-
-  /**
-    * used to receive the response.
-    */
-  private[this] val consumer = newOrClose {
-    Consumer
-      .builder()
-      .brokers(brokers)
-      // the uuid from requestConsumer is random since we want to check all response.
-      .groupId(uuid)
-      .offsetAfterLatest()
-      .topicName(responseTopic)
-      .build(Serializer.OBJECT, Serializer.OBJECT)
-  }
 
   /**
     * store the response handler against the CallQueueResponse.
@@ -169,7 +166,6 @@ private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag](brokers
   private[this] def requestUuid() = s"$uuid-request-${indexer.getAndIncrement()}"
 
   override def request(request: Request, timeout: Duration): Future[Either[Error, Response]] = {
-    checkClose()
     val lease = timeout + (CommonUtil.current() milliseconds)
     val internalRequest = CallQueueRequest(requestUuid(), lease)
     val receiver = new ResponseReceiver(internalRequest.uuid, lease)
@@ -196,8 +192,8 @@ private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag](brokers
       .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION))
     if (consumer != null) consumer.wakeup()
     if (responseWorker != null) Await.result(responseWorker, 60 seconds)
-    if (consumer != null) CloseOnce.close(consumer)
-    if (producer != null) producer.close()
+    CloseOnce.close(consumer)
+    CloseOnce.close(producer)
     if (expiredRequestDustman != null) Await.result(expiredRequestDustman, 60 seconds)
     if (executor != null) {
       executor.shutdownNow()

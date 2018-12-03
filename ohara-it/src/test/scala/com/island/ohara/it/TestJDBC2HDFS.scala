@@ -5,14 +5,13 @@ import java.text.SimpleDateFormat
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.integration.{Database, OharaTestUtil, With3Brokers3Workers}
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.common.util.CommonUtil
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -105,17 +104,19 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
 
       val fileSystem: FileSystem = testUtil.hdfs.fileSystem
       val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000099.csv"
-      val lineCountFile1 =
-        CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath1))))) { reader =>
-          Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
-        }
+      val lineCountFile1 = {
+        val reader = new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath1))))
+        try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+        finally reader.close()
+      }
       lineCountFile1.length shouldBe 51
 
       val resultPath2: String = s"$hdfsResultFolder/part-000000000-000000049.csv"
-      val lineCountFile2 =
-        CloseOnce.doClose(new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath2))))) { reader =>
-          Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
-        }
+      val lineCountFile2 = {
+        val reader = new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath2))))
+        try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
+        finally reader.close()
+      }
       lineCountFile2.length shouldBe 51
       val header: String = lineCountFile1(0)
       header shouldBe "CREATE_DATE,ID,NAME,ADDRESS"
@@ -130,6 +131,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   @After
   def afterTest(): Unit = {
     client.dropTable(tableName)
+    CloseOnce.close(connectorClient)
     CloseOnce.close(client)
   }
 }

@@ -14,23 +14,24 @@ import com.island.ohara.client.ConnectorJson.{
 }
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 class ConfiguratorBuilder {
-  private[this] var uuidGenerator: Option[() => String] = Some(Configurator.DEFAULT_UUID_GENERATOR)
+  private[this] var uuidGenerator: Option[() => String] = Some(() => CommonUtil.uuid())
   private[this] var hostname: Option[String] = None
   private[this] var port: Option[Int] = None
   private[this] var store: Option[Store] = None
   private[this] var kafkaClient: Option[KafkaClient] = None
   private[this] var connectClient: Option[ConnectorClient] = None
-  private[this] var initializationTimeout: Option[Duration] = Some(Configurator.DEFAULT_INITIALIZATION_TIMEOUT)
-  private[this] var terminationTimeout: Option[Duration] = Some(Configurator.DEFAULT_TERMINATION_TIMEOUT)
+  private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
+  private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
 
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
@@ -78,7 +79,7 @@ class ConfiguratorBuilder {
     * @param store used to maintain the ohara data.
     * @return this builder
     */
-  def store(store: com.island.ohara.configurator.store.BlockingStore[String, AnyRef]): ConfiguratorBuilder = {
+  def store(store: com.island.ohara.configurator.store.Store[String, AnyRef]): ConfiguratorBuilder = {
     this.store = Some(new Store(store))
     this
   }

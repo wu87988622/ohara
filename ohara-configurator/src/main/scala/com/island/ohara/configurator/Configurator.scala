@@ -11,9 +11,8 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.Consistency
@@ -21,7 +20,7 @@ import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsonParser}
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Awaitable}
 import scala.concurrent.duration.{Duration, _}
 import scala.reflect.{ClassTag, classTag}
 
@@ -113,10 +112,8 @@ class Configurator private[configurator] (configuredHostname: String,
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
-    if (httpServer != null)
-      CloseOnce.release(() => Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds))
-    if (actorSystem != null)
-      CloseOnce.release(() => Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds))
+    if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
+    if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
     CloseOnce.close(store)
     CloseOnce.close(kafkaClient)
     CloseOnce.close(connectorClient)
@@ -134,23 +131,19 @@ class Configurator private[configurator] (configuredHostname: String,
 }
 
 object Configurator {
-  def builder() = new ConfiguratorBuilder()
-
-  val DEFAULT_UUID_GENERATOR: () => String = () => CommonUtil.uuid()
-  val DEFAULT_INITIALIZATION_TIMEOUT: Duration = 10 seconds
-  val DEFAULT_TERMINATION_TIMEOUT: Duration = 10 seconds
+  def builder(): ConfiguratorBuilder = new ConfiguratorBuilder()
 
   //----------------[main]----------------//
   private[this] lazy val LOG = Logger(Configurator.getClass)
-  val HELP_KEY = "--help"
-  val HOSTNAME_KEY = "--hostname"
-  val PORT_KEY = "--port"
-  val BROKERS_KEY = "--brokers"
-  val WORKERS_KEY = "--workers"
-  val TOPIC_KEY = "--topic"
-  val PARTITIONS_KEY = "--partitions"
-  val REPLICATIONS_KEY = "--replications"
-  val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $BROKERS_KEY $TOPIC_KEY $PARTITIONS_KEY $REPLICATIONS_KEY"
+  private[configurator] val HELP_KEY = "--help"
+  private[configurator] val HOSTNAME_KEY = "--hostname"
+  private[configurator] val PORT_KEY = "--port"
+  private[configurator] val BROKERS_KEY = "--brokers"
+  private[configurator] val WORKERS_KEY = "--workers"
+  private[configurator] val TOPIC_KEY = "--topic"
+  private[configurator] val PARTITIONS_KEY = "--partitions"
+  private[configurator] val REPLICATIONS_KEY = "--replications"
+  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $BROKERS_KEY $TOPIC_KEY $PARTITIONS_KEY $REPLICATIONS_KEY"
 
   /**
     * Running a standalone configurator.
@@ -197,7 +190,7 @@ object Configurator {
               .builder()
               .brokers(brokers.get)
               .topicName(topicName)
-              .buildBlocking(Serializer.STRING, Serializer.OBJECT))
+              .build(Serializer.STRING, Serializer.OBJECT))
           .kafkaClient(KafkaClient(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
@@ -230,9 +223,12 @@ object Configurator {
     */
   @volatile private[configurator] var closeRunningConfigurator = false
 
-  private[configurator] class Store(store: com.island.ohara.configurator.store.BlockingStore[String, AnyRef])
+  private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, AnyRef])
       extends CloseOnce {
+    private[this] val timeout = 30 seconds
     private[this] val consistency = Consistency.STRICT
+
+    private[this] def result[T](awaitable: Awaitable[T]): T = Await.result(awaitable, timeout)
 
     /**
       * Remove a "specified" sublcass from ohara data mapping the uuid. If the data mapping to the uuid is not the specified
@@ -242,10 +238,9 @@ object Configurator {
       * @tparam T subclass type
       * @return the removed data
       */
-    def remove[T <: Data: ClassTag](uuid: String): T = store
-      ._get(uuid)
+    def remove[T <: Data: ClassTag](uuid: String): T = result(store.get(uuid))
       .filter(classTag[T].runtimeClass.isInstance)
-      .flatMap(_ => store._remove(uuid, consistency))
+      .flatMap(_ => result(store.remove(uuid, consistency)))
       .getOrElse(throw new IllegalArgumentException(s"Failed to remove $uuid since it doesn't exist"))
       .asInstanceOf[T]
 
@@ -257,8 +252,8 @@ object Configurator {
       * @return the removed data
       */
     def update[T <: Data: ClassTag](data: T): T =
-      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance))
-        store._update(data.uuid, data, consistency).get.asInstanceOf[T]
+      if (result(store.get(data.uuid)).exists(classTag[T].runtimeClass.isInstance))
+        result(store.update(data.uuid, data, consistency)).get.asInstanceOf[T]
       else throw new IllegalArgumentException(s"Failed to update ${data.uuid} since it doesn't exist")
 
     /**
@@ -268,9 +263,9 @@ object Configurator {
       * @tparam T type from data
       */
     def add[T <: Data: ClassTag](data: T): Unit =
-      if (store._get(data.uuid).exists(classTag[T].runtimeClass.isInstance))
+      if (result(store.get(data.uuid)).exists(classTag[T].runtimeClass.isInstance))
         throw new IllegalArgumentException(s"The object:${data.uuid} exists")
-      else store._update(data.uuid, data, consistency)
+      else result(store.update(data.uuid, data, consistency))
 
     /**
       * Iterate the specified type. The unrelated type will be ignored.
@@ -290,21 +285,20 @@ object Configurator {
       * @return a subclass from ohara data
       */
     def data[T <: Data: ClassTag](uuid: String): T =
-      store
-        ._get(uuid)
+      result(store.get(uuid))
         .filter(classTag[T].runtimeClass.isInstance)
         .getOrElse(throw new IllegalArgumentException(
           s"Failed to find ${classTag[T].runtimeClass.getSimpleName} by $uuid since it doesn't exist"))
         .asInstanceOf[T]
 
-    def exist[T <: Data: ClassTag](uuid: String): Boolean = store._get(uuid).exists(classTag[T].runtimeClass.isInstance)
+    def exist[T <: Data: ClassTag](uuid: String): Boolean =
+      result(store.get(uuid)).exists(classTag[T].runtimeClass.isInstance)
 
     def nonExist[T <: Data: ClassTag](uuid: String): Boolean = !exist[T](uuid)
 
     def raw(): Iterator[Data] = store.iterator.map(_._2).filter(_.isInstanceOf[Data]).map(_.asInstanceOf[Data])
 
-    def raw(uuid: String): Data = store
-      ._get(uuid)
+    def raw(uuid: String): Data = result(store.get(uuid))
       .filter(_.isInstanceOf[Data])
       .map(_.asInstanceOf[Data])
       .getOrElse(throw new IllegalArgumentException(s"Failed to find raw data by $uuid since it doesn't exist"))

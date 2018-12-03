@@ -2,9 +2,8 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
 
 import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.common.data.{Cell, DataType, Row}
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.{CloseOnce, VersionUtil}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}

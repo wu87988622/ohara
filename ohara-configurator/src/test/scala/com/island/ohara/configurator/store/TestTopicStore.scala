@@ -2,37 +2,37 @@ package com.island.ohara.configurator.store
 
 import java.time.Duration
 
-import com.island.ohara.integration.With3Brokers
-import com.island.ohara.client.util.CloseOnce.close
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.integration.With3Brokers
 import org.junit._
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Awaitable}
 
 class TestTopicStore extends With3Brokers with Matchers {
   private[this] val topicName = random()
-  private[this] val store: BlockingStore[String, String] =
-    Store
-      .builder()
-      .brokers(testUtil.brokersConnProps)
-      .topicName(topicName)
-      .buildBlocking(Serializer.STRING, Serializer.STRING)
+  private[this] val store: Store[String, String] =
+    Store.builder().brokers(testUtil.brokersConnProps).topicName(topicName).build(Serializer.STRING, Serializer.STRING)
+
+  private[this] def result[T](awaitable: Awaitable[T]): T = Await.result(awaitable, 30 seconds)
+
   @Test
   def testRestart(): Unit = {
-    store._update("aa", "bb", Consistency.STRICT) shouldBe None
-    store._get("aa") shouldBe Some("bb")
+    result(store.update("aa", "bb", Consistency.STRICT)) shouldBe None
+    result(store.get("aa")) shouldBe Some("bb")
     store.close()
     val another =
       Store
         .builder()
         .brokers(testUtil.brokersConnProps)
         .topicName(topicName)
-        .buildBlocking(Serializer.STRING, Serializer.STRING)
+        .build(Serializer.STRING, Serializer.STRING)
     try {
-      CommonUtil.await(() => another._get("aa").isDefined, Duration.ofSeconds(10))
-      another._get("aa") shouldBe Some("bb")
+      CommonUtil.await(() => result(another.get("aa")).isDefined, Duration.ofSeconds(10))
+      result(another.get("aa")) shouldBe Some("bb")
     } finally another.close()
 
   }
@@ -49,20 +49,21 @@ class TestTopicStore extends With3Brokers with Matchers {
         .builder()
         .brokers(testUtil.brokersConnProps)
         .topicName(topicName)
-        .buildBlocking(Serializer.STRING, Serializer.STRING))
-    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
+        .build(Serializer.STRING, Serializer.STRING))
+    0 until 10 foreach (index => result(store.update(index.toString, index.toString, Consistency.STRICT)))
     store.size shouldBe 10
 
     // make sure all stores have synced the updated data
     CommonUtil.await(() => stores.count(_.size == 10) == numberOfStore, Duration.ofSeconds(30))
 
     stores.foreach(s => {
-      0 until 10 foreach (index => s._get(index.toString) shouldBe Some(index.toString))
+      0 until 10 foreach (index => result(s.get(index.toString)) shouldBe Some(index.toString))
     })
 
     // remove all data
     val randomStore = stores.iterator.next()
-    0 until 10 foreach (index => randomStore._remove(index.toString, Consistency.STRICT) shouldBe Some(index.toString))
+    0 until 10 foreach (index =>
+      result(randomStore.remove(index.toString, Consistency.STRICT)) shouldBe Some(index.toString))
 
     // make sure all stores have synced the updated data
     CommonUtil.await(() => stores.count(_.isEmpty) == numberOfStore, Duration.ofSeconds(30))
@@ -79,30 +80,30 @@ class TestTopicStore extends With3Brokers with Matchers {
 
   @Test
   def testUpdate(): Unit = {
-    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT) shouldBe None)
+    0 until 10 foreach (index => result(store.update(index.toString, index.toString, Consistency.STRICT)) shouldBe None)
     0 until 10 foreach (index =>
-      store._update(index.toString, index.toString, Consistency.STRICT) shouldBe Some(index.toString))
-    0 until 10 foreach (index => store._get(index.toString) shouldBe Some(index.toString))
+      result(store.update(index.toString, index.toString, Consistency.STRICT)) shouldBe Some(index.toString))
+    0 until 10 foreach (index => result(store.get(index.toString)) shouldBe Some(index.toString))
   }
 
   @Test
   def testRemove(): Unit = {
-    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
+    0 until 10 foreach (index => result(store.update(index.toString, index.toString, Consistency.STRICT)))
 
     val removed = new ArrayBuffer[String]
     for (index <- 0 until 10) {
-      store._get(index.toString) shouldBe Some(index.toString)
+      result(store.get(index.toString)) shouldBe Some(index.toString)
       if (index % 2 == 0) {
-        store._remove(index.toString, Consistency.STRICT)
+        result(store.remove(index.toString, Consistency.STRICT))
         removed += index.toString
       }
     }
-    removed.foreach(store._get(_) shouldBe None)
+    removed.foreach(s => result(store.get(s)) shouldBe None)
   }
 
   @Test
   def testIterable(): Unit = {
-    0 until 10 foreach (index => store._update(index.toString, index.toString, Consistency.STRICT))
+    0 until 10 foreach (index => result(store.update(index.toString, index.toString, Consistency.STRICT)))
     store.size shouldBe 10
     store.foreach {
       case (k, v) => k shouldBe v
@@ -111,6 +112,6 @@ class TestTopicStore extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    close(store)
+    CloseOnce.close(store)
   }
 }

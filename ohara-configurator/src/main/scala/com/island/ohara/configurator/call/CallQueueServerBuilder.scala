@@ -77,7 +77,7 @@ class CallQueueServerBuilder private[call] {
     * @return a call queue server implementation
     */
   def build[REQUEST: ClassTag, RESPONSE <: AnyRef](): CallQueueServer[REQUEST, RESPONSE] =
-    new CallQueueServerImpl[REQUEST, RESPONSE](
+    CallQueueServerImpl[REQUEST, RESPONSE](
       brokers.get,
       requestTopic.get,
       responseTopic.get,

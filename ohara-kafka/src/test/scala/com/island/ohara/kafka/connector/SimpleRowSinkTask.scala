@@ -1,7 +1,7 @@
 package com.island.ohara.kafka.connector
 
 import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.Constants._
 

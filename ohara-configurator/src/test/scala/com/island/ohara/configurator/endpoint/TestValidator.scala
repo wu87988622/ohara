@@ -1,7 +1,5 @@
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.client.util.CloseOnce
 import com.island.ohara.client.ConfiguratorJson.{
   FtpValidationRequest,
   HdfsValidationRequest,
@@ -9,12 +7,14 @@ import com.island.ohara.client.ConfiguratorJson.{
   ValidationReport
 }
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val kafkaClient = KafkaClient(testUtil.brokersConnProps)
@@ -62,6 +62,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
+    CloseOnce.close(connectorClient)
     CloseOnce.close(kafkaClient)
   }
 }

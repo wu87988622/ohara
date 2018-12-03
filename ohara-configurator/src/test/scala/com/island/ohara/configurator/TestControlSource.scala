@@ -5,38 +5,29 @@ import java.time.Duration
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.client.util.CloseOnce.doClose
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.duration._
 class TestControlSource extends With3Brokers3Workers with Matchers {
 
-  private[this] val configurator = {
-    val topicName = random()
-    doClose(KafkaClient(testUtil.brokersConnProps))(
-      _.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName))
-    Configurator
-      .builder()
-      .hostname("localhost")
-      .port(0)
-      .store(
-        Store
-          .builder()
-          .topicName(topicName)
-          .brokers(testUtil.brokersConnProps)
-          .buildBlocking(Serializer.STRING, Serializer.OBJECT))
-      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
-      .connectClient(ConnectorClient(testUtil.workersConnProps))
-      .build()
-  }
+  private[this] val configurator = Configurator
+    .builder()
+    .hostname("localhost")
+    .port(0)
+    .store(
+      Store
+        .builder()
+        .topicName(random())
+        .brokers(testUtil.brokersConnProps)
+        .build(Serializer.STRING, Serializer.OBJECT))
+    .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+    .connectClient(ConnectorClient(testUtil.workersConnProps))
+    .build()
 
   private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 
@@ -85,7 +76,10 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 
       CommonUtil.await(() => connectorClient.nonExist(source.uuid), Duration.ofSeconds(20))
       client.get[Source](source.uuid).state shouldBe None
-    } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+    } finally {
+      if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+      CloseOnce.close(connectorClient)
+    }
   }
 
   @Test
@@ -121,7 +115,10 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
       client.stop[Source](source.uuid)
       CommonUtil.await(() => connectorClient.nonExist(source.uuid), Duration.ofSeconds(20))
       client.get[Source](source.uuid).state shouldBe None
-    } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+    } finally {
+      if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+      CloseOnce.close(connectorClient)
+    }
   }
 
   @Test

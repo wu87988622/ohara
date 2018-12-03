@@ -3,12 +3,12 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.{PreparedStatement, ResultSet}
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
-import com.island.ohara.client.util.CloseOnce
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 
 class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[RdbColumn])
-    extends Iterator[Seq[ColumnInfo[_]]]
-    with CloseOnce {
+    extends CloseOnce
+    with Iterator[Seq[ColumnInfo[_]]] {
   private[this] val resultSet: ResultSet = preparedStatement.executeQuery()
   private[this] var cache: Seq[ColumnInfo[_]] = _
 

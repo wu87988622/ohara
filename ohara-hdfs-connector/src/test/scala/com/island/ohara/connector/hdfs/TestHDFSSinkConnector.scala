@@ -6,19 +6,16 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
+import com.island.ohara.common.util.{ByteUtil, CloseOnce, CommonUtil}
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
-import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.integration._
-import com.island.ohara.client.util.CloseOnce._
-import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
 import org.apache.hadoop.fs.Path
-import org.junit.Test
+import org.junit.{After, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.duration._
 
 class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
@@ -93,10 +90,11 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    try {
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
-    }
+    } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     connectorClient
@@ -172,10 +170,11 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    try {
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
-    }
+    } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     connectorClient
@@ -251,10 +250,12 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    doClose(Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)) { producer =>
+
+    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    try {
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
-    }
+    } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
     connectorClient
@@ -279,6 +280,9 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 0, Duration.ofSeconds(20))
   }
+
+  @After
+  def tearDown(): Unit = CloseOnce.close(connectorClient)
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {

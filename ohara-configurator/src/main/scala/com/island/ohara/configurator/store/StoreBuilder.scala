@@ -2,7 +2,7 @@ package com.island.ohara.configurator.store
 
 import com.island.ohara.common.data.Serializer
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 /**
   * a helper class to build the Store. Excluding the #brokers and #topicName, other arguments
@@ -11,7 +11,7 @@ import scala.concurrent.duration.Duration
 class StoreBuilder {
   private[this] var brokers: Option[String] = None
   private[this] var topicName: Option[String] = None
-  private[this] var pollTimeout: Option[Duration] = Some(Store.DEFAULT_POLL_TIMEOUT)
+  private[this] var pollTimeout: Option[Duration] = Some(5 seconds)
 
   /**
     * set the kafka brokers information.
@@ -43,16 +43,10 @@ class StoreBuilder {
     this
   }
 
-  def build[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] = new TopicStore(
+  def build[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] = TopicStore(
     brokers.get,
     topicName.get,
     pollTimeout.get
   )
 
-  def buildBlocking[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): BlockingStore[K, V] =
-    new TopicStore(
-      brokers.get,
-      topicName.get,
-      pollTimeout.get
-    )(keySerializer, valueSerializer) with BlockingStore[K, V]
 }

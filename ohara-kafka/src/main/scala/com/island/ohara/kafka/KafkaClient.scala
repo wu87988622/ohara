@@ -2,19 +2,16 @@ package com.island.ohara.kafka
 
 import java.util
 import java.util.Properties
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ExecutionException, TimeUnit}
 
-import com.google.common.collect.ImmutableMap
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.kafka.KafkaClient._
+import com.island.ohara.common.util.CloseOnce
+
+import scala.concurrent.duration._
+import KafkaClient._
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
-import org.apache.kafka.common.KafkaFuture
 import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
-
-import scala.concurrent.ExecutionException
-import scala.concurrent.duration._
 
 /**
   * a helper methods used by configurator. It provide many helper method to operate kafka cluster.

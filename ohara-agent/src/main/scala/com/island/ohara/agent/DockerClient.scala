@@ -4,8 +4,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.DockerClient.Executor
 import com.island.ohara.agent.DockerJson.{ContainerDescription, PortMapping, PortPair, State}
-import com.island.ohara.client.util.CloseOnce
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 
 /**
   * a interface used to control remote node's docker service.
@@ -284,7 +283,9 @@ class DockerClientBuilder {
 
     private[this] def channel() = Agent.channel().user(user).password(password).hostname(hostname).port(port)
 
-    override protected def doClose(): Unit = {}
+    override protected def doClose(): Unit = {
+      // do nothing
+    }
 
     override def executor(): Executor = new Executor {
       private[this] var image: String = _
