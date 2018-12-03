@@ -5,11 +5,13 @@ import com.island.ohara.integration.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
-class TestKafkaClient extends With3Brokers with Matchers {
-  import scala.concurrent.duration._
-  private[this] val timeout = 10 seconds
 
-  private[this] val client = KafkaClient(testUtil.brokersConnProps)
+import scala.collection.JavaConverters._
+
+class TestKafkaClient extends With3Brokers with Matchers {
+  private[this] val timeout = java.time.Duration.ofSeconds(10)
+
+  private[this] val client = KafkaClient.of(testUtil.brokersConnProps)
 
   @Test
   def testAddPartitions(): Unit = {
@@ -40,7 +42,7 @@ class TestKafkaClient extends With3Brokers with Matchers {
     val topicInfo = client.topicDescription(topicName)
     topicInfo.name shouldBe topicName
     topicInfo.numberOfPartitions shouldBe numberOfPartitions
-    topicInfo.numberOfReplications shouldBe numberOfReplications
+    topicInfo.numberOfPartitions shouldBe numberOfReplications
 
     client.deleteTopic(topicName)
     client.exist(topicName) shouldBe false
@@ -58,14 +60,14 @@ class TestKafkaClient extends With3Brokers with Matchers {
       .topicCreator()
       .numberOfPartitions(numberOfPartitions)
       .numberOfReplications(numberOfReplications)
-      .options(options)
+      .options(options.asJava)
       .create(topicName)
 
     val desc = client.topicDescription(topicName)
     desc.name shouldBe topicName
     desc.numberOfPartitions shouldBe numberOfPartitions
-    desc.numberOfReplications shouldBe numberOfReplications
-    desc.options
+    desc.numberOfPartitions shouldBe numberOfReplications
+    desc.options.asScala
       .filter(_.key == TopicConfig.CLEANUP_POLICY_CONFIG)
       .head
       .value shouldBe TopicConfig.CLEANUP_POLICY_DELETE

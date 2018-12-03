@@ -9,6 +9,8 @@ import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
+
 class TestFtpSourceTask extends SmallTest with Matchers {
 
   private[this] val ftpServer = FtpServer.local(0, Array(0))
@@ -46,11 +48,11 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   private[this] def createTask() = {
     val task = new FtpSourceTask()
     task._start(
-      TaskConfig(
-        name = methodName,
-        topics = Seq(methodName),
-        schema = Seq.empty,
-        options = props.toMap
+      new TaskConfig(
+        methodName,
+        Seq(methodName).asJava,
+        Seq.empty.asJava,
+        props.toMap.asJava
       ))
     task
   }
@@ -205,11 +207,11 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     }
     val task = new FtpSourceTask()
     task._start(
-      TaskConfig(
-        name = methodName,
-        topics = Seq(methodName),
-        schema = schema,
-        options = props.toMap
+      new TaskConfig(
+        methodName,
+        Seq(methodName).asJava,
+        schema.asJava,
+        props.toMap.asJava
       ))
     task.transform(data) shouldBe data.map {
       case (index, cells) => (index, Row.of(cells: _*))
@@ -230,11 +232,11 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
     val task = new FtpSourceTask()
     task._start(
-      TaskConfig(
-        name = methodName,
-        topics = Seq(methodName),
-        schema = Seq(schema),
-        options = props.toMap
+      new TaskConfig(
+        methodName,
+        Seq(methodName).asJava,
+        Seq(schema).asJava,
+        props.toMap.asJava
       ))
     val transformedData = task.transform(data)
     transformedData.size shouldBe data.size

@@ -13,6 +13,9 @@ import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+
+import scala.collection.JavaConverters._
+
 class TestControlSource extends With3Brokers3Workers with Matchers {
 
   private[this] val configurator = Configurator
@@ -25,7 +28,7 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
         .topicName(random())
         .brokers(testUtil.brokersConnProps)
         .build(Serializer.STRING, Serializer.OBJECT))
-    .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+    .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
     .connectClient(ConnectorClient(testUtil.workersConnProps))
     .build()
 
@@ -151,7 +154,7 @@ class TestControlSource extends With3Brokers3Workers with Matchers {
 class DumbSource extends RowSourceConnector {
   private[this] var config: TaskConfig = _
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[DumbSourceTask]
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = Seq.fill(maxTasks)(config)
+  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
   }
@@ -163,5 +166,5 @@ class DumbSourceTask extends RowSourceTask {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _poll(): Seq[RowSourceRecord] = Seq.empty
+  override protected def _poll(): java.util.List[RowSourceRecord] = Seq.empty.asJava
 }

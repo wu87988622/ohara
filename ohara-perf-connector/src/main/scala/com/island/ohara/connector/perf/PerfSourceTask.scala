@@ -4,20 +4,22 @@ import com.island.ohara.common.data.{Cell, DataType, Row}
 import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 
+import scala.collection.JavaConverters._
+
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _
   private[this] var topics: Seq[String] = _
   private[this] var schema: Seq[Column] = _
   private[this] var lastPoll: Long = -1
   override protected def _start(config: TaskConfig): Unit = {
-    this.props = PerfSourceProps(config.options)
-    this.topics = config.topics
-    this.schema = config.schema
+    this.props = PerfSourceProps(config.options.asScala.toMap)
+    this.topics = config.topics.asScala
+    this.schema = config.schema.asScala
   }
 
   override protected def _stop(): Unit = {}
 
-  override protected def _poll(): Seq[RowSourceRecord] = {
+  override protected def _poll(): java.util.List[RowSourceRecord] = {
     val current = CommonUtil.current()
     if (current - lastPoll > props.freq.toMillis) {
       val row: Row = Row.of(
@@ -41,7 +43,7 @@ class PerfSourceTask extends RowSourceTask {
       )
       val records: Seq[RowSourceRecord] = topics.map(RowSourceRecord.builder().row(row).build(_))
       lastPoll = current
-      (0 until props.batch).flatMap(_ => records)
-    } else Seq.empty
+      (0 until props.batch).flatMap(_ => records).asJava
+    } else Seq.empty.asJava
   }
 }

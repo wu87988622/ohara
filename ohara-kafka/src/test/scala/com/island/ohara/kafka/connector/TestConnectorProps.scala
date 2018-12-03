@@ -1,4 +1,5 @@
 package com.island.ohara.kafka.connector
+
 import java.util
 
 import com.island.ohara.client.ConfiguratorJson.Column
@@ -6,6 +7,8 @@ import com.island.ohara.common.data.DataType
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
+
+import scala.collection.JavaConverters._
 
 class TestConnectorProps extends SmallTest with Matchers {
 
@@ -39,31 +42,45 @@ class TestConnectorProps extends SmallTest with Matchers {
 }
 
 class DumbSource extends RowSourceConnector {
+
   private[this] val columns = Seq(Column("cf0", DataType.BOOLEAN, 0), Column("cf1", DataType.BOOLEAN, 1))
+
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[DumbSourceTask]
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
-    Seq(TaskConfig("test", Seq("topic"), columns, Map(Column.COLUMN_KEY -> Column.toString(columns))))
+
+  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
+    Seq(
+      new TaskConfig("test",
+                     Seq("topic").asJava,
+                     columns.asJava,
+                     Map(Column.COLUMN_KEY -> Column.toString(columns)).asJava)).asJava
   }
   override protected def _start(config: TaskConfig): Unit = {}
+
   override protected def _stop(): Unit = {}
 }
 
 class DumbSourceTask extends RowSourceTask {
   override protected def _start(config: TaskConfig): Unit = {}
-
   override protected def _stop(): Unit = {}
-
-  override protected def _poll(): Seq[RowSourceRecord] = Seq.empty
+  override protected def _poll(): util.List[RowSourceRecord] = Seq.empty.asJava
 }
 
 class DumbSink extends RowSinkConnector {
   private[this] val columns = Seq(Column("cf0", DataType.BOOLEAN, 0), Column("cf1", DataType.BOOLEAN, 1))
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[DumbSinkTask]
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
-    Seq(TaskConfig("test", Seq("topic"), columns, Map(Column.COLUMN_KEY -> Column.toString(columns))))
-  }
+
   override protected def _start(config: TaskConfig): Unit = {}
+
   override protected def _stop(): Unit = {}
+
+  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[DumbSinkTask]
+
+  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
+    Seq(
+      new TaskConfig("test",
+                     Seq("topic").asJava,
+                     columns.asJava,
+                     Map(Column.COLUMN_KEY -> Column.toString(columns)).asJava)).asJava
+  }
 }
 
 class DumbSinkTask extends RowSinkTask {
@@ -71,5 +88,5 @@ class DumbSinkTask extends RowSinkTask {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _put(records: Seq[RowSinkRecord]): Unit = {}
+  override protected def _put(records: util.List[RowSinkRecord]): Unit = {}
 }

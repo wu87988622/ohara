@@ -176,6 +176,7 @@ object Configurator {
       case _                              => throw new IllegalArgumentException(USAGE)
     }
     var standalone = false
+
     val configurator =
       if (brokers.isEmpty && workers.isEmpty) {
         standalone = true
@@ -191,7 +192,7 @@ object Configurator {
               .brokers(brokers.get)
               .topicName(topicName)
               .build(Serializer.STRING, Serializer.OBJECT))
-          .kafkaClient(KafkaClient(brokers.get))
+          .kafkaClient(KafkaClient.of(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
           .port(port)

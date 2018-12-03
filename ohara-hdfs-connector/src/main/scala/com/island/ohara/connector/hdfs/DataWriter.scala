@@ -45,7 +45,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schem
     records.foreach(record => {
       val topicName: String = record.topic
       val partition: Int = record.partition
-      val oharaTopicPartition: TopicPartition = TopicPartition(topicName, partition)
+      val oharaTopicPartition: TopicPartition = new TopicPartition(topicName, partition)
       topicPartitionWriters(oharaTopicPartition).write(schema, record)
     })
 
@@ -60,7 +60,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schem
     */
   def removePartitionWriters(partitions: Seq[TopicPartition]): Unit = {
     partitions.foreach(partition => {
-      val oharaTopicPartition: TopicPartition = TopicPartition(partition.topic, partition.partition)
+      val oharaTopicPartition: TopicPartition = new TopicPartition(partition.topic, partition.partition)
       topicPartitionWriters(oharaTopicPartition).close()
       topicPartitionWriters.remove(oharaTopicPartition)
     })

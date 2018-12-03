@@ -7,6 +7,8 @@ import com.island.ohara.kafka.connector.TaskConfig
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
+
 class TestOhara741 extends SmallTest with Matchers {
 
   private[this] val ftpServer = FtpServer.local(0, Array(0))
@@ -23,11 +25,11 @@ class TestOhara741 extends SmallTest with Matchers {
       encode = Some("UTF-8")
     )
 
-    val taskConfig = TaskConfig(
-      name = "aa",
-      topics = Seq.empty,
-      schema = Seq.empty,
-      options = props.toMap
+    val taskConfig = new TaskConfig(
+      "aa",
+      Seq.empty.asJava,
+      Seq.empty.asJava,
+      props.toMap.asJava
     )
 
     val sink = new FtpSink

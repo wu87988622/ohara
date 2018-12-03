@@ -3,6 +3,8 @@ import com.island.ohara.connector.jdbc.source.{DBTableDataProvider, JDBCSourceCo
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.JavaConverters._
+
 /**
   * This class for JDBC Source connector plugin
   */
@@ -19,7 +21,7 @@ class JDBCSourceConnector extends RowSourceConnector {
   override protected def _start(taskConfig: TaskConfig): Unit = {
     this.taskConfig = taskConfig
 
-    val props = taskConfig.options
+    val props = taskConfig.options.asScala.toMap
     val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(props)
 
     val dbURL = jdbcSourceConnectorConfig.dbURL
@@ -48,9 +50,9 @@ class JDBCSourceConnector extends RowSourceConnector {
     *
     * @return a seq from configs
     */
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = {
+  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = {
     //TODO
-    Seq(taskConfig)
+    Seq(taskConfig).asJava
   }
 
   /**

@@ -61,17 +61,17 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
                                         DB_TABLENAME -> tableName,
                                         DB_SCHEMA_PATTERN -> "",
                                         TIMESTAMP_COLUMN_NAME -> timestampColumnName)
-    when(taskConfig.options).thenReturn(maps)
+    when(taskConfig.options).thenReturn(maps.asJava)
 
     val columns: Seq[Column] = Seq(Column("COLUMN1", DataType.OBJECT, 0),
                                    Column("COLUMN2", DataType.STRING, 1),
                                    Column("COLUMN4", DataType.INT, 3))
 
-    when(taskConfig.schema).thenReturn(columns)
-    when(taskConfig.topics).thenReturn(Seq("topic1"))
+    when(taskConfig.schema).thenReturn(columns.asJava)
+    when(taskConfig.topics).thenReturn(Seq("topic1").asJava)
     jdbcSourceTask._start(taskConfig)
 
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll()
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
     rows(0).row.cell(0).value.toString() shouldBe "2018-09-01 00:00:00.0"
     rows(0).row.cell(1).value shouldBe "a11"
     rows(0).row.cell(2).value shouldBe 1
@@ -81,12 +81,12 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     rows(2).row.cell(2).name shouldBe "COLUMN4"
 
     //Test row 1 offset
-    rows(0).sourceOffset.foreach(x => {
+    rows(0).sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
       x._2 shouldBe 1535731200000L
     })
     //Test row 2 offset
-    rows(1).sourceOffset.foreach(x => {
+    rows(1).sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
       x._2 shouldBe 1535731201000L
     })
@@ -147,18 +147,18 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
                                         DB_TABLENAME -> tableName,
                                         DB_SCHEMA_PATTERN -> "",
                                         TIMESTAMP_COLUMN_NAME -> timestampColumnName)
-    when(taskConfig.options).thenReturn(maps)
+    when(taskConfig.options).thenReturn(maps.asJava)
 
     val columns: Seq[Column] = Seq(Column("COLUMN1", "COLUMN100", DataType.OBJECT, 0),
                                    Column("COLUMN2", "COLUMN200", DataType.STRING, 1),
                                    Column("COLUMN4", "COLUMN400", DataType.INT, 3))
 
-    when(taskConfig.schema).thenReturn(columns)
-    when(taskConfig.topics).thenReturn(Seq("topic1"))
+    when(taskConfig.schema).thenReturn(columns.asJava)
+    when(taskConfig.topics).thenReturn(Seq("topic1").asJava)
 
     jdbcSourceTask._start(taskConfig)
 
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll()
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
     rows(0).row.cell(0).value.toString() shouldBe "2018-09-01 00:00:00.0"
     rows(0).row.cell(1).value shouldBe "a11"
     rows(0).row.cell(2).value shouldBe 1

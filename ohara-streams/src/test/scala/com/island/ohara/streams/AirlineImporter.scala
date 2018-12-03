@@ -5,9 +5,11 @@ import java.nio.file.{Path, Paths}
 import java.util.Properties
 
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.kafka.Producer
+import com.island.ohara.kafka.Sender.Handler
+import com.island.ohara.kafka.{Producer, RecordMetadata, Sender}
 import com.typesafe.scalalogging.Logger
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
+import org.apache.kafka.clients.producer
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
 
 import scala.concurrent.duration.Duration
@@ -47,16 +49,23 @@ object AirlineImporter {
     // Note: value is ohara's Row type
     val oharaProducer: Producer[Array[Byte], Row] =
       Producer.builder().brokers(bootstrapServers).build(Serializer.BYTES, Serializer.ROW)
-    val oharaSendLine: SendLine = (line, topicName) => {
-      val sender = oharaProducer.sender()
+
+    val oharaSendLine: SendLine = (line, topicName: String) => {
+      val sender: Sender[Array[Byte], Row] = oharaProducer.sender()
       val row = Row.of(Cell.of("cf0", line))
       sender
-        .key(null)
+        .key(Array.emptyByteArray)
         .value(row)
-        .send(topicName, {
-          case Right(_) =>
-          case Left(e)  => logger.error(e.getMessage)
-        })
+        .send(
+          topicName,
+          new Handler[RecordMetadata] {
+            override def doException(e: Exception): Unit = {
+              logger.error(e.getMessage)
+            }
+
+            override def doHandle(t: RecordMetadata): Unit = {}
+          }
+        )
     }
 
     val prefix = "src/test/data"
@@ -132,7 +141,8 @@ object AirlineImporter {
 
   private class KafkaProducerCallback(val value: String) extends org.apache.kafka.clients.producer.Callback {
     val logger = Logger(classOf[KafkaProducerCallback])
-    override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+
+    override def onCompletion(metadata: producer.RecordMetadata, exception: Exception): Unit = {
       if (exception != null) {
         logger.error("Error: " + exception.getMessage)
       } else {

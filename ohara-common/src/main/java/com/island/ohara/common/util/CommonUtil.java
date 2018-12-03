@@ -121,7 +121,7 @@ public final class CommonUtil {
    * @return false if timeout and (useException = true). Otherwise, the return value is true
    */
   public static Boolean await(Supplier<Boolean> f, Duration d) {
-    return await(f, d, Duration.ofMillis(5000), true);
+    return await(f, d, Duration.ofMillis(500), true);
   }
 
   /**
@@ -133,10 +133,10 @@ public final class CommonUtil {
    * @param useException true make this method throw exception after timeout.
    * @return false if timeout and (useException = true). Otherwise, the return value is true
    */
-  public static boolean await(
-      Supplier<Boolean> f, Duration d, Duration freq, boolean useException) {
+  public static Boolean await(
+      Supplier<Boolean> f, Duration d, Duration freq, Boolean useException) {
     long startTs = current();
-    while (d.toMillis() >= (System.currentTimeMillis() - startTs)) {
+    while (d.toMillis() >= current() - startTs) {
       if (f.get()) return true;
       else {
         try {
@@ -149,7 +149,7 @@ public final class CommonUtil {
     if (useException) {
       logger.error(
           "Running test method time is "
-              + (System.currentTimeMillis() - startTs)
+              + (current() - startTs)
               + " seconds more than the timeout time "
               + d.getSeconds()
               + " seconds. Please turning your timeout time.");

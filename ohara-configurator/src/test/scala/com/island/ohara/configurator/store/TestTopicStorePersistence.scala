@@ -10,6 +10,8 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Awaitable}
 import scala.concurrent.duration._
+import scala.collection.JavaConverters._
+
 class TestTopicStorePersistence extends With3Brokers with Matchers {
 
   private[this] def result[T](awaitable: Awaitable[T]): T = Await.result(awaitable, 30 seconds)
@@ -18,13 +20,14 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
     val specifiedKey = "specifiedKey"
     val topicName = methodName
     val numberOfOtherMessages = 2048
-    val client = KafkaClient(testUtil.brokersConnProps)
+    val client = KafkaClient.of(testUtil.brokersConnProps)
     try client
       .topicCreator()
       .numberOfReplications(1)
       .numberOfPartitions(1)
       // make small retention so as to trigger log clear
-      .options(Map(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG -> "1000", TopicConfig.SEGMENT_BYTES_CONFIG -> "1024"))
+      .options(
+        Map(TopicConfig.FILE_DELETE_DELAY_MS_CONFIG -> "1000", TopicConfig.SEGMENT_BYTES_CONFIG -> "1024").asJava)
       .compacted()
       .create(topicName)
     finally client.close()
@@ -56,7 +59,8 @@ class TestTopicStorePersistence extends With3Brokers with Matchers {
         .build(Serializer.STRING, Serializer.STRING)
 
       try {
-        val keys = consumer.poll(timeout, numberOfOtherMessages + 1).map(_.key.get)
+        val keys =
+          consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), numberOfOtherMessages + 1).asScala.map(_.key.get)
         keys.count(_ == specifiedKey) == 1 && keys.count(_ != specifiedKey) == numberOfOtherMessages
       } finally consumer.close()
     }

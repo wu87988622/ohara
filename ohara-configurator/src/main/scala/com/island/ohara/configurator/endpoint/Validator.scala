@@ -38,7 +38,7 @@ import scala.concurrent.duration._
   */
 class Validator extends SourceConnector {
   private[this] var props: util.Map[String, String] = _
-  override def version(): String = com.island.ohara.kafka.connector.VERSION
+  override def version(): String = com.island.ohara.kafka.connector.ConnectorUtil.VERSION
   override def start(props: util.Map[String, String]): Unit = {
     this.props = new util.HashMap[String, String](props)
     // we don't want to make any exception here
@@ -153,9 +153,18 @@ object Validator {
           .topicName(INTERNAL_TOPIC)
           .build(Serializer.STRING, Serializer.OBJECT)
         try client
-          .poll(TIMEOUT,
-                taskCount,
-                filter = (records: Seq[ConsumerRecord[String, AnyRef]]) => records.filter(_.key.contains(requestId)))
+          .poll(
+            java.time.Duration.ofNanos(TIMEOUT.toNanos),
+            taskCount,
+            new java.util.function.Function[util.List[ConsumerRecord[String, Object]],
+                                            util.List[ConsumerRecord[String, Object]]] {
+              override def apply(
+                records: util.List[ConsumerRecord[String, Object]]): util.List[ConsumerRecord[String, Object]] = {
+                records.asScala.filter(requestId == _.key.orElse(null)).asJava
+              }
+            }
+          )
+          .asScala
           .map(_.value.get match {
             case report: ValidationReport => report
             case _                        => throw new IllegalStateException(s"Unknown report")
@@ -196,7 +205,7 @@ class ValidatorTask extends SourceTask {
     // do nothing
   }
 
-  override def version(): String = com.island.ohara.kafka.connector.VERSION
+  override def version(): String = com.island.ohara.kafka.connector.ConnectorUtil.VERSION
 
   private[this] def validate(info: HdfsValidationRequest): String = {
     val config = new Configuration()

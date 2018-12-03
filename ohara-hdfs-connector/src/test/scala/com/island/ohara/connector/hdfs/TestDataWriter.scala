@@ -20,7 +20,7 @@ class TestDataWriter extends MediumTest with Matchers with MockitoSugar {
     val dataWriter: DataWriter = new DataWriter(hdfsSinkConnectorConfig, context, schema)
     val topicName: String = "topic1"
     val listPartition =
-      List(TopicPartition(topicName, 0), TopicPartition(topicName, 1), TopicPartition(topicName, 2))
+      List(new TopicPartition(topicName, 0), new TopicPartition(topicName, 1), new TopicPartition(topicName, 2))
 
     dataWriter.createPartitionDataWriters(listPartition)
     dataWriter.topicPartitionWriters.size shouldBe 3
@@ -37,7 +37,7 @@ class TestDataWriter extends MediumTest with Matchers with MockitoSugar {
     val dataWriter: DataWriter = new DataWriter(hdfsSinkConnectorConfig, context, schema)
 
     val topicName: String = "topic1"
-    val topicPartition1: TopicPartition = TopicPartition(topicName, 0)
+    val topicPartition1: TopicPartition = new TopicPartition(topicName, 0)
     val listPartition = List(topicPartition1)
     dataWriter.createPartitionDataWriters(listPartition)
     dataWriter.write(Seq.empty)

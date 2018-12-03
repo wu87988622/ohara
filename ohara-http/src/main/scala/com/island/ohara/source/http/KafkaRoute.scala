@@ -39,10 +39,14 @@ trait KafkaRoute extends Directives with CsvSupport {
         complete("EXIST")
       } ~ (post & entity(as[CSV])) { csv =>
         val (kafkaTopic, oharaSchema) = schemaMap.get(pathName)
+
         onComplete(
           transform(csv.row, oharaSchema.schema) match {
-            case Success(oharaRow) => producer.sender().key(UUID.randomUUID().toString).value(oharaRow).send(kafkaTopic)
-            case Failure(e)        => Future(e)
+            case Success(oharaRow) =>
+              Future {
+                producer.sender().key(UUID.randomUUID().toString).value(oharaRow).send(kafkaTopic).get()
+              }
+            case Failure(e) => Future(e)
           }
         ) {
           case Success(_) => complete(StatusCodes.Created.reason)

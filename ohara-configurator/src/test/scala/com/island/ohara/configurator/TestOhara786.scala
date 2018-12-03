@@ -17,7 +17,7 @@ class TestOhara786 extends With3Brokers3Workers with Matchers {
       .port(0)
       .store(Store.inMemory(Serializer.STRING, Serializer.OBJECT))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
-      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+      .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
       .build()
 
   @Test

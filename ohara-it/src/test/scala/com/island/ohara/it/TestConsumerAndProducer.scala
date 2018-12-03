@@ -9,14 +9,14 @@ import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
+import scala.collection.JavaConverters._
 
 class TestConsumerAndProducer extends With3Brokers with Matchers {
 
   @Test
   def testSendAndReceiveString(): Unit = {
     val topicName = methodName
-    val client = KafkaClient(testUtil.brokersConnProps)
+    val client = KafkaClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
@@ -34,9 +34,9 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
       .brokers(testUtil.brokersConnProps)
       .build(Serializer.STRING, Serializer.STRING)
     try {
-      consumer.subscription() shouldBe Set(topicName)
-      val data = consumer.poll(20 seconds, 1)
-      data.head.value.get shouldBe "value"
+      consumer.subscription().asScala.toSet shouldBe Set(topicName)
+      val data = consumer.poll(java.time.Duration.ofSeconds(20), 1)
+      data.get(0).value.get shouldBe "value"
     } finally consumer.close()
   }
 
@@ -45,7 +45,7 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
     val topicName = methodName
     val data = Row.of(Cell.of("a", "abc"), Cell.of("b", 123), Cell.of("c", true))
 
-    val client = KafkaClient(testUtil.brokersConnProps)
+    val client = KafkaClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
@@ -62,9 +62,9 @@ class TestConsumerAndProducer extends With3Brokers with Matchers {
       .brokers(testUtil.brokersConnProps)
       .build(Serializer.STRING, Serializer.ROW)
     try {
-      consumer.subscription() shouldBe Set(topicName)
-      val record = consumer.poll(20 seconds, 1)
-      record.head.value.get shouldBe data
+      consumer.subscription().asScala.toSet shouldBe Set(topicName)
+      val record = consumer.poll(java.time.Duration.ofSeconds(20), 1)
+      record.get(0).value.get shouldBe data
     } finally consumer.close()
   }
 }

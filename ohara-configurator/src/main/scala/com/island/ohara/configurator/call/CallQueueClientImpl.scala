@@ -23,7 +23,7 @@ private object CallQueueClientImpl {
     pollTimeout: Duration,
     expirationCleanupTime: Duration): CallQueueClientImpl[Request, Response] = {
     // check topics
-    val client = KafkaClient(brokers)
+    val client = KafkaClient.of(brokers)
     try {
       def check(topicName: String): Unit =
         if (!client.exist(topicName)) throw new IllegalArgumentException(s"$topicName doesn't exist")
@@ -93,17 +93,18 @@ private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag] private
     * to the internal response handler used to accept the response and notify the user who is waiting for the response
     */
   private[this] val responseWorker = Future[Unit] {
+    import collection.JavaConverters._
     try {
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(pollTimeout)
+          val records = consumer.poll(java.time.Duration.ofNanos(pollTimeout.toNanos)).asScala
           records
             .filter(_.topic == responseTopic)
             .foreach(record => {
-              record.key.foreach {
+              Option(record.key.orElse(null)).foreach {
                 case internalResponse: CallQueueResponse =>
                   if (responseReceivers.containsKey(internalResponse.reqId)) {
-                    record.value.foreach {
+                    Option(record.value.orElse(null)).foreach {
                       case response: Response =>
                         // NOTED: the uuid we record is CallQueueRequest'd uuid
                         responseReceivers.remove(internalResponse.reqId).complete(response)

@@ -1,6 +1,8 @@
 package com.island.ohara.kafka.connector
+
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.kafka.connector.ConnectorUtil._
 import org.junit.Test
 import org.scalatest.Matchers
 

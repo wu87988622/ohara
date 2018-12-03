@@ -6,10 +6,11 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Consistency._
-import com.island.ohara.kafka.{Consumer, Header, KafkaClient, Producer}
+import com.island.ohara.kafka._
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
+import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration.{Duration, _}
 import scala.util.{Failure, Success}
@@ -23,7 +24,7 @@ private object TopicStore {
   def apply[K, V](brokers: String, topicName: String, pollTimeout: Duration)(
     implicit keySerializer: Serializer[K],
     valueSerializer: Serializer[V]): TopicStore[K, V] = {
-    val client = KafkaClient(brokers)
+    val client = KafkaClient.of(brokers)
     try if (!client.exist(topicName))
       client
         .topicCreator()
@@ -31,7 +32,7 @@ private object TopicStore {
         .numberOfReplications(TopicStore.NUMBER_OF_REPLICATIONS)
         // enable kafka save the latest message for each key
         .compacted()
-        .timeout(TopicStore.TIMEOUT)
+        .timeout(java.time.Duration.ofNanos(TopicStore.TIMEOUT.toNanos))
         .create(topicName)
     catch {
       case e: ExecutionException =>
@@ -42,10 +43,16 @@ private object TopicStore {
     } finally client.close()
 
     val uuid = CommonUtil.uuid()
-    val producer = Producer.builder().brokers(brokers).build[K, V]
+    val producer = Producer.builder().brokers(brokers).build(keySerializer, valueSerializer)
 
     val consumer =
-      try Consumer.builder().topicName(topicName).brokers(brokers).offsetFromBegin().groupId(uuid).build[K, V]
+      try Consumer
+        .builder()
+        .topicName(topicName)
+        .brokers(brokers)
+        .offsetFromBegin()
+        .groupId(uuid)
+        .build(keySerializer, valueSerializer)
       catch {
         case e: Throwable =>
           producer.close()
@@ -113,33 +120,35 @@ private class TopicStore[K, V] private (topicName: String,
     try {
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(pollTimeout)
-          records
+          val records = consumer.poll(java.time.Duration.ofNanos(pollTimeout.toNanos))
+          records.asScala
             .withFilter(_.topic == topicName)
             .withFilter(_.headers.size == 1)
             .foreach(record => {
-              record.key.foreach(k => {
-                val index = record.headers.head.key
+              Option(record.key().orElse(null.asInstanceOf[K])).foreach(k => {
+                val index = record.headers.get(0).key
                 // only handle the value from this topic store
                 val p: Promise[Option[V]] = if (index.startsWith(uuid)) commitResult.remove(index) else null
                 // If no value exist, remove the key. Otherwise, update the value mapped to the key
-                record.value.fold(cache.remove(k, Consistency.NONE))(cache.update(k, _, Consistency.NONE)).onComplete {
-                  case Success(previous) =>
-                    if (p != null) {
-                      p.success(previous)
-                      consumerNotifier.synchronized {
-                        consumerNotifier.notifyAll()
+                Option(record.value.orElse(null.asInstanceOf[V]))
+                  .fold(cache.remove(k, Consistency.NONE))(cache.update(k, _, Consistency.NONE))
+                  .onComplete {
+                    case Success(previous) =>
+                      if (p != null) {
+                        p.success(previous)
+                        consumerNotifier.synchronized {
+                          consumerNotifier.notifyAll()
+                        }
                       }
-                    }
-                  case Failure(exception) =>
-                    if (p != null) {
-                      p.failure(exception)
-                      consumerNotifier.synchronized {
-                        consumerNotifier.notifyAll()
+                    case Failure(exception) =>
+                      if (p != null) {
+                        p.failure(exception)
+                        consumerNotifier.synchronized {
+                          consumerNotifier.notifyAll()
+                        }
                       }
-                    }
 
-                }
+                  }
 
               })
             })
@@ -152,7 +161,8 @@ private class TopicStore[K, V] private (topicName: String,
     } finally TopicStore.this.close()
   }
 
-  private[this] def createHeader() = Header(s"$uuid-${headerIndexer.getAndIncrement().toString}", Array.emptyByteArray)
+  private[this] def createHeader() =
+    new Header(s"$uuid-${headerIndexer.getAndIncrement().toString}", Array.emptyByteArray)
   private[this] def send(key: K, value: V, sync: Consistency): Future[Option[V]] = {
     val header = createHeader()
     val promise = Promise[Option[V]]
@@ -167,10 +177,15 @@ private class TopicStore[K, V] private (topicName: String,
           .key(key)
           .value(value)
           .send(
-            topicName, {
-              case Left(e) => promise.failure(e)
-              // it is ok to call blocking method since the cache is in-memory.
-              case Right(_) => promise.success(Await.result(cache.get(key), 5 seconds))
+            topicName,
+            new Sender.Handler[RecordMetadata]() {
+              override def doException(e: Exception): Unit = {
+                promise.failure(e)
+              }
+
+              override def doHandle(o: RecordMetadata): Unit = {
+                promise.success(Await.result(cache.get(key), 5 seconds))
+              }
             }
           )
       case NONE =>

@@ -1,12 +1,12 @@
 package com.island.ohara.streams
 
+import java.util
+
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.{Consumer, ConsumerRecord}
 import org.junit.Test
 import org.scalatest.Matchers
-
-import scala.concurrent.duration._
 
 class TestImportData extends With3Brokers with Matchers {
 
@@ -34,7 +34,8 @@ class TestImportData extends With3Brokers with Matchers {
         .groupId("import-airline")
         .build(Serializer.BYTES, Serializer.ROW)
       try {
-        val messages: Seq[ConsumerRecord[Array[Byte], Row]] = consumer.poll(100 millisecond, 1)
+
+        val messages: util.List[ConsumerRecord[Array[Byte], Row]] = consumer.poll(java.time.Duration.ofMillis(100), 1)
         messages.size should be > 0
       } finally {
         consumer.close()

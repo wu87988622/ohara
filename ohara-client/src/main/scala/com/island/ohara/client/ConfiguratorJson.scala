@@ -4,7 +4,7 @@ import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.DataType
 import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection from marshalling/unmarshalling configurator data to/from json.
@@ -70,6 +70,8 @@ object ConfiguratorJson {
     // TODO: Personally, I hate this ugly workaround...by chia
     val COLUMN_KEY: String = "__row_connector_schema"
     def toString(schema: Seq[Column]): String =
+      schema.map(c => s"${c.name},${c.newName},${c.dataType.name},${c.order}").mkString(",")
+    def fromColumns(schema: Seq[Column]): String =
       schema.map(c => s"${c.name},${c.newName},${c.dataType.name},${c.order}").mkString(",")
     def toColumns(columnsString: String): Seq[Column] = if (columnsString == null || columnsString.isEmpty) Seq.empty
     else {

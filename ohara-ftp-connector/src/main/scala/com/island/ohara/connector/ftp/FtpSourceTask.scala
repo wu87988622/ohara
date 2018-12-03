@@ -1,5 +1,7 @@
 package com.island.ohara.connector.ftp
 
+import java.util
+
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
 import com.island.ohara.common.data.{Cell, DataType, Row}
@@ -8,6 +10,7 @@ import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 /**
@@ -22,10 +25,6 @@ class FtpSourceTask extends RowSourceTask {
   private[this] var schema: Seq[Column] = _
   private[this] var ftpClient: FtpClient = _
   private[ftp] var cache: OffsetCache = _
-
-  override protected def _stop(): Unit = {
-    CloseOnce.close(ftpClient)
-  }
 
   /**
     * list the files from input folder. NOTED: the returned value is full path.
@@ -155,7 +154,11 @@ class FtpSourceTask extends RowSourceTask {
              }): _*))
     }
 
-  override protected[ftp] def _poll(): Seq[RowSourceRecord] = listInputFiles().headOption
+  override protected def _stop(): Unit = {
+    CloseOnce.close(ftpClient)
+  }
+
+  override protected def _poll(): util.List[RowSourceRecord] = listInputFiles().headOption
     .map(path => {
       try {
         // update cache
@@ -163,8 +166,8 @@ class FtpSourceTask extends RowSourceTask {
         val rows = toRow(path)
         val records = transform(rows).flatMap {
           case (index, row) =>
-            val p = partition(path)
-            val o = offset(index)
+            val p = partition(path).asJava
+            val o = offset(index).asJava
             topics.map(t => RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).row(row).build(t))
         }.toSeq
         // ok. all data are prepared. let update the cache
@@ -181,13 +184,14 @@ class FtpSourceTask extends RowSourceTask {
       }
     })
     .getOrElse(Seq.empty)
+    .asJava
 
   override protected[ftp] def _start(config: TaskConfig): Unit = {
-    this.props = FtpSourceTaskProps(config.options)
-    this.schema = config.schema
+    this.props = FtpSourceTaskProps(config.options.asScala.toMap)
+    this.schema = config.schema.asScala
     if (props.inputFolder.isEmpty)
       throw new IllegalArgumentException(s"invalid input:${props.inputFolder.mkString(",")}")
-    topics = config.topics
+    topics = config.topics.asScala
     ftpClient =
       FtpClient.builder().hostname(props.host).port(props.port).user(props.user).password(props.password).build()
     cache = OffsetCache()
@@ -227,8 +231,8 @@ object OffsetCache {
     private[this] val cache = new mutable.HashMap[String, Int]()
 
     override def update(context: RowSourceContext, path: String): Unit = {
-      val map = context.offset(partition(path))
-      if (map.nonEmpty) update(path, offset(map))
+      val map = context.offset(partition(path).asJava)
+      if (!map.isEmpty) update(path, offset(map.asScala.toMap))
     }
 
     override def update(path: String, index: Int): Unit = {

@@ -56,6 +56,16 @@ subprojects {
           googleJavaFormat()
         }
       }
+    }else if(it.name == 'ohara-kafka'){
+      spotless {
+        java {
+          googleJavaFormat()
+        }
+        scala {
+          // DON'T change the scalafmt version since the rules may be changed in newer version.
+          scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+        }
+      }
     } else {
       spotless {
         scala {

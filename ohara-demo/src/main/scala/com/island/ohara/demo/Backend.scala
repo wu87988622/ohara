@@ -7,18 +7,19 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration._
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
+
+import scala.collection.JavaConverters._
 
 /**
   * run a configurator based on 3 brokers and 3 workers.
@@ -132,7 +133,6 @@ object Backend {
        ftpPort = ftpPort
      ))
   }
-
   private[this] def resources(ports: ServicePorts): (Zookeepers, Brokers, Workers, Database, FtpServer) = {
     val rs = new ArrayBuffer[AutoCloseable]
     try {
@@ -212,7 +212,7 @@ object Backend {
           .brokers(brokers.connectionProps)
           .topicName(topicName)
           .build(Serializer.STRING, Serializer.OBJECT))
-      .kafkaClient(KafkaClient(brokers.connectionProps))
+      .kafkaClient(KafkaClient.of(brokers.connectionProps))
       .connectClient(ConnectorClient(workers.connectionProps))
       .hostname(CommonUtil.anyLocalAddress)
       .port(ports.configuratorPort)

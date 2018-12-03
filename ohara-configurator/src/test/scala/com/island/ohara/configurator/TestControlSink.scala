@@ -14,6 +14,8 @@ import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkRecord, RowSin
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
+
 class TestControlSink extends With3Brokers3Workers with Matchers {
 
   private[this] val configurator = {
@@ -28,7 +30,7 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
           .topicName(topicName)
           .brokers(testUtil.brokersConnProps)
           .build(Serializer.STRING, Serializer.OBJECT))
-      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+      .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
   }
@@ -149,7 +151,7 @@ class TestControlSink extends With3Brokers3Workers with Matchers {
 class DumbSink extends RowSinkConnector {
   private[this] var config: TaskConfig = _
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[DumbSinkTask]
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = Seq.fill(maxTasks)(config)
+  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
   }
@@ -161,5 +163,5 @@ class DumbSinkTask extends RowSinkTask {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _put(records: Seq[RowSinkRecord]): Unit = {}
+  override protected def _put(records: java.util.List[RowSinkRecord]): Unit = {}
 }

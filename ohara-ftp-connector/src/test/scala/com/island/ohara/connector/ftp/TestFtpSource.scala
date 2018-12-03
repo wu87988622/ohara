@@ -93,7 +93,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .offsetFromBegin()
       .brokers(testUtil.brokersConnProps)
       .build(Serializer.BYTES, Serializer.ROW)
-    try consumer.poll(timeout, size)
+    try consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), size).asScala
     finally consumer.close()
   }
 

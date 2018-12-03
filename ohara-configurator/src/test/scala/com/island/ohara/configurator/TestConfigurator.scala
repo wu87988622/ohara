@@ -27,7 +27,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         .topicName(random())
         .brokers(testUtil.brokersConnProps)
         .build(Serializer.STRING, Serializer.OBJECT))
-    .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+    .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
     .connectClient(ConnectorClient(testUtil.workersConnProps))
     .build()
 

@@ -1,6 +1,6 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.ConfiguratorJson
-import com.island.ohara.client.ConfiguratorJson.{Column, SourceRequest}
+import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.common.data.DataType
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test

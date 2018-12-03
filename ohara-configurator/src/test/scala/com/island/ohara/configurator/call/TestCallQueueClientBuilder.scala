@@ -2,7 +2,6 @@ package com.island.ohara.configurator.call
 
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.integration.OharaTestUtil
-import com.island.ohara.integration.OharaTestUtil._
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers

@@ -10,13 +10,13 @@ import com.island.ohara.client.ConfiguratorJson.PRIVATE_API
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.demo.Backend._
+import com.island.ohara.integration.Integration
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import com.island.ohara.integration.{Integration}
 
 class TestBackendServices extends LargeTest with Matchers {
 

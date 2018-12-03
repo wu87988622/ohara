@@ -6,6 +6,7 @@ import com.island.ohara.kafka.connector.TaskConfig
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 class TestPerfSourceProps extends SmallTest with Matchers {
@@ -24,21 +25,21 @@ class TestPerfSourceProps extends SmallTest with Matchers {
   def testEmptyTopics(): Unit = {
     val source = new PerfSource
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig(methodName, Seq.empty, schema, props.toMap))
+      new TaskConfig(methodName, Seq.empty.asJava, schema.asJava, props.toMap.asJava))
   }
 
   @Test
   def testEmptySchema(): Unit = {
     val source = new PerfSource
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig(methodName, topics, Seq.empty, props.toMap))
+      new TaskConfig(methodName, topics.asJava, Seq.empty.asJava, props.toMap.asJava))
   }
 
   @Test
   def testInvalidProps(): Unit = {
     val source = new PerfSource
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig(methodName, topics, schema, props.copy(batch = -1).toMap))
+      new TaskConfig(methodName, topics.asJava, schema.asJava, props.copy(batch = -1).toMap.asJava))
   }
 
 }

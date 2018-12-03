@@ -5,8 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import akka.testkit.{TestKit, TestKitBase}
-import com.island.ohara.common.rule.SmallTest
+import akka.testkit.TestKit
 import com.island.ohara.integration.OharaTestUtil
 import com.typesafe.config.ConfigFactory
 import org.junit.{After, Test}

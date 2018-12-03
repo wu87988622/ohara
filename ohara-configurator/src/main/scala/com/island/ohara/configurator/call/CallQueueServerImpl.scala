@@ -10,6 +10,7 @@ import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
 
+import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -24,7 +25,7 @@ private object CallQueueServerImpl {
                                                    responseTopic: String,
                                                    groupId: String,
                                                    pollTimeout: Duration): CallQueueServerImpl[Request, Response] = {
-    val client = KafkaClient(brokers)
+    val client = KafkaClient.of(brokers)
     try {
       def createIfNeed(topicName: String): Unit = if (!client.exist(topicName))
         try client
@@ -33,7 +34,7 @@ private object CallQueueServerImpl {
           .numberOfReplications(CallQueueServerImpl.NUMBER_OF_REPLICATIONS)
           // enable kafka save the latest message for each key
           .deleted()
-          .timeout(CallQueueServerImpl.TIMEOUT)
+          .timeout(java.time.Duration.ofNanos(CallQueueServerImpl.TIMEOUT.toNanos))
           .create(topicName)
         catch {
           case e: ExecutionException =>
@@ -149,19 +150,20 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef] private
     * the supported producer's value is RESPONSE.
     */
   private[this] val requestWorker: Future[Unit] = Future[Unit] {
+
     try {
       while (!this.isClosed) {
         try {
-          val records = consumer.poll(pollTimeout)
+          val records = consumer.poll(java.time.Duration.ofNanos(pollTimeout.toNanos)).asScala
           records
             .filter(_.topic == requestTopic)
             .foreach(record => {
-              record.key.foreach {
+              Option(record.key.orElse(null)).foreach {
                 case internalRequest: CallQueueRequest =>
                   if (internalRequest.lease.toMillis <= CommonUtil.current())
                     LOG.debug(s"the lease from request is violated")
                   else
-                    record.value.foreach {
+                    Option(record.value.orElse(null)).foreach {
                       case clientRequest: Request =>
                         undealtTasks.put(createCallQueueTask(internalRequest, clientRequest))
                       case _ =>

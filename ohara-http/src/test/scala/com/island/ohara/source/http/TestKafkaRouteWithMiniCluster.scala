@@ -14,8 +14,6 @@ import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.junit.JUnitSuiteLike
 
-import scala.concurrent.duration._
-
 class TestKafkaRouteWithMiniCluster
     extends JUnitSuiteLike
     with ScalaFutures
@@ -99,9 +97,9 @@ class TestKafkaRouteWithMiniCluster
             .topicName(topic)
             .build(Serializer.STRING, Serializer.ROW)
         try {
-          val fromKafka = consumer.poll(30 seconds, 1)
+          val fromKafka = consumer.poll(java.time.Duration.ofSeconds(30), 1)
           fromKafka.isEmpty shouldBe false
-          val row = fromKafka.head.value.get
+          val row = fromKafka.get(0).value.get
           status should ===(StatusCodes.OK)
           for (((value, (colName, _)), i) <- (csv zip schema).zipWithIndex) {
             row.cell(i).name shouldBe colName

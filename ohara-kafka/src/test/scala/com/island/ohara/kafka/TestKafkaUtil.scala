@@ -1,8 +1,11 @@
 package com.island.ohara.kafka
+
 import com.island.ohara.integration.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.Test
 import org.scalatest.Matchers
+
+import scala.collection.JavaConverters._
 
 class TestKafkaUtil extends With3Brokers with Matchers {
 
@@ -31,7 +34,7 @@ class TestKafkaUtil extends With3Brokers with Matchers {
     val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, topicName)
     topicInfo.name shouldBe topicName
     topicInfo.numberOfPartitions shouldBe numberOfPartitions
-    topicInfo.numberOfReplications shouldBe numberOfReplications
+    topicInfo.numberOfPartitions shouldBe numberOfReplications
 
     KafkaUtil.deleteTopic(testUtil.brokersConnProps, topicName)
     KafkaUtil.exist(testUtil.brokersConnProps, topicName) shouldBe false
@@ -45,13 +48,14 @@ class TestKafkaUtil extends With3Brokers with Matchers {
     val options = Map(
       TopicConfig.CLEANUP_POLICY_CONFIG -> TopicConfig.CLEANUP_POLICY_DELETE
     )
-    KafkaUtil.createTopic(testUtil.brokersConnProps, topicName, numberOfPartitions, numberOfReplications, options)
+    KafkaUtil
+      .createTopic(testUtil.brokersConnProps, topicName, numberOfPartitions, numberOfReplications, options.asJava)
 
     val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, topicName)
     topicInfo.name shouldBe topicName
     topicInfo.numberOfPartitions shouldBe numberOfPartitions
-    topicInfo.numberOfReplications shouldBe numberOfReplications
-    topicInfo.options
+    topicInfo.numberOfPartitions shouldBe numberOfReplications
+    topicInfo.options.asScala
       .filter(_.key == TopicConfig.CLEANUP_POLICY_CONFIG)
       .head
       .value shouldBe TopicConfig.CLEANUP_POLICY_DELETE

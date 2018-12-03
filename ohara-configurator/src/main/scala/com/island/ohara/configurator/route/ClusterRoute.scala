@@ -6,8 +6,8 @@ import com.island.ohara.client.ConfiguratorJson.{CLUSTER_PATH, ClusterInformatio
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.Plugin
 import com.island.ohara.common.data.DataType
-import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.kafka.KafkaClient
 
 object ClusterRoute extends SprayJsonSupport {
 

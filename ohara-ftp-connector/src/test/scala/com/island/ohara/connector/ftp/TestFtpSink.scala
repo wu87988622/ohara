@@ -26,7 +26,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
   }
 
   def setupData(topicName: String): Unit = {
-    val client = KafkaClient(testUtil.brokersConnProps)
+    val client = KafkaClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
@@ -43,8 +43,8 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       .brokers(testUtil.brokersConnProps)
       .build(Serializer.BYTES, Serializer.ROW)
     try {
-      val records = consumer.poll(60 seconds, 1)
-      val row = records.head.value.get
+      val records = consumer.poll(java.time.Duration.ofSeconds(60), 1)
+      val row = records.get(0).value.get
       row.size shouldBe data.size
       row.cell("a").value shouldBe "abc"
       row.cell("b").value shouldBe 123

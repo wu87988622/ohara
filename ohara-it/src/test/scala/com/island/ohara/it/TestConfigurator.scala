@@ -23,7 +23,7 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
+
 class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
@@ -38,7 +38,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .topicName(random())
           .brokers(testUtil.brokersConnProps)
           .build(Serializer.STRING, Serializer.OBJECT))
-      .kafkaClient(KafkaClient(testUtil.brokersConnProps))
+      .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
 
@@ -107,7 +107,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .topicName(topic.uuid)
       .build(Serializer.BYTES, Serializer.ROW)
     try {
-      val records = consumer.poll(20 seconds, rows.length)
+      val records = consumer.poll(java.time.Duration.ofSeconds(20), rows.length).asScala
+
       records.length shouldBe rows.length
       records(0).value.get shouldBe rows(0)
       records(1).value.get shouldBe rows(1)

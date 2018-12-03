@@ -1,18 +1,18 @@
 package com.island.ohara.kafka
 
 import java.time.Duration
+import java.util
 
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.TestConnectorClient._
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
+import scala.collection.JavaConverters._
 
 class TestConnectorClient extends With3Brokers3Workers with Matchers {
 
@@ -21,6 +21,8 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
   @After
   def tearDown(): Unit = CloseOnce.close(connectorClient)
 
+  import TestConnectorClient.ROW
+//  @Ignore
   @Test
   def testExist(): Unit = {
     val topicName = methodName
@@ -84,9 +86,9 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
           .build(Serializer.BYTES, Serializer.ROW)
       try {
         // try to receive some data from topic
-        var result = consumer.poll(10 seconds, 1)
+        var result = consumer.poll(java.time.Duration.ofSeconds(10), 1)
         result.size should not be 0
-        result.foreach(_.value.get shouldBe ROW)
+        result.asScala.foreach(_.value.get shouldBe ROW)
 
         // pause connector
         connectorClient.pause(connectorName)
@@ -94,11 +96,11 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
           .await(() => connectorClient.status(connectorName).connector.state == State.PAUSED, Duration.ofSeconds(50))
 
         // try to receive all data from topic...10 seconds should be enough in this case
-        result = consumer.poll(10 seconds, Int.MaxValue)
-        result.foreach(_.value.get shouldBe ROW)
+        result = consumer.poll(java.time.Duration.ofSeconds(10), Int.MaxValue)
+        result.asScala.foreach(_.value.get shouldBe ROW)
 
         // connector is paused so there is no data
-        result = consumer.poll(20 seconds, 1)
+        result = consumer.poll(java.time.Duration.ofSeconds(20), 1)
         result.size shouldBe 0
 
         // resume connector
@@ -110,7 +112,7 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
                          true)
 
         // since connector is resumed so some data are generated
-        result = consumer.poll(20 seconds, 1)
+        result = consumer.poll(java.time.Duration.ofSeconds(20), 1)
         result.size should not be 0
       } finally consumer.close()
     } finally connectorClient.delete(connectorName)
@@ -118,14 +120,18 @@ class TestConnectorClient extends With3Brokers3Workers with Matchers {
 }
 
 private object TestConnectorClient {
-  val ROW = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
+  val ROW: Row = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 }
 
 class MyConnector extends RowSourceConnector {
   private[this] var config: TaskConfig = _
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[MyConnectorTask]
+  override protected def _taskClass(): Class[_ <: RowSourceTask] = {
+    classOf[MyConnectorTask]
+  }
 
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = Seq.fill(maxTasks)(config)
+  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = {
+    Seq.fill(maxTasks)(config).asJava
+  }
 
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
@@ -138,26 +144,28 @@ class MyConnectorTask extends RowSourceTask {
   private[this] var lastSent: Long = 0
   private[this] var topicName: String = _
 
-  override protected def _start(config: TaskConfig): Unit = {
-    this.topicName = config.topics.head
+  override protected def _start(config: TaskConfig) = {
+    this.topicName = config.topics().get(0)
   }
 
   override protected def _stop(): Unit = {}
 
-  override protected def _poll(): Seq[RowSourceRecord] = {
+  override protected def _poll(): util.List[RowSourceRecord] = {
     val current = System.currentTimeMillis()
     if (current - lastSent >= 1000) {
       lastSent = current
-      Seq(RowSourceRecord(topicName, TestConnectorClient.ROW))
-    } else Seq.empty
+      Seq(RowSourceRecord.of(topicName, TestConnectorClient.ROW)).asJava
+    } else
+      Seq.empty.asJava
   }
 }
 
 class UnrunnableConnector extends RowSourceConnector {
   override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[UnrunnableConnectorTask]
 
-  override protected def _taskConfigs(maxTasks: Int): Seq[TaskConfig] = throw new IllegalArgumentException(
-    "This is an unrunnable connector")
+  override protected def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
+    throw new IllegalArgumentException("This is an unrunnable connector")
+  }
 
   override protected def _start(config: TaskConfig): Unit = {
     throw new IllegalArgumentException("This is an unrunnable connector")
@@ -167,9 +175,7 @@ class UnrunnableConnector extends RowSourceConnector {
 }
 
 class UnrunnableConnectorTask extends RowSourceTask {
-  override protected def _start(config: TaskConfig): Unit = {}
-
+  override protected def _start(config: TaskConfig) = {}
   override protected def _stop(): Unit = {}
-
-  override protected def _poll(): Seq[RowSourceRecord] = Seq.empty
+  override protected def _poll(): util.List[RowSourceRecord] = Seq.empty.asJava
 }

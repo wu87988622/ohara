@@ -17,6 +17,8 @@ import org.apache.hadoop.fs.Path
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
+
 class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
   private[this] val hdfsURL: String = "hdfs://host1:9000"
@@ -28,13 +30,14 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val maxTasks = 5
     val hdfsSinkConnector = new HDFSSinkConnector()
 
-    hdfsSinkConnector._start(TaskConfig("test", Seq("topic"), Seq.empty, Map(HDFS_URL -> hdfsURL, TMP_DIR -> tmpDir)))
+    hdfsSinkConnector._start(
+      new TaskConfig("test", Seq("topic").asJava, Seq.empty.asJava, Map(HDFS_URL -> hdfsURL, TMP_DIR -> tmpDir).asJava))
     val result = hdfsSinkConnector._taskConfigs(maxTasks)
 
     result.size shouldBe maxTasks
-    result.foreach(r => {
-      r.options(HDFS_URL) shouldBe hdfsURL
-      r.options(TMP_DIR) shouldBe tmpDir
+    result.asScala.foreach(r => {
+      r.options.get(HDFS_URL) shouldBe hdfsURL
+      r.options.get(TMP_DIR) shouldBe tmpDir
     })
   }
 
@@ -294,7 +297,7 @@ class SimpleHDFSSinkConnector extends HDFSSinkConnector {
 class SimpleHDFSSinkTask extends HDFSSinkTask {
   override def _start(props: TaskConfig): Unit = {
     super._start(props)
-    props.options.foreach {
+    props.options.asScala.foreach {
       case (k, v) => SimpleHDFSSinkTask.taskProps.put(k, v)
     }
     SimpleHDFSSinkTask.sinkConnectorConfig = hdfsSinkConnectorConfig

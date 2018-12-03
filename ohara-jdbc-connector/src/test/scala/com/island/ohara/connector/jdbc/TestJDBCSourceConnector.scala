@@ -12,7 +12,7 @@ import com.island.ohara.kafka.Consumer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
+import scala.collection.JavaConverters._
 
 /**
   * Test the JDBC Source Connector
@@ -68,7 +68,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
         .brokers(testUtil.brokersConnProps)
         .build(Serializer.BYTES, Serializer.ROW)
     try {
-      val record = consumer.poll(30 seconds, 3)
+      val record = consumer.poll(java.time.Duration.ofSeconds(30), 3).asScala
       val row0: Row = record(0).value.get
       row0.size shouldBe 4
       row0.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:00.0").toString

@@ -1,12 +1,14 @@
 package com.island.ohara.configurator
 
 import java.util.concurrent.ConcurrentHashMap
+import java.{time, util}
 
 import akka.http.scaladsl.server
 import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
   ConnectorStatus,
+  CreateConnectorRequest,
   CreateConnectorResponse,
   Plugin,
   State,
@@ -130,13 +132,14 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
 
-  override def connectorCreator(): ConnectorCreator = request =>
+  override def connectorCreator(): ConnectorCreator = request => {
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
     else {
       cachedConnectors.put(request.name, request.config)
       cachedConnectorsState.put(request.name, State.RUNNING)
       CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
+    }
   }
 
   override def delete(name: String): Unit =
@@ -186,45 +189,62 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   * NOTED: It should be used in testing only.
   */
 private class FakeKafkaClient extends KafkaClient {
-  private[this] val log = Logger(KafkaClient.getClass.getName)
+
+  import scala.collection.JavaConverters._
+
+  private[this] val log = Logger(classOf[FakeKafkaClient].getName)
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
-  override def exist(topicName: String, timeout: Duration): Boolean = {
-    printDebugMessage()
-    cachedTopics.contains(topicName)
-  }
-  override protected def doClose(): Unit = {
-    printDebugMessage()
-  }
 
-  override def topicCreator(): TopicCreator = request => {
-    printDebugMessage()
-    cachedTopics.put(
-      request.name,
-      TopicDescription(request.name, request.numberOfPartitions, request.numberOfReplications, request.options.map {
-        case (k, v) => TopicOption(k, v, false, false, false)
-      }.toSeq)
-    )
-  }
-
-  override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: Duration): Unit = {
-    printDebugMessage()
-    Option(cachedTopics.get(topicName))
-      .map(previous => TopicDescription(topicName, numberOfPartitions, previous.numberOfReplications, Seq.empty))
-      .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
+  override def topicCreator(): TopicCreator = new TopicCreator() {
+    override protected def doCreate(name: String): Unit = {
+      printDebugMessage()
+      cachedTopics.put(
+        name,
+        new TopicDescription(
+          name,
+          numberOfPartitions,
+          numberOfReplications,
+          options.asScala
+            .map {
+              case (k, v) => new TopicOption(k, v, false, false, false)
+            }
+            .toSeq
+            .asJava
+        )
+      )
+    }
   }
 
   private[this] def printDebugMessage(): Unit =
     log.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
 
-  override def topicDescription(topicName: String, timeout: Duration): TopicDescription = Option(
+  override def exist(topicName: String, timeout: time.Duration): Boolean = {
+    printDebugMessage()
+    cachedTopics.contains(topicName)
+  }
+
+  override def topicDescription(topicName: String, timeout: time.Duration): TopicDescription = Option(
     cachedTopics.get(topicName)).get
-  override def deleteTopic(topicName: String, timeout: Duration): Unit =
+
+  override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: time.Duration): Unit = {
+    printDebugMessage()
+    Option(cachedTopics.get(topicName))
+      .map(previous =>
+        new TopicDescription(topicName, numberOfPartitions, previous.numberOfReplications, Seq.empty.asJava))
+      .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
+  }
+
+  override def deleteTopic(topicName: String, timeout: time.Duration): Unit =
     if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
 
-  import scala.collection.JavaConverters._
-  override def listTopics(timeout: Duration): Seq[String] = cachedTopics.keys().asScala.map(t => t).toList
+  override def listTopics(timeout: time.Duration): util.List[String] = {
+    cachedTopics.keys().asScala.map(t => t).toList.asJava
+  }
 
-  override def brokers: String = "Unknown"
+  override def brokers(): String = "Unknown"
+
   override def consumerBuilder(): ConsumerBuilder = throw new UnsupportedOperationException(
     s"${classOf[FakeKafkaClient].getSimpleName} does not support this operation")
+
+  override def close(): Unit = printDebugMessage()
 }

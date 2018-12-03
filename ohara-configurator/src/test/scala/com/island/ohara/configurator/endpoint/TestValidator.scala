@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
-  private[this] val kafkaClient = KafkaClient(testUtil.brokersConnProps)
+  private[this] val kafkaClient = KafkaClient.of(testUtil.brokersConnProps)
   private[this] val ftpServer = testUtil.ftpServer
   private[this] val rdb = testUtil.dataBase
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)

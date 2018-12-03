@@ -8,6 +8,9 @@ import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
 import com.typesafe.scalalogging.Logger
+
+import scala.collection.JavaConverters._
+
 class JDBCSourceTask extends RowSourceTask {
 
   private[this] lazy val logger = Logger(getClass.getName)
@@ -25,7 +28,7 @@ class JDBCSourceTask extends RowSourceTask {
     */
   override protected[source] def _start(config: TaskConfig): Unit = {
     logger.info("starting JDBC Source Connector")
-    val props = config.options
+    val props = config.options.asScala.toMap
     jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(props)
 
     val dbURL = jdbcSourceConnectorConfig.dbURL
@@ -34,8 +37,8 @@ class JDBCSourceTask extends RowSourceTask {
     val tableName = jdbcSourceConnectorConfig.dbTableName
     dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
 
-    schema = config.schema
-    topics = config.topics
+    schema = config.schema.asScala
+    topics = config.topics.asScala
     offsets = new Offsets(rowContext, tableName)
   }
 
@@ -44,7 +47,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @return a array from RowSourceRecord
     */
-  override protected[source] def _poll(): Seq[RowSourceRecord] = try {
+  override protected[source] def _poll(): java.util.List[RowSourceRecord] = try {
     val tableName: String = jdbcSourceConnectorConfig.dbTableName
     val timestampColumnName: String = jdbcSourceConnectorConfig.timestampColumnName
 
@@ -62,19 +65,20 @@ class JDBCSourceTask extends RowSourceTask {
           topics.map(
             RowSourceRecord
               .builder()
-              .sourcePartition(JDBCSourceTask.partition(tableName))
+              .sourcePartition(JDBCSourceTask.partition(tableName).asJava)
               //Writer Offset
-              .sourceOffset(JDBCSourceTask.offset(offsetTimestampValue))
+              .sourceOffset(JDBCSourceTask.offset(offsetTimestampValue).asJava)
               //Create Ohara Row
               .row(row(newSchema, columns))
               .build(_))
       }
       .toList
+      .asJava
     finally resultSet.close()
   } catch {
     case e: Throwable => {
       LOG.error(e.getMessage, e)
-      Seq.empty
+      Seq.empty.asJava
     }
   }
 
@@ -134,7 +138,7 @@ class JDBCSourceTask extends RowSourceTask {
         throw new RuntimeException(s"$timestampColumnName not in ${jdbcSourceConnectorConfig.dbTableName} table."))
 
   private class Offsets(context: RowSourceContext, tableName: String) {
-    private[this] val offsets: Map[String, _] = context.offset(JDBCSourceTask.partition(tableName))
+    private[this] val offsets: Map[String, _] = context.offset(JDBCSourceTask.partition(tableName).asJava).asScala.toMap
     private[this] var cache: Map[String, Long] =
       if (offsets.isEmpty) Map(tableName -> 0)
       else Map(tableName -> offsets(JDBCSourceTask.DB_TABLE_OFFSET_KEY).asInstanceOf[Long])

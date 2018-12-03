@@ -8,8 +8,8 @@ import com.island.ohara.kafka.Consumer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-
 class TestPerfSource extends With3Brokers3Workers with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
@@ -70,9 +70,10 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
           }
         }
         // it is hard to evaluate number from records in topics so we just fetch some records here.
-        val records = consumer.poll(props.freq * 3, props.batch)
+
+        val records = consumer.poll(java.time.Duration.ofNanos((props.freq * 3).toNanos), props.batch)
         records.size >= props.batch shouldBe true
-        records
+        records.asScala
           .map(_.value.get)
           .foreach(row => {
             row.size shouldBe schema.size
