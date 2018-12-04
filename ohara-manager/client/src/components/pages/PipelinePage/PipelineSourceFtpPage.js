@@ -29,10 +29,6 @@ const H5Wrapper = styled(H5)`
 `;
 H5Wrapper.displayName = 'H5';
 
-const TableWrapper = styled.div`
-  display: flex;
-`;
-
 const FormGroupWrapper = styled.div`
   display: flex;
   justify-content: space-between;
@@ -691,7 +687,7 @@ class PipelineSourceFtpPage extends React.Component {
           <TabPanel>
             <form>
               <FormGroupWrapper>
-                <FormGroup width="70%" margin="0 20px 20px 0">
+                <FormGroup css={{ width: '70%', margin: '0 20px 0 0' }}>
                   <Label>File encoding</Label>
                   <Select
                     name="fileEnconding"
@@ -704,15 +700,13 @@ class PipelineSourceFtpPage extends React.Component {
 
                 <FormGroup width="30%">
                   <Label>Task</Label>
-                  <TableWrapper>
-                    <Select
-                      name="tasks"
-                      list={tasks}
-                      selected={currTask}
-                      data-testid="task-select"
-                      handleChange={this.handleSelectChange}
-                    />
-                  </TableWrapper>
+                  <Select
+                    name="tasks"
+                    list={tasks}
+                    selected={currTask}
+                    data-testid="task-select"
+                    handleChange={this.handleSelectChange}
+                  />
                 </FormGroup>
               </FormGroupWrapper>
               <FormGroup>

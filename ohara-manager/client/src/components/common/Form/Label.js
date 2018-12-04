@@ -6,20 +6,28 @@ import { lightBlue } from 'theme/variables';
 
 const LabelWrapper = styled.label`
   color: ${lightBlue};
+  width: ${({ width }) => width};
   font-size: 13px;
-  margin-bottom: 8px;
+  margin: ${({ margin }) => margin};
 `;
 
 LabelWrapper.displayName = 'Label';
 
-LabelWrapper.displayName = 'Label';
-
-const Label = ({ children, ...rest }) => {
-  return <LabelWrapper {...rest}>{children}</LabelWrapper>;
+const Label = ({
+  children,
+  css = { margin: '0 0 8px', width: 'auto' },
+  ...rest
+}) => {
+  return (
+    <LabelWrapper {...css} {...rest}>
+      {children}
+    </LabelWrapper>
+  );
 };
 
 Label.propTypes = {
   children: PropTypes.any,
+  css: PropTypes.object,
 };
 
 export default Label;

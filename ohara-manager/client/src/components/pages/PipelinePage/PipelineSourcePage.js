@@ -34,6 +34,7 @@ const H5Wrapper = styled(H5)`
 const Fieldset = styled.fieldset`
   border: none;
   position: relative;
+  padding: 0;
 
   &:after {
     content: '';
@@ -51,6 +52,7 @@ const Fieldset = styled.fieldset`
 
 const TableWrapper = styled.div`
   display: flex;
+  width: 100%;
 `;
 
 const GetTablesBtn = styled(Button)`
