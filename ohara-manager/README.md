@@ -26,19 +26,40 @@ yum install -y xorg-x11-server-Xvfb gtk2-2.24* libXtst* libXScrnSaver* GConf2* a
 
 **If this is your first time running this project, you need to complete the _Initial machine setup_ section above** 👆
 
-You need to start both **Server** and **Client** servers before you can start your development. Follow the instructions below:
+#### Quick start guide:
 
-**Server:**
-
-Make sure you're in the ohara-manager root and start the server with:
+Make sure you're at the Ohara-manager root, then start Ohara manager with:
 
 ```sh
 yarn start --configurator http://host:port/v0
 ```
 
-- Note that the `--configurator` argument is required, you should pass in the
-  Ohara configurator API URL.
-- You can override the default port `5050` by passing in `--port` like the following:
+> Note that configurator option is required, and you should have configurator running before starting Ohara manager.
+
+Open another terminal tab, and start the **client**:
+
+```
+yarn start:client
+```
+
+Now, go to http://localhost:3000 and start your development, happy coding 😎
+
+#### Full development guide:
+
+In development, you need to start both **Server** and **Client** servers before you can start your development. Follow the instructions below:
+
+**Server:**
+
+Make sure you're at the ohara-manager root:
+
+```sh
+yarn start --configurator http://host:port/v0
+```
+
+> Note that the `--configurator` argument is required, you should pass in
+> Ohara configurator API URL.
+
+You can also override the default port `5050` by passing in `--port` like the following:
 
 ```sh
 yarn start --configurator http://host:port/v0 --port 1234
@@ -46,15 +67,25 @@ yarn start --configurator http://host:port/v0 --port 1234
 
 After starting the server, visit `http://localhost:${PORT}` in your browser.
 
-> Double check the configurator spelling and the API URL, it should contain the API version number: `/v0`
+> Double check the configurator spelling and API URL, the URL should contain the API version number: `/v0`
 
 **Client**:
+
+Start the **Client** development server with:
 
 ```sh
 yarn start:client
 ```
 
-After starting the dev server, visit `http://localhost:3000` in your browser.
+After starting the dev server, visit `http://localhost:3000` in your browser and start you development.
+
+You can override the default port `3000` by passing in a environment variable:
+
+```sh
+PORT=7777 yarn start:client
+```
+
+The dev server will then start at `http://localhost:7777`
 
 ## Test
 
@@ -169,6 +200,7 @@ After the build, copy/use these files and directories to the destination directo
 - index.js
 - config.js
 - package.json
+- .yarnrc
 - client -- only node_modules and build directories are needed
   - node_modules
   - build
