@@ -1,11 +1,6 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.kafka.exception.CheckedExceptionUtil;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewPartitions;
@@ -13,6 +8,12 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * a helper methods used by configurator. It provide many helper method to operate kafka cluster.
@@ -80,7 +81,6 @@ public interface KafkaClient extends AutoCloseable {
 
       private String brokers = outerbrokers;
 
-      private Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
       private AdminClient admin = AdminClient.create(toAdminProps(outerbrokers));
 
       @Override
@@ -88,17 +88,17 @@ public interface KafkaClient extends AutoCloseable {
         return new TopicCreator() {
 
           @Override
-          protected void doCreate(String name) {
+          public void create(String name) {
             CheckedExceptionUtil.wrap(
                 () ->
                     admin
                         .createTopics(
-                            Arrays.asList(
-                                new NewTopic(name, numberOfPartitions(), numberOfReplications())
-                                    .configs(options())))
+                            Collections.singletonList(
+                                new NewTopic(name, numberOfPartitions, numberOfReplications)
+                                    .configs(options)))
                         .values()
                         .get(name)
-                        .get(timeout().toMillis(), TimeUnit.MILLISECONDS));
+                        .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
           }
         };
       }
@@ -129,7 +129,7 @@ public interface KafkaClient extends AutoCloseable {
                 ConfigResource configKey = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
                 List<TopicOption> options =
                     admin
-                        .describeConfigs(Arrays.asList(configKey))
+                        .describeConfigs(Collections.singletonList(configKey))
                         .values()
                         .get(configKey)
                         .get()
@@ -147,7 +147,7 @@ public interface KafkaClient extends AutoCloseable {
 
                 org.apache.kafka.clients.admin.TopicDescription topicPartitionInfo =
                     Optional.ofNullable(
-                            admin.describeTopics(Arrays.asList(topicName)).values().get(topicName))
+                            admin.describeTopics(Collections.singletonList(topicName)).values().get(topicName))
                         .orElseThrow(
                             () ->
                                 new IllegalArgumentException(
@@ -189,7 +189,7 @@ public interface KafkaClient extends AutoCloseable {
         CheckedExceptionUtil.wrap(
             () ->
                 admin
-                    .deleteTopics(Arrays.asList(topicName))
+                    .deleteTopics(Collections.singletonList(topicName))
                     .all()
                     .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
       }

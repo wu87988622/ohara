@@ -196,7 +196,7 @@ private class FakeKafkaClient extends KafkaClient {
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
 
   override def topicCreator(): TopicCreator = new TopicCreator() {
-    override protected def doCreate(name: String): Unit = {
+    override def create(name: String): Unit = {
       printDebugMessage()
       cachedTopics.put(
         name,

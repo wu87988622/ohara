@@ -1,35 +1,21 @@
 package com.island.ohara.kafka;
 
+import org.apache.kafka.common.config.TopicConfig;
+
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.kafka.common.config.TopicConfig;
 
 /**
  * a helper class used to create the kafka topic. all member are protected since we have to
  * implement a do-nothing TopicCreator in testing.
  */
 public abstract class TopicCreator {
-  private int numberOfPartitions = 1;
-  private short numberOfReplications = 1;
-  private Map<String, String> options = new HashMap<>();
-  private Duration timeout = Duration.ofSeconds(10);
-
-  protected int numberOfPartitions() {
-    return numberOfPartitions;
-  }
-
-  protected short numberOfReplications() {
-    return numberOfReplications;
-  }
-
-  protected Map<String, String> options() {
-    return options;
-  }
-
-  protected Duration timeout() {
-    return timeout;
-  }
+  protected int numberOfPartitions = 1;
+  protected short numberOfReplications = 1;
+  protected Map<String, String> options = new HashMap<>();
+  protected Duration timeout = Duration.ofSeconds(10);
 
   public TopicCreator numberOfPartitions(int numberOfPartitions) {
     this.numberOfPartitions = numberOfPartitions;
@@ -53,9 +39,10 @@ public abstract class TopicCreator {
    * @return this builder
    */
   public TopicCreator compacted() {
-    Map<String, String> map = new HashMap<>();
-    map.put(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT);
-    doOptions(map, false);
+    doOptions(
+        Collections.singletonMap(
+            TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT),
+        false);
     return this;
   }
   /**
@@ -65,17 +52,16 @@ public abstract class TopicCreator {
    * @return this builder
    */
   public TopicCreator deleted() {
-    Map<String, String> map = new HashMap<>();
-    map.put(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE);
-    doOptions(map, false);
+    doOptions(
+        Collections.singletonMap(
+            TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE),
+        false);
     return this;
   }
 
   private TopicCreator doOptions(Map<String, String> options, boolean overwrite) {
     if (this.options == null || overwrite) {
-      Map<String, String> map = new HashMap<>();
-      map.putAll(options);
-      this.options = map;
+      this.options = new HashMap<>(options);
     } else {
       this.options
           .entrySet()
@@ -83,16 +69,14 @@ public abstract class TopicCreator {
           .filter(x -> options.containsKey(x.getKey()))
           .forEach(
               x -> {
-                if (options.get(x.getKey()) != x.getValue())
+                if (!options.get(x.getKey()).equals(x.getValue()))
                   throw new IllegalArgumentException(
                       String.format(
                           "conflict options! previous:%s new:%s",
                           x.getValue(), options.get(x.getKey())));
               });
-      options.forEach(
-          (k, v) -> {
-            this.options.put(k, v);
-          });
+
+      this.options.putAll(options);
     }
     return this;
   }
@@ -102,9 +86,5 @@ public abstract class TopicCreator {
     return this;
   }
 
-  public void create(String name) {
-    doCreate(name);
-  };
-
-  protected abstract void doCreate(String name);
+  public abstract void create(String name);
 }
