@@ -16,7 +16,7 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
 
 /**
  * a simple embedded ftp server providing 1 writable user. The home folder is based on
- * java.io.tmpdir with prefix - ftp 1) port -> a random port 2) host -> "localhost" 3) user -> a
+ * java.io.tmpdir with prefix - ftp 1) port -> a random port 2) hostname -> "localhost" 3) user -> a
  * writable account 4) password -> a writable account
  *
  * <p>all resources will be released by FtpServer#close(). For example, all data in home folder will
@@ -29,7 +29,7 @@ public interface FtpServer extends AutoCloseable {
 
   int NUMBER_OF_SERVERS = 3;
 
-  String host();
+  String hostname();
 
   int port();
 
@@ -78,7 +78,7 @@ public interface FtpServer extends AutoCloseable {
   }
 
   static FtpServerInfo parseString(String ftpString) {
-    // format => user:password@host:port
+    // format => user:password@hostname:port
     try {
       String user = ftpString.split(":")[0];
       String password = ftpString.split("@")[0].split(":")[1];
@@ -147,7 +147,7 @@ public interface FtpServer extends AutoCloseable {
       }
 
       @Override
-      public String host() {
+      public String hostname() {
         return CommonUtil.hostname();
       }
 
@@ -195,7 +195,7 @@ public interface FtpServer extends AutoCloseable {
                     }
 
                     @Override
-                    public String host() {
+                    public String hostname() {
                       return ftpServerInfo.host();
                     }
 

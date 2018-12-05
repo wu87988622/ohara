@@ -23,7 +23,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     errorFolder = "/error",
     user = ftpServer.user,
     password = ftpServer.password,
-    host = ftpServer.host,
+    hostname = ftpServer.hostname,
     port = ftpServer.port,
     encode = Some("UTF-8")
   )
@@ -32,7 +32,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   def setup(): Unit = {
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -69,7 +69,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
          |${line2.mkString(",")}""".stripMargin
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -95,7 +95,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   private[this] def assertNumberOfFiles(numberOfInput: Int, numberOfCompleted: Int, numberOfError: Int) = {
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -111,7 +111,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   def testListNonexistentInput(): Unit = {
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)
@@ -129,7 +129,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val numberOfInputs = 3
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .password(ftpServer.password)
       .port(ftpServer.port)
       .user(ftpServer.user)

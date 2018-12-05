@@ -162,7 +162,7 @@ object Backend {
     println(s"Succeed to run the mini brokers: ${brokers.connectionProps} and workers:${workers.connectionProps}")
     println(s"Succeed to run a database url:${dataBase.url} user:${dataBase.user} password:${dataBase.password}")
     println(
-      s"Succeed to run a ftp server host:${ftpServer.host} port:${ftpServer.port} user:${ftpServer.user} password:${ftpServer.password}")
+      s"Succeed to run a ftp server hostname:${ftpServer.hostname} port:${ftpServer.port} user:${ftpServer.user} password:${ftpServer.password}")
     val dbRoute: server.Route = path("creation" / "rdb") {
       pathEnd {
         post {
@@ -187,7 +187,7 @@ object Backend {
               brokers = brokers.connectionProps,
               workers = workers.connectionProps,
               ftpServer = FtpServerInformation(
-                hostname = ftpServer.host,
+                hostname = ftpServer.hostname,
                 port = ftpServer.port.toInt,
                 dataPort = ftpServer.dataPort().asScala.map(x => x.toInt),
                 user = ftpServer.user,

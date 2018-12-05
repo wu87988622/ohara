@@ -19,7 +19,7 @@ class FtpSink extends RowSinkConnector {
       throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
-      FtpClient.builder().hostname(props.host).port(props.port).user(props.user).password(props.password).build()
+      FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
     try if (!ftpClient.exist(props.output)) ftpClient.mkdir(props.output)
     finally ftpClient.close()
   }
@@ -42,7 +42,7 @@ class FtpSink extends RowSinkConnector {
               output = CommonUtil.path(props.output, s"${config.name}_$index"),
               needHeader = props.needHeader,
               encode = props.encode,
-              host = props.host,
+              hostname = props.hostname,
               port = props.port,
               user = props.user,
               password = props.password

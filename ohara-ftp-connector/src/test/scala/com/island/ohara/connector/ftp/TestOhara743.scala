@@ -22,7 +22,7 @@ class TestOhara743 extends SmallTest with Matchers {
       errorFolder = "/error",
       user = ftpServer.user,
       password = ftpServer.password,
-      host = ftpServer.host,
+      hostname = ftpServer.hostname,
       port = ftpServer.port,
       encode = Some("UTF-8")
     )
@@ -36,7 +36,7 @@ class TestOhara743 extends SmallTest with Matchers {
 
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .port(ftpServer.port)
       .user(ftpServer.user)
       .password(ftpServer.password)

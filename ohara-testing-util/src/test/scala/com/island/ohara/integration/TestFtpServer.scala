@@ -10,7 +10,7 @@ class TestFtpServer extends MediumTest with Matchers {
   def testExternalFtpServer(): Unit = {
     val user = "user"
     val password = "password"
-    val host = "host"
+    val host = "hostname"
     val port = 123
 
     val result = FtpServer.parseString(s"$user:$password@$host:$port")
@@ -27,14 +27,14 @@ class TestFtpServer extends MediumTest with Matchers {
   def testLocalMethod(): Unit = {
     val user = "user"
     val password = "password"
-    val host = "host"
+    val host = "hostname"
     val port = 123
     val externalFtpServer = FtpServer.of(s"$user:$password@$host:$port")
     try {
       externalFtpServer.isLocal shouldBe false
       externalFtpServer.user shouldBe user
       externalFtpServer.password shouldBe password
-      externalFtpServer.host shouldBe host
+      externalFtpServer.hostname shouldBe host
       externalFtpServer.port shouldBe port
     } finally externalFtpServer.close()
 

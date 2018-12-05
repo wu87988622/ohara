@@ -31,7 +31,7 @@ class FtpSource extends RowSourceConnector {
               completedFolder = props.completedFolder,
               errorFolder = props.errorFolder,
               encode = props.encode,
-              host = props.host,
+              hostname = props.hostname,
               port = props.port,
               user = props.user,
               password = props.password
@@ -47,7 +47,7 @@ class FtpSource extends RowSourceConnector {
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
-      FtpClient.builder().hostname(props.host).port(props.port).user(props.user).password(props.password).build()
+      FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
     try {
       if (ftpClient.nonExist(props.inputFolder))
         throw new IllegalArgumentException(s"${props.inputFolder} doesn't exist")

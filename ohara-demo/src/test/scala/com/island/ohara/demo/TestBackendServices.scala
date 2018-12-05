@@ -41,7 +41,7 @@ class TestBackendServices extends LargeTest with Matchers {
         result.brokers shouldBe brokers.connectionProps
         result.workers shouldBe workers.connectionProps
 
-        result.ftpServer.hostname shouldBe ftp.host
+        result.ftpServer.hostname shouldBe ftp.hostname
         result.ftpServer.port shouldBe ftp.port
         result.ftpServer.user shouldBe ftp.user
         result.ftpServer.password shouldBe ftp.password
@@ -85,7 +85,7 @@ class TestBackendServices extends LargeTest with Matchers {
           result.brokers shouldBe ports.brokersPort.map(p => s"${CommonUtil.hostname}:$p").mkString(",")
           result.workers shouldBe ports.workersPort.map(p => s"${CommonUtil.hostname}:$p").mkString(",")
 
-          result.ftpServer.hostname shouldBe ftp.host
+          result.ftpServer.hostname shouldBe ftp.hostname
           result.ftpServer.port shouldBe ports.ftpPort
           result.ftpServer.dataPort shouldBe ports.ftpDataPorts
           result.ftpServer.user shouldBe ftp.user

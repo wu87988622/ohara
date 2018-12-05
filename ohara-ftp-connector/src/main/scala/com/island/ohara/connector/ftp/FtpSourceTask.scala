@@ -193,7 +193,7 @@ class FtpSourceTask extends RowSourceTask {
       throw new IllegalArgumentException(s"invalid input:${props.inputFolder.mkString(",")}")
     topics = config.topics.asScala
     ftpClient =
-      FtpClient.builder().hostname(props.host).port(props.port).user(props.user).password(props.password).build()
+      FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
     cache = OffsetCache()
   }
 }

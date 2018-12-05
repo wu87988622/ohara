@@ -19,7 +19,7 @@ public interface Database extends AutoCloseable {
   String DB_SERVER = "ohara.it.db";
   AtomicInteger COUNT = new AtomicInteger(0);
 
-  String host();
+  String hostname();
 
   int port();
 
@@ -130,7 +130,7 @@ public interface Database extends AutoCloseable {
       }
 
       @Override
-      public String host() {
+      public String hostname() {
         return CommonUtil.hostname();
       }
 
@@ -156,7 +156,7 @@ public interface Database extends AutoCloseable {
 
       @Override
       public String url() {
-        return "jdbc:mysql://" + host() + ":" + port() + "/" + databaseName();
+        return "jdbc:mysql://" + hostname() + ":" + port() + "/" + databaseName();
       }
 
       @Override
@@ -199,7 +199,7 @@ public interface Database extends AutoCloseable {
                     }
 
                     @Override
-                    public String host() {
+                    public String hostname() {
                       return connectionInfo.getHost();
                     }
 
@@ -228,7 +228,7 @@ public interface Database extends AutoCloseable {
                       return "jdbc:"
                           + connectionInfo.getDbInstance()
                           + "://"
-                          + host()
+                          + hostname()
                           + ":"
                           + port()
                           + "/"

@@ -11,7 +11,7 @@ class TestDatabase extends MediumTest with Matchers {
     val dbInstance = "mysql"
     val user = "user"
     val password = "password"
-    val host = "host"
+    val host = "hostname"
     val port = 123
     val dbName = "dbName"
 
@@ -36,7 +36,7 @@ class TestDatabase extends MediumTest with Matchers {
     val dbInstance = "mysql"
     val user = "user"
     val password = "password"
-    val host = "host"
+    val host = "hostname"
     val port = 123
     val dbName = "dbName"
 
@@ -46,7 +46,7 @@ class TestDatabase extends MediumTest with Matchers {
       externaldb.isLocal shouldBe false
       externaldb.user shouldBe user
       externaldb.password shouldBe password
-      externaldb.host shouldBe host
+      externaldb.hostname shouldBe host
       externaldb.port shouldBe port
       externaldb.databaseName shouldBe dbName
     } finally externaldb.close()

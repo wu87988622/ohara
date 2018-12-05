@@ -12,7 +12,7 @@ class TestFtpProperties extends SmallTest with Matchers {
       needHeader = false,
       user = "user",
       password = "pwd",
-      host = "host",
+      hostname = "hostname",
       port = 123,
       encode = Some("UTF-8")
     )
@@ -27,7 +27,7 @@ class TestFtpProperties extends SmallTest with Matchers {
       needHeader = false,
       user = "user",
       password = "pwd",
-      host = "host",
+      hostname = "hostname",
       port = 123,
       encode = Some("UTF-8")
     )
@@ -43,7 +43,7 @@ class TestFtpProperties extends SmallTest with Matchers {
       errorFolder = "/error/",
       user = "user",
       password = "pwd",
-      host = "host",
+      hostname = "hostname",
       port = 123,
       encode = Some("UTF-8")
     )
@@ -61,7 +61,7 @@ class TestFtpProperties extends SmallTest with Matchers {
       errorFolder = "/error/",
       user = "user",
       password = "pwd",
-      host = "host",
+      hostname = "hostname",
       port = 123,
       encode = Some("UTF-8")
     )

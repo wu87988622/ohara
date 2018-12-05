@@ -44,7 +44,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
       Validator.run(
         connectorClient,
         kafkaClient,
-        FtpValidationRequest(ftpServer.host, ftpServer.port, ftpServer.user, ftpServer.password),
+        FtpValidationRequest(ftpServer.hostname, ftpServer.port, ftpServer.user, ftpServer.password),
         taskCount
       ))
   }

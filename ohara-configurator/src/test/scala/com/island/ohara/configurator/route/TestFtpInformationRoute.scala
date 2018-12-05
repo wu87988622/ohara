@@ -11,7 +11,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "",
-        hostname = "host",
+        hostname = "hostname",
         port = 1234,
         user = "ab",
         password = "aaa"
@@ -29,7 +29,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "aa",
-        hostname = "host",
+        hostname = "hostname",
         port = -1,
         user = "ab",
         password = "aaa"
@@ -38,7 +38,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "aa",
-        hostname = "host",
+        hostname = "hostname",
         port = 0,
         user = "ab",
         password = "aaa"
@@ -47,7 +47,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "aaa",
-        hostname = "host",
+        hostname = "hostname",
         port = 99999,
         user = "ab",
         password = "aaa"
@@ -56,7 +56,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "aaa",
-        hostname = "host",
+        hostname = "hostname",
         port = 12345,
         user = "",
         password = "aaa"
@@ -65,7 +65,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "aaa",
-        hostname = "host",
+        hostname = "hostname",
         port = 12345,
         user = "aa",
         password = ""
@@ -74,7 +74,7 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
     FtpInformationRoute.validateField(
       FtpInformationRequest(
         name = "aaa",
-        hostname = "host",
+        hostname = "hostname",
         port = 12345,
         user = "aa",
         password = "aaa"

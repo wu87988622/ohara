@@ -55,7 +55,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       errorFolder = "/error",
       user = testUtil.ftpServer.user,
       password = testUtil.ftpServer.password,
-      host = testUtil.ftpServer.host,
+      hostname = testUtil.ftpServer.hostname,
       port = testUtil.ftpServer.port,
       encode = Some("UTF-8")
     )
@@ -72,7 +72,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     // setup env
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .port(ftpServer.port)
       .user(ftpServer.user)
       .password(ftpServer.password)
@@ -129,7 +129,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       needHeader = false,
       user = testUtil.ftpServer.user,
       password = testUtil.ftpServer.password,
-      host = testUtil.ftpServer.host,
+      hostname = testUtil.ftpServer.hostname,
       port = testUtil.ftpServer.port,
       encode = Some("UTF-8")
     )
@@ -149,7 +149,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     // setup env
     val ftpClient = FtpClient
       .builder()
-      .hostname(ftpServer.host)
+      .hostname(ftpServer.hostname)
       .port(ftpServer.port)
       .user(ftpServer.user)
       .password(ftpServer.password)

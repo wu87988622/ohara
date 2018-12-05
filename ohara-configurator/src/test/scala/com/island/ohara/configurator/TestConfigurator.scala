@@ -384,7 +384,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     clients.foreach(client => {
       val report =
         client.validate[FtpValidationRequest, ValidationReport](
-          FtpValidationRequest(ftpServer.host, ftpServer.port, ftpServer.user, ftpServer.password))
+          FtpValidationRequest(ftpServer.hostname, ftpServer.port, ftpServer.user, ftpServer.password))
       report.isEmpty shouldBe false
       report.foreach(_.pass shouldBe true)
     })
