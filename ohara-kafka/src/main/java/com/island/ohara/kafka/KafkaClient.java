@@ -147,7 +147,10 @@ public interface KafkaClient extends AutoCloseable {
 
                 org.apache.kafka.clients.admin.TopicDescription topicPartitionInfo =
                     Optional.ofNullable(
-                            admin.describeTopics(Collections.singletonList(topicName)).values().get(topicName))
+                            admin
+                                .describeTopics(Collections.singletonList(topicName))
+                                .values()
+                                .get(topicName))
                         .orElseThrow(
                             () ->
                                 new IllegalArgumentException(

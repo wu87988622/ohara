@@ -92,6 +92,9 @@ class Configurator private[configurator] (configuredHostname: String,
       initializationTimeout.toMillis milliseconds
     )
 
+  /**
+    *Akka use rejection to wrap error message
+    */
   private[this] val rejectionHandler =
     RejectionHandler
       .newBuilder()
@@ -105,6 +108,10 @@ class Configurator private[configurator] (configuredHostname: String,
             case e: Throwable =>
               throw new IllegalArgumentException(s"Ohata Error occur :${e.getMessage}.")
           }
+      }
+      //which handles undefined Rejections to Exceptions , like ValidationRejection(java.lang.NumberFormatException)
+      .handle {
+        case otherRejection => { throw new IllegalArgumentException(s"Ohata Error occur : ${otherRejection}") }
       }
       .result()
 

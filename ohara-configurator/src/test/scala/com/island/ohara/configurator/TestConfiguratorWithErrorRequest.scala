@@ -58,6 +58,10 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
         TIMEOUT
       )
     }
+    def doRequestWithEntity[T](url: String, entity: RequestEntity, method: HttpMethod)(
+      implicit rm: RootJsonFormat[T]): T = {
+      Await.result(Http().singleRequest(HttpRequest(method, url, entity = entity)).flatMap(unmarshal[T]), TIMEOUT)
+    }
   }
 
   object ExceptionType {
@@ -145,6 +149,20 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
     verify[RdbQuery]
   }
 
+  @Test
+  def testExceptionWithSpecialCase(): Unit = {
+    val entity = HttpEntity(ContentTypes.`application/json`, """{"hostname":"", "port":"", "user":"", "password":""}""");
+
+    def url(implicit formatter: ValidationCommandFormat[FtpValidationRequest]) = {
+      val domain = ip
+      formatter.format(domain)
+    }
+    val e = the[ExceptionType.error_exception] thrownBy TestClient
+      .doRequestWithEntity[MyRequest](url, entity, HttpMethods.PUT)
+
+    e.getMessage.contains("ValidationRejection") shouldBe true
+    e.getMessage.contains("NumberFormatException") shouldBe true
+  }
   @Test
   def errorRequestWithConfiguratorClient(): Unit = {
 
