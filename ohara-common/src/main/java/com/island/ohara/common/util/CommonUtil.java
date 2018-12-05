@@ -121,7 +121,7 @@ public final class CommonUtil {
    * @return false if timeout and (useException = true). Otherwise, the return value is true
    */
   public static Boolean await(Supplier<Boolean> f, Duration d) {
-    return await(f, d, Duration.ofMillis(500), true);
+    return await(f, d, Duration.ofMillis(1500), true);
   }
 
   /**
@@ -136,7 +136,7 @@ public final class CommonUtil {
   public static Boolean await(
       Supplier<Boolean> f, Duration d, Duration freq, Boolean useException) {
     long startTs = current();
-    while (d.toMillis() >= current() - startTs) {
+    while (d.toMillis() >= (current() - startTs)) {
       if (f.get()) return true;
       else {
         try {

@@ -10,6 +10,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 class TestOhara786 extends With3Brokers3Workers with Matchers {
+
   private[this] val configurator =
     Configurator
       .builder()

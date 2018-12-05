@@ -8,7 +8,6 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 
 class TestKafkaUtil extends With3Brokers with Matchers {
-
   @Test
   def testAddPartitions(): Unit = {
     val topicName = methodName

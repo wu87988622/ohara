@@ -5,8 +5,9 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.integration.With3Brokers
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -14,7 +15,6 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestCallQueue extends With3Brokers with Matchers {
-
   private[this] val requestTopicName = random()
   private[this] val responseTopicName = random()
   private[this] val defaultServerBuilder =

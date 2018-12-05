@@ -17,7 +17,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
-
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
   private[this] val kafkaClient = KafkaClient.of(testUtil.brokersConnProps)
   private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))

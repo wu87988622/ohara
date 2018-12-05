@@ -1,11 +1,10 @@
 package com.island.ohara.kafka;
 
-import org.apache.kafka.common.config.TopicConfig;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.kafka.common.config.TopicConfig;
 
 /**
  * a helper class used to create the kafka topic. all member are protected since we have to

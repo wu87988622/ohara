@@ -15,7 +15,6 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 
 class TestConnectorClient extends With3Brokers3Workers with Matchers {
-
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   @After

@@ -114,7 +114,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         ftpClient.listFileNames(props.completedFolder.get).size == outputCount &&
         ftpClient.listFileNames(props.errorFolder).size == errorCount
       },
-      Duration.ofSeconds(20)
+      Duration.ofSeconds(30)
     )
   }
 
@@ -152,7 +152,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // put a duplicate file
       setupInput()
       checkFileCount(0, 2, 0)
-      records = pollData(topicName, 5 second)
+      records = pollData(topicName, 10 second)
       records.size shouldBe data.length
 
     } finally connectorClient.delete(connectorName)
@@ -363,7 +363,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 1)
 
-      val records = pollData(topicName, 5 second)
+      val records = pollData(topicName, 10 second)
       records.size shouldBe 0
 
       // add a file to input again

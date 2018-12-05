@@ -2,7 +2,6 @@ package com.island.ohara.configurator.store
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, TimeUnit}
-
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.integration.With3Brokers

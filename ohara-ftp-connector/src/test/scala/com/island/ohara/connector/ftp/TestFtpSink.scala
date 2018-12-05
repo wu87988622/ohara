@@ -55,6 +55,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
 }
 
 class TestFtpSink extends With3Brokers3Workers with Matchers {
+
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   private[this] val TOPIC = TestFtpSink.TOPIC
@@ -331,7 +332,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
-      TimeUnit.SECONDS.sleep(2)
+      TimeUnit.SECONDS.sleep(5)
       ftpClient.listFileNames(props.output).size shouldBe 0
     } finally connectorClient.delete(connectorName)
   }

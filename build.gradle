@@ -16,13 +16,9 @@ ext {
 
 subprojects {
   if (it.name != 'ohara-manager') {
-    if (it.name == 'ohara-common')
+    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util')
       apply plugin: 'java'
-    else if (it.name == 'ohara-testing-util') {
-      apply plugin: 'scala'
-      apply plugin: 'java'
-
-    } else apply plugin: 'scala'
+    else apply plugin: 'scala'
     test {
       maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()
       minHeapSize = "256m"

@@ -9,7 +9,6 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 class TestImportData extends With3Brokers with Matchers {
-
   val TOPIC_CARRIERS = "carriers"
   val TOPIC_PLANE = "plane"
   val TOPIC_AIRPORT = "airport"
