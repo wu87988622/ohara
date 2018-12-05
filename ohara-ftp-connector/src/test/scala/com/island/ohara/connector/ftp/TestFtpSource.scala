@@ -7,7 +7,7 @@ import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.{Consumer, ConsumerRecord}
+import com.island.ohara.kafka.{Consumer, ConsumerRecord, KafkaUtil}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -82,6 +82,16 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     rebuild(props.completedFolder.get)
     setupInput()
     ftpClient.listFileNames(props.inputFolder).isEmpty shouldBe false
+    KafkaUtil.createTopic(testUtil.brokersConnProps(), methodName(), 1, 1)
+    val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps(), methodName())
+    topicInfo.numberOfPartitions() shouldBe 1
+    topicInfo.numberOfReplications() shouldBe 1
+  }
+
+  @After
+  def cleanTopic(): Unit = {
+    if (KafkaUtil.exist(testUtil.brokersConnProps(), methodName()))
+      KafkaUtil.deleteTopic(testUtil.brokersConnProps(), methodName())
   }
 
   private[this] def pollData(topicName: String,
