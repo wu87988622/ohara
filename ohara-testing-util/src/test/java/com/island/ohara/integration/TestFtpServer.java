@@ -12,7 +12,7 @@ public class TestFtpServer extends MediumTest {
   @Test(expected = IllegalArgumentException.class)
   public void testErrorFtpConnectionString() {
     // a random string
-    FtpServer.parseString("adadasdasd");
+    FtpServer.of("adadasdasd");
   }
 
   @Test
@@ -22,11 +22,10 @@ public class TestFtpServer extends MediumTest {
     String host = "host";
     int port = 123;
 
-    FtpServer.FtpServerInfo result =
-        FtpServer.parseString(user + ":" + password + "@" + host + ":" + port);
+    FtpServer result = FtpServer.of(user + ":" + password + "@" + host + ":" + port);
     Assert.assertEquals(user, result.user());
     Assert.assertEquals(password, result.password());
-    Assert.assertEquals(host, result.host());
+    Assert.assertEquals(host, result.hostname());
     Assert.assertEquals(port, result.port());
   }
 

@@ -47,49 +47,6 @@ public interface FtpServer extends AutoCloseable {
   /** @return true if this ftp server is generated locally. */
   boolean isLocal();
 
-  final class FtpServerInfo {
-    private final String user;
-    private final String password;
-    private final String host;
-    private final int port;
-
-    private FtpServerInfo(String user, String password, String host, int port) {
-      this.user = user;
-      this.password = password;
-      this.host = host;
-      this.port = port;
-    }
-
-    public String user() {
-      return user;
-    }
-
-    public String password() {
-      return password;
-    }
-
-    public String host() {
-      return host;
-    }
-
-    public int port() {
-      return port;
-    }
-  }
-
-  static FtpServerInfo parseString(String ftpString) {
-    // format => user:password@hostname:port
-    try {
-      String user = ftpString.split(":")[0];
-      String password = ftpString.split("@")[0].split(":")[1];
-      String host = ftpString.split("@")[1].split(":")[0];
-      int port = Integer.parseInt(ftpString.split("@")[1].split(":")[1]);
-      return new FtpServerInfo(user, password, host, port);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("invalid value from " + FTP_SERVER, e);
-    }
-  }
-
   /**
    * create an embedded ftp server with specific port
    *
@@ -182,11 +139,24 @@ public interface FtpServer extends AutoCloseable {
     return of(System.getenv(FTP_SERVER));
   }
 
-  static FtpServer of(String ftpServer) {
-    return Optional.ofNullable(ftpServer)
+  static FtpServer of(String ftpString) {
+    return Optional.ofNullable(ftpString)
         .map(
             f -> {
-              FtpServerInfo ftpServerInfo = parseString(f);
+              String user;
+              String password;
+              String host;
+              int port;
+
+              try {
+                user = ftpString.split(":")[0];
+                password = ftpString.split("@")[0].split(":")[1];
+                host = ftpString.split("@")[1].split(":")[0];
+                port = Integer.parseInt(ftpString.split("@")[1].split(":")[1]);
+              } catch (Exception e) {
+                throw new IllegalArgumentException("invalid value from " + FTP_SERVER, e);
+              }
+              // FtpServerInfo ftpServerInfo = parseString(f);
               return (FtpServer)
                   new FtpServer() {
                     @Override
@@ -196,22 +166,22 @@ public interface FtpServer extends AutoCloseable {
 
                     @Override
                     public String hostname() {
-                      return ftpServerInfo.host();
+                      return host;
                     }
 
                     @Override
                     public int port() {
-                      return ftpServerInfo.port();
+                      return port;
                     }
 
                     @Override
                     public String user() {
-                      return ftpServerInfo.user();
+                      return user;
                     }
 
                     @Override
                     public String password() {
-                      return ftpServerInfo.password();
+                      return password;
                     }
 
                     @Override
@@ -226,7 +196,7 @@ public interface FtpServer extends AutoCloseable {
                     }
                   };
             })
-        .orElseGet(() -> local(0, IntStream.range(1, NUMBER_OF_SERVERS).map(x -> 0).toArray()));
+        .orElseGet(() -> local(0, IntStream.range(0, NUMBER_OF_SERVERS).map(x -> 0).toArray()));
   }
 
   static String mkPortString(List<Integer> ports) {

@@ -19,7 +19,7 @@ public class TestDatabase extends MediumTest {
     String dbName = "dbName";
 
     // the string should start with "jdbc"
-    Database.parseString(
+    Database.of(
         "abc:"
             + dbInstance
             + ":"
@@ -34,7 +34,7 @@ public class TestDatabase extends MediumTest {
             + dbName);
 
     // a random string
-    Database.parseString("adadasdasd");
+    Database.of("adadasdasd");
   }
 
   @Test
@@ -46,8 +46,8 @@ public class TestDatabase extends MediumTest {
     int port = 123;
     String dbName = "dbName";
 
-    Database.ConnectionInfo result =
-        Database.parseString(
+    Database result =
+        Database.of(
             "jdbc:"
                 + dbInstance
                 + ":"
@@ -61,12 +61,11 @@ public class TestDatabase extends MediumTest {
                 + "/"
                 + dbName);
 
-    Assert.assertEquals(dbInstance, result.getDbInstance());
-    Assert.assertEquals(user, result.getUser());
-    Assert.assertEquals(password, result.getPassword());
-    Assert.assertEquals(host, result.getHost());
-    Assert.assertEquals(port, result.getPort());
-    Assert.assertEquals(dbName, result.getDbName());
+    Assert.assertEquals(user, result.user());
+    Assert.assertEquals(password, result.password());
+    Assert.assertEquals(host, result.hostname());
+    Assert.assertEquals(port, result.port());
+    Assert.assertEquals(dbName, result.databaseName());
   }
 
   @Test

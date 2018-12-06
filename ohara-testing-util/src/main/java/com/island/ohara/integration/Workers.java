@@ -177,7 +177,7 @@ public interface Workers extends AutoCloseable {
             () ->
                 local(
                     brokers.get(),
-                    IntStream.range(1, NUMBER_OF_WORKERS)
+                    IntStream.range(0, NUMBER_OF_WORKERS)
                         .map(x -> Integration.availablePort())
                         .toArray()));
   }
