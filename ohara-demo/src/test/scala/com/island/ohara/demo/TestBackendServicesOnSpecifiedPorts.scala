@@ -18,51 +18,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestBackendServices extends LargeTest with Matchers {
+class TestBackendServicesOnSpecifiedPorts extends LargeTest with Matchers {
 
   @Test
-  def testDefaultPorts(): Unit = {
-    Backend.run(
-      ServicePorts.default,
-      (configurator, zk, brokers, workers, database, ftp) => {
-        implicit val actorSystem: ActorSystem = ActorSystem(methodName)
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
-        val result = Await.result(
-          Http()
-            .singleRequest(HttpRequest(HttpMethods.GET, s"http://localhost:${configurator.port}/$PRIVATE_API/services"))
-            .flatMap(res => {
-              if (res.status.isSuccess()) Unmarshal(res.entity).to[Services]
-              else
-                Future.failed(new IllegalArgumentException(s"Failed to create table. error:${res.status.intValue()}"))
-            }),
-          20 seconds
-        )
-        result.zookeeper shouldBe zk.connectionProps
-        result.brokers shouldBe brokers.connectionProps
-        result.workers shouldBe workers.connectionProps
-
-        result.ftpServer.hostname shouldBe ftp.hostname
-        result.ftpServer.port shouldBe ftp.port
-        result.ftpServer.user shouldBe ftp.user
-        result.ftpServer.password shouldBe ftp.password
-
-        result.database.url shouldBe database.url
-        result.database.user shouldBe database.user
-        result.database.password shouldBe database.password
-      }
-    )
-  }
-
-  @Test
-  def testSpecificPorts(): Unit = {
+  def test(): Unit = {
     val ports = ServicePorts(
-      dbPort = Integration.availablePort().toInt,
-      ftpPort = Integration.availablePort().toInt,
+      dbPort = Integration.availablePort(),
+      ftpPort = Integration.availablePort(),
       ftpDataPorts = Seq(Integration.availablePort()),
-      configuratorPort = Integration.availablePort().toInt,
-      zkPort = Integration.availablePort().toInt,
-      brokersPort = Seq.fill(3)(Integration.availablePort().toInt).toArray,
-      workersPort = Seq.fill(3)(Integration.availablePort().toInt).toArray
+      configuratorPort = Integration.availablePort(),
+      zkPort = Integration.availablePort(),
+      brokersPort = Seq.fill(3)(Integration.availablePort()).toArray,
+      workersPort = Seq.fill(3)(Integration.availablePort()).toArray
     )
     Backend.run(
       ports,
