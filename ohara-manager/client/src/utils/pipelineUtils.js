@@ -1,9 +1,9 @@
-import { ICON_KEYS } from 'constants/pipelines';
+import { CONNECTOR_KEYS } from 'constants/pipelines';
 
 const getKeys = kind => {
-  return Object.keys(ICON_KEYS).reduce((acc, iconKey) => {
+  return Object.keys(CONNECTOR_KEYS).reduce((acc, iconKey) => {
     if (iconKey.includes(kind)) {
-      acc.push(ICON_KEYS[iconKey]);
+      acc.push(CONNECTOR_KEYS[iconKey]);
     }
 
     return acc;

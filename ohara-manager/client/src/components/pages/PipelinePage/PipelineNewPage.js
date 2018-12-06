@@ -8,6 +8,8 @@ import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
+import * as PIPELINES from 'constants/pipelines';
+import * as URLS from 'constants/urls';
 import PipelineSourcePage from './PipelineSourcePage';
 import PipelineSourceFtpPage from './PipelineSourceFtpPage';
 import PipelineTopicPage from './PipelineTopicPage';
@@ -21,9 +23,7 @@ import { H2, H3 } from 'common/Headings';
 import { Box } from 'common/Layout';
 import { isSource, isSink } from 'utils/pipelineUtils';
 import { lightBlue, red, redHover, blue } from 'theme/variables';
-import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
-import { ICON_KEYS, ICON_MAPS } from 'constants/pipelines';
 import {
   fetchPipeline,
   updatePipeline,
@@ -198,7 +198,7 @@ class PipelineNewPage extends React.Component {
         name,
         type,
         uuid,
-        icon: ICON_MAPS[type],
+        icon: PIPELINES.ICON_MAPS[type],
         id: graph[idx] ? graph[idx].id : uuid4(),
         isActive: graph[idx] ? graph[idx].isActive : false,
         to: '?',
@@ -370,7 +370,7 @@ class PipelineNewPage extends React.Component {
     } = this.state;
 
     if (isRedirect) {
-      return <Redirect to={PIPELINE} />;
+      return <Redirect to={URLS.PIPELINE} />;
     }
 
     if (_.isEmpty(pipelines)) return null;
@@ -383,7 +383,12 @@ class PipelineNewPage extends React.Component {
       ? 'fa-stop-circle'
       : 'fa-play-circle';
 
-    const { jdbcSource, ftpSource, hdfsSink, ftpSink } = ICON_KEYS;
+    const {
+      jdbcSource,
+      ftpSource,
+      hdfsSink,
+      ftpSink,
+    } = PIPELINES.CONNECTOR_KEYS;
 
     return (
       <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>

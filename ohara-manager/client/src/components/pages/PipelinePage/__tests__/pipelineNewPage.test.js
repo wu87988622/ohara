@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 import toastr from 'toastr';
 
 import PipelineNewPage from '../PipelineNewPage';
-import { ICON_KEYS } from 'constants/pipelines';
+import { CONNECTOR_KEYS } from 'constants/pipelines';
 import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
@@ -95,7 +95,7 @@ describe('<PipelineNewPage />', () => {
     const data = {
       result: {
         name: 'newPipeline',
-        objects: [{ kind: ICON_KEYS.topic, name: 'a', uuid: '1' }],
+        objects: [{ kind: CONNECTOR_KEYS.topic, name: 'a', uuid: '1' }],
         rules: {},
       },
     };
@@ -123,9 +123,9 @@ describe('<PipelineNewPage />', () => {
         name: 'test',
         status: 'Stopped',
         objects: [
-          { kind: ICON_KEYS.jdbcSource, name: 'c', uuid: '3' },
-          { kind: ICON_KEYS.hdfsSink, name: 'b', uuid: '2' },
-          { kind: ICON_KEYS.topic, name: 'a', uuid: '1' },
+          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', uuid: '3' },
+          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', uuid: '2' },
+          { kind: CONNECTOR_KEYS.topic, name: 'a', uuid: '1' },
         ],
         rules: {},
       },
@@ -157,9 +157,9 @@ describe('<PipelineNewPage />', () => {
       result: {
         name: 'test',
         objects: [
-          { kind: ICON_KEYS.jdbcSource, name: 'c', uuid: '3' },
-          { kind: ICON_KEYS.hdfsSink, name: 'b', uuid: '2' },
-          { kind: ICON_KEYS.topic, name: 'a', uuid: '1' },
+          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', uuid: '3' },
+          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', uuid: '2' },
+          { kind: CONNECTOR_KEYS.topic, name: 'a', uuid: '1' },
         ],
         rules: {},
       },

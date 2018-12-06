@@ -4,6 +4,9 @@ import { shallow } from 'enzyme';
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
 import { getTestById } from 'utils/testUtils';
+import { fetchCluster } from 'utils/pipelineToolbarUtils';
+
+jest.mock('utils/pipelineToolbarUtils');
 
 const props = {
   match: {
@@ -30,6 +33,10 @@ const props = {
 describe('<PipelineToolbar />', () => {
   let wrapper;
   beforeEach(() => {
+    fetchCluster.mockImplementation(() =>
+      Promise.resolve({ sources: [], sinks: [] }),
+    );
+
     wrapper = shallow(<PipelineToolbar {...props} />);
   });
 
@@ -60,23 +67,19 @@ describe('<PipelineToolbar />', () => {
     ).toBe('Saving...');
   });
 
-  it('renders JDBC source icon', () => {
-    expect(wrapper.find(getTestById('toolbar-source')).length).toBe(1);
-  });
-
-  it('renders FTP source icon', () => {
-    expect(wrapper.find(getTestById('toolbar-source-ftp')).length).toBe(1);
-  });
-
-  it('renders HDFS sink icon', () => {
-    expect(wrapper.find(getTestById('toolbar-sink')).length).toBe(1);
-  });
-
-  it('renders FTP sink icon', () => {
-    expect(wrapper.find(getTestById('toolbar-source-ftp')).length).toBe(1);
+  it('renders sources icon', () => {
+    expect(wrapper.find(getTestById('toolbar-sources')).length).toBe(1);
   });
 
   it('renders topic icon', () => {
-    expect(wrapper.find(getTestById('toolbar-topic')).length).toBe(1);
+    expect(wrapper.find(getTestById('toolbar-topics')).length).toBe(1);
+  });
+
+  it('renders sink icon', () => {
+    expect(wrapper.find(getTestById('toolbar-sinks')).length).toBe(1);
+  });
+
+  it('renders streams icon', () => {
+    expect(wrapper.find(getTestById('toolbar-streams')).length).toBe(1);
   });
 });
