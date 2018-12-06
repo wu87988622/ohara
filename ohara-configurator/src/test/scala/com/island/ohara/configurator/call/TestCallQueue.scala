@@ -5,9 +5,8 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers
-import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -168,33 +167,6 @@ class TestCallQueue extends With3Brokers with Matchers {
       Iterator.continually(server.take(1 second)).takeWhile(_.isDefined).map(_.get)
     })
     tasks.size shouldBe requestCount
-
-    tasks.foreach(_.complete(responseData))
-
-    requests.foreach(Await.result(_, 10 seconds) match {
-      case Right(r) => r shouldBe responseData
-      case _        => throw new RuntimeException("All requests should work")
-    })
-  }
-
-  @Test
-  def testMultiRequestFromDifferentClients(): Unit = {
-    val clientCount = 10
-    val clients = 0 until clientCount map { _ =>
-      CallQueue
-        .clientBuilder()
-        .brokers(testUtil.brokersConnProps)
-        .requestTopic(requestTopicName)
-        .responseTopic(responseTopicName)
-        .build[SourceRequest, Source]()
-    }
-    val requests = clients.map(_.request(requestData))
-    // wait the one from servers receive the request
-    CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == clientCount, Duration.ofSeconds(10))
-    val tasks = servers.flatMap(server => {
-      Iterator.continually(server.take(1 second)).takeWhile(_.isDefined).map(_.get)
-    })
-    tasks.size shouldBe clientCount
 
     tasks.foreach(_.complete(responseData))
 
