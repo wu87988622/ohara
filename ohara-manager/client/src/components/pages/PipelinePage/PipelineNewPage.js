@@ -193,17 +193,20 @@ class PipelineNewPage extends React.Component {
     const { objects, rules } = pipelines;
     const { graph } = this.state;
 
-    const _graph = objects.map(({ kind: type, uuid, name }, idx) => {
-      return {
-        name,
-        type,
-        uuid,
-        icon: PIPELINES.ICON_MAPS[type],
-        id: graph[idx] ? graph[idx].id : uuid4(),
-        isActive: graph[idx] ? graph[idx].isActive : false,
-        to: '?',
-      };
-    });
+    const _graph = objects.map(
+      ({ kind: type, uuid, name, state = '' }, idx) => {
+        return {
+          state,
+          name,
+          type,
+          uuid,
+          icon: PIPELINES.ICON_MAPS[type],
+          id: graph[idx] ? graph[idx].id : uuid4(),
+          isActive: graph[idx] ? graph[idx].isActive : false,
+          to: '?',
+        };
+      },
+    );
 
     const froms = Object.keys(rules);
 
@@ -338,6 +341,9 @@ class PipelineNewPage extends React.Component {
           };
         });
       }
+
+      const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
+      this.fetchPipeline(pipelineId);
     } else {
       toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
     }

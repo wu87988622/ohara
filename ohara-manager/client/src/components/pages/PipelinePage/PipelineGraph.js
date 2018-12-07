@@ -1,12 +1,25 @@
 import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import * as d3 from 'd3v4';
 import dagreD3 from 'dagre-d3';
+import * as d3 from 'd3v4';
 
+import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import { lightBlue, lightestBlue, whiteSmoke, blue } from 'theme/variables';
+import {
+  white,
+  blue,
+  green,
+  lightBlue,
+  lightestBlue,
+  lighterGray,
+  whiteSmoke,
+  radiusRounded,
+  radiusNormal,
+  shadowNormal,
+  dimBlue,
+} from 'theme/variables';
 
 const Wrapper = styled(Box)`
   width: 65%;
@@ -28,28 +41,102 @@ const Svg = styled.svg`
   width: 100%;
   height: 100%;
 
-  .node circle {
-    fill: ${whiteSmoke};
+  .node {
+    circle,
+    rect {
+      fill: transparent;
+      cursor: pointer;
+      border: 1px solid ${whiteSmoke};
+    }
+  }
+
+  .node-graph {
     cursor: pointer;
   }
 
-  .node.is-active circle {
-    fill: ${blue};
+  .node-label {
+    font-size: 14px;
+    color: ${lightBlue};
+  }
+
+  .node-topic {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid ${lighterGray};
+    border-radius: ${radiusRounded};
+    box-shadow: ${shadowNormal};
+
+    .node-text-wrapper {
+      position: absolute;
+      top: calc(100% + 10px);
+    }
+
+    /* type is not necessary for topics */
+    .node-type {
+      display: none;
+    }
+
+    .node-icon {
+      color: ${lightestBlue};
+    }
+  }
+
+  .node-connector {
+    width: 200px;
+    min-height: 90px;
+    padding: 15px 20px;
+    border: 1px solid ${lighterGray};
+    border-radius: ${radiusNormal};
+    box-shadow: ${shadowNormal};
+    display: flex;
+
+    .node-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      margin-right: 8px;
+      color: ${white};
+      border-radius: ${radiusRounded};
+      background-color: ${lightestBlue};
+    }
+
+    .node-text-wrapper {
+      display: flex;
+      flex-direction: column;
+      color: ${dimBlue};
+    }
+
+    .node-label {
+      margin-bottom: 5px;
+    }
+
+    .node-type {
+      font-size: 11px;
+      width: 100px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    &.is-running {
+      .node-icon {
+        background-color: ${green};
+      }
+    }
   }
 
   .fa {
-    cursor: pointer;
-    color: ${lightestBlue};
     font-size: 16px;
   }
 
   .icon-hadoop {
     font-size: 25px;
-  }
-
-  text {
-    fill: white;
-    text-transform: uppercase;
   }
 
   path {
@@ -116,13 +203,23 @@ class PipelineGraph extends React.Component {
 
   renderGraph = () => {
     const g = new dagreD3.graphlib.Graph().setGraph({});
+    const { graph } = this.props;
 
-    this.props.graph.forEach(({ to, id, icon, isActive }) => {
-      const props = { width: 60, height: 60, shape: 'circle' };
+    graph.forEach(({ name, type, to, id, icon, isActive, state = '' }) => {
+      const isTopic = type === 'topic';
+      const props = { shape: isTopic ? 'circle' : 'rect' };
+      const displayType = type.split('.').pop();
 
       const isActiveCls = isActive ? 'is-active' : '';
-      const html = `<div class="node-graph ${isActiveCls}">
-        <i class="fa ${icon}"></i>
+      const topicCls = isTopic ? 'node-topic' : 'node-connector';
+      const stateCls = !_.isEmptyStr(state) ? `is-${state.toLowerCase()}` : '';
+
+      const html = `<div class="node-graph ${topicCls} ${isActiveCls} ${stateCls}">
+        <span class="node-icon"><i class="fa ${icon}"></i></span>
+        <div class="node-text-wrapper">
+          <span class="node-label">${name}</span>
+          <span class="node-type">${displayType}</span>
+        </div>
       </div>`;
 
       g.setNode(id, {
@@ -134,7 +231,7 @@ class PipelineGraph extends React.Component {
       });
 
       if (to) {
-        const dests = this.props.graph.map(x => x.id);
+        const dests = graph.map(x => x.id);
 
         if (!dests.includes(to)) return;
 

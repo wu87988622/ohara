@@ -474,6 +474,7 @@ class PipelineSourceFtpPage extends React.Component {
     }
 
     const sourceId = _.get(match, 'params.sourceId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
     const sourceIdPlaceHolder = '__';
     const isCreate =
       _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
@@ -505,6 +506,7 @@ class PipelineSourceFtpPage extends React.Component {
       : await updateSource({ uuid: sourceId, params });
 
     const _sourceId = _.get(res, 'data.result.uuid', null);
+    await this.fetchPipeline(pipelineId);
 
     if (_sourceId) {
       updateHasChanges(false);

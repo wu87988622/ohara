@@ -7,11 +7,11 @@ export const CONNECTOR_KEYS = {
 };
 
 export const ICON_MAPS = {
-  [CONNECTOR_KEYS.jdbcSource]: 'fa-database',
-  [CONNECTOR_KEYS.ftpSource]: 'fa-upload',
+  [CONNECTOR_KEYS.jdbcSource]: 'fa-file-import',
+  [CONNECTOR_KEYS.ftpSource]: 'fa-file-import',
   [CONNECTOR_KEYS.topic]: 'fa-list-ul',
-  [CONNECTOR_KEYS.hdfsSink]: 'icon-hadoop',
-  [CONNECTOR_KEYS.ftpSink]: 'fa-download',
+  [CONNECTOR_KEYS.hdfsSink]: 'fa-file-export',
+  [CONNECTOR_KEYS.ftpSink]: 'fa-file-export',
 };
 
 export const TABLE_HEADERS = ['connector name', 'version', 'revision'];

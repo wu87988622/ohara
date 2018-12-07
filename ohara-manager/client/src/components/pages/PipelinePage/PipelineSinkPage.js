@@ -63,6 +63,7 @@ class PipelineSinkPage extends React.Component {
   };
 
   state = {
+    name: '',
     topics: [],
     currTopic: {},
     hdfses: [],
@@ -148,6 +149,7 @@ class PipelineSinkPage extends React.Component {
 
     if (isSuccess) {
       const { currHdfs } = this.state;
+      const { name } = res.data.result;
       const {
         topic,
         hdfs,
@@ -167,6 +169,7 @@ class PipelineSinkPage extends React.Component {
       const _needHeader = needHeader === 'true' ? true : false;
 
       this.setState({
+        name,
         currTopic,
         writePath,
         currHdfs: _currHdfs,
@@ -282,6 +285,7 @@ class PipelineSinkPage extends React.Component {
   save = _.debounce(async () => {
     const { updateHasChanges, history, match, isPipelineRunning } = this.props;
     const {
+      name,
       currHdfs,
       currTopic,
       writePath,
@@ -298,13 +302,14 @@ class PipelineSinkPage extends React.Component {
       return;
     }
 
+    const pipelineId = _.get(match, 'params.pipelineId', null);
     const sinkId = _.get(match, 'params.sinkId', null);
     const sourceId = _.get(match, 'params.sourceId', null);
     const isCreate = _.isNull(sinkId) ? true : false;
     const hasSourceId = _.isNull(sourceId) ? false : true;
 
     const params = {
-      name: 'untitled sink',
+      name,
       schema: [],
       className: 'hdfs',
       topics: [currTopic.uuid],
@@ -330,6 +335,7 @@ class PipelineSinkPage extends React.Component {
       : await updateSink({ uuid: sinkId, params });
 
     const uuid = _.get(res, 'data.result.uuid');
+    await this.fetchPipeline(pipelineId);
 
     if (uuid) {
       updateHasChanges(false);
@@ -340,6 +346,7 @@ class PipelineSinkPage extends React.Component {
 
   render() {
     const {
+      name,
       topics,
       currTopic,
       hdfses,
@@ -362,6 +369,17 @@ class PipelineSinkPage extends React.Component {
       <Box>
         <H5Wrapper>HDFS</H5Wrapper>
         <form>
+          <FormGroup data-testid="name">
+            <Label>Name</Label>
+            <Input
+              name="name"
+              width="100%"
+              placeholder="HDFS sink name"
+              value={name}
+              data-testid="name-input"
+              handleChange={this.handleChangeInput}
+            />
+          </FormGroup>
           <FormGroup data-testid="read-from-topic">
             <Label>Read from topic</Label>
             <Select

@@ -84,6 +84,7 @@ class PipelineSourcePage extends React.Component {
   dbSchemasHeader = ['Column name', 'Column type'];
 
   state = {
+    name: '',
     databases: [],
     currDatabase: {},
     tables: [],
@@ -183,6 +184,8 @@ class PipelineSourcePage extends React.Component {
     }
 
     if (isSuccess) {
+      const { name } = res.data.result;
+
       const {
         'source.timestamp.column.name': timestamp,
         'source.db.username': username,
@@ -211,6 +214,7 @@ class PipelineSourcePage extends React.Component {
       const isFormDisabled = !hasValidProps.every(p => p === true);
 
       this.setState({
+        name,
         isFormDisabled,
         currDatabase,
         tables,
@@ -325,6 +329,7 @@ class PipelineSourcePage extends React.Component {
   save = _.debounce(async () => {
     const { match, history, updateHasChanges, isPipelineRunning } = this.props;
     const {
+      name,
       currDatabase,
       currWriteTopic,
       currTable,
@@ -341,12 +346,13 @@ class PipelineSourcePage extends React.Component {
     }
 
     const sourceId = _.get(match, 'params.sourceId', null);
+    const pipelineId = _.get(match, 'params.pipelineId', null);
     const sourceIdPlaceHolder = '__';
     const isCreate =
       _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
 
     const params = {
-      name: 'untitled source',
+      name,
       schema: [],
       className: 'jdbc',
       topics: [currWriteTopic.uuid],
@@ -368,6 +374,7 @@ class PipelineSourcePage extends React.Component {
       : await updateSource({ uuid: sourceId, params });
 
     const _sourceId = _.get(res, 'data.result.uuid', null);
+    await this.fetchPipeline(pipelineId);
 
     if (_sourceId) {
       updateHasChanges(false);
@@ -382,6 +389,7 @@ class PipelineSourcePage extends React.Component {
 
   render() {
     const {
+      name,
       url,
       username,
       password,
@@ -405,6 +413,18 @@ class PipelineSourcePage extends React.Component {
         <Box>
           <H5Wrapper>JDBC connection</H5Wrapper>
           <Fieldset disabled={isBtnWorking}>
+            <FormGroup data-testid="name">
+              <Label>Name</Label>
+              <Input
+                name="name"
+                width="100%"
+                placeholder="JDBC source name"
+                value={name}
+                data-testid="name-input"
+                handleChange={this.handleChangeInput}
+              />
+            </FormGroup>
+
             <FormGroup>
               <Label>Database</Label>
               <Select

@@ -481,6 +481,7 @@ class PipelineSinkFtpPage extends React.Component {
       return;
     }
 
+    const pipelineId = _.get(match, 'params.pipelineId', null);
     const sourceId = _.get(match, 'params.sourceId', null);
     const sinkId = _.get(match, 'params.sinkId', null);
     const isCreate = _.isNull(sinkId) ? true : false;
@@ -511,6 +512,7 @@ class PipelineSinkFtpPage extends React.Component {
       : await updateSink({ uuid: sinkId, params });
 
     const _sinkId = _.get(res, 'data.result.uuid', null);
+    await this.fetchPipeline(pipelineId);
 
     if (_sinkId) {
       updateHasChanges(false);

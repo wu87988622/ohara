@@ -37,7 +37,7 @@ describe('update()', () => {
     expect(updateGraph).toHaveBeenCalledTimes(1);
     expect(updateGraph).toHaveBeenCalledWith(
       {
-        icon: 'fa-upload',
+        icon: 'fa-file-import',
         id: expect.any(String),
         isActive: false,
         name: expect.any(String),
