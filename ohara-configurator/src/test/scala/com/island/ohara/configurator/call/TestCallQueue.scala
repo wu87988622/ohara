@@ -176,27 +176,6 @@ class TestCallQueue extends With3Brokers with Matchers {
     })
   }
 
-  @Test
-  def testCloseClientWithOnFlyRequests(): Unit = {
-    val requestCount = 10
-    val requestTopic = newTopic()
-    val responseTopic = newTopic()
-    val invalidClient: CallQueueClient[SourceRequest, Source] =
-      CallQueue
-        .clientBuilder()
-        .brokers(testUtil.brokersConnProps)
-        .requestTopic(requestTopic)
-        .responseTopic(responseTopic)
-        .build[SourceRequest, Source]()
-    val requests = try 0 until requestCount map { _ =>
-      invalidClient.request(requestData)
-    } finally invalidClient.close()
-    requests.foreach(Await.result(_, 15 seconds) match {
-      case Left(exception) => exception.message shouldBe CallQueue.TERMINATE_TIMEOUT_EXCEPTION.getMessage
-      case _               => throw new RuntimeException("All requests should fail")
-    })
-  }
-
   private[this] def newTopic(): String = {
     val name = random()
     KafkaUtil.createTopic(testUtil.brokersConnProps, name, 1, 1)

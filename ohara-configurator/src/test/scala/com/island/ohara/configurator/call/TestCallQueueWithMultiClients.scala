@@ -27,13 +27,6 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
     defaultServerBuilder.build[SourceRequest, Source]()
   private[this] val server2: CallQueueServer[SourceRequest, Source] =
     defaultServerBuilder.build[SourceRequest, Source]()
-  private[this] val client: CallQueueClient[SourceRequest, Source] =
-    CallQueue
-      .clientBuilder()
-      .brokers(testUtil.brokersConnProps)
-      .requestTopic(requestTopicName)
-      .responseTopic(responseTopicName)
-      .build[SourceRequest, Source]()
 
   private[this] val servers = Seq(server0, server1, server2)
 
@@ -56,8 +49,6 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
       topics = Seq.empty,
       state = None
     )
-  private[this] val error = new IllegalArgumentException("YOU SHOULD NOT PASS")
-
   @Test
   def test(): Unit = {
     val clientCount = 10
@@ -86,9 +77,6 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = {
-    servers.foreach(CloseOnce.close)
-    CloseOnce.close(client)
-  }
+  def tearDown(): Unit = servers.foreach(CloseOnce.close)
 
 }
