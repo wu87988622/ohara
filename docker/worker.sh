@@ -10,7 +10,6 @@ if [[ -f "$CONFIG" ]]; then
 fi
 
 # default setting
-echo "group.id=connect-cluster" >> "$CONFIG"
 echo "key.converter=org.apache.kafka.connect.json.JsonConverter" >> "$CONFIG"
 echo "value.converter=org.apache.kafka.connect.json.JsonConverter" >> "$CONFIG"
 echo "key.converter.schemas.enable=true" >> "$CONFIG"
@@ -28,39 +27,39 @@ if [[ -z "${WORKER_GROUP}" ]]; then
 fi
 echo "group.id=$WORKER_GROUP" >> "$CONFIG"
 
-if [[ -z "${OFFSET_TOPIC}" ]]; then
-  OFFSET_TOPIC="connect-offsets"
+if [[ -z "${WORKER_OFFSET_TOPIC}" ]]; then
+  WORKER_OFFSET_TOPIC="connect-offsets"
 fi
-echo "offset.storage.topic=$OFFSET_TOPIC" >> "$CONFIG"
+echo "offset.storage.topic=$WORKER_OFFSET_TOPIC" >> "$CONFIG"
 echo "offset.storage.replication.factor=1" >> "$CONFIG"
 
-if [[ -z "${CONFIG_TOPIC}" ]]; then
-  CONFIG_TOPIC="connect-config"
+if [[ -z "${WORKER_CONFIG_TOPIC}" ]]; then
+  WORKER_CONFIG_TOPIC="connect-config"
 fi
-echo "config.storage.topic=$CONFIG_TOPIC" >> "$CONFIG"
+echo "config.storage.topic=$WORKER_CONFIG_TOPIC" >> "$CONFIG"
 echo "config.storage.replication.factor=1" >> "$CONFIG"
 
-if [[ -z "${STATUS_TOPIC}" ]]; then
-  STATUS_TOPIC="connect-offsets"
+if [[ -z "${WORKER_STATUS_TOPIC}" ]]; then
+  WORKER_STATUS_TOPIC="connect-offsets"
 fi
-echo "status.storage.topic=$STATUS_TOPIC" >> "$CONFIG"
+echo "status.storage.topic=$WORKER_STATUS_TOPIC" >> "$CONFIG"
 echo "status.storage.replication.factor=1" >> "$CONFIG"
 
-if [[ -z "$PLUGIN_FOLDER" ]]; then
-  PLUGIN_FOLDER="/tmp/plugins"
+if [[ -z "$WORKER_PLUGIN_FOLDER" ]]; then
+  WORKER_PLUGIN_FOLDER="/tmp/plugins"
 fi
-echo "plugin.path=$PLUGIN_FOLDER" >> "$CONFIG"
+echo "plugin.path=$WORKER_PLUGIN_FOLDER" >> "$CONFIG"
 
-if [[ -z "$BROKERS" ]]; then
+if [[ -z "$WORKER_BROKERS" ]]; then
   echo "You have to define BROKERS"
   exit 2
 fi
-echo "bootstrap.servers=$BROKERS" >> "$CONFIG"
+echo "bootstrap.servers=$WORKER_BROKERS" >> "$CONFIG"
 
-if [[ -z "${WORKER_PORT}" ]]; then
-  WORKER_PORT="8083"
+if [[ -z "${WORKER_CLIENT_PORT}" ]]; then
+  WORKER_CLIENT_PORT="8083"
 fi
-echo "rest.port=$WORKER_PORT" >> "$CONFIG"
+echo "rest.port=$WORKER_CLIENT_PORT" >> "$CONFIG"
 
 if [[ -n "$WORKER_HOSTNAME" ]]; then
   echo "rest.host.name=$WORKER_HOSTNAME" >> "$CONFIG"

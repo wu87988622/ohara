@@ -25,6 +25,7 @@ class TestDockerClient extends MediumTest with Matchers {
 
   private[this] val webHost = "www.google.com.tw"
 
+  private[this] var remoteHostname: String = _
   @Before
   def setup(): Unit = sys.env.get(key).foreach { info =>
     val user = info.split(":").head
@@ -32,6 +33,7 @@ class TestDockerClient extends MediumTest with Matchers {
     val hostname = info.split("@").last.split(":").head
     val port = info.split("@").last.split(":").last.toInt
     client = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
+    remoteHostname = hostname
   }
 
   /**
@@ -43,24 +45,24 @@ class TestDockerClient extends MediumTest with Matchers {
   @Test
   def testLog(): Unit = runTest { client =>
     val container =
-      client.executor().image("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+      client.executor().imageName("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     try client.log(container.name).contains(webHost) shouldBe true
     finally client.stop(container.name)
+
   }
 
   @Test
   def testList(): Unit = runTest { client =>
     val before = client.containers()
     val container =
-      client.executor().image("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+      client.executor().imageName("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     try {
       container.state shouldBe State.RUNNING
       val after = client.containers()
-      after.size - before.size shouldBe 1
-      before.exists(_.name == container.name) shouldBe true
-      after.exists(_.name == container.name) shouldBe false
+      before.exists(_.name == container.name) shouldBe false
+      after.exists(_.name == container.name) shouldBe true
     } finally client.stop(container.name)
-    client.containers().size shouldBe before.size
+    client.containers().exists(_.name == container.name) shouldBe false
   }
 
   @Test
@@ -68,7 +70,7 @@ class TestDockerClient extends MediumTest with Matchers {
     val before = client.containers()
     // ping google 3 times
     val container =
-      client.executor().image("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
+      client.executor().imageName("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
     TimeUnit.SECONDS.sleep(3)
     client.containers().size shouldBe before.size
     client.exist(container.name) shouldBe false
@@ -79,7 +81,8 @@ class TestDockerClient extends MediumTest with Matchers {
   def testNonCleanup(): Unit = runTest { client =>
     val before = client.containers()
     // ping google 3 times
-    val container = client.executor().image("centos:7").command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
+    val container =
+      client.executor().imageName("centos:7").command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
     try {
       TimeUnit.SECONDS.sleep(3)
       client.containers().size shouldBe before.size + 1
@@ -89,10 +92,9 @@ class TestDockerClient extends MediumTest with Matchers {
 
   @Test
   def testStopById(): Unit = runTest { client =>
-    val before = client.containers()
     // ping google 3 times
     val container =
-      client.executor().image("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+      client.executor().imageName("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     client.stopById(container.id)
     TimeUnit.SECONDS.sleep(3)
     client.exist(container.name) shouldBe false
@@ -102,7 +104,7 @@ class TestDockerClient extends MediumTest with Matchers {
   @Test
   def testRemoveById(): Unit = runTest { client =>
     // ping google 3 times
-    val container = client.executor().image("centos:7").command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+    val container = client.executor().imageName("centos:7").command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     try {
       client.stopById(container.id)
       TimeUnit.SECONDS.sleep(3)
@@ -125,7 +127,7 @@ class TestDockerClient extends MediumTest with Matchers {
     val container = client
       .executor()
       .route(Map("ABC" -> "192.168.123.123"))
-      .image("centos:7")
+      .imageName("centos:7")
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .run()
@@ -141,7 +143,7 @@ class TestDockerClient extends MediumTest with Matchers {
   def testPortMapping(): Unit = runTest { client =>
     val container = client
       .executor()
-      .image("centos:7")
+      .imageName("centos:7")
       .portMappings(Map(12345 -> 12345))
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
@@ -152,6 +154,44 @@ class TestDockerClient extends MediumTest with Matchers {
       container.portMappings.head.portPairs.size shouldBe 1
       container.portMappings.head.portPairs.head shouldBe PortPair(12345, 12345)
     } finally client.stop(container.name)
+  }
+
+  @Test
+  def testSetEnv(): Unit = runTest { client =>
+    val container = client
+      .executor()
+      .imageName("centos:7")
+      .envs(Map("abc" -> "123", "ccc" -> "ttt"))
+      .cleanup()
+      .command(s"""/bin/bash -c \"ping $webHost\"""")
+      .run()
+      .get
+    try {
+      container.environments("abc") shouldBe "123"
+      container.environments("ccc") shouldBe "ttt"
+    } finally client.stop(container.name)
+  }
+
+  @Test
+  def testHostname(): Unit = runTest { client =>
+    val container = client
+      .executor()
+      .imageName("centos:7")
+      .hostname("abcdef")
+      .cleanup()
+      .command(s"""/bin/bash -c \"ping $webHost\"""")
+      .run()
+      .get
+    try container.hostname shouldBe "abcdef"
+    finally client.stop(container.name)
+  }
+
+  @Test
+  def testNodeName(): Unit = runTest { client =>
+    val container =
+      client.executor().imageName("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+    try container.nodeName shouldBe remoteHostname
+    finally client.stop(container.name)
   }
 
   @After

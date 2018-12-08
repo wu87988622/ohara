@@ -106,24 +106,31 @@ object SshdServer {
           handler =>
             new Command {
               private[this] var out: OutputStream = _
+              private[this] var err: OutputStream = _
               private[this] var callback: ExitCallback = _
               override def setInputStream(in: InputStream): Unit = {}
 
               override def setOutputStream(out: OutputStream): Unit = this.out = out
 
-              override def setErrorStream(err: OutputStream): Unit = {}
+              override def setErrorStream(err: OutputStream): Unit = this.err = err
 
               override def setExitCallback(callback: ExitCallback): Unit = this.callback = callback
 
-              override def start(env: Environment): Unit = {
+              override def start(env: Environment): Unit = try {
                 handler.execute(command).foreach { s =>
                   out.write(s.getBytes)
                   // TODO: make it configurable...by chia
                   out.write("\n".getBytes)
                 }
                 callback.onExit(0)
+              } catch {
+                case e: Throwable =>
+                  callback.onExit(2, e.getMessage)
               }
-              override def destroy(): Unit = {}
+              override def destroy(): Unit = {
+                CloseOnce.close(out)
+                CloseOnce.close(err)
+              }
             }
 
         }

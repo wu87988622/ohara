@@ -5,6 +5,7 @@ import java.util.Objects
 import com.island.ohara.agent.DockerClient.Executor
 import com.island.ohara.agent.DockerJson.{ContainerDescription, PortMapping, PortPair, State}
 import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.typesafe.scalalogging.Logger
 
 /**
   * a interface used to control remote node's docker service.
@@ -119,9 +120,11 @@ trait DockerClient extends CloseOnce {
     */
   def cat(name: String, path: String): Option[String]
 
+  def images(): Seq[String]
 }
 
 object DockerClient {
+  private[agent] val LOG = Logger(classOf[DockerClient])
 
   /**
     * Parse the forward ports from container.
@@ -135,7 +138,7 @@ object DockerClient {
   private[agent] def parsePortMapping(portMapping: String): Seq[PortMapping] = {
     portMapping
       .replaceAll("/tcp", "")
-      // we don't distinuish protocol now.. TODO by chia
+      // we don't distinguish protocol now.. TODO by chia
       .replaceAll("/udp", "")
       .split(", ")
       .flatMap { portMap =>
@@ -174,7 +177,7 @@ object DockerClient {
     "{{.Size}}",
     "{{.Ports}}"
   ).mkString(DIVIDER)
-  def builder(): DockerClientBuilder = new DockerClientBuilder
+  def builder(): Builder = new Builder
 
   /**
     * a interface used to run a docker container on remote node
@@ -196,10 +199,10 @@ object DockerClient {
 
     /**
       * set target image
-      * @param image docker image
+      * @param imageName docker image
       * @return this executor
       */
-    def image(image: String): Executor
+    def imageName(imageName: String): Executor
 
     /**
       * the command passed to docker container
@@ -221,7 +224,7 @@ object DockerClient {
     def envs(envs: Map[String, String]): Executor
 
     /**
-      * @param route the pre-defined route to container
+      * @param route the pre-defined route to container. hostname -> ip
       * @return this executor
       */
     def route(route: Map[String, String]): Executor
@@ -246,200 +249,239 @@ object DockerClient {
       */
     protected[agent] def dockerCommand(): String
   }
-}
-import com.island.ohara.agent.DockerClient._
 
-class DockerClientBuilder {
-  private[this] var hostname: String = _
-  private[this] var port: Int = 22
-  private[this] var user: String = _
-  private[this] var password: String = _
+  class Builder private[agent] {
+    private[this] var hostname: String = _
+    private[this] var port: Int = 22
+    private[this] var user: String = _
+    private[this] var password: String = _
 
-  def hostname(hostname: String): DockerClientBuilder = {
-    this.hostname = hostname
-    this
-  }
-
-  def port(port: Int): DockerClientBuilder = {
-    this.port = port
-    this
-  }
-
-  def user(user: String): DockerClientBuilder = {
-    this.user = user
-    this
-  }
-
-  def password(password: String): DockerClientBuilder = {
-    this.password = password
-    this
-  }
-
-  def build(): DockerClient = new DockerClient {
-    private[this] val hostname: String = Objects.requireNonNull(DockerClientBuilder.this.hostname)
-    private[this] val port: Int = DockerClientBuilder.this.port
-    private[this] val user: String = Objects.requireNonNull(DockerClientBuilder.this.user)
-    private[this] val password: String = Objects.requireNonNull(DockerClientBuilder.this.password)
-
-    private[this] def channel() = Agent.channel().user(user).password(password).hostname(hostname).port(port)
-
-    override protected def doClose(): Unit = {
-      // do nothing
+    def hostname(hostname: String): Builder = {
+      this.hostname = hostname
+      this
     }
 
-    override def executor(): Executor = new Executor {
-      private[this] var image: String = _
-      private[this] var name: String = CommonUtil.uuid()
-      private[this] var command: String = _
-      private[this] var disableCleanup: Boolean = true
-      private[this] var ports: Map[Int, Int] = Map.empty
-      private[this] var envs: Map[String, String] = Map.empty
-      private[this] var route: Map[String, String] = Map.empty
-      private[this] var hostname: String = _
-
-      override def name(name: String): Executor = {
-        this.name = name
-        this
-      }
-
-      override def image(image: String): Executor = {
-        this.image = image
-        this
-      }
-
-      override def run(): Option[ContainerDescription] = {
-        channel().execute(dockerCommand())
-        activeContainers().find(_.name == name)
-      }
-
-      override def command(command: String): Executor = {
-        this.command = command
-        this
-      }
-
-      override protected[agent] def dockerCommand(): String = Seq(
-        "docker run -d ",
-        if (hostname == null) "" else s"-h $hostname",
-        route
-          .map {
-            case (hostname, ip) => s"--add-host $hostname:$ip"
-          }
-          .mkString(" "),
-        if (disableCleanup) "" else "--rm",
-        s"--name ${Objects.requireNonNull(name)}",
-        ports
-          .map {
-            case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
-          }
-          .mkString(" "),
-        envs
-          .map {
-            case (key, value) => s"""-e \"$key=$value\""""
-          }
-          .mkString(" "),
-        Objects.requireNonNull(image),
-        if (command == null) "" else command
-      ).filter(_.nonEmpty).mkString(" ")
-
-      override def portMappings(ports: Map[Int, Int]): Executor = {
-        this.ports = ports;
-        this
-      }
-
-      override def hostname(hostname: String): Executor = {
-        this.hostname = hostname
-        this
-      }
-
-      override def envs(envs: Map[String, String]): Executor = {
-        this.envs = envs
-        this
-      }
-      override def route(route: Map[String, String]): Executor = {
-        this.route = route
-        this
-      }
-
-      override def cleanup(): Executor = {
-        this.disableCleanup = false
-        this
-      }
+    def port(port: Int): Builder = {
+      this.port = port
+      this
     }
 
-    override def containers(): Seq[ContainerDescription] = channel()
-      .execute(s"docker ps -a --format $LIST_PROCESS_FORMAT")
-      .map(_.split("\n"))
-      .map {
-        _.map(line => {
-          // filter out all empty string
-          val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
-          // not all containers have forward ports so length - 1
-          if (items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length
-              && items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length - 1)
-            throw new IllegalArgumentException(
-              s"the expected number of iterms in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
+    def user(user: String): Builder = {
+      this.user = user
+      this
+    }
 
-          ContainerDescription(
-            id = items(0),
-            image = items(1),
-            created = items(2),
-            state = State.all
-              .find(s => items(3).toLowerCase.contains(s.name.toLowerCase))
-              // the running container show "up to xxx"
-              .getOrElse(State.RUNNING),
-            name = items(4),
-            size = items(5),
-            portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6))
-          )
-        }).toSeq
+    def password(password: String): Builder = {
+      this.password = password
+      this
+    }
+
+    def build(): DockerClient = new DockerClient {
+      private[this] val agent = Agent
+        .builder()
+        .hostname(Objects.requireNonNull(hostname))
+        .port(port)
+        .user(Objects.requireNonNull(user))
+        .password(Objects.requireNonNull(password))
+        .build()
+
+      override protected def doClose(): Unit = CloseOnce.close(agent)
+
+      override def executor(): Executor = new Executor {
+        private[this] var imageName: String = _
+        private[this] var name: String = CommonUtil.uuid()
+        private[this] var command: String = _
+        private[this] var disableCleanup: Boolean = true
+        private[this] var ports: Map[Int, Int] = Map.empty
+        private[this] var envs: Map[String, String] = Map.empty
+        private[this] var route: Map[String, String] = Map.empty
+        private[this] var hostname: String = _
+
+        override def name(name: String): Executor = {
+          this.name = name
+          this
+        }
+
+        override def imageName(imageName: String): Executor = {
+          this.imageName = imageName
+          this
+        }
+
+        override def run(): Option[ContainerDescription] = {
+          val cmd = dockerCommand()
+          DockerClient.LOG.info(s"docker command:$cmd")
+          agent.execute(cmd)
+          activeContainers().find(_.name == name)
+        }
+
+        override def command(command: String): Executor = {
+          this.command = command
+          this
+        }
+
+        override protected[agent] def dockerCommand(): String = Seq(
+          "docker run -d ",
+          if (hostname == null) "" else s"-h $hostname",
+          route
+            .map {
+              case (hostname, ip) => s"--add-host $hostname:$ip"
+            }
+            .mkString(" "),
+          if (disableCleanup) "" else "--rm",
+          s"--name ${Objects.requireNonNull(name)}",
+          ports
+            .map {
+              case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
+            }
+            .mkString(" "),
+          envs
+            .map {
+              case (key, value) => s"""-e \"$key=$value\""""
+            }
+            .mkString(" "),
+          Objects.requireNonNull(imageName),
+          if (command == null) "" else command
+        ).filter(_.nonEmpty).mkString(" ")
+
+        override def portMappings(ports: Map[Int, Int]): Executor = {
+          this.ports = ports;
+          this
+        }
+
+        override def hostname(hostname: String): Executor = {
+          this.hostname = hostname
+          this
+        }
+
+        override def envs(envs: Map[String, String]): Executor = {
+          this.envs = envs
+          this
+        }
+        override def route(route: Map[String, String]): Executor = {
+          this.route = route
+          this
+        }
+
+        override def cleanup(): Executor = {
+          this.disableCleanup = false
+          this
+        }
       }
-      .getOrElse(Seq.empty)
 
-    override def stop(name: String): ContainerDescription =
-      containers()
-        .find(_.name == name)
-        .map(container => {
-          channel().execute(s"docker stop $name")
-          container
-        })
-        .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
+      override def containers(): Seq[ContainerDescription] = agent
+        .execute(s"docker ps -a --format $LIST_PROCESS_FORMAT")
+        .map(_.split("\n"))
+        .map {
+          _.flatMap { line =>
+            try {
+              // filter out all empty string
+              val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
+              // not all containers have forward ports so length - 1
+              if (items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length
+                  && items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length - 1)
+                throw new IllegalArgumentException(
+                  s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
+              val id = items.head
+              Some(
+                ContainerDescription(
+                  nodeName = hostname,
+                  id = id,
+                  image = items(1),
+                  created = items(2),
+                  state = State.all
+                    .find(s => items(3).toLowerCase.contains(s.name.toLowerCase))
+                    // the running container show "up to xxx"
+                    .getOrElse(State.RUNNING),
+                  name = items(4),
+                  size = items(5),
+                  portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6)),
+                  environments = agent
+                    .execute(s"docker inspect $id --format '{{.Config.Env}}'")
+                    .map(_.replaceAll("\n", ""))
+                    // form: [abc=123 aa=111]
+                    .filter(_.length > 2)
+                    .map(_.substring(1))
+                    .map(s => s.substring(0, s.length - 1))
+                    .map { s =>
+                      s.split(" ")
+                        .filterNot(_.isEmpty)
+                        .map { line =>
+                          val items = line.split("=")
+                          items.head -> items.last
+                        }
+                        .toMap
+                    }
+                    .getOrElse(Map.empty),
+                  // we can't cat file from a exited container
+                  hostname = agent
+                    .execute(s"docker inspect $id --format '{{.Config.Hostname}}'")
+                    // remove new line
+                    .map(_.replaceAll("\n", ""))
+                    .get
+                ))
+            } catch {
+              case e: Throwable =>
+                val errorMessage = s"failed to get container description from $hostname." +
+                  "This error may be caused by operator conflict since we can't get container information by single command."
+                LOG.error(errorMessage, e)
+                None
+            }
+          }.toSeq
+        }
+        .getOrElse(Seq.empty)
 
-    override def remove(name: String): ContainerDescription =
-      containers()
-        .find(_.name == name)
-        .map(container => {
-          channel().execute(s"docker rm $name")
-          container
-        })
-        .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
+      override def stop(name: String): ContainerDescription =
+        containers()
+          .find(_.name == name)
+          .map(container => {
+            agent.execute(s"docker stop $name")
+            container
+          })
+          .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
 
-    override def stopById(id: String): ContainerDescription =
-      containers()
-        .find(_.id == id)
-        .map(container => {
-          channel().execute(s"docker stop $id")
-          container
-        })
-        .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
+      override def remove(name: String): ContainerDescription =
+        containers()
+          .find(_.name == name)
+          .map(container => {
+            agent.execute(s"docker rm $name")
+            container
+          })
+          .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
 
-    override def removeById(id: String): ContainerDescription =
-      containers()
-        .find(_.id == id)
-        .map(container => {
-          channel().execute(s"docker rm $id")
-          container
-        })
-        .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
+      override def stopById(id: String): ContainerDescription =
+        containers()
+          .find(_.id == id)
+          .map(container => {
+            agent.execute(s"docker stop $id")
+            container
+          })
+          .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
 
-    override def verify(): Boolean =
-      channel().execute("docker run --rm hello-world").exists(_.contains("Hello from Docker!"))
+      override def removeById(id: String): ContainerDescription =
+        containers()
+          .find(_.id == id)
+          .map(container => {
+            agent.execute(s"docker rm $id")
+            container
+          })
+          .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
 
-    override def log(name: String): String = channel()
-      .execute(s"docker container logs $name")
-      .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
-      .getOrElse(throw new IllegalArgumentException(s"no response from $hostname"))
+      override def verify(): Boolean =
+        agent.execute("docker run --rm hello-world").exists(_.contains("Hello from Docker!"))
 
-    override def cat(name: String, path: String): Option[String] =
-      channel().execute(s"""docker exec $name /bin/bash -c \"cat $path\"""")
+      override def log(name: String): String = agent
+        .execute(s"docker container logs $name")
+        .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
+        .getOrElse(throw new IllegalArgumentException(s"no response from $hostname"))
+
+      override def cat(name: String, path: String): Option[String] =
+        agent.execute(s"""docker exec $name /bin/bash -c \"cat $path\"""")
+
+      override def images(): Seq[String] = agent
+        .execute("docker images --format {{.Repository}}:{{.Tag}}")
+        .map(_.split("\n").toSeq)
+        .filter(_.nonEmpty)
+        .getOrElse(Seq.empty)
+    }
   }
 }

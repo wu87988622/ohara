@@ -2,7 +2,6 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 
 dependencies {
   implementation project(":ohara-common")
-  implementation project(':ohara-client')
   implementation libs.scala
   implementation libs.scalaLogging
   implementation libs.slf4jApi

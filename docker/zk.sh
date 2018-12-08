@@ -13,10 +13,10 @@ if [[ ! -f "$CONFIG" ]]; then
   echo "syncLimit=5" >> "$CONFIG"
   echo "maxClientCnxns=60" >> "$CONFIG"
 
-  if [[ -z "$ZK_PORT" ]]; then
-    ZK_PORT=2181
+  if [[ -z "$ZK_CLIENT_PORT" ]]; then
+    ZK_CLIENT_PORT=2181
   fi
-  echo "clientPort=$ZK_PORT" >> "$CONFIG"
+  echo "clientPort=$ZK_CLIENT_PORT" >> "$CONFIG"
 
   if [[ -z "$ZK_DATA_DIR" ]]; then
     ZK_DATA_DIR="/tmp/zookeeper/data"
@@ -24,9 +24,17 @@ if [[ ! -f "$CONFIG" ]]; then
   echo "dataDir=$ZK_DATA_DIR" >> "$CONFIG"
   mkdir -p $ZK_DATA_DIR
 
+  if [[ -z "$ZK_PEER_PORT" ]]; then
+    ZK_PEER_PORT=2888
+  fi
+  if [[ -z "$ZK_ELECTION_PORT" ]]; then
+    ZK_ELECTION_PORT=3888
+  fi
   if [[ -n "$ZK_SERVERS" ]]; then
+    serverIndex=0
     for server in $ZK_SERVERS; do
-      echo "$server" >> "$CONFIG"
+      echo "server.$serverIndex=$server:$ZK_PEER_PORT:$ZK_ELECTION_PORT" >> "$CONFIG"
+      serverIndex=$((serverIndex+1))
     done
   fi
 fi

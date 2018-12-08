@@ -26,32 +26,28 @@ class TestAgent extends SmallTest with Matchers {
 
   @Test
   def testJaveVersion(): Unit = {
-    val result = Agent
-      .channel()
-      .hostname(server.hostname)
-      .port(server.port)
-      .user(server.user)
-      .password(server.password)
-      .execute("java -version")
-      .get
-    // You must have jdk 1.8+ if you want to run ohara...
-    withClue(s"result:$result")(result.contains("1.8.0") shouldBe true)
+    val agent =
+      Agent.builder().hostname(server.hostname).port(server.port).user(server.user).password(server.password).build()
+    try {
+      val result = agent.execute("java -version").get
+      // You must have jdk 1.8+ if you want to run ohara...
+      withClue(s"result:$result")(result.contains("1.8.0") shouldBe true)
+    } finally agent.close()
   }
 
   @Test
   def testCustomCommand(): Unit = {
     customCommands.foreach {
       case (command, response) =>
-        val result = Agent
-          .channel()
+        val agent = Agent
+          .builder()
           .hostname(server.hostname)
           .port(server.port)
           .user(server.user)
           .password(server.password)
-          .execute(command)
-          .get
-          .split("\n")
-        result shouldBe response
+          .build()
+        try agent.execute(command).get.split("\n") shouldBe response
+        finally agent.close()
     }
   }
   @After

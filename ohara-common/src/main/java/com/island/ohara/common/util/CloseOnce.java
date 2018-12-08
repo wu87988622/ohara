@@ -4,6 +4,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class implements the {@link AutoCloseable} and it make sure {@link #close()} is executed
+ * only once. Since java disallow interface to have member, this class has got to be a abstract
+ * class. Hence, you SHOULD NOT apply this class to the "interface" layer. This class is more
+ * suitable to the implementation.
+ */
 public abstract class CloseOnce implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(CloseOnce.class);
   private final AtomicBoolean closed = new AtomicBoolean(false);

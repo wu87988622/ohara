@@ -30,21 +30,21 @@ if [[ -z "${BROKER_ID}" ]]; then
 fi
 echo "broker.id=$BROKER_ID" >> "$CONFIG"
 
-if [[ -z "${BROKER_ADDRESS}" ]]; then
-  BROKER_ADDRESS="PLAINTEXT://:9092"
+if [[ -z "${BROKER_CLIENT_PORT}" ]]; then
+  BROKER_CLIENT_PORT=9092
 fi
-echo "listeners=$BROKER_ADDRESS" >> "$CONFIG"
+echo "listeners=PLAINTEXT://:$BROKER_CLIENT_PORT" >> "$CONFIG"
 
 if [[ -z "${BROKER_DATA_DIR}" ]]; then
   BROKER_DATA_DIR="/tmp/broker/data"
 fi
 echo "log.dirs=$BROKER_DATA_DIR" >> "$CONFIG"
 
-if [[ -z "${ZOOKEEPERS}" ]]; then
-  echo "You have to define ZOOKEEPERS"
+if [[ -z "${BROKER_ZOOKEEPERS}" ]]; then
+  echo "You have to define BROKER_ZOOKEEPERS"
   exit 2
 fi
-echo "zookeeper.connect=$ZOOKEEPERS" >> "$CONFIG"
+echo "zookeeper.connect=$BROKER_ZOOKEEPERS" >> "$CONFIG"
 
 if [[ -z "$KAFKA_HOME" ]]; then
   echo "KAFKA_HOME is required!!!"

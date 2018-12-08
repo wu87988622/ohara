@@ -67,13 +67,16 @@ object DockerJson {
   final case class PortMapping(hostIp: String, portPairs: Seq[PortPair])
   implicit val PORT_MAPPING_JSON_FORMAT: RootJsonFormat[PortMapping] = jsonFormat2(PortMapping)
 
-  final case class ContainerDescription(id: String,
+  final case class ContainerDescription(nodeName: String,
+                                        id: String,
                                         image: String,
                                         created: String,
                                         state: State,
                                         name: String,
                                         size: String,
-                                        portMappings: Seq[PortMapping])
-  implicit val CONTAINER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ContainerDescription] = jsonFormat7(
+                                        portMappings: Seq[PortMapping],
+                                        environments: Map[String, String],
+                                        hostname: String)
+  implicit val CONTAINER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ContainerDescription] = jsonFormat10(
     ContainerDescription)
 }
