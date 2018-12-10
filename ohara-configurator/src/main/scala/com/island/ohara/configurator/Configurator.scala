@@ -102,11 +102,11 @@ class Configurator private[configurator] (configuredHostname: String,
         case MalformedRequestContentRejection(_, cause) =>
           cause match {
             case e: DeserializationException =>
-              throw new IllegalArgumentException(s"Ohara Deserialized Error :${e.getMessage}", e)
+              throw new IllegalArgumentException(s"Deserialized Error :${e.getMessage}", e)
             case e: JsonParser.ParsingException =>
-              throw new IllegalArgumentException(s"Ohara JSON Parse Error :${e.getMessage}", e)
+              throw new IllegalArgumentException(s"JSON Parse Error :${e.getMessage}", e)
             case e: Throwable =>
-              throw new IllegalArgumentException(s"Ohata Error occur :${e.getMessage}.")
+              throw new IllegalArgumentException(s"Error :${e.getMessage}.")
           }
       }
       //which handles undefined Rejections to Exceptions , like ValidationRejection(java.lang.NumberFormatException)
