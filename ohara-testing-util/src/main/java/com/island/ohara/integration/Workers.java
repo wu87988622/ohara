@@ -181,10 +181,6 @@ public interface Workers extends AutoCloseable {
                     })
         .orElseGet(
             () ->
-                local(
-                    brokers.get(),
-                    IntStream.range(0, NUMBER_OF_WORKERS)
-                        .map(x -> Integration.availablePort())
-                        .toArray()));
+                local(brokers.get(), IntStream.range(0, NUMBER_OF_WORKERS).map(x -> 0).toArray()));
   }
 }
