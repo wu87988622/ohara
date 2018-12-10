@@ -7,6 +7,7 @@ export const TOPIC_CREATION_SUCCESS = 'Topic successfully created!';
 export const PIPELINE_CREATION_SUCCESS = 'New pipeline has been created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
 export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
+export const CONFIG_DELETE_SUCCESS = 'Successfully deleted the configuration:';
 export const TEST_SUCCESS = 'Test has passed!';
 
 // Error messages

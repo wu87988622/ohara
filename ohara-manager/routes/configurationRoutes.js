@@ -31,5 +31,12 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
+  app.delete('/api/configuration/hdfs/:uuid', (req, res) => {
+    axios
+      .delete(`${API_ROOT}/hdfs/${req.params.uuid}`)
+      .then(result => onSuccess(res, result))
+      .catch(err => onError(res, err));
+  });
+
   return app;
 };
