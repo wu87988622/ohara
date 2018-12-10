@@ -38,9 +38,12 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     nodeCollie.add(Node(hostname, port, user, password))
     val dockerClient = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
     try {
-      withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-      withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-      withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+      withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
+        dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+      withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(
+        dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+      withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
+        dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
     } finally dockerClient.close()
     remoteHostname = hostname
   }
