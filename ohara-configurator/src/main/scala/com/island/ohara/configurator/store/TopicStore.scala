@@ -16,8 +16,8 @@ import scala.concurrent.duration.{Duration, _}
 import scala.util.{Failure, Success}
 
 private object TopicStore {
-  val NUMBER_OF_PARTITIONS: Int = 3
-  val NUMBER_OF_REPLICATIONS: Short = 3
+  val NUMBER_OF_PARTITIONS: Int = 1
+  val NUMBER_OF_REPLICATIONS: Short = 1
   val TIMEOUT: Duration = 30 seconds
   val LOG = Logger(getClass.getName)
 

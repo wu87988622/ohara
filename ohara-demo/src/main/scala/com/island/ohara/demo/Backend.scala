@@ -66,9 +66,9 @@ object Backend {
       configuratorPort = 0,
       dbPort = 0,
       ftpPort = 0,
-      ftpDataPorts = Seq.fill(3)(0),
-      workersPort = Seq.fill(3)(0),
-      brokersPort = Seq.fill(3)(0),
+      ftpDataPorts = Seq.fill(1)(0),
+      workersPort = Seq.fill(1)(0),
+      brokersPort = Seq.fill(1)(0),
       zkPort = 0
     )
   }

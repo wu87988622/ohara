@@ -17,8 +17,8 @@ import scala.reflect.ClassTag
 
 private object CallQueueServerImpl {
   val LOG = Logger(getClass.getName)
-  val NUMBER_OF_PARTITIONS: Int = 3
-  val NUMBER_OF_REPLICATIONS: Short = 3
+  val NUMBER_OF_PARTITIONS: Int = 1
+  val NUMBER_OF_REPLICATIONS: Short = 1
   val TIMEOUT: Duration = 30 seconds
   def apply[Request: ClassTag, Response <: AnyRef](brokers: String,
                                                    requestTopic: String,
