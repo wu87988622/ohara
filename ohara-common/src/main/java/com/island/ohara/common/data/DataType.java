@@ -69,7 +69,7 @@ public enum DataType {
     else throw new UnsupportedOperationException(obj.getClass() + " is not supported");
   }
 
-  public static List<DataType> all = Arrays.asList(DataType.values());
+  public static final List<DataType> all = Arrays.asList(DataType.values());
 
   DataType(short order, String name) {
     this(order, name, name);
