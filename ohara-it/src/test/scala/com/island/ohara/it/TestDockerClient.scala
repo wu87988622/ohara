@@ -26,6 +26,7 @@ class TestDockerClient extends MediumTest with Matchers {
   private[this] val webHost = "www.google.com.tw"
 
   private[this] var remoteHostname: String = _
+
   @Before
   def setup(): Unit = sys.env.get(key).foreach { info =>
     val user = info.split(":").head
@@ -67,25 +68,21 @@ class TestDockerClient extends MediumTest with Matchers {
 
   @Test
   def testCleanup(): Unit = runTest { client =>
-    val before = client.containers()
     // ping google 3 times
     val container =
       client.executor().imageName("centos:7").cleanup().command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
     TimeUnit.SECONDS.sleep(3)
-    client.containers().size shouldBe before.size
     client.exist(container.name) shouldBe false
     client.nonExist(container.name) shouldBe true
   }
 
   @Test
   def testNonCleanup(): Unit = runTest { client =>
-    val before = client.containers()
     // ping google 3 times
     val container =
       client.executor().imageName("centos:7").command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
     try {
       TimeUnit.SECONDS.sleep(3)
-      client.containers().size shouldBe before.size + 1
       client.container(container.name).get.state shouldBe State.EXITED
     } finally client.remove(container.name)
   }
