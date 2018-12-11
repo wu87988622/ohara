@@ -22,7 +22,7 @@ class TestHttpConnectorActorWithMiniCluster
     with Matchers
     with ScaledTimeSpans {
 
-  private val testUtil = OharaTestUtil.brokers()
+  private val testUtil = OharaTestUtil.broker()
   private implicit val materializer: ActorMaterializer = ActorMaterializer()
   private val interface = "localhost"
   private val port = 5566

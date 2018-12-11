@@ -17,13 +17,14 @@ import org.apache.kafka.common.utils.SystemTime;
 public interface Brokers extends AutoCloseable {
   String BROKER_CONNECTION_PROPS = "ohara.it.brokers";
 
-  int NUMBER_OF_BROKERS = 3;
-
   /** @return brokers information. the form is "host_a:port_a,host_b:port_b" */
   String connectionProps();
 
   /** @return true if this broker cluster is generated locally. */
   boolean isLocal();
+
+  @Override
+  void close();
 
   static Brokers local(Zookeepers zk, int[] ports) {
     List<File> tempFolders =
@@ -81,7 +82,7 @@ public interface Brokers extends AutoCloseable {
               broker.shutdown();
               broker.awaitShutdown();
             });
-        tempFolders.forEach(x -> Integration.deleteFiles(x));
+        tempFolders.forEach(Integration::deleteFiles);
       }
 
       @Override
@@ -96,23 +97,32 @@ public interface Brokers extends AutoCloseable {
     };
   }
 
-  static Brokers of(Supplier<Zookeepers> zk) {
-    return of(System.getenv(BROKER_CONNECTION_PROPS), zk);
+  static Brokers of(Supplier<Zookeepers> zk, int numberOfBrokers) {
+    return of(System.getenv(BROKER_CONNECTION_PROPS), zk, numberOfBrokers);
   }
 
-  static Brokers of(String brokers, Supplier<Zookeepers> zk) {
+  static Brokers of(String brokers, Supplier<Zookeepers> zk, int numberOfBrokers) {
     return Optional.ofNullable(brokers)
         .map(
             s ->
                 (Brokers)
                     new Brokers() {
                       @Override
-                      public void close() throws Exception {
+                      public void close() {
                         // Nothing
                       }
 
                       @Override
                       public String connectionProps() {
+                        if (s.split(",").length != numberOfBrokers)
+                          throw new IllegalArgumentException(
+                              "Expected number of brokers is "
+                                  + numberOfBrokers
+                                  + " but actual is "
+                                  + s.split(",").length
+                                  + "("
+                                  + s
+                                  + ")");
                         return s;
                       }
 
@@ -122,6 +132,6 @@ public interface Brokers extends AutoCloseable {
                       }
                     })
         .orElseGet(
-            () -> local(zk.get(), IntStream.range(0, NUMBER_OF_BROKERS).map(i -> 0).toArray()));
+            () -> local(zk.get(), IntStream.range(0, numberOfBrokers).map(i -> 0).toArray()));
   }
 }

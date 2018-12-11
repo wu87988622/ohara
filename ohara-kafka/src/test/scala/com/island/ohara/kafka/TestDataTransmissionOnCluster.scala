@@ -7,7 +7,7 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
 import com.island.ohara.common.util.{ByteUtil, CloseOnce, CommonUtil}
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.connector._
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -16,7 +16,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
+class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
   private[this] val kafkaClient = KafkaClient.of(testUtil.brokersConnProps)
   private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
@@ -127,7 +127,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topic(topicName)
-      .numberOfTasks(2)
+      .numberOfTasks(1)
       .disableConverter()
       .schema(schema)
       .configs(Map(Constants.BROKER -> testUtil.brokersConnProps, Constants.OUTPUT -> topicName2))
@@ -167,7 +167,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSourceConnector])
       .topic(topicName2)
-      .numberOfTasks(2)
+      .numberOfTasks(1)
       .disableConverter()
       .schema(schema)
       .configs(Map(Constants.BROKER -> testUtil.brokersConnProps, Constants.INPUT -> topicName))
@@ -237,7 +237,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .connectorClass(classOf[SimpleRowSinkConnector])
       .topics(topics)
-      .numberOfTasks(2)
+      .numberOfTasks(1)
       .disableConverter()
       .schema(schema)
       .configs(Map(Constants.BROKER -> testUtil.brokersConnProps, Constants.OUTPUT -> output_topic))

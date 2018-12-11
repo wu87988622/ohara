@@ -5,7 +5,7 @@ import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseCli
 import com.island.ohara.common.data.{DataType, Serializer}
 import com.island.ohara.common.util.{CloseOnce, VersionUtil}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -16,7 +16,7 @@ import scala.collection.JavaConverters._
   * this test includes two configurators - with/without cluster.
   * All test cases should work with all configurators.
   */
-class TestConfigurator extends With3Brokers3Workers with Matchers {
+class TestConfigurator extends WithBrokerWorker with Matchers {
   private[this] val configurator0 = Configurator
     .builder()
     .hostname("localhost")

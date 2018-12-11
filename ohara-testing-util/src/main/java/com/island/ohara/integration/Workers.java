@@ -154,11 +154,11 @@ public interface Workers extends AutoCloseable {
     };
   }
 
-  static Workers of(Supplier<Brokers> brokers) {
-    return of(System.getenv(WORKER_CONNECTION_PROPS), brokers);
+  static Workers of(Supplier<Brokers> brokers, int numberOfWorkers) {
+    return of(System.getenv(WORKER_CONNECTION_PROPS), brokers, numberOfWorkers);
   }
 
-  static Workers of(String workers, Supplier<Brokers> brokers) {
+  static Workers of(String workers, Supplier<Brokers> brokers, int numberOfWorkers) {
     return Optional.ofNullable(workers)
         .map(
             w ->
@@ -180,7 +180,6 @@ public interface Workers extends AutoCloseable {
                       }
                     })
         .orElseGet(
-            () ->
-                local(brokers.get(), IntStream.range(0, NUMBER_OF_WORKERS).map(x -> 0).toArray()));
+            () -> local(brokers.get(), IntStream.range(0, numberOfWorkers).map(x -> 0).toArray()));
   }
 }

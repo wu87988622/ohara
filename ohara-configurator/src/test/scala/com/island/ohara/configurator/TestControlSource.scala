@@ -8,7 +8,7 @@ import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CloseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
 import com.island.ohara.kafka.KafkaClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
@@ -16,7 +16,7 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 
-class TestControlSource extends With3Brokers3Workers with Matchers {
+class TestControlSource extends WithBrokerWorker with Matchers {
 
   private[this] val configurator = Configurator
     .builder()

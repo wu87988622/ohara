@@ -29,7 +29,7 @@ class TestKafkaRouteWithMiniCluster
     * we can't use With3Brokers3Workers since With3Brokers3Workers is not a "trait" now. It is illegal to extend multi
     * abstract classes...by chia
     */
-  private[this] val testUtil = OharaTestUtil.workers()
+  private[this] val testUtil = OharaTestUtil.broker()
 
   @Test
   def shouldReturnNotFoundWhenUrlNotExist(): Unit = {

@@ -15,7 +15,8 @@ public class TestBrokers extends MediumTest {
         null,
         () -> {
           throw new IllegalArgumentException("you can't pass");
-        });
+        },
+        1);
   }
 
   @Test
@@ -26,7 +27,8 @@ public class TestBrokers extends MediumTest {
             connProps,
             () -> {
               throw new IllegalArgumentException("you can't pass");
-            })) {
+            },
+            1)) {
 
       Assert.assertEquals(connProps, external.connectionProps());
       assertFalse(external.isLocal());
@@ -36,7 +38,7 @@ public class TestBrokers extends MediumTest {
   @Test
   public void testLocalMethod() throws Exception {
     try (Zookeepers zk = Zookeepers.of();
-        Brokers local = Brokers.of(() -> zk); ) {
+        Brokers local = Brokers.of(() -> zk, 1)) {
       assertTrue(local.isLocal());
     }
   }

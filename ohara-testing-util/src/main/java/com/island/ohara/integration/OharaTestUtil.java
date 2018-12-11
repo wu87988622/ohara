@@ -92,12 +92,22 @@ public class OharaTestUtil extends CloseOnce {
   }
 
   /**
+   * create a test util with a broker cluster based on single node. NOTED: don't call the worker and
+   * hdfs service. otherwise you will get exception
+   *
+   * @return a test util
+   */
+  public static OharaTestUtil broker() {
+    return brokers(1);
+  }
+
+  /**
    * Create a test util with multi-brokers. NOTED: don't call the worker and hdfs service. otherwise
    * you will get exception
    *
    * @return a test util
    */
-  public static OharaTestUtil brokers() {
+  public static OharaTestUtil brokers(int numberOfBrokers) {
     AtomicReference<Zookeepers> zk = new AtomicReference<>();
     Brokers brokers =
         Brokers.of(
@@ -106,17 +116,30 @@ public class OharaTestUtil extends CloseOnce {
                 zk.set(Zookeepers.of());
               }
               return zk.get();
-            });
+            },
+            numberOfBrokers);
     return new OharaTestUtil(zk.get(), brokers, null);
   }
 
   /**
-   * Create a test util with multi-brokers and multi-workers. NOTED: don't call the hdfs service.
-   * otherwise you will get exception
+   * create a test util with a worker/broker cluster based on single node. NOTED: don't call the
+   * worker and hdfs service. otherwise you will get exception
    *
    * @return a test util
    */
-  public static OharaTestUtil workers() {
+  public static OharaTestUtil worker() {
+    return workers(1);
+  }
+
+  /**
+   * Create a test util with multi-brokers and multi-workers. NOTED: don't call the hdfs service.
+   * otherwise you will get exception.
+   *
+   * <p>NOTED: the default number of brokers is 3
+   *
+   * @return a test util
+   */
+  public static OharaTestUtil workers(int numberOfWorkers) {
     AtomicReference<Zookeepers> zk = new AtomicReference<>();
     AtomicReference<Brokers> brokers = new AtomicReference<>();
 
@@ -129,10 +152,12 @@ public class OharaTestUtil extends CloseOnce {
                         () -> {
                           if (zk.get() == null) zk.set(Zookeepers.of());
                           return zk.get();
-                        }));
+                        },
+                        numberOfWorkers));
               }
               return brokers.get();
-            });
+            },
+            numberOfWorkers);
     return new OharaTestUtil(zk.get(), brokers.get(), workers);
   }
 
@@ -146,12 +171,12 @@ public class OharaTestUtil extends CloseOnce {
     return new OharaTestUtil(null, null, null);
   }
 
-  static String HELP_KEY = "--help";
-  static String TTL_KEY = "--ttl";
-  static String USAGE = "[Usage]" + TTL_KEY;
+  private static String HELP_KEY = "--help";
+  private static String TTL_KEY = "--ttl";
+  private static String USAGE = "[Usage]" + TTL_KEY;
 
-  public static void main(String args[]) {
-    if (args.length == 1 && args[0] == HELP_KEY) {
+  public static void main(String args[]) throws InterruptedException {
+    if (args.length == 1 && args[0].equals(HELP_KEY)) {
       System.out.println(USAGE);
       return;
     }
@@ -174,28 +199,24 @@ public class OharaTestUtil extends CloseOnce {
               }
             });
 
-    Brokers brokers = OharaTestUtil.workers().brokers;
-    Workers workers = OharaTestUtil.workers().workers;
-    System.out.println("wait for the mini kafka cluster");
-    try {
-      TimeUnit.SECONDS.sleep(5);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    System.out.println(
-        "Succeed to run the mini brokers: "
-            + brokers.connectionProps()
-            + " and workers: "
-            + workers.connectionProps());
+    try (OharaTestUtil util = OharaTestUtil.workers(3)) {
+      System.out.println("wait for the mini kafka cluster");
+      try {
+        TimeUnit.SECONDS.sleep(5);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      System.out.println(
+          "Succeed to run the mini brokers: "
+              + util.brokers.connectionProps()
+              + " and workers: "
+              + util.workers.connectionProps());
 
-    System.out.println(
-        "enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after "
-            + ttl
-            + " seconds");
-    try {
+      System.out.println(
+          "enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after "
+              + ttl
+              + " seconds");
       TimeUnit.SECONDS.sleep(ttl.get());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 }

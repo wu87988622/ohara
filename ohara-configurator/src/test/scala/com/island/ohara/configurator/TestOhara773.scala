@@ -3,14 +3,14 @@ import java.time.Duration
 import java.util.concurrent.Executors
 
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TestOhara773 extends With3Brokers3Workers with Matchers {
+class TestOhara773 extends WithBrokerWorker with Matchers {
 
   @Test
   def shouldNotCreateTopicIfItExists(): Unit = {

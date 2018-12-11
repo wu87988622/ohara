@@ -21,7 +21,7 @@ public abstract class With3Brokers extends LargeTest {
     if (util != null)
       throw new IllegalArgumentException(
           "The test util had been initialized!!! This happens on your tests don't run on different jvm");
-    util = OharaTestUtil.brokers();
+    util = OharaTestUtil.brokers(3);
   }
 
   protected OharaTestUtil testUtil() {

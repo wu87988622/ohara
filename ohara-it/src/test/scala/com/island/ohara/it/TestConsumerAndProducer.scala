@@ -4,14 +4,14 @@ import java.time.Duration
 
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.integration.With3Brokers
+import com.island.ohara.integration.WithBroker
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 
-class TestConsumerAndProducer extends With3Brokers with Matchers {
+class TestConsumerAndProducer extends WithBroker with Matchers {
 
   @Test
   def testSendAndReceiveString(): Unit = {

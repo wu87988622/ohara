@@ -3,12 +3,12 @@ package com.island.ohara.streams
 import java.util
 
 import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.integration.With3Brokers
+import com.island.ohara.integration.{With3Brokers, WithBroker}
 import com.island.ohara.kafka.{Consumer, ConsumerRecord}
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestImportData extends With3Brokers with Matchers {
+class TestImportData extends WithBroker with Matchers {
   val TOPIC_CARRIERS = "carriers"
   val TOPIC_PLANE = "plane"
   val TOPIC_AIRPORT = "airport"

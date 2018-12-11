@@ -8,9 +8,9 @@ import org.junit.Test;
 public class TestOharaTestUtil extends MediumTest {
 
   @Test(expected = RuntimeException.class)
-  public void testLocalMethod() throws Exception {
+  public void testLocalMethod() {
     setEnv("ohara.it.workers", "123");
-    try (OharaTestUtil util = OharaTestUtil.workers()) {
+    try (OharaTestUtil util = OharaTestUtil.workers(1)) {
       util.brokersConnProps();
     }
   }

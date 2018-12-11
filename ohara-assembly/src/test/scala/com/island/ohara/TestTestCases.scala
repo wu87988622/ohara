@@ -4,7 +4,7 @@ import java.net.URL
 import java.util.regex.Pattern
 
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
-import com.island.ohara.integration.{With3Brokers, With3Brokers3Workers}
+import com.island.ohara.integration.{With3Brokers, With3Brokers3Workers, WithBroker, WithBrokerWorker}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -16,8 +16,10 @@ class TestTestCases extends MediumTest with Matchers {
       classOf[SmallTest],
       classOf[MediumTest],
       classOf[LargeTest],
-      classOf[With3Brokers3Workers],
-      classOf[With3Brokers]
+      classOf[WithBroker],
+      classOf[With3Brokers],
+      classOf[WithBrokerWorker],
+      classOf[With3Brokers3Workers]
     )
   private[this] val validTestName: Array[String] = validTestCatalog.map(_.getName)
 

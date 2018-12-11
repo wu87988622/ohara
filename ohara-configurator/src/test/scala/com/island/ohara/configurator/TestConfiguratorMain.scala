@@ -42,7 +42,7 @@ class TestConfiguratorMain extends LargeTest with Matchers {
 
   @Test
   def testActualEnv(): Unit = {
-    val util = OharaTestUtil.workers()
+    val util = OharaTestUtil.workers(1)
     try {
       Configurator.closeRunningConfigurator = false
       val service = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor())
