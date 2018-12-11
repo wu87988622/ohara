@@ -188,7 +188,7 @@ object Backend {
               workers = workers.connectionProps,
               ftpServer = FtpServerInformation(
                 hostname = ftpServer.hostname,
-                port = ftpServer.port.toInt,
+                port = ftpServer.port,
                 dataPort = ftpServer.dataPort().asScala.map(x => x.toInt),
                 user = ftpServer.user,
                 password = ftpServer.password
@@ -219,6 +219,13 @@ object Backend {
       .extraRoute(dbRoute ~ servicesRoute)
       .build()
     try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)
-    finally configurator.close()
+    finally {
+      CloseOnce.close(configurator)
+      CloseOnce.close(ftpServer)
+      CloseOnce.close(dataBase)
+      CloseOnce.close(workers)
+      CloseOnce.close(brokers)
+      CloseOnce.close(zk)
+    }
   }
 }
