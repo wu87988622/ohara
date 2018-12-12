@@ -17,14 +17,18 @@ public interface Zookeepers extends AutoCloseable {
   /** @return true if this zookeeper cluster is generated locally. */
   boolean isLocal();
 
-  static Zookeepers local(Integer port) {
+  @Override
+  void close();
+
+  static Zookeepers local(int port) {
     final NIOServerCnxnFactory factory;
-    File snapshotDir = Integration.createTempDir("standalone-zk/snapshot");
-    File logDir = Integration.createTempDir("standalone-zk/log");
+    File snapshotDir = Integration.createTempDir("local-zk-snapshot");
+    File logDir = Integration.createTempDir("local-zk-log");
 
     try {
       factory = new NIOServerCnxnFactory();
-      factory.configure(new InetSocketAddress(CommonUtil.anyLocalAddress(), port), 1024);
+      factory.configure(
+          new InetSocketAddress(CommonUtil.anyLocalAddress(), Math.max(0, port)), 1024);
       factory.startup(new ZooKeeperServer(snapshotDir, logDir, 500));
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -32,7 +36,7 @@ public interface Zookeepers extends AutoCloseable {
 
     return new Zookeepers() {
       @Override
-      public void close() throws Exception {
+      public void close() {
         factory.shutdown();
         Integration.deleteFiles(snapshotDir);
         Integration.deleteFiles(logDir);
@@ -61,7 +65,7 @@ public interface Zookeepers extends AutoCloseable {
                 (Zookeepers)
                     new Zookeepers() {
                       @Override
-                      public void close() throws Exception {
+                      public void close() {
                         // Nothing
                       }
 
@@ -75,6 +79,6 @@ public interface Zookeepers extends AutoCloseable {
                         return false;
                       }
                     })
-        .orElseGet(() -> local(Integration.freePort()));
+        .orElseGet(() -> local(0));
   }
 }
