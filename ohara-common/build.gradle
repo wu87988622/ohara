@@ -20,20 +20,34 @@ def exec(String[] args) {
     commandLine args
     standardOutput = stdout
   }
-  return stdout.toString().replaceAll("\n", "")
+  // If the shell is wrapped by cygwin, the line separator is changed to \n...
+  // Hence, checking the separator manually is more suitable in this case
+  def s = stdout.toString()
+  if (s.contains("\r\n")) return s.replaceAll("\r\n", "")
+  return s.replaceAll("\n", "")
 }
 
 def hasGit() {
   return exec("which", "git")
 }
 
+import org.apache.tools.ant.taskdefs.condition.Os
+def whoami() {
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    def fullName = exec("whoami")
+    def backslash = fullName.lastIndexOf("\\")
+    if (backslash == -1) return fullName
+    else fullName.substring(backslash + 1)
+  }
+  else return exec("whoami")
+}
 def user() {
   try {
     if (hasGit()) return exec("git", "config", "user.name")
-    else return exec("whoami")
+    else return whoami()
   } catch (Throwable e) {
     // if git's user is not set, git will return exit code 1
-    return exec("whoami")
+    return whoami()
   }
 }
 
@@ -48,7 +62,7 @@ def revision() {
 }
 
 def date() {
-  return exec("date")
+  return new Date().format('yyyy-MM-dd HH:mm:ss')
 }
 
 task initializer {
@@ -74,7 +88,7 @@ public final class VersionUtil {
   private VersionUtil() {}
 }
 """
-      writer.write(code)
+      writer.write(code.replaceAll("\n", System.lineSeparator()))
     } finally {
       writer.close()
     }
