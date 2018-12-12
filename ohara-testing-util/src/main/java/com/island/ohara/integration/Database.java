@@ -43,7 +43,7 @@ public interface Database extends AutoCloseable {
    */
   static Database local(int port) {
     int count = 0;
-    port = (port <= 0) ? Integration.availablePort() : port;
+    port = Integration.resolvePort(port);
     MysqldConfig config =
         aMysqldConfig(v5_7_latest)
             .withCharset(UTF8)
@@ -65,6 +65,7 @@ public interface Database extends AutoCloseable {
       @Override
       public void close() {
         CloseOnce.close(connection);
+        mysqld.stop();
       }
 
       @Override

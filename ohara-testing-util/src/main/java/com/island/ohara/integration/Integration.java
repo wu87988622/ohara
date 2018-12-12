@@ -2,7 +2,7 @@ package com.island.ohara.integration;
 
 import java.io.File;
 import java.net.ServerSocket;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -10,8 +10,12 @@ import java.util.stream.Collectors;
 public final class Integration {
   private Integration() {}
 
-  public static List<Integer> resolvePorts(Integer numberOfPorts) {
-    return resolvePorts(Arrays.asList(numberOfPorts));
+  public static int freePort() {
+    return resolvePort(0);
+  }
+
+  public static int resolvePort(int port) {
+    return resolvePorts(Collections.singletonList(port)).get(0);
   }
 
   public static List<Integer> resolvePorts(List<Integer> ports) {
@@ -22,24 +26,16 @@ public final class Integration {
   }
 
   public static int availablePort() {
-    ServerSocket socket = null;
-    try {
-      socket = new ServerSocket(0);
+    try (ServerSocket socket = new ServerSocket(0)) {
       socket.setReuseAddress(true);
       return socket.getLocalPort();
     } catch (Exception e) {
       throw new RuntimeException(e);
-    } finally {
-      try {
-        socket.close();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
   public static File createTempDir(String dirPrefix) {
-    Integer count = 50;
+    int count = 50;
     while (count >= 0) {
       Random random = new Random();
       File file =

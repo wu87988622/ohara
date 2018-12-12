@@ -77,7 +77,7 @@ public interface FtpServer extends AutoCloseable {
 
     List<Integer> availableDataPorts =
         Arrays.stream(dataPorts)
-            .mapToObj(port -> port <= 0 ? Integration.availablePort() : port)
+            .mapToObj(port -> Integration.resolvePort(port))
             .collect(Collectors.toList());
 
     connectionConfig.setActiveEnabled(false);

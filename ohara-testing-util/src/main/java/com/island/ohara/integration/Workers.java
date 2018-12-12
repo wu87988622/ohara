@@ -50,7 +50,8 @@ public interface Workers extends AutoCloseable {
                   boolean canRetry = port <= 0;
                   while (true) {
                     try {
-                      int availablePort = port <= 0 ? Integration.availablePort() : port;
+                      int availablePort = Integration.resolvePort(port);
+
                       Map<String, String> config = new HashMap<>();
                       // reduce the number from partitions and replicas to speedup the mini cluster
                       // for config storage. the partition from config topic is always 1 so we

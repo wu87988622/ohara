@@ -75,6 +75,6 @@ public interface Zookeepers extends AutoCloseable {
                         return false;
                       }
                     })
-        .orElseGet(() -> local(Integration.availablePort()));
+        .orElseGet(() -> local(Integration.freePort()));
   }
 }
