@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import PipelineSourceFtp from '../PipelineSourceFtpPage';
+import PipelineFtpSource from '../PipelineFtpSource';
 
 const props = {
   hasChanges: false,
@@ -12,11 +12,11 @@ const props = {
   schema: [],
 };
 
-describe('<PipelineSourceFtp />', () => {
+describe('<PipelineFtpSource />', () => {
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallow(<PipelineSourceFtp {...props} />);
+    wrapper = shallow(<PipelineFtpSource {...props} />);
   });
 
   it('renders self', () => {

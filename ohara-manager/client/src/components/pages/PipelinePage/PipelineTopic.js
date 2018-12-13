@@ -15,7 +15,7 @@ const H5Wrapper = styled(H5)`
   color: ${lightBlue};
 `;
 
-class PipelineTopicPage extends React.Component {
+class PipelineTopic extends React.Component {
   static propTypes = {
     name: PropTypes.string.isRequired,
     isLoading: PropTypes.bool.isRequired,
@@ -63,4 +63,4 @@ class PipelineTopicPage extends React.Component {
   }
 }
 
-export default PipelineTopicPage;
+export default PipelineTopic;

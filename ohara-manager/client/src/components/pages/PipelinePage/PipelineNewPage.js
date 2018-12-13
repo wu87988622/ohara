@@ -10,11 +10,11 @@ import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as URLS from 'constants/urls';
-import PipelineSourcePage from './PipelineSourcePage';
-import PipelineSourceFtpPage from './PipelineSourceFtpPage';
-import PipelineTopicPage from './PipelineTopicPage';
-import PipelineSinkPage from './PipelineSinkPage';
-import PipelineSinkFtpPage from './PipelineSinkFtpPage';
+import PipelineJdbcSource from './PipelineJdbcSource';
+import PipelineFtpSource from './PipelineFtpSource';
+import PipelineTopic from './PipelineTopic';
+import PipelineHdfsSink from './PipelineHdfsSink';
+import PipelineFtpSink from './PipelineFtpSink';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
@@ -438,7 +438,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${jdbcSource}`}
                   render={() => (
-                    <PipelineSourcePage
+                    <PipelineJdbcSource
                       {...this.props}
                       graph={graph}
                       loadGraph={this.loadGraph}
@@ -453,7 +453,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${ftpSource}`}
                   render={() => (
-                    <PipelineSourceFtpPage
+                    <PipelineFtpSource
                       {...this.props}
                       graph={graph}
                       loadGraph={this.loadGraph}
@@ -468,7 +468,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${ftpSink}`}
                   render={() => (
-                    <PipelineSinkFtpPage
+                    <PipelineFtpSink
                       {...this.props}
                       graph={graph}
                       loadGraph={this.loadGraph}
@@ -483,7 +483,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path="/pipelines/(new|edit)/topic"
                   render={() => (
-                    <PipelineTopicPage
+                    <PipelineTopic
                       {...this.props}
                       graph={graph}
                       loadGraph={this.loadGraph}
@@ -498,7 +498,7 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${hdfsSink}`}
                   render={() => (
-                    <PipelineSinkPage
+                    <PipelineHdfsSink
                       {...this.props}
                       graph={graph}
                       hasChanges={hasChanges}

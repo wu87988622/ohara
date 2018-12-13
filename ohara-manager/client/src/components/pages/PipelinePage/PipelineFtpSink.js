@@ -1,11 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import PropTypes from 'prop-types';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
@@ -14,36 +13,40 @@ import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { fetchTopics } from 'apis/topicApis';
 import {
-  checkSource,
-  createSource,
-  updateSource,
-  fetchSource,
-  fetchPipeline,
+  createSink,
+  updateSink,
+  fetchSink,
   updatePipeline,
+  fetchPipeline,
+  validateFtp,
 } from 'apis/pipelinesApis';
-
-const H5Wrapper = styled(H5)`
-  margin: 0;
-  font-weight: normal;
-  color: ${lightBlue};
-`;
-H5Wrapper.displayName = 'H5';
 
 const FormGroupWrapper = styled.div`
   display: flex;
   justify-content: space-between;
 `;
 
+const FormGroupCheckbox = styled(FormGroup)`
+  flex-direction: row;
+  align-items: center;
+  color: ${lightBlue};
+`;
+
+const Checkbox = styled(Input)`
+  height: auto;
+  width: auto;
+  margin-right: 8px;
+`;
+
 const NewRowBtn = styled(Button)`
   margin-left: auto;
 `;
-NewRowBtn.displayName = 'NewRowBtn';
 
 const FormInner = styled.div`
   padding: 20px;
 `;
 
-class PipelineSourceFtpPage extends React.Component {
+class PipelineFtpSink extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -59,8 +62,8 @@ class PipelineSourceFtpPage extends React.Component {
 
   selectMaps = {
     tasks: 'currTask',
-    writeTopics: 'currWriteTopic',
     fileEncodings: 'currFileEncoding',
+    readTopics: 'currReadTopic',
     types: 'currType',
   };
 
@@ -82,23 +85,20 @@ class PipelineSourceFtpPage extends React.Component {
     port: '',
     username: '',
     password: '',
-    inputFolder: '',
-    completeFolder: '',
-    errorFolder: '',
-    writeTopics: [],
-    currWriteTopic: {},
+    outputfolder: '',
+    readTopics: [],
+    schema: [],
+    currReadTopic: {},
     fileEncodings: ['UTF-8'],
     currFileEncoding: {},
     tasks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
     currTask: {},
-    schema: [],
-    isDeleteRowModalActive: false,
+    needHeader: true,
     isNewRowModalActive: false,
-    workingRow: null,
+    isDeleteRowModalActive: false,
     columnName: '',
     newColumnName: '',
-    currType: '',
-    pipelines: {},
+    IsTestConnectionBtnWorking: false,
   };
 
   componentDidMount() {
@@ -107,21 +107,23 @@ class PipelineSourceFtpPage extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { hasChanges, match } = this.props;
-    const prevSourceId = _.get(prevProps.match, 'params.sourceId', null);
-    const currSourceId = _.get(match, 'params.sourceId', null);
+
+    const prevSinkId = _.get(prevProps.match, 'params.sinkId', null);
+    const currSinkId = _.get(this.props.match, 'params.sinkId', null);
     const topicId = _.get(match, 'params.topicId');
-    const isUpdate = prevSourceId !== currSourceId;
+    const hasTopicId = !_.isNull(topicId);
+    const isUpdate = prevSinkId !== currSinkId;
 
     if (hasChanges) {
       this.save();
     }
 
-    if (isUpdate) {
+    if (isUpdate && hasTopicId) {
       const { name, uuid, rules } = this.state.pipelines;
 
       const params = {
         name,
-        rules: { ...rules, [currSourceId]: topicId },
+        rules: { ...rules, [topicId]: currSinkId },
       };
 
       this.updatePipeline(uuid, params);
@@ -137,18 +139,18 @@ class PipelineSourceFtpPage extends React.Component {
 
   fetchData = () => {
     const { match } = this.props;
+    const sinkId = _.get(match, 'params.sinkId', null);
     const topicId = _.get(match, 'params.topicId', null);
-    const sourceId = _.get(match, 'params.sourceId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
     this.setDefaults();
 
-    if (sourceId) {
+    if (sinkId) {
       const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchPipelinePromise = this.fetchPipeline(pipelineId);
 
-      Promise.all([fetchTopicsPromise, fetchPipelinePromise]).then(() => {
-        this.fetchSource(sourceId);
+      Promise.all([fetchPipelinePromise, fetchTopicsPromise]).then(() => {
+        this.fetchSink(sinkId);
       });
 
       return;
@@ -158,26 +160,41 @@ class PipelineSourceFtpPage extends React.Component {
     this.fetchPipeline(pipelineId);
   };
 
-  fetchSource = async sourceId => {
+  fetchTopics = async topicId => {
+    if (!_.isUuid(topicId)) return;
+
+    const res = await fetchTopics();
+    const readTopics = _.get(res, 'data.result', []);
+    if (!_.isEmpty(readTopics)) {
+      const { name, uuid } = readTopics.find(({ uuid }) => uuid === topicId);
+      this.setState({ readTopics, currReadTopic: { name, uuid } });
+    } else {
+      toastr.error(MESSAGES.INVALID_TOPIC_ID);
+      this.setState({ isRedirect: true });
+    }
+  };
+
+  fetchSink = async sourceId => {
     if (!_.isUuid(sourceId)) return;
 
-    const res = await fetchSource(sourceId);
+    const res = await fetchSink(sourceId);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) return;
 
     const { schema, name, configs } = res.data.result;
     const {
+      'ftp.hostname': host,
+      'ftp.port': port,
       'ftp.user.name': username,
       'ftp.user.password': password,
-      'ftp.port': port,
-      'ftp.hostname': host,
-      'ftp.input.folder': inputFolder,
-      'ftp.completed.folder': completeFolder,
-      'ftp.error.folder': errorFolder,
+      'ftp.output.folder': outputfolder,
       'ftp.encode': currFileEncoding,
+      'ftp.needHeader': needHeader,
       currTask,
     } = configs;
+
+    const _needHeader = needHeader === 'true' ? true : false;
 
     this.setState({
       name,
@@ -185,42 +202,26 @@ class PipelineSourceFtpPage extends React.Component {
       port,
       username,
       password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
+      outputfolder,
       currFileEncoding,
       currTask,
+      needHeader: _needHeader,
       schema,
     });
-  };
-
-  fetchTopics = async topicId => {
-    if (!_.isUuid(topicId)) return;
-
-    const res = await fetchTopics();
-    const writeTopics = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(writeTopics)) {
-      const { name, uuid } = writeTopics.find(({ uuid }) => uuid === topicId);
-      this.setState({ writeTopics, currWriteTopic: { name, uuid } });
-    } else {
-      toastr.error(MESSAGES.INVALID_TOPIC_ID);
-      this.setState({ isRedirect: true });
-    }
   };
 
   fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
     const res = await fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', []);
+    const pipelines = _.get(res, 'data.result', null);
 
-    if (!_.isEmpty(pipelines)) {
+    if (pipelines) {
       this.setState({ pipelines });
 
-      const sourceId = _.get(this.props.match, 'params.sourceId', null);
+      const sinkId = _.get(this.props.match, 'params.sinkId', null);
 
-      if (sourceId && sourceId !== '__') {
+      if (sinkId) {
         this.props.loadGraph(pipelines);
       }
     }
@@ -238,65 +239,21 @@ class PipelineSourceFtpPage extends React.Component {
 
   handleInputChange = ({ target: { name, value } }) => {
     this.setState({ [name]: value }, () => {
-      const targets = ['columnName', 'newColumnName'];
-
-      if (!targets.includes(name)) {
-        this.props.updateHasChanges(true);
-      }
+      this.props.updateHasChanges(true);
     });
   };
 
-  handleSelectChange = ({ target }) => {
-    const { name, options, value } = target;
-    const selectedIdx = options.selectedIndex;
-    const { uuid } = options[selectedIdx].dataset;
-    const hasUuid = Boolean(uuid);
-    const current = this.selectMaps[name];
-
-    if (hasUuid) {
-      this.setState(
-        () => {
-          return {
-            [current]: {
-              name: value,
-              uuid,
-            },
-          };
-        },
-        () => {
-          this.props.updateHasChanges(true);
-        },
-      );
-
-      return;
-    }
-
-    this.setState(
-      () => {
-        return {
-          [current]: value,
-        };
-      },
-      () => {
-        if (current !== 'currType') {
-          this.props.updateHasChanges(true);
-        }
-      },
-    );
-  };
-
-  handleDeleteRowModalOpen = (e, order) => {
-    e.preventDefault();
-    this.setState({ isDeleteRowModalActive: true, workingRow: order });
-  };
-
-  handleDeleteRowModalClose = () => {
-    this.setState({ isDeleteRowModalActive: false, workingRow: null });
+  handleCheckboxChange = ({ target }) => {
+    const { name, checked } = target;
+    this.setState({ [name]: checked }, () => {
+      this.props.updateHasChanges(true);
+    });
   };
 
   handleTypeChange = (e, order) => {
     // https://reactjs.org/docs/events.html#event-pooling
     e.persist();
+
     this.setState(({ schema }) => {
       const idx = schema.findIndex(schema => schema.order === order);
       const { value: dataType } = e.target;
@@ -318,6 +275,61 @@ class PipelineSourceFtpPage extends React.Component {
     });
 
     this.props.updateHasChanges(true);
+  };
+
+  handleUp = (e, order) => {
+    e.preventDefault();
+
+    if (order === 1) return;
+
+    this.setState(({ schema }) => {
+      const idx = schema.findIndex(s => s.order === order);
+
+      const _schema = [
+        ...schema.slice(0, idx - 1),
+        schema[idx],
+        schema[idx - 1],
+        ...schema.slice(idx + 1),
+      ].map((schema, idx) => ({ ...schema, order: ++idx }));
+
+      return {
+        schema: _schema,
+      };
+    });
+
+    this.props.updateHasChanges(true);
+  };
+
+  handleDown = (e, order) => {
+    e.preventDefault();
+
+    if (order === this.state.schema.length) return;
+
+    this.setState(({ schema }) => {
+      const idx = schema.findIndex(s => s.order === order);
+
+      const _schema = [
+        ...schema.slice(0, idx),
+        schema[idx + 1],
+        schema[idx],
+        ...schema.slice(idx + 2),
+      ].map((schema, idx) => ({ ...schema, order: ++idx }));
+
+      return {
+        schema: _schema,
+      };
+    });
+
+    this.props.updateHasChanges(true);
+  };
+
+  handleDeleteRowModalOpen = (e, order) => {
+    e.preventDefault();
+    this.setState({ isDeleteRowModalActive: true, workingRow: order });
+  };
+
+  handleDeleteRowModalClose = () => {
+    this.setState({ isDeleteRowModalActive: false, workingRow: null });
   };
 
   handleRowDelete = () => {
@@ -381,53 +393,6 @@ class PipelineSourceFtpPage extends React.Component {
         };
       },
     );
-
-    this.props.updateHasChanges(true);
-  };
-
-  handleUp = (e, order) => {
-    e.preventDefault();
-
-    if (order === 1) return;
-
-    this.setState(({ schema }) => {
-      const idx = schema.findIndex(s => s.order === order);
-
-      const _schema = [
-        ...schema.slice(0, idx - 1),
-        schema[idx],
-        schema[idx - 1],
-        ...schema.slice(idx + 1),
-      ].map((schema, idx) => ({ ...schema, order: ++idx }));
-
-      return {
-        schema: _schema,
-      };
-    });
-
-    this.props.updateHasChanges(true);
-  };
-
-  handleDown = (e, order) => {
-    e.preventDefault();
-
-    if (order === this.state.schema.length) return;
-
-    this.setState(({ schema }) => {
-      const idx = schema.findIndex(s => s.order === order);
-
-      const _schema = [
-        ...schema.slice(0, idx),
-        schema[idx + 1],
-        schema[idx],
-        ...schema.slice(idx + 2),
-      ].map((schema, idx) => ({ ...schema, order: ++idx }));
-
-      return {
-        schema: _schema,
-      };
-    });
-
     this.props.updateHasChanges(true);
   };
 
@@ -436,18 +401,62 @@ class PipelineSourceFtpPage extends React.Component {
     const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await checkSource({ hostname, port, user, password });
+    const res = await validateFtp({
+      hostname,
+      port,
+      user,
+      password,
+    });
     this.updateIsTestConnectionBtnWorking(false);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
 
-    if (isSuccess) {
+    const _res = _.get(res, 'data.isSuccess', false);
+
+    if (_res) {
       toastr.success(MESSAGES.TEST_SUCCESS);
-      this.setState({ isFormDisabled: false });
     }
   };
 
   updateIsTestConnectionBtnWorking = update => {
     this.setState({ IsTestConnectionBtnWorking: update });
+  };
+
+  handleSelectChange = ({ target }) => {
+    const { name, options, value } = target;
+    const selectedIdx = options.selectedIndex;
+    const { uuid } = options[selectedIdx].dataset;
+    const hasUuid = Boolean(uuid);
+    const current = this.selectMaps[name];
+
+    if (hasUuid) {
+      this.setState(
+        () => {
+          return {
+            [current]: {
+              name: value,
+              uuid,
+            },
+          };
+        },
+        () => {
+          this.props.updateHasChanges(true);
+        },
+      );
+
+      return;
+    }
+
+    this.setState(
+      () => {
+        return {
+          [current]: value,
+        };
+      },
+      () => {
+        if (current !== 'currType') {
+          this.props.updateHasChanges(true);
+        }
+      },
+    );
   };
 
   save = _.debounce(async () => {
@@ -458,10 +467,9 @@ class PipelineSourceFtpPage extends React.Component {
       port,
       username,
       password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      currWriteTopic,
+      outputfolder,
+      needHeader,
+      currReadTopic,
       currFileEncoding,
       currTask,
       schema,
@@ -473,49 +481,44 @@ class PipelineSourceFtpPage extends React.Component {
       return;
     }
 
-    const sourceId = _.get(match, 'params.sourceId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
-    const sourceIdPlaceHolder = '__';
-    const isCreate =
-      _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
+    const sourceId = _.get(match, 'params.sourceId', null);
+    const sinkId = _.get(match, 'params.sinkId', null);
+    const isCreate = _.isNull(sinkId) ? true : false;
+    const hasSourceId = _.isNull(sourceId) ? false : true;
     const _schema = _.isEmpty(schema) ? [] : schema;
 
     const params = {
       name,
       schema: _schema,
       className: 'ftp',
-      topics: [currWriteTopic.uuid],
+      topics: [currReadTopic.uuid],
       numberOfTasks: 1,
       configs: {
-        'ftp.input.folder': inputFolder,
-        'ftp.completed.folder': completeFolder,
-        'ftp.error.folder': errorFolder,
+        'ftp.output.folder': outputfolder,
         'ftp.encode': currFileEncoding,
         'ftp.hostname': host,
         'ftp.port': port,
         'ftp.user.name': username,
         'ftp.user.password': password,
-
-        topic: currWriteTopic.name,
+        'ftp.needHeader': String(needHeader),
         currTask,
+        topic: currReadTopic.name,
       },
     };
 
     const res = isCreate
-      ? await createSource(params)
-      : await updateSource({ uuid: sourceId, params });
+      ? await createSink(params)
+      : await updateSink({ uuid: sinkId, params });
 
-    const _sourceId = _.get(res, 'data.result.uuid', null);
+    const _sinkId = _.get(res, 'data.result.uuid', null);
     await this.fetchPipeline(pipelineId);
 
-    if (_sourceId) {
+    if (_sinkId) {
       updateHasChanges(false);
-      if (isCreate && !sourceId) {
-        history.push(`${match.url}/${_sourceId}`);
-      } else if (isCreate && sourceId) {
-        const paths = match.url.split(sourceIdPlaceHolder);
-        history.push(`${paths[0]}${_sourceId}${paths[1]}`);
-      }
+
+      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${_sinkId}`);
+      if (isCreate && hasSourceId) history.push(`${match.url}/${_sinkId}`);
     }
   }, 1000);
 
@@ -526,30 +529,29 @@ class PipelineSourceFtpPage extends React.Component {
       port,
       username,
       password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      writeTopics,
-      currWriteTopic,
       fileEncodings,
       currFileEncoding,
       tasks,
-      IsTestConnectionBtnWorking,
-      currTask,
       schema,
-      isDeleteRowModalActive,
+      currTask,
       isNewRowModalActive,
+      readTopics,
+      currReadTopic,
+      outputfolder,
+      needHeader,
       columnName,
       newColumnName,
       currType,
+      isDeleteRowModalActive,
+      IsTestConnectionBtnWorking,
     } = this.state;
 
     return (
       <React.Fragment>
         <Tabs>
           <TabList>
-            <Tab>FTP Source 1/2</Tab>
-            <Tab>FTP Source 2/2</Tab>
+            <Tab>FTP Sink 1/2</Tab>
+            <Tab>FTP Sink 2/2</Tab>
             <Tab>Output schema</Tab>
           </TabList>
           <ConfirmModal
@@ -577,14 +579,13 @@ class PipelineSourceFtpPage extends React.Component {
                   <Label>Column name</Label>
                   <Input
                     name="columnName"
-                    width="250px"
+                    width="100%"
                     placeholder="Column name"
                     value={columnName}
                     data-testid="column-name-modal"
                     handleChange={this.handleInputChange}
                   />
                 </FormGroup>
-
                 <FormGroup>
                   <Label>New column name</Label>
                   <Input
@@ -596,7 +597,6 @@ class PipelineSourceFtpPage extends React.Component {
                     handleChange={this.handleInputChange}
                   />
                 </FormGroup>
-
                 <FormGroup>
                   <Label>Type</Label>
                   <Select
@@ -610,6 +610,7 @@ class PipelineSourceFtpPage extends React.Component {
               </FormInner>
             </form>
           </Modal>
+
           <TabPanel>
             <form>
               <FormGroup>
@@ -617,7 +618,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Input
                   name="name"
                   width="100%"
-                  placeholder="FTP source name"
+                  placeholder="FTP sink name"
                   value={name}
                   data-testid="name-input"
                   handleChange={this.handleInputChange}
@@ -629,7 +630,7 @@ class PipelineSourceFtpPage extends React.Component {
                 <Input
                   name="host"
                   width="100%"
-                  placeholder="http://localhost"
+                  placeholder="ftp://localhost"
                   value={host}
                   data-testid="host-input"
                   handleChange={this.handleInputChange}
@@ -647,7 +648,6 @@ class PipelineSourceFtpPage extends React.Component {
                   handleChange={this.handleInputChange}
                 />
               </FormGroup>
-
               <FormGroup>
                 <Label>User name</Label>
                 <Input
@@ -672,11 +672,10 @@ class PipelineSourceFtpPage extends React.Component {
                   handleChange={this.handleInputChange}
                 />
               </FormGroup>
-
               <FormGroup>
                 <Button
                   theme={primaryBtn}
-                  text="Test Connection"
+                  text="Test connection"
                   isWorking={IsTestConnectionBtnWorking}
                   disabled={IsTestConnectionBtnWorking}
                   data-testid="test-connection-btn"
@@ -689,13 +688,13 @@ class PipelineSourceFtpPage extends React.Component {
           <TabPanel>
             <form>
               <FormGroupWrapper>
-                <FormGroup css={{ width: '70%', margin: '0 20px 0 0' }}>
+                <FormGroup width="70%" margin="0 20px 20px 0">
                   <Label>File encoding</Label>
                   <Select
                     name="fileEnconding"
-                    list={fileEncodings}
-                    selected={currFileEncoding}
                     data-testid="file-enconding-select"
+                    selected={currFileEncoding}
+                    list={fileEncodings}
                     handleChange={this.handleSelectChange}
                   />
                 </FormGroup>
@@ -704,61 +703,51 @@ class PipelineSourceFtpPage extends React.Component {
                   <Label>Task</Label>
                   <Select
                     name="tasks"
-                    list={tasks}
-                    selected={currTask}
                     data-testid="task-select"
+                    selected={currTask}
+                    list={tasks}
                     handleChange={this.handleSelectChange}
                   />
                 </FormGroup>
               </FormGroupWrapper>
+
               <FormGroup>
-                <Label>Write topic</Label>
+                <Label>Read topic</Label>
                 <Select
                   isObject
-                  name="writeTopics"
-                  list={writeTopics}
-                  selected={currWriteTopic}
+                  name="readTopics"
                   width="100%"
-                  data-testid="write-topic-select"
+                  data-testid="read-topic-select"
+                  selected={currReadTopic}
+                  list={readTopics}
                   handleChange={this.handleSelectChange}
                 />
               </FormGroup>
 
               <FormGroup>
-                <Label>Input folder</Label>
+                <Label>Output Folder</Label>
                 <Input
-                  name="inputFolder"
+                  name="outputfolder"
                   width="100%"
-                  placeholder="/path/to/the/input/folder"
-                  value={inputFolder}
-                  data-testid="input-folder-input"
+                  placeholder="/home/user1"
+                  value={outputfolder}
+                  data-testid="outputfolder-input"
                   handleChange={this.handleInputChange}
                 />
               </FormGroup>
 
-              <FormGroup>
-                <Label>Complete folder</Label>
-                <Input
-                  name="completeFolder"
-                  width="100%"
-                  placeholder="/path/to/the/complete/folder"
-                  value={completeFolder}
-                  data-testid="complete-folder-input"
-                  handleChange={this.handleInputChange}
+              <FormGroupCheckbox>
+                <Checkbox
+                  type="checkbox"
+                  name="needHeader"
+                  width="25px"
+                  value=""
+                  checked={needHeader}
+                  data-testid="needheader-input"
+                  handleChange={this.handleCheckboxChange}
                 />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Error folder</Label>
-                <Input
-                  name="errorFolder"
-                  width="100%"
-                  placeholder="/path/to/the/error/folder"
-                  value={errorFolder}
-                  data-testid="error-folder-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
+                Include header
+              </FormGroupCheckbox>
             </form>
           </TabPanel>
           <TabPanel>
@@ -784,4 +773,4 @@ class PipelineSourceFtpPage extends React.Component {
   }
 }
 
-export default PipelineSourceFtpPage;
+export default PipelineFtpSink;

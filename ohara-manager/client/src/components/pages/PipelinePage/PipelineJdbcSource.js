@@ -61,7 +61,7 @@ const GetTablesBtn = styled(Button)`
   white-space: nowrap;
 `;
 
-class PipelineSourcePage extends React.Component {
+class PipelineJdbcSource extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -547,4 +547,4 @@ class PipelineSourcePage extends React.Component {
   }
 }
 
-export default PipelineSourcePage;
+export default PipelineJdbcSource;

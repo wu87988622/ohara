@@ -43,7 +43,7 @@ const Checkbox = styled(Input)`
 
 Checkbox.displayName = 'Checkbox';
 
-class PipelineSinkPage extends React.Component {
+class PipelineHdfsSink extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -484,4 +484,4 @@ class PipelineSinkPage extends React.Component {
   }
 }
 
-export default PipelineSinkPage;
+export default PipelineHdfsSink;

@@ -1,3 +1,3 @@
-import PipelinePage from './PipelinePage';
+import PipelineListPage from './PipelineListPage';
 
-export default PipelinePage;
+export default PipelineListPage;

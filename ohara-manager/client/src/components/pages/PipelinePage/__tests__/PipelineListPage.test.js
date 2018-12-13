@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import PipelinePage from '../PipelinePage';
+import PipelineListPage from '../PipelineListPage';
 
 const pipelines = [
   {
@@ -24,10 +24,10 @@ const props = {
   },
 };
 
-describe('<PipelinePage />', () => {
+describe('<PipelineListPage />', () => {
   let wrapper;
   beforeEach(() => {
-    wrapper = shallow(<PipelinePage {...props} />);
+    wrapper = shallow(<PipelineListPage {...props} />);
   });
 
   it('renders self', () => {

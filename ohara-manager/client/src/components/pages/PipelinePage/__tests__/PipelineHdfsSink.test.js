@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import PipelineSinkPage from '../PipelineSinkPage';
+import PipelineHdfsSink from '../PipelineHdfsSink';
 import { getTestById } from 'utils/testUtils';
 import { CONFIGURATION } from 'constants/urls';
 
@@ -15,11 +15,11 @@ const props = {
   isRedirect: false,
 };
 
-describe('<PipelineSinkPage />', () => {
+describe('<PipelineHdfsSink />', () => {
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallow(<PipelineSinkPage {...props} />);
+    wrapper = shallow(<PipelineHdfsSink {...props} />);
   });
 
   it('renders self', () => {

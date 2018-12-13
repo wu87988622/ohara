@@ -98,7 +98,7 @@ const DeleteIcon = styled.button`
 
 DeleteIcon.displayName = 'DeleteIcon';
 
-class PipelinePage extends React.Component {
+class PipelineListPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
       isExact: PropTypes.bool,
@@ -435,4 +435,4 @@ class PipelinePage extends React.Component {
   }
 }
 
-export default PipelinePage;
+export default PipelineListPage;
