@@ -11,20 +11,18 @@ import org.scalatest.Matchers
 import scala.collection.mutable.ArrayBuffer
 
 class TestTestCases extends MediumTest with Matchers {
+  //Currently, We should implement following abstract class in all test cases
   private[this] val validTestCatalog: Array[Class[_]] =
     Array(
       classOf[SmallTest],
       classOf[MediumTest],
-      classOf[LargeTest],
-      classOf[WithBroker],
-      classOf[With3Brokers],
-      classOf[WithBrokerWorker],
-      classOf[With3Brokers3Workers]
+      classOf[LargeTest]
     )
   private[this] val validTestName: Array[String] = validTestCatalog.map(_.getName)
 
   /**
     * fail if any test case have not extended the test catalog.
+    * We will find any possible superClass is in [SmallTest, MediumTest, LargeTest] or not.
     */
   @Test
   def testSupperClassOfTestCases(): Unit = {
@@ -32,6 +30,7 @@ class TestTestCases extends MediumTest with Matchers {
     val packageName = getClass.getPackage.getName
     val path = packageName.replace('.', '/') + "/"
     val pattern = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
+
     val urls = classLoader.getResources(path)
     new Iterator[URL] {
       def hasNext: Boolean = urls.hasMoreElements
@@ -58,9 +57,13 @@ class TestTestCases extends MediumTest with Matchers {
             .map(clzName => clzName.substring(0, clzName.length - ".class".length))
             .foreach(clzName => {
               def listSuperClassName = (clz: Class[_]) => {
+                def getValidSupperClass(cl: Class[_]): Class[_] = {
+                  if (cl.getSuperclass == null || validTestName.contains(cl.getName)) cl
+                  else getValidSupperClass(cl.getSuperclass)
+                }
                 val buf = new ArrayBuffer[String]
-                val superClz = clz.getAnnotatedSuperclass
-                if (superClz != null) buf += superClz.getType.getTypeName
+                val superClz = getValidSupperClass(clz)
+                if (superClz != null) buf += superClz.getName
                 clz.getAnnotatedInterfaces.foreach(interfaceClz => buf += interfaceClz.getType.getTypeName)
                 logger.info(s"${clz.getName} have ${buf.mkString(", ")}")
                 buf.toArray
