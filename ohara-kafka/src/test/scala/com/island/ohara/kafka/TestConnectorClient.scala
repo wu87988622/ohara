@@ -7,7 +7,7 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.{CloseOnce, CommonUtil}
-import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
+import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers

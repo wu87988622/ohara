@@ -5,7 +5,7 @@ import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseCli
 import com.island.ohara.common.data.{DataType, Serializer}
 import com.island.ohara.common.util.{CloseOnce, VersionUtil}
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
+import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers

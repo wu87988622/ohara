@@ -4,7 +4,7 @@ import com.island.ohara.client.ConfiguratorJson.{TopicInfo, TopicInfoRequest}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.configurator.store.Store
-import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
+import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import org.junit.Test
 import org.scalatest.Matchers

@@ -3,7 +3,7 @@ import java.time.Duration
 import java.util.concurrent.Executors
 
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.integration.{With3Brokers3Workers, WithBrokerWorker}
+import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.Test
 import org.scalatest.Matchers

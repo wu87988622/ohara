@@ -4,7 +4,6 @@ import java.net.URL
 import java.util.regex.Pattern
 
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
-import com.island.ohara.integration.{With3Brokers, With3Brokers3Workers, WithBroker, WithBrokerWorker}
 import org.junit.Test
 import org.scalatest.Matchers
 

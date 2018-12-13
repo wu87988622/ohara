@@ -29,8 +29,8 @@ subprojects {
     }
   }
 
-  // The *-tests.jar of ohara-assembly is useless so we exclude the ohara-assembly
-  if (it.name != 'ohara-assembly' && it.name != 'ohara-manager') {
+  // ohara-manager doesn't generate test.jar
+  if (it.name != 'ohara-manager') {
     configurations {
       tests.extendsFrom archives
     }
@@ -50,12 +50,14 @@ subprojects {
       spotless {
         java {
           googleJavaFormat()
+          removeUnusedImports()
         }
       }
     }else if(it.name == 'ohara-kafka'){
       spotless {
         java {
           googleJavaFormat()
+          removeUnusedImports()
         }
         scala {
           // DON'T change the scalafmt version since the rules may be changed in newer version.
@@ -86,25 +88,16 @@ subprojects {
       "-language:postfixOps",
       "-language:implicitConversions",
       "-language:existentials",
-      "-Xlint:by-name-right-associative",
-      "-Xlint:delayedinit-select",
-      "-Xlint:doc-detached",
-      "-Xlint:missing-interpolator",
-      "-Xlint:nullary-override",
-      "-Xlint:nullary-unit",
-      "-Xlint:option-implicit",
-      "-Xlint:package-object-classes",
-      "-Xlint:poly-implicit-overload",
-      "-Xlint:private-shadow",
-      "-Xlint:stars-align",
-      "-Xlint:type-parameter-shadow",
-      "-Xlint:unsound-match",
       "-target:jvm-1.8",
       "-explaintypes",
       "-feature",
       "-unchecked",
+      // -Xlint enables all -Xlint:xxx checks.
+      // see https://github.com/scala/scala/blob/v2.11.12/src/compiler/scala/tools/nsc/settings/Warnings.scala#L102
       "-Xlint",
       "-Ywarn-dead-code",
+      "-Ywarn-unused-import",
+      "-Xfatal-warnings",
       // in order to enable SAM in scala 2.11.
       // see https://github.com/scala/scala/pull/3037
       // TODO: remove this flag after we are in scala 2.12.  by chia

@@ -8,7 +8,6 @@ import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
   ConnectorStatus,
-  CreateConnectorRequest,
   CreateConnectorResponse,
   Plugin,
   State,

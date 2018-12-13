@@ -3,7 +3,7 @@ package com.island.ohara.streams
 import java.util
 
 import com.island.ohara.common.data.{Row, Serializer}
-import com.island.ohara.integration.{With3Brokers, WithBroker}
+import com.island.ohara.integration.WithBroker
 import com.island.ohara.kafka.{Consumer, ConsumerRecord}
 import org.junit.Test
 import org.scalatest.Matchers
