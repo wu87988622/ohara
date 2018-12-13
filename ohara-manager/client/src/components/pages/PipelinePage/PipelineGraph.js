@@ -12,6 +12,7 @@ import {
   blue,
   green,
   lightBlue,
+  lighterBlue,
   lightestBlue,
   lighterGray,
   whiteSmoke,
@@ -19,6 +20,7 @@ import {
   radiusNormal,
   shadowNormal,
   dimBlue,
+  red,
 } from 'theme/variables';
 
 const Wrapper = styled(Box)`
@@ -54,7 +56,7 @@ const Svg = styled.svg`
     cursor: pointer;
   }
 
-  .node-label {
+  .node-name {
     font-size: 14px;
     color: ${lightBlue};
   }
@@ -75,8 +77,9 @@ const Svg = styled.svg`
       top: calc(100% + 10px);
     }
 
-    /* type is not necessary for topics */
-    .node-type {
+    /* These labels are not needed in topics */
+    .node-type,
+    .node-status {
       display: none;
     }
 
@@ -112,7 +115,13 @@ const Svg = styled.svg`
       color: ${dimBlue};
     }
 
-    .node-label {
+    .node-name {
+      margin-bottom: 5px;
+    }
+
+    .node-status {
+      font-size: 11px;
+      color: ${lighterBlue};
       margin-bottom: 5px;
     }
 
@@ -127,6 +136,12 @@ const Svg = styled.svg`
     &.is-running {
       .node-icon {
         background-color: ${green};
+      }
+    }
+
+    &.is-failed {
+      .node-icon {
+        background-color: ${red};
       }
     }
   }
@@ -145,6 +160,8 @@ const Svg = styled.svg`
     stroke-width: 2px;
   }
 `;
+
+Svg.displayName = 'Svg';
 
 class PipelineGraph extends React.Component {
   static propTypes = {
@@ -213,11 +230,13 @@ class PipelineGraph extends React.Component {
       const isActiveCls = isActive ? 'is-active' : '';
       const topicCls = isTopic ? 'node-topic' : 'node-connector';
       const stateCls = !_.isEmptyStr(state) ? `is-${state.toLowerCase()}` : '';
+      const status = !_.isEmptyStr(state) ? state.toLowerCase() : 'stopped';
 
       const html = `<div class="node-graph ${topicCls} ${isActiveCls} ${stateCls}">
         <span class="node-icon"><i class="fa ${icon}"></i></span>
         <div class="node-text-wrapper">
-          <span class="node-label">${name}</span>
+          <span class="node-name">${name}</span>
+          <span class="node-status">Status: ${status}</span>
           <span class="node-type">${displayType}</span>
         </div>
       </div>`;

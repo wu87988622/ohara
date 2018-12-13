@@ -54,5 +54,9 @@ describe('<PipelineGraph />', () => {
     ).toBe('Pipeline graph');
   });
 
-  // TODO: complete the tests
+  it('renders <Svg />', () => {
+    const svg = wrapper.find('Svg');
+    expect(svg.length).toBe(1);
+    expect(svg.hasClass('pipeline-graph')).toBe(true);
+  });
 });
