@@ -3,8 +3,9 @@ package com.island.ohara.common.util;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Calendar;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,6 +156,131 @@ public final class CommonUtil {
               + " seconds. Please turning your timeout time.");
       throw new IllegalStateException("timeout");
     } else return false;
+  }
+
+  /** Set elemnts normally implements equals */
+  public static <E1> boolean equals(Set<E1> s1, Object o) {
+    if (s1 == o) return true;
+    if (!(o instanceof Set)) return false;
+    Set<?> s2 = ((Set<?>) o);
+    // check empty
+    if (s1.isEmpty() && s2.isEmpty()) return true;
+
+    if (s1.size() != s2.size()) return false;
+
+    try {
+      return s1.containsAll(s2);
+    } catch (ClassCastException | NullPointerException var4) {
+      return false;
+    }
+  }
+
+  /**
+   * @param m1 map1
+   * @param m2 map2
+   * @param condition value eqauls condition
+   */
+  private static <K, V> boolean mapEquals(
+      Map<K, V> m1, Map<?, ?> m2, BiPredicate<V, Object> condition) {
+
+    try {
+      Iterator<Map.Entry<K, V>> i = m1.entrySet().iterator();
+      while (i.hasNext()) {
+        Map.Entry<K, V> e = i.next();
+        K key = e.getKey();
+        V value = e.getValue();
+        // value null
+        if (value == null) {
+          // not have key or value is null
+          if (m2.get(key) == null && m2.containsKey(key)) continue;
+          return false;
+        } else {
+          if (!condition.test(value, m2.get(key))) return false;
+        }
+      }
+    } catch (ClassCastException | NullPointerException unused) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Map equals
+   *
+   * <p>equals method do not compare all elements only first one to case It will throw
+   * ClassCastException when Map.entry<K,V> has values List and String
+   */
+  public static <K, V> boolean equals(Map<K, V> m1, Object o) {
+
+    if (m1 == o) return true;
+    if (!(o instanceof Map)) return false;
+    Map<?, ?> m2 = ((Map<?, ?>) o);
+    // check empty
+    if (m1.isEmpty() && m2.isEmpty()) return true;
+    if (m1.size() != m2.size()) {
+      return false;
+    }
+    V valueHead = m1.entrySet().iterator().next().getValue();
+
+    // nested
+    if (valueHead instanceof List) {
+      return mapEquals(m1, m2, (a, b) -> equals((List<?>) a, b));
+    } else if (valueHead instanceof Set) {
+      return mapEquals(m1, m2, (a, b) -> equals((Set<?>) a, b));
+    } else if (valueHead instanceof Map) {
+      return mapEquals(m1, m2, (a, b) -> equals((Map<?, ?>) a, b));
+    } else {
+      return mapEquals(m1, m2, Objects::equals);
+    }
+  }
+
+  /**
+   * List equals
+   *
+   * @param l1
+   * @param l2
+   * @param condition
+   * @see java.util.AbstractList
+   * @return
+   */
+  private static <E1> boolean listEquals(
+      List<E1> l1, List<?> l2, BiPredicate<E1, Object> condition) {
+    Iterator<E1> e1 = l1.listIterator();
+    Iterator<?> e2 = l2.listIterator();
+    while (e1.hasNext() && e2.hasNext()) {
+      E1 o1 = e1.next();
+      Object o2 = e2.next();
+      if (!condition.test(o1, o2)) return false;
+    }
+    return (!e1.hasNext()) && (!e2.hasNext());
+  }
+
+  /**
+   * List equals
+   *
+   * <p>equals method do not compare all elements only first one to case It will throw
+   * ClassCastException when List<Object> has elements List and String
+   *
+   * <p>
+   */
+  public static <E1> boolean equals(List<E1> l1, Object o) {
+    if (l1 == o) return true;
+    if (!(o instanceof List)) return false;
+    List<?> l2 = ((List<?>) o);
+    // check empty
+    if (l1.isEmpty() && l2.isEmpty()) return true;
+
+    // nested
+    E1 head = l1.get(0);
+    if (head instanceof List) {
+      return listEquals(l1, l2, (a, b) -> equals((List<?>) a, b));
+    } else if (head instanceof Set) {
+      return listEquals(l1, l2, (a, b) -> equals((Set<?>) a, b));
+    } else if (head instanceof Map) {
+      return listEquals(l1, l2, (a, b) -> equals((Map<?, ?>) a, b));
+    } else {
+      return listEquals(l1, l2, Objects::equals);
+    }
   }
 
   /** disable to instantiate CommonUtil. */

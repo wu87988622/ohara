@@ -37,7 +37,7 @@ public interface Consumer<K, V> extends AutoCloseable {
 
   default List<ConsumerRecord<K, V>> poll(
       Duration timeout, int expectedSize, Supplier<Boolean> stop) {
-    return poll(timeout, expectedSize, stop, i -> i);
+    return poll(timeout, expectedSize, stop, Function.identity());
   }
 
   default List<ConsumerRecord<K, V>> poll(
@@ -63,8 +63,8 @@ public interface Consumer<K, V> extends AutoCloseable {
     if (expectedSize == Integer.MAX_VALUE) list = new ArrayList<>();
     else list = new ArrayList<>(expectedSize);
 
-    Long endtime = CommonUtil.current() + timeout.toMillis();
-    Long ramaining = endtime - CommonUtil.current();
+    long endtime = CommonUtil.current() + timeout.toMillis();
+    long ramaining = endtime - CommonUtil.current();
 
     while (!stop.get() && list.size() < expectedSize && ramaining > 0) {
       list.addAll(filter.apply(poll(Duration.ofMillis(ramaining))));
@@ -82,4 +82,7 @@ public interface Consumer<K, V> extends AutoCloseable {
   static ConsumerBuilder builder() {
     return new ConsumerBuilder();
   }
+
+  @Override
+  void close();
 }

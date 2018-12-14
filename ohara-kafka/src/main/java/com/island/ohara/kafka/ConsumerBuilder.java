@@ -73,9 +73,9 @@ public final class ConsumerBuilder {
     return this;
   }
 
-  // TODO: 2018/11/14 is there more powerful to inject implicit Serializer
   public <K, V> Consumer<K, V> build(Serializer<K> keySerializer, Serializer<V> valueSerializer) {
     Objects.requireNonNull(topicNames);
+    if (topicNames.isEmpty()) throw new IllegalArgumentException("Topics list is empty");
     Objects.requireNonNull(groupId);
     Objects.requireNonNull(brokers);
 
@@ -86,8 +86,8 @@ public final class ConsumerBuilder {
     // kafka demand us to pass lowe case words...
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
 
-    KafkaConsumer kafkaConsumer =
-        new KafkaConsumer<K, V>(
+    KafkaConsumer<K, V> kafkaConsumer =
+        new KafkaConsumer<>(
             consumerConfig,
             KafkaUtil.wrapDeserializer(keySerializer),
             KafkaUtil.wrapDeserializer(valueSerializer));
@@ -98,14 +98,14 @@ public final class ConsumerBuilder {
       private ConsumerRecords<K, V> firstPoll = kafkaConsumer.poll(0);
 
       @Override
-      public void close() throws Exception {
+      public void close() {
         kafkaConsumer.close();
       }
 
       @Override
       public List<ConsumerRecord<K, V>> poll(Duration timeout) {
 
-        ConsumerRecords<K, V> r = null;
+        ConsumerRecords<K, V> r;
         if (firstPoll == null || firstPoll.isEmpty()) r = kafkaConsumer.poll(timeout.toMillis());
         else {
           r = firstPoll;
@@ -118,23 +118,23 @@ public final class ConsumerBuilder {
                   Spliterators.spliteratorUnknownSize(r.iterator(), Spliterator.ORDERED), false)
               .map(
                   cr ->
-                      new ConsumerRecord<K, V>(
+                      new ConsumerRecord<>(
                           cr.topic(),
-                          Optional.of(cr.headers())
+                          Optional.ofNullable(cr.headers())
                               .map(
                                   headers ->
                                       StreamSupport.stream(headers.spliterator(), false)
                                           .map(header -> new Header(header.key(), header.value()))
                                           .collect(Collectors.toList()))
-                              .orElse(Collections.emptyList()),
-                          Optional.ofNullable(cr.key()),
-                          Optional.ofNullable(cr.value())))
+                              .orElseGet(() -> Collections.emptyList()),
+                          cr.key(),
+                          cr.value()))
               .collect(Collectors.toList());
       }
 
       @Override
       public Set<String> subscription() {
-        return kafkaConsumer.subscription();
+        return Collections.unmodifiableSet(kafkaConsumer.subscription());
       }
 
       @Override

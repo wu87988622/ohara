@@ -35,4 +35,9 @@ public class Header {
     result = 31 * result + Arrays.hashCode(value);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "Header{" + "key='" + key + '\'' + ", value=" + Arrays.toString(value) + '}';
+  }
 }
