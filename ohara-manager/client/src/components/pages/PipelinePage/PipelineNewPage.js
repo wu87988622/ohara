@@ -3,13 +3,12 @@ import styled from 'styled-components';
 import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
-import { Route, Redirect } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
-import * as URLS from 'constants/urls';
 import PipelineJdbcSource from './PipelineJdbcSource';
 import PipelineFtpSource from './PipelineFtpSource';
 import PipelineTopic from './PipelineTopic';
@@ -91,18 +90,13 @@ class PipelineNewPage extends React.Component {
   state = {
     topicName: '',
     graph: [],
-    isRedirect: false,
     isLoading: true,
     hasChanges: false,
     pipelines: {},
   };
 
   componentDidMount() {
-    const isValid = this.checkTopicId(this.props.match);
-
-    if (isValid) {
-      this.fetchData();
-    }
+    this.fetchData();
   }
 
   fetchData = async () => {
@@ -152,19 +146,6 @@ class PipelineNewPage extends React.Component {
       ...pipeline,
       status: _status,
     };
-  };
-
-  checkTopicId = match => {
-    const topicId = _.get(match, 'params.topicId', null);
-    const isValid = !_.isNull(topicId) && _.isUuid(topicId);
-
-    if (!isValid) {
-      toastr.error(MESSAGES.TOPIC_ID_REQUIRED_ERROR);
-      this.setState({ isRedirect: true });
-      return false;
-    }
-
-    return true;
   };
 
   updateGraph = (update, id) => {
@@ -366,18 +347,7 @@ class PipelineNewPage extends React.Component {
   };
 
   render() {
-    const {
-      isLoading,
-      graph,
-      isRedirect,
-      topicName,
-      hasChanges,
-      pipelines,
-    } = this.state;
-
-    if (isRedirect) {
-      return <Redirect to={URLS.PIPELINE} />;
-    }
+    const { isLoading, graph, topicName, hasChanges, pipelines } = this.state;
 
     if (_.isEmpty(pipelines)) return null;
 

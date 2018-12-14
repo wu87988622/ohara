@@ -18,9 +18,6 @@ export const EMPTY_SCHEMAS_COLUMNS_ERROR =
 export const DUPLICATED_COLUMN_NAME_ERROR = 'Column Name cannot be repeated';
 export const ONLY_NUMBER_ALLOW_ERROR =
   'partition or replication only accept numeric values';
-export const TOPIC_ID_REQUIRED_ERROR =
-  'You need to select a topi before creating a new pipeline!';
-export const NO_TOPICS_FOUND_ERROR = `You don't have any topics!`;
 export const INVALID_TOPIC_ID = `The selected topic doesn't exist!`;
 
 // Pipelines

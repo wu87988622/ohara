@@ -40,11 +40,11 @@ describe('<App />', () => {
     // TODO: reuse routes config in App.js
     const routes = [
       {
-        path: '/pipelines/new/:page/:pipelineId/:topicId/:sourceId?/:sinkId?',
+        path: '/pipelines/new/:page?/:pipelineId/:topicId?/:sourceId?/:sinkId?',
         testId: 'pipeline-new-page',
       },
       {
-        path: '/pipelines/edit/:page/:pipelineId/:topicId/:sourceId?/:sinkId?',
+        path: '/pipelines/edit/:page/:pipelineId/:topicId?/:sourceId?/:sinkId?',
         testId: 'pipeline-edit-page',
       },
       {

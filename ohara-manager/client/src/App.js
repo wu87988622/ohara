@@ -40,12 +40,12 @@ class App extends React.Component {
           <Header isLogin={isLogin} />
           <Switch>
             <Route
-              path="/pipelines/new/:page/:pipelineId/:topicId/:sourceId?/:sinkId?"
+              path="/pipelines/new/:page?/:pipelineId/:topicId?/:sourceId?/:sinkId?"
               component={PipelineNewPage}
               data-testid="pipeline-new-page"
             />
             <Route
-              path="/pipelines/edit/:page/:pipelineId/:topicId/:sourceId?/:sinkId?"
+              path="/pipelines/edit/:page/:pipelineId/:topicId?/:sourceId?/:sinkId?"
               component={PipelineNewPage}
               data-testid="pipeline-edit-page"
             />

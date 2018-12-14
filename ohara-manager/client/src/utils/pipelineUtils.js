@@ -1,3 +1,7 @@
+import * as _ from './commonUtils';
+import * as pipelineApis from 'apis/pipelinesApis';
+import * as topicApis from 'apis/topicApis';
+
 import { CONNECTOR_KEYS } from 'constants/pipelines';
 
 const getKeys = kind => {
@@ -19,4 +23,18 @@ export const isSource = kind => {
 
 export const isSink = kind => {
   return sinkKeys.some(sinkKey => kind.includes(sinkKey));
+};
+
+export const fetchPipelines = async () => {
+  const res = await pipelineApis.fetchPipelines();
+  const pipelines = _.get(res, 'data.result', null);
+
+  if (pipelines) return pipelines;
+};
+
+export const fetchTopics = async () => {
+  const res = await topicApis.fetchTopics();
+  const topics = _.get(res, 'data.result', null);
+
+  if (topics) return topics;
 };

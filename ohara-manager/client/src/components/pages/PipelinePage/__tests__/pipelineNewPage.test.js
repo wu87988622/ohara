@@ -5,7 +5,6 @@ import toastr from 'toastr';
 
 import PipelineNewPage from '../PipelineNewPage';
 import { CONNECTOR_KEYS } from 'constants/pipelines';
-import { PIPELINE } from 'constants/urls';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
 import {
@@ -60,12 +59,6 @@ describe('<PipelineNewPage />', () => {
 
   it('renders edit pipeline page document title, if pipelineId is present', () => {
     expect(wrapper.props().title).toBe(PIPELINE_EDIT);
-  });
-
-  it('should render <Redirect /> when topicUuid is not present', () => {
-    const match = {};
-    wrapper = shallow(<PipelineNewPage match={match} />);
-    expect(wrapper.props().to).toBe(PIPELINE);
   });
 
   it('renders the <H2 />', () => {
