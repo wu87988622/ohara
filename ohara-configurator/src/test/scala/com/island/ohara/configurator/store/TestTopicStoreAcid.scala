@@ -2,8 +2,9 @@ package com.island.ohara.configurator.store
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, TimeUnit}
+
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -50,7 +51,7 @@ class TestTopicStoreAcid extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(store)
+    ReleaseOnce.close(store)
   }
 
   import scala.concurrent.duration._

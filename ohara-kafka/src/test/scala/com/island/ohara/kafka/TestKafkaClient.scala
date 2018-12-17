@@ -1,6 +1,5 @@
 package com.island.ohara.kafka
-
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers
 import org.apache.kafka.common.config.TopicConfig
 import org.junit.{After, Test}
@@ -75,6 +74,6 @@ class TestKafkaClient extends With3Brokers with Matchers {
 
   @After
   def cleanup(): Unit = {
-    CloseOnce.close(client)
+    ReleaseOnce.close(client)
   }
 }

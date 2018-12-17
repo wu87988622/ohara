@@ -2,9 +2,9 @@ package com.island.ohara.agent
 import com.island.ohara.agent.AgentJson.BrokerCluster
 import com.island.ohara.agent.BrokerCollie.ClusterCreator
 import com.island.ohara.agent.DockerJson.ContainerDescription
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 
-trait BrokerCollie extends CloseOnce with Iterable[BrokerCluster] {
+trait BrokerCollie extends ReleaseOnce with Iterable[BrokerCluster] {
 
   /**
     * remove whole cluster by specified name

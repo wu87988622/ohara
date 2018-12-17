@@ -2,9 +2,9 @@ package com.island.ohara.agent
 import com.island.ohara.agent.AgentJson.WorkerCluster
 import com.island.ohara.agent.DockerJson.ContainerDescription
 import com.island.ohara.agent.WorkerCollie.ClusterCreator
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 
-trait WorkerCollie extends CloseOnce with Iterable[WorkerCluster] {
+trait WorkerCollie extends ReleaseOnce with Iterable[WorkerCluster] {
 
   /**
     * remove whole cluster by specified name

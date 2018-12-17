@@ -4,7 +4,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.DockerClient.Executor
 import com.island.ohara.agent.DockerJson.{ContainerDescription, PortMapping, PortPair, State}
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 /**
@@ -12,7 +12,7 @@ import com.typesafe.scalalogging.Logger
   * the default implementation is based on ssh client.
   * NOTED: All contaiers are executed background so as to avoid blocking call.
   */
-trait DockerClient extends CloseOnce {
+trait DockerClient extends ReleaseOnce {
 
   /**
     * @param name container's name
@@ -285,7 +285,7 @@ object DockerClient {
         .password(Objects.requireNonNull(password))
         .build()
 
-      override protected def doClose(): Unit = CloseOnce.close(agent)
+      override protected def doClose(): Unit = ReleaseOnce.close(agent)
 
       override def executor(): Executor = new Executor {
         private[this] var imageName: String = _

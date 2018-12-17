@@ -4,18 +4,18 @@ import com.island.ohara.common.rule.SmallTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCloseOnce extends SmallTest {
+public class TestReleaseOnce extends SmallTest {
 
   @Test
   public void testIsClosed() {
-    SimpleCloseOnce c = new SimpleCloseOnce();
+    SimpleReleaseOnce c = new SimpleReleaseOnce();
     c.close();
     Assert.assertTrue(c.isClosed());
   }
 
   @Test
   public void testCloseOnce() {
-    SimpleCloseOnce c = new SimpleCloseOnce();
+    SimpleReleaseOnce c = new SimpleReleaseOnce();
     c.close();
     Assert.assertEquals(1, c.closeCount);
     c.close();
@@ -24,17 +24,17 @@ public class TestCloseOnce extends SmallTest {
 
   @Test
   public void testSwallowException() {
-    CloseOnce.close(new TerribleCloseOnce());
-    CloseOnce.close(new TerribleCloseOnce(), true);
+    ReleaseOnce.close(new TerribleReleaseOnce());
+    ReleaseOnce.close(new TerribleReleaseOnce(), true);
   }
 
   /** NOTED: all exception is converted to RuntimeException */
   @Test(expected = RuntimeException.class)
   public void testThrowException() {
-    CloseOnce.close(new TerribleCloseOnce(), false);
+    ReleaseOnce.close(new TerribleReleaseOnce(), false);
   }
 
-  private static class SimpleCloseOnce extends CloseOnce {
+  private static class SimpleReleaseOnce extends ReleaseOnce {
     private int closeCount = 0;
 
     @Override
@@ -43,7 +43,7 @@ public class TestCloseOnce extends SmallTest {
     }
   }
 
-  private static class TerribleCloseOnce extends CloseOnce {
+  private static class TerribleReleaseOnce extends ReleaseOnce {
 
     @Override
     protected void doClose() {

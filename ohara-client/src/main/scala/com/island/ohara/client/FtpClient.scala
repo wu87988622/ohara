@@ -5,17 +5,17 @@ import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
 import scala.concurrent.duration._
 
 /**
   * A general interface from ftp file system.
-  * NOTED: FtpClient doesn't extend CloseOnce since it is a "retryable" class which do close-and-then-reconnect
+  * NOTED: FtpClient doesn't extend ReleaseOnce since it is a "retryable" class which do close-and-then-reconnect
   * internally. Hence, FtpClient MAY close itself many times and re-build the connection.
   */
-trait FtpClient extends AutoCloseable {
+trait FtpClient extends Releasable {
   def listFileNames(dir: String): Seq[String]
 
   /**

@@ -3,7 +3,7 @@ package com.island.ohara.configurator
 import com.island.ohara.client.ConfiguratorJson.{Column, _}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.common.data.{DataType, Serializer}
-import com.island.ohara.common.util.{CloseOnce, VersionUtil}
+import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
@@ -637,7 +637,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @After
   def tearDown(): Unit = {
-    clients.foreach(CloseOnce.close)
+    clients.foreach(ReleaseOnce.close)
     configurators.foreach(_.close())
   }
 }

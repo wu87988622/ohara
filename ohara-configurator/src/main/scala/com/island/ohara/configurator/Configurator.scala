@@ -12,7 +12,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.Consistency
@@ -40,7 +40,7 @@ class Configurator private[configurator] (configuredHostname: String,
                                                                             val store: Store,
                                                                             kafkaClient: KafkaClient,
                                                                             connectorClient: ConnectorClient)
-    extends CloseOnce
+    extends ReleaseOnce
     with SprayJsonSupport {
 
   private val log = Logger(classOf[Configurator])
@@ -121,9 +121,9 @@ class Configurator private[configurator] (configuredHostname: String,
   override protected def doClose(): Unit = {
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
-    CloseOnce.close(store)
-    CloseOnce.close(kafkaClient)
-    CloseOnce.close(connectorClient)
+    ReleaseOnce.close(store)
+    ReleaseOnce.close(kafkaClient)
+    ReleaseOnce.close(connectorClient)
   }
 
   //-----------------[public interfaces]-----------------//
@@ -232,7 +232,7 @@ object Configurator {
   @volatile private[configurator] var closeRunningConfigurator = false
 
   private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, AnyRef])
-      extends CloseOnce {
+      extends ReleaseOnce {
     private[this] val timeout = 30 seconds
     private[this] val consistency = Consistency.STRICT
 

@@ -3,7 +3,7 @@ import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.configurator.store.Store
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -51,7 +51,7 @@ class TestOhara450 extends SmallTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(client)
-    CloseOnce.close(configurator)
+    ReleaseOnce.close(client)
+    ReleaseOnce.close(configurator)
   }
 }

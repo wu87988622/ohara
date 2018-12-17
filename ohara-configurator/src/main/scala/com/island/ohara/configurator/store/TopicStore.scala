@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Consistency._
 import com.island.ohara.kafka._
 import com.typesafe.scalalogging.Logger
@@ -61,8 +61,8 @@ private object TopicStore {
     val cache = try Store.inMemory(keySerializer, valueSerializer)
     catch {
       case e: Throwable =>
-        CloseOnce.close(producer)
-        CloseOnce.close(consumer)
+        ReleaseOnce.close(producer)
+        ReleaseOnce.close(consumer)
         throw e
     }
     new TopicStore(topicName, pollTimeout, uuid, producer, consumer, cache)
@@ -208,9 +208,9 @@ private class TopicStore[K, V] private (topicName: String,
     if (consumer != null) consumer.wakeup()
     // hardcode
     if (poller != null) Await.result(poller, 60 seconds)
-    CloseOnce.close(producer)
-    CloseOnce.close(consumer)
-    CloseOnce.close(cache)
+    ReleaseOnce.close(producer)
+    ReleaseOnce.close(consumer)
+    ReleaseOnce.close(cache)
     if (executor != null) {
       executor.shutdownNow()
       executor.awaitTermination(60, TimeUnit.SECONDS)

@@ -2,9 +2,9 @@ package com.island.ohara.agent
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.agent.AgentJson.Node
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
-trait NodeCollie extends AutoCloseable with Iterable[Node] {
+trait NodeCollie extends Releasable with Iterable[Node] {
   def add(node: Node): Unit
   def remove(uuid: String): Unit
   def update(node: Node): Unit
@@ -14,7 +14,7 @@ trait NodeCollie extends AutoCloseable with Iterable[Node] {
 
 object NodeCollie {
 
-  private[this] class NodeCollieImpl(nodes: Seq[Node]) extends CloseOnce with NodeCollie {
+  private[this] class NodeCollieImpl(nodes: Seq[Node]) extends ReleaseOnce with NodeCollie {
     private[this] val cache = {
       val c = new ConcurrentHashMap[String, Node]()
       nodes.foreach(n => c.put(n.name, n))

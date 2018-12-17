@@ -5,7 +5,7 @@ import com.island.ohara.agent.DockerJson.{ContainerDescription, PortPair, State}
 import com.island.ohara.agent.SshdServer.CommandHandler
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import org.junit.{AfterClass, Test}
 import org.scalatest.Matchers
 
@@ -212,7 +212,7 @@ object TestDockerClientWithoutDockerServer {
 
   @AfterClass
   def afterAll(): Unit = {
-    CloseOnce.close(CLIENT)
-    CloseOnce.close(SERVER)
+    ReleaseOnce.close(CLIENT)
+    ReleaseOnce.close(SERVER)
   }
 }

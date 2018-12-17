@@ -13,7 +13,7 @@ import com.island.ohara.client.ConfiguratorJson.{
 }
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{CloseOnce, CommonUtil, VersionUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil, VersionUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
@@ -203,9 +203,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(connectorClient)
-    CloseOnce.close(client)
-    CloseOnce.close(configurator)
+    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(client)
+    ReleaseOnce.close(configurator)
   }
 
 }

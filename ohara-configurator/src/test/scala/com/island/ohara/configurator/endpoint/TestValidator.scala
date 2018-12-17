@@ -7,7 +7,7 @@ import com.island.ohara.client.ConfiguratorJson.{
   ValidationReport
 }
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.KafkaClient
 import org.junit.{After, Before, Test}
@@ -62,7 +62,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(connectorClient)
-    CloseOnce.close(kafkaClient)
+    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(kafkaClient)
   }
 }

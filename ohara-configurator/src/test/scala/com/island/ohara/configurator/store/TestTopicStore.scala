@@ -2,7 +2,7 @@ package com.island.ohara.configurator.store
 
 import java.time.Duration
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers
 import org.junit._
 import org.scalatest.Matchers
@@ -110,6 +110,6 @@ class TestTopicStore extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(store)
+    ReleaseOnce.close(store)
   }
 }

@@ -11,14 +11,13 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration._
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil, Releasable}
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-
 import scala.collection.JavaConverters._
 
 /**
@@ -134,7 +133,7 @@ object Backend {
      ))
   }
   private[this] def resources(ports: ServicePorts): (Zookeepers, Brokers, Workers, Database, FtpServer) = {
-    val rs = new ArrayBuffer[AutoCloseable]
+    val rs = new ArrayBuffer[Releasable]
     try {
       val zk = Zookeepers.local(ports.zkPort)
       rs += zk
@@ -149,7 +148,7 @@ object Backend {
       (zk, brokers, workers, database, ftpServer)
     } catch {
       case e: Throwable =>
-        rs.foreach(CloseOnce.close)
+        rs.foreach(ReleaseOnce.close)
         throw e
     }
   }
@@ -220,12 +219,12 @@ object Backend {
       .build()
     try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)
     finally {
-      CloseOnce.close(configurator)
-      CloseOnce.close(ftpServer)
-      CloseOnce.close(dataBase)
-      CloseOnce.close(workers)
-      CloseOnce.close(brokers)
-      CloseOnce.close(zk)
+      ReleaseOnce.close(configurator)
+      ReleaseOnce.close(ftpServer)
+      ReleaseOnce.close(dataBase)
+      ReleaseOnce.close(workers)
+      ReleaseOnce.close(brokers)
+      ReleaseOnce.close(zk)
     }
   }
 }

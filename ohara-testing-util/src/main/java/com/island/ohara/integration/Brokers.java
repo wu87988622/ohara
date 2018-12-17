@@ -1,6 +1,7 @@
 package com.island.ohara.integration;
 
 import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +15,7 @@ import kafka.server.KafkaServer;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.utils.SystemTime;
 
-public interface Brokers extends AutoCloseable {
+public interface Brokers extends Releasable {
   String BROKER_CONNECTION_PROPS = "ohara.it.brokers";
 
   /** @return brokers information. the form is "host_a:port_a,host_b:port_b" */
@@ -22,9 +23,6 @@ public interface Brokers extends AutoCloseable {
 
   /** @return true if this broker cluster is generated locally. */
   boolean isLocal();
-
-  @Override
-  void close();
 
   static Brokers local(Zookeepers zk, int[] ports) {
     List<File> tempFolders =

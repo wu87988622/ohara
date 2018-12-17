@@ -1,13 +1,14 @@
 package com.island.ohara.integration;
 
 import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
-public interface Zookeepers extends AutoCloseable {
+public interface Zookeepers extends Releasable {
 
   String ZOOKEEPER_CONNECTION_PROPS = "ohara.it.zookeepers";
 
@@ -16,9 +17,6 @@ public interface Zookeepers extends AutoCloseable {
 
   /** @return true if this zookeeper cluster is generated locally. */
   boolean isLocal();
-
-  @Override
-  void close();
 
   static Zookeepers local(int port) {
     final NIOServerCnxnFactory factory;

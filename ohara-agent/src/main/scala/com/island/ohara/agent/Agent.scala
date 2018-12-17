@@ -4,14 +4,14 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.{Charset, StandardCharsets}
 import java.util.Objects
 
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.typesafe.scalalogging.Logger
 import org.apache.sshd.client.SshClient
 
 /**
   * represent a remote node. Default implementation is based on ssh.
   */
-trait Agent extends CloseOnce {
+trait Agent extends ReleaseOnce {
 
   /**
     * execute the command by ssh
@@ -116,7 +116,7 @@ object Agent {
           } finally stdOut.close()
         } finally session.close()
       }
-      override protected def doClose(): Unit = CloseOnce.close(client)
+      override protected def doClose(): Unit = ReleaseOnce.close(client)
     }
   }
   private[this] val LOG = Logger(Agent.getClass)

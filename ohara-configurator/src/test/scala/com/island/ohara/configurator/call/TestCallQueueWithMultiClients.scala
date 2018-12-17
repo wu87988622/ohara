@@ -4,7 +4,7 @@ import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -77,6 +77,6 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = servers.foreach(CloseOnce.close)
+  def tearDown(): Unit = servers.foreach(ReleaseOnce.close)
 
 }

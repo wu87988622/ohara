@@ -1,5 +1,6 @@
 package com.island.ohara.kafka;
 
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.exception.CheckedExceptionUtil;
 import java.time.Duration;
 import java.util.*;
@@ -19,7 +20,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  *
  * <p>Every method with remote call need to overload in Default Timeout
  */
-public interface KafkaClient extends AutoCloseable {
+public interface KafkaClient extends Releasable {
   static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
 
   TopicCreator topicCreator();
@@ -72,8 +73,6 @@ public interface KafkaClient extends AutoCloseable {
   String brokers();
 
   ConsumerBuilder consumerBuilder();
-
-  void close();
 
   static KafkaClient of(String outerbrokers) {
     return new KafkaClient() {

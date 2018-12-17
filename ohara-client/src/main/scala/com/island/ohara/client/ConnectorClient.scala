@@ -11,7 +11,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConnectorJson._
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -22,7 +22,7 @@ import scala.util.Random
 /**
   * a helper class used to send the rest request to kafka worker.
   */
-trait ConnectorClient extends CloseOnce {
+trait ConnectorClient extends ReleaseOnce {
 
   def connectorCreator(): ConnectorCreator
 

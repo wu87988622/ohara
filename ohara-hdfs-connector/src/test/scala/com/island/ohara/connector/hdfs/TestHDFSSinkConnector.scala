@@ -7,7 +7,7 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ByteUtil, CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ByteUtil, ReleaseOnce, CommonUtil}
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
@@ -285,7 +285,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = CloseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {

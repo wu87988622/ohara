@@ -2,7 +2,7 @@ package com.island.ohara.connector.perf
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.{Cell, DataType, Serializer}
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
 import org.junit.{After, Test}
@@ -89,5 +89,5 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = CloseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
 }

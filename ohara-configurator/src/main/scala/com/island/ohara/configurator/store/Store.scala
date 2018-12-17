@@ -4,7 +4,7 @@ import java.util.Objects
 import java.util.concurrent.ConcurrentSkipListMap
 
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ByteUtil, CloseOnce}
+import com.island.ohara.common.util.{ByteUtil, ReleaseOnce}
 
 import scala.concurrent.Future
 
@@ -12,7 +12,7 @@ import scala.concurrent.Future
   * A key-value store. It is used to save the component information
   * NOTED: All implementation from Store should be thread-safe.
   */
-trait Store[K, V] extends CloseOnce with Iterable[(K, V)] {
+trait Store[K, V] extends ReleaseOnce with Iterable[(K, V)] {
 
   /**
     * Update the value with specified key. If the key-value exist, the new value will replace the previous value.

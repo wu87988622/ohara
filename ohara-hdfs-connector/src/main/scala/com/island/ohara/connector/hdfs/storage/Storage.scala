@@ -2,7 +2,9 @@ package com.island.ohara.connector.hdfs.storage
 
 import java.io.OutputStream
 
-abstract class Storage extends AutoCloseable {
+import com.island.ohara.common.util.Releasable
+
+abstract class Storage extends Releasable {
 
   /**
     * List children folder path from path parameter
@@ -58,9 +60,4 @@ abstract class Storage extends AutoCloseable {
     * @param targetPath
     */
   def renameFile(sourcePath: String, targetPath: String): Boolean
-
-  /**
-    * close file OutputStream
-    */
-  def close(): Unit
 }

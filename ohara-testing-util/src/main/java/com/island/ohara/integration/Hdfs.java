@@ -1,5 +1,6 @@
 package com.island.ohara.integration;
 
+import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -8,7 +9,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 /** HDFS client Using external HDFS or local FileSystem */
-public interface Hdfs extends AutoCloseable {
+public interface Hdfs extends Releasable {
   String HDFS = "ohara.it.hdfs";
 
   String hdfsURL();
@@ -49,13 +50,16 @@ public interface Hdfs extends AutoCloseable {
     return new Hdfs() {
 
       @Override
-      public void close() throws Exception {
+      public void close() {
         // delete localfile
         if (tmpFile != null) {
           Integration.deleteFiles(tmpFile);
-        } else {
-          FileSystem fs = fileSystem();
+        }
+        FileSystem fs = fileSystem();
+        try {
           fs.delete(new Path(tmpDirectory()), true);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
         }
       }
 

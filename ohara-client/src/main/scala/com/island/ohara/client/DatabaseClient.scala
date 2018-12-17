@@ -2,14 +2,14 @@ package com.island.ohara.client
 import java.sql.{Connection, DriverManager, ResultSet}
 
 import com.island.ohara.client.ConfiguratorJson.RdbTable
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * a easy database client.
   */
-trait DatabaseClient extends CloseOnce {
+trait DatabaseClient extends ReleaseOnce {
 
   /**
     * @param catalog catalog

@@ -3,7 +3,7 @@ package com.island.ohara.agent
 import java.io.{InputStream, OutputStream}
 import java.util
 
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import org.apache.sshd.server.command.Command
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider
 import org.apache.sshd.server.shell.{ProcessShellCommandFactory, ProcessShellFactory}
@@ -12,7 +12,7 @@ import org.apache.sshd.server.{Environment, ExitCallback, SshServer}
 /**
   * a embedded ssh server.
   */
-trait SshdServer extends CloseOnce {
+trait SshdServer extends ReleaseOnce {
 
   /**
     * @return ssh server's hostname
@@ -128,8 +128,8 @@ object SshdServer {
                   callback.onExit(2, e.getMessage)
               }
               override def destroy(): Unit = {
-                CloseOnce.close(out)
-                CloseOnce.close(err)
+                ReleaseOnce.close(out)
+                ReleaseOnce.close(err)
               }
             }
 

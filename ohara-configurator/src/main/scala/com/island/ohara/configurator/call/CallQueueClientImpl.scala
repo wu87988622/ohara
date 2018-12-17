@@ -5,7 +5,7 @@ import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -193,8 +193,8 @@ private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag] private
       .foreach(_.complete(CallQueue.TERMINATE_TIMEOUT_EXCEPTION))
     if (consumer != null) consumer.wakeup()
     if (responseWorker != null) Await.result(responseWorker, 60 seconds)
-    CloseOnce.close(consumer)
-    CloseOnce.close(producer)
+    ReleaseOnce.close(consumer)
+    ReleaseOnce.close(producer)
     if (expiredRequestDustman != null) Await.result(expiredRequestDustman, 60 seconds)
     if (executor != null) {
       executor.shutdownNow()

@@ -1,6 +1,7 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.Releasable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
  * @param <K></K> key type
  * @param <V></V> value type
  */
-public interface Consumer<K, V> extends AutoCloseable {
+public interface Consumer<K, V> extends Releasable {
 
   /**
    * poll the data from subscribed topics
@@ -82,7 +83,4 @@ public interface Consumer<K, V> extends AutoCloseable {
   static ConsumerBuilder builder() {
     return new ConsumerBuilder();
   }
-
-  @Override
-  void close();
 }

@@ -6,7 +6,7 @@ import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ByteUtil, CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ByteUtil, ReleaseOnce, CommonUtil}
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.connector._
 import org.junit.{After, Test}
@@ -25,8 +25,8 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(connectorClient)
-    CloseOnce.close(kafkaClient)
+    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(kafkaClient)
   }
 
   private[this] def createTopic(topicName: String, compacted: Boolean): Unit = {

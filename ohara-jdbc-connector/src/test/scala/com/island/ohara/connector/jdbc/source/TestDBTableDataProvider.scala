@@ -5,7 +5,7 @@ import java.sql.{Statement, Timestamp}
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import com.island.ohara.integration.Database
 import org.junit.{After, Before, Test}
@@ -91,7 +91,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
   }
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(client)
-    CloseOnce.close(db)
+    ReleaseOnce.close(client)
+    ReleaseOnce.close(db)
   }
 }

@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.call
 
 import com.island.ohara.client.ConfiguratorJson.Error
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
   * @tparam Request request type
   * @tparam Response response type
   */
-trait CallQueueClient[Request, Response] extends CloseOnce {
+trait CallQueueClient[Request, Response] extends ReleaseOnce {
 
   /**
     * send the request and then wait the response.

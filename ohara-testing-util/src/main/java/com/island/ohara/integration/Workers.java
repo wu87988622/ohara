@@ -1,6 +1,7 @@
 package com.island.ohara.integration;
 
 import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.Releasable;
 import java.net.BindException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,7 @@ import org.apache.kafka.connect.storage.KafkaConfigBackingStore;
 import org.apache.kafka.connect.storage.KafkaOffsetBackingStore;
 import org.apache.kafka.connect.storage.KafkaStatusBackingStore;
 
-public interface Workers extends AutoCloseable {
+public interface Workers extends Releasable {
   String WORKER_CONNECTION_PROPS = "ohara.it.workers";
 
   int NUMBER_OF_WORKERS = 3;
@@ -37,9 +38,6 @@ public interface Workers extends AutoCloseable {
 
   /** @return true if this worker cluster is generated locally. */
   boolean isLocal();
-
-  @Override
-  void close();
 
   static Workers local(Brokers brokers, int[] ports) {
     List<Integer> availablePorts = new ArrayList<>(ports.length);

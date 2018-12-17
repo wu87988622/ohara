@@ -4,7 +4,7 @@ import java.nio.charset.Charset
 
 import com.island.ohara.client.{FileType, FtpClient}
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.{ByteUtil, CloseOnce}
+import com.island.ohara.common.util.{ByteUtil, ReleaseOnce}
 import com.island.ohara.integration.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -152,7 +152,7 @@ class TestFtpClient extends MediumTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(client)
-    CloseOnce.close(server)
+    ReleaseOnce.close(client)
+    ReleaseOnce.close(server)
   }
 }

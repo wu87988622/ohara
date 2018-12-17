@@ -2,13 +2,13 @@ package com.island.ohara.agent
 import com.island.ohara.agent.AgentJson.ZookeeperCluster
 import com.island.ohara.agent.DockerJson.ContainerDescription
 import com.island.ohara.agent.ZookeeperCollie.ClusterCreator
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 
 /**
   * a interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends CloseOnce with Iterable[ZookeeperCluster] {
+trait ZookeeperCollie extends ReleaseOnce with Iterable[ZookeeperCluster] {
 
   /**
     * remove whole cluster by specified name

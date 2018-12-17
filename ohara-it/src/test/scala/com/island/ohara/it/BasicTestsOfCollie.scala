@@ -3,7 +3,7 @@ package com.island.ohara.it
 import com.island.ohara.agent.AgentJson.{BrokerCluster, Node, ZookeeperCluster}
 import com.island.ohara.agent._
 import com.island.ohara.common.rule.LargeTest
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.Integration
 import org.junit.{After, Before}
 import org.scalatest.Matchers
@@ -166,7 +166,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
 
   @After
   final def tearDown(): Unit = {
-    CloseOnce.close(clusterCollie)
-    CloseOnce.close(nodeCollie)
+    ReleaseOnce.close(clusterCollie)
+    ReleaseOnce.close(nodeCollie)
   }
 }

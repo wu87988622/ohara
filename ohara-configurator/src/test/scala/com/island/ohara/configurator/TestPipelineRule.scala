@@ -13,7 +13,7 @@ import com.island.ohara.client.ConfiguratorJson.{
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConfiguratorJson}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -88,7 +88,7 @@ class TestPipelineRule extends SmallTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(client)
-    CloseOnce.close(configurator)
+    ReleaseOnce.close(client)
+    ReleaseOnce.close(configurator)
   }
 }

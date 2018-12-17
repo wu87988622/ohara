@@ -6,7 +6,7 @@ import java.util
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
@@ -18,7 +18,7 @@ class TestConnectorClient extends WithBrokerWorker with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
 
   @After
-  def tearDown(): Unit = CloseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
 
   import TestConnectorClient.ROW
 //  @Ignore

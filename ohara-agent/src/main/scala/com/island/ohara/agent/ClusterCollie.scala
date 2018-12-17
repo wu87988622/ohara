@@ -3,7 +3,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.AgentJson.{BrokerCluster, Node, WorkerCluster, ZookeeperCluster}
 import com.island.ohara.agent.DockerJson.ContainerDescription
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.typesafe.scalalogging.Logger
 
 /**
@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.Logger
   * Currently, default implementation is based on ssh and docker command. It is simple but slow.
   * TODO: We are looking for k8s implementation...by chia
   */
-trait ClusterCollie extends CloseOnce {
+trait ClusterCollie extends ReleaseOnce {
 
   /**
     * create a collie for zookeeper cluster

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ByteUtil, CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ByteUtil, ReleaseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import org.junit.{After, Before, BeforeClass, Test}
@@ -338,5 +338,5 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = CloseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
 }

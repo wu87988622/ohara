@@ -2,8 +2,8 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.util
 
-import com.island.ohara.common.util.CloseOnce
 import com.island.ohara.client.{ConfiguratorJson, FtpClient}
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.connector.ftp.FtpSinkTask._
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
@@ -25,7 +25,7 @@ class FtpSinkTask extends RowSinkTask {
   }
 
   override protected def _stop(): Unit = {
-    CloseOnce.close(ftpClient)
+    ReleaseOnce.close(ftpClient)
   }
 
   override protected def _put(records: util.List[RowSinkRecord]): Unit = try {

@@ -5,14 +5,14 @@ import java.util.Calendar
 
 import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 
 /**
   * Connection to database and query data
   *
   */
-class DBTableDataProvider(url: String, userName: String, password: String) extends CloseOnce {
+class DBTableDataProvider(url: String, userName: String, password: String) extends ReleaseOnce {
   private[this] val client: DatabaseClient = DatabaseClient(url, userName, password)
 
   def executeQuery(tableName: String, timeStampColumnName: String, tsOffset: Timestamp): QueryResultIterator = {
@@ -58,7 +58,7 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     * Do what you want to do when calling closing.
     */
   override def doClose(): Unit = {
-    CloseOnce.close(client)
+    ReleaseOnce.close(client)
   }
 }
 

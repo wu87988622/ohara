@@ -9,7 +9,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.common.util.CloseOnce
+import com.island.ohara.common.util.ReleaseOnce
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,7 +21,7 @@ import scala.concurrent.{Await, Future}
   * on akka-http and akka-json.
   *
   */
-trait ConfiguratorClient extends CloseOnce {
+trait ConfiguratorClient extends ReleaseOnce {
 
   //------------------------------------------------[DATA]------------------------------------------------//
   def list[T](implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T]

@@ -6,7 +6,7 @@ import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.KafkaClient
@@ -143,8 +143,8 @@ class TestControlSink extends WithBrokerWorker with Matchers {
   }
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(client)
-    CloseOnce.close(configurator)
+    ReleaseOnce.close(client)
+    ReleaseOnce.close(configurator)
   }
 }
 

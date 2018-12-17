@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
  * class. Hence, you SHOULD NOT apply this class to the "interface" layer. This class is more
  * suitable to the implementation.
  */
-public abstract class CloseOnce implements AutoCloseable {
-  private static final Logger LOG = LoggerFactory.getLogger(CloseOnce.class);
+public abstract class ReleaseOnce implements Releasable {
+  private static final Logger LOG = LoggerFactory.getLogger(ReleaseOnce.class);
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   /** @return true if this object have been closed */

@@ -5,7 +5,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
@@ -184,8 +184,8 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    servers.foreach(CloseOnce.close)
-    CloseOnce.close(client)
+    servers.foreach(ReleaseOnce.close)
+    ReleaseOnce.close(client)
   }
 
 }

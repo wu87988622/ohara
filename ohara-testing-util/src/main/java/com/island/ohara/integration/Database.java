@@ -5,8 +5,9 @@ import static com.wix.mysql.config.Charset.UTF8;
 import static com.wix.mysql.config.MysqldConfig.aMysqldConfig;
 import static com.wix.mysql.distribution.Version.v5_7_latest;
 
-import com.island.ohara.common.util.CloseOnce;
 import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.Releasable;
+import com.island.ohara.common.util.ReleaseOnce;
 import com.wix.mysql.EmbeddedMysql;
 import com.wix.mysql.config.MysqldConfig;
 import java.sql.Connection;
@@ -14,7 +15,7 @@ import java.sql.DriverManager;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public interface Database extends AutoCloseable {
+public interface Database extends Releasable {
 
   String DB_SERVER = "ohara.it.db";
 
@@ -64,7 +65,7 @@ public interface Database extends AutoCloseable {
 
       @Override
       public void close() {
-        CloseOnce.close(connection);
+        ReleaseOnce.close(connection);
         mysqld.stop();
       }
 
@@ -139,10 +140,8 @@ public interface Database extends AutoCloseable {
                     private Connection connection = null;
 
                     @Override
-                    public void close() throws Exception {
-                      if (connection != null) {
-                        connection.close();
-                      }
+                    public void close() {
+                      ReleaseOnce.close(connection);
                     }
 
                     @Override

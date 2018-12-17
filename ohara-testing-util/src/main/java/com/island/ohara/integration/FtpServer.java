@@ -1,6 +1,7 @@
 package com.island.ohara.integration;
 
 import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
  *
  * <p>If ohara.it.ftp exists in env variables, local ftp server is not created.
  */
-public interface FtpServer extends AutoCloseable {
+public interface FtpServer extends Releasable {
   String FTP_SERVER = "ohara.it.ftp";
 
   int NUMBER_OF_SERVERS = 3;
@@ -98,7 +99,7 @@ public interface FtpServer extends AutoCloseable {
     return new FtpServer() {
 
       @Override
-      public void close() throws Exception {
+      public void close() {
         server.stop();
         Integration.deleteFiles(homeFolder);
       }
@@ -160,7 +161,7 @@ public interface FtpServer extends AutoCloseable {
               return (FtpServer)
                   new FtpServer() {
                     @Override
-                    public void close() throws Exception {
+                    public void close() {
                       // Nothing
                     }
 

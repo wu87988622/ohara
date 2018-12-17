@@ -5,7 +5,7 @@ import java.time.Duration
 import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row}
-import com.island.ohara.common.util.{CloseOnce, CommonUtil}
+import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.integration.With3Brokers3Workers
 import org.junit.{After, Before, Test}
@@ -117,8 +117,8 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    CloseOnce.close(connectorClient)
-    CloseOnce.close(ftpClient)
+    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(ftpClient)
   }
 }
 

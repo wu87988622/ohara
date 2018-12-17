@@ -1,6 +1,6 @@
 package com.island.ohara.integration;
 
-import com.island.ohara.common.util.CloseOnce;
+import com.island.ohara.common.util.ReleaseOnce;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
  * <p>see TestOharaTestUtil for more examples NOTED: the close() will shutdown all services
  * including the passed consumers (see run())
  */
-public class OharaTestUtil extends CloseOnce {
+public class OharaTestUtil extends ReleaseOnce {
   private Database localDb;
   private FtpServer localFtpServer;
   private Hdfs localHdfs;
@@ -83,12 +83,12 @@ public class OharaTestUtil extends CloseOnce {
 
   @Override
   protected void doClose() {
-    CloseOnce.close(localDb);
-    CloseOnce.close(localFtpServer);
-    CloseOnce.close(localHdfs);
-    CloseOnce.close(workers);
-    CloseOnce.close(brokers);
-    CloseOnce.close(zk);
+    ReleaseOnce.close(localDb);
+    ReleaseOnce.close(localFtpServer);
+    ReleaseOnce.close(localHdfs);
+    ReleaseOnce.close(workers);
+    ReleaseOnce.close(brokers);
+    ReleaseOnce.close(zk);
   }
 
   /**
