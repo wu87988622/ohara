@@ -3,8 +3,8 @@ package com.island.ohara.configurator.call
 import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -35,14 +35,14 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
                   className = "jdbc",
                   topics = Seq.empty,
                   numberOfTasks = 1,
-                  schema = Seq(Column("cf", DataType.BOOLEAN, 1)),
+                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
                   configs = Map("a" -> "b"))
   private[this] val responseData: Source =
     Source(
       uuid = "uuid",
       name = "name2",
       className = "jdbc",
-      schema = Seq(Column("cf", DataType.BOOLEAN, 1)),
+      schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
       configs = Map("a" -> "b"),
       lastModified = com.island.ohara.common.util.CommonUtil.current(),
       numberOfTasks = 1,

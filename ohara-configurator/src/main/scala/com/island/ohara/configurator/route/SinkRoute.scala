@@ -6,7 +6,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.client.ConnectorJson.State
+import com.island.ohara.common.data.connector.State
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._

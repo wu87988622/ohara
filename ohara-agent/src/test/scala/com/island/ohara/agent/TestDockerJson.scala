@@ -1,7 +1,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.agent.DockerJson.State
-import com.island.ohara.agent.DockerJson.State.{CREATED, DEAD, EXITED, PAUSED, REMOVING, RESTARTING, RUNNING}
+import com.island.ohara.agent.DockerJson.State._
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers

@@ -1,8 +1,8 @@
 package com.island.ohara.connector.ftp
 import java.time.Duration
 
-import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.client.{ConnectorClient, ConnectorJson}
+import com.island.ohara.client.ConnectorClient
+import com.island.ohara.common.data.connector.State
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
 object FtpUtil {
@@ -10,7 +10,7 @@ object FtpUtil {
   def assertFailedConnector(testUtil: OharaTestUtil, name: String): Unit = CommonUtil.await(
     () => {
       val connectorClient = ConnectorClient(testUtil.workersConnProps)
-      try connectorClient.status(name).connector.state == ConnectorJson.State.FAILED
+      try connectorClient.status(name).connector.state == State.FAILED
       catch {
         case _: Throwable => false
       } finally connectorClient.close()

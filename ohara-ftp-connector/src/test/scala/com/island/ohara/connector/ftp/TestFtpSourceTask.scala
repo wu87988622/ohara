@@ -1,9 +1,8 @@
 package com.island.ohara.connector.ftp
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
-import com.island.ohara.common.data.{Cell, DataType, Row}
+import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.FtpServer
 import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
 import org.junit.{After, Before, Test}
@@ -203,7 +202,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val schema = data.head._2.map(_.name).zipWithIndex.map {
-      case (name: String, index: Int) => Column(name, DataType.STRING, index)
+      case (name: String, index: Int) => Column.of(name, DataType.STRING, index)
     }
     val task = new FtpSourceTask()
     task._start(
@@ -226,7 +225,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
       .map(_.name)
       .zipWithIndex
       .map {
-        case (name, index) => Column(name, DataType.STRING, index)
+        case (name, index) => Column.of(name, DataType.STRING, index)
       }
       .head
 

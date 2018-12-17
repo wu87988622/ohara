@@ -1,7 +1,6 @@
 package com.island.ohara.connector.perf
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.common.data.{Cell, DataType, Serializer}
+import com.island.ohara.common.data.{Cell, Column, DataType, Serializer}
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
@@ -19,15 +18,15 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   )
 
   private[this] val schema: Seq[Column] = Seq(
-    Column("a", DataType.STRING, 1),
-    Column("b", DataType.SHORT, 2),
-    Column("c", DataType.INT, 3),
-    Column("d", DataType.LONG, 4),
-    Column("e", DataType.FLOAT, 5),
-    Column("f", DataType.DOUBLE, 6),
-    Column("g", DataType.BOOLEAN, 7),
-    Column("h", DataType.BYTE, 8),
-    Column("i", DataType.BYTES, 9)
+    Column.of("a", DataType.STRING, 1),
+    Column.of("b", DataType.SHORT, 2),
+    Column.of("c", DataType.INT, 3),
+    Column.of("d", DataType.LONG, 4),
+    Column.of("e", DataType.FLOAT, 5),
+    Column.of("f", DataType.DOUBLE, 6),
+    Column.of("g", DataType.BOOLEAN, 7),
+    Column.of("h", DataType.BYTE, 8),
+    Column.of("i", DataType.BYTES, 9)
   )
 
   @Test

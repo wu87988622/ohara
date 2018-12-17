@@ -1,6 +1,6 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.client.ConnectorJson.State
+import com.island.ohara.common.data.connector.State
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers

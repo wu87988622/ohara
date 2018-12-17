@@ -1,8 +1,5 @@
 package com.island.ohara.integration;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import com.island.ohara.common.rule.MediumTest;
 import java.io.IOException;
 import java.lang.reflect.Field;

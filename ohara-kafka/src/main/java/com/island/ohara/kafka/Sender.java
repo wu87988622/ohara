@@ -74,8 +74,7 @@ public abstract class Sender<K, V> {
   /** send the record to brokers with async future */
   public Future<RecordMetadata> send(String topic) {
 
-    CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture();
-
+    CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
     send(
         topic,
         new Handler<RecordMetadata>() {

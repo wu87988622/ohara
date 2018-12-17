@@ -46,25 +46,14 @@ subprojects {
   // All sub-projects have applied the scala checkstyle.
   if (it.name != 'ohara-manager') {
     apply plugin: "com.diffplug.gradle.spotless"
-    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util') {
+    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util'||it.name=='ohara-kafka') {
       spotless {
         java {
           googleJavaFormat()
           removeUnusedImports()
         }
       }
-    }else if(it.name == 'ohara-kafka'){
-      spotless {
-        java {
-          googleJavaFormat()
-          removeUnusedImports()
-        }
-        scala {
-          // DON'T change the scalafmt version since the rules may be changed in newer version.
-          scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
-        }
-      }
-    } else {
+    }else {
       spotless {
         scala {
           // DON'T change the scalafmt version since the rules may be changed in newer version.

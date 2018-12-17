@@ -8,7 +8,7 @@ import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class LargeTest {
+public abstract class LargeTest extends DefaultAssert {
   protected final Logger logger = LoggerFactory.getLogger(LargeTest.class);
   @Rule public final TestName name = new TestName();
 

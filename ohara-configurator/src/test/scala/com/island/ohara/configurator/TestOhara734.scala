@@ -1,7 +1,6 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.ConfiguratorJson
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.DataType
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -77,8 +76,8 @@ class TestOhara734 extends SmallTest with Matchers {
     request.numberOfTasks shouldBe 1
     request.configs("perf.batch") shouldBe "1"
     request.schema.size shouldBe 2
-    request.schema.head shouldBe Column("cf0", "cf0", DataType.INT, 1)
-    request.schema.last shouldBe Column("cf1", "cf1", DataType.BYTES, 2)
+    request.schema.head shouldBe Column.of("cf0", "cf0", DataType.INT, 1)
+    request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
 
     val request2 =
       ConfiguratorJson.SOURCE_REQUEST_JSON_FORMAT.read("""
@@ -140,8 +139,8 @@ class TestOhara734 extends SmallTest with Matchers {
     request.numberOfTasks shouldBe 1
     request.configs("perf.batch") shouldBe "1"
     request.schema.size shouldBe 2
-    request.schema.head shouldBe Column("cf0", "cf0", DataType.INT, 1)
-    request.schema.last shouldBe Column("cf1", "cf1", DataType.BYTES, 2)
+    request.schema.head shouldBe Column.of("cf0", "cf0", DataType.INT, 1)
+    request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
 
     val request2 =
       ConfiguratorJson.SINK_REQUEST_JSON_FORMAT.read("""

@@ -1,6 +1,6 @@
 package com.island.ohara.connector.hdfs
 
-import com.island.ohara.client.ConfiguratorJson.Column
+import com.island.ohara.common.data.Column
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}

@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}

@@ -1,32 +1,23 @@
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.client.ConfiguratorJson;
-import com.island.ohara.client.ConfiguratorJson.Column$;
+import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.VersionUtil;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
-// TODO: 2018/11/15  Using scala Column
-
-// package object connector
 public class ConnectorUtil {
 
   private static final String NAME_KEY = "name";
   private static final String TOPICS_KEY = "topics";
 
   static TaskConfig toTaskConfig(Map<String, String> props) {
-    Column$.MODULE$.toColumns(props.get(Column$.MODULE$.COLUMN_KEY()));
+    Column.toColumns(props.get(Column.COLUMN_KEY));
 
     // TODO: the passed props is not a "copy" so any changes to props will impact props itself.
     // see OHARA-588 for more details...by chia
-    java.util.List<ConfiguratorJson.Column> schema =
-        scala.collection.JavaConversions.seqAsJavaList(
-            Column$.MODULE$.toColumns(props.get(Column$.MODULE$.COLUMN_KEY())));
+    List<Column> schema = Column.toColumns(props.get(Column.COLUMN_KEY));
 
-    java.util.List<String> topics =
+    List<String> topics =
         Optional.ofNullable(props.get(TOPICS_KEY))
             .map((x) -> x.split(","))
             .map(Arrays::asList)
@@ -55,10 +46,7 @@ public class ConnectorUtil {
     Map<String, String> map = new HashMap<>();
     map.putAll(taskConfig.options());
 
-    map.put(
-        Column$.MODULE$.COLUMN_KEY(),
-        Column$.MODULE$.fromColumns(
-            scala.collection.JavaConversions.asScalaBuffer(taskConfig.schema())));
+    map.put(Column.COLUMN_KEY, Column.fromColumns(taskConfig.schema()));
     map.put(TOPICS_KEY, taskConfig.topics().stream().collect(Collectors.joining(",")));
     map.put(NAME_KEY, taskConfig.name());
     return map;

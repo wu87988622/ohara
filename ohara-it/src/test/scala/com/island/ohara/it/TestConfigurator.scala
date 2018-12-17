@@ -3,7 +3,6 @@ import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson.{
   ClusterInformation,
-  Column,
   Sink,
   SinkRequest,
   Source,
@@ -12,8 +11,8 @@ import com.island.ohara.client.ConfiguratorJson.{
   TopicInfoRequest
 }
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
-import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil, VersionUtil}
+import com.island.ohara.common.data._
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce, VersionUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
@@ -88,9 +87,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       name = methodName,
       className = "ftp",
       schema = Seq(
-        Column("name", DataType.STRING, 1),
-        Column("ranking", DataType.INT, 2),
-        Column("single", DataType.BOOLEAN, 3)
+        Column.of("name", DataType.STRING, 1),
+        Column.of("ranking", DataType.INT, 2),
+        Column.of("single", DataType.BOOLEAN, 3)
       ),
       topics = Seq(topic.uuid),
       numberOfTasks = 1,

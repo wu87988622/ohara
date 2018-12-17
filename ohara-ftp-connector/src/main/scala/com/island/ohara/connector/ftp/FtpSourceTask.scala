@@ -2,10 +2,9 @@ package com.island.ohara.connector.ftp
 
 import java.util
 
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.FtpClient
-import com.island.ohara.common.data.{Cell, DataType, Row}
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.{Cell, Column, DataType, Row}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}

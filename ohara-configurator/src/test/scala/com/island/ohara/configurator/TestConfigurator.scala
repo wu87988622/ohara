@@ -1,8 +1,8 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.client.ConfiguratorJson.{Column, _}
+import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
-import com.island.ohara.common.data.{DataType, Serializer}
+import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.WithBrokerWorker
@@ -487,7 +487,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.lastModified shouldBe rhs.lastModified
       }
 
-      val schema = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2))
+      val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
       // test add
       client.list[Source].size shouldBe 0
       val request = SourceRequest(name = methodName,
@@ -530,7 +530,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     clients.foreach(client => {
       client.list[Source].size shouldBe 0
 
-      val illegalOrder = Seq(Column("cf", DataType.BOOLEAN, 0), Column("cf", DataType.BOOLEAN, 2))
+      val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
       an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
         SourceRequest(name = methodName,
                       className = "jdbc",
@@ -540,7 +540,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                       numberOfTasks = 1))
       client.list[Source].size shouldBe 0
 
-      val duplicateOrder = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 1))
+      val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
       an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
         SourceRequest(name = methodName,
                       className = "jdbc",
@@ -569,7 +569,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.lastModified shouldBe rhs.lastModified
       }
 
-      val schema = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 2))
+      val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
 
       // test add
       client.list[Sink].size shouldBe 0
@@ -613,7 +613,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     clients.foreach(client => {
       client.list[Source].size shouldBe 0
 
-      val illegalOrder = Seq(Column("cf", DataType.BOOLEAN, 0), Column("cf", DataType.BOOLEAN, 2))
+      val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
       an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
         SinkRequest(name = methodName,
                     className = "jdbc",
@@ -623,7 +623,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                     numberOfTasks = 1))
       client.list[Source].size shouldBe 0
 
-      val duplicateOrder = Seq(Column("cf", DataType.BOOLEAN, 1), Column("cf", DataType.BOOLEAN, 1))
+      val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
       an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
         SinkRequest(name = methodName,
                     className = "jdbc",

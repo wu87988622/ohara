@@ -4,8 +4,8 @@ import java.time.Duration
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.{After, Test}
@@ -44,14 +44,14 @@ class TestCallQueue extends With3Brokers with Matchers {
                   className = "jdbc",
                   topics = Seq.empty,
                   numberOfTasks = 1,
-                  schema = Seq(Column("cf", DataType.BOOLEAN, 1)),
+                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
                   configs = Map("a" -> "b"))
   private[this] val responseData: Source =
     Source(
       uuid = "uuid",
       name = "name2",
       className = "jdbc",
-      schema = Seq(Column("cf", DataType.BOOLEAN, 1)),
+      schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
       configs = Map("a" -> "b"),
       lastModified = com.island.ohara.common.util.CommonUtil.current(),
       numberOfTasks = 1,
@@ -84,7 +84,7 @@ class TestCallQueue extends With3Brokers with Matchers {
     // wait the one from servers receive the request
     CommonUtil.await(() => servers.map(_.countOfUndealtTasks).sum == 1, Duration.ofSeconds(10))
 
-    // get the task and assign a error
+    // get the task and assign aCloseOnce error
     val task = servers.find(_.countOfUndealtTasks == 1).get.take()
     task.complete(error)
     val result = Await.result(request, 3 second)

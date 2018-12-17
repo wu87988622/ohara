@@ -20,6 +20,9 @@ public interface Producer<K, V> extends Releasable {
   /** flush all on-the-flight data. */
   void flush();
 
+  @Override
+  void close();
+
   static ProducerBuilder builder() {
     return new ProducerBuilder();
   }

@@ -1,6 +1,5 @@
 package com.island.ohara.connector.perf
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.{Cell, DataType, Row}
+import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 

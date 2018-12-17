@@ -8,9 +8,9 @@ import org.apache.kafka.common.config.TopicConfig
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Awaitable}
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Awaitable}
 
 class TestTopicStorePersistence extends With3Brokers with Matchers {
 

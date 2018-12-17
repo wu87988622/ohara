@@ -4,8 +4,6 @@ import com.island.ohara.common.data.Serializer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import org.apache.kafka.common.serialization.Deserializer;
 
 /**
@@ -82,28 +80,24 @@ public class KafkaUtil {
    * @param topicName topic nameHDFSStorage
    * @return true if the topic exist. Otherwise, false
    */
-  public static boolean exist(String brokersConnProps, String topicName, Duration timeout)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public static boolean exist(String brokersConnProps, String topicName, Duration timeout) {
     try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
       return client.exist(topicName, timeout);
     }
   }
 
-  public static boolean exist(String brokersConnProps, String topicName)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public static boolean exist(String brokersConnProps, String topicName) {
     return exist(brokersConnProps, topicName, DEFAULT_TIMEOUT);
   }
 
   public static TopicDescription topicDescription(
-      String brokersConnProps, String topicName, Duration timeout)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      String brokersConnProps, String topicName, Duration timeout) {
     try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
       return client.topicDescription(topicName, timeout);
     }
   }
 
-  public static TopicDescription topicDescription(String brokersConnProps, String topicName)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public static TopicDescription topicDescription(String brokersConnProps, String topicName) {
     return topicDescription(brokersConnProps, topicName, DEFAULT_TIMEOUT);
   }
   /**
@@ -117,16 +111,14 @@ public class KafkaUtil {
    * @param numberOfPartitions if this number is s
    */
   public static void addPartitions(
-      String brokersConnProps, String topicName, int numberOfPartitions, Duration timeout)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      String brokersConnProps, String topicName, int numberOfPartitions, Duration timeout) {
     try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
       client.addPartitions(topicName, numberOfPartitions, timeout);
     }
   }
 
   public static void addPartitions(
-      String brokersConnProps, String topicName, int numberOfPartitions)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      String brokersConnProps, String topicName, int numberOfPartitions) {
     addPartitions(brokersConnProps, topicName, numberOfPartitions, DEFAULT_TIMEOUT);
   }
 
@@ -136,8 +128,7 @@ public class KafkaUtil {
       int numberOfPartitions,
       short numberOfReplications,
       Map<String, String> options,
-      Duration timeout)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      Duration timeout) {
     try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
       client
           .topicCreator()
@@ -154,8 +145,7 @@ public class KafkaUtil {
       String topicName,
       int numberOfPartitions,
       short numberOfReplications,
-      Map<String, String> options)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      Map<String, String> options) {
     createTopic(
         brokersConnProps,
         topicName,
@@ -166,8 +156,10 @@ public class KafkaUtil {
   }
 
   public static void createTopic(
-      String brokersConnProps, String topicName, int numberOfPartitions, short numberOfReplications)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      String brokersConnProps,
+      String topicName,
+      int numberOfPartitions,
+      short numberOfReplications) {
     createTopic(
         brokersConnProps,
         topicName,
@@ -176,15 +168,13 @@ public class KafkaUtil {
         Collections.emptyMap());
   }
 
-  public static void deleteTopic(String brokersConnProps, String topicName, Duration timeout)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public static void deleteTopic(String brokersConnProps, String topicName, Duration timeout) {
     try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
       client.deleteTopic(topicName, timeout);
     }
   }
 
-  public static void deleteTopic(String brokersConnProps, String topicName)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public static void deleteTopic(String brokersConnProps, String topicName) {
     deleteTopic(brokersConnProps, topicName, DEFAULT_TIMEOUT);
   }
 }

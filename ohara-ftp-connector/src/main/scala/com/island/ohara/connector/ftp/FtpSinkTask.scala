@@ -2,7 +2,8 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.util
 
-import com.island.ohara.client.{ConfiguratorJson, FtpClient}
+import com.island.ohara.client.FtpClient
+import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.connector.ftp.FtpSinkTask._
 import com.island.ohara.kafka.connector._
@@ -14,7 +15,7 @@ class FtpSinkTask extends RowSinkTask {
   private[this] var config: TaskConfig = _
   private[this] var props: FtpSinkTaskProps = _
   private[this] var ftpClient: FtpClient = _
-  private[this] var schema: Seq[ConfiguratorJson.Column] = _
+  private[this] var schema: Seq[Column] = _
 
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config

@@ -1,7 +1,7 @@
 package com.island.ohara.configurator.call
 
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.common.data.DataType
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.KafkaUtil
 import org.junit.Test
@@ -9,13 +9,14 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+
 class TestCallQueueInClosingOnFlyRequests extends With3Brokers with Matchers {
   private[this] val requestData: SourceRequest =
     SourceRequest(name = "name",
                   className = "jdbc",
                   topics = Seq.empty,
                   numberOfTasks = 1,
-                  schema = Seq(Column("cf", DataType.BOOLEAN, 1)),
+                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
                   configs = Map("a" -> "b"))
 
   @Test

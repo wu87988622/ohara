@@ -12,7 +12,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.Consistency
@@ -20,8 +20,8 @@ import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsonParser}
 
-import scala.concurrent.{Await, Awaitable}
 import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.{Await, Awaitable}
 import scala.reflect.{ClassTag, classTag}
 
 /**

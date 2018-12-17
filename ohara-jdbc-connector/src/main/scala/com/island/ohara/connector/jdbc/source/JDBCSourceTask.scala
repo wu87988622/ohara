@@ -1,8 +1,7 @@
 package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
 
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.{Cell, DataType, Row}
+import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
@@ -57,7 +56,7 @@ class JDBCSourceTask extends RowSourceTask {
     try resultSet
     //Create Ohara Schema
       .map(columns =>
-        (if (schema.isEmpty) columns.map(c => Column(c.columnName, DataType.OBJECT, 0)) else schema, columns))
+        (if (schema.isEmpty) columns.map(c => Column.of(c.columnName, DataType.OBJECT, 0)) else schema, columns))
       .flatMap {
         case (newSchema, columns) =>
           val offsetTimestampValue = dbTimestampColumnValue(columns, timestampColumnName)

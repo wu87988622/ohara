@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.store.Consistency._
 import com.island.ohara.kafka._
 import com.typesafe.scalalogging.Logger

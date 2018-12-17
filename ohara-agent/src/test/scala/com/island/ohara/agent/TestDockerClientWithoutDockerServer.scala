@@ -5,7 +5,7 @@ import com.island.ohara.agent.DockerJson.{ContainerDescription, PortPair, State}
 import com.island.ohara.agent.SshdServer.CommandHandler
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import org.junit.{AfterClass, Test}
 import org.scalatest.Matchers
 

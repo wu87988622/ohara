@@ -3,10 +3,10 @@ package com.island.ohara.configurator
 import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.KafkaClient

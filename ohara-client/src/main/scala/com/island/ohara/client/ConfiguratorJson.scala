@@ -1,7 +1,8 @@
 package com.island.ohara.client
 
-import com.island.ohara.client.ConnectorJson.State
-import com.island.ohara.common.data.DataType
+import com.island.ohara.client.ConnectorJson._
+import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.{Column, DataType}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
@@ -49,13 +50,12 @@ object ConfiguratorJson {
     def format(address: String, uuid: String): String
   }
 
-  final case class Column(name: String, newName: String, dataType: DataType, order: Int)
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
     override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
-      case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column(n, nn, DataType.of(t), o.toInt)
-      case Seq(JsString(n), JsNull, JsString(t), JsNumber(o))       => Column(n, n, DataType.of(t), o.toInt)
-      case Seq(JsString(n), JsString(t), JsNumber(o))               => Column(n, n, DataType.of(t), o.toInt)
-      case _                                                        => throw new UnsupportedOperationException(s"invalid format from ${Column.getClass.getSimpleName}")
+      case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column.of(n, nn, DataType.of(t), o.toInt)
+      case Seq(JsString(n), JsNull, JsString(t), JsNumber(o))       => Column.of(n, n, DataType.of(t), o.toInt)
+      case Seq(JsString(n), JsString(t), JsNumber(o))               => Column.of(n, n, DataType.of(t), o.toInt)
+      case _                                                        => throw new UnsupportedOperationException(s"invalid format from ${classOf[Column].getSimpleName}")
     }
     override def write(obj: Column): JsValue = JsObject(
       "name" -> JsString(obj.name),
@@ -63,28 +63,6 @@ object ConfiguratorJson {
       "dataType" -> JsString(obj.dataType.name),
       "order" -> JsNumber(obj.order)
     )
-  }
-  object Column {
-    def apply(name: String, dataType: DataType, order: Int): Column = Column(name, name, dataType, order)
-    // kafka connector accept only Map[String, String] as input arguments so we have to serialize the column to a string
-    // TODO: Personally, I hate this ugly workaround...by chia
-    val COLUMN_KEY: String = "__row_connector_schema"
-    def toString(schema: Seq[Column]): String =
-      schema.map(c => s"${c.name},${c.newName},${c.dataType.name},${c.order}").mkString(",")
-    def fromColumns(schema: Seq[Column]): String =
-      schema.map(c => s"${c.name},${c.newName},${c.dataType.name},${c.order}").mkString(",")
-    def toColumns(columnsString: String): Seq[Column] = if (columnsString == null || columnsString.isEmpty) Seq.empty
-    else {
-      val splits = columnsString.split(",")
-      if (splits.length % 4 != 0)
-        throw new IllegalArgumentException(s"invalid format from columns string:$columnsString")
-      splits
-        .grouped(4)
-        .map {
-          case Array(name, newName, dataType, order) => Column(name, newName, DataType.of(dataType), order.toInt)
-        }
-        .toSeq
-    }
   }
   //------------------------------------------------[DATA-TOPIC]------------------------------------------------//
   val TOPIC_INFO_PATH = "topics"

@@ -4,10 +4,9 @@ import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.time.Duration
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ByteUtil, ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
+import com.island.ohara.common.util.{ByteUtil, CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
@@ -24,7 +23,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
-  private[this] val schema = Seq(Column("cf0", DataType.BOOLEAN, 1))
+  private[this] val schema = Seq(Column.of("cf0", DataType.BOOLEAN, 1))
   @Test
   def testTaskConfigs(): Unit = {
     val maxTasks = 5
@@ -276,7 +275,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         dataDirName -> dataDirPath,
         isHeader -> "false"
       ))
-      .schema(Seq(Column("cccc", DataType.BOOLEAN, 1)))
+      .schema(Seq(Column.of("cccc", DataType.BOOLEAN, 1)))
       .create()
 
     TimeUnit.SECONDS.sleep(5)

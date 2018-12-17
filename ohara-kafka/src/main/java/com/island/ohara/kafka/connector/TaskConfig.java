@@ -1,6 +1,6 @@
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.client.ConfiguratorJson.Column;
+import com.island.ohara.common.data.Column;
 import java.util.List;
 import java.util.Map;
 

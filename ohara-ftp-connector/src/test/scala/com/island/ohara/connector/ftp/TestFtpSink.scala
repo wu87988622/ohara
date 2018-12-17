@@ -2,17 +2,15 @@ package com.island.ohara.connector.ftp
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.{ConnectorClient, FtpClient}
-import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ByteUtil, ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
+import com.island.ohara.common.util.{ByteUtil, CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import org.junit.{After, Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
@@ -61,9 +59,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   private[this] val TOPIC = TestFtpSink.TOPIC
 
   private[this] val schema: Seq[Column] = Seq(
-    Column("a", DataType.STRING, 1),
-    Column("b", DataType.INT, 2),
-    Column("c", DataType.BOOLEAN, 3)
+    Column.of("a", DataType.STRING, 1),
+    Column.of("b", DataType.INT, 2),
+    Column.of("c", DataType.BOOLEAN, 3)
   )
 
   private[this] val data = TestFtpSink.data
@@ -105,9 +103,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val topicName = TOPIC
     val connectorName = methodName
     val newSchema: Seq[Column] = Seq(
-      Column("a", DataType.STRING, 3),
-      Column("b", DataType.INT, 2),
-      Column("c", DataType.BOOLEAN, 1)
+      Column.of("a", DataType.STRING, 3),
+      Column.of("b", DataType.INT, 2),
+      Column.of("c", DataType.BOOLEAN, 1)
     )
     connectorClient
       .connectorCreator()
@@ -198,9 +196,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val topicName = TOPIC
     val connectorName = methodName
     val schema = Seq(
-      Column("a", "aa", DataType.STRING, 1),
-      Column("b", "bb", DataType.INT, 2),
-      Column("c", "cc", DataType.BOOLEAN, 3)
+      Column.of("a", "aa", DataType.STRING, 1),
+      Column.of("b", "bb", DataType.INT, 2),
+      Column.of("c", "cc", DataType.BOOLEAN, 3)
     )
     connectorClient
       .connectorCreator()
@@ -326,7 +324,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       // the name can't be casted to int
-      .schema(Seq(Column("name", DataType.INT, 1)))
+      .schema(Seq(Column.of("name", DataType.INT, 1)))
       .configs(props.toMap)
       .create()
 

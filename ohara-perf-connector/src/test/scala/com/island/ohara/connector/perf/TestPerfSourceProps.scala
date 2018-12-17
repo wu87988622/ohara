@@ -1,6 +1,5 @@
 package com.island.ohara.connector.perf
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.DataType
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.kafka.connector.TaskConfig
 import org.junit.Test
@@ -12,7 +11,7 @@ import scala.concurrent.duration._
 class TestPerfSourceProps extends SmallTest with Matchers {
   private[this] val props = PerfSourceProps(10, 10 seconds)
   private[this] val topics = Seq("TestPerfSourceProps")
-  private[this] val schema = Seq(Column("name", DataType.SHORT, 1))
+  private[this] val schema = Seq(Column.of("name", DataType.SHORT, 1))
 
   @Test
   def testPlainMap(): Unit = {

@@ -1,10 +1,11 @@
 package com.island.ohara.client
 import java.util.Objects
 
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.ConnectorJson.{CreateConnectorRequest, CreateConnectorResponse}
+import com.island.ohara.common.data.Column
 import com.typesafe.scalalogging.Logger
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 /**
@@ -162,7 +163,7 @@ abstract class ConnectorCreator {
     config += ("connector.class" -> clzName)
     config += ("topics" -> topicNames.mkString(","))
     config += ("tasks.max" -> numberOfTasks.toString)
-    if (schema != null && schema.nonEmpty) config += (Column.COLUMN_KEY -> Column.toString(schema))
+    if (schema != null && schema.nonEmpty) config += (Column.COLUMN_KEY -> Column.fromColumns(schema.asJava))
     if (_disableKeyConverter) config += ("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
     if (_disableValueConverter)
       config += ("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")

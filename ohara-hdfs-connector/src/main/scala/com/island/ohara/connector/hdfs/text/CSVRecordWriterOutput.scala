@@ -2,8 +2,7 @@ package com.island.ohara.connector.hdfs.text
 
 import java.io.{BufferedWriter, OutputStreamWriter, Writer}
 
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.{DataType, Row}
+import com.island.ohara.common.data.{Column, DataType, Row}
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.Storage
@@ -27,7 +26,7 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     */
   override def write(isHeader: Boolean, schema: Seq[Column], row: Row): Unit = {
     val newSchema: Seq[Column] =
-      if (schema.isEmpty) row.cells().asScala.map(r => Column(r.name, DataType.OBJECT, 0)).toSeq else schema
+      if (schema.isEmpty) row.cells().asScala.map(r => Column.of(r.name, DataType.OBJECT, 0)).toSeq else schema
     val line: String = newSchema
       .sortBy(_.order)
       .map(n => (n, row.cells().asScala.filter(r => n.name == r.name)))

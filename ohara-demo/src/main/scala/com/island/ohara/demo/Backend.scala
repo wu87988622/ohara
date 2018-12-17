@@ -7,18 +7,18 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration._
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil, Releasable}
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
 
 /**
   * run a configurator based on 3 brokers and 3 workers.

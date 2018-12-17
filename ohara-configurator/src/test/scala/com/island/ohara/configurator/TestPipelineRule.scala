@@ -10,8 +10,8 @@ import com.island.ohara.client.ConfiguratorJson.{
   TopicInfo,
   TopicInfoRequest
 }
-import com.island.ohara.client.ConnectorJson.State
 import com.island.ohara.client.{ConfiguratorClient, ConfiguratorJson}
+import com.island.ohara.common.data.connector.State
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Test}

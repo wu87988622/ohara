@@ -1,7 +1,6 @@
 package com.island.ohara.connector.hdfs.text
 
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.Row
+import com.island.ohara.common.data.{Column, Row}
 
 /**
   * This abstract to define how to write data to file

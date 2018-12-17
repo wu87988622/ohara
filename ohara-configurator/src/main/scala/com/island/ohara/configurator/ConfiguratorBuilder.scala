@@ -10,11 +10,11 @@ import com.island.ohara.client.ConnectorJson.{
   ConnectorStatus,
   CreateConnectorResponse,
   Plugin,
-  State,
   TaskStatus
 }
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.common.data.Serializer
+import com.island.ohara.common.data.connector.State
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._

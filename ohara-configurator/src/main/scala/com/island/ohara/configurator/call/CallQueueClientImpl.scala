@@ -5,7 +5,7 @@ import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 
 import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.lang3.exception.ExceptionUtils

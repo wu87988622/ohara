@@ -3,7 +3,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.AgentJson.{BrokerCluster, Node, WorkerCluster, ZookeeperCluster}
 import com.island.ohara.agent.DockerJson.ContainerDescription
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 /**

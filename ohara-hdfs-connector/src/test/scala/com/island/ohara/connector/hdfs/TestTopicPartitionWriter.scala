@@ -2,8 +2,7 @@ package com.island.ohara.connector.hdfs
 
 import java.io.OutputStream
 
-import com.island.ohara.client.ConfiguratorJson.Column
-import com.island.ohara.common.data.{Cell, Row}
+import com.island.ohara.common.data.{Cell, Column, Row}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}

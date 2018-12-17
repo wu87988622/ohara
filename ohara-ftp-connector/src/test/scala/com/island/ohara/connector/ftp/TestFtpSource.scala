@@ -2,10 +2,9 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.ConfiguratorJson.Column
 import com.island.ohara.client.{ConnectorClient, FtpClient}
-import com.island.ohara.common.data.{Cell, DataType, Row, Serializer}
-import com.island.ohara.common.util.{ReleaseOnce, CommonUtil}
+import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
+import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{Consumer, ConsumerRecord, KafkaUtil}
 import org.junit.{After, Before, Test}
@@ -16,9 +15,9 @@ import scala.concurrent.duration._
 class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] val schema: Seq[Column] = Seq(
-    Column("name", DataType.STRING, 1),
-    Column("ranking", DataType.INT, 2),
-    Column("single", DataType.BOOLEAN, 3)
+    Column.of("name", DataType.STRING, 1),
+    Column.of("ranking", DataType.INT, 2),
+    Column.of("single", DataType.BOOLEAN, 3)
   )
   private[this] val rows: Seq[Row] = Seq(
     Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
@@ -171,9 +170,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .schema(
         Seq(
-          Column("name", "newName", DataType.STRING, 1),
-          Column("ranking", "newRanking", DataType.INT, 2),
-          Column("single", "newSingle", DataType.BOOLEAN, 3)
+          Column.of("name", "newName", DataType.STRING, 1),
+          Column.of("ranking", "newRanking", DataType.INT, 2),
+          Column.of("single", "newSingle", DataType.BOOLEAN, 3)
         ))
       .configs(props.toMap)
       .create()
@@ -216,9 +215,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .name(connectorName)
       .schema(
         Seq(
-          Column("name", DataType.OBJECT, 1),
-          Column("ranking", DataType.INT, 2),
-          Column("single", DataType.BOOLEAN, 3)
+          Column.of("name", DataType.OBJECT, 1),
+          Column.of("ranking", DataType.INT, 2),
+          Column.of("single", DataType.BOOLEAN, 3)
         ))
       .configs(props.toMap)
       .create()
@@ -356,7 +355,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .name(connectorName)
       // the name can't be casted to int
-      .schema(Seq(Column("name", DataType.INT, 1)))
+      .schema(Seq(Column.of("name", DataType.INT, 1)))
       .configs(props.toMap)
       .create()
     try {
@@ -403,9 +402,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       .schema(
         Seq(
           // 0 is invalid
-          Column("name", DataType.STRING, 0),
-          Column("ranking", DataType.INT, 2),
-          Column("single", DataType.BOOLEAN, 3)
+          Column.of("name", DataType.STRING, 0),
+          Column.of("ranking", DataType.INT, 2),
+          Column.of("single", DataType.BOOLEAN, 3)
         ))
       .configs(props.toMap)
       .create()
