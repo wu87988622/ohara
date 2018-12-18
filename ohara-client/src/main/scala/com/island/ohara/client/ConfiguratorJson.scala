@@ -1,5 +1,6 @@
 package com.island.ohara.client
 
+import akka.http.scaladsl.model.Multipart.FormData.BodyPart.Strict
 import com.island.ohara.client.ConnectorJson._
 import com.island.ohara.common.data.connector.State
 import com.island.ohara.common.data.{Column, DataType}
@@ -37,6 +38,7 @@ object ConfiguratorJson {
     /**
       * This field should not be marshalled into json so we make it be "def" rather than "val.
       * DON'T change this filed since it is exposed by restful APIs
+      *
       * @return the type from this class
       */
     def kind: String
@@ -154,6 +156,7 @@ object ConfiguratorJson {
 
     /**
       * used to generate uri to send start request
+      *
       * @param address basic address
       * @param uuid uuid from data
       * @return uri
@@ -162,6 +165,7 @@ object ConfiguratorJson {
 
     /**
       * used to generate uri to send stop request
+      *
       * @param address basic address
       * @param uuid uuid from data
       * @return uri
@@ -170,6 +174,7 @@ object ConfiguratorJson {
 
     /**
       * used to generate uri to send resume request
+      *
       * @param address basic address
       * @param uuid uuid from data
       * @return uri
@@ -178,6 +183,7 @@ object ConfiguratorJson {
 
     /**
       * used to generate uri to send pause request
+      *
       * @param address basic address
       * @param uuid uuid from data
       * @return uri
@@ -408,6 +414,47 @@ object ConfiguratorJson {
     new ClusterCommandFormat[ClusterInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$CLUSTER_PATH"
     }
+
+  //------------------------------------------------[STREAM]------------------------------------------------//
+  val STREAM_PATH = "stream"
+
+  /**
+    * used to send stream command
+    */
+  sealed trait StreamCommandFormat[T] {
+    def format(address: String): String
+  }
+  final case class StreamObj(uuid: String, jarName: String, lastModified: Long) extends Data {
+    override def kind: String = "streams"
+    override def name: String = jarName
+  }
+  implicit val STREAM_OBJ_FORMAT: RootJsonFormat[StreamObj] = jsonFormat3(StreamObj)
+
+  val JARS_STREAM_PATH = "jars"
+  final case class JarsStreamRequest(name: String, jars: Seq[String])
+  implicit val JARS_STREAM_PATH_REQUEST_JSON_FORMAT: RootJsonFormat[JarsStreamRequest] = jsonFormat2(JarsStreamRequest)
+
+  implicit val STRICT_STREAM_PATH_COMMAND_FORMAT: StreamCommandFormat[Strict] =
+    new StreamCommandFormat[Strict] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
+    }
+
+  final case class StreamResponse(jars: Seq[StreamObj])
+  implicit val STREAM_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamResponse] = jsonFormat1(StreamResponse)
+
+  implicit val JARS_INFO_COMMAND_FORMAT: DataCommandFormat[StreamObj] = new DataCommandFormat[StreamObj] {
+    override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
+    override def format(address: String, uuid: String): String =
+      s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$uuid"
+  }
+
+  final case class StreamJarUpdateRequest(jarName: String)
+  implicit val STREAM_JAR_UPDATE_REQUEST_JSON_FORMAT: RootJsonFormat[StreamJarUpdateRequest] = jsonFormat1(
+    StreamJarUpdateRequest)
+
+  final case class StreamApp(uuid: String, name: String) extends Data {
+    override def kind: String = "streamApp"
+  }
 
   //------------------------------------------------[ERROR]------------------------------------------------//
   final case class Error(code: String, message: String, stack: String)

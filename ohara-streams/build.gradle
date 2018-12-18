@@ -19,10 +19,28 @@ dependencies {
     testImplementation libs.scalatest
     testImplementation libs.mockito
     testImplementation libs.junit
-    testImplementation (libs.hadoopHDFS) {
+    testImplementation(libs.hadoopHDFS) {
         exclude group: 'com.sun.jersey', module: 'jersey-core'
         exclude group: 'com.sun.jersey', module: 'jersey-json'
         exclude group: 'com.sun.jersey', module: 'jersey-servlet'
         exclude group: 'com.sun.jersey', module: 'jersey-server'
     }
+}
+
+/**
+ * run a importData based on user defined kafka cluster
+ */
+task runImportData(type: JavaExec, dependsOn: 'classes') {
+    description 'run AirlineDataImporter. You can use --bootstrapServers and --useOharaAPI.'
+    String servers = "192.168.99.100:9092,192.168.99.100:9093,192.168.99.100:9094"
+    if (project.hasProperty('servers')) {
+        servers = "${project.getProperty('servers')}"
+    }
+    boolean useOharaAPI = false
+
+    classpath = sourceSets.test.runtimeClasspath
+    main = "com.island.ohara.streams.AirlineDataImporter"
+
+    args = Arrays.asList("--bootstrapServers", servers, "--useOharaAPI", useOharaAPI)
+
 }

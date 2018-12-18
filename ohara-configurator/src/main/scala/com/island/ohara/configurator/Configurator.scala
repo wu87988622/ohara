@@ -71,7 +71,8 @@ class Configurator private[configurator] (configuredHostname: String,
       QueryRoute(),
       SourceRoute.apply,
       SinkRoute.apply,
-      ClusterRoute.apply
+      ClusterRoute.apply,
+      StreamRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>

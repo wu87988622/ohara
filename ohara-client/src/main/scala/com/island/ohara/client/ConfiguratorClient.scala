@@ -5,7 +5,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.Multipart.FormData.BodyPart.Strict
+import akka.http.scaladsl.model.{Multipart, _}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
@@ -46,6 +47,9 @@ trait ConfiguratorClient extends ReleaseOnce {
   //------------------------------------------------[QUERY]------------------------------------------------//
   def query[Req, Res](
     query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
+  //------------------------------------------------[Stream]------------------------------------------------//
+  def stream_jars_uploadJar[Req, Res](data: Strict*)(implicit rm1: RootJsonFormat[Res],
+                                                     cf: StreamCommandFormat[Req]): Res
 }
 
 object ConfiguratorClient {
@@ -162,5 +166,15 @@ object ConfiguratorClient {
         TIMEOUT
       )
 
+    override def stream_jars_uploadJar[Req, Res](data: Strict*)(implicit rm1: RootJsonFormat[Res],
+                                                                cf: StreamCommandFormat[Req]): Res = {
+      val entity = Multipart.FormData(data: _*)
+      Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.POST, cf.format(connectionProps), entity = entity.toEntity))
+          .flatMap(unmarshal[Res](_)),
+        TIMEOUT
+      )
+    }
   }
 }
