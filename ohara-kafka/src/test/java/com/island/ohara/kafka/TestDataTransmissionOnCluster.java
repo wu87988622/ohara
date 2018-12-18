@@ -3,7 +3,11 @@ package com.island.ohara.kafka;
 import com.island.ohara.client.ConnectorClient;
 import com.island.ohara.client.ConnectorClient$;
 import com.island.ohara.client.ConnectorJson;
-import com.island.ohara.common.data.*;
+import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Column;
+import com.island.ohara.common.data.DataType;
+import com.island.ohara.common.data.Row;
+import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.data.connector.State;
 import com.island.ohara.common.util.ByteUtil;
 import com.island.ohara.common.util.CommonUtil;
@@ -14,7 +18,11 @@ import com.island.ohara.kafka.connector.Constants;
 import com.island.ohara.kafka.connector.SimpleRowSinkConnector;
 import com.island.ohara.kafka.connector.SimpleRowSourceConnector;
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.junit.After;
@@ -311,6 +319,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
    * @param <V>
    * @return
    */
+  @SuppressWarnings("unchecked")
   private static <K, V> scala.collection.immutable.Map<K, V> toScalaMap(
       java.util.Map<K, V> javaMap) {
     final java.util.List<scala.Tuple2<K, V>> list = new java.util.ArrayList<>(javaMap.size());

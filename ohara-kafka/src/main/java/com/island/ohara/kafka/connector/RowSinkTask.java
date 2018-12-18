@@ -186,12 +186,20 @@ public abstract class RowSinkTask extends SinkTask {
     rowContext = RowSinkContext.toRowSinkContext(context);
   }
 
+  @SuppressWarnings({
+    "deprecation",
+    "kafka had deprecated this method but it still allow developer to override it. We forbrid the inherance now"
+  })
   @Override
   public final void onPartitionsAssigned(
       Collection<org.apache.kafka.common.TopicPartition> partitions) {
     super.onPartitionsAssigned(partitions);
   }
 
+  @SuppressWarnings({
+    "deprecation",
+    "kafka had deprecated this method but it still allow developer to override it. We forbrid the inherance now"
+  })
   @Override
   public final void onPartitionsRevoked(
       Collection<org.apache.kafka.common.TopicPartition> partitions) {
