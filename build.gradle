@@ -24,7 +24,7 @@ subprojects {
       minHeapSize = "256m"
       maxHeapSize = "4096m"
       testLogging {
-        events = ["passed", "skipped", "failed"]
+        events "PASSED", "STARTED", "FAILED", "SKIPPED"
       }
     }
   }
