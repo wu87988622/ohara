@@ -16,7 +16,7 @@ ext {
 
 subprojects {
   if (it.name != 'ohara-manager') {
-    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util')
+    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util' || it.name == 'ohara-streams')
       apply plugin: 'java'
     else apply plugin: 'scala'
     test {
@@ -43,10 +43,10 @@ subprojects {
     }
   }
 
-  // All sub-projects have applied the scala checkstyle.
+  // All sub-projects have been applied the java or scala checkstyle.
   if (it.name != 'ohara-manager') {
     apply plugin: "com.diffplug.gradle.spotless"
-    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util'||it.name=='ohara-kafka') {
+    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util'||it.name=='ohara-kafka' || it.name == 'ohara-streams') {
       spotless {
         java {
           googleJavaFormat()
