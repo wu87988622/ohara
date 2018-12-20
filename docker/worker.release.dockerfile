@@ -27,34 +27,25 @@ RUN yum install -y \
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
 # change user from root to kafka
-ARG USER=kafka
+ARG USER=worker
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
 # copy kafka binary
-WORKDIR /home/$USER
+# TODO: we should remove unused dependencies since this image is used to run broker only
 COPY --from=base /opt/kafka /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "kafka_*") /home/$USER/default
-ADD ./broker.sh /home/$USER/default/bin/
-RUN chmod +x /home/$USER/default/bin/broker.sh
 ADD ./worker.sh /home/$USER/default/bin/
 RUN chmod +x /home/$USER/default/bin/worker.sh
 RUN chown -R $USER:$USER /home/$USER
-WORKDIR /home/$USER/default/bin/
+ENV KAFKA_HOME=/home/$USER/default
+ENV PATH=$PATH:$KAFKA_HOME/bin
 
 # copy Tini
 COPY --from=base /tini /tini
 RUN chmod +x /tini
 
-# change to user
-USER $USER
-WORKDIR /home/$USER
+# USER $USER
 
-# Set ENV
-ENV KAFKA_HOME=/home/$USER/default
-ENV PATH=$PATH:$KAFKA_HOME/bin
-
-ENTRYPOINT ["/tini", "--"]
-
-CMD ["sh", "-c", "echo [Usage] broker.sh or worker.sh"]
+ENTRYPOINT ["/tini", "--", "worker.sh"]
 

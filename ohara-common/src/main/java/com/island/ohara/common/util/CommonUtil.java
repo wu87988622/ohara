@@ -38,12 +38,25 @@ public final class CommonUtil {
   }
 
   /**
-   * create a uuid.
+   * create a uuid. This uuid consists of "number" and [a-zA-Z]
    *
    * @return uuid
    */
   public static String uuid() {
-    return java.util.UUID.randomUUID().toString();
+    return java.util.UUID.randomUUID().toString().replaceAll("-", "");
+  }
+
+  /**
+   * create a uuid with specified length. This uuid consists of "number" and [a-zA-Z]
+   *
+   * @param len the length of uuid
+   * @return uuid
+   */
+  public static String uuid(int len) {
+    String uuid = uuid();
+    if (uuid.length() < len)
+      throw new IllegalArgumentException("expected size:" + len + ", actual size:" + uuid.length());
+    return uuid.substring(0, len);
   }
 
   /**

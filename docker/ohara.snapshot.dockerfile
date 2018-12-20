@@ -19,7 +19,7 @@ RUN yum install -y nodejs
 RUN npm install -g yarn@1.7.0
 
 # download gradle
-ARG GRADLE_VERSION=4.10.2
+ARG GRADLE_VERSION=4.10.3
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
@@ -73,6 +73,8 @@ COPY --from=deps /opt/ohara /opt/ohara
 RUN ln -s $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*") /opt/ohara/default
 # (TODO) manager has got to write something to binary folder...we should keep the permission if OHARA-669 is resolved
 RUN chown -R $USER:$USER /opt/ohara
+ENV OHARA_HOME=/opt/ohara/default
+ENV PATH=$PATH:$OHARA_HOME/bin
 
 # Add Tini
 RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
@@ -80,11 +82,6 @@ RUN chmod +x /tini
 
 # change to user
 USER $USER
-WORKDIR /home/$USER
-
-# Set ENV
-ENV OHARA_HOME=/opt/ohara/default
-ENV PATH=$PATH:$OHARA_HOME/bin
 
 ENTRYPOINT ["/tini", "--", "/opt/ohara/default/bin/ohara", "start"]
 

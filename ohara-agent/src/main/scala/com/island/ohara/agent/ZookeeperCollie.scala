@@ -1,64 +1,21 @@
 package com.island.ohara.agent
-import com.island.ohara.agent.AgentJson.ZookeeperCluster
-import com.island.ohara.agent.DockerJson.ContainerDescription
-import com.island.ohara.agent.ZookeeperCollie.ClusterCreator
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.agent.AgentJson._
+import com.island.ohara.common.util.Releasable
 
 /**
   * a interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends ReleaseOnce with Iterable[ZookeeperCluster] {
-
-  /**
-    * remove whole cluster by specified name
-    * @param clusterName cluster name
-    */
-  def remove(clusterName: String): Unit
-
-  /**
-    * get logs from all containers
-    * @param clusterName cluster name
-    * @return all log content from cluster. Each container has a log.
-    */
-  def logs(clusterName: String): Map[ContainerDescription, String]
-
-  /**
-    * create a cluster creator
-    * @return creator of zookeeper cluster
-    */
-  def creator(): ClusterCreator
-
-  /**
-    * get the containers information from a zookeeper cluster
-    * @param clusterName cluster name
-    * @return containers information
-    */
-  def containers(clusterName: String): Seq[ContainerDescription]
-
-  /**
-    * @param clusterName cluster name
-    * @return true if the zk cluster exists
-    */
-  def exist(clusterName: String): Boolean = containers(clusterName).nonEmpty
-
-  /**
-    * @param clusterName cluster name
-    * @return true if the zk cluster doesn't exist
-    */
-  def nonExist(clusterName: String): Boolean = !exist(clusterName)
+trait ZookeeperCollie extends Releasable with Collie[ZookeeperClusterDescription] {
+  override def creator(): ZookeeperCollie.ClusterCreator
 }
 
 object ZookeeperCollie {
-
-  trait ClusterCreator {
-    def imageName(imageName: String): ClusterCreator
-    def clusterName(name: String): ClusterCreator
+  trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterDescription] {
     def clientPort(clientPort: Int): ClusterCreator
     def peerPort(peerPort: Int): ClusterCreator
     def electionPort(electionPort: Int): ClusterCreator
-    def create(nodeName: String): ZookeeperCluster = create(Seq(nodeName))
-    def create(nodeNames: Seq[String]): ZookeeperCluster
+    def create(nodeNames: Seq[String]): ZookeeperClusterDescription
   }
 
   /**

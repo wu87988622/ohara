@@ -10,7 +10,7 @@ RUN yum install -y \
 ENV JAVA_HOME=/usr/lib/jvm/java
 
 # download gradle
-ARG GRADLE_VERSION=4.10.2
+ARG GRADLE_VERSION=4.10.3
 WORKDIR /opt/gradle
 RUN wget --no-check-certificate https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
@@ -47,7 +47,6 @@ RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
 # copy kafka binary
-WORKDIR /home/$USER
 COPY --from=base /opt/kafka /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "kafka_*") /home/$USER/default
 ADD ./broker.sh /home/$USER/default/bin/
@@ -55,7 +54,8 @@ RUN chmod +x /home/$USER/default/bin/broker.sh
 ADD ./worker.sh /home/$USER/default/bin/
 RUN chmod +x /home/$USER/default/bin/worker.sh
 RUN chown -R $USER:$USER /home/$USER
-WORKDIR /home/$USER/default/bin/
+ENV KAFKA_HOME=/home/$USER/default
+ENV PATH=$PATH:$KAFKA_HOME/bin
 
 # copy Tini
 COPY --from=base /tini /tini
@@ -63,11 +63,6 @@ RUN chmod +x /tini
 
 # change to user
 USER $USER
-WORKDIR /home/$USER
-
-# Set ENV
-ENV KAFKA_HOME=/home/$USER/default
-ENV PATH=$PATH:$KAFKA_HOME/bin
 
 ENTRYPOINT ["/tini", "--"]
 

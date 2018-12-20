@@ -1,7 +1,6 @@
 package com.island.ohara.agent
 
-import com.island.ohara.agent.DockerClient.LIST_PROCESS_FORMAT
-import com.island.ohara.agent.DockerJson.{ContainerDescription, PortPair, State}
+import com.island.ohara.agent.AgentJson._
 import com.island.ohara.agent.SshdServer.CommandHandler
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
 import com.island.ohara.common.rule.SmallTest
@@ -14,13 +13,13 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   @Test
   def checkCleanupOption(): Unit = {
     CLIENT
-      .executor()
+      .containerCreator()
       .command("/bin/bash -c \"ls\"")
       .imageName("centos:latest")
       .dockerCommand()
       .contains("--rm") shouldBe false
     CLIENT
-      .executor()
+      .containerCreator()
       .command("/bin/bash -c \"ls\"")
       .imageName("centos:latest")
       .cleanup()
@@ -70,7 +69,12 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   @Test
   def testSetHostname(): Unit = {
     val hostname = methodName()
-    CLIENT.executor().imageName("aaa").hostname(hostname).dockerCommand().contains(s"-h $hostname") shouldBe true
+    CLIENT
+      .containerCreator()
+      .imageName("aaa")
+      .hostname(hostname)
+      .dockerCommand()
+      .contains(s"-h $hostname") shouldBe true
   }
 
   @Test
@@ -78,7 +82,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     val key = s"key-${methodName()}"
     val value = s"value-${methodName()}"
     CLIENT
-      .executor()
+      .containerCreator()
       .imageName("aaa")
       .envs(Map(key -> value))
       .dockerCommand()
@@ -90,7 +94,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     val hostname = methodName()
     val ip = "192.168.103.1"
     CLIENT
-      .executor()
+      .containerCreator()
       .imageName("aaa")
       .route(Map(hostname -> ip))
       .dockerCommand()
@@ -102,7 +106,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     val port0 = 12345
     val port1 = 12346
     CLIENT
-      .executor()
+      .containerCreator()
       .imageName("aaa")
       .portMappings(Map(port0 -> port0, port1 -> port1))
       .dockerCommand()
@@ -114,7 +118,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     val ip = "0.0.0.0"
     val minPort = 12345
     val maxPort = 12350
-    val ports = DockerClient.parsePortMapping(s"$ip:$minPort-$maxPort->$minPort-$maxPort/tcp")
+    val ports = DockerClientImpl.parsePortMapping(s"$ip:$minPort-$maxPort->$minPort-$maxPort/tcp")
     ports.size shouldBe 1
     ports.find(_.hostIp == ip).get.portPairs.size shouldBe maxPort - minPort + 1
     ports.find(_.hostIp == ip).get.portPairs shouldBe (minPort to maxPort).map(port => PortPair(port, port)).toSeq
@@ -125,7 +129,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     val ip = "0.0.0.0"
     val hostPorts = Seq.fill(5)(Random.nextInt(10000))
     val containerPorts = Seq.fill(5)(Random.nextInt(10000))
-    val ports = DockerClient.parsePortMapping(
+    val ports = DockerClientImpl.parsePortMapping(
       hostPorts.zipWithIndex
         .map {
           case (p, index) => s"$ip:$p->${containerPorts(index)}/tcp"
@@ -150,7 +154,7 @@ object TestDockerClientWithoutDockerServer {
       ContainerDescription(
         nodeName = CommonUtil.hostname(),
         id = s"id-${s.name}",
-        image = s"image-${s.name}",
+        imageName = s"image-${s.name}",
         created = s"created-${s.name}",
         state = s,
         name = s"name-${s.name}",
@@ -162,19 +166,20 @@ object TestDockerClientWithoutDockerServer {
 
   private[this] def containerToString(container: ContainerDescription): String = Seq(
     container.id,
-    container.image,
+    container.imageName,
     container.created,
     container.state,
     container.name,
     container.size
-  ).mkString(DockerClient.DIVIDER)
+  ).mkString(DockerClientImpl.DIVIDER)
 
   private val SERVER = SshdServer.local(
     0,
     Seq(
       // handle normal
       new CommandHandler {
-        override def belong(command: String): Boolean = command == s"docker ps -a --format $LIST_PROCESS_FORMAT"
+        override def belong(command: String): Boolean =
+          command == s"docker ps -a --format ${DockerClientImpl.LIST_PROCESS_FORMAT}"
         override def execute(command: String): Seq[String] = if (belong(command)) CONTAINERS.map(containerToString)
         else throw new IllegalArgumentException(s"$command doesn't support")
       },

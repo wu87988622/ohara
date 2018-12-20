@@ -30,7 +30,6 @@ RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
 # copy zookeeper binary
-WORKDIR /home/$USER
 COPY --from=base /opt/zookeeper /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "zookeeper-*") /home/$USER/default
 COPY ./zk.sh /home/$USER/default/bin/
@@ -43,8 +42,6 @@ ENV PATH=$PATH:$ZOOKEEPER_HOME/bin
 COPY --from=base /tini /tini
 RUN chmod +x /tini
 
-# change to user
 USER $USER
-WORKDIR /home/$USER/default
 
 ENTRYPOINT ["/tini", "--", "zk.sh"]

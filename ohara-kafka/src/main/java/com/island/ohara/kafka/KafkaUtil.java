@@ -13,7 +13,7 @@ import org.apache.kafka.common.serialization.Deserializer;
  */
 public class KafkaUtil {
 
-  private static Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+  private static Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20);
 
   /**
    * Used to convert ohara row to byte array. It is a private class since ohara producer will

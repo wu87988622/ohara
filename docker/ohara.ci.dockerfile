@@ -33,7 +33,7 @@ RUN yum install -y \
   alsa-lib*
 
 # download gradle
-ARG GRADLE_VERSION=4.10.2
+ARG GRADLE_VERSION=4.10.3
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
@@ -115,7 +115,6 @@ RUN chown -R $USER:$USER /home/$USER/.embedmysql
 
 # change to user
 USER $USER
-WORKDIR /home/$USER
 
 # see https://github.com/NixOS/nixpkgs/issues/20802
 ENV GRADLE_USER_HOME=/home/$USER/.gradle

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# this script is used to start the broker.
-# it accept the env variables and then generate the configuration file used in starting broker or worker.
+if [[ -z "$KAFKA_HOME" ]];then
+  echo "$KAFKA_HOME is required!!!"
+  exit 2
+fi
 
-CONFIG=$HOME/server.config
+CONFIG=$KAFKA_HOME/config/broker.config
 if [[ -f "$CONFIG" ]]; then
   echo "$CONFIG already exists!!!"
   exit 2
@@ -45,6 +47,14 @@ if [[ -z "${BROKER_ZOOKEEPERS}" ]]; then
   exit 2
 fi
 echo "zookeeper.connect=$BROKER_ZOOKEEPERS" >> "$CONFIG"
+
+if [[ -z "$BROKER_ADVERTISED_CLIENT_PORT" ]]; then
+  BROKER_ADVERTISED_CLIENT_PORT=$BROKER_CLIENT_PORT
+fi
+
+if [[ -n "$BROKER_ADVERTISED_HOSTNAME" ]]; then
+  echo "advertised.listeners=PLAINTEXT://$BROKER_ADVERTISED_HOSTNAME:$BROKER_ADVERTISED_CLIENT_PORT" >> "$CONFIG"
+fi
 
 if [[ -z "$KAFKA_HOME" ]]; then
   echo "KAFKA_HOME is required!!!"
