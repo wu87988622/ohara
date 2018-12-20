@@ -18,7 +18,7 @@
     "lint": "run-s lint:*",
     "lint:server": "eslint --ignore-pattern \"/client\" --ignore-pattern \"/coverage\" \"**/*.js\"",
     "lint:client": "yarn --cwd client lint",
-    "test": "run-s clean:process test:server:unit test:client:unit test:client:e2e",
+    "test": "run-s test:server:unit test:client:unit",
     "test:client": "yarn --cwd client test",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

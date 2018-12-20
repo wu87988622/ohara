@@ -144,7 +144,9 @@ class PipelineNewStream extends React.Component {
 
   handleTitleChange = ({ target: { value: title } }) => {
     if (this.isDuplicateTitle(title, true)) {
-      toastr.error('The filename is already taken, please choose another name.');
+      toastr.error(
+        'The filename is already taken, please choose another name.',
+      );
       return;
     }
 
@@ -230,7 +232,11 @@ class PipelineNewStream extends React.Component {
         ) : (
           <React.Fragment>
             <FileUploadWrapper>
-              <input type="file" accept=".jar" onChange={this.handleFileSelect} />
+              <input
+                type="file"
+                accept=".jar"
+                onChange={this.handleFileSelect}
+              />
             </FileUploadWrapper>
             <TableWrapper>
               <Table headers={['FILENAME', 'RENAME', 'DELETE']}>
