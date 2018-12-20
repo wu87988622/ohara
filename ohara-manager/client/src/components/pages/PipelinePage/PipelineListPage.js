@@ -141,9 +141,6 @@ class PipelineListPage extends React.Component {
 
   handleDeletePipelineConfirm = async () => {
     const { deletePipelineUuid: uuid } = this.state;
-
-    if (!_.isUuid(uuid)) return;
-
     const res = await deletePipeline(uuid);
     const deletedUuid = _.get(res, 'data.result.uuid', null);
     const deletedPipeline = _.get(res, 'data.result.name', null);

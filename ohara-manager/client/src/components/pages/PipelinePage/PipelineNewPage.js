@@ -104,7 +104,7 @@ class PipelineNewPage extends React.Component {
   };
 
   fetchTopics = async topicId => {
-    if (!_.isUuid(topicId)) return;
+    if (!topicId) return;
 
     const res = await fetchTopic(topicId);
     this.setState(() => ({ isLoading: false }));
@@ -117,7 +117,7 @@ class PipelineNewPage extends React.Component {
   };
 
   fetchPipeline = async pipelineId => {
-    if (!_.isUuid(pipelineId)) return;
+    if (!pipelineId) return;
 
     const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', null);

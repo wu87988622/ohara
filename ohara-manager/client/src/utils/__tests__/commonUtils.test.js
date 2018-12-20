@@ -1,10 +1,4 @@
-import {
-  isNumber,
-  isDefined,
-  isUuid,
-  reduceByProp,
-  isEmptyStr,
-} from '../commonUtils';
+import { isNumber, isDefined, reduceByProp, isEmptyStr } from '../commonUtils';
 
 describe('isEmptyStr()', () => {
   it('returns true if the given string is an empty string', () => {
@@ -39,18 +33,6 @@ describe('isNumber()', () => {
 
   it('returns false if the given value type is not number', () => {
     expect(isNumber('test me!')).toBe(false);
-  });
-});
-
-describe('isUuid()', () => {
-  it('returns true if the given value is a valid uuid', () => {
-    const uuid = 'c0398bff-72f6-4080-985b-5a0c5feb911f';
-    expect(isUuid(uuid)).toBe(true);
-  });
-
-  it('returns false if the given value is not a valid uuid', () => {
-    const uuid = 'xx-xxxxx-4080-985b-xxxxxx';
-    expect(isUuid(uuid)).toBe(false);
   });
 });
 

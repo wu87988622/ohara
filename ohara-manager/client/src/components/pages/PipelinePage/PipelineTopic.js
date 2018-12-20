@@ -37,7 +37,7 @@ class PipelineTopic extends React.Component {
   }
 
   fetchPipeline = async pipelineId => {
-    if (!_.isUuid(pipelineId)) return;
+    if (!pipelineId) return;
 
     const res = await fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', []);

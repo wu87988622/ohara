@@ -151,7 +151,7 @@ class PipelineFtpSink extends React.Component {
   };
 
   fetchSink = async sourceId => {
-    if (!_.isUuid(sourceId)) return;
+    if (!sourceId) return;
 
     const res = await pipelinesApis.fetchSink(sourceId);
     const isSuccess = _.get(res, 'data.isSuccess', false);
@@ -187,7 +187,7 @@ class PipelineFtpSink extends React.Component {
   };
 
   fetchPipeline = async pipelineId => {
-    if (!_.isUuid(pipelineId)) return;
+    if (!pipelineId) return;
 
     const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', null);

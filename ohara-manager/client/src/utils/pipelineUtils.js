@@ -44,7 +44,7 @@ export const fetchTopics = async () => {
 };
 
 export const fetchSink = async uuid => {
-  if (!_.isUuid(uuid)) return;
+  if (!uuid) return;
 
   const res = await pipelinesApis.fetchSink(uuid);
   const sink = _.get(res, 'data.result', null);
@@ -56,7 +56,7 @@ export const fetchSink = async uuid => {
 };
 
 export const fetchSource = async uuid => {
-  if (!_.isUuid(uuid)) return;
+  if (!uuid) return;
 
   const res = await pipelinesApis.fetchSource(uuid);
   const source = _.get(res, 'data.result', null);
