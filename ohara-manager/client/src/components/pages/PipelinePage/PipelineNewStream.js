@@ -5,21 +5,10 @@ import { Facebook } from 'react-content-loader';
 import { find, some, endsWith } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
+import * as CSS_VARS from 'theme/variables';
+import * as streamApis from 'apis/streamApis';
 import { DataTable } from 'common/Table';
 import { ConfirmModal } from 'common/Modal';
-import {
-  lighterBlue,
-  lightBlue,
-  durationNormal,
-  trBgColor,
-  blue,
-} from 'theme/variables';
-import {
-  fetchStreamJars,
-  createStreamJar,
-  deleteStreamJar,
-  updateStreamJar,
-} from 'apis/streamApis';
 import Editable from './Editable';
 import * as MESSAGES from 'constants/messages';
 
@@ -35,12 +24,12 @@ const TableWrapper = styled.div`
 
 const Table = styled(DataTable)`
   thead th {
-    color: ${lightBlue};
+    color: ${CSS_VARS.lightBlue};
     font-weight: normal;
   }
 
   td {
-    color: ${lighterBlue};
+    color: ${CSS_VARS.lighterBlue};
   }
 
   tbody tr {
@@ -48,21 +37,21 @@ const Table = styled(DataTable)`
   }
 
   .is-active {
-    background-color: ${trBgColor};
+    background-color: ${CSS_VARS.trBgColor};
   }
 `;
 
 const Icon = styled.i`
-  color: ${lighterBlue};
+  color: ${CSS_VARS.lighterBlue};
   font-size: 25px;
   margin-right: 20px;
-  transition: ${durationNormal} all;
+  transition: ${CSS_VARS.durationNormal} all;
   cursor: pointer;
 
   &:hover,
   &.is-active {
-    transition: ${durationNormal} all;
-    color: ${blue};
+    transition: ${CSS_VARS.durationNormal} all;
+    color: ${CSS_VARS.blue};
   }
 
   &:last-child {
@@ -180,7 +169,7 @@ class PipelineNewStream extends React.Component {
   };
 
   fetchJars = async () => {
-    const res = await fetchStreamJars();
+    const res = await streamApis.fetchStreamJars();
     this.setState(() => ({ isLoading: false }));
 
     const result = _.get(res, 'data.result', null);
@@ -191,7 +180,7 @@ class PipelineNewStream extends React.Component {
   };
 
   uploadJar = async file => {
-    const res = await createStreamJar({ file });
+    const res = await streamApis.createStreamJar({ file });
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
@@ -201,7 +190,10 @@ class PipelineNewStream extends React.Component {
   };
 
   updateJar = async (id, newJarName) => {
-    const res = await updateStreamJar({ uuid: id, jarName: newJarName });
+    const res = await streamApis.updateStreamJar({
+      uuid: id,
+      jarName: newJarName,
+    });
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_RENAME_SUCCESS);
@@ -209,7 +201,7 @@ class PipelineNewStream extends React.Component {
   };
 
   deleteJar = async id => {
-    const res = await deleteStreamJar({ uuid: id });
+    const res = await streamApis.deleteStreamJar({ uuid: id });
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);

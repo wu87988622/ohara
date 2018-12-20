@@ -3,67 +3,36 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import * as _ from 'utils/commonUtils';
-import { Modal } from 'common/Modal';
-import { DataTable } from 'common/Table';
-import { update, fetchCluster } from 'utils/pipelineToolbarUtils';
+import * as CSS_VARS from 'theme/variables';
 import * as PIPELINES from 'constants/pipelines';
-import {
-  lightestBlue,
-  lighterBlue,
-  lightBlue,
-  radiusNormal,
-  durationNormal,
-  trBgColor,
-  blue,
-} from 'theme/variables';
+import { Modal } from 'common/Modal';
+import { fetchCluster } from 'utils/pipelineToolbarUtils';
 import PipelineNewStream from './PipelineNewStream';
+import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
   padding: 15px 30px;
-  border: 1px solid ${lightestBlue};
-  border-radius: ${radiusNormal};
+  border: 1px solid ${CSS_VARS.lightestBlue};
+  border-radius: ${CSS_VARS.radiusNormal};
   display: flex;
   align-items: center;
 `;
 
 ToolbarWrapper.displayName = 'ToolbarWrapper';
 
-const TableWrapper = styled.div`
-  margin: 30px 30px 40px;
-`;
-
-const Table = styled(DataTable)`
-  thead th {
-    color: ${lightBlue};
-    font-weight: normal;
-  }
-
-  td {
-    color: ${lighterBlue};
-  }
-
-  tbody tr {
-    cursor: pointer;
-  }
-
-  .is-active {
-    background-color: ${trBgColor};
-  }
-`;
-
 const Icon = styled.i`
-  color: ${lighterBlue};
+  color: ${CSS_VARS.lighterBlue};
   font-size: 25px;
   margin-right: 20px;
-  transition: ${durationNormal} all;
+  transition: ${CSS_VARS.durationNormal} all;
   cursor: pointer;
 
   &:hover,
   &.is-active {
-    transition: ${durationNormal} all;
-    color: ${blue};
+    transition: ${CSS_VARS.durationNormal} all;
+    color: ${CSS_VARS.blue};
   }
 
   &:last-child {
@@ -78,7 +47,7 @@ const FileSavingStatus = styled.div`
   margin-left: auto;
   color: red;
   font-size: 12px;
-  color: ${lighterBlue};
+  color: ${CSS_VARS.lighterBlue};
 `;
 
 FileSavingStatus.displayName = 'FileSavingStatus';
@@ -144,12 +113,6 @@ class PipelineToolbar extends React.Component {
     }
   };
 
-  update = () => {
-    const { updateGraph, graph } = this.props;
-    const { activeConnector: connector } = this.state;
-    update({ graph, updateGraph, connector });
-  };
-
   handleModalOpen = (modalName, connectorType) => {
     this.setState({ isModalActive: true, modalName, connectorType }, () => {
       this.setDefaultConnector(this.state.connectorType);
@@ -161,7 +124,6 @@ class PipelineToolbar extends React.Component {
   };
 
   handleConfirm = () => {
-    // this.update();
     this.modalChild.current.update();
     this.handleModalClose();
   };
@@ -179,7 +141,7 @@ class PipelineToolbar extends React.Component {
   };
 
   render() {
-    const { hasChanges } = this.props;
+    const { hasChanges, updateGraph, graph } = this.props;
     const { ftpSource } = PIPELINES.CONNECTOR_KEYS;
     const {
       isModalActive,
@@ -202,35 +164,6 @@ class PipelineToolbar extends React.Component {
           return `Add a new ${_connectorType} connector`;
         }
       }
-    };
-
-    const PipelineNewConnector = ({
-      connectorType,
-      connectors,
-      activeConnector,
-      onSelect,
-    }) => {
-      return (
-        <TableWrapper>
-          <Table headers={PIPELINES.TABLE_HEADERS}>
-            {connectors.map(({ className: name, version, revision }) => {
-              const isActive =
-                name === activeConnector.className ? 'is-active' : '';
-              return (
-                <tr
-                  className={isActive}
-                  key={name}
-                  onClick={() => onSelect(name)}
-                >
-                  <td>{name}</td>
-                  <td>{version}</td>
-                  <td>{revision}</td>
-                </tr>
-              );
-            })}
-          </Table>
-        </TableWrapper>
-      );
     };
 
     return (
@@ -257,10 +190,13 @@ class PipelineToolbar extends React.Component {
             modalName,
           ) && (
             <PipelineNewConnector
+              ref={this.modalChild}
               connectorType={connectorType}
               connectors={this.state[connectorType]}
               activeConnector={activeConnector}
               onSelect={this.handleTrSelect}
+              updateGraph={updateGraph}
+              graph={graph}
             />
           )}
         </Modal>
