@@ -5,21 +5,13 @@ import PropTypes from 'prop-types';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
+import * as pipelinesApis from 'apis/pipelinesApis';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
 import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
-import { fetchTopics } from 'apis/topicApis';
-import {
-  createSink,
-  updateSink,
-  fetchSink,
-  updatePipeline,
-  fetchPipeline,
-  validateFtp,
-} from 'apis/pipelinesApis';
 
 const FormGroupWrapper = styled.div`
   display: flex;
@@ -106,24 +98,25 @@ class PipelineFtpSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges, match } = this.props;
+    const { hasChanges } = this.props;
 
-    const prevSinkId = _.get(prevProps.match, 'params.sinkId', null);
-    const currSinkId = _.get(this.props.match, 'params.sinkId', null);
-    const topicId = _.get(match, 'params.topicId');
-    const hasTopicId = !_.isNull(topicId);
+    const prevSinkId = _.get(prevProps.match, 'params.connectorId', null);
+    const currSinkId = _.get(this.props.match, 'params.connectorId', null);
     const isUpdate = prevSinkId !== currSinkId;
 
     if (hasChanges) {
       this.save();
     }
 
-    if (isUpdate && hasTopicId) {
+    if (isUpdate) {
       const { name, uuid, rules } = this.state.pipelines;
 
       const params = {
         name,
-        rules: { ...rules, [topicId]: currSinkId },
+        rules: {
+          ...rules,
+          '?': currSinkId,
+        },
       };
 
       this.updatePipeline(uuid, params);
@@ -139,45 +132,28 @@ class PipelineFtpSink extends React.Component {
 
   fetchData = () => {
     const { match } = this.props;
-    const sinkId = _.get(match, 'params.sinkId', null);
-    const topicId = _.get(match, 'params.topicId', null);
+    const sinkId = _.get(match, 'params.connectorId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
     this.setDefaults();
 
     if (sinkId) {
-      const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchPipelinePromise = this.fetchPipeline(pipelineId);
 
-      Promise.all([fetchPipelinePromise, fetchTopicsPromise]).then(() => {
+      Promise.all([fetchPipelinePromise]).then(() => {
         this.fetchSink(sinkId);
       });
 
       return;
     }
 
-    this.fetchTopics(topicId);
     this.fetchPipeline(pipelineId);
-  };
-
-  fetchTopics = async topicId => {
-    if (!_.isUuid(topicId)) return;
-
-    const res = await fetchTopics();
-    const readTopics = _.get(res, 'data.result', []);
-    if (!_.isEmpty(readTopics)) {
-      const { name, uuid } = readTopics.find(({ uuid }) => uuid === topicId);
-      this.setState({ readTopics, currReadTopic: { name, uuid } });
-    } else {
-      toastr.error(MESSAGES.INVALID_TOPIC_ID);
-      this.setState({ isRedirect: true });
-    }
   };
 
   fetchSink = async sourceId => {
     if (!_.isUuid(sourceId)) return;
 
-    const res = await fetchSink(sourceId);
+    const res = await pipelinesApis.fetchSink(sourceId);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) return;
@@ -213,7 +189,7 @@ class PipelineFtpSink extends React.Component {
   fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipeline(pipelineId);
+    const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
@@ -228,7 +204,7 @@ class PipelineFtpSink extends React.Component {
   };
 
   updatePipeline = async (uuid, params) => {
-    const res = await updatePipeline({ uuid, params });
+    const res = await pipelinesApis.updatePipeline({ uuid, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -401,7 +377,7 @@ class PipelineFtpSink extends React.Component {
     const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await validateFtp({
+    const res = await pipelinesApis.validateFtp({
       hostname,
       port,
       user,
@@ -481,18 +457,16 @@ class PipelineFtpSink extends React.Component {
       return;
     }
 
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const sinkId = _.get(match, 'params.sinkId', null);
-    const isCreate = _.isNull(sinkId) ? true : false;
-    const hasSourceId = _.isNull(sourceId) ? false : true;
+    const sinkId = _.get(match, 'params.connectorId', null);
+    const isConnectorExist = _.isNull(sinkId);
     const _schema = _.isEmpty(schema) ? [] : schema;
+    const topics = _.isEmpty(currReadTopic) ? [] : [currReadTopic.topicId];
 
     const params = {
       name,
       schema: _schema,
       className: 'ftp',
-      topics: [currReadTopic.uuid],
+      topics,
       numberOfTasks: 1,
       configs: {
         'ftp.output.folder': outputfolder,
@@ -507,18 +481,15 @@ class PipelineFtpSink extends React.Component {
       },
     };
 
-    const res = isCreate
-      ? await createSink(params)
-      : await updateSink({ uuid: sinkId, params });
+    const res = isConnectorExist
+      ? await pipelinesApis.createSink(params)
+      : await pipelinesApis.updateSink({ uuid: sinkId, params });
 
-    const _sinkId = _.get(res, 'data.result.uuid', null);
-    await this.fetchPipeline(pipelineId);
+    const updatedSinkId = _.get(res, 'data.result.uuid', null);
+    updateHasChanges(false);
 
-    if (_sinkId) {
-      updateHasChanges(false);
-
-      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${_sinkId}`);
-      if (isCreate && hasSourceId) history.push(`${match.url}/${_sinkId}`);
+    if (updatedSinkId && isConnectorExist) {
+      history.push(`${match.url}/${updatedSinkId}`);
     }
   }, 1000);
 

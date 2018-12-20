@@ -1,7 +1,7 @@
 import * as _ from './commonUtils';
 import { isSource, isSink } from './pipelineUtils';
 
-export const addPipelineStatus = pipelines => {
+export const addPipelineStatus = (pipelines = []) => {
   const _pipelines = pipelines.reduce((acc, pipeline) => {
     const status = pipeline.objects.filter(p => p.state === 'RUNNING');
     const _status = status.length >= 2 ? 'Running' : 'Stopped';
@@ -28,7 +28,7 @@ export const getEditUrl = (pipeline, match) => {
     return acc;
   }, '');
 
-  const { topic: topicId, source: sourceId, sink: sinkId } = connectors.reduce(
+  const { source: sourceId, sink: sinkId } = connectors.reduce(
     (acc, { uuid, kind }) => {
       if (kind === 'topic') {
         acc[kind] = uuid;
@@ -49,7 +49,7 @@ export const getEditUrl = (pipeline, match) => {
 
   const pageName = _.isEmptyStr(source) ? 'topic' : source;
 
-  const baseUrl = `${match.url}/edit/${pageName}/${pipelineId}/${topicId}`;
+  const baseUrl = `${match.url}/edit/${pageName}/${pipelineId}`;
   let url = baseUrl;
 
   if (sinkId) {

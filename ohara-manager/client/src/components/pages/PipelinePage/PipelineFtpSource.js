@@ -5,6 +5,8 @@ import toastr from 'toastr';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
+import * as pipelinesApis from 'apis/pipelinesApis';
+import { fetchSource } from 'utils/pipelineUtils';
 import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
@@ -12,15 +14,6 @@ import { primaryBtn } from 'theme/btnTheme';
 import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
-import { fetchTopics } from 'apis/topicApis';
-import {
-  checkSource,
-  createSource,
-  updateSource,
-  fetchSource,
-  fetchPipeline,
-  updatePipeline,
-} from 'apis/pipelinesApis';
 
 const H5Wrapper = styled(H5)`
   margin: 0;
@@ -107,9 +100,8 @@ class PipelineFtpSource extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { hasChanges, match } = this.props;
-    const prevSourceId = _.get(prevProps.match, 'params.sourceId', null);
-    const currSourceId = _.get(match, 'params.sourceId', null);
-    const topicId = _.get(match, 'params.topicId');
+    const prevSourceId = _.get(prevProps.match, 'params.connectorId', null);
+    const currSourceId = _.get(match, 'params.connectorId', null);
     const isUpdate = prevSourceId !== currSourceId;
 
     if (hasChanges) {
@@ -121,7 +113,7 @@ class PipelineFtpSource extends React.Component {
 
       const params = {
         name,
-        rules: { ...rules, [currSourceId]: topicId },
+        rules: { ...rules, [currSourceId]: '?' },
       };
 
       this.updatePipeline(uuid, params);
@@ -137,36 +129,30 @@ class PipelineFtpSource extends React.Component {
 
   fetchData = () => {
     const { match } = this.props;
-    const topicId = _.get(match, 'params.topicId', null);
-    const sourceId = _.get(match, 'params.sourceId', null);
+    const sourceId = _.get(match, 'params.connectorId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
     this.setDefaults();
 
     if (sourceId) {
-      const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchPipelinePromise = this.fetchPipeline(pipelineId);
 
-      Promise.all([fetchTopicsPromise, fetchPipelinePromise]).then(() => {
+      Promise.all([fetchPipelinePromise]).then(() => {
         this.fetchSource(sourceId);
       });
 
       return;
     }
 
-    this.fetchTopics(topicId);
     this.fetchPipeline(pipelineId);
   };
 
   fetchSource = async sourceId => {
-    if (!_.isUuid(sourceId)) return;
+    const source = await fetchSource(sourceId);
 
-    const res = await fetchSource(sourceId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (_.isNull(source)) return;
 
-    if (!isSuccess) return;
-
-    const { schema, name, configs } = res.data.result;
+    const { schema, name, configs } = source;
     const {
       'ftp.user.name': username,
       'ftp.user.password': password,
@@ -194,25 +180,10 @@ class PipelineFtpSource extends React.Component {
     });
   };
 
-  fetchTopics = async topicId => {
-    if (!_.isUuid(topicId)) return;
-
-    const res = await fetchTopics();
-    const writeTopics = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(writeTopics)) {
-      const { name, uuid } = writeTopics.find(({ uuid }) => uuid === topicId);
-      this.setState({ writeTopics, currWriteTopic: { name, uuid } });
-    } else {
-      toastr.error(MESSAGES.INVALID_TOPIC_ID);
-      this.setState({ isRedirect: true });
-    }
-  };
-
   fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipeline(pipelineId);
+    const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -227,7 +198,7 @@ class PipelineFtpSource extends React.Component {
   };
 
   updatePipeline = async (uuid, params) => {
-    const res = await updatePipeline({ uuid, params });
+    const res = await pipelinesApis.updatePipeline({ uuid, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -436,7 +407,12 @@ class PipelineFtpSource extends React.Component {
     const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await checkSource({ hostname, port, user, password });
+    const res = await pipelinesApis.checkSource({
+      hostname,
+      port,
+      user,
+      password,
+    });
     this.updateIsTestConnectionBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
@@ -473,18 +449,16 @@ class PipelineFtpSource extends React.Component {
       return;
     }
 
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-    const sourceIdPlaceHolder = '__';
-    const isCreate =
-      _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
+    const sourceId = _.get(match, 'params.connectorId', null);
+    const isConnectorExist = _.isNull(sourceId);
     const _schema = _.isEmpty(schema) ? [] : schema;
+    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.topicId];
 
     const params = {
       name,
       schema: _schema,
       className: 'ftp',
-      topics: [currWriteTopic.uuid],
+      topics,
       numberOfTasks: 1,
       configs: {
         'ftp.input.folder': inputFolder,
@@ -495,27 +469,20 @@ class PipelineFtpSource extends React.Component {
         'ftp.port': port,
         'ftp.user.name': username,
         'ftp.user.password': password,
-
         topic: currWriteTopic.name,
         currTask,
       },
     };
 
-    const res = isCreate
-      ? await createSource(params)
-      : await updateSource({ uuid: sourceId, params });
+    const res = isConnectorExist
+      ? await pipelinesApis.createSource(params)
+      : await pipelinesApis.updateSource({ uuid: sourceId, params });
 
-    const _sourceId = _.get(res, 'data.result.uuid', null);
-    await this.fetchPipeline(pipelineId);
+    const updatedSourceId = _.get(res, 'data.result.uuid', null);
+    updateHasChanges(false);
 
-    if (_sourceId) {
-      updateHasChanges(false);
-      if (isCreate && !sourceId) {
-        history.push(`${match.url}/${_sourceId}`);
-      } else if (isCreate && sourceId) {
-        const paths = match.url.split(sourceIdPlaceHolder);
-        history.push(`${paths[0]}${_sourceId}${paths[1]}`);
-      }
+    if (updatedSourceId && isConnectorExist) {
+      history.push(`${match.url}/${updatedSourceId}`);
     }
   }, 1000);
 

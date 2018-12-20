@@ -5,23 +5,9 @@ import dagreD3 from 'dagre-d3';
 import * as d3 from 'd3v4';
 
 import * as _ from 'utils/commonUtils';
+import * as CSS_VARS from 'theme/variables';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import {
-  white,
-  blue,
-  green,
-  lightBlue,
-  lighterBlue,
-  lightestBlue,
-  lighterGray,
-  whiteSmoke,
-  radiusRounded,
-  radiusNormal,
-  shadowNormal,
-  dimBlue,
-  red,
-} from 'theme/variables';
 
 const Wrapper = styled(Box)`
   width: 65%;
@@ -34,7 +20,7 @@ Wrapper.displayName = 'Box';
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
   font-weight: normal;
-  color: ${lightBlue};
+  color: ${CSS_VARS.lightBlue};
 `;
 
 H5Wrapper.displayName = 'H5Wrapper';
@@ -48,7 +34,7 @@ const Svg = styled.svg`
     rect {
       fill: transparent;
       cursor: pointer;
-      border: 1px solid ${whiteSmoke};
+      border: 1px solid ${CSS_VARS.whiteSmoke};
     }
   }
 
@@ -58,7 +44,7 @@ const Svg = styled.svg`
 
   .node-name {
     font-size: 14px;
-    color: ${lightBlue};
+    color: ${CSS_VARS.lightBlue};
   }
 
   .node-topic {
@@ -68,9 +54,9 @@ const Svg = styled.svg`
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid ${lighterGray};
-    border-radius: ${radiusRounded};
-    box-shadow: ${shadowNormal};
+    border: 1px solid ${CSS_VARS.lighterGray};
+    border-radius: ${CSS_VARS.radiusRounded};
+    box-shadow: ${CSS_VARS.shadowNormal};
 
     .node-text-wrapper {
       position: absolute;
@@ -84,7 +70,7 @@ const Svg = styled.svg`
     }
 
     .node-icon {
-      color: ${lightestBlue};
+      color: ${CSS_VARS.lightestBlue};
     }
   }
 
@@ -92,9 +78,9 @@ const Svg = styled.svg`
     width: 200px;
     min-height: 90px;
     padding: 15px 20px;
-    border: 1px solid ${lighterGray};
-    border-radius: ${radiusNormal};
-    box-shadow: ${shadowNormal};
+    border: 1px solid ${CSS_VARS.lighterGray};
+    border-radius: ${CSS_VARS.radiusNormal};
+    box-shadow: ${CSS_VARS.shadowNormal};
     display: flex;
 
     .node-icon {
@@ -104,15 +90,15 @@ const Svg = styled.svg`
       width: 40px;
       height: 40px;
       margin-right: 8px;
-      color: ${white};
-      border-radius: ${radiusRounded};
-      background-color: ${lightestBlue};
+      color: ${CSS_VARS.white};
+      border-radius: ${CSS_VARS.radiusRounded};
+      background-color: ${CSS_VARS.lightestBlue};
     }
 
     .node-text-wrapper {
       display: flex;
       flex-direction: column;
-      color: ${dimBlue};
+      color: ${CSS_VARS.dimBlue};
     }
 
     .node-name {
@@ -121,7 +107,7 @@ const Svg = styled.svg`
 
     .node-status {
       font-size: 11px;
-      color: ${lighterBlue};
+      color: ${CSS_VARS.lighterBlue};
       margin-bottom: 5px;
     }
 
@@ -135,13 +121,13 @@ const Svg = styled.svg`
 
     &.is-running {
       .node-icon {
-        background-color: ${green};
+        background-color: ${CSS_VARS.green};
       }
     }
 
     &.is-failed {
       .node-icon {
-        background-color: ${red};
+        background-color: ${CSS_VARS.red};
       }
     }
   }
@@ -155,8 +141,8 @@ const Svg = styled.svg`
   }
 
   path {
-    stroke: ${blue};
-    fill: ${blue};
+    stroke: ${CSS_VARS.blue};
+    fill: ${CSS_VARS.blue};
     stroke-width: 2px;
   }
 `;
@@ -197,22 +183,19 @@ class PipelineGraph extends React.Component {
 
   handleNodeClick = id => {
     const { history, resetGraph, updateGraph, graph, match } = this.props;
-    const { topicId, pipelineId, sourceId, sinkId } = match.params;
+    const { pipelineId } = match.params;
 
     resetGraph();
     updateGraph({ isActive: true }, id);
 
-    const [_graph] = graph.filter(g => g.id === id);
+    const [currConnector] = graph.filter(g => g.id === id);
+    const { type, uuid: connectorId } = currConnector;
 
     const action = match.url.includes('/edit/') ? 'edit' : 'new';
-    const baseUrl = `/pipelines/${action}/${
-      _graph.type
-    }/${pipelineId}/${topicId}`;
+    const baseUrl = `/pipelines/${action}/${type}/${pipelineId}`;
 
-    if (sinkId) {
-      history.push(`${baseUrl}/${sourceId}/${sinkId}`);
-    } else if (sourceId) {
-      history.push(`${baseUrl}/${sourceId}`);
+    if (connectorId) {
+      history.push(`${baseUrl}/${connectorId}`);
     } else {
       history.push(`${baseUrl}`);
     }

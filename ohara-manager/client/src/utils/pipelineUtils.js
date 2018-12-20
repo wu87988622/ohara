@@ -1,5 +1,5 @@
 import * as _ from './commonUtils';
-import * as pipelineApis from 'apis/pipelinesApis';
+import * as pipelinesApis from 'apis/pipelinesApis';
 import * as topicApis from 'apis/topicApis';
 
 import { CONNECTOR_KEYS } from 'constants/pipelines';
@@ -26,7 +26,7 @@ export const isSink = kind => {
 };
 
 export const fetchPipelines = async () => {
-  const res = await pipelineApis.fetchPipelines();
+  const res = await pipelinesApis.fetchPipelines();
   const pipelines = _.get(res, 'data.result', null);
 
   if (pipelines) return pipelines;
@@ -36,5 +36,34 @@ export const fetchTopics = async () => {
   const res = await topicApis.fetchTopics();
   const topics = _.get(res, 'data.result', null);
 
-  if (topics) return topics;
+  if (topics) {
+    return topics;
+  }
+
+  return null;
+};
+
+export const fetchSink = async uuid => {
+  if (!_.isUuid(uuid)) return;
+
+  const res = await pipelinesApis.fetchSink(uuid);
+  const sink = _.get(res, 'data.result', null);
+  if (sink) {
+    return sink;
+  }
+
+  return null;
+};
+
+export const fetchSource = async uuid => {
+  if (!_.isUuid(uuid)) return;
+
+  const res = await pipelinesApis.fetchSource(uuid);
+  const source = _.get(res, 'data.result', null);
+
+  if (source) {
+    return source;
+  }
+
+  return null;
 };

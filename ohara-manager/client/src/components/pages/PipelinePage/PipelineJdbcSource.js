@@ -7,23 +7,14 @@ import { Redirect } from 'react-router-dom';
 import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
+import * as pipelinesApis from 'apis/pipelinesApis';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { DataTable } from 'common/Table';
 import { lightBlue } from 'theme/variables';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { fetchTopics } from 'apis/topicApis';
 import { fetchCluster } from 'apis/clusterApis';
-import {
-  queryRdb,
-  createSource,
-  fetchSource,
-  validateRdb,
-  updateSource,
-  fetchPipeline,
-  updatePipeline,
-} from 'apis/pipelinesApis';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
@@ -108,22 +99,20 @@ class PipelineJdbcSource extends React.Component {
   async componentDidUpdate(prevProps) {
     const { hasChanges, match } = this.props;
 
-    const prevSourceId = _.get(prevProps.match, 'params.sourceId', null);
-    const currSourceId = _.get(match, 'params.sourceId', null);
-    const topicId = _.get(match, 'params.topicId');
-    const hasTopicId = !_.isNull(topicId);
+    const prevSourceId = _.get(prevProps.match, 'params.connectorId', null);
+    const currSourceId = _.get(match, 'params.connectorId', null);
     const isUpdate = prevSourceId !== currSourceId;
 
     if (hasChanges) {
       this.save();
     }
 
-    if (isUpdate && hasTopicId) {
+    if (isUpdate) {
       const { name, uuid, rules } = this.state.pipelines;
 
       const params = {
         name,
-        rules: { ...rules, [currSourceId]: topicId },
+        rules: { ...rules, [currSourceId]: '?' },
       };
 
       this.updatePipeline(uuid, params);
@@ -132,20 +121,14 @@ class PipelineJdbcSource extends React.Component {
 
   fetchData = () => {
     const { match } = this.props;
-    const topicId = _.get(match, 'params.topicId', null);
-    const sourceId = _.get(match, 'params.sourceId', null);
+    const sourceId = _.get(match, 'params.connectorId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
     if (sourceId) {
-      const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchPipelinePromise = this.fetchPipeline(pipelineId);
       const fetchClusterPromise = this.fetchCluster();
 
-      Promise.all([
-        fetchTopicsPromise,
-        fetchPipelinePromise,
-        fetchClusterPromise,
-      ]).then(() => {
+      Promise.all([fetchPipelinePromise, fetchClusterPromise]).then(() => {
         this.fetchSource(sourceId);
       });
 
@@ -153,29 +136,13 @@ class PipelineJdbcSource extends React.Component {
     }
 
     this.fetchCluster();
-    this.fetchTopics(topicId);
     this.fetchPipeline(pipelineId);
-  };
-
-  fetchTopics = async topicId => {
-    if (!_.isUuid(topicId)) return;
-
-    const res = await fetchTopics();
-    const writeTopics = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(writeTopics)) {
-      const currWriteTopic = writeTopics.find(topic => topic.uuid === topicId);
-      this.setState({ writeTopics, currWriteTopic });
-    } else {
-      toastr.error(MESSAGES.INVALID_TOPIC_ID);
-      this.setState({ isRedirect: true });
-    }
   };
 
   fetchSource = async sourceId => {
     if (!_.isUuid(sourceId)) return;
 
-    const res = await fetchSource(sourceId);
+    const res = await pipelinesApis.fetchSource(sourceId);
     const isSuccess = _.get(res, 'data.isSuccess', false);
     const topicId = _.get(this.props.match, 'params.topicId');
 
@@ -230,7 +197,7 @@ class PipelineJdbcSource extends React.Component {
   fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipeline(pipelineId);
+    const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -246,7 +213,7 @@ class PipelineJdbcSource extends React.Component {
 
   fetchRdbTables = async () => {
     const { url, username, password, currTable } = this.state;
-    const res = await queryRdb({ url, user: username, password });
+    const res = await pipelinesApis.queryRdb({ url, user: username, password });
     const tables = _.get(res, 'data.result.tables', null);
     const _currTable = _.isEmpty(currTable) ? tables[0] : currTable;
 
@@ -301,7 +268,7 @@ class PipelineJdbcSource extends React.Component {
     const { username: user, password, url } = this.state;
 
     this.updateIsBtnWorking(true);
-    const res = await validateRdb({ user, password, url });
+    const res = await pipelinesApis.validateRdb({ user, password, url });
     this.updateIsBtnWorking(false);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
@@ -317,7 +284,7 @@ class PipelineJdbcSource extends React.Component {
   };
 
   updatePipeline = async (uuid, params) => {
-    const res = await updatePipeline({ uuid, params });
+    const res = await pipelinesApis.updatePipeline({ uuid, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -345,17 +312,15 @@ class PipelineJdbcSource extends React.Component {
       return;
     }
 
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-    const sourceIdPlaceHolder = '__';
-    const isCreate =
-      _.isNull(sourceId) || sourceId === sourceIdPlaceHolder ? true : false;
+    const sourceId = _.get(match, 'params.connectorId', null);
+    const isConnectorExist = _.isNull(sourceId);
+    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.topicId];
 
     const params = {
       name,
       schema: [],
       className: 'jdbc',
-      topics: [currWriteTopic.uuid],
+      topics,
       numberOfTasks: 1,
       configs: {
         'source.table.name': currTable.name,
@@ -369,21 +334,15 @@ class PipelineJdbcSource extends React.Component {
       },
     };
 
-    const res = isCreate
-      ? await createSource(params)
-      : await updateSource({ uuid: sourceId, params });
+    const res = isConnectorExist
+      ? await pipelinesApis.createSource(params)
+      : await pipelinesApis.updateSource({ uuid: sourceId, params });
 
-    const _sourceId = _.get(res, 'data.result.uuid', null);
-    await this.fetchPipeline(pipelineId);
+    const updatedSourceId = _.get(res, 'data.result.uuid', null);
+    updateHasChanges(false);
 
-    if (_sourceId) {
-      updateHasChanges(false);
-      if (isCreate && !sourceId) {
-        history.push(`${match.url}/${_sourceId}`);
-      } else if (isCreate && sourceId) {
-        const paths = match.url.split(sourceIdPlaceHolder);
-        history.push(`${paths[0]}${_sourceId}${paths[1]}`);
-      }
+    if (updatedSourceId && isConnectorExist) {
+      history.push(`${match.url}/${updatedSourceId}`);
     }
   }, 1000);
 

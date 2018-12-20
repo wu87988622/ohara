@@ -5,21 +5,15 @@ import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 
 import * as MESSAGES from 'constants/messages';
+import * as pipelinesApis from 'apis/pipelinesApis';
 import * as _ from 'utils/commonUtils';
+import { fetchSink } from 'utils/pipelineUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label } from 'common/Form';
-import { fetchTopics } from 'apis/topicApis';
 import { fetchHdfs } from 'apis/configurationApis';
 import { CONFIGURATION } from 'constants/urls';
-import {
-  createSink,
-  updateSink,
-  fetchSink,
-  updatePipeline,
-  fetchPipeline,
-} from 'apis/pipelinesApis';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
@@ -84,24 +78,22 @@ class PipelineHdfsSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges, match } = this.props;
+    const { hasChanges } = this.props;
 
-    const prevSinkId = _.get(prevProps.match, 'params.sinkId', null);
-    const currSinkId = _.get(this.props.match, 'params.sinkId', null);
-    const topicId = _.get(match, 'params.topicId');
-    const hasTopicId = !_.isNull(topicId);
+    const prevSinkId = _.get(prevProps.match, 'params.connectorId', null);
+    const currSinkId = _.get(this.props.match, 'params.connectorId', null);
     const isUpdate = prevSinkId !== currSinkId;
 
     if (hasChanges) {
       this.save();
     }
 
-    if (isUpdate && hasTopicId) {
+    if (isUpdate) {
       const { name, uuid, rules } = this.state.pipelines;
 
       const params = {
         name,
-        rules: { ...rules, [topicId]: currSinkId },
+        rules: { ...rules, '?': currSinkId },
       };
 
       this.updatePipeline(uuid, params);
@@ -114,75 +106,75 @@ class PipelineHdfsSink extends React.Component {
     }));
   };
 
+  isConnectorExist = async id => {
+    const res = await fetchSink(id);
+    if (_.isNull(res)) return;
+
+    return res.isSuccess;
+  };
+
   fetchData = () => {
     const { match } = this.props;
-    const topicId = _.get(match, 'params.topicId', null);
-    const sinkId = _.get(match, 'params.sinkId', null);
+    const sinkId = _.get(match, 'params.connectorId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
     this.setDefaults();
 
     if (sinkId) {
-      const fetchTopicsPromise = this.fetchTopics(topicId);
       const fetchHdfsPromise = this.fetchHdfs(sinkId);
+
       const fetchPipelinePromise = this.fetchPipeline(pipelineId);
 
-      Promise.all([
-        fetchTopicsPromise,
-        fetchHdfsPromise,
-        fetchPipelinePromise,
-      ]).then(() => {
-        this.fetchSink(sinkId);
+      Promise.all([fetchHdfsPromise, fetchPipelinePromise]).then(() => {
+        this.isConnectorExist(sinkId) && this.fetchSink(sinkId);
       });
 
       return;
     }
 
-    this.fetchTopics(topicId);
     this.fetchPipeline(pipelineId);
     this.fetchHdfs();
   };
 
   fetchSink = async sinkId => {
-    const res = await fetchSink(sinkId);
-    const isSuccess = _.get(res, 'data.isSuccess', null);
+    const sink = await fetchSink(sinkId);
 
-    if (isSuccess) {
-      const { currHdfs } = this.state;
-      const { name } = res.data.result;
-      const {
-        topic,
-        hdfs,
-        writePath,
-        needHeader,
-        'tmp.dir': tempDirectory,
-        'flush.line.count': flushLineCount,
-        'rotate.interval.ms': rotateInterval,
-        'data.econde': currFileEncoding,
-      } = res.data.result.configs;
+    if (_.isNull(sink)) return;
 
-      const currTopic = JSON.parse(topic);
-      const prevHdfs = JSON.parse(hdfs);
+    const { currHdfs } = this.state;
+    const { name } = sink;
+    const {
+      topic,
+      hdfs,
+      writePath,
+      needHeader,
+      'tmp.dir': tempDirectory,
+      'flush.line.count': flushLineCount,
+      'rotate.interval.ms': rotateInterval,
+      'data.econde': currFileEncoding,
+    } = sink.configs;
 
-      const isDiffHdfs = prevHdfs !== currHdfs ? true : false;
-      const _currHdfs = isDiffHdfs ? currHdfs : prevHdfs;
-      const _needHeader = needHeader === 'true' ? true : false;
+    const currTopic = JSON.parse(topic);
+    const prevHdfs = JSON.parse(hdfs);
 
-      this.setState({
-        name,
-        currTopic,
-        writePath,
-        currHdfs: _currHdfs,
-        needHeader: _needHeader,
-        tempDirectory,
-        flushLineCount,
-        rotateInterval,
-        currFileEncoding,
-      });
+    const isDiffHdfs = prevHdfs !== currHdfs ? true : false;
+    const _currHdfs = isDiffHdfs ? currHdfs : prevHdfs;
+    const _needHeader = needHeader === 'true' ? true : false;
 
-      if (isDiffHdfs) {
-        this.save();
-      }
+    this.setState({
+      name,
+      currTopic,
+      writePath,
+      currHdfs: _currHdfs,
+      needHeader: _needHeader,
+      tempDirectory,
+      flushLineCount,
+      rotateInterval,
+      currFileEncoding,
+    });
+
+    if (isDiffHdfs) {
+      this.save();
     }
   };
 
@@ -205,25 +197,10 @@ class PipelineHdfsSink extends React.Component {
     }
   };
 
-  fetchTopics = async topicId => {
-    if (!_.isUuid(topicId)) return;
-
-    const res = await fetchTopics();
-    const topics = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(topics)) {
-      const currTopic = topics.find(topic => topic.uuid === topicId);
-      this.setState({ topics, currTopic });
-    } else {
-      toastr.error(MESSAGES.INVALID_TOPIC_ID);
-      this.setState({ isRedirect: true });
-    }
-  };
-
   fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipeline(pipelineId);
+    const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
@@ -238,7 +215,7 @@ class PipelineHdfsSink extends React.Component {
   };
 
   updatePipeline = async (uuid, params) => {
-    const res = await updatePipeline({ uuid, params });
+    const res = await pipelinesApis.updatePipeline({ uuid, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -302,17 +279,15 @@ class PipelineHdfsSink extends React.Component {
       return;
     }
 
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-    const sinkId = _.get(match, 'params.sinkId', null);
-    const sourceId = _.get(match, 'params.sourceId', null);
-    const isCreate = _.isNull(sinkId) ? true : false;
-    const hasSourceId = _.isNull(sourceId) ? false : true;
+    const sinkId = _.get(match, 'params.connectorId', null);
+    const topics = _.isEmpty(currTopic) ? [] : [currTopic.topicId];
+    const isConnectorExist = !_.isNull(sinkId) && this.isConnectorExist(sinkId);
 
     const params = {
       name,
       schema: [],
       className: 'hdfs',
-      topics: [currTopic.uuid],
+      topics,
       numberOfTasks: 1,
       configs: {
         topic: JSON.stringify(currTopic),
@@ -330,17 +305,15 @@ class PipelineHdfsSink extends React.Component {
       },
     };
 
-    const res = isCreate
-      ? await createSink(params)
-      : await updateSink({ uuid: sinkId, params });
+    const res = isConnectorExist
+      ? await pipelinesApis.updateSink({ uuid: sinkId, params })
+      : await pipelinesApis.createSink(params);
 
-    const uuid = _.get(res, 'data.result.uuid');
-    await this.fetchPipeline(pipelineId);
+    const updatedSinkId = _.get(res, 'data.result.uuid');
+    updateHasChanges(false);
 
-    if (uuid) {
-      updateHasChanges(false);
-      if (isCreate && !hasSourceId) history.push(`${match.url}/__/${uuid}`);
-      if (isCreate && hasSourceId) history.push(`${match.url}/${uuid}`);
+    if (updatedSinkId && !isConnectorExist) {
+      history.push(`${match.url}/${updatedSinkId}`);
     }
   }, 1000);
 

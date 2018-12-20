@@ -9,6 +9,7 @@ import { v4 as uuid4 } from 'uuid';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
+import * as pipelinesApis from 'apis/pipelinesApis';
 import PipelineJdbcSource from './PipelineJdbcSource';
 import PipelineFtpSource from './PipelineFtpSource';
 import PipelineTopic from './PipelineTopic';
@@ -23,14 +24,6 @@ import { Box } from 'common/Layout';
 import { isSource, isSink } from 'utils/pipelineUtils';
 import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
-import {
-  fetchPipeline,
-  updatePipeline,
-  startSource,
-  startSink,
-  stopSource,
-  stopSink,
-} from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -126,7 +119,7 @@ class PipelineNewPage extends React.Component {
   fetchPipeline = async pipelineId => {
     if (!_.isUuid(pipelineId)) return;
 
-    const res = await fetchPipeline(pipelineId);
+    const res = await pipelinesApis.fetchPipeline(pipelineId);
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
@@ -171,43 +164,45 @@ class PipelineNewPage extends React.Component {
   loadGraph = pipelines => {
     if (!pipelines) return;
 
-    const { objects, rules } = pipelines;
+    const { objects } = pipelines;
     const { graph } = this.state;
 
-    const _graph = objects.map(
-      ({ kind: type, uuid, name, state = '' }, idx) => {
-        return {
-          state,
-          name,
-          type,
-          uuid,
+    let updatedGraph;
+
+    if (_.isEmpty(objects) && !_.isEmpty(graph[0])) {
+      const { name, type, id } = graph[0];
+      updatedGraph = [
+        {
+          state: '',
+          name: name,
+          type: type,
+          uuid: uuid4(),
           icon: PIPELINES.ICON_MAPS[type],
-          id: graph[idx] ? graph[idx].id : uuid4(),
-          isActive: graph[idx] ? graph[idx].isActive : false,
+          id,
+          isActive: false,
           to: '?',
-        };
-      },
-    );
+        },
+      ];
+    } else {
+      updatedGraph = objects.map(
+        ({ kind: type, uuid, name, state = '' }, idx) => {
+          return {
+            state,
+            name,
+            type,
+            uuid,
+            icon: PIPELINES.ICON_MAPS[type],
+            id: graph[idx] ? graph[idx].id : uuid4(),
+            isActive: graph[idx] ? graph[idx].isActive : false,
+            to: '?',
+          };
+        },
+      );
+    }
 
-    const froms = Object.keys(rules);
-
-    const results = froms.map(from => {
-      const source = _graph.filter(g => g.uuid === from);
-      const target = _graph.filter(g => g.uuid === rules[from]);
-      return {
-        ...source[0],
-        to: target[0] ? target[0].id : '',
-      };
+    this.setState(() => {
+      return { graph: updatedGraph };
     });
-
-    this.setState(
-      () => {
-        return { graph: _graph };
-      },
-      () => {
-        results.forEach(result => this.updateGraph(result, result.id));
-      },
-    );
   };
 
   resetGraph = () => {
@@ -246,7 +241,7 @@ class PipelineNewPage extends React.Component {
       rules,
     };
 
-    const res = await updatePipeline({ uuid, params });
+    const res = await pipelinesApis.updatePipeline({ uuid, params });
     const pipelines = _.get(res, 'data.result', null);
 
     if (!_.isEmpty(pipelines)) {
@@ -282,8 +277,10 @@ class PipelineNewPage extends React.Component {
   startConnectors = async connectors => {
     const { sources, sinks } = this.getConnectors(connectors);
 
-    const sourcePromise = sources.map(source => startSource(source));
-    const sinkPromise = sinks.map(sink => startSink(sink));
+    const sourcePromise = sources.map(source =>
+      pipelinesApis.startSource(source),
+    );
+    const sinkPromise = sinks.map(sink => pipelinesApis.startSink(sink));
 
     return Promise.all([...sourcePromise, ...sinkPromise]).then(
       result => result,
@@ -292,8 +289,10 @@ class PipelineNewPage extends React.Component {
 
   stopConnectors = connectors => {
     const { sources, sinks } = this.getConnectors(connectors);
-    const sourcePromise = sources.map(source => stopSource(source));
-    const sinkPromise = sinks.map(sink => stopSink(sink));
+    const sourcePromise = sources.map(source =>
+      pipelinesApis.stopSource(source),
+    );
+    const sinkPromise = sinks.map(sink => pipelinesApis.stopSink(sink));
     return Promise.all([...sourcePromise, ...sinkPromise]).then(
       result => result,
     );
