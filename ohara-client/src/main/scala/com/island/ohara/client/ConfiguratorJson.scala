@@ -32,7 +32,7 @@ object ConfiguratorJson {
   val RESUME_COMMAND: String = "resume"
   //------------------------------------------------[DATA]------------------------------------------------//
   sealed trait Data {
-    def uuid: String
+    def id: String
     def name: String
 
     /**
@@ -71,7 +71,7 @@ object ConfiguratorJson {
   final case class TopicInfoRequest(name: String, numberOfPartitions: Int, numberOfReplications: Short)
   implicit val TOPIC_INFO_REQUEST_JSON_FORMAT: RootJsonFormat[TopicInfoRequest] = jsonFormat3(TopicInfoRequest)
 
-  final case class TopicInfo(uuid: String,
+  final case class TopicInfo(id: String,
                              name: String,
                              numberOfPartitions: Int,
                              numberOfReplications: Short,
@@ -91,7 +91,7 @@ object ConfiguratorJson {
   implicit val HDFS_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsInformationRequest] = jsonFormat2(
     HdfsInformationRequest)
 
-  final case class HdfsInformation(uuid: String, name: String, uri: String, lastModified: Long) extends Data {
+  final case class HdfsInformation(id: String, name: String, uri: String, lastModified: Long) extends Data {
     override def kind: String = "hdfs"
   }
   implicit val HDFS_INFORMATION_JSON_FORMAT: RootJsonFormat[HdfsInformation] = jsonFormat4(HdfsInformation)
@@ -107,7 +107,7 @@ object ConfiguratorJson {
   implicit val FTP_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpInformationRequest] = jsonFormat5(
     FtpInformationRequest)
 
-  final case class FtpInformation(uuid: String,
+  final case class FtpInformation(id: String,
                                   name: String,
                                   hostname: String,
                                   port: Int,
@@ -130,7 +130,7 @@ object ConfiguratorJson {
   implicit val JDBC_INFORMATION_REQUEST_JSON_FORMAT: RootJsonFormat[JdbcInformationRequest] = jsonFormat4(
     JdbcInformationRequest)
 
-  final case class JdbcInformation(uuid: String,
+  final case class JdbcInformation(id: String,
                                    name: String,
                                    url: String,
                                    user: String,
@@ -197,7 +197,7 @@ object ConfiguratorJson {
   final case class ObjectAbstract(uuid: String, name: String, kind: String, state: Option[State])
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat4(ObjectAbstract)
 
-  final case class Pipeline(uuid: String,
+  final case class Pipeline(id: String,
                             name: String,
                             rules: Map[String, String],
                             objects: Seq[ObjectAbstract],
@@ -221,7 +221,7 @@ object ConfiguratorJson {
                                  configs: Map[String, String])
   implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = jsonFormat6(SourceRequest)
 
-  final case class Source(uuid: String,
+  final case class Source(id: String,
                           name: String,
                           className: String,
                           schema: Seq[Column],
@@ -261,7 +261,7 @@ object ConfiguratorJson {
                                configs: Map[String, String])
   implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = jsonFormat6(SinkRequest)
 
-  final case class Sink(uuid: String,
+  final case class Sink(id: String,
                         name: String,
                         className: String,
                         schema: Seq[Column],
@@ -424,7 +424,7 @@ object ConfiguratorJson {
   sealed trait StreamCommandFormat[T] {
     def format(address: String): String
   }
-  final case class StreamObj(uuid: String, jarName: String, lastModified: Long) extends Data {
+  final case class StreamObj(id: String, jarName: String, lastModified: Long) extends Data {
     override def kind: String = "streams"
     override def name: String = jarName
   }
@@ -452,7 +452,7 @@ object ConfiguratorJson {
   implicit val STREAM_JAR_UPDATE_REQUEST_JSON_FORMAT: RootJsonFormat[StreamJarUpdateRequest] = jsonFormat1(
     StreamJarUpdateRequest)
 
-  final case class StreamApp(uuid: String, name: String) extends Data {
+  final case class StreamApp(id: String, name: String) extends Data {
     override def kind: String = "streamApp"
   }
 

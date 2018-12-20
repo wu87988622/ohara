@@ -16,7 +16,7 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
           .data[Pipeline]
           .exists(
             pipeline =>
-              pipeline.uuid == uuid
+              pipeline.id == uuid
                 || pipeline.rules.keys.toSet.contains(uuid)
                 || pipeline.rules.values.toSet.contains(uuid)))
       throw new IllegalArgumentException(s"The uuid:$uuid is used by pipeline")
@@ -25,7 +25,7 @@ private[configurator] object BasicRoute extends SprayJsonSupport {
     if (store
           .data[StreamApp]
           .exists(
-            streamApp => streamApp.uuid == uuid
+            streamApp => streamApp.id == uuid
           ))
       throw new IllegalArgumentException(s"The uuid: $uuid is used by steramApp")
   }

@@ -88,6 +88,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         .clusterName(clusterName)
         .create(nodeName)
       try {
+        zookeeperCollie.foreach(c => println(s"[CHIA] $c"))
         zookeeperCollie.exists(_.name == zkCluster.name) shouldBe true
         zkCluster.name shouldBe clusterName
         zkCluster.nodeNames.head shouldBe nodeName
@@ -158,7 +159,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         container.portMappings.head.portPairs.size shouldBe 1
         container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
-        val topicName = CommonUtil.uuid()
+        val topicName = CommonUtil.randomString()
         val brokers = brokerCluster.nodeNames.map(_ + s":${brokerCluster.clientPort}").mkString(",")
         KafkaUtil.createTopic(brokers, topicName, 1, 1)
         val producer = Producer.builder().brokers(brokers).build(Serializer.STRING, Serializer.STRING)
@@ -195,7 +196,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         an[IllegalArgumentException] should be thrownBy brokerCollie.addNode(previousCluster.name,
                                                                              previousCluster.nodeNames.head)
         // we can't add a nonexistent node
-        an[IllegalArgumentException] should be thrownBy brokerCollie.addNode(previousCluster.name, CommonUtil.uuid())
+        an[IllegalArgumentException] should be thrownBy brokerCollie.addNode(previousCluster.name,
+                                                                             CommonUtil.randomString())
         val newCluster = brokerCollie.addNode(previousCluster.name, freeNodes.head.name)
         newCluster.name shouldBe previousCluster.name
         newCluster.imageName shouldBe previousCluster.imageName
@@ -287,7 +289,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         an[IllegalArgumentException] should be thrownBy workerCollie.addNode(previousCluster.name,
                                                                              previousCluster.nodeNames.head)
         // we can't add a nonexistent node
-        an[IllegalArgumentException] should be thrownBy workerCollie.addNode(previousCluster.name, CommonUtil.uuid())
+        an[IllegalArgumentException] should be thrownBy workerCollie.addNode(previousCluster.name,
+                                                                             CommonUtil.randomString())
         val newCluster = workerCollie.addNode(previousCluster.name, freeNodes.head.name)
         newCluster.name shouldBe previousCluster.name
         newCluster.imageName shouldBe previousCluster.imageName

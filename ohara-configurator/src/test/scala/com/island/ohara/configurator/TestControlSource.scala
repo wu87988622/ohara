@@ -41,46 +41,43 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     val request = SourceRequest(name = methodName,
                                 className = classOf[DumbSource].getName,
                                 schema = Seq.empty,
-                                topics = Seq(topic.uuid),
+                                topics = Seq(topic.id),
                                 numberOfTasks = 1,
                                 configs = Map.empty)
 
     val source = client.add[SourceRequest, Source](request)
 
     // test idempotent start
-    (0 until 3).foreach(_ => client.start[Source](source.uuid))
+    (0 until 3).foreach(_ => client.start[Source](source.id))
     val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try connectorClient.exist(source.uuid)
+                         try connectorClient.exist(source.id)
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil
-        .await(() => connectorClient.status(source.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
-      client.get[Source](source.uuid).state.get shouldBe State.RUNNING
+      CommonUtil.await(() => connectorClient.status(source.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      client.get[Source](source.id).state.get shouldBe State.RUNNING
 
       // test idempotent pause
-      (0 until 3).foreach(_ => client.pause[Source](source.uuid))
+      (0 until 3).foreach(_ => client.pause[Source](source.id))
 
-      CommonUtil
-        .await(() => connectorClient.status(source.uuid).connector.state == State.PAUSED, Duration.ofSeconds(20))
-      client.get[Source](source.uuid).state.get shouldBe State.PAUSED
+      CommonUtil.await(() => connectorClient.status(source.id).connector.state == State.PAUSED, Duration.ofSeconds(20))
+      client.get[Source](source.id).state.get shouldBe State.PAUSED
 
       // test idempotent resume
-      (0 until 3).foreach(_ => client.resume[Source](source.uuid))
-      CommonUtil
-        .await(() => connectorClient.status(source.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
-      client.get[Source](source.uuid).state.get shouldBe State.RUNNING
+      (0 until 3).foreach(_ => client.resume[Source](source.id))
+      CommonUtil.await(() => connectorClient.status(source.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      client.get[Source](source.id).state.get shouldBe State.RUNNING
 
       // test idempotent stop. the connector should be removed
-      (0 until 3).foreach(_ => client.stop[Source](source.uuid))
+      (0 until 3).foreach(_ => client.stop[Source](source.id))
 
-      CommonUtil.await(() => connectorClient.nonExist(source.uuid), Duration.ofSeconds(20))
-      client.get[Source](source.uuid).state shouldBe None
+      CommonUtil.await(() => connectorClient.nonExist(source.id), Duration.ofSeconds(20))
+      client.get[Source](source.id).state shouldBe None
     } finally {
-      if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+      if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
       ReleaseOnce.close(connectorClient)
     }
   }
@@ -92,34 +89,33 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     val request = SourceRequest(name = methodName,
                                 className = classOf[DumbSource].getName,
                                 schema = Seq.empty,
-                                topics = Seq(topic.uuid),
+                                topics = Seq(topic.id),
                                 numberOfTasks = 1,
                                 configs = Map.empty)
 
     val source = client.add[SourceRequest, Source](request)
     // test start
-    client.start[Source](source.uuid)
+    client.start[Source](source.id)
     val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try connectorClient.exist(source.uuid)
+                         try connectorClient.exist(source.id)
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil
-        .await(() => connectorClient.status(source.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => connectorClient.status(source.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy client
-        .update[SourceRequest, Source](source.uuid, request.copy(numberOfTasks = 2))
-      an[IllegalArgumentException] should be thrownBy client.delete[Source](source.uuid)
+        .update[SourceRequest, Source](source.id, request.copy(numberOfTasks = 2))
+      an[IllegalArgumentException] should be thrownBy client.delete[Source](source.id)
 
       // test stop. the connector should be removed
-      client.stop[Source](source.uuid)
-      CommonUtil.await(() => connectorClient.nonExist(source.uuid), Duration.ofSeconds(20))
-      client.get[Source](source.uuid).state shouldBe None
+      client.stop[Source](source.id)
+      CommonUtil.await(() => connectorClient.nonExist(source.id), Duration.ofSeconds(20))
+      client.get[Source](source.id).state shouldBe None
     } finally {
-      if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+      if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
       ReleaseOnce.close(connectorClient)
     }
   }
@@ -140,8 +136,8 @@ class TestControlSource extends WithBrokerWorker with Matchers {
 
     val source = client.add[SourceRequest, Source](request)
 
-    (the[IllegalArgumentException] thrownBy client.pause[Source](source.uuid)).getMessage should include("start")
-    (the[IllegalArgumentException] thrownBy client.resume[Source](source.uuid)).getMessage should include("start")
+    (the[IllegalArgumentException] thrownBy client.pause[Source](source.id)).getMessage should include("start")
+    (the[IllegalArgumentException] thrownBy client.resume[Source](source.id)).getMessage should include("start")
   }
 
   @After

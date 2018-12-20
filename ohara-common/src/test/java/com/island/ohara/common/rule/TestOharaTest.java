@@ -2,7 +2,7 @@ package com.island.ohara.common.rule;
 
 import org.junit.Test;
 
-public class TestDefaultAssert extends SmallTest {
+public class TestOharaTest extends SmallTest {
 
   @Test
   public void TestException() {

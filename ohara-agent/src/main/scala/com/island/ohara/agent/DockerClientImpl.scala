@@ -78,7 +78,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
 
   override def containerCreator(): ContainerCreator = new ContainerCreator {
     private[this] var imageName: String = _
-    private[this] var name: String = CommonUtil.uuid()
+    private[this] var name: String = CommonUtil.randomString()
     private[this] var command: String = _
     private[this] var disableCleanup: Boolean = true
     private[this] var ports: Map[Int, Int] = Map.empty

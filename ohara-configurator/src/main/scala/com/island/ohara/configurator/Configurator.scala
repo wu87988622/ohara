@@ -261,9 +261,9 @@ object Configurator {
       * @return the removed data
       */
     def update[T <: Data: ClassTag](data: T): T =
-      if (result(store.get(data.uuid)).exists(classTag[T].runtimeClass.isInstance))
-        result(store.update(data.uuid, data, consistency)).get.asInstanceOf[T]
-      else throw new IllegalArgumentException(s"Failed to update ${data.uuid} since it doesn't exist")
+      if (result(store.get(data.id)).exists(classTag[T].runtimeClass.isInstance))
+        result(store.update(data.id, data, consistency)).get.asInstanceOf[T]
+      else throw new IllegalArgumentException(s"Failed to update ${data.id} since it doesn't exist")
 
     /**
       * add an new object to the store. If the uuid already exists, an exception will be thrown.
@@ -272,9 +272,9 @@ object Configurator {
       * @tparam T type from data
       */
     def add[T <: Data: ClassTag](data: T): Unit =
-      if (result(store.get(data.uuid)).exists(classTag[T].runtimeClass.isInstance))
-        throw new IllegalArgumentException(s"The object:${data.uuid} exists")
-      else result(store.update(data.uuid, data, consistency))
+      if (result(store.get(data.id)).exists(classTag[T].runtimeClass.isInstance))
+        throw new IllegalArgumentException(s"The object:${data.id} exists")
+      else result(store.update(data.id, data, consistency))
 
     /**
       * Iterate the specified type. The unrelated type will be ignored.

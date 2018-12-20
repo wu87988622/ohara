@@ -28,13 +28,13 @@ private[configurator] object PipelineRoute {
     checkExist(values)
     store
       .raw()
-      .filter(data => keys.contains(data.uuid) || values.contains(data.uuid))
+      .filter(data => keys.contains(data.id) || values.contains(data.id))
       .map {
         case statableData: Source =>
-          ObjectAbstract(statableData.uuid, statableData.name, statableData.kind, statableData.state)
+          ObjectAbstract(statableData.id, statableData.name, statableData.kind, statableData.state)
         case statableData: Sink =>
-          ObjectAbstract(statableData.uuid, statableData.name, statableData.kind, statableData.state)
-        case data => ObjectAbstract(data.uuid, data.name, data.kind, None)
+          ObjectAbstract(statableData.id, statableData.name, statableData.kind, statableData.state)
+        case data => ObjectAbstract(data.id, data.name, data.kind, None)
       }
       .toList // NOTED: we have to return a "serializable" list!!!
   }

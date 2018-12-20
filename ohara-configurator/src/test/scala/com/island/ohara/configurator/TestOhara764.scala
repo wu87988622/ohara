@@ -32,17 +32,17 @@ class TestOhara764 extends SmallTest with Matchers {
                     schema = Seq.empty,
                     configs = Map.empty))
 
-    an[IllegalArgumentException] should be thrownBy client.start[Source](source.uuid)
+    an[IllegalArgumentException] should be thrownBy client.start[Source](source.id)
 
     val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest("abc", 1, 1))
     val source2 = client.add[SourceRequest, Source](
       SourceRequest(name = "abc",
                     className = "aaa.class",
-                    topics = Seq(topic.uuid),
+                    topics = Seq(topic.id),
                     numberOfTasks = 1,
                     schema = Seq.empty,
                     configs = Map.empty))
-    client.start[Source](source2.uuid)
+    client.start[Source](source2.id)
   }
 
   @After

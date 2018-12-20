@@ -13,7 +13,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
   @Test
   def testAdd(): Unit = {
     val s = Source(
-      uuid = "asdad",
+      id = "asdad",
       name = "abc",
       className = "aaa.class",
       schema = Seq.empty,
@@ -25,14 +25,14 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     )
     store.add(s)
 
-    store.exist[Data](s.uuid) shouldBe true
-    store.nonExist[Data](s.uuid) shouldBe false
+    store.exist[Data](s.id) shouldBe true
+    store.nonExist[Data](s.id) shouldBe false
   }
 
   @Test
   def testUpdate(): Unit = {
     val s = Source(
-      uuid = "asdad",
+      id = "asdad",
       name = "abc",
       className = "aaa.class",
       schema = Seq.empty,
@@ -47,13 +47,13 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     val newOne = store.update(s.copy(name = "123"))
     newOne.name shouldBe "abc"
 
-    an[IllegalArgumentException] should be thrownBy store.update(s.copy(uuid = "123"))
+    an[IllegalArgumentException] should be thrownBy store.update(s.copy(id = "123"))
   }
 
   @Test
   def testList(): Unit = {
     val s = Source(
-      uuid = "asdad",
+      id = "asdad",
       name = "abc",
       className = "aaa.class",
       schema = Seq.empty,
@@ -69,13 +69,13 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
     store.raw().toSeq.head.asInstanceOf[Source] shouldBe s
 
-    store.raw(s.uuid).asInstanceOf[Source] shouldBe s
+    store.raw(s.id).asInstanceOf[Source] shouldBe s
   }
 
   @Test
   def testRemove(): Unit = {
     val s = Source(
-      uuid = "asdad",
+      id = "asdad",
       name = "abc",
       className = "aaa.class",
       schema = Seq.empty,
@@ -92,7 +92,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy store.remove("asdasd")
     an[IllegalArgumentException] should be thrownBy store.remove[Source]("asdasd")
 
-    store.remove[Source](s.uuid) shouldBe s
+    store.remove[Source](s.id) shouldBe s
 
     store.size shouldBe 0
   }

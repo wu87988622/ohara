@@ -55,13 +55,13 @@ class TestStream extends MediumTest with Matchers {
 
     // Test DELETE method
     val deleteJar = jars.head
-    val d = client.delete[StreamObj](deleteJar.uuid)
+    val d = client.delete[StreamObj](deleteJar.id)
     d.jarName shouldBe deleteJar.jarName
 
     //Test PUT method
     val originJar = jars.last
     val anotherJar = StreamJarUpdateRequest("la-new.jar")
-    val updated = client.update[StreamJarUpdateRequest, StreamObj](originJar.uuid, anotherJar)
+    val updated = client.update[StreamJarUpdateRequest, StreamObj](originJar.id, anotherJar)
     updated.jarName shouldBe "la-new.jar"
   }
 

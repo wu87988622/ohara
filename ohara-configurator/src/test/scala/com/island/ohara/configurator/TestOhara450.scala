@@ -44,8 +44,7 @@ class TestOhara450 extends SmallTest with Matchers {
     client.list[TopicInfo].size shouldBe 1
     client.list[Sink].size shouldBe 1
 
-    client.add[PipelineRequest, Pipeline](
-      PipelineRequest("abc", Map(source.uuid -> topic.uuid, topic.uuid -> sink.uuid)))
+    client.add[PipelineRequest, Pipeline](PipelineRequest("abc", Map(source.id -> topic.id, topic.id -> sink.id)))
     client.list[Pipeline].size shouldBe 1
   }
 

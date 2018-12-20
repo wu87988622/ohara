@@ -48,7 +48,7 @@ class TestCallQueue extends With3Brokers with Matchers {
                   configs = Map("a" -> "b"))
   private[this] val responseData: Source =
     Source(
-      uuid = "uuid",
+      id = "uuid",
       name = "name2",
       className = "jdbc",
       schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),

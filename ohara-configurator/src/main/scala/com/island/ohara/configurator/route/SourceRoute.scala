@@ -23,7 +23,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
 
   private[this] def toRes(uuid: String, request: SourceRequest) =
     Source(
-      uuid = uuid,
+      id = uuid,
       name = request.name,
       className = sourceAlias(request.className),
       schema = request.schema,
@@ -44,7 +44,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
 
   private[this] def update(source: Source)(implicit store: Store, connectorClient: ConnectorClient): Source = {
     val state =
-      if (connectorClient.exist(source.uuid)) Some(connectorClient.status(source.uuid).connector.state) else None
+      if (connectorClient.exist(source.id)) Some(connectorClient.status(source.id).connector.state) else None
     val newOne = source.copy(state = state)
     store.update(newOne)
     newOne
@@ -89,7 +89,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
                 if (store.nonExist[TopicInfo](t)) throw new IllegalArgumentException(s"$t does not exist in ohara"))
               connectorClient
                 .connectorCreator()
-                .name(source.uuid)
+                .name(source.id)
                 .disableConverter()
                 .connectorClass(source.className)
                 .schema(source.schema)
@@ -107,7 +107,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
           put {
             val source = store.data[Source](uuid)
             if (connectorClient.exist(uuid)) {
-              connectorClient.delete(source.uuid)
+              connectorClient.delete(source.id)
               // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
               // connector from kafka
               store.update[Source](source.copy(state = None))
@@ -120,7 +120,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             if (connectorClient.nonExist(uuid))
               throw new IllegalArgumentException(
                 s"Connector is not running , using start command first . UUID: $uuid !!!")
-            connectorClient.pause(source.uuid)
+            connectorClient.pause(source.id)
             // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
             store.update[Source](source.copy(state = Some(State.PAUSED)))
@@ -132,7 +132,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             if (connectorClient.nonExist(uuid))
               throw new IllegalArgumentException(
                 s"Connector is not running , using start command first . UUID: $uuid !!!")
-            connectorClient.resume(source.uuid)
+            connectorClient.resume(source.id)
             // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
             store.update[Source](source.copy(state = Some(State.RUNNING)))

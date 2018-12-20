@@ -93,8 +93,8 @@ object SshdServer {
     * @return a embedded sshd server
     */
   def local(port: Int, commandHandlers: Seq[CommandHandler] = Seq.empty): SshdServer = {
-    val _user = CommonUtil.uuid()
-    val _password = CommonUtil.uuid()
+    val _user = CommonUtil.randomString()
+    val _password = CommonUtil.randomString()
     val sshd = SshServer.setUpDefaultServer()
     sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider())
     sshd.setPasswordAuthenticator((username, password, _) => username == _user && password == _password)

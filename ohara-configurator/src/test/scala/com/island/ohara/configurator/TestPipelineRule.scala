@@ -30,7 +30,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
-      topics = Seq(topic.uuid),
+      topics = Seq(topic.id),
       configs = Map.empty,
       numberOfTasks = 1
     )
@@ -39,13 +39,13 @@ class TestPipelineRule extends SmallTest with Matchers {
     val pipeline = client.add[PipelineRequest, Pipeline](
       PipelineRequest(
         name = "abc",
-        rules = Map(source.uuid -> ConfiguratorJson.UNKNOWN)
+        rules = Map(source.id -> ConfiguratorJson.UNKNOWN)
       ))
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
     // start source and pipeline should "see" what happen in source
-    client.start[Source](source.uuid)
-    val pipeline2 = client.get[Pipeline](pipeline.uuid)
+    client.start[Source](source.id)
+    val pipeline2 = client.get[Pipeline](pipeline.id)
     pipeline2.objects.foreach(obj => obj.state.get shouldBe State.RUNNING)
   }
 
@@ -65,7 +65,7 @@ class TestPipelineRule extends SmallTest with Matchers {
     client.add[PipelineRequest, Pipeline](
       PipelineRequest(
         name = "abc",
-        rules = Map(source.uuid -> ConfiguratorJson.UNKNOWN)
+        rules = Map(source.id -> ConfiguratorJson.UNKNOWN)
       ))
 
     val sinkRequest = SinkRequest(
@@ -82,7 +82,7 @@ class TestPipelineRule extends SmallTest with Matchers {
     client.add[PipelineRequest, Pipeline](
       PipelineRequest(
         name = "abc",
-        rules = Map(ConfiguratorJson.UNKNOWN -> sink.uuid)
+        rules = Map(ConfiguratorJson.UNKNOWN -> sink.id)
       ))
   }
 

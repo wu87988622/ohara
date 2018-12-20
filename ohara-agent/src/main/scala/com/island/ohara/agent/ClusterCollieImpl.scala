@@ -67,7 +67,7 @@ private object ClusterCollieImpl {
       * @param clusterName cluster name
       * @return a formatted string. form: ${clusterName}-${service}-${index}
       */
-    def format(clusterName: String): String = s"$clusterName-${service.name}-${CommonUtil.uuid(LENGTH_OF_UUID)}"
+    def format(clusterName: String): String = s"$clusterName-${service.name}-${CommonUtil.randomString(LENGTH_OF_UUID)}"
 
     override def remove(clusterName: String): Unit = nodeCollie.foreach { node =>
       val client =
@@ -436,7 +436,7 @@ private object ClusterCollieImpl {
     override def creator(): WorkerCollie.ClusterCreator = new WorkerCollie.ClusterCreator {
       private[this] var brokerClusterName: String = _
       private[this] var clientPort: Int = WorkerCollie.CLIENT_PORT_DEFAULT
-      private[this] var groupId: String = CommonUtil.uuid()
+      private[this] var groupId: String = CommonUtil.randomString()
       private[this] var offsetTopicName = s"$groupId-offset-topic"
       private[this] var offsetTopicReplications: Short = 1
       private[this] var offsetTopicPartitions: Int = 1

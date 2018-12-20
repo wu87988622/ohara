@@ -33,8 +33,8 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
           numberOfPartitions = 1,
           numberOfReplications = 1
         ))
-      KafkaUtil.deleteTopic(testUtil.brokersConnProps, info.uuid)
-      client.delete[TopicInfo](info.uuid)
+      KafkaUtil.deleteTopic(testUtil.brokersConnProps, info.id)
+      client.delete[TopicInfo](info.id)
     } finally client.close()
   }
 }

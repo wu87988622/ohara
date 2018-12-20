@@ -91,19 +91,19 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         Column.of("ranking", DataType.INT, 2),
         Column.of("single", DataType.BOOLEAN, 3)
       ),
-      topics = Seq(topic.uuid),
+      topics = Seq(topic.id),
       numberOfTasks = 1,
       configs = sourceProps.toMap
     )
 
     val source = client.add[SourceRequest, Source](request)
-    client.start[Source](source.uuid)
+    client.start[Source](source.id)
 
     val consumer = Consumer
       .builder()
       .brokers(testUtil.brokersConnProps)
       .offsetFromBegin()
-      .topicName(topic.uuid)
+      .topicName(topic.id)
       .build(Serializer.BYTES, Serializer.ROW)
     try {
       val records = consumer.poll(java.time.Duration.ofSeconds(20), rows.length).asScala
@@ -114,9 +114,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     } finally consumer.close()
 
     try {
-      client.stop[Source](source.uuid)
-      client.delete[Source](source.uuid)
-    } finally if (connectorClient.exist(source.uuid)) connectorClient.delete(source.uuid)
+      client.stop[Source](source.id)
+      client.delete[Source](source.id)
+    } finally if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
 
   }
 
@@ -142,7 +142,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     })
 
     val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
-    try rows.foreach(row => producer.sender().value(row).send(topic.uuid))
+    try rows.foreach(row => producer.sender().value(row).send(topic.id))
     finally producer.close()
 
     // setup env
@@ -160,13 +160,13 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         name = methodName,
         className = "ftp",
         schema = Seq.empty,
-        topics = Seq(topic.uuid),
+        topics = Seq(topic.id),
         numberOfTasks = 1,
         configs = sinkProps.toMap
       )
 
       val sink = client.add[SinkRequest, Sink](request)
-      client.start[Sink](sink.uuid)
+      client.start[Sink](sink.id)
       try {
         CommonUtil.await(() => ftpClient.listFileNames(sinkProps.output).nonEmpty, Duration.ofSeconds(30))
         ftpClient
@@ -177,9 +177,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
             lines(0) shouldBe data(0)
             lines(1) shouldBe data(1)
           })
-        client.stop[Sink](sink.uuid)
-        client.delete[Sink](sink.uuid)
-      } finally if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+        client.stop[Sink](sink.id)
+        client.delete[Sink](sink.id)
+      } finally if (connectorClient.exist(sink.id)) connectorClient.delete(sink.id)
     } finally ftpClient.close()
   }
 

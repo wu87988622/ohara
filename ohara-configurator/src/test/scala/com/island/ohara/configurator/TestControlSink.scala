@@ -44,42 +44,42 @@ class TestControlSink extends WithBrokerWorker with Matchers {
     val request = SinkRequest(name = methodName,
                               className = classOf[DumbSink].getName,
                               schema = Seq.empty,
-                              topics = Seq(topic.uuid),
+                              topics = Seq(topic.id),
                               numberOfTasks = 1,
                               configs = Map.empty)
 
     val sink = client.add[SinkRequest, Sink](request)
 
     // test idempotent start
-    (0 until 3).foreach(_ => client.start[Sink](sink.uuid))
+    (0 until 3).foreach(_ => client.start[Sink](sink.id))
     val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
 
       CommonUtil.await(() =>
-                         try connectorClient.exist(sink.uuid)
+                         try connectorClient.exist(sink.id)
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil.await(() => connectorClient.status(sink.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
-      client.get[Sink](sink.uuid).state.get shouldBe State.RUNNING
+      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state.get shouldBe State.RUNNING
 
       // test idempotent pause
-      (0 until 3).foreach(_ => client.pause[Sink](sink.uuid))
-      CommonUtil.await(() => connectorClient.status(sink.uuid).connector.state == State.PAUSED, Duration.ofSeconds(20))
-      client.get[Sink](sink.uuid).state.get shouldBe State.PAUSED
+      (0 until 3).foreach(_ => client.pause[Sink](sink.id))
+      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.PAUSED, Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state.get shouldBe State.PAUSED
 
       // test idempotent resume
-      (0 until 3).foreach(_ => client.resume[Sink](sink.uuid))
-      CommonUtil.await(() => connectorClient.status(sink.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
-      client.get[Sink](sink.uuid).state.get shouldBe State.RUNNING
+      (0 until 3).foreach(_ => client.resume[Sink](sink.id))
+      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state.get shouldBe State.RUNNING
 
       // test idempotent stop. the connector should be removed
-      (0 until 3).foreach(_ => client.stop[Sink](sink.uuid))
-      CommonUtil.await(() => connectorClient.nonExist(sink.uuid), Duration.ofSeconds(20))
-      client.get[Sink](sink.uuid).state shouldBe None
+      (0 until 3).foreach(_ => client.stop[Sink](sink.id))
+      CommonUtil.await(() => connectorClient.nonExist(sink.id), Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state shouldBe None
     } finally {
-      if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+      if (connectorClient.exist(sink.id)) connectorClient.delete(sink.id)
       connectorClient.close()
     }
   }
@@ -91,33 +91,33 @@ class TestControlSink extends WithBrokerWorker with Matchers {
     val request = SinkRequest(name = methodName,
                               className = classOf[DumbSink].getName,
                               schema = Seq.empty,
-                              topics = Seq(topic.uuid),
+                              topics = Seq(topic.id),
                               numberOfTasks = 1,
                               configs = Map.empty)
 
     val sink = client.add[SinkRequest, Sink](request)
     // test start
-    client.start[Sink](sink.uuid)
+    client.start[Sink](sink.id)
     val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try connectorClient.exist(sink.uuid)
+                         try connectorClient.exist(sink.id)
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil.await(() => connectorClient.status(sink.uuid).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy client
-        .update[SinkRequest, Sink](sink.uuid, request.copy(numberOfTasks = 2))
-      an[IllegalArgumentException] should be thrownBy client.delete[Sink](sink.uuid)
+        .update[SinkRequest, Sink](sink.id, request.copy(numberOfTasks = 2))
+      an[IllegalArgumentException] should be thrownBy client.delete[Sink](sink.id)
 
       // test stop. the connector should be removed
-      client.stop[Sink](sink.uuid)
-      CommonUtil.await(() => connectorClient.nonExist(sink.uuid), Duration.ofSeconds(20))
-      client.get[Sink](sink.uuid).state shouldBe None
+      client.stop[Sink](sink.id)
+      CommonUtil.await(() => connectorClient.nonExist(sink.id), Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state shouldBe None
     } finally {
-      if (connectorClient.exist(sink.uuid)) connectorClient.delete(sink.uuid)
+      if (connectorClient.exist(sink.id)) connectorClient.delete(sink.id)
       connectorClient.close()
     }
   }
@@ -138,8 +138,8 @@ class TestControlSink extends WithBrokerWorker with Matchers {
 
     val sink = client.add[SinkRequest, Sink](request)
 
-    (the[IllegalArgumentException] thrownBy client.pause[Sink](sink.uuid)).getMessage should include("start")
-    (the[IllegalArgumentException] thrownBy client.resume[Sink](sink.uuid)).getMessage should include("start")
+    (the[IllegalArgumentException] thrownBy client.pause[Sink](sink.id)).getMessage should include("start")
+    (the[IllegalArgumentException] thrownBy client.resume[Sink](sink.id)).getMessage should include("start")
   }
   @After
   def tearDown(): Unit = {

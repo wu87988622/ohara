@@ -57,7 +57,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: TopicInfo, rhs: TopicInfo): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.numberOfReplications shouldBe rhs.numberOfReplications
         lhs.numberOfPartitions shouldBe rhs.numberOfPartitions
@@ -72,36 +72,36 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       if (client == client0) {
         // the "name" used to create topic is uuid rather than name from request
         KafkaUtil.exist(testUtil.brokersConnProps, request.name) shouldBe false
-        KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
-        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.uuid)
+        KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe true
+        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.id)
         topicInfo.numberOfPartitions shouldBe 1
         topicInfo.numberOfReplications shouldBe 1
       }
 
       // test get
-      compare2Response(response, client.get[TopicInfo](response.uuid))
+      compare2Response(response, client.get[TopicInfo](response.id))
 
       // test update
       val anotherRequest = TopicInfoRequest(methodName, 2, 1)
       val newResponse =
         compareRequestAndResponse(anotherRequest,
-                                  client.update[TopicInfoRequest, TopicInfo](response.uuid, anotherRequest))
+                                  client.update[TopicInfoRequest, TopicInfo](response.id, anotherRequest))
       // verify the topic from kafka
       if (client == client0) {
-        KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe true
-        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.uuid)
+        KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe true
+        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.id)
         topicInfo.numberOfPartitions shouldBe 2
         topicInfo.numberOfReplications shouldBe 1
       }
 
       // test get
-      compare2Response(newResponse, client.get[TopicInfo](newResponse.uuid))
+      compare2Response(newResponse, client.get[TopicInfo](newResponse.id))
 
       // test delete
       client.list[TopicInfo].size shouldBe 1
-      client.delete[TopicInfo](response.uuid)
+      client.delete[TopicInfo](response.id)
       client.list[TopicInfo].size shouldBe 0
-      if (client == client0) KafkaUtil.exist(testUtil.brokersConnProps, response.uuid) shouldBe false
+      if (client == client0) KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe false
 
       // test nonexistent data
       an[IllegalArgumentException] should be thrownBy client.get[TopicInfo]("123")
@@ -125,7 +125,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: HdfsInformation, rhs: HdfsInformation): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.uri shouldBe rhs.uri
         lhs.lastModified shouldBe rhs.lastModified
@@ -137,20 +137,20 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val response = compareRequestAndResponse(request, client.add[HdfsInformationRequest, HdfsInformation](request))
 
       // test get
-      compare2Response(response, client.get[HdfsInformation](response.uuid))
+      compare2Response(response, client.get[HdfsInformation](response.id))
 
       // test update
       val anotherRequest = HdfsInformationRequest(s"$methodName-2", "file:///")
       val newResponse =
         compareRequestAndResponse(anotherRequest,
-                                  client.update[HdfsInformationRequest, HdfsInformation](response.uuid, anotherRequest))
+                                  client.update[HdfsInformationRequest, HdfsInformation](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[HdfsInformation](newResponse.uuid))
+      compare2Response(newResponse, client.get[HdfsInformation](newResponse.id))
 
       // test delete
       client.list[HdfsInformation].size shouldBe 1
-      client.delete[HdfsInformation](response.uuid)
+      client.delete[HdfsInformation](response.id)
       client.list[HdfsInformation].size shouldBe 0
 
       // test nonexistent data
@@ -174,7 +174,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: FtpInformation, rhs: FtpInformation): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe lhs.name
         lhs.hostname shouldBe lhs.hostname
         lhs.port shouldBe lhs.port
@@ -190,20 +190,20 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val response = compareRequestAndResponse(request, client.add[FtpInformationRequest, FtpInformation](request))
 
       // test get
-      compare2Response(response, client.get[FtpInformation](response.uuid))
+      compare2Response(response, client.get[FtpInformation](response.id))
 
       // test update
       val anotherRequest = FtpInformationRequest("test2", "152.22.23.125", 1222, "test", "test")
       val newResponse =
         compareRequestAndResponse(anotherRequest,
-                                  client.update[FtpInformationRequest, FtpInformation](response.uuid, anotherRequest))
+                                  client.update[FtpInformationRequest, FtpInformation](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[FtpInformation](newResponse.uuid))
+      compare2Response(newResponse, client.get[FtpInformation](newResponse.id))
 
       // test delete
       client.list[FtpInformation].size shouldBe 1
-      client.delete[FtpInformation](response.uuid)
+      client.delete[FtpInformation](response.id)
       client.list[FtpInformation].size shouldBe 0
 
       // test nonexistent data
@@ -226,7 +226,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: JdbcInformation, rhs: JdbcInformation): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe lhs.name
         lhs.url shouldBe lhs.url
         lhs.user shouldBe lhs.user
@@ -241,20 +241,20 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val response = compareRequestAndResponse(request, client.add[JdbcInformationRequest, JdbcInformation](request))
 
       // test get
-      compare2Response(response, client.get[JdbcInformation](response.uuid))
+      compare2Response(response, client.get[JdbcInformation](response.id))
 
       // test update
       val anotherRequest = JdbcInformationRequest("test2", "msSQL://152.22.23.12:4222", "test", "test")
       val newResponse =
         compareRequestAndResponse(anotherRequest,
-                                  client.update[JdbcInformationRequest, JdbcInformation](response.uuid, anotherRequest))
+                                  client.update[JdbcInformationRequest, JdbcInformation](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[JdbcInformation](newResponse.uuid))
+      compare2Response(newResponse, client.get[JdbcInformation](newResponse.id))
 
       // test delete
       client.list[JdbcInformation].size shouldBe 1
-      client.delete[JdbcInformation](response.uuid)
+      client.delete[JdbcInformation](response.id)
       client.list[JdbcInformation].size shouldBe 0
 
       // test nonexistent data
@@ -275,7 +275,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: Pipeline, rhs: Pipeline): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.rules shouldBe rhs.rules
         lhs.objects shouldBe rhs.objects
@@ -283,9 +283,9 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       // test add
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
-      val uuid_2 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
+      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
+      val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
+      val uuid_2 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
 
       client.list[Pipeline].size shouldBe 0
 
@@ -293,23 +293,22 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val response = compareRequestAndResponse(request, client.add[PipelineRequest, Pipeline](request))
 
       // test get
-      compare2Response(response, client.get[Pipeline](response.uuid))
+      compare2Response(response, client.get[Pipeline](response.id))
 
       // test update
       val anotherRequest = PipelineRequest(methodName, Map(uuid_0 -> uuid_2))
       val newResponse =
-        compareRequestAndResponse(anotherRequest,
-                                  client.update[PipelineRequest, Pipeline](response.uuid, anotherRequest))
+        compareRequestAndResponse(anotherRequest, client.update[PipelineRequest, Pipeline](response.id, anotherRequest))
 
       // topics should have no state
       newResponse.objects.foreach(_.state shouldBe None)
 
       // test get
-      compare2Response(newResponse, client.get[Pipeline](newResponse.uuid))
+      compare2Response(newResponse, client.get[Pipeline](newResponse.id))
 
       // test delete
       client.list[Pipeline].size shouldBe 1
-      client.delete[Pipeline](response.uuid)
+      client.delete[Pipeline](response.id)
       client.list[Pipeline].size shouldBe 0
 
       // test nonexistent data
@@ -325,12 +324,12 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
   @Test
   def testBindInvalidObjects2Pipeline(): Unit = {
     clients.foreach(client => {
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
+      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
       val uuid_1 =
-        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).uuid
+        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).id
       val uuid_2 =
-        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).uuid
-      val uuid_3 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).uuid
+        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).id
+      val uuid_3 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
       client.list[TopicInfo].size shouldBe 2
       client.list[HdfsInformation].size shouldBe 2
 
@@ -347,16 +346,16 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val res = client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_3)))
       // uuid_0 -> uuid_0: self-bound
       an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_0)))
+        .update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_0)))
       // uuid_1 can't be applied to pipeline
       an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
+        .update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
       // uuid_2 can't be applied to pipeline
       an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
+        .update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
 
       // good case
-      client.update[PipelineRequest, Pipeline](res.uuid, PipelineRequest(methodName, Map(uuid_0 -> uuid_3)))
+      client.update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_3)))
     })
   }
 
@@ -398,14 +397,14 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     request.name shouldBe response.name
     request.uri shouldBe response.uri
 
-    response = client0.get[HdfsInformation](response.uuid)
+    response = client0.get[HdfsInformation](response.id)
     request.name shouldBe response.name
     request.uri shouldBe response.uri
 
-    an[IllegalArgumentException] should be thrownBy client0.get[TopicInfo](response.uuid)
-    an[IllegalArgumentException] should be thrownBy client0.get[Source](response.uuid)
+    an[IllegalArgumentException] should be thrownBy client0.get[TopicInfo](response.id)
+    an[IllegalArgumentException] should be thrownBy client0.get[Source](response.id)
 
-    client0.delete[HdfsInformation](response.uuid)
+    client0.delete[HdfsInformation](response.id)
   }
 
   @Test
@@ -480,7 +479,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: Source, rhs: Source): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.schema shouldBe rhs.schema
         lhs.configs shouldBe rhs.configs
@@ -499,7 +498,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val response = compareRequestAndResponse(request, client.add[SourceRequest, Source](request))
 
       // test get
-      compare2Response(response, client.get[Source](response.uuid))
+      compare2Response(response, client.get[Source](response.id))
 
       // test update
       val anotherRequest = SourceRequest(name = methodName,
@@ -509,14 +508,14 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                                          topics = Seq.empty,
                                          numberOfTasks = 1)
       val newResponse =
-        compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.uuid, anotherRequest))
+        compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[Source](newResponse.uuid))
+      compare2Response(newResponse, client.get[Source](newResponse.id))
 
       // test delete
       client.list[Source].size shouldBe 1
-      client.delete[Source](response.uuid)
+      client.delete[Source](response.id)
       client.list[Source].size shouldBe 0
 
       // test nonexistent data
@@ -562,7 +561,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       def compare2Response(lhs: Sink, rhs: Sink): Unit = {
-        lhs.uuid shouldBe rhs.uuid
+        lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.schema shouldBe rhs.schema
         lhs.configs shouldBe rhs.configs
@@ -582,7 +581,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val response = compareRequestAndResponse(request, client.add[SinkRequest, Sink](request))
 
       // test get
-      compare2Response(response, client.get[Sink](response.uuid))
+      compare2Response(response, client.get[Sink](response.id))
 
       // test update
       val anotherRequest = SinkRequest(name = methodName,
@@ -592,14 +591,14 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                                        topics = Seq.empty,
                                        numberOfTasks = 1)
       val newResponse =
-        compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.uuid, anotherRequest))
+        compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[Sink](newResponse.uuid))
+      compare2Response(newResponse, client.get[Sink](newResponse.id))
 
       // test delete
       client.list[Sink].size shouldBe 1
-      client.delete[Sink](response.uuid)
+      client.delete[Sink](response.id)
       client.list[Sink].size shouldBe 0
 
       // test nonexistent data

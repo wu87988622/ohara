@@ -43,20 +43,30 @@ public final class CommonUtil {
    * @return uuid
    */
   public static String uuid() {
-    return java.util.UUID.randomUUID().toString().replaceAll("-", "");
+    return java.util.UUID.randomUUID().toString();
   }
 
   /**
-   * create a uuid with specified length. This uuid consists of "number" and [a-zA-Z]
+   * a random string based on uuid without "-"
+   *
+   * @return random string
+   */
+  public static String randomString() {
+    return uuid().replaceAll("-", "");
+  }
+
+  /**
+   * create a random string with specified length. This uuid consists of "number" and [a-zA-Z]
    *
    * @param len the length of uuid
    * @return uuid
    */
-  public static String uuid(int len) {
-    String uuid = uuid();
-    if (uuid.length() < len)
-      throw new IllegalArgumentException("expected size:" + len + ", actual size:" + uuid.length());
-    return uuid.substring(0, len);
+  public static String randomString(int len) {
+    String string = randomString();
+    if (string.length() < len)
+      throw new IllegalArgumentException(
+          "expected size:" + len + ", actual size:" + string.length());
+    return string.substring(0, len);
   }
 
   /**

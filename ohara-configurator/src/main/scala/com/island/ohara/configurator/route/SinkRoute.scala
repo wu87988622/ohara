@@ -23,7 +23,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
 
   private[this] def toRes(uuid: String, request: SinkRequest) =
     Sink(
-      uuid = uuid,
+      id = uuid,
       name = request.name,
       className = sinkAlias(request.className),
       schema = request.schema,
@@ -44,7 +44,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
 
   private[this] def update(sink: Sink)(implicit store: Store, connectorClient: ConnectorClient): Sink = {
     val state =
-      if (connectorClient.exist(sink.uuid)) Some(connectorClient.status(sink.uuid).connector.state) else None
+      if (connectorClient.exist(sink.id)) Some(connectorClient.status(sink.id).connector.state) else None
     val newOne = sink.copy(state = state)
     store.update(newOne)
     newOne
@@ -89,7 +89,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
                 if (store.nonExist[TopicInfo](t)) throw new IllegalArgumentException(s"$t does not exist in ohara"))
               connectorClient
                 .connectorCreator()
-                .name(sink.uuid)
+                .name(sink.id)
                 .disableConverter()
                 .connectorClass(sink.className)
                 .schema(sink.schema)
@@ -107,7 +107,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
           put {
             val sink = store.data[Sink](uuid)
             if (connectorClient.exist(uuid)) {
-              connectorClient.delete(sink.uuid)
+              connectorClient.delete(sink.id)
               // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
               // connector from kafka
               store.update[Sink](sink.copy(state = None))
@@ -120,7 +120,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
             if (connectorClient.nonExist(uuid))
               throw new IllegalArgumentException(
                 s"Connector is not running , using start command first . UUID: $uuid !!!")
-            connectorClient.pause(sink.uuid)
+            connectorClient.pause(sink.id)
             // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
             store.update[Sink](sink.copy(state = Some(State.PAUSED)))
@@ -132,7 +132,7 @@ private[configurator] object SinkRoute extends SprayJsonSupport {
             if (connectorClient.nonExist(uuid))
               throw new IllegalArgumentException(
                 s"Connector is not running , using start command first . UUID: $uuid !!!")
-            connectorClient.resume(sink.uuid)
+            connectorClient.resume(sink.id)
             // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
             store.update[Sink](sink.copy(state = Some(State.RUNNING)))

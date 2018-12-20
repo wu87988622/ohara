@@ -19,16 +19,16 @@ private[configurator] object TopicInfoRoute {
         post {
           entity(as[TopicInfoRequest]) { req =>
             val topicInfo = toRes(uuidGenerator(), req)
-            if (kafkaClient.exist(topicInfo.uuid))
+            if (kafkaClient.exist(topicInfo.id))
               // this should be impossible....
-              throw new IllegalArgumentException(s"The topic:${topicInfo.uuid} exists")
+              throw new IllegalArgumentException(s"The topic:${topicInfo.id} exists")
             else {
               kafkaClient
                 .topicCreator()
                 .numberOfPartitions(topicInfo.numberOfPartitions)
                 .numberOfReplications(topicInfo.numberOfReplications)
                 // NOTED: we use the uuid to create topic since we allow user to change the topic name arbitrary
-                .create(topicInfo.uuid)
+                .create(topicInfo.id)
               store.add(topicInfo)
               complete(topicInfo)
             }
