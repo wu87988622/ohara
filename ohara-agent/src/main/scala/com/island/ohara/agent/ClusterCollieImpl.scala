@@ -1,5 +1,6 @@
 package com.island.ohara.agent
 import java.util.Objects
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 
 import com.island.ohara.agent.AgentJson.{
   BrokerClusterDescription,
@@ -12,37 +13,51 @@ import com.island.ohara.agent.ClusterCollieImpl._
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends ReleaseOnce with ClusterCollie {
+  private[this] implicit val clientCache: DockerClientCache = new DockerClientCache {
+    private[this] val cache: ConcurrentMap[Node, DockerClient] = new ConcurrentHashMap[Node, DockerClient]()
+    override def get(node: Node): DockerClient = cache.computeIfAbsent(
+      node,
+      node =>
+        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build())
 
+    override def close(): Unit = {
+      cache.values().forEach(client => ReleaseOnce.close(client))
+      cache.clear()
+    }
+  }
   override def zookeepersCollie(): ZookeeperCollie = new ZookeeperCollieImpl
   override def brokerCollie(): BrokerCollie = new BrokerCollieImpl
   override def workerCollie(): WorkerCollie = new WorkerCollieImpl
-  override protected def doClose(): Unit = nodeCollie.close()
+  override protected def doClose(): Unit = {
+    ReleaseOnce.close(clientCache)
+    ReleaseOnce.close(nodeCollie)
+  }
 }
 
 private object ClusterCollieImpl {
   private[this] val LOG = Logger(classOf[ClusterCollieImpl])
 
+  /**
+    * This interface enable us to reuse the docker client object.
+    */
+  private trait DockerClientCache extends Releasable {
+    def get(node: Node): DockerClient
+  }
+
   private[this] trait BasicCollieImpl[T <: ClusterDescription] extends Collie[T] with Releasable {
 
+    val clientCache: DockerClientCache
     val nodeCollie: NodeCollie
 
     val service: Service
 
-    override def containers(clusterName: String): Seq[ContainerDescription] = nodeCollie.flatMap { node =>
-      val client =
-        DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-      try client.containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))
-      finally client.close()
-    }.toSeq
+    override def containers(clusterName: String): Seq[ContainerDescription] = nodeCollie
+      .flatMap(clientCache.get(_).containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}")))
+      .toSeq
 
     protected def toClusterDescription(clusterName: String, containers: Seq[ContainerDescription]): T
     override def iterator: Iterator[T] = nodeCollie
-      .flatMap { node =>
-        val client =
-          DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-        try client.containers().filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER"))
-        finally client.close()
-      }
+      .flatMap(clientCache.get(_).containers().filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
       .map(container => container.name.split(DIVIDER).head -> container)
       .groupBy(_._1)
       .map {
@@ -69,12 +84,8 @@ private object ClusterCollieImpl {
       */
     def format(clusterName: String): String = s"$clusterName-${service.name}-${CommonUtil.randomString(LENGTH_OF_UUID)}"
 
-    override def remove(clusterName: String): Unit = nodeCollie.foreach { node =>
-      val client =
-        DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-      try stopAndRemoveService(client, clusterName, false)
-      finally client.close()
-    }
+    override def remove(clusterName: String): Unit =
+      nodeCollie.foreach(node => stopAndRemoveService(clientCache.get(node), clusterName, false))
 
     /**
       * a helper method used to do "stop" and "remove".
@@ -121,22 +132,14 @@ private object ClusterCollieImpl {
       * @return containers information
       */
     def query(clusterName: String, service: Service): Seq[ContainerDescription] = {
-      nodeCollie.flatMap { node =>
-        val client =
-          DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-        try client.containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))
-        finally client.close()
-      }.toSeq
+      nodeCollie
+        .flatMap(clientCache.get(_).containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}")))
+        .toSeq
     }
 
-    override def logs(clusterName: String): Map[ContainerDescription, String] = query(clusterName, service).map {
-      container =>
-        val node = nodeCollie.get(container.nodeName)
-        val client =
-          DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-        try container -> client.log(container.name)
-        finally client.close()
-    }.toMap
+    override def logs(clusterName: String): Map[ContainerDescription, String] = query(clusterName, service)
+      .map(container => container -> clientCache.get(nodeCollie.get(container.nodeName)).log(container.name))
+      .toMap
 
     override def removeNode(clusterName: String, nodeName: String): T = {
       val targetNode =
@@ -148,16 +151,7 @@ private object ClusterCollieImpl {
           throw new IllegalArgumentException(
             s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead")
         case _ =>
-          val client =
-            DockerClient
-              .builder()
-              .user(targetNode.user)
-              .password(targetNode.password)
-              .hostname(targetNode.name)
-              .port(targetNode.port)
-              .build()
-          try stopAndRemoveService(client, clusterName, false)
-          finally client.close()
+          stopAndRemoveService(clientCache.get(targetNode), clusterName, false)
           cluster(clusterName)
       }
     }
@@ -173,7 +167,7 @@ private object ClusterCollieImpl {
     }
   }
 
-  private class ZookeeperCollieImpl(implicit val nodeCollie: NodeCollie)
+  private class ZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
       extends ZookeeperCollie
       with BasicCollieImpl[ZookeeperClusterDescription] {
 
@@ -211,14 +205,7 @@ private object ClusterCollieImpl {
         val successfulNodeNames: Seq[String] = nodes.zipWithIndex
           .flatMap {
             case ((node, hostname), index) =>
-              val client =
-                DockerClient
-                  .builder()
-                  .user(node.user)
-                  .password(node.password)
-                  .hostname(node.name)
-                  .port(node.port)
-                  .build()
+              val client = clientCache.get(node)
               try client
                 .containerCreator()
                 .imageName(imageName)
@@ -244,7 +231,7 @@ private object ClusterCollieImpl {
                   stopAndRemoveService(client, clusterName, true)
                   LOG.error(s"failed to start $imageName", e)
                   None
-              } finally client.close()
+              }
           }
           .map(_.nodeName)
           .toSeq
@@ -290,7 +277,7 @@ private object ClusterCollieImpl {
       throw new UnsupportedOperationException("zookeeper collie doesn't support to add node to a running cluster")
   }
 
-  private class BrokerCollieImpl(implicit val nodeCollie: NodeCollie)
+  private class BrokerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
       extends BrokerCollie
       with BasicCollieImpl[BrokerClusterDescription] {
 
@@ -351,11 +338,7 @@ private object ClusterCollieImpl {
         // update the route since we are adding new node to a running broker cluster
         // we don't need to update startup broker list since kafka do the update for us.
         existNodes.foreach {
-          case (node, container) =>
-            val client =
-              DockerClient.builder().hostname(node.name).password(node.password).user(node.user).port(node.port).build()
-            try updateRoute(client, container.name, route)
-            finally client.close()
+          case (node, container) => updateRoute(clientCache.get(node), container.name, route)
         }
 
         val maxId: Int =
@@ -364,13 +347,7 @@ private object ClusterCollieImpl {
         val successfulNodeNames = newNodes.zipWithIndex
           .flatMap {
             case ((node, hostname), index) =>
-              val client = DockerClient
-                .builder()
-                .hostname(node.name)
-                .password(node.password)
-                .user(node.user)
-                .port(node.port)
-                .build()
+              val client = clientCache.get(node)
               try client
                 .containerCreator()
                 .imageName(imageName)
@@ -392,7 +369,7 @@ private object ClusterCollieImpl {
                   stopAndRemoveService(client, clusterName, true)
                   LOG.error(s"failed to start $imageName on ${node.name}", e)
                   None
-              } finally client.close()
+              }
           }
           .map(_.nodeName)
           .toSeq
@@ -427,7 +404,7 @@ private object ClusterCollieImpl {
       .create(newNodeName)
   }
 
-  private class WorkerCollieImpl(implicit val nodeCollie: NodeCollie)
+  private class WorkerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
       extends WorkerCollie
       with BasicCollieImpl[WorkerClusterDescription] {
 
@@ -557,23 +534,13 @@ private object ClusterCollieImpl {
         // update the route since we are adding new node to a running worker cluster
         // we don't need to update startup broker list (WorkerCollie.BROKERS_KEY) since kafka do the update for us.
         existNodes.foreach {
-          case (node, container) =>
-            val client =
-              DockerClient.builder().hostname(node.name).password(node.password).user(node.user).port(node.port).build()
-            try updateRoute(client, container.name, route)
-            finally client.close()
+          case (node, container) => updateRoute(clientCache.get(node), container.name, route)
         }
 
         val successfulNodeNames = newNodes
           .flatMap {
             case (node, hostname) =>
-              val client = DockerClient
-                .builder()
-                .hostname(node.name)
-                .password(node.password)
-                .user(node.user)
-                .port(node.port)
-                .build()
+              val client = clientCache.get(node)
               try client
                 .containerCreator()
                 .imageName(imageName)
@@ -603,7 +570,7 @@ private object ClusterCollieImpl {
                   stopAndRemoveService(client, clusterName, true)
                   LOG.error(s"failed to start $imageName", e)
                   None
-              } finally client.close()
+              }
           }
           .map(_.nodeName)
           .toSeq
