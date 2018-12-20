@@ -7,7 +7,7 @@ import { white, shadowNormal, radiusNormal } from '../../../theme/variables';
 const BoxWrapper = styled.div`
   padding: 25px;
   background-color: ${white};
-  box-shadow: ${shadowNormal};
+  box-shadow: ${props => (props.shadow ? shadowNormal : '')};
   border-radius: ${radiusNormal};
   margin-bottom: 20px;
 `;
@@ -20,6 +20,10 @@ const Box = ({ children, ...rest }) => {
 
 Box.propTypes = {
   children: PropTypes.any,
+};
+
+Box.defaultProps = {
+  shadow: true,
 };
 
 export default Box;

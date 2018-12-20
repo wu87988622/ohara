@@ -28,6 +28,11 @@ class EditableLabel extends React.Component {
     title: PropTypes.string.isRequired,
     handleFocusOut: PropTypes.func,
     handleChange: PropTypes.func.isRequired,
+    showIcon: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    showIcon: true,
   };
 
   state = {
@@ -62,13 +67,13 @@ class EditableLabel extends React.Component {
   };
 
   render() {
-    const { handleChange, title } = this.props;
+    const { handleChange, title, showIcon } = this.props;
     const { isEditing } = this.state;
 
     if (isEditing) {
       return (
         <InputWrapper>
-          <Icon className="fas fa-pencil-alt" />
+          {showIcon && <Icon className="fas fa-pencil-alt" />}
           <EditInput
             value={title}
             onChange={handleChange}
@@ -83,7 +88,7 @@ class EditableLabel extends React.Component {
 
     return (
       <React.Fragment>
-        <Icon className="fas fa-pencil-alt" />
+        {showIcon && <Icon className="fas fa-pencil-alt" />}
         <label data-testid="title-label" onClick={this.handleFocus}>
           {title}
         </label>

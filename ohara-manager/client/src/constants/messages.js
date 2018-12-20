@@ -8,6 +8,9 @@ export const PIPELINE_CREATION_SUCCESS = 'New pipeline has been created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
 export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
 export const CONFIG_DELETE_SUCCESS = 'Successfully deleted the configuration:';
+export const STREAM_APP_UPLOAD_SUCCESS = 'Stream app successfully uploaded!';
+export const STREAM_APP_RENAME_SUCCESS = 'Stream app successfully renamed!';
+export const STREAM_APP_DELETE_SUCCESS = 'Successfully deleted the stream app!';
 export const TEST_SUCCESS = 'Test has passed!';
 
 // Error messages

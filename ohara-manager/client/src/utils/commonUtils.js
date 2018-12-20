@@ -5,6 +5,7 @@ import isEmpty from 'lodash.isempty';
 import isString from 'lodash.isstring';
 import debounce from 'lodash.debounce';
 import uuidValidate from 'uuid-validate';
+import { includes } from 'lodash';
 
 const isEmptyStr = val => val.length === 0;
 
@@ -28,6 +29,7 @@ export {
   get,
   reduceByProp,
   debounce,
+  includes,
   isEmpty,
   isString,
   isEmptyStr,
