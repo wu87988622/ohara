@@ -12,6 +12,7 @@ export const STREAM_APP_UPLOAD_SUCCESS = 'Stream app successfully uploaded!';
 export const STREAM_APP_RENAME_SUCCESS = 'Stream app successfully renamed!';
 export const STREAM_APP_DELETE_SUCCESS = 'Successfully deleted the stream app!';
 export const TEST_SUCCESS = 'Test has passed!';
+export const TEST_NOT_SUCCESS = 'Test has not passed!';
 
 // Error messages
 export const EMPTY_COLUMN_NAME_ERROR = 'Column Name is a required field!';
