@@ -50,7 +50,7 @@ trait ConfiguratorClient extends ReleaseOnce {
     query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
   //------------------------------------------------[Stream]------------------------------------------------//
   def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
-                                                                    cf: DataCommandFormat[Req]): Res
+                                                              cf: DataCommandFormat[Req]): Res
 }
 
 object ConfiguratorClient {
@@ -174,7 +174,7 @@ object ConfiguratorClient {
       )
 
     override def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
-                                                                               cf: DataCommandFormat[Req]): Res = {
+                                                                         cf: DataCommandFormat[Req]): Res = {
       val entity = Multipart.FormData(data: _*)
       Await.result(
         Http()
