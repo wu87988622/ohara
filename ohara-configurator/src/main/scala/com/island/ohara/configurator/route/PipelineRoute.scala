@@ -10,8 +10,8 @@ import spray.json.DefaultJsonProtocol._
 
 private[configurator] object PipelineRoute {
 
-  private[this] val ACCEPTED_TYPES_FROM = Seq(classOf[TopicInfo], classOf[Source])
-  private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink])
+  private[this] val ACCEPTED_TYPES_FROM = Seq(classOf[TopicInfo], classOf[Source], classOf[StreamData])
+  private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink], classOf[StreamData])
 
   private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
     Pipeline(uuid, request.name, request.rules, abstracts(request.rules), CommonUtil.current())

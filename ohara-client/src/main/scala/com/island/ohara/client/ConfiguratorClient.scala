@@ -26,6 +26,7 @@ trait ConfiguratorClient extends ReleaseOnce {
 
   //------------------------------------------------[DATA]------------------------------------------------//
   def list[T](implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T]
+  def list[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T]
   def get[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T
   def delete[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T
   def add[Req, Res](
@@ -48,8 +49,8 @@ trait ConfiguratorClient extends ReleaseOnce {
   def query[Req, Res](
     query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
   //------------------------------------------------[Stream]------------------------------------------------//
-  def stream_jars_uploadJar[Req, Res](data: Strict*)(implicit rm1: RootJsonFormat[Res],
-                                                     cf: StreamCommandFormat[Req]): Res
+  def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
+                                                                    cf: DataCommandFormat[Req]): Res
 }
 
 object ConfiguratorClient {
@@ -67,6 +68,12 @@ object ConfiguratorClient {
 
     override def list[T](implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T] = Await.result(
       Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(connectionProps))).flatMap(unmarshal[Seq[T]](_)),
+      TIMEOUT)
+
+    override def list[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): Seq[T] = Await.result(
+      Http()
+        .singleRequest(HttpRequest(HttpMethods.GET, cf.format(connectionProps, uuid)))
+        .flatMap(unmarshal[Seq[T]](_)),
       TIMEOUT)
 
     override def delete[T](uuid: String)(implicit rm: RootJsonFormat[T], cf: DataCommandFormat[T]): T = Await.result(
@@ -166,12 +173,12 @@ object ConfiguratorClient {
         TIMEOUT
       )
 
-    override def stream_jars_uploadJar[Req, Res](data: Strict*)(implicit rm1: RootJsonFormat[Res],
-                                                                cf: StreamCommandFormat[Req]): Res = {
+    override def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
+                                                                               cf: DataCommandFormat[Req]): Res = {
       val entity = Multipart.FormData(data: _*)
       Await.result(
         Http()
-          .singleRequest(HttpRequest(HttpMethods.POST, cf.format(connectionProps), entity = entity.toEntity))
+          .singleRequest(HttpRequest(HttpMethods.POST, cf.format(connectionProps, uuid), entity = entity.toEntity))
           .flatMap(unmarshal[Res](_)),
         TIMEOUT
       )

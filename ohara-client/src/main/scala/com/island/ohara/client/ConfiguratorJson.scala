@@ -418,43 +418,69 @@ object ConfiguratorJson {
   //------------------------------------------------[STREAM]------------------------------------------------//
   val STREAM_PATH = "stream"
 
-  /**
-    * used to send stream command
-    */
-  sealed trait StreamCommandFormat[T] {
-    def format(address: String): String
-  }
-  final case class StreamObj(id: String, jarName: String, lastModified: Long) extends Data {
-    override def kind: String = "streams"
-    override def name: String = jarName
-  }
-  implicit val STREAM_OBJ_FORMAT: RootJsonFormat[StreamObj] = jsonFormat3(StreamObj)
-
-  val JARS_STREAM_PATH = "jars"
-  final case class JarsStreamRequest(name: String, jars: Seq[String])
-  implicit val JARS_STREAM_PATH_REQUEST_JSON_FORMAT: RootJsonFormat[JarsStreamRequest] = jsonFormat2(JarsStreamRequest)
-
-  implicit val STRICT_STREAM_PATH_COMMAND_FORMAT: StreamCommandFormat[Strict] =
-    new StreamCommandFormat[Strict] {
-      override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
-    }
-
-  final case class StreamResponse(jars: Seq[StreamObj])
-  implicit val STREAM_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamResponse] = jsonFormat1(StreamResponse)
-
-  implicit val JARS_INFO_COMMAND_FORMAT: DataCommandFormat[StreamObj] = new DataCommandFormat[StreamObj] {
-    override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
-    override def format(address: String, uuid: String): String =
-      s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$uuid"
-  }
-
-  final case class StreamJarUpdateRequest(jarName: String)
-  implicit val STREAM_JAR_UPDATE_REQUEST_JSON_FORMAT: RootJsonFormat[StreamJarUpdateRequest] = jsonFormat1(
-    StreamJarUpdateRequest)
-
-  final case class StreamApp(id: String, name: String) extends Data {
+  // Store object
+  final case class StreamData(pipeline_id: String,
+                              jarName: String,
+                              name: String,
+                              fromTopics: Seq[String],
+                              toTopics: Seq[String],
+                              instances: Int,
+                              id: String,
+                              filePath: String,
+                              lastModified: Long)
+      extends Data {
     override def kind: String = "streamApp"
   }
+
+  // StreamApp List Request Body
+  final case class StreamListRequest(jarName: String)
+  implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
+
+  // StreamApp Property Request Body
+  final case class StreamPropertyRequest(name: String, fromTopics: Seq[String], toTopics: Seq[String], instances: Int)
+  implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat4(
+    StreamPropertyRequest)
+
+  // StreamApp List Page Response Body
+  final case class StreamJar(id: String, jarName: String, lastModified: Long)
+  implicit val STREAM_LIST_JARS_FORMAT: RootJsonFormat[StreamJar] = jsonFormat3(StreamJar)
+  final case class StreamListResponse(jars: Seq[StreamJar])
+  implicit val STREAM_LIST_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamListResponse] = jsonFormat1(StreamListResponse)
+
+  // StreamApp Property Page Response Body
+  final case class StreamPropertyResponse(id: String,
+                                          jarName: String,
+                                          name: String,
+                                          fromTopics: Seq[String],
+                                          toTopics: Seq[String],
+                                          instances: Int,
+                                          lastModified: Long)
+  implicit val STREAM_PROPERTY_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamPropertyResponse] = jsonFormat7(
+    StreamPropertyResponse)
+
+  // StreamApp List Page Command
+  val JARS_STREAM_PATH = "jars"
+  implicit val JAR_UPLOAD_LIST_PATH_COMMAND_FORMAT: DataCommandFormat[Strict] =
+    new DataCommandFormat[Strict] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
+      override def format(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$uuid"
+    }
+  implicit val LIST_PATH_COMMAND_FORMAT: DataCommandFormat[StreamJar] =
+    new DataCommandFormat[StreamJar] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
+      override def format(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$uuid"
+    }
+
+  // StreamApp Property Page
+  val PROPERTY_STREAM_PATH = "property"
+  implicit val PROPERTY_INFO_COMMAND_FORMAT: DataCommandFormat[StreamPropertyResponse] =
+    new DataCommandFormat[StreamPropertyResponse] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$PROPERTY_STREAM_PATH"
+      override def format(address: String, uuid: String): String =
+        s"http://$address/$VERSION_V0/$STREAM_PATH/$PROPERTY_STREAM_PATH/$uuid"
+    }
 
   //------------------------------------------------[ERROR]------------------------------------------------//
   final case class Error(code: String, message: String, stack: String)
