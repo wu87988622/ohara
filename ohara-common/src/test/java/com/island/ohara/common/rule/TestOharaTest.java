@@ -111,10 +111,4 @@ public class TestOharaTest extends SmallTest {
         });
     throw new RuntimeException("assertException didn't fail , normally can't see this msg");
   }
-
-  @Test
-  public void TestSkipTest() {
-    skipTest("skip test");
-    throw new RuntimeException("test throw exception");
-  }
 }
