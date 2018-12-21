@@ -1,33 +1,98 @@
 const yargs = require('yargs');
+const chalk = require('chalk');
+const axios = require('axios');
 
 const _ = require('./helpers');
 const getProjectVersion = require('./getProjectVersion');
 
-const getConfig = yargs
-  .options({
-    configurator: {
-      demandOption: true,
-      describe: 'Ohara configurator api',
-      string: true,
-      alias: 'c',
-    },
-    port: {
-      describe: 'Ohara manager port, defaults to 5050',
-      default: 5050,
-      alias: 'p',
-    },
-  })
-  .help()
-  .alias('help', 'h')
-  .version(getProjectVersion())
-  .alias('version', 'v')
-  .check(argv => {
-    if (_.isEmptyStr(argv.configurator))
-      throw Error('--configurator cannot be empty');
+/* eslint-disable no-process-exit, no-console */
 
-    if (!_.isNumber(argv.port)) throw Error('--port can only accept number');
+const validateUrl = async url => {
+  const regex = /https?:\/\/[-a-z0-9._+~#=:]{2,256}\/v[0-9]/gi;
+  const validUrl = chalk.green('http://localhost:5050/v0');
 
-    return true;
-  }).argv;
+  if (!regex.test(url)) {
+    console.log(
+      `
+  --configurator: ${chalk.red(url)} is invalid
 
-module.exports = getConfig;
+  The valid configurator URL should be something like: ${validUrl}
+      `,
+    );
+
+    // Throw an error here won't stop the node process
+    // since we're inside an async function, that's a promise rejection
+    process.exit(1);
+  }
+
+  // Ensure the API URL can be reach
+  try {
+    await axios.get(`${url}/cluster`, { timeout: 3000 });
+  } catch (err) {
+    console.log(
+      `
+  --configurator: we're not able to connect to ${chalk.red(url)}
+
+  Please make sure your Configurator is running at ${chalk.green(url)}
+      `,
+    );
+
+    process.exit(1);
+  }
+};
+
+const validatePort = port => {
+  const isValidPort = port >= 1 && port <= 65535;
+
+  if (!_.isNumber(port)) {
+    throw Error('--port: can only accept number');
+  }
+
+  if (!isValidPort) {
+    throw Error(
+      `
+  --port: ${chalk.red(port)} is invalid
+
+  Valid port number is between the range of ${chalk.green(0)} and ${chalk.green(
+        65535,
+      )}
+      `,
+    );
+  }
+};
+
+// Don't run yargs when running tests with jest
+// Doing so will cause jest hanging in the watch mode
+let getConfig;
+if (process.env.NODE_ENV !== 'test') {
+  getConfig = yargs
+    .options({
+      configurator: {
+        demandOption: true,
+        describe: 'Ohara configurator api',
+        string: true,
+        alias: 'c',
+      },
+      port: {
+        describe: 'Ohara manager port, defaults to 5050',
+        default: 5050,
+        alias: 'p',
+      },
+    })
+    .help()
+    .alias('help', 'h')
+    .version(getProjectVersion())
+    .alias('version', 'v')
+    .check(argv => {
+      const { configurator, port } = argv;
+      validateUrl(configurator);
+      validatePort(port);
+      return true;
+    }).argv;
+}
+
+module.exports = {
+  validateUrl,
+  validatePort,
+  getConfig,
+};

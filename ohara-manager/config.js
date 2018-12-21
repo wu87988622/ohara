@@ -1,4 +1,4 @@
-const getConfig = require('./utils/configHelpers');
+const { getConfig } = require('./utils/configHelpers');
 
 const { configurator, port } = getConfig;
 
