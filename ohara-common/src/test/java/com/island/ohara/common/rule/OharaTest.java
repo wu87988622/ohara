@@ -3,6 +3,7 @@ package com.island.ohara.common.rule;
 import com.island.ohara.common.util.CommonUtil;
 import java.util.Optional;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.slf4j.Logger;
@@ -78,5 +79,9 @@ public abstract class OharaTest extends Assert {
 
   public String methodName() {
     return name.getMethodName();
+  }
+
+  protected void skipTest(String message) {
+    Assume.assumeTrue(message, false);
   }
 }
