@@ -109,14 +109,14 @@ class PipelineFtpSource extends React.Component {
     }
 
     if (isUpdate) {
-      const { name, uuid, rules } = this.state.pipelines;
+      const { name, id, rules } = this.state.pipelines;
 
       const params = {
         name,
         rules: { ...rules, [currSourceId]: '?' },
       };
 
-      this.updatePipeline(uuid, params);
+      this.updatePipeline(id, params);
     }
   }
 
@@ -197,8 +197,8 @@ class PipelineFtpSource extends React.Component {
     }
   };
 
-  updatePipeline = async (uuid, params) => {
-    const res = await pipelinesApis.updatePipeline({ uuid, params });
+  updatePipeline = async (id, params) => {
+    const res = await pipelinesApis.updatePipeline({ id, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -220,17 +220,17 @@ class PipelineFtpSource extends React.Component {
   handleSelectChange = ({ target }) => {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
-    const { uuid } = options[selectedIdx].dataset;
-    const hasUuid = Boolean(uuid);
+    const { id } = options[selectedIdx].dataset;
+    const hasId = Boolean(id);
     const current = this.selectMaps[name];
 
-    if (hasUuid) {
+    if (hasId) {
       this.setState(
         () => {
           return {
             [current]: {
               name: value,
-              uuid,
+              id,
             },
           };
         },
@@ -476,9 +476,9 @@ class PipelineFtpSource extends React.Component {
 
     const res = isConnectorExist
       ? await pipelinesApis.createSource(params)
-      : await pipelinesApis.updateSource({ uuid: sourceId, params });
+      : await pipelinesApis.updateSource({ id: sourceId, params });
 
-    const updatedSourceId = _.get(res, 'data.result.uuid', null);
+    const updatedSourceId = _.get(res, 'data.result.id', null);
     updateHasChanges(false);
 
     if (updatedSourceId && isConnectorExist) {

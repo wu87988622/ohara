@@ -89,14 +89,14 @@ class PipelineHdfsSink extends React.Component {
     }
 
     if (isUpdate) {
-      const { name, uuid, rules } = this.state.pipelines;
+      const { name, id, rules } = this.state.pipelines;
 
       const params = {
         name,
         rules: { ...rules, '?': currSinkId },
       };
 
-      this.updatePipeline(uuid, params);
+      this.updatePipeline(id, params);
     }
   }
 
@@ -214,8 +214,8 @@ class PipelineHdfsSink extends React.Component {
     }
   };
 
-  updatePipeline = async (uuid, params) => {
-    const res = await pipelinesApis.updatePipeline({ uuid, params });
+  updatePipeline = async (id, params) => {
+    const res = await pipelinesApis.updatePipeline({ id, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -240,7 +240,7 @@ class PipelineHdfsSink extends React.Component {
   handleSelectChange = ({ target }) => {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
-    const { uuid } = options[selectedIdx].dataset;
+    const { id } = options[selectedIdx].dataset;
 
     const current = this.selectMaps[name];
 
@@ -249,7 +249,7 @@ class PipelineHdfsSink extends React.Component {
         return {
           [current]: {
             name: value,
-            uuid,
+            id,
           },
         };
       },
@@ -306,10 +306,10 @@ class PipelineHdfsSink extends React.Component {
     };
 
     const res = isConnectorExist
-      ? await pipelinesApis.updateSink({ uuid: sinkId, params })
+      ? await pipelinesApis.updateSink({ id: sinkId, params })
       : await pipelinesApis.createSink(params);
 
-    const updatedSinkId = _.get(res, 'data.result.uuid');
+    const updatedSinkId = _.get(res, 'data.result.id');
     updateHasChanges(false);
 
     if (updatedSinkId && !isConnectorExist) {

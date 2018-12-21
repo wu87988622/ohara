@@ -8,21 +8,21 @@ const props = {
   graph: [
     {
       type: 'source',
-      uuid: 'uuid1234',
+      id: 'id1234',
       isActive: false,
       isExist: false,
       icon: 'fa-database',
     },
     {
       type: 'topic',
-      uuid: 'uuid5678',
+      id: 'id5678',
       isActive: false,
       isExist: false,
       icon: '',
     },
     {
       type: 'sink',
-      uuid: 'uuid9112',
+      id: 'id9112',
       isActive: false,
       isExist: false,
       icon: '',

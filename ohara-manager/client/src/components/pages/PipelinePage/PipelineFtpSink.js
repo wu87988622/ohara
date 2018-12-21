@@ -109,7 +109,7 @@ class PipelineFtpSink extends React.Component {
     }
 
     if (isUpdate) {
-      const { name, uuid, rules } = this.state.pipelines;
+      const { name, id, rules } = this.state.pipelines;
 
       const params = {
         name,
@@ -119,7 +119,7 @@ class PipelineFtpSink extends React.Component {
         },
       };
 
-      this.updatePipeline(uuid, params);
+      this.updatePipeline(id, params);
     }
   }
 
@@ -203,8 +203,8 @@ class PipelineFtpSink extends React.Component {
     }
   };
 
-  updatePipeline = async (uuid, params) => {
-    const res = await pipelinesApis.updatePipeline({ uuid, params });
+  updatePipeline = async (id, params) => {
+    const res = await pipelinesApis.updatePipeline({ id, params });
     const pipelines = _.get(res, 'data.result', []);
 
     if (!_.isEmpty(pipelines)) {
@@ -399,17 +399,17 @@ class PipelineFtpSink extends React.Component {
   handleSelectChange = ({ target }) => {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
-    const { uuid } = options[selectedIdx].dataset;
-    const hasUuid = Boolean(uuid);
+    const { id } = options[selectedIdx].dataset;
+    const hasId = Boolean(id);
     const current = this.selectMaps[name];
 
-    if (hasUuid) {
+    if (hasId) {
       this.setState(
         () => {
           return {
             [current]: {
               name: value,
-              uuid,
+              id,
             },
           };
         },
@@ -483,9 +483,9 @@ class PipelineFtpSink extends React.Component {
 
     const res = isConnectorExist
       ? await pipelinesApis.createSink(params)
-      : await pipelinesApis.updateSink({ uuid: sinkId, params });
+      : await pipelinesApis.updateSink({ id: sinkId, params });
 
-    const updatedSinkId = _.get(res, 'data.result.uuid', null);
+    const updatedSinkId = _.get(res, 'data.result.id', null);
     updateHasChanges(false);
 
     if (updatedSinkId && isConnectorExist) {

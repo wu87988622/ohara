@@ -15,9 +15,9 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.get('/api/pipelines/:uuid', (req, res) => {
+  app.get('/api/pipelines/:id', (req, res) => {
     axios
-      .get(`${API_ROOT}/pipelines/${req.params.uuid}`)
+      .get(`${API_ROOT}/pipelines/${req.params.id}`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
@@ -29,16 +29,16 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/pipelines/update/:uuid', (req, res) => {
+  app.put('/api/pipelines/update/:id', (req, res) => {
     axios
-      .put(`${API_ROOT}/pipelines/${req.params.uuid}`, req.body)
+      .put(`${API_ROOT}/pipelines/${req.params.id}`, req.body)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
 
-  app.delete('/api/pipelines/delete/:uuid', (req, res) => {
+  app.delete('/api/pipelines/delete/:id', (req, res) => {
     axios
-      .delete(`${API_ROOT}/pipelines/${req.params.uuid}`)
+      .delete(`${API_ROOT}/pipelines/${req.params.id}`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
@@ -71,9 +71,9 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.get('/api/sources/:uuid', (req, res) => {
+  app.get('/api/sources/:id', (req, res) => {
     axios
-      .get(`${API_ROOT}/sources/${req.params.uuid}`)
+      .get(`${API_ROOT}/sources/${req.params.id}`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
@@ -85,23 +85,23 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/sources/update/:uuid', (req, res) => {
+  app.put('/api/sources/update/:id', (req, res) => {
     axios
-      .put(`${API_ROOT}/sources/${req.params.uuid}`, req.body)
+      .put(`${API_ROOT}/sources/${req.params.id}`, req.body)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/sources/:uuid/start', (req, res) => {
+  app.put('/api/sources/:id/start', (req, res) => {
     axios
-      .put(`${API_ROOT}/sources/${req.params.uuid}/start`)
+      .put(`${API_ROOT}/sources/${req.params.id}/start`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/sources/:uuid/stop', (req, res) => {
+  app.put('/api/sources/:id/stop', (req, res) => {
     axios
-      .put(`${API_ROOT}/sources/${req.params.uuid}/stop`)
+      .put(`${API_ROOT}/sources/${req.params.id}/stop`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
@@ -113,9 +113,9 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/sinks/update/:uuid', (req, res) => {
+  app.put('/api/sinks/update/:id', (req, res) => {
     axios
-      .put(`${API_ROOT}/sinks/${req.params.uuid}`, req.body)
+      .put(`${API_ROOT}/sinks/${req.params.id}`, req.body)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
@@ -127,23 +127,23 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.get('/api/sinks/:uuid', (req, res) => {
+  app.get('/api/sinks/:id', (req, res) => {
     axios
-      .get(`${API_ROOT}/sinks/${req.params.uuid}`)
+      .get(`${API_ROOT}/sinks/${req.params.id}`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/sinks/:uuid/start', (req, res) => {
+  app.put('/api/sinks/:id/start', (req, res) => {
     axios
-      .put(`${API_ROOT}/sinks/${req.params.uuid}/start`)
+      .put(`${API_ROOT}/sinks/${req.params.id}/start`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });
 
-  app.put('/api/sinks/:uuid/stop', (req, res) => {
+  app.put('/api/sinks/:id/stop', (req, res) => {
     axios
-      .put(`${API_ROOT}/sinks/${req.params.uuid}/stop`)
+      .put(`${API_ROOT}/sinks/${req.params.id}/stop`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });

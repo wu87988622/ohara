@@ -124,7 +124,7 @@ class PipelineNewStream extends React.Component {
   isDuplicateTitle = (title, excludeMyself = false) => {
     const { jars, activeId } = this.state;
     if (excludeMyself) {
-      return some(jars, jar => activeId !== jar.uuid && title === jar.jarName);
+      return some(jars, jar => activeId !== jar.id && title === jar.jarName);
     }
     return some(jars, jar => title === jar.jarName);
   };
@@ -151,8 +151,7 @@ class PipelineNewStream extends React.Component {
     this.setState(({ jars, activeId }) => {
       return {
         jars: jars.map(
-          jar =>
-            jar.uuid === activeId ? { ...jar, jarName: newJarName } : jar,
+          jar => (jar.id === activeId ? { ...jar, jarName: newJarName } : jar),
         ),
       };
     });
@@ -161,9 +160,9 @@ class PipelineNewStream extends React.Component {
   handleTitleConfirm = async isUpdate => {
     if (isUpdate) {
       const { jars, activeId } = this.state;
-      const jar = find(jars, { uuid: activeId });
+      const jar = find(jars, { id: activeId });
       if (jar) {
-        this.updateJar(jar.uuid, jar.jarName);
+        this.updateJar(jar.id, jar.jarName);
       }
     }
   };
@@ -191,7 +190,7 @@ class PipelineNewStream extends React.Component {
 
   updateJar = async (id, newJarName) => {
     const res = await streamApis.updateStreamJar({
-      uuid: id,
+      id: id,
       jarName: newJarName,
     });
     const isSuccess = _.get(res, 'data.isSuccess', false);
@@ -201,7 +200,7 @@ class PipelineNewStream extends React.Component {
   };
 
   deleteJar = async id => {
-    const res = await streamApis.deleteStreamJar({ uuid: id });
+    const res = await streamApis.deleteStreamJar({ id: id });
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
@@ -232,7 +231,7 @@ class PipelineNewStream extends React.Component {
             </FileUploadWrapper>
             <TableWrapper>
               <Table headers={['FILENAME', 'RENAME', 'DELETE']}>
-                {jars.map(({ uuid: id, jarName: title }) => {
+                {jars.map(({ id, jarName: title }) => {
                   const isActive = id === activeId ? 'is-active' : '';
                   return (
                     <tr

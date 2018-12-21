@@ -33,9 +33,9 @@ export const createPipeline = async params => {
   }
 };
 
-export const updatePipeline = async ({ uuid, params }) => {
+export const updatePipeline = async ({ id, params }) => {
   try {
-    const res = await axios.put(`/api/pipelines/update/${uuid}`, params);
+    const res = await axios.put(`/api/pipelines/update/${id}`, params);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -48,9 +48,9 @@ export const updatePipeline = async ({ uuid, params }) => {
   }
 };
 
-export const deletePipeline = async uuid => {
+export const deletePipeline = async id => {
   try {
-    const res = await axios.delete(`/api/pipelines/delete/${uuid}`);
+    const res = await axios.delete(`/api/pipelines/delete/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -138,9 +138,9 @@ export const createSource = async params => {
   }
 };
 
-export const updateSource = async ({ uuid, params }) => {
+export const updateSource = async ({ id, params }) => {
   try {
-    const res = await axios.put(`/api/sources/update/${uuid}`, params);
+    const res = await axios.put(`/api/sources/update/${id}`, params);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -153,9 +153,9 @@ export const updateSource = async ({ uuid, params }) => {
   }
 };
 
-export const fetchSource = async uuid => {
+export const fetchSource = async id => {
   try {
-    const res = await axios.get(`/api/sources/${uuid}`);
+    const res = await axios.get(`/api/sources/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -168,9 +168,9 @@ export const fetchSource = async uuid => {
   }
 };
 
-export const fetchPipeline = async uuid => {
+export const fetchPipeline = async id => {
   try {
-    const res = await axios.get(`/api/pipelines/${uuid}`);
+    const res = await axios.get(`/api/pipelines/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -198,9 +198,9 @@ export const createSink = async params => {
   }
 };
 
-export const updateSink = async ({ uuid, params }) => {
+export const updateSink = async ({ id, params }) => {
   try {
-    const res = await axios.put(`/api/sinks/update/${uuid}`, params);
+    const res = await axios.put(`/api/sinks/update/${id}`, params);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -213,9 +213,9 @@ export const updateSink = async ({ uuid, params }) => {
   }
 };
 
-export const fetchSink = async uuid => {
+export const fetchSink = async id => {
   try {
-    const res = await axios.get(`/api/sinks/${uuid}`);
+    const res = await axios.get(`/api/sinks/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -228,9 +228,9 @@ export const fetchSink = async uuid => {
   }
 };
 
-export const startSource = async uuid => {
+export const startSource = async id => {
   try {
-    const res = await axios.put(`/api/sources/${uuid}/start`);
+    const res = await axios.put(`/api/sources/${id}/start`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -243,9 +243,9 @@ export const startSource = async uuid => {
   }
 };
 
-export const stopSource = async uuid => {
+export const stopSource = async id => {
   try {
-    const res = await axios.put(`/api/sources/${uuid}/stop`);
+    const res = await axios.put(`/api/sources/${id}/stop`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -258,9 +258,9 @@ export const stopSource = async uuid => {
   }
 };
 
-export const startSink = async uuid => {
+export const startSink = async id => {
   try {
-    const res = await axios.put(`/api/sinks/${uuid}/start`);
+    const res = await axios.put(`/api/sinks/${id}/start`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -273,9 +273,9 @@ export const startSink = async uuid => {
   }
 };
 
-export const stopSink = async uuid => {
+export const stopSink = async id => {
   try {
-    const res = await axios.put(`/api/sinks/${uuid}/stop`);
+    const res = await axios.put(`/api/sinks/${id}/stop`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

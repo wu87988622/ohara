@@ -18,9 +18,9 @@ module.exports = app => {
       .catch(err => onError(res, err));
   });
 
-  app.get('/api/topics/:uuid', (req, res) => {
+  app.get('/api/topics/:id', (req, res) => {
     axios
-      .get(`${API_ROOT}/topics/${req.params.uuid}`)
+      .get(`${API_ROOT}/topics/${req.params.id}`)
       .then(result => onSuccess(res, result))
       .catch(err => onError(res, err));
   });

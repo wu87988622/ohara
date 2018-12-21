@@ -39,12 +39,12 @@ const ListTable = ({ headers, list, urlDir }) => {
         <tr>{headers.map(header => <Th key={header}>{header}</Th>)}</tr>
       </thead>
       <tbody>
-        {list.map(({ uuid, name }) => {
+        {list.map(({ id, name }) => {
           return (
-            <tr key={uuid}>
+            <tr key={id}>
               <td>{name}</td>
               <td>
-                <Link to={`${urlDir}/${uuid}`}>Details</Link>
+                <Link to={`${urlDir}/${id}`}>Details</Link>
               </td>
             </tr>
           );

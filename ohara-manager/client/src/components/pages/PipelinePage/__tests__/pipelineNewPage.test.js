@@ -88,7 +88,7 @@ describe('<PipelineNewPage />', () => {
     const data = {
       result: {
         name: 'newPipeline',
-        objects: [{ kind: CONNECTOR_KEYS.topic, name: 'a', uuid: '1' }],
+        objects: [{ kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' }],
         rules: {},
       },
     };
@@ -117,9 +117,9 @@ describe('<PipelineNewPage />', () => {
         name: 'test',
         status: 'Stopped',
         objects: [
-          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', uuid: '3' },
-          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', uuid: '2' },
-          { kind: CONNECTOR_KEYS.topic, name: 'a', uuid: '1' },
+          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', id: '3' },
+          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', id: '2' },
+          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' },
         ],
         rules: {},
       },
@@ -137,9 +137,9 @@ describe('<PipelineNewPage />', () => {
     await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
 
     expect(startSource).toHaveBeenCalledTimes(1);
-    expect(startSource).toHaveBeenCalledWith(data.result.objects[0].uuid);
+    expect(startSource).toHaveBeenCalledWith(data.result.objects[0].id);
     expect(startSink).toHaveBeenCalledTimes(1);
-    expect(startSink).toHaveBeenCalledWith(data.result.objects[1].uuid);
+    expect(startSink).toHaveBeenCalledWith(data.result.objects[1].id);
 
     const button = wrapper.find(getTestById('start-stop-icon'));
     expect(button.find('i').props().className).toMatch(/^fa fa-stop-circle$/);
@@ -150,9 +150,9 @@ describe('<PipelineNewPage />', () => {
       result: {
         name: 'test',
         objects: [
-          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', uuid: '3' },
-          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', uuid: '2' },
-          { kind: CONNECTOR_KEYS.topic, name: 'a', uuid: '1' },
+          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', id: '3' },
+          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', id: '2' },
+          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' },
         ],
         rules: {},
       },
@@ -174,9 +174,9 @@ describe('<PipelineNewPage />', () => {
     await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
 
     expect(stopSource).toHaveBeenCalledTimes(1);
-    expect(stopSource).toHaveBeenCalledWith(data.result.objects[0].uuid);
+    expect(stopSource).toHaveBeenCalledWith(data.result.objects[0].id);
     expect(stopSink).toHaveBeenCalledTimes(1);
-    expect(stopSink).toHaveBeenCalledWith(data.result.objects[1].uuid);
+    expect(stopSink).toHaveBeenCalledWith(data.result.objects[1].id);
 
     const button = wrapper.find(getTestById('start-stop-icon'));
     expect(button.find('i').props().className).toMatch(/^fa fa-play-circle$/);

@@ -155,7 +155,7 @@ class PipelineGraph extends React.Component {
       PropTypes.shape({
         type: PropTypes.string,
         name: PropTypes.string,
-        uuid: PropTypes.string,
+        id: PropTypes.string,
         isActive: PropTypes.bool,
         icon: PropTypes.string,
       }),
@@ -181,15 +181,17 @@ class PipelineGraph extends React.Component {
     }
   }
 
-  handleNodeClick = id => {
+  handleNodeClick = localId => {
+    console.log(localId);
+
     const { history, resetGraph, updateGraph, graph, match } = this.props;
     const { pipelineId } = match.params;
 
     resetGraph();
-    updateGraph({ isActive: true }, id);
+    updateGraph({ isActive: true }, localId);
 
-    const [currConnector] = graph.filter(g => g.id === id);
-    const { type, uuid: connectorId } = currConnector;
+    const [currConnector] = graph.filter(g => g.localId === localId);
+    const { type, id: connectorId } = currConnector;
 
     const action = match.url.includes('/edit/') ? 'edit' : 'new';
     const baseUrl = `/pipelines/${action}/${type}/${pipelineId}`;
@@ -205,7 +207,7 @@ class PipelineGraph extends React.Component {
     const g = new dagreD3.graphlib.Graph().setGraph({});
     const { graph } = this.props;
 
-    graph.forEach(({ name, type, to, id, icon, isActive, state = '' }) => {
+    graph.forEach(({ name, type, to, localId, icon, isActive, state = '' }) => {
       const isTopic = type === 'topic';
       const props = { shape: isTopic ? 'circle' : 'rect' };
       const displayType = type.split('.').pop();
@@ -224,27 +226,27 @@ class PipelineGraph extends React.Component {
         </div>
       </div>`;
 
-      g.setNode(id, {
+      g.setNode(localId, {
         ...props,
-        lable: id,
+        lable: localId,
         labelType: 'html',
         label: html,
         class: isActiveCls,
       });
 
       if (to) {
-        const dests = graph.map(x => x.id);
+        const dests = graph.map(x => x.localId);
 
         if (!dests.includes(to)) return;
 
         if (Array.isArray(to)) {
           to.forEach(t => {
-            g.setEdge(id, t, {});
+            g.setEdge(localId, t, {});
           });
           return;
         }
 
-        g.setEdge(id, to, {});
+        g.setEdge(localId, to, {});
       }
     });
 

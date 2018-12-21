@@ -19,7 +19,7 @@ export const addPipelineStatus = (pipelines = []) => {
 };
 
 export const getEditUrl = (pipeline, match) => {
-  const { uuid: pipelineId, objects: connectors } = pipeline;
+  const { id: pipelineId, objects: connectors } = pipeline;
 
   const source = connectors.reduce((acc, connector) => {
     if (isSource(connector.kind)) {
@@ -29,17 +29,17 @@ export const getEditUrl = (pipeline, match) => {
   }, '');
 
   const { source: sourceId, sink: sinkId } = connectors.reduce(
-    (acc, { uuid, kind }) => {
+    (acc, { id, kind }) => {
       if (kind === 'topic') {
-        acc[kind] = uuid;
+        acc[kind] = id;
       }
 
       if (isSource(kind)) {
-        acc['source'] = uuid;
+        acc['source'] = id;
       }
 
       if (isSink(kind)) {
-        acc['sink'] = uuid;
+        acc['sink'] = id;
       }
 
       return acc;

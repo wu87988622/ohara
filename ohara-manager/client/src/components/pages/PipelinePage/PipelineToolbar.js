@@ -70,7 +70,7 @@ class PipelineToolbar extends React.Component {
     graph: PropTypes.arrayOf(
       PropTypes.shape({
         type: PropTypes.string,
-        uuid: PropTypes.string,
+        id: PropTypes.string,
         isActive: PropTypes.bool,
         isExact: PropTypes.bool,
         icon: PropTypes.string,

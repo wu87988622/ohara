@@ -102,12 +102,12 @@ class PipelineListPage extends React.Component {
 
   handleSelectChange = ({ target }) => {
     const selectedIdx = target.options.selectedIndex;
-    const { uuid } = target.options[selectedIdx].dataset;
+    const { id } = target.options[selectedIdx].dataset;
 
     this.setState({
       currentTopic: {
         name: target.value,
-        uuid,
+        id,
       },
     });
   };
@@ -117,41 +117,41 @@ class PipelineListPage extends React.Component {
     const params = { name: 'Untitled pipeline', rules: {} };
     const res = await createPipeline(params);
 
-    const pipelineUuid = _.get(res, 'data.result.uuid', null);
+    const pipelineId = _.get(res, 'data.result.id', null);
 
-    if (pipelineUuid) {
+    if (pipelineId) {
       toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
-      history.push(`${match.url}/new/${pipelineUuid}`);
+      history.push(`${match.url}/new/${pipelineId}`);
     }
   };
 
-  handleDeletePipelineModalOpen = uuid => {
+  handleDeletePipelineModalOpen = id => {
     this.setState({
       isDeletePipelineModalActive: true,
-      deletePipelineUuid: uuid,
+      deletePipelineId: id,
     });
   };
 
   handleDeletePipelineModalClose = () => {
     this.setState({
       isDeletePipelineModalActive: false,
-      deletePipelineUuid: '',
+      deletePipelineId: '',
     });
   };
 
   handleDeletePipelineConfirm = async () => {
-    const { deletePipelineUuid: uuid } = this.state;
-    const res = await deletePipeline(uuid);
-    const deletedUuid = _.get(res, 'data.result.uuid', null);
+    const { deletePipelineId: id } = this.state;
+    const res = await deletePipeline(id);
+    const deletedId = _.get(res, 'data.result.id', null);
     const deletedPipeline = _.get(res, 'data.result.name', null);
 
-    if (deletedUuid) {
+    if (deletedId) {
       this.setState(({ pipelines }) => {
-        const _pipelines = pipelines.filter(p => p.uuid !== deletedUuid);
+        const _pipelines = pipelines.filter(p => p.id !== deletedId);
         return {
           pipelines: _pipelines,
           isDeletePipelineModalActive: false,
-          deletePipelineUuid: '',
+          deletePipelineId: '',
         };
       });
       toastr.success(
@@ -193,14 +193,14 @@ class PipelineListPage extends React.Component {
             <Box>
               <Table headers={this.headers}>
                 {pipelines.map((pipeline, idx) => {
-                  const { uuid, name, status } = pipeline;
+                  const { id, name, status } = pipeline;
                   const isRunning = status === 'Running' ? true : false;
 
                   const trCls = isRunning ? 'is-running' : '';
                   const editUrl = getEditUrl(pipeline, match);
 
                   return (
-                    <tr key={uuid} className={trCls}>
+                    <tr key={id} className={trCls}>
                       <td>{idx}</td>
                       <td>{name}</td>
                       <td>{status}</td>
@@ -211,9 +211,7 @@ class PipelineListPage extends React.Component {
                       </td>
                       <td data-testid="delete-pipeline" className="has-icon">
                         <DeleteIcon
-                          onClick={() =>
-                            this.handleDeletePipelineModalOpen(uuid)
-                          }
+                          onClick={() => this.handleDeletePipelineModalOpen(id)}
                         >
                           <i className="far fa-trash-alt" />
                         </DeleteIcon>

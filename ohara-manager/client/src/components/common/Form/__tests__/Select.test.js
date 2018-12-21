@@ -4,8 +4,8 @@ import { shallow } from 'enzyme';
 import Select from '../Select';
 
 const props = {
-  list: [{ name: 'a', uuid: '1' }, { name: 'b', uuid: '2' }],
-  selected: { name: 'a', uuid: '2' },
+  list: [{ name: 'a', id: '1' }, { name: 'b', id: '2' }],
+  selected: { name: 'a', id: '2' },
   handleChange: jest.fn(),
   isObject: true,
 };

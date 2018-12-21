@@ -34,7 +34,7 @@ export const update = ({ graph, updateGraph, connector }) => {
       to: '?',
       isActive: false,
       icon: PIPELINES.ICON_MAPS[type],
-      id: uuid4(),
+      localId: uuid4(),
     };
 
     updateGraph(update, type);

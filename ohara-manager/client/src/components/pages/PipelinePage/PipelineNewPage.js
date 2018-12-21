@@ -141,9 +141,9 @@ class PipelineNewPage extends React.Component {
     };
   };
 
-  updateGraph = (update, id) => {
+  updateGraph = (update, localId) => {
     this.setState(({ graph }) => {
-      const idx = graph.findIndex(g => g.id === id);
+      const idx = graph.findIndex(g => g.localId === localId);
       let _graph = [];
 
       if (idx === -1) {
@@ -176,7 +176,7 @@ class PipelineNewPage extends React.Component {
           state: '',
           name: name,
           type: type,
-          uuid: uuid4(),
+          localId: uuid4(),
           icon: PIPELINES.ICON_MAPS[type],
           id,
           isActive: false,
@@ -185,14 +185,14 @@ class PipelineNewPage extends React.Component {
       ];
     } else {
       updatedGraph = objects.map(
-        ({ kind: type, uuid, name, state = '' }, idx) => {
+        ({ kind: type, id, name, state = '' }, idx) => {
           return {
             state,
             name,
             type,
-            uuid,
+            id,
             icon: PIPELINES.ICON_MAPS[type],
-            id: graph[idx] ? graph[idx].id : uuid4(),
+            localId: graph[idx] ? graph[idx].id : uuid4(),
             isActive: graph[idx] ? graph[idx].isActive : false,
             to: '?',
           };
@@ -235,13 +235,13 @@ class PipelineNewPage extends React.Component {
   };
 
   updatePipeline = async () => {
-    const { name, uuid, rules, status } = this.state.pipelines;
+    const { name, id, rules, status } = this.state.pipelines;
     const params = {
       name,
       rules,
     };
 
-    const res = await pipelinesApis.updatePipeline({ uuid, params });
+    const res = await pipelinesApis.updatePipeline({ id, params });
     const pipelines = _.get(res, 'data.result', null);
 
     if (!_.isEmpty(pipelines)) {
@@ -334,13 +334,13 @@ class PipelineNewPage extends React.Component {
       .filter(({ kind }) => {
         return isSource(kind);
       })
-      .map(({ uuid }) => uuid);
+      .map(({ id }) => id);
 
     const sinks = connectors
       .filter(({ kind }) => {
         return isSink(kind);
       })
-      .map(({ uuid }) => uuid);
+      .map(({ id }) => id);
 
     return { sources, sinks };
   };

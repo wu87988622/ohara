@@ -17,14 +17,14 @@ const pipelines = [
   {
     name: 'a',
     status: 'Stopped',
-    uuid: uuid4(),
-    objects: [{ abc: 'def', kind: 'topic', uuid: '123' }],
+    id: uuid4(),
+    objects: [{ abc: 'def', kind: 'topic', id: '123' }],
   },
   {
     name: 'b',
     status: 'Running',
-    uuid: uuid4(),
-    objects: [{ def: 'abc', kind: 'topic', uuid: '456' }],
+    id: uuid4(),
+    objects: [{ def: 'abc', kind: 'topic', id: '456' }],
   },
 ];
 
@@ -62,9 +62,9 @@ describe('<PipelineListPage />', () => {
 
   it('creates a new pipeline', async () => {
     const newBtn = wrapper.find('NewPipelineBtn');
-    const uuid = '1234';
-    const expectedUrl = `${props.match.url}/new/${uuid}`;
-    const res = { data: { result: { uuid } } };
+    const id = '1234';
+    const expectedUrl = `${props.match.url}/new/${id}`;
+    const res = { data: { result: { id } } };
 
     createPipeline.mockImplementation(() => Promise.resolve(res));
     await newBtn.prop('handleClick')();
@@ -93,9 +93,9 @@ describe('<PipelineListPage />', () => {
 
   it('successfully deletes the first pipeline', async () => {
     wrapper.setState({ pipelines });
-    const uuid = pipelines[0].uuid;
+    const id = pipelines[0].id;
     const pipelineName = 'pipelineAbc';
-    const res = { data: { result: { uuid, name: pipelineName } } };
+    const res = { data: { result: { id, name: pipelineName } } };
     const expectedSuccessMsg = `${
       MESSAGES.PIPELINE_DELETION_SUCCESS
     } ${pipelineName}`;
@@ -108,12 +108,12 @@ describe('<PipelineListPage />', () => {
       .find(getTestById('delete-pipeline'))
       .at(0)
       .find('DeleteIcon')
-      .prop('onClick')(uuid);
+      .prop('onClick')(id);
 
     expect(wrapper.find('ConfirmModal').props().isActive).toBe(true);
     await wrapper.find('ConfirmModal').prop('handleConfirm')();
     expect(deletePipeline).toHaveBeenCalledTimes(1);
-    expect(deletePipeline).toHaveBeenCalledWith(uuid);
+    expect(deletePipeline).toHaveBeenCalledWith(id);
     expect(toastr.success).toHaveBeenCalledTimes(1);
     expect(toastr.success).toHaveBeenCalledWith(expectedSuccessMsg);
     expect(wrapper.find('Table tr').length).toBe(1);

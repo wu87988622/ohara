@@ -53,9 +53,9 @@ export const saveHdfs = async ({ name, uri }) => {
   }
 };
 
-export const deleteHdfs = async uuid => {
+export const deleteHdfs = async id => {
   try {
-    const res = await axios.delete(`/api/configuration/hdfs/${uuid}`);
+    const res = await axios.delete(`/api/configuration/hdfs/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

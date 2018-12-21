@@ -18,7 +18,7 @@ const props = {
   graph: [
     {
       type: 'source',
-      uuid: '1',
+      id: '1',
       isActive: false,
       isExact: false,
       icon: 'fa-test',

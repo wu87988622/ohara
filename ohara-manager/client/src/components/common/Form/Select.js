@@ -52,9 +52,9 @@ const Select = ({
       {...rest}
     >
       {isObject
-        ? list.map(({ uuid, name }, idx) => {
+        ? list.map(({ id, name }, idx) => {
             return (
-              <option key={idx} data-uuid={uuid}>
+              <option key={idx} data-id={id}>
                 {name}
               </option>
             );

@@ -45,8 +45,8 @@ export const createStreamJar = async params => {
 
 export const deleteStreamJar = async params => {
   try {
-    const { uuid } = params;
-    const url = `/api/stream/jars/${uuid}`;
+    const { id } = params;
+    const url = `/api/stream/jars/${id}`;
     const res = await axiosInstance.delete(url);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
@@ -62,8 +62,8 @@ export const deleteStreamJar = async params => {
 
 export const updateStreamJar = async params => {
   try {
-    const { uuid, jarName } = params;
-    const url = `/api/stream/jars/${uuid}`;
+    const { id, jarName } = params;
+    const url = `/api/stream/jars/${id}`;
     const data = {
       jarName,
     };
