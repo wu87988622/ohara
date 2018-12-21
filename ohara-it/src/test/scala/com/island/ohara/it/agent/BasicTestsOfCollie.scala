@@ -65,7 +65,9 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     * make sure all test cases here are executed only if we have defined the docker server.
     * @param f test case
     */
-  private[this] def runTest(f: () => Unit): Unit = if (nodeCollie.nonEmpty) f()
+  private[this] def runTest(f: () => Unit): Unit = if (nodeCollie.isEmpty)
+    skipTest(s"$key doesn't exist so all tests in BasicTestsOfCollie are ignored")
+  else f()
 
   /**
     * create a zk cluster env in running test case.

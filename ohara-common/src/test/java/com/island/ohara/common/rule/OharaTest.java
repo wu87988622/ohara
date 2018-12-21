@@ -81,6 +81,11 @@ public abstract class OharaTest extends Assert {
     return name.getMethodName();
   }
 
+  /**
+   * Skip all remaining test cases after calling this method.
+   *
+   * @param message why you want to skip all test cases?
+   */
   protected void skipTest(String message) {
     Assume.assumeTrue(message, false);
   }

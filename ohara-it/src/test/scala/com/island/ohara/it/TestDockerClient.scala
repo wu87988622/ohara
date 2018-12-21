@@ -44,7 +44,9 @@ class TestDockerClient extends MediumTest with Matchers {
     * make sure all test cases here are executed only if we have defined the docker server.
     * @param f test case
     */
-  private[this] def runTest(f: DockerClient => Unit): Unit = if (client != null) f(client)
+  private[this] def runTest(f: DockerClient => Unit): Unit = if (client == null)
+    skipTest(s"$key doesn't exist so all tests in TestDockerClient are ignored")
+  else f(client)
 
   @Test
   def testLog(): Unit = runTest { client =>
