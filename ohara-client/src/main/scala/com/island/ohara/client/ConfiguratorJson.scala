@@ -194,7 +194,7 @@ object ConfiguratorJson {
   final case class PipelineRequest(name: String, rules: Map[String, String])
   implicit val PIPELINE_REQUEST_JSON_FORMAT: RootJsonFormat[PipelineRequest] = jsonFormat2(PipelineRequest)
 
-  final case class ObjectAbstract(uuid: String, name: String, kind: String, state: Option[State])
+  final case class ObjectAbstract(id: String, name: String, kind: String, state: Option[State]) extends Data
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat4(ObjectAbstract)
 
   final case class Pipeline(id: String,
