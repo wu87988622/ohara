@@ -16,28 +16,33 @@ task clean {
   }
 }
 
-task test {
-  if(!project.hasProperty('skipManager')) {
-    doLast {
-      exec {
-        commandLine 'yarn', 'setup'
-      }
-      exec {
-        commandLine 'yarn', 'test'
-      }
-    }
-  }
-}
-
-task build {
+task setup {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
         commandLine 'yarn', 'checkYarnVersion'
       }
+      exec {
+        commandLine 'yarn', 'setup'
+      }
     }
-    dependsOn test
   }
+}
+
+task test {
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        commandLine 'yarn', 'test'
+      }
+    }
+  }
+  dependsOn setup
+}
+
+task build {
+  dependsOn setup
+  dependsOn test
 }
 
 task runManager {
