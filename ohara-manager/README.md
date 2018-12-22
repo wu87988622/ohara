@@ -89,7 +89,7 @@ The dev server will then start at `http://localhost:7777`
 
 ## Test
 
-You can run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End test with one single npm script:
+You can run both the **Server** and the **Client** unit tests with a single npm script:
 
 ```sh
 yarn test
@@ -120,7 +120,7 @@ yarn test:coverage
 Run the tests and stay in Jest watch mode
 
 ```sh
-yarn test:client:watch
+yarn test:client
 ```
 
 Generate test coverage reports
@@ -134,7 +134,7 @@ yarn test:client:coverage
 **Client** also has End-to-End tests, you can run them via the following command:
 
 ```sh
-yarn test:client:cypress
+yarn test:e2e:open
 ```
 
 This will open cypress test runner, you can then run your test manually through the UIs.
@@ -189,20 +189,17 @@ yarn build:client
 
 ## Ohara manager image
 
-Run the following command to get the production ready build of both **Server** and **Client**. This command will only install **production needed dependencies**.
+Run the following command to get the production ready build of both the **Server** and the **Client**.
 
 ```sh
-yarn setup:prod
+yarn setup
 ```
 
-After the build, copy/use these files and directories to the destination directory (this step is automatically done by gradle):
+After the build, copy/use these files and directories to the destination directory (Note this step is automatically done by Ohara-assembly module):
 
 - index.js
 - config.js
-- package.json
-- .yarnrc
-- client -- only node_modules and build directories are needed
-  - node_modules
+- client -- only build directory is needed
   - build
 - constants
 - node_modules
@@ -227,9 +224,9 @@ Run tests on CI:
 yarn test
 ```
 
-- Run all tests including **Server** and **Client** unit tests as well as **Client** End-to-End tests. The test reports can be found in `ohara-manager/test-reports/`
+- Run all tests including the **Server** and the **Client** unit tests. The test reports can be found in `ohara-manager/test-reports/`
 
-- Note you should run `yarn setup` to ensure that all necessary packages are correctly installed prior to running tests.
+- Note you should run `yarn setup` to ensure that all necessary packages are installed prior to running tests.
 
 ## Clean
 
