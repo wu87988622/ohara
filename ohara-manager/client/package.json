@@ -20,8 +20,8 @@
     "test:watch": "yarn test",
     "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
-    "cypress": "cypress open",
-    "cypress:ci": "cypress run"
+    "e2e": "cypress open",
+    "e2e:ci": "cypress run"
   },
   "dependencies": {
     "classnames": "2.2.6",
