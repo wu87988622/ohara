@@ -20,9 +20,6 @@ task setup {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine 'yarn', 'checkYarnVersion'
-      }
-      exec {
         commandLine 'yarn', 'setup'
       }
     }

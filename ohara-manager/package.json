@@ -7,7 +7,7 @@
     "node": "^8.12.0"
   },
   "scripts": {
-    "checkYarnVersion": "node ./scripts/checkYarnVersion.js",
+    "preinstall": "node ./scripts/checkYarnVersion.js",
     "setup": "yarn && yarn --cwd client setup",
     "start": "nodemon index.js --exec 'yarn lint:server && node'",
     "start:ci": "forever start index.js --configurator http://fakehost:7777/v0 & wait-on http://localhost:5050",
@@ -28,7 +28,7 @@
     "test:e2e:ci": "yarn --cwd client e2e:ci",
     "test:e2e:open": "yarn --cwd client e2e",
     "clean": "run-s clean:*",
-    "clean:process": "node ./scripts/cleanAllProcesses",
+    "clean:process": "node ./scripts/cleanAllProcesses.js",
     "clean:server": "rm -rf ./test-reports node_modules",
     "clean:client": "rm -rf ./client/node_modules ./client/build",
     "build:client": "yarn --cwd client build",
