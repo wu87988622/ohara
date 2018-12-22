@@ -25,8 +25,6 @@ RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.z
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
 RUN rm -f gradle-$GRADLE_VERSION-bin.zip
 RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
-
-# add gradle to path
 ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
@@ -36,24 +34,18 @@ ARG GIT_PWD=""
 ARG BRANCH="master"
 WORKDIR /testpatch/ohara
 RUN git clone --single-branch -b $BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
-RUN gradle clean build -x test -PskipManager
+RUN gradle clean build -x test
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
-FROM centos:7.5.1804
+# remove configurator's dependencies
+RUN rm -rf $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/lib
 
-ARG USER=ohara
+# Add Tini
 ARG TINI_VERSION=v0.18.0
+RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 
-# install tools
-RUN yum install -y \
-  git \
-  java-1.8.0-openjdk-devel \
-  wget \
-  unzip
-
-# export JAVA_HOME
-ENV JAVA_HOME=/usr/lib/jvm/java
+FROM centos:7.5.1804
 
 # install nodejs
 # NOTED: ohara-manager requires nodejs 8.x
@@ -64,25 +56,21 @@ RUN yum install -y nodejs
 RUN npm install -g yarn@1.7.0
 
 # add user
+ARG USER=manager
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
 # clone ohara binary
-RUN mkdir /opt/ohara
-COPY --from=deps /opt/ohara /opt/ohara
-RUN ln -s $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*") /opt/ohara/default
-# (TODO) manager has got to write something to binary folder...we should keep the permission if OHARA-669 is resolved
-RUN chown -R $USER:$USER /opt/ohara
-ENV OHARA_HOME=/opt/ohara/default
+COPY --from=deps /opt/ohara /home/$USER
+RUN ln -s $(find "/home/$USER/" -maxdepth 1 -type d -name "ohara-*") /home/$USER/default
+ENV OHARA_HOME=/home/$USER/default
 ENV PATH=$PATH:$OHARA_HOME/bin
 
-# Add Tini
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
+# clone Tini
+COPY --from=deps /tini /tini
 RUN chmod +x /tini
 
 # change to user
 USER $USER
 
-ENTRYPOINT ["/tini", "--", "/opt/ohara/default/bin/ohara", "start"]
-
-CMD ["help"]
+ENTRYPOINT ["/tini", "--", "ohara", "start", "manager"]

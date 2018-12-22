@@ -8,9 +8,9 @@ a powerful ETL tool
 
 ### Prerequisites
 
-* JDK 1.7+
+* JDK 1.8+
 * Scala 2.11 (Note that scala 2.11 and 2.12 are not binary compatible.)
-* gradle 4.5+
+* gradle 4.10+
 * Node.js 8.12.0
 * Yarn 1.7.0. (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)
 
@@ -21,7 +21,7 @@ a powerful ETL tool
 ### Running all backend-services by docker
 (3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 ```
-docker run --rm -p 12345:12345 islandsystems/ohara:backend backend --configuratorPort 12345
+docker run --rm -p 12345:12345 islandsystems/ohara:backend --configuratorPort 12345
 ```
 * configuratorPort: bound by Configurator (default is random)
 * zkPort: bound by zookeeper (default is random)
@@ -35,7 +35,7 @@ The backend image is not in production release. Hence, there is no any guarantee
 
 ### Running configurator by docker
 ```
-docker run --rm -p 12345:12345 islandsystems/ohara:0.2-SNAPSHOT configurator --port 12345
+docker run --rm -p 12345:12345 islandsystems/configurator:0.2-SNAPSHOT --port 12345
 ```
 * port: bound by Configurator (default is random)
 * brokers: broker information (ex. host0:port0,host1:port1)
@@ -46,7 +46,7 @@ stored in memory. And connector-related commands are executed by nothing.
 
 ### Running manager by docker
 ```
-docker run --rm -p 5050:5050 islandsystems/ohara:0.2-SNAPSHOT manager --port 5050 --configurator http://localhost:12345/v0
+docker run --rm -p 5050:5050 islandsystems/manager:0.2-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
 ```
 * port: bound by manager (default is 5050)
 * configurator: basic form of restful API of configurator

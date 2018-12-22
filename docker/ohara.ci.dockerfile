@@ -57,8 +57,6 @@ RUN gradle -Pcdh clean build -x test
 
 FROM centos:7.5.1804
 
-ARG USER=jenkins
-
 # install tools
 RUN yum install -y \
   git \
@@ -99,6 +97,7 @@ ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # add user
+ARG USER=jenkins
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
