@@ -136,10 +136,6 @@ const Svg = styled.svg`
     font-size: 16px;
   }
 
-  .icon-hadoop {
-    font-size: 25px;
-  }
-
   path {
     stroke: ${CSS_VARS.blue};
     fill: ${CSS_VARS.blue};
