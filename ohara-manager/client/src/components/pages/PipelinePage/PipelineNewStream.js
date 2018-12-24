@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import styled from 'styled-components';
 import { Facebook } from 'react-content-loader';
@@ -63,7 +64,17 @@ const Icon = styled.i`
 Icon.displayName = 'Icon';
 
 class PipelineNewStream extends React.Component {
+  static propTypes = {
+    match: PropTypes.shape({
+      isExact: PropTypes.bool,
+      params: PropTypes.object,
+      path: PropTypes.string,
+      url: PropTypes.string,
+    }).isRequired,
+  };
+
   state = {
+    pipelineId: null,
     isLoading: true,
     jars: [],
     activeId: null,
@@ -73,8 +84,16 @@ class PipelineNewStream extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchJars();
+    this.fetchData();
   }
+
+  fetchData = async () => {
+    const { match } = this.props;
+    const pipelineId = _.get(match, 'params.pipelineId', null);
+    this.setState({ pipelineId }, () => {
+      this.fetchJars();
+    });
+  };
 
   handleTrSelect = id => {
     this.setState({ activeId: id });
@@ -168,7 +187,8 @@ class PipelineNewStream extends React.Component {
   };
 
   fetchJars = async () => {
-    const res = await streamApis.fetchStreamJars();
+    const { pipelineId } = this.state;
+    const res = await streamApis.fetchStreamJars(pipelineId);
     this.setState(() => ({ isLoading: false }));
 
     const result = _.get(res, 'data.result', null);
@@ -179,7 +199,8 @@ class PipelineNewStream extends React.Component {
   };
 
   uploadJar = async file => {
-    const res = await streamApis.createStreamJar({ file });
+    const { pipelineId } = this.state;
+    const res = await streamApis.createStreamJar({ pipelineId, file });
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);

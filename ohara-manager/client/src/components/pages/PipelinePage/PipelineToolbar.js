@@ -178,7 +178,7 @@ class PipelineToolbar extends React.Component {
           showActions={true}
         >
           {modalName === modalNames.ADD_STREAM && (
-            <PipelineNewStream ref={this.modalChild} />
+            <PipelineNewStream {...this.props} ref={this.modalChild} />
           )}
 
           {modalName === modalNames.ADD_TOPIC && (

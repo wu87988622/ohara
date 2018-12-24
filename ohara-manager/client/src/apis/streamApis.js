@@ -3,9 +3,9 @@ import axiosInstance from './axios';
 import { handleError } from 'utils/apiUtils';
 import * as _ from 'utils/commonUtils';
 
-export const fetchStreamJars = async () => {
+export const fetchStreamJars = async pipelineId => {
   try {
-    const res = await axiosInstance.get('/api/stream/jars');
+    const res = await axiosInstance.get(`/api/stream/jars/${pipelineId}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -20,8 +20,8 @@ export const fetchStreamJars = async () => {
 
 export const createStreamJar = async params => {
   try {
-    const { file } = params;
-    const url = '/api/stream/jars';
+    const { pipelineId, file } = params;
+    const url = `/api/stream/jars/${pipelineId}`;
     const formData = new FormData();
     formData.append('streamapp', file);
     const config = {
