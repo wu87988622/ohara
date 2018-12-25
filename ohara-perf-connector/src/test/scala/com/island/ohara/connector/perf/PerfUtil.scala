@@ -3,7 +3,7 @@ package com.island.ohara.connector.perf
 import java.time.Duration
 
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
 object PerfUtil {
@@ -11,7 +11,7 @@ object PerfUtil {
   def assertFailedConnector(testUtil: OharaTestUtil, name: String): Unit = CommonUtil.await(
     () => {
       val client = ConnectorClient(testUtil.workersConnProps)
-      try client.status(name).connector.state == State.FAILED
+      try client.status(name).connector.state == ConnectorState.FAILED
       catch {
         case _: Throwable => false
       } finally client.close()
@@ -31,7 +31,7 @@ object PerfUtil {
     CommonUtil.await(
       () => {
         val connectorClient = ConnectorClient(testUtil.workersConnProps)
-        try connectorClient.status(name).connector.state == State.RUNNING
+        try connectorClient.status(name).connector.state == ConnectorState.RUNNING
         catch {
           case _: Throwable => false
         } finally connectorClient.close()

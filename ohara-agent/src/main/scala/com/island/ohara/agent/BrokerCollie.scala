@@ -1,5 +1,5 @@
 package com.island.ohara.agent
-import com.island.ohara.agent.AgentJson.BrokerClusterDescription
+import com.island.ohara.client.ConfiguratorJson.BrokerClusterDescription
 import com.island.ohara.common.util.Releasable
 
 trait BrokerCollie extends Releasable with Collie[BrokerClusterDescription] {

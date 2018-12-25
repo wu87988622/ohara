@@ -2,14 +2,8 @@ package com.island.ohara.agent
 import java.util.Objects
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 
-import com.island.ohara.agent.AgentJson.{
-  BrokerClusterDescription,
-  Node,
-  WorkerClusterDescription,
-  ZookeeperClusterDescription,
-  _
-}
 import com.island.ohara.agent.ClusterCollieImpl._
+import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends ReleaseOnce with ClusterCollie {

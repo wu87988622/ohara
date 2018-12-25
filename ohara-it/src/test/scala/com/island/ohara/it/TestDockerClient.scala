@@ -1,8 +1,8 @@
 package com.island.ohara.it
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.agent.AgentJson.{PortPair, State}
 import com.island.ohara.agent.DockerClient
+import com.island.ohara.client.ConfiguratorJson.{PortPair, ContainerState}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Before, Test}
@@ -63,7 +63,7 @@ class TestDockerClient extends MediumTest with Matchers {
     val container =
       client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     try {
-      container.state shouldBe State.RUNNING
+      container.state shouldBe ContainerState.RUNNING
       val after = client.containers()
       before.exists(_.name == container.name) shouldBe false
       after.exists(_.name == container.name) shouldBe true
@@ -94,7 +94,7 @@ class TestDockerClient extends MediumTest with Matchers {
       client.containerCreator().imageName(imageName).command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
     try {
       TimeUnit.SECONDS.sleep(3)
-      client.container(container.name).get.state shouldBe State.EXITED
+      client.container(container.name).get.state shouldBe ContainerState.EXITED
     } finally client.remove(container.name)
   }
 
@@ -117,7 +117,7 @@ class TestDockerClient extends MediumTest with Matchers {
     try {
       client.stopById(container.id)
       TimeUnit.SECONDS.sleep(3)
-      client.containerById(container.id).get.state shouldBe State.EXITED
+      client.containerById(container.id).get.state shouldBe ContainerState.EXITED
       client.exist(container.name) shouldBe true
       client.existById(container.id) shouldBe true
     } finally if (client.exist(container.name)) {

@@ -2,13 +2,13 @@ package com.island.ohara.it.agent
 
 import java.time.Duration
 
-import com.island.ohara.agent.AgentJson.{
+import com.island.ohara.agent._
+import com.island.ohara.client.ConfiguratorJson.{
   BrokerClusterDescription,
   Node,
   WorkerClusterDescription,
   ZookeeperClusterDescription
 }
-import com.island.ohara.agent._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.LargeTest
@@ -48,7 +48,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val password = nodeInfo.split("@").head.split(":").last
       val hostname = nodeInfo.split("@").last.split(":").head
       val port = nodeInfo.split("@").last.split(":").last.toInt
-      nodeCollie.add(Node(hostname, port, user, password))
+      nodeCollie.add(Node(hostname, hostname, port, user, password, CommonUtil.current()))
       val dockerClient = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
       try {
         withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
@@ -90,7 +90,6 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         .clusterName(clusterName)
         .create(nodeName)
       try {
-        zookeeperCollie.foreach(c => println(s"[CHIA] $c"))
         zookeeperCollie.exists(_.name == zkCluster.name) shouldBe true
         zkCluster.name shouldBe clusterName
         zkCluster.nodeNames.head shouldBe nodeName

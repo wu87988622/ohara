@@ -1,7 +1,7 @@
 package com.island.ohara.common.data.connector;
 
 /** Kafka connector state */
-public enum State {
+public enum ConnectorState {
   UNASSIGNED,
   RUNNING,
   PAUSED,

@@ -31,10 +31,18 @@ private[configurator] object PipelineRoute {
       .filter(data => keys.contains(data.id) || values.contains(data.id))
       .map {
         case statableData: Source =>
-          ObjectAbstract(statableData.id, statableData.name, statableData.kind, statableData.state)
+          ObjectAbstract(statableData.id,
+                         statableData.name,
+                         statableData.kind,
+                         statableData.state,
+                         statableData.lastModified)
         case statableData: Sink =>
-          ObjectAbstract(statableData.id, statableData.name, statableData.kind, statableData.state)
-        case data => ObjectAbstract(data.id, data.name, data.kind, None)
+          ObjectAbstract(statableData.id,
+                         statableData.name,
+                         statableData.kind,
+                         statableData.state,
+                         statableData.lastModified)
+        case data => ObjectAbstract(data.id, data.name, data.kind, None, data.lastModified)
       }
       .toList // NOTED: we have to return a "serializable" list!!!
   }

@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.Directives.{handleRejections, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
+import com.island.ohara.agent.NodeCollie
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.Serializer
@@ -57,6 +58,16 @@ class Configurator private[configurator] (configuredHostname: String,
       complete(StatusCodes.ServiceUnavailable -> Error(e))
   }
 
+  private[this] implicit val nodeCollie = new NodeCollie {
+    override def add(node: Node): Unit = store.add(node)
+    override def remove(id: String): Node = store.remove[Node](id)
+    override def update(node: Node): Unit = store.update(node)
+    override def close(): Unit = {
+      // do nothing
+    }
+    override def iterator: Iterator[Node] = store.data[Node]
+  }
+
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
@@ -72,7 +83,8 @@ class Configurator private[configurator] (configuredHostname: String,
       SourceRoute.apply,
       SinkRoute.apply,
       ClusterRoute.apply,
-      StreamRoute.apply
+      StreamRoute.apply,
+      NodeRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
@@ -139,6 +151,12 @@ class Configurator private[configurator] (configuredHostname: String,
 }
 
 object Configurator {
+
+  /**
+    * generate a configurator with all-in-memory store and fake-client-to-no-cluster.
+    * @return a local configurator
+    */
+  def local(): Configurator = builder().noCluster().port(0).hostname(CommonUtil.hostname()).build()
   def builder(): ConfiguratorBuilder = new ConfiguratorBuilder()
 
   //----------------[main]----------------//
@@ -188,7 +206,7 @@ object Configurator {
     val configurator =
       if (brokers.isEmpty && workers.isEmpty) {
         standalone = true
-        Configurator.builder().noCluster.hostname(hostname).port(port).build()
+        Configurator.builder().noCluster().hostname(hostname).port(port).build()
       } else if (brokers.isEmpty ^ workers.isEmpty)
         throw new IllegalArgumentException(s"brokers:$brokers workers:$workers")
       else

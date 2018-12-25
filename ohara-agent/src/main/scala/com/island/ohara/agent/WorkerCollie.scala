@@ -1,5 +1,5 @@
 package com.island.ohara.agent
-import com.island.ohara.agent.AgentJson.WorkerClusterDescription
+import com.island.ohara.client.ConfiguratorJson.WorkerClusterDescription
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 

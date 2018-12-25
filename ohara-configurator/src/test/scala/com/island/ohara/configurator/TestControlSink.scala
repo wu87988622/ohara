@@ -5,7 +5,7 @@ import java.time.Duration
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.WithBrokerWorker
@@ -61,18 +61,21 @@ class TestControlSink extends WithBrokerWorker with Matchers {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
-      client.get[Sink](sink.id).state.get shouldBe State.RUNNING
+      CommonUtil
+        .await(() => connectorClient.status(sink.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ => client.pause[Sink](sink.id))
-      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.PAUSED, Duration.ofSeconds(20))
-      client.get[Sink](sink.id).state.get shouldBe State.PAUSED
+      CommonUtil
+        .await(() => connectorClient.status(sink.id).connector.state == ConnectorState.PAUSED, Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ => client.resume[Sink](sink.id))
-      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
-      client.get[Sink](sink.id).state.get shouldBe State.RUNNING
+      CommonUtil
+        .await(() => connectorClient.status(sink.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      client.get[Sink](sink.id).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => client.stop[Sink](sink.id))
@@ -106,7 +109,8 @@ class TestControlSink extends WithBrokerWorker with Matchers {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil.await(() => connectorClient.status(sink.id).connector.state == State.RUNNING, Duration.ofSeconds(20))
+      CommonUtil
+        .await(() => connectorClient.status(sink.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy client
         .update[SinkRequest, Sink](sink.id, request.copy(numberOfTasks = 2))

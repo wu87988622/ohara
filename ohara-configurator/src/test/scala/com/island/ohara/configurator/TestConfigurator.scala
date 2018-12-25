@@ -32,7 +32,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     .build()
 
   private[this] val configurator1 =
-    Configurator.builder().hostname("localhost").port(0).noCluster.build()
+    Configurator.local()
 
   private[this] val configurators = Seq(configurator0, configurator1)
 

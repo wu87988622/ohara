@@ -1,6 +1,5 @@
 package com.island.ohara.client
-
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -69,16 +68,16 @@ object ConnectorJson {
       )
     }
 
-  implicit val STATE_JSON_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
-    override def write(obj: State): JsValue = JsString(obj.name)
-    override def read(json: JsValue): State = State.values
+  implicit val STATE_JSON_FORMAT: RootJsonFormat[ConnectorState] = new RootJsonFormat[ConnectorState] {
+    override def write(obj: ConnectorState): JsValue = JsString(obj.name)
+    override def read(json: JsValue): ConnectorState = ConnectorState.values
       .find(_.name == json.asInstanceOf[JsString].value)
       .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
   }
 
-  final case class ConnectorStatus(state: State, worker_id: String, trace: Option[String])
+  final case class ConnectorStatus(state: ConnectorState, worker_id: String, trace: Option[String])
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
-  final case class TaskStatus(id: Int, state: State, worker_id: String, trace: Option[String])
+  final case class TaskStatus(id: Int, state: ConnectorState, worker_id: String, trace: Option[String])
   implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)
   final case class ConnectorInformation(name: String, connector: ConnectorStatus, tasks: Seq[TaskStatus])
   implicit val CONNECTOR_INFORMATION_JSON_FORMAT: RootJsonFormat[ConnectorInformation] = jsonFormat3(

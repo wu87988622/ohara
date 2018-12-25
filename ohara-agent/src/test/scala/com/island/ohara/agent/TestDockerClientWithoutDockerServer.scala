@@ -1,8 +1,7 @@
 package com.island.ohara.agent
-
-import com.island.ohara.agent.AgentJson._
 import com.island.ohara.agent.SshdServer.CommandHandler
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
+import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import org.junit.{AfterClass, Test}
@@ -27,37 +26,37 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
       .contains("--rm") shouldBe true
   }
 
-  private[this] def testSpecifiedContainer(expectedState: State): Unit = {
+  private[this] def testSpecifiedContainer(expectedState: ContainerState): Unit = {
     val rContainers = CLIENT.containers().filter(_.state == expectedState)
     rContainers.size shouldBe 1
     rContainers.head shouldBe CONTAINERS.find(_.state == expectedState).get
   }
   @Test
-  def testCreatedContainers(): Unit = testSpecifiedContainer(State.CREATED)
+  def testCreatedContainers(): Unit = testSpecifiedContainer(ContainerState.CREATED)
 
   @Test
-  def testRestartingContainers(): Unit = testSpecifiedContainer(State.RESTARTING)
+  def testRestartingContainers(): Unit = testSpecifiedContainer(ContainerState.RESTARTING)
 
   @Test
-  def testRunningContainers(): Unit = testSpecifiedContainer(State.RUNNING)
+  def testRunningContainers(): Unit = testSpecifiedContainer(ContainerState.RUNNING)
 
   @Test
-  def testRemovingContainers(): Unit = testSpecifiedContainer(State.REMOVING)
+  def testRemovingContainers(): Unit = testSpecifiedContainer(ContainerState.REMOVING)
 
   @Test
-  def testPausedContainers(): Unit = testSpecifiedContainer(State.PAUSED)
+  def testPausedContainers(): Unit = testSpecifiedContainer(ContainerState.PAUSED)
 
   @Test
-  def testExitedContainers(): Unit = testSpecifiedContainer(State.EXITED)
+  def testExitedContainers(): Unit = testSpecifiedContainer(ContainerState.EXITED)
 
   @Test
-  def testDeadContainers(): Unit = testSpecifiedContainer(State.DEAD)
+  def testDeadContainers(): Unit = testSpecifiedContainer(ContainerState.DEAD)
 
   @Test
   def testActiveContainers(): Unit = {
     val rContainers = CLIENT.activeContainers()
     rContainers.size shouldBe 1
-    rContainers.head shouldBe CONTAINERS.find(_.state == State.RUNNING).get
+    rContainers.head shouldBe CONTAINERS.find(_.state == ContainerState.RUNNING).get
   }
 
   @Test
@@ -149,7 +148,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   */
 object TestDockerClientWithoutDockerServer {
 
-  private val CONTAINERS = State.all.map(
+  private val CONTAINERS = ContainerState.all.map(
     s =>
       ContainerDescription(
         nodeName = CommonUtil.hostname(),

@@ -1,8 +1,8 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.agent.AgentJson.{ContainerDescription, PortMapping, PortPair, State}
 import com.island.ohara.agent.DockerClient._
+import com.island.ohara.client.ConfiguratorJson.{ContainerDescription, PortMapping, PortPair, ContainerState}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -177,10 +177,10 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
               id = id,
               imageName = items(1),
               created = items(2),
-              state = State.all
+              state = ContainerState.all
                 .find(s => items(3).toLowerCase.contains(s.name.toLowerCase))
                 // the running container show "up to xxx"
-                .getOrElse(State.RUNNING),
+                .getOrElse(ContainerState.RUNNING),
               name = items(4),
               size = items(5),
               portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6)),

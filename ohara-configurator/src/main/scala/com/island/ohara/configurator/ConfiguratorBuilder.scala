@@ -14,7 +14,7 @@ import com.island.ohara.client.ConnectorJson.{
 }
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._
@@ -110,7 +110,7 @@ class ConfiguratorBuilder {
     *
     * @return this builder
     */
-  def noCluster: ConfiguratorBuilder = {
+  def noCluster(): ConfiguratorBuilder = {
     kafkaClient(new FakeKafkaClient())
     connectClient(new FakeConnectorClient())
     store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
@@ -129,14 +129,14 @@ class ConfiguratorBuilder {
   */
 private[configurator] class FakeConnectorClient extends ConnectorClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
-  private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
+  private[this] val cachedConnectorsState = new ConcurrentHashMap[String, ConnectorState]()
 
   override def connectorCreator(): ConnectorCreator = request => {
     if (cachedConnectors.contains(request.name))
       throw new IllegalStateException(s"the connector:${request.name} exists!")
     else {
       cachedConnectors.put(request.name, request.config)
-      cachedConnectorsState.put(request.name, State.RUNNING)
+      cachedConnectorsState.put(request.name, ConnectorState.RUNNING)
       CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
     }
   }
@@ -171,12 +171,12 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   }
   override def pause(name: String): Unit = {
     checkExist(name)
-    cachedConnectorsState.put(name, State.PAUSED)
+    cachedConnectorsState.put(name, ConnectorState.PAUSED)
   }
 
   override def resume(name: String): Unit = {
     checkExist(name)
-    cachedConnectorsState.put(name, State.RUNNING)
+    cachedConnectorsState.put(name, ConnectorState.RUNNING)
   }
 
   private[this] def checkExist(name: String): Unit =

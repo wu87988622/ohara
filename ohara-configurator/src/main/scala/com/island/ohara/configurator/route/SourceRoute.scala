@@ -6,7 +6,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
@@ -99,7 +99,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
                 .create()
               // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
               // connector from kafka
-              store.update[Source](source.copy(state = Some(State.RUNNING)))
+              store.update[Source](source.copy(state = Some(ConnectorState.RUNNING)))
             }
             complete(StatusCodes.OK)
           }
@@ -123,7 +123,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             connectorClient.pause(source.id)
             // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
-            store.update[Source](source.copy(state = Some(State.PAUSED)))
+            store.update[Source](source.copy(state = Some(ConnectorState.PAUSED)))
             complete(StatusCodes.OK)
           }
         } ~ path(RESUME_COMMAND) {
@@ -135,7 +135,7 @@ private[configurator] object SourceRoute extends SprayJsonSupport {
             connectorClient.resume(source.id)
             // update the stats manually. Connector request is executed async so we can't get the "real-time" state from
             // connector from kafka
-            store.update[Source](source.copy(state = Some(State.RUNNING)))
+            store.update[Source](source.copy(state = Some(ConnectorState.RUNNING)))
             complete(StatusCodes.OK)
           }
         }

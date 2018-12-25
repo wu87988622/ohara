@@ -1,6 +1,5 @@
 package com.island.ohara.configurator
-
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -17,13 +16,13 @@ class TestFakeConnectorClient extends SmallTest with Matchers {
 
     fake.exist(connectorName) shouldBe true
 
-    fake.status(connectorName).connector.state shouldBe State.RUNNING
+    fake.status(connectorName).connector.state shouldBe ConnectorState.RUNNING
 
     fake.pause(connectorName)
-    fake.status(connectorName).connector.state shouldBe State.PAUSED
+    fake.status(connectorName).connector.state shouldBe ConnectorState.PAUSED
 
     fake.resume(connectorName)
-    fake.status(connectorName).connector.state shouldBe State.RUNNING
+    fake.status(connectorName).connector.state shouldBe ConnectorState.RUNNING
 
     fake.delete(connectorName)
     fake.exist(connectorName) shouldBe false

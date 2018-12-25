@@ -5,7 +5,7 @@ import com.island.ohara.client.ConnectorClient$;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.common.data.connector.State;
+import com.island.ohara.common.data.connector.ConnectorState;
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers3Workers;
@@ -91,7 +91,7 @@ public class TestConnectorClient extends With3Brokers3Workers {
       // pause connector
       connectorClient.pause(connectorName);
       CommonUtil.await(
-          () -> connectorClient.status(connectorName).connector().state() == State.PAUSED,
+          () -> connectorClient.status(connectorName).connector().state() == ConnectorState.PAUSED,
           Duration.ofSeconds(50));
 
       // try to receive all data from topic...10 seconds should be enough in this case;
@@ -105,7 +105,7 @@ public class TestConnectorClient extends With3Brokers3Workers {
       // resume connector
       connectorClient.resume(connectorName);
       CommonUtil.await(
-          () -> connectorClient.status(connectorName).connector().state() == State.RUNNING,
+          () -> connectorClient.status(connectorName).connector().state() == ConnectorState.RUNNING,
           Duration.ofSeconds(50),
           Duration.ofSeconds(2),
           true);

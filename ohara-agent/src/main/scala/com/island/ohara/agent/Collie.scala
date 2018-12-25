@@ -1,6 +1,6 @@
 package com.island.ohara.agent
-import com.island.ohara.agent.AgentJson.{ClusterDescription, ContainerDescription}
 import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.client.ConfiguratorJson.{ClusterDescription, ContainerDescription}
 import com.island.ohara.common.annotations.Optional
 
 /**

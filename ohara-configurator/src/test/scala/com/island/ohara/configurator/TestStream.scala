@@ -21,8 +21,7 @@ import scala.io.Source
 
 class TestStream extends MediumTest with Matchers {
 
-  private[this] val configurator =
-    Configurator.builder().hostname("localhost").port(0).noCluster.build()
+  private[this] val configurator = Configurator.local()
 
   private[this] val ip = s"${configurator.hostname}:${configurator.port}"
   private[this] val client = ConfiguratorClient(ip)

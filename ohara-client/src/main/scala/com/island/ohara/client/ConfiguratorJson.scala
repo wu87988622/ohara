@@ -2,7 +2,7 @@ package com.island.ohara.client
 
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart.Strict
 import com.island.ohara.client.ConnectorJson._
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.data.{Column, DataType}
 import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
@@ -31,17 +31,17 @@ object ConfiguratorJson {
   val PAUSE_COMMAND: String = "pause"
   val RESUME_COMMAND: String = "resume"
   //------------------------------------------------[DATA]------------------------------------------------//
-  sealed trait Data {
-    def id: String
-    def name: String
 
-    /**
-      * This field should not be marshalled into json so we make it be "def" rather than "val.
-      * DON'T change this filed since it is exposed by restful APIs
-      *
-      * @return the type from this class
-      */
+  /**
+    * this is the basic type which can be stored by configurator.
+    * the members declared as "def" are not format to "json". By contrast, the "val" memebers are serialized to json.
+    */
+  sealed trait Data {
+    val id: String
+    val name: String
+    val lastModified: Long
     def kind: String
+
   }
 
   /**
@@ -49,7 +49,7 @@ object ConfiguratorJson {
     */
   sealed trait DataCommandFormat[T] {
     def format(address: String): String
-    def format(address: String, uuid: String): String
+    def format(address: String, id: String): String
   }
 
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
@@ -82,7 +82,7 @@ object ConfiguratorJson {
   implicit val TOPIC_INFO_JSON_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat5(TopicInfo)
   implicit val TOPIC_INFO_COMMAND_FORMAT: DataCommandFormat[TopicInfo] = new DataCommandFormat[TopicInfo] {
     override def format(address: String): String = s"http://$address/$VERSION_V0/$TOPIC_INFO_PATH"
-    override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$TOPIC_INFO_PATH/$uuid"
+    override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$TOPIC_INFO_PATH/$id"
   }
 
   //------------------------------------------------[DATA-HDFS]------------------------------------------------//
@@ -98,7 +98,7 @@ object ConfiguratorJson {
   implicit val HDFS_INFORMATION_COMMAND_FORMAT: DataCommandFormat[HdfsInformation] =
     new DataCommandFormat[HdfsInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$HDFS_PATH"
-      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$HDFS_PATH/$uuid"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$HDFS_PATH/$id"
     }
 
   //------------------------------------------------[DATA-FTP]------------------------------------------------//
@@ -121,7 +121,7 @@ object ConfiguratorJson {
   implicit val FTP_INFORMATION_COMMAND_FORMAT: DataCommandFormat[FtpInformation] =
     new DataCommandFormat[FtpInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$FTP_PATH"
-      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$FTP_PATH/$uuid"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$FTP_PATH/$id"
     }
 
   //------------------------------------------------[DATA-JDBC]------------------------------------------------//
@@ -143,7 +143,7 @@ object ConfiguratorJson {
   implicit val JDBC_INFORMATION_COMMAND_FORMAT: DataCommandFormat[JdbcInformation] =
     new DataCommandFormat[JdbcInformation] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$JDBC_PATH"
-      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$JDBC_PATH/$uuid"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$JDBC_PATH/$id"
     }
 
   //------------------------------------------------[DATA-PIPELINE]------------------------------------------------//
@@ -158,44 +158,49 @@ object ConfiguratorJson {
       * used to generate uri to send start request
       *
       * @param address basic address
-      * @param uuid uuid from data
+      * @param id id from data
       * @return uri
       */
-    def start(address: String, uuid: String): String
+    def start(address: String, id: String): String
 
     /**
       * used to generate uri to send stop request
       *
       * @param address basic address
-      * @param uuid uuid from data
+      * @param id id from data
       * @return uri
       */
-    def stop(address: String, uuid: String): String
+    def stop(address: String, id: String): String
 
     /**
       * used to generate uri to send resume request
       *
       * @param address basic address
-      * @param uuid uuid from data
+      * @param id id from data
       * @return uri
       */
-    def resume(address: String, uuid: String): String
+    def resume(address: String, id: String): String
 
     /**
       * used to generate uri to send pause request
       *
       * @param address basic address
-      * @param uuid uuid from data
+      * @param id id from data
       * @return uri
       */
-    def pause(address: String, uuid: String): String
+    def pause(address: String, id: String): String
   }
 
   final case class PipelineRequest(name: String, rules: Map[String, String])
   implicit val PIPELINE_REQUEST_JSON_FORMAT: RootJsonFormat[PipelineRequest] = jsonFormat2(PipelineRequest)
 
-  final case class ObjectAbstract(id: String, name: String, kind: String, state: Option[State]) extends Data
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat4(ObjectAbstract)
+  final case class ObjectAbstract(id: String,
+                                  name: String,
+                                  kind: String,
+                                  state: Option[ConnectorState],
+                                  lastModified: Long)
+      extends Data
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat5(ObjectAbstract)
 
   final case class Pipeline(id: String,
                             name: String,
@@ -209,7 +214,7 @@ object ConfiguratorJson {
   implicit val PIPELINE_COMMAND_FORMAT: DataCommandFormat[Pipeline] =
     new DataCommandFormat[Pipeline] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH"
-      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH/$uuid"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH/$id"
     }
   //------------------------------------------------[DATA-SOURCE]------------------------------------------------//
   val SOURCE_PATH = "sources"
@@ -228,7 +233,7 @@ object ConfiguratorJson {
                           topics: Seq[String],
                           numberOfTasks: Int,
                           configs: Map[String, String],
-                          state: Option[State],
+                          state: Option[ConnectorState],
                           lastModified: Long)
       extends Data {
     override def kind: String = className
@@ -237,19 +242,19 @@ object ConfiguratorJson {
   implicit val SOURCE_COMMAND_FORMAT: DataCommandFormat[Source] =
     new DataCommandFormat[Source] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH"
-      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH/$id"
     }
 
   implicit val SOURCE_CONTROL_FORMAT: ControlCommandFormat[Source] =
     new ControlCommandFormat[Source] {
-      override def start(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$START_COMMAND"
-      override def stop(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$STOP_COMMAND"
-      override def resume(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$RESUME_COMMAND"
-      override def pause(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$uuid/$PAUSE_COMMAND"
+      override def start(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$START_COMMAND"
+      override def stop(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$STOP_COMMAND"
+      override def resume(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$RESUME_COMMAND"
+      override def pause(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$PAUSE_COMMAND"
     }
   //------------------------------------------------[DATA-SINK]------------------------------------------------//
   val SINK_PATH = "sinks"
@@ -268,7 +273,7 @@ object ConfiguratorJson {
                         topics: Seq[String],
                         numberOfTasks: Int,
                         configs: Map[String, String],
-                        state: Option[State],
+                        state: Option[ConnectorState],
                         lastModified: Long)
       extends Data {
     override def kind: String = className
@@ -277,19 +282,19 @@ object ConfiguratorJson {
   implicit val SINK_COMMAND_FORMAT: DataCommandFormat[Sink] =
     new DataCommandFormat[Sink] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$SINK_PATH"
-      override def format(address: String, uuid: String): String = s"http://$address/$VERSION_V0/$SINK_PATH/$uuid"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$SINK_PATH/$id"
     }
 
   implicit val SINK_CONTROL_FORMAT: ControlCommandFormat[Sink] =
     new ControlCommandFormat[Sink] {
-      override def start(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$START_COMMAND"
-      override def stop(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$STOP_COMMAND"
-      override def resume(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$RESUME_COMMAND"
-      override def pause(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$uuid/$PAUSE_COMMAND"
+      override def start(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$START_COMMAND"
+      override def stop(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$STOP_COMMAND"
+      override def resume(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$RESUME_COMMAND"
+      override def pause(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$PAUSE_COMMAND"
     }
   //------------------------------------------------[VALIDATION]------------------------------------------------//
   val VALIDATION_PATH = "validate"
@@ -463,14 +468,14 @@ object ConfiguratorJson {
   implicit val JAR_UPLOAD_LIST_PATH_COMMAND_FORMAT: DataCommandFormat[Strict] =
     new DataCommandFormat[Strict] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
-      override def format(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$uuid"
+      override def format(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$id"
     }
   implicit val LIST_PATH_COMMAND_FORMAT: DataCommandFormat[StreamJar] =
     new DataCommandFormat[StreamJar] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH"
-      override def format(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$uuid"
+      override def format(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$STREAM_PATH/$JARS_STREAM_PATH/$id"
     }
 
   // StreamApp Property Page
@@ -478,8 +483,8 @@ object ConfiguratorJson {
   implicit val PROPERTY_INFO_COMMAND_FORMAT: DataCommandFormat[StreamPropertyResponse] =
     new DataCommandFormat[StreamPropertyResponse] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$STREAM_PATH/$PROPERTY_STREAM_PATH"
-      override def format(address: String, uuid: String): String =
-        s"http://$address/$VERSION_V0/$STREAM_PATH/$PROPERTY_STREAM_PATH/$uuid"
+      override def format(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$STREAM_PATH/$PROPERTY_STREAM_PATH/$id"
     }
 
   //------------------------------------------------[ERROR]------------------------------------------------//
@@ -499,4 +504,141 @@ object ConfiguratorJson {
     def apply(e: Throwable): Error =
       Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
   }
+
+  //----------------------------------------------------[Node]----------------------------------------------------//
+  val NODE_PATH: String = "nodes"
+  case class NodeRequest(name: String, port: Int, user: String, password: String)
+  implicit val NODE_REQUEST_JSON_FORMAT: RootJsonFormat[NodeRequest] = jsonFormat4(NodeRequest)
+
+  case class Node(id: String, name: String, port: Int, user: String, password: String, lastModified: Long)
+      extends Data {
+    override def kind: String = "node"
+  }
+
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat6(Node)
+  implicit val NODE_COMMAND_FORMAT: DataCommandFormat[Node] =
+    new DataCommandFormat[Node] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$NODE_PATH"
+      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$NODE_PATH/$id"
+    }
+  //----------------------------------------------------[Worker]----------------------------------------------------//
+  sealed trait ClusterDescription {
+    def name: String
+    def imageName: String
+    def nodeNames: Seq[String]
+  }
+
+  final case class ZookeeperClusterDescription(name: String,
+                                               imageName: String,
+                                               clientPort: Int,
+                                               peerPort: Int,
+                                               electionPort: Int,
+                                               nodeNames: Seq[String])
+      extends ClusterDescription
+  implicit val ZOOKEEPER_CLUSTER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ZookeeperClusterDescription] = jsonFormat6(
+    ZookeeperClusterDescription)
+
+  final case class BrokerClusterDescription(name: String,
+                                            imageName: String,
+                                            zookeeperClusterName: String,
+                                            clientPort: Int,
+                                            nodeNames: Seq[String])
+      extends ClusterDescription
+  implicit val BROKER_CLUSTER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[BrokerClusterDescription] = jsonFormat5(
+    BrokerClusterDescription)
+
+  final case class WorkerClusterDescription(name: String,
+                                            imageName: String,
+                                            brokerClusterName: String,
+                                            clientPort: Int,
+                                            groupId: String,
+                                            statusTopicName: String,
+                                            statusTopicPartitions: Int,
+                                            statusTopicReplications: Short,
+                                            configTopicName: String,
+                                            configTopicPartitions: Int,
+                                            configTopicReplications: Short,
+                                            offsetTopicName: String,
+                                            offsetTopicPartitions: Int,
+                                            offsetTopicReplications: Short,
+                                            nodeNames: Seq[String])
+      extends ClusterDescription
+  implicit val WORKER_CLUSTER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[WorkerClusterDescription] = jsonFormat15(
+    WorkerClusterDescription)
+
+  //----------------------------------------------------[Docker]----------------------------------------------------//
+  /**
+    * the enumeration is referenced to container's status. one of created, restarting, running, removing, paused, exited, or dead.
+    * see https://docs.docker.com/engine/reference/commandline/ps/#filtering for more information
+    *
+    */
+  abstract sealed class ContainerState extends Serializable {
+    // adding a field to display the name from enumeration avoid we break the compatibility when moving code...
+    val name: String
+  }
+
+  object ContainerState {
+    case object CREATED extends ContainerState {
+      val name = "CREATED"
+    }
+
+    case object RESTARTING extends ContainerState {
+      val name = "RESTARTING"
+    }
+
+    case object RUNNING extends ContainerState {
+      val name = "RUNNING"
+    }
+
+    case object REMOVING extends ContainerState {
+      val name = "REMOVING"
+    }
+
+    case object PAUSED extends ContainerState {
+      val name = "PAUSED"
+    }
+
+    case object EXITED extends ContainerState {
+      val name = "EXITED"
+    }
+
+    case object DEAD extends ContainerState {
+      val name = "DEAD"
+    }
+
+    val all: Seq[ContainerState] = Seq(
+      CREATED,
+      RESTARTING,
+      RUNNING,
+      REMOVING,
+      PAUSED,
+      EXITED,
+      DEAD
+    )
+  }
+  implicit val CONTAINER_STATE_JSON_FORMAT: RootJsonFormat[ContainerState] = new RootJsonFormat[ContainerState] {
+    override def write(obj: ContainerState): JsValue = JsString(obj.name)
+    override def read(json: JsValue): ContainerState = ContainerState.all
+      .find(_.name == json.asInstanceOf[JsString].value)
+      .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
+  }
+
+  final case class PortPair(hostPort: Int, containerPort: Int)
+  implicit val PORT_PAIR_JSON_FORMAT: RootJsonFormat[PortPair] = jsonFormat2(PortPair)
+
+  final case class PortMapping(hostIp: String, portPairs: Seq[PortPair])
+  implicit val PORT_MAPPING_JSON_FORMAT: RootJsonFormat[PortMapping] = jsonFormat2(PortMapping)
+
+  final case class ContainerDescription(nodeName: String,
+                                        id: String,
+                                        imageName: String,
+                                        created: String,
+                                        state: ContainerState,
+                                        name: String,
+                                        size: String,
+                                        portMappings: Seq[PortMapping],
+                                        environments: Map[String, String],
+                                        hostname: String)
+  implicit val CONTAINER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ContainerDescription] = jsonFormat10(
+    ContainerDescription)
 }

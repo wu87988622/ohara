@@ -8,7 +8,7 @@ import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.common.data.connector.State;
+import com.island.ohara.common.data.connector.ConnectorState;
 import com.island.ohara.common.util.ByteUtil;
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.ReleaseOnce;
@@ -94,7 +94,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     CommonUtil.await(
         () -> {
           try {
-            return connectorClient.status(name).connector().state() == State.RUNNING;
+            return connectorClient.status(name).connector().state() == ConnectorState.RUNNING;
           } catch (Throwable t) {
             return false;
           }

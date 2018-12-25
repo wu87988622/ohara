@@ -1,5 +1,5 @@
 package com.island.ohara.agent
-import com.island.ohara.agent.AgentJson._
+import com.island.ohara.client.ConfiguratorJson.ZookeeperClusterDescription
 import com.island.ohara.common.util.Releasable
 
 /**

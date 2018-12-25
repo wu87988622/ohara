@@ -11,7 +11,7 @@ import com.island.ohara.client.ConfiguratorJson.{
   TopicInfoRequest
 }
 import com.island.ohara.client.{ConfiguratorClient, ConfiguratorJson}
-import com.island.ohara.common.data.connector.State
+import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Test}
@@ -19,7 +19,7 @@ import org.scalatest.Matchers
 
 class TestPipelineRule extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.builder().noCluster.hostname("localhost").port(0).build()
+  private[this] val configurator = Configurator.local()
 
   private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 
@@ -46,7 +46,7 @@ class TestPipelineRule extends SmallTest with Matchers {
     // start source and pipeline should "see" what happen in source
     client.start[Source](source.id)
     val pipeline2 = client.get[Pipeline](pipeline.id)
-    pipeline2.objects.foreach(obj => obj.state.get shouldBe State.RUNNING)
+    pipeline2.objects.foreach(obj => obj.state.get shouldBe ConnectorState.RUNNING)
   }
 
   @Test

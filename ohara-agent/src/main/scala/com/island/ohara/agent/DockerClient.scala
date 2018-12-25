@@ -2,8 +2,8 @@ package com.island.ohara.agent
 
 import java.util.Objects
 
-import com.island.ohara.agent.AgentJson._
 import com.island.ohara.agent.DockerClient.{ContainerCreator, ContainerInspector}
+import com.island.ohara.client.ConfiguratorJson.{ContainerDescription, ContainerState}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
@@ -29,7 +29,7 @@ trait DockerClient extends Releasable {
   /**
     * @return a collection of running docker containers
     */
-  def activeContainers(): Seq[ContainerDescription] = containers().filter(_.state == State.RUNNING)
+  def activeContainers(): Seq[ContainerDescription] = containers().filter(_.state == ContainerState.RUNNING)
 
   /**
     * @return a collection of docker containers

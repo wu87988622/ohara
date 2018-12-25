@@ -1,23 +1,14 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.ReleaseOnce
-import com.island.ohara.configurator.store.Store
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 class TestOhara450 extends SmallTest with Matchers {
 
-  private[this] val configurator =
-    Configurator
-      .builder()
-      .hostname("localhost")
-      .port(0)
-      .store(Store.inMemory(Serializer.STRING, Serializer.OBJECT))
-      .noCluster
-      .build()
+  private[this] val configurator = Configurator.local()
 
   private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 
