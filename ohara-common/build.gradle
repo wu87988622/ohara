@@ -27,10 +27,6 @@ def exec(String[] args) {
   return s.replaceAll("\n", "")
 }
 
-def hasGit() {
-  return exec("which", "git")
-}
-
 import org.apache.tools.ant.taskdefs.condition.Os
 def whoami() {
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -43,8 +39,7 @@ def whoami() {
 }
 def user() {
   try {
-    if (hasGit()) return exec("git", "config", "user.name")
-    else return whoami()
+    return exec("git", "config", "user.name")
   } catch (Throwable e) {
     // if git's user is not set, git will return exit code 1
     return whoami()
@@ -53,8 +48,7 @@ def user() {
 
 def revision() {
   try {
-    if (hasGit()) return exec("git", "log", "-1", "--no-show-signature", "--pretty=format:%H")
-    else return "Unknown"
+    return exec("git", "log", "-1", "--pretty=format:%H")
   } catch (Throwable e) {
     // if git's user is not set, git will return exit code 1
     return "Unknown"
