@@ -1,7 +1,6 @@
 import axiosInstance from './axios';
-
-import { handleError } from 'utils/apiUtils';
 import * as _ from 'utils/commonUtils';
+import { handleError } from 'utils/apiUtils';
 
 export const fetchStreamJars = async pipelineId => {
   try {

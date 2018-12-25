@@ -1,11 +1,10 @@
-import axios from 'axios';
-
-import { handleError } from 'utils/apiUtils';
+import axiosInstance from './axios';
 import * as _ from 'utils/commonUtils';
+import { handleError } from 'utils/apiUtils';
 
 export const fetchTopic = async topicId => {
   try {
-    const res = await axios.get(`/api/topics/${topicId}`);
+    const res = await axiosInstance.get(`/api/topics/${topicId}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -20,7 +19,7 @@ export const fetchTopic = async topicId => {
 
 export const fetchTopics = async () => {
   try {
-    const res = await axios.get('/api/topics');
+    const res = await axiosInstance.get('/api/topics');
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -35,7 +34,7 @@ export const fetchTopics = async () => {
 
 export const createTopics = async params => {
   try {
-    const res = await axios.post('/api/topics', params);
+    const res = await axiosInstance.post('/api/topics', params);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

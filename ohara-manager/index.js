@@ -21,11 +21,6 @@ app.use(express.static(path.resolve(__dirname, 'client', 'build')));
 
 // API routes
 require('./routes/authRoutes')(app);
-require('./routes/topicRoutes')(app);
-require('./routes/schemaRoutes')(app);
-require('./routes/configurationRoutes')(app);
-require('./routes/clusterRoutes')(app);
-require('./routes/pipelineRoutes')(app);
 
 // API Proxy
 app.use(
@@ -44,7 +39,7 @@ app.use(
 
       if (req.body) {
         const bodyData = JSON.stringify(req.body);
-        // incase if content-type is application/x-www-form-urlencoded -> we need to change to application/json
+        // in case if content-type is application/x-www-form-urlencoded -> we need to change to application/json
         proxyReq.setHeader('Content-Type', 'application/json');
         proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);

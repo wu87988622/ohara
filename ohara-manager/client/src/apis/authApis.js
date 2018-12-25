@@ -1,11 +1,10 @@
-import axios from 'axios';
-
-import { handleError } from 'utils/apiUtils';
+import axiosInstance from './axios';
 import * as _ from 'utils/commonUtils';
+import { handleError } from 'utils/apiUtils';
 
 export const login = async ({ username, password }) => {
   try {
-    const res = await axios.post('/api/login', {
+    const res = await axiosInstance.post('/api/login', {
       username,
       password,
     });
@@ -23,7 +22,7 @@ export const login = async ({ username, password }) => {
 
 export const logout = async () => {
   try {
-    const res = await axios.get('/api/logout');
+    const res = await axiosInstance.get('/api/logout');
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

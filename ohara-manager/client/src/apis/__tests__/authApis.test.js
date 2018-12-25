@@ -1,9 +1,8 @@
-import axios from 'axios';
-
+import axiosInstance from '../axios';
 import { login, logout } from '../authApis';
 import { handleError } from 'utils/apiUtils';
 
-jest.mock('axios');
+jest.mock('../axios');
 jest.mock('utils/apiUtils');
 
 describe('authApis', () => {
@@ -17,13 +16,13 @@ describe('authApis', () => {
         },
       };
 
-      axios.post.mockImplementation(() => Promise.resolve(res));
+      axiosInstance.post.mockImplementation(() => Promise.resolve(res));
 
       const params = { username: 'test', password: '1234' };
 
       const result = await login(params);
-      expect(axios.post).toHaveBeenCalledTimes(1);
-      expect(axios.post).toHaveBeenCalledWith('/api/login', params);
+      expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+      expect(axiosInstance.post).toHaveBeenCalledWith('/api/login', params);
       expect(result).toBe(res);
     });
 
@@ -33,13 +32,13 @@ describe('authApis', () => {
           isSuccess: false,
         },
       };
-      axios.post.mockImplementation(() => Promise.resolve(res));
+      axiosInstance.post.mockImplementation(() => Promise.resolve(res));
       const params = { username: 'test', password: '1234' };
 
       const result = await login(params);
 
-      expect(axios.post).toHaveBeenCalledTimes(1);
-      expect(axios.post).toHaveBeenCalledWith('/api/login', params);
+      expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+      expect(axiosInstance.post).toHaveBeenCalledWith('/api/login', params);
       expect(handleError).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledWith(result);
     });
@@ -54,10 +53,10 @@ describe('authApis', () => {
       };
 
       const params = { username: 'test', password: '1234' };
-      axios.post.mockImplementation(() => Promise.reject(res));
+      axiosInstance.post.mockImplementation(() => Promise.reject(res));
 
       await login(params);
-      expect(axios.post).toHaveBeenCalledTimes(1);
+      expect(axiosInstance.post).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledWith(res);
     });
@@ -71,12 +70,12 @@ describe('authApis', () => {
         },
       };
 
-      axios.get.mockImplementation(() => Promise.resolve(res));
+      axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
       const result = await logout();
 
-      expect(axios.get).toHaveBeenCalledTimes(1);
-      expect(axios.get).toHaveBeenCalledWith('/api/logout');
+      expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(axiosInstance.get).toHaveBeenCalledWith('/api/logout');
       expect(result).toBe(res);
     });
 
@@ -87,12 +86,12 @@ describe('authApis', () => {
         },
       };
 
-      axios.get.mockImplementation(() => Promise.resolve(res));
+      axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
       const result = await logout();
 
-      expect(axios.get).toHaveBeenCalledTimes(1);
-      expect(axios.get).toHaveBeenCalledWith('/api/logout');
+      expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(axiosInstance.get).toHaveBeenCalledWith('/api/logout');
       expect(handleError).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledWith(result);
     });
@@ -106,10 +105,10 @@ describe('authApis', () => {
         },
       };
 
-      axios.get.mockImplementation(() => Promise.reject(res));
+      axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
       await logout();
-      expect(axios.get).toHaveBeenCalledTimes(1);
+      expect(axiosInstance.get).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledWith(res);
     });

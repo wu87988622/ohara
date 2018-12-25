@@ -11,7 +11,7 @@ import { logout } from 'apis/authApis';
 
 window.localStorage = localStorageMock;
 
-jest.mock('axios');
+jest.mock('apis/axios');
 jest.mock('utils/authUtils');
 jest.mock('apis/authApis');
 

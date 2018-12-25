@@ -1,11 +1,10 @@
-import axios from 'axios';
-
-import { handleError } from 'utils/apiUtils';
+import axiosInstance from './axios';
 import * as _ from 'utils/commonUtils';
+import { handleError } from 'utils/apiUtils';
 
 export const fetchHdfs = async () => {
   try {
-    const res = await axios.get('/api/configuration/hdfs');
+    const res = await axiosInstance.get('/api/hdfs');
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -20,7 +19,7 @@ export const fetchHdfs = async () => {
 
 export const validateHdfs = async ({ uri }) => {
   try {
-    const res = await axios.put('/api/configuration/validate/hdfs', {
+    const res = await axiosInstance.put('/api/validate/hdfs', {
       uri,
     });
     const isSuccess = _.get(res, 'data.isSuccess', false);
@@ -37,7 +36,7 @@ export const validateHdfs = async ({ uri }) => {
 
 export const saveHdfs = async ({ name, uri }) => {
   try {
-    const res = await axios.post('/api/configuration/hdfs/save', {
+    const res = await axiosInstance.post('/api/hdfs', {
       name,
       uri,
     });
@@ -55,7 +54,7 @@ export const saveHdfs = async ({ name, uri }) => {
 
 export const deleteHdfs = async id => {
   try {
-    const res = await axios.delete(`/api/configuration/hdfs/${id}`);
+    const res = await axiosInstance.delete(`/api/hdfs/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

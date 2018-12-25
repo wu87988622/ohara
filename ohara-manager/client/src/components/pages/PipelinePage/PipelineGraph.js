@@ -178,8 +178,6 @@ class PipelineGraph extends React.Component {
   }
 
   handleNodeClick = localId => {
-    console.log(localId);
-
     const { history, resetGraph, updateGraph, graph, match } = this.props;
     const { pipelineId } = match.params;
 

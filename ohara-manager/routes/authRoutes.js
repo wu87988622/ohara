@@ -1,6 +1,6 @@
 const { fakeUsers, token } = require('../constants/fakeUsers');
 
-// TODO: Replace these fake user data and routes with the real ones
+// TODO: fake routes, this is due to we haven't implement the real auth in our app
 module.exports = app => {
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
