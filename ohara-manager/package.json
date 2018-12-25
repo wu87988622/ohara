@@ -13,6 +13,7 @@
     "start:ci": "forever start index.js --configurator http://fakehost:7777/v0 & wait-on http://localhost:5050",
     "start:prod": "node index.js",
     "start:client": "yarn --cwd client start",
+    "dev:client": "run-p start:client test:client",
     "start:client:ci": "BROWSER=none yarn --cwd client start:ci & wait-on http://localhost:3000",
     "lint": "run-s lint:*",
     "lint:server": "eslint --ignore-pattern \"/client\" --ignore-pattern \"/coverage\" \"**/*.js\"",

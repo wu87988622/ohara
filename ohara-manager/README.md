@@ -131,6 +131,12 @@ Generate test coverage reports
 yarn test:client:coverage
 ```
 
+We also have an npm script that runs both the **client** server and unit tests together:
+
+```sh
+yarn dev:client
+```
+
 **Client** also has End-to-End tests, you can run them via the following command:
 
 ```sh
