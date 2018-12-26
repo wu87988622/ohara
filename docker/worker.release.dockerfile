@@ -12,6 +12,7 @@ RUN tar -zxvf kafka_${SCALA_VERSION}-${VERSION}.tgz
 RUN rm -f kafka_${SCALA_VERSION}-${VERSION}.tgz
 RUN mkdir /opt/kafka
 RUN mv kafka_${SCALA_VERSION}-${VERSION} /opt/kafka/
+RUN echo "$VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
 
 # download Tini
 # we download the Tini in multi-stage so as to save the space to install the wget

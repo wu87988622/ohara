@@ -1,5 +1,15 @@
 #!/bin/bash
 
+if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
+  if [[ -f "$ZOOKEEPER_HOME/bin/true_version" ]]; then
+    VERSION=$(cat "$ZOOKEEPER_HOME/bin/true_version")
+    echo "zookeeper $VERSION"
+  else
+    echo "zookeeper: unknown"
+  fi
+  exit
+fi
+
 if [[ -z "$ZOOKEEPER_HOME" ]];then
   echo "$ZOOKEEPER_HOME is required!!!"
   exit 2

@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
+  if [[ -f "$KAFKA_HOME/bin/true_version" ]]; then
+    VERSION=$(cat "$KAFKA_HOME/bin/true_version")
+    echo "broker $VERSION"
+  else
+    echo "broker: unknown"
+  fi
+  exit
+fi
+
 if [[ -z "$KAFKA_HOME" ]];then
   echo "$KAFKA_HOME is required!!!"
   exit 2

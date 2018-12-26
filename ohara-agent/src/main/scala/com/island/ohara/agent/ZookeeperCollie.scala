@@ -1,6 +1,6 @@
 package com.island.ohara.agent
 import com.island.ohara.client.ConfiguratorJson.ZookeeperClusterDescription
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{Releasable, VersionUtil}
 
 /**
   * a interface of controlling zookeeper cluster.
@@ -27,7 +27,7 @@ object ZookeeperCollie {
   /**
     * ohara-it needs this property for testing.
     */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = "islandsystems/zookeeper:3.4.13"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = s"islandsystems/zookeeper:${VersionUtil.VERSION}"
 
   private[agent] val CLIENT_PORT_KEY: String = "ZK_CLIENT_PORT"
   private[agent] val CLIENT_PORT_DEFAULT: Int = 2181

@@ -1,7 +1,7 @@
 package com.island.ohara.agent
 import com.island.ohara.client.ConfiguratorJson.WorkerClusterDescription
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{Releasable, VersionUtil}
 
 trait WorkerCollie extends Releasable with Collie[WorkerClusterDescription] {
   def creator(): WorkerCollie.ClusterCreator
@@ -35,7 +35,7 @@ object WorkerCollie {
   /**
     * ohara-it needs this property for testing.
     */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = "islandsystems/connect-worker:1.0.2"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = s"islandsystems/connect-worker:${VersionUtil.VERSION}"
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
   private[agent] val OFFSET_TOPIC_KEY: String = "WORKER_OFFSET_TOPIC"
   private[agent] val OFFSET_TOPIC_REPLICATIONS_KEY: String = "WORKER_OFFSET_TOPIC_REPLICATIONS"

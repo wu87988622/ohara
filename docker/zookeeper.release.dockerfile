@@ -11,6 +11,7 @@ RUN tar -zxvf zookeeper-${VERSION}.tar.gz
 RUN rm -f zookeeper-${VERSION}.tar.gz
 RUN mkdir /opt/zookeeper
 RUN mv zookeeper-${VERSION} /opt/zookeeper/
+RUN echo "$VERSION" > $(find "/opt/zookeeper/" -maxdepth 1 -type d -name "zookeeper-*")/bin/true_version
 
 # download Tini
 ARG TINI_VERSION=v0.18.0

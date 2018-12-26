@@ -1,6 +1,6 @@
 package com.island.ohara.agent
 import com.island.ohara.client.ConfiguratorJson.BrokerClusterDescription
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{Releasable, VersionUtil}
 
 trait BrokerCollie extends Releasable with Collie[BrokerClusterDescription] {
   def creator(): BrokerCollie.ClusterCreator
@@ -16,7 +16,7 @@ object BrokerCollie {
   /**
     * ohara-it needs this property for testing.
     */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = "islandsystems/broker:1.0.2"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = s"islandsystems/broker:${VersionUtil.VERSION}"
   private[agent] val ID_KEY: String = "BROKER_ID"
   private[agent] val DATA_DIRECTORY_KEY: String = "BROKER_DATA_DIR"
   private[agent] val ZOOKEEPERS_KEY: String = "BROKER_ZOOKEEPERS"
