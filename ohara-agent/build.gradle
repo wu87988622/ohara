@@ -25,5 +25,4 @@ task runAgent(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.agent.Agent"
   args = Arrays.asList(port)
-
 }

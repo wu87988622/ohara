@@ -60,4 +60,7 @@ test {
 
   String DOCKER = "ohara.it.docker"
   if(project.hasProperty(DOCKER)) environment DOCKER, project.getProperty(DOCKER)
+
+  String KUBERNETES = "ohara.it.k8s"
+  if(project.hasProperty(KUBERNETES)) environment KUBERNETES, project.getProperty(KUBERNETES)
 }
