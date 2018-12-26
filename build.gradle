@@ -20,7 +20,7 @@ subprojects {
       apply plugin: 'java'
     else apply plugin: 'scala'
     test {
-      maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()/2 ?: 1
+      maxParallelForks = userMaxForks ?:((int)(Runtime.runtime.availableProcessors()/2)) ?: 1
       minHeapSize = "256m"
       maxHeapSize = "4096m"
       testLogging {
