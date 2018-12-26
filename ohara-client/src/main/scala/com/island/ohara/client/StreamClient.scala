@@ -3,6 +3,7 @@ import java.io.File
 import java.nio.file.Paths
 
 import akka.http.scaladsl.server.directives.FileInfo
+import com.island.ohara.common.util.VersionUtil
 
 trait StreamClient extends AutoCloseable {
 
@@ -28,6 +29,11 @@ object StreamClient {
     * StreamApp List Page files save path (just for testing purpose for now...by sam)
     */
   final val JARS_ROOT = Paths.get(TMP_ROOT, "ohara_streams")
+
+  /**
+    * StreamApp Docker Image name
+    */
+  final val STREAMAPP_IMAGE: String = s"islandsystems/streamapp:${VersionUtil.VERSION}"
 
   /**
     * Save http request files by [[File.createTempFile]]

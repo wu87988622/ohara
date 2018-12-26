@@ -3,6 +3,7 @@ package com.island.ohara.configurator.route
 import java.io.File
 import java.nio.file.FileAlreadyExistsException
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
@@ -10,7 +11,10 @@ import com.island.ohara.client.StreamClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.BasicRoute._
+import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
+
+import scala.sys.process._
 
 private[configurator] object StreamRoute {
 
@@ -25,7 +29,21 @@ private[configurator] object StreamRoute {
                             lastModified: Long): StreamData =
     StreamData(pipeline_id, jarName, name, fromTopics, toTopics, instances, id, filePath, lastModified)
 
-  def apply(implicit store: Store, idGenerator: () => String): server.Route =
+  private[this] def assertParameters[T <: Data](req: T): Boolean = {
+    req match {
+      case data: StreamData =>
+        data.name.nonEmpty &&
+          data.filePath.nonEmpty &&
+          data.fromTopics.nonEmpty &&
+          data.toTopics.nonEmpty &&
+          data.id.nonEmpty &&
+          data.pipeline_id.nonEmpty &&
+          data.jarName.nonEmpty &&
+          data.instances >= 1
+    }
+  }
+
+  def apply(implicit store: Store, kafkaClient: KafkaClient, idGenerator: () => String): server.Route =
     pathPrefix(STREAM_PATH) {
       pathPrefix(JARS_STREAM_PATH) {
         path(Segment) { id =>
@@ -100,52 +118,110 @@ private[configurator] object StreamRoute {
             }
           }
         }
-      } ~
-        pathPrefix(PROPERTY_STREAM_PATH) {
-          path(Segment) { id =>
-            // get
-            get {
-              if (!store.exist[StreamData](id))
-                throw new NoSuchElementException(s"The require element : $id does not exist.")
-              val data = store.data[StreamData](id)
-              val res = StreamPropertyResponse(id,
-                                               data.jarName,
-                                               data.name,
-                                               data.fromTopics,
-                                               data.toTopics,
-                                               data.instances,
-                                               data.lastModified)
-              complete(res)
-            } ~
-              // update
-              put {
-                entity(as[StreamPropertyRequest]) { req =>
-                  if (req.instances < 1)
-                    throw new IllegalArgumentException(s"Require instances bigger or equal to 1")
-                  if (!store.exist[StreamData](id))
-                    throw new NoSuchElementException(s"The require element : $id does not exist.")
-                  val oldData = store.data[StreamData](id)
-                  val newData = toStore(oldData.pipeline_id,
-                                        oldData.jarName,
-                                        req.name,
-                                        req.fromTopics,
-                                        req.toTopics,
-                                        req.instances,
-                                        id,
-                                        oldData.filePath,
-                                        CommonUtil.current())
-                  val res = StreamPropertyResponse(id,
-                                                   newData.jarName,
-                                                   newData.name,
-                                                   newData.fromTopics,
-                                                   newData.toTopics,
-                                                   newData.instances,
-                                                   newData.lastModified)
-                  store.update[StreamData](newData)
-                  complete(res)
-                }
+      } ~ pathPrefix(PROPERTY_STREAM_PATH) {
+        path(Segment) { id =>
+          // get
+          get {
+            if (!store.exist[StreamData](id))
+              throw new NoSuchElementException(s"The require element : $id does not exist.")
+            val data = store.data[StreamData](id)
+            val res = StreamPropertyResponse(id,
+                                             data.jarName,
+                                             data.name,
+                                             data.fromTopics,
+                                             data.toTopics,
+                                             data.instances,
+                                             data.lastModified)
+            complete(res)
+          } ~
+            // update
+            put {
+              entity(as[StreamPropertyRequest]) { req =>
+                if (req.instances < 1)
+                  throw new IllegalArgumentException(s"Require instances bigger or equal to 1")
+                if (!store.exist[StreamData](id))
+                  throw new NoSuchElementException(s"The require element : $id does not exist.")
+                val oldData = store.data[StreamData](id)
+                val newData = toStore(oldData.pipeline_id,
+                                      oldData.jarName,
+                                      req.name,
+                                      req.fromTopics,
+                                      req.toTopics,
+                                      req.instances,
+                                      id,
+                                      oldData.filePath,
+                                      CommonUtil.current())
+                val res = StreamPropertyResponse(id,
+                                                 newData.jarName,
+                                                 newData.name,
+                                                 newData.fromTopics,
+                                                 newData.toTopics,
+                                                 newData.instances,
+                                                 newData.lastModified)
+                store.update[StreamData](newData)
+                complete(res)
               }
+            }
+        }
+      } ~ pathPrefix(Segment) { uuid =>
+        path(START_COMMAND) {
+          put {
+            if (!store.exist[StreamData](uuid))
+              throw new NoSuchElementException(s"The require element : $uuid does not exist.")
+            val data = store.data[StreamData](uuid)
+            if (!assertParameters(data))
+              throw new IllegalArgumentException(
+                s"StreamData with id : ${data.id} not match the parameter requirement.")
+
+            val checkDocker = "which docker" !!
+
+            if (checkDocker.toLowerCase.contains("not found"))
+              throw new RuntimeException(s"This machine is not support docker command !")
+
+            //TODO : we hard code here currently. This should be called dynamically and run async ...by Sam
+            val dockerCmd =
+              s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
+                          | -e STREAMAPP_SERVERS=${kafkaClient.brokers()}
+                          | -e STREAMAPP_APPID=${data.name}
+                          | -e STREAMAPP_FROMTOPIC=${data.fromTopics.head}
+                          | -e STREAMAPP_TOTOPIC=${data.toTopics.head}
+                          | ${StreamClient.STREAMAPP_IMAGE}
+                          | "example.MyApp"
+                          """.stripMargin
+
+            System.out.println(s"command : $dockerCmd")
+
+            val res = Process(dockerCmd).run
+
+            if (res.exitValue() == 0)
+              complete(StatusCodes.OK)
+            else
+              complete(StatusCodes.BadRequest)
+          }
+        } ~ path(STOP_COMMAND) {
+          put {
+            if (!store.exist[StreamData](uuid))
+              throw new NoSuchElementException(s"The require element : $uuid does not exist.")
+            val data = store.data[StreamData](uuid)
+
+            val checkDocker = "which docker" !!
+
+            if (checkDocker.toLowerCase.contains("not found"))
+              throw new RuntimeException(s"This machine is not support docker command !")
+
+            //TODO : we hard code here currently. This should be called dynamically and run async ...by Sam
+            val dockerCmd =
+              s"""docker stop ${data.name}
+               """.stripMargin
+
+            val res = Process(dockerCmd).run
+
+            if (res.exitValue() == 0)
+              complete(StatusCodes.OK)
+            else
+              complete(StatusCodes.BadRequest)
           }
         }
+      }
     }
 }

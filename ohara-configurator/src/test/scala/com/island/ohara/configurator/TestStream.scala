@@ -12,16 +12,31 @@ import com.island.ohara.client.ConfiguratorJson.{
   StreamPropertyResponse
 }
 import com.island.ohara.client.{ConfiguratorClient, StreamClient}
-import com.island.ohara.common.rule.MediumTest
+import com.island.ohara.common.data.Serializer
+import com.island.ohara.configurator.store.Store
+import com.island.ohara.integration.With3Brokers
+import com.island.ohara.kafka.KafkaClient
 import org.apache.commons.io.FileUtils
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.io.Source
 
-class TestStream extends MediumTest with Matchers {
+class TestStream extends With3Brokers with Matchers {
 
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator
+    .builder()
+    .hostname("localhost")
+    .port(0)
+    .store(
+      Store
+        .builder()
+        .topicName(random())
+        .brokers(testUtil.brokersConnProps)
+        .build(Serializer.STRING, Serializer.OBJECT))
+    .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
+    .connectClient(new FakeConnectorClient())
+    .build()
 
   private[this] val ip = s"${configurator.hostname}:${configurator.port}"
   private[this] val client = ConfiguratorClient(ip)
@@ -33,13 +48,13 @@ class TestStream extends MediumTest with Matchers {
   private[this] val tmpF3 = File.createTempFile("empty_", ".jar")
 
   @Before
-  def setup(): Unit = {
+  def tearUp(): Unit = {
     val baseDir: File = new File(StreamClient.JARS_ROOT.toUri)
     if (!baseDir.exists()) baseDir.mkdir()
   }
 
   @Test
-  def testStreamRequest_ListPage(): Unit = {
+  def testStreamAppListPage(): Unit = {
     // Test POST method
     val multipartForm =
       Multipart.FormData(
@@ -76,7 +91,7 @@ class TestStream extends MediumTest with Matchers {
   }
 
   @Test
-  def testAbnormalStreamRequest_ListPage(): Unit = {
+  def testFailStreamAppListPage(): Unit = {
     // Test POST method
     // Testing wrong input key
     val multipartForm =
@@ -119,7 +134,7 @@ class TestStream extends MediumTest with Matchers {
   }
 
   @Test
-  def testStreamRequest_PropertyPage(): Unit = {
+  def testStreamAppPropertyPage(): Unit = {
     val multipartForm =
       Multipart.FormData(
         Multipart.FormData.BodyPart.Strict(
@@ -149,7 +164,7 @@ class TestStream extends MediumTest with Matchers {
   }
 
   @Test
-  def testAbnormalStreamRequest_PropertyPage(): Unit = {
+  def testFailStreamAppPropertyPage(): Unit = {
     // Test GET method
     // no such id
     an[IllegalArgumentException] should be thrownBy client.get[StreamPropertyResponse]("fake-id")
@@ -165,7 +180,6 @@ class TestStream extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy client
       .update[StreamPropertyRequest, StreamPropertyResponse]("fake-id", req2)
   }
-
   @After
   def tearDown(): Unit = {
     tmpF1.deleteOnExit()
