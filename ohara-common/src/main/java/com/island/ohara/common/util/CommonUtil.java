@@ -1,12 +1,18 @@
 package com.island.ohara.common.util;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -304,6 +310,71 @@ public final class CommonUtil {
     } else {
       return listEquals(l1, l2, Objects::equals);
     }
+  }
+
+  /**
+   * create a temp file with specified prefix name.
+   *
+   * @param prefix prefix name
+   * @return a temp folder
+   */
+  public static File createTempFile(String prefix) {
+    try {
+      Path t = Files.createTempFile(prefix, null);
+      return t.toFile();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * create a temp folder with specified prefix name.
+   *
+   * @param prefix prefix name
+   * @return a temp folder
+   */
+  public static File createTempDir(String prefix) {
+    try {
+      Path t = Files.createTempDirectory(prefix);
+      return t.toFile();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public static int resolvePort(int port) {
+    if (port <= 0) return availablePort();
+    else return port;
+  }
+
+  public static int availablePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      socket.setReuseAddress(true);
+      return socket.getLocalPort();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Delete the file or folder
+   *
+   * @param path path to file or folder
+   */
+  public static void deleteFiles(File path) {
+    try {
+      FileUtils.forceDelete(path);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * @param s string
+   * @return true if s is null or empty. otherwise false
+   */
+  public static boolean isEmpty(String s) {
+    return s == null || s.isEmpty();
   }
 
   /** disable to instantiate CommonUtil. */

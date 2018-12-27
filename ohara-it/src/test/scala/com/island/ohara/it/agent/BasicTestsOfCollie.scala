@@ -13,7 +13,6 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
-import com.island.ohara.integration.Integration
 import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
 import org.junit.{After, Before}
 import org.scalatest.Matchers
@@ -79,9 +78,9 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val nodeName = nodeCollie.head.name
       val clusterName = random()
       zookeeperCollie.nonExists(clusterName) shouldBe true
-      val clientPort = Integration.availablePort()
-      val electionPort = Integration.availablePort()
-      val peerPort = Integration.availablePort()
+      val clientPort = CommonUtil.availablePort()
+      val electionPort = CommonUtil.availablePort()
+      val peerPort = CommonUtil.availablePort()
       val zkCluster = zookeeperCollie
         .creator()
         .clientPort(clientPort)
@@ -129,7 +128,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val nodeName = nodeCollie.head.name
       val clusterName = random()
       brokerCollie.nonExists(clusterName) shouldBe true
-      val clientPort = Integration.availablePort()
+      val clientPort = CommonUtil.availablePort()
       val brokerCluster = brokerCollie
         .creator()
         .clusterName(clusterName)
@@ -227,7 +226,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val nodeName = nodeCollie.head.name
       val clusterName = random()
       workerCollie.nonExists(clusterName) shouldBe true
-      val clientPort = Integration.availablePort()
+      val clientPort = CommonUtil.availablePort()
       val workerCluster = workerCollie
         .creator()
         .clusterName(clusterName)

@@ -1,5 +1,6 @@
 package com.island.ohara.integration;
 
+import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -40,7 +41,7 @@ public interface Hdfs extends Releasable {
       _isLocal = false;
       _hdfsUrl = hdfs;
     } else {
-      File file = Integration.createTempDir(Hdfs.class.getSimpleName());
+      File file = CommonUtil.createTempDir(Hdfs.class.getSimpleName());
       tmpFile = file;
       _tmpDirectory = file.getAbsolutePath();
       _isLocal = true;
@@ -53,7 +54,7 @@ public interface Hdfs extends Releasable {
       public void close() {
         // delete localfile
         if (tmpFile != null) {
-          Integration.deleteFiles(tmpFile);
+          CommonUtil.deleteFiles(tmpFile);
         }
         FileSystem fs = fileSystem();
         try {

@@ -42,7 +42,7 @@ public interface Workers extends Releasable {
                   boolean canRetry = port <= 0;
                   while (true) {
                     try {
-                      int availablePort = Integration.resolvePort(port);
+                      int availablePort = CommonUtil.resolvePort(port);
 
                       Map<String, String> config = new HashMap<>();
                       // reduce the number from partitions and replicas to speedup the mini cluster

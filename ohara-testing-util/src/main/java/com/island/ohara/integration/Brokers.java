@@ -27,7 +27,7 @@ public interface Brokers extends Releasable {
   static Brokers local(Zookeepers zk, int[] ports) {
     List<File> tempFolders =
         IntStream.range(0, ports.length)
-            .mapToObj(i -> Integration.createTempDir("kafka-local"))
+            .mapToObj(i -> CommonUtil.createTempDir("kafka-local"))
             .collect(Collectors.toList());
     List<KafkaServer> brokers =
         IntStream.range(0, ports.length)
@@ -80,7 +80,7 @@ public interface Brokers extends Releasable {
               broker.shutdown();
               broker.awaitShutdown();
             });
-        tempFolders.forEach(Integration::deleteFiles);
+        tempFolders.forEach(CommonUtil::deleteFiles);
       }
 
       @Override

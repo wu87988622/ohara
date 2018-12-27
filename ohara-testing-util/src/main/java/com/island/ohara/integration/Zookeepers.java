@@ -20,8 +20,8 @@ public interface Zookeepers extends Releasable {
 
   static Zookeepers local(int port) {
     final NIOServerCnxnFactory factory;
-    File snapshotDir = Integration.createTempDir("local-zk-snapshot");
-    File logDir = Integration.createTempDir("local-zk-log");
+    File snapshotDir = CommonUtil.createTempDir("local-zk-snapshot");
+    File logDir = CommonUtil.createTempDir("local-zk-log");
 
     try {
       factory = new NIOServerCnxnFactory();
@@ -36,8 +36,8 @@ public interface Zookeepers extends Releasable {
       @Override
       public void close() {
         factory.shutdown();
-        Integration.deleteFiles(snapshotDir);
-        Integration.deleteFiles(logDir);
+        CommonUtil.deleteFiles(snapshotDir);
+        CommonUtil.deleteFiles(logDir);
       }
 
       @Override

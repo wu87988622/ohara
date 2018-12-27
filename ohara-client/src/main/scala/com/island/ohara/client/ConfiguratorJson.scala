@@ -641,4 +641,10 @@ object ConfiguratorJson {
                                         hostname: String)
   implicit val CONTAINER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ContainerDescription] = jsonFormat10(
     ContainerDescription)
+
+  //----------------------------------------------------[Plugin]----------------------------------------------------//
+  final case class PluginDescription(id: String, name: String, size: Long, lastModified: Long) extends Data {
+    override def kind: String = "plugin"
+  }
+  implicit val PLUGIN_JSON_FORMAT: RootJsonFormat[PluginDescription] = jsonFormat4(PluginDescription)
 }

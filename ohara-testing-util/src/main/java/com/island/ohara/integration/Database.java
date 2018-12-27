@@ -44,7 +44,7 @@ public interface Database extends Releasable {
    */
   static Database local(int port) {
     int count = 0;
-    port = Integration.resolvePort(port);
+    port = CommonUtil.resolvePort(port);
     MysqldConfig config =
         aMysqldConfig(v5_7_latest)
             .withCharset(UTF8)
@@ -52,7 +52,7 @@ public interface Database extends Releasable {
             .withTimeZone(CommonUtil.timezone())
             .withTimeout(2, TimeUnit.MINUTES)
             .withServerVariable("max_connect_errors", 666)
-            .withTempDir(Integration.createTempDir("my_sql").getAbsolutePath())
+            .withTempDir(CommonUtil.createTempDir("my_sql").getAbsolutePath())
             .withPort(port)
             // make mysql use " replace '
             // see https://stackoverflow.com/questions/13884854/mysql-double-quoted-table-names

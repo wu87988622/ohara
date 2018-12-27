@@ -61,7 +61,7 @@ public interface FtpServer extends Releasable {
   static FtpServer local(int commandPort, int[] dataPorts) {
     int count = 0;
 
-    File homeFolder = Integration.createTempDir("ftp");
+    File homeFolder = CommonUtil.createTempDir("ftp");
     PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
     UserManager userManager = userManagerFactory.createUserManager();
     BaseUser _user = new BaseUser();
@@ -80,9 +80,7 @@ public interface FtpServer extends Releasable {
     DataConnectionConfigurationFactory connectionConfig = new DataConnectionConfigurationFactory();
 
     List<Integer> availableDataPorts =
-        Arrays.stream(dataPorts)
-            .mapToObj(port -> Integration.resolvePort(port))
-            .collect(Collectors.toList());
+        Arrays.stream(dataPorts).mapToObj(CommonUtil::resolvePort).collect(Collectors.toList());
 
     connectionConfig.setActiveEnabled(false);
     connectionConfig.setPassivePorts(mkPortString(availableDataPorts));
@@ -104,7 +102,7 @@ public interface FtpServer extends Releasable {
       @Override
       public void close() {
         server.stop();
-        Integration.deleteFiles(homeFolder);
+        CommonUtil.deleteFiles(homeFolder);
       }
 
       @Override

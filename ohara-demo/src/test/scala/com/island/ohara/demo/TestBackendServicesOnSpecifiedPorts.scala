@@ -10,7 +10,6 @@ import com.island.ohara.client.ConfiguratorJson.PRIVATE_API
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.demo.Backend._
-import com.island.ohara.integration.Integration
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -23,13 +22,13 @@ class TestBackendServicesOnSpecifiedPorts extends LargeTest with Matchers {
   @Test
   def test(): Unit = {
     val ports = ServicePorts(
-      dbPort = Integration.availablePort(),
-      ftpPort = Integration.availablePort(),
-      ftpDataPorts = Seq(Integration.availablePort()),
-      configuratorPort = Integration.availablePort(),
-      zkPort = Integration.availablePort(),
-      brokersPort = Seq.fill(3)(Integration.availablePort()).toArray,
-      workersPort = Seq.fill(3)(Integration.availablePort()).toArray
+      dbPort = CommonUtil.availablePort(),
+      ftpPort = CommonUtil.availablePort(),
+      ftpDataPorts = Seq(CommonUtil.availablePort()),
+      configuratorPort = CommonUtil.availablePort(),
+      zkPort = CommonUtil.availablePort(),
+      brokersPort = Seq.fill(3)(CommonUtil.availablePort()).toArray,
+      workersPort = Seq.fill(3)(CommonUtil.availablePort()).toArray
     )
     Backend.run(
       ports,
