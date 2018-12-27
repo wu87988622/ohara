@@ -132,7 +132,7 @@ private object ClusterCollieImpl {
     }
 
     override def logs(clusterName: String): Map[ContainerDescription, String] = query(clusterName, service)
-      .map(container => container -> clientCache.get(nodeCollie.get(container.nodeName)).log(container.name))
+      .map(container => container -> clientCache.get(nodeCollie.node(container.nodeName)).log(container.name))
       .toMap
 
     override def removeNode(clusterName: String, nodeName: String): T = {
@@ -188,7 +188,7 @@ private object ClusterCollieImpl {
         Objects.requireNonNull(clusterName)
         if (exists(clusterName)) throw new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!")
         val nodes: Map[Node, String] =
-          nodeNames.map(nodeCollie.get).map(node => node -> format(clusterName)).toMap
+          nodeNames.map(nodeCollie.node).map(node => node -> format(clusterName)).toMap
         // add route in order to make zk node can connect to each other.
         val route: Map[String, String] = nodes.map {
           case (node, _) =>
@@ -293,7 +293,7 @@ private object ClusterCollieImpl {
         Objects.requireNonNull(clusterName)
         Objects.requireNonNull(zkClusterName)
         val existNodes: Map[Node, ContainerDescription] =
-          containers(clusterName).map(container => nodeCollie.get(container.nodeName) -> container).toMap
+          containers(clusterName).map(container => nodeCollie.node(container.nodeName) -> container).toMap
 
         // if there is a running cluster already, we should check the consistency of configuration
         existNodes.values.foreach { container =>
@@ -308,7 +308,7 @@ private object ClusterCollieImpl {
           check(ZOOKEEPER_CLUSTER_NAME, zkClusterName)
         }
         val newNodes: Map[Node, String] =
-          nodeNames.map(nodeCollie.get).map(node => node -> format(clusterName)).toMap
+          nodeNames.map(nodeCollie.node).map(node => node -> format(clusterName)).toMap
         existNodes.keys.foreach(
           node =>
             if (newNodes.keys.exists(_.name == node.name))
@@ -477,7 +477,7 @@ private object ClusterCollieImpl {
         Objects.requireNonNull(statusTopicName)
         Objects.requireNonNull(configTopicName)
         val existNodes: Map[Node, ContainerDescription] =
-          containers(clusterName).map(container => nodeCollie.get(container.nodeName) -> container).toMap
+          containers(clusterName).map(container => nodeCollie.node(container.nodeName) -> container).toMap
 
         // if there is a running cluster already, we should check the consistency of configuration
         existNodes.values.foreach { container =>
@@ -501,7 +501,7 @@ private object ClusterCollieImpl {
           check(BROKER_CLUSTER_NAME, brokerClusterName)
         }
         val newNodes: Map[Node, String] =
-          nodeNames.map(nodeCollie.get).map(node => node -> format(clusterName)).toMap
+          nodeNames.map(nodeCollie.node).map(node => node -> format(clusterName)).toMap
         existNodes.keys.foreach(
           node =>
             if (newNodes.keys.exists(_.name == node.name))

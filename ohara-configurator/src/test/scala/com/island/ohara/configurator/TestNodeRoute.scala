@@ -53,6 +53,9 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res2 = client.update[NodeRequest, Node](res.id, req2)
     compare(req2, res2)
     client.list[Node].size shouldBe 1
+
+    an[IllegalArgumentException] should be thrownBy client
+      .update[NodeRequest, Node](res.id, NodeRequest("a2", 22, "b", "d"))
   }
 
   @After

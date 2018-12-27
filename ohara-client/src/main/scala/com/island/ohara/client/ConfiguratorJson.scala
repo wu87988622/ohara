@@ -33,13 +33,13 @@ object ConfiguratorJson {
   //------------------------------------------------[DATA]------------------------------------------------//
 
   /**
-    * this is the basic type which can be stored by configurator.
-    * the members declared as "def" are not format to "json". By contrast, the "val" memebers are serialized to json.
+    * This is the basic type which can be stored by configurator.
+    * All members are declared as "def" since not all subclasses intend to represent all members in restful APIs.
     */
   sealed trait Data {
-    val id: String
-    val name: String
-    val lastModified: Long
+    def id: String
+    def name: String
+    def lastModified: Long
     def kind: String
 
   }
@@ -510,12 +510,17 @@ object ConfiguratorJson {
   case class NodeRequest(name: String, port: Int, user: String, password: String)
   implicit val NODE_REQUEST_JSON_FORMAT: RootJsonFormat[NodeRequest] = jsonFormat4(NodeRequest)
 
-  case class Node(id: String, name: String, port: Int, user: String, password: String, lastModified: Long)
-      extends Data {
+  case class Node(name: String, port: Int, user: String, password: String, lastModified: Long) extends Data {
+
+    /**
+      *  node's name should be unique in ohara so we make id same to name.
+      * @return name
+      */
+    override def id: String = name
     override def kind: String = "node"
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat6(Node)
+  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat5(Node)
   implicit val NODE_COMMAND_FORMAT: DataCommandFormat[Node] =
     new DataCommandFormat[Node] {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$NODE_PATH"

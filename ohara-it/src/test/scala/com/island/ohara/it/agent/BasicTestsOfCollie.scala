@@ -47,7 +47,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val password = nodeInfo.split("@").head.split(":").last
       val hostname = nodeInfo.split("@").last.split(":").head
       val port = nodeInfo.split("@").last.split(":").last.toInt
-      nodeCollie.add(Node(hostname, hostname, port, user, password, CommonUtil.current()))
+      nodeCollie.add(Node(hostname, port, user, password, CommonUtil.current()))
       val dockerClient = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
       try {
         withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(

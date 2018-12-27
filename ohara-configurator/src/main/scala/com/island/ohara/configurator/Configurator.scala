@@ -60,7 +60,7 @@ class Configurator private[configurator] (configuredHostname: String,
 
   private[this] implicit val nodeCollie = new NodeCollie {
     override def add(node: Node): Unit = store.add(node)
-    override def remove(id: String): Node = store.remove[Node](id)
+    override def remove(name: String): Node = store.remove[Node](name)
     override def update(node: Node): Unit = store.update(node)
     override def close(): Unit = {
       // do nothing
