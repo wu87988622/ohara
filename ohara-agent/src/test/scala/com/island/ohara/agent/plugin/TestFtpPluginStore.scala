@@ -56,9 +56,9 @@ class TestFtpPluginStore extends MediumTest with Matchers {
   def testInvalidId(): Unit = {
     an[IllegalArgumentException] should be thrownBy pluginStore.pluginDescription(null)
     an[IllegalArgumentException] should be thrownBy pluginStore.pluginDescription("")
+    an[IllegalArgumentException] should be thrownBy pluginStore.remove(null)
     an[IllegalArgumentException] should be thrownBy pluginStore.remove("")
-    an[IllegalArgumentException] should be thrownBy pluginStore.remove("")
-    an[IllegalArgumentException] should be thrownBy pluginStore.url("")
+    an[IllegalArgumentException] should be thrownBy pluginStore.url(null)
     an[IllegalArgumentException] should be thrownBy pluginStore.url("")
     an[IllegalArgumentException] should be thrownBy pluginStore.update("", null)
     an[IllegalArgumentException] should be thrownBy pluginStore.update("", null)
