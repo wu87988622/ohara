@@ -5,7 +5,8 @@ import Header from 'components/common/Header';
 import HomePage from 'components/pages/HomePage';
 import PipelinePage from 'components/pages/PipelinePage';
 import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
-import DeploymentPage from 'components/pages/DeploymentPage';
+import NodesPage from 'components/pages/NodesPage';
+import ServicesPage from 'components/pages/ServicesPage';
 import ConfigurationPage from 'components/pages/ConfigurationPage';
 import MonitoringPage from 'components/pages/MonitoringPage';
 import KafkaPage from 'components/pages/KafkaPage';
@@ -60,9 +61,14 @@ class App extends React.Component {
               data-testid="configuration-page"
             />
             <Route
-              path="/deployment"
-              component={DeploymentPage}
-              data-testid="deployment-page"
+              path="/nodes"
+              component={NodesPage}
+              data-testid="nodes-page"
+            />
+            <Route
+              path="/services"
+              component={ServicesPage}
+              data-testid="services-page"
             />
             <Route
               path="/monitoring"

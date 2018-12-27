@@ -1,42 +1,38 @@
 import * as URLS from '../../src/constants/urls';
-import { getTestById } from '../../src/utils/testUtils';
 
 describe('Header', () => {
   beforeEach(() => {
     cy.visit(URLS.HOME);
   });
 
-  it('matches the correct routes', () => {
-    cy.get('nav')
-      .contains('Pipelines')
-      .click();
-    cy.location('pathname').should('eq', URLS.PIPELINE);
+  it('visits all pages from main navigation', () => {
+    cy.get('nav').within(() => {
+      cy.getByText('Pipelines').click();
+      cy.location('pathname').should('eq', URLS.PIPELINE);
 
-    cy.get('nav')
-      .contains('Deployment')
-      .click();
-    cy.location('pathname').should('eq', URLS.DEPLOYMENT);
+      cy.getByText('Nodes').click();
+      cy.location('pathname').should('eq', URLS.NODES);
 
-    cy.get('nav')
-      .contains('Monitoring')
-      .click();
-    cy.location('pathname').should('eq', URLS.MONITORING);
+      cy.getByText('Services').click();
+      cy.location('pathname').should('eq', URLS.SERVICES);
 
-    cy.get('header')
-      .contains('Log in')
-      .click();
+      cy.getByText('Monitoring').click();
+      cy.location('pathname').should('eq', URLS.MONITORING);
+    });
+  });
+
+  it('visits Log in page', () => {
+    cy.getByText('Log in').click();
     cy.location('pathname').should('eq', URLS.LOGIN);
   });
 
   it('toggles configuration modal', () => {
-    cy.get(getTestById('config-btn')).click();
+    cy.getByTestId('config-btn').click();
     cy.get('.ReactModal__Content')
       .contains('Configuration')
       .should('be.visible');
 
-    cy.get('.ReactModal__Content')
-      .find(getTestById('close-btn'))
-      .click();
+    cy.getByTestId('close-btn').click();
 
     cy.get('.ReactModal__Content').should('not.be.visible');
   });

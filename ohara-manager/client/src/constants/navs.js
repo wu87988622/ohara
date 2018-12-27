@@ -1,4 +1,4 @@
-import { PIPELINE, DEPLOYMENT, MONITORING } from './urls';
+import { PIPELINE, SERVICES, NODES, MONITORING } from './urls';
 
 const NAVS = [
   {
@@ -8,10 +8,16 @@ const NAVS = [
     iconCls: 'fa-code-branch',
   },
   {
-    testId: 'deployment-link',
-    to: DEPLOYMENT,
-    text: 'Deployment',
+    testId: 'nodes-link',
+    to: NODES,
+    text: 'Nodes',
     iconCls: 'fa-sitemap',
+  },
+  {
+    testId: 'services-link',
+    to: SERVICES,
+    text: 'Services',
+    iconCls: 'fa-project-diagram',
   },
   {
     testId: 'monitoring-link',

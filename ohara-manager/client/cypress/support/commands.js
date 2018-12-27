@@ -1,3 +1,5 @@
+import 'cypress-testing-library/add-commands';
+
 import { setUserKey } from '../../src/utils/authUtils';
 import { VALID_USER } from '../../src/constants/cypress';
 import * as _ from '../../src/utils/commonUtils';

@@ -56,8 +56,12 @@ describe('<App />', () => {
         testId: 'configuration-page',
       },
       {
-        path: '/deployment',
-        testId: 'deployment-page',
+        path: '/nodes',
+        testId: 'nodes-page',
+      },
+      {
+        path: '/services',
+        testId: 'services-page',
       },
       {
         path: '/monitoring',
