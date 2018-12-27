@@ -11,8 +11,9 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestFtpPluginStore extends MediumTest with Matchers {
+  private[this] val ftpThreads = 10
   private[this] val tmpFolder = CommonUtil.createTempDir(classOf[TestFtpPluginStore].getSimpleName)
-  private[this] val pluginStore = new FtpPluginStore(tmpFolder.getAbsolutePath, 0, Array.fill[Int](3)(0))
+  private[this] val pluginStore = new FtpPluginStore(tmpFolder.getAbsolutePath, 0, Array.fill[Int](ftpThreads)(0))
 
   private[this] def generateFile(bytes: Array[Byte]): File = {
     val tempFile = CommonUtil.createTempFile(methodName())
@@ -155,7 +156,7 @@ class TestFtpPluginStore extends MediumTest with Matchers {
     val f = generateFile(content.getBytes)
     val plugin = Await.result(pluginStore.add(f), 30 seconds)
     plugin.size shouldBe content.length
-    (0 until 10)
+    (0 until ftpThreads / 2)
       .map { _ =>
         Future {
           val url = pluginStore.url(plugin.id)
