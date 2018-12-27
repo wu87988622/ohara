@@ -182,7 +182,11 @@ class PipelineToolbar extends React.Component {
           )}
 
           {modalName === modalNames.ADD_TOPIC && (
-            <PipelineNewTopic ref={this.modalChild} />
+            <PipelineNewTopic
+              updateGraph={updateGraph}
+              graph={graph}
+              ref={this.modalChild}
+            />
           )}
 
           {_.includes(

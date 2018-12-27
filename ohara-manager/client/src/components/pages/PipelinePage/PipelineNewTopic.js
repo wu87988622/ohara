@@ -1,16 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 import { Facebook } from 'react-content-loader';
 
 import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
-import { lighterBlue, lightBlue, durationNormal, blue } from 'theme/variables';
-
-const H5Wrapper = styled(H5)`
-  margin: 0 0 30px;
-  font-weight: normal;
-  color: ${lightBlue};
-`;
+import { Select } from 'common/Form';
+import { fetchTopics } from 'utils/pipelineUtils';
+import { lighterBlue, durationNormal, blue } from 'theme/variables';
+import { update } from 'utils/pipelineToolbarUtils';
 
 const Icon = styled.i`
   color: ${lighterBlue};
@@ -34,18 +31,56 @@ const Icon = styled.i`
 Icon.displayName = 'Icon';
 
 class PipelineNewTopic extends React.Component {
-  static propTypes = {};
+  static propTypes = {
+    graph: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        id: PropTypes.string,
+        isActive: PropTypes.bool,
+        isExact: PropTypes.bool,
+        icon: PropTypes.string,
+      }),
+    ).isRequired,
+    updateGraph: PropTypes.func.isRequired,
+  };
 
   state = {
     isLoading: true,
+    topics: [],
+    currentTopic: {},
+  };
+
+  componentDidMount() {
+    this.fetchTopics();
+  }
+
+  fetchTopics = async () => {
+    const topics = await fetchTopics();
+    if (topics) {
+      this.setState({ topics, isLoading: false, currentTopic: topics[0] });
+    }
+  };
+
+  handleSelectChange = ({ target }) => {
+    const selectedIdx = target.options.selectedIndex;
+    const { uuid } = target.options[selectedIdx].dataset;
+
+    this.setState({
+      currentTopic: {
+        name: target.value,
+        uuid,
+      },
+    });
   };
 
   update = () => {
-    // TODO:
+    const { updateGraph, graph } = this.props;
+    const { currentTopic } = this.state;
+    update({ graph, updateGraph, connector: currentTopic });
   };
 
   render() {
-    const { isLoading } = this.state;
+    const { isLoading, topics, currentTopic } = this.state;
 
     return (
       <Box shadow={false}>
@@ -53,7 +88,12 @@ class PipelineNewTopic extends React.Component {
           <Facebook style={{ width: '70%', height: 'auto' }} />
         ) : (
           <React.Fragment>
-            <H5Wrapper>New Topic</H5Wrapper>
+            <Select
+              isObject
+              list={topics}
+              selected={currentTopic}
+              handleChange={this.handleSelectChange}
+            />
           </React.Fragment>
         )}
       </Box>

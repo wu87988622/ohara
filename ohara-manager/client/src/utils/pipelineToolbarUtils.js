@@ -19,17 +19,28 @@ export const checkTypeExist = (type, graph) => {
   });
 };
 
+const getNameByType = type => {
+  if (isSource(type)) {
+    return 'Source';
+  } else if (isSink(type)) {
+    return 'Sink';
+  } else {
+    return 'Topic';
+  }
+};
+
 export const update = ({ graph, updateGraph, connector }) => {
   let type = connector.className;
 
   // TODO: replace the svg icon with the HTML one and so we'll get the target.dataset.id back
-  type = type ? type : PIPELINES.CONNECTOR_KEYS.hdfsSink;
+  type = type ? type : PIPELINES.CONNECTOR_KEYS.topic;
 
+  const connectorName = getNameByType(type);
   const result = checkTypeExist(type, graph);
 
   if (!_.isDefined(result)) {
     const update = {
-      name: `Untitled ${isSource(type) ? 'source' : 'sink'}`,
+      name: `Untitled ${connectorName}`,
       type,
       to: '?',
       isActive: false,
