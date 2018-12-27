@@ -2,6 +2,8 @@ package com.island.ohara.agent
 import com.island.ohara.client.ConfiguratorJson.BrokerClusterDescription
 import com.island.ohara.common.util.{Releasable, VersionUtil}
 
+import scala.concurrent.Future
+
 trait BrokerCollie extends Releasable with Collie[BrokerClusterDescription] {
   def creator(): BrokerCollie.ClusterCreator
 }
@@ -10,7 +12,7 @@ object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterDescription] {
     def zookeeperClusterName(name: String): ClusterCreator
     def clientPort(clientPort: Int): ClusterCreator
-    def create(nodeNames: Seq[String]): BrokerClusterDescription
+    def create(nodeNames: Seq[String]): Future[BrokerClusterDescription]
   }
 
   /**

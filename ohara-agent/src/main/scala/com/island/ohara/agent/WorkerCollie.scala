@@ -3,6 +3,8 @@ import com.island.ohara.client.ConfiguratorJson.WorkerClusterDescription
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{Releasable, VersionUtil}
 
+import scala.concurrent.Future
+
 trait WorkerCollie extends Releasable with Collie[WorkerClusterDescription] {
   def creator(): WorkerCollie.ClusterCreator
 }
@@ -29,7 +31,7 @@ object WorkerCollie {
     def configTopicName(configTopicName: String): ClusterCreator
     @Optional("default number is 1")
     def configTopicReplications(numberOfReplications: Short): ClusterCreator
-    def create(nodeNames: Seq[String]): WorkerClusterDescription
+    def create(nodeNames: Seq[String]): Future[WorkerClusterDescription]
   }
 
   /**

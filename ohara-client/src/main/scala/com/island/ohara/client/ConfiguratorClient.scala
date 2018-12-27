@@ -3,7 +3,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart.Strict
 import akka.http.scaladsl.model.{Multipart, _}
@@ -11,7 +10,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.util.ReleaseOnce
-import spray.json.{DefaultJsonProtocol, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -51,6 +50,14 @@ trait ConfiguratorClient extends ReleaseOnce {
   //------------------------------------------------[Stream]------------------------------------------------//
   def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
                                                               cf: DataCommandFormat[Req]): Res
+  //------------------------------------------------[Cluster]------------------------------------------------//
+  def createCluster[Req, Res](
+    request: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Res
+  def removeCluster[Res](name: String)(implicit rm: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Res
+  def listCluster[Res](implicit rm: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Seq[Res]
+  def containersOfZookeeperCluster(name: String)(
+    implicit cf: ClusterControlCommand[ZookeeperClusterDescription]): Seq[ContainerDescription]
+
 }
 
 object ConfiguratorClient {
@@ -59,8 +66,10 @@ object ConfiguratorClient {
   private[this] val TIMEOUT = 20 seconds
 
   def apply(hostname: String, port: Int): ConfiguratorClient = apply(s"$hostname:$port")
-  def apply(connectionProps: String): ConfiguratorClient = new ConfiguratorClient with SprayJsonSupport
-  with DefaultJsonProtocol {
+
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import spray.json.DefaultJsonProtocol._
+  def apply(connectionProps: String): ConfiguratorClient = new ConfiguratorClient {
     private[this] implicit val actorSystem: ActorSystem = ActorSystem(
       s"${classOf[ConfiguratorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
     private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
@@ -183,5 +192,34 @@ object ConfiguratorClient {
         TIMEOUT
       )
     }
+    override def createCluster[Req, Res](
+      request: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Res =
+      Await.result(
+        Marshal(request)
+          .to[RequestEntity]
+          .flatMap(entity => {
+            Http()
+              .singleRequest(HttpRequest(HttpMethods.POST, cf.create(connectionProps), entity = entity))
+              .flatMap(unmarshal[Res](_))
+          }),
+        TIMEOUT
+      )
+    override def removeCluster[Res](name: String)(implicit rm: RootJsonFormat[Res],
+                                                  cf: ClusterControlCommand[Res]): Res = Await.result(
+      Http().singleRequest(HttpRequest(HttpMethods.DELETE, cf.remove(connectionProps, name))).flatMap(unmarshal[Res]),
+      TIMEOUT)
+    override def containersOfZookeeperCluster(name: String)(
+      implicit cf: ClusterControlCommand[ZookeeperClusterDescription]): Seq[ContainerDescription] =
+      Await.result(
+        Http()
+          .singleRequest(HttpRequest(HttpMethods.GET, cf.containers(connectionProps, name)))
+          .flatMap(unmarshal[Seq[ContainerDescription]]),
+        TIMEOUT
+      )
+    override def listCluster[Res](implicit rm: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Seq[Res] =
+      Await.result(
+        Http().singleRequest(HttpRequest(HttpMethods.GET, cf.list(connectionProps))).flatMap(unmarshal[Seq[Res]]),
+        TIMEOUT
+      )
   }
 }

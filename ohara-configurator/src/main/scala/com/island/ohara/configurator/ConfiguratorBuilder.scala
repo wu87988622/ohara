@@ -4,6 +4,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.{time, util}
 
 import akka.http.scaladsl.server
+import com.island.ohara.agent._
+import com.island.ohara.client.ConfiguratorJson.{
+  ClusterDescription,
+  ContainerDescription,
+  ContainerState,
+  Node,
+  ZookeeperClusterDescription
+}
 import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
@@ -12,7 +20,7 @@ import com.island.ohara.client.ConnectorJson.{
   Plugin,
   TaskStatus
 }
-import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
+import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, ConnectorCreator}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.data.connector.ConnectorState
 import com.island.ohara.common.util.CommonUtil
@@ -22,6 +30,7 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ConfiguratorBuilder {
@@ -34,6 +43,7 @@ class ConfiguratorBuilder {
   private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
+  private[this] var clusterCollie: Option[ClusterCollie] = None
 
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
     this.extraRoute = Some(extraRoute)
@@ -114,14 +124,33 @@ class ConfiguratorBuilder {
     kafkaClient(new FakeKafkaClient())
     connectClient(new FakeConnectorClient())
     store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
+    clusterCollie(new FakeClusterCollie)
   }
 
-  def build(): Configurator = new Configurator(
-    hostname.get,
-    port.get,
-    initializationTimeout.get,
-    terminationTimeout.get,
-    extraRoute)(uuidGenerator.get, store.get, kafkaClient.get, connectClient.get)
+  def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
+    this.clusterCollie = Some(clusterCollie)
+    this
+  }
+
+  def build(): Configurator = {
+    val nodeCollie = new NodeCollie {
+      override def add(node: Node): Unit = store.get.add(node)
+      override def remove(name: String): Node = store.get.remove[Node](name)
+      override def update(node: Node): Unit = store.get.update(node)
+      override def close(): Unit = {
+        // do nothing
+      }
+      override def iterator: Iterator[Node] = store.get.data[Node]
+    }
+    new Configurator(hostname.get, port.get, initializationTimeout.get, terminationTimeout.get, extraRoute)(
+      ug = uuidGenerator.get,
+      store = store.get,
+      nodeCollie = nodeCollie,
+      clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie)),
+      kafkaClient = kafkaClient.get,
+      connectorClient = connectClient.get
+    )
+  }
 }
 
 /**
@@ -187,7 +216,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   * A do-nothing impl from KafkaClient.
   * NOTED: It should be used in testing only.
   */
-private class FakeKafkaClient extends KafkaClient {
+private[this] class FakeKafkaClient extends KafkaClient {
 
   import scala.collection.JavaConverters._
 
@@ -246,4 +275,96 @@ private class FakeKafkaClient extends KafkaClient {
     s"${classOf[FakeKafkaClient].getSimpleName} does not support this operation")
 
   override def close(): Unit = printDebugMessage()
+}
+
+/**
+  * It doesn't involve any running cluster but save all description in memory
+  */
+private[this] class FakeClusterCollie extends ClusterCollie {
+
+  override def zookeepersCollie(): ZookeeperCollie = new FakeZookeeperCollie
+
+  override def brokerCollie(): BrokerCollie = throw new UnsupportedOperationException("TODO: see OHARA-1063")
+
+  override def workerCollie(): WorkerCollie = throw new UnsupportedOperationException("TODO: see OHARA-1064")
+
+  override def close(): Unit = {
+    // do nothing
+  }
+}
+
+private[this] abstract class FakeCollie[T <: ClusterDescription] extends Collie[T] {
+  protected val clusterCache = new ConcurrentHashMap[String, T]()
+  protected val containerCache = new ConcurrentHashMap[String, Seq[ContainerDescription]]()
+
+  protected def generateContainerDescription(nodeName: String,
+                                             imageName: String,
+                                             state: ContainerState): ContainerDescription = ContainerDescription(
+    nodeName = nodeName,
+    id = CommonUtil.randomString(10),
+    imageName = imageName,
+    created = "unknown",
+    state = state,
+    name = CommonUtil.randomString(10),
+    size = "unknown",
+    portMappings = Seq.empty,
+    environments = Map.empty,
+    hostname = CommonUtil.randomString(10)
+  )
+  override def exists(clusterName: String): Boolean =
+    clusterCache.containsKey(clusterName) && containerCache.containsKey(clusterName)
+
+  override def remove(clusterName: String): Future[T] = if (exists(clusterName)) {
+    val cluster = clusterCache.remove(clusterName)
+    containerCache.remove(clusterName)
+    Future.successful(cluster)
+  } else Future.failed(new IllegalArgumentException(s"$clusterName doesn't exist"))
+
+  override def logs(clusterName: String): Map[ConfiguratorJson.ContainerDescription, String] = Map.empty
+
+  override def containers(clusterName: String): Seq[ConfiguratorJson.ContainerDescription] = if (exists(clusterName))
+    containerCache.get(clusterName)
+  else Seq.empty
+
+  import scala.collection.JavaConverters._
+  override def iterator: Iterator[T] = clusterCache.values().asScala.toIterator
+}
+
+private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterDescription] with ZookeeperCollie {
+  override def creator(): ZookeeperCollie.ClusterCreator =
+    (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
+      if (exists(clusterName)) Future.failed(new IllegalArgumentException(s"$clusterName exists!!!"))
+      else
+        Future.successful {
+          val cluster = ZookeeperClusterDescription(
+            name = clusterName,
+            imageName = imageName,
+            clientPort = clientPort,
+            peerPort = peerPort,
+            electionPort = electionPort,
+            nodeNames = nodeNames
+          )
+          clusterCache.put(clusterName, cluster)
+          containerCache.put(clusterName,
+                             nodeNames.map(
+                               nodeName =>
+                                 generateContainerDescription(
+                                   nodeName = nodeName,
+                                   imageName = imageName,
+                                   state = ContainerState.RUNNING
+                               )))
+          cluster
+      }
+
+  override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterDescription] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+
+  override def addNode(clusterName: String, nodeName: String): Future[ZookeeperClusterDescription] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+
+  override def close(): Unit = {
+    // do nothing
+  }
 }

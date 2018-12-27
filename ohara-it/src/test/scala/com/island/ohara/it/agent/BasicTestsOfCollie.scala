@@ -17,6 +17,9 @@ import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
 import org.junit.{After, Before}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 /**
   * This abstract class extracts the "required" information of running tests on true env.
   * All checks are verified in this class but we do run all test cases on different test in order to avoid
@@ -34,6 +37,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
 
   private[this] val nodeCollie: NodeCollie = NodeCollie.inMemory()
   private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
+
+  private[this] val timeout = 60 seconds
 
   /**
     * used to debug...
@@ -81,13 +86,14 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val clientPort = CommonUtil.availablePort()
       val electionPort = CommonUtil.availablePort()
       val peerPort = CommonUtil.availablePort()
-      val zkCluster = zookeeperCollie
-        .creator()
-        .clientPort(clientPort)
-        .electionPort(electionPort)
-        .peerPort(peerPort)
-        .clusterName(clusterName)
-        .create(nodeName)
+      val zkCluster = Await.result(zookeeperCollie
+                                     .creator()
+                                     .clientPort(clientPort)
+                                     .electionPort(electionPort)
+                                     .peerPort(peerPort)
+                                     .clusterName(clusterName)
+                                     .create(nodeName),
+                                   timeout)
       try {
         zookeeperCollie.exists(_.name == zkCluster.name) shouldBe true
         zkCluster.name shouldBe clusterName
@@ -118,7 +124,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         container.environments.exists(_._2 == electionPort.toString) shouldBe true
         container.environments.exists(_._2 == peerPort.toString) shouldBe true
         f(zkCluster)
-      } finally if (cleanup) zookeeperCollie.remove(zkCluster.name)
+      } finally if (cleanup) Await.result(zookeeperCollie.remove(zkCluster.name), timeout)
     } finally zookeeperCollie.close()
   }
 
@@ -129,12 +135,13 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val clusterName = random()
       brokerCollie.nonExists(clusterName) shouldBe true
       val clientPort = CommonUtil.availablePort()
-      val brokerCluster = brokerCollie
-        .creator()
-        .clusterName(clusterName)
-        .clientPort(clientPort)
-        .zookeeperClusterName(zkCluster.name)
-        .create(nodeName)
+      val brokerCluster = Await.result(brokerCollie
+                                         .creator()
+                                         .clusterName(clusterName)
+                                         .clientPort(clientPort)
+                                         .zookeeperClusterName(zkCluster.name)
+                                         .create(nodeName),
+                                       timeout)
       try {
         brokerCollie.exists(_.name == brokerCluster.name) shouldBe true
         brokerCluster.zookeeperClusterName shouldBe zkCluster.name
@@ -180,7 +187,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         } finally consumer.close()
         KafkaUtil.deleteTopic(brokers, topicName)
         f(brokerCluster)
-      } finally if (cleanup) brokerCollie.remove(brokerCluster.name)
+      } finally if (cleanup) Await.result(brokerCollie.remove(brokerCluster.name), timeout)
     } finally brokerCollie.close()
   }
 
@@ -188,17 +195,18 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     previousCluster =>
       val brokerCollie = clusterCollie.brokerCollie()
       brokerCollie.exists(_.name == previousCluster.name) shouldBe true
-      an[IllegalArgumentException] should be thrownBy brokerCollie.removeNode(previousCluster.name,
-                                                                              previousCluster.nodeNames.head)
+
+      an[IllegalArgumentException] should be thrownBy Await
+        .result(brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head), timeout)
       val freeNodes = nodeCollie.filterNot(node => previousCluster.nodeNames.contains(node.name))
       if (freeNodes.nonEmpty) {
         // we can't add duplicate node
-        an[IllegalArgumentException] should be thrownBy brokerCollie.addNode(previousCluster.name,
-                                                                             previousCluster.nodeNames.head)
+        an[IllegalArgumentException] should be thrownBy Await
+          .result(brokerCollie.addNode(previousCluster.name, previousCluster.nodeNames.head), timeout)
         // we can't add a nonexistent node
-        an[IllegalArgumentException] should be thrownBy brokerCollie.addNode(previousCluster.name,
-                                                                             CommonUtil.randomString())
-        val newCluster = brokerCollie.addNode(previousCluster.name, freeNodes.head.name)
+        an[IllegalArgumentException] should be thrownBy Await
+          .result(brokerCollie.addNode(previousCluster.name, CommonUtil.randomString()), timeout)
+        val newCluster = Await.result(brokerCollie.addNode(previousCluster.name, freeNodes.head.name), timeout)
         newCluster.name shouldBe previousCluster.name
         newCluster.imageName shouldBe previousCluster.imageName
         newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
@@ -212,7 +220,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     val brokerCollie = clusterCollie.brokerCollie()
     brokerCollie.exists(_.name == previousCluster.name) shouldBe true
 
-    val newCluster = brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head)
+    val newCluster =
+      Await.result(brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head), timeout)
     newCluster.name shouldBe previousCluster.name
     newCluster.imageName shouldBe previousCluster.imageName
     newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
@@ -227,12 +236,13 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val clusterName = random()
       workerCollie.nonExists(clusterName) shouldBe true
       val clientPort = CommonUtil.availablePort()
-      val workerCluster = workerCollie
-        .creator()
-        .clusterName(clusterName)
-        .clientPort(clientPort)
-        .brokerClusterName(brokerCluster.name)
-        .create(nodeName)
+      val workerCluster = Await.result(workerCollie
+                                         .creator()
+                                         .clusterName(clusterName)
+                                         .clientPort(clientPort)
+                                         .brokerClusterName(brokerCluster.name)
+                                         .create(nodeName),
+                                       timeout)
       try {
         workerCollie.exists(_.name == workerCluster.name) shouldBe true
         workerCluster.brokerClusterName shouldBe brokerCluster.name
@@ -273,7 +283,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
         f(workerCluster)
-      } finally if (cleanup) workerCollie.remove(workerCluster.name)
+      } finally if (cleanup) Await.result(workerCollie.remove(workerCluster.name), timeout)
     } finally workerCollie.close()
   }
 
@@ -281,17 +291,17 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     previousCluster =>
       val workerCollie = clusterCollie.workerCollie()
       workerCollie.exists(_.name == previousCluster.name) shouldBe true
-      an[IllegalArgumentException] should be thrownBy workerCollie.removeNode(previousCluster.name,
-                                                                              previousCluster.nodeNames.head)
+      an[IllegalArgumentException] should be thrownBy Await
+        .result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head), timeout)
       val freeNodes = nodeCollie.filterNot(node => previousCluster.nodeNames.contains(node.name))
       if (freeNodes.nonEmpty) {
         // we can't add duplicate node
-        an[IllegalArgumentException] should be thrownBy workerCollie.addNode(previousCluster.name,
-                                                                             previousCluster.nodeNames.head)
+        an[IllegalArgumentException] should be thrownBy Await
+          .result(workerCollie.addNode(previousCluster.name, previousCluster.nodeNames.head), timeout)
         // we can't add a nonexistent node
-        an[IllegalArgumentException] should be thrownBy workerCollie.addNode(previousCluster.name,
-                                                                             CommonUtil.randomString())
-        val newCluster = workerCollie.addNode(previousCluster.name, freeNodes.head.name)
+        an[IllegalArgumentException] should be thrownBy Await
+          .result(workerCollie.addNode(previousCluster.name, CommonUtil.randomString()), timeout)
+        val newCluster = Await.result(workerCollie.addNode(previousCluster.name, freeNodes.head.name), timeout)
         newCluster.name shouldBe previousCluster.name
         newCluster.imageName shouldBe previousCluster.imageName
         newCluster.configTopicName shouldBe previousCluster.configTopicName
@@ -322,7 +332,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     val workerCollie = clusterCollie.workerCollie()
     workerCollie.exists(_.name == previousCluster.name) shouldBe true
 
-    val newCluster = workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head)
+    val newCluster =
+      Await.result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head), timeout)
     newCluster.name shouldBe previousCluster.name
     newCluster.imageName shouldBe previousCluster.imageName
     newCluster.configTopicName shouldBe previousCluster.configTopicName

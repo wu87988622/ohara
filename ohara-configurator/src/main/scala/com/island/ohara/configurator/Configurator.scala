@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.{handleRejections, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.NodeCollie
+import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.data.Serializer
@@ -38,13 +38,17 @@ class Configurator private[configurator] (configuredHostname: String,
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration,
                                           extraRoute: Option[server.Route])(implicit ug: () => String,
-                                                                            val store: Store,
+                                                                            store: Store,
+                                                                            nodeCollie: NodeCollie,
+                                                                            clusterCollie: ClusterCollie,
                                                                             kafkaClient: KafkaClient,
                                                                             connectorClient: ConnectorClient)
     extends ReleaseOnce
     with SprayJsonSupport {
 
   private val log = Logger(classOf[Configurator])
+
+  private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
 
   private[this] val exceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
@@ -56,16 +60,6 @@ class Configurator private[configurator] (configuredHostname: String,
     case e: Throwable =>
       log.error("What happens here?", e)
       complete(StatusCodes.ServiceUnavailable -> Error(e))
-  }
-
-  private[this] implicit val nodeCollie = new NodeCollie {
-    override def add(node: Node): Unit = store.add(node)
-    override def remove(name: String): Node = store.remove[Node](name)
-    override def update(node: Node): Unit = store.update(node)
-    override def close(): Unit = {
-      // do nothing
-    }
-    override def iterator: Iterator[Node] = store.data[Node]
   }
 
   /**
@@ -84,7 +78,8 @@ class Configurator private[configurator] (configuredHostname: String,
       SinkRoute.apply,
       ClusterRoute.apply,
       StreamRoute.apply,
-      NodeRoute.apply
+      NodeRoute.apply,
+      ZookeeperRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
@@ -124,7 +119,7 @@ class Configurator private[configurator] (configuredHostname: String,
       }
       //which handles undefined Rejections to Exceptions , like ValidationRejection(java.lang.NumberFormatException)
       .handle {
-        case otherRejection => { throw new IllegalArgumentException(s"Ohata Error occur : ${otherRejection}") }
+        case otherRejection => throw new IllegalArgumentException(s"Ohata Error occur : $otherRejection")
       }
       .result()
 
@@ -134,9 +129,12 @@ class Configurator private[configurator] (configuredHostname: String,
   override protected def doClose(): Unit = {
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
-    ReleaseOnce.close(store)
     ReleaseOnce.close(kafkaClient)
     ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(zookeeperCollie)
+    ReleaseOnce.close(clusterCollie)
+    ReleaseOnce.close(nodeCollie)
+    ReleaseOnce.close(store)
   }
 
   //-----------------[public interfaces]-----------------//

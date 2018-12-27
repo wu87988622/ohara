@@ -29,14 +29,16 @@ trait ClusterCollie extends Releasable {
   def workerCollie(): WorkerCollie
 }
 
-/**
-  * the default implementation uses ssh and docker command to manage all clusters.
-  * Each node running the service has name "${clusterName}-${service}-${index}".
-  * For example, there is a worker cluster called "workercluster" and it is run on 3 nodes.
-  * node-0 => workercluster-worker-0
-  * node-1 => workercluster-worker-1
-  * node-2 => workercluster-worker-2
-  */
 object ClusterCollie {
-  def apply(implicit nodeCollie: NodeCollie): ClusterCollie = new ClusterCollieImpl
+  def apply(implicit nodeCollie: NodeCollie): ClusterCollie = ssh
+
+  /**
+    * the default implementation uses ssh and docker command to manage all clusters.
+    * Each node running the service has name "${clusterName}-${service}-${index}".
+    * For example, there is a worker cluster called "workercluster" and it is run on 3 nodes.
+    * node-0 => workercluster-worker-0
+    * node-1 => workercluster-worker-1
+    * node-2 => workercluster-worker-2
+    */
+  def ssh(implicit nodeCollie: NodeCollie): ClusterCollie = new ClusterCollieImpl
 }

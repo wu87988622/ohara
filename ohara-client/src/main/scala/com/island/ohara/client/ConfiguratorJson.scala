@@ -526,12 +526,72 @@ object ConfiguratorJson {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$NODE_PATH"
       override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$NODE_PATH/$id"
     }
-  //----------------------------------------------------[Worker]----------------------------------------------------//
+  //----------------------------------------------------[Cluster]----------------------------------------------------//
+  /**
+    * used to manipulate the zookeeper/broker/worker cluster.
+    * @tparam T type of cluster description
+    */
+  sealed trait ClusterControlCommand[T] {
+
+    /**
+      * used to generate a url to send create request
+      *
+      * @param address basic address of configurator
+      * @return url
+      */
+    def create(address: String): String
+
+    /**
+      * used to generate a url to send remove request
+      *
+      * @param address basic address of configurator
+      * @param name name of cluster
+      * @return url
+      */
+    def remove(address: String, name: String): String
+
+    /**
+      * used to generate a url to request the details of cluster.
+      * @param address basic address of configurator
+      * @param name name of cluster
+      * @return url
+      */
+    def containers(address: String, name: String): String
+
+    /**
+      *  used to generate a url to list all cluster
+      * @param address basic address of configurator
+      * @return url
+      */
+    def list(address: String): String
+  }
+
   sealed trait ClusterDescription {
     def name: String
     def imageName: String
     def nodeNames: Seq[String]
   }
+
+  //----------------------------------------------------[Zookeeper]----------------------------------------------------//
+  val ZOOKEEPER_PATH: String = "zookeepers"
+  implicit val ZOOKEEPER_CLUSTER_CONTROL_COMMAND: ClusterControlCommand[ZookeeperClusterDescription] =
+    new ClusterControlCommand[ZookeeperClusterDescription] {
+      override def create(address: String): String = s"http://$address/$VERSION_V0/$ZOOKEEPER_PATH"
+      override def remove(address: String, name: String): String = s"http://$address/$VERSION_V0/$ZOOKEEPER_PATH/$name"
+      override def containers(address: String, name: String): String =
+        s"http://$address/$VERSION_V0/$ZOOKEEPER_PATH/$name"
+      override def list(address: String): String = s"http://$address/$VERSION_V0/$ZOOKEEPER_PATH"
+    }
+
+  final case class ZookeeperClusterRequest(name: String,
+                                           imageName: Option[String],
+                                           clientPort: Option[Int],
+                                           peerPort: Option[Int],
+                                           electionPort: Option[Int],
+                                           nodeNames: Seq[String])
+
+  implicit val ZOOKEEPER_CLUSTER_REQUEST_JSON_FORMAT: RootJsonFormat[ZookeeperClusterRequest] =
+    jsonFormat6(ZookeeperClusterRequest)
 
   final case class ZookeeperClusterDescription(name: String,
                                                imageName: String,
@@ -540,9 +600,11 @@ object ConfiguratorJson {
                                                electionPort: Int,
                                                nodeNames: Seq[String])
       extends ClusterDescription
+
   implicit val ZOOKEEPER_CLUSTER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ZookeeperClusterDescription] = jsonFormat6(
     ZookeeperClusterDescription)
 
+  //----------------------------------------------------[Broker]----------------------------------------------------//
   final case class BrokerClusterDescription(name: String,
                                             imageName: String,
                                             zookeeperClusterName: String,
@@ -552,6 +614,7 @@ object ConfiguratorJson {
   implicit val BROKER_CLUSTER_DESCRIPTION_JSON_FORMAT: RootJsonFormat[BrokerClusterDescription] = jsonFormat5(
     BrokerClusterDescription)
 
+  //----------------------------------------------------[Worker]----------------------------------------------------//
   final case class WorkerClusterDescription(name: String,
                                             imageName: String,
                                             brokerClusterName: String,
