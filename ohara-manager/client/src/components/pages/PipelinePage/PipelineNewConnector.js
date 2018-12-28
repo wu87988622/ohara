@@ -52,6 +52,13 @@ class PipelineNewConnector extends React.Component {
     update({ graph, updateGraph, connector });
   };
 
+  trimString = string => {
+    // https://stackoverflow.com/a/18134919/1727948
+    // Only displays the first 8 digits of the git sha instead of the full number so
+    // it won't break our layout
+    return string.substring(0, 7);
+  };
+
   render() {
     const { connectors, activeConnector, onSelect } = this.props;
 
@@ -69,7 +76,7 @@ class PipelineNewConnector extends React.Component {
               >
                 <td>{name}</td>
                 <td>{version}</td>
-                <td>{revision}</td>
+                <td>{this.trimString(revision)}</td>
               </tr>
             );
           })}
