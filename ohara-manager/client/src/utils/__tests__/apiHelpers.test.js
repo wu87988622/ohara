@@ -25,11 +25,11 @@ describe('handleError()', () => {
     expect(toastr.error).toHaveBeenCalledTimes(0);
 
     const err = {
-      data: { errorMessage: { message: 'error' } },
+      errorMessage: { message: 'error' },
     };
 
     handleError(err);
     expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(err.data.errorMessage.message);
+    expect(toastr.error).toHaveBeenCalledWith(err.errorMessage.message);
   });
 });
