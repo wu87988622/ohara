@@ -5,20 +5,15 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-/**
- * a simple wrap from kafka producer.
- *
- * @tparam K key type
- * @tparam V value type
- */
+/** a simple wrap from kafka producer. */
 public final class ProducerBuilder {
   private String brokers;
-  private short numberOfAcks;
+  // default noAcks
+  private short numberOfAcks = 0;
 
   public ProducerBuilder brokers(String brokers) {
     this.brokers = brokers;
@@ -35,7 +30,10 @@ public final class ProducerBuilder {
     return this;
   }
 
-  // TODO: 2018/11/19  is threr more good way to do implicit in java
+  /**
+   * @param <K> key type
+   * @param <V> value type
+   */
   public <K, V> Producer<K, V> build(Serializer<K> keySerializer, Serializer<V> valueSerializer) {
     Objects.requireNonNull(brokers);
     return new Producer<K, V>() {
@@ -47,56 +45,51 @@ public final class ProducerBuilder {
         return props;
       }
 
-      private KafkaProducer producer = getProducer();
-
-      private KafkaProducer getProducer() {
-        return new KafkaProducer<K, V>(
-            getProducerConfig(),
-            KafkaUtil.wrapSerializer(keySerializer),
-            KafkaUtil.wrapSerializer(valueSerializer));
-      }
+      private final KafkaProducer<K, V> producer =
+          new KafkaProducer<>(
+              getProducerConfig(),
+              KafkaUtil.wrapSerializer(keySerializer),
+              KafkaUtil.wrapSerializer(valueSerializer));
 
       @Override
-      public Sender<K, V> sender() {
+      public final Sender<K, V> sender() {
         return new Sender<K, V>() {
 
           @Override
           protected void doSend(String topic, Handler<RecordMetadata> handler) {
             ProducerRecord<K, V> record =
-                new ProducerRecord<K, V>(
+                new ProducerRecord<>(
                     topic,
-                    partition().map(x -> new Integer(x)).orElse(null),
-                    timestamp().map(x -> new Long(x)).orElse(null),
+                    partition().map(Integer::new).orElse(null),
+                    timestamp().map(Long::new).orElse(null),
                     key().orElse(null),
                     value().orElse(null),
-                    headers().stream().map(x -> toKafkaHeader(x)).collect(Collectors.toList()));
+                    headers()
+                        .stream()
+                        .map(ProducerBuilder.this::toKafkaHeader)
+                        .collect(Collectors.toList()));
 
             producer.send(
                 record,
-                new Callback() {
-                  @Override
-                  public void onCompletion(
-                      org.apache.kafka.clients.producer.RecordMetadata metadata,
-                      Exception exception) {
-                    if (metadata == null && exception == null)
-                      handler.doException(
-                          new IllegalStateException(
-                              "no meta and exception from kafka producer...It should be impossible"));
-                    if (metadata != null && exception != null)
-                      handler.doException(
-                          new IllegalStateException(
-                              "Both meta and exception from kafka producer...It should be impossible"));
-                    if (metadata != null)
-                      handler.doHandle(
-                          new RecordMetadata(
-                              metadata.topic(),
-                              metadata.partition(),
-                              metadata.offset(),
-                              metadata.timestamp(),
-                              metadata.serializedKeySize(),
-                              metadata.serializedValueSize()));
-                    if (exception != null) handler.doException(exception);
-                  }
+                (metadata, exception) -> {
+                  if (metadata == null && exception == null)
+                    handler.doException(
+                        new IllegalStateException(
+                            "no meta and exception from kafka producer...It should be impossible"));
+                  if (metadata != null && exception != null)
+                    handler.doException(
+                        new IllegalStateException(
+                            "Both meta and exception from kafka producer...It should be impossible"));
+                  if (metadata != null)
+                    handler.doHandle(
+                        new RecordMetadata(
+                            metadata.topic(),
+                            metadata.partition(),
+                            metadata.offset(),
+                            metadata.timestamp(),
+                            metadata.serializedKeySize(),
+                            metadata.serializedValueSize()));
+                  if (exception != null) handler.doException(exception);
                 });
           }
         };
@@ -118,11 +111,11 @@ public final class ProducerBuilder {
     return new KafkaHeader(header);
   }
 
-  private class KafkaHeader implements org.apache.kafka.common.header.Header {
+  static class KafkaHeader implements org.apache.kafka.common.header.Header {
 
     private Header header;
 
-    public KafkaHeader(Header header) {
+    KafkaHeader(Header header) {
       this.header = header;
     }
 
