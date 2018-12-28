@@ -1,4 +1,4 @@
-FROM centos:7.5.1804 as base
+FROM centos:7.6.1810 as deps
 
 # install tools
 RUN yum install -y \
@@ -19,7 +19,7 @@ RUN echo "$VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/
 ARG TINI_VERSION=v0.18.0
 RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 
-FROM centos:7.5.1804
+FROM centos:7.6.1810
 
 # install openjdk-1.8
 RUN yum install -y \
@@ -34,7 +34,7 @@ RUN useradd -ms /bin/bash -g $USER $USER
 
 # copy kafka binary
 # TODO: we should remove unused dependencies since this image is used to run broker only
-COPY --from=base /opt/kafka /home/$USER
+COPY --from=deps /opt/kafka /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "kafka_*") /home/$USER/default
 ADD ./worker.sh /home/$USER/default/bin/
 RUN chmod +x /home/$USER/default/bin/worker.sh
@@ -43,7 +43,7 @@ ENV KAFKA_HOME=/home/$USER/default
 ENV PATH=$PATH:$KAFKA_HOME/bin
 
 # copy Tini
-COPY --from=base /tini /tini
+COPY --from=deps /tini /tini
 RUN chmod +x /tini
 
 # USER $USER

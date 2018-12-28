@@ -1,4 +1,4 @@
-FROM centos:7.5.1804 AS deps
+FROM centos:7.6.1810 AS deps
 
 # install tools
 RUN yum install -y \
@@ -55,7 +55,7 @@ RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 # for cdh dependencies
 RUN gradle -Pcdh clean build -x test
 
-FROM centos:7.5.1804
+FROM centos:7.6.1810
 
 # install tools
 RUN yum install -y \

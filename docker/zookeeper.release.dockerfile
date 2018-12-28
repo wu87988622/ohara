@@ -1,4 +1,4 @@
-FROM centos:7.5.1804 as base
+FROM centos:7.6.1810 as deps
 
 # install tools
 RUN yum install -y \
@@ -17,7 +17,7 @@ RUN echo "$VERSION" > $(find "/opt/zookeeper/" -maxdepth 1 -type d -name "zookee
 ARG TINI_VERSION=v0.18.0
 RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 
-FROM centos:7.5.1804
+FROM centos:7.6.1810
 
 # install tools
 RUN yum install -y \
@@ -31,7 +31,7 @@ RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
 # copy zookeeper binary
-COPY --from=base /opt/zookeeper /home/$USER
+COPY --from=deps /opt/zookeeper /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "zookeeper-*") /home/$USER/default
 COPY ./zk.sh /home/$USER/default/bin/
 RUN chown -R $USER:$USER /home/$USER
@@ -40,7 +40,7 @@ ENV ZOOKEEPER_HOME=/home/$USER/default
 ENV PATH=$PATH:$ZOOKEEPER_HOME/bin
 
 # copy Tini
-COPY --from=base /tini /tini
+COPY --from=deps /tini /tini
 RUN chmod +x /tini
 
 USER $USER
