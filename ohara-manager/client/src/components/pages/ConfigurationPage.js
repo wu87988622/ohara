@@ -132,8 +132,9 @@ class ConfigurationPage extends React.Component {
           <form>
             <FormInner>
               <FormGroup data-testid="connection-name">
-                <Label>Name</Label>
+                <Label htmlFor="connection-name">Name</Label>
                 <Input
+                  id="connection-name"
                   name="connectionName"
                   width="250px"
                   placeholder="Connection name"
@@ -144,8 +145,9 @@ class ConfigurationPage extends React.Component {
               </FormGroup>
 
               <FormGroup data-testid="connection-url">
-                <Label>HDFS connection URL</Label>
+                <Label htmlFor="connection-url">HDFS connection URL</Label>
                 <Input
+                  id="connection-url"
                   name="connectionUrl"
                   width="250px"
                   placeholder="http://localhost:5050"

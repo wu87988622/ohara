@@ -3,18 +3,18 @@ import { getTestById } from '../../src/utils/testUtils';
 
 // TODO: skip these tests for now since this will hit the real APIs
 // Need to start the Configurator when running on CI
-describe.skip('KafkaPage', () => {
+describe('KafkaPage', () => {
   it('creates a new topic', () => {
     cy.visit(KAFKA);
 
-    cy.get(getTestById('new-topic')).click();
+    cy.getByText('New topic').click();
 
     cy.get('.ReactModal__Content').should('have.length', 1);
 
-    cy.get(getTestById('modal-cluster-name')).type('test cluster');
-    cy.get(getTestById('modal-partitions')).type('1');
-    cy.get(getTestById('modal-replication-factor')).type('2');
-    cy.get(getTestById('modal-submit-btn')).click();
+    cy.getByLabelText('Topic name').type('test cluster');
+    cy.getByLabelText('Partitions').type('1');
+    cy.getByLabelText('Replication factor').type('2');
+    cy.getByText('Save').click();
 
     cy.get('.toast-success').should('have.length', 1);
     cy.get('.ReactModal__Content').should('have.length', 0);

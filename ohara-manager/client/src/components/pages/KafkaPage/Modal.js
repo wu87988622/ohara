@@ -106,11 +106,11 @@ const Modal = ({
       <form>
         <FormInner>
           <FormGroup>
-            <Label>Topic name</Label>
+            <Label htmlFor="topic-name">Topic name</Label>
             <Input
-              type="text"
               width="250px"
-              id="topicName"
+              id="topic-name"
+              name="topicName"
               placeholder="kafka-cluster"
               value={topicName}
               data-testid="modal-cluster-name"
@@ -119,11 +119,11 @@ const Modal = ({
           </FormGroup>
 
           <FormGroup>
-            <Label>Partitions</Label>
+            <Label htmlFor="partitions">Partitions</Label>
             <Input
-              type="text"
               width="250px"
               id="partitions"
+              name="partitions"
               placeholder="1"
               value={partitions}
               data-testid="modal-partitions"
@@ -132,11 +132,11 @@ const Modal = ({
           </FormGroup>
 
           <FormGroup>
-            <Label>Replication Factor</Label>
+            <Label htmlFor="replication">Replication factor</Label>
             <Input
-              type="text"
               width="250px"
-              id="replicationFactor"
+              id="replication"
+              name="replicationFactor"
               placeholder="3"
               value={replicationFactor}
               data-testid="modal-replication-factor"

@@ -1,7 +1,6 @@
 import * as URLS from '../../src/constants/urls';
-import { getTestById } from '../../src/utils/testUtils';
 
-describe.skip('configuration page', () => {
+describe('configuration page', () => {
   beforeEach(() => {
     cy.visit(URLS.CONFIGURATION);
   });
@@ -10,15 +9,15 @@ describe.skip('configuration page', () => {
     cy.location('pathname').should('eq', URLS.CONFIGURATION);
   });
 
-  it('should pass the test with correct HDFS info', () => {
-    cy.get(getTestById('connection-name-input'))
+  it('should pass the connection test with correct HDFS info', () => {
+    cy.getByLabelText('Name')
       .clear()
       .type('test connection');
-    cy.get(getTestById('connection-url-input'))
+    cy.getByLabelText('HDFS connection URL')
       .clear()
       .type('file://test/connection');
 
-    cy.get(getTestById('test-connection-btn')).click();
+    cy.getByText('Test connection').click();
 
     cy.wait(3000);
     cy.get('.toast-success').should('have.length.above', 1);

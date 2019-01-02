@@ -128,8 +128,8 @@ class KafkaPage extends React.Component {
     }
   };
 
-  handleChange = ({ target: { id, value } }) => {
-    this.setState({ [id]: value, isFormDirty: true });
+  handleChange = ({ target: { name, value } }) => {
+    this.setState({ [name]: value, isFormDirty: true });
   };
 
   resetModal = () => {
