@@ -1,7 +1,6 @@
 import { CONNECTOR_KEYS } from 'constants/pipelines';
 
-import * as clusterApis from 'apis/clusterApis';
-import { checkTypeExist, update, fetchCluster } from '../pipelineToolbarUtils';
+import { checkTypeExist, update } from '../pipelineToolbarUtils';
 
 jest.mock('apis/clusterApis');
 
@@ -56,23 +55,4 @@ describe('update()', () => {
     update({ graph, updateGraph, connector });
     expect(updateGraph).toHaveBeenCalledTimes(0);
   });
-});
-
-describe('fetchCluster()', async () => {
-  const res = {
-    data: {
-      isSuccess: true,
-      result: {
-        sources: ['a', 'b'],
-        sinks: ['c', 'd'],
-      },
-    },
-  };
-  clusterApis.fetchCluster.mockImplementation(() => Promise.resolve(res));
-
-  const { sources, sinks } = await fetchCluster();
-
-  expect(clusterApis.fetchCluster).toHaveBeenCalledTimes(1);
-  expect(sources).toEqual(res.data.result.sources);
-  expect(sinks).toEqual(res.data.result.sinks);
 });

@@ -4,9 +4,9 @@ import { shallow } from 'enzyme';
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
 import { getTestById } from 'utils/testUtils';
-import { fetchCluster } from 'utils/pipelineToolbarUtils';
+import { fetchCluster } from 'utils/pipelineUtils';
 
-jest.mock('utils/pipelineToolbarUtils');
+jest.mock('utils/pipelineUtils');
 
 const props = {
   match: {

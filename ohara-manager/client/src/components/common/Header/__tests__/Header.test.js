@@ -1,9 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import Header from '../Header';
 import * as URLS from 'constants/urls';
+import Header from '../Header';
 import NAVS from 'constants/navs';
+import { fetchCluster } from 'utils/pipelineUtils';
+
+jest.mock('utils/pipelineUtils');
+
+fetchCluster.mockImplementation(() =>
+  Promise.resolve({ data: { result: { versionInfo: {} }, isSuccess: true } }),
+);
 
 const props = {
   isLogin: false,
@@ -11,13 +18,30 @@ const props = {
 
 describe('<Header />', () => {
   let wrapper;
+
   beforeEach(() => {
+    fetchCluster.mockImplementation(() =>
+      Promise.resolve({
+        versionInfo: {
+          version: '123',
+          revision: 'abcdefghijklno123',
+          date: Date.now(),
+        },
+      }),
+    );
     wrapper = shallow(<Header {...props} />);
   });
 
   it('renders self', () => {
     expect(wrapper.length).toBe(1);
-    expect(wrapper.name()).toBe('Wrapper');
+    expect(wrapper.name()).toBe('StyledHeader');
+  });
+
+  it('should not render if cluster info not provided', () => {
+    fetchCluster.mockImplementation(() => Promise.resolve({}));
+
+    wrapper = shallow(<Header {...props} />);
+    expect(wrapper.name()).toBe(null);
   });
 
   it('renders <Brand />', () => {

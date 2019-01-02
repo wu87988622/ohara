@@ -5,11 +5,11 @@ import styled from 'styled-components';
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
 import * as PIPELINES from 'constants/pipelines';
-import { Modal } from 'common/Modal';
-import { fetchCluster } from 'utils/pipelineToolbarUtils';
 import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
+import { Modal } from 'common/Modal';
+import { fetchCluster } from 'utils/pipelineUtils';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;

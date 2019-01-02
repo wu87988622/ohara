@@ -3,12 +3,22 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 
-import NAVS from 'constants/navs';
 import * as URLS from 'constants/urls';
+import NAVS from 'constants/navs';
 import ConfigurationModal from 'pages/ConfigurationModal';
-import { white, blue, dimBlue, lighterGray } from 'theme/variables';
+import { fetchCluster } from 'utils/pipelineUtils';
+import { InfoModal } from '../Modal';
+import {
+  white,
+  whiteSmoke,
+  blue,
+  dimBlue,
+  darkerBlue,
+  lightBlue,
+  lighterGray,
+} from 'theme/variables';
 
-const Wrapper = styled.div`
+const StyledHeader = styled.div`
   background-color: ${white};
   position: fixed;
   left: 0;
@@ -20,7 +30,7 @@ const Wrapper = styled.div`
   z-index: 100;
 `;
 
-Wrapper.displayName = 'Wrapper';
+StyledHeader.displayName = 'StyledHeader';
 
 const HeaderWrapper = styled.header`
   width: 100%;
@@ -66,11 +76,10 @@ const Link = styled(NavLink)`
 
 Link.displayName = 'Link';
 
-const ConfigBtn = styled.button`
+const Btn = styled.button`
   border: none;
   color: ${dimBlue};
   font-size: 18px;
-  margin-left: auto;
 
   &:hover,
   &.active {
@@ -90,34 +99,123 @@ const Icon = styled.i`
 
 Icon.displayName = 'Icon';
 
+const RightCol = styled.div`
+  margin-left: auto;
+`;
+
+const Ul = styled.ul`
+  padding: 22px 25px;
+
+  li {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .item {
+    margin-right: 10px;
+    padding: 13px 15px;
+    color: ${darkerBlue};
+    background-color: ${whiteSmoke};
+  }
+
+  .content {
+    color: ${lightBlue};
+  }
+
+  .item,
+  .content {
+    font-size: 13px;
+  }
+`;
+
 class Header extends React.Component {
   state = {
-    isModalActive: false,
+    isConfigModalActive: false,
+    isVersionModalActive: false,
     partitions: '',
     replicationFactor: '',
   };
+
   static propTypes = {
     isLogin: PropTypes.bool.isRequired,
+    versionInfo: PropTypes.object,
   };
 
-  handleModalOpen = () => {
-    this.setState({ isModalActive: true });
+  componentDidMount() {
+    this.fetchCluster();
+  }
+
+  fetchCluster = async () => {
+    const { versionInfo } = await fetchCluster();
+    if (versionInfo) {
+      this.setState({ versionInfo });
+    }
   };
 
-  handleModalClose = () => {
-    this.setState({ isModalActive: false });
+  handleConfigModalOpen = () => {
+    this.setState({ isConfigModalActive: true });
+  };
+
+  handleConfigModalClose = () => {
+    this.setState({ isConfigModalActive: false });
+  };
+
+  handleVersionModalOpen = () => {
+    this.setState({ isVersionModalActive: true });
+  };
+
+  handleVersionModalClose = () => {
+    this.setState({ isVersionModalActive: false });
   };
 
   render() {
     const { isLogin } = this.props;
-    const { isModalActive } = this.state;
+    const {
+      isConfigModalActive,
+      isVersionModalActive,
+      versionInfo,
+    } = this.state;
+
+    if (!versionInfo) return null;
+
+    const { version, revision, date } = versionInfo;
 
     return (
-      <Wrapper>
+      <StyledHeader>
         <ConfigurationModal
-          isActive={isModalActive}
-          handleClose={this.handleModalClose}
+          isActive={isConfigModalActive}
+          handleClose={this.handleConfigModalClose}
         />
+
+        <InfoModal
+          title="Ohara version"
+          isActive={isVersionModalActive}
+          contentLabel="VersionModal"
+          ariaHideApp={false}
+          width="440px"
+          onRequestClose={this.handleVersionModalClose}
+          handleCancel={this.handleVersionModalClose}
+        >
+          <Ul>
+            <li>
+              <span className="item">Version:</span>
+              <span className="content">{version}</span>
+            </li>
+            <li>
+              <span className="item">Revision:</span>
+              <span className="content">{revision}</span>
+            </li>
+            <li>
+              <span className="item">Build date:</span>
+              <span className="content">{date}</span>
+            </li>
+          </Ul>
+        </InfoModal>
         <HeaderWrapper>
           <Brand to={URLS.HOME}>Ohara</Brand>
           <Nav>
@@ -137,18 +235,27 @@ class Header extends React.Component {
             })}
           </Nav>
 
-          <ConfigBtn data-testid="config-btn" onClick={this.handleModalOpen}>
-            <i className="fas fa-cog" />
-          </ConfigBtn>
+          <RightCol>
+            <Btn
+              data-testid="version-btn"
+              onClick={this.handleVersionModalOpen}
+            >
+              <i className="fas fa-info-circle" />
+            </Btn>
 
-          <Login
-            data-testid="login-state"
-            to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
-          >
-            {isLogin ? 'Log out' : 'Log in'}
-          </Login>
+            <Btn data-testid="config-btn" onClick={this.handleConfigModalOpen}>
+              <i className="fas fa-cog" />
+            </Btn>
+
+            <Login
+              data-testid="login-state"
+              to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
+            >
+              {isLogin ? 'Log out' : 'Log in'}
+            </Login>
+          </RightCol>
         </HeaderWrapper>
-      </Wrapper>
+      </StyledHeader>
     );
   }
 }

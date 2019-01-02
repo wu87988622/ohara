@@ -1,7 +1,6 @@
 import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/commonUtils';
-import * as clusterApis from 'apis/clusterApis';
 import * as PIPELINES from 'constants/pipelines';
 
 const isSource = type => type.includes('Source');
@@ -49,15 +48,5 @@ export const update = ({ graph, updateGraph, connector }) => {
     };
 
     updateGraph(update, type);
-  }
-};
-
-export const fetchCluster = async () => {
-  const res = await clusterApis.fetchCluster();
-
-  const isSuccess = _.get(res, 'data.isSuccess');
-  if (isSuccess) {
-    const { sources, sinks } = res.data.result;
-    return { sources, sinks };
   }
 };

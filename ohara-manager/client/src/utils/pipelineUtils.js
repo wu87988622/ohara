@@ -1,4 +1,5 @@
 import * as _ from './commonUtils';
+import * as clusterApis from 'apis/clusterApis';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as topicApis from 'apis/topicApis';
 
@@ -66,4 +67,14 @@ export const fetchSource = async id => {
   }
 
   return null;
+};
+
+export const fetchCluster = async () => {
+  const res = await clusterApis.fetchCluster();
+
+  const isSuccess = _.get(res, 'data.isSuccess');
+  if (isSuccess) {
+    const { sources, sinks, versionInfo } = res.data.result;
+    return { sources, sinks, versionInfo };
+  }
 };
