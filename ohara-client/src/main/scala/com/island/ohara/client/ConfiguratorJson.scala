@@ -507,7 +507,7 @@ object ConfiguratorJson {
 
   //----------------------------------------------------[Node]----------------------------------------------------//
   val NODE_PATH: String = "nodes"
-  case class NodeRequest(name: String, port: Int, user: String, password: String)
+  case class NodeRequest(name: Option[String], port: Int, user: String, password: String)
   implicit val NODE_REQUEST_JSON_FORMAT: RootJsonFormat[NodeRequest] = jsonFormat4(NodeRequest)
 
   case class Node(name: String, port: Int, user: String, password: String, lastModified: Long) extends Data {

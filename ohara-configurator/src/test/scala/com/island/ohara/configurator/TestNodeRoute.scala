@@ -12,8 +12,10 @@ class TestNodeRoute extends SmallTest with Matchers {
   private[this] val client = ConfiguratorClient(configurator.connectionProps)
 
   private[this] def compare(req: NodeRequest, res: Node): Unit = {
-    req.name shouldBe res.id
-    req.name shouldBe res.name
+    req.name.map { name =>
+      name shouldBe res.id
+      name shouldBe res.name
+    }
     req.port shouldBe res.port
     req.user shouldBe res.user
     req.password shouldBe res.password
@@ -21,7 +23,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testAdd(): Unit = {
-    val req = NodeRequest("a", 22, "b", "c")
+    val req = NodeRequest(Some("a"), 22, "b", "c")
     val res = client.add[NodeRequest, Node](req)
     compare(req, res)
 
@@ -31,7 +33,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testDelete(): Unit = {
-    val req = NodeRequest("a", 22, "b", "c")
+    val req = NodeRequest(Some("a"), 22, "b", "c")
     val res = client.add[NodeRequest, Node](req)
     compare(req, res)
 
@@ -43,19 +45,45 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testUpdate(): Unit = {
-    val req = NodeRequest("a", 22, "b", "c")
+    val req = NodeRequest(Some("a"), 22, "b", "c")
     val res = client.add[NodeRequest, Node](req)
     compare(req, res)
 
     client.list[Node].size shouldBe 1
 
-    val req2 = NodeRequest("a", 22, "b", "d")
+    val req2 = NodeRequest(Some("a"), 22, "b", "d")
     val res2 = client.update[NodeRequest, Node](res.id, req2)
     compare(req2, res2)
     client.list[Node].size shouldBe 1
 
     an[IllegalArgumentException] should be thrownBy client
-      .update[NodeRequest, Node](res.id, NodeRequest("a2", 22, "b", "d"))
+      .update[NodeRequest, Node](res.id, NodeRequest(Some("a2"), 22, "b", "d"))
+  }
+
+  @Test
+  def testInvalidNameOfUpdate(): Unit = {
+    val req = NodeRequest(Some("a"), 22, "b", "c")
+    val res = client.add[NodeRequest, Node](req)
+    compare(req, res)
+
+    client.list[Node].size shouldBe 1
+
+    // we can't update an non-existent node
+    an[IllegalArgumentException] should be thrownBy client
+      .update[NodeRequest, Node]("xxxxxx", NodeRequest(Some("a"), 22, "b", "d"))
+    // we can't update an existent node by unmatched name
+    an[IllegalArgumentException] should be thrownBy client
+      .update[NodeRequest, Node](res.id, NodeRequest(Some("xxxxxx"), 22, "b", "d"))
+
+    val req2 = NodeRequest(Some(res.id), 22, "b", "d")
+    val res2 = client.update[NodeRequest, Node](res.id, req2)
+    compare(req2, res2)
+    client.list[Node].size shouldBe 1
+
+    val req3 = NodeRequest(None, 22, "b", "zz")
+    val res3 = client.update[NodeRequest, Node](res.id, req3)
+    compare(req3, res3)
+    client.list[Node].size shouldBe 1
   }
 
   @After
