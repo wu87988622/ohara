@@ -49,7 +49,7 @@ ENV KAFKA_HOME=/home/$USER/default
 ENV PATH=$PATH:$KAFKA_HOME/bin
 
 # copy prometheus java-exporter
-COPY --from=base /prometheus /prometheus
+COPY --from=deps /prometheus /prometheus
 ENV PROMETHEUS_EXPORTER=/prometheus/jmx_prometheus_javaagent.jar
 ENV PROMETHEUS_EXPORTER_CONFIG=/prometheus/config.yml
 

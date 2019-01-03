@@ -59,8 +59,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
           dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
         withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(
           dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-//        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
-//          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
+          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
   }
