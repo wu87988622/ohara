@@ -1,10 +1,10 @@
 package com.island.ohara.agent
 import com.island.ohara.client.ConfiguratorJson.BrokerClusterDescription
-import com.island.ohara.common.util.{Releasable, VersionUtil}
+import com.island.ohara.common.util.VersionUtil
 
 import scala.concurrent.Future
 
-trait BrokerCollie extends Releasable with Collie[BrokerClusterDescription] {
+trait BrokerCollie extends Collie[BrokerClusterDescription] {
   def creator(): BrokerCollie.ClusterCreator
 }
 

@@ -3,7 +3,7 @@ import java.util.Objects
 
 import com.island.ohara.client.ConfiguratorJson.ZookeeperClusterDescription
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.{Releasable, VersionUtil}
+import com.island.ohara.common.util.VersionUtil
 
 import scala.concurrent.Future
 
@@ -11,7 +11,7 @@ import scala.concurrent.Future
   * a interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Releasable with Collie[ZookeeperClusterDescription] {
+trait ZookeeperCollie extends Collie[ZookeeperClusterDescription] {
   override def creator(): ZookeeperCollie.ClusterCreator
 }
 

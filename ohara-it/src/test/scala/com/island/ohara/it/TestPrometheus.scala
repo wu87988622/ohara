@@ -36,7 +36,7 @@ class TestPrometheus extends MediumTest with Matchers {
             val password = nodeInfo.split("@").head.split(":").last
             val hostname = nodeInfo.split("@").last.split(":").head
             val port = nodeInfo.split("@").last.split(":").last.toInt
-            Node(hostname, port, user, password, CommonUtil.current())
+            Node(hostname, port, user, password, Seq.empty, CommonUtil.current())
           }
         )
         .toList
@@ -94,19 +94,18 @@ class TestPrometheus extends MediumTest with Matchers {
     val clientPort = CommonUtil.availablePort()
     val zookeeperCollie = clusterCollie.zookeepersCollie()
 
-    try {
-      val zkCluster = zookeeperCollie
-        .creator()
-        .clientPort(clientPort)
-        .electionPort(electionPort)
-        .peerPort(peerPort)
-        .clusterName(clusterName)
-        .create(nodeCollie.head.name)
-      f(Await.result(zkCluster, 2 minutes))
-    } finally {
-      Await.result(zookeeperCollie.remove(clusterName), 60 seconds)
-      zookeeperCollie.close()
-    }
+    try f(
+      Await.result(
+        zookeeperCollie
+          .creator()
+          .clientPort(clientPort)
+          .electionPort(electionPort)
+          .peerPort(peerPort)
+          .clusterName(clusterName)
+          .create(nodeCollie.head.name),
+        2 minutes
+      ))
+    finally Await.result(zookeeperCollie.remove(clusterName), 60 seconds)
   }
 
   def startBroker(zkClusterName: String, f: (Int, BrokerClusterDescription) => Unit): Unit = {
@@ -115,19 +114,20 @@ class TestPrometheus extends MediumTest with Matchers {
     val exporterPort = CommonUtil.availablePort()
     val brokerCollie = clusterCollie.brokerCollie()
 
-    try {
-      val brokerCluster = brokerCollie
-        .creator()
-        .clusterName(clusterName)
-        .clientPort(clientPort)
-        .exporterPort(exporterPort)
-        .zookeeperClusterName(zkClusterName)
-        .create(nodeCollie.head.name)
-      f(exporterPort, Await.result(brokerCluster, 2 minutes))
-    } finally {
-      Await.result(brokerCollie.remove(clusterName), 60 seconds)
-      brokerCollie.close()
-    }
+    try f(
+      exporterPort,
+      Await.result(
+        brokerCollie
+          .creator()
+          .clusterName(clusterName)
+          .clientPort(clientPort)
+          .exporterPort(exporterPort)
+          .zookeeperClusterName(zkClusterName)
+          .create(nodeCollie.head.name),
+        2 minutes
+      )
+    )
+    finally Await.result(brokerCollie.remove(clusterName), 60 seconds)
   }
 
   private val fakeUrl = "128.128.128.128"
@@ -181,10 +181,8 @@ class TestPrometheus extends MediumTest with Matchers {
     val clientPort = CommonUtil.availablePort()
     val server = PrometheusServer.creater().clientPort(clientPort).targets(Seq(fakeUrl + ":" + clientPort)).create(node)
 
-    try {
-      val desc = server.start()
-      f(desc)
-    } finally server.stop()
+    try f(server.start())
+    finally server.stop()
   }
 
   /**

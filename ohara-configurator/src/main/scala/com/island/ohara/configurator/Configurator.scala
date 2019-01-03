@@ -131,7 +131,6 @@ class Configurator private[configurator] (configuredHostname: String,
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
     ReleaseOnce.close(kafkaClient)
     ReleaseOnce.close(connectorClient)
-    ReleaseOnce.close(zookeeperCollie)
     ReleaseOnce.close(clusterCollie)
     ReleaseOnce.close(nodeCollie)
     ReleaseOnce.close(store)
@@ -192,15 +191,15 @@ object Configurator {
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value)     => hostname = value
       case Array(PORT_KEY, value)         => port = value.toInt
-      case Array(BROKERS_KEY, value)      => if (value.toLowerCase != "none") brokers = Some(value)
-      case Array(WORKERS_KEY, value)      => if (value.toLowerCase != "none") workers = Some(value)
+      case Array(BROKERS_KEY, value)      => brokers = Some(value)
+      case Array(WORKERS_KEY, value)      => workers = Some(value)
       case Array(TOPIC_KEY, value)        => topicName = value
       case Array(PARTITIONS_KEY, value)   => numberOfPartitions = value.toInt
       case Array(REPLICATIONS_KEY, value) => numberOfReplications = value.toShort
       case _                              => throw new IllegalArgumentException(USAGE)
     }
     var standalone = false
-
+    println(s"[CHIA] hostname:$hostname")
     val configurator =
       if (brokers.isEmpty && workers.isEmpty) {
         standalone = true

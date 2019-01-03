@@ -1,11 +1,11 @@
 package com.island.ohara.agent
 import com.island.ohara.client.ConfiguratorJson.WorkerClusterDescription
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.{Releasable, VersionUtil}
+import com.island.ohara.common.util.VersionUtil
 
 import scala.concurrent.Future
 
-trait WorkerCollie extends Releasable with Collie[WorkerClusterDescription] {
+trait WorkerCollie extends Collie[WorkerClusterDescription] {
   def creator(): WorkerCollie.ClusterCreator
 }
 

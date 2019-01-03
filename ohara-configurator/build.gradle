@@ -45,38 +45,39 @@ dependencies {
 task runConfigurator(type: JavaExec, dependsOn: 'classes') {
   description 'run a configurator. You can use -Phost and -Pport to change the address and port of configurator.' +
           'Also, you can assign -Pbrokers, -Pworkers, -Ptopic, -Ppartitions, and -Preplications to run the configurator on truly kafka'
-  String hostname = "localhost"
-  if(project.hasProperty('host')) {
-    hostname = "${project.getProperty('host')}"
-  }
-  String port = 0
-  if(project.hasProperty('port')) {
-    port = "${project.getProperty('port')}"
-  }
+
   classpath = sourceSets.main.runtimeClasspath
   main = "com.island.ohara.configurator.Configurator"
-  String brokers = "none"
-  if(project.hasProperty('brokers')) {
-    brokers = "${project.getProperty('brokers')}"
-  }
-  String topic = "test-topic"
-  if(project.hasProperty('topic')) {
-    topic = "${project.getProperty('topic')}"
-  }
-  String partitions = "1"
-  if(project.hasProperty('partitions')) {
-    partitions = "${project.getProperty('partitions')}"
-  }
-  String replications = "1"
-  if(project.hasProperty('replications')) {
-    replications = "${project.getProperty('replications')}"
-  }
-  String workers = "none"
-  if(project.hasProperty('workers')) {
-    workers = "${project.getProperty('workers')}"
-  }
-  args = Arrays.asList("--hostname", hostname, "--port", port, "--brokers", brokers, "--topic", topic,
-          "--partitions", partitions, "--replications", replications, "--workers", workers)
 
+  def inputs = []
+  if(project.hasProperty('hostname')) {
+    inputs << "--hostname"
+    inputs << project.getProperty("hostname")
+  }
+  if(project.hasProperty('port')) {
+    inputs << "--port"
+    inputs << project.getProperty("port")
+  }
+  if(project.hasProperty('brokers')) {
+    inputs << "--brokers"
+    inputs << project.getProperty('brokers')
+  }
+  if(project.hasProperty('topic')) {
+    inputs << "--topic"
+    inputs << project.getProperty('topic')
+  }
+  if(project.hasProperty('partitions')) {
+    inputs << "--partitions"
+    inputs << project.getProperty('partitions')
+  }
+  if(project.hasProperty('replications')) {
+    inputs << "--replications"
+    inputs << project.getProperty('replications')
+  }
+  if(project.hasProperty('workers')) {
+    inputs << "--workers"
+    inputs << project.getProperty('workers')
+  }
+  args = inputs
 }
 

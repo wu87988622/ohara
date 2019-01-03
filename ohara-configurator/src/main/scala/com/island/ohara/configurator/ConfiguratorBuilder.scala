@@ -363,8 +363,4 @@ private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterDescr
   override def addNode(clusterName: String, nodeName: String): Future[ZookeeperClusterDescription] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
-
-  override def close(): Unit = {
-    // do nothing
-  }
 }

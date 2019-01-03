@@ -11,7 +11,7 @@ class TestNodeCollie extends SmallTest with Matchers {
   def testAdd(): Unit = {
     val collie = NodeCollie.inMemory()
     try {
-      val node = Node("b", 123, "c", "d", CommonUtil.current())
+      val node = Node("b", 123, "c", "d", Seq.empty, CommonUtil.current())
       collie.add(node)
       collie.size shouldBe 1
       an[IllegalArgumentException] should be thrownBy collie.add(node)
@@ -24,14 +24,14 @@ class TestNodeCollie extends SmallTest with Matchers {
   def testUpdate(): Unit = {
     val collie = NodeCollie.inMemory()
     try {
-      val node = Node("b", 123, "c", "d", CommonUtil.current())
+      val node = Node("b", 123, "c", "d", Seq.empty, CommonUtil.current())
       collie.add(node)
       collie.size shouldBe 1
-      val node2 = Node("b", 123, "c", "d", CommonUtil.current())
+      val node2 = Node("b", 123, "c", "d", Seq.empty, CommonUtil.current())
       collie.update(node2)
       collie.size shouldBe 1
       collie.head shouldBe node2
-      val node3 = Node("b3", 123, "c", "d", CommonUtil.current())
+      val node3 = Node("b3", 123, "c", "d", Seq.empty, CommonUtil.current())
       an[IllegalArgumentException] should be thrownBy collie.update(node3)
     } finally collie.close()
   }
@@ -40,8 +40,8 @@ class TestNodeCollie extends SmallTest with Matchers {
   def testRemove(): Unit = {
     val collie = NodeCollie.inMemory()
     try {
-      val node = Node("b", 123, "c", "d", CommonUtil.current())
-      val node2 = Node("b2", 123, "c", "d", CommonUtil.current())
+      val node = Node("b", 123, "c", "d", Seq.empty, CommonUtil.current())
+      val node2 = Node("b2", 123, "c", "d", Seq.empty, CommonUtil.current())
       collie.add(node)
       collie.add(node2)
       collie.size shouldBe 2
@@ -54,7 +54,7 @@ class TestNodeCollie extends SmallTest with Matchers {
   def testClose(): Unit = {
     val collie = NodeCollie.inMemory()
     try {
-      val node = Node("b", 123, "c", "d", CommonUtil.current())
+      val node = Node("b", 123, "c", "d", Seq.empty, CommonUtil.current())
       collie.add(node)
       collie.size shouldBe 1
     } finally collie.close()

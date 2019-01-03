@@ -19,8 +19,17 @@ class TestNodeRoute extends SmallTest with Matchers {
     req.port shouldBe res.port
     req.user shouldBe res.user
     req.password shouldBe res.password
+    res.services.isEmpty shouldBe false
+    res.services.foreach(_.clusterNames.isEmpty shouldBe true)
   }
 
+  private[this] def compare(lhs: Node, rhs: Node): Unit = {
+    lhs.name shouldBe rhs.name
+    lhs.port shouldBe rhs.port
+    lhs.user shouldBe rhs.user
+    lhs.password shouldBe rhs.password
+    lhs.lastModified shouldBe rhs.lastModified
+  }
   @Test
   def testAdd(): Unit = {
     val req = NodeRequest(Some("a"), 22, "b", "c")
@@ -28,7 +37,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     compare(req, res)
 
     client.list[Node].size shouldBe 1
-    client.list[Node].head shouldBe res
+    compare(client.list[Node].head, res)
   }
 
   @Test
@@ -39,7 +48,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
     client.list[Node].size shouldBe 1
 
-    client.delete[Node](res.name) shouldBe res
+    compare(client.delete[Node](res.name), res)
     client.list[Node].size shouldBe 0
   }
 

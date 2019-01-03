@@ -42,7 +42,7 @@ private object ClusterCollieImpl {
     def get(node: Node): DockerClient
   }
 
-  private[this] trait BasicCollieImpl[T <: ClusterDescription] extends Collie[T] with Releasable {
+  private[this] trait BasicCollieImpl[T <: ClusterDescription] extends Collie[T] {
 
     val clientCache: DockerClientCache
     val nodeCollie: NodeCollie
@@ -162,10 +162,6 @@ private object ClusterCollieImpl {
     override def addNode(clusterName: String, nodeName: String): Future[T] = {
       if (!nodeCollie.exists(_.name == nodeName)) throw new IllegalArgumentException(s"$nodeName doesn't exist")
       doAddNode(cluster(clusterName), nodeName)
-    }
-
-    override def close(): Unit = {
-      // do nothing
     }
   }
 
