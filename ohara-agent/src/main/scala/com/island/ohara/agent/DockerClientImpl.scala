@@ -84,6 +84,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     private[this] var ports: Map[Int, Int] = Map.empty
     private[this] var envs: Map[String, String] = Map.empty
     private[this] var route: Map[String, String] = Map.empty
+    private[this] var volumnMapping: Map[String, String] = Map.empty
     private[this] var hostname: String = _
 
     override def name(name: String): ContainerCreator = {
@@ -128,12 +129,22 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
           case (key, value) => s"""-e \"$key=$value\""""
         }
         .mkString(" "),
+      volumnMapping
+        .map {
+          case (key, value) => s"""-v \"$key:$value\""""
+        }
+        .mkString(" "),
       Objects.requireNonNull(imageName),
       if (command == null) "" else command
     ).filter(_.nonEmpty).mkString(" ")
 
     override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
       this.ports = ports;
+      this
+    }
+
+    override def volumnMapping(volumnMapping: Map[String, String]): ContainerCreator = {
+      this.volumnMapping = volumnMapping
       this
     }
 
@@ -274,6 +285,12 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       override def append(path: String, content: Seq[String]): String = {
         agent.execute(
           s"""docker exec $rootConfig $containerName /bin/bash -c \"echo \\"${content.mkString("\n")}\\" >> $path\"""")
+        cat(path).get
+      }
+
+      override def write(path: String, content: Seq[String]): String = {
+        agent.execute(
+          s"""docker exec $rootConfig $containerName /bin/bash -c \"echo \\"${content.mkString("\n")}\\" > $path\"""")
         cat(path).get
       }
 

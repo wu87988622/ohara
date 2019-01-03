@@ -59,8 +59,8 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
           dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
         withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(
           dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+//        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
+//          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
   }
@@ -163,7 +163,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
         container.nodeName shouldBe nodeName
         container.name.contains(clusterName) shouldBe true
         container.hostname.contains(clusterName) shouldBe true
-        container.portMappings.head.portPairs.size shouldBe 1
+        container.portMappings.head.portPairs.size shouldBe 2
         container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
         val topicName = CommonUtil.randomString()

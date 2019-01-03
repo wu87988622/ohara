@@ -273,6 +273,8 @@ private object ClusterCollieImpl {
     override def creator(): BrokerCollie.ClusterCreator = new BrokerCollie.ClusterCreator {
       private[this] var zkClusterName: String = _
       private[this] var clientPort: Int = BrokerCollie.CLIENT_PORT_DEFAULT
+      private[this] var exporterPort: Int = BrokerCollie.EXPORTER_PORT_DEFAULT
+
       override def zookeeperClusterName(name: String): BrokerCollie.ClusterCreator = {
         this.zkClusterName = Objects.requireNonNull(name)
         this
@@ -281,6 +283,12 @@ private object ClusterCollieImpl {
         this.clientPort = clientPort
         this
       }
+
+      override def exporterPort(exporterPort: Int): BrokerCollie.ClusterCreator = {
+        this.exporterPort = exporterPort
+        this
+      }
+
       override def create(nodeNames: Seq[String]): Future[BrokerClusterDescription] = Future {
         if (imageName == null) imageName = BrokerCollie.IMAGE_NAME_DEFAULT
         Objects.requireNonNull(clusterName)
@@ -338,13 +346,18 @@ private object ClusterCollieImpl {
               try client
                 .containerCreator()
                 .imageName(imageName)
-                .portMappings(Map(clientPort -> clientPort))
+                .portMappings(
+                  Map(
+                    clientPort -> clientPort,
+                    exporterPort -> exporterPort
+                  ))
                 .hostname(hostname)
                 .envs(Map(
                   BrokerCollie.ID_KEY -> (maxId + index).toString,
                   BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
                   BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
                   BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                  BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                   BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                   ZOOKEEPER_CLUSTER_NAME -> zkClusterName
                 ))

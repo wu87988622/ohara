@@ -12,6 +12,7 @@ object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterDescription] {
     def zookeeperClusterName(name: String): ClusterCreator
     def clientPort(clientPort: Int): ClusterCreator
+    def exporterPort(exporterPort: Int): ClusterCreator
     def create(nodeNames: Seq[String]): Future[BrokerClusterDescription]
   }
 
@@ -28,4 +29,7 @@ object BrokerCollie {
 
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "BROKER_ADVERTISED_HOSTNAME"
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "BROKER_ADVERTISED_CLIENT_PORT"
+
+  private[agent] val EXPORTER_PORT_KEY: String = "PROMETHEUS_EXPORTER_PORT"
+  private[agent] val EXPORTER_PORT_DEFAULT: Int = 7071
 }

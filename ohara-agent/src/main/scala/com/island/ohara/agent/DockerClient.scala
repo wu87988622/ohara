@@ -152,6 +152,20 @@ object DockerClient {
       * @param path file path
       */
     def append(path: String, content: Seq[String]): String
+
+    /**
+      * clear and write something to the file of a running container
+      * @param content content
+      * @param path file path
+      */
+    def write(path: String, content: String): String = write(path, Seq(content))
+
+    /**
+      * clear and write something to the file of a running container
+      * @param content content
+      * @param path file path
+      */
+    def write(path: String, content: Seq[String]): String
   }
 
   /**
@@ -211,6 +225,12 @@ object DockerClient {
       * @return this executor
       */
     def portMappings(ports: Map[Int, Int]): ContainerCreator
+
+    /**
+      * docker -v
+      * @return process information
+      */
+    def volumnMapping(ports: Map[String, String]): ContainerCreator
 
     /**
       * execute the docker container on background

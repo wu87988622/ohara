@@ -70,4 +70,27 @@ if [[ -z "$KAFKA_HOME" ]]; then
   echo "KAFKA_HOME is required!!!"
   exit 2
 fi
-exec $KAFKA_HOME/bin/kafka-server-start.sh "$CONFIG"
+
+if [[ ! -z "$PROMETHEUS_EXPORTER" ]]; then
+  if [[ ! -f "$PROMETHEUS_EXPORTER" ]]; then
+    echo "$PROMETHEUS_EXPORTER exporter don't exist!!!"
+    exit 2
+  fi
+
+  if [[ ! -f "$PROMETHEUS_EXPORTER_CONFIG" ]]; then
+    echo "$PROMETHEUS_EXPORTER_CONFIG exporter config don't exist!!!"
+    exit 2
+  fi
+
+  if [[ -z "$PROMETHEUS_EXPORTER_PORT" ]]; then
+    PROMETHEUS_EXPORTER_PORT="7071"
+  fi
+
+  if [[ -z "$JMX_PORT" ]]; then
+    JMX_PORT="9090"
+  fi
+
+  KAFKA_OPTS="-javaagent:$PROMETHEUS_EXPORTER=$PROMETHEUS_EXPORTER_PORT:$PROMETHEUS_EXPORTER_CONFIG"
+fi
+
+exec env JMX_PORT=$JMX_PORT KAFKA_OPTS=$KAFKA_OPTS $KAFKA_HOME/bin/kafka-server-start.sh "$CONFIG"

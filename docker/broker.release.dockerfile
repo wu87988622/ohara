@@ -14,6 +14,12 @@ RUN mkdir /opt/kafka
 RUN mv kafka_${SCALA_VERSION}-${VERSION} /opt/kafka/
 RUN echo "$VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
 
+# download Prometheus exporter
+ARG EXPORTER_VERSION=0.3.1
+RUN mkdir /prometheus
+RUN wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/${EXPORTER_VERSION}/jmx_prometheus_javaagent-${EXPORTER_VERSION}.jar -O /prometheus/jmx_prometheus_javaagent.jar
+ADD ./prometheus/exporter.config.yml /prometheus/config.yml
+
 # download Tini
 # we download the Tini in multi-stage so as to save the space to install the wget
 ARG TINI_VERSION=v0.18.0
@@ -41,6 +47,11 @@ RUN chmod +x /home/$USER/default/bin/broker.sh
 RUN chown -R $USER:$USER /home/$USER
 ENV KAFKA_HOME=/home/$USER/default
 ENV PATH=$PATH:$KAFKA_HOME/bin
+
+# copy prometheus java-exporter
+COPY --from=base /prometheus /prometheus
+ENV PROMETHEUS_EXPORTER=/prometheus/jmx_prometheus_javaagent.jar
+ENV PROMETHEUS_EXPORTER_CONFIG=/prometheus/config.yml
 
 # copy Tini
 COPY --from=deps /tini /tini
