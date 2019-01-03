@@ -5,7 +5,7 @@ import Header from 'components/common/Header';
 import HomePage from 'components/pages/HomePage';
 import PipelinePage from 'components/pages/PipelinePage';
 import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
-import NodesPage from 'components/pages/NodesPage';
+import NodesPage from 'components/pages/NodePage/NodeListPage';
 import ServicesPage from 'components/pages/ServicesPage';
 import ConfigurationPage from 'components/pages/ConfigurationPage';
 import MonitoringPage from 'components/pages/MonitoringPage';

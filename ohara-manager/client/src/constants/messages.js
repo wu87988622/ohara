@@ -4,6 +4,8 @@ export const LOGOUT_SUCCESS = 'You are now logged out!';
 
 export const SCHEMA_CREATION_SUCCESS = 'Schema successfully created!';
 export const TOPIC_CREATION_SUCCESS = 'Topic successfully created!';
+export const NODE_CREATION_SUCCESS = 'Node successfully created!';
+export const NODE_SAVE_SUCCESS = 'Node successfully saved!';
 export const PIPELINE_CREATION_SUCCESS = 'New pipeline has been created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
 export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
