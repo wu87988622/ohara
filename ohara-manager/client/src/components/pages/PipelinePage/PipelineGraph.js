@@ -177,14 +177,12 @@ class PipelineGraph extends React.Component {
     }
   }
 
-  handleNodeClick = localId => {
-    const { history, resetGraph, updateGraph, graph, match } = this.props;
+  handleNodeClick = currId => {
+    const { history, graph, match } = this.props;
     const { pipelineId } = match.params;
 
-    resetGraph();
-    updateGraph({ isActive: true }, localId);
+    const [currConnector] = graph.filter(g => g.id === currId);
 
-    const [currConnector] = graph.filter(g => g.localId === localId);
     const { type, id: connectorId } = currConnector;
 
     const action = match.url.includes('/edit/') ? 'edit' : 'new';
@@ -201,7 +199,7 @@ class PipelineGraph extends React.Component {
     const g = new dagreD3.graphlib.Graph().setGraph({});
     const { graph } = this.props;
 
-    graph.forEach(({ name, type, to, localId, icon, isActive, state = '' }) => {
+    graph.forEach(({ name, type, to, id, icon, isActive, state = '' }) => {
       const isTopic = type === 'topic';
       const props = { shape: isTopic ? 'circle' : 'rect' };
       const displayType = type.split('.').pop();
@@ -220,27 +218,27 @@ class PipelineGraph extends React.Component {
         </div>
       </div>`;
 
-      g.setNode(localId, {
+      g.setNode(id, {
         ...props,
-        lable: localId,
+        lable: id,
         labelType: 'html',
         label: html,
         class: isActiveCls,
       });
 
       if (to) {
-        const dests = graph.map(x => x.localId);
+        const dests = graph.map(x => x.id);
 
         if (!dests.includes(to)) return;
 
         if (Array.isArray(to)) {
           to.forEach(t => {
-            g.setEdge(localId, t, {});
+            g.setEdge(id, t, {});
           });
           return;
         }
 
-        g.setEdge(localId, to, {});
+        g.setEdge(id, to, {});
       }
     });
 

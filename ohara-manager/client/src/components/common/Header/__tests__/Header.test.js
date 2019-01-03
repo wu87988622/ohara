@@ -4,9 +4,9 @@ import { shallow } from 'enzyme';
 import * as URLS from 'constants/urls';
 import Header from '../Header';
 import NAVS from 'constants/navs';
-import { fetchCluster } from 'utils/pipelineUtils';
+import { fetchCluster } from 'apis/clusterApis';
 
-jest.mock('utils/pipelineUtils');
+jest.mock('apis/clusterApis');
 
 fetchCluster.mockImplementation(() =>
   Promise.resolve({ data: { result: { versionInfo: {} }, isSuccess: true } }),
@@ -22,10 +22,15 @@ describe('<Header />', () => {
   beforeEach(() => {
     fetchCluster.mockImplementation(() =>
       Promise.resolve({
-        versionInfo: {
-          version: '123',
-          revision: 'abcdefghijklno123',
-          date: Date.now(),
+        data: {
+          result: {
+            versionInfo: {
+              version: '123',
+              revision: 'abcdefghijklno123',
+              date: Date.now(),
+            },
+          },
+          isSuccess: true,
         },
       }),
     );

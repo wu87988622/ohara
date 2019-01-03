@@ -4,16 +4,16 @@ import { shallow } from 'enzyme';
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
 import { getTestById } from 'utils/testUtils';
-import { fetchCluster } from 'utils/pipelineUtils';
+import { fetchCluster } from 'apis/clusterApis';
 
-jest.mock('utils/pipelineUtils');
+jest.mock('apis/clusterApis');
 
 const props = {
   match: {
     isExact: false,
     params: {},
     path: 'test/path',
-    url: 'test/url',
+    url: 'test/url'
   },
   graph: [
     {
@@ -21,20 +21,20 @@ const props = {
       id: '1',
       isActive: false,
       isExact: false,
-      icon: 'fa-test',
-    },
+      icon: 'fa-test'
+    }
   ],
   updateGraph: jest.fn(),
   hasChanges: false,
   iconMaps: {},
-  iconKeys: ICON_KEYS,
+  iconKeys: ICON_KEYS
 };
 
 describe('<PipelineToolbar />', () => {
   let wrapper;
   beforeEach(() => {
     fetchCluster.mockImplementation(() =>
-      Promise.resolve({ sources: [], sinks: [] }),
+      Promise.resolve({ sources: [], sinks: [] })
     );
 
     wrapper = shallow(<PipelineToolbar {...props} />);
@@ -54,7 +54,7 @@ describe('<PipelineToolbar />', () => {
       wrapper
         .find('FileSavingStatus')
         .children()
-        .text(),
+        .text()
     ).toBe('All changes saved');
 
     wrapper = shallow(<PipelineToolbar {...props} hasChanges={true} />);
@@ -63,7 +63,7 @@ describe('<PipelineToolbar />', () => {
       wrapper
         .find('FileSavingStatus')
         .children()
-        .text(),
+        .text()
     ).toBe('Saving...');
   });
 

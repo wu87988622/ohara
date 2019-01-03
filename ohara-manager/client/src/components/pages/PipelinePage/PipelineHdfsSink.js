@@ -7,7 +7,6 @@ import { Redirect } from 'react-router-dom';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as _ from 'utils/commonUtils';
-import { fetchSink } from 'utils/pipelineUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';
@@ -107,8 +106,10 @@ class PipelineHdfsSink extends React.Component {
   };
 
   isConnectorExist = async id => {
-    const res = await fetchSink(id);
-    if (_.isNull(res)) return;
+    const res = await pipelinesApis.fetchSink(id);
+    const sink = _.get(res, 'data.result', null);
+
+    if (_.isNull(sink)) return;
 
     return res.isSuccess;
   };
@@ -137,21 +138,22 @@ class PipelineHdfsSink extends React.Component {
   };
 
   fetchSink = async sinkId => {
-    const sink = await fetchSink(sinkId);
+    const res = await pipelinesApis.fetchSink(sinkId);
+    const sink = _.get(res, 'data.result', null);
 
     if (_.isNull(sink)) return;
 
     const { currHdfs } = this.state;
     const { name } = sink;
     const {
-      topic,
-      hdfs,
-      writePath,
-      needHeader,
-      'tmp.dir': tempDirectory,
-      'flush.line.count': flushLineCount,
-      'rotate.interval.ms': rotateInterval,
-      'data.econde': currFileEncoding,
+      topic = '{}',
+      hdfs = '{}',
+      writePath = '',
+      needHeader = false,
+      'tmp.dir': tempDirectory = '',
+      'flush.line.count': flushLineCount = '',
+      'rotate.interval.ms': rotateInterval = '',
+      'data.econde': currFileEncoding = '',
     } = sink.configs;
 
     const currTopic = JSON.parse(topic);

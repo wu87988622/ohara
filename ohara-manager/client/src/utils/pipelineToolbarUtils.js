@@ -1,7 +1,6 @@
-import { v4 as uuid4 } from 'uuid';
-
 import * as _ from 'utils/commonUtils';
-import * as PIPELINES from 'constants/pipelines';
+import * as pipelinesApis from 'apis/pipelinesApis';
+import { CONNECTOR_TYPES, ICON_MAPS } from 'constants/pipelines';
 
 const isSource = type => type.includes('Source');
 const isSink = type => type.includes('Sink');
@@ -28,14 +27,35 @@ const getNameByType = type => {
   }
 };
 
-export const update = ({ graph, updateGraph, connector }) => {
+export const update = async ({ graph, updateGraph, connector }) => {
   let type = connector.className;
-
-  // TODO: replace the svg icon with the HTML one and so we'll get the target.dataset.id back
-  type = type ? type : PIPELINES.CONNECTOR_KEYS.topic;
+  type = type ? type : CONNECTOR_TYPES.topic;
 
   const connectorName = getNameByType(type);
   const result = checkTypeExist(type, graph);
+
+  // Default params for creating connectors
+  const params = {
+    name: `Untitled ${connectorName}`,
+    className: type,
+    schema: [],
+    topics: [],
+    numberOfTasks: 1,
+    configs: {}
+  };
+
+  let id;
+
+  if (type === 'topic') {
+    // Topic was created beforehand, it already has an ID.
+    id = connector.id;
+  } else if (isSource(type)) {
+    const res = await pipelinesApis.createSource(params);
+    id = _.get(res, 'data.result.id', null);
+  } else if (isSink(type)) {
+    const res = await pipelinesApis.createSink(params);
+    id = _.get(res, 'data.result.id', null);
+  }
 
   if (!_.isDefined(result)) {
     const update = {
@@ -43,8 +63,8 @@ export const update = ({ graph, updateGraph, connector }) => {
       type,
       to: '?',
       isActive: false,
-      icon: PIPELINES.ICON_MAPS[type],
-      localId: uuid4(),
+      icon: ICON_MAPS[type],
+      id
     };
 
     updateGraph(update, type);

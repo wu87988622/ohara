@@ -6,7 +6,6 @@ import toastr from 'toastr';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import { fetchSource } from 'utils/pipelineUtils';
 import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
@@ -148,21 +147,22 @@ class PipelineFtpSource extends React.Component {
   };
 
   fetchSource = async sourceId => {
-    const source = await fetchSource(sourceId);
+    const res = await pipelinesApis.fetchSource(sourceId);
+    const source = _.get(res, 'data.result', null);
 
     if (_.isNull(source)) return;
 
-    const { schema, name, configs } = source;
+    const { schema = '[]', name = '', configs } = source;
     const {
-      'ftp.user.name': username,
-      'ftp.user.password': password,
-      'ftp.port': port,
-      'ftp.hostname': host,
-      'ftp.input.folder': inputFolder,
-      'ftp.completed.folder': completeFolder,
-      'ftp.error.folder': errorFolder,
-      'ftp.encode': currFileEncoding,
-      currTask,
+      'ftp.user.name': username = '',
+      'ftp.user.password': password = '',
+      'ftp.port': port = '',
+      'ftp.hostname': host = '',
+      'ftp.input.folder': inputFolder = '',
+      'ftp.completed.folder': completeFolder = '',
+      'ftp.error.folder': errorFolder = '',
+      'ftp.encode': currFileEncoding = '',
+      currTask = '',
     } = configs;
 
     this.setState({

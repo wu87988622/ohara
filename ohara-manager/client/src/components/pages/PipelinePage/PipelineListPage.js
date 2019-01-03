@@ -14,10 +14,13 @@ import { H2 } from 'common/Headings';
 import { Button } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import { fetchPipelines } from 'utils/pipelineUtils';
 import { lightBlue, blue, red, trBgColor } from 'theme/variables';
-import { createPipeline, deletePipeline } from 'apis/pipelinesApis';
 import { addPipelineStatus, getEditUrl } from 'utils/pipelineListPageUtils';
+import {
+  fetchPipelines,
+  createPipeline,
+  deletePipeline,
+} from 'apis/pipelinesApis';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -85,7 +88,6 @@ class PipelineListPage extends React.Component {
   state = {
     isSelectTopicModalActive: false,
     isDeletePipelineModalActive: false,
-    deletePipelineUuid: '',
     pipelines: [],
     currentTopic: {},
   };
@@ -95,9 +97,13 @@ class PipelineListPage extends React.Component {
   }
 
   fetchPipelines = async () => {
-    const pipelines = await fetchPipelines();
-    const _pipelines = addPipelineStatus(pipelines);
-    this.setState({ pipelines: _pipelines });
+    const res = await fetchPipelines();
+    const result = _.get(res, 'data.result', null);
+
+    if (!result) return;
+
+    const pipelines = addPipelineStatus(result);
+    this.setState({ pipelines });
   };
 
   handleSelectChange = ({ target }) => {

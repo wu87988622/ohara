@@ -158,15 +158,15 @@ class PipelineFtpSink extends React.Component {
 
     if (!isSuccess) return;
 
-    const { schema, name, configs } = res.data.result;
+    const { schema = '[]', name = '', configs } = res.data.result;
     const {
-      'ftp.hostname': host,
-      'ftp.port': port,
-      'ftp.user.name': username,
-      'ftp.user.password': password,
-      'ftp.output.folder': outputfolder,
-      'ftp.encode': currFileEncoding,
-      'ftp.needHeader': needHeader,
+      'ftp.hostname': host = '',
+      'ftp.port': port = '',
+      'ftp.user.name': username = '',
+      'ftp.user.password': password = '',
+      'ftp.output.folder': outputfolder = '',
+      'ftp.encode': currFileEncoding = '',
+      'ftp.needHeader': needHeader = false,
       currTask,
     } = configs;
 

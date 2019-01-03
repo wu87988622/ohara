@@ -9,7 +9,7 @@ import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'common/Modal';
-import { fetchCluster } from 'utils/pipelineUtils';
+import { fetchCluster } from 'apis/clusterApis';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
@@ -96,11 +96,15 @@ class PipelineToolbar extends React.Component {
   fetchCluster = async () => {
     const res = await fetchCluster();
 
-    const sources = res.sources.filter(
+    const result = _.get(res, 'data.result', null);
+
+    if (!result) return;
+
+    const sources = result.sources.filter(
       source => !PIPELINES.CONNECTOR_FILTERS.includes(source.className),
     );
 
-    const sinks = res.sinks.filter(
+    const sinks = result.sinks.filter(
       sink => !PIPELINES.CONNECTOR_FILTERS.includes(sink.className),
     );
 
@@ -142,7 +146,7 @@ class PipelineToolbar extends React.Component {
 
   render() {
     const { hasChanges, updateGraph, graph } = this.props;
-    const { ftpSource } = PIPELINES.CONNECTOR_KEYS;
+    const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
     const {
       isModalActive,
       modalName,

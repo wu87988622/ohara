@@ -1,5 +1,4 @@
 import axios from 'axios';
-import humps from 'humps';
 
 function createAxios() {
   const instance = axios.create({
@@ -33,14 +32,19 @@ function createAxios() {
     response => {
       return {
         data: {
-          result: humps.camelizeKeys(response.data),
+          result: response.data,
           isSuccess: true,
         },
       };
     },
     error => {
       const { data: errorMessage } = error.response;
-      return { errorMessage, isSuccess: false };
+      return {
+        data: {
+          errorMessage,
+          isSuccess: false,
+        },
+      };
     },
   );
 

@@ -49,12 +49,16 @@ class NodeListPage extends React.Component {
 
   getAllClusterNames = node => {
     if (node && node.services) {
-      return reduce(node.services, (results, service) => {
-        map(service.clusterNames, clusterName => {
-          results.push(clusterName);
-        });
-        return results;
-      }, []);
+      return reduce(
+        node.services,
+        (results, service) => {
+          map(service.clusterNames, clusterName => {
+            results.push(clusterName);
+          });
+          return results;
+        },
+        [],
+      );
     }
     return [];
   };
@@ -84,7 +88,7 @@ class NodeListPage extends React.Component {
                 text="New Node"
                 data-testid="new-node"
                 handleClick={() => {
-                  this.setState({ activeModal: NODE_NEW_MODAL })
+                  this.setState({ activeModal: NODE_NEW_MODAL });
                 }}
               />
             </s.TopWrapper>
@@ -109,7 +113,7 @@ class NodeListPage extends React.Component {
           <NodeNewModal
             isActive={activeModal === NODE_NEW_MODAL}
             handleClose={() => {
-              this.setState({ activeModal: null })
+              this.setState({ activeModal: null });
             }}
             handleConfirm={this.fetchData}
           />
@@ -117,7 +121,7 @@ class NodeListPage extends React.Component {
             node={activeNode}
             isActive={activeModal === NODE_EDIT_MODAL}
             handleClose={() => {
-              this.setState({ activeModal: null, activeNode: null })
+              this.setState({ activeModal: null, activeNode: null });
             }}
             handleConfirm={this.fetchData}
           />

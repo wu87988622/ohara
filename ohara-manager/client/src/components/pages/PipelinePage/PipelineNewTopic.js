@@ -1,11 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import toastr from 'toastr';
 import { Facebook } from 'react-content-loader';
 
+import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
-import { fetchTopics } from 'utils/pipelineUtils';
+import { fetchTopics } from 'apis/topicApis';
 import { lighterBlue, durationNormal, blue } from 'theme/variables';
 import { update } from 'utils/pipelineToolbarUtils';
 
@@ -55,7 +57,9 @@ class PipelineNewTopic extends React.Component {
   }
 
   fetchTopics = async () => {
-    const topics = await fetchTopics();
+    const res = await fetchTopics();
+    const topics = _.get(res, 'data.result', null);
+
     if (topics) {
       this.setState({ topics, isLoading: false, currentTopic: topics[0] });
     }
@@ -63,12 +67,12 @@ class PipelineNewTopic extends React.Component {
 
   handleSelectChange = ({ target }) => {
     const selectedIdx = target.options.selectedIndex;
-    const { uuid } = target.options[selectedIdx].dataset;
+    const { id } = target.options[selectedIdx].dataset;
 
     this.setState({
       currentTopic: {
         name: target.value,
-        uuid,
+        id,
       },
     });
   };
@@ -76,6 +80,11 @@ class PipelineNewTopic extends React.Component {
   update = () => {
     const { updateGraph, graph } = this.props;
     const { currentTopic } = this.state;
+
+    if (!currentTopic) {
+      return toastr.error('Please select a topic!');
+    }
+
     update({ graph, updateGraph, connector: currentTopic });
   };
 

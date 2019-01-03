@@ -1,14 +1,16 @@
 import React from 'react';
 import toastr from 'toastr';
-import { v4 as uuid4 } from 'uuid';
 import { shallow } from 'enzyme';
 
 import * as MESSAGES from 'constants/messages';
 import PipelineListPage from '../PipelineListPage';
 import { PIPELINE } from 'constants/documentTitles';
-import { createPipeline, deletePipeline } from 'apis/pipelinesApis';
 import { getTestById } from 'utils/testUtils';
-import { fetchPipelines } from 'utils/pipelineUtils';
+import {
+  createPipeline,
+  deletePipeline,
+  fetchPipelines,
+} from 'apis/pipelinesApis';
 
 jest.mock('apis/pipelinesApis');
 jest.mock('utils/pipelineUtils');
@@ -17,13 +19,13 @@ const pipelines = [
   {
     name: 'a',
     status: 'Stopped',
-    id: uuid4(),
+    id: '1234',
     objects: [{ abc: 'def', kind: 'topic', id: '123' }],
   },
   {
     name: 'b',
     status: 'Running',
-    id: uuid4(),
+    id: '5678',
     objects: [{ def: 'abc', kind: 'topic', id: '456' }],
   },
 ];

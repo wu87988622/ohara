@@ -3,7 +3,7 @@ import toastr from 'toastr';
 import * as _ from './commonUtils';
 
 export const handleError = err => {
-  const message = _.get(err, 'errorMessage.message');
+  const message = _.get(err, 'data.errorMessage.message');
 
   if (message) {
     toastr.error(message);

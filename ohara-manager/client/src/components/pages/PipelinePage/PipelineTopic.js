@@ -7,9 +7,10 @@ import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';
-import { fetchPipeline } from 'apis/pipelinesApis';
+import { fetchTopic } from 'apis/topicApis';
 
 const H5Wrapper = styled(H5)`
+  font-size: 15px;
   margin: 0 0 30px;
   font-weight: normal;
   color: ${lightBlue};
@@ -29,33 +30,37 @@ class PipelineTopic extends React.Component {
     }).isRequired,
   };
 
+  state = {
+    topic: {},
+    isLoading: true,
+  };
+
   componentDidMount() {
-    const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
-    if (pipelineId) {
-      this.fetchPipeline(pipelineId);
-    }
+    this.fetchTopic();
   }
 
-  fetchPipeline = async pipelineId => {
-    if (!pipelineId) return;
+  fetchTopic = async () => {
+    const id = _.get(this.props.match, 'params.connectorId');
+    const res = await fetchTopic(id);
+    const topic = _.get(res, 'data.result', null);
 
-    const res = await fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(pipelines)) {
-      this.props.loadGraph(pipelines);
+    if (topic) {
+      this.setState({
+        topic,
+        isLoading: false,
+      });
     }
   };
 
   render() {
-    const { name, isLoading } = this.props;
+    const { topic, isLoading } = this.state;
     return (
       <Box>
         {isLoading ? (
           <Facebook style={{ width: '70%', height: 'auto' }} />
         ) : (
           <React.Fragment>
-            <H5Wrapper>Topic : {name}</H5Wrapper>
+            <H5Wrapper>Topic : {topic.name}</H5Wrapper>
           </React.Fragment>
         )}
       </Box>

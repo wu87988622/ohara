@@ -154,12 +154,12 @@ class PipelineJdbcSource extends React.Component {
       const { name } = res.data.result;
 
       const {
-        'source.timestamp.column.name': timestamp,
-        'source.db.username': username,
-        'source.db.password': password,
-        'source.db.url': url,
-        table,
-        database,
+        'source.timestamp.column.name': timestamp = '',
+        'source.db.username': username = '',
+        'source.db.password': password = '',
+        'source.db.url': url = '',
+        table = '{}',
+        database = '{}',
       } = res.data.result.configs;
 
       let currTable = null;

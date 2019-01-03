@@ -32,7 +32,7 @@ export const PIPELINE_DELETION_ERROR =
 export const CANNOT_START_PIPELINE_ERROR =
   'Cannot complete your action, please check your connector settings';
 
-export const NO_CONFIGURATION_FOUND_ERROR = `You don't any configuration set up yet, please create one before you can proceed`;
+export const NO_CONFIGURATION_FOUND_ERROR = `You don't have any HDFS connections set up yet, please create one before you can proceed`;
 
 export const EMPTY_PIPELINE_TITLE_ERROR = 'Pipeline title cannot be empty!';
 export const CANNOT_UPDATE_WHILE_RUNNING_ERROR = `You cannot update the pipeline while it's running`;

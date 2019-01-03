@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Field } from 'react-final-form'
+import { Form, Field } from 'react-final-form';
 import toastr from 'toastr';
 
 import * as _ from 'utils/commonUtils';
@@ -110,7 +110,7 @@ class NodeNewModal extends React.Component {
                 </Box>
               </form>
             </Modal>
-          )
+          );
         }}
       />
     );

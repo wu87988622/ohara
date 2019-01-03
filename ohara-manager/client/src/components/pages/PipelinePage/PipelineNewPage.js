@@ -4,7 +4,6 @@ import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
 import { Route } from 'react-router-dom';
-import { v4 as uuid4 } from 'uuid';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
@@ -18,10 +17,11 @@ import PipelineFtpSink from './PipelineFtpSink';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
+import { getConnectors, addPipelineStatus } from 'utils/pipelineNewPageUtils';
 import { fetchTopic } from 'apis/topicApis';
 import { H2, H3 } from 'common/Headings';
 import { Box } from 'common/Layout';
-import { isSource, isSink } from 'utils/pipelineUtils';
+import { isSink } from 'utils/pipelineUtils';
 import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 
@@ -123,7 +123,7 @@ class PipelineNewPage extends React.Component {
     const pipelines = _.get(res, 'data.result', null);
 
     if (pipelines) {
-      const _pipelines = this.addPipelineStatus(pipelines);
+      const _pipelines = addPipelineStatus(pipelines);
 
       this.setState({ pipelines: _pipelines }, () => {
         this.loadGraph(this.state.pipelines);
@@ -131,19 +131,9 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  addPipelineStatus = pipeline => {
-    const status = pipeline.objects.filter(p => p.state === 'RUNNING');
-    const _status = status.length >= 2 ? 'Running' : 'Stopped';
-
-    return {
-      ...pipeline,
-      status: _status,
-    };
-  };
-
-  updateGraph = (update, localId) => {
+  updateGraph = async (update, id) => {
     this.setState(({ graph }) => {
-      const idx = graph.findIndex(g => g.localId === localId);
+      const idx = graph.findIndex(g => g.id === id);
       let _graph = [];
 
       if (idx === -1) {
@@ -155,10 +145,13 @@ class PipelineNewPage extends React.Component {
           ...graph.slice(idx + 1),
         ];
       }
+
       return {
         graph: _graph,
       };
     });
+
+    await this.updatePipeline(update);
   };
 
   loadGraph = pipelines => {
@@ -176,7 +169,6 @@ class PipelineNewPage extends React.Component {
           state: '',
           name: name,
           type: type,
-          localId: uuid4(),
           icon: PIPELINES.ICON_MAPS[type],
           id,
           isActive: false,
@@ -192,7 +184,6 @@ class PipelineNewPage extends React.Component {
             type,
             id,
             icon: PIPELINES.ICON_MAPS[type],
-            localId: graph[idx] ? graph[idx].id : uuid4(),
             isActive: graph[idx] ? graph[idx].isActive : false,
             to: '?',
           };
@@ -234,17 +225,27 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  updatePipeline = async () => {
+  updatePipeline = async update => {
     const { name, id, rules, status } = this.state.pipelines;
-    const params = {
-      name,
-      rules,
-    };
+
+    let params;
+    if (update && update.id) {
+      const { id, type } = update;
+      const updateRule = isSink(type) ? { '?': id } : { [id]: '?' };
+
+      params = {
+        name,
+        rules: { ...rules, ...updateRule },
+      };
+    } else {
+      params = { name, rules };
+    }
 
     const res = await pipelinesApis.updatePipeline({ id, params });
     const pipelines = _.get(res, 'data.result', null);
 
     if (!_.isEmpty(pipelines)) {
+      // Keep the pipeline status since that's not stored on the configurator
       this.setState({ pipelines: { ...pipelines, status } });
     }
   };
@@ -275,7 +276,7 @@ class PipelineNewPage extends React.Component {
   };
 
   startConnectors = async connectors => {
-    const { sources, sinks } = this.getConnectors(connectors);
+    const { sources, sinks } = getConnectors(connectors);
 
     const sourcePromise = sources.map(source =>
       pipelinesApis.startSource(source),
@@ -288,7 +289,7 @@ class PipelineNewPage extends React.Component {
   };
 
   stopConnectors = connectors => {
-    const { sources, sinks } = this.getConnectors(connectors);
+    const { sources, sinks } = getConnectors(connectors);
     const sourcePromise = sources.map(source =>
       pipelinesApis.stopSource(source),
     );
@@ -329,22 +330,6 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  getConnectors = connectors => {
-    const sources = connectors
-      .filter(({ kind }) => {
-        return isSource(kind);
-      })
-      .map(({ id }) => id);
-
-    const sinks = connectors
-      .filter(({ kind }) => {
-        return isSink(kind);
-      })
-      .map(({ id }) => id);
-
-    return { sources, sinks };
-  };
-
   render() {
     const { isLoading, graph, topicName, hasChanges, pipelines } = this.state;
 
@@ -363,7 +348,7 @@ class PipelineNewPage extends React.Component {
       ftpSource,
       hdfsSink,
       ftpSink,
-    } = PIPELINES.CONNECTOR_KEYS;
+    } = PIPELINES.CONNECTOR_TYPES;
 
     return (
       <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>

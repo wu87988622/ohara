@@ -1,4 +1,4 @@
-export const CONNECTOR_KEYS = {
+export const CONNECTOR_TYPES = {
   jdbcSource: 'com.island.ohara.connector.jdbc.JDBCSourceConnector',
   ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
   hdfsSink: 'com.island.ohara.connector.hdfs.HDFSSinkConnector',
@@ -7,11 +7,11 @@ export const CONNECTOR_KEYS = {
 };
 
 export const ICON_MAPS = {
-  [CONNECTOR_KEYS.jdbcSource]: 'fa-file-import',
-  [CONNECTOR_KEYS.ftpSource]: 'fa-file-import',
-  [CONNECTOR_KEYS.topic]: 'fa-list-ul',
-  [CONNECTOR_KEYS.hdfsSink]: 'fa-file-export',
-  [CONNECTOR_KEYS.ftpSink]: 'fa-file-export',
+  [CONNECTOR_TYPES.jdbcSource]: 'fa-file-import',
+  [CONNECTOR_TYPES.ftpSource]: 'fa-file-import',
+  [CONNECTOR_TYPES.topic]: 'fa-list-ul',
+  [CONNECTOR_TYPES.hdfsSink]: 'fa-file-export',
+  [CONNECTOR_TYPES.ftpSink]: 'fa-file-export',
 };
 
 export const TABLE_HEADERS = ['connector name', 'version', 'revision'];

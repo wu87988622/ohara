@@ -4,9 +4,10 @@ import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 
 import * as URLS from 'constants/urls';
+import * as _ from 'utils/commonUtils';
 import NAVS from 'constants/navs';
 import ConfigurationModal from 'pages/ConfigurationModal';
-import { fetchCluster } from 'utils/pipelineUtils';
+import { fetchCluster } from 'apis/clusterApis';
 import { InfoModal } from '../Modal';
 import {
   white,
@@ -151,7 +152,8 @@ class Header extends React.Component {
   }
 
   fetchCluster = async () => {
-    const { versionInfo } = await fetchCluster();
+    const res = await fetchCluster();
+    const versionInfo = _.get(res, 'data.result.versionInfo', null);
     if (versionInfo) {
       this.setState({ versionInfo });
     }

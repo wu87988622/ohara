@@ -1,14 +1,9 @@
-import * as _ from './commonUtils';
-import * as clusterApis from 'apis/clusterApis';
-import * as pipelinesApis from 'apis/pipelinesApis';
-import * as topicApis from 'apis/topicApis';
-
-import { CONNECTOR_KEYS } from 'constants/pipelines';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 
 const getKeys = kind => {
-  return Object.keys(CONNECTOR_KEYS).reduce((acc, iconKey) => {
+  return Object.keys(CONNECTOR_TYPES).reduce((acc, iconKey) => {
     if (iconKey.includes(kind)) {
-      acc.push(CONNECTOR_KEYS[iconKey]);
+      acc.push(CONNECTOR_TYPES[iconKey]);
     }
 
     return acc;
@@ -24,57 +19,4 @@ export const isSource = kind => {
 
 export const isSink = kind => {
   return sinkKeys.some(sinkKey => kind.includes(sinkKey));
-};
-
-export const fetchPipelines = async () => {
-  const res = await pipelinesApis.fetchPipelines();
-  const pipelines = _.get(res, 'data.result', null);
-
-  if (pipelines) return pipelines;
-};
-
-export const fetchTopics = async () => {
-  const res = await topicApis.fetchTopics();
-  const topics = _.get(res, 'data.result', null);
-
-  if (topics) {
-    return topics;
-  }
-
-  return null;
-};
-
-export const fetchSink = async id => {
-  if (!id) return;
-
-  const res = await pipelinesApis.fetchSink(id);
-  const sink = _.get(res, 'data.result', null);
-  if (sink) {
-    return sink;
-  }
-
-  return null;
-};
-
-export const fetchSource = async id => {
-  if (!id) return;
-
-  const res = await pipelinesApis.fetchSource(id);
-  const source = _.get(res, 'data.result', null);
-
-  if (source) {
-    return source;
-  }
-
-  return null;
-};
-
-export const fetchCluster = async () => {
-  const res = await clusterApis.fetchCluster();
-
-  const isSuccess = _.get(res, 'data.isSuccess');
-  if (isSuccess) {
-    const { sources, sinks, versionInfo } = res.data.result;
-    return { sources, sinks, versionInfo };
-  }
 };
