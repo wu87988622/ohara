@@ -136,13 +136,17 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     val clusterName = random()
     brokerCollie.nonExists(clusterName) shouldBe true
     val clientPort = CommonUtil.availablePort()
-    val brokerCluster = Await.result(brokerCollie
-                                       .creator()
-                                       .clusterName(clusterName)
-                                       .clientPort(clientPort)
-                                       .zookeeperClusterName(zkCluster.name)
-                                       .create(nodeName),
-                                     timeout)
+    val exporterPort = CommonUtil.availablePort()
+    val brokerCluster = Await.result(
+      brokerCollie
+        .creator()
+        .clusterName(clusterName)
+        .clientPort(clientPort)
+        .exporterPort(exporterPort)
+        .zookeeperClusterName(zkCluster.name)
+        .create(nodeName),
+      timeout
+    )
     try {
       brokerCollie.exists(_.name == brokerCluster.name) shouldBe true
       brokerCluster.zookeeperClusterName shouldBe zkCluster.name

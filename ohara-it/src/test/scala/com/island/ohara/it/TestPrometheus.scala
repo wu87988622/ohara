@@ -23,7 +23,7 @@ class TestPrometheus extends MediumTest with Matchers {
 
   private val nodes_key = "ohara.it.docker"
 
-  private val timeout: java.time.Duration = java.time.Duration.ofSeconds(30)
+  private val timeout: java.time.Duration = java.time.Duration.ofSeconds(50)
 
   private val nodes: Option[Seq[Node]] = sys.env
     .get(nodes_key)
