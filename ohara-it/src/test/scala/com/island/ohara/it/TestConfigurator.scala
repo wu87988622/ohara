@@ -3,10 +3,8 @@ import java.time.Duration
 
 import com.island.ohara.client.ConfiguratorJson.{
   ClusterInformation,
-  Sink,
-  SinkRequest,
-  Source,
-  SourceRequest,
+  ConnectorConfiguration,
+  ConnectorConfigurationRequest,
   TopicInfo,
   TopicInfoRequest
 }
@@ -14,8 +12,7 @@ import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce, VersionUtil}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.store.Store
-import com.island.ohara.connector.ftp.{FtpSinkProps, FtpSourceProps}
+import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import org.junit.{After, Test}
@@ -31,12 +28,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .store(
-        Store
-          .builder()
-          .topicName(random())
-          .brokers(testUtil.brokersConnProps)
-          .build(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
       .connectClient(ConnectorClient(testUtil.workersConnProps))
       .build()
@@ -83,9 +74,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
     } finally ftpClient.close()
 
-    val request = SourceRequest(
+    val request = ConnectorConfigurationRequest(
       name = methodName,
-      className = "ftp",
+      className = classOf[FtpSource].getName,
       schema = Seq(
         Column.of("name", DataType.STRING, 1),
         Column.of("ranking", DataType.INT, 2),
@@ -96,8 +87,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       configs = sourceProps.toMap
     )
 
-    val source = client.add[SourceRequest, Source](request)
-    client.start[Source](source.id)
+    val source = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request)
+    client.start[ConnectorConfiguration](source.id)
 
     val consumer = Consumer
       .builder()
@@ -114,8 +105,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     } finally consumer.close()
 
     try {
-      client.stop[Source](source.id)
-      client.delete[Source](source.id)
+      client.stop[ConnectorConfiguration](source.id)
+      client.delete[ConnectorConfiguration](source.id)
     } finally if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
 
   }
@@ -156,17 +147,17 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     try {
       TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
 
-      val request = SinkRequest(
+      val request = ConnectorConfigurationRequest(
         name = methodName,
-        className = "ftp",
+        className = classOf[FtpSink].getName,
         schema = Seq.empty,
         topics = Seq(topic.id),
         numberOfTasks = 1,
         configs = sinkProps.toMap
       )
 
-      val sink = client.add[SinkRequest, Sink](request)
-      client.start[Sink](sink.id)
+      val sink = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request)
+      client.start[ConnectorConfiguration](sink.id)
       try {
         CommonUtil.await(() => ftpClient.listFileNames(sinkProps.output).nonEmpty, Duration.ofSeconds(30))
         ftpClient
@@ -177,8 +168,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
             lines(0) shouldBe data(0)
             lines(1) shouldBe data(1)
           })
-        client.stop[Sink](sink.id)
-        client.delete[Sink](sink.id)
+        client.stop[ConnectorConfiguration](sink.id)
+        client.delete[ConnectorConfiguration](sink.id)
       } finally if (connectorClient.exist(sink.id)) connectorClient.delete(sink.id)
     } finally ftpClient.close()
   }

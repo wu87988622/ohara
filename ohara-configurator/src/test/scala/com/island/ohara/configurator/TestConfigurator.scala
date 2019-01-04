@@ -2,9 +2,8 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
-import com.island.ohara.common.data.{Column, DataType, Serializer}
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
-import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
 import org.junit.{After, Test}
@@ -21,12 +20,6 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     .builder()
     .hostname("localhost")
     .port(0)
-    .store(
-      Store
-        .builder()
-        .topicName(random())
-        .brokers(testUtil.brokersConnProps)
-        .build(Serializer.STRING, Serializer.OBJECT))
     .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
     .connectClient(ConnectorClient(testUtil.workersConnProps))
     .build()
@@ -402,7 +395,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     request.uri shouldBe response.uri
 
     an[IllegalArgumentException] should be thrownBy client0.get[TopicInfo](response.id)
-    an[IllegalArgumentException] should be thrownBy client0.get[Source](response.id)
+    an[IllegalArgumentException] should be thrownBy client0.get[ConnectorConfiguration](response.id)
 
     client0.delete[HdfsInformation](response.id)
   }
@@ -432,7 +425,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       an[IllegalArgumentException] should be thrownBy Configurator.main(
         Array[String]("localhost", "localhost", "localhost"))
       an[IllegalArgumentException] should be thrownBy Configurator.main(
-        Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0", Configurator.TOPIC_KEY))
+        Array[String](Configurator.HOSTNAME_KEY, "localhost", Configurator.PORT_KEY, "0", Configurator.BROKERS_KEY))
     } finally Configurator.closeRunningConfigurator = false
   }
   @Test
@@ -471,14 +464,15 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
   @Test
   def testSource(): Unit = {
     clients.foreach(client => {
-      def compareRequestAndResponse(request: SourceRequest, response: Source): Source = {
+      def compareRequestAndResponse(request: ConnectorConfigurationRequest,
+                                    response: ConnectorConfiguration): ConnectorConfiguration = {
         request.name shouldBe response.name
         request.schema shouldBe response.schema
         request.configs shouldBe response.configs
         response
       }
 
-      def compare2Response(lhs: Source, rhs: Source): Unit = {
+      def compare2Response(lhs: ConnectorConfiguration, rhs: ConnectorConfiguration): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.schema shouldBe rhs.schema
@@ -488,79 +482,84 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
       val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
       // test add
-      client.list[Source].size shouldBe 0
-      val request = SourceRequest(name = methodName,
-                                  className = "jdbc",
-                                  schema = schema,
-                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                  topics = Seq.empty,
-                                  numberOfTasks = 1)
-      val response = compareRequestAndResponse(request, client.add[SourceRequest, Source](request))
+      client.list[ConnectorConfiguration].size shouldBe 0
+      val request = ConnectorConfigurationRequest(name = methodName,
+                                                  className = "jdbc",
+                                                  schema = schema,
+                                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                                  topics = Seq.empty,
+                                                  numberOfTasks = 1)
+      val response =
+        compareRequestAndResponse(request, client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request))
 
       // test get
-      compare2Response(response, client.get[Source](response.id))
+      compare2Response(response, client.get[ConnectorConfiguration](response.id))
 
       // test update
-      val anotherRequest = SourceRequest(name = methodName,
-                                         className = "jdbc",
-                                         schema = schema,
-                                         configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-                                         topics = Seq.empty,
-                                         numberOfTasks = 1)
+      val anotherRequest = ConnectorConfigurationRequest(name = methodName,
+                                                         className = "jdbc",
+                                                         schema = schema,
+                                                         configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                                         topics = Seq.empty,
+                                                         numberOfTasks = 1)
       val newResponse =
-        compareRequestAndResponse(anotherRequest, client.update[SourceRequest, Source](response.id, anotherRequest))
+        compareRequestAndResponse(
+          anotherRequest,
+          client.update[ConnectorConfigurationRequest, ConnectorConfiguration](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[Source](newResponse.id))
+      compare2Response(newResponse, client.get[ConnectorConfiguration](newResponse.id))
 
       // test delete
-      client.list[Source].size shouldBe 1
-      client.delete[Source](response.id)
-      client.list[Source].size shouldBe 0
+      client.list[ConnectorConfiguration].size shouldBe 1
+      client.delete[ConnectorConfiguration](response.id)
+      client.list[ConnectorConfiguration].size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[Source]("123")
-      an[IllegalArgumentException] should be thrownBy client.update[SourceRequest, Source]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy client.get[ConnectorConfiguration]("123")
+      an[IllegalArgumentException] should be thrownBy client
+        .update[ConnectorConfigurationRequest, ConnectorConfiguration]("777", anotherRequest)
     })
   }
 
   @Test
   def testInvalidSource(): Unit = {
     clients.foreach(client => {
-      client.list[Source].size shouldBe 0
+      client.list[ConnectorConfiguration].size shouldBe 0
 
       val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
-      an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
-        SourceRequest(name = methodName,
-                      className = "jdbc",
-                      schema = illegalOrder,
-                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                      topics = Seq.empty,
-                      numberOfTasks = 1))
-      client.list[Source].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
+        ConnectorConfigurationRequest(name = methodName,
+                                      className = "jdbc",
+                                      schema = illegalOrder,
+                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                      topics = Seq.empty,
+                                      numberOfTasks = 1))
+      client.list[ConnectorConfiguration].size shouldBe 0
 
       val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
-      an[IllegalArgumentException] should be thrownBy client.add[SourceRequest, Source](
-        SourceRequest(name = methodName,
-                      className = "jdbc",
-                      schema = duplicateOrder,
-                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                      topics = Seq.empty,
-                      numberOfTasks = 1))
-      client.list[Source].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
+        ConnectorConfigurationRequest(name = methodName,
+                                      className = "jdbc",
+                                      schema = duplicateOrder,
+                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                      topics = Seq.empty,
+                                      numberOfTasks = 1))
+      client.list[ConnectorConfiguration].size shouldBe 0
     })
   }
 
   @Test
   def testSink(): Unit = {
     clients.foreach(client => {
-      def compareRequestAndResponse(request: SinkRequest, response: Sink): Sink = {
+      def compareRequestAndResponse(request: ConnectorConfigurationRequest,
+                                    response: ConnectorConfiguration): ConnectorConfiguration = {
         request.name shouldBe response.name
         request.configs shouldBe response.configs
         response
       }
 
-      def compare2Response(lhs: Sink, rhs: Sink): Unit = {
+      def compare2Response(lhs: ConnectorConfiguration, rhs: ConnectorConfiguration): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.schema shouldBe rhs.schema
@@ -571,66 +570,70 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
 
       // test add
-      client.list[Sink].size shouldBe 0
-      val request = SinkRequest(name = methodName,
-                                className = "jdbc",
-                                schema = schema,
-                                configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                topics = Seq.empty,
-                                numberOfTasks = 1)
-      val response = compareRequestAndResponse(request, client.add[SinkRequest, Sink](request))
+      client.list[ConnectorConfiguration].size shouldBe 0
+      val request = ConnectorConfigurationRequest(name = methodName,
+                                                  className = "jdbc",
+                                                  schema = schema,
+                                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                                  topics = Seq.empty,
+                                                  numberOfTasks = 1)
+      val response =
+        compareRequestAndResponse(request, client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request))
 
       // test get
-      compare2Response(response, client.get[Sink](response.id))
+      compare2Response(response, client.get[ConnectorConfiguration](response.id))
 
       // test update
-      val anotherRequest = SinkRequest(name = methodName,
-                                       className = "jdbc",
-                                       schema = schema,
-                                       configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-                                       topics = Seq.empty,
-                                       numberOfTasks = 1)
+      val anotherRequest = ConnectorConfigurationRequest(name = methodName,
+                                                         className = "jdbc",
+                                                         schema = schema,
+                                                         configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                                         topics = Seq.empty,
+                                                         numberOfTasks = 1)
       val newResponse =
-        compareRequestAndResponse(anotherRequest, client.update[SinkRequest, Sink](response.id, anotherRequest))
+        compareRequestAndResponse(
+          anotherRequest,
+          client.update[ConnectorConfigurationRequest, ConnectorConfiguration](response.id, anotherRequest))
 
       // test get
-      compare2Response(newResponse, client.get[Sink](newResponse.id))
+      compare2Response(newResponse, client.get[ConnectorConfiguration](newResponse.id))
 
       // test delete
-      client.list[Sink].size shouldBe 1
-      client.delete[Sink](response.id)
-      client.list[Sink].size shouldBe 0
+      client.list[ConnectorConfiguration].size shouldBe 1
+      client.delete[ConnectorConfiguration](response.id)
+      client.list[ConnectorConfiguration].size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[Sink]("123")
-      an[IllegalArgumentException] should be thrownBy client.update[SinkRequest, Sink]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy client.get[ConnectorConfiguration]("123")
+      an[IllegalArgumentException] should be thrownBy client
+        .update[ConnectorConfigurationRequest, ConnectorConfiguration]("777", anotherRequest)
     })
   }
 
   @Test
   def testInvalidSink(): Unit = {
     clients.foreach(client => {
-      client.list[Source].size shouldBe 0
+      client.list[ConnectorConfiguration].size shouldBe 0
 
       val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
-      an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
-        SinkRequest(name = methodName,
-                    className = "jdbc",
-                    schema = illegalOrder,
-                    configs = Map("c0" -> "v0", "c1" -> "v1"),
-                    topics = Seq.empty,
-                    numberOfTasks = 1))
-      client.list[Source].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
+        ConnectorConfigurationRequest(name = methodName,
+                                      className = "jdbc",
+                                      schema = illegalOrder,
+                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                      topics = Seq.empty,
+                                      numberOfTasks = 1))
+      client.list[ConnectorConfiguration].size shouldBe 0
 
       val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
-      an[IllegalArgumentException] should be thrownBy client.add[SinkRequest, Sink](
-        SinkRequest(name = methodName,
-                    className = "jdbc",
-                    schema = duplicateOrder,
-                    configs = Map("c0" -> "v0", "c1" -> "v1"),
-                    topics = Seq.empty,
-                    numberOfTasks = 1))
-      client.list[Source].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
+        ConnectorConfigurationRequest(name = methodName,
+                                      className = "jdbc",
+                                      schema = duplicateOrder,
+                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                      topics = Seq.empty,
+                                      numberOfTasks = 1))
+      client.list[ConnectorConfiguration].size shouldBe 0
     })
   }
 

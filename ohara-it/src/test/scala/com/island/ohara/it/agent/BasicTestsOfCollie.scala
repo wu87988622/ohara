@@ -17,6 +17,7 @@ import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
 import org.junit.{After, Before}
 import org.scalatest.Matchers
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -34,8 +35,11 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     * NOTED: this key need to be matched with another key value in ohara-it/build.gradle
     */
   private[this] val key = "ohara.it.docker"
-
-  private[this] val nodeCollie: NodeCollie = NodeCollie.inMemory()
+  private[this] val colliCache = new ArrayBuffer[Node]()
+  private[this] val nodeCollie: NodeCollie = new NodeCollie {
+    override def node(name: String): Node = colliCache.find(_.name == name).get
+    override def iterator: Iterator[Node] = colliCache.iterator
+  }
   private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
 
   private[this] val timeout = 60 seconds
@@ -52,7 +56,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
       val password = nodeInfo.split("@").head.split(":").last
       val hostname = nodeInfo.split("@").last.split(":").head
       val port = nodeInfo.split("@").last.split(":").last.toInt
-      nodeCollie.add(Node(hostname, port, user, password, Seq.empty, CommonUtil.current()))
+      colliCache.append(Node(hostname, port, user, password, Seq.empty, CommonUtil.current()))
       val dockerClient = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
       try {
         withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
@@ -340,8 +344,5 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
   }
 
   @After
-  final def tearDown(): Unit = {
-    ReleaseOnce.close(clusterCollie)
-    ReleaseOnce.close(nodeCollie)
-  }
+  final def tearDown(): Unit = ReleaseOnce.close(clusterCollie)
 }

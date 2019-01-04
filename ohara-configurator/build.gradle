@@ -62,10 +62,6 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     inputs << "--brokers"
     inputs << project.getProperty('brokers')
   }
-  if(project.hasProperty('topic')) {
-    inputs << "--topic"
-    inputs << project.getProperty('topic')
-  }
   if(project.hasProperty('partitions')) {
     inputs << "--partitions"
     inputs << project.getProperty('partitions')

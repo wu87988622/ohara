@@ -12,30 +12,52 @@ import scala.concurrent.Future
   * A key-value store. It is used to save the component information
   * NOTED: All implementation from Store should be thread-safe.
   */
-trait Store[K, V] extends ReleaseOnce with Iterable[(K, V)] {
+trait Store[K, V] extends ReleaseOnce {
 
   /**
-    * Update the value with specified key. If the key-value exist, the new value will replace the previous value.
+    * add new key and value.
     * NOTED: Both key and value aren't nullable
     * @param key key
     * @param value value
-    * @return Some[V] if the previous value exist
+    * @return the updated value
     */
-  def update(key: K, value: V, sync: Consistency): Future[Option[V]]
+  def add(key: K, value: V): Future[V]
+
+  /**
+    * Update the existent value with specified key.
+    * NOTED: Both key and value aren't nullable
+    * @param key key
+    * @param value value
+    * @return the updated value
+    */
+  def update(key: K, value: V => V): Future[V]
 
   /**
     * Retrieve the value by specified key.
     * @param key key mapped to the value
-    * @return None if no key exist.
     */
-  def get(key: K): Future[Option[V]]
+  def value(key: K): Future[V]
+
+  /**
+    * Retrieve the values by specified keys.
+    * NOTED: If any key in inputs doesn't exist in the store, an exception will be stored in Future.
+    * @param keys keys mapped to the values
+    */
+  def values(keys: Seq[K]): Future[Map[K, V]]
+
+  /**
+    * Retrieve all values
+    */
+  def values(): Future[Map[K, V]]
+
+  def size: Int
 
   /**
     * Remove the value by specified key.
     * @param key key mapped to the value
-    * @return previous value or None if no key exist.
+    * @return the removed value
     */
-  def remove(key: K, sync: Consistency): Future[Option[V]]
+  def remove(key: K): Future[V]
 
   def exist(key: K): Future[Boolean]
 }
@@ -60,25 +82,29 @@ object Store {
       private[this] def fromKey(key: Array[Byte]) = keySerializer.from(Objects.requireNonNull(key))
       private[this] def toValue(value: V) = valueSerializer.to(Objects.requireNonNull(value))
       private[this] def fromValue(value: Array[Byte]) = valueSerializer.from(Objects.requireNonNull(value))
-      override def update(key: K, value: V, consistency: Consistency): Future[Option[V]] =
-        Future.successful(Option(store.put(toKey(key), toValue(value))).map(fromValue))
+      override def update(key: K, value: V => V): Future[V] = Future.successful(
+        fromValue(
+          store.computeIfPresent(toKey(key),
+                                 (_: Array[Byte], previous: Array[Byte]) => toValue(value(fromValue(previous))))))
 
-      override def get(key: K): Future[Option[V]] = Future.successful(Option(store.get(toKey(key))).map(fromValue))
+      override def value(key: K): Future[V] = Future.successful(
+        Option(store.get(toKey(key))).map(fromValue).getOrElse(throw new NoSuchElementException(s"$key doesn't exist")))
+      override def values(keys: Seq[K]): Future[Map[K, V]] =
+        Future.successful(
+          keys
+            .map(key =>
+              key -> fromValue(
+                Option(store.get(toKey(key))).getOrElse(throw new NoSuchElementException(s"$key doesn't exist"))))
+            .toMap)
+      import scala.collection.JavaConverters._
+      override def values(): Future[Map[K, V]] = Future.successful(store.asScala.map {
+        case (k, v) => fromKey(k) -> fromValue(v)
+      }.toMap)
 
       override protected def doClose(): Unit = store.clear()
 
-      override def remove(key: K, consistency: Consistency): Future[Option[V]] =
-        Future.successful(Option(store.remove(toKey(key))).map(fromValue))
-
-      override def iterator: Iterator[(K, V)] = new Iterator[(K, V)] {
-        private[this] val iter = store.entrySet().iterator()
-        override def hasNext: Boolean = iter.hasNext
-
-        override def next(): (K, V) = {
-          val entry = iter.next()
-          (fromKey(entry.getKey), fromValue(entry.getValue))
-        }
-      }
+      override def remove(key: K): Future[V] =
+        Future.successful(Option(store.remove(toKey(key))).map(fromValue).get)
 
       /**
         * Override the size to provide the efficient implementation
@@ -87,14 +113,11 @@ object Store {
       override def size: Int = store.size()
 
       override def exist(key: K): Future[Boolean] = Future.successful(store.containsKey(toKey(key)))
+
+      override def add(key: K, value: V): Future[V] = Future.successful {
+        val previous = store.putIfAbsent(toKey(key), toValue(value))
+        if (previous != null) throw new IllegalStateException(s"$key exists!!!")
+        value
+      }
     }
-
-  def builder(): StoreBuilder = new StoreBuilder()
-}
-
-abstract sealed class Consistency
-object Consistency {
-  case object STRICT extends Consistency
-  case object WEAK extends Consistency
-  case object NONE extends Consistency
 }

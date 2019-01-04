@@ -12,8 +12,6 @@ import com.island.ohara.client.ConfiguratorJson.{
   StreamPropertyResponse
 }
 import com.island.ohara.client.{ConfiguratorClient, StreamClient}
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.KafkaClient
 import org.apache.commons.io.FileUtils
@@ -28,12 +26,6 @@ class TestStream extends With3Brokers with Matchers {
     .builder()
     .hostname("localhost")
     .port(0)
-    .store(
-      Store
-        .builder()
-        .topicName(random())
-        .brokers(testUtil.brokersConnProps)
-        .build(Serializer.STRING, Serializer.OBJECT))
     .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
     .connectClient(new FakeConnectorClient())
     .build()

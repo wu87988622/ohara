@@ -21,24 +21,24 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .groupId(com.island.ohara.common.util.CommonUtil.uuid())
-  private[this] val server0: CallQueueServer[SourceRequest, Source] =
-    defaultServerBuilder.build[SourceRequest, Source]()
-  private[this] val server1: CallQueueServer[SourceRequest, Source] =
-    defaultServerBuilder.build[SourceRequest, Source]()
-  private[this] val server2: CallQueueServer[SourceRequest, Source] =
-    defaultServerBuilder.build[SourceRequest, Source]()
+  private[this] val server0: CallQueueServer[ConnectorConfigurationRequest, ConnectorConfiguration] =
+    defaultServerBuilder.build[ConnectorConfigurationRequest, ConnectorConfiguration]()
+  private[this] val server1: CallQueueServer[ConnectorConfigurationRequest, ConnectorConfiguration] =
+    defaultServerBuilder.build[ConnectorConfigurationRequest, ConnectorConfiguration]()
+  private[this] val server2: CallQueueServer[ConnectorConfigurationRequest, ConnectorConfiguration] =
+    defaultServerBuilder.build[ConnectorConfigurationRequest, ConnectorConfiguration]()
 
   private[this] val servers = Seq(server0, server1, server2)
 
-  private[this] val requestData: SourceRequest =
-    SourceRequest(name = "name",
-                  className = "jdbc",
-                  topics = Seq.empty,
-                  numberOfTasks = 1,
-                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
-                  configs = Map("a" -> "b"))
-  private[this] val responseData: Source =
-    Source(
+  private[this] val requestData: ConnectorConfigurationRequest =
+    ConnectorConfigurationRequest(name = "name",
+                                  className = "jdbc",
+                                  topics = Seq.empty,
+                                  numberOfTasks = 1,
+                                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
+                                  configs = Map("a" -> "b"))
+  private[this] val responseData: ConnectorConfiguration =
+    ConnectorConfiguration(
       id = "uuid",
       name = "name2",
       className = "jdbc",
@@ -58,7 +58,7 @@ class TestCallQueueWithMultiClients extends With3Brokers with Matchers {
         .brokers(testUtil.brokersConnProps)
         .requestTopic(requestTopicName)
         .responseTopic(responseTopicName)
-        .build[SourceRequest, Source]()
+        .build[ConnectorConfigurationRequest, ConnectorConfiguration]()
     }
     val requests = clients.map(_.request(requestData))
     // wait the one from servers receive the request

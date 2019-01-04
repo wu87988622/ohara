@@ -1,12 +1,10 @@
 package com.island.ohara.configurator.route
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.util.CommonUtil
-import spray.json.DefaultJsonProtocol._
+import com.island.ohara.configurator.Configurator.Store
 object NodeRoute {
 
   private[this] def update(res: Node)(implicit clusterCollie: ClusterCollie): Node = res.copy(
@@ -27,49 +25,39 @@ object NodeRoute {
       )
     )
   )
-  def apply(implicit nodeCollie: NodeCollie, clusterCollie: ClusterCollie): server.Route = pathPrefix(NODE_PATH) {
-    pathEnd {
-      // add
-      post {
-        entity(as[NodeRequest]) { req =>
-          val node = update(
-            Node(
-              name = req.name.get,
-              port = req.port,
-              user = req.user,
-              password = req.password,
-              services = Seq.empty,
-              lastModified = CommonUtil.current()
-            ))
-          nodeCollie.add(node)
-          complete(node)
-        }
-      } ~ get(complete(nodeCollie.iterator.map(update).toSeq)) // list
-    } ~ path(Segment) { name =>
-      // get
-      get(complete(update(nodeCollie.node(name)))) ~
-        // delete
-        delete(complete(update(nodeCollie.remove(name)))) ~
-        // update
-        put {
-          entity(as[NodeRequest]) { req =>
-            val oldNode = nodeCollie.node(name)
-            if (req.name.exists(_ != name))
-              throw new IllegalArgumentException(
-                s"the name from request is conflict with previous setting:${oldNode.name}")
-            val newNode = update(
-              Node(
-                name = oldNode.name,
-                port = req.port,
-                user = req.user,
-                password = req.password,
-                services = Seq.empty,
-                lastModified = CommonUtil.current()
-              ))
-            nodeCollie.update(newNode)
-            complete(newNode)
-          }
-        }
-    }
-  }
+
+  def apply(implicit store: Store, clusterCollie: ClusterCollie): server.Route =
+    RouteUtil.basicRoute[NodeRequest, Node](
+      root = NODE_PATH,
+      hookOfAdd = (_: String, request: NodeRequest) => {
+        if (request.name.isEmpty) throw new IllegalArgumentException(s"name is required")
+        update(
+          Node(
+            name = request.name.get,
+            port = request.port,
+            user = request.user,
+            password = request.password,
+            services = Seq.empty,
+            lastModified = CommonUtil.current()
+          ))
+      },
+      hookOfUpdate = (name: String, request: NodeRequest, previous: Node) => {
+        if (request.name.exists(_ != name))
+          throw new IllegalArgumentException(
+            s"the name from request is conflict with previous setting:${previous.name}")
+        update(
+          Node(
+            name = name,
+            port = request.port,
+            user = request.user,
+            password = request.password,
+            services = Seq.empty,
+            lastModified = CommonUtil.current()
+          ))
+      },
+      hookOfGet = (response: Node) => response,
+      hookOfList = (responses: Seq[Node]) => responses,
+      hookBeforeDelete = (id: String) => id,
+      hookOfDelete = (response: Node) => response
+    )
 }

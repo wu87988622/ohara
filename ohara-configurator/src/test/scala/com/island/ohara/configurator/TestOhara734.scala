@@ -47,7 +47,8 @@ class TestOhara734 extends SmallTest with Matchers {
   def testSourceRequest(): Unit = {
     import spray.json._
     val request =
-      ConfiguratorJson.SOURCE_REQUEST_JSON_FORMAT.read("""
+      ConfiguratorJson.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+        """
                                                             |{
                                                             |  "name":"perf",
                                                             |  "className":"com.island.ohara.connector.perf.PerfSource",
@@ -80,7 +81,8 @@ class TestOhara734 extends SmallTest with Matchers {
     request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
 
     val request2 =
-      ConfiguratorJson.SOURCE_REQUEST_JSON_FORMAT.read("""
+      ConfiguratorJson.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+        """
                                                          |{
                                                          |  "name":"perf",
                                                          |  "className":"com.island.ohara.connector.perf.PerfSource",
@@ -110,7 +112,8 @@ class TestOhara734 extends SmallTest with Matchers {
   def testSinkRequest(): Unit = {
     import spray.json._
     val request =
-      ConfiguratorJson.SINK_REQUEST_JSON_FORMAT.read("""
+      ConfiguratorJson.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+        """
                                                                |{
                                                                |  "name":"perf",
                                                                |  "className":"com.island.ohara.connector.perf.PerfSource",
@@ -143,7 +146,8 @@ class TestOhara734 extends SmallTest with Matchers {
     request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
 
     val request2 =
-      ConfiguratorJson.SINK_REQUEST_JSON_FORMAT.read("""
+      ConfiguratorJson.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+        """
                                                        |{
                                                        |  "name":"perf",
                                                        |  "className":"com.island.ohara.connector.perf.PerfSource",

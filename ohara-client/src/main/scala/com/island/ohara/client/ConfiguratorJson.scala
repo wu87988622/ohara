@@ -216,85 +216,48 @@ object ConfiguratorJson {
       override def format(address: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH"
       override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$PIPELINE_PATH/$id"
     }
-  //------------------------------------------------[DATA-SOURCE]------------------------------------------------//
-  val SOURCE_PATH = "sources"
-  final case class SourceRequest(name: String,
-                                 className: String,
-                                 schema: Seq[Column],
-                                 topics: Seq[String],
-                                 numberOfTasks: Int,
-                                 configs: Map[String, String])
-  implicit val SOURCE_REQUEST_JSON_FORMAT: RootJsonFormat[SourceRequest] = jsonFormat6(SourceRequest)
+  //------------------------------------------------[DATA-CONNECTOR]------------------------------------------------//
+  val CONNECTOR_CONFIG_PATH = "connectors"
+  final case class ConnectorConfigurationRequest(name: String,
+                                                 className: String,
+                                                 schema: Seq[Column],
+                                                 topics: Seq[String],
+                                                 numberOfTasks: Int,
+                                                 configs: Map[String, String])
+  implicit val CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorConfigurationRequest] = jsonFormat6(
+    ConnectorConfigurationRequest)
 
-  final case class Source(id: String,
-                          name: String,
-                          className: String,
-                          schema: Seq[Column],
-                          topics: Seq[String],
-                          numberOfTasks: Int,
-                          configs: Map[String, String],
-                          state: Option[ConnectorState],
-                          lastModified: Long)
+  final case class ConnectorConfiguration(id: String,
+                                          name: String,
+                                          className: String,
+                                          schema: Seq[Column],
+                                          topics: Seq[String],
+                                          numberOfTasks: Int,
+                                          configs: Map[String, String],
+                                          state: Option[ConnectorState],
+                                          lastModified: Long)
       extends Data {
     override def kind: String = className
   }
-  implicit val SOURCE_JSON_FORMAT: RootJsonFormat[Source] = jsonFormat9(Source)
-  implicit val SOURCE_COMMAND_FORMAT: DataCommandFormat[Source] =
-    new DataCommandFormat[Source] {
-      override def format(address: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH"
-      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$SOURCE_PATH/$id"
+  implicit val CONNECTOR_CONFIGURATION_JSON_FORMAT: RootJsonFormat[ConnectorConfiguration] = jsonFormat9(
+    ConnectorConfiguration)
+  implicit val CONNECTOR_CONFIGURATION_COMMAND_FORMAT: DataCommandFormat[ConnectorConfiguration] =
+    new DataCommandFormat[ConnectorConfiguration] {
+      override def format(address: String): String = s"http://$address/$VERSION_V0/$CONNECTOR_CONFIG_PATH"
+      override def format(address: String, id: String): String =
+        s"http://$address/$VERSION_V0/$CONNECTOR_CONFIG_PATH/$id"
     }
 
-  implicit val SOURCE_CONTROL_FORMAT: ControlCommandFormat[Source] =
-    new ControlCommandFormat[Source] {
+  implicit val CONNECTOR_CONFIGURATION_CONTROL_FORMAT: ControlCommandFormat[ConnectorConfiguration] =
+    new ControlCommandFormat[ConnectorConfiguration] {
       override def start(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$START_COMMAND"
+        s"http://$address/$VERSION_V0/$CONNECTOR_CONFIG_PATH/$id/$START_COMMAND"
       override def stop(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$STOP_COMMAND"
+        s"http://$address/$VERSION_V0/$CONNECTOR_CONFIG_PATH/$id/$STOP_COMMAND"
       override def resume(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$RESUME_COMMAND"
+        s"http://$address/$VERSION_V0/$CONNECTOR_CONFIG_PATH/$id/$RESUME_COMMAND"
       override def pause(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SOURCE_PATH/$id/$PAUSE_COMMAND"
-    }
-  //------------------------------------------------[DATA-SINK]------------------------------------------------//
-  val SINK_PATH = "sinks"
-  final case class SinkRequest(name: String,
-                               className: String,
-                               schema: Seq[Column],
-                               topics: Seq[String],
-                               numberOfTasks: Int,
-                               configs: Map[String, String])
-  implicit val SINK_REQUEST_JSON_FORMAT: RootJsonFormat[SinkRequest] = jsonFormat6(SinkRequest)
-
-  final case class Sink(id: String,
-                        name: String,
-                        className: String,
-                        schema: Seq[Column],
-                        topics: Seq[String],
-                        numberOfTasks: Int,
-                        configs: Map[String, String],
-                        state: Option[ConnectorState],
-                        lastModified: Long)
-      extends Data {
-    override def kind: String = className
-  }
-  implicit val SINK_JSON_FORMAT: RootJsonFormat[Sink] = jsonFormat9(Sink)
-  implicit val SINK_COMMAND_FORMAT: DataCommandFormat[Sink] =
-    new DataCommandFormat[Sink] {
-      override def format(address: String): String = s"http://$address/$VERSION_V0/$SINK_PATH"
-      override def format(address: String, id: String): String = s"http://$address/$VERSION_V0/$SINK_PATH/$id"
-    }
-
-  implicit val SINK_CONTROL_FORMAT: ControlCommandFormat[Sink] =
-    new ControlCommandFormat[Sink] {
-      override def start(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$START_COMMAND"
-      override def stop(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$STOP_COMMAND"
-      override def resume(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$RESUME_COMMAND"
-      override def pause(address: String, id: String): String =
-        s"http://$address/$VERSION_V0/$SINK_PATH/$id/$PAUSE_COMMAND"
+        s"http://$address/$VERSION_V0/$CONNECTOR_CONFIG_PATH/$id/$PAUSE_COMMAND"
     }
   //------------------------------------------------[VALIDATION]------------------------------------------------//
   val VALIDATION_PATH = "validate"

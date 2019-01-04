@@ -97,8 +97,7 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
     verify[FtpInformation]
     verify[JdbcInformation]
     verify[Pipeline]
-    verify[Sink]
-    verify[Source]
+    verify[ConnectorConfiguration]
 
   }
 
@@ -168,8 +167,7 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy client.add[MyRequest, TopicInfo](request)
     an[IllegalArgumentException] should be thrownBy client.add[MyRequest, HdfsInformation](request)
     an[IllegalArgumentException] should be thrownBy client.add[MyRequest, Pipeline](request)
-    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, Sink](request)
-    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, Source](request)
+    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ConnectorConfiguration](request)
 
     an[IllegalArgumentException] should be thrownBy client
       .update[MyRequest, TopicInfo](Long.MaxValue.toString(), request)
@@ -177,8 +175,8 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
       .update[MyRequest, HdfsInformation](Long.MaxValue.toString(), request)
     an[IllegalArgumentException] should be thrownBy client
       .update[MyRequest, Pipeline](Long.MaxValue.toString(), request)
-    an[IllegalArgumentException] should be thrownBy client.update[MyRequest, Sink](Long.MaxValue.toString(), request)
-    an[IllegalArgumentException] should be thrownBy client.update[MyRequest, Source](Long.MaxValue.toString(), request)
+    an[IllegalArgumentException] should be thrownBy client
+      .update[MyRequest, ConnectorConfiguration](Long.MaxValue.toString(), request)
   }
 
   @After

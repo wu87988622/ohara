@@ -14,43 +14,22 @@ class TestOhara699 extends SmallTest with Matchers {
   private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 
   @Test
-  def testStartAnNonexistantSource(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.start[Source]("asdadasdas")
+  def testStartAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy client.start[ConnectorConfiguration]("asdadasdas")
   }
 
   @Test
-  def testStartAnNonexistantSink(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.start[Sink]("asdadasdas")
+  def testStopAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy client.stop[ConnectorConfiguration]("asdadasdas")
+  }
+  @Test
+  def testPauseAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy client.pause[ConnectorConfiguration]("asdadasdas")
   }
 
   @Test
-  def testStopAnNonexistantSource(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.stop[Source]("asdadasdas")
-  }
-
-  @Test
-  def testStopAnNonexistantSink(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.stop[Sink]("asdadasdas")
-  }
-
-  @Test
-  def testPauseAnNonexistantSource(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.pause[Source]("asdadasdas")
-  }
-
-  @Test
-  def testPauseAnNonexistantSink(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.pause[Sink]("asdadasdas")
-  }
-
-  @Test
-  def testResumeAnNonexistantSource(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.resume[Source]("asdadasdas")
-  }
-
-  @Test
-  def testResumeAnNonexistantSink(): Unit = {
-    an[IllegalArgumentException] should be thrownBy client.resume[Sink]("asdadasdas")
+  def testResumeAnNonexistentConnector(): Unit = {
+    an[IllegalArgumentException] should be thrownBy client.resume[ConnectorConfiguration]("asdadasdas")
   }
 
   @After

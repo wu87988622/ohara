@@ -11,26 +11,26 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class TestCallQueueInClosingOnFlyRequests extends With3Brokers with Matchers {
-  private[this] val requestData: SourceRequest =
-    SourceRequest(name = "name",
-                  className = "jdbc",
-                  topics = Seq.empty,
-                  numberOfTasks = 1,
-                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
-                  configs = Map("a" -> "b"))
+  private[this] val requestData: ConnectorConfigurationRequest =
+    ConnectorConfigurationRequest(name = "name",
+                                  className = "jdbc",
+                                  topics = Seq.empty,
+                                  numberOfTasks = 1,
+                                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
+                                  configs = Map("a" -> "b"))
 
   @Test
   def test(): Unit = {
     val requestCount = 10
     val requestTopic = newTopic()
     val responseTopic = newTopic()
-    val invalidClient: CallQueueClient[SourceRequest, Source] =
+    val invalidClient: CallQueueClient[ConnectorConfigurationRequest, ConnectorConfiguration] =
       CallQueue
         .clientBuilder()
         .brokers(testUtil.brokersConnProps)
         .requestTopic(requestTopic)
         .responseTopic(responseTopic)
-        .build[SourceRequest, Source]()
+        .build[ConnectorConfigurationRequest, ConnectorConfiguration]()
     val requests = try 0 until requestCount map { _ =>
       invalidClient.request(requestData)
     } finally invalidClient.close()

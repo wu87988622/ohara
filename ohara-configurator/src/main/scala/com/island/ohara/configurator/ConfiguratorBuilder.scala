@@ -30,14 +30,14 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class ConfiguratorBuilder {
-  private[this] var uuidGenerator: Option[() => String] = Some(() => CommonUtil.uuid())
   private[this] var hostname: Option[String] = None
   private[this] var port: Option[Int] = None
-  private[this] var store: Option[Store] = None
+  private[this] val store: Store = new Store(
+    com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
   private[this] var kafkaClient: Option[KafkaClient] = None
   private[this] var connectClient: Option[ConnectorClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
@@ -47,17 +47,6 @@ class ConfiguratorBuilder {
 
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
     this.extraRoute = Some(extraRoute)
-    this
-  }
-
-  /**
-    * set a specified uuid generator.
-    *
-    * @param generator uuid generator
-    * @return this builder
-    */
-  def uuidGenerator(generator: () => String): ConfiguratorBuilder = {
-    uuidGenerator = Some(generator)
     this
   }
 
@@ -80,18 +69,6 @@ class ConfiguratorBuilder {
     */
   def port(port: Int): ConfiguratorBuilder = {
     this.port = Some(port)
-    this
-  }
-
-  /**
-    * set a specified store used to maintain the ohara data.
-    * NOTED: Configurator has responsibility to release this store.
-    *
-    * @param store used to maintain the ohara data.
-    * @return this builder
-    */
-  def store(store: com.island.ohara.configurator.store.Store[String, AnyRef]): ConfiguratorBuilder = {
-    this.store = Some(new Store(store))
     this
   }
 
@@ -123,7 +100,6 @@ class ConfiguratorBuilder {
   def noCluster(): ConfiguratorBuilder = {
     kafkaClient(new FakeKafkaClient())
     connectClient(new FakeConnectorClient())
-    store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
     clusterCollie(new FakeClusterCollie)
   }
 
@@ -134,17 +110,13 @@ class ConfiguratorBuilder {
 
   def build(): Configurator = {
     val nodeCollie = new NodeCollie {
-      override def add(node: Node): Unit = store.get.add(node)
-      override def remove(name: String): Node = store.get.remove[Node](name)
-      override def update(node: Node): Unit = store.get.update(node)
-      override def close(): Unit = {
-        // do nothing
-      }
-      override def iterator: Iterator[Node] = store.get.data[Node]
+      import scala.concurrent.duration._
+      override def node(name: String): Node = Await.result(store.value[Node](name), 10 seconds)
+      override def iterator: Iterator[Node] =
+        Await.result(store.raw(), 10 seconds).filter(_.isInstanceOf[Node]).map(_.asInstanceOf[Node]).iterator
     }
     new Configurator(hostname.get, port.get, initializationTimeout.get, terminationTimeout.get, extraRoute)(
-      ug = uuidGenerator.get,
-      store = store.get,
+      store = store,
       nodeCollie = nodeCollie,
       clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie)),
       kafkaClient = kafkaClient.get,

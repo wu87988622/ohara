@@ -1,111 +1,73 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson.{Pipeline, _}
+import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.route.BasicRoute._
-import spray.json.DefaultJsonProtocol._
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 private[configurator] object PipelineRoute {
+  private[this] def toRes(id: String, request: PipelineRequest)(implicit store: Store,
+                                                                connectorClient: ConnectorClient) =
+    Pipeline(id, request.name, request.rules, abstracts(request.rules), CommonUtil.current())
 
-  private[this] val ACCEPTED_TYPES_FROM = Seq(classOf[TopicInfo], classOf[Source], classOf[StreamData])
-  private[this] val ACCEPTED_TYPES_TO = Seq(classOf[TopicInfo], classOf[Sink], classOf[StreamData])
-
-  private[this] def toRes(uuid: String, request: PipelineRequest)(implicit store: Store) =
-    Pipeline(uuid, request.name, request.rules, abstracts(request.rules), CommonUtil.current())
-
-  private[this] def checkExist(uuids: Set[String])(implicit store: Store): Unit = {
-    uuids.foreach(uuid =>
-      if (store.nonExist[Data](uuid)) throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
+  private[this] def checkExist(ids: Set[String])(implicit store: Store): Unit = {
+    ids.foreach(
+      uuid =>
+        if (Await.result(store.nonExist[Data](uuid), 10 seconds))
+          throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
   }
 
-  private[this] def abstracts(rules: Map[String, String])(implicit store: Store): Seq[ObjectAbstract] = {
+  private[this] def abstracts(rules: Map[String, String])(implicit store: Store,
+                                                          connectorClient: ConnectorClient): Seq[ObjectAbstract] = {
     val keys = rules.keys.filterNot(_ == UNKNOWN).toSet
     checkExist(keys)
     val values = rules.values.filterNot(_ == UNKNOWN).toSet
     checkExist(values)
-    store
-      .raw()
+    Await
+      .result(store.raw(), 30 seconds)
       .filter(data => keys.contains(data.id) || values.contains(data.id))
       .map {
-        case statableData: Source =>
-          ObjectAbstract(statableData.id,
-                         statableData.name,
-                         statableData.kind,
-                         statableData.state,
-                         statableData.lastModified)
-        case statableData: Sink =>
-          ObjectAbstract(statableData.id,
-                         statableData.name,
-                         statableData.kind,
-                         statableData.state,
-                         statableData.lastModified)
+        case data: ConnectorConfiguration =>
+          ObjectAbstract(data.id,
+                         data.name,
+                         data.kind,
+                         if (connectorClient.exist(data.id)) Some(connectorClient.status(data.id).connector.state)
+                         else None,
+                         data.lastModified)
         case data => ObjectAbstract(data.id, data.name, data.kind, None, data.lastModified)
       }
       .toList // NOTED: we have to return a "serializable" list!!!
   }
 
-  private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Unit = {
-    def verifyFrom(uuid: String): Unit = {
-      val data = store.raw(uuid)
-      if (!ACCEPTED_TYPES_FROM.contains(data.getClass))
-        throw new IllegalArgumentException(
-          s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
-            s" accepted type:${ACCEPTED_TYPES_FROM.map(_.getSimpleName).mkString(",")}")
+  private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Pipeline = {
+    def verify(id: String): Unit = if (id != UNKNOWN) {
+      val data = Await.result(store.raw(id), 10 seconds)
+      if (!data.isInstanceOf[ConnectorConfiguration] && !data.isInstanceOf[TopicInfo])
+        throw new IllegalArgumentException(s"""${data.getClass.getName} can't be placed at "from"""")
     }
-    def verifyTo(uuid: String): Unit = {
-      val data = store.raw(uuid)
-      if (!ACCEPTED_TYPES_TO.contains(data.getClass))
-        throw new IllegalArgumentException(
-          s"the type:${data.getClass.getSimpleName} can't be applied to pipeline." +
-            s" accepted type:${ACCEPTED_TYPES_TO.map(_.getSimpleName).mkString(",")}")
-    }
-    pipeline.rules.keys.filterNot(_ == UNKNOWN).foreach(verifyFrom)
-    pipeline.rules.values.filterNot(_ == UNKNOWN).foreach(verifyTo)
     pipeline.rules.foreach {
-      case (k, v) => if (k == v) throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
+      case (k, v) =>
+        if (k == v) throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
+        verify(k)
+        verify(v)
     }
+    pipeline
   }
 
-  private[this] def update(pipeline: Pipeline)(implicit store: Store): Pipeline = {
-    val newAbstracts = abstracts(pipeline.rules)
-    val newOne = pipeline.copy(objects = newAbstracts)
-    store.update(newOne)
-    newOne
-  }
+  private[this] def update(pipeline: Pipeline)(implicit store: Store, connectorClient: ConnectorClient): Pipeline =
+    pipeline.copy(objects = abstracts(pipeline.rules))
 
-  def apply(implicit store: Store, uuidGenerator: () => String): server.Route =
-    pathPrefix(PIPELINE_PATH) {
-      pathEnd {
-        // add
-        post {
-          entity(as[PipelineRequest]) { req =>
-            val pipeline = toRes(uuidGenerator(), req)
-            verifyRules(pipeline)
-            store.add(pipeline)
-            complete(pipeline)
-          }
-        } ~ get(complete(store.data[Pipeline].map(update(_)).toSeq)) // list
-      } ~ pathPrefix(Segment) { uuid =>
-        pathEnd {
-          // get
-          get(complete(update(store.data[Pipeline](uuid)))) ~
-            // delete
-            delete(complete {
-              store.remove[Pipeline](uuid)
-            }) ~
-            // update
-            put {
-              entity(as[PipelineRequest]) { req =>
-                val pipeline = toRes(uuid, req)
-                verifyRules(pipeline)
-                store.update(pipeline)
-                complete(pipeline)
-              }
-            }
-        }
-      }
-    }
+  def apply(implicit store: Store, connectorClient: ConnectorClient): server.Route =
+    RouteUtil.basicRoute[PipelineRequest, Pipeline](
+      root = PIPELINE_PATH,
+      hookOfAdd = (id: String, request: PipelineRequest) => verifyRules(toRes(id, request)),
+      hookOfUpdate = (id: String, request: PipelineRequest, _: Pipeline) => verifyRules(toRes(id, request)),
+      hookOfGet = (response: Pipeline) => update(response),
+      hookOfList = (responses: Seq[Pipeline]) => responses.map(update),
+      hookBeforeDelete = (id: String) => id,
+      hookOfDelete = (response: Pipeline) => response
+    )
 }

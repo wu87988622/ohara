@@ -56,7 +56,7 @@ class TestPrometheus extends MediumTest with Matchers {
     } finally client.close()
   }
 
-  protected val nodeCollie: NodeCollie = NodeCollie.inMemory()
+  protected val nodeCollie: NodeCollie = NodeCollie.inMemory(Seq(node))
   protected val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
 
   /**
@@ -64,7 +64,6 @@ class TestPrometheus extends MediumTest with Matchers {
     */
   @Test
   def testExporter(): Unit = {
-    nodeCollie.add(node)
     startZK(zkDesc => {
       startBroker(
         zkDesc.name,

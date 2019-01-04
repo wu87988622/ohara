@@ -7,10 +7,8 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
-import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.configurator.store.Store
 import com.island.ohara.integration._
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
@@ -202,15 +200,8 @@ object Backend {
         }
       }
     }
-    val topicName = s"demo-${CommonUtil.current()}"
     val configurator = Configurator
       .builder()
-      .store(
-        Store
-          .builder()
-          .brokers(brokers.connectionProps)
-          .topicName(topicName)
-          .build(Serializer.STRING, Serializer.OBJECT))
       .kafkaClient(KafkaClient.of(brokers.connectionProps))
       .connectClient(ConnectorClient(workers.connectionProps))
       .hostname(CommonUtil.anyLocalAddress)

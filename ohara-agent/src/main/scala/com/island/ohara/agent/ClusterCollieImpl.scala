@@ -26,10 +26,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
   override def zookeepersCollie(): ZookeeperCollie = new ZookeeperCollieImpl
   override def brokerCollie(): BrokerCollie = new BrokerCollieImpl
   override def workerCollie(): WorkerCollie = new WorkerCollieImpl
-  override protected def doClose(): Unit = {
-    ReleaseOnce.close(clientCache)
-    ReleaseOnce.close(nodeCollie)
-  }
+  override protected def doClose(): Unit = ReleaseOnce.close(clientCache)
 }
 
 private object ClusterCollieImpl {

@@ -23,31 +23,31 @@ class TestCallQueue extends With3Brokers with Matchers {
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .groupId(com.island.ohara.common.util.CommonUtil.uuid())
-  private[this] val server0: CallQueueServer[SourceRequest, Source] =
-    defaultServerBuilder.build[SourceRequest, Source]()
-  private[this] val server1: CallQueueServer[SourceRequest, Source] =
-    defaultServerBuilder.build[SourceRequest, Source]()
-  private[this] val server2: CallQueueServer[SourceRequest, Source] =
-    defaultServerBuilder.build[SourceRequest, Source]()
-  private[this] val client: CallQueueClient[SourceRequest, Source] =
+  private[this] val server0: CallQueueServer[ConnectorConfigurationRequest, ConnectorConfiguration] =
+    defaultServerBuilder.build[ConnectorConfigurationRequest, ConnectorConfiguration]()
+  private[this] val server1: CallQueueServer[ConnectorConfigurationRequest, ConnectorConfiguration] =
+    defaultServerBuilder.build[ConnectorConfigurationRequest, ConnectorConfiguration]()
+  private[this] val server2: CallQueueServer[ConnectorConfigurationRequest, ConnectorConfiguration] =
+    defaultServerBuilder.build[ConnectorConfigurationRequest, ConnectorConfiguration]()
+  private[this] val client: CallQueueClient[ConnectorConfigurationRequest, ConnectorConfiguration] =
     CallQueue
       .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
-      .build[SourceRequest, Source]()
+      .build[ConnectorConfigurationRequest, ConnectorConfiguration]()
 
   private[this] val servers = Seq(server0, server1, server2)
 
-  private[this] val requestData: SourceRequest =
-    SourceRequest(name = "name",
-                  className = "jdbc",
-                  topics = Seq.empty,
-                  numberOfTasks = 1,
-                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
-                  configs = Map("a" -> "b"))
-  private[this] val responseData: Source =
-    Source(
+  private[this] val requestData: ConnectorConfigurationRequest =
+    ConnectorConfigurationRequest(name = "name",
+                                  className = "jdbc",
+                                  topics = Seq.empty,
+                                  numberOfTasks = 1,
+                                  schema = Seq(Column.of("cf", DataType.BOOLEAN, 1)),
+                                  configs = Map("a" -> "b"))
+  private[this] val responseData: ConnectorConfiguration =
+    ConnectorConfiguration(
       id = "uuid",
       name = "name2",
       className = "jdbc",
@@ -115,13 +115,13 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @Test
   def testSendInvalidRequest(): Unit = {
-    val invalidClient: CallQueueClient[TopicInfoRequest, Source] = CallQueue
+    val invalidClient: CallQueueClient[TopicInfoRequest, ConnectorConfiguration] = CallQueue
       .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .expirationCleanupTime(3 seconds)
-      .build[TopicInfoRequest, Source]()
+      .build[TopicInfoRequest, ConnectorConfiguration]()
     try {
       val request = invalidClient.request(TopicInfoRequest("uuid", 1, 2))
       Await.result(request, 5 second) match {
@@ -140,13 +140,13 @@ class TestCallQueue extends With3Brokers with Matchers {
     val requestTopic = newTopic()
     val responseTopic = newTopic()
     val leaseCleanupFreq: scala.concurrent.duration.Duration = 5 seconds
-    val timeoutClient: CallQueueClient[SourceRequest, Source] = CallQueue
+    val timeoutClient: CallQueueClient[ConnectorConfigurationRequest, ConnectorConfiguration] = CallQueue
       .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopic)
       .responseTopic(responseTopic)
       .expirationCleanupTime(leaseCleanupFreq)
-      .build[SourceRequest, Source]()
+      .build[ConnectorConfigurationRequest, ConnectorConfiguration]()
     val request = timeoutClient.request(requestData, leaseCleanupFreq)
     TimeUnit.MILLISECONDS.sleep(leaseCleanupFreq.toMillis)
     Await.result(request, 5 second) match {

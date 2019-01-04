@@ -1,12 +1,10 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.ConfiguratorJson.{
+  ConnectorConfiguration,
+  ConnectorConfigurationRequest,
   Pipeline,
   PipelineRequest,
-  Sink,
-  SinkRequest,
-  Source,
-  SourceRequest,
   TopicInfo,
   TopicInfoRequest
 }
@@ -26,7 +24,7 @@ class TestPipelineRule extends SmallTest with Matchers {
   @Test
   def testPipelineStateAfterStartingSource(): Unit = {
     val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1))
-    val sourceRequest = SourceRequest(
+    val sourceRequest = ConnectorConfigurationRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
@@ -35,7 +33,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       numberOfTasks = 1
     )
 
-    val source = client.add[SourceRequest, Source](sourceRequest)
+    val source = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](sourceRequest)
     val pipeline = client.add[PipelineRequest, Pipeline](
       PipelineRequest(
         name = "abc",
@@ -44,14 +42,14 @@ class TestPipelineRule extends SmallTest with Matchers {
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
     // start source and pipeline should "see" what happen in source
-    client.start[Source](source.id)
+    client.start[ConnectorConfiguration](source.id)
     val pipeline2 = client.get[Pipeline](pipeline.id)
     pipeline2.objects.foreach(obj => obj.state.get shouldBe ConnectorState.RUNNING)
   }
 
   @Test
   def testUnknownObject(): Unit = {
-    val sourceRequest = SourceRequest(
+    val sourceRequest = ConnectorConfigurationRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
@@ -60,7 +58,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       numberOfTasks = 1
     )
 
-    val source = client.add[SourceRequest, Source](sourceRequest)
+    val source = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](sourceRequest)
 
     client.add[PipelineRequest, Pipeline](
       PipelineRequest(
@@ -68,7 +66,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         rules = Map(source.id -> ConfiguratorJson.UNKNOWN)
       ))
 
-    val sinkRequest = SinkRequest(
+    val sinkRequest = ConnectorConfigurationRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
@@ -77,7 +75,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       numberOfTasks = 1
     )
 
-    val sink = client.add[SinkRequest, Sink](sinkRequest)
+    val sink = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](sinkRequest)
 
     client.add[PipelineRequest, Pipeline](
       PipelineRequest(

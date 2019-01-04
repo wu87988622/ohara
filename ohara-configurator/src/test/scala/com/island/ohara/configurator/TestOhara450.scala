@@ -14,26 +14,25 @@ class TestOhara450 extends SmallTest with Matchers {
 
   @Test
   def testUncreatablePipeline(): Unit = {
-    val source = client.add[SourceRequest, Source](
-      SourceRequest(name = "abc",
-                    className = "aaa.class",
-                    topics = Seq.empty,
-                    numberOfTasks = 1,
-                    schema = Seq.empty,
-                    configs = Map.empty))
-    client.list[Source].size shouldBe 1
+    val source = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
+      ConnectorConfigurationRequest(name = "abc",
+                                    className = "aaa.class",
+                                    topics = Seq.empty,
+                                    numberOfTasks = 1,
+                                    schema = Seq.empty,
+                                    configs = Map.empty))
+    client.list[ConnectorConfiguration].size shouldBe 1
     val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest("abc", 1, 1))
-    val sink = client.add[SinkRequest, Sink](
-      SinkRequest(name = "abc",
-                  className = "aaa.class",
-                  schema = Seq.empty,
-                  configs = Map.empty,
-                  topics = Seq.empty,
-                  numberOfTasks = 1))
+    val sink = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
+      ConnectorConfigurationRequest(name = "abc",
+                                    className = "aaa.class",
+                                    schema = Seq.empty,
+                                    configs = Map.empty,
+                                    topics = Seq.empty,
+                                    numberOfTasks = 1))
 
-    client.list[Source].size shouldBe 1
+    client.list[ConnectorConfiguration].size shouldBe 2
     client.list[TopicInfo].size shouldBe 1
-    client.list[Sink].size shouldBe 1
 
     client.add[PipelineRequest, Pipeline](PipelineRequest("abc", Map(source.id -> topic.id, topic.id -> sink.id)))
     client.list[Pipeline].size shouldBe 1

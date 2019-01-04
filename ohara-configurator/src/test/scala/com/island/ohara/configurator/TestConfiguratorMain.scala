@@ -56,9 +56,7 @@ class TestConfiguratorMain extends LargeTest with Matchers {
             Configurator.BROKERS_KEY,
             util.brokersConnProps,
             Configurator.WORKERS_KEY,
-            util.workersConnProps,
-            Configurator.TOPIC_KEY,
-            methodName
+            util.workersConnProps
           ))
       }(service)
       import java.time.Duration

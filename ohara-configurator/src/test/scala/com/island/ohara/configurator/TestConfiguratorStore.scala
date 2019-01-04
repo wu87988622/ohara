@@ -1,18 +1,23 @@
 package com.island.ohara.configurator
-import com.island.ohara.client.ConfiguratorJson.{Data, Source}
+import com.island.ohara.client.ConfiguratorJson.{ConnectorConfiguration, Data}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 class TestConfiguratorStore extends MediumTest with Matchers {
 
+  private[this] val timeout = 10 seconds
   private[this] val store =
-    new Configurator.Store(com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Serializer.OBJECT))
+    new Configurator.Store(
+      com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
 
   @Test
   def testAdd(): Unit = {
-    val s = Source(
+    val s = ConnectorConfiguration(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -23,15 +28,15 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       state = None,
       lastModified = CommonUtil.current()
     )
-    store.add(s)
+    Await.result(store.add(s), timeout)
 
-    store.exist[Data](s.id) shouldBe true
-    store.nonExist[Data](s.id) shouldBe false
+    Await.result(store.exist[Data](s.id), timeout) shouldBe true
+    Await.result(store.nonExist[Data](s.id), timeout) shouldBe false
   }
 
   @Test
   def testUpdate(): Unit = {
-    val s = Source(
+    val s = ConnectorConfiguration(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -44,15 +49,15 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     )
     store.add(s)
 
-    val newOne = store.update(s.copy(name = "123"))
-    newOne.name shouldBe "abc"
+    Await.result(store.update(s.id, (_: Data) => s.copy(name = "123")), 10 seconds).name shouldBe "123"
 
-    an[IllegalArgumentException] should be thrownBy store.update(s.copy(id = "123"))
+    an[NoSuchElementException] should be thrownBy Await
+      .result(store.update("asdasdasd", (_: Data) => s.copy(id = "123")), 10 seconds)
   }
 
   @Test
   def testList(): Unit = {
-    val s = Source(
+    val s = ConnectorConfiguration(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -67,14 +72,14 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
     store.size shouldBe 1
 
-    store.raw().toSeq.head.asInstanceOf[Source] shouldBe s
+    Await.result(store.raw(), 10 seconds).head.asInstanceOf[ConnectorConfiguration] shouldBe s
 
-    store.raw(s.id).asInstanceOf[Source] shouldBe s
+    Await.result(store.raw(s.id), 10 seconds).asInstanceOf[ConnectorConfiguration] shouldBe s
   }
 
   @Test
   def testRemove(): Unit = {
-    val s = Source(
+    val s = ConnectorConfiguration(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -89,10 +94,11 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
     store.size shouldBe 1
 
-    an[IllegalArgumentException] should be thrownBy store.remove("asdasd")
-    an[IllegalArgumentException] should be thrownBy store.remove[Source]("asdasd")
+    an[NoSuchElementException] should be thrownBy Await.result(store.remove("asdasd"), 50 seconds)
+    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorConfiguration]("asdasd"),
+                                                               50 seconds)
 
-    store.remove[Source](s.id) shouldBe s
+    Await.result(store.remove[ConnectorConfiguration](s.id), 50 seconds) shouldBe s
 
     store.size shouldBe 0
   }

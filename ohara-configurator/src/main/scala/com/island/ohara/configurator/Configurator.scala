@@ -16,13 +16,13 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route._
-import com.island.ohara.configurator.store.Consistency
 import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsonParser}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, Awaitable}
+import scala.concurrent.{Await, Future}
 import scala.reflect.{ClassTag, classTag}
 
 /**
@@ -37,8 +37,7 @@ class Configurator private[configurator] (configuredHostname: String,
                                           configuredPort: Int,
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration,
-                                          extraRoute: Option[server.Route])(implicit ug: () => String,
-                                                                            store: Store,
+                                          extraRoute: Option[server.Route])(implicit store: Store,
                                                                             nodeCollie: NodeCollie,
                                                                             clusterCollie: ClusterCollie,
                                                                             kafkaClient: KafkaClient,
@@ -74,8 +73,7 @@ class Configurator private[configurator] (configuredHostname: String,
       PipelineRoute.apply,
       ValidationRoute.apply,
       QueryRoute(),
-      SourceRoute.apply,
-      SinkRoute.apply,
+      ConnectorRoute.apply,
       ClusterRoute.apply,
       StreamRoute.apply,
       NodeRoute.apply,
@@ -132,7 +130,6 @@ class Configurator private[configurator] (configuredHostname: String,
     ReleaseOnce.close(kafkaClient)
     ReleaseOnce.close(connectorClient)
     ReleaseOnce.close(clusterCollie)
-    ReleaseOnce.close(nodeCollie)
     ReleaseOnce.close(store)
   }
 
@@ -148,6 +145,10 @@ class Configurator private[configurator] (configuredHostname: String,
 }
 
 object Configurator {
+  private[configurator] val DATA_SERIALIZER: Serializer[Data] = new Serializer[Data] {
+    override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
+    override def from(bytes: Array[Byte]): Data = Serializer.OBJECT.from(bytes).asInstanceOf[Data]
+  }
 
   /**
     * generate a configurator with all-in-memory store and fake-client-to-no-cluster.
@@ -163,10 +164,9 @@ object Configurator {
   private[configurator] val PORT_KEY = "--port"
   private[configurator] val BROKERS_KEY = "--brokers"
   private[configurator] val WORKERS_KEY = "--workers"
-  private[configurator] val TOPIC_KEY = "--topic"
   private[configurator] val PARTITIONS_KEY = "--partitions"
   private[configurator] val REPLICATIONS_KEY = "--replications"
-  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $BROKERS_KEY $TOPIC_KEY $PARTITIONS_KEY $REPLICATIONS_KEY"
+  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $BROKERS_KEY $PARTITIONS_KEY $REPLICATIONS_KEY"
 
   /**
     * Running a standalone configurator.
@@ -185,7 +185,6 @@ object Configurator {
     var port: Int = 0
     var brokers: Option[String] = None
     var workers: Option[String] = None
-    var topicName = "test-topic"
     var numberOfPartitions: Int = 1
     var numberOfReplications: Short = 1
     args.sliding(2, 2).foreach {
@@ -193,13 +192,11 @@ object Configurator {
       case Array(PORT_KEY, value)         => port = value.toInt
       case Array(BROKERS_KEY, value)      => brokers = Some(value)
       case Array(WORKERS_KEY, value)      => workers = Some(value)
-      case Array(TOPIC_KEY, value)        => topicName = value
       case Array(PARTITIONS_KEY, value)   => numberOfPartitions = value.toInt
       case Array(REPLICATIONS_KEY, value) => numberOfReplications = value.toShort
       case _                              => throw new IllegalArgumentException(USAGE)
     }
     var standalone = false
-    println(s"[CHIA] hostname:$hostname")
     val configurator =
       if (brokers.isEmpty && workers.isEmpty) {
         standalone = true
@@ -209,12 +206,6 @@ object Configurator {
       else
         Configurator
           .builder()
-          .store(
-            com.island.ohara.configurator.store.Store
-              .builder()
-              .brokers(brokers.get)
-              .topicName(topicName)
-              .build(Serializer.STRING, Serializer.OBJECT))
           .kafkaClient(KafkaClient.of(brokers.get))
           .connectClient(ConnectorClient(workers.get))
           .hostname(hostname)
@@ -247,85 +238,46 @@ object Configurator {
     */
   @volatile private[configurator] var closeRunningConfigurator = false
 
-  private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, AnyRef])
+  private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, Data])
       extends ReleaseOnce {
-    private[this] val timeout = 30 seconds
-    private[this] val consistency = Consistency.STRICT
 
-    private[this] def result[T](awaitable: Awaitable[T]): T = Await.result(awaitable, timeout)
+    def value[T <: Data: ClassTag](id: String): Future[T] =
+      store.value(id).filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
+
+    def values[T <: Data: ClassTag]: Future[Seq[T]] =
+      store.values().map(_.values.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T]).toSeq)
+
+    def raw(): Future[Seq[Data]] = store.values().map(_.values.toSeq)
+
+    def raw(id: String): Future[Data] = store.value(id)
 
     /**
-      * Remove a "specified" sublcass from ohara data mapping the uuid. If the data mapping to the uuid is not the specified
+      * Remove a "specified" sublcass from ohara data mapping the id. If the data mapping to the id is not the specified
       * type, an exception will be thrown.
       *
-      * @param uuid from ohara data
+      * @param id from ohara data
       * @tparam T subclass type
       * @return the removed data
       */
-    def remove[T <: Data: ClassTag](uuid: String): T = result(store.get(uuid))
-      .filter(classTag[T].runtimeClass.isInstance)
-      .flatMap(_ => result(store.remove(uuid, consistency)))
-      .getOrElse(throw new IllegalArgumentException(s"Failed to remove $uuid since it doesn't exist"))
-      .asInstanceOf[T]
+    def remove[T <: Data: ClassTag](id: String): Future[T] =
+      value[T](id).flatMap(_ => store.remove(id)).map(_.asInstanceOf[T])
 
     /**
-      * update an existed object in the store. If the uuid doesn't  exists, an exception will be thrown.
+      * update an existed object in the store. If the id doesn't  exists, an exception will be thrown.
       *
       * @param data data
       * @tparam T type from data
       * @return the removed data
       */
-    def update[T <: Data: ClassTag](data: T): T =
-      if (result(store.get(data.id)).exists(classTag[T].runtimeClass.isInstance))
-        result(store.update(data.id, data, consistency)).get.asInstanceOf[T]
-      else throw new IllegalArgumentException(s"Failed to update ${data.id} since it doesn't exist")
+    def update[T <: Data: ClassTag](id: String, data: T => T): Future[T] =
+      value[T](id).flatMap(_ => store.update(id, v => data(v.asInstanceOf[T]))).map(_.asInstanceOf[T])
 
-    /**
-      * add an new object to the store. If the uuid already exists, an exception will be thrown.
-      *
-      * @param data data
-      * @tparam T type from data
-      */
-    def add[T <: Data: ClassTag](data: T): Unit =
-      if (result(store.get(data.id)).exists(classTag[T].runtimeClass.isInstance))
-        throw new IllegalArgumentException(s"The object:${data.id} exists")
-      else result(store.update(data.id, data, consistency))
+    def add[T <: Data](data: T): Future[T] = store.add(data.id, data).map(_.asInstanceOf[T])
 
-    /**
-      * Iterate the specified type. The unrelated type will be ignored.
-      *
-      * @tparam T subclass type
-      * @return iterator
-      */
-    def data[T <: Data: ClassTag]: Iterator[T] =
-      store.map(_._2).iterator.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
+    def exist[T <: Data: ClassTag](id: String): Future[Boolean] =
+      store.value(id).map(classTag[T].runtimeClass.isInstance)
 
-    /**
-      * Retrieve a "specified" subclass from ohara data mapping the uuid. If the data mapping to the uuid is not the specified
-      * type, the None will be returned.
-      *
-      * @param uuid from ohara data
-      * @tparam T subclass type
-      * @return a subclass from ohara data
-      */
-    def data[T <: Data: ClassTag](uuid: String): T =
-      result(store.get(uuid))
-        .filter(classTag[T].runtimeClass.isInstance)
-        .getOrElse(throw new IllegalArgumentException(
-          s"Failed to find ${classTag[T].runtimeClass.getSimpleName} by $uuid since it doesn't exist"))
-        .asInstanceOf[T]
-
-    def exist[T <: Data: ClassTag](uuid: String): Boolean =
-      result(store.get(uuid)).exists(classTag[T].runtimeClass.isInstance)
-
-    def nonExist[T <: Data: ClassTag](uuid: String): Boolean = !exist[T](uuid)
-
-    def raw(): Iterator[Data] = store.iterator.map(_._2).filter(_.isInstanceOf[Data]).map(_.asInstanceOf[Data])
-
-    def raw(uuid: String): Data = result(store.get(uuid))
-      .filter(_.isInstanceOf[Data])
-      .map(_.asInstanceOf[Data])
-      .getOrElse(throw new IllegalArgumentException(s"Failed to find raw data by $uuid since it doesn't exist"))
+    def nonExist[T <: Data: ClassTag](id: String): Future[Boolean] = exist[T](id).map(!_)
 
     def size: Int = store.size
 
