@@ -49,7 +49,11 @@ class SchemaTable extends React.Component {
     return (
       <Table>
         <thead>
-          <tr>{headers.map(header => <th key={header}>{header}</th>)}</tr>
+          <tr>
+            {headers.map(header => (
+              <th key={header}>{header}</th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {schema.map(({ order, name, newName, dataType: currType }) => {

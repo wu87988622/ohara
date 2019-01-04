@@ -33,7 +33,7 @@
     "clean:server": "rm -rf ./test-reports node_modules",
     "clean:client": "rm -rf ./client/node_modules ./client/build",
     "build:client": "yarn --cwd client build",
-    "format": "prettier --single-quote --trailing-comma all --write \"**/*.js\"",
+    "format": "prettier --write \"**/*.*(js|json|html|md)\"",
     "prepush": "run-s lint test format"
   },
   "dependencies": {
@@ -62,7 +62,8 @@
     "jest-junit": "5.1.0",
     "nodemon": "1.17.5",
     "npm-run-all": "4.1.3",
-    "prettier": "1.13.7",
+    "prettier": "1.15.3",
+    "supertest": "3.1.0",
     "wait-on": "2.1.0"
   },
   "jest": {

@@ -186,8 +186,8 @@ class PipelineHdfsSink extends React.Component {
     const hdfses = await _.get(res, 'data.result', []);
 
     if (!_.isEmpty(hdfses)) {
-      const mostRecent = hdfses.reduce(
-        (prev, curr) => (prev.lastModified > curr.lastModified ? prev : curr),
+      const mostRecent = hdfses.reduce((prev, curr) =>
+        prev.lastModified > curr.lastModified ? prev : curr,
       );
 
       const _currHdfs = _.isEmpty(currHdfs) ? mostRecent : currHdfs;

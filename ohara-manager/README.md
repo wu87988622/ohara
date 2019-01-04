@@ -297,7 +297,7 @@ We would highly recommend that you use [Visual Studio Code](https://code.visuals
 
 ## Having issues?
 
-- **Got an error while starting up the server: Error: Cannot find module ${module-name}**
+- **Got an error while starting up the server: Error: Cannot find module \${module-name}**
 
   If you're running into this, it's probably that this module is not correctly installed on your machine. You can fix this by simply run:
 

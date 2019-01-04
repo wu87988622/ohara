@@ -39,7 +39,11 @@ const DataTable = ({ headers, children, ...rest }) => {
   return (
     <Table {...rest}>
       <thead>
-        <tr>{headers.map(header => <Th key={header}>{header}</Th>)}</tr>
+        <tr>
+          {headers.map(header => (
+            <Th key={header}>{header}</Th>
+          ))}
+        </tr>
       </thead>
       <tbody>{children}</tbody>
     </Table>
