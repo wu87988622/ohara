@@ -2,6 +2,7 @@ package com.island.ohara.it
 import java.io.{BufferedReader, InputStreamReader}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
+import java.util.{Calendar, TimeZone}
 
 import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
@@ -52,15 +53,18 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     val createDateTimestamp = RdbColumn("CREATE_DATE", "TIMESTAMP", true)
     client.createTable(tableName, Seq(createDateTimestamp, id, name, address))
 
-    val initTime = new Timestamp(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-09-01 00:00:00").getTime)
-    def subtract(t: Duration): Timestamp = new Timestamp(initTime.getTime - t.toMillis)
+    val cal = Calendar.getInstance(TimeZone.getTimeZone(System.getProperty("user.timezone")))
+    cal.setTime(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2018-09-01 00:00:00"))
+    def subtract(t: Duration): Timestamp = new Timestamp(cal.getTimeInMillis - t.toMillis)
     import scala.concurrent.duration._
     val state =
       db.connection.prepareStatement(
         s"""INSERT INTO \"$tableName\" (\"CREATE_DATE\", \"ID\", \"NAME\", \"ADDRESS\") VALUES(?, ?, ?, ?)""")
     try {
       (1 to 100).foreach(index => {
-        state.setTimestamp(1, subtract(index days))
+        state.setTimestamp(1,
+                           subtract(index days),
+                           Calendar.getInstance(TimeZone.getTimeZone(System.getProperty("user.timezone"))))
         state.setInt(2, index)
         state.setString(3, s"NAME-$index")
         state.setString(4, s"ADDRESS-$index")
