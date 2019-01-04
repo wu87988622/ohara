@@ -41,7 +41,7 @@ export const update = async ({ graph, updateGraph, connector }) => {
     schema: [],
     topics: [],
     numberOfTasks: 1,
-    configs: {}
+    configs: {},
   };
 
   let id;
@@ -64,7 +64,7 @@ export const update = async ({ graph, updateGraph, connector }) => {
       to: '?',
       isActive: false,
       icon: ICON_MAPS[type],
-      id
+      id,
     };
 
     updateGraph(update, type);

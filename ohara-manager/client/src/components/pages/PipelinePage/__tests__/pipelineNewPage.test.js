@@ -11,7 +11,7 @@ import {
   startSource,
   stopSink,
   stopSource,
-  fetchPipeline
+  fetchPipeline,
 } from 'apis/pipelinesApis';
 
 jest.mock('apis/pipelinesApis');
@@ -20,9 +20,9 @@ const props = {
   match: {
     params: {
       topicId: '1234',
-      pipelineId: '5678'
-    }
-  }
+      pipelineId: '5678',
+    },
+  },
 };
 
 describe('<PipelineNewPage />', () => {
@@ -34,7 +34,7 @@ describe('<PipelineNewPage />', () => {
 
     // TODO: change this to a more real world like case, e.g., mock data returns by some requests
     wrapper.setState({
-      pipelines: { name: 'test' }
+      pipelines: { name: 'test' },
     });
   });
 
@@ -47,8 +47,8 @@ describe('<PipelineNewPage />', () => {
   it('renders new pipeline page document title', () => {
     const match = {
       params: {
-        pipelineId: null
-      }
+        pipelineId: null,
+      },
     };
     wrapper.setProps({ match });
 
@@ -88,24 +88,24 @@ describe('<PipelineNewPage />', () => {
       result: {
         name: 'newPipeline',
         objects: [{ kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' }],
-        rules: {}
-      }
+        rules: {},
+      },
     };
 
     fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
 
     startSink.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } })
+      Promise.resolve({ data: { isSuccess: true } }),
     );
     startSource.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } })
+      Promise.resolve({ data: { isSuccess: true } }),
     );
 
     await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
 
     expect(toastr.error).toHaveBeenCalledTimes(1);
     expect(toastr.error).toHaveBeenCalledWith(
-      'Cannot complete your action, please check your connector settings'
+      'Cannot complete your action, please check your connector settings',
     );
   });
 
@@ -118,19 +118,19 @@ describe('<PipelineNewPage />', () => {
         objects: [
           { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', id: '3' },
           { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', id: '2' },
-          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' }
+          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' },
         ],
-        rules: {}
-      }
+        rules: {},
+      },
     };
 
     fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
 
     startSink.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } })
+      Promise.resolve({ data: { isSuccess: true } }),
     );
     startSource.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } })
+      Promise.resolve({ data: { isSuccess: true } }),
     );
 
     await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
@@ -151,19 +151,19 @@ describe('<PipelineNewPage />', () => {
         objects: [
           { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', id: '3' },
           { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', id: '2' },
-          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' }
+          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' },
         ],
-        rules: {}
-      }
+        rules: {},
+      },
     };
 
     fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
 
     startSink.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } })
+      Promise.resolve({ data: { isSuccess: true } }),
     );
     startSource.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } })
+      Promise.resolve({ data: { isSuccess: true } }),
     );
 
     // Start the pipeline

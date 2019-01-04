@@ -10,7 +10,7 @@ describe('checkTypeExist()', () => {
     const type = CONNECTOR_TYPES.ftpSink;
     const graph = [
       { name: 'a', type: CONNECTOR_TYPES.ftpSink },
-      { name: 'b', type: CONNECTOR_TYPES.ftpSource }
+      { name: 'b', type: CONNECTOR_TYPES.ftpSource },
     ];
     expect(checkTypeExist(type, graph)).toBe(graph[0]);
   });
@@ -19,7 +19,7 @@ describe('checkTypeExist()', () => {
     const type = CONNECTOR_TYPES.ftpSink;
     const graph = [
       { name: 'a', type: CONNECTOR_TYPES.ftpSource },
-      { name: 'b', type: CONNECTOR_TYPES.jdbcSource }
+      { name: 'b', type: CONNECTOR_TYPES.jdbcSource },
     ];
 
     expect(checkTypeExist(type, graph)).toBeUndefined();
@@ -46,9 +46,9 @@ describe('update()', () => {
         name: expect.any(String),
         to: '?',
         type: CONNECTOR_TYPES.ftpSource,
-        id: res.data.result.id
+        id: res.data.result.id,
       },
-      CONNECTOR_TYPES.ftpSource
+      CONNECTOR_TYPES.ftpSource,
     );
   });
 
