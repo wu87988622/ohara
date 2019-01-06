@@ -2,6 +2,7 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Test}

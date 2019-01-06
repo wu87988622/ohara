@@ -9,7 +9,6 @@ import com.island.ohara.client.ConfiguratorJson.{
   ClusterDescription,
   ContainerDescription,
   ContainerState,
-  Node,
   ZookeeperClusterDescription
 }
 import com.island.ohara.client.ConnectorJson.{
@@ -20,9 +19,9 @@ import com.island.ohara.client.ConnectorJson.{
   Plugin,
   TaskStatus
 }
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, ConnectorCreator}
-import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.data.connector.ConnectorState
+import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._

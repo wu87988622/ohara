@@ -3,12 +3,12 @@ package com.island.ohara.configurator.call
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{ConcurrentSkipListMap, Executors, TimeUnit}
 
-import com.island.ohara.client.ConfiguratorJson.Error
+import com.island.ohara.client.configurator.v0.ErrorApi
+import com.island.ohara.client.configurator.v0.ErrorApi.Error
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.kafka.common.errors.WakeupException
 
 import scala.concurrent._
@@ -128,8 +128,7 @@ private class CallQueueClientImpl[Request <: AnyRef, Response: ClassTag] private
     } finally close()
   }
 
-  private[this] def toError(e: Throwable) =
-    Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
+  private[this] def toError(e: Throwable) = ErrorApi.of(e)
 
   /**
     * used to notify the dustman to do its job

@@ -5,11 +5,11 @@ import java.time.Duration
 import com.island.ohara.agent._
 import com.island.ohara.client.ConfiguratorJson.{
   BrokerClusterDescription,
-  Node,
   WorkerClusterDescription,
   ZookeeperClusterDescription
 }
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}

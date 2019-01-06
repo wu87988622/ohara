@@ -3,7 +3,7 @@ package com.island.ohara.configurator.call
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 
-import com.island.ohara.client.ConfiguratorJson.Error
+import com.island.ohara.client.configurator.v0.ErrorApi
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
@@ -128,7 +128,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef] private
       override def complete(exception: Throwable): Unit = if (response != null)
         throw new IllegalArgumentException(s"you have assigned the response:$response")
       else {
-        response = Error(exception)
+        response = ErrorApi.of(exception)
         send(CallQueueResponse(responseUuid(), internalRequest.uuid), response)
       }
 
@@ -168,7 +168,7 @@ private class CallQueueServerImpl[Request: ClassTag, Response <: AnyRef] private
                         undealtTasks.put(createCallQueueTask(internalRequest, clientRequest))
                       case _ =>
                         try sendToKafka(CallQueueResponse(responseUuid(), internalRequest.uuid),
-                                        Error(new IllegalArgumentException(s"Unsupported type")))
+                                        ErrorApi.of(new IllegalArgumentException(s"Unsupported type")))
                         catch {
                           case _: Throwable => LOG.error("Failed to response the unsupported request")
                         }

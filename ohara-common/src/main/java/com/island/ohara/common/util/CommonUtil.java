@@ -377,6 +377,15 @@ public final class CommonUtil {
     return s == null || s.isEmpty();
   }
 
+  public static String requireNonEmpty(String s, Supplier<String> msg) {
+    if (s == null || s.isEmpty()) throw new NullPointerException(msg.get());
+    return s;
+  }
+
+  public static int requirePositiveNumber(int value, Supplier<String> msg) {
+    if (value < 0) throw new NullPointerException(msg.get());
+    return value;
+  }
   /** disable to instantiate CommonUtil. */
   private CommonUtil() {}
 }

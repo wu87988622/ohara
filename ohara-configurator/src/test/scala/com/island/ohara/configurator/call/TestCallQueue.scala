@@ -3,7 +3,8 @@ package com.island.ohara.configurator.call
 import java.time.Duration
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
-import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers
@@ -115,15 +116,15 @@ class TestCallQueue extends With3Brokers with Matchers {
 
   @Test
   def testSendInvalidRequest(): Unit = {
-    val invalidClient: CallQueueClient[TopicInfoRequest, ConnectorConfiguration] = CallQueue
+    val invalidClient: CallQueueClient[TopicCreationRequest, ConnectorConfiguration] = CallQueue
       .clientBuilder()
       .brokers(testUtil.brokersConnProps)
       .requestTopic(requestTopicName)
       .responseTopic(responseTopicName)
       .expirationCleanupTime(3 seconds)
-      .build[TopicInfoRequest, ConnectorConfiguration]()
+      .build[TopicCreationRequest, ConnectorConfiguration]()
     try {
-      val request = invalidClient.request(TopicInfoRequest("uuid", 1, 2))
+      val request = invalidClient.request(TopicCreationRequest("uuid", 1, 2))
       Await.result(request, 5 second) match {
         case Left(e) =>
           withClue(s"exception:${e.message}") {

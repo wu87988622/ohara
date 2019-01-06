@@ -1,7 +1,7 @@
 package com.island.ohara.prometheus
 
 import com.island.ohara.agent.DockerClient
-import com.island.ohara.client.ConfiguratorJson.Node
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtil
 import com.typesafe.scalalogging.Logger
 

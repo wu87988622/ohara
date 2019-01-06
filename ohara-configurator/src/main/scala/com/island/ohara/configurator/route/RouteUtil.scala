@@ -4,10 +4,10 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
-import com.island.ohara.client.ConfiguratorJson.{Data, Error, Pipeline}
+import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
+import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
-import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -15,12 +15,9 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success}
 private[configurator] object RouteUtil extends SprayJsonSupport {
-
-  private[this] implicit val UG: () => String = () => CommonUtil.uuid()
   def rejectNonexistentUuid(uuid: String): StandardRoute = complete(
-    StatusCodes.BadRequest -> toResponse(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
+    StatusCodes.BadRequest -> ErrorApi.of(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
 
   def assertNotRelated2Pipeline(id: String)(implicit store: Store): Unit =
     if (Await.result(
@@ -32,48 +29,30 @@ private[configurator] object RouteUtil extends SprayJsonSupport {
         ))
       throw new IllegalArgumentException(s"The id:$id is used by pipeline")
 
-  private[this] def toResponse(e: Throwable) =
-    Error(e.getClass.getName, if (e.getMessage == null) "None" else e.getMessage, ExceptionUtils.getStackTrace(e))
-
   private[this] def routeOfAdd[Req, Res <: Data](
     hook: (String, Req) => Res)(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]) = post {
     entity(as[Req]) { req =>
-      onComplete(store.add(hook(UG(), req))) {
-        case Success(value) => complete(value)
-        case Failure(e)     => failWith(e)
-      }
+      onSuccess(store.add(hook(CommonUtil.uuid(), req)))(value => complete(value))
     }
   }
-  private[this] def routeOfList[Req, Res <: Data: ClassTag](
-    hook: Seq[Res] => Seq[Res])(implicit store: Store, rm: RootJsonFormat[Res]) = get(onComplete(store.values[Res]) {
-    case Success(values) => complete(hook(values))
-    case Failure(e)      => failWith(e)
-  })
+  private[this] def routeOfList[Req, Res <: Data: ClassTag](hook: Seq[Res] => Seq[Res])(implicit store: Store,
+                                                                                        rm: RootJsonFormat[Res]) = get(
+    onSuccess(store.values[Res])(values => complete(hook(values))))
 
   private[this] def routeOfGet[Req, Res <: Data: ClassTag](id: String, hook: Res => Res)(implicit store: Store,
                                                                                          rm: RootJsonFormat[Res]) = get(
-    onComplete(store.value[Res](id)) {
-      case Success(value) => complete(hook(value))
-      case Failure(e)     => failWith(e)
-    })
+    onSuccess(store.value[Res](id))(value => complete(hook(value))))
 
   private[this] def routeOfDelete[Req, Res <: Data: ClassTag](id: String, hook: String => String, hook1: Res => Res)(
     implicit store: Store,
     rm: RootJsonFormat[Res]) =
-    delete(onComplete(store.remove[Res](hook(id))) {
-      case Success(value) => complete(hook1(value))
-      case Failure(ex)    => failWith(ex)
-    })
+    delete(onSuccess(store.remove[Res](hook(id)))(value => complete(hook1(value))))
 
   private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](
     id: String,
     hook: (String, Req, Res) => Res)(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]) = put {
-    entity(as[Req]) { req =>
-      onComplete(store.update(id, (previous: Res) => hook(id, req, previous))) {
-        case Success(value) => complete(value)
-        case Failure(e)     => failWith(e)
-      }
-    }
+    entity(as[Req])(req =>
+      onSuccess(store.update(id, (previous: Res) => hook(id, req, previous)))(value => complete(value)))
   }
 
   /**

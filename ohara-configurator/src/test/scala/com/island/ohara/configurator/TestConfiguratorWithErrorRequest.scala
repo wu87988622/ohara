@@ -9,6 +9,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ErrorApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Test}
@@ -69,39 +70,6 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
   }
 
   @Test
-  def dataTest(): Unit = {
-
-    def verify[T](implicit formatter: DataCommandFormat[T]): Unit = {
-      val domain = ip
-      val uuid = random()
-      val url = formatter.format(domain)
-      val url2 = formatter.format(domain, uuid)
-
-      an[ExceptionType.parse_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url, request, HttpMethods.GET)
-      //add
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url, request, HttpMethods.POST)
-      //get
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url2, request, HttpMethods.GET)
-      //delete
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url2, request, HttpMethods.DELETE)
-      //update
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url2, request, HttpMethods.PUT)
-    }
-    verify[TopicInfo]
-    verify[HdfsInformation]
-    verify[FtpInformation]
-    verify[JdbcInformation]
-    verify[Pipeline]
-    verify[ConnectorConfiguration]
-
-  }
-
-  @Test
   def validateTest(): Unit = {
 
     def verify[T](implicit formatter: ValidationCommandFormat[T]): Unit = {
@@ -115,21 +83,6 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
     verify[RdbValidationRequest]
     verify[HdfsValidationRequest]
     verify[RdbValidationRequest]
-
-  }
-  @Test
-  def clusterTest(): Unit = {
-
-    def verify[T](implicit formatter: ClusterCommandFormat[T]): Unit = {
-      val domain = ip
-      val uuid = random()
-
-      val url = formatter.format(domain)
-      //cluster
-      an[ExceptionType.parse_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url, request, HttpMethods.GET)
-    }
-    verify[ClusterInformation]
 
   }
 
@@ -160,23 +113,6 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
 
     e.getMessage.contains("ValidationRejection") shouldBe true
     e.getMessage.contains("NumberFormatException") shouldBe true
-  }
-  @Test
-  def errorRequestWithConfiguratorClient(): Unit = {
-
-    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, TopicInfo](request)
-    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, HdfsInformation](request)
-    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, Pipeline](request)
-    an[IllegalArgumentException] should be thrownBy client.add[MyRequest, ConnectorConfiguration](request)
-
-    an[IllegalArgumentException] should be thrownBy client
-      .update[MyRequest, TopicInfo](Long.MaxValue.toString(), request)
-    an[IllegalArgumentException] should be thrownBy client
-      .update[MyRequest, HdfsInformation](Long.MaxValue.toString(), request)
-    an[IllegalArgumentException] should be thrownBy client
-      .update[MyRequest, Pipeline](Long.MaxValue.toString(), request)
-    an[IllegalArgumentException] should be thrownBy client
-      .update[MyRequest, ConnectorConfiguration](Long.MaxValue.toString(), request)
   }
 
   @After

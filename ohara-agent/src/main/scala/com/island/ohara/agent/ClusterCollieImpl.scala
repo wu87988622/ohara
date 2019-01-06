@@ -4,11 +4,12 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 
 import com.island.ohara.agent.ClusterCollieImpl._
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends ReleaseOnce with ClusterCollie {
   private[this] implicit val clientCache: DockerClientCache = new DockerClientCache {

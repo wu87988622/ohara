@@ -1,5 +1,6 @@
 package com.island.ohara.configurator
-import com.island.ohara.client.ConfiguratorJson.{ConnectorConfiguration, Data}
+import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}

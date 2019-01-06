@@ -1,6 +1,13 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
+import com.island.ohara.client.configurator.v0.DatabaseApi.{JdbcInfo, JdbcInfoRequest}
+import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
+import com.island.ohara.client.configurator.v0.HadoopApi.{HdfsInfo, HdfsInfoRequest}
+import com.island.ohara.client.configurator.v0.PipelineApi.{Pipeline, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicDescription}
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
@@ -10,6 +17,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
   * this test includes two configurators - with/without cluster.
@@ -39,17 +48,19 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
   private[this] val db = testUtil.dataBase
   private[this] val ftpServer = testUtil.ftpServer
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
   @Test
   def testTopic(): Unit = {
-    clients.foreach(client => {
-      def compareRequestAndResponse(request: TopicInfoRequest, response: TopicInfo): TopicInfo = {
+    configurators.foreach { configurator =>
+      def compareRequestAndResponse(request: TopicCreationRequest, response: TopicDescription): TopicDescription = {
         request.name shouldBe response.name
         request.numberOfReplications shouldBe response.numberOfReplications
         request.numberOfPartitions shouldBe response.numberOfPartitions
         response
       }
 
-      def compare2Response(lhs: TopicInfo, rhs: TopicInfo): Unit = {
+      def compare2Response(lhs: TopicDescription, rhs: TopicDescription): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.numberOfReplications shouldBe rhs.numberOfReplications
@@ -57,12 +68,14 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.lastModified shouldBe rhs.lastModified
       }
 
+      val access = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+
       // test add
-      client.list[TopicInfo].size shouldBe 0
-      val request = TopicInfoRequest(methodName, 1, 1)
-      val response = compareRequestAndResponse(request, client.add[TopicInfoRequest, TopicInfo](request))
+      result(access.list()).size shouldBe 0
+      val request = TopicCreationRequest(methodName, 1, 1)
+      val response = compareRequestAndResponse(request, result(access.add(request)))
       // verify the topic from kafka
-      if (client == client0) {
+      if (configurator == configurator0) {
         // the "name" used to create topic is uuid rather than name from request
         KafkaUtil.exist(testUtil.brokersConnProps, request.name) shouldBe false
         KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe true
@@ -72,15 +85,14 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       // test get
-      compare2Response(response, client.get[TopicInfo](response.id))
+      compare2Response(response, result(access.get(response.id)))
 
       // test update
-      val anotherRequest = TopicInfoRequest(methodName, 2, 1)
+      val anotherRequest = TopicCreationRequest(methodName, 2, 1)
       val newResponse =
-        compareRequestAndResponse(anotherRequest,
-                                  client.update[TopicInfoRequest, TopicInfo](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
       // verify the topic from kafka
-      if (client == client0) {
+      if (configurator == configurator0) {
         KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe true
         val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.id)
         topicInfo.numberOfPartitions shouldBe 2
@@ -88,36 +100,35 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       // test get
-      compare2Response(newResponse, client.get[TopicInfo](newResponse.id))
+      compare2Response(newResponse, result(access.get(newResponse.id)))
 
       // test delete
-      client.list[TopicInfo].size shouldBe 1
-      client.delete[TopicInfo](response.id)
-      client.list[TopicInfo].size shouldBe 0
-      if (client == client0) KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe false
+      result(access.list()).size shouldBe 1
+      result(access.delete(response.id)) shouldBe newResponse
+      result(access.list()).size shouldBe 0
+      if (configurator == configurator0) KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe false
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[TopicInfo]("123")
-      an[IllegalArgumentException] should be thrownBy client.update[TopicInfoRequest, TopicInfo]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy result(access.get("123"))
+      an[IllegalArgumentException] should be thrownBy result(access.update("777", anotherRequest))
 
       // test same name
-      val topicNames: Set[String] = (0 until 5)
-        .map(index => client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(s"topic-$index", 1, 1)).name)
-        .toSet
+      val topicNames: Set[String] =
+        (0 until 5).map(index => result(access.add(TopicCreationRequest(s"topic-$index", 1, 1))).name).toSet
       topicNames.size shouldBe 5
-    })
+    }
   }
 
   @Test
   def testHdfsInformation(): Unit = {
-    clients.foreach(client => {
-      def compareRequestAndResponse(request: HdfsInformationRequest, response: HdfsInformation): HdfsInformation = {
+    configurators.foreach(configurator => {
+      def compareRequestAndResponse(request: HdfsInfoRequest, response: HdfsInfo): HdfsInfo = {
         request.name shouldBe response.name
         request.uri shouldBe response.uri
         response
       }
 
-      def compare2Response(lhs: HdfsInformation, rhs: HdfsInformation): Unit = {
+      def compare2Response(lhs: HdfsInfo, rhs: HdfsInfo): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.uri shouldBe rhs.uri
@@ -125,39 +136,37 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       // test add
-      client.list[HdfsInformation].size shouldBe 0
-      val request = HdfsInformationRequest(methodName, "file:///")
-      val response = compareRequestAndResponse(request, client.add[HdfsInformationRequest, HdfsInformation](request))
+      val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
+      result(hdfsAccess.list()).size shouldBe 0
+      val request = HdfsInfoRequest(methodName, "file:///")
+      val response = result(hdfsAccess.add(request))
 
       // test get
-      compare2Response(response, client.get[HdfsInformation](response.id))
+      compare2Response(response, result(hdfsAccess.get(response.id)))
 
       // test update
-      val anotherRequest = HdfsInformationRequest(s"$methodName-2", "file:///")
+      val anotherRequest = HdfsInfoRequest(s"$methodName-2", "file:///")
       val newResponse =
-        compareRequestAndResponse(anotherRequest,
-                                  client.update[HdfsInformationRequest, HdfsInformation](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(hdfsAccess.update(response.id, anotherRequest)))
 
       // test get
-      compare2Response(newResponse, client.get[HdfsInformation](newResponse.id))
+      compare2Response(newResponse, result(hdfsAccess.get(newResponse.id)))
 
       // test delete
-      client.list[HdfsInformation].size shouldBe 1
-      client.delete[HdfsInformation](response.id)
-      client.list[HdfsInformation].size shouldBe 0
+      result(hdfsAccess.list()).size shouldBe 1
+      result(hdfsAccess.delete(response.id)) shouldBe newResponse
+      result(hdfsAccess.list()).size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[HdfsInformation]("123")
-      an[IllegalArgumentException] should be thrownBy client
-        .update[HdfsInformationRequest, HdfsInformation]("777", anotherRequest)
-
+      an[IllegalArgumentException] should be thrownBy result(hdfsAccess.get("123"))
+      an[IllegalArgumentException] should be thrownBy result(hdfsAccess.update("777", anotherRequest))
     })
   }
 
   @Test
   def testFtpInformation(): Unit = {
-    clients.foreach(client => {
-      def compareRequestAndResponse(request: FtpInformationRequest, response: FtpInformation): FtpInformation = {
+    configurators.foreach(configurator => {
+      def compareRequestAndResponse(request: FtpInfoRequest, response: FtpInfo): FtpInfo = {
         request.name shouldBe response.name
         request.hostname shouldBe response.hostname
         request.port shouldBe response.port
@@ -166,7 +175,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         response
       }
 
-      def compare2Response(lhs: FtpInformation, rhs: FtpInformation): Unit = {
+      def compare2Response(lhs: FtpInfo, rhs: FtpInfo): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe lhs.name
         lhs.hostname shouldBe lhs.hostname
@@ -176,41 +185,40 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.lastModified shouldBe rhs.lastModified
       }
 
+      val access = FtpApi.access().hostname(configurator.hostname).port(configurator.port)
       // test add
-      client.list[FtpInformation].size shouldBe 0
+      result(access.list()).size shouldBe 0
 
-      val request = FtpInformationRequest("test", "152.22.23.12", 5, "test", "test")
-      val response = compareRequestAndResponse(request, client.add[FtpInformationRequest, FtpInformation](request))
+      val request = FtpInfoRequest("test", "152.22.23.12", 5, "test", "test")
+      val response = compareRequestAndResponse(request, result(access.add(request)))
 
       // test get
-      compare2Response(response, client.get[FtpInformation](response.id))
+      compare2Response(response, result(access.get(response.id)))
 
       // test update
-      val anotherRequest = FtpInformationRequest("test2", "152.22.23.125", 1222, "test", "test")
+      val anotherRequest = FtpInfoRequest("test2", "152.22.23.125", 1222, "test", "test")
       val newResponse =
-        compareRequestAndResponse(anotherRequest,
-                                  client.update[FtpInformationRequest, FtpInformation](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
       // test get
-      compare2Response(newResponse, client.get[FtpInformation](newResponse.id))
+      compare2Response(newResponse, result(access.get(newResponse.id)))
 
       // test delete
-      client.list[FtpInformation].size shouldBe 1
-      client.delete[FtpInformation](response.id)
-      client.list[FtpInformation].size shouldBe 0
+      result(access.list()).size shouldBe 1
+      result(access.delete(response.id)) shouldBe newResponse
+      result(access.list()).size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[FtpInformation]("123")
-      an[IllegalArgumentException] should be thrownBy client
-        .update[FtpInformationRequest, FtpInformation]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy result(access.get("asdadas"))
+      an[IllegalArgumentException] should be thrownBy result(access.update("asdadas", anotherRequest))
 
     })
   }
 
   @Test
   def testJdbcInformation(): Unit = {
-    clients.foreach(client => {
-      def compareRequestAndResponse(request: JdbcInformationRequest, response: JdbcInformation): JdbcInformation = {
+    configurators.foreach(configurator => {
+      def compareRequestAndResponse(request: JdbcInfoRequest, response: JdbcInfo): JdbcInfo = {
         request.name shouldBe response.name
         request.url shouldBe response.url
         request.user shouldBe response.user
@@ -218,7 +226,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         response
       }
 
-      def compare2Response(lhs: JdbcInformation, rhs: JdbcInformation): Unit = {
+      def compare2Response(lhs: JdbcInfo, rhs: JdbcInfo): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe lhs.name
         lhs.url shouldBe lhs.url
@@ -227,41 +235,39 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.lastModified shouldBe rhs.lastModified
       }
 
+      val access = DatabaseApi.access().hostname(configurator.hostname).port(configurator.port)
       // test add
-      client.list[JdbcInformation].size shouldBe 0
+      result(access.list()).size shouldBe 0
 
-      val request = JdbcInformationRequest("test", "oracle://152.22.23.12:4222", "test", "test")
-      val response = compareRequestAndResponse(request, client.add[JdbcInformationRequest, JdbcInformation](request))
+      val request = JdbcInfoRequest("test", "oracle://152.22.23.12:4222", "test", "test")
+      val response = compareRequestAndResponse(request, result(access.add(request)))
 
       // test get
-      compare2Response(response, client.get[JdbcInformation](response.id))
+      compare2Response(response, result(access.get(response.id)))
 
       // test update
-      val anotherRequest = JdbcInformationRequest("test2", "msSQL://152.22.23.12:4222", "test", "test")
+      val anotherRequest = JdbcInfoRequest("test2", "msSQL://152.22.23.12:4222", "test", "test")
       val newResponse =
-        compareRequestAndResponse(anotherRequest,
-                                  client.update[JdbcInformationRequest, JdbcInformation](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
       // test get
-      compare2Response(newResponse, client.get[JdbcInformation](newResponse.id))
+      compare2Response(newResponse, result(access.get(newResponse.id)))
 
       // test delete
-      client.list[JdbcInformation].size shouldBe 1
-      client.delete[JdbcInformation](response.id)
-      client.list[JdbcInformation].size shouldBe 0
+      result(access.list()).size shouldBe 1
+      result(access.delete(response.id)) shouldBe newResponse
+      result(access.list()).size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[JdbcInformation]("123")
-      an[IllegalArgumentException] should be thrownBy client
-        .update[JdbcInformationRequest, JdbcInformation]("777", anotherRequest)
-
+      an[IllegalArgumentException] should be thrownBy result(access.get("adasd"))
+      an[IllegalArgumentException] should be thrownBy result(access.update("adasd", anotherRequest))
     })
   }
 
   @Test
   def testPipeline(): Unit = {
-    clients.foreach(client => {
-      def compareRequestAndResponse(request: PipelineRequest, response: Pipeline): Pipeline = {
+    configurators.foreach(configurator => {
+      def compareRequestAndResponse(request: PipelineCreationRequest, response: Pipeline): Pipeline = {
         request.name shouldBe response.name
         request.rules shouldBe response.rules
         response
@@ -276,79 +282,82 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       }
 
       // test add
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
-      val uuid_1 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
-      val uuid_2 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
+      val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+      val pipelineAccess = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+      val uuid_0 = result(topicAccess.add(TopicCreationRequest(methodName(), 1, 1))).id
+      val uuid_1 = result(topicAccess.add(TopicCreationRequest(methodName(), 1, 1))).id
+      val uuid_2 = result(topicAccess.add(TopicCreationRequest(methodName(), 1, 1))).id
 
-      client.list[Pipeline].size shouldBe 0
+      result(pipelineAccess.list()).size shouldBe 0
 
-      val request = PipelineRequest(methodName, Map(uuid_0 -> uuid_1))
-      val response = compareRequestAndResponse(request, client.add[PipelineRequest, Pipeline](request))
+      val request = PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_1))
+      val response = compareRequestAndResponse(request, result(pipelineAccess.add(request)))
 
       // test get
-      compare2Response(response, client.get[Pipeline](response.id))
+      compare2Response(response, result(pipelineAccess.get(response.id)))
 
       // test update
-      val anotherRequest = PipelineRequest(methodName, Map(uuid_0 -> uuid_2))
+      val anotherRequest = PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_2))
       val newResponse =
-        compareRequestAndResponse(anotherRequest, client.update[PipelineRequest, Pipeline](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(pipelineAccess.update(response.id, anotherRequest)))
 
       // topics should have no state
       newResponse.objects.foreach(_.state shouldBe None)
 
       // test get
-      compare2Response(newResponse, client.get[Pipeline](newResponse.id))
+      compare2Response(newResponse, result(pipelineAccess.get(newResponse.id)))
 
       // test delete
-      client.list[Pipeline].size shouldBe 1
-      client.delete[Pipeline](response.id)
-      client.list[Pipeline].size shouldBe 0
+      result(pipelineAccess.list()).size shouldBe 1
+      result(pipelineAccess.delete(response.id)) shouldBe newResponse
+      result(pipelineAccess.list()).size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[Pipeline]("123")
-      an[IllegalArgumentException] should be thrownBy client.update[PipelineRequest, Pipeline]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy result(pipelineAccess.get("asdasdsad"))
+      an[IllegalArgumentException] should be thrownBy result(pipelineAccess.update("asdasdsad", anotherRequest))
 
       // test invalid request: nonexistent uuid
-      val invalidRequest = PipelineRequest(methodName, Map("invalid" -> uuid_2))
-      an[IllegalArgumentException] should be thrownBy client.add[PipelineRequest, Pipeline](invalidRequest)
+      val invalidRequest = PipelineCreationRequest(methodName, Map("invalid" -> uuid_2))
+      an[IllegalArgumentException] should be thrownBy result(pipelineAccess.add(invalidRequest))
     })
   }
 
   @Test
   def testBindInvalidObjects2Pipeline(): Unit = {
-    clients.foreach(client => {
-      val uuid_0 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
-      val uuid_1 =
-        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).id
-      val uuid_2 =
-        client.add[HdfsInformationRequest, HdfsInformation](HdfsInformationRequest(methodName, "file:///")).id
-      val uuid_3 = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1)).id
-      client.list[TopicInfo].size shouldBe 2
-      client.list[HdfsInformation].size shouldBe 2
+    configurators.foreach(configurator => {
+      val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+      val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
+      val pipelineAccess = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+      val uuid_0 = result(topicAccess.add(TopicCreationRequest(methodName(), 1, 1))).id
+      val uuid_1 = result(hdfsAccess.add(HdfsInfoRequest(methodName, "file:///"))).id
+      val uuid_2 = result(hdfsAccess.add(HdfsInfoRequest(methodName, "file:///"))).id
+      val uuid_3 = result(topicAccess.add(TopicCreationRequest(methodName(), 1, 1))).id
+      result(topicAccess.list()).size shouldBe 2
+      result(hdfsAccess.list()).size shouldBe 2
 
       // uuid_0 -> uuid_0: self-bound
-      an[IllegalArgumentException] should be thrownBy client.add[PipelineRequest, Pipeline](
-        PipelineRequest(methodName, Map(uuid_0 -> uuid_0)))
+      an[IllegalArgumentException] should be thrownBy result(
+        pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_0))))
       // uuid_1 can't be applied to pipeline
-      an[IllegalArgumentException] should be thrownBy client.add[PipelineRequest, Pipeline](
-        PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
+      an[IllegalArgumentException] should be thrownBy result(
+        pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_1))))
       // uuid_2 can't be applied to pipeline
-      an[IllegalArgumentException] should be thrownBy client.add[PipelineRequest, Pipeline](
-        PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
+      an[IllegalArgumentException] should be thrownBy result(
+        pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_2))))
 
-      val res = client.add[PipelineRequest, Pipeline](PipelineRequest(methodName, Map(uuid_0 -> uuid_3)))
+      val res = result(pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_3))))
       // uuid_0 -> uuid_0: self-bound
-      an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_0)))
+      an[IllegalArgumentException] should be thrownBy result(
+        pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_0))))
       // uuid_1 can't be applied to pipeline
-      an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_1)))
+      an[IllegalArgumentException] should be thrownBy result(
+        pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_1))))
       // uuid_2 can't be applied to pipeline
-      an[IllegalArgumentException] should be thrownBy client
-        .update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_2)))
+      an[IllegalArgumentException] should be thrownBy result(
+        pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_2))))
 
       // good case
-      client.update[PipelineRequest, Pipeline](res.id, PipelineRequest(methodName, Map(uuid_0 -> uuid_3)))
+      result(pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> uuid_3)))).name shouldBe methodName
     })
   }
 
@@ -384,26 +393,26 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @Test
   def testGet2UnmatchedType(): Unit = {
-    client0.list[HdfsInformation].size shouldBe 0
-    val request = HdfsInformationRequest(methodName, "file:///")
-    var response: HdfsInformation = client0.add[HdfsInformationRequest, HdfsInformation](request)
+    val access = HadoopApi.access().hostname(configurator0.hostname).port(configurator0.port)
+    result(access.list()).size shouldBe 0
+    val request = HdfsInfoRequest(methodName, "file:///")
+    var response: HdfsInfo = result(access.add(request))
     request.name shouldBe response.name
     request.uri shouldBe response.uri
 
-    response = client0.get[HdfsInformation](response.id)
+    response = result(access.get(response.id))
     request.name shouldBe response.name
     request.uri shouldBe response.uri
 
-    an[IllegalArgumentException] should be thrownBy client0.get[TopicInfo](response.id)
-    an[IllegalArgumentException] should be thrownBy client0.get[ConnectorConfiguration](response.id)
-
-    client0.delete[HdfsInformation](response.id)
+    an[IllegalArgumentException] should be thrownBy result(
+      TopicApi.access().hostname(configurator0.hostname).port(configurator0.port).get(response.id))
+    result(access.delete(response.id)) shouldBe response
   }
 
   @Test
   def testClusterInformation(): Unit = {
     // only test the configurator based on mini cluster
-    val clusterInformation = client0.cluster[ClusterInformation]
+    val clusterInformation = result(InfoApi.access().hostname(configurator0.hostname).port(configurator0.port).get())
     clusterInformation.brokers shouldBe testUtil.brokersConnProps
     clusterInformation.workers shouldBe testUtil.workersConnProps
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
@@ -463,7 +472,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @Test
   def testSource(): Unit = {
-    clients.foreach(client => {
+    configurators.foreach(configurator => {
       def compareRequestAndResponse(request: ConnectorConfigurationRequest,
                                     response: ConnectorConfiguration): ConnectorConfiguration = {
         request.name shouldBe response.name
@@ -479,10 +488,11 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.configs shouldBe rhs.configs
         lhs.lastModified shouldBe rhs.lastModified
       }
+      val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
       val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
       // test add
-      client.list[ConnectorConfiguration].size shouldBe 0
+      result(access.list()).size shouldBe 0
       val request = ConnectorConfigurationRequest(name = methodName,
                                                   className = "jdbc",
                                                   schema = schema,
@@ -490,10 +500,10 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                                                   topics = Seq.empty,
                                                   numberOfTasks = 1)
       val response =
-        compareRequestAndResponse(request, client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request))
+        compareRequestAndResponse(request, result(access.add(request)))
 
       // test get
-      compare2Response(response, client.get[ConnectorConfiguration](response.id))
+      compare2Response(response, result(access.get(response.id)))
 
       // test update
       val anotherRequest = ConnectorConfigurationRequest(name = methodName,
@@ -503,55 +513,56 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                                                          topics = Seq.empty,
                                                          numberOfTasks = 1)
       val newResponse =
-        compareRequestAndResponse(
-          anotherRequest,
-          client.update[ConnectorConfigurationRequest, ConnectorConfiguration](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
       // test get
-      compare2Response(newResponse, client.get[ConnectorConfiguration](newResponse.id))
+      compare2Response(newResponse, result(access.get(newResponse.id)))
 
       // test delete
-      client.list[ConnectorConfiguration].size shouldBe 1
-      client.delete[ConnectorConfiguration](response.id)
-      client.list[ConnectorConfiguration].size shouldBe 0
+      result(access.list()).size shouldBe 1
+      result(access.delete(response.id)) shouldBe newResponse
+      result(access.list()).size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[ConnectorConfiguration]("123")
-      an[IllegalArgumentException] should be thrownBy client
-        .update[ConnectorConfigurationRequest, ConnectorConfiguration]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy result(access.get("asdasdasd"))
+      an[IllegalArgumentException] should be thrownBy result(access.update("Asdasd", anotherRequest))
     })
   }
 
   @Test
   def testInvalidSource(): Unit = {
-    clients.foreach(client => {
-      client.list[ConnectorConfiguration].size shouldBe 0
+    configurators.foreach(configurator => {
+      val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+
+      result(access.list()).size shouldBe 0
 
       val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
-      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = illegalOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1))
-      client.list[ConnectorConfiguration].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy result(
+        access.add(
+          ConnectorConfigurationRequest(name = methodName,
+                                        className = "jdbc",
+                                        schema = illegalOrder,
+                                        configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                        topics = Seq.empty,
+                                        numberOfTasks = 1)))
+      result(access.list()).size shouldBe 0
 
       val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
-      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = duplicateOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1))
-      client.list[ConnectorConfiguration].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy result(
+        access.add(
+          ConnectorConfigurationRequest(name = methodName,
+                                        className = "jdbc",
+                                        schema = duplicateOrder,
+                                        configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                        topics = Seq.empty,
+                                        numberOfTasks = 1)))
+      result(access.list()).size shouldBe 0
     })
   }
 
   @Test
   def testSink(): Unit = {
-    clients.foreach(client => {
+    configurators.foreach(configurator => {
       def compareRequestAndResponse(request: ConnectorConfigurationRequest,
                                     response: ConnectorConfiguration): ConnectorConfiguration = {
         request.name shouldBe response.name
@@ -567,10 +578,11 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         lhs.lastModified shouldBe rhs.lastModified
       }
 
+      val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
       val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
 
       // test add
-      client.list[ConnectorConfiguration].size shouldBe 0
+      result(access.list()).size shouldBe 0
       val request = ConnectorConfigurationRequest(name = methodName,
                                                   className = "jdbc",
                                                   schema = schema,
@@ -578,10 +590,10 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                                                   topics = Seq.empty,
                                                   numberOfTasks = 1)
       val response =
-        compareRequestAndResponse(request, client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request))
+        compareRequestAndResponse(request, result(access.add(request)))
 
       // test get
-      compare2Response(response, client.get[ConnectorConfiguration](response.id))
+      compare2Response(response, result(access.get(response.id)))
 
       // test update
       val anotherRequest = ConnectorConfigurationRequest(name = methodName,
@@ -591,49 +603,50 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
                                                          topics = Seq.empty,
                                                          numberOfTasks = 1)
       val newResponse =
-        compareRequestAndResponse(
-          anotherRequest,
-          client.update[ConnectorConfigurationRequest, ConnectorConfiguration](response.id, anotherRequest))
+        compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
       // test get
-      compare2Response(newResponse, client.get[ConnectorConfiguration](newResponse.id))
+      compare2Response(newResponse, result(access.get(newResponse.id)))
 
       // test delete
-      client.list[ConnectorConfiguration].size shouldBe 1
-      client.delete[ConnectorConfiguration](response.id)
-      client.list[ConnectorConfiguration].size shouldBe 0
+      result(access.list()).size shouldBe 1
+      result(access.delete(response.id)) shouldBe newResponse
+      result(access.list()).size shouldBe 0
 
       // test nonexistent data
-      an[IllegalArgumentException] should be thrownBy client.get[ConnectorConfiguration]("123")
-      an[IllegalArgumentException] should be thrownBy client
-        .update[ConnectorConfigurationRequest, ConnectorConfiguration]("777", anotherRequest)
+      an[IllegalArgumentException] should be thrownBy result(access.get("asdasdasd"))
+      an[IllegalArgumentException] should be thrownBy result(access.update("Asdasd", anotherRequest))
     })
   }
 
   @Test
   def testInvalidSink(): Unit = {
-    clients.foreach(client => {
-      client.list[ConnectorConfiguration].size shouldBe 0
+    configurators.foreach(configurator => {
+      val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+
+      result(access.list()).size shouldBe 0
 
       val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
-      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = illegalOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1))
-      client.list[ConnectorConfiguration].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy result(
+        access.add(
+          ConnectorConfigurationRequest(name = methodName,
+                                        className = "jdbc",
+                                        schema = illegalOrder,
+                                        configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                        topics = Seq.empty,
+                                        numberOfTasks = 1)))
+      result(access.list()).size shouldBe 0
 
       val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
-      an[IllegalArgumentException] should be thrownBy client.add[ConnectorConfigurationRequest, ConnectorConfiguration](
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = duplicateOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1))
-      client.list[ConnectorConfiguration].size shouldBe 0
+      an[IllegalArgumentException] should be thrownBy result(
+        access.add(
+          ConnectorConfigurationRequest(name = methodName,
+                                        className = "jdbc",
+                                        schema = duplicateOrder,
+                                        configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                        topics = Seq.empty,
+                                        numberOfTasks = 1)))
+      result(access.list()).size shouldBe 0
     })
   }
 

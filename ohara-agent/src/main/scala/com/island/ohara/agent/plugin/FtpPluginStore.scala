@@ -4,7 +4,7 @@ import java.net.URL
 import java.nio.file.Paths
 
 import com.island.ohara.agent.plugin.FtpPluginStore._
-import com.island.ohara.client.ConfiguratorJson.PluginDescription
+import com.island.ohara.client.configurator.v0.ConnectorApi.PluginDescription
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.io.FileUtils

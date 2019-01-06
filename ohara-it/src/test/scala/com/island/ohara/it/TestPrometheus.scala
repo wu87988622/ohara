@@ -6,7 +6,8 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.{ClusterCollie, DockerClient, NodeCollie}
-import com.island.ohara.client.ConfiguratorJson.{BrokerClusterDescription, Node, ZookeeperClusterDescription}
+import com.island.ohara.client.ConfiguratorJson.{BrokerClusterDescription, ZookeeperClusterDescription}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.prometheus.PrometheusJson.{Health, Targets}

@@ -1,5 +1,5 @@
 package com.island.ohara.client
-import com.island.ohara.common.data.connector.ConnectorState
+import com.island.ohara.common.data.ConnectorState
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -67,15 +67,8 @@ object ConnectorJson {
         "type" -> JsString(obj.typeName)
       )
     }
-
-  implicit val STATE_JSON_FORMAT: RootJsonFormat[ConnectorState] = new RootJsonFormat[ConnectorState] {
-    override def write(obj: ConnectorState): JsValue = JsString(obj.name)
-    override def read(json: JsValue): ConnectorState = ConnectorState.values
-      .find(_.name == json.asInstanceOf[JsString].value)
-      .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
-  }
-
   final case class ConnectorStatus(state: ConnectorState, worker_id: String, trace: Option[String])
+  import com.island.ohara.client.configurator.v0.ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
   final case class TaskStatus(id: Int, state: ConnectorState, worker_id: String, trace: Option[String])
   implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)

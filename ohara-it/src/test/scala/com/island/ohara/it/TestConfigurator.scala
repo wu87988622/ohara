@@ -1,13 +1,9 @@
 package com.island.ohara.it
 import java.time.Duration
 
-import com.island.ohara.client.ConfiguratorJson.{
-  ClusterInformation,
-  ConnectorConfiguration,
-  ConnectorConfigurationRequest,
-  TopicInfo,
-  TopicInfoRequest
-}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
+import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi, InfoApi}
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, FtpClient}
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce, VersionUtil}
@@ -19,6 +15,8 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
@@ -38,7 +36,12 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRunFtpSource(): Unit = {
-    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1))
+    val topic = Await.result(TopicApi
+                               .access()
+                               .hostname(configurator.hostname)
+                               .port(configurator.port)
+                               .add(TopicCreationRequest(methodName, 1, 1)),
+                             10 seconds)
     val sourceProps = FtpSourceProps(
       inputFolder = "/input",
       completedFolder = "/backup",
@@ -87,7 +90,9 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       configs = sourceProps.toMap
     )
 
-    val source = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request)
+    val source =
+      Await
+        .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).add(request), 10 seconds)
     client.start[ConnectorConfiguration](source.id)
 
     val consumer = Consumer
@@ -106,14 +111,20 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
     try {
       client.stop[ConnectorConfiguration](source.id)
-      client.delete[ConnectorConfiguration](source.id)
+      Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(source.id),
+                   10 seconds) shouldBe source
     } finally if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
 
   }
 
   @Test
   def testRunFtpSink(): Unit = {
-    val topic = client.add[TopicInfoRequest, TopicInfo](TopicInfoRequest(methodName, 1, 1))
+    val topic = Await.result(TopicApi
+                               .access()
+                               .hostname(configurator.hostname)
+                               .port(configurator.port)
+                               .add(TopicCreationRequest(methodName, 1, 1)),
+                             10 seconds)
     val sinkProps = FtpSinkProps(
       output = "/backup",
       needHeader = false,
@@ -156,7 +167,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         configs = sinkProps.toMap
       )
 
-      val sink = client.add[ConnectorConfigurationRequest, ConnectorConfiguration](request)
+      val sink = Await
+        .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).add(request), 10 seconds)
       client.start[ConnectorConfiguration](sink.id)
       try {
         CommonUtil.await(() => ftpClient.listFileNames(sinkProps.output).nonEmpty, Duration.ofSeconds(30))
@@ -169,14 +181,16 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
             lines(1) shouldBe data(1)
           })
         client.stop[ConnectorConfiguration](sink.id)
-        client.delete[ConnectorConfiguration](sink.id)
+        Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(sink.id),
+                     10 seconds) shouldBe sink
       } finally if (connectorClient.exist(sink.id)) connectorClient.delete(sink.id)
     } finally ftpClient.close()
   }
 
   @Test
   def testCluster(): Unit = {
-    val cluster = client.cluster[ClusterInformation]
+    val cluster =
+      Await.result(InfoApi.access().hostname(configurator.hostname).port(configurator.port).get(), 10 seconds)
     cluster.sources
       .filter(_.className.startsWith("com.island"))
       .foreach(s => {

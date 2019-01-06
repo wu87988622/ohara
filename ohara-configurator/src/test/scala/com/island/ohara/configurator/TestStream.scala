@@ -4,13 +4,9 @@ import java.io.{File, RandomAccessFile}
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart.Strict
 import akka.http.scaladsl.model._
 import akka.util.ByteString
-import com.island.ohara.client.ConfiguratorJson.{
-  StreamJar,
-  StreamListRequest,
-  StreamListResponse,
-  StreamPropertyRequest,
-  StreamPropertyResponse
-}
+import com.island.ohara.client.ConfiguratorJson.{StreamJar, StreamListRequest, StreamListResponse}
+import com.island.ohara.client.configurator.v0.StreamApi
+import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.{ConfiguratorClient, StreamClient}
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.KafkaClient
@@ -18,6 +14,8 @@ import org.apache.commons.io.FileUtils
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.io.Source
 
 class TestStream extends With3Brokers with Matchers {
@@ -140,7 +138,8 @@ class TestStream extends With3Brokers with Matchers {
 
     // Test GET method
     val id = jarData.jars.head.id
-    val res1 = client.get[StreamPropertyResponse](id)
+    val res1 = Await
+      .result(StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port).get(id), 10 seconds)
     res1.id shouldBe id
     res1.fromTopics.size shouldBe 0
     res1.toTopics.size shouldBe 0
@@ -148,7 +147,9 @@ class TestStream extends With3Brokers with Matchers {
 
     // Test PUT method
     val req = StreamPropertyRequest("my-app", Seq("from-topic"), Seq("to-topic"), 2)
-    val res2 = client.update[StreamPropertyRequest, StreamPropertyResponse](id, req)
+    val res2 = Await.result(
+      StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port).update(id, req),
+      10 seconds)
     res2.name shouldBe "my-app"
     res2.fromTopics.size shouldBe 1
     res2.toTopics.size shouldBe 1
@@ -157,20 +158,19 @@ class TestStream extends With3Brokers with Matchers {
 
   @Test
   def testFailStreamAppPropertyPage(): Unit = {
+    val propertyAccess = StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
     // Test GET method
     // no such id
-    an[IllegalArgumentException] should be thrownBy client.get[StreamPropertyResponse]("fake-id")
+    an[IllegalArgumentException] should be thrownBy Await.result(propertyAccess.get("fake-id"), 10 seconds)
 
     // Test PUT method
     // instances must bigger than 1
     val req1 = StreamPropertyRequest("my-app", List.empty, Seq("to-topic"), -1)
-    an[IllegalArgumentException] should be thrownBy client
-      .update[StreamPropertyRequest, StreamPropertyResponse]("fake-id", req1)
+    an[IllegalArgumentException] should be thrownBy Await.result(propertyAccess.update("fake-id", req1), 10 seconds)
 
     // no such id
     val req2 = StreamPropertyRequest("my-app", Seq.empty, Seq("to-topic"), 3)
-    an[IllegalArgumentException] should be thrownBy client
-      .update[StreamPropertyRequest, StreamPropertyResponse]("fake-id", req2)
+    an[IllegalArgumentException] should be thrownBy Await.result(propertyAccess.update("fake-id", req2), 10 seconds)
   }
   @After
   def tearDown(): Unit = {

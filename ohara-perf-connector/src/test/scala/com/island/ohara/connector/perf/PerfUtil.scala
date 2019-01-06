@@ -3,7 +3,7 @@ package com.island.ohara.connector.perf
 import java.time.Duration
 
 import com.island.ohara.client.ConnectorClient
-import com.island.ohara.common.data.connector.ConnectorState
+import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
 object PerfUtil {

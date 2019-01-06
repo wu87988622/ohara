@@ -2,10 +2,10 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
-import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
-object NodeRoute {
+object NodesRoute {
 
   private[this] def update(res: Node)(implicit clusterCollie: ClusterCollie): Node = res.copy(
     services = Seq(
@@ -27,9 +27,9 @@ object NodeRoute {
   )
 
   def apply(implicit store: Store, clusterCollie: ClusterCollie): server.Route =
-    RouteUtil.basicRoute[NodeRequest, Node](
-      root = NODE_PATH,
-      hookOfAdd = (_: String, request: NodeRequest) => {
+    RouteUtil.basicRoute[NodeCreationRequest, Node](
+      root = NODES_PREFIX_PATH,
+      hookOfAdd = (_: String, request: NodeCreationRequest) => {
         if (request.name.isEmpty) throw new IllegalArgumentException(s"name is required")
         update(
           Node(
@@ -41,7 +41,7 @@ object NodeRoute {
             lastModified = CommonUtil.current()
           ))
       },
-      hookOfUpdate = (name: String, request: NodeRequest, previous: Node) => {
+      hookOfUpdate = (name: String, request: NodeCreationRequest, previous: Node) => {
         if (request.name.exists(_ != name))
           throw new IllegalArgumentException(
             s"the name from request is conflict with previous setting:${previous.name}")

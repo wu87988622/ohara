@@ -12,6 +12,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
@@ -54,11 +55,11 @@ class Configurator private[configurator] (configuredHostname: String,
       extractRequest { request =>
         log.error(
           s"Request to ${request.uri} with ${request.entity} could not be handled normally because ${e.getMessage}")
-        complete(StatusCodes.BadRequest -> Error(e))
+        complete(StatusCodes.BadRequest -> ErrorApi.of(e))
       }
     case e: Throwable =>
       log.error("What happens here?", e)
-      complete(StatusCodes.ServiceUnavailable -> Error(e))
+      complete(StatusCodes.ServiceUnavailable -> ErrorApi.of(e))
   }
 
   /**
@@ -66,17 +67,17 @@ class Configurator private[configurator] (configuredHostname: String,
     */
   private[this] val basicRoute: server.Route = pathPrefix(VERSION_V0)(
     Seq[server.Route](
-      TopicInfoRoute.apply,
-      HdfsInformationRoute.apply,
-      FtpInformationRoute.apply,
-      JdbcInformationRoute.apply,
+      TopicsRoute.apply,
+      HdfsInfoRoute.apply,
+      FtpInfoRoute.apply,
+      JdbcInfoRoute.apply,
       PipelineRoute.apply,
       ValidationRoute.apply,
       QueryRoute(),
       ConnectorRoute.apply,
-      ClusterRoute.apply,
+      InfoRoute.apply,
       StreamRoute.apply,
-      NodeRoute.apply,
+      NodesRoute.apply,
       ZookeeperRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
@@ -106,6 +107,7 @@ class Configurator private[configurator] (configuredHostname: String,
       .newBuilder()
       .handle {
         case MalformedRequestContentRejection(_, cause) =>
+          // TODO: ohara needs exception hierarchy ... by chia
           cause match {
             case e: DeserializationException =>
               throw new IllegalArgumentException(s"Deserialized Error :${e.getMessage}", e)
@@ -147,7 +149,8 @@ class Configurator private[configurator] (configuredHostname: String,
 object Configurator {
   private[configurator] val DATA_SERIALIZER: Serializer[Data] = new Serializer[Data] {
     override def to(obj: Data): Array[Byte] = Serializer.OBJECT.to(obj)
-    override def from(bytes: Array[Byte]): Data = Serializer.OBJECT.from(bytes).asInstanceOf[Data]
+    override def from(bytes: Array[Byte]): Data =
+      Serializer.OBJECT.from(bytes).asInstanceOf[Data]
   }
 
   /**

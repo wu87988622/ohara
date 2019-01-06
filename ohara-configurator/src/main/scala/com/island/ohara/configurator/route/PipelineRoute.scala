@@ -1,16 +1,19 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.ConfiguratorJson.{Pipeline, _}
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
+import com.island.ohara.client.configurator.v0.PipelineApi._
+import com.island.ohara.client.configurator.v0.TopicApi.TopicDescription
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 private[configurator] object PipelineRoute {
-  private[this] def toRes(id: String, request: PipelineRequest)(implicit store: Store,
-                                                                connectorClient: ConnectorClient) =
+  private[this] def toRes(id: String, request: PipelineCreationRequest)(implicit store: Store,
+                                                                        connectorClient: ConnectorClient) =
     Pipeline(id, request.name, request.rules, abstracts(request.rules), CommonUtil.current())
 
   private[this] def checkExist(ids: Set[String])(implicit store: Store): Unit = {
@@ -45,7 +48,7 @@ private[configurator] object PipelineRoute {
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Pipeline = {
     def verify(id: String): Unit = if (id != UNKNOWN) {
       val data = Await.result(store.raw(id), 10 seconds)
-      if (!data.isInstanceOf[ConnectorConfiguration] && !data.isInstanceOf[TopicInfo])
+      if (!data.isInstanceOf[ConnectorConfiguration] && !data.isInstanceOf[TopicDescription])
         throw new IllegalArgumentException(s"""${data.getClass.getName} can't be placed at "from"""")
     }
     pipeline.rules.foreach {
@@ -61,10 +64,10 @@ private[configurator] object PipelineRoute {
     pipeline.copy(objects = abstracts(pipeline.rules))
 
   def apply(implicit store: Store, connectorClient: ConnectorClient): server.Route =
-    RouteUtil.basicRoute[PipelineRequest, Pipeline](
-      root = PIPELINE_PATH,
-      hookOfAdd = (id: String, request: PipelineRequest) => verifyRules(toRes(id, request)),
-      hookOfUpdate = (id: String, request: PipelineRequest, _: Pipeline) => verifyRules(toRes(id, request)),
+    RouteUtil.basicRoute[PipelineCreationRequest, Pipeline](
+      root = PIPELINES_PREFIX_PATH,
+      hookOfAdd = (id: String, request: PipelineCreationRequest) => verifyRules(toRes(id, request)),
+      hookOfUpdate = (id: String, request: PipelineCreationRequest, _: Pipeline) => verifyRules(toRes(id, request)),
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => responses.map(update),
       hookBeforeDelete = (id: String) => id,

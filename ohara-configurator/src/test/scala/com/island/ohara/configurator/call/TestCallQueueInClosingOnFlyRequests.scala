@@ -1,6 +1,6 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.integration.With3Brokers
 import com.island.ohara.kafka.KafkaUtil

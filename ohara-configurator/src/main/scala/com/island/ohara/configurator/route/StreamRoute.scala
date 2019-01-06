@@ -8,6 +8,8 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.StreamClient
+import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil._
@@ -15,7 +17,6 @@ import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 
 import scala.sys.process._
-import scala.util.{Failure, Success}
 
 private[configurator] object StreamRoute {
 
@@ -45,7 +46,7 @@ private[configurator] object StreamRoute {
   }
 
   def apply(implicit store: Store, kafkaClient: KafkaClient): server.Route =
-    pathPrefix(STREAM_PATH) {
+    pathPrefix(STREAM_PREFIX_PATH) {
       pathPrefix(JARS_STREAM_PATH) {
         path(Segment) { id =>
           //add jars
@@ -83,28 +84,24 @@ private[configurator] object StreamRoute {
               complete(StreamListResponse(jars))
             }
           } ~ get {
-            onComplete(store.values[StreamData]) {
-              case Success(values) =>
-                complete(
-                  values
-                    .filter(f => f.pipeline_id.equals(id)) //note : this id is given by UI (pipeline_id)
-                    .map(data => StreamJar(data.id, data.jarName, data.lastModified)))
-              case Failure(ex) => failWith(ex)
+            onSuccess(store.values[StreamData]) { values =>
+              complete(
+                values
+                  .filter(f => f.pipeline_id.equals(id)) //note : this id is given by UI (pipeline_id)
+                  .map(data => StreamJar(data.id, data.jarName, data.lastModified)))
             }
           } ~ delete {
             //TODO : check streamapp is not at running state
             assertNotRelated2Pipeline(id)
-            onComplete(store.remove[StreamData](id)) {
-              case Success(data) =>
-                val f: File = new File(data.filePath)
-                f.delete()
-                complete(StreamJar(data.id, data.jarName, data.lastModified))
-              case Failure(ex) => failWith(ex)
+            onSuccess(store.remove[StreamData](id)) { data =>
+              val f: File = new File(data.filePath)
+              f.delete()
+              complete(StreamJar(data.id, data.jarName, data.lastModified))
             }
           } ~ put {
             entity(as[StreamListRequest]) { req =>
               if (req.jarName == null || req.jarName.isEmpty) throw new IllegalArgumentException(s"Require jarName")
-              onComplete(
+              onSuccess(
                 store.update[StreamData](id,
                                          previous =>
                                            toStore(previous.pipeline_id,
@@ -115,28 +112,26 @@ private[configurator] object StreamRoute {
                                                    1,
                                                    id,
                                                    previous.filePath,
-                                                   CommonUtil.current()))) {
-                case Success(newData) => complete(StreamJar(newData.id, newData.jarName, newData.lastModified))
-                case Failure(ex)      => failWith(ex)
+                                                   CommonUtil.current()))) { newData =>
+                complete(StreamJar(newData.id, newData.jarName, newData.lastModified))
               }
             }
           }
         }
-      } ~ pathPrefix(PROPERTY_STREAM_PATH) {
+      } ~ pathPrefix(STREAM_PROPERTY_PREFIX_PATH) {
+        //TODO: It supports "update" but exclude "delete" and "add"...WHY? by chia
         path(Segment) { id =>
           // get
           get {
-            onComplete(store.value[StreamData](id)) {
-              case Success(data) =>
-                complete(
-                  StreamPropertyResponse(id,
-                                         data.jarName,
-                                         data.name,
-                                         data.fromTopics,
-                                         data.toTopics,
-                                         data.instances,
-                                         data.lastModified))
-              case Failure(ex) => failWith(ex)
+            onSuccess(store.value[StreamData](id)) { data =>
+              complete(
+                StreamPropertyResponse(id,
+                                       data.jarName,
+                                       data.name,
+                                       data.fromTopics,
+                                       data.toTopics,
+                                       data.instances,
+                                       data.lastModified))
             }
           } ~
             // update
@@ -144,7 +139,7 @@ private[configurator] object StreamRoute {
               entity(as[StreamPropertyRequest]) { req =>
                 if (req.instances < 1)
                   throw new IllegalArgumentException(s"Require instances bigger or equal to 1")
-                onComplete(
+                onSuccess(
                   store.update[StreamData](id,
                                            oldData =>
                                              toStore(oldData.pipeline_id,
@@ -155,17 +150,15 @@ private[configurator] object StreamRoute {
                                                      req.instances,
                                                      id,
                                                      oldData.filePath,
-                                                     CommonUtil.current()))) {
-                  case Success(newData) =>
-                    complete(
-                      StreamPropertyResponse(id,
-                                             newData.jarName,
-                                             newData.name,
-                                             newData.fromTopics,
-                                             newData.toTopics,
-                                             newData.instances,
-                                             newData.lastModified))
-                  case Failure(ex) => failWith(ex)
+                                                     CommonUtil.current()))) { newData =>
+                  complete(
+                    StreamPropertyResponse(id,
+                                           newData.jarName,
+                                           newData.name,
+                                           newData.fromTopics,
+                                           newData.toTopics,
+                                           newData.instances,
+                                           newData.lastModified))
                 }
               }
             }
@@ -173,19 +166,18 @@ private[configurator] object StreamRoute {
       } ~ pathPrefix(Segment) { id =>
         path(START_COMMAND) {
           put {
-            onComplete(store.value[StreamData](id)) {
-              case Success(data) =>
-                if (!assertParameters(data))
-                  throw new IllegalArgumentException(
-                    s"StreamData with id : ${data.id} not match the parameter requirement.")
-                val checkDocker = "which docker" !!
+            onSuccess(store.value[StreamData](id)) { data =>
+              if (!assertParameters(data))
+                throw new IllegalArgumentException(
+                  s"StreamData with id : ${data.id} not match the parameter requirement.")
+              val checkDocker = "which docker" !!
 
-                if (checkDocker.toLowerCase.contains("not found"))
-                  throw new RuntimeException(s"This machine is not support docker command !")
+              if (checkDocker.toLowerCase.contains("not found"))
+                throw new RuntimeException(s"This machine is not support docker command !")
 
-                //TODO : we hard code here currently. This should be called dynamically and run async ...by Sam
-                val dockerCmd =
-                  s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
+              //TODO : we hard code here currently. This should be called dynamically and run async ...by Sam
+              val dockerCmd =
+                s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
                      | -e STREAMAPP_SERVERS=${kafkaClient.brokers()}
                      | -e STREAMAPP_APPID=${data.name}
                      | -e STREAMAPP_FROMTOPIC=${data.fromTopics.head}
@@ -194,28 +186,24 @@ private[configurator] object StreamRoute {
                      | "example.MyApp"
                           """.stripMargin
 
-                // TODO: use LOG instead...by chia
-                System.out.println(s"command : $dockerCmd")
-                complete(if (Process(dockerCmd).run.exitValue() == 0) StatusCodes.OK else StatusCodes.BadRequest)
-
-              case Failure(ex) => failWith(ex)
+              // TODO: use LOG instead...by chia
+              System.out.println(s"command : $dockerCmd")
+              complete(if (Process(dockerCmd).run.exitValue() == 0) StatusCodes.OK else StatusCodes.BadRequest)
             }
           }
         } ~ path(STOP_COMMAND) {
           put {
-            onComplete(store.value[StreamData](id)) {
-              case Success(data) =>
-                val checkDocker = "which docker" !!
+            onSuccess(store.value[StreamData](id)) { data =>
+              val checkDocker = "which docker" !!
 
-                if (checkDocker.toLowerCase.contains("not found"))
-                  throw new RuntimeException(s"This machine is not support docker command !")
+              if (checkDocker.toLowerCase.contains("not found"))
+                throw new RuntimeException(s"This machine is not support docker command !")
 
-                //TODO : we hard code here currently. This should be called dynamically and run async ...by Sam
-                val dockerCmd =
-                  s"""docker stop ${data.name}
+              //TODO : we hard code here currently. This should be called dynamically and run async ...by Sam
+              val dockerCmd =
+                s"""docker stop ${data.name}
                """.stripMargin
-                complete(if (Process(dockerCmd).run.exitValue() == 0) StatusCodes.OK else StatusCodes.BadRequest)
-              case Failure(ex) => failWith(ex)
+              complete(if (Process(dockerCmd).run.exitValue() == 0) StatusCodes.OK else StatusCodes.BadRequest)
             }
           }
         }

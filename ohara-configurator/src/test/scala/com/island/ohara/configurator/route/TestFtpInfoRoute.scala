@@ -1,15 +1,15 @@
 package com.island.ohara.configurator.route
-import com.island.ohara.client.ConfiguratorJson.FtpInformationRequest
+import com.island.ohara.client.configurator.v0.FtpApi.FtpInfoRequest
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestFtpInformationRoute extends SmallTest with Matchers {
+class TestFtpInfoRoute extends SmallTest with Matchers {
 
   @Test
   def testValidateField(): Unit = {
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "",
         hostname = "hostname",
         port = 1234,
@@ -17,8 +17,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
 
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aa",
         hostname = "",
         port = 1234,
@@ -26,8 +26,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
 
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aa",
         hostname = "hostname",
         port = -1,
@@ -35,8 +35,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
 
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aa",
         hostname = "hostname",
         port = 0,
@@ -44,8 +44,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
 
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aaa",
         hostname = "hostname",
         port = 99999,
@@ -53,8 +53,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
 
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aaa",
         hostname = "hostname",
         port = 12345,
@@ -62,8 +62,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
 
-    an[IllegalArgumentException] should be thrownBy FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    an[IllegalArgumentException] should be thrownBy FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aaa",
         hostname = "hostname",
         port = 12345,
@@ -71,8 +71,8 @@ class TestFtpInformationRoute extends SmallTest with Matchers {
         password = ""
       ))
 
-    FtpInformationRoute.validateField(
-      FtpInformationRequest(
+    FtpInfoRoute.validateField(
+      FtpInfoRequest(
         name = "aaa",
         hostname = "hostname",
         port = 12345,

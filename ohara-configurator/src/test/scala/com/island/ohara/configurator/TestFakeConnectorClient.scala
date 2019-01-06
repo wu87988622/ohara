@@ -1,5 +1,5 @@
 package com.island.ohara.configurator
-import com.island.ohara.common.data.connector.ConnectorState
+import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers

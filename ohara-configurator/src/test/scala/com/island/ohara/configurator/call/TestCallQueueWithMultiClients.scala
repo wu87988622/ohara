@@ -2,7 +2,7 @@ package com.island.ohara.configurator.call
 
 import java.time.Duration
 
-import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers

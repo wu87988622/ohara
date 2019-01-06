@@ -1,5 +1,5 @@
 package com.island.ohara.agent
-import com.island.ohara.client.ConfiguratorJson.Node
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 
 trait NodeCollie extends Iterable[Node] {
   def node(name: String): Node

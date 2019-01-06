@@ -2,7 +2,7 @@ package com.island.ohara.agent.plugin
 import java.io.File
 import java.net.URL
 
-import com.island.ohara.client.ConfiguratorJson.PluginDescription
+import com.island.ohara.client.configurator.v0.ConnectorApi.PluginDescription
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 
 import scala.concurrent.Future

@@ -1,8 +1,8 @@
 package com.island.ohara.configurator.call
 
-import com.island.ohara.client.ConfiguratorJson.Error
 import com.island.ohara.common.util.ReleaseOnce
 
+import com.island.ohara.client.configurator.v0.ErrorApi._
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 

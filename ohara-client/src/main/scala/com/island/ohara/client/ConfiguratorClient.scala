@@ -11,6 +11,7 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.util.ReleaseOnce
 import spray.json.RootJsonFormat
+import com.island.ohara.client.configurator.v0.ErrorApi._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
@@ -37,8 +38,6 @@ trait ConfiguratorClient extends ReleaseOnce {
   def validate[Req, Res](request: Req)(implicit rm0: RootJsonFormat[Req],
                                        rm1: RootJsonFormat[Res],
                                        cf: ValidationCommandFormat[Req]): Seq[Res]
-  //------------------------------------------------[CLUSTER]------------------------------------------------//
-  def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res
   //------------------------------------------------[CONTROL]------------------------------------------------//
   def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
   def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
@@ -131,8 +130,6 @@ object ConfiguratorClient {
           }),
         TIMEOUT
       )
-
-    import com.island.ohara.client.ConfiguratorJson.{ERROR_JSON_FORMAT, Error}
     private[this] def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else
@@ -143,12 +140,6 @@ object ConfiguratorClient {
       else
         Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
 
-    // it is unnecessary to use the implicit imports here
-    override def cluster[Res](implicit rm0: RootJsonFormat[Res], cf: ClusterCommandFormat[Res]): Res =
-      Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.GET, cf.format(connectionProps))).flatMap(unmarshal[Res](_)),
-        TIMEOUT
-      )
     override def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
       Await.result(
         Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(connectionProps, uuid))).flatMap(unmarshal2),

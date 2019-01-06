@@ -8,11 +8,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import com.island.ohara.client.configurator.v0.ErrorApi._
 import com.island.ohara.prometheus.PrometheusJson.{Config, Targets}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 /**
@@ -47,8 +48,6 @@ object PrometheusClient {
       val url = schema + "://" + prometheusURL + url_preffix + apiVersion + path
       Await.result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[T](_)), TIMEOUT)
     }
-
-    import com.island.ohara.client.ConfiguratorJson.{ERROR_JSON_FORMAT, Error}
     private[this] def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else
