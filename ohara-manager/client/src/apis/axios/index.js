@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getErrors } from 'utils/apiUtils';
 
 function createAxios() {
   const instance = axios.create({
@@ -30,6 +31,29 @@ function createAxios() {
   // Add a response interceptor
   instance.interceptors.response.use(
     response => {
+      if (response.config.url.includes('/validate')) {
+        const errors = getErrors(response.data);
+
+        if (errors.length > 0) {
+          return {
+            data: {
+              errorMessage: {
+                message:
+                  'Test failed, please check you configs and try again later!',
+              },
+              isSuccess: false,
+            },
+          };
+        }
+
+        return {
+          data: {
+            result: response.data,
+            isSuccess: true,
+          },
+        };
+      }
+
       return {
         data: {
           result: response.data,

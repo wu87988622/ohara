@@ -22,4 +22,17 @@ describe('configuration page', () => {
     cy.wait(3000);
     cy.get('.toast-success').should('have.length.above', 1);
   });
+
+  it('should not pass the connection with wrong HDFS info', () => {
+    cy.getByLabelText('Name')
+      .clear()
+      .type('test connection');
+    cy.getByLabelText('HDFS connection URL')
+      .clear()
+      .type('somethingwrongaboutthisurl');
+
+    cy.getByText('Test connection').click();
+    cy.wait(3000);
+    cy.get('.toast-error').should('have.length', 1);
+  });
 });

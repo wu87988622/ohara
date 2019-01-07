@@ -12,3 +12,12 @@ export const handleError = err => {
 
   toastr.error(err);
 };
+
+export const getErrors = data => {
+  const errors = data.reduce((acc, r) => {
+    if (!r.pass) acc.push(r);
+    return acc;
+  }, []);
+
+  return errors;
+};

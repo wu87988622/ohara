@@ -20,9 +20,8 @@ module.exports = app => {
       });
     }
 
-    res.status(200).json({
-      isSuccess: false,
-      errMsg: 'Invalid username or password',
+    res.status(401).json({
+      message: 'Invalid username or password',
     });
   });
 
