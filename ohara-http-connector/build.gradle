@@ -1,0 +1,17 @@
+apply from: "$rootDir/gradle/dependencies.gradle"
+
+dependencies {
+    implementation libs.scala
+    implementation libs.scalaLogging
+    implementation libs.slf4jApi
+    implementation libs.slf4jlog4j
+
+    implementation libs.akkaStream
+    implementation libs.akkaHttp
+
+
+
+    testImplementation libs.scalatest
+    testImplementation libs.mockito
+    testImplementation libs.junit
+}

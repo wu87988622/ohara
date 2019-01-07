@@ -1,4 +1,4 @@
-
+import sbt._
 
 object versions {
   lazy val akkaHttpV = "10.1.3"
@@ -8,6 +8,7 @@ object versions {
   lazy val hadoopV = "2.7.0"
   lazy val commonsNetV = "3.6"
   lazy val commonsLangV = "3.7"
+  lazy val commonsIoV = "2.4"
   lazy val zookeeperV = "3.4.10"
   lazy val mysqlV = "8.0.12"
   lazy val embeddedsqlV = "4.1.2"
@@ -43,6 +44,7 @@ object libs {
   // Apache commons
   lazy val commonsNet = "commons-net" % "commons-net" % commonsNetV
   lazy val commonsLang = "org.apache.commons" % "commons-lang3" % commonsLangV
+  lazy val commonsIo = "commons-io" % "commons-io" % commonsIoV
 
   // Loggin
   lazy val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV

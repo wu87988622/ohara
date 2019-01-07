@@ -9,6 +9,8 @@ organizationHomepage := Some(url("https://github.com/is-land"))
 
 organization := "com.island"
 
+cancelable in Global := true
+
 val cpus = sys.runtime.availableProcessors
 
 scalacOptions ++= Seq(
@@ -57,11 +59,12 @@ val formatAll = taskKey[Unit]("Format all the source code which includes src, te
 val checkFormat = taskKey[Unit]("Check all the source code which includes src, test, and build files")
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.11.12",
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
   resolvers += "Cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
   fork in Test := true,
   fork in run := true,
+  run / connectInput := true,
   javaOptions ++= Seq("-Xms256m", "-Xmx4g", "-XX:MaxMetaspaceSize=512m"),
   libraryDependencies ++= Seq(
     libs.junit % Test,
@@ -90,6 +93,7 @@ lazy val `common` = (project in file("ohara-common"))
           libraryDependencies ++= Seq(
             libs.commonsNet,
             libs.commonsLang,
+            libs.commonsIo,
             libs.scalaLogging,
             libs.slf4jApi,
             libs.slf4jLog4j,
@@ -203,22 +207,18 @@ lazy val `configurator` = (project in file("ohara-configurator"))
         )
 
 
-lazy val `http` = (project in file("ohara-http"))
+lazy val `http-connector` = (project in file("ohara-http-connector"))
+        .dependsOn(
+        )
         .settings(
           commonSettings,
           libraryDependencies ++= Seq(
             libs.akkaHttp,
             libs.akkaStream,
             libs.akkaHttpSprayJson,
-            libs.kafkaClient,
 
             libs.akkaHttpTestKit % Test
           )
-        )
-        .dependsOn(
-          `common` % "compile->compile; test->test",
-          `kafka`,
-          `testing-util` % "test->test",
         )
 
 lazy val `streams` = (project in file("ohara-streams"))
