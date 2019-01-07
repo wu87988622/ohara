@@ -98,10 +98,9 @@ class PipelineFtpSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges } = this.props;
-
+    const { hasChanges, match } = this.props;
     const prevSinkId = _.get(prevProps.match, 'params.connectorId', null);
-    const currSinkId = _.get(this.props.match, 'params.connectorId', null);
+    const currSinkId = _.get(match, 'params.connectorId', null);
     const isUpdate = prevSinkId !== currSinkId;
 
     if (hasChanges) {
@@ -113,12 +112,10 @@ class PipelineFtpSink extends React.Component {
 
       const params = {
         name,
-        rules: {
-          ...rules,
-          '?': currSinkId,
-        },
+        rules: { ...rules, '?': currSinkId },
       };
 
+      this.fetchData();
       this.updatePipeline(id, params);
     }
   }

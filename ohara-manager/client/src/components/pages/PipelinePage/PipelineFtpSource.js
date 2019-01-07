@@ -115,6 +115,7 @@ class PipelineFtpSource extends React.Component {
         rules: { ...rules, [currSourceId]: '?' },
       };
 
+      this.fetchData();
       this.updatePipeline(id, params);
     }
   }
@@ -191,7 +192,7 @@ class PipelineFtpSource extends React.Component {
 
       const sourceId = _.get(this.props.match, 'params.sourceId', null);
 
-      if (sourceId && sourceId !== '__') {
+      if (sourceId) {
         this.props.loadGraph(pipelines);
       }
     }
@@ -215,45 +216,6 @@ class PipelineFtpSource extends React.Component {
         this.props.updateHasChanges(true);
       }
     });
-  };
-
-  handleSelectChange = ({ target }) => {
-    const { name, options, value } = target;
-    const selectedIdx = options.selectedIndex;
-    const { id } = options[selectedIdx].dataset;
-    const hasId = Boolean(id);
-    const current = this.selectMaps[name];
-
-    if (hasId) {
-      this.setState(
-        () => {
-          return {
-            [current]: {
-              name: value,
-              id,
-            },
-          };
-        },
-        () => {
-          this.props.updateHasChanges(true);
-        },
-      );
-
-      return;
-    }
-
-    this.setState(
-      () => {
-        return {
-          [current]: value,
-        };
-      },
-      () => {
-        if (current !== 'currType') {
-          this.props.updateHasChanges(true);
-        }
-      },
-    );
   };
 
   handleDeleteRowModalOpen = (e, order) => {
@@ -324,38 +286,6 @@ class PipelineFtpSource extends React.Component {
     });
   };
 
-  handleRowCreate = () => {
-    this.setState(
-      ({
-        schema,
-        columnName: name,
-        newColumnName: newName,
-        currType: type,
-      }) => {
-        const _order = _.isEmpty(schema)
-          ? 1
-          : schema[schema.length - 1].order + 1;
-
-        const newSchema = {
-          name,
-          newName,
-          dataType: type,
-          order: _order,
-        };
-
-        return {
-          isNewRowModalActive: false,
-          schema: [...schema, newSchema],
-          columnName: '',
-          newColumnName: '',
-          currType: this.schemaTypes[0],
-        };
-      },
-    );
-
-    this.props.updateHasChanges(true);
-  };
-
   handleUp = (e, order) => {
     e.preventDefault();
 
@@ -402,6 +332,38 @@ class PipelineFtpSource extends React.Component {
     this.props.updateHasChanges(true);
   };
 
+  handleRowCreate = () => {
+    this.setState(
+      ({
+        schema,
+        columnName: name,
+        newColumnName: newName,
+        currType: type,
+      }) => {
+        const _order = _.isEmpty(schema)
+          ? 1
+          : schema[schema.length - 1].order + 1;
+
+        const newSchema = {
+          name,
+          newName,
+          dataType: type,
+          order: _order,
+        };
+
+        return {
+          isNewRowModalActive: false,
+          schema: [...schema, newSchema],
+          columnName: '',
+          newColumnName: '',
+          currType: this.schemaTypes[0],
+        };
+      },
+    );
+
+    this.props.updateHasChanges(true);
+  };
+
   handleTestConnection = async e => {
     e.preventDefault();
     const { host: hostname, port, username: user, password } = this.state;
@@ -424,6 +386,45 @@ class PipelineFtpSource extends React.Component {
 
   updateIsTestConnectionBtnWorking = update => {
     this.setState({ IsTestConnectionBtnWorking: update });
+  };
+
+  handleSelectChange = ({ target }) => {
+    const { name, options, value } = target;
+    const selectedIdx = options.selectedIndex;
+    const { id } = options[selectedIdx].dataset;
+    const hasId = Boolean(id);
+    const current = this.selectMaps[name];
+
+    if (hasId) {
+      this.setState(
+        () => {
+          return {
+            [current]: {
+              name: value,
+              id,
+            },
+          };
+        },
+        () => {
+          this.props.updateHasChanges(true);
+        },
+      );
+
+      return;
+    }
+
+    this.setState(
+      () => {
+        return {
+          [current]: value,
+        };
+      },
+      () => {
+        if (current !== 'currType') {
+          this.props.updateHasChanges(true);
+        }
+      },
+    );
   };
 
   save = _.debounce(async () => {

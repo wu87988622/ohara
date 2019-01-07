@@ -115,6 +115,7 @@ class PipelineJdbcSource extends React.Component {
         rules: { ...rules, [currSourceId]: '?' },
       };
 
+      this.fetchData();
       this.updatePipeline(id, params);
     }
   }

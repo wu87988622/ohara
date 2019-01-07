@@ -95,6 +95,7 @@ class PipelineHdfsSink extends React.Component {
         rules: { ...rules, '?': currSinkId },
       };
 
+      this.fetchData();
       this.updatePipeline(id, params);
     }
   }

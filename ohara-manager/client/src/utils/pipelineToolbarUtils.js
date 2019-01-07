@@ -6,16 +6,6 @@ const isSource = type => type.includes('Source');
 const isSink = type => type.includes('Sink');
 
 /* eslint-disable array-callback-return */
-export const checkTypeExist = (type, graph) => {
-  return graph.find(g => {
-    const isExist =
-      g.type === type ||
-      (isSource(g.type) && isSource(type)) ||
-      (isSink(g.type) && isSink(type));
-
-    return isExist;
-  });
-};
 
 const getNameByType = type => {
   if (isSource(type)) {
@@ -32,7 +22,6 @@ export const update = async ({ graph, updateGraph, connector }) => {
   type = type ? type : CONNECTOR_TYPES.topic;
 
   const connectorName = getNameByType(type);
-  const result = checkTypeExist(type, graph);
 
   // Default params for creating connectors
   const params = {
@@ -57,16 +46,14 @@ export const update = async ({ graph, updateGraph, connector }) => {
     id = _.get(res, 'data.result.id', null);
   }
 
-  if (!_.isDefined(result)) {
-    const update = {
-      name: `Untitled ${connectorName}`,
-      type,
-      to: '?',
-      isActive: false,
-      icon: ICON_MAPS[type],
-      id,
-    };
+  const update = {
+    name: `Untitled ${connectorName}`,
+    type,
+    to: '?',
+    isActive: false,
+    icon: ICON_MAPS[type],
+    id,
+  };
 
-    updateGraph(update, type);
-  }
+  updateGraph(update, type);
 };
