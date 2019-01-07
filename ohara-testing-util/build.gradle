@@ -3,6 +3,7 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-client')
+  implementation libs.sshd
   implementation libs.scala
   implementation libs.kafkaCore
   implementation libs.kafkaConnectJson

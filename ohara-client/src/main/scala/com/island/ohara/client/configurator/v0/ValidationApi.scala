@@ -40,6 +40,11 @@ object ValidationApi {
       )
     }
 
+  val VALIDATION_NODE_PREFIX_PATH: String = "node"
+  final case class NodeValidationRequest(hostname: String, port: Int, user: String, password: String)
+  implicit val NODE_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[NodeValidationRequest] = jsonFormat4(
+    NodeValidationRequest)
+
   final case class ValidationReport(hostname: String, message: String, pass: Boolean)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 
@@ -47,6 +52,7 @@ object ValidationApi {
     def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]]
     def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]]
     def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]]
+    def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]]
   }
 
   def access(): Access = new Access(VALIDATION_PREFIX_PATH) {
@@ -57,5 +63,7 @@ object ValidationApi {
       exec.put[RdbValidationRequest, Seq[ValidationReport]](url(VALIDATION_RDB_PREFIX_PATH), request)
     override def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]] =
       exec.put[FtpValidationRequest, Seq[ValidationReport]](url(VALIDATION_FTP_PREFIX_PATH), request)
+    override def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]] =
+      exec.put[NodeValidationRequest, Seq[ValidationReport]](url(VALIDATION_NODE_PREFIX_PATH), request)
   }
 }

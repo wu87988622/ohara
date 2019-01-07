@@ -1,9 +1,10 @@
 package com.island.ohara.agent
-import com.island.ohara.agent.SshdServer.CommandHandler
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.integration.SshdServer
+import com.island.ohara.integration.SshdServer.CommandHandler
 import org.junit.{AfterClass, Test}
 import org.scalatest.Matchers
 
@@ -172,6 +173,7 @@ object TestDockerClientWithoutDockerServer {
     container.size
   ).mkString(DockerClientImpl.DIVIDER)
 
+  import scala.collection.JavaConverters._
   private val SERVER = SshdServer.local(
     0,
     Seq(
@@ -179,30 +181,32 @@ object TestDockerClientWithoutDockerServer {
       new CommandHandler {
         override def belong(command: String): Boolean =
           command == s"docker ps -a --format ${DockerClientImpl.LIST_PROCESS_FORMAT}"
-        override def execute(command: String): Seq[String] = if (belong(command)) CONTAINERS.map(containerToString)
+        override def execute(command: String): java.util.List[String] = if (belong(command))
+          CONTAINERS.map(containerToString).asJava
         else throw new IllegalArgumentException(s"$command doesn't support")
       },
       // handle env
       new CommandHandler {
         override def belong(command: String): Boolean =
           command.contains("docker inspect") && command.contains("Config.Env")
-        override def execute(command: String): Seq[String] = if (belong(command)) Seq("[env0=abc env1=ccc]")
+        override def execute(command: String): java.util.List[String] = if (belong(command))
+          Seq("[env0=abc env1=ccc]").asJava
         else throw new IllegalArgumentException(s"$command doesn't support")
       },
       // handle hostname
       new CommandHandler {
         override def belong(command: String): Boolean =
           command.contains("docker inspect") && command.contains("Config.Hostname")
-        override def execute(command: String): Seq[String] = if (belong(command)) Seq("localhost")
+        override def execute(command: String): java.util.List[String] = if (belong(command)) Seq("localhost").asJava
         else throw new IllegalArgumentException(s"$command doesn't support")
       },
       // final
       new CommandHandler {
         override def belong(command: String): Boolean = true
-        override def execute(command: String): Seq[String] =
+        override def execute(command: String): java.util.List[String] =
           throw new IllegalArgumentException(s"$command doesn't support")
       }
-    )
+    ).map(_.asInstanceOf[CommandHandler]).asJava
   )
 
   private val CLIENT =

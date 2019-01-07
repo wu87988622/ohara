@@ -2,6 +2,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
+import com.island.ohara.agent.Agent
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.configurator.endpoint.Validator
@@ -10,6 +11,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] def verifyRoute[Req](root: String, verify: Req => Future[Seq[ValidationReport]])(
@@ -39,6 +41,33 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         root = VALIDATION_FTP_PREFIX_PATH,
         verify =
           (req: FtpValidationRequest) => Validator.run(connectClient, kafkaClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+      ) ~ verifyRoute(
+        root = VALIDATION_NODE_PREFIX_PATH,
+        verify = (req: NodeValidationRequest) =>
+          Future {
+            val cmd = "ls /tmp"
+            val message = s"test $cmd on ${req.hostname}:${req.port}"
+            Seq[ValidationReport](
+              try {
+                val agent =
+                  Agent.builder().hostname(req.hostname).port(req.port).user(req.user).password(req.password).build()
+                try agent.execute(cmd)
+                finally agent.close()
+                ValidationReport(
+                  hostname = req.hostname,
+                  message = message,
+                  pass = true
+                )
+              } catch {
+                case e: Throwable =>
+                  ValidationReport(
+                    hostname = req.hostname,
+                    message = s"$message (failed by ${e.getMessage})",
+                    pass = false
+                  )
+              }
+            )
+        }
       )
     }
 }
