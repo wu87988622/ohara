@@ -18,15 +18,16 @@ const getNameByType = type => {
 };
 
 export const update = async ({ graph, updateGraph, connector }) => {
-  let type = connector.className;
-  type = type ? type : CONNECTOR_TYPES.topic;
+  let className = connector.className;
+  className = className ? className : CONNECTOR_TYPES.topic;
 
-  const connectorName = getNameByType(type);
+  const connectorType = getNameByType(className);
+  let connectorName = `Untitled ${connectorType}`;
 
   // Default params for creating connectors
   const params = {
-    name: `Untitled ${connectorName}`,
-    className: type,
+    name: connectorName,
+    className: className,
     schema: [],
     topics: [],
     numberOfTasks: 1,
@@ -35,25 +36,26 @@ export const update = async ({ graph, updateGraph, connector }) => {
 
   let id;
 
-  if (type === 'topic') {
+  if (className === 'topic') {
     // Topic was created beforehand, it already has an ID.
     id = connector.id;
-  } else if (isSource(type)) {
+    connectorName = connector.name;
+  } else if (isSource(className)) {
     const res = await pipelinesApis.createSource(params);
     id = _.get(res, 'data.result.id', null);
-  } else if (isSink(type)) {
+  } else if (isSink(className)) {
     const res = await pipelinesApis.createSink(params);
     id = _.get(res, 'data.result.id', null);
   }
 
   const update = {
-    name: `Untitled ${connectorName}`,
-    type,
+    name: connectorName,
+    type: className,
     to: '?',
     isActive: false,
-    icon: ICON_MAPS[type],
+    icon: ICON_MAPS[className],
     id,
   };
 
-  updateGraph(update, type);
+  updateGraph(update, className);
 };

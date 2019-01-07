@@ -1,65 +1,39 @@
 import * as URLS from '../../src/constants/urls';
-import { getTestById } from '../../src/utils/testUtils';
 
-describe.skip('PipelinePage', () => {
+describe('PipelinePage', () => {
   beforeEach(() => {
     cy.visit(URLS.PIPELINE);
-    cy.get(getTestById('new-pipeline')).click();
-    cy.get(getTestById('modal-confirm-btn')).click();
+    cy.getByTestId('new-pipeline').click();
   });
 
-  describe('main page', () => {
-    it('should be able to navigate to PipelineNewPage', () => {
-      cy.location('pathname').should('contain', '/pipeline/new/topic');
-      cy.get('[data-testid="graph-list"] li.is-exist').should('have.length', 1);
-      cy.get(getTestById('graph-topic'))
-        .should('be.visible')
-        .and('have.class', 'is-active');
-    });
+  it('creates a pipeline and displays in the pipeline list page', () => {
+    const pipelineName = 'Test pipeline';
+
+    cy.getByText('Untitled pipeline')
+      .click({ force: true })
+      .getByTestId('title-input')
+      .clear()
+      .type(pipelineName)
+      .blur();
+
+    cy.visit(URLS.HOME);
+    cy.getByText(pipelineName).should('have.length', 1);
+
+    // TODO: remove testing pipeline
   });
 
-  describe('pipeline toolbar', () => {
-    it('works correctly', () => {
-      cy.get(getTestById('toolbar-source')).click();
-      cy.get('[data-testid="graph-list"] li.is-exist').should('have.length', 2);
-      cy.get(getTestById('graph-source'))
-        .should('be.visible')
-        .and('not.have.class', 'is-active');
+  it('Creates a FTP source connector', () => {
+    cy.location('pathname').should('contain', '/pipelines/new/');
+    cy.getByTestId('toolbar-sources').click();
 
-      cy.get(getTestById('toolbar-sink')).click();
-      cy.get('[data-testid="graph-list"] li.is-exist').should('have.length', 3);
-      cy.get(getTestById('graph-source'))
-        .should('be.visible')
-        .and('not.have.class', 'is-active');
-    });
+    cy.getByText('Add a new source connector').should('have.length', 1);
+    cy.getByText('com.island.ohara.connector.ftp.FtpSource').click();
 
-    it('deletes the pipeline', () => {
-      cy.get(getTestById('delete-pipeline-btn')).click({ force: true });
+    cy.getByText('Add').click();
 
-      cy.get('.ReactModal__Content')
-        .should('be.visible')
-        .find('h3')
-        .should('contain', 'Delete pipeline');
-
-      cy.get(getTestById('confirm-modal-confirm-btn')).click();
-
-      cy.location('pathname').should('eq', URLS.PIPELINE);
-    });
-  });
-
-  describe('pipeline graph', () => {
-    it('works correctly', () => {
-      cy.get(getTestById('toolbar-source')).click();
-      cy.get(getTestById('toolbar-sink')).click();
-
-      cy.get(getTestById('graph-source')).click({ force: true });
-      cy.location('pathname').should('contain', '/pipeline/new/source/');
-
-      cy.get(getTestById('graph-sink')).click({ force: true });
-      cy.location('pathname').should('contain', '/pipeline/new/sink/');
-
-      cy.get(getTestById('graph-topic')).click({ force: true });
-      cy.location('pathname').should('contain', '/pipeline/new/topic/');
-    });
+    cy.getByText('Untitled Source')
+      .should('have.length', '1')
+      .get('.node-type')
+      .should('contain', 'FtpSource');
   });
 });

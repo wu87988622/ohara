@@ -39,9 +39,18 @@ class PipelineTopic extends React.Component {
     this.fetchTopic();
   }
 
+  componentDidUpdate(prevProps) {
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchTopic();
+    }
+  }
+
   fetchTopic = async () => {
-    const id = _.get(this.props.match, 'params.connectorId');
-    const res = await fetchTopic(id);
+    const { connectorId } = this.props.match.params;
+    const res = await fetchTopic(connectorId);
     const topic = _.get(res, 'data.result', null);
 
     if (topic) {
