@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.Multipart.FormData.BodyPart.Strict
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
 import com.island.ohara.client.configurator.v0.{ConnectorApi, StreamApi}
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection from marshalling/unmarshalling configurator data to/from json.
@@ -85,69 +85,6 @@ object ConfiguratorJson {
       override def pause(address: String, id: String): String =
         s"http://$address/$VERSION_V0/${ConnectorApi.CONNECTORS_PREFIX_PATH}/$id/$PAUSE_COMMAND"
     }
-  //------------------------------------------------[VALIDATION]------------------------------------------------//
-  val VALIDATION_PATH = "validate"
-
-  /**
-    * used to send validation command
-    */
-  sealed trait ValidationCommandFormat[T] {
-    def format(address: String): String
-  }
-
-  val HDFS_VALIDATION_PATH = "hdfs"
-  final case class HdfsValidationRequest(uri: String)
-  implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidationRequest] = jsonFormat1(
-    HdfsValidationRequest)
-  implicit val HDFS_VALIDATION_REQUEST_COMMAND_FORMAT: ValidationCommandFormat[HdfsValidationRequest] =
-    new ValidationCommandFormat[HdfsValidationRequest] {
-      override def format(address: String): String =
-        s"http://$address/$VERSION_V0/$VALIDATION_PATH/$HDFS_VALIDATION_PATH"
-    }
-
-  val RDB_VALIDATION_PATH = "rdb"
-  final case class RdbValidationRequest(url: String, user: String, password: String)
-  implicit val RDB_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[RdbValidationRequest] = jsonFormat3(
-    RdbValidationRequest)
-  implicit val RDB_VALIDATION_REQUEST_COMMAND_FORMAT: ValidationCommandFormat[RdbValidationRequest] =
-    new ValidationCommandFormat[RdbValidationRequest] {
-      override def format(address: String): String =
-        s"http://$address/$VERSION_V0/$VALIDATION_PATH/$RDB_VALIDATION_PATH"
-    }
-
-  val FTP_VALIDATION_PATH = "ftp"
-  final case class FtpValidationRequest(hostname: String, port: Int, user: String, password: String)
-  implicit val FTP_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpValidationRequest] =
-    new RootJsonFormat[FtpValidationRequest] {
-      override def read(json: JsValue): FtpValidationRequest =
-        json.asJsObject.getFields("hostname", "port", "user", "password") match {
-          case Seq(JsString(hostname), JsNumber(port), JsString(user), JsString(password)) =>
-            FtpValidationRequest(hostname, port.toInt, user, password)
-          // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
-          case Seq(JsString(hostname), JsString(port), JsString(user), JsString(password)) =>
-            FtpValidationRequest(hostname, port.toInt, user, password)
-          case _ =>
-            throw new UnsupportedOperationException(
-              s"invalid format from ${classOf[FtpValidationRequest].getSimpleName}")
-        }
-
-      override def write(obj: FtpValidationRequest): JsValue = JsObject(
-        "hostname" -> JsString(obj.hostname),
-        "port" -> JsNumber(obj.port),
-        "user" -> JsString(obj.user),
-        "password" -> JsString(obj.password)
-      )
-    }
-
-  implicit val FTP_VALIDATION_REQUEST_COMMAND_FORMAT: ValidationCommandFormat[FtpValidationRequest] =
-    new ValidationCommandFormat[FtpValidationRequest] {
-      override def format(address: String): String =
-        s"http://$address/$VERSION_V0/$VALIDATION_PATH/$FTP_VALIDATION_PATH"
-    }
-
-  final case class ValidationReport(hostname: String, message: String, pass: Boolean)
-  implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
-
   //------------------------------------------------[RDB-QUERY]------------------------------------------------//
   val QUERY_PATH = "query"
   val RDB_PATH = "rdb"

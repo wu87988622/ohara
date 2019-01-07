@@ -70,23 +70,6 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
   }
 
   @Test
-  def validateTest(): Unit = {
-
-    def verify[T](implicit formatter: ValidationCommandFormat[T]): Unit = {
-      val domain = ip
-      val uuid = random()
-      val url = formatter.format(domain)
-      //validate
-      an[ExceptionType.error_exception] should be thrownBy TestClient
-        .doRequest[MyRequest](url, request, HttpMethods.PUT)
-    }
-    verify[RdbValidationRequest]
-    verify[HdfsValidationRequest]
-    verify[RdbValidationRequest]
-
-  }
-
-  @Test
   def queryCommandTest(): Unit = {
 
     def verify[T](implicit formatter: QueryCommandFormat[T]): Unit = {
@@ -98,21 +81,6 @@ class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
         .doRequest[MyRequest](url, request, HttpMethods.POST)
     }
     verify[RdbQuery]
-  }
-
-  @Test
-  def testExceptionWithSpecialCase(): Unit = {
-    val entity = HttpEntity(ContentTypes.`application/json`, """{"hostname":"", "port":"", "user":"", "password":""}""");
-
-    def url(implicit formatter: ValidationCommandFormat[FtpValidationRequest]) = {
-      val domain = ip
-      formatter.format(domain)
-    }
-    val e = the[ExceptionType.error_exception] thrownBy TestClient
-      .doRequestWithEntity[MyRequest](url, entity, HttpMethods.PUT)
-
-    e.getMessage.contains("ValidationRejection") shouldBe true
-    e.getMessage.contains("NumberFormatException") shouldBe true
   }
 
   @After

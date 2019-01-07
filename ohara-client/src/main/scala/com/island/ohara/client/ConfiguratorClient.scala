@@ -34,10 +34,6 @@ trait ConfiguratorClient extends ReleaseOnce {
   def update[Req, Res](uuid: String, request: Req)(implicit rm0: RootJsonFormat[Req],
                                                    rm1: RootJsonFormat[Res],
                                                    cf: DataCommandFormat[Res]): Res
-  //------------------------------------------------[VALIDATION]------------------------------------------------//
-  def validate[Req, Res](request: Req)(implicit rm0: RootJsonFormat[Req],
-                                       rm1: RootJsonFormat[Res],
-                                       cf: ValidationCommandFormat[Req]): Seq[Res]
   //------------------------------------------------[CONTROL]------------------------------------------------//
   def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
   def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
@@ -117,19 +113,6 @@ object ConfiguratorClient {
       TIMEOUT
     )
 
-    override def validate[Req, Res](request: Req)(implicit rm0: RootJsonFormat[Req],
-                                                  rm1: RootJsonFormat[Res],
-                                                  cf: ValidationCommandFormat[Req]): Seq[Res] =
-      Await.result(
-        Marshal(request)
-          .to[RequestEntity]
-          .flatMap(entity => {
-            Http()
-              .singleRequest(HttpRequest(HttpMethods.PUT, cf.format(connectionProps), entity = entity))
-              .flatMap(unmarshal[Seq[Res]])
-          }),
-        TIMEOUT
-      )
     private[this] def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else

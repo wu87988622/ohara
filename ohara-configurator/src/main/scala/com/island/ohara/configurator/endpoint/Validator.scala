@@ -4,13 +4,14 @@ import java.sql.DriverManager
 import java.util
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.ConfiguratorJson.{
+import com.island.ohara.client.configurator.v0.ValidationApi
+import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, FtpClient}
+import com.island.ohara.client.{ConnectorClient, FtpClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.FakeConnectorClient
@@ -76,7 +77,7 @@ object Validator {
     connectorClient,
     kafkaClient,
     TARGET_RDB,
-    ConfiguratorJson.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+    ValidationApi.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
     },
     taskCount
@@ -89,7 +90,7 @@ object Validator {
     connectorClient,
     kafkaClient,
     TARGET_HDFS,
-    ConfiguratorJson.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+    ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
     },
     taskCount
@@ -102,7 +103,7 @@ object Validator {
     connectorClient,
     kafkaClient,
     TARGET_FTP,
-    ConfiguratorJson.FTP_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
+    ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) =>
         v match {
           case s: JsString => (k, s.value)
@@ -229,9 +230,9 @@ class ValidatorTask extends SourceTask {
 
   private[this] def toJsObject: JsObject = JsObject(props.map { case (k, v) => (k, JsString(v)) })
   private[this] def information = require(TARGET) match {
-    case TARGET_HDFS => ConfiguratorJson.HDFS_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
-    case TARGET_RDB  => ConfiguratorJson.RDB_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
-    case TARGET_FTP  => ConfiguratorJson.FTP_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case TARGET_HDFS => ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case TARGET_RDB  => ValidationApi.RDB_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
+    case TARGET_FTP  => ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT.read(toJsObject)
     case other: String =>
       throw new IllegalArgumentException(s"valid targets are $TARGET_HDFS and $TARGET_RDB. current is $other")
   }

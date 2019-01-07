@@ -8,7 +8,6 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, Request
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.configurator.v0.ErrorApi._
-import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,11 +19,10 @@ import scala.concurrent.Future
   */
 private trait HttpExecutor {
   def get[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res]
-  def get2[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Seq[Res]]
   def delete[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res]
-  def post[Res, Req](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
+  def post[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
                                                 rm1: RootJsonFormat[Req]): Future[Res]
-  def put[Res, Req](url: String, request: Req)(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[Req]): Future[Res]
+  def put[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[Req]): Future[Res]
 }
 
 private object HttpExecutor {
@@ -42,16 +40,14 @@ private object HttpExecutor {
         Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
     override def get[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[Res])
-    override def get2[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Seq[Res]] =
-      Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[Seq[Res]])
     override def delete[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.DELETE, url)).flatMap(unmarshal[Res])
-    override def post[Res, Req](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
+    override def post[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
                                                            rm1: RootJsonFormat[Req]): Future[Res] =
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(HttpRequest(HttpMethods.POST, url, entity = entity)).flatMap(unmarshal[Res])
       }
-    override def put[Res, Req](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
+    override def put[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
                                                           rm1: RootJsonFormat[Req]): Future[Res] =
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(HttpRequest(HttpMethods.PUT, url, entity = entity)).flatMap(unmarshal[Res])

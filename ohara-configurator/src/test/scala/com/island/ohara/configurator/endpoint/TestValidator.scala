@@ -1,12 +1,12 @@
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.client.ConfiguratorJson.{
+import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.ConnectorClient
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.KafkaClient

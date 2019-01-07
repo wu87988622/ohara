@@ -7,6 +7,7 @@ import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
 import com.island.ohara.client.configurator.v0.HadoopApi.{HdfsInfo, HdfsInfoRequest}
 import com.island.ohara.client.configurator.v0.PipelineApi.{Pipeline, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicDescription}
+import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
 import com.island.ohara.common.data.{Column, DataType}
@@ -363,8 +364,13 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @Test
   def testValidationOfHdfs(): Unit = {
-    clients.foreach(client => {
-      val report = client.validate[HdfsValidationRequest, ValidationReport](HdfsValidationRequest("file:///tmp"))
+    configurators.foreach(configurator => {
+      val report = result(
+        ValidationApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .verify(HdfsValidationRequest("file:///tmp")))
       report.isEmpty shouldBe false
       report.foreach(_.pass shouldBe true)
     })
@@ -372,9 +378,13 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @Test
   def testValidationOfRdb(): Unit = {
-    clients.foreach(client => {
-      val report =
-        client.validate[RdbValidationRequest, ValidationReport](RdbValidationRequest(db.url, db.user, db.password))
+    configurators.foreach(configurator => {
+      val report = result(
+        ValidationApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .verify(RdbValidationRequest(db.url, db.user, db.password)))
       report.isEmpty shouldBe false
       report.foreach(_.pass shouldBe true)
     })
@@ -382,10 +392,13 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @Test
   def testValidationOfFtp(): Unit = {
-    clients.foreach(client => {
-      val report =
-        client.validate[FtpValidationRequest, ValidationReport](
-          FtpValidationRequest(ftpServer.hostname, ftpServer.port, ftpServer.user, ftpServer.password))
+    configurators.foreach(configurator => {
+      val report = result(
+        ValidationApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .verify(FtpValidationRequest(ftpServer.hostname, ftpServer.port, ftpServer.user, ftpServer.password)))
       report.isEmpty shouldBe false
       report.foreach(_.pass shouldBe true)
     })
