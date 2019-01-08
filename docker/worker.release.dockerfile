@@ -2,17 +2,47 @@ FROM centos:7.6.1810 as deps
 
 # install tools
 RUN yum install -y \
-  wget
+  git \
+  java-1.8.0-openjdk-devel \
+  wget \
+  unzip
+
+# export JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java
 
 # download kafka
-ARG VERSION=1.0.2
+ARG KAFKA_VERSION=1.0.2
 ARG SCALA_VERSION=2.11
-RUN wget http://ftp.twaren.net/Unix/Web/apache/kafka/${VERSION}/kafka_${SCALA_VERSION}-${VERSION}.tgz
-RUN tar -zxvf kafka_${SCALA_VERSION}-${VERSION}.tgz
-RUN rm -f kafka_${SCALA_VERSION}-${VERSION}.tgz
+RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN mkdir /opt/kafka
-RUN mv kafka_${SCALA_VERSION}-${VERSION} /opt/kafka/
-RUN echo "$VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
+RUN mv kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/
+RUN echo "$KAFKA_VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
+
+# download gradle
+ARG GRADLE_VERSION=4.10.3
+WORKDIR /opt/gradle
+RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
+RUN unzip gradle-$GRADLE_VERSION-bin.zip
+RUN rm -f gradle-$GRADLE_VERSION-bin.zip
+
+# add gradle to path
+ENV GRADLE_HOME=/opt/gradle/gradle-$GRADLE_VERSION
+ENV PATH=$PATH:$GRADLE_HOME/bin
+
+# build ohara
+# TODO: we should clone ohara libs from official release... by chia
+ARG GIT_USER=""
+ARG GIT_PWD=""
+ARG OHARA_BRANCH="master"
+WORKDIR /testpatch/ohara
+RUN git clone --single-branch -b $OHARA_BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+# we build ohara with specified version of kafka in order to keep the compatibility
+RUN gradle clean build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
+RUN mkdir /opt/ohara
+RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
+RUN cp $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/lib/* $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/libs/
 
 # download Tini
 # we download the Tini in multi-stage so as to save the space to install the wget
