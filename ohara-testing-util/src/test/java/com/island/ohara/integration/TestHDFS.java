@@ -35,14 +35,22 @@ public class TestHDFS extends MediumTest {
   @Test(expected = IOException.class)
   public void testHDFSRemote() throws IOException {
     envMap.put("ohara.it.hdfs", hdfsURI);
+    envMap.put("ohara.it.hdfs.client.timeout", "1000");
+    envMap.put("ohara.it.hdfs.client.retries", "2");
+
     Hdfs hdfs = OharaTestUtil.localHDFS().hdfs();
     assertFalse(hdfs.isLocal());
     assertTrue(hdfs.tmpDirectory().startsWith("/it"));
+    hdfs.fileSystem().listFiles(new Path("/"), false);
+  }
+
+  @Test(expected = IOException.class)
+  public void testFileSystemRemoteException() throws IOException {
+    envMap.put("ohara.it.hdfs", hdfsURI);
+    Hdfs hdfs = OharaTestUtil.localHDFS().hdfs();
     Configuration config = new Configuration();
     config.set("fs.defaultFS", hdfs.hdfsURL());
-
     FileSystem.get(config).listFiles(new Path("/"), false);
-    hdfs.fileSystem().listFiles(new Path("/"), false);
   }
 
   @Test

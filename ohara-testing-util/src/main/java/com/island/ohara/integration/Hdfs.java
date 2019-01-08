@@ -5,6 +5,7 @@ import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -12,6 +13,8 @@ import org.apache.hadoop.fs.Path;
 /** HDFS client Using external HDFS or local FileSystem */
 public interface Hdfs extends Releasable {
   String HDFS = "ohara.it.hdfs";
+  String HDFS_CLEITN_TIMEOUT = "ohara.it.hdfs.client.timeout";
+  String HDFS_CLIENT_RETRIES = "ohara.it.hdfs.client.retries";
 
   String hdfsURL();
 
@@ -26,69 +29,101 @@ public interface Hdfs extends Releasable {
   }
 
   static Hdfs of(String hdfs) {
-    final File tmpFile;
-    final String _hdfsUrl;
-    final String _tmpDirectory;
-    final Boolean _isLocal;
+    return Optional.ofNullable(hdfs)
+        .map(
+            url ->
+                (Hdfs)
+                    new Hdfs() {
+                      private DateTimeFormatter formatter =
+                          DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+                      private String tempDir = "/it/" + LocalDateTime.now().format(formatter);
 
-    if (hdfs != null) {
-      tmpFile = null;
-      hdfs = hdfs.toLowerCase();
-      LocalDateTime now = LocalDateTime.now();
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-      String timeString = now.format(formatter);
-      _tmpDirectory = "/it/" + timeString;
-      _isLocal = false;
-      _hdfsUrl = hdfs;
-    } else {
-      File file = CommonUtil.createTempDir(Hdfs.class.getSimpleName());
-      tmpFile = file;
-      _tmpDirectory = file.getAbsolutePath();
-      _isLocal = true;
-      _hdfsUrl = "file://" + _tmpDirectory;
-    }
+                      @Override
+                      public void close() {
+                        FileSystem fs = fileSystem();
+                        try {
+                          fs.delete(new Path(tmpDirectory()), true);
+                        } catch (Exception e) {
+                          throw new RuntimeException(e);
+                        }
+                      }
 
-    return new Hdfs() {
+                      @Override
+                      public String hdfsURL() {
+                        return url.toLowerCase();
+                      }
 
-      @Override
-      public void close() {
-        // delete localfile
-        if (tmpFile != null) {
-          CommonUtil.deleteFiles(tmpFile);
-        }
-        FileSystem fs = fileSystem();
-        try {
-          fs.delete(new Path(tmpDirectory()), true);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
+                      @Override
+                      public String tmpDirectory() {
+                        return tempDir;
+                      }
 
-      @Override
-      public String hdfsURL() {
-        return _hdfsUrl;
-      }
+                      @Override
+                      public boolean isLocal() {
+                        return false;
+                      }
 
-      @Override
-      public String tmpDirectory() {
-        return _tmpDirectory;
-      }
+                      @Override
+                      public FileSystem fileSystem() {
+                        Configuration config = new Configuration();
+                        config.set("fs.defaultFS", hdfsURL());
+                        String hdfsClientTimeout = System.getenv(HDFS_CLEITN_TIMEOUT);
+                        String hdfsClientRetries = System.getenv(HDFS_CLIENT_RETRIES);
+                        if (hdfsClientTimeout != null)
+                          config.set("ipc.client.connect.timeout", hdfsClientTimeout);
 
-      @Override
-      public boolean isLocal() {
-        return _isLocal;
-      }
+                        if (hdfsClientRetries != null)
+                          config.set(
+                              "ipc.client.connect.max.retries.on.timeouts", hdfsClientRetries);
 
-      @Override
-      public FileSystem fileSystem() {
-        Configuration config = new Configuration();
-        config.set("fs.defaultFS", hdfsURL());
-        try {
-          return FileSystem.get(config);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    };
+                        try {
+                          return FileSystem.get(config);
+                        } catch (Exception e) {
+                          throw new RuntimeException(e);
+                        }
+                      }
+                    })
+        .orElseGet(
+            () ->
+                new Hdfs() {
+                  private File tempDir = CommonUtil.createTempDir(Hdfs.class.getSimpleName());
+
+                  @Override
+                  public void close() {
+                    CommonUtil.deleteFiles(tempDir);
+                    FileSystem fs = fileSystem();
+                    try {
+                      fs.delete(new Path(tmpDirectory()), true);
+                    } catch (Exception e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+
+                  @Override
+                  public String hdfsURL() {
+                    return "file://" + tmpDirectory();
+                  }
+
+                  @Override
+                  public String tmpDirectory() {
+                    return tempDir.getAbsolutePath();
+                  }
+
+                  @Override
+                  public boolean isLocal() {
+                    return true;
+                  }
+
+                  @Override
+                  public FileSystem fileSystem() {
+                    Configuration config = new Configuration();
+                    config.set("fs.defaultFS", hdfsURL());
+                    try {
+                      return FileSystem.get(config);
+                    } catch (Exception e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                });
   }
 }
