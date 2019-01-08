@@ -3,7 +3,7 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.DockerClient.{ContainerCreator, ContainerInspector}
-import com.island.ohara.client.ConfiguratorJson.{ContainerDescription, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
@@ -29,24 +29,24 @@ trait DockerClient extends Releasable {
   /**
     * @return a collection of running docker containers
     */
-  def activeContainers(): Seq[ContainerDescription] = containers().filter(_.state == ContainerState.RUNNING)
+  def activeContainers(): Seq[ContainerInfo] = containers().filter(_.state == ContainerState.RUNNING)
 
   /**
     * @return a collection of docker containers
     */
-  def containers(): Seq[ContainerDescription]
+  def containers(): Seq[ContainerInfo]
 
   /**
     * @param name container's name
     * @return container description or None if container doesn't exist
     */
-  def container(name: String): Option[ContainerDescription] = containers().find(_.name == name)
+  def container(name: String): Option[ContainerInfo] = containers().find(_.name == name)
 
   /**
     * @param name container's id
     * @return container description or None if container doesn't exist
     */
-  def containerById(id: String): Option[ContainerDescription] = containers().find(_.id == id)
+  def containerById(id: String): Option[ContainerInfo] = containers().find(_.id == id)
 
   /**
     * start a docker container.
@@ -60,7 +60,7 @@ trait DockerClient extends Releasable {
     * @param name container's name
     * @return container information.
     */
-  def stop(name: String): ContainerDescription
+  def stop(name: String): ContainerInfo
 
   /**
     * remove a stopped container. If the container doesn't exist, exception will be thrown.
@@ -68,7 +68,7 @@ trait DockerClient extends Releasable {
     * @param name container's name
     * @return container information.
     */
-  def remove(name: String): ContainerDescription
+  def remove(name: String): ContainerInfo
 
   /**
     * stop a running container. If the container doesn't exist, exception will be thrown.
@@ -76,7 +76,7 @@ trait DockerClient extends Releasable {
     * @param id container's id
     * @return container information.
     */
-  def stopById(id: String): ContainerDescription
+  def stopById(id: String): ContainerInfo
 
   /**
     * remove a stopped container. If the container doesn't exist, exception will be thrown.
@@ -84,7 +84,7 @@ trait DockerClient extends Releasable {
     * @param id container's id
     * @return container information.
     */
-  def removeById(id: String): ContainerDescription
+  def removeById(id: String): ContainerInfo
 
   /**
     * @param id container's id
@@ -236,7 +236,7 @@ object DockerClient {
       * execute the docker container on background
       * @return process information
       */
-    def run(): Option[ContainerDescription]
+    def run(): Option[ContainerInfo]
 
     /**
       * this is used in testing. Devlopers can check the generated command by this method.

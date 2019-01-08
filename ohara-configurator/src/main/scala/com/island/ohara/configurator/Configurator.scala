@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.{handleRejections, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.{ClusterCollie, NodeCollie, ZookeeperCollie}
+import com.island.ohara.agent._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
@@ -49,6 +49,8 @@ class Configurator private[configurator] (configuredHostname: String,
   private val log = Logger(classOf[Configurator])
 
   private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+  private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
+  private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
 
   private[this] val exceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
@@ -78,7 +80,9 @@ class Configurator private[configurator] (configuredHostname: String,
       InfoRoute.apply,
       StreamRoute.apply,
       NodesRoute.apply,
-      ZookeeperRoute.apply
+      ZookeeperRoute.apply,
+      BrokerRoute.apply,
+      WorkerRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
@@ -203,7 +207,7 @@ object Configurator {
     val configurator =
       if (brokers.isEmpty && workers.isEmpty) {
         standalone = true
-        Configurator.builder().noCluster().hostname(hostname).port(port).build()
+        Configurator.builder().standalone().hostname(hostname).port(port).build()
       } else if (brokers.isEmpty ^ workers.isEmpty)
         throw new IllegalArgumentException(s"brokers:$brokers workers:$workers")
       else

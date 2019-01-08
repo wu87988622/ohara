@@ -1,8 +1,8 @@
 package com.island.ohara.agent
 
-import com.island.ohara.client.ConfiguratorJson
-import com.island.ohara.client.ConfiguratorJson.ContainerState
-import com.island.ohara.client.ConfiguratorJson.ContainerState._
+import com.island.ohara.client.configurator.v0.ContainerApi
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState._
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -26,8 +26,8 @@ class TestDockerJson extends SmallTest with Matchers {
   def testStateJson(): Unit = {
     ContainerState.all.foreach(
       state =>
-        ConfiguratorJson.CONTAINER_STATE_JSON_FORMAT
-          .read(ConfiguratorJson.CONTAINER_STATE_JSON_FORMAT.write(state)) shouldBe state)
+        ContainerApi.CONTAINER_STATE_JSON_FORMAT
+          .read(ContainerApi.CONTAINER_STATE_JSON_FORMAT.write(state)) shouldBe state)
   }
 
 }

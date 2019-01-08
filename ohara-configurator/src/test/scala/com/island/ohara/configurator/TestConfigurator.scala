@@ -6,7 +6,7 @@ import com.island.ohara.client.configurator.v0.DatabaseApi.{JdbcInfo, JdbcInfoRe
 import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
 import com.island.ohara.client.configurator.v0.HadoopApi.{HdfsInfo, HdfsInfoRequest}
 import com.island.ohara.client.configurator.v0.PipelineApi.{Pipeline, PipelineCreationRequest}
-import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicDescription}
+import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicInfo}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.{ConfiguratorClient, ConnectorClient, DatabaseClient}
@@ -54,14 +54,14 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
   @Test
   def testTopic(): Unit = {
     configurators.foreach { configurator =>
-      def compareRequestAndResponse(request: TopicCreationRequest, response: TopicDescription): TopicDescription = {
+      def compareRequestAndResponse(request: TopicCreationRequest, response: TopicInfo): TopicInfo = {
         request.name shouldBe response.name
         request.numberOfReplications shouldBe response.numberOfReplications
         request.numberOfPartitions shouldBe response.numberOfPartitions
         response
       }
 
-      def compare2Response(lhs: TopicDescription, rhs: TopicDescription): Unit = {
+      def compare2Response(lhs: TopicInfo, rhs: TopicInfo): Unit = {
         lhs.id shouldBe rhs.id
         lhs.name shouldBe rhs.name
         lhs.numberOfReplications shouldBe rhs.numberOfReplications

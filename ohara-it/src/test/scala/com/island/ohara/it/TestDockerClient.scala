@@ -2,7 +2,7 @@ package com.island.ohara.it
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DockerClient
-import com.island.ohara.client.ConfiguratorJson.{PortPair, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortPair}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Before, Test}

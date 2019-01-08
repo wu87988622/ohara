@@ -5,12 +5,6 @@ import java.{time, util}
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.client.ConfiguratorJson.{
-  ClusterDescription,
-  ContainerDescription,
-  ContainerState,
-  ZookeeperClusterDescription
-}
 import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
@@ -19,8 +13,13 @@ import com.island.ohara.client.ConnectorJson.{
   Plugin,
   TaskStatus
 }
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.{ConfiguratorJson, ConnectorClient, ConnectorCreator}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
@@ -102,22 +101,31 @@ class ConfiguratorBuilder {
     clusterCollie(new FakeClusterCollie)
   }
 
+  /**
+    * set a standalone configurator. It assigns only fake kafka client and connector client to configurator. The collie is based on ssh.
+    * @return
+    */
+  def standalone(): ConfiguratorBuilder = {
+    kafkaClient(new FakeKafkaClient())
+    connectClient(new FakeConnectorClient())
+  }
+
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
     this.clusterCollie = Some(clusterCollie)
     this
   }
 
+  private[this] def nodeCollie(): NodeCollie = new NodeCollie {
+    import scala.concurrent.duration._
+    override def node(name: String): Node = Await.result(store.value[Node](name), 10 seconds)
+    override def iterator: Iterator[Node] =
+      Await.result(store.raw(), 10 seconds).filter(_.isInstanceOf[Node]).map(_.asInstanceOf[Node]).iterator
+  }
   def build(): Configurator = {
-    val nodeCollie = new NodeCollie {
-      import scala.concurrent.duration._
-      override def node(name: String): Node = Await.result(store.value[Node](name), 10 seconds)
-      override def iterator: Iterator[Node] =
-        Await.result(store.raw(), 10 seconds).filter(_.isInstanceOf[Node]).map(_.asInstanceOf[Node]).iterator
-    }
     new Configurator(hostname.get, port.get, initializationTimeout.get, terminationTimeout.get, extraRoute)(
       store = store,
-      nodeCollie = nodeCollie,
-      clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie)),
+      nodeCollie = nodeCollie(),
+      clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie())),
       kafkaClient = kafkaClient.get,
       connectorClient = connectClient.get
     )
@@ -252,25 +260,27 @@ private[this] class FakeKafkaClient extends KafkaClient {
   * It doesn't involve any running cluster but save all description in memory
   */
 private[this] class FakeClusterCollie extends ClusterCollie {
+  private[this] val zkCollie: ZookeeperCollie = new FakeZookeeperCollie
+  private[this] val bkCollie: BrokerCollie = new FakeBrokerCollie
+  private[this] val wkCollie: WorkerCollie = new FakeWorkerCollie
+  override def zookeepersCollie(): ZookeeperCollie = zkCollie
 
-  override def zookeepersCollie(): ZookeeperCollie = new FakeZookeeperCollie
+  override def brokerCollie(): BrokerCollie = bkCollie
 
-  override def brokerCollie(): BrokerCollie = throw new UnsupportedOperationException("TODO: see OHARA-1063")
-
-  override def workerCollie(): WorkerCollie = throw new UnsupportedOperationException("TODO: see OHARA-1064")
+  override def workerCollie(): WorkerCollie = wkCollie
 
   override def close(): Unit = {
     // do nothing
   }
 }
 
-private[this] abstract class FakeCollie[T <: ClusterDescription] extends Collie[T] {
+private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
   protected val clusterCache = new ConcurrentHashMap[String, T]()
-  protected val containerCache = new ConcurrentHashMap[String, Seq[ContainerDescription]]()
+  protected val containerCache = new ConcurrentHashMap[String, Seq[ContainerInfo]]()
 
   protected def generateContainerDescription(nodeName: String,
                                              imageName: String,
-                                             state: ContainerState): ContainerDescription = ContainerDescription(
+                                             state: ContainerState): ContainerInfo = ContainerInfo(
     nodeName = nodeName,
     id = CommonUtil.randomString(10),
     imageName = imageName,
@@ -289,11 +299,11 @@ private[this] abstract class FakeCollie[T <: ClusterDescription] extends Collie[
     val cluster = clusterCache.remove(clusterName)
     containerCache.remove(clusterName)
     Future.successful(cluster)
-  } else Future.failed(new IllegalArgumentException(s"$clusterName doesn't exist"))
+  } else Future.failed(new NoSuchElementException(s"$clusterName doesn't exist"))
 
-  override def logs(clusterName: String): Map[ConfiguratorJson.ContainerDescription, String] = Map.empty
+  override def logs(clusterName: String): Map[ContainerInfo, String] = Map.empty
 
-  override def containers(clusterName: String): Seq[ConfiguratorJson.ContainerDescription] = if (exists(clusterName))
+  override def containers(clusterName: String): Seq[ContainerInfo] = if (exists(clusterName))
     containerCache.get(clusterName)
   else Seq.empty
 
@@ -301,37 +311,158 @@ private[this] abstract class FakeCollie[T <: ClusterDescription] extends Collie[
   override def iterator: Iterator[T] = clusterCache.values().asScala.toIterator
 }
 
-private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterDescription] with ZookeeperCollie {
+private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterInfo] with ZookeeperCollie {
   override def creator(): ZookeeperCollie.ClusterCreator =
     (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-      if (exists(clusterName)) Future.failed(new IllegalArgumentException(s"$clusterName exists!!!"))
-      else
-        Future.successful {
-          val cluster = ZookeeperClusterDescription(
-            name = clusterName,
-            imageName = imageName,
-            clientPort = clientPort,
-            peerPort = peerPort,
-            electionPort = electionPort,
-            nodeNames = nodeNames
-          )
-          clusterCache.put(clusterName, cluster)
-          containerCache.put(clusterName,
-                             nodeNames.map(
-                               nodeName =>
-                                 generateContainerDescription(
-                                   nodeName = nodeName,
-                                   imageName = imageName,
-                                   state = ContainerState.RUNNING
-                               )))
-          cluster
+      Future.successful {
+        val cluster = ZookeeperClusterInfo(
+          name = clusterName,
+          imageName = imageName,
+          clientPort = clientPort,
+          peerPort = peerPort,
+          electionPort = electionPort,
+          nodeNames = nodeNames
+        )
+        clusterCache.put(clusterName, cluster)
+        containerCache.put(clusterName,
+                           nodeNames.map(
+                             nodeName =>
+                               generateContainerDescription(
+                                 nodeName = nodeName,
+                                 imageName = imageName,
+                                 state = ContainerState.RUNNING
+                             )))
+        cluster
+    }
+
+  override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterInfo] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+
+  override def addNode(clusterName: String, nodeName: String): Future[ZookeeperClusterInfo] =
+    Future.failed(
+      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+}
+
+private[this] class FakeBrokerCollie extends FakeCollie[BrokerClusterInfo] with BrokerCollie {
+  override def creator(): BrokerCollie.ClusterCreator =
+    (clusterName, imageName, zookeeperClusterName, clientPort, _, nodeNames) =>
+      Future.successful {
+        val cluster = BrokerClusterInfo(
+          name = clusterName,
+          imageName = imageName,
+          clientPort = clientPort,
+          zookeeperClusterName = zookeeperClusterName,
+          nodeNames = nodeNames
+        )
+        clusterCache.put(clusterName, cluster)
+        containerCache.put(clusterName,
+                           nodeNames.map(
+                             nodeName =>
+                               generateContainerDescription(
+                                 nodeName = nodeName,
+                                 imageName = imageName,
+                                 state = ContainerState.RUNNING
+                             )))
+        cluster
+    }
+
+  override def removeNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo] = {
+    val previous = clusterCache.get(clusterName)
+    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    else if (!previous.nodeNames.contains(nodeName))
+      Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
+    else
+      Future.successful {
+        val newOne = previous.copy(nodeNames = previous.nodeNames.filterNot(_ == nodeName))
+        clusterCache.put(clusterName, newOne)
+        newOne
       }
+  }
 
-  override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterDescription] =
-    Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+  override def addNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo] = {
+    val previous = clusterCache.get(clusterName)
+    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    else if (previous.nodeNames.contains(nodeName))
+      Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
+    else
+      Future.successful {
+        val newOne = previous.copy(nodeNames = previous.nodeNames :+ nodeName)
+        clusterCache.put(clusterName, newOne)
+        newOne
+      }
+  }
+}
 
-  override def addNode(clusterName: String, nodeName: String): Future[ZookeeperClusterDescription] =
-    Future.failed(
-      new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
+private[this] class FakeWorkerCollie extends FakeCollie[WorkerClusterInfo] with WorkerCollie {
+  override def creator(): WorkerCollie.ClusterCreator =
+    (clusterName,
+     imageName,
+     brokerClusterName,
+     clientPort,
+     groupId,
+     offsetTopicName,
+     offsetTopicReplications,
+     offsetTopicPartitions,
+     statusTopicName,
+     statusTopicReplications,
+     statusTopicPartitions,
+     configTopicName,
+     configTopicReplications,
+     nodeNames) =>
+      Future.successful {
+        val cluster = WorkerClusterInfo(
+          name = clusterName,
+          imageName = imageName,
+          brokerClusterName = brokerClusterName,
+          clientPort = clientPort,
+          groupId = groupId,
+          offsetTopicName = offsetTopicName,
+          offsetTopicPartitions = offsetTopicPartitions,
+          offsetTopicReplications = offsetTopicReplications,
+          configTopicName = configTopicName,
+          configTopicPartitions = 1,
+          configTopicReplications = configTopicReplications,
+          statusTopicName = statusTopicName,
+          statusTopicPartitions = statusTopicPartitions,
+          statusTopicReplications = statusTopicReplications,
+          nodeNames = nodeNames
+        )
+        clusterCache.put(clusterName, cluster)
+        containerCache.put(clusterName,
+                           nodeNames.map(
+                             nodeName =>
+                               generateContainerDescription(
+                                 nodeName = nodeName,
+                                 imageName = imageName,
+                                 state = ContainerState.RUNNING
+                             )))
+        cluster
+    }
+
+  override def removeNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo] = {
+    val previous = clusterCache.get(clusterName)
+    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    else if (!previous.nodeNames.contains(nodeName))
+      Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
+    else
+      Future.successful {
+        val newOne = previous.copy(nodeNames = previous.nodeNames.filterNot(_ == nodeName))
+        clusterCache.put(clusterName, newOne)
+        newOne
+      }
+  }
+
+  override def addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo] = {
+    val previous = clusterCache.get(clusterName)
+    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    else if (previous.nodeNames.contains(nodeName))
+      Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
+    else
+      Future.successful {
+        val newOne = previous.copy(nodeNames = previous.nodeNames :+ nodeName)
+        clusterCache.put(clusterName, newOne)
+        newOne
+      }
+  }
 }

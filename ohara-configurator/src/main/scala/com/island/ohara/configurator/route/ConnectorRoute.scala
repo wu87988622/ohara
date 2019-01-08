@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.v0.ConnectorApi._
-import com.island.ohara.client.configurator.v0.TopicApi.TopicDescription
+import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil._
@@ -73,7 +73,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             if (connectorClient.nonExist(id)) onSuccess(store.value[ConnectorConfiguration](id)) { source =>
               if (source.topics.isEmpty) throw new IllegalArgumentException("topics is required")
               val invalidTopics =
-                source.topics.filterNot(t => Await.result(store.exist[TopicDescription](t), 30 seconds))
+                source.topics.filterNot(t => Await.result(store.exist[TopicInfo](t), 30 seconds))
               if (invalidTopics.nonEmpty) throw new IllegalArgumentException(s"$invalidTopics doesn't exist in ohara")
               connectorClient
                 .connectorCreator()

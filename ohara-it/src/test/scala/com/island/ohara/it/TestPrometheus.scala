@@ -6,8 +6,9 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.{ClusterCollie, DockerClient, NodeCollie}
-import com.island.ohara.client.ConfiguratorJson.{BrokerClusterDescription, ZookeeperClusterDescription}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.prometheus.PrometheusJson.{Health, Targets}
@@ -87,7 +88,7 @@ class TestPrometheus extends MediumTest with Matchers {
   }
 
 //  val clientPort = CommonUtil.availablePort()
-  def startZK(f: ZookeeperClusterDescription => Unit): Unit = {
+  def startZK(f: ZookeeperClusterInfo => Unit): Unit = {
     val clusterName = methodName()
     val electionPort = CommonUtil.availablePort()
     val peerPort = CommonUtil.availablePort()
@@ -108,7 +109,7 @@ class TestPrometheus extends MediumTest with Matchers {
     finally Await.result(zookeeperCollie.remove(clusterName), 60 seconds)
   }
 
-  def startBroker(zkClusterName: String, f: (Int, BrokerClusterDescription) => Unit): Unit = {
+  def startBroker(zkClusterName: String, f: (Int, BrokerClusterInfo) => Unit): Unit = {
     val clusterName = methodName()
     val clientPort = CommonUtil.availablePort()
     val exporterPort = CommonUtil.availablePort()

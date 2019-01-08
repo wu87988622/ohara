@@ -1,7 +1,8 @@
 package com.island.ohara.configurator
+
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
-import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
-import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.ReleaseOnce
 import org.junit.{After, Before, Test}
@@ -9,18 +10,20 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-class TestZookeeperRoute extends MediumTest with Matchers {
-  private[this] val configurator = Configurator.local()
-  private[this] val access = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+class TestBrokerRoute extends MediumTest with Matchers {
 
-  private[this] def assert(request: ZookeeperClusterCreationRequest, cluster: ZookeeperClusterInfo): Unit = {
+  private[this] val configurator = Configurator.local()
+  private[this] val access = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
+
+  private[this] def assert(request: BrokerClusterCreationRequest, cluster: BrokerClusterInfo): Unit = {
     cluster.name shouldBe request.name
     request.imageName.foreach(_ shouldBe cluster.imageName)
     request.clientPort.foreach(_ shouldBe cluster.clientPort)
-    request.peerPort.foreach(_ shouldBe cluster.peerPort)
-    request.electionPort.foreach(_ shouldBe cluster.electionPort)
+    request.zookeeperClusterName.foreach(_ shouldBe cluster.zookeeperClusterName)
     request.nodeNames shouldBe cluster.nodeNames
   }
+
+  private[this] val zkClusterName = "zkCluster"
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
@@ -29,6 +32,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val nodeAccess = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
     nodeNames.isEmpty shouldBe false
+
     nodeNames.foreach { n =>
       Await.result(nodeAccess.add(
                      NodeCreationRequest(
@@ -41,34 +45,57 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     }
 
     Await.result(nodeAccess.list(), 10 seconds).size shouldBe nodeNames.size
+
+    Await
+      .result(ZookeeperApi
+                .access()
+                .hostname(configurator.hostname)
+                .port(configurator.port)
+                .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames)),
+              10 seconds)
+      .name shouldBe zkClusterName
   }
 
   @Test
-  def testEmptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy Await.result(
-      access.add(
-        ZookeeperClusterCreationRequest(
-          name = methodName(),
-          imageName = Some("abcdef"),
-          clientPort = Some(123),
-          electionPort = Some(456),
-          peerPort = Some(1345),
-          nodeNames = Seq.empty
-        )),
-      30 seconds
-    )
+  def testDefaultZkInMultiZkCluster(): Unit = {
+    val anotherZk = methodName()
+    Await
+      .result(ZookeeperApi
+                .access()
+                .hostname(configurator.hostname)
+                .port(configurator.port)
+                .add(ZookeeperApi.creationRequest(anotherZk, nodeNames)),
+              10 seconds)
+      .name shouldBe anotherZk
+    try {
+      Await
+        .result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        .size shouldBe 2
+
+      // there are two zk cluster so we have to assign the zk cluster...
+      an[IllegalArgumentException] should be thrownBy Await.result(
+        access.add(
+          BrokerApi.creationRequest(
+            name = methodName(),
+            nodeNames = nodeNames
+          )),
+        30 seconds
+      )
+    } finally {
+      Await
+        .result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherZk),
+                10 seconds)
+        .name shouldBe anotherZk
+    }
+
   }
 
   @Test
   def testCreateOnNonexistentNode(): Unit = {
     an[IllegalArgumentException] should be thrownBy Await.result(
       access.add(
-        ZookeeperClusterCreationRequest(
+        BrokerApi.creationRequest(
           name = methodName(),
-          imageName = Some("abcdef"),
-          clientPort = Some(123),
-          electionPort = Some(456),
-          peerPort = Some(1345),
           nodeNames = Seq("asdasdasd")
         )),
       30 seconds
@@ -76,13 +103,41 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   }
 
   @Test
-  def testCreate(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
+  def testEmptyNodes(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Await.result(
+      access.add(
+        BrokerClusterCreationRequest(
+          name = methodName(),
+          imageName = Some("abcdef"),
+          zookeeperClusterName = None,
+          clientPort = Some(123),
+          nodeNames = Seq.empty
+        )),
+      30 seconds
+    )
+  }
+
+  @Test
+  def testDefaultZk(): Unit = {
+    val request = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
+      zookeeperClusterName = Some("Asdasdasd"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      nodeNames = nodeNames
+    )
+    an[IllegalArgumentException] should be thrownBy assert(request, Await.result(access.add(request), 30 seconds))
+    val anotherRequest = request.copy(zookeeperClusterName = None)
+    assert(anotherRequest, Await.result(access.add(anotherRequest), 30 seconds))
+  }
+
+  @Test
+  def testCreate(): Unit = {
+    val request = BrokerClusterCreationRequest(
+      name = methodName(),
+      imageName = Some("abcdef"),
+      zookeeperClusterName = Some(zkClusterName),
+      clientPort = Some(123),
       nodeNames = nodeNames
     )
     assert(request, Await.result(access.add(request), 30 seconds))
@@ -90,21 +145,19 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    val request0 = ZookeeperClusterCreationRequest(
+    val request0 = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
     assert(request0, Await.result(access.add(request0), 30 seconds))
-    val request1 = ZookeeperClusterCreationRequest(
+    val request1 = BrokerClusterCreationRequest(
       name = methodName() + "-2",
       imageName = Some("abcdef"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
     assert(request1, Await.result(access.add(request1), 30 seconds))
@@ -117,12 +170,11 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testRemove(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
+    val request = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
     val cluster = Await.result(access.add(request), 30 seconds)
@@ -133,12 +185,11 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testGetContainers(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
+    val request = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
     val cluster = Await.result(access.add(request), 30 seconds)
@@ -153,37 +204,33 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def testAddNode(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
+    val request = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      zookeeperClusterName = Some(zkClusterName),
       nodeNames = Seq(nodeNames.head)
     )
     val cluster = Await.result(access.add(request), 30 seconds)
     assert(request, cluster)
 
-    // we don't support to add zk node at runtime
-    an[IllegalArgumentException] should be thrownBy Await.result(access.addNode(cluster.name, nodeNames.last),
-                                                                 30 seconds)
+    Await.result(access.addNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
+      nodeNames = cluster.nodeNames :+ nodeNames.last)
   }
   @Test
   def testRemoveNode(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
+    val request = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
     val cluster = Await.result(access.add(request), 30 seconds)
     assert(request, cluster)
 
-    // we don't support to remove zk node at runtime
-    an[IllegalArgumentException] should be thrownBy Await.result(access.removeNode(cluster.name, nodeNames.head),
-                                                                 30 seconds)
+    Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
+      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last))
   }
 
   @After

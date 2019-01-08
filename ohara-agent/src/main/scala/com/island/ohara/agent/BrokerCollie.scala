@@ -1,19 +1,58 @@
 package com.island.ohara.agent
-import com.island.ohara.client.ConfiguratorJson.BrokerClusterDescription
-import com.island.ohara.common.util.VersionUtil
+import java.util.Objects
+
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 
 import scala.concurrent.Future
 
-trait BrokerCollie extends Collie[BrokerClusterDescription] {
+trait BrokerCollie extends Collie[BrokerClusterInfo] {
   def creator(): BrokerCollie.ClusterCreator
 }
 
 object BrokerCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterDescription] {
-    def zookeeperClusterName(name: String): ClusterCreator
-    def clientPort(clientPort: Int): ClusterCreator
-    def exporterPort(exporterPort: Int): ClusterCreator
-    def create(nodeNames: Seq[String]): Future[BrokerClusterDescription]
+  trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
+    private[this] var clientPort: Int = BrokerCollie.CLIENT_PORT_DEFAULT
+    private[this] var zookeeperClusterName: String = _
+    private[this] var exporterPort: Int = BrokerCollie.EXPORTER_PORT_DEFAULT
+
+    def zookeeperClusterName(name: String): ClusterCreator = {
+      this.zookeeperClusterName = name
+      this
+    }
+
+    @Optional("default port is 9092")
+    def clientPort(clientPort: Option[Int]): ClusterCreator = {
+      clientPort.foreach(this.clientPort = _)
+      this
+    }
+
+    def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
+
+    @Optional("default port is 7071")
+    def exporterPort(exporterPort: Int): ClusterCreator = {
+      this.exporterPort = exporterPort
+      this
+    }
+
+    def create(nodeNames: Seq[String]): Future[BrokerClusterInfo] = doCreate(
+      clusterName = Objects.requireNonNull(clusterName),
+      imageName = Option(imageName).getOrElse(BrokerCollie.IMAGE_NAME_DEFAULT),
+      zookeeperClusterName = Objects.requireNonNull(zookeeperClusterName),
+      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort must be positive"),
+      exporterPort = CommonUtil.requirePositiveInt(exporterPort, () => "exporterPort must be positive"),
+      nodeNames =
+        if (nodeNames == null || nodeNames.isEmpty) throw new IllegalArgumentException("nodes can't be empty")
+        else nodeNames
+    )
+
+    protected def doCreate(clusterName: String,
+                           imageName: String,
+                           zookeeperClusterName: String,
+                           clientPort: Int,
+                           exporterPort: Int,
+                           nodeNames: Seq[String]): Future[BrokerClusterInfo]
   }
 
   /**

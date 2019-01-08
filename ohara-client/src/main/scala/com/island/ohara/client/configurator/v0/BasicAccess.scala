@@ -24,7 +24,7 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
   }
 
   protected def _hostname: String = CommonUtil.requireNonEmpty(hostname, () => "hostname can't be empty")
-  protected def _port: Int = CommonUtil.requirePositiveNumber(port, () => "port can't be empty")
+  protected def _port: Int = CommonUtil.requirePositiveInt(port, () => "port can't be empty")
   protected def _version: String = CommonUtil.requireNonEmpty(version, () => "version can't be empty")
   protected def _prefixPath: String = CommonUtil.requireNonEmpty(prefixPath, () => "prefixPath can't be empty")
 }

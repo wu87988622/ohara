@@ -1,6 +1,7 @@
 package com.island.ohara.agent
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.client.ConfiguratorJson.{ClusterDescription, ContainerDescription}
+import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
 
 import scala.concurrent.Future
@@ -9,7 +10,7 @@ import scala.concurrent.Future
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
   * @tparam T cluster description
   */
-trait Collie[T <: ClusterDescription] extends Iterable[T] {
+trait Collie[T <: ClusterInfo] extends Iterable[T] {
 
   /**
     * remove whole cluster by specified name.
@@ -23,7 +24,7 @@ trait Collie[T <: ClusterDescription] extends Iterable[T] {
     * @param clusterName cluster name
     * @return all log content from cluster. Each container has a log.
     */
-  def logs(clusterName: String): Map[ContainerDescription, String]
+  def logs(clusterName: String): Map[ContainerInfo, String]
 
   /**
     * create a cluster creator
@@ -36,7 +37,7 @@ trait Collie[T <: ClusterDescription] extends Iterable[T] {
     * @param clusterName cluster name
     * @return containers information
     */
-  def containers(clusterName: String): Seq[ContainerDescription]
+  def containers(clusterName: String): Seq[ContainerInfo]
 
   /**
     * get the cluster information from a broker cluster
@@ -77,7 +78,7 @@ trait Collie[T <: ClusterDescription] extends Iterable[T] {
 }
 
 object Collie {
-  trait ClusterCreator[T <: ClusterDescription] {
+  trait ClusterCreator[T <: ClusterInfo] {
     protected var imageName: String = _
     protected var clusterName: String = _
 
@@ -88,15 +89,11 @@ object Collie {
       */
     @Optional("we have default image for each collie")
     def imageName(imageName: Option[String]): ClusterCreator.this.type = {
-      imageName.foreach(ClusterCreator.this.imageName(_))
+      imageName.foreach(this.imageName = _)
       this
     }
 
-    @Optional("we have default image for each collie")
-    def imageName(imageName: String): ClusterCreator.this.type = {
-      this.imageName = imageName
-      this
-    }
+    def imageName(name: String): ClusterCreator.this.type = imageName(Some(name))
 
     def clusterName(clusterName: String): ClusterCreator.this.type = {
       this.clusterName = clusterName

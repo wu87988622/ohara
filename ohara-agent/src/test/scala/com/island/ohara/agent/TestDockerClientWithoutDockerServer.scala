@@ -1,6 +1,6 @@
 package com.island.ohara.agent
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
-import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortPair}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.SshdServer
@@ -151,7 +151,7 @@ object TestDockerClientWithoutDockerServer {
 
   private val CONTAINERS = ContainerState.all.map(
     s =>
-      ContainerDescription(
+      ContainerInfo(
         nodeName = CommonUtil.hostname(),
         id = s"id-${s.name}",
         imageName = s"image-${s.name}",
@@ -164,7 +164,7 @@ object TestDockerClientWithoutDockerServer {
         hostname = "localhost"
     ))
 
-  private[this] def containerToString(container: ContainerDescription): String = Seq(
+  private[this] def containerToString(container: ContainerInfo): String = Seq(
     container.id,
     container.imageName,
     container.created,

@@ -1,37 +1,125 @@
 package com.island.ohara.agent
-import com.island.ohara.client.ConfiguratorJson.WorkerClusterDescription
+import java.util.Objects
+
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 
 import scala.concurrent.Future
 
-trait WorkerCollie extends Collie[WorkerClusterDescription] {
+trait WorkerCollie extends Collie[WorkerClusterInfo] {
   def creator(): WorkerCollie.ClusterCreator
 }
 
 object WorkerCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterDescription] {
-    def brokerClusterName(name: String): ClusterCreator
-    def clientPort(clientPort: Int): ClusterCreator
-    @Optional("group id cant be generated automatically")
-    def groupId(groupId: String): ClusterCreator
-    @Optional("group id cant be generated automatically")
-    def offsetTopicName(offsetTopicName: String): ClusterCreator
+  trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
+    private[this] var clientPort: Int = WorkerCollie.CLIENT_PORT_DEFAULT
+    private[this] var brokerClusterName: String = _
+    private[this] var groupId: String = CommonUtil.randomString()
+    private[this] var offsetTopicName = s"$groupId-offset-topic"
+    private[this] var offsetTopicReplications: Short = 1
+    private[this] var offsetTopicPartitions: Int = 1
+    private[this] var configTopicName = s"$groupId-config-topic"
+    private[this] var configTopicReplications: Short = 1
+    private[this] var statusTopicName = s"$groupId-status-topic"
+    private[this] var statusTopicReplications: Short = 1
+    private[this] var statusTopicPartitions: Int = 1
+
+    def brokerClusterName(name: String): ClusterCreator = {
+      this.brokerClusterName = name
+      this
+    }
+
+    def clientPort(port: Option[Int]): ClusterCreator = {
+      port.foreach(this.clientPort = _)
+      this
+    }
+
+    def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
+
+    @Optional("group id can be generated automatically")
+    def groupId(groupId: String): ClusterCreator = {
+      this.groupId = groupId
+      this
+    }
+    @Optional("group id can be generated automatically")
+    def offsetTopicName(offsetTopicName: String): ClusterCreator = {
+      this.offsetTopicName = offsetTopicName
+      this
+    }
     @Optional("default number is 1")
-    def offsetTopicReplications(numberOfReplications: Short): ClusterCreator
+    def offsetTopicReplications(numberOfReplications: Short): ClusterCreator = {
+      this.offsetTopicReplications = numberOfReplications
+      this
+    }
     @Optional("default number is 1")
-    def offsetTopicPartitions(numberOfPartitions: Int): ClusterCreator
-    @Optional("status topic cant be generated automatically")
-    def statusTopicName(statusTopicName: String): ClusterCreator
+    def offsetTopicPartitions(numberOfPartitions: Int): ClusterCreator = {
+      this.offsetTopicPartitions = numberOfPartitions
+      this
+    }
+    @Optional("status topic can be generated automatically")
+    def statusTopicName(statusTopicName: String): ClusterCreator = {
+      this.statusTopicName = statusTopicName
+      this
+    }
     @Optional("default number is 1")
-    def statusTopicReplications(numberOfReplications: Short): ClusterCreator
+    def statusTopicReplications(numberOfReplications: Short): ClusterCreator = {
+      this.statusTopicReplications = numberOfReplications
+      this
+    }
     @Optional("default number is 1")
-    def statusTopicPartitions(numberOfPartitions: Int): ClusterCreator
-    @Optional("config topic cant be generated automatically")
-    def configTopicName(configTopicName: String): ClusterCreator
+    def statusTopicPartitions(numberOfPartitions: Int): ClusterCreator = {
+      this.statusTopicPartitions = numberOfPartitions
+      this
+    }
+    @Optional("config topic can be generated automatically")
+    def configTopicName(configTopicName: String): ClusterCreator = {
+      this.configTopicName = configTopicName
+      this
+    }
     @Optional("default number is 1")
-    def configTopicReplications(numberOfReplications: Short): ClusterCreator
-    def create(nodeNames: Seq[String]): Future[WorkerClusterDescription]
+    def configTopicReplications(numberOfReplications: Short): ClusterCreator = {
+      this.configTopicReplications = numberOfReplications
+      this
+    }
+    def create(nodeNames: Seq[String]): Future[WorkerClusterInfo] = doCreate(
+      clusterName = Objects.requireNonNull(clusterName),
+      imageName = Option(imageName).getOrElse(WorkerCollie.IMAGE_NAME_DEFAULT),
+      brokerClusterName = Objects.requireNonNull(brokerClusterName),
+      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort should be positive number"),
+      groupId = Objects.requireNonNull(groupId),
+      offsetTopicName = Objects.requireNonNull(offsetTopicName),
+      offsetTopicReplications = CommonUtil
+        .requirePositiveShort(offsetTopicReplications, () => "offsetTopicReplications should be positive number"),
+      offsetTopicPartitions =
+        CommonUtil.requirePositiveInt(offsetTopicPartitions, () => "offsetTopicPartitions should be positive number"),
+      statusTopicName = Objects.requireNonNull(statusTopicName),
+      statusTopicReplications = CommonUtil
+        .requirePositiveShort(statusTopicReplications, () => "statusTopicReplications should be positive number"),
+      statusTopicPartitions =
+        CommonUtil.requirePositiveInt(statusTopicPartitions, () => "statusTopicPartitions should be positive number"),
+      configTopicName = Objects.requireNonNull(configTopicName),
+      configTopicReplications = CommonUtil
+        .requirePositiveShort(configTopicReplications, () => "configTopicReplications should be positive number"),
+      nodeNames =
+        if (nodeNames == null || nodeNames.isEmpty) throw new IllegalArgumentException("nodes can't be empty")
+        else nodeNames
+    )
+
+    protected def doCreate(clusterName: String,
+                           imageName: String,
+                           brokerClusterName: String,
+                           clientPort: Int,
+                           groupId: String,
+                           offsetTopicName: String,
+                           offsetTopicReplications: Short,
+                           offsetTopicPartitions: Int,
+                           statusTopicName: String,
+                           statusTopicReplications: Short,
+                           statusTopicPartitions: Int,
+                           configTopicName: String,
+                           configTopicReplications: Short,
+                           nodeNames: Seq[String]): Future[WorkerClusterInfo]
   }
 
   /**

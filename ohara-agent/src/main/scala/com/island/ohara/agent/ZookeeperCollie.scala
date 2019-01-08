@@ -1,9 +1,9 @@
 package com.island.ohara.agent
 import java.util.Objects
 
-import com.island.ohara.client.ConfiguratorJson.ZookeeperClusterDescription
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 
 import scala.concurrent.Future
 
@@ -11,12 +11,12 @@ import scala.concurrent.Future
   * a interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Collie[ZookeeperClusterDescription] {
+trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
   override def creator(): ZookeeperCollie.ClusterCreator
 }
 
 object ZookeeperCollie {
-  trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterDescription] {
+  trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {
     private[this] var clientPort: Int = ZookeeperCollie.CLIENT_PORT_DEFAULT
     private[this] var peerPort: Int = ZookeeperCollie.PEER_PORT_DEFAULT
     private[this] var electionPort: Int = ZookeeperCollie.ELECTION_PORT_DEFAULT
@@ -28,14 +28,11 @@ object ZookeeperCollie {
       */
     @Optional("default port is 2181")
     def clientPort(clientPort: Option[Int]): ClusterCreator = {
-      clientPort.foreach(ClusterCreator.this.clientPort(_))
+      clientPort.foreach(this.clientPort = _)
       this
     }
-    @Optional("default port is 2181")
-    def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = clientPort
-      this
-    }
+
+    def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
 
     /**
       * In ZookeeperRoute we accept the option arguments from restful APIs. This method help caller to apply fluent pattern.
@@ -44,15 +41,11 @@ object ZookeeperCollie {
       */
     @Optional("default port is 2888")
     def peerPort(peerPort: Option[Int]): ClusterCreator = {
-      peerPort.foreach(ClusterCreator.this.peerPort(_))
+      peerPort.foreach(this.peerPort = _)
       this
     }
 
-    @Optional("default port is 2888")
-    def peerPort(peerPort: Int): ClusterCreator = {
-      this.peerPort = peerPort
-      this
-    }
+    def peerPort(port: Int): ClusterCreator = peerPort(Some(port))
 
     /**
       * In ZookeeperRoute we accept the option arguments from restful APIs. This method help caller to apply fluent pattern.
@@ -61,21 +54,17 @@ object ZookeeperCollie {
       */
     @Optional("default port is 3888")
     def electionPort(electionPort: Option[Int]): ClusterCreator = {
-      electionPort.foreach(ClusterCreator.this.electionPort(_))
+      electionPort.foreach(this.electionPort = _)
       this
     }
-    @Optional("default port is 3888")
-    def electionPort(electionPort: Int): ClusterCreator = {
-      this.electionPort = electionPort
-      this
-    }
+    def electionPort(port: Int): ClusterCreator = electionPort(Some(port))
 
-    def create(nodeNames: Seq[String]): Future[ZookeeperClusterDescription] = doCreate(
+    def create(nodeNames: Seq[String]): Future[ZookeeperClusterInfo] = doCreate(
       clusterName = Objects.requireNonNull(clusterName),
       imageName = Option(imageName).getOrElse(ZookeeperCollie.IMAGE_NAME_DEFAULT),
-      clientPort = clientPort,
-      peerPort = peerPort,
-      electionPort = electionPort,
+      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort must be positive"),
+      peerPort = CommonUtil.requirePositiveInt(peerPort, () => "peerPort must be positive"),
+      electionPort = CommonUtil.requirePositiveInt(electionPort, () => "electionPort must be positive"),
       nodeNames =
         if (nodeNames == null || nodeNames.isEmpty) throw new IllegalArgumentException("nodes can't be empty")
         else nodeNames
@@ -86,7 +75,7 @@ object ZookeeperCollie {
                            clientPort: Int,
                            peerPort: Int,
                            electionPort: Int,
-                           nodeNames: Seq[String]): Future[ZookeeperClusterDescription]
+                           nodeNames: Seq[String]): Future[ZookeeperClusterInfo]
   }
 
   /**

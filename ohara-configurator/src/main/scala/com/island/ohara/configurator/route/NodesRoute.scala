@@ -15,13 +15,11 @@ object NodesRoute {
       ),
       NodeService(
         name = "broker",
-        // TODO: see OHARA-1063
-        clusterNames = Seq.empty
+        clusterNames = clusterCollie.brokerCollie().filter(_.nodeNames.contains(res.name)).map(_.name).toSeq
       ),
       NodeService(
         name = "connect-worker",
-        // TODO: see OHARA-1064
-        clusterNames = Seq.empty
+        clusterNames = clusterCollie.workerCollie().filter(_.nodeNames.contains(res.name)).map(_.name).toSeq
       )
     )
   )

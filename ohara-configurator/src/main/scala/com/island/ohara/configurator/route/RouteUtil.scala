@@ -4,16 +4,17 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
+import com.island.ohara.agent.{Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
-import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
+import com.island.ohara.client.configurator.v0.{ClusterCreationRequest, ClusterInfo, Data, ErrorApi}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
 private[configurator] object RouteUtil extends SprayJsonSupport {
   def rejectNonexistentUuid(uuid: String): StandardRoute = complete(
@@ -124,5 +125,47 @@ private[configurator] object RouteUtil extends SprayJsonSupport {
     } ~ path(Segment) { id =>
       routeOfGet[Req, Res](id, hookOfGet) ~ routeOfDelete[Req, Res](id, hookBeforeDelete, hookOfDelete) ~
         routeOfUpdate[Req, Res](id, hookOfUpdate)
+    }
+
+  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo](root: String,
+                                                                             hookOfCreation: Req => Future[Res])(
+    implicit collie: Collie[Res],
+    nodeCollie: NodeCollie,
+    rm: RootJsonFormat[Req],
+    rm1: RootJsonFormat[Res]): server.Route =
+    pathPrefix(root) {
+      pathEnd {
+        // create cluster
+        post {
+          entity(as[Req]) { req =>
+            if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
+            if (collie.exists(req.name)) throw new IllegalArgumentException(s"${req.name} exists!!!")
+            req.nodeNames.foreach { nodeName =>
+              if (!nodeCollie.exists(_.name == nodeName)) throw new NoSuchElementException(s"$nodeName doesn't exist")
+            }
+            onSuccess(hookOfCreation(req))(cluster => complete(cluster))
+          }
+        } ~ get(complete(collie.toSeq))
+      } ~ pathPrefix(Segment) { clusterName =>
+        if (!collie.exists(clusterName)) failWith(new NoSuchElementException(s"$clusterName doesn't exist"))
+        else
+          path(Segment) { nodeName =>
+            if (!nodeCollie.exists(_.name == nodeName)) failWith(new NoSuchElementException(s"$nodeName doesn't exist"))
+            else
+              // add node to a running cluster
+              post {
+                onSuccess(collie.addNode(clusterName, nodeName))(value => complete(value))
+              } ~ delete {
+                // remove node from a running cluster
+                onSuccess(collie.removeNode(clusterName, nodeName))(value => complete(value))
+              }
+          } ~ pathEnd {
+            delete {
+              onComplete(collie.remove(clusterName))(cluster => complete(cluster))
+            } ~ get {
+              complete(collie.containers(clusterName))
+            }
+          }
+      }
     }
 }

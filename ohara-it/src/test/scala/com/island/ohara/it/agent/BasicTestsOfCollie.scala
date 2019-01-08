@@ -3,13 +3,11 @@ package com.island.ohara.it.agent
 import java.time.Duration
 
 import com.island.ohara.agent._
-import com.island.ohara.client.ConfiguratorJson.{
-  BrokerClusterDescription,
-  WorkerClusterDescription,
-  ZookeeperClusterDescription
-}
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
@@ -81,7 +79,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     * create a zk cluster env in running test case.
     * @param f test case
     */
-  private[this] def testZk(f: ZookeeperClusterDescription => Unit): Unit = runTest { () =>
+  private[this] def testZk(f: ZookeeperClusterInfo => Unit): Unit = runTest { () =>
     val zookeeperCollie = clusterCollie.zookeepersCollie()
     val nodeName = nodeCollie.head.name
     val clusterName = random()
@@ -130,7 +128,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     } finally if (cleanup) Await.result(zookeeperCollie.remove(zkCluster.name), timeout)
   }
 
-  private[this] def testBroker(f: BrokerClusterDescription => Unit): Unit = testZk { zkCluster =>
+  private[this] def testBroker(f: BrokerClusterInfo => Unit): Unit = testZk { zkCluster =>
     val brokerCollie = clusterCollie.brokerCollie()
     val nodeName = nodeCollie.head.name
     val clusterName = random()
@@ -195,7 +193,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     } finally if (cleanup) Await.result(brokerCollie.remove(brokerCluster.name), timeout)
   }
 
-  private[this] def testAddNodeToRunningBrokerCluster(f: BrokerClusterDescription => Unit): Unit = testBroker {
+  private[this] def testAddNodeToRunningBrokerCluster(f: BrokerClusterInfo => Unit): Unit = testBroker {
     previousCluster =>
       val brokerCollie = clusterCollie.brokerCollie()
       brokerCollie.exists(_.name == previousCluster.name) shouldBe true
@@ -233,7 +231,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
   }
 
-  private[this] def testWorker(f: WorkerClusterDescription => Unit): Unit = testBroker { brokerCluster =>
+  private[this] def testWorker(f: WorkerClusterInfo => Unit): Unit = testBroker { brokerCluster =>
     val workerCollie = clusterCollie.workerCollie()
     val nodeName = nodeCollie.head.name
     val clusterName = random()
@@ -289,7 +287,7 @@ abstract class BasicTestsOfCollie extends LargeTest with Matchers {
     } finally if (cleanup) Await.result(workerCollie.remove(workerCluster.name), timeout)
   }
 
-  private[this] def testAddNodeToRunningWorkerCluster(f: WorkerClusterDescription => Unit): Unit = testWorker {
+  private[this] def testAddNodeToRunningWorkerCluster(f: WorkerClusterInfo => Unit): Unit = testWorker {
     previousCluster =>
       val workerCollie = clusterCollie.workerCollie()
       workerCollie.exists(_.name == previousCluster.name) shouldBe true

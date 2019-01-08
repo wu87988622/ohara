@@ -23,6 +23,15 @@ private trait HttpExecutor {
   def post[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
                                                 rm1: RootJsonFormat[Req]): Future[Res]
   def put[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[Req]): Future[Res]
+
+  /**
+    * cluster apis use POST to add/remove node to/from a running cluster.
+    * @param url url to cluster apis
+    * @param rm0 format
+    * @tparam Res response type
+    * @return response
+    */
+  def post[Res](url: String)(implicit rm0: RootJsonFormat[Res]): Future[Res]
 }
 
 private object HttpExecutor {
@@ -52,5 +61,8 @@ private object HttpExecutor {
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(HttpRequest(HttpMethods.PUT, url, entity = entity)).flatMap(unmarshal[Res])
       }
+
+    override def post[Res](url: String)(implicit rm0: RootJsonFormat[Res]): Future[Res] =
+      Http().singleRequest(HttpRequest(HttpMethods.POST, url)).flatMap(unmarshal[Res])
   }
 }

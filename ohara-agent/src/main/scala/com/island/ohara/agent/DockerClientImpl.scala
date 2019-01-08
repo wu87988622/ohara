@@ -2,7 +2,7 @@ package com.island.ohara.agent
 import java.util.Objects
 
 import com.island.ohara.agent.DockerClient._
-import com.island.ohara.client.ConfiguratorJson.{ContainerDescription, PortMapping, PortPair, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -62,7 +62,7 @@ private[agent] object DockerClientImpl {
   ).mkString(DIVIDER)
 }
 
-import DockerClientImpl._
+import com.island.ohara.agent.DockerClientImpl._
 private[agent] class DockerClientImpl(hostname: String, port: Int, user: String, password: String)
     extends ReleaseOnce
     with DockerClient {
@@ -97,7 +97,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       this
     }
 
-    override def run(): Option[ContainerDescription] = {
+    override def run(): Option[ContainerInfo] = {
       val cmd = dockerCommand()
       LOG.info(s"docker command:$cmd")
       agent.execute(cmd)
@@ -168,7 +168,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     }
   }
 
-  override def containers(): Seq[ContainerDescription] = agent
+  override def containers(): Seq[ContainerInfo] = agent
     .execute(s"docker ps -a --format $LIST_PROCESS_FORMAT")
     .map(_.split("\n"))
     .map {
@@ -183,7 +183,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
               s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
           val id = items.head
           Some(
-            ContainerDescription(
+            ContainerInfo(
               nodeName = hostname,
               id = id,
               imageName = items(1),
@@ -230,7 +230,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     }
     .getOrElse(Seq.empty)
 
-  override def stop(name: String): ContainerDescription =
+  override def stop(name: String): ContainerInfo =
     containers()
       .find(_.name == name)
       .map(container => {
@@ -239,7 +239,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       })
       .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
 
-  override def remove(name: String): ContainerDescription =
+  override def remove(name: String): ContainerInfo =
     containers()
       .find(_.name == name)
       .map(container => {
@@ -248,7 +248,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       })
       .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
 
-  override def stopById(id: String): ContainerDescription =
+  override def stopById(id: String): ContainerInfo =
     containers()
       .find(_.id == id)
       .map(container => {
@@ -257,7 +257,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       })
       .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
 
-  override def removeById(id: String): ContainerDescription =
+  override def removeById(id: String): ContainerInfo =
     containers()
       .find(_.id == id)
       .map(container => {

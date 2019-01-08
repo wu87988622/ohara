@@ -45,14 +45,6 @@ trait ConfiguratorClient extends ReleaseOnce {
   //------------------------------------------------[Stream]------------------------------------------------//
   def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
                                                               cf: DataCommandFormat[Req]): Res
-  //------------------------------------------------[Cluster]------------------------------------------------//
-  def createCluster[Req, Res](
-    request: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Res
-  def removeCluster[Res](name: String)(implicit rm: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Res
-  def listCluster[Res](implicit rm: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Seq[Res]
-  def containersOfZookeeperCluster(name: String)(
-    implicit cf: ClusterControlCommand[ZookeeperClusterDescription]): Seq[ContainerDescription]
-
 }
 
 object ConfiguratorClient {
@@ -166,34 +158,5 @@ object ConfiguratorClient {
         TIMEOUT
       )
     }
-    override def createCluster[Req, Res](
-      request: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Res =
-      Await.result(
-        Marshal(request)
-          .to[RequestEntity]
-          .flatMap(entity => {
-            Http()
-              .singleRequest(HttpRequest(HttpMethods.POST, cf.create(connectionProps), entity = entity))
-              .flatMap(unmarshal[Res](_))
-          }),
-        TIMEOUT
-      )
-    override def removeCluster[Res](name: String)(implicit rm: RootJsonFormat[Res],
-                                                  cf: ClusterControlCommand[Res]): Res = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.DELETE, cf.remove(connectionProps, name))).flatMap(unmarshal[Res]),
-      TIMEOUT)
-    override def containersOfZookeeperCluster(name: String)(
-      implicit cf: ClusterControlCommand[ZookeeperClusterDescription]): Seq[ContainerDescription] =
-      Await.result(
-        Http()
-          .singleRequest(HttpRequest(HttpMethods.GET, cf.containers(connectionProps, name)))
-          .flatMap(unmarshal[Seq[ContainerDescription]]),
-        TIMEOUT
-      )
-    override def listCluster[Res](implicit rm: RootJsonFormat[Res], cf: ClusterControlCommand[Res]): Seq[Res] =
-      Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.GET, cf.list(connectionProps))).flatMap(unmarshal[Seq[Res]]),
-        TIMEOUT
-      )
   }
 }
