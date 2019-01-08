@@ -103,6 +103,9 @@ const Svg = styled.svg`
 
     .node-name {
       margin-bottom: 5px;
+      width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .node-status {
