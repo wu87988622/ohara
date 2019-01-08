@@ -1,0 +1,171 @@
+swagger: "2.0"
+info:
+  title: "OHARA Configurator"
+  description: "OHARA Configurator API - Swagger version"
+  version: "2.0-SNAPSHOT"
+  contact:
+    name: "The God - Chia7712"
+    email: "chia7712@is-land.com.tw"
+basePath: "/API/v0"
+tags:
+  - name: "Topics"
+    description: "topic crud"
+    externalDocs:
+      description: "Google Doc"
+      url: "https://ppt.cc/fhYKUx"
+schemes:
+  - "http"
+paths:
+  /topics:
+    get:
+      tags:
+        - "Topics"
+      summary: "get all topics"
+      description: "get all topics"
+      operationId: "getTopics"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: topic response
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Topic"
+        400:
+          $ref: "#/responses/Error"
+    post:
+      tags:
+        - "Topics"
+      summary: "add a topic"
+      description: "add a topic to broker"
+      operationId: "addTopic"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: "#/parameters/TopicRequest"
+      responses:
+        200:
+          $ref: "#/definitions/Topic"
+        400:
+          $ref: "#/responses/Error"
+
+  /topics/{topicId}:
+    get:
+      tags:
+        - "Topics"
+      summary: "find topic by ID"
+      description: "Returns a single topic"
+      operationId: "getTopicById"
+      parameters:
+        - $ref: "#/parameters/TopicId"
+      responses:
+        200:
+          $ref: "#/definitions/Topic"
+        400:
+          $ref: "#/responses/Error"
+    put:
+      tags:
+        - "Topics"
+      summary: "Updates topic by ID"
+      description: "update a single topic"
+      operationId: "updateTopicById"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: "#/parameters/TopicId"
+        - $ref: "#/parameters/TopicRequest"
+      responses:
+        200:
+          $ref: "#/definitions/Topic"
+        400:
+          $ref: "#/responses/Error"
+
+    delete:
+      tags:
+        - "Topics"
+      summary: "Deletes a topic"
+      description: "delete topic by id"
+      operationId: "deleteTopic"
+      parameters:
+        - $ref: "#/parameters/TopicId"
+      responses:
+        200:
+          $ref: "#/definitions/Topic"
+        400:
+          $ref: "#/responses/Error"
+
+parameters:
+  TopicId:
+    name: "topicId"
+    in: "path"
+    description: " topic id"
+    required: true
+    type: "string"
+
+  TopicRequest:
+    in: "body"
+    name: "body"
+    description: "topic request"
+    required: true
+    schema:
+      $ref: "#/definitions/TopicRequest"
+
+responses:
+  Topic:
+    description: topic response
+    schema:
+      $ref: "#/definitions/Topic"
+  Error:
+    description: bad request
+    schema:
+      $ref: "#/definitions/Error"
+
+definitions:
+  Topic:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      name:
+        type: "string"
+      numberOfPartitions:
+        type: "integer"
+        format: "int32"
+      numberOfReplications:
+        type: "integer"
+        format: "int16"
+      lastModified:
+        type: "integer"
+        format: "int64"
+
+  TopicRequest:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+      numberOfPartitions:
+        type: "integer"
+        format: "int32"
+      numberOfReplications:
+        type: "integer"
+        format: "int16"
+
+  Error:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+      code:
+        type: "string"
+      stack:
+        type: "string"
+
+
+externalDocs:
+  description: "Original Google Doc"
+  url: "https://ppt.cc/fhYKUx"

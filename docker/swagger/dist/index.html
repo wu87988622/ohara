@@ -1,0 +1,77 @@
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css" >
+    <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
+    <style>
+      html
+      {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+
+      *,
+      *:before,
+      *:after
+      {
+        box-sizing: inherit;
+      }
+
+      body
+      {
+        margin:0;
+        background: #fafafa;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+
+    <script src="./swagger-ui-bundle.js"> </script>
+    <script src="./swagger-ui-standalone-preset.js"> </script>
+    <script>
+
+        window.onload = function() {
+
+        var xmlhttp = new XMLHttpRequest();
+
+        //urls file name
+        var url = "urls.json";
+
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var urls = JSON.parse(this.responseText);
+                startSwagger(urls)
+            }
+        };
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
+
+        }
+
+        function startSwagger(urlsJson){
+         const ui = SwaggerUIBundle({
+            urls:urlsJson,
+            // urls: [{url:"file://./swagger.json",name:"test"}],
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+            ],
+            // plugins: [
+            //     SwaggerUIBundle.plugins.DownloadUrl
+            // ],
+            layout: "StandaloneLayout",
+            })
+             window.ui = ui
+        }
+  </script>
+  </body>
+</html>
