@@ -21,6 +21,8 @@ subprojects {
     else apply plugin: 'scala'
     test {
       maxParallelForks = userMaxForks ?:((int)(Runtime.runtime.availableProcessors()/2)) ?: 1
+      // make isolation for tests. It may be expensive but stability is first choice.
+      forkEvery = 1
       minHeapSize = "256m"
       maxHeapSize = "4096m"
       testLogging {
