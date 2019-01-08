@@ -10,6 +10,7 @@ export const PIPELINE_CREATION_SUCCESS = 'New pipeline has been created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
 export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
 export const CONFIG_DELETE_SUCCESS = 'Successfully deleted the configuration:';
+export const CONFIG_DELETE_CHECK = 'Please select a connection to delete!';
 export const STREAM_APP_UPLOAD_SUCCESS = 'Stream app successfully uploaded!';
 export const STREAM_APP_RENAME_SUCCESS = 'Stream app successfully renamed!';
 export const STREAM_APP_DELETE_SUCCESS = 'Successfully deleted the stream app!';
@@ -17,6 +18,10 @@ export const TEST_SUCCESS = 'Test has passed!';
 export const TEST_NOT_SUCCESS = 'Test has not passed!';
 
 // Error messages
+export const EMPTY_NAME_ERROR = 'Name is a required field!';
+export const EMPTY_CONN_URL_ERROR = 'Coonection URL is a required field!';
+export const EMPTY_USER_ERROR = 'User is a required field!';
+export const EMPTY_PASSWORD_ERROR = 'Password is a required field!';
 export const EMPTY_COLUMN_NAME_ERROR = 'Column Name is a required field!';
 export const EMPTY_SCHEMA_NAME_ERROR = 'Schema name is a required field!';
 export const EMPTY_SCHEMAS_COLUMNS_ERROR =
