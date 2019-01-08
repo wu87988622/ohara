@@ -13,7 +13,7 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.prometheus.PrometheusJson.{Health, Targets}
 import com.island.ohara.prometheus.{PrometheusClient, PrometheusConfigUtil, PrometheusDescription, PrometheusServer}
 import org.junit.Assume._
-import org.junit.{Before, Test}
+import org.junit.{Before, Ignore, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ListBuffer
@@ -136,6 +136,7 @@ class TestPrometheus extends MediumTest with Matchers {
     * test promethues add targets and remove targets
     *
     */
+  @Ignore
   @Test
   def startPrometheus(): Unit = {
     simpleServer(ports => {
