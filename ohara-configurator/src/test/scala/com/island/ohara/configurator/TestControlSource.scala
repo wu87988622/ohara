@@ -2,11 +2,10 @@ package com.island.ohara.configurator
 
 import java.time.Duration
 
-import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
-import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
+import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
-import com.island.ohara.client.{ConfiguratorClient, ConnectorClient}
+import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.WithBrokerWorker
@@ -15,8 +14,8 @@ import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, Ro
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestControlSource extends WithBrokerWorker with Matchers {
@@ -29,7 +28,6 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     .connectClient(ConnectorClient(testUtil.workersConnProps))
     .build()
 
-  private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
@@ -53,7 +51,8 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     val source = result(access.add(request))
 
     // test idempotent start
-    (0 until 3).foreach(_ => client.start[ConnectorConfiguration](source.id))
+    (0 until 3).foreach(_ =>
+      Await.result(access.start(source.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
     val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
@@ -67,20 +66,22 @@ class TestControlSource extends WithBrokerWorker with Matchers {
       result(access.get(source.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
-      (0 until 3).foreach(_ => client.pause[ConnectorConfiguration](source.id))
+      (0 until 3).foreach(_ =>
+        Await.result(access.pause(source.id), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
 
       CommonUtil
         .await(() => connectorClient.status(source.id).connector.state == ConnectorState.PAUSED, Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
-      (0 until 3).foreach(_ => client.resume[ConnectorConfiguration](source.id))
+      (0 until 3).foreach(_ =>
+        Await.result(access.resume(source.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
       CommonUtil.await(() => connectorClient.status(source.id).connector.state == ConnectorState.RUNNING,
                        Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
-      (0 until 3).foreach(_ => client.stop[ConnectorConfiguration](source.id))
+      (0 until 3).foreach(_ => Await.result(access.stop(source.id), 10 seconds))
 
       CommonUtil.await(() => connectorClient.nonExist(source.id), Duration.ofSeconds(20))
       result(access.get(source.id)).state shouldBe None
@@ -108,7 +109,7 @@ class TestControlSource extends WithBrokerWorker with Matchers {
 
     val source = result(access.add(request))
     // test start
-    client.start[ConnectorConfiguration](source.id)
+    Await.result(access.start(source.id), 10 seconds)
     val connectorClient = ConnectorClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
@@ -124,7 +125,7 @@ class TestControlSource extends WithBrokerWorker with Matchers {
       an[IllegalArgumentException] should be thrownBy result(access.delete(source.id))
 
       // test stop. the connector should be removed
-      client.stop[ConnectorConfiguration](source.id)
+      Await.result(access.stop(source.id), 10 seconds)
       CommonUtil.await(() => connectorClient.nonExist(source.id), Duration.ofSeconds(20))
       result(access.get(source.id)).state shouldBe None
     } finally {
@@ -133,35 +134,8 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     }
   }
 
-  @Test
-  def testCommandMsg(): Unit = {
-    val topicName = methodName
-    val request = ConnectorConfigurationRequest(name = methodName,
-                                                className = classOf[DumbSource].getName,
-                                                schema = Seq.empty,
-                                                topics = Seq(topicName),
-                                                numberOfTasks = 1,
-                                                configs = Map.empty)
-
-    val fakeUUID = random()
-    (the[IllegalArgumentException] thrownBy client.pause[ConnectorConfiguration](fakeUUID)).getMessage should include(
-      "exist")
-    (the[IllegalArgumentException] thrownBy client.resume[ConnectorConfiguration](fakeUUID)).getMessage should include(
-      "exist")
-
-    val source = result(access.add(request))
-
-    (the[IllegalArgumentException] thrownBy client.pause[ConnectorConfiguration](source.id)).getMessage should include(
-      "start")
-    (the[IllegalArgumentException] thrownBy client.resume[ConnectorConfiguration](source.id)).getMessage should include(
-      "start")
-  }
-
   @After
-  def tearDown(): Unit = {
-    ReleaseOnce.close(client)
-    ReleaseOnce.close(configurator)
-  }
+  def tearDown(): Unit = ReleaseOnce.close(configurator)
 }
 
 class DumbSource extends RowSourceConnector {

@@ -14,8 +14,6 @@ import scala.concurrent.Future
   */
 class Access[Req, Res] private[v0] (prefixPath: String)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res])
     extends BasicAccess(prefixPath) {
-  // TODO: this is specific case in info route...How to integrate them? by chia
-  private[v0] def get(): Future[Res] = exec.get[Res](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   def get(id: String): Future[Res] = exec.get[Res](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
   def delete(id: String): Future[Res] = exec.delete[Res](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
   def list(): Future[Seq[Res]] = exec.get[Seq[Res]](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")

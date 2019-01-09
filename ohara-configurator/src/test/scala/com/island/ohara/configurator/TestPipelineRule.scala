@@ -1,7 +1,6 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.client.ConfiguratorClient
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
@@ -16,8 +15,6 @@ import scala.concurrent.duration._
 class TestPipelineRule extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.fake()
-
-  private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -54,7 +51,8 @@ class TestPipelineRule extends SmallTest with Matchers {
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
     // start source and pipeline should "see" what happen in source
-    client.start[ConnectorConfiguration](source.id)
+    // we don't want to compare state since the state may be changed
+    Await.result(access.start(source.id), 10 seconds).copy(state = None) shouldBe source.copy(state = None)
     val pipeline2 = Await
       .result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id), 10 seconds)
     pipeline2.objects.foreach(obj => obj.state.get shouldBe ConnectorState.RUNNING)
@@ -112,8 +110,5 @@ class TestPipelineRule extends SmallTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = {
-    ReleaseOnce.close(client)
-    ReleaseOnce.close(configurator)
-  }
+  def tearDown(): Unit = ReleaseOnce.close(configurator)
 }

@@ -1,5 +1,6 @@
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.common.util.CommonUtil
 
 /**
@@ -10,7 +11,7 @@ import com.island.ohara.common.util.CommonUtil
 abstract class BasicAccess private[v0] (prefixPath: String) {
   protected[v0] val exec: HttpExecutor = HttpExecutor.SINGLETON
   // this access is under "v0" package so this field "version" is a constant string.
-  private[this] val version = "v0"
+  private[this] val version = ConfiguratorApiInfo.V0
   private[this] var hostname: String = _
   private[this] var port: Int = -1
 

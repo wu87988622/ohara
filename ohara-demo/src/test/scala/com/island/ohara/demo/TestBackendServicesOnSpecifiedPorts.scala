@@ -6,7 +6,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.client.ConfiguratorJson.PRIVATE_API
+import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.demo.Backend._
@@ -39,7 +39,8 @@ class TestBackendServicesOnSpecifiedPorts extends LargeTest with Matchers {
           val result = Await.result(
             Http()
               .singleRequest(
-                HttpRequest(HttpMethods.GET, s"http://localhost:${configurator.port}/$PRIVATE_API/services"))
+                HttpRequest(HttpMethods.GET,
+                            s"http://localhost:${configurator.port}/${ConfiguratorApiInfo.PRIVATE}/services"))
               .flatMap(res => {
                 if (res.status.isSuccess()) Unmarshal(res.entity).to[Services]
                 else

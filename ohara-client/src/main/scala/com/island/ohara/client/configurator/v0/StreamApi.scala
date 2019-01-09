@@ -7,6 +7,8 @@ import scala.concurrent.Future
 object StreamApi {
   val STREAM_PREFIX_PATH: String = "stream"
   val STREAM_PROPERTY_PREFIX_PATH: String = "property"
+  val START_COMMAND: String = "start"
+  val STOP_COMMAND: String = "stop"
 
   // Store object
   final case class StreamData(pipeline_id: String,

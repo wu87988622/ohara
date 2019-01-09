@@ -34,11 +34,6 @@ trait ConfiguratorClient extends ReleaseOnce {
   def update[Req, Res](uuid: String, request: Req)(implicit rm0: RootJsonFormat[Req],
                                                    rm1: RootJsonFormat[Res],
                                                    cf: DataCommandFormat[Res]): Res
-  //------------------------------------------------[CONTROL]------------------------------------------------//
-  def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
-  def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
-  def pause[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
-  def resume[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit
   //------------------------------------------------[QUERY]------------------------------------------------//
   def query[Req, Res](
     query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
@@ -114,26 +109,6 @@ object ConfiguratorClient {
       if (res.status.isSuccess()) Future.successful(Unit)
       else
         Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
-
-    override def start[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
-      Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.start(connectionProps, uuid))).flatMap(unmarshal2),
-        TIMEOUT)
-
-    override def stop[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
-      Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.stop(connectionProps, uuid))).flatMap(unmarshal2),
-        TIMEOUT)
-
-    override def pause[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
-      Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.pause(connectionProps, uuid))).flatMap(unmarshal2),
-        TIMEOUT)
-
-    override def resume[T](uuid: String)(implicit cf: ControlCommandFormat[T]): Unit =
-      Await.result(
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, cf.resume(connectionProps, uuid))).flatMap(unmarshal2),
-        TIMEOUT)
 
     override def query[Req, Res](
       query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res =

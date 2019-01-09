@@ -7,6 +7,7 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity}
 import com.island.ohara.client.ConfiguratorClient
 import com.island.ohara.client.ConfiguratorJson._
+import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.demo.Backend.{Creation, _}
 import org.junit.Test
@@ -40,7 +41,7 @@ class TestBackendCreation extends LargeTest with Matchers {
                 Http()
                   .singleRequest(
                     HttpRequest(HttpMethods.POST,
-                                s"http://localhost:${configurator.port}/$PRIVATE_API/creation/rdb",
+                                s"http://localhost:${configurator.port}/${ConfiguratorApiInfo.PRIVATE}/creation/rdb",
                                 entity = entity))
                   .flatMap(res => {
                     if (res.status.isSuccess()) Future.successful((): Unit)

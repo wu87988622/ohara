@@ -29,25 +29,13 @@ object InfoApi {
                                     supportedDatabases: Seq[String],
                                     supportedDataTypes: Seq[DataType],
                                     versionInfo: ConfiguratorVersion)
-  sealed trait InfoAccess {
-    def hostname(hostname: String): InfoAccess
-    def port(port: Int): InfoAccess
+  sealed abstract class InfoAccess extends BasicAccess(INFO_PREFIX_PATH) {
     def get(): Future[ConfiguratorInfo]
   }
   implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat7(ConfiguratorInfo)
 
   def access(): InfoAccess = new InfoAccess {
-    // the request type is useless here...
-    private[this] val access: Access[ConfiguratorInfo, ConfiguratorInfo] =
-      new Access[ConfiguratorInfo, ConfiguratorInfo](INFO_PREFIX_PATH)
-    override def hostname(hostname: String): InfoAccess = {
-      access.hostname(hostname)
-      this
-    }
-    override def port(port: Int): InfoAccess = {
-      access.port(port)
-      this
-    }
-    override def get(): Future[ConfiguratorInfo] = access.get()
+    override def get(): Future[ConfiguratorInfo] =
+      exec.get[ConfiguratorInfo](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }
 }

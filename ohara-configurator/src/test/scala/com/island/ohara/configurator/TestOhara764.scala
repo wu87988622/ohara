@@ -1,8 +1,6 @@
 package com.island.ohara.configurator
 
-import com.island.ohara.client.ConfiguratorClient
-import com.island.ohara.client.ConfiguratorJson._
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
@@ -15,8 +13,6 @@ import scala.concurrent.Await
 class TestOhara764 extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.fake()
-
-  private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 
   import scala.concurrent.duration._
   @Test
@@ -33,7 +29,7 @@ class TestOhara764 extends SmallTest with Matchers {
       10 seconds
     )
 
-    an[IllegalArgumentException] should be thrownBy client.start[ConnectorConfiguration](source.id)
+    an[IllegalArgumentException] should be thrownBy Await.result(access.start(source.id), 30 seconds)
 
     val topic = Await.result(
       TopicApi.access().hostname(configurator.hostname).port(configurator.port).add(TopicCreationRequest("abc", 1, 1)),
@@ -48,12 +44,9 @@ class TestOhara764 extends SmallTest with Matchers {
                                       configs = Map.empty)),
       10 seconds
     )
-    client.start[ConnectorConfiguration](source2.id)
+    Await.result(access.start(source2.id), 30 seconds).id shouldBe source2.id
   }
 
   @After
-  def tearDown(): Unit = {
-    ReleaseOnce.close(client)
-    ReleaseOnce.close(configurator)
-  }
+  def tearDown(): Unit = ReleaseOnce.close(configurator)
 }

@@ -11,8 +11,8 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.jar.JarStore
-import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
@@ -69,7 +69,7 @@ class Configurator private[configurator] (configuredHostname: String,
   /**
     * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
     */
-  private[this] val basicRoute: server.Route = pathPrefix(VERSION_V0)(
+  private[this] val basicRoute: server.Route = pathPrefix(ConfiguratorApiInfo.V0)(
     Seq[server.Route](
       TopicsRoute.apply,
       HdfsInfoRoute.apply,
@@ -88,8 +88,9 @@ class Configurator private[configurator] (configuredHostname: String,
       JarsRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
-  private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
-    complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path"))))
+  private[this] val privateRoute: server.Route =
+    pathPrefix(ConfiguratorApiInfo.PRIVATE)(extraRoute.getOrElse(path(Remaining)(path =>
+      complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path"))))
 
   private[this] val finalRoute: server.Route =
     path(Remaining)(path => complete(StatusCodes.NotFound -> s"Unsupported API: $path"))
