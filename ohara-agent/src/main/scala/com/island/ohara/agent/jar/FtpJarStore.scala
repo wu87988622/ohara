@@ -1,10 +1,10 @@
-package com.island.ohara.agent.plugin
+package com.island.ohara.agent.jar
 import java.io.File
 import java.net.URL
 import java.nio.file.Paths
 
-import com.island.ohara.agent.plugin.FtpPluginStore._
-import com.island.ohara.client.configurator.v0.ConnectorApi.PluginDescription
+import com.island.ohara.agent.jar.FtpJarStore._
+import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.io.FileUtils
@@ -26,17 +26,20 @@ import scala.concurrent.Future
   * @param commandPort the public ftp control port
   * @param dataPorts the public ftp data port
   */
-private[plugin] class FtpPluginStore(homeFolder: String, commandPort: Int, dataPorts: Array[Int])
+private[jar] class FtpJarStore(homeFolder: String, commandPort: Int, dataPorts: Seq[Int])
     extends ReleaseOnce
-    with PluginStore {
-  private[this] def assertNotEmpty(s: String, msg: => String): Unit =
-    if (CommonUtil.isEmpty(s)) throw new IllegalArgumentException(msg)
+    with JarStore {
+
   private[this] val (ftpServer: FtpServer, userName: String, password: String, port: Int) = {
-    assertNotEmpty(homeFolder, "home folder can't be empty")
+    if (CommonUtil.isEmpty(homeFolder)) throw new IllegalArgumentException("home folder can't be empty")
     if (homeFolder.length != 1 && homeFolder.endsWith(File.separator))
       throw new IllegalArgumentException(s"$homeFolder can end with ${File.separator}")
     if (!Paths.get(homeFolder).isAbsolute) throw new IllegalArgumentException(s"$homeFolder should be an absolute path")
     if (dataPorts == null || dataPorts.isEmpty) throw new IllegalArgumentException(s"data ports can't be empty")
+
+    val home = new File(homeFolder)
+    if (home.exists() && !home.isDirectory) throw new IllegalArgumentException(s"$homeFolder is not a folder")
+    if (!home.exists() && !home.mkdir()) throw new IllegalArgumentException(s"failed to create folder on $homeFolder")
     val userManagerFactory: PropertiesUserManagerFactory = new PropertiesUserManagerFactory
     val userManager: UserManager = userManagerFactory.createUserManager
     val userName = CommonUtil.randomString(USER_NAME_LENGTH)
@@ -75,7 +78,7 @@ private[plugin] class FtpPluginStore(homeFolder: String, commandPort: Int, dataP
     (server, userName, password, listener.getPort)
   }
   override protected def doClose(): Unit = if (ftpServer != null) ftpServer.stop()
-  override def add(file: File): Future[PluginDescription] = Future {
+  override def add(file: File, newName: String): Future[JarInfo] = Future {
     def generateFolder(): File = {
       var rval: File = null
       while (rval == null) {
@@ -90,29 +93,21 @@ private[plugin] class FtpPluginStore(homeFolder: String, commandPort: Int, dataP
     }
     val folder = generateFolder()
     val id = folder.getName
-    val newFile = new File(folder, file.getName)
+    val newFile = new File(folder, newName)
     if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
     FileUtils.copyFile(file, newFile)
     LOG.debug(s"copy $file to $newFile")
-    val plugin = PluginDescription(
+    val plugin = JarInfo(
       id = id,
       name = newFile.getName,
       size = newFile.length(),
-      lastModified = CommonUtil.current()
+      lastModified = newFile.lastModified()
     )
     LOG.info(s"add $plugin")
     plugin
   }
 
-  override def remove(id: String): Unit = {
-    assertNotEmpty(id, "id can't be empty")
-    val file = new File(homeFolder, id)
-    if (!file.exists()) throw new IllegalArgumentException(s"$id doesn't exist")
-    if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
-    FileUtils.forceDelete(file)
-  }
-
-  override def iterator: Iterator[PluginDescription] = {
+  override def jarInfos(): Future[Seq[JarInfo]] = Future.successful {
     // TODO: We should cache the plugins. because seeking to disk is a slow operation...
     val root = new File(homeFolder)
     val files = root.listFiles()
@@ -125,7 +120,7 @@ private[plugin] class FtpPluginStore(homeFolder: String, commandPort: Int, dataP
           else {
             val jar = jars.maxBy(_.lastModified())
             Some(
-              PluginDescription(
+              JarInfo(
                 id = folder.getName,
                 name = jar.getName,
                 size = jar.length(),
@@ -134,11 +129,18 @@ private[plugin] class FtpPluginStore(homeFolder: String, commandPort: Int, dataP
           }
         }
         .toSeq
-        .iterator
-    else Iterator.empty
+    else Seq.empty
   }
-  override def url(id: String): URL = {
-    val plugin = pluginDescription(id)
+
+  override def remove(id: String): Future[JarInfo] = jarInfo(id).map { jar =>
+    val file = new File(homeFolder, id)
+    if (!file.exists()) throw new NoSuchElementException(s"$id doesn't exist")
+    if (!file.isDirectory) throw new IllegalArgumentException(s"$id doesn't reference to a folder")
+    FileUtils.forceDelete(file)
+    jar
+  }
+
+  override def url(id: String): Future[URL] = jarInfo(id).map { plugin =>
     // NOTED: we replace hostname by actual ip address so we don't need to add route to worker containers.
     val hostname = CommonUtil.address(CommonUtil.hostname())
     // NOTED: DON'T append the homeFolder into the path since homeFolder is "root" of ftp server.
@@ -146,30 +148,38 @@ private[plugin] class FtpPluginStore(homeFolder: String, commandPort: Int, dataP
     new URL(path)
   }
 
-  override def update(id: String, file: File): Future[PluginDescription] = if (exists(_.id == id)) {
-    if (file == null) throw new IllegalArgumentException(s"file can't be null")
-    CommonUtil.deleteFiles(new File(homeFolder, id))
-    Future {
-      val folder = new File(homeFolder, id)
-      if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
-      val newFile = new File(folder, file.getName)
-      if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
-      FileUtils.copyFile(file, newFile)
-      LOG.debug(s"copy $file to $newFile")
-      val plugin = PluginDescription(
-        id = id,
-        name = newFile.getName,
-        size = newFile.length(),
-        lastModified = CommonUtil.current()
-      )
-      LOG.info(s"update $id by $plugin")
-      plugin
-    }
-  } else throw new IllegalArgumentException(s"$id doesn't exist")
+  override def exist(id: String): Future[Boolean] = if (CommonUtil.isEmpty(id))
+    Future.failed(new IllegalArgumentException("id can't by empty"))
+  else Future.successful(new File(homeFolder, id).exists())
+
+  override def update(id: String, file: File): Future[JarInfo] = if (file == null)
+    Future.failed(new IllegalArgumentException(s"file can't be null"))
+  else
+    exist(id).flatMap(
+      if (_) try {
+        CommonUtil.deleteFiles(new File(homeFolder, id))
+        val folder = new File(homeFolder, id)
+        if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
+        val newFile = new File(folder, file.getName)
+        if (newFile.exists()) throw new IllegalArgumentException(s"${newFile.getAbsolutePath} already exists")
+        FileUtils.copyFile(file, newFile)
+        LOG.debug(s"copy $file to $newFile")
+        val plugin = JarInfo(
+          id = id,
+          name = newFile.getName,
+          size = newFile.length(),
+          lastModified = CommonUtil.current()
+        )
+        LOG.info(s"update $id by $plugin")
+        Future.successful(plugin)
+      } catch {
+        case e: Throwable => Future.failed(e)
+      } else Future.failed(new IllegalArgumentException(s"$id doesn't exist"))
+    )
 }
 
-object FtpPluginStore {
-  private val LOG = Logger(FtpPluginStore.getClass)
+object FtpJarStore {
+  private val LOG = Logger(FtpJarStore.getClass)
   private val ID_LENGTH = 10
   private val USER_NAME_LENGTH = 10
   private val PASSWORD_LENGTH = 10

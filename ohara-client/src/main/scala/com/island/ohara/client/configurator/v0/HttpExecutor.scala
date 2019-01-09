@@ -32,6 +32,7 @@ private trait HttpExecutor {
     * @return response
     */
   def post[Res](url: String)(implicit rm0: RootJsonFormat[Res]): Future[Res]
+  def request[Res](request: HttpRequest)(implicit rm: RootJsonFormat[Res]): Future[Res]
 }
 
 private object HttpExecutor {
@@ -61,8 +62,9 @@ private object HttpExecutor {
       Marshal(request).to[RequestEntity].flatMap { entity =>
         Http().singleRequest(HttpRequest(HttpMethods.PUT, url, entity = entity)).flatMap(unmarshal[Res])
       }
-
     override def post[Res](url: String)(implicit rm0: RootJsonFormat[Res]): Future[Res] =
       Http().singleRequest(HttpRequest(HttpMethods.POST, url)).flatMap(unmarshal[Res])
+    override def request[Res](request: HttpRequest)(implicit rm: RootJsonFormat[Res]): Future[Res] =
+      Http().singleRequest(request).flatMap(unmarshal[Res])
   }
 }

@@ -11,6 +11,7 @@ dependencies {
   compile project(':ohara-jdbc-connector')
   compile project(':ohara-perf-connector')
   compile project(':ohara-configurator')
+  compile project(':ohara-agent')
   //--------------------------[other]--------------------------//
   compile libs.kafkaClient
   /**

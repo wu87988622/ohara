@@ -12,6 +12,7 @@ import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.island.ohara.configurator.route.RouteUtil._
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._

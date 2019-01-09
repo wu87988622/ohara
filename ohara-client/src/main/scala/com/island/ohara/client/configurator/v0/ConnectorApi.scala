@@ -5,10 +5,6 @@ import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat
 
 object ConnectorApi {
   val CONNECTORS_PREFIX_PATH: String = "connectors"
-  final case class PluginDescription(id: String, name: String, size: Long, lastModified: Long) extends Data {
-    override def kind: String = "plugin"
-  }
-  implicit val PLUGIN_JSON_FORMAT: RootJsonFormat[PluginDescription] = jsonFormat4(PluginDescription)
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
     override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
       case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column.of(n, nn, DataType.of(t), o.toInt)

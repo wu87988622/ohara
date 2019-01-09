@@ -1,4 +1,4 @@
-package com.island.ohara.agent.plugin
+package com.island.ohara.agent.jar
 import java.io.{File, FileOutputStream}
 import java.nio.file.Files
 
@@ -10,10 +10,10 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestFtpPluginStore extends MediumTest with Matchers {
-  private[this] val ftpThreads = 10
-  private[this] val tmpFolder = CommonUtil.createTempDir(classOf[TestFtpPluginStore].getSimpleName)
-  private[this] val pluginStore = new FtpPluginStore(tmpFolder.getAbsolutePath, 0, Array.fill[Int](ftpThreads)(0))
+class TestFtpJarStore extends MediumTest with Matchers {
+  private[this] val numberOfFtpThreads = 10
+  private[this] val tmpFolder = CommonUtil.createTempDir(classOf[TestFtpJarStore].getSimpleName)
+  private[this] val jarStore = JarStore.ftp(tmpFolder.getAbsolutePath, numberOfFtpThreads)
 
   private[this] def generateFile(bytes: Array[Byte]): File = {
     val tempFile = CommonUtil.createTempFile(methodName())
@@ -23,15 +23,16 @@ class TestFtpPluginStore extends MediumTest with Matchers {
     tempFile
   }
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Before
   def setup(): Unit = {
-    pluginStore.size shouldBe 0
+    result(jarStore.jarInfos()).size shouldBe 0
   }
 
   @Test
   def testInvalidHomeFolder(): Unit = {
-    an[IllegalArgumentException] should be thrownBy new FtpPluginStore("/home/", 0, Array(0))
-    an[IllegalArgumentException] should be thrownBy new FtpPluginStore("home", 0, Array(0))
+    an[IllegalArgumentException] should be thrownBy new FtpJarStore("/home/", 0, Array(0))
+    an[IllegalArgumentException] should be thrownBy new FtpJarStore("home", 0, Array(0))
   }
 
   private[this] def assert(id: String): Unit = {
@@ -47,34 +48,34 @@ class TestFtpPluginStore extends MediumTest with Matchers {
   def testAdd(): Unit = {
     val content = methodName()
     val f = generateFile(content.getBytes)
-    val plugin = Await.result(pluginStore.add(f), 30 seconds)
+    val plugin = Await.result(jarStore.add(f), 30 seconds)
     plugin.size shouldBe content.length
-    pluginStore.size shouldBe 1
+    result(jarStore.jarInfos()).size shouldBe 1
     assert(plugin.id)
   }
 
   @Test
   def testInvalidId(): Unit = {
-    an[IllegalArgumentException] should be thrownBy pluginStore.pluginDescription(null)
-    an[IllegalArgumentException] should be thrownBy pluginStore.pluginDescription("")
-    an[IllegalArgumentException] should be thrownBy pluginStore.remove(null)
-    an[IllegalArgumentException] should be thrownBy pluginStore.remove("")
-    an[IllegalArgumentException] should be thrownBy pluginStore.url(null)
-    an[IllegalArgumentException] should be thrownBy pluginStore.url("")
-    an[IllegalArgumentException] should be thrownBy pluginStore.update("", null)
-    an[IllegalArgumentException] should be thrownBy pluginStore.update("", null)
+    an[IllegalArgumentException] should be thrownBy result(jarStore.jarInfo(null))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.jarInfo(""))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.remove(null))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.remove(""))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.url(null))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.url(""))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.update("", null))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.update("", null))
   }
 
   @Test
   def testDownload(): Unit = {
     val content = methodName()
     val f = generateFile(content.getBytes)
-    val plugin = Await.result(pluginStore.add(f), 30 seconds)
+    val plugin = Await.result(jarStore.add(f), 30 seconds)
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
-    pluginStore.size shouldBe 1
+    result(jarStore.jarInfos()).size shouldBe 1
 
-    val url = pluginStore.url(plugin.id)
+    val url = result(jarStore.url(plugin.id))
     url.getProtocol shouldBe "ftp"
     val input = url.openStream()
     val tempFile = CommonUtil.createTempFile(methodName())
@@ -90,36 +91,35 @@ class TestFtpPluginStore extends MediumTest with Matchers {
   def testRemove(): Unit = {
     val content = methodName()
     val f = generateFile(content.getBytes)
-    val plugin = Await.result(pluginStore.add(f), 30 seconds)
+    val plugin = Await.result(jarStore.add(f), 30 seconds)
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
-    pluginStore.size shouldBe 1
-
-    pluginStore.remove(plugin.id)
-    pluginStore.size shouldBe 0
+    result(jarStore.jarInfos()).size shouldBe 1
+    result(jarStore.remove(plugin.id)) shouldBe plugin
+    result(jarStore.jarInfos()).size shouldBe 0
 
     val files = tmpFolder.listFiles()
     if (files != null) files.count(_.isDirectory) shouldBe 0
 
-    an[IllegalArgumentException] should be thrownBy pluginStore.remove(plugin.id)
+    an[NoSuchElementException] should be thrownBy result(jarStore.remove(plugin.id))
   }
 
   @Test
   def testUpdate(): Unit = {
     val content = methodName()
     val f = generateFile(content.getBytes)
-    val plugin = Await.result(pluginStore.add(f), 30 seconds)
+    val plugin = Await.result(jarStore.add(f), 30 seconds)
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
-    pluginStore.size shouldBe 1
+    result(jarStore.jarInfos()).size shouldBe 1
 
     val content2 = methodName() + "-newone"
     val f2 = generateFile(content2.getBytes)
-    val plugin2 = Await.result(pluginStore.update(plugin.id, f2), 30 seconds)
+    val plugin2 = Await.result(jarStore.update(plugin.id, f2), 30 seconds)
     plugin2.name shouldBe f2.getName
     plugin2.size shouldBe content2.length
     plugin2.id shouldBe plugin.id
-    pluginStore.size shouldBe 1
+    result(jarStore.jarInfos()).size shouldBe 1
     assert(plugin.id)
   }
 
@@ -127,15 +127,15 @@ class TestFtpPluginStore extends MediumTest with Matchers {
   def testUpdateNullFile(): Unit = {
     val content = methodName()
     val f = generateFile(content.getBytes)
-    val plugin = Await.result(pluginStore.add(f), 30 seconds)
+    val plugin = Await.result(jarStore.add(f), 30 seconds)
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
-    pluginStore.size shouldBe 1
+    result(jarStore.jarInfos()).size shouldBe 1
 
-    an[IllegalArgumentException] should be thrownBy pluginStore.update(plugin.id, null)
+    an[IllegalArgumentException] should be thrownBy result(jarStore.update(plugin.id, null))
 
     // failed update should not change the state of store
-    pluginStore.size shouldBe 1
+    result(jarStore.jarInfos()).size shouldBe 1
   }
 
   @Test
@@ -143,9 +143,9 @@ class TestFtpPluginStore extends MediumTest with Matchers {
     (0 until 10).foreach { index =>
       val content = methodName()
       val f = generateFile(content.getBytes)
-      val plugin = Await.result(pluginStore.add(f), 30 seconds)
+      val plugin = Await.result(jarStore.add(f), 30 seconds)
       plugin.size shouldBe content.length
-      pluginStore.size shouldBe (index + 1)
+      result(jarStore.jarInfos()).size shouldBe (index + 1)
     }
   }
 
@@ -154,12 +154,12 @@ class TestFtpPluginStore extends MediumTest with Matchers {
     import scala.concurrent.ExecutionContext.Implicits.global
     val content = methodName()
     val f = generateFile(content.getBytes)
-    val plugin = Await.result(pluginStore.add(f), 30 seconds)
+    val plugin = Await.result(jarStore.add(f), 30 seconds)
     plugin.size shouldBe content.length
-    (0 until ftpThreads / 2)
+    (0 until numberOfFtpThreads / 2)
       .map { _ =>
         Future {
-          val url = pluginStore.url(plugin.id)
+          val url = result(jarStore.url(plugin.id))
           val input = url.openStream()
           val tempFile = CommonUtil.createTempFile(methodName())
           if (tempFile.exists()) tempFile.delete() shouldBe true
@@ -175,7 +175,7 @@ class TestFtpPluginStore extends MediumTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(pluginStore)
+    ReleaseOnce.close(jarStore)
     CommonUtil.deleteFiles(tmpFolder)
   }
 }

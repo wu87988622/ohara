@@ -5,6 +5,7 @@ import java.{time, util}
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
+import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
@@ -42,6 +43,7 @@ class ConfiguratorBuilder {
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
   private[this] var clusterCollie: Option[ClusterCollie] = None
+  private[this] var jarStore: Option[JarStore] = None
 
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
     this.extraRoute = Some(extraRoute)
@@ -90,6 +92,11 @@ class ConfiguratorBuilder {
     this
   }
 
+  def jarStore(jarStore: JarStore): ConfiguratorBuilder = {
+    this.jarStore = Some(jarStore)
+    this
+  }
+
   /**
     * set a mock kafka client to this configurator. a testing-purpose method.
     *
@@ -127,7 +134,8 @@ class ConfiguratorBuilder {
       nodeCollie = nodeCollie(),
       clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie())),
       kafkaClient = kafkaClient.get,
-      connectorClient = connectClient.get
+      connectorClient = connectClient.get,
+      jarStore = jarStore.getOrElse(JarStore.ftp(CommonUtil.createTempDir("ftp_jar_store").getAbsolutePath, 10))
     )
   }
 }

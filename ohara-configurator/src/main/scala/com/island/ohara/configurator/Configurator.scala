@@ -10,6 +10,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
+import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.ConfiguratorJson._
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
@@ -42,7 +43,8 @@ class Configurator private[configurator] (configuredHostname: String,
                                                                             nodeCollie: NodeCollie,
                                                                             clusterCollie: ClusterCollie,
                                                                             kafkaClient: KafkaClient,
-                                                                            connectorClient: ConnectorClient)
+                                                                            connectorClient: ConnectorClient,
+                                                                            jarStore: JarStore)
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -82,7 +84,8 @@ class Configurator private[configurator] (configuredHostname: String,
       NodesRoute.apply,
       ZookeeperRoute.apply,
       BrokerRoute.apply,
-      WorkerRoute.apply
+      WorkerRoute.apply,
+      JarsRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] val privateRoute: server.Route = pathPrefix(PRIVATE_API)(extraRoute.getOrElse(path(Remaining)(path =>
@@ -136,6 +139,7 @@ class Configurator private[configurator] (configuredHostname: String,
     ReleaseOnce.close(kafkaClient)
     ReleaseOnce.close(connectorClient)
     ReleaseOnce.close(clusterCollie)
+    ReleaseOnce.close(jarStore)
     ReleaseOnce.close(store)
   }
 
