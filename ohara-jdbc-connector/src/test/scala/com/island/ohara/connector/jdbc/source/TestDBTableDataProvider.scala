@@ -2,8 +2,8 @@ package com.island.ohara.connector.jdbc.source
 
 import java.sql.{Statement, Timestamp}
 
-import com.island.ohara.client.ConfiguratorJson.RdbColumn
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}

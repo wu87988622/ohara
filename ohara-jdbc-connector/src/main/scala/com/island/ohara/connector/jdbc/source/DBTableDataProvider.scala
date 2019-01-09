@@ -3,8 +3,8 @@ package com.island.ohara.connector.jdbc.source
 import java.sql._
 import java.util.Calendar
 
-import com.island.ohara.client.ConfiguratorJson.{RdbColumn, RdbTable}
 import com.island.ohara.client.DatabaseClient
+import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 

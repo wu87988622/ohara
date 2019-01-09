@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.{Calendar, TimeZone}
 
-import com.island.ohara.client.ConfiguratorJson.RdbColumn
+import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.hdfs.creator.StorageCreator

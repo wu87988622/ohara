@@ -1,7 +1,7 @@
 package com.island.ohara.client
 import java.sql.{Connection, DriverManager, ResultSet}
 
-import com.island.ohara.client.ConfiguratorJson.RdbTable
+import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
 import com.island.ohara.common.util.ReleaseOnce
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,7 +20,7 @@ trait DatabaseClient extends ReleaseOnce {
 
   def name: String
 
-  def createTable(name: String, schema: Seq[ConfiguratorJson.RdbColumn]): Unit
+  def createTable(name: String, schema: Seq[RdbColumn]): Unit
 
   def dropTable(name: String): Unit
 
@@ -82,10 +82,10 @@ object DatabaseClient {
           case (c, s, t, pks) =>
             implicit val rs: ResultSet = md.getColumns(c, null, t, null);
             val columns = try {
-              val buf = new ArrayBuffer[ConfiguratorJson.RdbColumn]()
-              while (rs.next()) buf += ConfiguratorJson.RdbColumn(name = columnName,
-                                                                  dataType = columnType,
-                                                                  pk = pks.contains(columnName))
+              val buf = new ArrayBuffer[RdbColumn]()
+              while (rs.next()) buf += RdbColumn(name = columnName,
+                                                 dataType = columnType,
+                                                 pk = pks.contains(columnName))
               buf
             } finally rs.close()
             RdbTable(Option(c), Option(s), t, columns)
@@ -102,7 +102,7 @@ object DatabaseClient {
       if (r < 0) return url
       url.substring(l + 1, r)
     }
-    override def createTable(name: String, columns: Seq[ConfiguratorJson.RdbColumn]): Unit =
+    override def createTable(name: String, columns: Seq[RdbColumn]): Unit =
       if (columns.map(_.name).toSet.size != columns.size)
         throw new IllegalArgumentException(s"duplicate order!!!")
       else

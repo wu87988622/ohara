@@ -34,9 +34,6 @@ trait ConfiguratorClient extends ReleaseOnce {
   def update[Req, Res](uuid: String, request: Req)(implicit rm0: RootJsonFormat[Req],
                                                    rm1: RootJsonFormat[Res],
                                                    cf: DataCommandFormat[Res]): Res
-  //------------------------------------------------[QUERY]------------------------------------------------//
-  def query[Req, Res](
-    query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res
   //------------------------------------------------[Stream]------------------------------------------------//
   def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
                                                               cf: DataCommandFormat[Req]): Res
@@ -104,24 +101,6 @@ object ConfiguratorClient {
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]
       else
         Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
-
-    private[this] def unmarshal2(res: HttpResponse): Future[Unit] =
-      if (res.status.isSuccess()) Future.successful(Unit)
-      else
-        Unmarshal(res.entity).to[Error].flatMap(error => Future.failed(new IllegalArgumentException(error.message)))
-
-    override def query[Req, Res](
-      query: Req)(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[Res], cf: QueryCommandFormat[Req]): Res =
-      Await.result(
-        Marshal(query)
-          .to[RequestEntity]
-          .flatMap(entity => {
-            Http()
-              .singleRequest(HttpRequest(HttpMethods.POST, cf.format(connectionProps), entity = entity))
-              .flatMap(unmarshal[Res](_))
-          }),
-        TIMEOUT
-      )
 
     override def streamUploadJars[Req, Res](uuid: String, data: Strict*)(implicit rm1: RootJsonFormat[Res],
                                                                          cf: DataCommandFormat[Req]): Res = {

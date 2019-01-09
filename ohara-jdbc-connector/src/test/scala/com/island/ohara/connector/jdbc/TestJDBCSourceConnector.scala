@@ -2,7 +2,7 @@ package com.island.ohara.connector.jdbc
 
 import java.sql.Statement
 
-import com.island.ohara.client.ConfiguratorJson.RdbColumn
+import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.{ConnectorClient, DatabaseClient}
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.ReleaseOnce

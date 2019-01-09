@@ -21,38 +21,6 @@ object ConfiguratorJson {
     def format(address: String): String
     def format(address: String, id: String): String
   }
-  //------------------------------------------------[RDB-QUERY]------------------------------------------------//
-  val QUERY_PATH = "query"
-  val RDB_PATH = "rdb"
-
-  /**
-    * used to query 3 party system
-    */
-  sealed trait QueryCommandFormat[T] {
-    def format(address: String): String
-  }
-
-  final case class RdbColumn(name: String, dataType: String, pk: Boolean)
-  implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
-  final case class RdbTable(catalogPattern: Option[String],
-                            schemaPattern: Option[String],
-                            name: String,
-                            schema: Seq[RdbColumn])
-  implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat4(RdbTable)
-
-  final case class RdbQuery(url: String,
-                            user: String,
-                            password: String,
-                            catalogPattern: Option[String],
-                            schemaPattern: Option[String],
-                            tableName: Option[String])
-  implicit val RDB_QUERY_JSON_FORMAT: RootJsonFormat[RdbQuery] = jsonFormat6(RdbQuery)
-  implicit val RDB_QUERY_COMMAND_FORMAT: QueryCommandFormat[RdbQuery] = new QueryCommandFormat[RdbQuery] {
-    override def format(address: String): String = s"http://$address/${ConfiguratorApiInfo.V0}/$QUERY_PATH/$RDB_PATH"
-  }
-
-  final case class RdbInformation(name: String, tables: Seq[RdbTable])
-  implicit val RDB_INFORMATION_JSON_FORMAT: RootJsonFormat[RdbInformation] = jsonFormat2(RdbInformation)
 
   //------------------------------------------------[STREAM]------------------------------------------------//
 

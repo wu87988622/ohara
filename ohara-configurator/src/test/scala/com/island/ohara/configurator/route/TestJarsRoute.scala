@@ -1,9 +1,11 @@
-package com.island.ohara.configurator
+package com.island.ohara.configurator.route
+
 import java.io.{File, FileOutputStream}
 
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

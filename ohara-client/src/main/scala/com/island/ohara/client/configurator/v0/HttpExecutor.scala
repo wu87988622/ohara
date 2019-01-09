@@ -15,7 +15,6 @@ import scala.concurrent.Future
 
 /**
   * used to send http request to remote node. The operations implemented by this class includes 1) get, 2) delete, 3) put and 4) post.
-  * The method get2 is a variety of get. It sends get request and then assume the response is a array.
   */
 private trait HttpExecutor {
   def get[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res]

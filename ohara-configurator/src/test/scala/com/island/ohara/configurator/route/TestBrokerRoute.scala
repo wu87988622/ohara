@@ -1,10 +1,11 @@
-package com.island.ohara.configurator
+package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, BrokerClusterInfo}
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
