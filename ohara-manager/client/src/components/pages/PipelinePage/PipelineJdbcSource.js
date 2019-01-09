@@ -8,6 +8,7 @@ import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { DataTable } from 'common/Table';
@@ -320,7 +321,7 @@ class PipelineJdbcSource extends React.Component {
     const params = {
       name,
       schema: [],
-      className: 'jdbc',
+      className: CONNECTOR_TYPES.jdbcSource,
       topics,
       numberOfTasks: 1,
       configs: {

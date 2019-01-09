@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
@@ -462,7 +463,7 @@ class PipelineFtpSink extends React.Component {
     const params = {
       name,
       schema: _schema,
-      className: 'ftp',
+      className: CONNECTOR_TYPES.ftpSink,
       topics,
       numberOfTasks: 1,
       configs: {

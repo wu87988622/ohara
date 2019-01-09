@@ -6,6 +6,7 @@ import toastr from 'toastr';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
@@ -458,7 +459,7 @@ class PipelineFtpSource extends React.Component {
     const params = {
       name,
       schema: _schema,
-      className: 'ftp',
+      className: CONNECTOR_TYPES.ftpSource,
       topics,
       numberOfTasks: 1,
       configs: {

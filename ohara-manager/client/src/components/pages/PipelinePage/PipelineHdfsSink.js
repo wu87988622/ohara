@@ -7,6 +7,7 @@ import { Redirect } from 'react-router-dom';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as _ from 'utils/commonUtils';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';
@@ -289,7 +290,7 @@ class PipelineHdfsSink extends React.Component {
     const params = {
       name,
       schema: [],
-      className: 'hdfs',
+      className: CONNECTOR_TYPES.hdfsSink,
       topics,
       numberOfTasks: 1,
       configs: {
