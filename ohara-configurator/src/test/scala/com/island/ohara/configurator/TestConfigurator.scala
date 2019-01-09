@@ -35,7 +35,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     .build()
 
   private[this] val configurator1 =
-    Configurator.local()
+    Configurator.fake()
 
   private[this] val configurators = Seq(configurator0, configurator1)
 

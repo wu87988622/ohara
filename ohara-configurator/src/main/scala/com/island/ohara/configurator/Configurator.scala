@@ -162,10 +162,11 @@ object Configurator {
   }
 
   /**
-    * generate a configurator with all-in-memory store and fake-client-to-no-cluster.
-    * @return a local configurator
+    * set all client to fake mode. It means all request sent to configurator won't be executed. a testing-purpose method.
+    * @return a configurator with all fake clients
     */
-  def local(): Configurator = builder().noCluster().port(0).hostname(CommonUtil.hostname()).build()
+  def fake(): Configurator = builder().fake().port(0).hostname(CommonUtil.hostname()).build()
+
   def builder(): ConfiguratorBuilder = new ConfiguratorBuilder()
 
   //----------------[main]----------------//
@@ -211,7 +212,13 @@ object Configurator {
     val configurator =
       if (brokers.isEmpty && workers.isEmpty) {
         standalone = true
-        Configurator.builder().standalone().hostname(hostname).port(port).build()
+        Configurator
+          .builder()
+          .kafkaClient(new FakeKafkaClient())
+          .connectClient(new FakeConnectorClient())
+          .hostname(hostname)
+          .port(port)
+          .build()
       } else if (brokers.isEmpty ^ workers.isEmpty)
         throw new IllegalArgumentException(s"brokers:$brokers workers:$workers")
       else

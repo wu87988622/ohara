@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 
 class TestOhara699 extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator.fake()
 
   private[this] val client = ConfiguratorClient(configurator.hostname, configurator.port)
 

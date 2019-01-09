@@ -98,23 +98,14 @@ class ConfiguratorBuilder {
   }
 
   /**
-    * set a mock kafka client to this configurator. a testing-purpose method.
+    * set all client to fake mode. It means all request sent to configurator won't be executed. a testing-purpose method.
     *
     * @return this builder
     */
-  def noCluster(): ConfiguratorBuilder = {
+  def fake(): ConfiguratorBuilder = {
     kafkaClient(new FakeKafkaClient())
     connectClient(new FakeConnectorClient())
     clusterCollie(new FakeClusterCollie)
-  }
-
-  /**
-    * set a standalone configurator. It assigns only fake kafka client and connector client to configurator. The collie is based on ssh.
-    * @return
-    */
-  def standalone(): ConfiguratorBuilder = {
-    kafkaClient(new FakeKafkaClient())
-    connectClient(new FakeConnectorClient())
   }
 
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
@@ -128,8 +119,13 @@ class ConfiguratorBuilder {
     override def iterator: Iterator[Node] =
       Await.result(store.raw(), 10 seconds).filter(_.isInstanceOf[Node]).map(_.asInstanceOf[Node]).iterator
   }
+
   def build(): Configurator = {
-    new Configurator(hostname.get, port.get, initializationTimeout.get, terminationTimeout.get, extraRoute)(
+    new Configurator(hostname.getOrElse(CommonUtil.anyLocalAddress),
+                     port.getOrElse(0),
+                     initializationTimeout.get,
+                     terminationTimeout.get,
+                     extraRoute)(
       store = store,
       nodeCollie = nodeCollie(),
       clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie())),
@@ -203,7 +199,7 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
   * A do-nothing impl from KafkaClient.
   * NOTED: It should be used in testing only.
   */
-private[this] class FakeKafkaClient extends KafkaClient {
+private[configurator] class FakeKafkaClient extends KafkaClient {
 
   import scala.collection.JavaConverters._
 
@@ -267,7 +263,7 @@ private[this] class FakeKafkaClient extends KafkaClient {
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[this] class FakeClusterCollie extends ClusterCollie {
+private[configurator] class FakeClusterCollie extends ClusterCollie {
   private[this] val zkCollie: ZookeeperCollie = new FakeZookeeperCollie
   private[this] val bkCollie: BrokerCollie = new FakeBrokerCollie
   private[this] val wkCollie: WorkerCollie = new FakeWorkerCollie

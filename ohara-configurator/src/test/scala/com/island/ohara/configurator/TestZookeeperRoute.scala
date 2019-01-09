@@ -10,7 +10,7 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestZookeeperRoute extends MediumTest with Matchers {
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator.fake()
   private[this] val access = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: ZookeeperClusterCreationRequest, cluster: ZookeeperClusterInfo): Unit = {

@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future}
 
 class TestNodesRoute extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator.fake()
   private[this] val access = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
   import scala.concurrent.duration._

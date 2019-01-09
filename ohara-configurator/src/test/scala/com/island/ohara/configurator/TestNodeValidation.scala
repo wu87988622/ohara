@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 
 class TestNodeValidation extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator.fake()
   private[this] val sshd = SshdServer.local()
 
   @Test

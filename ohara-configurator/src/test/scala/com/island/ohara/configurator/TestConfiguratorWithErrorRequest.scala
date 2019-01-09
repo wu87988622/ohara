@@ -27,7 +27,7 @@ import scala.concurrent.{Await, Future}
   */
 class TestConfiguratorWithErrorRequest extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator.fake()
 
   private[this] val ip = s"${configurator.hostname}:${configurator.port}"
 

@@ -12,7 +12,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestBrokerRoute extends MediumTest with Matchers {
 
-  private[this] val configurator = Configurator.local()
+  private[this] val configurator = Configurator.fake()
   private[this] val access = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: BrokerClusterCreationRequest, cluster: BrokerClusterInfo): Unit = {
