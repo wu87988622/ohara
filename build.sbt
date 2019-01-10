@@ -207,7 +207,7 @@ lazy val `configurator` = (project in file("ohara-configurator"))
         )
 
 
-lazy val `http-connector` = (project in file("ohara-http-connector"))
+lazy val `shabondi` = (project in file("ohara-shabondi"))
         .dependsOn(
         )
         .settings(

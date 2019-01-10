@@ -1,4 +1,4 @@
-package com.island.ohara.connector.http
+package com.island.ohara.shabondi
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
