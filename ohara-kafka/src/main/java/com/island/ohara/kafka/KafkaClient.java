@@ -1,11 +1,12 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.exception.CheckedExceptionUtil;
+import com.island.ohara.kafka.exception.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -21,7 +22,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  * <p>Every method with remote call need to overload in Default Timeout
  */
 public interface KafkaClient extends Releasable {
-  static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+  Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
 
   TopicCreator topicCreator();
 
@@ -29,7 +30,7 @@ public interface KafkaClient extends Releasable {
 
   default boolean exist(String topicName) {
     return exist(topicName, DEFAULT_TIMEOUT);
-  };
+  }
 
   default boolean nonExist(String topicName, Duration timeout) {
     return !exist(topicName, timeout);
@@ -50,7 +51,7 @@ public interface KafkaClient extends Releasable {
 
   default TopicDescription topicDescription(String topicName) {
     return topicDescription(topicName, DEFAULT_TIMEOUT);
-  };
+  }
 
   void addPartitions(String topicName, int numberOfPartitions, Duration timeout);
 
@@ -62,13 +63,13 @@ public interface KafkaClient extends Releasable {
 
   default void deleteTopic(String topicName) {
     deleteTopic(topicName, DEFAULT_TIMEOUT);
-  };
+  }
 
   List<String> listTopics(Duration timeout);
 
   default List<String> listTopics() {
     return listTopics(DEFAULT_TIMEOUT);
-  };
+  }
 
   String brokers();
 
@@ -80,6 +81,13 @@ public interface KafkaClient extends Releasable {
       private String brokers = outerbrokers;
 
       private AdminClient admin = AdminClient.create(toAdminProps(outerbrokers));
+
+      private ExceptionHandler handler =
+          ExceptionHandler.creator()
+              .add(ExecutionException.class, (e) -> new OharaExecutionException(e.getCause()))
+              .add(InterruptedException.class, OharaInterruptedException::new)
+              .add(TimeoutException.class, OharaTimeoutException::new)
+              .create();
 
       @Override
       public TopicCreator topicCreator() {
@@ -96,7 +104,8 @@ public interface KafkaClient extends Releasable {
                                     .configs(options)))
                         .values()
                         .get(name)
-                        .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
+                        .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
+                handler);
           }
         };
       }
@@ -116,7 +125,8 @@ public interface KafkaClient extends Releasable {
                             return strings.contains(topicName);
                           }
                         })
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
+            handler);
       }
 
       @Override
@@ -167,7 +177,8 @@ public interface KafkaClient extends Releasable {
                       String.format("the %s doesn't exist", topicName));
                 throw e;
               }
-            });
+            },
+            handler);
       }
 
       @Override
@@ -181,7 +192,8 @@ public interface KafkaClient extends Releasable {
 
           CheckedExceptionUtil.wrap(
               () ->
-                  admin.createPartitions(map).all().get(timeout.toMillis(), TimeUnit.MILLISECONDS));
+                  admin.createPartitions(map).all().get(timeout.toMillis(), TimeUnit.MILLISECONDS),
+              handler);
         }
       }
 
@@ -192,7 +204,8 @@ public interface KafkaClient extends Releasable {
                 admin
                     .deleteTopics(Collections.singletonList(topicName))
                     .all()
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS));
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
+            handler);
       }
 
       @Override
@@ -204,7 +217,8 @@ public interface KafkaClient extends Releasable {
                     .names()
                     .get(timeout.toMillis(), TimeUnit.MILLISECONDS)
                     .stream()
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList()),
+            handler);
       }
 
       @Override

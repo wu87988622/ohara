@@ -3,12 +3,14 @@ package com.island.ohara.kafka;
 import com.island.ohara.common.util.ReleaseOnce;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers;
+import com.island.ohara.kafka.exception.OharaExecutionException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.kafka.common.config.TopicConfig;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.junit.After;
 import org.junit.Test;
 
@@ -83,6 +85,32 @@ public class TestKafkaClient extends With3Brokers {
             .get(0)
             .value(),
         TopicConfig.CLEANUP_POLICY_DELETE);
+  }
+
+  /** for OHARA-941 */
+  @Test
+  public void testExistTopic() {
+    try {
+      client
+          .topicCreator()
+          .numberOfPartitions(1)
+          .numberOfReplications((short) 1)
+          // enable kafka save the latest message for each key
+          .deleted()
+          .timeout(java.time.Duration.ofSeconds(30))
+          .create(methodName());
+
+      client
+          .topicCreator()
+          .numberOfPartitions(1)
+          .numberOfReplications((short) 1)
+          // enable kafka save the latest message for each key
+          .deleted()
+          .timeout(java.time.Duration.ofSeconds(30))
+          .create(methodName());
+    } catch (OharaExecutionException e) {
+      assertTrue(TopicExistsException.class.isInstance(e.getCause()));
+    }
   }
 
   @After

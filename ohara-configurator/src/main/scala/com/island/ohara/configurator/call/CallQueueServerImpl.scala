@@ -6,6 +6,7 @@ import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 import com.island.ohara.client.configurator.v0.ErrorApi
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.kafka.exception.OharaExecutionException
 import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{TopicExistsException, WakeupException}
@@ -37,7 +38,7 @@ private object CallQueueServerImpl {
           .timeout(java.time.Duration.ofNanos(CallQueueServerImpl.TIMEOUT.toNanos))
           .create(topicName)
         catch {
-          case e: ExecutionException =>
+          case e: OharaExecutionException =>
             e.getCause match {
               case _: TopicExistsException => LOG.error(s"$topicName exists but we didn't notice this fact")
               case _                       => if (e.getCause == null) throw e else throw e.getCause

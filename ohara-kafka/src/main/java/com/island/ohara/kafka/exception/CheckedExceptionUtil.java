@@ -6,17 +6,121 @@ public class CheckedExceptionUtil {
   /**
    * This method will wrap CheckedException to RuntimeException with lambda
    *
+   * <p>guave says that in most case , we case unchecked exception to RuntimeException
+   *
+   * @see <a
+   *     href="https://github.com/google/guava/wiki/Why-we-deprecated-Throwables.propagate">propaget</a>
    * @param cew a lambda throws Exceptions
    * @return anything
    * @throws RuntimeException
    */
-  public static <T> T wrap(CheckedExceptionWrapper<T> cew) throws RuntimeException {
+  public static <T> T wrap(CheckedExceptionWrapperReturn<T> cew) throws RuntimeException {
     try {
-      return cew.wrap();
+      return cew.excute();
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static void wrap(CheckedExceptionWrapper cew) throws RuntimeException {
+    try {
+      cew.excute();
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** wrap both checked and runtime exception in RuntimeException */
+  public static <T> T wrapRuntime(CheckedExceptionWrapperReturn<T> cew) throws RuntimeException {
+    try {
+      return cew.excute();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static void wrapRuntime(CheckedExceptionWrapper cew) throws RuntimeException {
+    try {
+      cew.excute();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * handler 1-1 mapping checked exception if it is not mapping to anything, mapping to
+   * OharaException
+   *
+   * <p>"last handler will be fiest mapping choose"
+   */
+  public static <T> T wrap(CheckedExceptionWrapperReturn<T> cew, ExceptionHandler... handlers)
+      throws RuntimeException {
+    try {
+      return cew.excute();
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw ExceptionHandler.handle(e, handlers);
+    }
+  }
+
+  public static void wrap(CheckedExceptionWrapper cew, ExceptionHandler... handlers)
+      throws RuntimeException {
+    try {
+      cew.excute();
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw ExceptionHandler.handle(e, handlers);
+    }
+  }
+
+  public static <T> T wrapRuntime(
+      CheckedExceptionWrapperReturn<T> cew, ExceptionHandler... handlers) throws OharaException {
+    try {
+      return cew.excute();
+    } catch (Exception e) {
+      throw ExceptionHandler.handle(e, handlers);
+    }
+  }
+
+  public static void wrapRuntime(CheckedExceptionWrapper cew, ExceptionHandler... handlers)
+      throws OharaException {
+    try {
+      cew.excute();
+    } catch (Exception e) {
+      throw ExceptionHandler.handle(e, handlers);
+    }
+  }
+
+  public static void rethrow(CheckedExceptionWrapper cew) {
+    try {
+      cew.excute();
+    } catch (Throwable e) {
+      rethrow(e);
+    }
+  }
+
+  public static <T> T rethrow(CheckedExceptionWrapperReturn<T> cew) {
+    try {
+      return cew.excute();
+    } catch (Throwable e) {
+      rethrow(e);
+    }
+    return null;
+  }
+
+  /**
+   * It's very tricky. This method will throw a cheked exception without checked !!!!!
+   *
+   * <p>But It also mean that you can't catch this exception in try-catch . Only can catch it by
+   * catching Exception.
+   */
+  private static <T extends Throwable> RuntimeException rethrow(Throwable throwable) throws T {
+    throw (T) throwable; // rely on vacuous cast
   }
 }
