@@ -249,12 +249,15 @@ class Header extends React.Component {
               <i className="fas fa-cog" />
             </Btn>
 
-            <Login
-              data-testid="login-state"
-              to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
-            >
-              {isLogin ? 'Log out' : 'Log in'}
-            </Login>
+            {/* v0.2 先不要顯示 Login */}
+            {false && (
+              <Login
+                data-testid="login-state"
+                to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
+              >
+                {isLogin ? 'Log out' : 'Log in'}
+              </Login>
+            )}
           </RightCol>
         </HeaderWrapper>
       </StyledHeader>
