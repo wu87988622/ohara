@@ -1,4 +1,4 @@
-FROM centos:7.5.1804 as base
+FROM centos:7.6.1810 as base
 
 # install tools
 RUN yum install -y \
@@ -28,7 +28,7 @@ RUN mkdir $PROMETHEUS_CONFIG/targets
 ARG TINI_VERSION=v0.18.0
 RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 
-FROM centos:7.5.1804
+FROM centos:7.6.1810
 # install jq (json framework)
 RUN yum install epel-release -y
 RUN yum install jq -y
