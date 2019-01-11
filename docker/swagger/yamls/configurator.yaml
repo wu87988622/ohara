@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   title: "OHARA Configurator"
   description: "OHARA Configurator API - Swagger version"
-  version: "2.0-SNAPSHOT"
+  version: "0.2-SNAPSHOT"
   contact:
     name: "The God - Chia7712"
     email: "chia7712@is-land.com.tw"
