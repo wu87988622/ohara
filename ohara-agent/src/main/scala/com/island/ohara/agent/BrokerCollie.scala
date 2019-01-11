@@ -58,7 +58,7 @@ object BrokerCollie {
   /**
     * ohara-it needs this property for testing.
     */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = s"islandsystems/broker:${VersionUtil.VERSION}"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtil.VERSION}"
   private[agent] val ID_KEY: String = "BROKER_ID"
   private[agent] val DATA_DIRECTORY_KEY: String = "BROKER_DATA_DIR"
   private[agent] val ZOOKEEPERS_KEY: String = "BROKER_ZOOKEEPERS"

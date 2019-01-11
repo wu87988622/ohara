@@ -8,16 +8,16 @@ class TestVersion extends SmallTest with Matchers {
 
   @Test
   def testZookeeper(): Unit = {
-    ZookeeperCollie.IMAGE_NAME_DEFAULT shouldBe s"islandsystems/zookeeper:${VersionUtil.VERSION}"
+    ZookeeperCollie.IMAGE_NAME_DEFAULT shouldBe s"oharastream/zookeeper:${VersionUtil.VERSION}"
   }
 
   @Test
   def testBroker(): Unit = {
-    BrokerCollie.IMAGE_NAME_DEFAULT shouldBe s"islandsystems/broker:${VersionUtil.VERSION}"
+    BrokerCollie.IMAGE_NAME_DEFAULT shouldBe s"oharastream/broker:${VersionUtil.VERSION}"
   }
 
   @Test
   def testWorker(): Unit = {
-    WorkerCollie.IMAGE_NAME_DEFAULT shouldBe s"islandsystems/connect-worker:${VersionUtil.VERSION}"
+    WorkerCollie.IMAGE_NAME_DEFAULT shouldBe s"oharastream/connect-worker:${VersionUtil.VERSION}"
   }
 }

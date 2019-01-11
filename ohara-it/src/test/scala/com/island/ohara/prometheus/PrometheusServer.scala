@@ -112,7 +112,7 @@ object PrometheusServer {
 
   def creater(): PrometheusCreator = PrometheusCreator.apply()
 
-  private[ohara] val IMAGE_NAME_DEFAULT: String = "islandsystems/ohara:prometheus"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = "oharastream/ohara:prometheus"
 
   private[prometheus] val PROMETHEUS_TARGET_CONFIG_DIR: String = "/home/prometheus/config/targets"
   private[prometheus] val PROMETHEUS_DATA_DIR: String = "/home/prometheus/data"

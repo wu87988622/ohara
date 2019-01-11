@@ -125,7 +125,7 @@ object WorkerCollie {
   /**
     * ohara-it needs this property for testing.
     */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = s"islandsystems/connect-worker:${VersionUtil.VERSION}"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtil.VERSION}"
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
   private[agent] val OFFSET_TOPIC_KEY: String = "WORKER_OFFSET_TOPIC"
   private[agent] val OFFSET_TOPIC_REPLICATIONS_KEY: String = "WORKER_OFFSET_TOPIC_REPLICATIONS"

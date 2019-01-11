@@ -87,7 +87,7 @@ object ZookeeperCollie {
   /**
     * ohara-it needs this property for testing.
     */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = s"islandsystems/zookeeper:${VersionUtil.VERSION}"
+  private[ohara] val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtil.VERSION}"
 
   private[agent] val CLIENT_PORT_KEY: String = "ZK_CLIENT_PORT"
   private[agent] val CLIENT_PORT_DEFAULT: Int = 2181

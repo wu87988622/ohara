@@ -33,7 +33,7 @@ object StreamClient {
   /**
     * StreamApp Docker Image name
     */
-  final val STREAMAPP_IMAGE: String = s"islandsystems/streamapp:${VersionUtil.VERSION}"
+  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtil.VERSION}"
 
   /**
     * Save http request files by [[File.createTempFile]]
