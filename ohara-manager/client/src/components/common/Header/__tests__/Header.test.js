@@ -62,13 +62,14 @@ describe('<Header />', () => {
     expect(wrapper.find('Nav').length).toBe(1);
   });
 
-  it('renders log in link and text when this.state.isLogin is false', () => {
+  // TODO: ignore the following two tests for now, since login feature is disabled in v0.2, see more info in OHARA-1269
+  it.skip('renders log in link and text when this.state.isLogin is false', () => {
     const login = wrapper.find('Login');
     expect(login.props().to).toBe(URLS.LOGIN);
     expect(login.children().text()).toBe('Log in');
   });
 
-  it('renders log out link and text when this.state.isLogin is true', () => {
+  it.skip('renders log out link and text when this.state.isLogin is true', () => {
     wrapper.setProps({ isLogin: true });
 
     const login = wrapper.find('Login');
