@@ -64,7 +64,7 @@ gradle clean build -PskipManager
 
 ### Run IT against actual systems
 ```
-gralde clean ohara-it:test -PskipManager -Pbrokers="" -Pworkers=""
+gradle clean ohara-it:test -PskipManager -Pbrokers="" -Pworkers=""
 ```
 all integration tests currently live under the ohara-it. Without actual systems information, ohara-it use mini cluster 
 (embedded kafka, ftp server and database) to run all integration tests. All configured services and related "key" are shown below.
@@ -75,7 +75,7 @@ all integration tests currently live under the ohara-it. Without actual systems 
 
 ### build uber jar
 ```
-gralde clean uberJar
+gradle clean uberJar
 ```
 the uber jar is under ohara-assembly/build/libs/
 
