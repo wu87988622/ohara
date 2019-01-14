@@ -104,6 +104,7 @@ the uber jar is under ohara-assembly/build/libs/
 * **Yu-Chen Cheng (yuchen@is-land.com.tw)** - committer
 * **Sam Cho (sam@is-land.com.tw)** - committer
 * **Chih-Chiang Yeh (harryyeh@is-land.com.tw)** - committer
+* **Harry Chiang (harry@is-land.com.tw)** - committer
 
 ### License
 
