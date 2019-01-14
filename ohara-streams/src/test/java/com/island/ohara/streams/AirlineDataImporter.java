@@ -1,21 +1,15 @@
 package com.island.ohara.streams;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
-import javassist.*;
-import javassist.bytecode.ClassFile;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -26,9 +20,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class DataImporter {
+class AirlineDataImporter {
 
-  private static final Logger log = LoggerFactory.getLogger(DataImporter.class);
+  private static final Logger log = LoggerFactory.getLogger(AirlineDataImporter.class);
 
   private static final String HELP_KEY = "--help";
   private static final String SERSERS_KEY = "--bootstrapServers";
@@ -188,62 +182,6 @@ class DataImporter {
     prop.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
     return new KafkaConsumer<>(prop);
-  }
-
-  /**
-   * Dynamic generate class from csv file and get all data (note : you should give the header in
-   * file) The result class name will be {@code CSV_{filename.toUpper}}
-   *
-   * @param filename the csv file name
-   * @return
-   */
-  static List<?> readData(String filename) throws Exception {
-    String prefix = "src/test/data";
-    Path p = Paths.get(prefix, File.separator, filename);
-    if (!p.toFile().exists()) throw new FileNotFoundException(filename + " not exists.");
-    Optional<String> header = Files.lines(p).findFirst();
-    String trueHeaders =
-        header.orElseThrow(
-            () -> new RuntimeException("the file : " + filename + " has no header."));
-    String className = filename.replace(".csv", "").toUpperCase();
-
-    Class<?> rowClass = buildClass(className, trueHeaders);
-
-    return Files.lines(p)
-        .skip(1)
-        .filter(s -> s != null && !s.isEmpty())
-        .map(line -> line.split(","))
-        .map(
-            values -> {
-              try {
-                Object rowObject = rowClass.newInstance();
-                Field[] fields = rowClass.getDeclaredFields();
-                for (int i = 0; i < fields.length; i++) {
-                  fields[i].setAccessible(true);
-                  fields[i].set(rowObject, values[i]);
-                }
-                return rowObject;
-              } catch (Exception e) {
-                log.error(e.getMessage());
-                return null;
-              }
-            })
-        .collect(Collectors.toList());
-  }
-
-  private static Class<?> buildClass(String className, String headers)
-      throws CannotCompileException, NotFoundException {
-    String[] fields = headers.split(",");
-    ClassPool pool = ClassPool.getDefault();
-    CtClass ctc = pool.makeClass("CSV_" + className);
-    ClassFile classFile = ctc.getClassFile();
-
-    classFile.setSuperclass(Object.class.getName());
-    for (String fieldName : fields) {
-      CtField field = new CtField(pool.get(String.class.getName()), fieldName, ctc);
-      ctc.addField(field);
-    }
-    return ctc.toClass();
   }
 
   private static String getLocalHostAddress() {
