@@ -21,11 +21,9 @@ ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
-ARG GIT_USER=""
-ARG GIT_PWD=""
 ARG BRANCH="master"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $BRANCH https://github.com/oharastream/ohara.git /testpatch/ohara
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/

@@ -33,11 +33,9 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
 # TODO: we should clone ohara libs from official release... by chia
-ARG GIT_USER=""
-ARG GIT_PWD=""
 ARG OHARA_BRANCH="master"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $OHARA_BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $OHARA_BRANCH https://github.com/oharastream/ohara.git /testpatch/ohara
 # we build ohara with specified version of kafka in order to keep the compatibility
 RUN gradle clean build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara

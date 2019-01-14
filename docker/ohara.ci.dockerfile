@@ -44,11 +44,9 @@ ENV GRADLE_HOME=/opt/gradle/gradle-$GRADLE_VERSION
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara
-ARG GIT_USER=""
-ARG GIT_PWD=""
 ARG BRANCH="master"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH https://$GIT_USER:$GIT_PWD@bitbucket.org/is-land/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $BRANCH https://github.com/oharastream/ohara.git /testpatch/ohara
 # Running this test case make gradle download mysql binary code
 RUN gradle clean build -x test -PskipManager
 RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
