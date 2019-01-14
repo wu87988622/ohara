@@ -20,11 +20,12 @@ class FtpSource extends RowSourceConnector {
     (0 until maxTasks)
       .map(
         index =>
-          new TaskConfig(
-            config.name,
-            config.topics,
-            schema.asJava,
-            FtpSourceTaskProps(
+          TaskConfig
+            .builder()
+            .name(config.name)
+            .topics(config.topics)
+            .schema(schema.asJava)
+            .options(FtpSourceTaskProps(
               total = maxTasks,
               hash = index,
               inputFolder = props.inputFolder,
@@ -35,8 +36,9 @@ class FtpSource extends RowSourceConnector {
               port = props.port,
               user = props.user,
               password = props.password
-            ).toMap.asJava
-        ))
+            ).toMap.asJava)
+            .build()
+      )
       .asJava
   }
 

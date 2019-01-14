@@ -1,4 +1,5 @@
 package com.island.ohara.agent
+import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -24,17 +25,20 @@ object WorkerCollie {
     private[this] var statusTopicName = s"$groupId-status-topic"
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
+    private[this] var jarUrls: Seq[URL] = Seq.empty
 
     def brokerClusterName(name: String): ClusterCreator = {
       this.brokerClusterName = name
       this
     }
 
+    @Optional("default is 8083")
     def clientPort(port: Option[Int]): ClusterCreator = {
       port.foreach(this.clientPort = _)
       this
     }
 
+    @Optional("default is 8083")
     def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
 
     @Optional("group id can be generated automatically")
@@ -82,7 +86,17 @@ object WorkerCollie {
       this.configTopicReplications = numberOfReplications
       this
     }
-    def create(nodeNames: Seq[String]): Future[WorkerClusterInfo] = doCreate(
+
+    @Optional("default is empty")
+    def jarUrl(jarUrl: URL): ClusterCreator = jarUrls(Seq(jarUrl))
+
+    @Optional("default is empty")
+    def jarUrls(jarUrls: Seq[URL]): ClusterCreator = {
+      this.jarUrls = jarUrls
+      this
+    }
+
+    override def create(): Future[WorkerClusterInfo] = doCreate(
       clusterName = Objects.requireNonNull(clusterName),
       imageName = Option(imageName).getOrElse(WorkerCollie.IMAGE_NAME_DEFAULT),
       brokerClusterName = Objects.requireNonNull(brokerClusterName),
@@ -101,6 +115,7 @@ object WorkerCollie {
       configTopicName = Objects.requireNonNull(configTopicName),
       configTopicReplications = CommonUtil
         .requirePositiveShort(configTopicReplications, () => "configTopicReplications should be positive number"),
+      Objects.requireNonNull(jarUrls),
       nodeNames =
         if (nodeNames == null || nodeNames.isEmpty) throw new IllegalArgumentException("nodes can't be empty")
         else nodeNames
@@ -119,6 +134,7 @@ object WorkerCollie {
                            statusTopicPartitions: Int,
                            configTopicName: String,
                            configTopicReplications: Short,
+                           jarUrls: Seq[URL],
                            nodeNames: Seq[String]): Future[WorkerClusterInfo]
   }
 
@@ -140,5 +156,6 @@ object WorkerCollie {
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "WORKER_ADVERTISED_CLIENT_PORT"
   private[agent] val CLIENT_PORT_KEY: String = "WORKER_CLIENT_PORT"
   private[agent] val CLIENT_PORT_DEFAULT: Int = 8083
+  private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
 
 }

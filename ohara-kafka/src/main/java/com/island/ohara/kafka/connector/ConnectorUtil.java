@@ -29,7 +29,7 @@ public class ConnectorUtil {
         Optional.ofNullable(props.get(NAME_KEY))
             .orElseThrow(() -> new IllegalArgumentException("name doesn't exist!!!"));
 
-    return new TaskConfig(name, topics, schema, props);
+    return TaskConfig.builder().name(name).topics(topics).schema(schema).options(props).build();
   }
 
   static Map<String, String> toMap(TaskConfig taskConfig) {

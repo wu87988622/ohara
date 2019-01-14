@@ -391,6 +391,7 @@ public final class CommonUtil {
     if (value < 0) throw new NullPointerException(msg.get());
     return value;
   }
+
   /** disable to instantiate CommonUtil. */
   private CommonUtil() {}
 }

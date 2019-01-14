@@ -10,7 +10,7 @@ import com.island.ohara.common.util.Releasable
 /**
   * a interface used to control remote node's docker service.
   * the default implementation is based on ssh client.
-  * NOTED: All contaiers are executed background so as to avoid blocking call.
+  * NOTED: All containers are executed background so as to avoid blocking call.
   */
 trait DockerClient extends Releasable {
 

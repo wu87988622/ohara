@@ -5,12 +5,13 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
   * @tparam T cluster description
   */
-trait Collie[T <: ClusterInfo] extends Iterable[T] {
+trait Collie[T <: ClusterInfo] {
 
   /**
     * remove whole cluster by specified name.
@@ -24,7 +25,7 @@ trait Collie[T <: ClusterInfo] extends Iterable[T] {
     * @param clusterName cluster name
     * @return all log content from cluster. Each container has a log.
     */
-  def logs(clusterName: String): Map[ContainerInfo, String]
+  def logs(clusterName: String): Future[Map[ContainerInfo, String]]
 
   /**
     * create a cluster creator
@@ -37,26 +38,29 @@ trait Collie[T <: ClusterInfo] extends Iterable[T] {
     * @param clusterName cluster name
     * @return containers information
     */
-  def containers(clusterName: String): Seq[ContainerInfo]
+  def containers(clusterName: String): Future[Seq[ContainerInfo]] = cluster(clusterName).map(_._2)
+
+  def clusters(): Future[Map[T, Seq[ContainerInfo]]]
 
   /**
     * get the cluster information from a broker cluster
     * @param name cluster name
     * @return cluster information
     */
-  def cluster(name: String): T = find(_.name == name).get
+  def cluster(name: String): Future[(T, Seq[ContainerInfo])] =
+    clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchElementException(s"$name doesn't exist")))
 
   /**
     * @param clusterName cluster name
     * @return true if the broker cluster exists
     */
-  def exists(clusterName: String): Boolean = exists(_.name == clusterName)
+  def exists(clusterName: String): Future[Boolean] = clusters().map(_.exists(_._1.name == clusterName))
 
   /**
     * @param clusterName cluster name
     * @return true if the broker cluster doesn't exist
     */
-  def nonExists(clusterName: String): Boolean = !exists(clusterName)
+  def nonExists(clusterName: String): Future[Boolean] = exists(clusterName).map(!_)
 
   /**
     * add a node to a running broker cluster
@@ -81,6 +85,7 @@ object Collie {
   trait ClusterCreator[T <: ClusterInfo] {
     protected var imageName: String = _
     protected var clusterName: String = _
+    protected var nodeNames: Seq[String] = _
 
     /**
       * In route we accept the option arguments from restful APIs. This method help caller to apply fluent pattern.
@@ -106,7 +111,7 @@ object Collie {
       * @param nodeName node name
       * @return cluster description
       */
-    def create(nodeName: String): Future[T] = create(Seq(nodeName))
+    def nodeName(nodeName: String): ClusterCreator.this.type = nodeNames(Seq(nodeName))
 
     /**
       *  create a cluster.
@@ -114,6 +119,11 @@ object Collie {
       * @param nodeNames nodes' name
       * @return cluster description
       */
-    def create(nodeNames: Seq[String]): Future[T]
+    def nodeNames(nodeNames: Seq[String]): ClusterCreator.this.type = {
+      this.nodeNames = nodeNames
+      this
+    }
+
+    def create(): Future[T]
   }
 }

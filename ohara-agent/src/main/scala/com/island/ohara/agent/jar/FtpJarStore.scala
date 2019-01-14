@@ -140,13 +140,21 @@ private[jar] class FtpJarStore(homeFolder: String, commandPort: Int, dataPorts: 
     jar
   }
 
-  override def url(id: String): Future[URL] = jarInfo(id).map { plugin =>
+  override def url(id: String): Future[URL] = doUrls().map(_(id))
+
+  override def urls(ids: Seq[String]): Future[Seq[URL]] = doUrls().map(_.filter {
+    case (id, url) => ids.contains(id)
+  }.values.toSeq)
+
+  override def urls(): Future[Seq[URL]] = doUrls().map(_.values.toSeq)
+
+  private def doUrls(): Future[Map[String, URL]] = jarInfos().map(_.map { plugin =>
     // NOTED: we replace hostname by actual ip address so we don't need to add route to worker containers.
     val hostname = CommonUtil.address(CommonUtil.hostname())
     // NOTED: DON'T append the homeFolder into the path since homeFolder is "root" of ftp server.
-    val path = s"ftp://$userName:$password@$hostname:$port/$id/${plugin.name}"
-    new URL(path)
-  }
+    val path = s"ftp://$userName:$password@$hostname:$port/${plugin.id}/${plugin.name}"
+    plugin.id -> new URL(path)
+  }.toMap)
 
   override def exist(id: String): Future[Boolean] = if (CommonUtil.isEmpty(id))
     Future.failed(new IllegalArgumentException("id can't by empty"))

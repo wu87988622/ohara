@@ -53,6 +53,8 @@ trait JarStore extends Releasable {
     Future.failed(new IllegalArgumentException(s"$id can't be empty"))
   else jarInfos().map(_.find(_.id == id).head)
 
+  def jarInfos(ids: String): Future[Seq[JarInfo]] = jarInfos().map(_.filter(p => ids.contains(p.id)))
+
   def jarInfos(): Future[Seq[JarInfo]]
 
   /**
@@ -61,6 +63,10 @@ trait JarStore extends Releasable {
     * @return url connection
     */
   def url(id: String): Future[URL]
+
+  def urls(ids: Seq[String]): Future[Seq[URL]]
+
+  def urls(): Future[Seq[URL]]
 
   def exist(id: String): Future[Boolean]
 

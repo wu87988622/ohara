@@ -30,7 +30,12 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsSinkConnector = new HDFSSinkConnector()
 
     hdfsSinkConnector._start(
-      new TaskConfig("test", Seq("topic").asJava, Seq.empty.asJava, Map(HDFS_URL -> hdfsURL, TMP_DIR -> tmpDir).asJava))
+      TaskConfig
+        .builder()
+        .name("test")
+        .topic("topic")
+        .options(Map(HDFS_URL -> hdfsURL, TMP_DIR -> tmpDir).asJava)
+        .build())
     val result = hdfsSinkConnector._taskConfigs(maxTasks)
 
     result.size shouldBe maxTasks

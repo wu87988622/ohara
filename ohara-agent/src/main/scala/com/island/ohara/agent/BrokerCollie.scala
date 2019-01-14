@@ -36,7 +36,7 @@ object BrokerCollie {
       this
     }
 
-    def create(nodeNames: Seq[String]): Future[BrokerClusterInfo] = doCreate(
+    override def create(): Future[BrokerClusterInfo] = doCreate(
       clusterName = Objects.requireNonNull(clusterName),
       imageName = Option(imageName).getOrElse(BrokerCollie.IMAGE_NAME_DEFAULT),
       zookeeperClusterName = Objects.requireNonNull(zookeeperClusterName),

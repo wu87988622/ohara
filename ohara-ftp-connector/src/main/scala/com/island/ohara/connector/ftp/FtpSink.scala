@@ -34,11 +34,12 @@ class FtpSink extends RowSinkConnector {
     (0 until maxTasks)
       .map(
         index =>
-          new TaskConfig(
-            config.name,
-            config.topics,
-            config.schema,
-            FtpSinkTaskProps(
+          TaskConfig
+            .builder()
+            .name(config.name)
+            .topics(config.topics)
+            .schema(config.schema)
+            .options(FtpSinkTaskProps(
               output = CommonUtil.path(props.output, s"${config.name}_$index"),
               needHeader = props.needHeader,
               encode = props.encode,
@@ -46,8 +47,8 @@ class FtpSink extends RowSinkConnector {
               port = props.port,
               user = props.user,
               password = props.password
-            ).toMap.asJava
-        ))
+            ).toMap.asJava)
+            .build())
       .asJava
   }
 }

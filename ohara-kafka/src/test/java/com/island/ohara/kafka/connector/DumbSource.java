@@ -18,11 +18,12 @@ public class DumbSource extends RowSourceConnector {
   @Override
   protected List<TaskConfig> _taskConfigs(int maxTasks) {
     return Collections.singletonList(
-        new TaskConfig(
-            "test",
-            Collections.singletonList("topic"),
-            columns,
-            Collections.singletonMap(Column.COLUMN_KEY, Column.fromColumns(columns))));
+        TaskConfig.builder()
+            .name("test")
+            .topic("topic")
+            .schema(columns)
+            .option(Column.COLUMN_KEY, Column.fromColumns(columns))
+            .build());
   }
 
   @Override

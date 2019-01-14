@@ -139,33 +139,28 @@ private[configurator] object RouteUtil {
         post {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
-            if (collie.exists(req.name)) throw new IllegalArgumentException(s"${req.name} exists!!!")
-            req.nodeNames.foreach { nodeName =>
-              if (!nodeCollie.exists(_.name == nodeName)) throw new NoSuchElementException(s"$nodeName doesn't exist")
-            }
-            onSuccess(hookOfCreation(req))(cluster => complete(cluster))
+            onSuccess(collie.nonExists(req.name).flatMap {
+              if (_) nodeCollie.nodes(req.nodeNames).flatMap(_ => hookOfCreation(req))
+              else Future.failed(new IllegalArgumentException(s"${req.name} is already running"))
+            })(complete(_))
           }
-        } ~ get(complete(collie.toSeq))
+        } ~ get(onSuccess(collie.clusters()) { clusters =>
+          complete(clusters.keys)
+        })
       } ~ pathPrefix(Segment) { clusterName =>
-        if (!collie.exists(clusterName)) failWith(new NoSuchElementException(s"$clusterName doesn't exist"))
-        else
-          path(Segment) { nodeName =>
-            if (!nodeCollie.exists(_.name == nodeName)) failWith(new NoSuchElementException(s"$nodeName doesn't exist"))
-            else
-              // add node to a running cluster
-              post {
-                onSuccess(collie.addNode(clusterName, nodeName))(value => complete(value))
-              } ~ delete {
-                // remove node from a running cluster
-                onSuccess(collie.removeNode(clusterName, nodeName))(value => complete(value))
-              }
-          } ~ pathEnd {
-            delete {
-              onComplete(collie.remove(clusterName))(cluster => complete(cluster))
-            } ~ get {
-              complete(collie.containers(clusterName))
-            }
+        path(Segment) { nodeName =>
+          post {
+            onSuccess(collie.addNode(clusterName, nodeName))(complete(_))
+          } ~ delete {
+            onSuccess(collie.removeNode(clusterName, nodeName))(complete(_))
           }
+        } ~ pathEnd {
+          delete {
+            onComplete(collie.remove(clusterName))(cluster => complete(cluster))
+          } ~ get {
+            complete(collie.containers(clusterName))
+          }
+        }
       }
     }
 }

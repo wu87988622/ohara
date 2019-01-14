@@ -17,6 +17,7 @@ object ZookeeperRoute {
           .electionPort(req.electionPort)
           .peerPort(req.peerPort)
           .imageName(req.imageName)
-          .create(req.nodeNames)
+          .nodeNames(req.nodeNames)
+          .create()
     )
 }

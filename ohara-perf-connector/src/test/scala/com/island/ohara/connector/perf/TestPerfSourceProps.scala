@@ -23,22 +23,35 @@ class TestPerfSourceProps extends SmallTest with Matchers {
   @Test
   def testEmptyTopics(): Unit = {
     val source = new PerfSource
+
     an[IllegalArgumentException] should be thrownBy source._start(
-      new TaskConfig(methodName, Seq.empty.asJava, schema.asJava, props.toMap.asJava))
+      TaskConfig.builder().name(methodName()).schema(schema.asJava).options(props.toMap.asJava).build())
   }
 
   @Test
   def testEmptySchema(): Unit = {
     val source = new PerfSource
     an[IllegalArgumentException] should be thrownBy source._start(
-      new TaskConfig(methodName, topics.asJava, Seq.empty.asJava, props.toMap.asJava))
+      TaskConfig.builder().name(methodName()).topics(topics.asJava).options(props.toMap.asJava).build())
   }
 
   @Test
   def testInvalidProps(): Unit = {
+    TaskConfig
+      .builder()
+      .name(methodName())
+      .topics(topics.asJava)
+      .schema(schema.asJava)
+      .options(props.copy(batch = -1).toMap.asJava)
+      .build()
     val source = new PerfSource
     an[IllegalArgumentException] should be thrownBy source._start(
-      new TaskConfig(methodName, topics.asJava, schema.asJava, props.copy(batch = -1).toMap.asJava))
+      TaskConfig
+        .builder()
+        .name(methodName())
+        .topics(topics.asJava)
+        .schema(schema.asJava)
+        .options(props.copy(batch = -1).toMap.asJava)
+        .build())
   }
-
 }

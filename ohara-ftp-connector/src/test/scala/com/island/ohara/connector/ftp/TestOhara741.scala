@@ -25,12 +25,7 @@ class TestOhara741 extends SmallTest with Matchers {
       encode = Some("UTF-8")
     )
 
-    val taskConfig = new TaskConfig(
-      "aa",
-      Seq.empty.asJava,
-      Seq.empty.asJava,
-      props.toMap.asJava
-    )
+    val taskConfig = TaskConfig.builder().name("aa").options(props.toMap.asJava).build()
 
     val sink = new FtpSink
     sink._start(taskConfig)

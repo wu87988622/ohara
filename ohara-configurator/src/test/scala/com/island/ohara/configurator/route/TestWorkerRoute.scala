@@ -73,6 +73,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       brokerClusterName = Some("Asdasdasd"),
       clientPort = Some(123),
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     an[IllegalArgumentException] should be thrownBy assert(request, Await.result(access.add(request), 30 seconds))
@@ -134,6 +135,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
           imageName = Some("abcdef"),
           brokerClusterName = Some(bkClusterName),
           clientPort = Some(123),
+          jars = Seq.empty,
           nodeNames = Seq.empty
         )),
       30 seconds
@@ -146,6 +148,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(123),
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request, Await.result(access.add(request), 30 seconds))
@@ -157,6 +160,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
+      jars = Seq.empty,
       brokerClusterName = Some(bkClusterName),
       nodeNames = nodeNames
     )
@@ -166,6 +170,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request1, Await.result(access.add(request1), 30 seconds))
@@ -183,6 +188,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = Await.result(access.add(request), 30 seconds)
@@ -198,6 +204,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = Await.result(access.add(request), 30 seconds)
@@ -217,6 +224,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
+      jars = Seq.empty,
       nodeNames = Seq(nodeNames.head)
     )
     val cluster = Await.result(access.add(request), 30 seconds)
@@ -232,6 +240,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = Await.result(access.add(request), 30 seconds)

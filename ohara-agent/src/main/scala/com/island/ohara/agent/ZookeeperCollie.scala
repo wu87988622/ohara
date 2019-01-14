@@ -59,7 +59,7 @@ object ZookeeperCollie {
     }
     def electionPort(port: Int): ClusterCreator = electionPort(Some(port))
 
-    def create(nodeNames: Seq[String]): Future[ZookeeperClusterInfo] = doCreate(
+    override def create(): Future[ZookeeperClusterInfo] = doCreate(
       clusterName = Objects.requireNonNull(clusterName),
       imageName = Option(imageName).getOrElse(ZookeeperCollie.IMAGE_NAME_DEFAULT),
       clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort must be positive"),

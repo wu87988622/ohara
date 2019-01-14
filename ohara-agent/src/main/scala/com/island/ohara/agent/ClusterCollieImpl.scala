@@ -1,4 +1,5 @@
 package com.island.ohara.agent
+import java.net.URL
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 
 import com.island.ohara.agent.ClusterCollieImpl._
@@ -41,6 +42,7 @@ private object ClusterCollieImpl {
     */
   private trait DockerClientCache extends Releasable {
     def get(node: Node): DockerClient
+    def get(nodes: Seq[Node]): Seq[DockerClient] = nodes.map(get)
   }
 
   private[this] trait BasicCollieImpl[T <: ClusterInfo] extends Collie[T] {
@@ -50,22 +52,21 @@ private object ClusterCollieImpl {
 
     val service: Service
 
-    override def containers(clusterName: String): Seq[ContainerInfo] = nodeCollie
-      .flatMap(clientCache.get(_).containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}")))
-      .toSeq
-
     protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): T
-    override def iterator: Iterator[T] = nodeCollie
-      .flatMap(clientCache.get(_).containers().filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
-      .map(container => container.name.split(DIVIDER).head -> container)
-      .groupBy(_._1)
-      .map {
-        case (clusterName, value) => clusterName -> value.map(_._2)
-      }
-      .map {
-        case (clusterName, containers) => toClusterDescription(clusterName, containers.toSeq)
-      }
-      .iterator
+
+    override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
+      .nodes()
+      .map(
+        _.flatMap(clientCache.get(_).containers().filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
+          .map(container => container.name.split(DIVIDER).head -> container)
+          .groupBy(_._1)
+          .map {
+            case (clusterName, value) => clusterName -> value.map(_._2)
+          }
+          .map {
+            case (clusterName, containers) => toClusterDescription(clusterName, containers) -> containers
+          }
+          .toMap)
 
     def updateRoute(client: DockerClient, containerName: String, route: Map[String, String]): Unit =
       client
@@ -83,11 +84,12 @@ private object ClusterCollieImpl {
       */
     def format(clusterName: String): String = s"$clusterName-${service.name}-${CommonUtil.randomString(LENGTH_OF_UUID)}"
 
-    override def remove(clusterName: String): Future[T] = Future {
-      val c = cluster(clusterName)
-      c.nodeNames.foreach(nodeName =>
-        stopAndRemoveService(clientCache.get(nodeCollie.node(nodeName)), clusterName, true))
-      c
+    override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
+      case (cluster, _) =>
+        nodeCollie.nodes(cluster.nodeNames).map { nodes =>
+          nodes.foreach(node => stopAndRemoveService(clientCache.get(node), clusterName, true))
+          cluster
+        }
     }
 
     /**
@@ -134,36 +136,46 @@ private object ClusterCollieImpl {
       * @param clusterName cluster name
       * @return containers information
       */
-    def query(clusterName: String, service: Service): Seq[ContainerInfo] = {
-      nodeCollie
-        .flatMap(clientCache.get(_).containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}")))
-        .toSeq
+    def query(clusterName: String, service: Service): Future[Seq[ContainerInfo]] = nodeCollie
+      .nodes()
+      .map(_.flatMap(clientCache.get(_).containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))))
+
+    override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = query(clusterName, service).flatMap {
+      containers =>
+        nodeCollie
+          .nodes(containers.map(_.nodeName))
+          .map(n => clientCache.get(n))
+          .map(_.zipWithIndex.map {
+            case (client, index) =>
+              val container = containers(index)
+              container -> client.log(container.name)
+          }.toMap)
     }
 
-    override def logs(clusterName: String): Map[ContainerInfo, String] = query(clusterName, service)
-      .map(container => container -> clientCache.get(nodeCollie.node(container.nodeName)).log(container.name))
-      .toMap
-
-    override def removeNode(clusterName: String, nodeName: String): Future[T] = Future {
-      val targetNode =
-        nodeCollie.find(_.name == nodeName).getOrElse(throw new IllegalArgumentException(s"$nodeName doesn't exist"))
-      val runningContainers = containers(clusterName)
-      runningContainers.size match {
-        case 0 => throw new IllegalArgumentException(s"$clusterName doesn't exist")
-        case 1 if runningContainers.map(_.nodeName).contains(nodeName) =>
-          throw new IllegalArgumentException(
-            s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead")
-        case _ =>
-          stopAndRemoveService(clientCache.get(targetNode), clusterName, false)
-          cluster(clusterName)
+    override def removeNode(clusterName: String, nodeName: String): Future[T] = containers(clusterName)
+      .flatMap { runningContainers =>
+        runningContainers.size match {
+          case 0 => Future.failed(new IllegalArgumentException(s"$clusterName doesn't exist"))
+          case 1 if runningContainers.map(_.nodeName).contains(nodeName) =>
+            Future.failed(new IllegalArgumentException(
+              s"$clusterName is a single-node cluster. You can't remove the last node by removeNode(). Please use remove(clusterName) instead"))
+          case _ => nodeCollie.node(nodeName)
+        }
       }
-    }
+      .flatMap { targetNode =>
+        stopAndRemoveService(clientCache.get(targetNode), clusterName, false)
+        cluster(clusterName).map(_._1)
+      }
 
-    protected def doAddNode(previousCluster: T, newNodeName: String): Future[T]
-    override def addNode(clusterName: String, nodeName: String): Future[T] = {
-      if (!nodeCollie.exists(_.name == nodeName)) throw new IllegalArgumentException(s"$nodeName doesn't exist")
-      doAddNode(cluster(clusterName), nodeName)
-    }
+    protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String): Future[T]
+
+    override def addNode(clusterName: String, nodeName: String): Future[T] =
+      nodeCollie
+        .node(nodeName) // make sure there is a exist node.
+        .flatMap(_ => cluster(clusterName))
+        .flatMap {
+          case (c, cs) => doAddNode(c, cs, nodeName)
+        }
   }
 
   private class ZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
@@ -174,61 +186,61 @@ private object ClusterCollieImpl {
 
     override def creator(): ZookeeperCollie.ClusterCreator =
       (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-        Future {
-          if (exists(clusterName)) throw new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!")
-          val nodes: Map[Node, String] =
-            nodeNames.map(nodeCollie.node).map(node => node -> format(clusterName)).toMap
-          // add route in order to make zk node can connect to each other.
-          val route: Map[String, String] = nodes.map {
-            case (node, _) =>
-              node.name -> CommonUtil.address(node.name)
-          }
-
-          val zkServers: String = nodes.values.mkString(" ")
-          val successfulNodeNames: Seq[String] = nodes.zipWithIndex
-            .flatMap {
-              case ((node, hostname), index) =>
-                val client = clientCache.get(node)
-                try client
-                  .containerCreator()
-                  .imageName(imageName)
-                  .portMappings(
-                    Map(
-                      clientPort -> clientPort,
-                      peerPort -> peerPort,
-                      electionPort -> electionPort
-                    ))
-                  .hostname(hostname)
-                  .envs(Map(
-                    ZookeeperCollie.ID_KEY -> index.toString,
-                    ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                    ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                    ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                    ZookeeperCollie.SERVERS_KEY -> zkServers
-                  ))
-                  .name(hostname)
-                  .route(route)
-                  .run()
-                catch {
-                  case e: Throwable =>
-                    stopAndRemoveService(client, clusterName, true)
-                    LOG.error(s"failed to start $clusterName", e)
-                    None
-                }
+        exists(clusterName)
+          .flatMap(if (_) Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
+          else nodeCollie.nodes(nodeNames))
+          .map(_.map(node => node -> format(clusterName)).toMap)
+          .map { nodes =>
+            // add route in order to make zk node can connect to each other.
+            val route: Map[String, String] = nodes.map {
+              case (node, _) =>
+                node.name -> CommonUtil.address(node.name)
             }
-            .map(_.nodeName)
-            .toSeq
-          if (successfulNodeNames.isEmpty)
-            throw new IllegalArgumentException(s"failed to create $clusterName on $ZOOKEEPER")
-          ZookeeperClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            clientPort = clientPort,
-            peerPort = peerPort,
-            electionPort = electionPort,
-            nodeNames = successfulNodeNames
-          )
-      }
+            val zkServers: String = nodes.values.mkString(" ")
+            val successfulNodeNames: Seq[String] = nodes.zipWithIndex
+              .flatMap {
+                case ((node, hostname), index) =>
+                  val client = clientCache.get(node)
+                  try client
+                    .containerCreator()
+                    .imageName(imageName)
+                    .portMappings(
+                      Map(
+                        clientPort -> clientPort,
+                        peerPort -> peerPort,
+                        electionPort -> electionPort
+                      ))
+                    .hostname(hostname)
+                    .envs(Map(
+                      ZookeeperCollie.ID_KEY -> index.toString,
+                      ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                      ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                      ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                      ZookeeperCollie.SERVERS_KEY -> zkServers
+                    ))
+                    .name(hostname)
+                    .route(route)
+                    .run()
+                  catch {
+                    case e: Throwable =>
+                      stopAndRemoveService(client, clusterName, true)
+                      LOG.error(s"failed to start $clusterName", e)
+                      None
+                  }
+              }
+              .map(_.nodeName)
+              .toSeq
+            if (successfulNodeNames.isEmpty)
+              throw new IllegalArgumentException(s"failed to create $clusterName on $ZOOKEEPER")
+            ZookeeperClusterInfo(
+              name = clusterName,
+              imageName = imageName,
+              clientPort = clientPort,
+              peerPort = peerPort,
+              electionPort = electionPort,
+              nodeNames = successfulNodeNames
+            )
+        }
 
     override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): ZookeeperClusterInfo = {
       val first = containers.head
@@ -255,6 +267,7 @@ private object ClusterCollieImpl {
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
     override protected def doAddNode(previousCluster: ZookeeperClusterInfo,
+                                     previousContainers: Seq[ContainerInfo],
                                      newNodeName: String): Future[ZookeeperClusterInfo] =
       Future.failed(
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
@@ -268,98 +281,111 @@ private object ClusterCollieImpl {
 
     override def creator(): BrokerCollie.ClusterCreator =
       (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
-        Future {
-          val existNodes: Map[Node, ContainerInfo] =
-            containers(clusterName).map(container => nodeCollie.node(container.nodeName) -> container).toMap
-
-          // if there is a running cluster already, we should check the consistency of configuration
-          existNodes.values.foreach { container =>
-            def checkValue(previous: String, newValue: String): Unit =
-              if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-            def check(key: String, newValue: String): Unit = {
-              val previous = container.environments(key)
-              if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-            }
-            checkValue(container.imageName, imageName)
-            check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
-            check(ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
-          }
-          val newNodes: Map[Node, String] =
-            nodeNames.map(nodeCollie.node).map(node => node -> format(clusterName)).toMap
-          existNodes.keys.foreach(
-            node =>
-              if (newNodes.keys.exists(_.name == node.name))
-                throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
-          val zkContainers = query(zookeeperClusterName, ZOOKEEPER)
-          if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName doesn't exist")
-          val zookeepers = zkContainers
-            .map(c =>
-              s"${c.nodeName}:${c.environments.getOrElse(ZookeeperCollie.CLIENT_PORT_KEY, ZookeeperCollie.CLIENT_PORT_DEFAULT)}")
-            .mkString(",")
-
-          val existRoute: Map[String, String] = existNodes.map {
-            case (node, container) => container.nodeName -> CommonUtil.address(node.name)
-          }
-          // add route in order to make broker node can connect to each other (and zk node).
-          val route: Map[String, String] = newNodes.map {
-            case (node, _) =>
-              node.name -> CommonUtil.address(node.name)
-          } ++ zkContainers.map(zkContainer => zkContainer.nodeName -> CommonUtil.address(zkContainer.nodeName)).toMap
-
-          // update the route since we are adding new node to a running broker cluster
-          // we don't need to update startup broker list since kafka do the update for us.
-          existNodes.foreach {
-            case (node, container) => updateRoute(clientCache.get(node), container.name, route)
-          }
-
-          val maxId: Int =
-            if (existNodes.isEmpty) 0
-            else existNodes.values.map(_.environments(BrokerCollie.ID_KEY).toInt).toSet.max + 1
-
-          val successfulNodeNames = newNodes.zipWithIndex
-            .flatMap {
-              case ((node, hostname), index) =>
-                val client = clientCache.get(node)
-                try client
-                  .containerCreator()
-                  .imageName(imageName)
-                  .portMappings(
-                    Map(
-                      clientPort -> clientPort,
-                      exporterPort -> exporterPort
-                    ))
-                  .hostname(hostname)
-                  .envs(Map(
-                    BrokerCollie.ID_KEY -> (maxId + index).toString,
-                    BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                    BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                    BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                    BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                    BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                    ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
-                  ))
-                  .name(hostname)
-                  .route(route ++ existRoute)
-                  .run()
-                catch {
-                  case e: Throwable =>
-                    stopAndRemoveService(client, clusterName, true)
-                    LOG.error(s"failed to start $imageName on ${node.name}", e)
-                    None
+        exists(clusterName)
+          .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
+          .flatMap(existContainers =>
+            nodeCollie
+              .nodes(existContainers.map(_.nodeName))
+              .map(_.zipWithIndex.map {
+                case (node, index) => node -> existContainers(index)
+              }.toMap)
+              .map { existNodes =>
+                // if there is a running cluster already, we should check the consistency of configuration
+                existNodes.values.foreach {
+                  container =>
+                    def checkValue(previous: String, newValue: String): Unit =
+                      if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+                    def check(key: String, newValue: String): Unit = {
+                      val previous = container.environments(key)
+                      if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+                    }
+                    checkValue(container.imageName, imageName)
+                    check(BrokerCollie.CLIENT_PORT_KEY, clientPort.toString)
+                    check(ZOOKEEPER_CLUSTER_NAME, zookeeperClusterName)
                 }
-            }
-            .map(_.nodeName)
-            .toSeq
-          if (successfulNodeNames.isEmpty)
-            throw new IllegalArgumentException(s"failed to create $clusterName on $BROKER")
-          BrokerClusterInfo(
-            name = clusterName,
-            imageName = imageName,
-            zookeeperClusterName = zookeeperClusterName,
-            clientPort = clientPort,
-            nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-          )
-      }
+                existNodes
+            })
+          .flatMap(existNodes =>
+            nodeCollie.nodes(nodeNames).map(_.map(node => node -> format(clusterName)).toMap).map((existNodes, _)))
+          .flatMap {
+            case (existNodes, newNodes) =>
+              existNodes.keys.foreach(node =>
+                if (newNodes.keys.exists(_.name == node.name))
+                  throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
+              query(zookeeperClusterName, ZOOKEEPER).map((existNodes, newNodes, _))
+          }
+          .map {
+            case (existNodes, newNodes, zkContainers) =>
+              if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName doesn't exist")
+              val zookeepers = zkContainers
+                .map(c =>
+                  s"${c.nodeName}:${c.environments.getOrElse(ZookeeperCollie.CLIENT_PORT_KEY, ZookeeperCollie.CLIENT_PORT_DEFAULT)}")
+                .mkString(",")
+
+              val existRoute: Map[String, String] = existNodes.map {
+                case (node, container) => container.nodeName -> CommonUtil.address(node.name)
+              }
+              // add route in order to make broker node can connect to each other (and zk node).
+              val route: Map[String, String] = newNodes.map {
+                case (node, _) =>
+                  node.name -> CommonUtil.address(node.name)
+              } ++ zkContainers
+                .map(zkContainer => zkContainer.nodeName -> CommonUtil.address(zkContainer.nodeName))
+                .toMap
+
+              // update the route since we are adding new node to a running broker cluster
+              // we don't need to update startup broker list since kafka do the update for us.
+              existNodes.foreach {
+                case (node, container) => updateRoute(clientCache.get(node), container.name, route)
+              }
+
+              val maxId: Int =
+                if (existNodes.isEmpty) 0
+                else existNodes.values.map(_.environments(BrokerCollie.ID_KEY).toInt).toSet.max + 1
+
+              val successfulNodeNames = newNodes.zipWithIndex
+                .flatMap {
+                  case ((node, hostname), index) =>
+                    val client = clientCache.get(node)
+                    try client
+                      .containerCreator()
+                      .imageName(imageName)
+                      .portMappings(Map(
+                        clientPort -> clientPort,
+                        exporterPort -> exporterPort
+                      ))
+                      .hostname(hostname)
+                      .envs(Map(
+                        BrokerCollie.ID_KEY -> (maxId + index).toString,
+                        BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                        BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                        BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                        BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                        ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
+                      ))
+                      .name(hostname)
+                      .route(route ++ existRoute)
+                      .run()
+                    catch {
+                      case e: Throwable =>
+                        stopAndRemoveService(client, clusterName, true)
+                        LOG.error(s"failed to start $imageName on ${node.name}", e)
+                        None
+                    }
+                }
+                .map(_.nodeName)
+                .toSeq
+              if (successfulNodeNames.isEmpty)
+                throw new IllegalArgumentException(s"failed to create $clusterName on $BROKER")
+              BrokerClusterInfo(
+                name = clusterName,
+                imageName = imageName,
+                zookeeperClusterName = zookeeperClusterName,
+                clientPort = clientPort,
+                nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
+              )
+        }
     override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): BrokerClusterInfo = {
       val first = containers.head
       BrokerClusterInfo(
@@ -372,12 +398,14 @@ private object ClusterCollieImpl {
       )
     }
     override protected def doAddNode(previousCluster: BrokerClusterInfo,
+                                     previousContainers: Seq[ContainerInfo],
                                      newNodeName: String): Future[BrokerClusterInfo] = creator()
       .clusterName(previousCluster.name)
       .zookeeperClusterName(previousCluster.zookeeperClusterName)
       .clientPort(previousCluster.clientPort)
       .imageName(previousCluster.imageName)
-      .create(newNodeName)
+      .nodeName(newNodeName)
+      .create()
   }
 
   private class WorkerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
@@ -404,152 +432,181 @@ private object ClusterCollieImpl {
                                                            statusTopicPartitions,
                                                            configTopicName,
                                                            configTopicReplications,
+                                                           jarUrls,
                                                            nodeNames) =>
-      Future {
-        val existNodes: Map[Node, ContainerInfo] =
-          containers(clusterName).map(container => nodeCollie.node(container.nodeName) -> container).toMap
-
-        // if there is a running cluster already, we should check the consistency of configuration
-        existNodes.values.foreach { container =>
-          def checkValue(previous: String, newValue: String): Unit =
-            if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-          def check(key: String, newValue: String): Unit = {
-            val previous = container.environments(key)
-            if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
-          }
-          checkValue(container.imageName, imageName)
-          check(WorkerCollie.GROUP_ID_KEY, groupId)
-          check(WorkerCollie.OFFSET_TOPIC_KEY, offsetTopicName)
-          check(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY, offsetTopicPartitions.toString)
-          check(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY, offsetTopicReplications.toString)
-          check(WorkerCollie.STATUS_TOPIC_KEY, statusTopicName)
-          check(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY, statusTopicPartitions.toString)
-          check(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY, statusTopicReplications.toString)
-          check(WorkerCollie.CONFIG_TOPIC_KEY, configTopicName)
-          check(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY, configTopicReplications.toString)
-          check(WorkerCollie.CLIENT_PORT_KEY, clientPort.toString)
-          check(BROKER_CLUSTER_NAME, brokerClusterName)
+      exists(clusterName)
+        .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
+        .flatMap(
+          existContainers =>
+            nodeCollie
+              .nodes(existContainers.map(_.nodeName))
+              .map(_.zipWithIndex.map {
+                case (node, index) => node -> existContainers(index)
+              }.toMap)
+              .map { existNodes =>
+                // if there is a running cluster already, we should check the consistency of configuration
+                existNodes.values.foreach {
+                  container =>
+                    def checkValue(previous: String, newValue: String): Unit =
+                      if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+                    def check(key: String, newValue: String): Unit = {
+                      val previous = container.environments(key)
+                      if (previous != newValue) throw new IllegalArgumentException(s"previous:$previous new:$newValue")
+                    }
+                    checkValue(container.imageName, imageName)
+                    check(WorkerCollie.GROUP_ID_KEY, groupId)
+                    check(WorkerCollie.OFFSET_TOPIC_KEY, offsetTopicName)
+                    check(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY, offsetTopicPartitions.toString)
+                    check(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY, offsetTopicReplications.toString)
+                    check(WorkerCollie.STATUS_TOPIC_KEY, statusTopicName)
+                    check(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY, statusTopicPartitions.toString)
+                    check(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY, statusTopicReplications.toString)
+                    check(WorkerCollie.CONFIG_TOPIC_KEY, configTopicName)
+                    check(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY, configTopicReplications.toString)
+                    check(WorkerCollie.CLIENT_PORT_KEY, clientPort.toString)
+                    check(BROKER_CLUSTER_NAME, brokerClusterName)
+                }
+                existNodes
+            })
+        .flatMap(existNodes =>
+          nodeCollie.nodes(nodeNames).map(_.map(node => node -> format(clusterName)).toMap).map((existNodes, _)))
+        .flatMap {
+          case (existNodes, newNodes) =>
+            existNodes.keys.foreach(node =>
+              if (newNodes.keys.exists(_.name == node.name))
+                throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
+            query(brokerClusterName, BROKER).map((existNodes, newNodes, _))
         }
-        val newNodes: Map[Node, String] =
-          nodeNames.map(nodeCollie.node).map(node => node -> format(clusterName)).toMap
-        existNodes.keys.foreach(
-          node =>
-            if (newNodes.keys.exists(_.name == node.name))
-              throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
-        val brokerContainers = query(brokerClusterName, BROKER)
-        if (brokerContainers.isEmpty)
-          throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
-        val brokers = brokerContainers
-          .map(c =>
-            s"${c.nodeName}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerCollie.CLIENT_PORT_DEFAULT)}")
-          .mkString(",")
+        .map {
+          case (existNodes, newNodes, brokerContainers) =>
+            if (brokerContainers.isEmpty)
+              throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
+            val brokers = brokerContainers
+              .map(c =>
+                s"${c.nodeName}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerCollie.CLIENT_PORT_DEFAULT)}")
+              .mkString(",")
 
-        val existRoute: Map[String, String] = existNodes.map {
-          case (node, container) => container.hostname -> CommonUtil.address(node.name)
-        }
-        // add route in order to make broker node can connect to each other (and broker node).
-        val route: Map[String, String] = newNodes.map {
-          case (node, _) =>
-            node.name -> CommonUtil.address(node.name)
-        } ++ brokerContainers
-          .map(brokerContainer => brokerContainer.nodeName -> CommonUtil.address(brokerContainer.nodeName))
-          .toMap
+            val existRoute: Map[String, String] = existNodes.map {
+              case (node, container) => container.hostname -> CommonUtil.address(node.name)
+            }
+            // add route in order to make broker node can connect to each other (and broker node).
+            val route: Map[String, String] = newNodes.map {
+              case (node, _) =>
+                node.name -> CommonUtil.address(node.name)
+            } ++ brokerContainers
+              .map(brokerContainer => brokerContainer.nodeName -> CommonUtil.address(brokerContainer.nodeName))
+              .toMap
 
-        // update the route since we are adding new node to a running worker cluster
-        // we don't need to update startup broker list (WorkerCollie.BROKERS_KEY) since kafka do the update for us.
-        existNodes.foreach {
-          case (node, container) => updateRoute(clientCache.get(node), container.name, route)
-        }
-
-        val successfulNodeNames = newNodes
-          .flatMap {
-            case (node, hostname) =>
-              val client = clientCache.get(node)
-              try client
-                .containerCreator()
-                .imageName(imageName)
-                .portMappings(Map(clientPort -> clientPort))
-                .hostname(hostname)
-                .envs(Map(
-                  WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                  WorkerCollie.BROKERS_KEY -> brokers,
-                  WorkerCollie.GROUP_ID_KEY -> groupId,
-                  WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                  WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                  WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                  WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                  WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                  WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                  WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                  WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                  WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                  WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                  BROKER_CLUSTER_NAME -> brokerClusterName
-                ))
-                .name(hostname)
-                .route(route ++ existRoute)
-                .run()
-              catch {
-                case e: Throwable =>
-                  stopAndRemoveService(client, clusterName, true)
-                  LOG.error(s"failed to start $imageName", e)
-                  None
+            // update the route since we are adding new node to a running worker cluster
+            // we don't need to update startup broker list (WorkerCollie.BROKERS_KEY) since kafka do the update for us.
+            existNodes.foreach {
+              case (node, container) => updateRoute(clientCache.get(node), container.name, route)
+            }
+            val successfulNodeNames = newNodes
+              .flatMap {
+                case (node, hostname) =>
+                  val client = clientCache.get(node)
+                  try client
+                    .containerCreator()
+                    .imageName(imageName)
+                    .portMappings(Map(clientPort -> clientPort))
+                    .hostname(hostname)
+                    .envs(Map(
+                      WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                      WorkerCollie.BROKERS_KEY -> brokers,
+                      WorkerCollie.GROUP_ID_KEY -> groupId,
+                      WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                      WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                      WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                      WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                      WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                      WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                      WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                      WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                      WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                      WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
+                      BROKER_CLUSTER_NAME -> brokerClusterName
+                    ))
+                    .name(hostname)
+                    .route(route ++ existRoute)
+                    .run()
+                  catch {
+                    case e: Throwable =>
+                      stopAndRemoveService(client, clusterName, true)
+                      LOG.error(s"failed to start $imageName", e)
+                      None
+                  }
               }
-          }
-          .map(_.nodeName)
-          .toSeq
-        if (successfulNodeNames.isEmpty) throw new IllegalArgumentException(s"failed to create $clusterName on $WORKER")
-        WorkerClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          brokerClusterName = brokerClusterName,
-          clientPort = clientPort,
-          groupId = groupId,
-          offsetTopicName = offsetTopicName,
-          offsetTopicPartitions = offsetTopicPartitions,
-          offsetTopicReplications = offsetTopicReplications,
-          configTopicName = configTopicName,
-          configTopicPartitions = 1,
-          configTopicReplications = configTopicReplications,
-          statusTopicName = statusTopicName,
-          statusTopicPartitions = statusTopicPartitions,
-          statusTopicReplications = statusTopicReplications,
-          nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-        )
-    }
+              .map(_.nodeName)
+              .toSeq
+            if (successfulNodeNames.isEmpty)
+              throw new IllegalArgumentException(s"failed to create $clusterName on $WORKER")
+            WorkerClusterInfo(
+              name = clusterName,
+              imageName = imageName,
+              brokerClusterName = brokerClusterName,
+              clientPort = clientPort,
+              groupId = groupId,
+              offsetTopicName = offsetTopicName,
+              offsetTopicPartitions = offsetTopicPartitions,
+              offsetTopicReplications = offsetTopicReplications,
+              configTopicName = configTopicName,
+              configTopicPartitions = 1,
+              configTopicReplications = configTopicReplications,
+              statusTopicName = statusTopicName,
+              statusTopicPartitions = statusTopicPartitions,
+              statusTopicReplications = statusTopicReplications,
+              jarNames = jarUrls.map(_.getFile),
+              nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
+            )
+      }
 
-    override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): WorkerClusterInfo = {
-      val first = containers.head
+    override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): WorkerClusterInfo =
       WorkerClusterInfo(
         name = clusterName,
-        imageName = first.imageName,
-        brokerClusterName = first.environments(BROKER_CLUSTER_NAME),
-        clientPort =
-          first.environments.get(WorkerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(WorkerCollie.CLIENT_PORT_DEFAULT),
-        groupId = first.environments(WorkerCollie.GROUP_ID_KEY),
-        offsetTopicName = first.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-        offsetTopicPartitions = first.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-        offsetTopicReplications = first.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-        configTopicName = first.environments(WorkerCollie.CONFIG_TOPIC_KEY),
+        imageName = containers.head.imageName,
+        brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
+        clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
+        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
+        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
+        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
+        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
+        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
         configTopicPartitions = 1,
-        configTopicReplications = first.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-        statusTopicName = first.environments(WorkerCollie.STATUS_TOPIC_KEY),
-        statusTopicPartitions = first.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-        statusTopicReplications = first.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
+        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
+        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
+        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
+        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
+        jarNames = containers.head
+          .environments(WorkerCollie.PLUGINS_KEY)
+          .split(",")
+          .filter(_.nonEmpty)
+          .map(u => new URL(u).getFile),
         nodeNames = containers.map(_.nodeName)
       )
-    }
+
     override protected def doAddNode(previousCluster: WorkerClusterInfo,
-                                     newNodeName: String): Future[WorkerClusterInfo] = creator()
-      .clusterName(previousCluster.name)
-      .brokerClusterName(previousCluster.brokerClusterName)
-      .clientPort(previousCluster.clientPort)
-      .groupId(previousCluster.groupId)
-      .offsetTopicName(previousCluster.offsetTopicName)
-      .statusTopicName(previousCluster.statusTopicName)
-      .configTopicName(previousCluster.configTopicName)
-      .imageName(previousCluster.imageName)
-      .create(newNodeName)
+                                     previousContainers: Seq[ContainerInfo],
+                                     newNodeName: String): Future[WorkerClusterInfo] = {
+      creator()
+        .clusterName(previousCluster.name)
+        .brokerClusterName(previousCluster.brokerClusterName)
+        .clientPort(previousCluster.clientPort)
+        .groupId(previousCluster.groupId)
+        .offsetTopicName(previousCluster.offsetTopicName)
+        .statusTopicName(previousCluster.statusTopicName)
+        .configTopicName(previousCluster.configTopicName)
+        .imageName(previousCluster.imageName)
+        .jarUrls(
+          previousContainers.head
+            .environments(WorkerCollie.PLUGINS_KEY)
+            .split(",")
+            .filter(_.nonEmpty)
+            .map(s => new URL(s)))
+        .nodeName(newNodeName)
+        .create()
+    }
   }
 
   /**

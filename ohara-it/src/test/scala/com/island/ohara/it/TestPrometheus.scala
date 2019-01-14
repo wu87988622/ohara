@@ -103,7 +103,8 @@ class TestPrometheus extends MediumTest with Matchers {
           .electionPort(electionPort)
           .peerPort(peerPort)
           .clusterName(clusterName)
-          .create(nodeCollie.head.name),
+          .nodeName(Await.result(nodeCollie.nodes(), 10 seconds).head.name)
+          .create(),
         2 minutes
       ))
     finally Await.result(zookeeperCollie.remove(clusterName), 60 seconds)
@@ -124,7 +125,8 @@ class TestPrometheus extends MediumTest with Matchers {
           .clientPort(clientPort)
           .exporterPort(exporterPort)
           .zookeeperClusterName(zkClusterName)
-          .create(nodeCollie.head.name),
+          .nodeName(Await.result(nodeCollie.nodes(), 10 seconds).head.name)
+          .create(),
         2 minutes
       )
     )

@@ -6,13 +6,17 @@ import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.typesafe.scalalogging.Logger
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 object NodesRoute {
   private[this] lazy val LOG = Logger(NodesRoute.getClass)
 
   /**
     * all exceptions are swallowed since the ssh info may be wrong.
     */
-  private[this] def wrapExceptionToEmpty[T](f: => Seq[T]): Seq[T] = try f
+  private[this] def wrapExceptionToEmpty[T](f: => Future[Seq[T]]): Seq[T] = try Await.result(f, 30 seconds)
   catch {
     case e: Throwable =>
       LOG.error("there is a invalid node!!!", e)
@@ -23,17 +27,20 @@ object NodesRoute {
       NodeService(
         name = "zookeeper",
         clusterNames = wrapExceptionToEmpty(
-          clusterCollie.zookeepersCollie().filter(_.nodeNames.contains(res.name)).map(_.name).toSeq)
+          clusterCollie
+            .zookeepersCollie()
+            .clusters()
+            .map(_.filter(_._1.nodeNames.contains(res.name)).map(_._1.name).toSeq))
       ),
       NodeService(
         name = "broker",
-        clusterNames =
-          wrapExceptionToEmpty(clusterCollie.brokerCollie().filter(_.nodeNames.contains(res.name)).map(_.name).toSeq)
+        clusterNames = wrapExceptionToEmpty(
+          clusterCollie.brokerCollie().clusters().map(_.filter(_._1.nodeNames.contains(res.name)).map(_._1.name).toSeq))
       ),
       NodeService(
         name = "connect-worker",
-        clusterNames =
-          wrapExceptionToEmpty(clusterCollie.workerCollie().filter(_.nodeNames.contains(res.name)).map(_.name).toSeq)
+        clusterNames = wrapExceptionToEmpty(
+          clusterCollie.workerCollie().clusters().map(_.filter(_._1.nodeNames.contains(res.name)).map(_._1.name).toSeq))
       )
     )
   )

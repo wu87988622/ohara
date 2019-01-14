@@ -80,9 +80,15 @@ fi
 echo "status.storage.topic=$WORKER_STATUS_TOPIC" >> "$CONFIG"
 echo "status.storage.replication.factor=$WORKER_STATUS_TOPIC_REPLICATIONS" >> "$CONFIG"
 echo "status.storage.partitions=$WORKER_STATUS_TOPIC_PARTITIONS" >> "$CONFIG"
+WORKER_PLUGIN_FOLDER="/tmp/plugins"
+mkdir -p $WORKER_PLUGIN_FOLDER
 
-if [[ -z "$WORKER_PLUGIN_FOLDER" ]]; then
-  WORKER_PLUGIN_FOLDER="/tmp/plugins"
+if [[ ! -z "$WORKER_PLUGINS" ]]; then
+  IFS=','
+  read -ra ADDR <<< "$WORKER_PLUGINS"
+  for i in "${ADDR[@]}"; do
+    wget $i -P $WORKER_PLUGIN_FOLDER
+  done
 fi
 echo "plugin.path=$WORKER_PLUGIN_FOLDER" >> "$CONFIG"
 

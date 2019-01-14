@@ -60,10 +60,10 @@ class TestFtpJarStore extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(jarStore.jarInfo(""))
     an[IllegalArgumentException] should be thrownBy result(jarStore.remove(null))
     an[IllegalArgumentException] should be thrownBy result(jarStore.remove(""))
-    an[IllegalArgumentException] should be thrownBy result(jarStore.url(null))
-    an[IllegalArgumentException] should be thrownBy result(jarStore.url(""))
+    an[NoSuchElementException] should be thrownBy result(jarStore.url(null))
+    an[NoSuchElementException] should be thrownBy result(jarStore.url(""))
     an[IllegalArgumentException] should be thrownBy result(jarStore.update("", null))
-    an[IllegalArgumentException] should be thrownBy result(jarStore.update("", null))
+    an[IllegalArgumentException] should be thrownBy result(jarStore.update(null, null))
   }
 
   @Test
@@ -158,14 +158,12 @@ class TestFtpJarStore extends MediumTest with Matchers {
     plugin.size shouldBe content.length
     (0 until numberOfFtpThreads / 2)
       .map { _ =>
-        Future {
-          val url = result(jarStore.url(plugin.id))
+        jarStore.url(plugin.id).map { url =>
           val input = url.openStream()
           val tempFile = CommonUtil.createTempFile(methodName())
           if (tempFile.exists()) tempFile.delete() shouldBe true
-          try {
-            Files.copy(input, tempFile.toPath)
-          } finally input.close()
+          try Files.copy(input, tempFile.toPath)
+          finally input.close()
           tempFile
         }
       }

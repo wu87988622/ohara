@@ -29,8 +29,9 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class ConfiguratorBuilder {
   private[this] var hostname: Option[String] = None
@@ -114,10 +115,8 @@ class ConfiguratorBuilder {
   }
 
   private[this] def nodeCollie(): NodeCollie = new NodeCollie {
-    import scala.concurrent.duration._
-    override def node(name: String): Node = Await.result(store.value[Node](name), 10 seconds)
-    override def iterator: Iterator[Node] =
-      Await.result(store.raw(), 10 seconds).filter(_.isInstanceOf[Node]).map(_.asInstanceOf[Node]).iterator
+    override def node(name: String): Future[Node] = store.value[Node](name)
+    override def nodes(): Future[Seq[Node]] = store.values[Node]
   }
 
   def build(): Configurator = {
@@ -296,23 +295,29 @@ private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
     environments = Map.empty,
     hostname = CommonUtil.randomString(10)
   )
-  override def exists(clusterName: String): Boolean =
-    clusterCache.containsKey(clusterName) && containerCache.containsKey(clusterName)
+  override def exists(clusterName: String): Future[Boolean] =
+    Future.successful(clusterCache.containsKey(clusterName) && containerCache.containsKey(clusterName))
 
-  override def remove(clusterName: String): Future[T] = if (exists(clusterName)) {
+  override def remove(clusterName: String): Future[T] = exists(clusterName).flatMap(if (_) Future.successful {
     val cluster = clusterCache.remove(clusterName)
     containerCache.remove(clusterName)
-    Future.successful(cluster)
-  } else Future.failed(new NoSuchElementException(s"$clusterName doesn't exist"))
+    cluster
+  } else Future.failed(new NoSuchElementException(s"$clusterName doesn't exist")))
 
-  override def logs(clusterName: String): Map[ContainerInfo, String] = Map.empty
+  override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = Future.successful(Map.empty)
 
-  override def containers(clusterName: String): Seq[ContainerInfo] = if (exists(clusterName))
-    containerCache.get(clusterName)
-  else Seq.empty
+  override def containers(clusterName: String): Future[Seq[ContainerInfo]] =
+    exists(clusterName).map(if (_) containerCache.get(clusterName) else Seq.empty)
 
   import scala.collection.JavaConverters._
-  override def iterator: Iterator[T] = clusterCache.values().asScala.toIterator
+  override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = Future.successful(
+    clusterCache
+      .values()
+      .asScala
+      .map { cluster =>
+        cluster -> containerCache.get(cluster.name)
+      }
+      .toMap)
 }
 
 private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterInfo] with ZookeeperCollie {
@@ -413,6 +418,7 @@ private[this] class FakeWorkerCollie extends FakeCollie[WorkerClusterInfo] with 
      statusTopicPartitions,
      configTopicName,
      configTopicReplications,
+     jarUrls,
      nodeNames) =>
       Future.successful {
         val cluster = WorkerClusterInfo(
@@ -430,6 +436,7 @@ private[this] class FakeWorkerCollie extends FakeCollie[WorkerClusterInfo] with 
           statusTopicName = statusTopicName,
           statusTopicPartitions = statusTopicPartitions,
           statusTopicReplications = statusTopicReplications,
+          jarNames = Seq.empty,
           nodeNames = nodeNames
         )
         clusterCache.put(clusterName, cluster)
