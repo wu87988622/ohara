@@ -1,6 +1,6 @@
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import { reduce, map, join } from 'lodash';
+import { reduce, map, join, sortBy } from 'lodash';
 
 import * as nodeApis from 'apis/nodeApis';
 import { NODES } from 'constants/documentTitles';
@@ -36,7 +36,7 @@ class NodeListPage extends React.Component {
     this.setState(() => ({ isLoading: false }));
     const nodes = _.get(res, 'data.result', null);
     if (!_.isNull(nodes)) {
-      this.setState({ nodes });
+      this.setState({ nodes: sortBy(nodes, 'name') });
     }
   };
 
