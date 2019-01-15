@@ -79,6 +79,7 @@ const Modal = ({
   confirmBtnText = 'Save',
   cancelBtnText = 'Cancel',
   isConfirmDisabled = false,
+  isConfirmWorking = false,
 }) => {
   return (
     <ModalWrapper
@@ -106,6 +107,7 @@ const Modal = ({
           handleClick={handleConfirm}
           data-testid="modal-confirm-btn"
           disabled={isConfirmDisabled}
+          isWorking={isConfirmWorking}
         />
       </Actions>
     </ModalWrapper>
@@ -121,6 +123,7 @@ Modal.propTypes = {
   confirmBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
   isConfirmDisabled: PropTypes.bool,
+  isConfirmWorking: PropTypes.bool,
   width: PropTypes.string,
 };
 

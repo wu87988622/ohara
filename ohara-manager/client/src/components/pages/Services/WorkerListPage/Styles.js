@@ -1,32 +1,28 @@
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import { Button } from 'common/Form';
 import { DataTable } from 'common/Table';
 import * as CSS_VARS from 'theme/variables';
 
-export const Wrapper = styled.div`
+const Wrapper = styled.div`
   padding-top: 75px;
   max-width: 1200px;
   width: calc(100% - 100px);
   margin: auto;
 `;
 
-export const TopWrapper = styled.div`
+const TopWrapper = styled.div`
   margin-bottom: 20px;
   display: flex;
   align-items: center;
 `;
 
-export const NewNodeBtn = styled(Button)`
+const NewNodeBtn = styled(Button)`
   margin-left: auto;
 `;
 
-export const TestConnectionBtn = styled(Button)`
-  margin-right: auto;
-`;
-
-export const Table = styled(DataTable)`
+const Table = styled(DataTable)`
   text-align: left;
 
   .is-running {
@@ -34,7 +30,7 @@ export const Table = styled(DataTable)`
   }
 `;
 
-export const LinkIcon = styled(Link)`
+const Link = styled(NavLink)`
   color: ${CSS_VARS.lightBlue};
 
   &:hover {
@@ -42,7 +38,7 @@ export const LinkIcon = styled(Link)`
   }
 `;
 
-export const Icon = styled.i`
+const Icon = styled.i`
   color: ${CSS_VARS.lighterBlue};
   font-size: 20px;
   margin-right: 20px;
@@ -60,3 +56,5 @@ export const Icon = styled.i`
     margin-right: 0;
   }
 `;
+
+export { Wrapper, TopWrapper, NewNodeBtn, Table, Link, Icon };

@@ -12,11 +12,7 @@ const data = [['1', '2', '3'], ['4', '5', '6']];
 const Children = () => (
   <React.Fragment>
     {data.map((d, idx) => (
-      <tr key={idx}>
-        {d.map(x => (
-          <td key={idx * 4}>{x}</td>
-        ))}
-      </tr>
+      <tr key={idx}>{d.map(x => <td key={idx * 4}>{x}</td>)}</tr>
     ))}
   </React.Fragment>
 );

@@ -36,11 +36,7 @@ const ListTable = ({ headers, list, urlDir }) => {
   return (
     <Table>
       <thead>
-        <tr>
-          {headers.map(header => (
-            <Th key={header}>{header}</Th>
-          ))}
-        </tr>
+        <tr>{headers.map(header => <Th key={header}>{header}</Th>)}</tr>
       </thead>
       <tbody>
         {list.map(({ id, name }) => {

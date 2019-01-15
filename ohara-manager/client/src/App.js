@@ -6,7 +6,7 @@ import HomePage from 'components/pages/HomePage';
 import PipelinePage from 'components/pages/PipelinePage';
 import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
 import NodesPage from 'components/pages/NodePage/NodeListPage';
-import ServicesPage from 'components/pages/ServicesPage';
+import ServicesPage from 'components/pages/Services';
 import ConfigurationPage from 'components/pages/ConfigurationPage';
 import MonitoringPage from 'components/pages/MonitoringPage';
 import KafkaPage from 'components/pages/KafkaPage';
@@ -66,7 +66,7 @@ class App extends React.Component {
               data-testid="nodes-page"
             />
             <Route
-              path="/services"
+              path="/services/:serviceName?/:clusterName?"
               component={ServicesPage}
               data-testid="services-page"
             />

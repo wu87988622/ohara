@@ -60,7 +60,7 @@ describe('<App />', () => {
         testId: 'nodes-page',
       },
       {
-        path: '/services',
+        path: '/services/:serviceName?/:clusterName?',
         testId: 'services-page',
       },
       {

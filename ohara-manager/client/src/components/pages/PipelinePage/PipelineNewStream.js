@@ -169,8 +169,8 @@ class PipelineNewStream extends React.Component {
 
     this.setState(({ jars, activeId }) => {
       return {
-        jars: jars.map(jar =>
-          jar.id === activeId ? { ...jar, jarName: newJarName } : jar,
+        jars: jars.map(
+          jar => (jar.id === activeId ? { ...jar, jarName: newJarName } : jar),
         ),
       };
     });
