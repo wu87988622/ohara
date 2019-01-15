@@ -28,9 +28,7 @@ public class TestKafkaUtil extends With3Brokers {
 
     assertException(
         IllegalArgumentException.class,
-        () -> {
-          KafkaUtil.addPartitions(testUtil.brokersConnProps(), topicName, 1);
-        });
+        () -> KafkaUtil.addPartitions(testUtil.brokersConnProps(), topicName, 1));
     // alter an nonexistent topic
     assertException(
         IllegalArgumentException.class,

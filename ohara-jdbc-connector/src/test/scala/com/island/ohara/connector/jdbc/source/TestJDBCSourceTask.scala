@@ -72,16 +72,16 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     jdbcSourceTask._start(taskConfig)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
-    rows(0).row.cell(0).value.toString() shouldBe "2018-09-01 00:00:00.0"
-    rows(0).row.cell(1).value shouldBe "a11"
-    rows(0).row.cell(2).value shouldBe 1
+    rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
+    rows.head.row.cell(1).value shouldBe "a11"
+    rows.head.row.cell(2).value shouldBe 1
 
-    rows(0).row.cell(0).name shouldBe "COLUMN1"
+    rows.head.row.cell(0).name shouldBe "COLUMN1"
     rows(1).row.cell(1).name shouldBe "COLUMN2"
     rows(2).row.cell(2).name shouldBe "COLUMN4"
 
     //Test row 1 offset
-    rows(0).sourceOffset.asScala.foreach(x => {
+    rows.head.sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
       x._2 shouldBe 1535731200000L
     })
@@ -98,7 +98,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     val schema: Seq[Column] = Seq(Column.of("COLUMN1", DataType.OBJECT, 0))
     val columnInfo: Seq[ColumnInfo[Timestamp]] = Seq(ColumnInfo("COLUMN1", "timestamp", new Timestamp(0)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
-    row0.cell("COLUMN1").value.toString() shouldBe "1970-01-01 08:00:00.0"
+    row0.cell("COLUMN1").value.toString shouldBe "1970-01-01 08:00:00.0"
   }
 
   @Test
@@ -117,8 +117,8 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     val columnInfo: Seq[ColumnInfo[Int]] =
       Seq(ColumnInfo("c1", "int", new Integer(100)), ColumnInfo("c0", "int", new Integer(50)))
     val cells = jdbcSourceTask.row(schema, columnInfo).cells().asScala
-    cells(0).name shouldBe "c0"
-    cells(0).value shouldBe 50
+    cells.head.name shouldBe "c0"
+    cells.head.value shouldBe 50
     cells(1).name shouldBe "c1"
     cells(1).value shouldBe 100
   }
@@ -159,11 +159,11 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     jdbcSourceTask._start(taskConfig)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
-    rows(0).row.cell(0).value.toString() shouldBe "2018-09-01 00:00:00.0"
-    rows(0).row.cell(1).value shouldBe "a11"
-    rows(0).row.cell(2).value shouldBe 1
+    rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
+    rows.head.row.cell(1).value shouldBe "a11"
+    rows.head.row.cell(2).value shouldBe 1
 
-    rows(0).row.cell(0).name shouldBe "COLUMN100"
+    rows.head.row.cell(0).name shouldBe "COLUMN100"
     rows(1).row.cell(1).name shouldBe "COLUMN200"
     rows(2).row.cell(2).name shouldBe "COLUMN400"
   }

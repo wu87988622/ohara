@@ -37,9 +37,7 @@ public interface RowSinkContext {
   };
 
   static RowSinkContext toRowSinkContext(SinkTaskContext context) {
-    return new RowSinkContext() {
-      @Override
-      public void offset(Map<TopicPartition, Long> offsets) {
+    return offsets ->
         context.offset(
             offsets
                 .entrySet()
@@ -50,7 +48,5 @@ public interface RowSinkContext {
                             new org.apache.kafka.common.TopicPartition(
                                 entry.getKey().topic(), entry.getKey().partition()),
                         Map.Entry::getValue)));
-      }
-    };
   }
 }

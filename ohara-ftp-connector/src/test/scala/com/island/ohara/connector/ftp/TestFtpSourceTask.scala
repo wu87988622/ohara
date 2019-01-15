@@ -151,7 +151,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   @Test
   def testToRowIfAllCached(): Unit = {
     val path = CommonUtil.path(props.inputFolder, methodName)
-    val data = setupInputData(path)
+    setupInputData(path)
     val task = createTask()
     task.cache = new OffsetCache {
       override def update(path: String, index: Int): Unit = {}

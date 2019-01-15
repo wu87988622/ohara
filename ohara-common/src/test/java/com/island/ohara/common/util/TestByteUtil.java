@@ -92,8 +92,8 @@ public class TestByteUtil extends SmallTest {
     data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
 
-    int lhs = ByteUtil.toInt(ByteUtil.toBytes((int) -10));
-    int rhs = ByteUtil.toInt(ByteUtil.toBytes((int) 20));
+    int lhs = ByteUtil.toInt(ByteUtil.toBytes(-10));
+    int rhs = ByteUtil.toInt(ByteUtil.toBytes(20));
     Assert.assertTrue(lhs < rhs);
   }
 

@@ -213,9 +213,7 @@ public final class CommonUtil {
       Map<K, V> m1, Map<?, ?> m2, BiPredicate<V, Object> condition) {
 
     try {
-      Iterator<Map.Entry<K, V>> i = m1.entrySet().iterator();
-      while (i.hasNext()) {
-        Map.Entry<K, V> e = i.next();
+      for (Map.Entry<K, V> e : m1.entrySet()) {
         K key = e.getKey();
         V value = e.getValue();
         // value null

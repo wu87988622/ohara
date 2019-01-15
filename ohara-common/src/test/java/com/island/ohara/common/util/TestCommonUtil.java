@@ -59,8 +59,8 @@ public class TestCommonUtil extends SmallTest {
     List<String> list3 = new MyList<>(list);
     list3.add("c");
 
-    Assert.assertFalse(list.equals(list2));
-    Assert.assertFalse(list.equals(list3));
+    Assert.assertNotEquals(list, list2);
+    Assert.assertNotEquals(list, list3);
     Assert.assertTrue(CommonUtil.equals(list, list2));
     Assert.assertFalse(CommonUtil.equals(list, list3));
   }
@@ -74,8 +74,8 @@ public class TestCommonUtil extends SmallTest {
     Map<String, String> map3 = new MyMap<>(map);
     map3.put("c", "valueC");
 
-    Assert.assertFalse(map.equals(map2));
-    Assert.assertFalse(map.equals(map3));
+    Assert.assertNotEquals(map, map2);
+    Assert.assertNotEquals(map, map3);
     Assert.assertTrue(CommonUtil.equals(map, map2));
     Assert.assertFalse(CommonUtil.equals(map, map3));
   }
@@ -89,8 +89,8 @@ public class TestCommonUtil extends SmallTest {
     Set<String> set3 = new MySet<>(set);
     set3.add("c");
 
-    Assert.assertFalse(set.equals(set2));
-    Assert.assertFalse(set.equals(set3));
+    Assert.assertNotEquals(set, set2);
+    Assert.assertNotEquals(set, set3);
     Assert.assertTrue(CommonUtil.equals(set, set2));
     Assert.assertFalse(CommonUtil.equals(set, set3));
   }
@@ -115,8 +115,8 @@ public class TestCommonUtil extends SmallTest {
     nestedMap3.add(new MyMap<>(map));
     nestedMap3.add(new MyMap<>(map3));
 
-    Assert.assertFalse(nestedMap.equals(nestedMap2));
-    Assert.assertFalse(nestedMap.equals(nestedMap3));
+    Assert.assertNotEquals(nestedMap, nestedMap2);
+    Assert.assertNotEquals(nestedMap, nestedMap3);
     Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
     Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
   }
@@ -142,8 +142,8 @@ public class TestCommonUtil extends SmallTest {
     nestedList3.add(new MyList<>(list));
     nestedList3.add(new MyList<>(list3));
 
-    Assert.assertFalse(nestedList.equals(nestedList2));
-    Assert.assertFalse(nestedList.equals(nestedList3));
+    Assert.assertNotEquals(nestedList, nestedList2);
+    Assert.assertNotEquals(nestedList, nestedList3);
     Assert.assertTrue(CommonUtil.equals(nestedList, nestedList2));
     Assert.assertFalse(CommonUtil.equals(nestedList, nestedList3));
   }
@@ -169,8 +169,8 @@ public class TestCommonUtil extends SmallTest {
     nestedList3.add(new MySet<>(set));
     nestedList3.add(new MySet<>(set3));
 
-    Assert.assertFalse(nestedList.equals(nestedList2));
-    Assert.assertFalse(nestedList.equals(nestedList3));
+    Assert.assertNotEquals(nestedList, nestedList2);
+    Assert.assertNotEquals(nestedList, nestedList3);
     Assert.assertTrue(CommonUtil.equals(nestedList, nestedList2));
     Assert.assertFalse(CommonUtil.equals(nestedList, nestedList3));
   }
@@ -195,8 +195,8 @@ public class TestCommonUtil extends SmallTest {
     nestedMap3.put("key", new MyList<>(list));
     nestedMap3.put("key2", new MyList<>(list3));
 
-    Assert.assertFalse(nestedMap.equals(nestedMap2));
-    Assert.assertFalse(nestedMap.equals(nestedMap3));
+    Assert.assertNotEquals(nestedMap, nestedMap2);
+    Assert.assertNotEquals(nestedMap, nestedMap3);
     Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
     Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
   }
@@ -221,8 +221,8 @@ public class TestCommonUtil extends SmallTest {
     nestedMap3.put("key", new MySet<>(set));
     nestedMap3.put("key2", new MySet<>(set3));
 
-    Assert.assertFalse(nestedMap.equals(nestedMap2));
-    Assert.assertFalse(nestedMap.equals(nestedMap3));
+    Assert.assertNotEquals(nestedMap, nestedMap2);
+    Assert.assertNotEquals(nestedMap, nestedMap3);
     Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
     Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
   }
@@ -247,8 +247,8 @@ public class TestCommonUtil extends SmallTest {
     nestedMap3.put("key", new MyMap<>(map));
     nestedMap3.put("key2", new MyMap<>(map3));
 
-    Assert.assertFalse(nestedMap.equals(nestedMap2));
-    Assert.assertFalse(nestedMap.equals(nestedMap3));
+    Assert.assertNotEquals(nestedMap, nestedMap2);
+    Assert.assertNotEquals(nestedMap, nestedMap3);
     Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
     Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
   }

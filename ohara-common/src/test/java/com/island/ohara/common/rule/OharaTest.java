@@ -86,6 +86,7 @@ public abstract class OharaTest extends Assert {
    *
    * @param message why you want to skip all test cases?
    */
+  @SuppressWarnings("ConstantConditions")
   protected void skipTest(String message) {
     Assume.assumeTrue(message, false);
   }

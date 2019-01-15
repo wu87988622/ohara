@@ -31,15 +31,15 @@ class TestJDBCSourceConnectorConfig extends SmallTest with Matchers {
   def testException(): Unit = {
     intercept[NoSuchElementException] {
       JDBCSourceConnectorConfig(Map())
-    }.getMessage() shouldBe s"key not found: $DB_URL"
+    }.getMessage shouldBe s"key not found: $DB_URL"
 
     intercept[NoSuchElementException] {
       JDBCSourceConnectorConfig(Map(DB_URL -> "jdbc:mysql://localhost:3306"))
-    }.getMessage() shouldBe s"key not found: $DB_USERNAME"
+    }.getMessage shouldBe s"key not found: $DB_USERNAME"
 
     intercept[NoSuchElementException] {
       JDBCSourceConnectorConfig(Map(DB_URL -> "jdbc:mysql://localhost/test", DB_USERNAME -> "root"))
-    }.getMessage() shouldBe s"key not found: $DB_PASSWORD"
+    }.getMessage shouldBe s"key not found: $DB_PASSWORD"
   }
 
   @Test

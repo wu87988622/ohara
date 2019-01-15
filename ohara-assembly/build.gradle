@@ -21,8 +21,7 @@ dependencies {
   testImplementation project(path: ':ohara-demo', configuration: 'tests')
   testImplementation project(path: ':ohara-ftp-connector', configuration: 'tests')
   testImplementation project(path: ':ohara-hdfs-connector', configuration: 'tests')
-  // ohara-http is not in maintain mode currently, we should not check this module by now -- by Sam
-  // testImplementation project(path: ':ohara-http', configuration: 'tests')
+  testImplementation project(path: ':ohara-shabondi', configuration: 'tests')
   testImplementation project(path: ':ohara-it', configuration: 'tests')
   testImplementation project(path: ':ohara-jdbc-connector', configuration: 'tests')
   testImplementation project(path: ':ohara-kafka', configuration: 'tests')

@@ -15,10 +15,10 @@ import org.junit.After;
 import org.junit.Test;
 
 public class TestKafkaClient extends With3Brokers {
-  private Duration timeout = Duration.ofSeconds(10);
-  private OharaTestUtil testUtil = testUtil();
+  private final Duration timeout = Duration.ofSeconds(10);
+  private final OharaTestUtil testUtil = testUtil();
 
-  private KafkaClient client = KafkaClient.of(testUtil.brokersConnProps());
+  private final KafkaClient client = KafkaClient.of(testUtil.brokersConnProps());
 
   @Test
   public void testAddPartitions() {
@@ -109,7 +109,7 @@ public class TestKafkaClient extends With3Brokers {
           .timeout(java.time.Duration.ofSeconds(30))
           .create(methodName());
     } catch (OharaExecutionException e) {
-      assertTrue(TopicExistsException.class.isInstance(e.getCause()));
+      assertTrue(e.getCause() instanceof TopicExistsException);
     }
   }
 

@@ -1,6 +1,12 @@
 package com.island.ohara.common.data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.IntBinaryOperator;
 import java.util.stream.Collectors;
 
@@ -42,7 +48,9 @@ public interface Row extends Iterable<Cell> {
    */
   @Override
   default Iterator<Cell> iterator() {
-    return cells().iterator();
+    List<Cell> cells = cells();
+    if (cells == null) cells = Collections.emptyList();
+    return cells.iterator();
   }
 
   /** @return a immutable collection from tags */

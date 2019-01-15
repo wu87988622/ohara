@@ -217,10 +217,7 @@ class FtpClientBuilder {
       override def status(): String = retry(() => client.status())
       override def workingFolder(): String = retry(() => client.workingFolder())
       override def close(): Unit = client.close()
-      def retry[T](function: () => T,
-                   cleanup: () => Unit = () => {},
-                   retryCount: Int = 1,
-                   retryInterval: Duration = 1 second): T = {
+      def retry[T](function: () => T, cleanup: () => Unit, retryCount: Int, retryInterval: Duration): T = {
         var lastException: Throwable = null
         var remainingRetry = retryCount
         do {

@@ -33,14 +33,15 @@ import scala.collection.Seq;
 
 public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
-  private OharaTestUtil testUtil = testUtil();
-  private ConnectorClient connectorClient =
+  private final OharaTestUtil testUtil = testUtil();
+  private final ConnectorClient connectorClient =
       ConnectorClient$.MODULE$.apply(testUtil.workersConnProps());
 
-  private KafkaClient kafkaClient = KafkaClient.of(testUtil.brokersConnProps());
-  private Row row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11));
-  private List<Column> schema = Collections.singletonList(Column.of("cf", DataType.BOOLEAN, 1));
-  private int numberOfRows = 20;
+  private final KafkaClient kafkaClient = KafkaClient.of(testUtil.brokersConnProps());
+  private final Row row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11));
+  private final List<Column> schema =
+      Collections.singletonList(Column.of("cf", DataType.BOOLEAN, 1));
+  private final int numberOfRows = 20;
   // ---------------------------------
 
   private void createTopic(String topicName, Boolean compacted) {

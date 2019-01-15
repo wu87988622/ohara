@@ -34,9 +34,9 @@ public interface Hdfs extends Releasable {
             url ->
                 (Hdfs)
                     new Hdfs() {
-                      private DateTimeFormatter formatter =
+                      private final DateTimeFormatter formatter =
                           DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-                      private String tempDir = "/it/" + LocalDateTime.now().format(formatter);
+                      private final String tempDir = "/it/" + LocalDateTime.now().format(formatter);
 
                       @Override
                       public void close() {
@@ -86,7 +86,7 @@ public interface Hdfs extends Releasable {
         .orElseGet(
             () ->
                 new Hdfs() {
-                  private File tempDir = CommonUtil.createTempDir(Hdfs.class.getSimpleName());
+                  private final File tempDir = CommonUtil.createTempDir(Hdfs.class.getSimpleName());
 
                   @Override
                   public void close() {

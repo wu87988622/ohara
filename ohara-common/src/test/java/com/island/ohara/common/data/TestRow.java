@@ -2,6 +2,7 @@ package com.island.ohara.common.data;
 
 import com.island.ohara.common.rule.SmallTest;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,7 +25,7 @@ public class TestRow extends SmallTest {
   @Test
   public void testEqualsWithoutTags() {
     Row row = Row.of(Arrays.asList("tag", "tag2"), Cell.of("aa", "aa"), Cell.of("b", 123));
-    Row row2 = Row.of(Arrays.asList("tag"), Cell.of("aa", "aa"), Cell.of("b", 123));
+    Row row2 = Row.of(Collections.singletonList("tag"), Cell.of("aa", "aa"), Cell.of("b", 123));
     Assert.assertTrue(row.equals(row, false));
     Assert.assertTrue(row.equals(row2, false));
     Assert.assertTrue(row2.equals(row, false));

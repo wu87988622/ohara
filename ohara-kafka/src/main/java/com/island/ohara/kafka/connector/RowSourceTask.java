@@ -93,12 +93,12 @@ public abstract class RowSourceTask extends SourceTask {
                       s.sourcePartition(),
                       s.sourceOffset(),
                       s.topic(),
-                      s.partition().map(x -> new Integer(x)).orElse(null),
+                      s.partition().orElse(null),
                       Schema.BYTES_SCHEMA,
                       s.key(),
                       Schema.BYTES_SCHEMA,
                       Serializer.ROW.to(s.row()),
-                      s.timestamp().map((x) -> new java.lang.Long(x)).orElse(null)))
+                      s.timestamp().orElse(null)))
           .collect(Collectors.toList());
   }
 

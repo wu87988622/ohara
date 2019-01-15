@@ -15,7 +15,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
-private object CallQueueClientImpl {
+private[call] object CallQueueClientImpl {
   def apply[Request <: AnyRef, Response: ClassTag](
     brokers: String,
     requestTopic: String,

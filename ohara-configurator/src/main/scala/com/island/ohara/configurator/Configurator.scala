@@ -54,7 +54,7 @@ class Configurator private[configurator] (configuredHostname: String,
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
 
-  private[this] val exceptionHandler = ExceptionHandler {
+  private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
       extractRequest { request =>
         log.error(
@@ -67,50 +67,9 @@ class Configurator private[configurator] (configuredHostname: String,
   }
 
   /**
-    * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
-    */
-  private[this] val basicRoute: server.Route = pathPrefix(ConfiguratorApiInfo.V0)(
-    Seq[server.Route](
-      TopicsRoute.apply,
-      HdfsInfoRoute.apply,
-      FtpInfoRoute.apply,
-      JdbcInfoRoute.apply,
-      PipelineRoute.apply,
-      ValidationRoute.apply,
-      QueryRoute(),
-      ConnectorRoute.apply,
-      InfoRoute.apply,
-      StreamRoute.apply,
-      NodesRoute.apply,
-      ZookeeperRoute.apply,
-      BrokerRoute.apply,
-      WorkerRoute.apply,
-      JarsRoute.apply
-    ).reduce[server.Route]((a, b) => a ~ b))
-
-  private[this] val privateRoute: server.Route =
-    pathPrefix(ConfiguratorApiInfo.PRIVATE)(extraRoute.getOrElse(path(Remaining)(path =>
-      complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path"))))
-
-  private[this] val finalRoute: server.Route =
-    path(Remaining)(path => complete(StatusCodes.NotFound -> s"Unsupported API: $path"))
-
-  private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
-  private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
-  private[this] val httpServer: Http.ServerBinding =
-    Await.result(
-      Http().bindAndHandle(
-        handleExceptions(exceptionHandler)(handleRejections(rejectionHandler)(basicRoute ~ privateRoute) ~ finalRoute),
-        configuredHostname,
-        configuredPort
-      ),
-      initializationTimeout.toMillis milliseconds
-    )
-
-  /**
     *Akka use rejection to wrap error message
     */
-  private[this] val rejectionHandler =
+  private[this] def rejectionHandler(): RejectionHandler =
     RejectionHandler
       .newBuilder()
       .handle {
@@ -130,6 +89,48 @@ class Configurator private[configurator] (configuredHostname: String,
         case otherRejection => throw new IllegalArgumentException(s"Ohata Error occur : $otherRejection")
       }
       .result()
+
+  /**
+    * the full route consists from all routes against all subclass from ohara data and a final route used to reject other requests.
+    */
+  private[this] def basicRoute(): server.Route = pathPrefix(ConfiguratorApiInfo.V0)(
+    Seq[server.Route](
+      TopicsRoute.apply,
+      HdfsInfoRoute.apply,
+      FtpInfoRoute.apply,
+      JdbcInfoRoute.apply,
+      PipelineRoute.apply,
+      ValidationRoute.apply,
+      QueryRoute(),
+      ConnectorRoute.apply,
+      InfoRoute.apply,
+      StreamRoute.apply,
+      NodesRoute.apply,
+      ZookeeperRoute.apply,
+      BrokerRoute.apply,
+      WorkerRoute.apply,
+      JarsRoute.apply
+    ).reduce[server.Route]((a, b) => a ~ b))
+
+  private[this] def privateRoute(): server.Route =
+    pathPrefix(ConfiguratorApiInfo.PRIVATE)(extraRoute.getOrElse(path(Remaining)(path =>
+      complete(StatusCodes.NotFound -> s"you have to buy the license for advanced API: $path"))))
+
+  private[this] def finalRoute(): server.Route =
+    path(Remaining)(path => complete(StatusCodes.NotFound -> s"Unsupported API: $path"))
+
+  private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
+  private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+  private[this] val httpServer: Http.ServerBinding =
+    Await.result(
+      Http().bindAndHandle(
+        handleExceptions(exceptionHandler())(
+          handleRejections(rejectionHandler())(basicRoute() ~ privateRoute()) ~ finalRoute()),
+        configuredHostname,
+        configuredPort
+      ),
+      initializationTimeout.toMillis milliseconds
+    )
 
   /**
     * Do what you want to do when calling closing.

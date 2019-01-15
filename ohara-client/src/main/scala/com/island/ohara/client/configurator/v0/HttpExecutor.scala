@@ -16,7 +16,7 @@ import scala.concurrent.Future
 /**
   * used to send http request to remote node. The operations implemented by this class includes 1) get, 2) delete, 3) put and 4) post.
   */
-private trait HttpExecutor {
+private[v0] trait HttpExecutor {
   def get[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res]
   def delete[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res]
   def post[Req, Res](url: String, request: Req)(implicit rm0: RootJsonFormat[Res],
@@ -35,7 +35,7 @@ private trait HttpExecutor {
   def put[Res](url: String)(implicit rm: RootJsonFormat[Res]): Future[Res]
 }
 
-private object HttpExecutor {
+private[v0] object HttpExecutor {
 
   /**
     *  ActorSystem is a heavy component in akka, so we should reuse it as much as possible. We don't need to close it programmatically since

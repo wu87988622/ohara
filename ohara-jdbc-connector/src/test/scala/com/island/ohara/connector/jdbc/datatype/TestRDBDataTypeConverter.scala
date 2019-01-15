@@ -68,7 +68,7 @@ class TestRDBDataTypeConverter extends MediumTest with Matchers with MockitoSuga
     val result: Object = rdbDataTypeConverter.converterValue(resultSet, column)
     result.isInstanceOf[Timestamp] shouldBe true
     result.isInstanceOf[Object] shouldBe true
-    result.toString() shouldBe "1970-01-01 08:00:00.0"
+    result.toString shouldBe "1970-01-01 08:00:00.0"
   }
 
   @Test

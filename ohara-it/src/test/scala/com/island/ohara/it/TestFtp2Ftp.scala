@@ -108,7 +108,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
               .path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
         lines.length shouldBe rows.length + 1 // header
         lines(0) shouldBe header
-        lines(1) shouldBe data(0)
+        lines(1) shouldBe data.head
         lines(2) shouldBe data(1)
       } finally connectorClient.delete(sourceName)
     } finally connectorClient.delete(sinkName)

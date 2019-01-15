@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class DumbSink extends RowSinkConnector {
-  private List<Column> columns =
+  private final List<Column> columns =
       Arrays.asList(Column.of("cf0", DataType.BOOLEAN, 0), Column.of("cf1", DataType.BOOLEAN, 1));
 
   @Override

@@ -126,7 +126,7 @@ public final class ConsumerBuilder {
                                       StreamSupport.stream(headers.spliterator(), false)
                                           .map(header -> new Header(header.key(), header.value()))
                                           .collect(Collectors.toList()))
-                              .orElseGet(() -> Collections.emptyList()),
+                              .orElse(Collections.emptyList()),
                           cr.key(),
                           cr.value()))
               .collect(Collectors.toList());

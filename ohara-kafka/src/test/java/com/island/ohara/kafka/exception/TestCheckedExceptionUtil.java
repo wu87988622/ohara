@@ -6,10 +6,10 @@ import org.junit.Test;
 public class TestCheckedExceptionUtil extends SmallTest {
 
   // checked exception
-  private Exception checkedException = new ClassNotFoundException();
+  private final Exception checkedException = new ClassNotFoundException();
 
   // unchecked exception
-  private RuntimeException uncheckedException = new ClassCastException();
+  private final RuntimeException uncheckedException = new ClassCastException();
 
   // special unique class name
   private class OharaTest0000Exception extends OharaException {
@@ -18,7 +18,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
     }
   }
 
-  private ExceptionHandler handler =
+  private final ExceptionHandler handler =
       ExceptionHandler.creator()
           .add(checkedException.getClass(), OharaTest0000Exception::new)
           .create();

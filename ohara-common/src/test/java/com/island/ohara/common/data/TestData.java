@@ -6,10 +6,10 @@ import org.junit.Test;
 public class TestData extends SmallTest {
 
   private class MyData extends Data {
-    private int a;
-    private long b;
-    private String c;
-    private byte[] d;
+    private final int a;
+    private final long b;
+    private final String c;
+    private final byte[] d;
 
     public MyData(int a, long b, String c, byte[] d) {
       this.a = a;

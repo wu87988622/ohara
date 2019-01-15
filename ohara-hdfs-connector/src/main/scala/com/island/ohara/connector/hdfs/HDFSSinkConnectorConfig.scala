@@ -15,13 +15,13 @@ case class HDFSSinkConnectorConfig(hdfsURL: String,
                                    dataFileEncode: String) {
   def toMap: Map[String, String] = Map(
     HDFS_URL -> hdfsURL,
-    FLUSH_LINE_COUNT -> flushLineCount.toString(),
-    ROTATE_INTERVAL_MS -> rotateIntervalMS.toString(),
+    FLUSH_LINE_COUNT -> flushLineCount.toString,
+    ROTATE_INTERVAL_MS -> rotateIntervalMS.toString,
     TMP_DIR -> tmpDir,
     DATA_DIR -> dataDir,
     DATAFILE_PREFIX_NAME -> dataFilePrefixName,
-    DATAFILE_NEEDHEADER -> dataFileNeedHeader.toString(),
-    DATA_BUFFER_COUNT -> dataBufferCount.toString(),
+    DATAFILE_NEEDHEADER -> dataFileNeedHeader.toString,
+    DATA_BUFFER_COUNT -> dataBufferCount.toString,
     HDFS_STORAGE_CREATOR_CLASS -> hdfsStorageCreateClass
   )
 
@@ -40,7 +40,7 @@ object HDFSSinkConnectorConfig {
   private[this] val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
   private[this] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
   private[this] val DATA_BUFFER_COUNT_DEFAULT: Long = 100
-  private[this] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName()
+  private[this] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName
   private[this] val DATAFILE_ENCODE_DEFAULT = "UTF-8"
 
   def apply(props: Map[String, String]): HDFSSinkConnectorConfig = {
@@ -56,7 +56,7 @@ object HDFSSinkConnectorConfig {
       tmpDir = props.getOrElse(TMP_DIR, TMP_DIR_DEFAULT.toString),
       dataDir = props.getOrElse(DATA_DIR, DATA_DIR_DEFAULT),
       dataFilePrefixName = prefixFileName,
-      dataFileNeedHeader = props.getOrElse(DATAFILE_NEEDHEADER, DATAFILE_NEEDHEADER_DEFAULT.toString()).toBoolean,
+      dataFileNeedHeader = props.getOrElse(DATAFILE_NEEDHEADER, DATAFILE_NEEDHEADER_DEFAULT.toString).toBoolean,
       dataBufferCount = props.getOrElse(DATA_BUFFER_COUNT, DATA_BUFFER_COUNT_DEFAULT.toString).toLong,
       hdfsStorageCreateClass = props.getOrElse(HDFS_STORAGE_CREATOR_CLASS, HDFS_STORAGE_CREATOR_CLASS_DEFAULT),
       dataFileEncode = props.getOrElse(DATAFILE_ENCODE, DATAFILE_ENCODE_DEFAULT)

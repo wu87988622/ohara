@@ -61,10 +61,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return _taskConfigs(maxTasks)
-        .stream()
-        .map(x -> ConnectorUtil.toMap(x))
-        .collect(Collectors.toList());
+    return _taskConfigs(maxTasks).stream().map(ConnectorUtil::toMap).collect(Collectors.toList());
   }
 
   @Override

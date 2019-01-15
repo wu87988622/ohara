@@ -4,7 +4,10 @@ apply from: "$rootDir/gradle/dependencies.gradle"
  * Noted: this module should NOT have any production code!!! by chia
  */
 dependencies {
-  testImplementation libs.scala
+  /**
+   * scala plugin complains that we don't put scala library in production scope... by chia
+   */
+  implementation libs.scala
   testImplementation libs.scalaLogging
   testImplementation libs.sprayJson
   testImplementation libs.kafkaConnectRuntime

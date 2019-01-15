@@ -121,7 +121,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     val ports = DockerClientImpl.parsePortMapping(s"$ip:$minPort-$maxPort->$minPort-$maxPort/tcp")
     ports.size shouldBe 1
     ports.find(_.hostIp == ip).get.portPairs.size shouldBe maxPort - minPort + 1
-    ports.find(_.hostIp == ip).get.portPairs shouldBe (minPort to maxPort).map(port => PortPair(port, port)).toSeq
+    ports.find(_.hostIp == ip).get.portPairs shouldBe (minPort to maxPort).map(port => PortPair(port, port))
   }
 
   @Test

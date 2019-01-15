@@ -15,9 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] def verifyRoute[Req](root: String, verify: Req => Future[Seq[ValidationReport]])(
-    implicit kafkaClient: KafkaClient,
-    connectClient: ConnectorClient,
-    rm: RootJsonFormat[Req]): server.Route = path(root) {
+    implicit rm: RootJsonFormat[Req]): server.Route = path(root) {
     put {
       entity(as[Req])(req =>
         onSuccess(verify(req))(reports =>

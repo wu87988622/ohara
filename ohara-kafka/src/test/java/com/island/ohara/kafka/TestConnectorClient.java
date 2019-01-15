@@ -14,9 +14,9 @@ import java.util.List;
 import org.junit.Test;
 
 public class TestConnectorClient extends With3Brokers3Workers {
-  private OharaTestUtil testUtil = testUtil();
+  private final OharaTestUtil testUtil = testUtil();
 
-  private ConnectorClient connectorClient =
+  private final ConnectorClient connectorClient =
       ConnectorClient$.MODULE$.apply(testUtil.workersConnProps());
   //  @Ignore
   @Test
@@ -118,5 +118,5 @@ public class TestConnectorClient extends With3Brokers3Workers {
     }
   }
 
-  static Row ROW = Row.of(Cell.of("f0", 13), Cell.of("f1", false));
+  static final Row ROW = Row.of(Cell.of("f0", 13), Cell.of("f1", false));
 }

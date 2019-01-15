@@ -24,9 +24,9 @@ public class OharaTestUtil extends ReleaseOnce {
   private Database localDb;
   private FtpServer localFtpServer;
   private Hdfs localHdfs;
-  private Zookeepers zk;
-  private Brokers brokers;
-  private Workers workers;
+  private final Zookeepers zk;
+  private final Brokers brokers;
+  private final Workers workers;
 
   private OharaTestUtil(Zookeepers zk, Brokers brokers, Workers workers) {
     this.zk = zk;
@@ -171,11 +171,11 @@ public class OharaTestUtil extends ReleaseOnce {
     return new OharaTestUtil(null, null, null);
   }
 
-  private static String HELP_KEY = "--help";
-  private static String TTL_KEY = "--ttl";
-  private static String USAGE = "[Usage]" + TTL_KEY;
+  private static final String TTL_KEY = "--ttl";
+  private static final String USAGE = "[Usage]" + TTL_KEY;
 
   public static void main(String args[]) throws InterruptedException {
+    String HELP_KEY = "--help";
     if (args.length == 1 && args[0].equals(HELP_KEY)) {
       System.out.println(USAGE);
       return;

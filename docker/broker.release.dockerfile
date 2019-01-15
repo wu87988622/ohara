@@ -6,7 +6,7 @@ RUN yum install -y \
 
 # download kafka
 ARG VERSION=1.0.2
-ARG SCALA_VERSION=2.11
+ARG SCALA_VERSION=2.12
 RUN wget http://ftp.twaren.net/Unix/Web/apache/kafka/${VERSION}/kafka_${SCALA_VERSION}-${VERSION}.tgz
 RUN tar -zxvf kafka_${SCALA_VERSION}-${VERSION}.tgz
 RUN rm -f kafka_${SCALA_VERSION}-${VERSION}.tgz

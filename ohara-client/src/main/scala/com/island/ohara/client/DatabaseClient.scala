@@ -80,7 +80,7 @@ object DatabaseClient {
       data2
         .map {
           case (c, s, t, pks) =>
-            implicit val rs: ResultSet = md.getColumns(c, null, t, null);
+            implicit val rs: ResultSet = md.getColumns(c, null, t, null)
             val columns = try {
               val buf = new ArrayBuffer[RdbColumn]()
               while (rs.next()) buf += RdbColumn(name = columnName,

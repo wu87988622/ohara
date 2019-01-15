@@ -35,9 +35,6 @@ public class SimpleRowSinkTask extends RowSinkTask {
 
   @Override
   protected void _put(List<RowSinkRecord> records) {
-    records.forEach(
-        r -> {
-          producer.sender().key(r.key()).value(r.row()).send(outputTopic);
-        });
+    records.forEach(r -> producer.sender().key(r.key()).value(r.row()).send(outputTopic));
   }
 }

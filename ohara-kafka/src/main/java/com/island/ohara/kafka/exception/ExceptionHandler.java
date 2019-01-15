@@ -41,8 +41,8 @@ public class ExceptionHandler {
   }
 
   private static class ExceptionPair {
-    private Class<? extends Exception> c;
-    private Function<Exception, OharaException> f;
+    private final Class<? extends Exception> c;
+    private final Function<Exception, OharaException> f;
 
     private ExceptionPair(Class<? extends Exception> c, Function<Exception, OharaException> f) {
       this.c = c;

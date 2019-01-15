@@ -120,6 +120,7 @@ public class CheckedExceptionUtil {
    * <p>But It also mean that you can't catch this exception in try-catch . Only can catch it by
    * catching Exception.
    */
+  @SuppressWarnings("unchecked")
   private static <T extends Throwable> RuntimeException rethrow(Throwable throwable) throws T {
     throw (T) throwable; // rely on vacuous cast
   }

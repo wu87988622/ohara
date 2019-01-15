@@ -105,7 +105,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       val records = consumer.poll(java.time.Duration.ofSeconds(20), rows.length).asScala
 
       records.length shouldBe rows.length
-      records(0).value.get shouldBe rows(0)
+      records.head.value.get shouldBe rows.head
       records(1).value.get shouldBe rows(1)
     } finally consumer.close()
 
@@ -177,7 +177,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
           .foreach(name => {
             val lines = ftpClient.readLines(com.island.ohara.common.util.CommonUtil.path(sinkProps.output, name))
             lines.length shouldBe 2
-            lines(0) shouldBe data(0)
+            lines(0) shouldBe data.head
             lines(1) shouldBe data(1)
           })
         Await.result(connectorAccess.stop(sink.id), 10 seconds)

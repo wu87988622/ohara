@@ -36,33 +36,24 @@ public class TestDataType extends SmallTest {
 
   @Test
   public void testOrder() {
-    DataType.all.forEach(
-        t -> {
-          Assert.assertEquals(t, DataType.of(t.order));
-        });
+    DataType.all.forEach(t -> Assert.assertEquals(t, DataType.of(t.order)));
   }
 
   @Test
   public void testName() {
-    DataType.all.forEach(
-        t -> {
-          Assert.assertEquals(t, DataType.of(t.name));
-        });
+    DataType.all.forEach(t -> Assert.assertEquals(t, DataType.of(t.name)));
   }
 
   @Test
   public void testAlias() {
-    DataType.all.forEach(
-        t -> {
-          Assert.assertEquals(t, DataType.of(t.alias));
-        });
+    DataType.all.forEach(t -> Assert.assertEquals(t, DataType.of(t.alias)));
   }
 
   @Test
   public void testOfType() {
     Assert.assertEquals(DataType.BOOLEAN, DataType.from(false));
     Assert.assertEquals(DataType.SHORT, DataType.from((short) 1));
-    Assert.assertEquals(DataType.INT, DataType.from((int) 1));
+    Assert.assertEquals(DataType.INT, DataType.from(1));
     Assert.assertEquals(DataType.LONG, DataType.from((long) 1));
     Assert.assertEquals(DataType.FLOAT, DataType.from((float) 1));
     Assert.assertEquals(DataType.DOUBLE, DataType.from((double) 1));

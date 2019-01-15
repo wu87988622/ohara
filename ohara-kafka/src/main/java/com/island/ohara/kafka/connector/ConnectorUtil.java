@@ -3,7 +3,6 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.VersionUtil;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ConnectorUtil {
 
@@ -43,11 +42,10 @@ public class ConnectorUtil {
     //      throw new IllegalArgumentException("DON'T touch \"name\" manually in row connector")
     if (taskConfig.topics().isEmpty())
       throw new IllegalArgumentException("empty topics is invalid");
-    Map<String, String> map = new HashMap<>();
-    map.putAll(taskConfig.options());
+    Map<String, String> map = new HashMap<>(taskConfig.options());
 
     map.put(Column.COLUMN_KEY, Column.fromColumns(taskConfig.schema()));
-    map.put(TOPICS_KEY, taskConfig.topics().stream().collect(Collectors.joining(",")));
+    map.put(TOPICS_KEY, String.join(",", taskConfig.topics()));
     map.put(NAME_KEY, taskConfig.name());
     return map;
   }

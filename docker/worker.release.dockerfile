@@ -12,7 +12,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java
 
 # download kafka
 ARG KAFKA_VERSION=1.0.2
-ARG SCALA_VERSION=2.11
+ARG SCALA_VERSION=2.12
 RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz

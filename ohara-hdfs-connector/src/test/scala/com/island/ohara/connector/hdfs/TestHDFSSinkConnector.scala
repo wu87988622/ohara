@@ -128,7 +128,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     CommonUtil.await(
       () =>
-        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 99,
+        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 99,
       Duration.ofSeconds(20))
 
     CommonUtil.await(() =>
@@ -210,10 +210,10 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       })
     CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, Duration.ofSeconds(20))
 
-    CommonUtil.await(() =>
-                       FileUtils.getStopOffset(
-                         storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName(_))) == 199,
-                     Duration.ofSeconds(20))
+    CommonUtil.await(
+      () =>
+        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 199,
+      Duration.ofSeconds(20))
 
     CommonUtil.await(() =>
                        storage
@@ -285,7 +285,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 0, Duration.ofSeconds(20))
+    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").isEmpty, Duration.ofSeconds(20))
   }
 
   @After

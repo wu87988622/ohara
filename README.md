@@ -9,7 +9,7 @@ a powerful ETL tool
 ### Prerequisites
 
 * JDK 1.8+
-* Scala 2.11 (Note that scala 2.11 and 2.12 are not binary compatible.)
+* Scala 2.12.8
 * gradle 4.10+
 * Node.js 8.12.0
 * Yarn 1.7.0. (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)

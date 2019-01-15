@@ -16,8 +16,11 @@ ext {
 
 subprojects {
   if (it.name != 'ohara-manager') {
-    if (it.name == 'ohara-common' || it.name == 'ohara-kafka' || it.name == 'ohara-testing-util' || it.name == 'ohara-streams')
+    if (it.name == 'ohara-common' || it.name == 'ohara-kafka' || it.name == 'ohara-testing-util' || it.name == 'ohara-streams') {
       apply plugin: 'java'
+      sourceCompatibility = 1.8
+      targetCompatibility = 1.8
+    }
     else apply plugin: 'scala'
     test {
       maxParallelForks = userMaxForks ?:((int)(Runtime.runtime.availableProcessors()/2)) ?: 1
@@ -84,15 +87,11 @@ subprojects {
       "-feature",
       "-unchecked",
       // -Xlint enables all -Xlint:xxx checks.
-      // see https://github.com/scala/scala/blob/v2.11.12/src/compiler/scala/tools/nsc/settings/Warnings.scala#L102
+      // see https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/Warnings.scala#L60
       "-Xlint",
       "-Ywarn-dead-code",
       "-Ywarn-unused-import",
-      "-Xfatal-warnings",
-      // in order to enable SAM in scala 2.11.
-      // see https://github.com/scala/scala/pull/3037
-      // TODO: remove this flag after we are in scala 2.12.  by chia
-      "-Xexperimental"
+      "-Xfatal-warnings"
     ]
 
     configure(scalaCompileOptions.forkOptions) {

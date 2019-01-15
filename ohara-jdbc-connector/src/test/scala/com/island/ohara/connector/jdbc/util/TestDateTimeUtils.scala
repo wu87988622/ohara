@@ -10,6 +10,6 @@ class TestDateTimeUtils extends MediumTest with Matchers {
   @Test
   def testTaipeiTimeZone(): Unit = {
     val timestamp: Timestamp = new Timestamp(0)
-    timestamp.toString() shouldBe "1970-01-01 08:00:00.0"
+    timestamp.toString shouldBe "1970-01-01 08:00:00.0"
   }
 }

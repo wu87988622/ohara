@@ -19,16 +19,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** Used for testing. */
 public class SimpleRowSourceTask extends RowSourceTask {
 
-  private TaskConfig config = null;
-  private LinkedBlockingQueue<RowSourceRecord> queue = new LinkedBlockingQueue<RowSourceRecord>();
-  private AtomicBoolean closed = new AtomicBoolean(false);
+  private final LinkedBlockingQueue<RowSourceRecord> queue = new LinkedBlockingQueue<>();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private Consumer<byte[], Row> consumer = null;
-  private ExecutorService executor = Executors.newFixedThreadPool(1);
+  private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
   @Override
   protected void _start(TaskConfig config) {
-
-    this.config = config;
     CompletableFuture.runAsync(
         () -> {
           try (Consumer<byte[], Row> consumer =
@@ -77,7 +74,7 @@ public class SimpleRowSourceTask extends RowSourceTask {
   protected List<RowSourceRecord> _poll() {
 
     // Stream Api Support Condition break in JDK9
-    List<RowSourceRecord> list = new ArrayList<RowSourceRecord>();
+    List<RowSourceRecord> list = new ArrayList<>();
     RowSourceRecord record;
     while ((record = queue.poll()) != null) list.add(record);
 

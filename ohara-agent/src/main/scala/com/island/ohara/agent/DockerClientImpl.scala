@@ -139,7 +139,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     ).filter(_.nonEmpty).mkString(" ")
 
     override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-      this.ports = ports;
+      this.ports = ports
       this
     }
 

@@ -111,9 +111,9 @@ public final class ProducerBuilder {
     return new KafkaHeader(header);
   }
 
-  static class KafkaHeader implements org.apache.kafka.common.header.Header {
+  private static class KafkaHeader implements org.apache.kafka.common.header.Header {
 
-    private Header header;
+    private final Header header;
 
     KafkaHeader(Header header) {
       this.header = header;

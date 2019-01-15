@@ -78,11 +78,11 @@ public interface KafkaClient extends Releasable {
   static KafkaClient of(String outerbrokers) {
     return new KafkaClient() {
 
-      private String brokers = outerbrokers;
+      private final String brokers = outerbrokers;
 
-      private AdminClient admin = AdminClient.create(toAdminProps(outerbrokers));
+      private final AdminClient admin = AdminClient.create(toAdminProps(outerbrokers));
 
-      private ExceptionHandler handler =
+      private final ExceptionHandler handler =
           ExceptionHandler.creator()
               .add(ExecutionException.class, (e) -> new OharaExecutionException(e.getCause()))
               .add(InterruptedException.class, OharaInterruptedException::new)
@@ -212,12 +212,8 @@ public interface KafkaClient extends Releasable {
       public List<String> listTopics(Duration timeout) {
         return CheckedExceptionUtil.wrap(
             () ->
-                admin
-                    .listTopics()
-                    .names()
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-                    .stream()
-                    .collect(Collectors.toList()),
+                new ArrayList<>(
+                    admin.listTopics().names().get(timeout.toMillis(), TimeUnit.MILLISECONDS)),
             handler);
       }
 

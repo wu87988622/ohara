@@ -75,10 +75,9 @@ class JDBCSourceTask extends RowSourceTask {
       .asJava
     finally resultSet.close()
   } catch {
-    case e: Throwable => {
+    case e: Throwable =>
       LOG.error(e.getMessage, e)
       Seq.empty.asJava
-    }
   }
 
   /**

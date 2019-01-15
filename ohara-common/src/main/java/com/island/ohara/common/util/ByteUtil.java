@@ -4,14 +4,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 
 public final class ByteUtil {
-  public static Comparator<byte[]> BYTES_COMPARATOR = ByteUtil::compare;
-  public static int SIZE_OF_BYTE = 1;
-  public static int SIZE_OF_BOOLEAN = 1;
-  public static int SIZE_OF_SHORT = java.lang.Short.SIZE / java.lang.Byte.SIZE;
-  public static int SIZE_OF_INT = java.lang.Integer.SIZE / java.lang.Byte.SIZE;
-  public static int SIZE_OF_LONG = java.lang.Long.SIZE / java.lang.Byte.SIZE;
-  public static int SIZE_OF_FLOAT = java.lang.Float.SIZE / java.lang.Byte.SIZE;
-  public static int SIZE_OF_DOUBLE = java.lang.Double.SIZE / java.lang.Byte.SIZE;
+  public static final Comparator<byte[]> BYTES_COMPARATOR = ByteUtil::compare;
+  public static final int SIZE_OF_BYTE = 1;
+  public static final int SIZE_OF_BOOLEAN = 1;
+  public static final int SIZE_OF_SHORT = java.lang.Short.SIZE / java.lang.Byte.SIZE;
+  public static final int SIZE_OF_INT = java.lang.Integer.SIZE / java.lang.Byte.SIZE;
+  public static final int SIZE_OF_LONG = java.lang.Long.SIZE / java.lang.Byte.SIZE;
+  public static final int SIZE_OF_FLOAT = java.lang.Float.SIZE / java.lang.Byte.SIZE;
+  public static final int SIZE_OF_DOUBLE = java.lang.Double.SIZE / java.lang.Byte.SIZE;
 
   // -------------[boolean]------------- //
   public static byte[] toBytes(boolean value) {

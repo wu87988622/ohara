@@ -89,15 +89,14 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
   def testGetDataFilePrefixNameException1(): Unit = {
     intercept[RuntimeException] {
       HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "datapart123AAA-"))
-    }.getMessage() shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
+    }.getMessage shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
   }
 
   @Test
   def testGetDataFilePrefixNameException2(): Unit = {
     intercept[RuntimeException] {
-      val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =
-        HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "data-part123-AAA"))
-    }.getMessage() shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
+      HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "data-part123-AAA"))
+    }.getMessage shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
   }
 
   @Test

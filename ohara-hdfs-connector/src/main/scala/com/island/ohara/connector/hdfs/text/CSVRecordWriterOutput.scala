@@ -26,7 +26,7 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     */
   override def write(isHeader: Boolean, schema: Seq[Column], row: Row): Unit = {
     val newSchema: Seq[Column] =
-      if (schema.isEmpty) row.cells().asScala.map(r => Column.of(r.name, DataType.OBJECT, 0)).toSeq else schema
+      if (schema.isEmpty) row.cells().asScala.map(r => Column.of(r.name, DataType.OBJECT, 0)) else schema
     val line: String = newSchema
       .sortBy(_.order)
       .map(n => (n, row.cells().asScala.filter(r => n.name == r.name)))

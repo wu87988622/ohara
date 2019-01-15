@@ -54,16 +54,16 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
       count = count + 1
     }
     count shouldBe 3
-    resultList(0)(3).columnName shouldBe "column4"
-    resultList(0)(3).columnType shouldBe "INT"
-    resultList(0)(3).value shouldBe 1
+    resultList.head(3).columnName shouldBe "column4"
+    resultList.head(3).columnType shouldBe "INT"
+    resultList.head(3).value shouldBe 1
   }
 
   @Test
   def testDbCurrentTime(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
     val dbCurrentTime = dbTableDataProvider.dbCurrentTime(DateTimeUtils.CALENDAR)
-    val dbCurrentTimestamp = dbCurrentTime.getTime()
+    val dbCurrentTimestamp = dbCurrentTime.getTime
     val systemCurrentTimestamp = CommonUtil.current()
     ((systemCurrentTimestamp - dbCurrentTimestamp) < 5000) shouldBe true
   }
@@ -72,7 +72,7 @@ class TestDBTableDataProvider extends MediumTest with Matchers {
   def testColumnList(): Unit = {
     val dbTableDataProvider = new DBTableDataProvider(db.url, db.user, db.password)
     val columns: Seq[RdbColumn] = dbTableDataProvider.columns(tableName)
-    columns(0).name shouldBe "column1"
+    columns.head.name shouldBe "column1"
     columns(1).name shouldBe "column2"
     columns(2).name shouldBe "column3"
     columns(3).name shouldBe "column4"
