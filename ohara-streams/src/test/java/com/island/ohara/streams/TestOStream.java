@@ -1,11 +1,9 @@
 package com.island.ohara.streams;
 
-import static com.island.ohara.streams.AirlineDataImporter.createKafkaConsumer;
-import static com.island.ohara.streams.AirlineDataImporter.createKafkaProducer;
+import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
+import static com.island.ohara.streams.DataImporter.createKafkaProducer;
 
-import com.island.ohara.OStreams;
-import com.island.ohara.StreamsBuilder;
-import com.island.ohara.Topology;
+import com.island.ohara.OStream;
 import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.KafkaClient;
 import com.island.ohara.ostreams.Serdes;
@@ -24,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestOStreams extends With3Brokers {
+public class TestOStream extends With3Brokers {
 
   private final String appid = "test-app";
   private final String fromTopic = "stream-in";
@@ -57,6 +55,7 @@ public class TestOStreams extends With3Brokers {
 
   @Test
   public void testSimpleApplication() {
+    // Sending data
     ProducerRecord<String, String> producerRecord = new ProducerRecord<>(fromTopic, simple_string);
     Future<RecordMetadata> f = producer.send(producerRecord);
     try {
@@ -65,6 +64,7 @@ public class TestOStreams extends With3Brokers {
       e.printStackTrace();
     }
 
+    // Checking data exists
     consumer.subscribe(Collections.singletonList(fromTopic));
     ConsumerRecords<String, String> m = consumer.poll(10000);
     consumer.commitAsync();
@@ -74,25 +74,20 @@ public class TestOStreams extends With3Brokers {
           Assert.assertEquals(simple_string, record.value());
         });
 
-    OStreams<String, String> oStreams =
-        StreamsBuilder.of(Serdes.STRING, Serdes.STRING)
-            .appid(appid)
-            .bootstrapServers(client.brokers())
-            .fromTopic(fromTopic)
-            .toTopic(toTopic)
-            .cleanStart()
-            .build();
+    // Ohara Streams ETL Part
+    OStream<String, String> ostream =
+        (OStream<String, String>)
+            OStream.builder()
+                .appid(appid)
+                .bootstrapServers(client.brokers())
+                .fromTopicWith(fromTopic, Serdes.StringSerde, Serdes.StringSerde)
+                .toTopicWith(toTopic, Serdes.StringSerde, Serdes.StringSerde)
+                .cleanStart()
+                .build();
 
-    oStreams.filter((key, value) -> value != null).mapValues(String::toUpperCase);
+    ostream.filter(((key, value) -> value != null)).mapValues(String::toUpperCase).start();
 
-    try (Topology topology = oStreams.construct()) {
-      System.out.println(topology.describe());
-      topology.start();
-      Thread.sleep(10000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
+    // Checking data again whether the ohara streams works or not
     consumer.unsubscribe();
     consumer.subscribe(Collections.singletonList(toTopic));
     try {

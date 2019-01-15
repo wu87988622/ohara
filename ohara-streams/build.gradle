@@ -5,6 +5,7 @@ test.systemProperty("user.timezone", "Asia/Taipei")
 dependencies {
     implementation project(':ohara-common')
     implementation project(':ohara-kafka')
+    implementation libs.commonsLang
     implementation libs.slf4jApi
     implementation libs.slf4jlog4j
     implementation libs.kafkaStream
@@ -13,6 +14,7 @@ dependencies {
     testImplementation project(":ohara-common").sourceSets.test.output
     testImplementation libs.mockito
     testImplementation libs.junit
+    testImplementation libs.javassist
 }
 
 /**

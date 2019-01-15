@@ -31,6 +31,7 @@ dependencies {
   testImplementation libs.akkaHttpTestKit
   testImplementation libs.scalatest
   testImplementation libs.junit
+  testImplementation libs.kafkaStream
 }
 
 task uberJar(type: Jar) {

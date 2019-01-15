@@ -1,6 +1,6 @@
 package com.island.ohara.streams;
 
-import static com.island.ohara.streams.AirlineDataImporter.createKafkaConsumer;
+import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 
 import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.KafkaClient;
@@ -13,7 +13,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestAirlineDataImporter extends With3Brokers {
+public class TestDataImporter extends With3Brokers {
 
   private KafkaClient client = KafkaClient.of(testUtil().brokersConnProps());
   private List<String> TOPICS = Arrays.asList("carriers", "plane", "airport", "flight");
@@ -43,7 +43,7 @@ public class TestAirlineDataImporter extends With3Brokers {
   @Test
   public void testImportAirlineData() {
 
-    AirlineDataImporter.importData(client.brokers(), false);
+    DataImporter.importData(client.brokers(), false);
 
     TOPICS.forEach(
         topic -> {
