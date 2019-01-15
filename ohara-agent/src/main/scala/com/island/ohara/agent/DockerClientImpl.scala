@@ -237,37 +237,46 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
   override def stop(name: String): ContainerInfo =
     containers()
       .find(_.name == name)
-      .map(container => {
+      .map { container =>
         agent.execute(s"docker stop $name")
         container
-      })
+      }
       .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
 
   override def remove(name: String): ContainerInfo =
     containers()
       .find(_.name == name)
-      .map(container => {
+      .map { container =>
         agent.execute(s"docker rm $name")
         container
-      })
+      }
+      .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
+
+  override def forceRemove(name: String): ContainerInfo =
+    containers()
+      .find(_.name == name)
+      .map { container =>
+        agent.execute(s"docker rm -f $name")
+        container
+      }
       .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
 
   override def stopById(id: String): ContainerInfo =
     containers()
       .find(_.id == id)
-      .map(container => {
+      .map { container =>
         agent.execute(s"docker stop $id")
         container
-      })
+      }
       .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
 
   override def removeById(id: String): ContainerInfo =
     containers()
       .find(_.id == id)
-      .map(container => {
+      .map { container =>
         agent.execute(s"docker rm $id")
         container
-      })
+      }
       .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
 
   override def verify(): Boolean =

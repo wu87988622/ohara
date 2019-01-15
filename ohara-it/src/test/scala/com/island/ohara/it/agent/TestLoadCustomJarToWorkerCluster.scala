@@ -35,7 +35,7 @@ class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
   /**
     * used to debug...
     */
-  private[this] val cleanup = false
+  private[this] val cleanup = true
 
   @Before
   final def setup(): Unit = sys.env.get(key).foreach { info =>
@@ -58,7 +58,7 @@ class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
 
   }
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   @Test
   def test(): Unit = if (nodeCache.isEmpty)

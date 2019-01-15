@@ -10,10 +10,6 @@ allprojects {
   }
 }
 
-ext {
-  userMaxForks = project.hasProperty('maxParallelForks') ? maxParallelForks.toInteger() : null
-}
-
 subprojects {
   if (it.name != 'ohara-manager') {
     if (it.name == 'ohara-common' || it.name == 'ohara-kafka' || it.name == 'ohara-testing-util' || it.name == 'ohara-streams') {
@@ -22,8 +18,16 @@ subprojects {
       targetCompatibility = 1.8
     }
     else apply plugin: 'scala'
+
+    /**
+     * The tests in ohara-it are fucking heavy so it would be better to verify them one by one.
+     * TODO: Increase the number of forks if we buy a fucking super machine for QA
+     */
+    int numberOfForks = it.name == 'ohara-it' ? 1 :
+            project.hasProperty('maxParallelForks') ? maxParallelForks.toInteger() :
+                    Math.max((int) (Runtime.runtime.availableProcessors() / 2), 1)
     test {
-      maxParallelForks = userMaxForks ?:((int)(Runtime.runtime.availableProcessors()/2)) ?: 1
+      maxParallelForks = numberOfForks
       // make isolation for tests. It may be expensive but stability is first choice.
       forkEvery = 1
       minHeapSize = "256m"

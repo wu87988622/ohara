@@ -71,6 +71,13 @@ trait DockerClient extends Releasable {
   def remove(name: String): ContainerInfo
 
   /**
+    * remove a container. If the container doesn't exist, exception will be thrown.
+    * @param name container's name
+    * @return container information.
+    */
+  def forceRemove(name: String): ContainerInfo
+
+  /**
     * stop a running container. If the container doesn't exist, exception will be thrown.
     * Noted: Please use #stop to stop container by name
     * @param id container's id

@@ -106,21 +106,10 @@ private object ClusterCollieImpl {
           var lastException: Throwable = null
           containers.foreach(
             container =>
-              try client.stop(container.name)
+              try client.forceRemove(container.name)
               catch {
                 case e: Throwable =>
                   LOG.error(s"failed to stop $container", e)
-                  lastException = e
-            })
-          // we need to list the containers again since the "cleanup" containers will be removed automatically
-          client
-            .containers()
-            .filter(_.name.startsWith(key))
-            .foreach(container =>
-              try client.remove(container.name)
-              catch {
-                case e: Throwable =>
-                  LOG.error(s"failed to remove $container", e)
                   lastException = e
             })
           if (lastException != null) throw lastException
