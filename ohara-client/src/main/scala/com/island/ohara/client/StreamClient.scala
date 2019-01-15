@@ -1,7 +1,7 @@
 package com.island.ohara.client
 import java.io.File
-import java.nio.file.Paths
 
+import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.server.directives.FileInfo
 import com.island.ohara.common.util.VersionUtil
 
@@ -14,7 +14,7 @@ trait StreamClient extends AutoCloseable {
 object StreamClient {
 
   /**
-    * StreamApp List Page max acceptable file size (1 MB currently)
+    * StreamApp List Page max acceptable upload file size (1 MB currently)
     */
   final val MAX_FILE_SIZE = 1 * 1024 * 1024L
 
@@ -23,12 +23,9 @@ object StreamClient {
     */
   final val INPUT_KEY = "streamapp"
 
-  final val TMP_ROOT = System.getProperty("java.io.tmpdir")
+  final val CONTENT_TYPE = MediaTypes.`application/java-archive`
 
-  /**
-    * StreamApp List Page files save path (just for testing purpose for now...by sam)
-    */
-  final val JARS_ROOT = Paths.get(TMP_ROOT, "ohara_streams")
+  final val TMP_ROOT = System.getProperty("java.io.tmpdir")
 
   /**
     * StreamApp Docker Image name

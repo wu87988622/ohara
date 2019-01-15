@@ -10,8 +10,8 @@ import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] def verifyRoute[Req](root: String, verify: Req => Future[Seq[ValidationReport]])(

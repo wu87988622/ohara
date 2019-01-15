@@ -1,6 +1,7 @@
 package com.island.ohara.client.configurator.v0
-import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
+
 import scala.concurrent.Future
 
 /**
