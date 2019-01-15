@@ -26,7 +26,7 @@ InputField.propTypes = {
   }).isRequired,
   meta: PropTypes.shape({
     touched: PropTypes.bool,
-    error: PropTypes.object,
+    error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
 };
 
