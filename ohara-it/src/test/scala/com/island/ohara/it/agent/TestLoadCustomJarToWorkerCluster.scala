@@ -7,13 +7,15 @@ import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
-import org.junit.{After, Before, Test}
+import org.junit.{After, Before, Ignore, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
+@Ignore // fixed by OHARA-1300
 class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
 
   /**
