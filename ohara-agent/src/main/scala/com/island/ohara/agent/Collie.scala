@@ -34,7 +34,7 @@ trait Collie[T <: ClusterInfo] {
   def creator(): ClusterCreator[T]
 
   /**
-    * get the containers information from a zookeeper cluster
+    * get the containers information from a1 cluster
     * @param clusterName cluster name
     * @return containers information
     */

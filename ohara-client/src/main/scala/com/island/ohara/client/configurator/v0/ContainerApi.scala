@@ -52,6 +52,30 @@ object ContainerApi {
       EXITED,
       DEAD
     )
+
+    case object PENDING extends ContainerState {
+      val name = "PENDING"
+    }
+
+    case object SUCCEEDED extends ContainerState {
+      val name = "SUCCEEDED"
+    }
+
+    case object FAILED extends ContainerState {
+      val name = "FAILED"
+    }
+
+    case object UNKNOWN extends ContainerState {
+      val name = "UNKNOWN"
+    }
+
+    val k8sAll: Seq[ContainerState] = Seq(
+      PENDING,
+      RUNNING,
+      SUCCEEDED,
+      FAILED,
+      UNKNOWN
+    )
   }
   implicit val CONTAINER_STATE_JSON_FORMAT: RootJsonFormat[ContainerState] = new RootJsonFormat[ContainerState] {
     override def write(obj: ContainerState): JsValue = JsString(obj.name)

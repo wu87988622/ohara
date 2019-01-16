@@ -41,4 +41,11 @@ object ClusterCollie {
     * node-2 => workercluster-worker-2
     */
   def ssh(implicit nodeCollie: NodeCollie): ClusterCollie = new ClusterCollieImpl
+
+  /**
+    * create kubernetes implements
+    * @param nodeCollie
+    * @return
+    */
+  def k8s(implicit nodeCollie: NodeCollie, k8sClient: K8SClient): ClusterCollie = new K8SClusterCollieImpl
 }
