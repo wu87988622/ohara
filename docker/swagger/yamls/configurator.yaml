@@ -6,144 +6,180 @@ info:
   contact:
     name: "The God - Chia7712"
     email: "chia7712@is-land.com.tw"
-basePath: "/API/v0"
+servers:
+- url: "/API/v0"
+externalDocs:
+  description: "Original Google Doc"
+  url: "https://ppt.cc/fhYKUx"
 tags:
-  - name: "Topics"
-    description: "topic crud"
-    externalDocs:
-      description: "Google Doc"
-      url: "https://ppt.cc/fhYKUx"
-  - name: "StreamApp List"
-    description: "StreamApp List Page Operations"
-schemes:
-  - "http"
+- name: "Topics"
+  description: "topic crud"
+  externalDocs:
+    description: "Google Doc"
+    url: "https://ppt.cc/fhYKUx"
+- name: "StreamApp List"
+  description: "StreamApp List Page Operations"
+- name: "StreamApp Property"
+  description: "StreamApp Property Page Operations"
 paths:
   /topics:
     get:
       tags:
-        - "Topics"
+      - "Topics"
       summary: "get all topics"
       description: "get all topics"
       operationId: "getTopics"
-      produces:
-        - "application/json"
       responses:
         200:
-          description: topic response
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Topic"
+          description: "topic response"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Topic"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
     post:
       tags:
-        - "Topics"
+      - "Topics"
       summary: "add a topic"
       description: "add a topic to broker"
       operationId: "addTopic"
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
       requestBody:
         description: "topic request"
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/definitions/TopicRequest"
+              $ref: "#/components/schemas/TopicRequest"
       responses:
         200:
-          $ref: "#/definitions/Topic"
+          description: "topic response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /topics/{topicId}:
     get:
       tags:
-        - "Topics"
+      - "Topics"
       summary: "find topic by ID"
       description: "Returns a single topic"
       operationId: "getTopicById"
       parameters:
-        - $ref: "#/parameters/TopicId"
+      - $ref: "#/components/parameters/TopicId"
       responses:
         200:
-          $ref: "#/definitions/Topic"
+          description: "topic response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     put:
       tags:
-        - "Topics"
+      - "Topics"
       summary: "Updates topic by ID"
       description: "update a single topic"
       operationId: "updateTopicById"
-      consumes:
-        - "application/json"
       requestBody:
         description: "topic request"
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/definitions/TopicRequest"
-      produces:
-        - "application/json"
+              $ref: "#/components/schemas/TopicRequest"
       parameters:
-        - $ref: "#/parameters/TopicId"
+      - $ref: "#/components/parameters/TopicId"
       responses:
         200:
-          $ref: "#/definitions/Topic"
+          description: "topic response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
     delete:
       tags:
-        - "Topics"
+      - "Topics"
       summary: "Deletes a topic"
       description: "delete topic by id"
       operationId: "deleteTopic"
       parameters:
-        - $ref: "#/parameters/TopicId"
+      - $ref: "#/components/parameters/TopicId"
       responses:
         200:
-          $ref: "#/definitions/Topic"
+          description: "topic response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Topic"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /stream/jars/{pipelineId}:
     get:
       tags:
-        - "StreamApp List"
+      - "StreamApp List"
       summary: "Get list by pipeline id"
       description: "return a list of uploaded streamApp jars"
       operationId: "getStreamList"
-      produces:
-        - "application/json"
-        - "application/xml"
       parameters:
-        - in: "path"
-          name: "pipelineId"
-          description: "ID of pipeline to query"
-          required: true
-          schema:
-            type: "string"
+      - in: "path"
+        name: "pipelineId"
+        description: "ID of pipeline to query"
+        required: true
+        schema:
+          type: "string"
       responses:
         200:
           description: "successful streamApp list operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/StreamJar"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/StreamListResponse"
     post:
       tags:
-        - "StreamApp List"
+      - "StreamApp List"
       summary: "Upload jars by pipeline id"
-      consumes:
-        - "multipart/form-data"
       description: "upload streamApp jars"
       operationId: "postStreamList"
+      parameters:
+      - in: "path"
+        name: "pipelineId"
+        description: "ID of pipeline to query"
+        required: true
+        schema:
+          type: "string"
       requestBody:
         content:
           multipart/form-data:
@@ -158,12 +194,18 @@ paths:
       responses:
         200:
           description: "successful streamApp list operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/StreamJar"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/StreamListResponse"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /stream/jars/{id}:
     delete:
       tags:
@@ -172,19 +214,25 @@ paths:
       description: "delete the specific streamApp jar"
       operationId: "deleteStreamList"
       parameters:
-        - in: "path"
-          name: "id"
-          description: "ID of streamApp to delete"
-          required: true
-          schema:
-            type: "string"
+      - in: "path"
+        name: "id"
+        description: "ID of streamApp to delete"
+        required: true
+        schema:
+          type: "string"
       responses:
         200:
           description: "successful streamApp list operation"
-          schema:
-            $ref: "#/definitions/StreamJar"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamListResponse"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     put:
       tags:
       - "StreamApp List"
@@ -202,89 +250,176 @@ paths:
                   type: "string"
               example:
                 jarName: "new-example.jar"
-
       parameters:
-        - in: "path"
-          name: "id"
-          description: "ID of streamApp to update"
-          required: true
-          schema:
-            type: "string"
+      - in: "path"
+        name: "id"
+        description: "ID of streamApp to update"
+        required: true
+        schema:
+          type: "string"
       responses:
         200:
           description: "successful streamApp list operation"
-          schema:
-            $ref: "#/definitions/StreamJar"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamListResponse"
         400:
-          $ref: "#/responses/Error"
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stream/property/{id}:
+    get:
+      tags:
+      - "StreamApp Property"
+      summary: "Get properties by streamApp id"
+      description: "return the specific streamApp configuration"
+      operationId: "getStreamProperty"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "ID of streamApp to get"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "successful streamApp property operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamPropertyResponse"
+        400:
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags:
+      - "StreamApp Property"
+      summary: "Update properties by streamApp id"
+      description: "update configuration of specific streamApp"
+      operationId: "putStreamProperty"
+      requestBody:
+        description: "The request properties"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamPropertyRequest"
+      parameters:
+      - in: "path"
+        name: "id"
+        description: "ID of streamApp to update"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "successful streamApp list operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamPropertyResponse"
+        400:
+          description: "error response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-parameters:
-  TopicId:
-    name: "topicId"
-    in: "path"
-    description: " topic id"
-    required: true
-    schema:
-      type: "string"
-
-responses:
-  Topic:
-    description: topic response
-    schema:
-      $ref: "#/definitions/Topic"
-  Error:
-    description: bad request
-    schema:
-      $ref: "#/definitions/Error"
-
-definitions:
-  Topic:
-    type: "object"
-    properties:
-      id:
+components:
+  schemas:
+    Topic:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        name:
+          type: "string"
+        numberOfPartitions:
+          type: "integer"
+          format: "int32"
+        numberOfReplications:
+          type: "integer"
+          format: "int16"
+        lastModified:
+          type: "integer"
+          format: "int64"
+    TopicRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        numberOfPartitions:
+          type: "integer"
+          format: "int32"
+        numberOfReplications:
+          type: "integer"
+          format: "int16"
+    StreamListResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        jarName:
+          type: "string"
+        lastModified:
+          type: "integer"
+          format: "int64"
+    StreamPropertyRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        fromTopics:
+          type: "array"
+          items:
+            type: "string"
+        toTopics:
+          type: "array"
+          items:
+            type: "string"
+        instances:
+          type: "integer"
+    StreamPropertyResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        jarName:
+          type: "string"
+        name:
+          type: "string"
+        fromTopics:
+          type: "array"
+          items:
+            type: "string"
+        toTopics:
+          type: "array"
+          items:
+            type: "string"
+        instances:
+          type: "integer"
+        lastModified:
+          type: "integer"
+          format: "int64"
+    Error:
+      type: "object"
+      properties:
+        message:
+          type: "string"
+        code:
+          type: "string"
+        stack:
+          type: "string"
+  parameters:
+    TopicId:
+      name: "topicId"
+      in: "path"
+      description: " topic id"
+      required: true
+      schema:
         type: "string"
-      name:
-        type: "string"
-      numberOfPartitions:
-        type: "integer"
-        format: "int32"
-      numberOfReplications:
-        type: "integer"
-        format: "int16"
-      lastModified:
-        type: "integer"
-        format: "int64"
-  TopicRequest:
-    type: "object"
-    properties:
-      name:
-        type: "string"
-      numberOfPartitions:
-        type: "integer"
-        format: "int32"
-      numberOfReplications:
-        type: "integer"
-        format: "int16"
-  StreamJar:
-    type: "object"
-    properties:
-      id:
-        type: "string"
-      jarName:
-        type: "string"
-      lastModified:
-        type: "integer"
-        format: "int64"
-  Error:
-    type: "object"
-    properties:
-      message:
-        type: "string"
-      code:
-        type: "string"
-      stack:
-        type: "string"
-
-externalDocs:
-  description: "Original Google Doc"
-  url: "https://ppt.cc/fhYKUx"
