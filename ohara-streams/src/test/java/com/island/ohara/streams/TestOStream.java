@@ -3,10 +3,9 @@ package com.island.ohara.streams;
 import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 import static com.island.ohara.streams.DataImporter.createKafkaProducer;
 
-import com.island.ohara.OStream;
 import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.KafkaClient;
-import com.island.ohara.ostreams.Serdes;
+import com.island.ohara.streams.ostream.Serdes;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

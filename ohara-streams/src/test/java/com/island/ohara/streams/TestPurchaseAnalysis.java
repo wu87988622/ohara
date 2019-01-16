@@ -1,8 +1,5 @@
 package com.island.ohara.streams;
 
-import com.island.ohara.OStream;
-import com.island.ohara.StreamApp;
-import com.island.ohara.TimestampExtractor;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
@@ -11,8 +8,8 @@ import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.ConsumerRecord;
 import com.island.ohara.kafka.KafkaClient;
 import com.island.ohara.kafka.Producer;
-import com.island.ohara.ostreams.KeyValue;
-import com.island.ohara.ostreams.Serdes;
+import com.island.ohara.streams.ostream.KeyValue;
+import com.island.ohara.streams.ostream.Serdes;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDateTime;

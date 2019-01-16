@@ -1,6 +1,5 @@
 package com.island.ohara.streams;
 
-import com.island.ohara.TimestampExtractor;
 import com.island.ohara.common.data.Row;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
