@@ -17,7 +17,7 @@ const Layout = styled.div`
     flex-direction: row;
     max-width: 1200px;
     width: 100%;
-    height: calc(100% - 100px);
+    min-height: calc(100% - 100px);
 
     & > div:first-child {
       flex: 0 0 auto;

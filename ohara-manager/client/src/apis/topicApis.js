@@ -1,3 +1,4 @@
+import { toNumber } from 'lodash';
 import axiosInstance from './axios';
 import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
@@ -32,9 +33,15 @@ export const fetchTopics = async () => {
   }
 };
 
-export const createTopics = async params => {
+export const createTopic = async params => {
+  const { name, numberOfPartitions, numberOfReplications } = params;
   try {
-    const res = await axiosInstance.post('/api/topics', params);
+    const data = {
+      name,
+      numberOfPartitions: toNumber(numberOfPartitions),
+      numberOfReplications: toNumber(numberOfReplications),
+    };
+    const res = await axiosInstance.post('/api/topics', data);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
