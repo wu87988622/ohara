@@ -93,9 +93,12 @@ public class TestPurchaseAnalysis extends With3Brokers {
             .offsetFromBegin()
             .build(Serializer.STRING, Serializer.DOUBLE);
 
-    List<ConsumerRecord<String, Double>> records = consumer.poll(Duration.ofSeconds(2), 2);
+    List<ConsumerRecord<String, Double>> records = consumer.poll(Duration.ofSeconds(10), 2);
     // the result will get "accumulation" ; hence we will get 2 -> 4 records
-    Assert.assertEquals(2, records.size());
+    Assert.assertTrue(
+        "the result will get \"accumulation\" ; hence we will get 2 -> 4 records. actual:"
+            + records.size(),
+        records.size() >= 2 && records.size() <= 4);
 
     records.forEach(
         record -> {
