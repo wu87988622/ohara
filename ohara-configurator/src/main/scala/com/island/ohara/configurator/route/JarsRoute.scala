@@ -6,8 +6,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.FileInfo
-import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.configurator.v0.JarApi._
+import com.island.ohara.configurator.jar.JarStore
 import spray.json.DefaultJsonProtocol._
 private[configurator] object JarsRoute {
 

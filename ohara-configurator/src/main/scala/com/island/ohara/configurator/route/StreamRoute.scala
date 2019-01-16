@@ -6,12 +6,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.StreamClient
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtil._
 import com.island.ohara.kafka.KafkaClient
 import spray.json.DefaultJsonProtocol._

@@ -9,16 +9,16 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
   * This abstract class extracts the "required" information of running tests on true env.
@@ -27,7 +27,7 @@ import scala.concurrent.duration._
   *
   * NOTED: this test will forward random ports so it would be better to "close" firewall of remote node.
   */
-abstract class BasicTestsOfCollie extends LargeTest with Matchers {
+abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTestsOfCollie])
 
   /**

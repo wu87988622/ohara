@@ -1,12 +1,13 @@
-package com.island.ohara.agent.jar
+package com.island.ohara.configurator.jar
+
 import java.io.File
 import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Plugin store used to keep the custom plugin (connector or streamapp) and provide a way to remote node to get the plugin.
@@ -71,17 +72,4 @@ trait JarStore extends Releasable {
   def exist(id: String): Future[Boolean]
 
   def nonExist(id: String): Future[Boolean] = exist(id).map(!_)
-}
-
-object JarStore {
-
-  /**
-    * create a store based on ftp interface. All jars are stored at input - home folder, and all read to jar are formatted
-    * to ftp url.
-    * @param homeFolder location to store jars
-    * @param numberOfThreads max connection to transfer data
-    * @return jar store
-    */
-  def ftp(homeFolder: String, numberOfThreads: Int): JarStore =
-    new FtpJarStore(homeFolder, 0, Seq.fill(numberOfThreads)(0))
 }

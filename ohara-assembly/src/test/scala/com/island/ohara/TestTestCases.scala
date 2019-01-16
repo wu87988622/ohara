@@ -4,6 +4,7 @@ import java.net.URL
 import java.util.regex.Pattern
 
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
+import com.island.ohara.it.IntegrationTest
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -15,7 +16,8 @@ class TestTestCases extends MediumTest with Matchers {
     Array(
       classOf[SmallTest],
       classOf[MediumTest],
-      classOf[LargeTest]
+      classOf[LargeTest],
+      classOf[IntegrationTest]
     )
   private[this] val validTestName: Array[String] = validTestCatalog.map(_.getName)
 

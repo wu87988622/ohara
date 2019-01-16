@@ -64,6 +64,14 @@ test {
   String DOCKER = "ohara.it.docker"
   if(project.hasProperty(DOCKER)) environment DOCKER, project.getProperty(DOCKER)
 
+  // required by TestLoadCustomJarToWorkerCluster
+  String PUBLIC_HOSTNAME= "ohara.it.hostname"
+  if(project.hasProperty(PUBLIC_HOSTNAME)) environment PUBLIC_HOSTNAME, project.getProperty(PUBLIC_HOSTNAME)
+
+  // required by TestLoadCustomJarToWorkerCluster
+  String PUBLIC_PORT = "ohara.it.port"
+  if(project.hasProperty(PUBLIC_PORT)) environment PUBLIC_PORT, project.getProperty(PUBLIC_PORT)
+
   String KUBERNETES = "ohara.it.k8s"
   if(project.hasProperty(KUBERNETES)) environment KUBERNETES, project.getProperty(KUBERNETES)
 }

@@ -5,7 +5,6 @@ import java.{time, util}
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.ConnectorJson.{
   ConnectorConfig,
   ConnectorInformation,
@@ -21,6 +20,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
@@ -29,8 +29,8 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ConfiguratorBuilder {
@@ -44,40 +44,44 @@ class ConfiguratorBuilder {
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
   private[this] var clusterCollie: Option[ClusterCollie] = None
-  private[this] var jarStore: Option[JarStore] = None
 
+  @Optional("default is none")
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
     this.extraRoute = Some(extraRoute)
     this
   }
 
   /**
-    * set a specified hostname
+    * set advertised hostname which will be exposed by configurator.
     *
     * @param hostname used to build the rest server
     * @return this builder
     */
+  @Optional("default is 0.0.0.0")
   def hostname(hostname: String): ConfiguratorBuilder = {
     this.hostname = Some(hostname)
     this
   }
 
   /**
-    * set a specified port
+    * set advertised port which will be exposed by configurator.
     *
     * @param port used to build the rest server
     * @return this builder
     */
+  @Optional("default is random port")
   def port(port: Int): ConfiguratorBuilder = {
     this.port = Some(port)
     this
   }
 
+  @Optional("default is 10 seconds")
   def terminationTimeout(terminationTimeout: Duration): ConfiguratorBuilder = {
     this.terminationTimeout = Some(terminationTimeout)
     this
   }
 
+  @Optional("default is 10 seconds")
   def initializationTimeout(initializationTimeout: Duration): ConfiguratorBuilder = {
     this.initializationTimeout = Some(initializationTimeout)
     this
@@ -93,11 +97,6 @@ class ConfiguratorBuilder {
     this
   }
 
-  def jarStore(jarStore: JarStore): ConfiguratorBuilder = {
-    this.jarStore = Some(jarStore)
-    this
-  }
-
   /**
     * set all client to fake mode. It means all request sent to configurator won't be executed. a testing-purpose method.
     *
@@ -109,6 +108,7 @@ class ConfiguratorBuilder {
     clusterCollie(new FakeClusterCollie)
   }
 
+  @Optional("default is implemented by ssh")
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
     this.clusterCollie = Some(clusterCollie)
     this
@@ -120,17 +120,12 @@ class ConfiguratorBuilder {
   }
 
   def build(): Configurator = {
-    new Configurator(hostname.getOrElse(CommonUtil.anyLocalAddress),
-                     port.getOrElse(0),
-                     initializationTimeout.get,
-                     terminationTimeout.get,
-                     extraRoute)(
+    new Configurator(hostname, port, initializationTimeout.get, terminationTimeout.get, extraRoute)(
       store = store,
       nodeCollie = nodeCollie(),
       clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie())),
       kafkaClient = kafkaClient.get,
-      connectorClient = connectClient.get,
-      jarStore = jarStore.getOrElse(JarStore.ftp(CommonUtil.createTempDir("ftp_jar_store").getAbsolutePath, 10))
+      connectorClient = connectClient.get
     )
   }
 }

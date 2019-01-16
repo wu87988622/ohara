@@ -1,22 +1,24 @@
 package com.island.ohara.configurator
 
+import java.io.File
+import java.net.URL
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives.{handleRejections, _}
+import akka.http.scaladsl.server.Directives.{handleRejections, path, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
-import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
 import com.island.ohara.kafka.KafkaClient
 import com.typesafe.scalalogging.Logger
@@ -31,24 +33,73 @@ import scala.reflect.{ClassTag, classTag}
   * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
   * NOTED: there are many route requiring the implicit variables so we make them be implicit in construction.
   *
-  * @param configuredHostname hostname from rest server
-  * @param configuredPort    port from rest server
+  * @param advertisedHostname hostname from rest server
+  * @param advertisedPort    port from rest server
   * @param store    store
   */
-class Configurator private[configurator] (configuredHostname: String,
-                                          configuredPort: Int,
+class Configurator private[configurator] (advertisedHostname: Option[String],
+                                          advertisedPort: Option[Int],
                                           initializationTimeout: Duration,
                                           terminationTimeout: Duration,
                                           extraRoute: Option[server.Route])(implicit store: Store,
                                                                             nodeCollie: NodeCollie,
                                                                             clusterCollie: ClusterCollie,
                                                                             kafkaClient: KafkaClient,
-                                                                            connectorClient: ConnectorClient,
-                                                                            jarStore: JarStore)
+                                                                            connectorClient: ConnectorClient)
     extends ReleaseOnce
     with SprayJsonSupport {
 
-  private val log = Logger(classOf[Configurator])
+  //-----------------[public interfaces]-----------------//
+
+  val hostname: String = advertisedHostname.getOrElse(CommonUtil.hostname())
+
+  /**
+    * we assign the port manually since we have to create a jar store in order to create related routes. And then
+    * the http server can be created by the routes. Hence, we can't get free port through http server.
+    * TODO: this won't hurt the production but it may unstabilize our tests because of port conflict...by chia
+    */
+  val port: Int = advertisedPort.map(CommonUtil.resolvePort).getOrElse(CommonUtil.availablePort())
+
+  def size: Int = store.size
+
+  private[this] val log = Logger(classOf[Configurator])
+
+  private[this] val jarLocalHome = CommonUtil.createTempDir("Configurator").getAbsolutePath
+  private[this] val jarDownloadPath = "jar"
+
+  /**
+    * We create an internal jar store based on http server of configurator.
+    */
+  implicit val jarStore: JarStore = new LocalJarStore(jarLocalHome) {
+    log.info(s"path of jar:$jarLocalHome")
+    override protected def doUrls(): Future[Map[String, URL]] = jarInfos().map(_.map { plugin =>
+      plugin.id -> new URL(s"http://${CommonUtil.address(hostname)}:$port/$jarDownloadPath/${plugin.id}.jar")
+    }.toMap)
+
+    override protected def doClose(): Unit = {
+      // do nothing
+    }
+  }
+
+  /**
+    * the route is exposed to worker cluster. They will download all assigned jars to start worker process.
+    * TODO: should we integrate this route to our public API?? by chia
+    */
+  private[this] def jarDownloadRoute(): server.Route = path(jarDownloadPath / Segment) { idWithExtension =>
+    // We force all url end with .jar
+    if (!idWithExtension.endsWith(".jar")) complete(StatusCodes.NotFound -> s"$idWithExtension doesn't exist")
+    else {
+      val id = idWithExtension.substring(0, idWithExtension.indexOf(".jar"))
+      val jarFolder = new File(jarLocalHome, id)
+      if (!jarFolder.exists() || !jarFolder.isDirectory) complete(StatusCodes.NotFound -> s"$id doesn't exist")
+      else {
+        val jars = jarFolder.listFiles()
+        if (jars == null || jars.isEmpty) complete(StatusCodes.NotFound)
+        else if (jars.size != 1) complete(StatusCodes.InternalServerError -> s"duplicate jars for $id")
+        else getFromFile(jars.head)
+      }
+    }
+  }
 
   private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
@@ -125,9 +176,10 @@ class Configurator private[configurator] (configuredHostname: String,
     Await.result(
       Http().bindAndHandle(
         handleExceptions(exceptionHandler())(
-          handleRejections(rejectionHandler())(basicRoute() ~ privateRoute()) ~ finalRoute()),
-        configuredHostname,
-        configuredPort
+          handleRejections(rejectionHandler())(basicRoute() ~ privateRoute() ~ jarDownloadRoute()) ~ finalRoute()),
+        // we bind the service on all network adapter.
+        CommonUtil.anyLocalAddress(),
+        port
       ),
       initializationTimeout.toMillis milliseconds
     )
@@ -144,16 +196,6 @@ class Configurator private[configurator] (configuredHostname: String,
     ReleaseOnce.close(jarStore)
     ReleaseOnce.close(store)
   }
-
-  //-----------------[public interfaces]-----------------//
-
-  val hostname: String = httpServer.localAddress.getHostName
-
-  val port: Int = httpServer.localAddress.getPort
-
-  val connectionProps: String = s"$hostname:$port"
-
-  def size: Int = store.size
 }
 
 object Configurator {

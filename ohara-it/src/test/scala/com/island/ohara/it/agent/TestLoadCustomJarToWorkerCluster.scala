@@ -2,21 +2,20 @@ package com.island.ohara.it.agent
 import java.io.File
 
 import com.island.ohara.agent._
-import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.client.ConnectorClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.rule.LargeTest
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
-import org.junit.{After, Before, Ignore, Test}
+import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.jar.JarStore
+import com.island.ohara.it.IntegrationTest
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-@Ignore // fixed by OHARA-1300
-class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
+class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   /**
     * form: user:password@hostname:port.
@@ -24,14 +23,44 @@ class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
     */
   private[this] val key = "ohara.it.docker"
 
-  private[this] val nodeCache = new ArrayBuffer[Node]()
+  /**
+    * we need to export port to enable remote node download jar from this node
+    */
+  private[this] val portKey = "ohara.it.port"
+
+  /**
+    * we need to export hostname to enable remote node download jar from this node
+    */
+  private[this] val hostnameKey: String = "ohara.it.hostname"
+
+  private[this] val nodeCache: Seq[Node] = sys.env
+    .get(key)
+    .map(_.split(",").map { nodeInfo =>
+      val user = nodeInfo.split(":").head
+      val password = nodeInfo.split("@").head.split(":").last
+      val hostname = nodeInfo.split("@").last.split(":").head
+      val port = nodeInfo.split("@").last.split(":").last.toInt
+      Node(hostname, port, user, password, Seq.empty, CommonUtil.current())
+    }.toSeq)
+    .getOrElse(Seq.empty)
+
   private[this] val nodeCollie: NodeCollie = new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
     override def node(name: String): Future[Node] = Future.successful(
       nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
   }
-  private[this] val jarStore =
-    JarStore.ftp(CommonUtil.createTempDir("TestLoadCustomJarToWorkerCluster").getAbsolutePath, 5)
+
+  private[this] val invalidHostname = "unknown"
+
+  private[this] val invalidPort = 0
+
+  private[this] val publicHostname: String = sys.env.getOrElse(hostnameKey, invalidHostname)
+
+  private[this] val publicPort = sys.env.get(portKey).map(_.toInt).getOrElse(invalidPort)
+
+  private[this] val configurator: Configurator =
+    Configurator.builder().fake().hostname(publicHostname).port(publicPort).build()
+  private[this] val jarStore: JarStore = configurator.jarStore
   private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
 
   /**
@@ -39,15 +68,16 @@ class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
     */
   private[this] val cleanup = true
 
-  @Before
-  final def setup(): Unit = sys.env.get(key).foreach { info =>
-    info.split(",").foreach { nodeInfo =>
-      val user = nodeInfo.split(":").head
-      val password = nodeInfo.split("@").head.split(":").last
-      val hostname = nodeInfo.split("@").last.split(":").head
-      val port = nodeInfo.split("@").last.split(":").last.toInt
-      nodeCache.append(Node(hostname, port, user, password, Seq.empty, CommonUtil.current()))
-      val dockerClient = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+
+  @Test
+  def test(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
+    skipTest(
+      s"$key, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
+  else {
+    nodeCache.foreach { node =>
+      val dockerClient =
+        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
         withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
           dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
@@ -57,15 +87,6 @@ class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
           dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
-
-  }
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
-
-  @Test
-  def test(): Unit = if (nodeCache.isEmpty)
-    skipTest(s"$key doesn't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
-  else {
     val currentPath = new File(".").getCanonicalPath
     // Both jars are pre-generated. see readme in test/resources
     val jars = result(
@@ -137,7 +158,7 @@ class TestLoadCustomJarToWorkerCluster extends LargeTest with Matchers {
 
   @After
   final def tearDown(): Unit = {
-    ReleaseOnce.close(jarStore)
+    ReleaseOnce.close(configurator)
     ReleaseOnce.close(clusterCollie)
   }
 }

@@ -9,7 +9,6 @@ import com.island.ohara.agent.{ClusterCollie, DockerClient, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.prometheus.PrometheusJson.{Health, Targets}
 import com.island.ohara.prometheus.{PrometheusClient, PrometheusConfigUtil, PrometheusDescription, PrometheusServer}
@@ -21,7 +20,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
 
-class TestPrometheus extends MediumTest with Matchers {
+class TestPrometheus extends IntegrationTest with Matchers {
 
   private val nodes_key = "ohara.it.docker"
 

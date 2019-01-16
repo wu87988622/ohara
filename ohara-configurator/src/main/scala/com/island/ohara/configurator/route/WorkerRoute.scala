@@ -1,9 +1,9 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.jar.JarStore
 import com.island.ohara.agent.{BrokerCollie, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.WorkerApi._
+import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
