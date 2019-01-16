@@ -57,7 +57,7 @@ RUN yum install -y \
   numactl
 
 # add user
-ARG USER=backend
+ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 

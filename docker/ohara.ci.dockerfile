@@ -95,7 +95,7 @@ ENV GRADLE_HOME=/opt/gradle/default
 ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # add user
-ARG USER=jenkins
+ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 

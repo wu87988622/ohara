@@ -54,7 +54,7 @@ RUN yum install -y nodejs
 RUN npm install -g yarn@1.7.0
 
 # add user
-ARG USER=manager
+ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 

@@ -45,7 +45,7 @@ RUN yum install -y \
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
 # add user
-ARG USER=configurator
+ARG USER=ohara
 RUN groupadd $USER
 RUN useradd -ms /bin/bash -g $USER $USER
 
