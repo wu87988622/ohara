@@ -15,8 +15,8 @@ const isDefined = val => typeof val !== 'undefined';
 const isNumber = val => typeof val === 'number';
 
 const reduceByProp = (data, prop) => {
-  const result = data.reduce(
-    (prev, curr) => (prev[prop] > curr[prop] ? prev : curr),
+  const result = data.reduce((prev, curr) =>
+    prev[prop] > curr[prop] ? prev : curr,
   );
 
   return result;

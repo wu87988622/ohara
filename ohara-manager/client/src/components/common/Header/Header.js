@@ -81,6 +81,7 @@ const Btn = styled.button`
   border: none;
   color: ${dimBlue};
   font-size: 18px;
+  background-color: transparent;
 
   &:hover,
   &.active {

@@ -66,6 +66,7 @@ const DeleteIcon = styled.button`
   border: 0;
   font-size: 20px;
   cursor: pointer;
+  background-color: transparent;
 
   &:hover {
     color: ${red};
