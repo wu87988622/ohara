@@ -16,12 +16,9 @@ const H5Wrapper = styled(H5)`
   color: ${lightBlue};
 `;
 
-class PipelineTopic extends React.Component {
+class Topic extends React.Component {
   static propTypes = {
-    name: PropTypes.string.isRequired,
     isLoading: PropTypes.bool.isRequired,
-    updateGraph: PropTypes.func,
-    loadGraph: PropTypes.func,
     match: PropTypes.shape({
       isExact: PropTypes.bool,
       params: PropTypes.object,
@@ -77,4 +74,4 @@ class PipelineTopic extends React.Component {
   }
 }
 
-export default PipelineTopic;
+export default Topic;

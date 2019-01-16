@@ -14,6 +14,7 @@ import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchHdfs } from 'apis/configurationApis';
 import { CONFIGURATION } from 'constants/urls';
+import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
@@ -37,7 +38,7 @@ const Checkbox = styled(Input)`
 
 Checkbox.displayName = 'Checkbox';
 
-class PipelineHdfsSink extends React.Component {
+class HdfsSink extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -49,17 +50,18 @@ class PipelineHdfsSink extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    topics: PropTypes.array.isRequired,
   };
 
   selectMaps = {
-    topics: 'currTopic',
+    topics: 'currReadTopic',
     hdfses: 'currHdfs',
   };
 
   state = {
     name: '',
-    topics: [],
-    currTopic: {},
+    readTopics: [],
+    currReadTopic: {},
     hdfses: [],
     currHdfs: {},
     writePath: '',
@@ -78,26 +80,21 @@ class PipelineHdfsSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges } = this.props;
+    const { topics: prevTopics } = prevProps;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { hasChanges, topics: currTopics } = this.props;
+    const { connectorId: currConnectorId } = this.props.match.params;
 
-    const prevSinkId = _.get(prevProps.match, 'params.connectorId', null);
-    const currSinkId = _.get(this.props.match, 'params.connectorId', null);
-    const isUpdate = prevSinkId !== currSinkId;
+    if (prevTopics !== currTopics) {
+      this.setState({ writeTopics: currTopics });
+    }
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchData();
+    }
 
     if (hasChanges) {
       this.save();
-    }
-
-    if (isUpdate) {
-      const { name, id, rules } = this.state.pipelines;
-
-      const params = {
-        name,
-        rules: { ...rules, '?': currSinkId },
-      };
-
-      this.fetchData();
-      this.updatePipeline(id, params);
     }
   }
 
@@ -107,78 +104,59 @@ class PipelineHdfsSink extends React.Component {
     }));
   };
 
-  isConnectorExist = async id => {
-    const res = await pipelinesApis.fetchSink(id);
-    const sink = _.get(res, 'data.result', null);
-
-    if (_.isNull(sink)) return;
-
-    return res.isSuccess;
-  };
-
   fetchData = () => {
-    const { match } = this.props;
-    const sinkId = _.get(match, 'params.connectorId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-
+    const sinkId = _.get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
-
-    if (sinkId) {
-      const fetchHdfsPromise = this.fetchHdfs(sinkId);
-
-      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
-
-      Promise.all([fetchHdfsPromise, fetchPipelinePromise]).then(() => {
-        this.isConnectorExist(sinkId) && this.fetchSink(sinkId);
-      });
-
-      return;
-    }
-
-    this.fetchPipeline(pipelineId);
-    this.fetchHdfs();
+    this.fetchHdfs(sinkId);
+    this.fetchSink(sinkId);
   };
 
   fetchSink = async sinkId => {
     const res = await pipelinesApis.fetchSink(sinkId);
-    const sink = _.get(res, 'data.result', null);
+    const result = _.get(res, 'data.result', null);
 
-    if (_.isNull(sink)) return;
+    if (result) {
+      const { currHdfs } = this.state;
+      const { name, configs, topics: prevTopics } = result;
+      const {
+        hdfs = '{}',
+        writePath = '',
+        needHeader = false,
+        'tmp.dir': tempDirectory = '',
+        'flush.line.count': flushLineCount = '',
+        'rotate.interval.ms': rotateInterval = '',
+        'data.econde': currFileEncoding = '',
+      } = configs;
 
-    const { currHdfs } = this.state;
-    const { name } = sink;
-    const {
-      topic = '{}',
-      hdfs = '{}',
-      writePath = '',
-      needHeader = false,
-      'tmp.dir': tempDirectory = '',
-      'flush.line.count': flushLineCount = '',
-      'rotate.interval.ms': rotateInterval = '',
-      'data.econde': currFileEncoding = '',
-    } = sink.configs;
+      if (_.isEmpty(prevTopics)) {
+        this.setTopic();
+      } else {
+        const { topics } = this.props;
+        const currReadTopic = topics.find(topic => topic.id === prevTopics[0]);
 
-    const currTopic = JSON.parse(topic);
-    const prevHdfs = JSON.parse(hdfs);
+        updateTopic(this.props, currReadTopic, 'sink');
+        this.setState({ readTopics: topics, currReadTopic });
+      }
 
-    const isDiffHdfs = prevHdfs !== currHdfs ? true : false;
-    const _currHdfs = isDiffHdfs ? currHdfs : prevHdfs;
-    const _needHeader = needHeader === 'true' ? true : false;
+      const prevHdfs = JSON.parse(hdfs);
+      const isDiffHdfs = prevHdfs !== currHdfs ? true : false;
+      const _currHdfs = isDiffHdfs ? currHdfs : prevHdfs;
+      const _needHeader = needHeader === 'true' ? true : false;
 
-    this.setState({
-      name,
-      currTopic,
-      writePath,
-      currHdfs: _currHdfs,
-      needHeader: _needHeader,
-      tempDirectory,
-      flushLineCount,
-      rotateInterval,
-      currFileEncoding,
-    });
+      this.setState({
+        name,
+        writePath,
+        currHdfs: _currHdfs,
+        needHeader: _needHeader,
+        tempDirectory,
+        flushLineCount,
+        rotateInterval,
+        currFileEncoding,
+      });
 
-    if (isDiffHdfs) {
-      this.save();
+      if (isDiffHdfs) {
+        this.save();
+      }
     }
   };
 
@@ -201,34 +179,22 @@ class PipelineHdfsSink extends React.Component {
     }
   };
 
-  fetchPipeline = async pipelineId => {
-    if (!pipelineId) return;
+  setTopic = () => {
+    const { topics } = this.props;
 
-    const res = await pipelinesApis.fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', null);
-
-    if (pipelines) {
-      this.setState({ pipelines });
-
-      const sinkId = _.get(this.props.match, 'params.sinkId', null);
-
-      if (sinkId) {
-        this.props.loadGraph(pipelines);
-      }
-    }
+    this.setState(
+      {
+        readTopics: topics,
+        currReadTopic: topics[0],
+      },
+      () => {
+        const { currReadTopic } = this.state;
+        updateTopic(this.props, currReadTopic, 'sink');
+      },
+    );
   };
 
-  updatePipeline = async (id, params) => {
-    const res = await pipelinesApis.updatePipeline({ id, params });
-    const pipelines = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
-      this.props.loadGraph(pipelines);
-    }
-  };
-
-  handleChangeInput = ({ target: { name, value } }) => {
+  handleInputChange = ({ target: { name, value } }) => {
     this.setState({ [name]: value }, () => {
       this.props.updateHasChanges(true);
     });
@@ -264,11 +230,17 @@ class PipelineHdfsSink extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { updateHasChanges, history, match, isPipelineRunning } = this.props;
+    const {
+      updateHasChanges,
+      match,
+      graph,
+      updateGraph,
+      isPipelineRunning,
+    } = this.props;
     const {
       name,
       currHdfs,
-      currTopic,
+      currReadTopic,
       writePath,
       needHeader,
       tempDirectory,
@@ -284,8 +256,7 @@ class PipelineHdfsSink extends React.Component {
     }
 
     const sinkId = _.get(match, 'params.connectorId', null);
-    const topics = _.isEmpty(currTopic) ? [] : [currTopic.topicId];
-    const isConnectorExist = !_.isNull(sinkId) && this.isConnectorExist(sinkId);
+    const topics = _.isEmpty(currReadTopic) ? [] : [currReadTopic.id];
 
     const params = {
       name,
@@ -294,7 +265,7 @@ class PipelineHdfsSink extends React.Component {
       topics,
       numberOfTasks: 1,
       configs: {
-        topic: JSON.stringify(currTopic),
+        topic: JSON.stringify(currReadTopic),
         hdfs: JSON.stringify(currHdfs),
         needHeader: String(needHeader),
         writePath,
@@ -309,23 +280,23 @@ class PipelineHdfsSink extends React.Component {
       },
     };
 
-    const res = isConnectorExist
-      ? await pipelinesApis.updateSink({ id: sinkId, params })
-      : await pipelinesApis.createSink(params);
-
-    const updatedSinkId = _.get(res, 'data.result.id');
+    await pipelinesApis.updateSink({ id: sinkId, params });
     updateHasChanges(false);
 
-    if (updatedSinkId && !isConnectorExist) {
-      history.push(`${match.url}/${updatedSinkId}`);
+    const currTopicId = _.isEmpty(currReadTopic) ? '?' : currReadTopic.id;
+    const topic = findByGraphId(graph, currTopicId);
+
+    if (topic) {
+      const update = { ...topic, to: sinkId };
+      updateGraph(update, currTopicId);
     }
   }, 1000);
 
   render() {
     const {
       name,
-      topics,
-      currTopic,
+      readTopics,
+      currReadTopic,
       hdfses,
       currHdfs,
       writePath,
@@ -354,7 +325,7 @@ class PipelineHdfsSink extends React.Component {
               placeholder="HDFS sink name"
               value={name}
               data-testid="name-input"
-              handleChange={this.handleChangeInput}
+              handleChange={this.handleInputChange}
             />
           </FormGroup>
           <FormGroup data-testid="read-from-topic">
@@ -362,8 +333,8 @@ class PipelineHdfsSink extends React.Component {
             <Select
               isObject
               name="topics"
-              list={topics}
-              selected={currTopic}
+              list={readTopics}
+              selected={currReadTopic}
               width="100%"
               data-testid="topic-select"
               handleChange={this.handleSelectChange}
@@ -391,7 +362,7 @@ class PipelineHdfsSink extends React.Component {
               placeholder="file://"
               value={writePath}
               data-testid="write-path-input"
-              handleChange={this.handleChangeInput}
+              handleChange={this.handleInputChange}
             />
           </FormGroup>
 
@@ -403,7 +374,7 @@ class PipelineHdfsSink extends React.Component {
               placeholder="/tmp"
               value={tempDirectory}
               data-testid="temp-directory"
-              handleChange={this.handleChangeInput}
+              handleChange={this.handleInputChange}
             />
           </FormGroup>
 
@@ -427,7 +398,7 @@ class PipelineHdfsSink extends React.Component {
               placeholder="60000"
               value={rotateInterval}
               data-testid="rotate-interval"
-              handleChange={this.handleChangeInput}
+              handleChange={this.handleInputChange}
             />
           </FormGroup>
 
@@ -439,7 +410,7 @@ class PipelineHdfsSink extends React.Component {
               placeholder="10"
               value={flushLineCount}
               data-testid="flush-line-count"
-              handleChange={this.handleChangeInput}
+              handleChange={this.handleInputChange}
             />
           </FormGroup>
 
@@ -461,4 +432,4 @@ class PipelineHdfsSink extends React.Component {
   }
 }
 
-export default PipelineHdfsSink;
+export default HdfsSink;

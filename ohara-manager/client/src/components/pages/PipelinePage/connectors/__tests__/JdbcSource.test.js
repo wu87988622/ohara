@@ -1,22 +1,23 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import PipelineFtpSource from '../PipelineFtpSource';
+import FtpSource from '../FtpSource';
 
 const props = {
   hasChanges: false,
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
   loadGraph: jest.fn(),
-  match: {},
+  topics: [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }],
+  match: { params: { connectorId: '1234' } },
   schema: [],
 };
 
-describe('<PipelineFtpSource />', () => {
+describe('<FtpSource />', () => {
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallow(<PipelineFtpSource {...props} />);
+    wrapper = shallow(<FtpSource {...props} />);
   });
 
   it('renders self', () => {

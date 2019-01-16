@@ -70,7 +70,7 @@ const Svg = styled.svg`
     }
 
     .node-icon {
-      color: ${CSS_VARS.lightestBlue};
+      color: ${CSS_VARS.dimBlue};
     }
   }
 
@@ -140,8 +140,8 @@ const Svg = styled.svg`
   }
 
   path {
-    stroke: ${CSS_VARS.blue};
-    fill: ${CSS_VARS.blue};
+    stroke: ${CSS_VARS.lighterGray};
+    fill: ${CSS_VARS.lighterGray};
     stroke-width: 2px;
   }
 `;
@@ -186,10 +186,10 @@ class PipelineGraph extends React.Component {
 
     const [currConnector] = graph.filter(g => g.id === currId);
 
-    const { type, id: connectorId } = currConnector;
+    const { kind, id: connectorId } = currConnector;
 
     const action = match.url.includes('/edit/') ? 'edit' : 'new';
-    const baseUrl = `/pipelines/${action}/${type}/${pipelineId}`;
+    const baseUrl = `/pipelines/${action}/${kind}/${pipelineId}`;
 
     if (connectorId) {
       history.push(`${baseUrl}/${connectorId}`);
@@ -199,25 +199,35 @@ class PipelineGraph extends React.Component {
   };
 
   renderGraph = () => {
-    const g = new dagreD3.graphlib.Graph().setGraph({});
     const { graph } = this.props;
+    const g = new dagreD3.graphlib.Graph().setGraph({});
 
-    graph.forEach(({ name, type, to, id, icon, isActive, state = '' }) => {
-      const isTopic = type === 'topic';
+    graph.forEach(({ name, kind, to, id, isActive = false, state = '' }) => {
+      const isTopic = kind === 'topic';
       const props = { shape: isTopic ? 'circle' : 'rect' };
-      const displayType = type.split('.').pop();
+      const displayKind = kind.split('.').pop();
 
       const isActiveCls = isActive ? 'is-active' : '';
       const topicCls = isTopic ? 'node-topic' : 'node-connector';
       const stateCls = !_.isEmptyStr(state) ? `is-${state.toLowerCase()}` : '';
       const status = !_.isEmptyStr(state) ? state.toLowerCase() : 'stopped';
 
+      let icon = '';
+
+      if (kind.includes('Source')) {
+        icon = 'fa-file-import';
+      } else if (kind.includes('Sink')) {
+        icon = 'fa-file-export';
+      } else {
+        icon = 'fa-list-ul';
+      }
+
       const html = `<div class="node-graph ${topicCls} ${isActiveCls} ${stateCls}">
         <span class="node-icon"><i class="fa ${icon}"></i></span>
         <div class="node-text-wrapper">
           <span class="node-name">${name}</span>
           <span class="node-status">Status: ${status}</span>
-          <span class="node-type">${displayType}</span>
+          <span class="node-type">${displayKind}</span>
         </div>
       </div>`;
 

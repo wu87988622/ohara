@@ -16,6 +16,7 @@ import { lightBlue } from 'theme/variables';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchCluster } from 'apis/clusterApis';
+import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
@@ -53,7 +54,7 @@ const GetTablesBtn = styled(Button)`
   white-space: nowrap;
 `;
 
-class PipelineJdbcSource extends React.Component {
+class JdbcSource extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -65,6 +66,7 @@ class PipelineJdbcSource extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    topics: PropTypes.array.isRequired,
   };
 
   selectMaps = {
@@ -90,7 +92,6 @@ class PipelineJdbcSource extends React.Component {
     isBtnWorking: false,
     isFormDisabled: false,
     isRedirect: false,
-    pipelines: [],
   };
 
   componentDidMount() {
@@ -98,63 +99,36 @@ class PipelineJdbcSource extends React.Component {
   }
 
   async componentDidUpdate(prevProps) {
-    const { hasChanges, match } = this.props;
+    const { topics: prevTopics } = prevProps;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { hasChanges, topics: currTopics } = this.props;
+    const { connectorId: currConnectorId } = this.props.match.params;
 
-    const prevSourceId = _.get(prevProps.match, 'params.connectorId', null);
-    const currSourceId = _.get(match, 'params.connectorId', null);
-    const isUpdate = prevSourceId !== currSourceId;
+    if (prevTopics !== currTopics) {
+      this.setState({ writeTopics: currTopics });
+    }
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchData();
+    }
 
     if (hasChanges) {
       this.save();
     }
-
-    if (isUpdate) {
-      const { name, id, rules } = this.state.pipelines;
-
-      const params = {
-        name,
-        rules: { ...rules, [currSourceId]: '?' },
-      };
-
-      this.fetchData();
-      this.updatePipeline(id, params);
-    }
   }
 
   fetchData = () => {
-    const { match } = this.props;
-    const sourceId = _.get(match, 'params.connectorId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-
-    if (sourceId) {
-      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
-      const fetchClusterPromise = this.fetchCluster();
-
-      Promise.all([fetchPipelinePromise, fetchClusterPromise]).then(() => {
-        this.fetchSource(sourceId);
-      });
-
-      return;
-    }
-
+    const sourceId = _.get(this.props.match, 'params.connectorId', null);
     this.fetchCluster();
-    this.fetchPipeline(pipelineId);
+    this.fetchSource(sourceId);
   };
 
   fetchSource = async sourceId => {
-    if (!sourceId) return;
-
     const res = await pipelinesApis.fetchSource(sourceId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
-    const topicId = _.get(this.props.match, 'params.topicId');
+    const result = _.get(res, 'data.result', null);
 
-    if (topicId) {
-      this.fetchTopics(topicId);
-    }
-
-    if (isSuccess) {
-      const { name } = res.data.result;
-
+    if (result) {
+      const { name, configs, topics: prevTopics } = result;
       const {
         'source.timestamp.column.name': timestamp = '',
         'source.db.username': username = '',
@@ -162,7 +136,17 @@ class PipelineJdbcSource extends React.Component {
         'source.db.url': url = '',
         table = '{}',
         database = '{}',
-      } = res.data.result.configs;
+      } = configs;
+
+      if (_.isEmpty(prevTopics)) {
+        this.setTopic();
+      } else {
+        const { topics } = this.props;
+        const currWriteTopic = topics.find(topic => topic.id === prevTopics[0]);
+
+        updateTopic(this.props, currWriteTopic, 'source');
+        this.setState({ writeTopics: topics, currWriteTopic });
+      }
 
       let currTable = null;
       let tables = [];
@@ -180,7 +164,7 @@ class PipelineJdbcSource extends React.Component {
         return x.length > 0;
       });
 
-      const isFormDisabled = !hasValidProps.every(p => p === true);
+      const isFormDisabled = !hasValidProps.every(x => x === true);
 
       this.setState({
         name,
@@ -193,23 +177,6 @@ class PipelineJdbcSource extends React.Component {
         username,
         url,
       });
-    }
-  };
-
-  fetchPipeline = async pipelineId => {
-    if (!pipelineId) return;
-
-    const res = await pipelinesApis.fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
-
-      const sourceId = _.get(this.props.match, 'params.sourceId', null);
-
-      if (sourceId && sourceId !== '__') {
-        this.props.loadGraph(pipelines);
-      }
     }
   };
 
@@ -233,7 +200,22 @@ class PipelineJdbcSource extends React.Component {
     }
   };
 
-  handleChangeInput = ({ target: { name, value } }) => {
+  setTopic = () => {
+    const { topics } = this.props;
+
+    this.setState(
+      {
+        writeTopics: topics,
+        currWriteTopic: topics[0],
+      },
+      () => {
+        const { currWriteTopic } = this.state;
+        updateTopic(this.props, currWriteTopic, 'source');
+      },
+    );
+  };
+
+  handleInputChange = ({ target: { name, value } }) => {
     this.setState({ [name]: value }, () => {
       this.props.updateHasChanges(true);
     });
@@ -285,18 +267,14 @@ class PipelineJdbcSource extends React.Component {
     this.setState({ isBtnWorking: update });
   };
 
-  updatePipeline = async (id, params) => {
-    const res = await pipelinesApis.updatePipeline({ id, params });
-    const pipelines = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
-      this.props.loadGraph(pipelines);
-    }
-  };
-
   save = _.debounce(async () => {
-    const { match, history, updateHasChanges, isPipelineRunning } = this.props;
+    const {
+      match,
+      updateHasChanges,
+      isPipelineRunning,
+      graph,
+      updateGraph,
+    } = this.props;
     const {
       name,
       currDatabase,
@@ -315,8 +293,7 @@ class PipelineJdbcSource extends React.Component {
     }
 
     const sourceId = _.get(match, 'params.connectorId', null);
-    const isConnectorExist = _.isNull(sourceId);
-    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.topicId];
+    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
 
     const params = {
       name,
@@ -336,16 +313,13 @@ class PipelineJdbcSource extends React.Component {
       },
     };
 
-    const res = isConnectorExist
-      ? await pipelinesApis.createSource(params)
-      : await pipelinesApis.updateSource({ id: sourceId, params });
-
-    const updatedSourceId = _.get(res, 'data.result.id', null);
+    await pipelinesApis.updateSource({ id: sourceId, params });
     updateHasChanges(false);
 
-    if (updatedSourceId && isConnectorExist) {
-      history.push(`${match.url}/${updatedSourceId}`);
-    }
+    const currSource = findByGraphId(graph, sourceId);
+    const to = _.isEmpty(topics) ? '?' : topics[0];
+    const update = { ...currSource, to };
+    updateGraph(update, currSource.id);
   }, 1000);
 
   render() {
@@ -382,7 +356,7 @@ class PipelineJdbcSource extends React.Component {
                 placeholder="JDBC source name"
                 value={name}
                 data-testid="name-input"
-                handleChange={this.handleChangeInput}
+                handleChange={this.handleInputChange}
               />
             </FormGroup>
 
@@ -406,7 +380,7 @@ class PipelineJdbcSource extends React.Component {
                 placeholder="jdbc:mysql://localhost:3030/my-db"
                 value={url}
                 data-testid="url-input"
-                handleChange={this.handleChangeInput}
+                handleChange={this.handleInputChange}
               />
             </FormGroup>
 
@@ -418,7 +392,7 @@ class PipelineJdbcSource extends React.Component {
                 placeholder="John Doe"
                 value={username}
                 data-testid="username-input"
-                handleChange={this.handleChangeInput}
+                handleChange={this.handleInputChange}
               />
             </FormGroup>
 
@@ -431,7 +405,7 @@ class PipelineJdbcSource extends React.Component {
                 placeholder="password"
                 value={password}
                 data-testid="password-input"
-                handleChange={this.handleChangeInput}
+                handleChange={this.handleInputChange}
               />
             </FormGroup>
           </Fieldset>
@@ -469,7 +443,7 @@ class PipelineJdbcSource extends React.Component {
                 placeholder="120"
                 value={timestamp}
                 data-testid="timestamp-input"
-                handleChange={this.handleChangeInput}
+                handleChange={this.handleInputChange}
               />
             </FormGroup>
 
@@ -508,4 +482,4 @@ class PipelineJdbcSource extends React.Component {
   }
 }
 
-export default PipelineJdbcSource;
+export default JdbcSource;

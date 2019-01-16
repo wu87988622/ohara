@@ -78,6 +78,10 @@ class PipelineToolbar extends React.Component {
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
+    topics: PropTypes.array.isRequired,
+    currentTopic: PropTypes.object.isRequired,
+    isLoading: PropTypes.bool.isRequired,
+    updateCurrentTopic: PropTypes.func.isRequired,
   };
 
   state = {
@@ -145,7 +149,15 @@ class PipelineToolbar extends React.Component {
   };
 
   render() {
-    const { hasChanges, updateGraph, graph } = this.props;
+    const {
+      hasChanges,
+      updateGraph,
+      graph,
+      topics,
+      currentTopic,
+      updateCurrentTopic,
+      isLoading,
+    } = this.props;
     const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
     const {
       isModalActive,
@@ -189,6 +201,10 @@ class PipelineToolbar extends React.Component {
             <PipelineNewTopic
               updateGraph={updateGraph}
               graph={graph}
+              topics={topics}
+              currentTopic={currentTopic}
+              isLoading={isLoading}
+              updateTopic={updateCurrentTopic}
               ref={this.modalChild}
             />
           )}

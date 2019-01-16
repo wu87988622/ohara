@@ -9,21 +9,22 @@ import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import PipelineJdbcSource from './PipelineJdbcSource';
-import PipelineFtpSource from './PipelineFtpSource';
-import PipelineTopic from './PipelineTopic';
-import PipelineHdfsSink from './PipelineHdfsSink';
-import PipelineFtpSink from './PipelineFtpSink';
+import * as topicApis from 'apis/topicApis';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
-import { getConnectors, addPipelineStatus } from 'utils/pipelineNewPageUtils';
-import { fetchTopic } from 'apis/topicApis';
 import { H2, H3 } from 'common/Headings';
 import { Box } from 'common/Layout';
-import { isSink } from 'utils/pipelineUtils';
 import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
+import { JdbcSource, FtpSource, Topic, HdfsSink, FtpSink } from './connectors';
+import {
+  getConnectors,
+  addPipelineStatus,
+  updatePipelineParams,
+  updateGraph,
+  loadGraph,
+} from 'utils/pipelineNewPageUtils';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -81,11 +82,13 @@ class PipelineNewPage extends React.Component {
   };
 
   state = {
-    topicName: '',
+    topics: [],
+    currentTopic: {},
     graph: [],
     isLoading: true,
     hasChanges: false,
     pipelines: {},
+    pipelineTopics: [],
   };
 
   componentDidMount() {
@@ -94,25 +97,21 @@ class PipelineNewPage extends React.Component {
 
   fetchData = async () => {
     const { match } = this.props;
-    const topicId = _.get(match, 'params.topicId', null);
     const pipelineId = _.get(match, 'params.pipelineId', null);
 
-    const fetchTopicsPromise = this.fetchTopics(topicId);
+    const fetchTopicsPromise = this.fetchTopics();
     const fetchPipelinePromise = this.fetchPipeline(pipelineId);
 
     Promise.all([fetchTopicsPromise, fetchPipelinePromise]);
   };
 
-  fetchTopics = async topicId => {
-    if (!topicId) return;
-
-    const res = await fetchTopic(topicId);
+  fetchTopics = async () => {
+    const res = await topicApis.fetchTopics();
     this.setState(() => ({ isLoading: false }));
 
-    const result = _.get(res, 'data.result', null);
-
-    if (!_.isNull(result)) {
-      this.setState({ topicName: result.name });
+    const topics = _.get(res, 'data.result', null);
+    if (topics) {
+      this.setState({ topics, currentTopic: topics[0] });
     }
   };
 
@@ -120,12 +119,15 @@ class PipelineNewPage extends React.Component {
     if (!pipelineId) return;
 
     const res = await pipelinesApis.fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', null);
+    const pipeline = _.get(res, 'data.result', null);
 
-    if (pipelines) {
-      const _pipelines = addPipelineStatus(pipelines);
+    if (pipeline) {
+      const updatedPipeline = addPipelineStatus(pipeline);
+      const { topics: pipelineTopics = [] } = getConnectors(
+        updatedPipeline.objects,
+      );
 
-      this.setState({ pipelines: _pipelines }, () => {
+      this.setState({ pipelines: updatedPipeline, pipelineTopics }, () => {
         this.loadGraph(this.state.pipelines);
       });
     }
@@ -133,66 +135,16 @@ class PipelineNewPage extends React.Component {
 
   updateGraph = async (update, id) => {
     this.setState(({ graph }) => {
-      const idx = graph.findIndex(g => g.id === id);
-      let _graph = [];
-
-      if (idx === -1) {
-        _graph = [...graph, update];
-      } else {
-        _graph = [
-          ...graph.slice(0, idx),
-          { ...graph[idx], ...update },
-          ...graph.slice(idx + 1),
-        ];
-      }
-
-      return {
-        graph: _graph,
-      };
+      return { graph: updateGraph(graph, update, id) };
     });
-
     await this.updatePipeline(update);
   };
 
   loadGraph = pipelines => {
     if (!pipelines) return;
 
-    const { objects } = pipelines;
-    const { graph } = this.state;
-
-    let updatedGraph;
-
-    if (_.isEmpty(objects) && !_.isEmpty(graph[0])) {
-      const { name, type, id } = graph[0];
-      updatedGraph = [
-        {
-          state: '',
-          name: name,
-          type: type,
-          icon: PIPELINES.ICON_MAPS[type],
-          id,
-          isActive: false,
-          to: '?',
-        },
-      ];
-    } else {
-      updatedGraph = objects.map(
-        ({ kind: type, id, name, state = '' }, idx) => {
-          return {
-            state,
-            name,
-            type,
-            id,
-            icon: PIPELINES.ICON_MAPS[type],
-            isActive: graph[idx] ? graph[idx].isActive : false,
-            to: '?',
-          };
-        },
-      );
-    }
-
     this.setState(() => {
-      return { graph: updatedGraph };
+      return { graph: loadGraph(pipelines) };
     });
   };
 
@@ -210,13 +162,17 @@ class PipelineNewPage extends React.Component {
 
   handlePipelineTitleChange = ({ target: { value: title } }) => {
     this.setState(({ pipelines }) => {
-      const _pipelines = { ...pipelines, name: title };
-      return { pipelines: _pipelines };
+      const updatedPipeline = { ...pipelines, name: title };
+      return { pipelines: updatedPipeline };
     });
   };
 
   updateHasChanges = update => {
     this.setState({ hasChanges: update });
+  };
+
+  updateCurrentTopic = currentTopic => {
+    this.setState({ currentTopic });
   };
 
   handleFocusOut = async isUpdate => {
@@ -226,27 +182,23 @@ class PipelineNewPage extends React.Component {
   };
 
   updatePipeline = async update => {
-    const { name, id, rules, status } = this.state.pipelines;
-
-    let params;
-    if (update && update.id) {
-      const { id, type } = update;
-      const updateRule = isSink(type) ? { '?': id } : { [id]: '?' };
-
-      params = {
-        name,
-        rules: { ...rules, ...updateRule },
-      };
-    } else {
-      params = { name, rules };
-    }
+    const { pipelines } = this.state;
+    const { id, status } = pipelines;
+    const params = updatePipelineParams(pipelines, update);
 
     const res = await pipelinesApis.updatePipeline({ id, params });
-    const pipelines = _.get(res, 'data.result', null);
+    const updatedPipelines = _.get(res, 'data.result', null);
 
-    if (!_.isEmpty(pipelines)) {
+    if (!_.isEmpty(updatedPipelines)) {
+      const { topics: pipelineTopics } = getConnectors(
+        updatedPipelines.objects,
+      );
+
       // Keep the pipeline status since that's not stored on the configurator
-      this.setState({ pipelines: { ...pipelines, status } });
+      this.setState({
+        pipelines: { ...updatedPipelines, status },
+        pipelineTopics,
+      });
     }
   };
 
@@ -331,7 +283,15 @@ class PipelineNewPage extends React.Component {
   };
 
   render() {
-    const { isLoading, graph, topicName, hasChanges, pipelines } = this.state;
+    const {
+      isLoading,
+      graph,
+      topics,
+      pipelineTopics,
+      currentTopic,
+      hasChanges,
+      pipelines,
+    } = this.state;
 
     if (_.isEmpty(pipelines)) return null;
 
@@ -359,6 +319,10 @@ class PipelineNewPage extends React.Component {
               updateGraph={this.updateGraph}
               graph={graph}
               hasChanges={hasChanges}
+              topics={topics}
+              currentTopic={currentTopic}
+              isLoading={isLoading}
+              updateCurrentTopic={this.updateCurrentTopic}
             />
 
             <Main>
@@ -392,9 +356,10 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${jdbcSource}`}
                   render={() => (
-                    <PipelineJdbcSource
+                    <JdbcSource
                       {...this.props}
                       graph={graph}
+                      topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
                       hasChanges={hasChanges}
@@ -407,9 +372,10 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${ftpSource}`}
                   render={() => (
-                    <PipelineFtpSource
+                    <FtpSource
                       {...this.props}
                       graph={graph}
+                      topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
                       hasChanges={hasChanges}
@@ -422,9 +388,10 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${ftpSink}`}
                   render={() => (
-                    <PipelineFtpSink
+                    <FtpSink
                       {...this.props}
                       graph={graph}
+                      topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
                       hasChanges={hasChanges}
@@ -437,13 +404,9 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path="/pipelines/(new|edit)/topic"
                   render={() => (
-                    <PipelineTopic
+                    <Topic
                       {...this.props}
-                      graph={graph}
-                      loadGraph={this.loadGraph}
-                      updateGraph={this.updateGraph}
                       isLoading={isLoading}
-                      name={topicName}
                       isPipelineRunning={isPipelineRunning}
                     />
                   )}
@@ -452,12 +415,13 @@ class PipelineNewPage extends React.Component {
                 <Route
                   path={`/pipelines/(new|edit)/${hdfsSink}`}
                   render={() => (
-                    <PipelineHdfsSink
+                    <HdfsSink
                       {...this.props}
                       graph={graph}
-                      hasChanges={hasChanges}
+                      topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
+                      hasChanges={hasChanges}
                       isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
                     />

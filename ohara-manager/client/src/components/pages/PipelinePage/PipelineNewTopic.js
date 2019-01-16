@@ -4,10 +4,8 @@ import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Facebook } from 'react-content-loader';
 
-import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
-import { fetchTopics } from 'apis/topicApis';
 import { lighterBlue, durationNormal, blue } from 'theme/variables';
 import { update } from 'utils/pipelineToolbarUtils';
 
@@ -44,42 +42,22 @@ class PipelineNewTopic extends React.Component {
       }),
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
-  };
-
-  state = {
-    isLoading: true,
-    topics: [],
-    currentTopic: {},
-  };
-
-  componentDidMount() {
-    this.fetchTopics();
-  }
-
-  fetchTopics = async () => {
-    const res = await fetchTopics();
-    const topics = _.get(res, 'data.result', null);
-
-    if (topics) {
-      this.setState({ topics, isLoading: false, currentTopic: topics[0] });
-    }
+    topics: PropTypes.array.isRequired,
+    currentTopic: PropTypes.object.isRequired,
+    isLoading: PropTypes.bool.isRequired,
+    updateTopic: PropTypes.func.isRequired,
   };
 
   handleSelectChange = ({ target }) => {
     const selectedIdx = target.options.selectedIndex;
     const { id } = target.options[selectedIdx].dataset;
+    const currentTopic = { name: target.value, id };
 
-    this.setState({
-      currentTopic: {
-        name: target.value,
-        id,
-      },
-    });
+    this.props.updateTopic(currentTopic);
   };
 
   update = () => {
-    const { updateGraph, graph } = this.props;
-    const { currentTopic } = this.state;
+    const { updateGraph, graph, currentTopic } = this.props;
 
     if (!currentTopic) {
       return toastr.error('Please select a topic!');
@@ -89,7 +67,9 @@ class PipelineNewTopic extends React.Component {
   };
 
   render() {
-    const { isLoading, topics, currentTopic } = this.state;
+    const { isLoading, topics, currentTopic } = this.props;
+
+    if (!topics) return null;
 
     return (
       <Box shadow={false}>

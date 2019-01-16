@@ -13,6 +13,7 @@ import { primaryBtn } from 'theme/btnTheme';
 import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
+import { updateTopic } from 'utils/pipelineUtils';
 
 const FormGroupWrapper = styled.div`
   display: flex;
@@ -39,7 +40,7 @@ const FormInner = styled.div`
   padding: 20px;
 `;
 
-class PipelineFtpSink extends React.Component {
+class FtpSink extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -51,6 +52,7 @@ class PipelineFtpSink extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    topics: PropTypes.array.isRequired,
   };
 
   selectMaps = {
@@ -99,25 +101,21 @@ class PipelineFtpSink extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges, match } = this.props;
-    const prevSinkId = _.get(prevProps.match, 'params.connectorId', null);
-    const currSinkId = _.get(match, 'params.connectorId', null);
-    const isUpdate = prevSinkId !== currSinkId;
+    const { topics: prevTopics } = prevProps;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { hasChanges, topics: currTopics } = this.props;
+    const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevTopics !== currTopics) {
+      this.setState({ writeTopics: currTopics });
+    }
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchData();
+    }
 
     if (hasChanges) {
       this.save();
-    }
-
-    if (isUpdate) {
-      const { name, id, rules } = this.state.pipelines;
-
-      const params = {
-        name,
-        rules: { ...rules, '?': currSinkId },
-      };
-
-      this.fetchData();
-      this.updatePipeline(id, params);
     }
   }
 
@@ -129,86 +127,73 @@ class PipelineFtpSink extends React.Component {
   };
 
   fetchData = () => {
-    const { match } = this.props;
-    const sinkId = _.get(match, 'params.connectorId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-
+    const sinkId = _.get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
-
-    if (sinkId) {
-      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
-
-      Promise.all([fetchPipelinePromise]).then(() => {
-        this.fetchSink(sinkId);
-      });
-
-      return;
-    }
-
-    this.fetchPipeline(pipelineId);
+    this.fetchSink(sinkId);
   };
 
-  fetchSink = async sourceId => {
-    if (!sourceId) return;
+  fetchSink = async sinkId => {
+    const res = await pipelinesApis.fetchSink(sinkId);
+    const result = _.get(res, 'data.result', false);
 
-    const res = await pipelinesApis.fetchSink(sourceId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (result) {
+      const {
+        schema = '[]',
+        name = '',
+        configs,
+        topics: prevTopics,
+      } = res.data.result;
+      const {
+        'ftp.hostname': host = '',
+        'ftp.port': port = '',
+        'ftp.user.name': username = '',
+        'ftp.user.password': password = '',
+        'ftp.output.folder': outputfolder = '',
+        'ftp.encode': currFileEncoding = '',
+        'ftp.needHeader': needHeader = false,
+        currTask,
+      } = configs;
 
-    if (!isSuccess) return;
+      if (_.isEmpty(prevTopics)) {
+        this.setTopic();
+      } else {
+        const { topics } = this.props;
+        const currReadTopic = topics.find(topic => topic.id === prevTopics[0]);
 
-    const { schema = '[]', name = '', configs } = res.data.result;
-    const {
-      'ftp.hostname': host = '',
-      'ftp.port': port = '',
-      'ftp.user.name': username = '',
-      'ftp.user.password': password = '',
-      'ftp.output.folder': outputfolder = '',
-      'ftp.encode': currFileEncoding = '',
-      'ftp.needHeader': needHeader = false,
-      currTask,
-    } = configs;
-
-    const _needHeader = needHeader === 'true' ? true : false;
-
-    this.setState({
-      name,
-      host,
-      port,
-      username,
-      password,
-      outputfolder,
-      currFileEncoding,
-      currTask,
-      needHeader: _needHeader,
-      schema,
-    });
-  };
-
-  fetchPipeline = async pipelineId => {
-    if (!pipelineId) return;
-
-    const res = await pipelinesApis.fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', null);
-
-    if (pipelines) {
-      this.setState({ pipelines });
-
-      const sinkId = _.get(this.props.match, 'params.sinkId', null);
-
-      if (sinkId) {
-        this.props.loadGraph(pipelines);
+        updateTopic(this.props, currReadTopic, 'sink');
+        this.setState({ ReadTopics: topics, currReadTopic });
       }
+
+      const _needHeader = needHeader === 'true' ? true : false;
+
+      this.setState({
+        name,
+        host,
+        port,
+        username,
+        password,
+        outputfolder,
+        currFileEncoding,
+        currTask,
+        needHeader: _needHeader,
+        schema,
+      });
     }
   };
 
-  updatePipeline = async (id, params) => {
-    const res = await pipelinesApis.updatePipeline({ id, params });
-    const pipelines = _.get(res, 'data.result', []);
+  setTopic = () => {
+    const { topics } = this.props;
 
-    if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
-      this.props.loadGraph(pipelines);
-    }
+    this.setState(
+      {
+        readTopics: topics,
+        currReadTopic: topics[0],
+      },
+      () => {
+        const { currReadTopic } = this.state;
+        updateTopic(this.props, currReadTopic, 'sink');
+      },
+    );
   };
 
   handleInputChange = ({ target: { name, value } }) => {
@@ -434,7 +419,7 @@ class PipelineFtpSink extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history, updateHasChanges, isPipelineRunning } = this.props;
+    const { match, updateHasChanges, isPipelineRunning } = this.props;
     const {
       name,
       host,
@@ -456,9 +441,8 @@ class PipelineFtpSink extends React.Component {
     }
 
     const sinkId = _.get(match, 'params.connectorId', null);
-    const isConnectorExist = _.isNull(sinkId);
     const _schema = _.isEmpty(schema) ? [] : schema;
-    const topics = _.isEmpty(currReadTopic) ? [] : [currReadTopic.topicId];
+    const topics = _.isEmpty(currReadTopic) ? [] : [currReadTopic.id];
 
     const params = {
       name,
@@ -475,20 +459,12 @@ class PipelineFtpSink extends React.Component {
         'ftp.user.password': password,
         'ftp.needHeader': String(needHeader),
         currTask,
-        topic: currReadTopic.name,
       },
     };
 
-    const res = isConnectorExist
-      ? await pipelinesApis.createSink(params)
-      : await pipelinesApis.updateSink({ id: sinkId, params });
-
-    const updatedSinkId = _.get(res, 'data.result.id', null);
+    await pipelinesApis.updateSink({ id: sinkId, params });
     updateHasChanges(false);
-
-    if (updatedSinkId && isConnectorExist) {
-      history.push(`${match.url}/${updatedSinkId}`);
-    }
+    updateTopic(this.props, currReadTopic, 'sink');
   }, 1000);
 
   render() {
@@ -742,4 +718,4 @@ class PipelineFtpSink extends React.Component {
   }
 }
 
-export default PipelineFtpSink;
+export default FtpSink;

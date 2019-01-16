@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import PipelineHdfsSink from '../PipelineHdfsSink';
+import HdfsSink from '../HdfsSink';
 import { getTestById } from 'utils/testUtils';
 import { CONFIGURATION } from 'constants/urls';
 
@@ -10,16 +10,21 @@ const props = {
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
   loadGraph: jest.fn(),
-  match: {},
+  topics: [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }],
+  match: {
+    params: {
+      connectorId: '12345',
+    },
+  },
   schema: [],
   isRedirect: false,
 };
 
-describe('<PipelineHdfsSink />', () => {
+describe('<HdfsSink />', () => {
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallow(<PipelineHdfsSink {...props} />);
+    wrapper = shallow(<HdfsSink {...props} />);
   });
 
   it('renders self', () => {
@@ -43,7 +48,7 @@ describe('<PipelineHdfsSink />', () => {
     expect(select.name()).toBe('Select');
     expect(_props).toHaveProperty('isObject');
     expect(_props.name).toBe('topics');
-    expect(_props.selected).toBe(wrapper.state().currTopic);
+    expect(_props.selected).toBe(wrapper.state().currReadTopic);
     expect(_props.width).toBe('100%');
     expect(_props.handleChange).toBeDefined();
   });
@@ -59,8 +64,8 @@ describe('<PipelineHdfsSink />', () => {
     expect(select.name()).toBe('Select');
     expect(_props).toHaveProperty('isObject');
     expect(_props.name).toBe('hdfses');
-    expect(_props.list).toEqual(wrapper.state().topics);
-    expect(_props.selected).toEqual(wrapper.state().currTopic);
+    expect(_props.list).toEqual(wrapper.state().readTopics);
+    expect(_props.selected).toEqual(wrapper.state().currReadTopic);
     expect(_props.width).toBe('100%');
     expect(_props.handleChange).toBeDefined();
   });

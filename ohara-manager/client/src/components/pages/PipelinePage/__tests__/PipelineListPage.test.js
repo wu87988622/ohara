@@ -71,10 +71,6 @@ describe('<PipelineListPage />', () => {
     createPipeline.mockImplementation(() => Promise.resolve(res));
     await newBtn.prop('handleClick')();
 
-    expect(toastr.success).toHaveBeenCalledTimes(1);
-    expect(toastr.success).toHaveBeenCalledWith(
-      MESSAGES.PIPELINE_CREATION_SUCCESS,
-    );
     expect(props.history.push).toHaveBeenCalledTimes(1);
     expect(props.history.push).toHaveBeenCalledWith(expectedUrl);
   });

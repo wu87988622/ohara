@@ -2,15 +2,15 @@ import * as _ from 'utils/commonUtils';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import { CONNECTOR_TYPES, ICON_MAPS } from 'constants/pipelines';
 
-const isSource = type => type.includes('Source');
-const isSink = type => type.includes('Sink');
+const isSource = kind => kind.includes('Source');
+const isSink = kind => kind.includes('Sink');
 
 /* eslint-disable array-callback-return */
 
-const getNameByType = type => {
-  if (isSource(type)) {
+const getNameByKind = kind => {
+  if (isSource(kind)) {
     return 'Source';
-  } else if (isSink(type)) {
+  } else if (isSink(kind)) {
     return 'Sink';
   } else {
     return 'Topic';
@@ -21,8 +21,8 @@ export const update = async ({ graph, updateGraph, connector }) => {
   let className = connector.className;
   className = className ? className : CONNECTOR_TYPES.topic;
 
-  const connectorType = getNameByType(className);
-  let connectorName = `Untitled ${connectorType}`;
+  const connectorKind = getNameByKind(className);
+  let connectorName = `Untitled ${connectorKind}`;
 
   // Default params for creating connectors
   const params = {
@@ -50,7 +50,7 @@ export const update = async ({ graph, updateGraph, connector }) => {
 
   const update = {
     name: connectorName,
-    type: className,
+    kind: className,
     to: '?',
     isActive: false,
     icon: ICON_MAPS[className],

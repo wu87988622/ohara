@@ -127,7 +127,6 @@ class PipelineListPage extends React.Component {
     const pipelineId = _.get(res, 'data.result.id', null);
 
     if (pipelineId) {
-      toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
       history.push(`${match.url}/new/${pipelineId}`);
     }
   };

@@ -28,6 +28,10 @@ const props = {
   hasChanges: false,
   iconMaps: {},
   iconKeys: ICON_KEYS,
+  topics: [],
+  currentTopic: {},
+  isLoading: false,
+  updateCurrentTopic: jest.fn(),
 };
 
 describe('<PipelineToolbar />', () => {

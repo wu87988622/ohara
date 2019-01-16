@@ -7,21 +7,21 @@ const props = {
   iconMaps: {},
   graph: [
     {
-      type: 'source',
+      kind: 'source',
       id: 'id1234',
       isActive: false,
       isExist: false,
       icon: 'fa-database',
     },
     {
-      type: 'topic',
+      kind: 'topic',
       id: 'id5678',
       isActive: false,
       isExist: false,
       icon: '',
     },
     {
-      type: 'sink',
+      kind: 'sink',
       id: 'id9112',
       isActive: false,
       isExist: false,

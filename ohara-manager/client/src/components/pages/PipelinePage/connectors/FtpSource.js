@@ -14,6 +14,7 @@ import { primaryBtn } from 'theme/btnTheme';
 import { lightBlue } from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
+import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 
 const H5Wrapper = styled(H5)`
   margin: 0;
@@ -36,7 +37,7 @@ const FormInner = styled.div`
   padding: 20px;
 `;
 
-class PipelineFtpSource extends React.Component {
+class FtpSource extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
@@ -48,6 +49,7 @@ class PipelineFtpSource extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    topics: PropTypes.array.isRequired,
   };
 
   selectMaps = {
@@ -99,25 +101,21 @@ class PipelineFtpSource extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { hasChanges, match } = this.props;
-    const prevSourceId = _.get(prevProps.match, 'params.connectorId', null);
-    const currSourceId = _.get(match, 'params.connectorId', null);
-    const isUpdate = prevSourceId !== currSourceId;
+    const { topics: prevTopics } = prevProps;
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { hasChanges, topics: currTopics } = this.props;
+    const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevTopics !== currTopics) {
+      this.setState({ writeTopics: currTopics });
+    }
+
+    if (prevConnectorId !== currConnectorId) {
+      this.fetchData();
+    }
 
     if (hasChanges) {
       this.save();
-    }
-
-    if (isUpdate) {
-      const { name, id, rules } = this.state.pipelines;
-
-      const params = {
-        name,
-        rules: { ...rules, [currSourceId]: '?' },
-      };
-
-      this.fetchData();
-      this.updatePipeline(id, params);
     }
   }
 
@@ -129,84 +127,68 @@ class PipelineFtpSource extends React.Component {
   };
 
   fetchData = () => {
-    const { match } = this.props;
-    const sourceId = _.get(match, 'params.connectorId', null);
-    const pipelineId = _.get(match, 'params.pipelineId', null);
-
+    const sourceId = _.get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
-
-    if (sourceId) {
-      const fetchPipelinePromise = this.fetchPipeline(pipelineId);
-
-      Promise.all([fetchPipelinePromise]).then(() => {
-        this.fetchSource(sourceId);
-      });
-
-      return;
-    }
-
-    this.fetchPipeline(pipelineId);
+    this.fetchSource(sourceId);
   };
 
   fetchSource = async sourceId => {
     const res = await pipelinesApis.fetchSource(sourceId);
-    const source = _.get(res, 'data.result', null);
+    const result = _.get(res, 'data.result', null);
 
-    if (_.isNull(source)) return;
+    if (result) {
+      const { schema = '[]', name = '', configs, topics: prevTopics } = result;
+      const {
+        'ftp.user.name': username = '',
+        'ftp.user.password': password = '',
+        'ftp.port': port = '',
+        'ftp.hostname': host = '',
+        'ftp.input.folder': inputFolder = '',
+        'ftp.completed.folder': completeFolder = '',
+        'ftp.error.folder': errorFolder = '',
+        'ftp.encode': currFileEncoding = '',
+        currTask = '',
+      } = configs;
 
-    const { schema = '[]', name = '', configs } = source;
-    const {
-      'ftp.user.name': username = '',
-      'ftp.user.password': password = '',
-      'ftp.port': port = '',
-      'ftp.hostname': host = '',
-      'ftp.input.folder': inputFolder = '',
-      'ftp.completed.folder': completeFolder = '',
-      'ftp.error.folder': errorFolder = '',
-      'ftp.encode': currFileEncoding = '',
-      currTask = '',
-    } = configs;
+      if (_.isEmpty(prevTopics)) {
+        this.setTopic();
+      } else {
+        const { topics } = this.props;
+        const currWriteTopic = topics.find(topic => topic.id === prevTopics[0]);
 
-    this.setState({
-      name,
-      host,
-      port,
-      username,
-      password,
-      inputFolder,
-      completeFolder,
-      errorFolder,
-      currFileEncoding,
-      currTask,
-      schema,
-    });
-  };
-
-  fetchPipeline = async pipelineId => {
-    if (!pipelineId) return;
-
-    const res = await pipelinesApis.fetchPipeline(pipelineId);
-    const pipelines = _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
-
-      const sourceId = _.get(this.props.match, 'params.sourceId', null);
-
-      if (sourceId) {
-        this.props.loadGraph(pipelines);
+        updateTopic(this.props, currWriteTopic, 'source');
+        this.setState({ writeTopics: topics, currWriteTopic });
       }
+
+      this.setState({
+        name,
+        host,
+        port,
+        username,
+        password,
+        inputFolder,
+        completeFolder,
+        errorFolder,
+        currFileEncoding,
+        currTask,
+        schema,
+      });
     }
   };
 
-  updatePipeline = async (id, params) => {
-    const res = await pipelinesApis.updatePipeline({ id, params });
-    const pipelines = _.get(res, 'data.result', []);
+  setTopic = () => {
+    const { topics } = this.props;
 
-    if (!_.isEmpty(pipelines)) {
-      this.setState({ pipelines });
-      this.props.loadGraph(pipelines);
-    }
+    this.setState(
+      {
+        writeTopics: topics,
+        currWriteTopic: topics[0],
+      },
+      () => {
+        const { currWriteTopic } = this.state;
+        updateTopic(this.props, currWriteTopic, 'source');
+      },
+    );
   };
 
   handleInputChange = ({ target: { name, value } }) => {
@@ -429,7 +411,13 @@ class PipelineFtpSource extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, history, updateHasChanges, isPipelineRunning } = this.props;
+    const {
+      match,
+      graph,
+      updateGraph,
+      updateHasChanges,
+      isPipelineRunning,
+    } = this.props;
     const {
       name,
       host,
@@ -452,9 +440,8 @@ class PipelineFtpSource extends React.Component {
     }
 
     const sourceId = _.get(match, 'params.connectorId', null);
-    const isConnectorExist = _.isNull(sourceId);
     const _schema = _.isEmpty(schema) ? [] : schema;
-    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.topicId];
+    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
 
     const params = {
       name,
@@ -471,21 +458,17 @@ class PipelineFtpSource extends React.Component {
         'ftp.port': port,
         'ftp.user.name': username,
         'ftp.user.password': password,
-        topic: currWriteTopic.name,
         currTask,
       },
     };
 
-    const res = isConnectorExist
-      ? await pipelinesApis.createSource(params)
-      : await pipelinesApis.updateSource({ id: sourceId, params });
-
-    const updatedSourceId = _.get(res, 'data.result.id', null);
+    await pipelinesApis.updateSource({ id: sourceId, params });
     updateHasChanges(false);
 
-    if (updatedSourceId && isConnectorExist) {
-      history.push(`${match.url}/${updatedSourceId}`);
-    }
+    const currSource = findByGraphId(graph, sourceId);
+    const to = _.isEmpty(topics) ? '?' : topics[0];
+    const update = { ...currSource, to };
+    updateGraph(update, currSource.id);
   }, 1000);
 
   render() {
@@ -753,4 +736,4 @@ class PipelineFtpSource extends React.Component {
   }
 }
 
-export default PipelineFtpSource;
+export default FtpSource;

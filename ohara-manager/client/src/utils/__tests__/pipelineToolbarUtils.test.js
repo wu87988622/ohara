@@ -24,7 +24,7 @@ describe('update()', () => {
         isActive: false,
         name: expect.any(String),
         to: '?',
-        type: CONNECTOR_TYPES.ftpSource,
+        kind: CONNECTOR_TYPES.ftpSource,
         id: res.data.result.id,
       },
       CONNECTOR_TYPES.ftpSource,
