@@ -22,10 +22,7 @@ dependencies {
   compile project(':ohara-common')
   compile project(':ohara-client')
   compile project(':ohara-kafka')
-  compile project(':ohara-hdfs-connector')
-  compile project(':ohara-ftp-connector')
-  compile project(':ohara-jdbc-connector')
-  compile project(':ohara-perf-connector')
+  compile project(':ohara-connector')
   compile project(':ohara-configurator')
   compile project(':ohara-agent')
   //--------------------------[other]--------------------------//

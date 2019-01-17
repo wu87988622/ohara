@@ -33,9 +33,7 @@ dependencies {
   testImplementation project(':ohara-client')
   testImplementation project(':ohara-kafka')
   testImplementation project(':ohara-configurator')
-  testImplementation project(':ohara-ftp-connector')
-  testImplementation project(':ohara-jdbc-connector')
-  testImplementation project(':ohara-hdfs-connector')
+  testImplementation project(':ohara-connector')
   testImplementation project(':ohara-agent')
   testImplementation project(':ohara-testing-util')
   /**

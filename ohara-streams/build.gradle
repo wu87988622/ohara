@@ -16,6 +16,8 @@
 
 apply from: "$rootDir/gradle/dependencies.gradle"
 
+
+// TODO: Why we set the time zone in testing??? We can get the system timezone through Calendar.getInstance().getTimeZone... by chia
 test.systemProperty("user.timezone", "Asia/Taipei")
 
 dependencies {
