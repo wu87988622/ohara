@@ -27,7 +27,7 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.ByteUtil;
 import com.island.ohara.common.util.CommonUtil;
-import com.island.ohara.common.util.ReleaseOnce;
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers3Workers;
 import com.island.ohara.kafka.Consumer.Record;
@@ -120,7 +120,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
   @After
   public void tearDown() {
-    ReleaseOnce.close(brokerClient);
+    Releasable.close(brokerClient);
   }
 
   @Test

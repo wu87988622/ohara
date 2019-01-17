@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.{Charset, StandardCharsets}
 import java.util.Objects
 
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import org.apache.sshd.client.SshClient
 
@@ -132,7 +132,7 @@ object Agent {
           } finally stdOut.close()
         } finally session.close()
       }
-      override protected def doClose(): Unit = ReleaseOnce.close(client)
+      override protected def doClose(): Unit = Releasable.close(client)
     }
   }
   private[this] val LOG = Logger(Agent.getClass)

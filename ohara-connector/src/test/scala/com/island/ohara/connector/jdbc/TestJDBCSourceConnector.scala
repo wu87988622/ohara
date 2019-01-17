@@ -19,9 +19,9 @@ package com.island.ohara.connector.jdbc
 import java.sql.Statement
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{WorkerClient, DatabaseClient}
+import com.island.ohara.client.{DatabaseClient, WorkerClient}
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.integration.{Database, With3Brokers3Workers}
 import com.island.ohara.kafka.Consumer
@@ -111,7 +111,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(workerClient)
+  def tearDown(): Unit = Releasable.close(workerClient)
   private[this] val props = JDBCSourceConnectorConfig(
     Map(DB_URL -> db.url,
         DB_USERNAME -> db.user,

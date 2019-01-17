@@ -20,7 +20,7 @@ import java.io.File
 import com.island.ohara.agent._
 import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
@@ -174,7 +174,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   @After
   final def tearDown(): Unit = {
-    ReleaseOnce.close(configurator)
-    ReleaseOnce.close(clusterCollie)
+    Releasable.close(configurator)
+    Releasable.close(clusterCollie)
   }
 }

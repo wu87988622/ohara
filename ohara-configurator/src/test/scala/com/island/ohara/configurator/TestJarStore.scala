@@ -20,12 +20,12 @@ import java.nio.file.Files
 
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class TestJarStore extends SmallTest with Matchers {
 
@@ -67,5 +67,5 @@ class TestJarStore extends SmallTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(configurator)
+  def tearDown(): Unit = Releasable.close(configurator)
 }

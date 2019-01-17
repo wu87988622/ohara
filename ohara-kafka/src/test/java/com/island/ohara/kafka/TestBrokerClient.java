@@ -16,7 +16,7 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.common.util.ReleaseOnce;
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.exception.OharaExecutionException;
@@ -138,6 +138,6 @@ public class TestBrokerClient extends With3Brokers {
 
   @After
   public void cleanup() {
-    ReleaseOnce.close(client);
+    Releasable.close(client);
   }
 }

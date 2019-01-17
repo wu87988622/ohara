@@ -17,7 +17,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.SshdServer
 import com.island.ohara.integration.SshdServer.CommandHandler
 import org.junit.{After, Test}
@@ -68,5 +68,5 @@ class TestAgent extends SmallTest with Matchers {
     }
   }
   @After
-  def tearDown(): Unit = ReleaseOnce.close(server)
+  def tearDown(): Unit = Releasable.close(server)
 }

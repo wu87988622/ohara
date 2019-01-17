@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.client.{DatabaseClient, WorkerClient}
 import com.island.ohara.common.data.{Column, DataType}
-import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
+import com.island.ohara.common.util.{Releasable, VersionUtil}
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.BrokerClient
 import org.junit.{After, Test}
@@ -663,7 +663,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(brokerClient)
+    Releasable.close(brokerClient)
     configurators.foreach(_.close())
   }
 }

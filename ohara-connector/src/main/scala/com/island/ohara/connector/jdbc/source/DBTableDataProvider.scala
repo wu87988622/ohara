@@ -21,7 +21,7 @@ import java.util.Calendar
 
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbTable}
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.island.ohara.connector.jdbc.util.DateTimeUtils
 
 /**
@@ -74,7 +74,7 @@ class DBTableDataProvider(url: String, userName: String, password: String) exten
     * Do what you want to do when calling closing.
     */
   override def doClose(): Unit = {
-    ReleaseOnce.close(client)
+    Releasable.close(client)
   }
 }
 

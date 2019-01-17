@@ -22,8 +22,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{WorkerClient, DatabaseClient}
-import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
+import com.island.ohara.client.{DatabaseClient, WorkerClient}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.integration._
 import com.island.ohara.kafka.BrokerClient
@@ -162,7 +162,7 @@ object Backend {
       (zk, brokers, workers, database, ftpServer)
     } catch {
       case e: Throwable =>
-        rs.foreach(ReleaseOnce.close)
+        rs.foreach(Releasable.close)
         throw e
     }
   }
@@ -226,12 +226,12 @@ object Backend {
       .build()
     try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)
     finally {
-      ReleaseOnce.close(configurator)
-      ReleaseOnce.close(ftpServer)
-      ReleaseOnce.close(dataBase)
-      ReleaseOnce.close(workers)
-      ReleaseOnce.close(brokers)
-      ReleaseOnce.close(zk)
+      Releasable.close(configurator)
+      Releasable.close(ftpServer)
+      Releasable.close(dataBase)
+      Releasable.close(workers)
+      Releasable.close(brokers)
+      Releasable.close(zk)
     }
   }
 }

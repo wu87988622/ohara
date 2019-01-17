@@ -16,8 +16,37 @@
 
 package com.island.ohara.common.util;
 
+import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public interface Releasable extends AutoCloseable {
   /** ohara doesn't use checked exception. */
   @Override
   void close();
+
+  Logger LOG = LoggerFactory.getLogger(Releasable.class);
+
+  /**
+   * this helper method close object if it is not null.
+   *
+   * @param obj releasable object
+   */
+  static void close(AutoCloseable obj) {
+    close(obj, t -> LOG.error("failed to release object:" + obj, t));
+  }
+
+  /**
+   * this helper method close object if it is not null.
+   *
+   * @param obj releasable object
+   * @param consumer handle the exception
+   */
+  static void close(AutoCloseable obj, Consumer<Throwable> consumer) {
+    try {
+      if (obj != null) obj.close();
+    } catch (Throwable e) {
+      consumer.accept(e);
+    }
+  }
 }

@@ -19,7 +19,7 @@ package com.island.ohara.connector.hdfs.text
 import java.io.{BufferedWriter, OutputStreamWriter, Writer}
 
 import com.island.ohara.common.data.{Column, DataType, Row}
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.Storage
 import com.typesafe.scalalogging.Logger
@@ -74,7 +74,7 @@ class CSVRecordWriterOutput(hdfsSinkConnectorConfig: HDFSSinkConnectorConfig, st
     */
   override def close(): Unit = {
     logger.info("close temp file")
-    ReleaseOnce.close(writer)
+    Releasable.close(writer)
   }
 
   private[this] def writerHeader(writer: Writer, newSchema: Seq[Column], isHeader: Boolean): Unit = {

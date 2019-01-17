@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.typesafe.scalalogging.Logger
@@ -387,5 +387,5 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   }
 
   @After
-  final def tearDown(): Unit = ReleaseOnce.close(clusterCollie)
+  final def tearDown(): Unit = Releasable.close(clusterCollie)
 }

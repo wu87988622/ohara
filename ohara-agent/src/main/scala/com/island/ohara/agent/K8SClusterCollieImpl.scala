@@ -127,7 +127,7 @@ private object K8SClusterCollieImpl {
           .toMap)
 
     override def close(): Unit = {
-      ReleaseOnce.close(k8sClient)
+      Releasable.close(k8sClient)
     }
   }
 

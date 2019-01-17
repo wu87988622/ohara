@@ -20,7 +20,7 @@ import java.util
 
 import com.island.ohara.client.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
@@ -170,7 +170,7 @@ class FtpSourceTask extends RowSourceTask {
     }
 
   override protected def _stop(): Unit = {
-    ReleaseOnce.close(ftpClient)
+    Releasable.close(ftpClient)
   }
 
   override protected def _poll(): util.List[RowSourceRecord] = listInputFiles().headOption

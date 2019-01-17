@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.SshdServer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -53,7 +53,7 @@ class TestNodeValidation extends SmallTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(configurator)
-    ReleaseOnce.close(sshd)
+    Releasable.close(configurator)
+    Releasable.close(sshd)
   }
 }

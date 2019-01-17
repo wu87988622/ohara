@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -120,5 +120,5 @@ class TestNodesRoute extends SmallTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(configurator)
+  def tearDown(): Unit = Releasable.close(configurator)
 }

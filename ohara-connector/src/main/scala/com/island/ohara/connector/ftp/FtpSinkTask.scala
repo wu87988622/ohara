@@ -20,7 +20,7 @@ import java.util
 
 import com.island.ohara.client.FtpClient
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.ftp.FtpSinkTask._
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
@@ -42,7 +42,7 @@ class FtpSinkTask extends RowSinkTask {
   }
 
   override protected def _stop(): Unit = {
-    ReleaseOnce.close(ftpClient)
+    Releasable.close(ftpClient)
   }
 
   override protected def _put(records: util.List[RowSinkRecord]): Unit = try {

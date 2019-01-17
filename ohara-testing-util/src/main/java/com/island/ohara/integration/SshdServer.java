@@ -18,7 +18,6 @@ package com.island.ohara.integration;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.common.util.ReleaseOnce;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -164,8 +163,8 @@ public interface SshdServer extends Releasable {
 
                               @Override
                               public void destroy() {
-                                ReleaseOnce.close(out);
-                                ReleaseOnce.close(err);
+                                Releasable.close(out);
+                                Releasable.close(err);
                               }
 
                               @Override
@@ -200,7 +199,7 @@ public interface SshdServer extends Releasable {
 
       @Override
       public void close() {
-        ReleaseOnce.close(sshd);
+        Releasable.close(sshd);
       }
 
       @Override

@@ -18,9 +18,9 @@ package com.island.ohara.it
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.{WorkerClient, FtpClient}
+import com.island.ohara.client.{FtpClient, WorkerClient}
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.integration.With3Brokers3Workers
 import org.junit.{After, Before, Test}
@@ -132,8 +132,8 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(workerClient)
-    ReleaseOnce.close(ftpClient)
+    Releasable.close(workerClient)
+    Releasable.close(ftpClient)
   }
 }
 

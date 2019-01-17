@@ -20,7 +20,7 @@ import java.time.Duration
 
 import com.island.ohara.client.{FtpClient, WorkerClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.{BrokerClient, Consumer}
@@ -461,8 +461,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   @After
   def tearDown(): Unit = {
     if (brokerClient.exist(methodName())) brokerClient.deleteTopic(methodName())
-    ReleaseOnce.close(brokerClient)
-    ReleaseOnce.close(workerClient)
-    ReleaseOnce.close(ftpClient)
+    Releasable.close(brokerClient)
+    Releasable.close(workerClient)
+    Releasable.close(ftpClient)
   }
 }

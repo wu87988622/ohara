@@ -40,14 +40,14 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build())
 
     override def close(): Unit = {
-      cache.values().forEach(client => ReleaseOnce.close(client))
+      cache.values().forEach(client => Releasable.close(client))
       cache.clear()
     }
   }
   override def zookeepersCollie(): ZookeeperCollie = new ZookeeperCollieImpl
   override def brokerCollie(): BrokerCollie = new BrokerCollieImpl
   override def workerCollie(): WorkerCollie = new WorkerCollieImpl
-  override protected def doClose(): Unit = ReleaseOnce.close(clientCache)
+  override protected def doClose(): Unit = Releasable.close(clientCache)
 }
 
 private object ClusterCollieImpl {

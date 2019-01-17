@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurati
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -64,5 +64,5 @@ class TestOhara764 extends SmallTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(configurator)
+  def tearDown(): Unit = Releasable.close(configurator)
 }

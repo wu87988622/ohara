@@ -19,7 +19,7 @@ import java.util.Objects
 
 import com.island.ohara.agent.DockerClient._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 private[agent] object DockerClientImpl {
@@ -90,7 +90,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     .password(Objects.requireNonNull(password))
     .build()
 
-  override protected def doClose(): Unit = ReleaseOnce.close(agent)
+  override protected def doClose(): Unit = Releasable.close(agent)
 
   override def containerCreator(): ContainerCreator = new ContainerCreator {
     private[this] var imageName: String = _

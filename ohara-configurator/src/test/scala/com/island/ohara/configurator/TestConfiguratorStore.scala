@@ -15,11 +15,11 @@
  */
 
 package com.island.ohara.configurator
-import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -121,6 +121,6 @@ class TestConfiguratorStore extends MediumTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(store)
+  def tearDown(): Unit = Releasable.close(store)
 
 }

@@ -19,7 +19,7 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.{PreparedStatement, ResultSet}
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 
 class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[RdbColumn])
@@ -49,7 +49,7 @@ class QueryResultIterator(preparedStatement: PreparedStatement, columns: Seq[Rdb
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
-    ReleaseOnce.close(resultSet)
-    ReleaseOnce.close(preparedStatement)
+    Releasable.close(resultSet)
+    Releasable.close(preparedStatement)
   }
 }

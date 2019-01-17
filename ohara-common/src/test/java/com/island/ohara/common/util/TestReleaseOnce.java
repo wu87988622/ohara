@@ -40,14 +40,17 @@ public class TestReleaseOnce extends SmallTest {
 
   @Test
   public void testSwallowException() {
-    ReleaseOnce.close(new TerribleReleaseOnce());
-    ReleaseOnce.close(new TerribleReleaseOnce(), true);
+    Releasable.close(new TerribleReleaseOnce());
   }
 
   /** NOTED: all exception is converted to RuntimeException */
   @Test(expected = RuntimeException.class)
   public void testThrowException() {
-    ReleaseOnce.close(new TerribleReleaseOnce(), false);
+    Releasable.close(
+        new TerribleReleaseOnce(),
+        t -> {
+          throw new RuntimeException(t);
+        });
   }
 
   private static class SimpleReleaseOnce extends ReleaseOnce {

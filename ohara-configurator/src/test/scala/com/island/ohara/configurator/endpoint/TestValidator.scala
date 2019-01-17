@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.BrokerClient
 import org.junit.{After, Before, Test}
@@ -78,7 +78,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(workerClient)
-    ReleaseOnce.close(brokerClient)
+    Releasable.close(workerClient)
+    Releasable.close(brokerClient)
   }
 }

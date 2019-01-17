@@ -32,7 +32,7 @@ import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
@@ -206,11 +206,11 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
   override protected def doClose(): Unit = {
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
-    ReleaseOnce.close(brokerClient)
-    ReleaseOnce.close(workerClient)
-    ReleaseOnce.close(clusterCollie)
-    ReleaseOnce.close(jarStore)
-    ReleaseOnce.close(store)
+    Releasable.close(brokerClient)
+    Releasable.close(workerClient)
+    Releasable.close(clusterCollie)
+    Releasable.close(jarStore)
+    Releasable.close(store)
   }
 }
 

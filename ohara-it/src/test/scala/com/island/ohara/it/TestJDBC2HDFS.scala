@@ -21,8 +21,8 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, TimeZone}
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{WorkerClient, DatabaseClient}
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.client.{DatabaseClient, WorkerClient}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
@@ -151,8 +151,8 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   @After
   def afterTest(): Unit = {
     client.dropTable(tableName)
-    ReleaseOnce.close(workerClient)
-    ReleaseOnce.close(client)
+    Releasable.close(workerClient)
+    Releasable.close(client)
   }
 }
 
@@ -165,6 +165,6 @@ class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCr
   }
 
   override def close(): Unit = {
-    ReleaseOnce.close(fileSystem)
+    Releasable.close(fileSystem)
   }
 }

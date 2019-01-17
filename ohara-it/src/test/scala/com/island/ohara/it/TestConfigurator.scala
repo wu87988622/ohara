@@ -20,13 +20,13 @@ import java.time.Duration
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, InfoApi, TopicApi}
-import com.island.ohara.client.{WorkerClient, FtpClient}
+import com.island.ohara.client.{FtpClient, WorkerClient}
 import com.island.ohara.common.data._
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce, VersionUtil}
+import com.island.ohara.common.util.{CommonUtil, Releasable, VersionUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.{Consumer, BrokerClient, Producer}
+import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -223,8 +223,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(workerClient)
-    ReleaseOnce.close(configurator)
+    Releasable.close(workerClient)
+    Releasable.close(configurator)
   }
 
 }

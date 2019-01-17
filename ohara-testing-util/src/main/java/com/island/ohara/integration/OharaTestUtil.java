@@ -16,6 +16,7 @@
 
 package com.island.ohara.integration;
 
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.ReleaseOnce;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -94,12 +95,12 @@ public class OharaTestUtil extends ReleaseOnce {
 
   @Override
   protected void doClose() {
-    ReleaseOnce.close(localDb);
-    ReleaseOnce.close(localFtpServer);
-    ReleaseOnce.close(localHdfs);
-    ReleaseOnce.close(workers);
-    ReleaseOnce.close(brokers);
-    ReleaseOnce.close(zk);
+    Releasable.close(localDb);
+    Releasable.close(localFtpServer);
+    Releasable.close(localHdfs);
+    Releasable.close(workers);
+    Releasable.close(brokers);
+    Releasable.close(zk);
   }
 
   /**

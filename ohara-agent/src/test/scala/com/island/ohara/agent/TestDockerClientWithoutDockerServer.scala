@@ -18,7 +18,7 @@ package com.island.ohara.agent
 import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortPair}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.SshdServer
 import com.island.ohara.integration.SshdServer.CommandHandler
 import org.junit.{AfterClass, Test}
@@ -236,7 +236,7 @@ object TestDockerClientWithoutDockerServer {
 
   @AfterClass
   def afterAll(): Unit = {
-    ReleaseOnce.close(CLIENT)
-    ReleaseOnce.close(SERVER)
+    Releasable.close(CLIENT)
+    Releasable.close(SERVER)
   }
 }

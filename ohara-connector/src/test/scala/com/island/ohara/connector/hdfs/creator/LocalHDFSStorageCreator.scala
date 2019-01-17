@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.hdfs.creator
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.hdfs.HDFSSinkConnectorConfig
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.integration.OharaTestUtil
@@ -30,6 +30,6 @@ class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCr
   }
 
   override def close(): Unit = {
-    ReleaseOnce.close(fileSystem)
+    Releasable.close(fileSystem)
   }
 }

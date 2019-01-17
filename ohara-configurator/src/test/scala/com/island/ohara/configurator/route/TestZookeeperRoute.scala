@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.{ZookeeperClusterCreationRequest, ZookeeperClusterInfo}
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -218,5 +218,5 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(configurator)
+  def tearDown(): Unit = Releasable.close(configurator)
 }

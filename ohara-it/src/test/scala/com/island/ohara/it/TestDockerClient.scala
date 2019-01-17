@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortPair}
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -231,6 +231,6 @@ class TestDockerClient extends MediumTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(client)
+  def tearDown(): Unit = Releasable.close(client)
 
 }

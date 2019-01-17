@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.client.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.FtpServer
 import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
 import org.junit.{After, Before, Test}
@@ -272,7 +272,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(ftpServer)
+  def tearDown(): Unit = Releasable.close(ftpServer)
 }
 
 class FakeOffsetCache extends OffsetCache {

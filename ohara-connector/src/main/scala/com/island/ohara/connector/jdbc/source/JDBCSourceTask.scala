@@ -18,7 +18,7 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.Timestamp
 
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
+import com.island.ohara.common.util.{Releasable, VersionUtil}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
@@ -101,7 +101,7 @@ class JDBCSourceTask extends RowSourceTask {
     * trying to poll for new data and interrupt any outstanding poll() requests. It is not required that the task has
     * fully stopped. Note that this method necessarily may be invoked from a different thread than _poll() and _commit()
     */
-  override protected def _stop(): Unit = ReleaseOnce.close(dbTableDataProvider)
+  override protected def _stop(): Unit = Releasable.close(dbTableDataProvider)
 
   /**
     * Get the version from this task. Usually this should be the same as the corresponding Connector class's version.

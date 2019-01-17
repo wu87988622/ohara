@@ -23,7 +23,6 @@ import static com.wix.mysql.distribution.Version.v5_7_latest;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.common.util.ReleaseOnce;
 import com.wix.mysql.EmbeddedMysql;
 import com.wix.mysql.config.MysqldConfig;
 import java.sql.Connection;
@@ -81,7 +80,7 @@ public interface Database extends Releasable {
 
       @Override
       public void close() {
-        ReleaseOnce.close(connection);
+        Releasable.close(connection);
         mysqld.stop();
       }
 
@@ -157,7 +156,7 @@ public interface Database extends Releasable {
 
                     @Override
                     public void close() {
-                      ReleaseOnce.close(connection);
+                      Releasable.close(connection);
                     }
 
                     @Override

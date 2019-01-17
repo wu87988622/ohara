@@ -19,7 +19,7 @@ package com.island.ohara.it
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -81,7 +81,7 @@ class TestDatabaseClient extends MediumTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(client)
-    ReleaseOnce.close(db)
+    Releasable.close(client)
+    Releasable.close(db)
   }
 }

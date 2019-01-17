@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurati
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.BrokerClient
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkRecord, RowSinkTask, TaskConfig}
@@ -147,7 +147,7 @@ class TestControlSink extends WithBrokerWorker with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(configurator)
+  def tearDown(): Unit = Releasable.close(configurator)
 }
 
 class DumbSink extends RowSinkConnector {

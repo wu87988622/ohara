@@ -17,7 +17,7 @@
 package com.island.ohara.connector.ftp
 import com.island.ohara.client.FtpClient
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.ReleaseOnce
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.FtpServer
 import com.island.ohara.kafka.connector.TaskConfig
 import org.junit.{After, Test}
@@ -59,6 +59,6 @@ class TestOhara741 extends SmallTest with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(ftpServer)
+    Releasable.close(ftpServer)
   }
 }

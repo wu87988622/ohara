@@ -17,7 +17,7 @@
 package com.island.ohara.integration;
 
 import com.island.ohara.common.rule.LargeTest;
-import com.island.ohara.common.util.ReleaseOnce;
+import com.island.ohara.common.util.Releasable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -46,7 +46,7 @@ public abstract class With3Brokers3Workers extends LargeTest {
 
   @AfterClass
   public static void afterAll() {
-    ReleaseOnce.close(util);
+    Releasable.close(util);
     // we have to assign null to util since we allow junit to reuse jvm
     util = null;
   }
