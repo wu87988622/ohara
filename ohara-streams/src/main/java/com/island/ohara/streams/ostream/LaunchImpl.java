@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package com.island.ohara.streams;
+package com.island.ohara.streams.ostream;
 
+import com.island.ohara.streams.StreamApp;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-class StreamAppImpl {
+public class LaunchImpl {
 
   private static AtomicBoolean appCalled = new AtomicBoolean(false);
   private static volatile boolean error = false;
   private static volatile RuntimeException exception = null;
 
-  static void launchApplication(final Class<? extends StreamApp> clz, final Object... args) {
+  public static void launchApplication(
+      final Class<? extends StreamApp> clz, final Object... params) {
 
     if (appCalled.getAndSet(true)) {
       throw new IllegalStateException("StreamApp could only be called once in each thread");
@@ -42,14 +44,11 @@ class StreamAppImpl {
               try {
                 final AtomicReference<StreamApp> app = new AtomicReference<>();
                 if (!error) {
-                  if (args != null) {
+                  if (params != null) {
                     Constructor<? extends StreamApp> cons =
                         clz.getConstructor(
-                            Arrays.asList(args)
-                                .stream()
-                                .map(c -> c.getClass())
-                                .toArray(Class[]::new));
-                    app.set(cons.newInstance(args));
+                            Arrays.stream(params).map(Object::getClass).toArray(Class[]::new));
+                    app.set(cons.newInstance(params));
                   } else {
                     Constructor<? extends StreamApp> cons = clz.getConstructor();
                     app.set(cons.newInstance());

@@ -18,9 +18,10 @@ package com.island.ohara.streams.ostream;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
-import org.apache.kafka.common.serialization.Deserializer;
 
-public class StringDeserializer implements Deserializer<String> {
+// Kafka use it's own serializer to initial Serdes object, we need to implement that
+public class StringDeserializer
+    implements org.apache.kafka.common.serialization.Deserializer<String> {
 
   private String encoding = "UTF8";
 

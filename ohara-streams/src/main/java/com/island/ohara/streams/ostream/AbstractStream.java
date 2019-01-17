@@ -26,32 +26,37 @@ abstract class AbstractStream<K, V> {
   KTable<K, V> ktable;
   KStream<K, V> kstreams;
   KGroupedStream<K, V> kgroupstream;
-  OStreamBuilder ob;
-  StreamsBuilder builder;
+  OStreamBuilder<K, V> builder;
+  StreamsBuilder innerBuilder;
 
-  AbstractStream(final OStreamBuilder ob) {
+  @SuppressWarnings("unchecked")
+  AbstractStream(final OStreamBuilder builder) {
     StreamsBuilder newBuilder = new StreamsBuilder();
-    this.kstreams = newBuilder.stream(ob.fromTopic, ob.fromSerdes.get());
-    this.ob = ob;
-    this.builder = newBuilder;
-  }
-
-  AbstractStream(final OStreamBuilder ob, final KStream<K, V> kstreams, StreamsBuilder builder) {
-    this.ob = ob;
-    this.kstreams = kstreams;
+    this.kstreams = newBuilder.stream(builder.getFromTopic(), builder.getFromSerde().get());
     this.builder = builder;
+    this.innerBuilder = newBuilder;
   }
 
   AbstractStream(
-      final OStreamBuilder ob, final KGroupedStream<K, V> kgroupstream, StreamsBuilder builder) {
-    this.ob = ob;
-    this.kgroupstream = kgroupstream;
+      final OStreamBuilder builder, final KStream<K, V> kstreams, StreamsBuilder innerBuilder) {
     this.builder = builder;
+    this.kstreams = kstreams;
+    this.innerBuilder = innerBuilder;
   }
 
-  AbstractStream(final OStreamBuilder ob, final KTable<K, V> ktable, StreamsBuilder builder) {
-    this.ob = ob;
-    this.ktable = ktable;
+  AbstractStream(
+      final OStreamBuilder builder,
+      final KGroupedStream<K, V> kgroupstream,
+      StreamsBuilder innerBuilder) {
     this.builder = builder;
+    this.kgroupstream = kgroupstream;
+    this.innerBuilder = innerBuilder;
+  }
+
+  AbstractStream(
+      final OStreamBuilder builder, final KTable<K, V> ktable, StreamsBuilder innerBuilder) {
+    this.builder = builder;
+    this.ktable = ktable;
+    this.innerBuilder = innerBuilder;
   }
 }

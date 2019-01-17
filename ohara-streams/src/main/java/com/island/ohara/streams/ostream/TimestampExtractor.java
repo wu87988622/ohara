@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.streams;
+package com.island.ohara.streams.ostream;
 
+// Since kafka stream use "class name" as the config
+// we could not wrap the TimestampExtractor
 public interface TimestampExtractor extends org.apache.kafka.streams.processor.TimestampExtractor {}

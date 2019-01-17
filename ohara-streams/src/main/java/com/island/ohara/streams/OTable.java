@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.streams.ostream;
-
-import com.island.ohara.streams.OStream;
+package com.island.ohara.streams;
 
 public interface OTable<K, V> {
 

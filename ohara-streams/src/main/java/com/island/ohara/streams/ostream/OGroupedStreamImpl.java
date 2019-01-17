@@ -16,6 +16,8 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.streams.OGroupedStream;
+import com.island.ohara.streams.OTable;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KGroupedStream;
 
@@ -27,12 +29,12 @@ public class OGroupedStreamImpl<K, V> extends AbstractStream<K, V> implements OG
 
   @Override
   public OTable<K, Long> count() {
-    return new OTableImpl<>(ob, kgroupstream.count(), builder);
+    return new OTableImpl<>(builder, kgroupstream.count(), innerBuilder);
   }
 
   @Override
   public OTable<K, V> reduce(final Reducer<V> reducer) {
     Reducer.TrueReducer<V> trueReducer = new Reducer.TrueReducer<>(reducer);
-    return new OTableImpl<>(ob, kgroupstream.reduce(trueReducer), builder);
+    return new OTableImpl<>(builder, kgroupstream.reduce(trueReducer), innerBuilder);
   }
 }

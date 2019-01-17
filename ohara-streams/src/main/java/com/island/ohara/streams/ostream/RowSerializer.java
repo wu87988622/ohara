@@ -20,6 +20,7 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import java.util.Map;
 
+// Kafka use it's own serializer to initial Serdes object, we need to implement that
 public class RowSerializer implements org.apache.kafka.common.serialization.Serializer<Row> {
 
   @Override

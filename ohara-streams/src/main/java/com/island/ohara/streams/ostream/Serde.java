@@ -16,6 +16,6 @@
 
 package com.island.ohara.streams.ostream;
 
-public interface Serde<T> extends org.apache.kafka.common.serialization.Serde<T> {
-  // TODO : Serde has been wrapped, currently we have to extends the kakfa Serde...by Sam
-}
+// Since kafka stream use "class name" as the config
+// we could not wrap the Serde
+public interface Serde<T> extends org.apache.kafka.common.serialization.Serde<T> {}

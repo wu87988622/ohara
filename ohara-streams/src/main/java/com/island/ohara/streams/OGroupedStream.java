@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package com.island.ohara.streams.exception;
+package com.island.ohara.streams;
 
-/** CheckedException util */
-public class CheckedExceptionUtil {
+import com.island.ohara.streams.ostream.Reducer;
 
-  /**
-   * This method will wrap CheckedException to RuntimeException with lambda
-   *
-   * @param cew a lambda throws Exceptions
-   * @throws RuntimeException
-   */
-  public static void wrap(CheckedExceptionWrapper cew) throws RuntimeException {
-    try {
-      cew.wrap();
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+public interface OGroupedStream<K, V> {
+
+  OTable<K, Long> count();
+
+  OTable<K, V> reduce(final Reducer<V> reducer);
 }

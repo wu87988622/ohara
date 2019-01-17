@@ -18,15 +18,15 @@ package com.island.ohara.streams.ostream;
 
 public class Consumed<K, V> {
 
-  private final Serde<K> keySerde;
-  private final Serde<V> valueSerde;
+  private final Serde<K> key;
+  private final Serde<V> value;
 
-  Consumed(Serde key, Serde value) {
-    this.keySerde = key;
-    this.valueSerde = value;
+  Consumed(Serde<K> key, Serde<V> value) {
+    this.key = key;
+    this.value = value;
   }
 
   org.apache.kafka.streams.Consumed<K, V> get() {
-    return org.apache.kafka.streams.Consumed.with(this.keySerde, this.valueSerde);
+    return org.apache.kafka.streams.Consumed.with(this.key, this.value);
   }
 }

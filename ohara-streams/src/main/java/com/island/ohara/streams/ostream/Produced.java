@@ -16,19 +16,17 @@
 
 package com.island.ohara.streams.ostream;
 
-import org.apache.kafka.common.serialization.Serde;
-
 public class Produced<K, V> {
 
-  private final Serde<K> keySerde;
-  private final Serde<V> valueSerde;
+  private final Serde<K> key;
+  private final Serde<V> value;
 
-  Produced(Serde key, Serde value) {
-    this.keySerde = key;
-    this.valueSerde = value;
+  Produced(Serde<K> key, Serde<V> value) {
+    this.key = key;
+    this.value = value;
   }
 
   org.apache.kafka.streams.kstream.Produced<K, V> get() {
-    return org.apache.kafka.streams.kstream.Produced.with(this.keySerde, this.valueSerde);
+    return org.apache.kafka.streams.kstream.Produced.with(this.key, this.value);
   }
 }

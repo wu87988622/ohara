@@ -26,6 +26,7 @@ import com.island.ohara.kafka.KafkaClient;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.ostream.KeyValue;
 import com.island.ohara.streams.ostream.Serdes;
+import com.island.ohara.streams.ostream.TimestampExtractor;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -152,7 +153,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
               .appid(appid)
               .bootstrapServers(brokers)
               .fromTopic(orderTopic)
-              .toTopicWith(resultTopic, Serdes.StringSerde, Serdes.DoubleSerde)
+              .toTopicWith(resultTopic, Serdes.STRING, Serdes.DOUBLE)
               .cleanStart()
               .timestampExactor(MyExtractor.class)
               .build();
@@ -160,8 +161,8 @@ public class TestPurchaseAnalysis extends With3Brokers {
       ostream
           .leftJoin(
               userTopic,
-              Serdes.StringSerde,
-              Serdes.RowSerde,
+              Serdes.STRING,
+              Serdes.ROW,
               (row1, row2) -> {
                 Row newRow =
                     Row.of(
@@ -176,11 +177,11 @@ public class TestPurchaseAnalysis extends With3Brokers {
               })
           .filter((key, row) -> row.cell("address").value() != null)
           .map((key, row) -> new KeyValue<>(row.cell("itemName").value().toString(), row))
-          .through(orderuser_repartition, Serdes.StringSerde, Serdes.RowSerde)
+          .through(orderuser_repartition, Serdes.STRING, Serdes.ROW)
           .leftJoin(
               itemTopic,
-              Serdes.StringSerde,
-              Serdes.RowSerde,
+              Serdes.STRING,
+              Serdes.ROW,
               (row1, row2) -> {
                 Row newRow =
                     Row.of(
@@ -210,7 +211,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
                       row.cell("gender").value().toString(),
                       Double.valueOf(row.cell("quantity").value().toString())
                           * Double.valueOf(row.cell("price").value().toString())))
-          .groupByKey(Serdes.StringSerde, Serdes.DoubleSerde)
+          .groupByKey(Serdes.STRING, Serdes.DOUBLE)
           .reduce((v1, v2) -> v1 + v2)
           .toOStream()
           .start();
@@ -218,8 +219,6 @@ public class TestPurchaseAnalysis extends With3Brokers {
   }
 
   public static class MyExtractor implements TimestampExtractor {
-
-    public MyExtractor() {}
 
     private final DateTimeFormatter dataTimeFormatter =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

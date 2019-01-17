@@ -91,14 +91,13 @@ public class TestOStream extends With3Brokers {
 
     // Ohara Streams ETL Part
     OStream<String, String> ostream =
-        (OStream<String, String>)
-            OStream.builder()
-                .appid(appid)
-                .bootstrapServers(client.brokers())
-                .fromTopicWith(fromTopic, Serdes.StringSerde, Serdes.StringSerde)
-                .toTopicWith(toTopic, Serdes.StringSerde, Serdes.StringSerde)
-                .cleanStart()
-                .build();
+        OStream.builder()
+            .appid(appid)
+            .bootstrapServers(client.brokers())
+            .fromTopicWith(fromTopic, Serdes.STRING, Serdes.STRING)
+            .toTopicWith(toTopic, Serdes.STRING, Serdes.STRING)
+            .cleanStart()
+            .build();
 
     ostream.filter(((key, value) -> value != null)).mapValues(String::toUpperCase).start();
 
@@ -109,10 +108,7 @@ public class TestOStream extends With3Brokers {
       ConsumerRecords<String, String> messages = consumer.poll(10000);
       consumer.commitAsync();
       Assert.assertEquals(1, messages.count());
-      messages.forEach(
-          record -> {
-            Assert.assertEquals(simple_string.toUpperCase(), record.value());
-          });
+      messages.forEach(record -> Assert.assertEquals(simple_string.toUpperCase(), record.value()));
     } finally {
       consumer.close();
     }

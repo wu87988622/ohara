@@ -19,6 +19,7 @@ package com.island.ohara.streams.ostream;
 import com.island.ohara.common.data.Serializer;
 import java.util.Map;
 
+// Kafka use it's own serializer to initial Serdes object, we need to implement that
 public class DoubleDeserializer
     implements org.apache.kafka.common.serialization.Deserializer<Double> {
 

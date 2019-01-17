@@ -50,6 +50,6 @@ public interface OStream<K, V> {
 
   static OStreamBuilder<String, Row> builder() {
     // By default, we use the <String, Row> as the stream topic consume with
-    return new OStreamBuilder<>(Serdes.StringSerde, Serdes.RowSerde);
+    return new OStreamBuilder<>(Serdes.STRING, Serdes.ROW);
   }
 }

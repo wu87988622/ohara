@@ -18,7 +18,7 @@ package com.island.ohara.streams.ostream;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 
-public class StreamsConfig {
+class StreamsConfig {
   static final String BOOTSTRAP_SERVERS =
       org.apache.kafka.streams.StreamsConfig.BOOTSTRAP_SERVERS_CONFIG;
   static final String APP_ID = org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;

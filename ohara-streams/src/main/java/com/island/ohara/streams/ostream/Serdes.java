@@ -21,9 +21,9 @@ import java.util.Map;
 
 public class Serdes {
 
-  public static Serde<String> StringSerde = STRING.get();
-  public static Serde<Row> RowSerde = ROW.get();
-  public static Serde<Double> DoubleSerde = DOUBLE.get();
+  public static Serde<String> STRING = StringSerde.get();
+  public static Serde<Row> ROW = RowSerde.get();
+  public static Serde<Double> DOUBLE = DoubleSerde.get();
 
   protected static class WrapperSerde<T> implements Serde<T> {
 
@@ -56,8 +56,8 @@ public class Serdes {
     }
   }
 
-  public static final class STRING extends WrapperSerde<String> {
-    public STRING() {
+  public static final class StringSerde extends WrapperSerde<String> {
+    public StringSerde() {
       super(new StringSerializer(), new StringDeserializer());
     }
 
@@ -66,8 +66,8 @@ public class Serdes {
     }
   }
 
-  public static final class ROW extends WrapperSerde<Row> {
-    public ROW() {
+  public static final class RowSerde extends WrapperSerde<Row> {
+    public RowSerde() {
       super(new RowSerializer(), new RowDeserializer());
     }
 
@@ -76,8 +76,8 @@ public class Serdes {
     }
   }
 
-  public static final class DOUBLE extends WrapperSerde<Double> {
-    public DOUBLE() {
+  public static final class DoubleSerde extends WrapperSerde<Double> {
+    public DoubleSerde() {
       super(new DoubleSerializer(), new DoubleDeserializer());
     }
 

@@ -17,6 +17,7 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.streams.OStream;
+import com.island.ohara.streams.OTable;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 
@@ -27,6 +28,6 @@ public class OTableImpl<K, V> extends AbstractStream<K, V> implements OTable<K, 
 
   @Override
   public OStream<K, V> toOStream() {
-    return new OStreamImpl<>(ob, ktable.toStream(), builder);
+    return new OStreamImpl<>(builder, ktable.toStream(), innerBuilder);
   }
 }

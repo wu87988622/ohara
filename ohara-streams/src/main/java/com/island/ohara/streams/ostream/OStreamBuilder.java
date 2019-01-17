@@ -18,26 +18,37 @@ package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.streams.OStream;
-import com.island.ohara.streams.TimestampExtractor;
 import java.util.Objects;
 
 public final class OStreamBuilder<K, V> {
 
-  String bootstrapServers = null;
-  String appId = null;
-  String fromTopic = null;
-  Consumed fromSerdes = null;
-  String toTopic = null;
-  Produced toSerdes = null;
-  Class<? extends TimestampExtractor> extractor = null;
-  boolean isCleanStart = false;
+  private String bootstrapServers = null;
+  private String appId = null;
+  private String fromTopic = null;
+  private Consumed fromSerde = null;
+  private String toTopic = null;
+  private Produced toSerde = null;
+  private Class<? extends TimestampExtractor> extractor = null;
+  private boolean cleanStart = false;
 
-  private Serde<K> builderKey;
-  private Serde<V> builderValue;
+  private Serde<K> builderKeySerde;
+  private Serde<V> builderValueSerde;
 
   public OStreamBuilder(Serde<K> key, Serde<V> value) {
-    this.builderKey = key;
-    this.builderValue = value;
+    this.builderKeySerde = key;
+    this.builderValueSerde = value;
+  }
+
+  /** For those who want to custom own serdes for from/to topic */
+  private OStreamBuilder(OStreamBuilder builder) {
+    this.bootstrapServers = builder.bootstrapServers;
+    this.appId = builder.appId;
+    this.fromTopic = builder.fromTopic;
+    this.fromSerde = builder.fromSerde;
+    this.toTopic = builder.toTopic;
+    this.toSerde = builder.toSerde;
+    this.extractor = builder.extractor;
+    this.cleanStart = builder.cleanStart;
   }
 
   public OStreamBuilder<K, V> bootstrapServers(String bootstrapServers) {
@@ -51,50 +62,64 @@ public final class OStreamBuilder<K, V> {
   }
 
   /**
-   * set the topic consume from. note the default {@code <key, value>} is {@code <Serdes.String,
+   * set the topic consumed from. note the default {@code <key, value>} is {@code <Serdes.String,
    * Serdes.Row>}
    *
    * @param fromTopic the topic name
    */
   public OStreamBuilder<K, V> fromTopic(String fromTopic) {
     this.fromTopic = fromTopic;
-    this.fromSerdes = new Consumed(builderKey, builderValue);
+    this.fromSerde = new Consumed<>(builderKeySerde, builderValueSerde);
     return this;
   }
 
   /**
-   * you can change the consuming serializer/de-serializer. however you should check the {@code
-   * <key, value>} by your own
+   * set the topic consumed from by providing the serializer/de-serializer.
+   *
+   * @param fromTopic the topic name
+   * @param key the serialize type for topic key
+   * @param value the serialize type for topic value
    */
-  public OStreamBuilder<?, ?> fromTopicWith(String fromTopic, Serde key, Serde value) {
-    this.builderKey = key;
-    this.builderValue = value;
+  public <S, U> OStreamBuilder<S, U> fromTopicWith(String fromTopic, Serde<S> key, Serde<U> value) {
     this.fromTopic = fromTopic;
-    this.fromSerdes = new Consumed(key, value);
-    return this;
+    this.fromSerde = new Consumed<>(key, value);
+    return new OStreamBuilder<>(this);
   }
 
   /**
-   * set the topic produce to. note the default {@code <key, value>} is {@code <Serdes.String,
+   * set the topic produced to. note the default {@code <key, value>} is {@code <Serdes.String,
    * Serdes.Row>}
    *
    * @param toTopic the topic name
    */
   public OStreamBuilder<K, V> toTopic(String toTopic) {
-    return toTopicWith(toTopic, builderKey, builderValue);
+    return toTopicWith(toTopic, builderKeySerde, builderValueSerde);
   }
 
-  public OStreamBuilder<K, V> toTopicWith(String toTopic, Serde key, Serde value) {
+  /**
+   * set the topic produced from by providing the serializer/de-serializer.
+   *
+   * @param toTopic the topic name
+   * @param key the serialize type for topic key
+   * @param value the serialize type for topic value
+   */
+  public <S, U> OStreamBuilder<K, V> toTopicWith(String toTopic, Serde<S> key, Serde<U> value) {
     this.toTopic = toTopic;
-    this.toSerdes = new Produced(key, value);
+    this.toSerde = new Produced<>(key, value);
     return this;
   }
 
+  /** control this stream application should clean all state data before start. */
   public OStreamBuilder<K, V> cleanStart() {
-    this.isCleanStart = true;
+    this.cleanStart = true;
     return this;
   }
 
+  /**
+   * define timestamp of fromTopic records.
+   *
+   * @param extractor class extends {@code TimestampExtractor}
+   */
   public OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
     this.extractor = extractor;
     return this;
@@ -112,5 +137,38 @@ public final class OStreamBuilder<K, V> {
     }
 
     return new OStreamImpl<>(this);
+  }
+
+  // Getters
+  public String getBootstrapServers() {
+    return bootstrapServers;
+  }
+
+  public String getAppId() {
+    return appId;
+  }
+
+  public String getFromTopic() {
+    return fromTopic;
+  }
+
+  public Consumed getFromSerde() {
+    return fromSerde;
+  }
+
+  public String getToTopic() {
+    return toTopic;
+  }
+
+  public Produced getToSerde() {
+    return toSerde;
+  }
+
+  public Class<? extends TimestampExtractor> getExtractor() {
+    return extractor;
+  }
+
+  public boolean isCleanStart() {
+    return cleanStart;
   }
 }

@@ -16,6 +16,9 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.kafka.exception.CheckedExceptionUtil;
+import com.island.ohara.streams.ostream.LaunchImpl;
+
 public abstract class StreamApp {
 
   /**
@@ -31,13 +34,11 @@ public abstract class StreamApp {
    * </pre>
    *
    * @param theClass the streamapp class that is constructed and extends from {@link StreamApp}
-   * @param params parameters of {@code theClass} contructor used
+   * @param params parameters of {@code theClass} constructor used
    */
   public static void runStreamApp(Class<? extends StreamApp> theClass, Object... params) {
-
     if (StreamApp.class.isAssignableFrom(theClass)) {
-      Class<? extends StreamApp> streamAppClass = theClass;
-      StreamAppImpl.launchApplication(streamAppClass, params);
+      CheckedExceptionUtil.wrap(() -> LaunchImpl.launchApplication(theClass, params));
     } else {
       throw new RuntimeException(
           "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
@@ -45,7 +46,7 @@ public abstract class StreamApp {
   }
 
   /**
-   * running a standalone streamapp. This method will try to find each methods in current thread
+   * running a standalone streamApp. This method will try to find each methods in current thread
    * that is extends from {@code StreamApp}
    */
   public static void runStreamApp() {
@@ -76,7 +77,7 @@ public abstract class StreamApp {
           Class.forName(entryClassName, false, Thread.currentThread().getContextClassLoader());
       if (StreamApp.class.isAssignableFrom(theClass)) {
         Class<? extends StreamApp> streamAppClass = theClass;
-        StreamAppImpl.launchApplication(streamAppClass);
+        CheckedExceptionUtil.wrap(() -> LaunchImpl.launchApplication(streamAppClass));
       } else {
         throw new RuntimeException(
             "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());

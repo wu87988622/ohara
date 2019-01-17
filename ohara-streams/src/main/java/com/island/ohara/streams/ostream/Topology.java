@@ -16,9 +16,9 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.kafka.exception.CheckedExceptionUtil;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
-import com.island.ohara.streams.exception.CheckedExceptionUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -73,11 +73,11 @@ public class Topology implements AutoCloseable {
     }
   }
 
-  public String describe() {
+  String describe() {
     return topology.describe().toString();
   }
 
-  public List<Poneglyph> getPoneglyphs() {
+  List<Poneglyph> getPoneglyphs() {
     return topology
         .describe()
         .subtopologies()
@@ -117,7 +117,7 @@ public class Topology implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  public void start() {
+  void start() {
     CheckedExceptionUtil.wrap(() -> streams.start());
   }
 

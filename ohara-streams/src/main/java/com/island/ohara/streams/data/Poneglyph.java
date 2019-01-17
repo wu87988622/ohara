@@ -32,6 +32,6 @@ public final class Poneglyph implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("steles : %s" + getSteles());
+    return String.format("steles : %s", getSteles());
   }
 }
