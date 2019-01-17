@@ -97,7 +97,7 @@ public class KafkaUtil {
    * @return true if the topic exist. Otherwise, false
    */
   public static boolean exist(String brokersConnProps, String topicName, Duration timeout) {
-    try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
+    try (BrokerClient client = BrokerClient.of(brokersConnProps)) {
       return client.exist(topicName, timeout);
     }
   }
@@ -108,7 +108,7 @@ public class KafkaUtil {
 
   public static TopicDescription topicDescription(
       String brokersConnProps, String topicName, Duration timeout) {
-    try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
+    try (BrokerClient client = BrokerClient.of(brokersConnProps)) {
       return client.topicDescription(topicName, timeout);
     }
   }
@@ -128,7 +128,7 @@ public class KafkaUtil {
    */
   public static void addPartitions(
       String brokersConnProps, String topicName, int numberOfPartitions, Duration timeout) {
-    try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
+    try (BrokerClient client = BrokerClient.of(brokersConnProps)) {
       client.addPartitions(topicName, numberOfPartitions, timeout);
     }
   }
@@ -145,7 +145,7 @@ public class KafkaUtil {
       short numberOfReplications,
       Map<String, String> options,
       Duration timeout) {
-    try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
+    try (BrokerClient client = BrokerClient.of(brokersConnProps)) {
       client
           .topicCreator()
           .timeout(timeout)
@@ -185,7 +185,7 @@ public class KafkaUtil {
   }
 
   public static void deleteTopic(String brokersConnProps, String topicName, Duration timeout) {
-    try (KafkaClient client = KafkaClient.of(brokersConnProps)) {
+    try (BrokerClient client = BrokerClient.of(brokersConnProps)) {
       client.deleteTopic(topicName, timeout);
     }
   }

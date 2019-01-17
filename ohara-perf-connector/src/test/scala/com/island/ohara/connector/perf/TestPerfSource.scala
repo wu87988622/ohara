@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.perf
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Serializer}
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.integration.With3Brokers3Workers
@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 class TestPerfSource extends With3Brokers3Workers with Matchers {
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(
     batch = 5,
@@ -49,7 +49,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[PerfSource])
@@ -100,9 +100,9 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
 
           })
       } finally consumer.close()
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(workerClient)
 }

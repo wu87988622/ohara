@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.common.util.CommonUtil
@@ -55,9 +55,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   }
 
   private[this] def update(connectorConfig: ConnectorConfiguration)(
-    implicit connectorClient: ConnectorClient): ConnectorConfiguration = {
-    val state = try if (connectorClient.exist(connectorConfig.id))
-      Some(connectorClient.status(connectorConfig.id).connector.state)
+    implicit workerClient: WorkerClient): ConnectorConfiguration = {
+    val state = try if (workerClient.exist(connectorConfig.id))
+      Some(workerClient.status(connectorConfig.id).connector.state)
     else None
     catch {
       case e: Throwable =>
@@ -68,20 +68,20 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     newOne
   }
 
-  def apply(implicit store: Store, connectorClient: ConnectorClient): server.Route =
+  def apply(implicit store: Store, workerClient: WorkerClient): server.Route =
     // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
     pathPrefix(CONNECTORS_PREFIX_PATH | "sources" | "sinks") {
       RouteUtil.basicRoute2[ConnectorConfigurationRequest, ConnectorConfiguration](
         hookOfAdd = (id: String, request: ConnectorConfigurationRequest) => toRes(id, verify(request)),
         hookOfUpdate = (id: String, request: ConnectorConfigurationRequest, _: ConnectorConfiguration) => {
-          if (connectorClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
+          if (workerClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
           toRes(id, verify(request))
         },
         hookOfGet = update(_),
         hookOfList = (responses: Seq[ConnectorConfiguration]) => responses.map(update),
         hookBeforeDelete = (id: String) => {
           assertNotRelated2Pipeline(id)
-          if (connectorClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
+          if (workerClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
           id
         },
         hookOfDelete = (response: ConnectorConfiguration) => response
@@ -92,12 +92,12 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         path(START_COMMAND) {
           put {
             onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (connectorClient.nonExist(connector.id)) {
+              if (workerClient.nonExist(connector.id)) {
                 if (connector.topics.isEmpty) throw new IllegalArgumentException("topics is required")
                 val invalidTopics =
                   connector.topics.filterNot(t => Await.result(store.exist[TopicInfo](t), 30 seconds))
                 if (invalidTopics.nonEmpty) throw new IllegalArgumentException(s"$invalidTopics doesn't exist in ohara")
-                connectorClient
+                workerClient
                   .connectorCreator()
                   .name(connector.id)
                   .disableConverter()
@@ -114,25 +114,25 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         } ~ path(STOP_COMMAND) {
           put {
             onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (connectorClient.exist(id)) connectorClient.delete(id)
+              if (workerClient.exist(id)) workerClient.delete(id)
               complete(update(connector))
             }
           }
         } ~ path(PAUSE_COMMAND) {
           put {
             onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (connectorClient.nonExist(id))
+              if (workerClient.nonExist(id))
                 throw new IllegalArgumentException(s"Connector is not running , using start command first . id:$id !!!")
-              connectorClient.pause(id)
+              workerClient.pause(id)
               complete(update(connector))
             }
           }
         } ~ path(RESUME_COMMAND) {
           put {
             onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (connectorClient.nonExist(id))
+              if (workerClient.nonExist(id))
                 throw new IllegalArgumentException(s"Connector is not running , using start command first . id:$id !!!")
-              connectorClient.resume(id)
+              workerClient.resume(id)
               complete(update(connector))
             }
           }

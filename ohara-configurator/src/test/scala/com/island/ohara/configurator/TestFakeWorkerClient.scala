@@ -20,14 +20,14 @@ import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestFakeConnectorClient extends SmallTest with Matchers {
+class TestFakeWorkerClient extends SmallTest with Matchers {
 
   @Test
   def testControlConnector(): Unit = {
     val connectorName = methodName
     val topicName = methodName
     val className = methodName
-    val fake = new FakeConnectorClient()
+    val fake = new FakeWorkerClient()
     fake.connectorCreator().name(connectorName).topic(topicName).numberOfTasks(1).connectorClass(className).create()
 
     fake.exist(connectorName) shouldBe true

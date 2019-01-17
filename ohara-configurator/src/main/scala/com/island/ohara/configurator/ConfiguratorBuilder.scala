@@ -35,7 +35,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.{ConnectorClient, ConnectorCreator}
+import com.island.ohara.client.{WorkerClient, ConnectorCreator}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
@@ -54,8 +54,8 @@ class ConfiguratorBuilder {
   private[this] var port: Option[Int] = None
   private[this] val store: Store = new Store(
     com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
-  private[this] var kafkaClient: Option[KafkaClient] = None
-  private[this] var connectClient: Option[ConnectorClient] = None
+  private[this] var brokerClient: Option[BrokerClient] = None
+  private[this] var connectClient: Option[WorkerClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
@@ -103,12 +103,12 @@ class ConfiguratorBuilder {
     this
   }
 
-  def kafkaClient(kafkaClient: KafkaClient): ConfiguratorBuilder = {
-    this.kafkaClient = Some(kafkaClient)
+  def brokerClient(brokerClient: BrokerClient): ConfiguratorBuilder = {
+    this.brokerClient = Some(brokerClient)
     this
   }
 
-  def connectClient(connectClient: ConnectorClient): ConfiguratorBuilder = {
+  def connectClient(connectClient: WorkerClient): ConfiguratorBuilder = {
     this.connectClient = Some(connectClient)
     this
   }
@@ -119,8 +119,8 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   def fake(): ConfiguratorBuilder = {
-    kafkaClient(new FakeKafkaClient())
-    connectClient(new FakeConnectorClient())
+    brokerClient(new FakeBrokerClient())
+    connectClient(new FakeWorkerClient())
     clusterCollie(new FakeClusterCollie)
   }
 
@@ -140,8 +140,8 @@ class ConfiguratorBuilder {
       store = store,
       nodeCollie = nodeCollie(),
       clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie())),
-      kafkaClient = kafkaClient.get,
-      connectorClient = connectClient.get
+      brokerClient = brokerClient.get,
+      workerClient = connectClient.get
     )
   }
 }
@@ -149,7 +149,7 @@ class ConfiguratorBuilder {
 /**
   * this class is exposed to Validator...an ugly way (TODO) by chia
   */
-private[configurator] class FakeConnectorClient extends ConnectorClient {
+private[configurator] class FakeWorkerClient extends WorkerClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, ConnectorState]()
 
@@ -206,14 +206,14 @@ private[configurator] class FakeConnectorClient extends ConnectorClient {
 }
 
 /**
-  * A do-nothing impl from KafkaClient.
+  * A do-nothing impl from BrokerClient.
   * NOTED: It should be used in testing only.
   */
-private[configurator] class FakeKafkaClient extends KafkaClient {
+private[configurator] class FakeBrokerClient extends BrokerClient {
 
   import scala.collection.JavaConverters._
 
-  private[this] val log = Logger(classOf[FakeKafkaClient].getName)
+  private[this] val log = Logger(classOf[FakeBrokerClient].getName)
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
 
   override def topicCreator(): TopicCreator = new TopicCreator() {
@@ -265,7 +265,7 @@ private[configurator] class FakeKafkaClient extends KafkaClient {
   override def brokers(): String = "Unknown"
 
   override def consumerBuilder(): ConsumerBuilder = throw new UnsupportedOperationException(
-    s"${classOf[FakeKafkaClient].getSimpleName} does not support this operation")
+    s"${classOf[FakeBrokerClient].getSimpleName} does not support this operation")
 
   override def close(): Unit = printDebugMessage()
 }

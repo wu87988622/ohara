@@ -39,7 +39,7 @@ public class MyConnectorTask extends RowSourceTask {
     long current = System.currentTimeMillis();
     if (current - lastSent >= 1000) {
       lastSent = current;
-      return Collections.singletonList(RowSourceRecord.of(topicName, TestConnectorClient.ROW));
+      return Collections.singletonList(RowSourceRecord.of(topicName, TestWorkerClient.ROW));
     } else return Collections.emptyList();
   }
 }

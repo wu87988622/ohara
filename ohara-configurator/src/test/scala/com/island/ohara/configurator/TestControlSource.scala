@@ -18,14 +18,14 @@ package com.island.ohara.configurator
 
 import java.time.Duration
 
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.WithBrokerWorker
-import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.kafka.BrokerClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -40,8 +40,8 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     .builder()
     .hostname("localhost")
     .port(0)
-    .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
-    .connectClient(ConnectorClient(testUtil.workersConnProps))
+    .brokerClient(BrokerClient.of(testUtil.brokersConnProps))
+    .connectClient(WorkerClient(testUtil.workersConnProps))
     .build()
 
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -69,16 +69,16 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     // test idempotent start
     (0 until 3).foreach(_ =>
       Await.result(access.start(source.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
-    val connectorClient = ConnectorClient(testUtil.workersConnProps)
+    val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try connectorClient.exist(source.id)
+                         try workerClient.exist(source.id)
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil.await(() => connectorClient.status(source.id).connector.state == ConnectorState.RUNNING,
-                       Duration.ofSeconds(20))
+      CommonUtil
+        .await(() => workerClient.status(source.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
@@ -86,24 +86,24 @@ class TestControlSource extends WithBrokerWorker with Matchers {
         Await.result(access.pause(source.id), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
 
       CommonUtil
-        .await(() => connectorClient.status(source.id).connector.state == ConnectorState.PAUSED, Duration.ofSeconds(20))
+        .await(() => workerClient.status(source.id).connector.state == ConnectorState.PAUSED, Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ =>
         Await.result(access.resume(source.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
-      CommonUtil.await(() => connectorClient.status(source.id).connector.state == ConnectorState.RUNNING,
-                       Duration.ofSeconds(20))
+      CommonUtil
+        .await(() => workerClient.status(source.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => Await.result(access.stop(source.id), 10 seconds))
 
-      CommonUtil.await(() => connectorClient.nonExist(source.id), Duration.ofSeconds(20))
+      CommonUtil.await(() => workerClient.nonExist(source.id), Duration.ofSeconds(20))
       result(access.get(source.id)).state shouldBe None
     } finally {
-      if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
-      ReleaseOnce.close(connectorClient)
+      if (workerClient.exist(source.id)) workerClient.delete(source.id)
+      ReleaseOnce.close(workerClient)
     }
   }
 
@@ -126,27 +126,27 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     val source = result(access.add(request))
     // test start
     Await.result(access.start(source.id), 10 seconds)
-    val connectorClient = ConnectorClient(testUtil.workersConnProps)
+    val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try connectorClient.exist(source.id)
+                         try workerClient.exist(source.id)
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil.await(() => connectorClient.status(source.id).connector.state == ConnectorState.RUNNING,
-                       Duration.ofSeconds(20))
+      CommonUtil
+        .await(() => workerClient.status(source.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(access.update(source.id, request.copy(numberOfTasks = 2)))
       an[IllegalArgumentException] should be thrownBy result(access.delete(source.id))
 
       // test stop. the connector should be removed
       Await.result(access.stop(source.id), 10 seconds)
-      CommonUtil.await(() => connectorClient.nonExist(source.id), Duration.ofSeconds(20))
+      CommonUtil.await(() => workerClient.nonExist(source.id), Duration.ofSeconds(20))
       result(access.get(source.id)).state shouldBe None
     } finally {
-      if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
-      ReleaseOnce.close(connectorClient)
+      if (workerClient.exist(source.id)) workerClient.delete(source.id)
+      ReleaseOnce.close(workerClient)
     }
   }
 

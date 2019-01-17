@@ -28,7 +28,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
 import com.island.ohara.common.data.Serializer
@@ -36,7 +36,7 @@ import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
-import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.kafka.BrokerClient
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsonParser}
 
@@ -60,8 +60,8 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
                                           extraRoute: Option[server.Route])(implicit store: Store,
                                                                             nodeCollie: NodeCollie,
                                                                             clusterCollie: ClusterCollie,
-                                                                            kafkaClient: KafkaClient,
-                                                                            connectorClient: ConnectorClient)
+                                                                            brokerClient: BrokerClient,
+                                                                            workerClient: WorkerClient)
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -206,8 +206,8 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
   override protected def doClose(): Unit = {
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
-    ReleaseOnce.close(kafkaClient)
-    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(brokerClient)
+    ReleaseOnce.close(workerClient)
     ReleaseOnce.close(clusterCollie)
     ReleaseOnce.close(jarStore)
     ReleaseOnce.close(store)
@@ -274,8 +274,8 @@ object Configurator {
         standalone = true
         Configurator
           .builder()
-          .kafkaClient(new FakeKafkaClient())
-          .connectClient(new FakeConnectorClient())
+          .brokerClient(new FakeBrokerClient())
+          .connectClient(new FakeWorkerClient())
           .hostname(hostname)
           .port(port)
           .build()
@@ -284,8 +284,8 @@ object Configurator {
       else
         Configurator
           .builder()
-          .kafkaClient(KafkaClient.of(brokers.get))
-          .connectClient(ConnectorClient(workers.get))
+          .brokerClient(BrokerClient.of(brokers.get))
+          .connectClient(WorkerClient(workers.get))
           .hostname(hostname)
           .port(port)
           .build()

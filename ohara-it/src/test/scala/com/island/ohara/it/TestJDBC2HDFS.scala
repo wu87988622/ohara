@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, TimeZone}
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.client.{WorkerClient, DatabaseClient}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
@@ -40,7 +40,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "testtable"
   private[this] val timestampColumnName = "CREATE_DATE"
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val jdbcProps = JDBCSourceConnectorConfig(
     Map(DB_URL -> db.url,
@@ -97,7 +97,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     val hdfsSinkConnectorName: String = "hdfs-sink-connector-it-test"
     val topicName: String = "it-test"
 
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(jdbcSourceConnectorName)
       .connectorClass(classOf[JDBCSourceConnector])
@@ -107,7 +107,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       .disableConverter()
       .create()
 
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(hdfsSinkConnectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -143,15 +143,15 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       lineCountFile1(1) shouldBe "2018-07-13 00:00:00.0,50,NAME-50,ADDRESS-50"
       lineCountFile1(50) shouldBe "2018-08-31 00:00:00.0,1,NAME-1,ADDRESS-1"
     } finally {
-      connectorClient.delete(jdbcSourceConnectorName)
-      connectorClient.delete(hdfsSinkConnectorName)
+      workerClient.delete(jdbcSourceConnectorName)
+      workerClient.delete(hdfsSinkConnectorName)
     }
   }
 
   @After
   def afterTest(): Unit = {
     client.dropTable(tableName)
-    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(workerClient)
     ReleaseOnce.close(client)
   }
 }

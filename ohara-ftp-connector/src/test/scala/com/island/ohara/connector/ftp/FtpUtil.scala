@@ -17,7 +17,7 @@
 package com.island.ohara.connector.ftp
 import java.time.Duration
 
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
@@ -25,11 +25,11 @@ object FtpUtil {
   private[this] val TIMEOUT = Duration.ofSeconds(60)
   def assertFailedConnector(testUtil: OharaTestUtil, name: String): Unit = CommonUtil.await(
     () => {
-      val connectorClient = ConnectorClient(testUtil.workersConnProps)
-      try connectorClient.status(name).connector.state == ConnectorState.FAILED
+      val workerClient = WorkerClient(testUtil.workersConnProps)
+      try workerClient.status(name).connector.state == ConnectorState.FAILED
       catch {
         case _: Throwable => false
-      } finally connectorClient.close()
+      } finally workerClient.close()
     },
     TIMEOUT
   )
@@ -37,19 +37,19 @@ object FtpUtil {
   def checkConnector(testUtil: OharaTestUtil, name: String): Unit = {
     CommonUtil.await(
       () => {
-        val connectorClient = ConnectorClient(testUtil.workersConnProps)
-        try connectorClient.activeConnectors().contains(name)
-        finally connectorClient.close()
+        val workerClient = WorkerClient(testUtil.workersConnProps)
+        try workerClient.activeConnectors().contains(name)
+        finally workerClient.close()
       },
       TIMEOUT
     )
     CommonUtil.await(
       () => {
-        val connectorClient = ConnectorClient(testUtil.workersConnProps)
-        try connectorClient.status(name).connector.state == ConnectorState.RUNNING
+        val workerClient = WorkerClient(testUtil.workersConnProps)
+        try workerClient.status(name).connector.state == ConnectorState.RUNNING
         catch {
           case _: Throwable => false
-        } finally connectorClient.close()
+        } finally workerClient.close()
       },
       TIMEOUT
     )

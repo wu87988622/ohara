@@ -18,7 +18,7 @@ package com.island.ohara.it
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.{ConnectorClient, FtpClient}
+import com.island.ohara.client.{WorkerClient, FtpClient}
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
@@ -32,7 +32,7 @@ import scala.collection.JavaConverters._
   * ftp csv -> topic -> ftp csv
   */
 class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val schema: Seq[Column] = Seq(
     Column.of("name", DataType.STRING, 1),
@@ -91,7 +91,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     val sinkName = methodName + "-sink"
     val sourceName = methodName + "-source"
     // start sink
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -104,7 +104,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
     try {
       try {
-        connectorClient
+        workerClient
           .connectorCreator()
           .topic(topicName)
           .connectorClass(classOf[FtpSource])
@@ -126,13 +126,13 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         lines(0) shouldBe header
         lines(1) shouldBe data.head
         lines(2) shouldBe data(1)
-      } finally connectorClient.delete(sourceName)
-    } finally connectorClient.delete(sinkName)
+      } finally workerClient.delete(sourceName)
+    } finally workerClient.delete(sinkName)
   }
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(workerClient)
     ReleaseOnce.close(ftpClient)
   }
 }

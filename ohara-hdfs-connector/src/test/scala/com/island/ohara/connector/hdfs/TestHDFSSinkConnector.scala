@@ -20,7 +20,7 @@ import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.time.Duration
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{ByteUtil, CommonUtil, ReleaseOnce}
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
@@ -35,7 +35,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 
 class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
@@ -74,7 +74,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsURLName = HDFS_URL
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[SimpleHDFSSinkConnector])
@@ -120,7 +120,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -200,7 +200,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -281,7 +281,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[HDFSSinkConnector])
@@ -305,7 +305,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(workerClient)
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {

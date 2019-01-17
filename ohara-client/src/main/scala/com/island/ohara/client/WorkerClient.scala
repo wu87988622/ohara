@@ -38,7 +38,7 @@ import scala.util.Random
 /**
   * a helper class used to send the rest request to kafka worker.
   */
-trait ConnectorClient extends ReleaseOnce {
+trait WorkerClient extends ReleaseOnce {
 
   def connectorCreator(): ConnectorCreator
 
@@ -71,19 +71,19 @@ trait ConnectorClient extends ReleaseOnce {
   def nonExist(name: String): Boolean = !exist(name)
 }
 
-object ConnectorClient {
+object WorkerClient {
   private[this] val COUNTER = new AtomicInteger(0)
   import scala.concurrent.duration._
   val TIMEOUT: FiniteDuration = 30 seconds
 
-  def apply(_workers: String): ConnectorClient = {
+  def apply(_workers: String): WorkerClient = {
     val workerList = _workers.split(",")
     if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_workers}")
-    new ConnectorClient() with SprayJsonSupport {
+    new WorkerClient() with SprayJsonSupport {
       private[this] val workerAddress: String = workerList(Random.nextInt(workerList.size))
 
       private[this] implicit val actorSystem: ActorSystem = ActorSystem(
-        s"${classOf[ConnectorClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
+        s"${classOf[WorkerClient].getSimpleName}-${COUNTER.getAndIncrement()}-system")
 
       private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 

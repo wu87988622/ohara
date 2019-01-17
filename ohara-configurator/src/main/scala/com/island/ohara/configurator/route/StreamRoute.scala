@@ -29,7 +29,7 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtil._
-import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.kafka.BrokerClient
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -63,7 +63,7 @@ private[configurator] object StreamRoute {
     data.toTopics.nonEmpty
   }
 
-  def apply(implicit store: Store, kafkaClient: KafkaClient, jarStore: JarStore): server.Route =
+  def apply(implicit store: Store, brokerClient: BrokerClient, jarStore: JarStore): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
         complete(StatusCodes.BadRequest -> "wrong uri")
@@ -223,7 +223,7 @@ private[configurator] object StreamRoute {
                 //TODO : we hard code here currently. This should be called from agent ...by Sam
                 val dockerCmd =
                   s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
-                     | -e STREAMAPP_SERVERS=${kafkaClient.brokers()}
+                     | -e STREAMAPP_SERVERS=${brokerClient.brokers()}
                      | -e STREAMAPP_APPID=${data.name}
                      | -e STREAMAPP_FROMTOPIC=${data.fromTopics.head}
                      | -e STREAMAPP_TOTOPIC=${data.toTopics.head}

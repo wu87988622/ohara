@@ -19,7 +19,7 @@ package com.island.ohara.streams;
 import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 
 import com.island.ohara.integration.With3Brokers;
-import com.island.ohara.kafka.KafkaClient;
+import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.TopicDescription;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +31,7 @@ import org.junit.Test;
 
 public class TestDataImporter extends With3Brokers {
 
-  private KafkaClient client = KafkaClient.of(testUtil().brokersConnProps());
+  private BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private List<String> TOPICS = Arrays.asList("carriers", "plane", "airport", "flight");
 
   @Test

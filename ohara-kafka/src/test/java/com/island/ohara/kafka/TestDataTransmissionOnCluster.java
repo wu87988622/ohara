@@ -16,9 +16,9 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.client.ConnectorClient;
-import com.island.ohara.client.ConnectorClient$;
 import com.island.ohara.client.ConnectorJson;
+import com.island.ohara.client.WorkerClient;
+import com.island.ohara.client.WorkerClient$;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.ConnectorState;
@@ -50,10 +50,10 @@ import scala.collection.Seq;
 public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
   private final OharaTestUtil testUtil = testUtil();
-  private final ConnectorClient connectorClient =
-      ConnectorClient$.MODULE$.apply(testUtil.workersConnProps());
+  private final WorkerClient workerClient =
+      WorkerClient$.MODULE$.apply(testUtil.workersConnProps());
 
-  private final KafkaClient kafkaClient = KafkaClient.of(testUtil.brokersConnProps());
+  private final BrokerClient brokerClient = BrokerClient.of(testUtil.brokersConnProps());
   private final Row row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11));
   private final List<Column> schema =
       Collections.singletonList(Column.of("cf", DataType.BOOLEAN, 1));
@@ -62,14 +62,14 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
   private void createTopic(String topicName, Boolean compacted) {
     if (compacted)
-      kafkaClient
+      brokerClient
           .topicCreator()
           .compacted()
           .numberOfPartitions(1)
           .numberOfReplications((short) 1)
           .create(topicName);
     else
-      kafkaClient
+      brokerClient
           .topicCreator()
           .deleted()
           .numberOfPartitions(1)
@@ -104,14 +104,12 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
   }
 
   private void checkConnector(String name) {
-    CommonUtil.await(
-        () -> connectorClient.activeConnectors().contains(name), Duration.ofSeconds(30));
-    CommonUtil.await(
-        () -> connectorClient.config(name).topics().nonEmpty(), Duration.ofSeconds(30));
+    CommonUtil.await(() -> workerClient.activeConnectors().contains(name), Duration.ofSeconds(30));
+    CommonUtil.await(() -> workerClient.config(name).topics().nonEmpty(), Duration.ofSeconds(30));
     CommonUtil.await(
         () -> {
           try {
-            return connectorClient.status(name).connector().state() == ConnectorState.RUNNING;
+            return workerClient.status(name).connector().state() == ConnectorState.RUNNING;
           } catch (Throwable t) {
             return false;
           }
@@ -121,7 +119,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
   @After
   public void tearDown() {
-    ReleaseOnce.close(kafkaClient);
+    ReleaseOnce.close(brokerClient);
   }
 
   @Test
@@ -177,7 +175,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     configs.put(Constants.OUTPUT, topicName2);
 
     String connectorName = methodName();
-    connectorClient
+    workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(SimpleRowSinkConnector.class)
@@ -193,7 +191,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
       setupData(topicName);
       checkData(topicName2);
     } finally {
-      connectorClient.delete(connectorName);
+      workerClient.delete(connectorName);
     }
   }
 
@@ -221,7 +219,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     configs.put(Constants.INPUT, topicName);
 
     String connectorName = methodName();
-    connectorClient
+    workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(SimpleRowSourceConnector.class)
@@ -237,7 +235,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
       setupData(topicName);
       checkData(topicName2);
     } finally {
-      connectorClient.delete(connectorName);
+      workerClient.delete(connectorName);
     }
   }
 
@@ -283,12 +281,12 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
   }
 
   /**
-   * Test for ConnectorClient
+   * Test for WorkerClient
    *
-   * @see ConnectorClient
+   * @see WorkerClient
    */
   @Test
-  public void connectorClientTest() {
+  public void testWorkerClient() {
     String connectorName = methodName();
     List<String> topics = Arrays.asList(connectorName + "_topic", connectorName + "_topic2");
     String output_topic = connectorName + "_topic_output";
@@ -296,7 +294,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     Map<String, String> configs = new HashMap<>();
     configs.put(Constants.BROKER, testUtil.brokersConnProps());
     configs.put(Constants.OUTPUT, output_topic);
-    connectorClient
+    workerClient
         .connectorCreator()
         .name(connectorName)
         .connectorClass(SimpleRowSinkConnector.class)
@@ -307,25 +305,25 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
         .configs(toScalaMap(configs))
         .create();
 
-    Seq<String> activeConnectors = connectorClient.activeConnectors();
+    Seq<String> activeConnectors = workerClient.activeConnectors();
     assertTrue(activeConnectors.contains(connectorName));
 
-    ConnectorJson.ConnectorConfig config = connectorClient.config(connectorName);
+    ConnectorJson.ConnectorConfig config = workerClient.config(connectorName);
     assertEquals(config.topics(), toScalaList(topics));
 
     CommonUtil.await(
-        () -> connectorClient.status(connectorName).tasks().size() > 0, Duration.ofSeconds(10));
-    ConnectorJson.ConnectorInformation status = connectorClient.status(connectorName);
+        () -> workerClient.status(connectorName).tasks().size() > 0, Duration.ofSeconds(10));
+    ConnectorJson.ConnectorInformation status = workerClient.status(connectorName);
     assertNotNull(status.tasks().head());
 
     ConnectorJson.TaskStatus task =
-        connectorClient.taskStatus(connectorName, status.tasks().head().id());
+        workerClient.taskStatus(connectorName, status.tasks().head().id());
     assertNotNull(task);
     assertEquals(task, status.tasks().head());
     assertFalse(task.worker_id().isEmpty());
 
-    connectorClient.delete(connectorName);
-    assertFalse(connectorClient.activeConnectors().contains(connectorName));
+    workerClient.delete(connectorName);
+    assertFalse(workerClient.activeConnectors().contains(connectorName));
   }
 
   /**

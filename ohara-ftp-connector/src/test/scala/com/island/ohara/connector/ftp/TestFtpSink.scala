@@ -18,11 +18,11 @@ package com.island.ohara.connector.ftp
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.{ConnectorClient, FtpClient}
+import com.island.ohara.client.{WorkerClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{ByteUtil, CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
+import com.island.ohara.kafka.{Consumer, BrokerClient, Producer}
 import org.junit.{After, Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
@@ -40,7 +40,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
   }
 
   def setupData(topicName: String): Unit = {
-    val client = KafkaClient.of(testUtil.brokersConnProps)
+    val client = BrokerClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
@@ -70,7 +70,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
 
 class TestFtpSink extends With3Brokers3Workers with Matchers {
 
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val TOPIC = TestFtpSink.TOPIC
 
@@ -123,7 +123,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       Column.of("b", DataType.INT, 2),
       Column.of("c", DataType.BOOLEAN, 1)
     )
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -145,14 +145,14 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(2).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(0).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testHeader(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -175,14 +175,14 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testHeaderWithoutSchema(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -204,7 +204,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
@@ -216,7 +216,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       Column.of("b", "bb", DataType.INT, 2),
       Column.of("c", "cc", DataType.BOOLEAN, 3)
     )
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -239,14 +239,14 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testNormalCase(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -268,14 +268,14 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -296,14 +296,14 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testPartialColumns(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -325,14 +325,14 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items.length shouldBe data.size - 1
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testUnmatchedSchema(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSink])
@@ -348,9 +348,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       FtpUtil.checkConnector(testUtil, connectorName)
       TimeUnit.SECONDS.sleep(5)
       ftpClient.listFileNames(props.output).size shouldBe 0
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(workerClient)
 }

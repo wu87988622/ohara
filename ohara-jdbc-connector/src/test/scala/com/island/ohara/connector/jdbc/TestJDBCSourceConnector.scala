@@ -19,7 +19,7 @@ package com.island.ohara.connector.jdbc
 import java.sql.Statement
 
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.client.{WorkerClient, DatabaseClient}
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.ReleaseOnce
 import com.island.ohara.connector.jdbc.source._
@@ -38,7 +38,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
@@ -66,7 +66,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     val connectorName: String = "JDBC-Source-Connector-Test"
     val topicName: String = "topic-test-1"
 
-    connectorClient
+    workerClient
       .connectorCreator()
       .name(connectorName)
       .connectorClass(classOf[JDBCSourceConnector])
@@ -111,7 +111,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def tearDown(): Unit = ReleaseOnce.close(connectorClient)
+  def tearDown(): Unit = ReleaseOnce.close(workerClient)
   private[this] val props = JDBCSourceConnectorConfig(
     Map(DB_URL -> db.url,
         DB_USERNAME -> db.user,

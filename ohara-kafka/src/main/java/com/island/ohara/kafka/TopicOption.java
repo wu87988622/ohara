@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * get TopicOption from kafka client
  *
- * @see KafkaClient;
+ * @see BrokerClient ;
  */
 public class TopicOption {
   private final String key;

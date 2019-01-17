@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.ConnectorClient
+import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
 import com.island.ohara.client.configurator.v0.PipelineApi._
@@ -29,7 +29,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 private[configurator] object PipelineRoute {
   private[this] def toRes(id: String, request: PipelineCreationRequest)(implicit store: Store,
-                                                                        connectorClient: ConnectorClient) =
+                                                                        workerClient: WorkerClient) =
     Pipeline(id, request.name, request.rules, abstracts(request.rules), CommonUtil.current())
 
   private[this] def checkExist(ids: Set[String])(implicit store: Store): Unit = {
@@ -40,7 +40,7 @@ private[configurator] object PipelineRoute {
   }
 
   private[this] def abstracts(rules: Map[String, String])(implicit store: Store,
-                                                          connectorClient: ConnectorClient): Seq[ObjectAbstract] = {
+                                                          workerClient: WorkerClient): Seq[ObjectAbstract] = {
     val keys = rules.keys.filterNot(_ == UNKNOWN).toSet
     checkExist(keys)
     val values = rules.values.filterNot(_ == UNKNOWN).toSet
@@ -53,7 +53,7 @@ private[configurator] object PipelineRoute {
           ObjectAbstract(data.id,
                          data.name,
                          data.kind,
-                         if (connectorClient.exist(data.id)) Some(connectorClient.status(data.id).connector.state)
+                         if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
                          else None,
                          data.lastModified)
         case data => ObjectAbstract(data.id, data.name, data.kind, None, data.lastModified)
@@ -76,10 +76,10 @@ private[configurator] object PipelineRoute {
     pipeline
   }
 
-  private[this] def update(pipeline: Pipeline)(implicit store: Store, connectorClient: ConnectorClient): Pipeline =
+  private[this] def update(pipeline: Pipeline)(implicit store: Store, workerClient: WorkerClient): Pipeline =
     pipeline.copy(objects = abstracts(pipeline.rules))
 
-  def apply(implicit store: Store, connectorClient: ConnectorClient): server.Route =
+  def apply(implicit store: Store, workerClient: WorkerClient): server.Route =
     RouteUtil.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfAdd = (id: String, request: PipelineCreationRequest) => verifyRules(toRes(id, request)),

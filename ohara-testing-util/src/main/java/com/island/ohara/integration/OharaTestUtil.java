@@ -77,11 +77,6 @@ public class OharaTestUtil extends ReleaseOnce {
         .orElseThrow(() -> new RuntimeException("Workers do not exist"));
   }
 
-  // TODO ohara-common is scala module. This class for java not support apply method
-  /*public ConnectorClient connectorClient() {
-    // throw exception if there is no worker cluster
-  }*/
-
   public Hdfs hdfs() {
     if (localHdfs == null) localHdfs = Hdfs.of();
     return localHdfs;

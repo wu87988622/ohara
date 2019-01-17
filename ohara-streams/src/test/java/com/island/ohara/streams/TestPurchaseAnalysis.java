@@ -20,9 +20,9 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.integration.With3Brokers;
+import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.ConsumerRecord;
-import com.island.ohara.kafka.KafkaClient;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.ostream.KeyValue;
 import com.island.ohara.streams.ostream.Serdes;
@@ -49,7 +49,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
   private static final String orderTopic = "orders";
   private static final String userTopic = "users";
   private static final String orderuser_repartition = "orderuser-repartition-by-item";
-  private final KafkaClient client = KafkaClient.of(testUtil().brokersConnProps());
+  private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final Producer<String, Row> producer =
       Producer.builder().brokers(client.brokers()).build(Serializer.STRING, Serializer.ROW);
 

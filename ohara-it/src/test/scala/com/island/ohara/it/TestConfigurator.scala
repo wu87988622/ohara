@@ -20,13 +20,13 @@ import java.time.Duration
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, InfoApi, TopicApi}
-import com.island.ohara.client.{ConnectorClient, FtpClient}
+import com.island.ohara.client.{WorkerClient, FtpClient}
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce, VersionUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
+import com.island.ohara.kafka.{Consumer, BrokerClient, Producer}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -35,15 +35,15 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class TestConfigurator extends With3Brokers3Workers with Matchers {
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val configurator =
     Configurator
       .builder()
       .hostname("localhost")
       .port(0)
-      .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
-      .connectClient(ConnectorClient(testUtil.workersConnProps))
+      .brokerClient(BrokerClient.of(testUtil.brokersConnProps))
+      .connectClient(WorkerClient(testUtil.workersConnProps))
       .build()
 
   private[this] val connectorAccess = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -129,7 +129,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       Await.result(connectorAccess.stop(source.id), 10 seconds)
       Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(source.id),
                    10 seconds) shouldBe source
-    } finally if (connectorClient.exist(source.id)) connectorClient.delete(source.id)
+    } finally if (workerClient.exist(source.id)) workerClient.delete(source.id)
 
   }
 
@@ -199,7 +199,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         Await.result(connectorAccess.stop(sink.id), 10 seconds)
         Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(sink.id),
                      10 seconds) shouldBe sink
-      } finally if (connectorClient.exist(sink.id)) connectorClient.delete(sink.id)
+      } finally if (workerClient.exist(sink.id)) workerClient.delete(sink.id)
     } finally ftpClient.close()
   }
 
@@ -223,7 +223,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(workerClient)
     ReleaseOnce.close(configurator)
   }
 

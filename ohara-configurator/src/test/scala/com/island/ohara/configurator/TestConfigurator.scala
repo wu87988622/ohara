@@ -25,11 +25,11 @@ import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, Rdb
 import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicInfo}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.client.{WorkerClient, DatabaseClient}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.VersionUtil
 import com.island.ohara.integration.WithBrokerWorker
-import com.island.ohara.kafka.{KafkaClient, KafkaUtil}
+import com.island.ohara.kafka.{BrokerClient, KafkaUtil}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -46,8 +46,8 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
     .builder()
     .hostname("localhost")
     .port(0)
-    .kafkaClient(KafkaClient.of(testUtil.brokersConnProps))
-    .connectClient(ConnectorClient(testUtil.workersConnProps))
+    .brokerClient(BrokerClient.of(testUtil.brokersConnProps))
+    .connectClient(WorkerClient(testUtil.workersConnProps))
     .build()
 
   private[this] val configurator1 =

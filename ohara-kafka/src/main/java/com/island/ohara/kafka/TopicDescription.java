@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * get TopicDescription from kafka client
  *
- * @see KafkaClient;
+ * @see BrokerClient ;
  */
 public class TopicDescription {
   private final String name;

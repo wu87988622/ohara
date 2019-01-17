@@ -27,12 +27,12 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.{ConnectorClient, FtpClient}
+import com.island.ohara.client.{FtpClient, WorkerClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.configurator.FakeConnectorClient
+import com.island.ohara.configurator.FakeWorkerClient
 import com.island.ohara.configurator.endpoint.Validator._
-import com.island.ohara.kafka.{ConsumerRecord, KafkaClient}
+import com.island.ohara.kafka.{BrokerClient, ConsumerRecord}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.common.config.ConfigDef
@@ -86,12 +86,12 @@ object Validator {
   private[endpoint] val TARGET_RDB = "rdb"
   private[endpoint] val TARGET_FTP = "ftp"
 
-  def run(connectorClient: ConnectorClient,
-          kafkaClient: KafkaClient,
+  def run(workerClient: WorkerClient,
+          brokerClient: BrokerClient,
           request: RdbValidationRequest,
           taskCount: Int): Future[Seq[ValidationReport]] = run(
-    connectorClient,
-    kafkaClient,
+    workerClient,
+    brokerClient,
     TARGET_RDB,
     ValidationApi.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
@@ -99,12 +99,12 @@ object Validator {
     taskCount
   )
 
-  def run(connectorClient: ConnectorClient,
-          kafkaClient: KafkaClient,
+  def run(workerClient: WorkerClient,
+          brokerClient: BrokerClient,
           request: HdfsValidationRequest,
           taskCount: Int): Future[Seq[ValidationReport]] = run(
-    connectorClient,
-    kafkaClient,
+    workerClient,
+    brokerClient,
     TARGET_HDFS,
     ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
@@ -112,12 +112,12 @@ object Validator {
     taskCount
   )
 
-  def run(connectorClient: ConnectorClient,
-          kafkaClient: KafkaClient,
+  def run(workerClient: WorkerClient,
+          brokerClient: BrokerClient,
           request: FtpValidationRequest,
           taskCount: Int): Future[Seq[ValidationReport]] = run(
-    connectorClient,
-    kafkaClient,
+    workerClient,
+    brokerClient,
     TARGET_FTP,
     ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) =>
@@ -134,25 +134,25 @@ object Validator {
   /**
     * a helper method to run the validation process quickly.
     *
-    * @param connectorClient connector client
-    * @param kafkaClient kafka client
+    * @param workerClient connector client
+    * @param brokerClient kafka client
     * @param config config used to test
     * @param taskCount the number from task. It implies how many worker nodes should be verified
     * @return reports
     */
-  private[this] def run(connectorClient: ConnectorClient,
-                        kafkaClient: KafkaClient,
+  private[this] def run(workerClient: WorkerClient,
+                        brokerClient: BrokerClient,
                         target: String,
                         config: Map[String, String],
-                        taskCount: Int): Future[Seq[ValidationReport]] = connectorClient match {
+                        taskCount: Int): Future[Seq[ValidationReport]] = workerClient match {
     // we expose the fake component...ugly way (TODO) by chia
-    case _: FakeConnectorClient =>
+    case _: FakeWorkerClient =>
       Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtil.hostname, "a fake report", true)))
     case _ =>
       Future {
         val requestId: String = CommonUtil.uuid()
         val validationName = s"Validator-${CommonUtil.uuid()}"
-        connectorClient
+        workerClient
           .connectorCreator()
           .name(validationName)
           .disableConverter()
@@ -164,7 +164,7 @@ object Validator {
           .config(TARGET, target)
           .create()
         // TODO: receiving all messages may be expensive...by chia
-        val client = kafkaClient
+        val client = brokerClient
           .consumerBuilder()
           .offsetFromBegin()
           .topicName(INTERNAL_TOPIC)
@@ -186,7 +186,7 @@ object Validator {
             case report: ValidationReport => report
             case _                        => throw new IllegalStateException(s"Unknown report")
           })
-        finally connectorClient.delete(validationName)
+        finally workerClient.delete(validationName)
       }
   }
 

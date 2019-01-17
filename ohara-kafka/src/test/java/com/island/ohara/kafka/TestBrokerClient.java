@@ -30,11 +30,11 @@ import org.apache.kafka.common.errors.TopicExistsException;
 import org.junit.After;
 import org.junit.Test;
 
-public class TestKafkaClient extends With3Brokers {
+public class TestBrokerClient extends With3Brokers {
   private final Duration timeout = Duration.ofSeconds(10);
   private final OharaTestUtil testUtil = testUtil();
 
-  private final KafkaClient client = KafkaClient.of(testUtil.brokersConnProps());
+  private final BrokerClient client = BrokerClient.of(testUtil.brokersConnProps());
 
   @Test
   public void testAddPartitions() {

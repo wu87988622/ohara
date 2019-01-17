@@ -22,11 +22,11 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{ConnectorClient, DatabaseClient}
+import com.island.ohara.client.{WorkerClient, DatabaseClient}
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.integration._
-import com.island.ohara.kafka.KafkaClient
+import com.island.ohara.kafka.BrokerClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -218,8 +218,8 @@ object Backend {
     }
     val configurator = Configurator
       .builder()
-      .kafkaClient(KafkaClient.of(brokers.connectionProps))
-      .connectClient(ConnectorClient(workers.connectionProps))
+      .brokerClient(BrokerClient.of(brokers.connectionProps))
+      .connectClient(WorkerClient(workers.connectionProps))
       .hostname(CommonUtil.anyLocalAddress)
       .port(ports.configuratorPort)
       .extraRoute(dbRoute ~ servicesRoute)

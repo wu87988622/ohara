@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.{ConnectorClient, FtpClient}
+import com.island.ohara.client.{WorkerClient, FtpClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers3Workers
@@ -44,7 +44,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     row.cells().asScala.map(_.value.toString).mkString(",")
   })
 
-  private[this] val connectorClient = ConnectorClient(testUtil.workersConnProps)
+  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val ftpClient = FtpClient
     .builder()
@@ -137,7 +137,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testDuplicateInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -170,14 +170,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       records = pollData(topicName, 10 second)
       records.size shouldBe data.length
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testColumnRename(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -215,14 +215,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row0.cell(2).name shouldBe "newSingle"
       row1.cell(2).value shouldBe rows(1).cell(2).value
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testObjectType(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -254,14 +254,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -288,7 +288,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
 
   }
 
@@ -296,7 +296,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testNormalCaseWithoutSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -323,14 +323,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
       row1.cell(2) shouldBe Cell.of(rows(1).cell(2).name, rows(1).cell(2).value.toString)
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testPartialColumns(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -356,14 +356,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testUnmatchedSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -384,14 +384,14 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // add a file to input again
       setupInput()
       checkFileCount(0, 0, 2)
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
   }
 
   @Test
   def testInvalidInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -408,7 +408,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -431,7 +431,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    connectorClient
+    workerClient
       .connectorCreator()
       .topic(topicName)
       .connectorClass(classOf[FtpSource])
@@ -458,13 +458,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally connectorClient.delete(connectorName)
+    } finally workerClient.delete(connectorName)
 
   }
 
   @After
   def tearDown(): Unit = {
-    ReleaseOnce.close(connectorClient)
+    ReleaseOnce.close(workerClient)
     ReleaseOnce.close(ftpClient)
   }
 }

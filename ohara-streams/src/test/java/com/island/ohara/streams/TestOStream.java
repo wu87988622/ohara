@@ -20,7 +20,7 @@ import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 import static com.island.ohara.streams.DataImporter.createKafkaProducer;
 
 import com.island.ohara.integration.With3Brokers;
-import com.island.ohara.kafka.KafkaClient;
+import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.streams.ostream.Serdes;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
@@ -44,7 +44,7 @@ public class TestOStream extends With3Brokers {
   private final String fromTopic = "stream-in";
   private final String toTopic = "stream-out";
 
-  private final KafkaClient client = KafkaClient.of(testUtil().brokersConnProps());
+  private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final String simple_string = "this is a test sentence.";
   private final KafkaProducer<String, String> producer = createKafkaProducer(client.brokers());
   private final KafkaConsumer<String, String> consumer = createKafkaConsumer(client.brokers());

@@ -37,7 +37,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  *
  * <p>Every method with remote call need to overload in Default Timeout
  */
-public interface KafkaClient extends Releasable {
+public interface BrokerClient extends Releasable {
   Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
 
   TopicCreator topicCreator();
@@ -91,8 +91,8 @@ public interface KafkaClient extends Releasable {
 
   ConsumerBuilder consumerBuilder();
 
-  static KafkaClient of(String outerbrokers) {
-    return new KafkaClient() {
+  static BrokerClient of(String outerbrokers) {
+    return new BrokerClient() {
 
       private final String brokers = outerbrokers;
 
@@ -248,7 +248,7 @@ public interface KafkaClient extends Releasable {
        * kafka.AdminClient.
        *
        * @param brokers the kafka brokers information
-       * @return a impl from KafkaClient
+       * @return a impl from BrokerClient
        */
       private Properties toAdminProps(String brokers) {
         Properties adminProps = new Properties();

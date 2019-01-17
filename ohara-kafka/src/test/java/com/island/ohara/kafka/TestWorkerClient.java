@@ -16,8 +16,8 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.client.ConnectorClient;
-import com.island.ohara.client.ConnectorClient$;
+import com.island.ohara.client.WorkerClient;
+import com.island.ohara.client.WorkerClient$;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.ConnectorState;
 import com.island.ohara.common.data.Row;
@@ -29,19 +29,19 @@ import java.time.Duration;
 import java.util.List;
 import org.junit.Test;
 
-public class TestConnectorClient extends With3Brokers3Workers {
+public class TestWorkerClient extends With3Brokers3Workers {
   private final OharaTestUtil testUtil = testUtil();
 
-  private final ConnectorClient connectorClient =
-      ConnectorClient$.MODULE$.apply(testUtil.workersConnProps());
+  private final WorkerClient workerClient =
+      WorkerClient$.MODULE$.apply(testUtil.workersConnProps());
   //  @Ignore
   @Test
   public void testExist() {
     String topicName = methodName();
     String connectorName = methodName();
-    assertFalse(connectorClient.exist(connectorName));
+    assertFalse(workerClient.exist(connectorName));
 
-    connectorClient
+    workerClient
         .connectorCreator()
         .topic(topicName)
         .connectorClass(MyConnector.class)
@@ -51,9 +51,9 @@ public class TestConnectorClient extends With3Brokers3Workers {
         .create();
 
     try {
-      CommonUtil.await(() -> connectorClient.exist(connectorName), Duration.ofSeconds(50));
+      CommonUtil.await(() -> workerClient.exist(connectorName), Duration.ofSeconds(50));
     } finally {
-      connectorClient.delete(connectorName);
+      workerClient.delete(connectorName);
     }
   }
 
@@ -61,9 +61,9 @@ public class TestConnectorClient extends With3Brokers3Workers {
   public void testExistOnUnrunnableConnector() {
     String topicName = methodName();
     String connectorName = methodName();
-    assertFalse(connectorClient.exist(connectorName));
+    assertFalse(workerClient.exist(connectorName));
 
-    connectorClient
+    workerClient
         .connectorCreator()
         .topic(topicName)
         .connectorClass(UnrunnableConnector.class)
@@ -73,9 +73,9 @@ public class TestConnectorClient extends With3Brokers3Workers {
         .create();
 
     try {
-      CommonUtil.await(() -> connectorClient.exist(connectorName), Duration.ofSeconds(50));
+      CommonUtil.await(() -> workerClient.exist(connectorName), Duration.ofSeconds(50));
     } finally {
-      connectorClient.delete(connectorName);
+      workerClient.delete(connectorName);
     }
   }
 
@@ -83,7 +83,7 @@ public class TestConnectorClient extends With3Brokers3Workers {
   public void testPauseAndResumeSource() {
     String topicName = methodName();
     String connectorName = methodName();
-    connectorClient
+    workerClient
         .connectorCreator()
         .topic(topicName)
         .connectorClass(MyConnector.class)
@@ -91,7 +91,7 @@ public class TestConnectorClient extends With3Brokers3Workers {
         .numberOfTasks(1)
         .disableConverter()
         .create();
-    CommonUtil.await(() -> connectorClient.exist(connectorName), Duration.ofSeconds(50));
+    CommonUtil.await(() -> workerClient.exist(connectorName), Duration.ofSeconds(50));
     try (Consumer<byte[], Row> consumer =
         Consumer.builder()
             .topicName(topicName)
@@ -105,9 +105,9 @@ public class TestConnectorClient extends With3Brokers3Workers {
       result.forEach(x -> assertEquals(x.value().get(), ROW));
 
       // pause connector
-      connectorClient.pause(connectorName);
+      workerClient.pause(connectorName);
       CommonUtil.await(
-          () -> connectorClient.status(connectorName).connector().state() == ConnectorState.PAUSED,
+          () -> workerClient.status(connectorName).connector().state() == ConnectorState.PAUSED,
           Duration.ofSeconds(50));
 
       // try to receive all data from topic...10 seconds should be enough in this case;
@@ -119,9 +119,9 @@ public class TestConnectorClient extends With3Brokers3Workers {
       assertEquals(result.size(), 0);
 
       // resume connector
-      connectorClient.resume(connectorName);
+      workerClient.resume(connectorName);
       CommonUtil.await(
-          () -> connectorClient.status(connectorName).connector().state() == ConnectorState.RUNNING,
+          () -> workerClient.status(connectorName).connector().state() == ConnectorState.RUNNING,
           Duration.ofSeconds(50),
           Duration.ofSeconds(2),
           true);
@@ -130,7 +130,7 @@ public class TestConnectorClient extends With3Brokers3Workers {
       result = consumer.poll(Duration.ofSeconds(20), 1);
       assertNotEquals(result.size(), 0);
     } finally {
-      connectorClient.delete(connectorName);
+      workerClient.delete(connectorName);
     }
   }
 

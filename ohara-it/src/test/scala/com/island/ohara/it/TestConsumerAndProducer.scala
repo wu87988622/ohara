@@ -21,7 +21,7 @@ import java.time.Duration
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.WithBroker
-import com.island.ohara.kafka.{Consumer, KafkaClient, Producer}
+import com.island.ohara.kafka.{Consumer, BrokerClient, Producer}
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -32,7 +32,7 @@ class TestConsumerAndProducer extends WithBroker with Matchers {
   @Test
   def testSendAndReceiveString(): Unit = {
     val topicName = methodName
-    val client = KafkaClient.of(testUtil.brokersConnProps)
+    val client = BrokerClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
@@ -61,7 +61,7 @@ class TestConsumerAndProducer extends WithBroker with Matchers {
     val topicName = methodName
     val data = Row.of(Cell.of("a", "abc"), Cell.of("b", 123), Cell.of("c", true))
 
-    val client = KafkaClient.of(testUtil.brokersConnProps)
+    val client = BrokerClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
