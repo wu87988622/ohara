@@ -48,6 +48,14 @@ class WorkerNewModal extends React.Component {
     }
   };
 
+  /**
+   * 只允許數字、字母大小寫
+   *
+   * @param value
+   * @returns {string}
+   */
+  formatName = value => (value === undefined ? '' : value.replace(/[^0-9a-zA-Z]/g, ''));
+
   render() {
     const { activeModal } = this.state;
     return (
@@ -89,9 +97,10 @@ class WorkerNewModal extends React.Component {
                         name="name"
                         component={InputField}
                         width="24rem"
-                        placeholder="connect-cluster-00"
+                        placeholder="cluster00"
                         data-testid="name-input"
                         disabled={submitting}
+                        format={this.formatName}
                       />
                     </s.FormCol>
                     <s.FormCol width="8rem">
