@@ -19,7 +19,7 @@ MAINTAINER sam cho <sam@is-land.com.tw>
 
 ARG KAFKA_VERSION=1.0.2
 ARG LOG_VERSION=1.7.25
-ARG GRADLE_VERSION=4.10.3
+ARG GRADLE_VERSION=5.1.1
 
 RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
  mkdir -p /opt/lib/streamapp && \

@@ -37,7 +37,7 @@ RUN mv kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/
 RUN echo "$KAFKA_VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
 
 # download gradle
-ARG GRADLE_VERSION=4.10.3
+ARG GRADLE_VERSION=5.1.1
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip

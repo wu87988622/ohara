@@ -27,7 +27,7 @@ RUN yum install -y \
 ENV JAVA_HOME=/usr/lib/jvm/java
 
 # download gradle
-ARG GRADLE_VERSION=4.10.3
+ARG GRADLE_VERSION=5.1.1
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
 RUN unzip gradle-$GRADLE_VERSION-bin.zip
