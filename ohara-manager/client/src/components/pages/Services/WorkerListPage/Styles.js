@@ -12,12 +12,6 @@ const Wrapper = styled.div`
   margin: auto;
 `;
 
-const TopWrapper = styled.div`
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-`;
-
 const NewNodeBtn = styled(Button)`
   margin-left: auto;
 `;
@@ -57,4 +51,4 @@ const Icon = styled.i`
   }
 `;
 
-export { Wrapper, TopWrapper, NewNodeBtn, Table, Link, Icon };
+export { Wrapper, NewNodeBtn, Table, Link, Icon };

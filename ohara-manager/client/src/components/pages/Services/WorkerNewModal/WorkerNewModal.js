@@ -8,7 +8,7 @@ import * as _ from 'utils/commonUtils';
 import * as workerApis from 'apis/workerApis';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
-import { FormGroup, Label } from 'common/Form';
+import { Label } from 'common/Form';
 import * as MESSAGES from 'constants/messages';
 import InputField from 'pages/NodePage/InputField';
 
@@ -65,7 +65,7 @@ class WorkerNewModal extends React.Component {
 
           return (
             <Modal
-              title="New Worker Service"
+              title="New connect service"
               isActive={this.props.isActive}
               width="600px"
               handleCancel={() => {
@@ -75,48 +75,51 @@ class WorkerNewModal extends React.Component {
                 }
               }}
               handleConfirm={handleSubmit}
-              confirmBtnText="Save"
+              confirmBtnText="Add"
               isConfirmDisabled={submitting || pristine}
               isConfirmWorking={submitting}
               showActions={true}
             >
               <form onSubmit={handleSubmit}>
                 <Box shadow={false}>
-                  <FormGroup data-testid="name">
-                    <Label>Service name</Label>
-                    <Field
-                      name="name"
-                      component={InputField}
-                      width="14rem"
-                      placeholder="connect-cluster-00"
-                      data-testid="name-input"
-                      disabled={submitting}
-                    />
-                  </FormGroup>
-                  <FormGroup data-testid="client-port">
-                    <Label>Port</Label>
-                    <Field
-                      name="clientPort"
-                      component={InputField}
-                      type="number"
-                      min={0}
-                      max={65535}
-                      width="14rem"
-                      placeholder="1021"
-                      data-testid="client-port-input"
-                      disabled={submitting}
-                    />
-                  </FormGroup>
                   <s.FormRow>
+                    <s.FormCol width="26rem">
+                      <Label>Service</Label>
+                      <Field
+                        name="name"
+                        component={InputField}
+                        width="24rem"
+                        placeholder="connect-cluster-00"
+                        data-testid="name-input"
+                        disabled={submitting}
+                      />
+                    </s.FormCol>
+                    <s.FormCol width="8rem">
+                      <Label>Port</Label>
+                      <Field
+                        name="clientPort"
+                        component={InputField}
+                        type="number"
+                        min={0}
+                        max={65535}
+                        width="8rem"
+                        placeholder="1021"
+                        data-testid="client-port-input"
+                        disabled={submitting}
+                      />
+                    </s.FormCol>
+                  </s.FormRow>
+
+                  <s.FormRow margin="1rem 0 0 0">
                     <s.FormCol width="18rem">
                       <Label>Node List</Label>
-                      <s.List width="14rem">
+                      <s.List width="16rem">
                         {values.nodeNames &&
                           values.nodeNames.map(nodeName => (
                             <s.ListItem key={nodeName}>{nodeName}</s.ListItem>
                           ))}
                         <s.AppendButton
-                          text="Append node"
+                          text="Add node"
                           handleClick={e => {
                             e.preventDefault();
                             this.setState({ activeModal: SELECT_NODE_MODAL });
@@ -125,7 +128,7 @@ class WorkerNewModal extends React.Component {
                         />
                       </s.List>
                     </s.FormCol>
-                    <s.FormCol width="18rem">
+                    <s.FormCol width="16rem">
                       <Label>Plugin List</Label>
                       <s.List width="16rem">
                         {values.plugins &&
@@ -135,7 +138,7 @@ class WorkerNewModal extends React.Component {
                             </s.ListItem>
                           ))}
                         <s.AppendButton
-                          text="Append plugin"
+                          text="Add plugin"
                           handleClick={e => {
                             e.preventDefault();
                             this.setState({ activeModal: SELECT_PLUGIN_MODAL });

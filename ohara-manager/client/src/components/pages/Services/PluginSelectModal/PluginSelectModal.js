@@ -13,7 +13,7 @@ import * as MESSAGES from 'constants/messages';
 import * as s from './Styles';
 
 class PluginSelectModal extends React.Component {
-  headers = ['#', 'Plugin Name', ''];
+  headers = ['#', 'PLUGIN', ''];
 
   static propTypes = {
     isActive: PropTypes.bool.isRequired,
@@ -154,12 +154,12 @@ class PluginSelectModal extends React.Component {
     const { jars } = this.state;
     return (
       <Modal
-        title="Select Plugins"
+        title="Add plugin"
         isActive={this.props.isActive}
         width="480px"
         handleCancel={this.handleClose}
         handleConfirm={this.handleConfirm}
-        confirmBtnText="Save"
+        confirmBtnText="Add"
         isConfirmDisabled={false}
         showActions={false}
       >

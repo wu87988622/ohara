@@ -11,7 +11,7 @@ import { SERVICES } from 'constants/documentTitles';
 import BrokerListPage from './BrokerListPage';
 import ZookeeperListPage from './ZookeeperListPage';
 import WorkerListPage from './WorkerListPage';
-import WorkerEditPage from './WorkerEditPage';
+import WorkerDetailPage from './WorkerDetailPage';
 import * as s from './Styles';
 
 const BROKERS = 'brokers';
@@ -59,7 +59,7 @@ class ServicesPage extends React.Component {
         return <ZookeeperListPage />;
       case WORKERS:
         if (clusterName) {
-          return <WorkerEditPage workers={workers} name={clusterName} />;
+          return <WorkerDetailPage workers={workers} name={clusterName} />;
         }
         return (
           <WorkerListPage
@@ -91,7 +91,7 @@ class ServicesPage extends React.Component {
                 <s.Divider />
                 <s.Link to={`/services/${ZOOKEEPERS}`}>Zookeeper</s.Link>
                 <s.Divider />
-                <s.Link to={`/services/${WORKERS}`}>Connect Worker</s.Link>
+                <s.Link to={`/services/${WORKERS}`}>Connect</s.Link>
                 {workers &&
                   workers.map(worker => (
                     <s.SubLink

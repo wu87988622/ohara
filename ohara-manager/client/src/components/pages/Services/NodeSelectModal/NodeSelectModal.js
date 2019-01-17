@@ -10,7 +10,7 @@ import { Box } from 'common/Layout';
 import * as s from './Styles';
 
 class NodeSelectModal extends React.Component {
-  headers = ['#', 'HOST NAME', 'PORT'];
+  headers = ['#', 'NODE NAME', 'PORT'];
 
   static propTypes = {
     isActive: PropTypes.bool.isRequired,
@@ -117,12 +117,12 @@ class NodeSelectModal extends React.Component {
     const { nodes } = this.state;
     return (
       <Modal
-        title="Select Nodes"
+        title="Add node"
         isActive={this.props.isActive}
         width="400px"
         handleCancel={this.handleClose}
         handleConfirm={this.handleConfirm}
-        confirmBtnText="Save"
+        confirmBtnText="Add"
         isConfirmDisabled={false}
         showActions={false}
       >

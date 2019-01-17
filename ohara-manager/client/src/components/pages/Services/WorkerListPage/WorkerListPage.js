@@ -4,6 +4,7 @@ import { join } from 'lodash';
 
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
+import { FormGroup } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import TableLoader from 'common/Loader';
 
@@ -25,7 +26,7 @@ class WorkerListPage extends React.Component {
     isLoading: PropTypes.bool,
   };
 
-  headers = ['Cluster Name (Service)', 'Nodes', 'Topics'];
+  headers = ['SERVICES', 'NODES', 'TOPICS'];
 
   state = {
     isModalOpen: false,
@@ -36,18 +37,18 @@ class WorkerListPage extends React.Component {
     const { isModalOpen } = this.state;
     return (
       <React.Fragment>
-        <s.TopWrapper>
-          <H2>Connect Worker Services</H2>
-          <s.NewNodeBtn
-            theme={primaryBtn}
-            text="Add new cluster"
-            data-testid="new-cluster"
-            handleClick={() => {
-              this.setState({ isModalOpen: true });
-            }}
-          />
-        </s.TopWrapper>
         <Box>
+          <FormGroup isInline>
+            <H2>Services > Connect</H2>
+            <s.NewNodeBtn
+              theme={primaryBtn}
+              text="New Cluster"
+              data-testid="new-cluster"
+              handleClick={() => {
+                this.setState({ isModalOpen: true });
+              }}
+            />
+          </FormGroup>
           {isLoading ? (
             <TableLoader />
           ) : (
