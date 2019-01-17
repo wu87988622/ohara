@@ -101,8 +101,6 @@ the uber jar is under ohara-assembly/build/libs/
 ### Authors
 
 * **Vito Jeng (vito@is-land.com.tw)** - leader
-* **Yung-An He (stana@is-land.com.tw)** - manager
-* **Jimin Hsieh (jimin.hsieh@is-land.com.tw)** - committer
 * **Jack Yang (jack@is-land.com.tw)** - committer
 * **Chia-Ping Tsai (chia7712@is-land.com.tw)** - committer
 * **Joshua_Lin (joshua@is-land.com.tw)** - committer
