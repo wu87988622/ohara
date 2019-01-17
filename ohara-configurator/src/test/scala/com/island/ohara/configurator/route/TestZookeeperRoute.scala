@@ -102,7 +102,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     )
     assert(request0, Await.result(access.add(request0), 30 seconds))
     val request1 = ZookeeperClusterCreationRequest(
-      name = methodName() + "-2",
+      name = methodName() + "2",
       imageName = Some("abcdef"),
       clientPort = Some(123),
       electionPort = Some(456),
@@ -186,6 +186,19 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     // we don't support to remove zk node at runtime
     an[IllegalArgumentException] should be thrownBy Await.result(access.removeNode(cluster.name, nodeNames.head),
                                                                  30 seconds)
+  }
+
+  @Test
+  def testInvalidClusterName(): Unit = {
+    val request = ZookeeperClusterCreationRequest(
+      name = "abc def",
+      imageName = Some("abcdef"),
+      clientPort = Some(123),
+      electionPort = Some(456),
+      peerPort = Some(1345),
+      nodeNames = nodeNames
+    )
+    an[IllegalArgumentException] should be thrownBy Await.result(access.add(request), 30 seconds)
   }
 
   @After

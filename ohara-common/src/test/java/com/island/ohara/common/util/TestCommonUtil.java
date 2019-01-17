@@ -300,4 +300,21 @@ public class TestCommonUtil extends SmallTest {
       return false;
     }
   }
+
+  @Test
+  public void testOnlyNumberAndChar() {
+    Assert.assertTrue(CommonUtil.onlyNumberAndChar("1"));
+    Assert.assertTrue(CommonUtil.onlyNumberAndChar("1a"));
+    Assert.assertTrue(CommonUtil.onlyNumberAndChar("1cD"));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1-"));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1a."));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD!"));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD~"));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD "));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD+ "));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD-"));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD("));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("@"));
+    Assert.assertFalse(CommonUtil.onlyNumberAndChar("12313_"));
+  }
 }

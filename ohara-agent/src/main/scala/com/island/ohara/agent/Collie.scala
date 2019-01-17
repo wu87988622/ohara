@@ -3,6 +3,7 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
+import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -101,7 +102,7 @@ object Collie {
     def imageName(name: String): ClusterCreator.this.type = imageName(Some(name))
 
     def clusterName(clusterName: String): ClusterCreator.this.type = {
-      this.clusterName = clusterName
+      this.clusterName = CommonUtil.assertOnlyNumberAndChar(clusterName)
       this
     }
 

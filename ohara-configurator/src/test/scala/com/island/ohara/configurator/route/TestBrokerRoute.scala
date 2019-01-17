@@ -155,7 +155,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
     assert(request0, Await.result(access.add(request0), 30 seconds))
     val request1 = BrokerClusterCreationRequest(
-      name = methodName() + "-2",
+      name = methodName() + "2",
       imageName = Some("abcdef"),
       clientPort = Some(123),
       zookeeperClusterName = Some(zkClusterName),
@@ -232,6 +232,18 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
       nodeNames = cluster.nodeNames.filter(_ != nodeNames.last))
+  }
+
+  @Test
+  def testInvalidClusterName(): Unit = {
+    val request = BrokerClusterCreationRequest(
+      name = "--1",
+      imageName = Some("abcdef"),
+      clientPort = Some(123),
+      zookeeperClusterName = Some(zkClusterName),
+      nodeNames = nodeNames
+    )
+    an[IllegalArgumentException] should be thrownBy Await.result(access.add(request), 30 seconds)
   }
 
   @After

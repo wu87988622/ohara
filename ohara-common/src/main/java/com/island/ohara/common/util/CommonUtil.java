@@ -390,6 +390,27 @@ public final class CommonUtil {
     return value;
   }
 
+  /**
+   * We should all love simple string, shouldn't we?
+   *
+   * @param s string
+   * @return true if the string consist of number and char. Otherwise, false
+   */
+  public static boolean onlyNumberAndChar(String s) {
+    return s.matches("^[a-zA-Z0-9]*$");
+  }
+
+  /**
+   * a helper method to "filter" the legal string.
+   *
+   * @param s string
+   * @return origin string
+   */
+  public static String assertOnlyNumberAndChar(String s) {
+    if (onlyNumberAndChar(s)) return s;
+    else throw new IllegalArgumentException("Only number and char are accepted!!! actual:" + s);
+  }
+
   /** disable to instantiate CommonUtil. */
   private CommonUtil() {}
 }
