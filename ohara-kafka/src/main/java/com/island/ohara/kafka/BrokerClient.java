@@ -17,9 +17,20 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.exception.*;
+import com.island.ohara.kafka.exception.CheckedExceptionUtil;
+import com.island.ohara.kafka.exception.ExceptionHandler;
+import com.island.ohara.kafka.exception.OharaException;
+import com.island.ohara.kafka.exception.OharaExecutionException;
+import com.island.ohara.kafka.exception.OharaInterruptedException;
+import com.island.ohara.kafka.exception.OharaTimeoutException;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -34,69 +45,51 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 /**
  * a helper methods used by configurator. It provide many helper method to operate kafka cluster.
+ * TODO: Do we really need a jave version of "broker" APIs? I don't think it is ok to allow user to
+ * touch topic directly... by chia
  *
  * <p>Every method with remote call need to overload in Default Timeout
  */
 public interface BrokerClient extends Releasable {
-  Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
 
   TopicCreator topicCreator();
 
-  boolean exist(String topicName, Duration timeout);
-
-  default boolean exist(String topicName) {
-    return exist(topicName, DEFAULT_TIMEOUT);
-  }
-
-  default boolean nonExist(String topicName, Duration timeout) {
-    return !exist(topicName, timeout);
-  }
+  boolean exist(String topicName);
 
   default boolean nonExist(String topicName) {
-    return !exist(topicName, DEFAULT_TIMEOUT);
+    return !exist(topicName);
   }
 
   /**
    * describe the topic existing in kafka. If the topic doesn't exist, exception will be thrown
    *
    * @param topicName topic name
-   * @param timeout timeout
    * @return TopicDescription
    */
-  TopicDescription topicDescription(String topicName, Duration timeout);
-
   default TopicDescription topicDescription(String topicName) {
-    return topicDescription(topicName, DEFAULT_TIMEOUT);
+    return topicDescriptions(Collections.singletonList(topicName)).get(0);
   }
 
-  void addPartitions(String topicName, int numberOfPartitions, Duration timeout);
-
-  default void addPartitions(String topicName, int numberOfPartitions) {
-    addPartitions(topicName, numberOfPartitions, DEFAULT_TIMEOUT);
+  default List<TopicDescription> topicDescriptions(List<String> topicNames) {
+    return topicDescriptions()
+        .stream()
+        .filter(t -> topicNames.stream().anyMatch(n -> n.equals(t.name())))
+        .collect(Collectors.toList());
   }
 
-  void deleteTopic(String topicName, Duration timeout);
+  List<TopicDescription> topicDescriptions();
 
-  default void deleteTopic(String topicName) {
-    deleteTopic(topicName, DEFAULT_TIMEOUT);
-  }
+  void addPartitions(String topicName, int numberOfPartitions);
 
-  List<String> listTopics(Duration timeout);
+  void deleteTopic(String topicName);
 
-  default List<String> listTopics() {
-    return listTopics(DEFAULT_TIMEOUT);
-  }
+  String connectionProps();
 
-  String brokers();
-
-  ConsumerBuilder consumerBuilder();
-
-  static BrokerClient of(String outerbrokers) {
+  static BrokerClient of(String connectionProps) {
+    Duration timeout = Duration.ofSeconds(30);
     return new BrokerClient() {
 
-      private final String brokers = outerbrokers;
-
-      private final AdminClient admin = AdminClient.create(toAdminProps(outerbrokers));
+      private final AdminClient admin = AdminClient.create(toAdminProps(connectionProps));
 
       private final ExceptionHandler handler =
           ExceptionHandler.creator()
@@ -127,7 +120,7 @@ public interface BrokerClient extends Releasable {
       }
 
       @Override
-      public boolean exist(String topicName, Duration timeout) {
+      public boolean exist(String topicName) {
 
         return CheckedExceptionUtil.wrap(
             () ->
@@ -146,51 +139,60 @@ public interface BrokerClient extends Releasable {
       }
 
       @Override
-      public TopicDescription topicDescription(String topicName, Duration timeout) {
+      public List<TopicDescription> topicDescriptions() {
+        return topicDescriptions(topicNames());
+      }
+
+      @Override
+      public List<TopicDescription> topicDescriptions(List<String> names) {
         return CheckedExceptionUtil.wrap(
             () -> {
               try {
-                ConfigResource configKey = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
-                List<TopicOption> options =
-                    admin
-                        .describeConfigs(Collections.singletonList(configKey))
-                        .values()
-                        .get(configKey)
-                        .get()
-                        .entries()
-                        .stream()
-                        .map(
-                            o ->
-                                new TopicOption(
-                                    o.name(),
-                                    o.value(),
-                                    o.isDefault(),
-                                    o.isSensitive(),
-                                    o.isReadOnly()))
-                        .collect(Collectors.toList());
-
-                org.apache.kafka.clients.admin.TopicDescription topicPartitionInfo =
-                    Optional.ofNullable(
-                            admin
-                                .describeTopics(Collections.singletonList(topicName))
-                                .values()
-                                .get(topicName))
-                        .orElseThrow(
-                            () ->
-                                new IllegalArgumentException(
-                                    String.format("the topic:%s isn't existed", topicName)))
-                        .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-
-                return new TopicDescription(
-                    topicPartitionInfo.name(),
-                    topicPartitionInfo.partitions().size(),
-                    (short) topicPartitionInfo.partitions().get(0).replicas().size(),
-                    options);
-
+                return admin
+                    .describeTopics(names)
+                    .all()
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+                    .entrySet()
+                    .stream()
+                    .map(
+                        entry -> {
+                          ConfigResource configKey =
+                              new ConfigResource(ConfigResource.Type.TOPIC, entry.getKey());
+                          try {
+                            List<TopicOption> options =
+                                admin
+                                    .describeConfigs(Collections.singletonList(configKey))
+                                    .values()
+                                    .get(configKey)
+                                    .get()
+                                    .entries()
+                                    .stream()
+                                    .map(
+                                        o ->
+                                            new TopicOption(
+                                                o.name(),
+                                                o.value(),
+                                                o.isDefault(),
+                                                o.isSensitive(),
+                                                o.isReadOnly()))
+                                    .collect(Collectors.toList());
+                            return new TopicDescription(
+                                entry.getValue().name(),
+                                entry.getValue().partitions().size(),
+                                (short) entry.getValue().partitions().get(0).replicas().size(),
+                                options,
+                                entry.getValue().isInternal());
+                          } catch (InterruptedException e) {
+                            throw new OharaInterruptedException(e);
+                          } catch (ExecutionException e) {
+                            throw new OharaException(e.getCause());
+                          }
+                        })
+                    .collect(Collectors.toList());
               } catch (ExecutionException e) {
                 if (e.getCause() instanceof UnknownTopicOrPartitionException)
                   throw new IllegalArgumentException(
-                      String.format("the %s doesn't exist", topicName));
+                      String.format("the %s doesn't exist", String.join(",", names)));
                 throw e;
               }
             },
@@ -198,8 +200,8 @@ public interface BrokerClient extends Releasable {
       }
 
       @Override
-      public void addPartitions(String topicName, int numberOfPartitions, Duration timeout) {
-        TopicDescription current = topicDescription(topicName, timeout);
+      public void addPartitions(String topicName, int numberOfPartitions) {
+        TopicDescription current = topicDescription(topicName);
         if (current.numberOfPartitions() > numberOfPartitions)
           throw new IllegalArgumentException("Reducing the number from partitions is disallowed");
         if (current.numberOfPartitions() < numberOfPartitions) {
@@ -214,7 +216,7 @@ public interface BrokerClient extends Releasable {
       }
 
       @Override
-      public void deleteTopic(String topicName, Duration timeout) {
+      public void deleteTopic(String topicName) {
         CheckedExceptionUtil.wrap(
             () ->
                 admin
@@ -224,8 +226,7 @@ public interface BrokerClient extends Releasable {
             handler);
       }
 
-      @Override
-      public List<String> listTopics(Duration timeout) {
+      List<String> topicNames() {
         return CheckedExceptionUtil.wrap(
             () ->
                 new ArrayList<>(
@@ -234,13 +235,8 @@ public interface BrokerClient extends Releasable {
       }
 
       @Override
-      public String brokers() {
-        return brokers;
-      }
-
-      @Override
-      public ConsumerBuilder consumerBuilder() {
-        return new ConsumerBuilder().brokers(brokers);
+      public String connectionProps() {
+        return connectionProps;
       }
 
       /**

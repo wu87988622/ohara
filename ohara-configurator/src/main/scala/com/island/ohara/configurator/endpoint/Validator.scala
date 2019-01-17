@@ -32,7 +32,8 @@ import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.FakeWorkerClient
 import com.island.ohara.configurator.endpoint.Validator._
-import com.island.ohara.kafka.{BrokerClient, ConsumerRecord}
+import com.island.ohara.kafka.Consumer.Record
+import com.island.ohara.kafka.{BrokerClient, Consumer}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.common.config.ConfigDef
@@ -164,8 +165,9 @@ object Validator {
           .config(TARGET, target)
           .create()
         // TODO: receiving all messages may be expensive...by chia
-        val client = brokerClient
-          .consumerBuilder()
+        val client = Consumer
+          .builder()
+          .connectionProps(brokerClient.connectionProps())
           .offsetFromBegin()
           .topicName(INTERNAL_TOPIC)
           .build(Serializer.STRING, Serializer.OBJECT)
@@ -173,10 +175,8 @@ object Validator {
           .poll(
             java.time.Duration.ofNanos(TIMEOUT.toNanos),
             taskCount,
-            new java.util.function.Function[util.List[ConsumerRecord[String, Object]],
-                                            util.List[ConsumerRecord[String, Object]]] {
-              override def apply(
-                records: util.List[ConsumerRecord[String, Object]]): util.List[ConsumerRecord[String, Object]] = {
+            new java.util.function.Function[util.List[Record[String, Object]], util.List[Record[String, Object]]] {
+              override def apply(records: util.List[Record[String, Object]]): util.List[Record[String, Object]] = {
                 records.asScala.filter(requestId == _.key.orElse(null)).asJava
               }
             }

@@ -46,7 +46,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
     } finally client.close()
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
     try producer.sender().key(ByteUtil.toBytes("key")).value(data).send(topicName)
     finally producer.close()
 
@@ -54,7 +54,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       .builder()
       .topicName(topicName)
       .offsetFromBegin()
-      .brokers(testUtil.brokersConnProps)
+      .connectionProps(testUtil.brokersConnProps)
       .build(Serializer.BYTES, Serializer.ROW)
     try {
       val records = consumer.poll(java.time.Duration.ofSeconds(60), 1)

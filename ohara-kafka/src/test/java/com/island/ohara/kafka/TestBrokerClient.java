@@ -20,7 +20,6 @@ import com.island.ohara.common.util.ReleaseOnce;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.exception.OharaExecutionException;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +30,6 @@ import org.junit.After;
 import org.junit.Test;
 
 public class TestBrokerClient extends With3Brokers {
-  private final Duration timeout = Duration.ofSeconds(10);
   private final OharaTestUtil testUtil = testUtil();
 
   private final BrokerClient client = BrokerClient.of(testUtil.brokersConnProps());
@@ -47,7 +45,7 @@ public class TestBrokerClient extends With3Brokers {
     // decrease the number
     assertException(IllegalArgumentException.class, () -> client.addPartitions(topicName, 1));
     // alter an nonexistent topic
-    assertException(IllegalArgumentException.class, () -> client.addPartitions("Xxx", 2, timeout));
+    assertException(IllegalArgumentException.class, () -> client.addPartitions("Xxx", 2));
   }
 
   @Test
@@ -66,6 +64,15 @@ public class TestBrokerClient extends With3Brokers {
     assertEquals(topicInfo.name(), topicName);
     assertEquals(topicInfo.numberOfPartitions(), numberOfPartitions);
     assertEquals(topicInfo.numberOfReplications(), numberOfReplications);
+
+    assertEquals(
+        client
+            .topicDescriptions()
+            .stream()
+            .filter(t -> t.name().equals(topicName))
+            .findFirst()
+            .get(),
+        topicInfo);
 
     client.deleteTopic(topicName);
     assertFalse(client.exist(topicName));

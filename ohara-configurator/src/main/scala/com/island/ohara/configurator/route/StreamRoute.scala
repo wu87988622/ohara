@@ -223,7 +223,7 @@ private[configurator] object StreamRoute {
                 //TODO : we hard code here currently. This should be called from agent ...by Sam
                 val dockerCmd =
                   s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
-                     | -e STREAMAPP_SERVERS=${brokerClient.brokers()}
+                     | -e STREAMAPP_SERVERS=${brokerClient.connectionProps()}
                      | -e STREAMAPP_APPID=${data.name}
                      | -e STREAMAPP_FROMTOPIC=${data.fromTopics.head}
                      | -e STREAMAPP_TOTOPIC=${data.toTopics.head}

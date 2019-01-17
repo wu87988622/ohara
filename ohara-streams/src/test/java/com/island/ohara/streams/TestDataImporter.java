@@ -59,11 +59,11 @@ public class TestDataImporter extends With3Brokers {
   @Test
   public void testImportAirlineData() {
 
-    DataImporter.importData(client.brokers(), false);
+    DataImporter.importData(client.connectionProps(), false);
 
     TOPICS.forEach(
         topic -> {
-          Consumer<String, String> consumer = createKafkaConsumer(client.brokers());
+          Consumer<String, String> consumer = createKafkaConsumer(client.connectionProps());
           consumer.subscribe(Collections.singletonList(topic));
 
           try {

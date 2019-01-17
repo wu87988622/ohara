@@ -18,11 +18,12 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.{WorkerClient, FtpClient}
+import com.island.ohara.client.{FtpClient, WorkerClient}
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.{Consumer, ConsumerRecord, KafkaUtil}
+import com.island.ohara.kafka.Consumer.Record
+import com.island.ohara.kafka.{BrokerClient, Consumer}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -44,6 +45,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     row.cells().asScala.map(_.value.toString).mkString(",")
   })
 
+  private[this] val brokerClient = BrokerClient.of(testUtil.brokersConnProps())
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val ftpClient = FtpClient
@@ -97,26 +99,20 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     rebuild(props.completedFolder.get)
     setupInput()
     ftpClient.listFileNames(props.inputFolder).isEmpty shouldBe false
-    KafkaUtil.createTopic(testUtil.brokersConnProps(), methodName(), 1, 1)
-    val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps(), methodName())
+    brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).create(methodName())
+    val topicInfo = brokerClient.topicDescription(methodName())
     topicInfo.numberOfPartitions() shouldBe 1
     topicInfo.numberOfReplications() shouldBe 1
   }
 
-  @After
-  def cleanTopic(): Unit = {
-    if (KafkaUtil.exist(testUtil.brokersConnProps(), methodName()))
-      KafkaUtil.deleteTopic(testUtil.brokersConnProps(), methodName())
-  }
-
   private[this] def pollData(topicName: String,
                              timeout: scala.concurrent.duration.Duration = 100 seconds,
-                             size: Int = data.length): Seq[ConsumerRecord[Array[Byte], Row]] = {
+                             size: Int = data.length): Seq[Record[Array[Byte], Row]] = {
     val consumer = Consumer
       .builder()
       .topicName(methodName)
       .offsetFromBegin()
-      .brokers(testUtil.brokersConnProps)
+      .connectionProps(testUtil.brokersConnProps)
       .build(Serializer.BYTES, Serializer.ROW)
     try consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), size).asScala
     finally consumer.close()
@@ -464,6 +460,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
+    if (brokerClient.exist(methodName())) brokerClient.deleteTopic(methodName())
+    ReleaseOnce.close(brokerClient)
     ReleaseOnce.close(workerClient)
     ReleaseOnce.close(ftpClient)
   }

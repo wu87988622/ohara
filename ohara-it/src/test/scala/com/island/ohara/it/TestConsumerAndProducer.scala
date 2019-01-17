@@ -39,7 +39,8 @@ class TestConsumerAndProducer extends WithBroker with Matchers {
       CommonUtil.await(() => client.exist(topicName), Duration.ofSeconds(10))
     } finally client.close()
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.STRING)
+    val producer =
+      Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.STRING)
     try producer.sender().key("key").value("value").send(topicName)
     finally producer.close()
 
@@ -47,7 +48,7 @@ class TestConsumerAndProducer extends WithBroker with Matchers {
       .builder()
       .topicName(topicName)
       .offsetFromBegin()
-      .brokers(testUtil.brokersConnProps)
+      .connectionProps(testUtil.brokersConnProps)
       .build(Serializer.STRING, Serializer.STRING)
     try {
       consumer.subscription().asScala.toSet shouldBe Set(topicName)
@@ -68,14 +69,15 @@ class TestConsumerAndProducer extends WithBroker with Matchers {
       CommonUtil.await(() => client.exist(topicName), Duration.ofSeconds(10))
     } finally client.close()
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW)
+    val producer =
+      Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW)
     try producer.sender().key("key").value(data).send(topicName)
     finally producer.close()
     val consumer = Consumer
       .builder()
       .topicName(topicName)
       .offsetFromBegin()
-      .brokers(testUtil.brokersConnProps)
+      .connectionProps(testUtil.brokersConnProps)
       .build(Serializer.STRING, Serializer.ROW)
     try {
       consumer.subscription().asScala.toSet shouldBe Set(topicName)

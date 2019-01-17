@@ -46,8 +46,10 @@ public class TestOStream extends With3Brokers {
 
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final String simple_string = "this is a test sentence.";
-  private final KafkaProducer<String, String> producer = createKafkaProducer(client.brokers());
-  private final KafkaConsumer<String, String> consumer = createKafkaConsumer(client.brokers());
+  private final KafkaProducer<String, String> producer =
+      createKafkaProducer(client.connectionProps());
+  private final KafkaConsumer<String, String> consumer =
+      createKafkaConsumer(client.connectionProps());
 
   @Before
   public void tearUp() {
@@ -94,7 +96,7 @@ public class TestOStream extends With3Brokers {
     OStream<String, String> ostream =
         OStream.builder()
             .appid(appid)
-            .bootstrapServers(client.brokers())
+            .bootstrapServers(client.connectionProps())
             .fromTopicWith(fromTopic, Serdes.STRING, Serdes.STRING)
             .toTopicWith(toTopic, Serdes.STRING, Serdes.STRING)
             .cleanStart()

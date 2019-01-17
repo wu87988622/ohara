@@ -36,7 +36,7 @@ public class SimpleRowSinkTask extends RowSinkTask {
     outputTopic = config.options().get(OUTPUT);
     producer =
         Producer.builder()
-            .brokers(config.options().get(BROKER))
+            .connectionProps(config.options().get(BROKER))
             .build(Serializer.BYTES, Serializer.ROW);
   }
 

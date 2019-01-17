@@ -21,7 +21,6 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil._
 import com.island.ohara.kafka.BrokerClient
-
 private[configurator] object TopicsRoute {
   private[this] def toRes(id: String, request: TopicCreationRequest) =
     TopicInfo(id, request.name, request.numberOfPartitions, request.numberOfReplications, CommonUtil.current())

@@ -65,7 +65,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
       val consumer =
         Consumer
           .builder()
-          .brokers(testUtil.brokersConnProps)
+          .connectionProps(testUtil.brokersConnProps)
           .offsetFromBegin()
           .topicName(topicName)
           .build(Serializer.BYTES, Serializer.ROW)

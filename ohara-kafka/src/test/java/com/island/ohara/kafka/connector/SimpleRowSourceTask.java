@@ -22,7 +22,7 @@ import static com.island.ohara.kafka.connector.Constants.INPUT;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.kafka.Consumer;
-import com.island.ohara.kafka.ConsumerRecord;
+import com.island.ohara.kafka.Consumer.Record;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,14 +46,14 @@ public class SimpleRowSourceTask extends RowSourceTask {
         () -> {
           try (Consumer<byte[], Row> consumer =
               Consumer.builder()
-                  .brokers(config.options().get(BROKER))
+                  .connectionProps(config.options().get(BROKER))
                   .groupId(config.name())
                   .topicName(config.options().get(INPUT))
                   .offsetFromBegin()
                   .build(Serializer.BYTES, Serializer.ROW)) {
             this.consumer = consumer;
             while (!closed.get()) {
-              List<ConsumerRecord<byte[], Row>> recordList = consumer.poll(Duration.ofSeconds(2));
+              List<Record<byte[], Row>> recordList = consumer.poll(Duration.ofSeconds(2));
               recordList
                   .stream()
                   .filter(r -> r.value().isPresent())

@@ -26,17 +26,18 @@ import java.util.Objects;
 public class TopicOption {
   private final String key;
   private final String value;
-  private final Boolean isDefault;
-  private final Boolean isSensitive;
-  private final Boolean isReadOnly;
+  private final boolean isDefault;
+  private final boolean sensitive;
+  private final boolean readOnly;
 
+  /** TODO: we ought not to expose it but ohara-configurator has a fake one...by chia */
   public TopicOption(
-      String key, String value, Boolean isDefault, Boolean isSensitive, Boolean isReadOnly) {
+      String key, String value, boolean isDefault, boolean sensitive, boolean readOnly) {
     this.key = key;
     this.value = value;
     this.isDefault = isDefault;
-    this.isSensitive = isSensitive;
-    this.isReadOnly = isReadOnly;
+    this.sensitive = sensitive;
+    this.readOnly = readOnly;
   }
 
   public String key() {
@@ -47,16 +48,16 @@ public class TopicOption {
     return value;
   }
 
-  public Boolean isDefault() {
+  public boolean isDefault() {
     return isDefault;
   }
 
-  public Boolean isSensitive() {
-    return isSensitive;
+  public boolean sensitive() {
+    return sensitive;
   }
 
-  public Boolean isReadOnly() {
-    return isReadOnly;
+  public boolean readOnly() {
+    return readOnly;
   }
 
   @Override
@@ -67,12 +68,26 @@ public class TopicOption {
     return Objects.equals(key, that.key)
         && Objects.equals(value, that.value)
         && Objects.equals(isDefault, that.isDefault)
-        && Objects.equals(isSensitive, that.isSensitive)
-        && Objects.equals(isReadOnly, that.isReadOnly);
+        && Objects.equals(sensitive, that.sensitive)
+        && Objects.equals(readOnly, that.readOnly);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(key, value, isDefault, isSensitive, isReadOnly);
+    return Objects.hash(key, value, isDefault, sensitive, readOnly);
+  }
+
+  @Override
+  public String toString() {
+    return "key="
+        + key
+        + "value="
+        + value
+        + "sensitive="
+        + sensitive
+        + "default="
+        + isDefault
+        + "readOnly="
+        + readOnly;
   }
 }

@@ -113,7 +113,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
     val consumer = Consumer
       .builder()
-      .brokers(testUtil.brokersConnProps)
+      .connectionProps(testUtil.brokersConnProps)
       .offsetFromBegin()
       .topicName(topic.id)
       .build(Serializer.BYTES, Serializer.ROW)
@@ -159,7 +159,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       row.cells().asScala.map(_.value.toString).mkString(",")
     })
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
     try rows.foreach(row => producer.sender().value(row).send(topic.id))
     finally producer.close()
 

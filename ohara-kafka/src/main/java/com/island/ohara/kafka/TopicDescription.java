@@ -16,6 +16,7 @@
 
 package com.island.ohara.kafka;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,13 +30,20 @@ public class TopicDescription {
   private final int numberOfPartitions;
   private final short numberOfReplications;
   private final List<TopicOption> options;
+  private final boolean internal;
 
+  /** TODO: we ought not to expose it but ohara-configurator has a fake one...by chia */
   public TopicDescription(
-      String name, int numberOfPartitions, short numberOfReplications, List<TopicOption> options) {
+      String name,
+      int numberOfPartitions,
+      short numberOfReplications,
+      List<TopicOption> options,
+      boolean internal) {
     this.name = name;
     this.numberOfPartitions = numberOfPartitions;
     this.numberOfReplications = numberOfReplications;
-    this.options = options;
+    this.options = Collections.unmodifiableList(options);
+    this.internal = internal;
   }
 
   public String name() {
@@ -54,6 +62,10 @@ public class TopicDescription {
     return options;
   }
 
+  public boolean internal() {
+    return internal;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -62,11 +74,26 @@ public class TopicDescription {
     return numberOfPartitions == that.numberOfPartitions
         && numberOfReplications == that.numberOfReplications
         && Objects.equals(name, that.name)
-        && Objects.equals(options, that.options);
+        && Objects.equals(options, that.options)
+        && Objects.equals(internal, that.internal);
+  }
+
+  @Override
+  public String toString() {
+    return "name="
+        + name
+        + ", numberOfPartitions="
+        + numberOfPartitions
+        + ", numberOfReplications="
+        + numberOfReplications
+        + ", internal="
+        + internal
+        + ", options="
+        + options;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, numberOfPartitions, numberOfReplications, options);
+    return Objects.hash(name, numberOfPartitions, numberOfReplications, options, internal);
   }
 }

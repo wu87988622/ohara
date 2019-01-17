@@ -396,14 +396,21 @@ public final class CommonUtil {
     return s;
   }
 
+  public static int requirePositiveInt(int value) {
+    return requirePositiveInt(value, () -> value + " can't be negative");
+  }
+
   public static int requirePositiveInt(int value, Supplier<String> msg) {
     if (value < 0) throw new NullPointerException(msg.get());
     return value;
   }
 
+  public static short requirePositiveShort(short value) {
+    return (short) requirePositiveInt(value);
+  }
+
   public static short requirePositiveShort(short value, Supplier<String> msg) {
-    if (value < 0) throw new NullPointerException(msg.get());
-    return value;
+    return (short) requirePositiveInt(value, msg);
   }
 
   /**

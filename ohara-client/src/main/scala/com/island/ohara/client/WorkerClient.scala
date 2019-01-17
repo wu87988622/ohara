@@ -52,7 +52,7 @@ trait WorkerClient extends ReleaseOnce {
 
   def activeConnectors(): Seq[String]
 
-  def workers: String
+  def connectionProps: String
 
   def status(name: String): ConnectorInformation
 
@@ -76,9 +76,9 @@ object WorkerClient {
   import scala.concurrent.duration._
   val TIMEOUT: FiniteDuration = 30 seconds
 
-  def apply(_workers: String): WorkerClient = {
-    val workerList = _workers.split(",")
-    if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_workers}")
+  def apply(_connectionProps: String): WorkerClient = {
+    val workerList = _connectionProps.split(",")
+    if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_connectionProps}")
     new WorkerClient() with SprayJsonSupport {
       private[this] val workerAddress: String = workerList(Random.nextInt(workerList.size))
 
@@ -149,7 +149,7 @@ object WorkerClient {
               }
             })
 
-      override def workers: String = _workers
+      override def connectionProps: String = _connectionProps
 
       override def status(name: String): ConnectorInformation = Await.result(
         Http()

@@ -49,8 +49,8 @@ object InfoRoute extends SprayJsonSupport {
         import scala.collection.JavaConverters._
         complete(
           ConfiguratorInfo(
-            brokerClient.brokers,
-            workerClient.workers,
+            brokerClient.connectionProps,
+            workerClient.connectionProps,
             plugins.filter(_.typeName.toLowerCase == "source").map(toConnectorInfo),
             plugins.filter(_.typeName.toLowerCase == "sink").map(toConnectorInfo),
             SUPPORTED_DATABASES,

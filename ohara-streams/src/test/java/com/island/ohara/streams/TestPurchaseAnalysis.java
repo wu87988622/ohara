@@ -22,7 +22,7 @@ import com.island.ohara.common.data.Serializer;
 import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
-import com.island.ohara.kafka.ConsumerRecord;
+import com.island.ohara.kafka.Consumer.Record;
 import com.island.ohara.kafka.Producer;
 import com.island.ohara.streams.ostream.KeyValue;
 import com.island.ohara.streams.ostream.Serdes;
@@ -51,7 +51,9 @@ public class TestPurchaseAnalysis extends With3Brokers {
   private static final String orderuser_repartition = "orderuser-repartition-by-item";
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final Producer<String, Row> producer =
-      Producer.builder().brokers(client.brokers()).build(Serializer.STRING, Serializer.ROW);
+      Producer.builder()
+          .connectionProps(client.connectionProps())
+          .build(Serializer.STRING, Serializer.ROW);
 
   @Before
   public void prepareData() {
@@ -100,18 +102,18 @@ public class TestPurchaseAnalysis extends With3Brokers {
 
   @Test
   public void testStreamApp() {
-    RunStreamApp app = new RunStreamApp(client.brokers());
-    StreamApp.runStreamApp(app.getClass(), client.brokers());
+    RunStreamApp app = new RunStreamApp(client.connectionProps());
+    StreamApp.runStreamApp(app.getClass(), client.connectionProps());
 
     Consumer<String, Double> consumer =
         Consumer.builder()
             .topicName(resultTopic)
-            .brokers(client.brokers())
+            .connectionProps(client.connectionProps())
             .groupId("group-" + resultTopic)
             .offsetFromBegin()
             .build(Serializer.STRING, Serializer.DOUBLE);
 
-    List<ConsumerRecord<String, Double>> records = consumer.poll(Duration.ofSeconds(10), 2);
+    List<Record<String, Double>> records = consumer.poll(Duration.ofSeconds(10), 2);
     // the result will get "accumulation" ; hence we will get 2 -> 4 records
     Assert.assertTrue(
         "the result will get \"accumulation\" ; hence we will get 2 -> 4 records. actual:"

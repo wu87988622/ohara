@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.kafka.{Consumer, KafkaUtil, Producer}
+import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before}
 import org.scalatest.Matchers
@@ -204,25 +204,29 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       container.environments.exists(_._2 == clientPort.toString) shouldBe true
       val topicName = CommonUtil.randomString()
       val brokers = brokerCluster.nodeNames.map(_ + s":${brokerCluster.clientPort}").mkString(",")
-      KafkaUtil.createTopic(brokers, topicName, 1, 1)
-      val producer = Producer.builder().brokers(brokers).build(Serializer.STRING, Serializer.STRING)
+      val brokerClient = BrokerClient.of(brokers)
       try {
-        producer.sender().key("abc").value("abc_value").send(topicName)
-      } finally producer.close()
-      val consumer = Consumer
-        .builder()
-        .brokers(brokers)
-        .offsetFromBegin()
-        .topicName(topicName)
-        .build(Serializer.STRING, Serializer.STRING)
-      try {
-        val records = consumer.poll(Duration.ofSeconds(10), 1)
-        records.size() shouldBe 1
-        records.get(0).key().get shouldBe "abc"
-        records.get(0).value().get shouldBe "abc_value"
-      } finally consumer.close()
-      KafkaUtil.deleteTopic(brokers, topicName)
-      f(brokerCluster)
+        brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).create(topicName)
+        val producer = Producer.builder().connectionProps(brokers).build(Serializer.STRING, Serializer.STRING)
+        try {
+          producer.sender().key("abc").value("abc_value").send(topicName)
+        } finally producer.close()
+        val consumer = Consumer
+          .builder()
+          .connectionProps(brokers)
+          .offsetFromBegin()
+          .topicName(topicName)
+          .build(Serializer.STRING, Serializer.STRING)
+        try {
+          val records = consumer.poll(Duration.ofSeconds(10), 1)
+          records.size() shouldBe 1
+          records.get(0).key().get shouldBe "abc"
+          records.get(0).value().get shouldBe "abc_value"
+        } finally consumer.close()
+        brokerClient.deleteTopic(topicName)
+        f(brokerCluster)
+      } finally brokerClient.close()
+
     } finally if (cleanup) result(brokerCollie.remove(brokerCluster.name))
     log.info("cleanup broker cluster ... done")
   }

@@ -81,7 +81,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
         .builder()
         .topicName(topicName)
         .offsetFromBegin()
-        .brokers(testUtil.brokersConnProps)
+        .connectionProps(testUtil.brokersConnProps)
         .build(Serializer.BYTES, Serializer.ROW)
     try {
       val record = consumer.poll(java.time.Duration.ofSeconds(30), 3).asScala

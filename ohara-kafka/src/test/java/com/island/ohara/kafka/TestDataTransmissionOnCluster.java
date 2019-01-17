@@ -30,6 +30,7 @@ import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.ReleaseOnce;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers3Workers;
+import com.island.ohara.kafka.Consumer.Record;
 import com.island.ohara.kafka.connector.Constants;
 import com.island.ohara.kafka.connector.SimpleRowSinkConnector;
 import com.island.ohara.kafka.connector.SimpleRowSourceConnector;
@@ -81,10 +82,10 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     try (Consumer<byte[], Row> consumer =
         Consumer.builder()
             .offsetFromBegin()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .topicName(topicName)
             .build(Serializer.BYTES, Serializer.ROW)) {
-      List<ConsumerRecord<byte[], Row>> data = consumer.poll(Duration.ofSeconds(30), numberOfRows);
+      List<Record<byte[], Row>> data = consumer.poll(Duration.ofSeconds(30), numberOfRows);
       assertEquals(data.size(), numberOfRows);
       data.forEach(x -> assertEquals(x.value().get(), row));
     }
@@ -94,7 +95,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
     try (Producer<byte[], Row> producer =
         Producer.builder()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .build(Serializer.BYTES, Serializer.ROW); ) {
       Stream.iterate(0, i -> i + 1)
           .limit(numberOfRows)
@@ -140,11 +141,11 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     setupData(topicName);
     try (Consumer<byte[], Row> consumer =
         Consumer.builder()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .offsetFromBegin()
             .topicName(topicName)
             .build(Serializer.BYTES, Serializer.ROW)) {
-      List<ConsumerRecord<byte[], Row>> data = consumer.poll(Duration.ofSeconds(10), numberOfRows);
+      List<Record<byte[], Row>> data = consumer.poll(Duration.ofSeconds(10), numberOfRows);
       assertEquals(data.size(), numberOfRows);
       data.forEach(x -> assertEquals(x.value().get(), row));
     }
@@ -244,13 +245,15 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
   public void shouldKeepColumnOrderAfterSendToKafka()
       throws ExecutionException, InterruptedException {
     String topicName = methodName();
-    KafkaUtil.createTopic(testUtil.brokersConnProps(), topicName, 1, (short) 1);
+    try (BrokerClient c = BrokerClient.of(testUtil.brokersConnProps())) {
+      c.topicCreator().numberOfPartitions(1).numberOfReplications((short) 1).create(topicName);
+    }
 
     Row row = Row.of(Cell.of("c", 3), Cell.of("b", 2), Cell.of("a", 1));
 
     try (Producer<String, Row> producer =
         Producer.builder()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .build(Serializer.STRING, Serializer.ROW)) {
       producer.sender().key(topicName).value(row).send(topicName);
       producer.flush();
@@ -258,11 +261,11 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
     try (Consumer<String, Row> consumer =
         Consumer.builder()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .offsetFromBegin()
             .topicName(topicName)
             .build(Serializer.STRING, Serializer.ROW)) {
-      List<ConsumerRecord<String, Row>> fromKafka = consumer.poll(Duration.ofSeconds(30), 1);
+      List<Record<String, Row>> fromKafka = consumer.poll(Duration.ofSeconds(30), 1);
 
       assertFalse(fromKafka.isEmpty());
       Row row2 = fromKafka.get(0).value().get();
@@ -273,9 +276,10 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
     try (Producer<String, Row> producer =
         Producer.builder()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .build(Serializer.STRING, Serializer.ROW)) {
-      RecordMetadata meta = producer.sender().key(topicName).value(row).send(topicName).get();
+      Producer.RecordMetadata meta =
+          producer.sender().key(topicName).value(row).send(topicName).get();
       assertEquals(meta.topic(), topicName);
     }
   }

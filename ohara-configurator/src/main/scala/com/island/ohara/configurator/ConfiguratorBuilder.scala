@@ -16,8 +16,8 @@
 
 package com.island.ohara.configurator
 
+import java.util
 import java.util.concurrent.ConcurrentHashMap
-import java.{time, util}
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
@@ -35,7 +35,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.{WorkerClient, ConnectorCreator}
+import com.island.ohara.client.{ConnectorCreator, WorkerClient}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
@@ -175,7 +175,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     cachedConnectorsState.clear()
   }
   override def activeConnectors(): Seq[String] = cachedConnectors.keys.asScala.toSeq
-  override def workers: String = "Unknown"
+  override def connectionProps: String = "Unknown"
   override def status(name: String): ConnectorInformation = {
     checkExist(name)
     ConnectorInformation(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty)
@@ -230,7 +230,8 @@ private[configurator] class FakeBrokerClient extends BrokerClient {
               case (k, v) => new TopicOption(k, v, false, false, false)
             }
             .toSeq
-            .asJava
+            .asJava,
+          false
         )
       )
     }
@@ -239,35 +240,35 @@ private[configurator] class FakeBrokerClient extends BrokerClient {
   private[this] def printDebugMessage(): Unit =
     log.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
 
-  override def exist(topicName: String, timeout: time.Duration): Boolean = {
+  override def exist(topicName: String): Boolean = {
     printDebugMessage()
     cachedTopics.contains(topicName)
   }
 
-  override def topicDescription(topicName: String, timeout: time.Duration): TopicDescription = Option(
-    cachedTopics.get(topicName)).get
-
-  override def addPartitions(topicName: String, numberOfPartitions: Int, timeout: time.Duration): Unit = {
+  override def addPartitions(topicName: String, numberOfPartitions: Int): Unit = {
     printDebugMessage()
     Option(cachedTopics.get(topicName))
-      .map(previous =>
-        new TopicDescription(topicName, numberOfPartitions, previous.numberOfReplications, Seq.empty.asJava))
+      .map(
+        previous =>
+          new TopicDescription(
+            topicName,
+            numberOfPartitions,
+            previous.numberOfReplications(),
+            Seq.empty.asJava,
+            false
+        ))
       .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
   }
 
-  override def deleteTopic(topicName: String, timeout: time.Duration): Unit =
+  override def deleteTopic(topicName: String): Unit =
     if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
 
-  override def listTopics(timeout: time.Duration): util.List[String] = {
-    cachedTopics.keys().asScala.map(t => t).toList.asJava
-  }
-
-  override def brokers(): String = "Unknown"
-
-  override def consumerBuilder(): ConsumerBuilder = throw new UnsupportedOperationException(
-    s"${classOf[FakeBrokerClient].getSimpleName} does not support this operation")
+  override def connectionProps(): String = "Unknown"
 
   override def close(): Unit = printDebugMessage()
+
+  override def topicDescriptions(): util.List[TopicDescription] =
+    new util.ArrayList[TopicDescription](cachedTopics.values())
 }
 
 /**

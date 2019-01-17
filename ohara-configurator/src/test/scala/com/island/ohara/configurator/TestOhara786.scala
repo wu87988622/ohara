@@ -20,7 +20,7 @@ import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.integration.WithBrokerWorker
-import com.island.ohara.kafka.{BrokerClient, KafkaUtil}
+import com.island.ohara.kafka.BrokerClient
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -47,8 +47,12 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
                                .port(configurator.port)
                                .add(TopicCreationRequest(topicName, 1, 1)),
                              10 seconds)
-    KafkaUtil.deleteTopic(testUtil.brokersConnProps, topic.id)
-    // the topic is removed but we don't throw exception.
-    Await.result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).delete(topic.id), 10 seconds)
+    val brokerClient = BrokerClient.of(testUtil().brokersConnProps())
+    try {
+      brokerClient.deleteTopic(topic.id)
+      // the topic is removed but we don't throw exception.
+      Await
+        .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).delete(topic.id), 10 seconds)
+    } finally brokerClient.close()
   }
 }

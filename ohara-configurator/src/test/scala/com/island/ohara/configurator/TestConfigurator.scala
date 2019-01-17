@@ -25,11 +25,11 @@ import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, Rdb
 import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicInfo}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.client.{WorkerClient, DatabaseClient}
+import com.island.ohara.client.{DatabaseClient, WorkerClient}
 import com.island.ohara.common.data.{Column, DataType}
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.{ReleaseOnce, VersionUtil}
 import com.island.ohara.integration.WithBrokerWorker
-import com.island.ohara.kafka.{BrokerClient, KafkaUtil}
+import com.island.ohara.kafka.BrokerClient
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -57,6 +57,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
 
   private[this] val db = testUtil.dataBase
   private[this] val ftpServer = testUtil.ftpServer
+  private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps())
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -87,9 +88,9 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       // verify the topic from kafka
       if (configurator == configurator0) {
         // the "name" used to create topic is uuid rather than name from request
-        KafkaUtil.exist(testUtil.brokersConnProps, request.name) shouldBe false
-        KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe true
-        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.id)
+        brokerClient.exist(request.name) shouldBe false
+        brokerClient.exist(response.id) shouldBe true
+        val topicInfo = brokerClient.topicDescription(response.id)
         topicInfo.numberOfPartitions shouldBe 1
         topicInfo.numberOfReplications shouldBe 1
       }
@@ -103,8 +104,8 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
         compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
       // verify the topic from kafka
       if (configurator == configurator0) {
-        KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe true
-        val topicInfo = KafkaUtil.topicDescription(testUtil.brokersConnProps, response.id)
+        brokerClient.exist(response.id) shouldBe true
+        val topicInfo = brokerClient.topicDescription(response.id)
         topicInfo.numberOfPartitions shouldBe 2
         topicInfo.numberOfReplications shouldBe 1
       }
@@ -116,7 +117,7 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
       result(access.list()).size shouldBe 1
       result(access.delete(response.id)) shouldBe newResponse
       result(access.list()).size shouldBe 0
-      if (configurator == configurator0) KafkaUtil.exist(testUtil.brokersConnProps, response.id) shouldBe false
+      if (configurator == configurator0) brokerClient.exist(response.id) shouldBe false
 
       // test nonexistent data
       an[IllegalArgumentException] should be thrownBy result(access.get("123"))
@@ -661,5 +662,8 @@ class TestConfigurator extends WithBrokerWorker with Matchers {
   }
 
   @After
-  def tearDown(): Unit = configurators.foreach(_.close())
+  def tearDown(): Unit = {
+    ReleaseOnce.close(brokerClient)
+    configurators.foreach(_.close())
+  }
 }

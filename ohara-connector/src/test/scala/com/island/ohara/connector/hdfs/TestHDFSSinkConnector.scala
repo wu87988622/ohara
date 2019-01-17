@@ -113,7 +113,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
     try {
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
@@ -193,7 +193,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
     try {
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()
@@ -274,7 +274,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
 
-    val producer = Producer.builder().brokers(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
     try {
       0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
       producer.flush()

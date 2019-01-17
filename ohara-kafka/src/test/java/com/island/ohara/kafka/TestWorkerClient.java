@@ -25,6 +25,7 @@ import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers3Workers;
+import com.island.ohara.kafka.Consumer.Record;
 import java.time.Duration;
 import java.util.List;
 import org.junit.Test;
@@ -96,11 +97,11 @@ public class TestWorkerClient extends With3Brokers3Workers {
         Consumer.builder()
             .topicName(topicName)
             .offsetFromBegin()
-            .brokers(testUtil.brokersConnProps())
+            .connectionProps(testUtil.brokersConnProps())
             .build(Serializer.BYTES, Serializer.ROW)) {
 
       // try to receive some data from topic
-      List<ConsumerRecord<byte[], Row>> result = consumer.poll(Duration.ofSeconds(10), 1);
+      List<Record<byte[], Row>> result = consumer.poll(Duration.ofSeconds(10), 1);
       assertNotEquals(result.size(), 0);
       result.forEach(x -> assertEquals(x.value().get(), ROW));
 
