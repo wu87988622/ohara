@@ -19,6 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.kafka.exception.CheckedExceptionUtil;
 import com.island.ohara.streams.ostream.LaunchImpl;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class StreamApp {
 
   /**

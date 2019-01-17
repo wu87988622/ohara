@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * add more "description" to the {@link Row}. NOTED. the default implementation from {@link Row} has
  * implemented the
  */
-public interface Row extends Iterable<Cell> {
+public interface Row extends Iterable<Cell<?>> {
   /** a empty row. It means no tag and cell exist in this row. */
   Row EMPTY = Row.of();
 
@@ -44,7 +44,7 @@ public interface Row extends Iterable<Cell> {
    * @param index cell's index
    * @return a cell or throw NoSuchElementException
    */
-  Cell cell(int index);
+  Cell<?> cell(int index);
 
   /**
    * seek the cell by specified name
@@ -52,10 +52,10 @@ public interface Row extends Iterable<Cell> {
    * @param name cell's name
    * @return a cell or throw NoSuchElementException
    */
-  Cell cell(String name);
+  Cell<?> cell(String name);
 
   /** @return a immutable collection from cells */
-  List<Cell> cells();
+  List<Cell<?>> cells();
 
   /**
    * the default order from cells from this method is same to {@link #cells()}
@@ -63,8 +63,8 @@ public interface Row extends Iterable<Cell> {
    * @return an iterator over the {@link Cell} in this row in proper sequence
    */
   @Override
-  default Iterator<Cell> iterator() {
-    List<Cell> cells = cells();
+  default Iterator<Cell<?>> iterator() {
+    List<Cell<?>> cells = cells();
     if (cells == null) cells = Collections.emptyList();
     return cells.iterator();
   }
@@ -91,13 +91,13 @@ public interface Row extends Iterable<Cell> {
     return cells().stream().allMatch(cell -> that.cells().stream().anyMatch(cell::equals));
   }
 
-  static Row of(Cell... cells) {
+  static Row of(Cell<?>... cells) {
     return of(Collections.emptyList(), cells);
   }
 
-  static Row of(List<String> tags, Cell... cells) {
+  static Row of(List<String> tags, Cell<?>... cells) {
     List<String> tagsCopy = new ArrayList<>(tags);
-    List<Cell> cellsCopy = Arrays.asList(cells);
+    List<Cell<?>> cellsCopy = Arrays.asList(cells);
     // check duplicate names
     int numberOfNames = cellsCopy.stream().map(Cell::name).collect(Collectors.toSet()).size();
     if (numberOfNames != cellsCopy.size())
@@ -110,14 +110,14 @@ public interface Row extends Iterable<Cell> {
       }
 
       @Override
-      public Cell cell(int index) {
-        Cell cell = cellsCopy.get(index);
+      public Cell<?> cell(int index) {
+        Cell<?> cell = cellsCopy.get(index);
         if (cell == null) throw new NoSuchElementException("no cell exists with index:" + index);
         return cell;
       }
 
       @Override
-      public Cell cell(String name) {
+      public Cell<?> cell(String name) {
         return cellsCopy
             .stream()
             .filter(c -> c.name().equals(name))
@@ -126,7 +126,7 @@ public interface Row extends Iterable<Cell> {
       }
 
       @Override
-      public List<Cell> cells() {
+      public List<Cell<?>> cells() {
         return Collections.unmodifiableList(cellsCopy);
       }
 

@@ -21,6 +21,7 @@ import com.island.ohara.streams.OTable;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class OTableImpl<K, V> extends AbstractStream<K, V> implements OTable<K, V> {
   OTableImpl(OStreamBuilder ob, KTable<K, V> ktable, StreamsBuilder builder) {
     super(ob, ktable, builder);

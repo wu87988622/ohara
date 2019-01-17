@@ -37,6 +37,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class TestOStream extends With3Brokers {
 
   private final String appid = "test-app";

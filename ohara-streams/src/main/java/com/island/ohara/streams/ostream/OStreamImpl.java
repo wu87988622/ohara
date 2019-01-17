@@ -29,6 +29,7 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Serialized;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
 
   private Topology topology = null;

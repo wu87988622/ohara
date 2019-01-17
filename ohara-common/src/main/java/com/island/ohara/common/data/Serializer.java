@@ -188,11 +188,15 @@ public interface Serializer<T> {
          * @param row row
          * @param output output
          */
+        @SuppressWarnings("unchecked")
         private void toV0(ByteArrayOutputStream output, Row row) throws IOException {
           output.write(INT.to(row.cells().size()));
           row.cells()
+              .stream()
               .forEach(
-                  cell -> {
+                  c -> {
+                    // we have got to cast Cell<?> to Cell<object>. Otherwise, we can't obey CAP#1
+                    Cell<Object> cell = (Cell<Object>) c;
                     try {
                       byte[] nameBytes = STRING.to(cell.name());
                       final byte[] valueBytes;
@@ -324,7 +328,7 @@ public interface Serializer<T> {
           int cellCount = INT.from(forceRead(input, ByteUtil.SIZE_OF_INT));
           if (cellCount < 0)
             throw new IllegalStateException("the number from cell should be bigger than zero");
-          Cell[] cells =
+          Cell<?>[] cells =
               IntStream.range(0, cellCount)
                   .mapToObj(
                       i -> {
@@ -332,7 +336,7 @@ public interface Serializer<T> {
                         String name = STRING.from(forceRead(input, nameSize));
                         DataType type =
                             DataType.of(SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT)));
-                        final Cell cell;
+                        final Cell<?> cell;
                         short valueSize = SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT));
                         switch (type) {
                           case BYTES:

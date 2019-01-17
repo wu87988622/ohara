@@ -112,6 +112,10 @@ subprojects {
         events "PASSED", "STARTED", "FAILED", "SKIPPED"
       }
     }
+    tasks.withType(JavaCompile) {
+      options.encoding = 'UTF-8'
+      options.compilerArgs += ["-Xlint:all", "-Werror"]
+    }
   }
 
   // ohara-manager doesn't generate test.jar
@@ -138,7 +142,7 @@ subprojects {
           removeUnusedImports()
         }
       }
-    }else {
+    } else {
       spotless {
         scala {
           // DON'T change the scalafmt version since the rules may be changed in newer version.

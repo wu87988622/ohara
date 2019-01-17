@@ -40,6 +40,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings({"rawtypes"})
 public class TestPurchaseAnalysis extends With3Brokers {
 
   private static final String appid = "test-purchase-analysis";

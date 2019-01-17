@@ -42,6 +42,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"rawtypes"})
 class DataImporter {
 
   private static final Logger log = LoggerFactory.getLogger(DataImporter.class);

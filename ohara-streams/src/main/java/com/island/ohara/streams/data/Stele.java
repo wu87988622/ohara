@@ -22,6 +22,7 @@ import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+@SuppressWarnings("serial")
 public final class Stele extends Data implements Serializable {
   private final String kind;
   private final String key;

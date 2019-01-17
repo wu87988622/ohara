@@ -21,6 +21,7 @@ import org.apache.kafka.streams.kstream.KGroupedStream;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 abstract class AbstractStream<K, V> {
 
   KTable<K, V> ktable;

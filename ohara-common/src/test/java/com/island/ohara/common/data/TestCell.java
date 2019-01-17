@@ -24,17 +24,17 @@ public class TestCell extends SmallTest {
 
   @Test
   public void testEquals() {
-    Cell cell = Cell.of("abc", "abc");
+    Cell<String> cell = Cell.of("abc", "abc");
     Assert.assertEquals(cell, cell);
     Assert.assertEquals(cell, Cell.of("abc", "abc"));
     Assert.assertEquals(Cell.of("abc", "abc"), cell);
 
-    Cell cell2 = Cell.of("abc", 123);
+    Cell<Integer> cell2 = Cell.of("abc", 123);
     Assert.assertEquals(cell2, cell2);
     Assert.assertNotEquals(cell, cell2);
     Assert.assertNotEquals(cell2, cell);
 
-    Cell cell3 = Cell.of("abc", "Adasd".getBytes());
+    Cell<byte[]> cell3 = Cell.of("abc", "Adasd".getBytes());
     Assert.assertEquals(cell3, cell3);
     Assert.assertEquals(cell3, Cell.of("abc", "Adasd".getBytes()));
     Assert.assertEquals(Cell.of("abc", "Adasd".getBytes()), cell3);
@@ -52,18 +52,18 @@ public class TestCell extends SmallTest {
 
   @Test
   public void testHashCode() {
-    Cell cell = Cell.of("abc", "abc");
+    Cell<String> cell = Cell.of("abc", "abc");
     Assert.assertEquals(cell.hashCode(), cell.hashCode());
     Assert.assertEquals(cell.hashCode(), Cell.of("abc", "abc").hashCode());
 
-    Cell cell2 = Cell.of("abc", "abc".getBytes());
+    Cell<byte[]> cell2 = Cell.of("abc", "abc".getBytes());
     Assert.assertEquals(cell2.hashCode(), cell2.hashCode());
     Assert.assertEquals(cell2.hashCode(), Cell.of("abc", "abc".getBytes()).hashCode());
   }
 
   @Test
   public void cellComposeRow() {
-    Cell c = Cell.of("abc", Row.of(Cell.of("abc", "aaa")));
+    Cell<Row> c = Cell.of("abc", Row.of(Cell.of("abc", "aaa")));
     Assert.assertEquals(c.name(), "abc");
     Assert.assertEquals(c.value(), Row.of(Cell.of("abc", "aaa")));
   }

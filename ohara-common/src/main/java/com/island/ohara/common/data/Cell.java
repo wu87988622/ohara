@@ -72,7 +72,7 @@ public interface Cell<T> {
       public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj instanceof Cell) {
-          Cell that = (Cell) obj;
+          Cell<?> that = (Cell<?>) obj;
           // java can't do deep comparison for byte array...
           if (value() instanceof byte[] && that.value() instanceof byte[])
             return name().equals(that.name())

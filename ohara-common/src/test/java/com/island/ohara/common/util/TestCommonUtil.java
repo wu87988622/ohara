@@ -271,6 +271,8 @@ public class TestCommonUtil extends SmallTest {
 
   private static class MyList<T> extends ArrayList<T> {
 
+    private static final long serialVersionUID = 1L;
+
     MyList() {
       super();
     }
@@ -287,6 +289,8 @@ public class TestCommonUtil extends SmallTest {
 
   private static class MyMap<K, V> extends HashMap<K, V> {
 
+    private static final long serialVersionUID = 1L;
+
     MyMap() {
       super();
     }
@@ -302,6 +306,8 @@ public class TestCommonUtil extends SmallTest {
   }
 
   private static class MySet<T> extends HashSet<T> {
+
+    private static final long serialVersionUID = 1L;
 
     MySet() {
       super();

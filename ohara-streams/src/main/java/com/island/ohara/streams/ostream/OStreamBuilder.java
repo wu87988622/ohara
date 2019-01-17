@@ -20,6 +20,7 @@ import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.streams.OStream;
 import java.util.Objects;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class OStreamBuilder<K, V> {
 
   private String bootstrapServers = null;

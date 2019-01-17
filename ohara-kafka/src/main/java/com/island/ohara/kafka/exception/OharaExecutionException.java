@@ -18,6 +18,8 @@ package com.island.ohara.kafka.exception;
 
 public class OharaExecutionException extends OharaException {
 
+  private static final long serialVersionUID = 1L;
+
   public OharaExecutionException() {}
 
   public OharaExecutionException(Throwable e) {

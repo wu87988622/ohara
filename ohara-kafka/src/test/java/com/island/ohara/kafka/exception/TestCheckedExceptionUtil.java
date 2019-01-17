@@ -29,6 +29,8 @@ public class TestCheckedExceptionUtil extends SmallTest {
 
   // special unique class name
   private class OharaTest0000Exception extends OharaException {
+    private static final long serialVersionUID = 1L;
+
     OharaTest0000Exception(Exception e) {
       super(e);
     }

@@ -21,6 +21,7 @@ import com.island.ohara.streams.OTable;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KGroupedStream;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class OGroupedStreamImpl<K, V> extends AbstractStream<K, V> implements OGroupedStream<K, V> {
 
   OGroupedStreamImpl(OStreamBuilder ob, KGroupedStream<K, V> kgroupstream, StreamsBuilder builder) {

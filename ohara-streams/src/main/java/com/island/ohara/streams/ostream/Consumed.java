@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams.ostream;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Consumed<K, V> {
 
   private final Serde<K> key;

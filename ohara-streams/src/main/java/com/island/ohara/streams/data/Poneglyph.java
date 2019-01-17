@@ -19,6 +19,7 @@ package com.island.ohara.streams.data;
 import java.io.Serializable;
 import java.util.HashSet;
 
+@SuppressWarnings({"rawtypes", "serial"})
 public final class Poneglyph implements Serializable {
   private final HashSet<Stele> steles = new HashSet<>();
 

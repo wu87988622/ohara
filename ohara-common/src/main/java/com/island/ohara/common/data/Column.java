@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 /** implements Serializable ,because akka unmashaller throws java.io.NotSerializableException */
 public final class Column extends Data implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private final String name;
   private final String newName;
   private final DataType dataType;
