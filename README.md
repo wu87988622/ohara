@@ -14,6 +14,12 @@ a powerful ETL tool
 * Node.js 8.12.0
 * Yarn 1.7.0. (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)
 
+### Apply header or checkstyle to code base
+```
+gradle spotlessApply
+gradle licenseApply
+```
+
 ### Installing
 
 [TODO]
@@ -105,8 +111,4 @@ the uber jar is under ohara-assembly/build/libs/
 * **Sam Cho (sam@is-land.com.tw)** - committer
 * **Chih-Chiang Yeh (harryyeh@is-land.com.tw)** - committer
 * **Harry Chiang (harry@is-land.com.tw)** - committer
-
-### License
-
-[TODO] This project is licensed under the is-land License
 

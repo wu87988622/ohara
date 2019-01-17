@@ -1,5 +1,22 @@
+/*
+ * Copyright 2019 is-land
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 plugins {
   id "com.diffplug.gradle.spotless" version "3.15.0"
+  id "com.github.hierynomus.license" version"0.15.0"
 }
 
 allprojects {
@@ -8,6 +25,67 @@ allprojects {
     maven { url "https://repository.cloudera.com/artifactory/cloudera-repos/" }
     maven { url "https://dl.bintray.com/cakesolutions/maven/" }
   }
+}
+
+apply plugin: "com.github.hierynomus.license"
+
+def needHeaders() {
+  return [
+    fileTree(dir: ".").include("**/*.java"),
+    fileTree(dir: ".").include("**/*.scala"),
+    fileTree(dir: ".").include("**/*.sh"),
+    fileTree(dir: ".").include("**/*.properties"),
+    fileTree(dir: ".").include("**/*.js"),
+    fileTree(dir: ".").include("**/*.dockerfile"),
+    fileTree(dir: ".").include("**/*.conf"),
+    fileTree(dir: ".").include("**/*.gradle"),
+    fileTree(dir: ".").include("**/*.yaml"),
+    fileTree(dir: ".").include("**/*.yml")
+  ]
+}
+
+task licenseApply(type: com.hierynomus.gradle.license.tasks.LicenseFormat) {
+  source(needHeaders())
+}
+
+task licenseTest(type: com.hierynomus.gradle.license.tasks.LicenseCheck) {
+  source(needHeaders())
+}
+
+
+license {
+  header = file("$rootDir/checkstyle/apacheV2.header")
+  strictCheck true
+  // VersionUtil.java is generated at runtime and its source code isn't public. Hence, we don't add header to it.
+  excludes(["**/VersionUtil.java", ".gradle", ".git", ".idea"])
+  // http://code.mycila.com/license-maven-plugin/#supported-comment-types
+  mapping {
+    js='JAVADOC_STYLE'
+    scala='JAVADOC_STYLE'
+    gradle='JAVADOC_STYLE'
+    dockerfile='SCRIPT_STYLE'
+    dockerfile='SCRIPT_STYLE'
+    conf='SCRIPT_STYLE'
+    yaml='SCRIPT_STYLE'
+    yml='SCRIPT_STYLE'
+  }
+  // NOTED: we use spotless to format our code so the format of header must be valid to spotless!
+  headerDefinitions {
+    javadoc_style {
+      firstLine = "/*"
+      beforeEachLine = " * "
+      // joshua's wish...
+      endLine   = " */EOL"
+      firstLineDetectionPattern = "/*"
+      lastLineDetectionPattern  = " */"
+      allowBlankLines = false
+      isMultiline = true
+    }
+  }
+}
+
+check {
+  dependsOn licenseTest
 }
 
 subprojects {
@@ -66,7 +144,7 @@ subprojects {
       spotless {
         scala {
           // DON'T change the scalafmt version since the rules may be changed in newer version.
-          scalafmt("1.5.1").configFile("$rootDir/.scalafmt.conf")
+          scalafmt("1.5.1").configFile("$rootDir/checkstyle/.scalafmt.conf")
         }
       }
     }
