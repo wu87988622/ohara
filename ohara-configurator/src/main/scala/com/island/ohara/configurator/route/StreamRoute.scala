@@ -38,11 +38,8 @@ import scala.sys.process._
 
 private[configurator] object StreamRoute {
 
-  private[this] def toStore(pipelineId: String,
-                            jarId: String,
-                            jarInfo: JarApi.JarInfo,
-                            lastModified: Long): StreamData =
-    StreamData(pipelineId, jarId, "", 1, jarInfo, Seq.empty, Seq.empty, lastModified)
+  private[this] def toStore(pipelineId: String, jarId: String, jarInfo: JarApi.JarInfo, lastModified: Long): StreamApp =
+    StreamApp(pipelineId, jarId, "", 1, jarInfo, Seq.empty, Seq.empty, lastModified)
 
   private[this] def toStore(pipelineId: String,
                             jarId: String,
@@ -51,10 +48,10 @@ private[configurator] object StreamRoute {
                             jarInfo: JarApi.JarInfo,
                             fromTopics: Seq[String],
                             toTopics: Seq[String],
-                            lastModified: Long): StreamData =
-    StreamData(pipelineId, jarId, appId, instances, jarInfo, fromTopics, toTopics, lastModified)
+                            lastModified: Long): StreamApp =
+    StreamApp(pipelineId, jarId, appId, instances, jarInfo, fromTopics, toTopics, lastModified)
 
-  private[this] def assertParameters(data: StreamData): Boolean = {
+  private[this] def assertParameters(data: StreamApp): Boolean = {
     data.pipelineId.nonEmpty &&
     data.id.nonEmpty &&
     data.name.nonEmpty &&
@@ -98,7 +95,7 @@ private[configurator] object StreamRoute {
               } ~
                 //return list
                 get {
-                  onSuccess(store.values[StreamData]) { values =>
+                  onSuccess(store.values[StreamApp]) { values =>
                     complete(values
                       .filter(f => f.pipelineId.equals(id)) //note : this id is given by UI (pipeline_id)
                       .map(data => StreamListResponse(data.id, data.jarInfo.name, data.lastModified)))
@@ -109,7 +106,7 @@ private[configurator] object StreamRoute {
                   //TODO : check streamapp is not at running state...by Sam
                   assertNotRelated2Pipeline(id)
                   val result = for {
-                    f1 <- store.remove[StreamData](id)
+                    f1 <- store.remove[StreamApp](id)
                     f2 <- jarStore.remove(f1.jarInfo.id)
                   } yield f1
 
@@ -124,14 +121,14 @@ private[configurator] object StreamRoute {
                       throw new IllegalArgumentException(s"Require jarName")
                     val f = new File(StreamClient.TMP_ROOT, CommonUtil.randomString(5))
                     val result = for {
-                      f1 <- store.value[StreamData](id)
+                      f1 <- store.value[StreamApp](id)
                       f2 <- jarStore.url(f1.jarInfo.id)
                       f3 <- {
                         { f2 #> f !! }
                         jarStore.add(f, req.jarName)
                       }
                       f4 <- jarStore.remove(f1.jarInfo.id)
-                      f5 <- store.update[StreamData](
+                      f5 <- store.update[StreamApp](
                         id,
                         previous =>
                           toStore(previous.pipelineId,
@@ -163,7 +160,7 @@ private[configurator] object StreamRoute {
                 delete { complete("unsupported method") } ~
                 // get property
                 get {
-                  onSuccess(store.value[StreamData](id)) { data =>
+                  onSuccess(store.value[StreamApp](id)) { data =>
                     complete(
                       StreamPropertyResponse(id,
                                              data.jarInfo.name,
@@ -180,7 +177,7 @@ private[configurator] object StreamRoute {
                     if (req.instances < 1)
                       throw new IllegalArgumentException(s"Require instances bigger or equal to 1")
                     onSuccess(
-                      store.update[StreamData](
+                      store.update[StreamApp](
                         id,
                         oldData =>
                           toStore(oldData.pipelineId,
@@ -211,7 +208,7 @@ private[configurator] object StreamRoute {
           // start streamapp
           path(START_COMMAND) {
             put {
-              onSuccess(store.value[StreamData](id)) { data =>
+              onSuccess(store.value[StreamApp](id)) { data =>
                 if (!assertParameters(data))
                   throw new IllegalArgumentException(
                     s"StreamData with id : ${data.id} not match the parameter requirement.")
@@ -240,7 +237,7 @@ private[configurator] object StreamRoute {
           // stop streamapp
           path(STOP_COMMAND) {
             put {
-              onSuccess(store.value[StreamData](id)) { data =>
+              onSuccess(store.value[StreamApp](id)) { data =>
                 val checkDocker = "which docker" !!
 
                 if (checkDocker.toLowerCase.contains("not found"))

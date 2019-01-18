@@ -16,10 +16,12 @@
 
 package com.island.ohara.configurator
 
+import java.io.File
+
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
-import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
+import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, StreamApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -36,12 +38,14 @@ class TestPipelineRule extends SmallTest with Matchers {
 
   @Test
   def testPipelineStateAfterStartingSource(): Unit = {
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicCreationRequest(methodName, 1, 1)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(TopicCreationRequest(methodName, 1, 1)),
+      10 seconds
+    )
     val sourceRequest = ConnectorConfigurationRequest(
       name = "abc",
       className = "jdbc",
@@ -61,7 +65,8 @@ class TestPipelineRule extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             rules = Map(source.id -> PipelineApi.UNKNOWN)
-          )),
+          )
+        ),
       10 seconds
     )
     pipeline.objects.foreach(obj => obj.state shouldBe None)
@@ -69,9 +74,94 @@ class TestPipelineRule extends SmallTest with Matchers {
     // start source and pipeline should "see" what happen in source
     // we don't want to compare state since the state may be changed
     Await.result(access.start(source.id), 10 seconds).copy(state = None) shouldBe source.copy(state = None)
-    val pipeline2 = Await
-      .result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id), 10 seconds)
-    pipeline2.objects.foreach(obj => obj.state.get shouldBe ConnectorState.RUNNING)
+    val pipeline2 = Await.result(
+      PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id),
+      10 seconds
+    )
+    pipeline2.objects.foreach(
+      obj => obj.state.get shouldBe ConnectorState.RUNNING
+    )
+  }
+
+  @Test
+  def testPipelineAllowObject(): Unit = {
+    val pipeline = Await.result(
+      PipelineApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          PipelineCreationRequest(
+            name = "testPipelineAllowData",
+            rules = Map.empty
+          )
+        ),
+      10 seconds
+    )
+
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(TopicCreationRequest("testPipelineAllowData", 1, 1)),
+      10 seconds
+    )
+
+    val sourceRequest = ConnectorConfigurationRequest(
+      name = "source",
+      className = "jdbc",
+      schema = Seq.empty,
+      topics = Seq(topic.id),
+      configs = Map.empty,
+      numberOfTasks = 1
+    )
+    val source = Await.result(access.add(sourceRequest), 10 seconds)
+
+    val filePath = File.createTempFile("empty_", ".jar").getPath
+    val streamapp = Await.result(
+      StreamApi
+        .accessOfList()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .upload(pipeline.id, Seq(filePath)),
+      10 seconds
+    )
+
+    Await
+      .result(
+        PipelineApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .update(
+            pipeline.id,
+            PipelineCreationRequest(
+              name = "abc",
+              rules = Map(source.id -> topic.id)
+            )
+          ),
+        10 seconds
+      )
+      .objects
+      .size shouldBe 2
+    Await
+      .result(
+        PipelineApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .update(
+            pipeline.id,
+            PipelineCreationRequest(
+              name = "abc",
+              rules = Map(topic.id -> streamapp.head.id)
+            )
+          ),
+        10 seconds
+      )
+      .objects
+      .size shouldBe 2
   }
 
   @Test
@@ -96,7 +186,8 @@ class TestPipelineRule extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             rules = Map(source.id -> PipelineApi.UNKNOWN)
-          )),
+          )
+        ),
       10 seconds
     )
 
@@ -120,7 +211,8 @@ class TestPipelineRule extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             rules = Map(PipelineApi.UNKNOWN -> sink.id)
-          )),
+          )
+        ),
       10 seconds
     )
   }

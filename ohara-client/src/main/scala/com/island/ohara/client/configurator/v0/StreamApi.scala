@@ -47,14 +47,14 @@ object StreamApi {
     * @param toTopics the candidate topics for streamapp produce to
     * @param lastModified this data change time
     */
-  final case class StreamData(pipelineId: String,
-                              id: String,
-                              name: String,
-                              instances: Int,
-                              jarInfo: JarApi.JarInfo,
-                              fromTopics: Seq[String],
-                              toTopics: Seq[String],
-                              lastModified: Long)
+  final case class StreamApp(pipelineId: String,
+                             id: String,
+                             name: String,
+                             instances: Int,
+                             jarInfo: JarApi.JarInfo,
+                             fromTopics: Seq[String],
+                             toTopics: Seq[String],
+                             lastModified: Long)
       extends Data {
     override def kind: String = "streamApp"
   }

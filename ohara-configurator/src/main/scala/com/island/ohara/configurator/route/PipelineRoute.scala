@@ -21,6 +21,7 @@ import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
 import com.island.ohara.client.configurator.v0.PipelineApi._
+import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
@@ -61,10 +62,14 @@ private[configurator] object PipelineRoute {
       .toList // NOTED: we have to return a "serializable" list!!!
   }
 
+  /**
+    * we should accept following data type only
+    * [ConnectorConfiguration, TopicInfo, StreamApp]
+    */
   private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Pipeline = {
     def verify(id: String): Unit = if (id != UNKNOWN) {
       val data = Await.result(store.raw(id), 10 seconds)
-      if (!data.isInstanceOf[ConnectorConfiguration] && !data.isInstanceOf[TopicInfo])
+      if (!data.isInstanceOf[ConnectorConfiguration] && !data.isInstanceOf[TopicInfo] && !data.isInstanceOf[StreamApp])
         throw new IllegalArgumentException(s"""${data.getClass.getName} can't be placed at "from"""")
     }
     pipeline.rules.foreach {
