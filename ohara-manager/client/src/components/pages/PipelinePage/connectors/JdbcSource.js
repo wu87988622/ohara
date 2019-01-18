@@ -24,7 +24,11 @@ import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import { CONNECTOR_TYPES } from 'constants/pipelines';
+import {
+  CONNECTOR_TYPES,
+  CONNECTOR_STATES,
+  CONNECTOR_ACTIONS,
+} from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { DataTable } from 'common/Table';
@@ -34,10 +38,34 @@ import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchCluster } from 'apis/clusterApis';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 
-const H5Wrapper = styled(H5)`
+const TitleWrapper = styled(FormGroup).attrs({
+  isInline: true,
+})`
+  position: relative;
   margin: 0 0 30px;
+`;
+
+const H5Wrapper = styled(H5)`
+  margin: 0;
   font-weight: normal;
   color: ${lightBlue};
+`;
+
+const Controller = styled.div`
+  position: absolute;
+  right: 0;
+`;
+
+const ControlButton = styled.button`
+  color: ${lightBlue};
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover {
+    color: blue;
+  }
 `;
 
 const Fieldset = styled.fieldset`
@@ -95,6 +123,7 @@ class JdbcSource extends React.Component {
 
   state = {
     name: '',
+    state: '',
     databases: [],
     currDatabase: {},
     tables: [],
@@ -144,7 +173,7 @@ class JdbcSource extends React.Component {
     const result = _.get(res, 'data.result', null);
 
     if (result) {
-      const { name, configs, topics: prevTopics } = result;
+      const { name, state, configs, topics: prevTopics } = result;
       const {
         'source.timestamp.column.name': timestamp = '',
         'source.db.username': username = '',
@@ -184,6 +213,7 @@ class JdbcSource extends React.Component {
 
       this.setState({
         name,
+        state,
         isFormDisabled,
         currDatabase,
         tables,
@@ -338,9 +368,37 @@ class JdbcSource extends React.Component {
     updateGraph(update, currSource.id);
   }, 1000);
 
+  handleStartBtnClick = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.start);
+  };
+
+  handleStopBtnClick = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.stop);
+  };
+
+  triggerConnector = async action => {
+    const { match, graph, updateGraph } = this.props;
+    const sourceId = _.get(match, 'params.connectorId', null);
+    let res;
+    if (action === CONNECTOR_ACTIONS.start) {
+      res = await pipelinesApis.startSource(sourceId);
+    } else {
+      res = await pipelinesApis.stopSource(sourceId);
+    }
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      const state = _.get(res, 'data.result.state');
+      this.setState({ state });
+      const currSource = findByGraphId(graph, sourceId);
+      const update = { ...currSource, state };
+      updateGraph(update, currSource.id);
+    }
+  };
+
   render() {
     const {
       name,
+      state,
       url,
       username,
       password,
@@ -359,10 +417,28 @@ class JdbcSource extends React.Component {
       return <Redirect to={URLS.PIPELINE} />;
     }
 
+    const isRunning = state === CONNECTOR_STATES.running;
+
     return (
       <React.Fragment>
         <Box>
-          <H5Wrapper>JDBC connection</H5Wrapper>
+          <TitleWrapper>
+            <H5Wrapper>JDBC connection</H5Wrapper>
+            <Controller>
+              <ControlButton
+                onClick={this.handleStartBtnClick}
+                data-testid="start-button"
+              >
+                <i className={`fa fa-play-circle`} />
+              </ControlButton>
+              <ControlButton
+                onClick={this.handleStopBtnClick}
+                data-testid="stop-button"
+              >
+                <i className={`fa fa-stop-circle`} />
+              </ControlButton>
+            </Controller>
+          </TitleWrapper>
           <Fieldset disabled={isBtnWorking}>
             <FormGroup data-testid="name">
               <Label>Name</Label>
@@ -373,6 +449,7 @@ class JdbcSource extends React.Component {
                 value={name}
                 data-testid="name-input"
                 handleChange={this.handleInputChange}
+                disabled={isRunning}
               />
             </FormGroup>
 
@@ -385,6 +462,7 @@ class JdbcSource extends React.Component {
                 width="100%"
                 data-testid="dataset-select"
                 handleChange={this.handleChangeSelect}
+                disabled={isRunning}
               />
             </FormGroup>
 
@@ -397,6 +475,7 @@ class JdbcSource extends React.Component {
                 value={url}
                 data-testid="url-input"
                 handleChange={this.handleInputChange}
+                disabled={isRunning}
               />
             </FormGroup>
 
@@ -409,6 +488,7 @@ class JdbcSource extends React.Component {
                 value={username}
                 data-testid="username-input"
                 handleChange={this.handleInputChange}
+                disabled={isRunning}
               />
             </FormGroup>
 
@@ -422,6 +502,7 @@ class JdbcSource extends React.Component {
                 value={password}
                 data-testid="password-input"
                 handleChange={this.handleInputChange}
+                disabled={isRunning}
               />
             </FormGroup>
           </Fieldset>
@@ -438,6 +519,7 @@ class JdbcSource extends React.Component {
                   width="100%"
                   data-testid="table-select"
                   handleChange={this.handleChangeSelect}
+                  disabled={isRunning}
                 />
 
                 <GetTablesBtn
@@ -447,6 +529,7 @@ class JdbcSource extends React.Component {
                   disabled={isBtnWorking}
                   data-testid="get-tables-btn"
                   handleClick={this.handleGetTables}
+                  disabled={isRunning}
                 />
               </TableWrapper>
             </FormGroup>
@@ -456,10 +539,11 @@ class JdbcSource extends React.Component {
               <Input
                 name="timestamp"
                 width="100%"
-                placeholder="120"
+                placeholder="cf3"
                 value={timestamp}
                 data-testid="timestamp-input"
                 handleChange={this.handleInputChange}
+                disabled={isRunning}
               />
             </FormGroup>
 
@@ -473,6 +557,7 @@ class JdbcSource extends React.Component {
                 width="100%"
                 data-testid="write-topic-select"
                 handleChange={this.handleChangeSelect}
+                disabled={isRunning}
               />
             </FormGroup>
           </Fieldset>

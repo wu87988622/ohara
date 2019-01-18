@@ -38,3 +38,18 @@ export const CONNECTOR_FILTERS = [
   'org.apache.kafka.connect.file.FileStreamSourceConnector',
   'org.apache.kafka.connect.file.FileStreamSinkConnector',
 ];
+
+export const CONNECTOR_STATES = {
+  unassigned: 'UNASSIGNED',
+  running: 'RUNNING',
+  paused: 'PAUSED',
+  failed: 'FAILED',
+  destroyed: 'DESTROYED',
+};
+
+export const CONNECTOR_ACTIONS = {
+  start: 'start',
+  pause: 'pause',
+  resume: 'resume',
+  stop: 'stop',
+};
