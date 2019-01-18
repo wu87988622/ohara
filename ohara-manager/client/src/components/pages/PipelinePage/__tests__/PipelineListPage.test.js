@@ -67,6 +67,14 @@ describe('<PipelineListPage />', () => {
     expect(wrapper.dive().props().title).toBe(PIPELINE);
   });
 
+  it('renders a loading indicator when this.state.isLoading is true', () => {
+    wrapper.setState({ isLoading: true });
+    expect(wrapper.find('TableLoader').length).toBe(1);
+
+    wrapper.setState({ isLoading: false });
+    expect(wrapper.find('TableLoader').length).toBe(0);
+  });
+
   it('renders <H2 />', () => {
     const h2 = wrapper.find('H2');
     expect(h2.length).toBe(1);

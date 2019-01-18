@@ -70,7 +70,8 @@ class WorkerNewModal extends React.Component {
    * @param value
    * @returns {string}
    */
-  formatName = value => (value === undefined ? '' : value.replace(/[^0-9a-zA-Z]/g, ''));
+  formatName = value =>
+    value === undefined ? '' : value.replace(/[^0-9a-zA-Z]/g, '');
 
   render() {
     const { activeModal } = this.state;

@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
+import TableLoader from 'common/Loader';
 import { ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
 import { Box } from 'common/Layout';
@@ -105,6 +106,7 @@ class PipelineListPage extends React.Component {
   state = {
     isSelectTopicModalActive: false,
     isDeletePipelineModalActive: false,
+    isLoading: true,
     pipelines: [],
     currentTopic: {},
   };
@@ -116,11 +118,12 @@ class PipelineListPage extends React.Component {
   fetchPipelines = async () => {
     const res = await fetchPipelines();
     const result = _.get(res, 'data.result', null);
+    this.setState({ isLoading: false });
 
-    if (!result) return;
-
-    const pipelines = addPipelineStatus(result);
-    this.setState({ pipelines });
+    if (result) {
+      const pipelines = addPipelineStatus(result);
+      this.setState({ pipelines });
+    }
   };
 
   handleSelectChange = ({ target }) => {
@@ -186,7 +189,7 @@ class PipelineListPage extends React.Component {
 
   render() {
     const { match } = this.props;
-    const { isDeletePipelineModalActive, pipelines } = this.state;
+    const { isDeletePipelineModalActive, pipelines, isLoading } = this.state;
 
     return (
       <DocumentTitle title={PIPELINE}>
@@ -213,35 +216,41 @@ class PipelineListPage extends React.Component {
               />
             </TopWrapper>
             <Box>
-              <Table headers={this.headers}>
-                {pipelines.map((pipeline, idx) => {
-                  const { id, name, status } = pipeline;
-                  const isRunning = status === 'Running' ? true : false;
+              {isLoading ? (
+                <TableLoader />
+              ) : (
+                <Table headers={this.headers}>
+                  {pipelines.map((pipeline, idx) => {
+                    const { id, name, status } = pipeline;
+                    const isRunning = status === 'Running' ? true : false;
 
-                  const trCls = isRunning ? 'is-running' : '';
-                  const editUrl = getEditUrl(pipeline, match);
+                    const trCls = isRunning ? 'is-running' : '';
+                    const editUrl = getEditUrl(pipeline, match);
 
-                  return (
-                    <tr key={id} className={trCls}>
-                      <td>{idx}</td>
-                      <td>{name}</td>
-                      <td>{status}</td>
-                      <td className="has-icon">
-                        <LinkIcon to={editUrl}>
-                          <i className="far fa-edit" />
-                        </LinkIcon>
-                      </td>
-                      <td data-testid="delete-pipeline" className="has-icon">
-                        <DeleteIcon
-                          onClick={() => this.handleDeletePipelineModalOpen(id)}
-                        >
-                          <i className="far fa-trash-alt" />
-                        </DeleteIcon>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </Table>
+                    return (
+                      <tr key={id} className={trCls}>
+                        <td>{idx}</td>
+                        <td>{name}</td>
+                        <td>{status}</td>
+                        <td className="has-icon">
+                          <LinkIcon to={editUrl}>
+                            <i className="far fa-edit" />
+                          </LinkIcon>
+                        </td>
+                        <td data-testid="delete-pipeline" className="has-icon">
+                          <DeleteIcon
+                            onClick={() =>
+                              this.handleDeletePipelineModalOpen(id)
+                            }
+                          >
+                            <i className="far fa-trash-alt" />
+                          </DeleteIcon>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </Table>
+              )}
             </Box>
           </Wrapper>
         </React.Fragment>
