@@ -142,3 +142,78 @@ export const deleteJdbc = async id => {
     handleError(err);
   }
 };
+
+export const fetchFtp = async () => {
+  try {
+    const res = await axiosInstance.get('/api/ftp');
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const validateFtp = async params => {
+  try {
+    const res = await axiosInstance.put('/api/validate/ftp', params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const updateFtp = async params => {
+  try {
+    const res = await axiosInstance.put(`/api/ftp/${params.id}`, params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const saveFtp = async params => {
+  try {
+    const res = await axiosInstance.post('/api/ftp', params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const deleteFtp = async id => {
+  try {
+    const res = await axiosInstance.delete(`/api/ftp/${id}`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

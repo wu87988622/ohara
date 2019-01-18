@@ -22,6 +22,7 @@ import * as CSS_VARS from 'theme/variables';
 import { H2 } from 'common/Headings';
 import HdfsConfiguration from 'components/pages/Configuration/HdfsConfiguration';
 import DbConfiguration from 'components/pages/Configuration/DbConfiguration';
+import FtpConfiguration from 'components/pages/Configuration/FtpConfiguration';
 import ReactModal from 'react-modal';
 
 const modalStyles = {
@@ -66,7 +67,8 @@ const CloseBtn = styled.div`
 `;
 
 const ConfLi = styled.li`
-  color: ${CSS_VARS.lightBlue};
+  color: ${({ isSelected }) =>
+    isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
   border: 0;
   font-size: 14px;
   cursor: pointer;
@@ -74,18 +76,22 @@ const ConfLi = styled.li`
   padding-left: 10px;
 
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${({ isSelected }) =>
+      isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
   }
 `;
 
 const ConfUl = styled.ul`
-  color: ${CSS_VARS.lightBlue};
+  color: ${({ isSelected }) =>
+    isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
   border: 0;
   font-size: 14px;
   cursor: pointer;
   padding-top: 20px;
+
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${({ isSelected }) =>
+      isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
   }
 `;
 
@@ -131,6 +137,12 @@ class ConfigurationModal extends React.Component {
   render() {
     const { isActive } = this.props;
     const { childName } = this.state;
+    const isDatabaseSelected =
+      childName === childNames.DATABASE_CONFIGURATION ? true : false;
+    const isFtpSelected =
+      childName === childNames.FTP_CONFIGURATION ? true : false;
+    const isHdfsSelected =
+      childName === childNames.HDFS_CONFIGURATION ? true : false;
 
     return (
       <ReactModal
@@ -148,9 +160,12 @@ class ConfigurationModal extends React.Component {
 
         <ModalBody>
           <ConfigurationList>
-            <ConfUl>
+            <ConfUl
+              isSelected={isDatabaseSelected || isFtpSelected || isHdfsSelected}
+            >
               Configuration
               <ConfLi
+                isSelected={isDatabaseSelected}
                 onClick={() =>
                   this.handleModalOpen(childNames.DATABASE_CONFIGURATION)
                 }
@@ -158,6 +173,7 @@ class ConfigurationModal extends React.Component {
                 Database
               </ConfLi>
               <ConfLi
+                isSelected={isFtpSelected}
                 onClick={() =>
                   this.handleModalOpen(childNames.FTP_CONFIGURATION)
                 }
@@ -165,6 +181,7 @@ class ConfigurationModal extends React.Component {
                 FTP
               </ConfLi>
               <ConfLi
+                isSelected={isHdfsSelected}
                 onClick={() =>
                   this.handleModalOpen(childNames.HDFS_CONFIGURATION)
                 }
@@ -177,6 +194,10 @@ class ConfigurationModal extends React.Component {
 
           {childName === childNames.DATABASE_CONFIGURATION ? (
             <DbConfiguration handleClose={this.handleModalClose} />
+          ) : null}
+
+          {childName === childNames.FTP_CONFIGURATION ? (
+            <FtpConfiguration handleClose={this.handleModalClose} />
           ) : null}
 
           {childName === childNames.HDFS_CONFIGURATION ? (

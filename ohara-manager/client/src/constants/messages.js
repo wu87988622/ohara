@@ -37,6 +37,8 @@ export const TEST_NOT_SUCCESS = 'Test has not passed!';
 // Error messages
 export const EMPTY_NAME_ERROR = 'Name is a required field!';
 export const EMPTY_CONN_URL_ERROR = 'Coonection URL is a required field!';
+export const EMPTY_HOSTNAME_ERROR = 'Hostname is a required field!';
+export const EMPTY_PORT_ERROR = 'Port is a required field!';
 export const EMPTY_USER_ERROR = 'User is a required field!';
 export const EMPTY_PASSWORD_ERROR = 'Password is a required field!';
 export const EMPTY_COLUMN_NAME_ERROR = 'Column Name is a required field!';
