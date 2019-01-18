@@ -95,4 +95,4 @@ RUN chmod +x /tini
 # change to user
 USER $USER
 
-ENTRYPOINT ["/tini", "--", "ohara", "start", "backend"]
+ENTRYPOINT ["/tini", "--", "ohara.sh", "start", "backend"]
