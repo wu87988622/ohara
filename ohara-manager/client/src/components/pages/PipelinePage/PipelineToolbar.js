@@ -104,7 +104,7 @@ class PipelineToolbar extends React.Component {
     isModalActive: false,
     sources: [],
     sinks: [],
-    activeConnector: {},
+    activeConnector: null,
     connectorType: '',
   };
 
@@ -133,7 +133,11 @@ class PipelineToolbar extends React.Component {
 
   setDefaultConnector = connectorType => {
     if (connectorType) {
-      this.setState({ activeConnector: this.state[connectorType][0] });
+      const { connectorType: connector } = this.state;
+      const activeConnector =
+        connectorType === 'stream' ? connector : this.state[connector][0];
+
+      this.setState({ activeConnector });
     }
   };
 
@@ -144,7 +148,7 @@ class PipelineToolbar extends React.Component {
   };
 
   handleModalClose = () => {
-    this.setState({ isModalActive: false });
+    this.setState({ isModalActive: false, activeConnector: null });
   };
 
   handleConfirm = () => {
@@ -174,13 +178,15 @@ class PipelineToolbar extends React.Component {
       updateCurrentTopic,
       isLoading,
     } = this.props;
-    const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
+
     const {
       isModalActive,
       modalName,
       connectorType,
       activeConnector,
     } = this.state;
+
+    const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
 
     const getModalTitle = () => {
       switch (modalName) {
@@ -203,14 +209,18 @@ class PipelineToolbar extends React.Component {
         <Modal
           title={getModalTitle()}
           isActive={isModalActive}
-          width="600px"
+          width={modalName === modalNames.ADD_TOPIC ? '350px' : '600px'}
           handleCancel={this.handleModalClose}
           handleConfirm={this.handleConfirm}
           confirmBtnText="Add"
           showActions={true}
         >
           {modalName === modalNames.ADD_STREAM && (
-            <PipelineNewStream {...this.props} ref={this.modalChild} />
+            <PipelineNewStream
+              {...this.props}
+              activeConnector={activeConnector}
+              ref={this.modalChild}
+            />
           )}
 
           {modalName === modalNames.ADD_TOPIC && (
@@ -257,7 +267,7 @@ class PipelineToolbar extends React.Component {
         />
         <Icon
           className="fas fa-wind"
-          onClick={() => this.handleModalOpen(modalNames.ADD_STREAM)}
+          onClick={() => this.handleModalOpen(modalNames.ADD_STREAM, 'stream')}
           data-id={modalNames.ADD_STREAM}
           data-testid="toolbar-streams"
         />

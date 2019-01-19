@@ -17,11 +17,11 @@
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { createSource } from 'apis/pipelinesApis';
 
-import { update } from '../pipelineToolbarUtils';
+import { createConnector } from '../pipelineToolbarUtils';
 
 jest.mock('apis/pipelinesApis');
 
-describe('update()', () => {
+describe('createConnector()', () => {
   it('should call updateGraph function if the given type is not exist in the current graph', async () => {
     const graph = [{ name: 'a', type: CONNECTOR_TYPES.topic }];
     const updateGraph = jest.fn();
@@ -31,7 +31,7 @@ describe('update()', () => {
 
     createSource.mockImplementation(() => Promise.resolve(res));
 
-    await update({ graph, updateGraph, connector });
+    await createConnector({ graph, updateGraph, connector });
 
     expect(updateGraph).toHaveBeenCalledTimes(1);
     expect(updateGraph).toHaveBeenCalledWith(

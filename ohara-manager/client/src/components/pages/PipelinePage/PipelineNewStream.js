@@ -24,10 +24,11 @@ import { find, some, endsWith } from 'lodash';
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
 import * as streamApis from 'apis/streamApis';
+import * as MESSAGES from 'constants/messages';
+import Editable from './Editable';
 import { DataTable } from 'common/Table';
 import { ConfirmModal } from 'common/Modal';
-import Editable from './Editable';
-import * as MESSAGES from 'constants/messages';
+import { createConnector } from 'utils/pipelineToolbarUtils';
 
 const JAR_EXTENSION = '.jar';
 
@@ -47,6 +48,7 @@ const Table = styled(DataTable)`
 
   td {
     color: ${CSS_VARS.lighterBlue};
+    padding: 20px 10px;
   }
 
   tbody tr {
@@ -60,7 +62,7 @@ const Table = styled(DataTable)`
 
 const Icon = styled.i`
   color: ${CSS_VARS.lighterBlue};
-  font-size: 25px;
+  font-size: 20px;
   margin-right: 20px;
   transition: ${CSS_VARS.durationNormal} all;
   cursor: pointer;
@@ -87,6 +89,8 @@ class PipelineNewStream extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    activeConnector: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+    updateGraph: PropTypes.func.isRequired,
   };
 
   state = {
@@ -247,7 +251,12 @@ class PipelineNewStream extends React.Component {
   };
 
   update = () => {
-    // TODO:
+    const { activeId, jars } = this.state;
+    const activeJar = jars.find(jar => jar.id === activeId);
+    const connector = { ...activeJar, className: 'streamApp' };
+
+    const { updateGraph } = this.props;
+    createConnector({ updateGraph, connector });
   };
 
   render() {
@@ -286,7 +295,7 @@ class PipelineNewStream extends React.Component {
                       </td>
                       <td>
                         <Icon
-                          className="fas fa-edit"
+                          className="far fa-edit"
                           onClick={() => {
                             this.handleEditIconClick(id);
                           }}
@@ -294,7 +303,7 @@ class PipelineNewStream extends React.Component {
                       </td>
                       <td>
                         <Icon
-                          className="fas fa-trash-alt"
+                          className="far fa-trash-alt"
                           onClick={e => {
                             this.handleDeleteRowModalOpen(e, id);
                           }}

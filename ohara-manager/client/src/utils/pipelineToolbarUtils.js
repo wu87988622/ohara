@@ -16,27 +16,36 @@
 
 import * as _ from 'utils/commonUtils';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import { CONNECTOR_TYPES, ICON_MAPS } from 'constants/pipelines';
-
-const isSource = kind => kind.includes('Source');
-const isSink = kind => kind.includes('Sink');
-
-/* eslint-disable array-callback-return */
+import { isSource, isSink, isTopic, isStream } from './pipelineUtils';
+import { ICON_MAPS } from 'constants/pipelines';
 
 const getNameByKind = kind => {
   if (isSource(kind)) {
     return 'Source';
   } else if (isSink(kind)) {
     return 'Sink';
-  } else {
-    return 'Topic';
+  } else if (isTopic(kind) || isStream(kind)) {
+    return kind;
   }
+
+  return null;
 };
 
-export const update = async ({ graph, updateGraph, connector }) => {
-  let className = connector.className;
-  className = className ? className : CONNECTOR_TYPES.topic;
+const getClassName = connector => {
+  let className = '';
 
+  if (_.isObject(connector)) {
+    // TODO: figure out a better way to get topic class name
+    className = connector.className || 'topic';
+  } else {
+    className = connector;
+  }
+
+  return className;
+};
+
+export const createConnector = async ({ updateGraph, connector }) => {
+  const className = getClassName(connector);
   const connectorKind = getNameByKind(className);
   let connectorName = `Untitled ${connectorKind}`;
 
@@ -52,10 +61,10 @@ export const update = async ({ graph, updateGraph, connector }) => {
 
   let id;
 
-  if (className === 'topic') {
+  if (isTopic(className) || isStream(className)) {
     // Topic was created beforehand, it already has an ID.
     id = connector.id;
-    connectorName = connector.name;
+    connectorName = connector.className;
   } else if (isSource(className)) {
     const res = await pipelinesApis.createSource(params);
     id = _.get(res, 'data.result.id', null);

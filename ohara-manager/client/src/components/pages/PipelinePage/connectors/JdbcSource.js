@@ -526,10 +526,9 @@ class JdbcSource extends React.Component {
                   theme={primaryBtn}
                   text="Get tables"
                   isWorking={isBtnWorking}
-                  disabled={isBtnWorking}
+                  disabled={isBtnWorking || isRunning}
                   data-testid="get-tables-btn"
                   handleClick={this.handleGetTables}
-                  disabled={isRunning}
                 />
               </TableWrapper>
             </FormGroup>

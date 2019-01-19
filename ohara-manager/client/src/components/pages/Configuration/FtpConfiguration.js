@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 
@@ -132,6 +133,10 @@ const HDiv = styled.div`
 `;
 
 class FtpConfiguration extends React.Component {
+  static propTypes = {
+    handleClose: PropTypes.func.isRequired,
+  };
+
   state = {
     connections: [],
     connectionName: '',
@@ -312,7 +317,14 @@ class FtpConfiguration extends React.Component {
 
   handleApplyConnection = async e => {
     e.preventDefault();
-    const { connectionName: name, hostname, port, user, password, id } = this.state;
+    const {
+      connectionName: name,
+      hostname,
+      port,
+      user,
+      password,
+      id,
+    } = this.state;
 
     if (!name) {
       toastr.error(MESSAGES.EMPTY_NAME_ERROR);

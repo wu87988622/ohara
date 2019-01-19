@@ -21,7 +21,7 @@ import styled from 'styled-components';
 import * as PIPELINES from 'constants/pipelines';
 import { DataTable } from 'common/Table';
 import { lighterBlue, lightBlue, trBgColor } from 'theme/variables';
-import { update } from 'utils/pipelineToolbarUtils';
+import { createConnector } from 'utils/pipelineToolbarUtils';
 
 const TableWrapper = styled.div`
   margin: 30px 30px 40px;
@@ -49,23 +49,14 @@ const Table = styled(DataTable)`
 class PipelineNewConnector extends React.Component {
   static propTypes = {
     connectors: PropTypes.array.isRequired,
-    activeConnector: PropTypes.object.isRequired,
     onSelect: PropTypes.func.isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
     updateGraph: PropTypes.func.isRequired,
+    activeConnector: PropTypes.object,
   };
 
   update = () => {
-    const { updateGraph, graph, activeConnector: connector } = this.props;
-    update({ graph, updateGraph, connector });
+    const { updateGraph, activeConnector: connector } = this.props;
+    createConnector({ updateGraph, connector });
   };
 
   trimString = string => {
@@ -77,6 +68,8 @@ class PipelineNewConnector extends React.Component {
 
   render() {
     const { connectors, activeConnector, onSelect } = this.props;
+
+    if (!activeConnector) return null;
 
     return (
       <TableWrapper>

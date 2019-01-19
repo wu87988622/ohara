@@ -20,7 +20,7 @@ import isFunction from 'lodash.isfunction';
 import isEmpty from 'lodash.isempty';
 import isString from 'lodash.isstring';
 import debounce from 'lodash.debounce';
-import { includes } from 'lodash';
+import { includes, isObject } from 'lodash';
 
 const isEmptyStr = val => val.length === 0;
 
@@ -51,4 +51,5 @@ export {
   isNumber,
   isFunction,
   isNull,
+  isObject,
 };

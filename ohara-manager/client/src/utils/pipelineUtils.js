@@ -14,33 +14,15 @@
  * limitations under the License.
  */
 
-import { CONNECTOR_TYPES } from 'constants/pipelines';
 import * as _ from './commonUtils';
 
-const getKeys = kind => {
-  return Object.keys(CONNECTOR_TYPES).reduce((acc, iconKey) => {
-    if (iconKey.includes(kind)) {
-      acc.push(CONNECTOR_TYPES[iconKey]);
-    }
+export const isSource = kind => kind.includes('Source');
 
-    return acc;
-  }, []);
-};
+export const isSink = kind => kind.includes('Sink');
 
-const sourceKeys = getKeys('Source');
-const sinkKeys = getKeys('Sink');
+export const isTopic = kind => kind === 'topic';
 
-export const isSource = kind => {
-  return sourceKeys.some(sourceKey => kind.includes(sourceKey));
-};
-
-export const isSink = kind => {
-  return sinkKeys.some(sinkKey => kind.includes(sinkKey));
-};
-
-export const isTopic = kind => {
-  return kind === CONNECTOR_TYPES.topic;
-};
+export const isStream = kind => kind === 'streamApp';
 
 export const findByGraphId = (graph, id) => {
   const result = graph.find(x => x.id === id);

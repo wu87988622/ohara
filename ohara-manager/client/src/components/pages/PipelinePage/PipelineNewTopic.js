@@ -23,7 +23,7 @@ import { Facebook } from 'react-content-loader';
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
 import { lighterBlue, durationNormal, blue } from 'theme/variables';
-import { update } from 'utils/pipelineToolbarUtils';
+import { createConnector } from 'utils/pipelineToolbarUtils';
 
 const Icon = styled.i`
   color: ${lighterBlue};
@@ -73,13 +73,14 @@ class PipelineNewTopic extends React.Component {
   };
 
   update = () => {
-    const { updateGraph, graph, currentTopic } = this.props;
+    const { updateGraph, currentTopic } = this.props;
 
     if (!currentTopic) {
       return toastr.error('Please select a topic!');
     }
 
-    update({ graph, updateGraph, connector: currentTopic });
+    const connector = { ...currentTopic, className: 'topic' };
+    createConnector({ updateGraph, connector });
   };
 
   render() {
