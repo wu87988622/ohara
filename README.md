@@ -1,6 +1,6 @@
 ## Ohara
 
-a powerful ETL tool
+An easy use visual stream processing tool based on Apache Kafka.
 
 ### Getting Started
 
@@ -111,3 +111,7 @@ the uber jar is under ohara-assembly/build/libs/
 * **Chih-Chiang Yeh (harryyeh@is-land.com.tw)** - committer
 * **Harry Chiang (harry@is-land.com.tw)** - committer
 
+
+### License
+
+Ohara is open source and available under the Apache 2.0 License.
