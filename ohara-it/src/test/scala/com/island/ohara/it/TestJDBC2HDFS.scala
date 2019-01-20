@@ -20,8 +20,9 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.{Calendar, TimeZone}
 
+import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.{DatabaseClient, WorkerClient}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
@@ -151,7 +152,6 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   @After
   def afterTest(): Unit = {
     client.dropTable(tableName)
-    Releasable.close(workerClient)
     Releasable.close(client)
   }
 }

@@ -18,7 +18,8 @@ package com.island.ohara.it
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
-import com.island.ohara.client.{FtpClient, WorkerClient}
+import com.island.ohara.client.FtpClient
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
@@ -132,7 +133,6 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(workerClient)
     Releasable.close(ftpClient)
   }
 }

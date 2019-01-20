@@ -53,10 +53,11 @@ object JarApi {
         .map(e => HttpRequest(HttpMethods.POST, uri = target, entity = e))
 
     override def upload(f: File, newName: String): Future[JarInfo] =
-      request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", f, newName).flatMap(exec.request[JarInfo])
+      request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", f, newName)
+        .flatMap(exec.request[JarInfo, ErrorApi.Error])
     override def delete(id: String): Future[JarInfo] =
-      exec.delete[JarInfo](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
+      exec.delete[JarInfo, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
     override def list(): Future[Seq[JarInfo]] =
-      exec.get[Seq[JarInfo]](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+      exec.get[Seq[JarInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }
 }

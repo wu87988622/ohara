@@ -35,17 +35,18 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
   private[this] def _nodeName(name: String): String = CommonUtil.requireNonEmpty(name, () => "node name can't be empty")
 
   def get(clusterName: String): Future[Seq[ContainerInfo]] =
-    exec.get[Seq[ContainerInfo]](
+    exec.get[Seq[ContainerInfo], ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}")
   def delete(clusterName: String): Future[Res] =
-    exec.delete[Res](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")
-  def list(): Future[Seq[Res]] = exec.get[Seq[Res]](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
+    exec.delete[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")
+  def list(): Future[Seq[Res]] =
+    exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   def add(request: Req): Future[Res] =
-    exec.post[Req, Res](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
+    exec.post[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
   def addNode(clusterName: String, nodeName: String): Future[Res] =
-    exec.post[Res](
+    exec.post[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
   def removeNode(clusterName: String, nodeName: String): Future[Res] =
-    exec.delete[Res](
+    exec.delete[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
 }

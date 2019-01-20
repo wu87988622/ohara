@@ -19,11 +19,11 @@ package com.island.ohara.it.agent
 import java.time.Duration
 
 import com.island.ohara.agent._
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
@@ -306,8 +306,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       result(workerCollie.exists(workerCluster.name)) shouldBe true
       log.info("[WORKER] verify:exist done")
       val workerClient = WorkerClient(s"${workerCluster.nodeNames.head}:${workerCluster.clientPort}")
-      try workerClient.plugins().isEmpty shouldBe false
-      finally workerClient.close()
+      workerClient.plugins().isEmpty shouldBe false
       // we can't assume the size since other tests may create zk cluster at the same time
       result(workerCollie.clusters()).isEmpty shouldBe false
       log.info("[WORKER] verify:list done")
@@ -359,8 +358,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
             try {
               val workersProps = s"${freeNodes.head.name}:${newCluster.clientPort}"
               val workerClient = WorkerClient(workersProps)
-              try workerClient.plugins().nonEmpty
-              finally workerClient.close()
+              workerClient.plugins().nonEmpty
             } catch {
               case _: Throwable => false
           },

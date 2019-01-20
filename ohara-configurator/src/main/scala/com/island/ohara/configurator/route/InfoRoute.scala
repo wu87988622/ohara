@@ -17,13 +17,12 @@
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives.{complete, get, path}
-import com.island.ohara.client.WorkerClient
-import com.island.ohara.client.ConnectorJson.Plugin
+import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import com.island.ohara.client.configurator.v0.InfoApi._
+import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
 import com.island.ohara.common.util.VersionUtil
-import akka.http.scaladsl.server.Directives._
 import com.island.ohara.kafka.BrokerClient
 object InfoRoute extends SprayJsonSupport {
 

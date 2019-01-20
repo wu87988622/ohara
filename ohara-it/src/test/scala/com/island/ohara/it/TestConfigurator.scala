@@ -17,10 +17,11 @@
 package com.island.ohara.it
 import java.time.Duration
 
+import com.island.ohara.client.FtpClient
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, InfoApi, TopicApi}
-import com.island.ohara.client.{FtpClient, WorkerClient}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtil, Releasable, VersionUtil}
 import com.island.ohara.configurator.Configurator
@@ -223,7 +224,6 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(workerClient)
     Releasable.close(configurator)
   }
 

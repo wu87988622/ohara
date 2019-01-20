@@ -74,12 +74,12 @@ object ValidationApi {
   def access(): Access = new Access(VALIDATION_PREFIX_PATH) {
     private[this] def url(prefix: String): String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix"
     override def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[HdfsValidationRequest, Seq[ValidationReport]](url(VALIDATION_HDFS_PREFIX_PATH), request)
+      exec.put[HdfsValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_HDFS_PREFIX_PATH), request)
     override def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[RdbValidationRequest, Seq[ValidationReport]](url(VALIDATION_RDB_PREFIX_PATH), request)
+      exec.put[RdbValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH), request)
     override def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[FtpValidationRequest, Seq[ValidationReport]](url(VALIDATION_FTP_PREFIX_PATH), request)
+      exec.put[FtpValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_FTP_PREFIX_PATH), request)
     override def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[NodeValidationRequest, Seq[ValidationReport]](url(VALIDATION_NODE_PREFIX_PATH), request)
+      exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH), request)
   }
 }

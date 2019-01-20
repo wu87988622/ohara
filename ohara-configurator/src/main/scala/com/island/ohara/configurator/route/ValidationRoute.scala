@@ -19,8 +19,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
 import com.island.ohara.agent.Agent
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.ValidationApi._
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.kafka.BrokerClient
 import spray.json.DefaultJsonProtocol._

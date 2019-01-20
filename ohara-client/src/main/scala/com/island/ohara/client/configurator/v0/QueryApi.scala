@@ -49,6 +49,8 @@ object QueryApi {
 
   def access(): Access = new Access {
     override def query(q: RdbQuery): Future[RdbInfo] =
-      exec.post[RdbQuery, RdbInfo](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$RDB_PREFIX_PATH", q)
+      exec.post[RdbQuery, RdbInfo, ErrorApi.Error](
+        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$RDB_PREFIX_PATH",
+        q)
   }
 }

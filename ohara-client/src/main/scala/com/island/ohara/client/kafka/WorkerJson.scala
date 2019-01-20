@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client
+package com.island.ohara.client.kafka
+
+import com.island.ohara.client.HttpExecutor
 import com.island.ohara.common.data.ConnectorState
 import spray.json.DefaultJsonProtocol._
+import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4}
 import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection from marshalling/unmarshalling connector data to/from json.
   * NOTED: the json format is a part from PUBLIC INTERFACE so please don't change the field names after releasing the ohara.
   */
-object ConnectorJson {
+object WorkerJson {
   final case class Plugin(className: String, typeName: String, version: String)
 
   /**
@@ -92,8 +95,8 @@ object ConnectorJson {
   implicit val CONNECTOR_INFORMATION_JSON_FORMAT: RootJsonFormat[ConnectorInformation] = jsonFormat3(
     ConnectorInformation)
 
-  final case class ErrorResponse(error_code: Int, message: String)
-  implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[ErrorResponse] = jsonFormat2(ErrorResponse)
+  final case class Error(error_code: Int, message: String) extends HttpExecutor.Error
+  implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[Error] = jsonFormat2(Error)
 
   final case class ConnectorConfig(tasksMax: String,
                                    topics: Seq[String],

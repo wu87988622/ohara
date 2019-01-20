@@ -16,9 +16,9 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.client.ConnectorJson;
-import com.island.ohara.client.WorkerClient;
-import com.island.ohara.client.WorkerClient$;
+import com.island.ohara.client.kafka.WorkerClient;
+import com.island.ohara.client.kafka.WorkerClient$;
+import com.island.ohara.client.kafka.WorkerJson;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.ConnectorState;
@@ -48,6 +48,7 @@ import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
+// TODO: we ought to write this one by scala ... by chia
 public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
   private final OharaTestUtil testUtil = testUtil();
@@ -312,16 +313,15 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
     Seq<String> activeConnectors = workerClient.activeConnectors();
     assertTrue(activeConnectors.contains(connectorName));
 
-    ConnectorJson.ConnectorConfig config = workerClient.config(connectorName);
+    WorkerJson.ConnectorConfig config = workerClient.config(connectorName);
     assertEquals(config.topics(), toScalaList(topics));
 
     CommonUtil.await(
         () -> workerClient.status(connectorName).tasks().size() > 0, Duration.ofSeconds(10));
-    ConnectorJson.ConnectorInformation status = workerClient.status(connectorName);
+    WorkerJson.ConnectorInformation status = workerClient.status(connectorName);
     assertNotNull(status.tasks().head());
 
-    ConnectorJson.TaskStatus task =
-        workerClient.taskStatus(connectorName, status.tasks().head().id());
+    WorkerJson.TaskStatus task = workerClient.taskStatus(connectorName, status.tasks().head().id());
     assertNotNull(task);
     assertEquals(task, status.tasks().head());
     assertFalse(task.worker_id().isEmpty());

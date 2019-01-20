@@ -17,12 +17,12 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 

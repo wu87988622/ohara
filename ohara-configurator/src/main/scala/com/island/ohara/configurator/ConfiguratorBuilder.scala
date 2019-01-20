@@ -21,7 +21,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
-import com.island.ohara.client.ConnectorJson.{
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.kafka.WorkerJson.{
   ConnectorConfig,
   ConnectorInformation,
   ConnectorStatus,
@@ -29,13 +35,7 @@ import com.island.ohara.client.ConnectorJson.{
   Plugin,
   TaskStatus
 }
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
-import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.{ConnectorCreator, WorkerClient}
+import com.island.ohara.client.kafka.{ConnectorCreator, WorkerClient}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
@@ -170,10 +170,6 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   import scala.collection.JavaConverters._
   // TODO; does this work? by chia
   override def plugins(): Seq[Plugin] = cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
-  override protected def doClose(): Unit = {
-    cachedConnectors.clear()
-    cachedConnectorsState.clear()
-  }
   override def activeConnectors(): Seq[String] = cachedConnectors.keys.asScala.toSeq
   override def connectionProps: String = "Unknown"
   override def status(name: String): ConnectorInformation = {

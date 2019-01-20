@@ -18,8 +18,8 @@ package com.island.ohara.it.agent
 import java.io.File
 
 import com.island.ohara.agent._
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
@@ -149,7 +149,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           // make sure all workers have loaded the test-purposed connector.
           result(clusterCollie.workerCollie().cluster(wkCluster.name))._1.nodeNames.foreach { name =>
             val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
-            try CommonUtil.await(
+            CommonUtil.await(
               () =>
                 try workerClient.plugins().exists(_.className == "com.island.ohara.it.ItConnector")
                   && workerClient.plugins().exists(_.className == "com.island.ohara.it.ItConnector2")
@@ -158,7 +158,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
               },
               java.time.Duration.ofSeconds(30)
             )
-            finally workerClient.close()
           }
         } finally if (cleanup)
           result(clusterCollie.workerCollie().clusters()).foreach(c =>

@@ -37,13 +37,11 @@ import com.island.ohara.agent.K8SJson.{
   CreatePodSpec,
   K8SPodInfo
 }
-import com.island.ohara.client.ConnectorJson.ErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
-import spray.json.RootJsonFormat
-import spray.json._
-
+import spray.json.{RootJsonFormat, _}
+import com.island.ohara.client.kafka.WorkerJson.Error
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -225,7 +223,7 @@ object K8SClient {
         if (response.status.isSuccess()) Unmarshal(response).to[T]
         else
           Unmarshal(response)
-            .to[ErrorResponse]
+            .to[Error]
             .flatMap(error => {
               // this is a retriable exception
               if (error.error_code == StatusCodes.Conflict.intValue)

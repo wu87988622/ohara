@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.client.HttpExecutor
 import org.apache.commons.lang3.exception.ExceptionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -27,7 +28,7 @@ object ErrorApi {
     * @param message error message
     * @param stack error stack
     */
-  final case class Error(code: String, message: String, stack: String)
+  final case class Error(code: String, message: String, stack: String) extends HttpExecutor.Error
 
   def of(e: Throwable): Error =
     Error(e.getClass.getName, if (e.getMessage == null) "unknown" else e.getMessage, ExceptionUtils.getStackTrace(e))

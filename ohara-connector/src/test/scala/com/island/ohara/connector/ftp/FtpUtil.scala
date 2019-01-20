@@ -17,7 +17,7 @@
 package com.island.ohara.connector.ftp
 import java.time.Duration
 
-import com.island.ohara.client.WorkerClient
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
@@ -29,7 +29,7 @@ object FtpUtil {
       try workerClient.status(name).connector.state == ConnectorState.FAILED
       catch {
         case _: Throwable => false
-      } finally workerClient.close()
+      }
     },
     TIMEOUT
   )
@@ -38,8 +38,7 @@ object FtpUtil {
     CommonUtil.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
-        try workerClient.activeConnectors().contains(name)
-        finally workerClient.close()
+        workerClient.activeConnectors().contains(name)
       },
       TIMEOUT
     )
@@ -49,7 +48,7 @@ object FtpUtil {
         try workerClient.status(name).connector.state == ConnectorState.RUNNING
         catch {
           case _: Throwable => false
-        } finally workerClient.close()
+        }
       },
       TIMEOUT
     )

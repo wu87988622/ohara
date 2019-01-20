@@ -18,12 +18,13 @@ package com.island.ohara.connector.ftp
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.{FtpClient, WorkerClient}
+import com.island.ohara.client.FtpClient
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.{ByteUtil, CommonUtil, Releasable}
+import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
-import org.junit.{After, Before, BeforeClass, Test}
+import org.junit.{Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
@@ -350,7 +351,4 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       ftpClient.listFileNames(props.output).size shouldBe 0
     } finally workerClient.delete(connectorName)
   }
-
-  @After
-  def tearDown(): Unit = Releasable.close(workerClient)
 }

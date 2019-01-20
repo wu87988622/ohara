@@ -20,27 +20,24 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.island.ohara.client.ConnectorJson.ErrorResponse
-import spray.json.RootJsonFormat
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import akka.stream.ActorMaterializer
+import com.island.ohara.agent.K8SClient
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.kafka.WorkerJson.Error
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.it.TestK8SSimple.API_SERVER_URL
 import com.typesafe.scalalogging.Logger
 import org.junit._
 import org.scalatest.Matchers
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model._
-import com.island.ohara.agent.K8SClient
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
-import spray.json._
-import DefaultJsonProtocol._
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.{Await, Future}
 
 class TestK8SSimple extends SmallTest with Matchers {
   private val log = Logger(classOf[TestK8SSimple])
@@ -234,7 +231,7 @@ object TestK8SSimple {
     if (response.status.isSuccess()) Unmarshal(response).to[T]
     else
       Unmarshal(response)
-        .to[ErrorResponse]
+        .to[Error]
         .flatMap(error => {
           // this is a retriable exception
           if (error.error_code == StatusCodes.Conflict.intValue)

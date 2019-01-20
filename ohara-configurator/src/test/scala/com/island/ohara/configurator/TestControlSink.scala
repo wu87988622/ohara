@@ -18,10 +18,10 @@ package com.island.ohara.configurator
 
 import java.time.Duration
 
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.WithBrokerWorker
@@ -99,7 +99,6 @@ class TestControlSink extends WithBrokerWorker with Matchers {
       result(access.get(sink.id)).state shouldBe None
     } finally {
       if (workerClient.exist(sink.id)) workerClient.delete(sink.id)
-      workerClient.close()
     }
   }
 
@@ -142,7 +141,6 @@ class TestControlSink extends WithBrokerWorker with Matchers {
       result(access.get(sink.id)).state shouldBe None
     } finally {
       if (workerClient.exist(sink.id)) workerClient.delete(sink.id)
-      workerClient.close()
     }
   }
 

@@ -16,8 +16,8 @@
 
 package com.island.ohara.kafka;
 
-import com.island.ohara.client.WorkerClient;
-import com.island.ohara.client.WorkerClient$;
+import com.island.ohara.client.kafka.WorkerClient;
+import com.island.ohara.client.kafka.WorkerClient$;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.ConnectorState;
 import com.island.ohara.common.data.Row;
@@ -35,7 +35,7 @@ public class TestWorkerClient extends With3Brokers3Workers {
 
   private final WorkerClient workerClient =
       WorkerClient$.MODULE$.apply(testUtil.workersConnProps());
-  //  @Ignore
+
   @Test
   public void testExist() {
     String topicName = methodName();

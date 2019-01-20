@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client
+package com.island.ohara.client.kafka
+
 import java.util.Objects
 
-import com.island.ohara.client.ConnectorJson.{CreateConnectorRequest, CreateConnectorResponse}
+import com.island.ohara.client.kafka.WorkerJson.{CreateConnectorRequest, CreateConnectorResponse}
 import com.island.ohara.common.data.Column
 import com.typesafe.scalalogging.Logger
 

@@ -20,16 +20,16 @@ import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.time.Duration
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
-import com.island.ohara.client.WorkerClient
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.{ByteUtil, CommonUtil, Releasable}
+import com.island.ohara.common.util.{ByteUtil, CommonUtil}
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
 import org.apache.hadoop.fs.Path
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
@@ -303,9 +303,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").isEmpty, Duration.ofSeconds(20))
   }
-
-  @After
-  def tearDown(): Unit = Releasable.close(workerClient)
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {

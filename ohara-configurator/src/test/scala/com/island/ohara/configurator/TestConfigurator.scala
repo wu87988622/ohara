@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator
 
+import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
 import com.island.ohara.client.configurator.v0.DatabaseApi.{JdbcInfo, JdbcInfoRequest}
 import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
@@ -25,7 +26,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, Rdb
 import com.island.ohara.client.configurator.v0.TopicApi.{TopicCreationRequest, TopicInfo}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.client.{DatabaseClient, WorkerClient}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.util.{Releasable, VersionUtil}
 import com.island.ohara.integration.WithBrokerWorker

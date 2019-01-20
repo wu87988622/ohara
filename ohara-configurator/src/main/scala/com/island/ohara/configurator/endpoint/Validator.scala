@@ -27,7 +27,8 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.{FtpClient, WorkerClient}
+import com.island.ohara.client.FtpClient
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.FakeWorkerClient

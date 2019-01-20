@@ -15,12 +15,11 @@
  */
 
 package com.island.ohara.connector.perf
-import com.island.ohara.client.WorkerClient
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Serializer}
-import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
@@ -102,7 +101,4 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
       } finally consumer.close()
     } finally workerClient.delete(connectorName)
   }
-
-  @After
-  def tearDown(): Unit = Releasable.close(workerClient)
 }

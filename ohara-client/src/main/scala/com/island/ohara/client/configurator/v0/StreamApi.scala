@@ -109,19 +109,21 @@ object StreamApi {
       }): _*)).to[RequestEntity].map(entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity))
 
     override def list(pipeline_id: String): Future[Seq[StreamListResponse]] =
-      exec.get[Seq[StreamListResponse]](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id")
+      exec.get[Seq[StreamListResponse], ErrorApi.Error](
+        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id")
 
     override def upload(pipeline_id: String,
                         filePaths: Seq[String],
                         inputKey: String,
                         contentType: ContentType): Future[Seq[StreamListResponse]] = {
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id", inputKey, contentType, filePaths)
-        .flatMap(exec.request[Seq[StreamListResponse]])
+        .flatMap(exec.request[Seq[StreamListResponse], ErrorApi.Error])
     }
     override def delete(jar_id: String): Future[StreamListResponse] =
-      exec.delete[StreamListResponse](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id")
+      exec.delete[StreamListResponse, ErrorApi.Error](
+        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id")
     override def update(jar_id: String, request: StreamListRequest): Future[StreamListResponse] =
-      exec.put[StreamListRequest, StreamListResponse](
+      exec.put[StreamListRequest, StreamListResponse, ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id",
         request)
   }

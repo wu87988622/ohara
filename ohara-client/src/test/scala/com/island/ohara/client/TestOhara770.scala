@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.client
+import com.island.ohara.client.kafka.{ConnectorCreator, WorkerJson}
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
@@ -24,8 +25,7 @@ class TestOhara770 extends SmallTest with Matchers {
   @Test
   def configsNameShouldBeRemoved(): Unit = {
     class DumbConnectorCreator extends ConnectorCreator {
-      override protected def send(
-        request: ConnectorJson.CreateConnectorRequest): ConnectorJson.CreateConnectorResponse = {
+      override protected def send(request: WorkerJson.CreateConnectorRequest): WorkerJson.CreateConnectorResponse = {
         request.config.get("name") shouldBe None
         null
       }

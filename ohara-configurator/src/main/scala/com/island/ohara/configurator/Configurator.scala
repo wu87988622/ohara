@@ -28,9 +28,9 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
@@ -207,7 +207,6 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
     Releasable.close(brokerClient)
-    Releasable.close(workerClient)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)

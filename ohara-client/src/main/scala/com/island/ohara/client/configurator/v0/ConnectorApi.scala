@@ -112,12 +112,12 @@ object ConnectorApi {
     private[this] def url(id: String, action: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
     override def start(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration](url(id, START_COMMAND))
+      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, START_COMMAND))
     override def stop(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration](url(id, STOP_COMMAND))
+      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, STOP_COMMAND))
     override def pause(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration](url(id, PAUSE_COMMAND))
+      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, PAUSE_COMMAND))
     override def resume(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration](url(id, RESUME_COMMAND))
+      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, RESUME_COMMAND))
   }
 }

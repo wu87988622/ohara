@@ -16,13 +16,13 @@
 
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.client.WorkerClient
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
   RdbValidationRequest,
   ValidationReport
 }
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.BrokerClient
@@ -78,7 +78,6 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(workerClient)
     Releasable.close(brokerClient)
   }
 }
