@@ -20,18 +20,16 @@ FROM centos:7.6.1810 as base
 RUN yum install -y \
   wget
 
-ARG PROMETHEUS_HOME=/opt/prometheus
-
 #download prometheus
-ARG VERSION=2.6.0
-RUN wget https://github.com/prometheus/prometheus/releases/download/v${VERSION}/prometheus-${VERSION}.linux-amd64.tar.gz
-RUN tar -zxvf prometheus-${VERSION}.linux-amd64.tar.gz
-RUN rm -f prometheus-${VERSION}.linux-amd64.tar.gz
-RUN mkdir $PROMETHEUS_HOME
-RUN mv prometheus-${VERSION}.linux-amd64/* $PROMETHEUS_HOME
-RUN ls  /opt/prometheus
+ARG PROMETHEUS_DIR=/opt/prometheus
+ARG PROMETHEUS_VERSION=2.6.0
+RUN wget https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+RUN mkdir ${PROMETHEUS_DIR}
+RUN tar -zxvf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz -C ${PROMETHEUS_DIR}
+RUN rm -f prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+RUN ls ${PROMETHEUS_DIR}
 
-ARG PROMETHEUS_CONFIG=$PROMETHEUS_HOME/config
+ARG PROMETHEUS_CONFIG=${PROMETHEUS_DIR}/config
 RUN mkdir $PROMETHEUS_CONFIG
 ADD prometheus/prometheus.yml $PROMETHEUS_CONFIG
 #basic empty target json

@@ -21,14 +21,15 @@ RUN yum install -y \
   wget
 
 # download kafka
-ARG VERSION=1.0.2
+# WARN: Please don't change the value of KAFKA_DIR
+ARG KAFKA_DIR=/opt/kafka
+ARG KAFKA_VERSION=1.0.2
 ARG SCALA_VERSION=2.12
-RUN wget http://ftp.twaren.net/Unix/Web/apache/kafka/${VERSION}/kafka_${SCALA_VERSION}-${VERSION}.tgz
-RUN tar -zxvf kafka_${SCALA_VERSION}-${VERSION}.tgz
-RUN rm -f kafka_${SCALA_VERSION}-${VERSION}.tgz
-RUN mkdir /opt/kafka
-RUN mv kafka_${SCALA_VERSION}-${VERSION} /opt/kafka/
-RUN echo "$VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
+RUN wget http://ftp.twaren.net/Unix/Web/apache/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN mkdir ${KAFKA_DIR}
+RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
+RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
 
 # download Prometheus exporter
 ARG EXPORTER_VERSION=0.3.1

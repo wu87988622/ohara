@@ -27,14 +27,15 @@ RUN yum install -y \
 ENV JAVA_HOME=/usr/lib/jvm/java
 
 # download kafka
+# WARN: Please don't change the value of KAFKA_DIR
+ARG KAFKA_DIR=/opt/kafka
 ARG KAFKA_VERSION=1.0.2
 ARG SCALA_VERSION=2.12
 RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
-RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN mkdir ${KAFKA_DIR}
+RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
-RUN mkdir /opt/kafka
-RUN mv kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka/
-RUN echo "$KAFKA_VERSION" > $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
+RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
 
 # download gradle
 ARG GRADLE_VERSION=5.1.1

@@ -21,13 +21,14 @@ RUN yum install -y \
   wget
 
 # download zookeeper
-ARG VERSION=3.4.13
-RUN wget http://ftp.twaren.net/Unix/Web/apache/zookeeper/zookeeper-${VERSION}/zookeeper-${VERSION}.tar.gz
-RUN tar -zxvf zookeeper-${VERSION}.tar.gz
-RUN rm -f zookeeper-${VERSION}.tar.gz
-RUN mkdir /opt/zookeeper
-RUN mv zookeeper-${VERSION} /opt/zookeeper/
-RUN echo "$VERSION" > $(find "/opt/zookeeper/" -maxdepth 1 -type d -name "zookeeper-*")/bin/true_version
+# WARN: Please don't change the value of ZOOKEEPER_DIR
+ARG ZOOKEEPER_DIR=/opt/zookeeper
+ARG ZOOKEEPER_VERSION=3.4.13
+RUN wget http://ftp.twaren.net/Unix/Web/apache/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz
+RUN mkdir ${ZOOKEEPER_DIR}
+RUN tar -zxvf zookeeper-${ZOOKEEPER_VERSION}.tar.gz -C ${ZOOKEEPER_DIR}
+RUN rm -f zookeeper-${ZOOKEEPER_VERSION}.tar.gz
+RUN echo "$ZOOKEEPER_VERSION" > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "zookeeper-*")/bin/true_version
 
 # download Tini
 ARG TINI_VERSION=v0.18.0
