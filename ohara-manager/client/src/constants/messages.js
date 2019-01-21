@@ -36,7 +36,7 @@ export const TEST_NOT_SUCCESS = 'Test has not passed!';
 
 // Error messages
 export const EMPTY_NAME_ERROR = 'Name is a required field!';
-export const EMPTY_CONN_URL_ERROR = 'Coonection URL is a required field!';
+export const EMPTY_CONN_URL_ERROR = 'Connection URL is a required field!';
 export const EMPTY_HOSTNAME_ERROR = 'Hostname is a required field!';
 export const EMPTY_PORT_ERROR = 'Port is a required field!';
 export const EMPTY_USER_ERROR = 'User is a required field!';
@@ -54,7 +54,7 @@ export const INVALID_TOPIC_ID = `The selected topic doesn't exist!`;
 export const PIPELINE_DELETION_ERROR =
   'Oops, something went wrong, we cannot delete the selected pipeline:';
 export const CANNOT_START_PIPELINE_ERROR =
-  'Cannot complete your action, please check your connector settings';
+  'Failed to start the pipeline, please check your connector settings';
 
 // Connectors
 export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';

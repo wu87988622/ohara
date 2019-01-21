@@ -75,7 +75,19 @@ const Heading3 = styled(H3)`
 
 Heading3.displayName = 'H3';
 
-const StartStopIcon = styled.button`
+const StartBtn = styled.button`
+  color: ${({ isRunning }) => (isRunning ? red : lightBlue)};
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover {
+    color: ${({ isRunning }) => (isRunning ? redHover : blue)};
+  }
+`;
+
+const StopBtn = styled.button`
   color: ${({ isRunning }) => (isRunning ? red : lightBlue)};
   border: 0;
   font-size: 20px;
@@ -218,25 +230,33 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  handleStartStopBtnClick = async () => {
+  checkPipelineStatus = async () => {
     const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
     await this.fetchPipeline(pipelineId);
 
     const { status, objects: connectors } = this.state.pipelines;
 
     if (!status) {
-      toastr.error(
-        'Failed to start the pipeline, please check your connectors settings',
-      );
-
-      return;
+      toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
     }
 
-    if (status === 'Stopped') {
+    return { connectors, status };
+  };
+
+  handlePipelineStartClick = async () => {
+    const { connectors, status } = await this.checkPipelineStatus();
+
+    if (status) {
       const res = await this.startConnectors(connectors);
       const isSuccess = res.filter(r => r.data.isSuccess);
       this.handleConnectorResponse(isSuccess, 'started');
-    } else {
+    }
+  };
+
+  handlePipelineStopClick = async () => {
+    const { connectors, status } = await this.checkPipelineStatus();
+
+    if (status) {
       const res = await this.stopConnectors(connectors);
       const isSuccess = res.filter(r => r.data.isSuccess);
       this.handleConnectorResponse(isSuccess, 'stopped');
@@ -315,9 +335,6 @@ class PipelineNewPage extends React.Component {
     const { name: pipelineTitle, status: pipelineStatus } = pipelines;
 
     const isPipelineRunning = pipelineStatus === 'Running' ? true : false;
-    const startStopCls = isPipelineRunning
-      ? 'fa-stop-circle'
-      : 'fa-play-circle';
 
     const {
       jdbcSource,
@@ -360,13 +377,18 @@ class PipelineNewPage extends React.Component {
 
                 <Box>
                   <Heading3>Operate</Heading3>
-                  <StartStopIcon
-                    isRunning={isPipelineRunning}
-                    onClick={this.handleStartStopBtnClick}
-                    data-testid="start-stop-icon"
+                  <StartBtn
+                    onClick={this.handlePipelineStartClick}
+                    data-testid="start-btn"
                   >
-                    <i className={`fa ${startStopCls}`} />
-                  </StartStopIcon>
+                    <i className="fa fa-play-circle" />
+                  </StartBtn>
+                  <StopBtn
+                    onClick={this.handlePipelineStopClick}
+                    data-testid="stop-btn"
+                  >
+                    <i className="fa fa-stop-circle" />
+                  </StopBtn>
                 </Box>
 
                 <Route

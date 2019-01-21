@@ -92,11 +92,18 @@ describe('<PipelineNewPage />', () => {
     expect(wrapper.find('Route').length).toBe(5);
   });
 
-  it('renders <StartStopIcon />', () => {
-    const button = wrapper.find(getTestById('start-stop-icon'));
+  it('renders <StartBtn />', () => {
+    const button = wrapper.find(getTestById('start-btn'));
 
     expect(button.length).toBe(1);
     expect(button.find('i').props().className).toMatch(/^fa fa-play-circle$/);
+  });
+
+  it('renders <StopBtn />', () => {
+    const button = wrapper.find(getTestById('stop-btn'));
+
+    expect(button.length).toBe(1);
+    expect(button.find('i').props().className).toMatch(/^fa fa-stop-circle$/);
   });
 
   it.skip('displays an error message if pipeline does not have status', async () => {

@@ -21,6 +21,26 @@ import FtpSource from '../FtpSource';
 
 const props = {
   hasChanges: false,
+  graph: [
+    {
+      kind: 'source',
+      id: 'id1234',
+      isActive: false,
+      icon: 'fa-database',
+    },
+    {
+      kind: 'topic',
+      id: 'id5678',
+      isActive: false,
+      icon: '',
+    },
+    {
+      kind: 'sink',
+      id: 'id9112',
+      isActive: false,
+      icon: '',
+    },
+  ],
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
   loadGraph: jest.fn(),
