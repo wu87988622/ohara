@@ -24,7 +24,7 @@ import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
-import org.junit.{After, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,12 +32,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
-
-  /**
-    * form: user:password@hostname:port.
-    * NOTED: this key need to be matched with another key value in ohara-it/build.gradle
-    */
-  private[this] val key = "ohara.it.docker"
 
   /**
     * we need to export port to enable remote node download jar from this node
@@ -49,16 +43,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     */
   private[this] val hostnameKey: String = "ohara.it.hostname"
 
-  private[this] val nodeCache: Seq[Node] = sys.env
-    .get(key)
-    .map(_.split(",").map { nodeInfo =>
-      val user = nodeInfo.split(":").head
-      val password = nodeInfo.split("@").head.split(":").last
-      val hostname = nodeInfo.split("@").last.split(":").head
-      val port = nodeInfo.split("@").last.split(":").last.toInt
-      Node(hostname, port, user, password, Seq.empty, CommonUtil.current())
-    }.toSeq)
-    .getOrElse(Seq.empty)
+  private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
 
   private[this] val nodeCollie: NodeCollie = new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
@@ -86,11 +71,13 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
-  @Test
-  def test(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
+  @Before
+  def setup(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
     skipTest(
-      s"$key, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
-  else {
+      s"${CollieTestUtil.key}, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
+
+  @Test
+  def test(): Unit = {
     nodeCache.foreach { node =>
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
@@ -168,7 +155,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     } finally if (cleanup)
       result(clusterCollie.zookeepersCollie().clusters()).foreach(c =>
         result(clusterCollie.zookeepersCollie().remove(c._1.name)))
-
   }
 
   @After

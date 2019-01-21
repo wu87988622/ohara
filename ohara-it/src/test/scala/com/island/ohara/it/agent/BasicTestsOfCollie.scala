@@ -32,7 +32,6 @@ import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before}
 import org.scalatest.Matchers
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -45,13 +44,7 @@ import scala.concurrent.{Await, Future}
   */
 abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTestsOfCollie])
-
-  /**
-    * form: user:password@hostname:port.
-    * NOTED: this key need to be matched with another key value in ohara-it/build.gradle
-    */
-  private[this] val key = "ohara.it.docker"
-  private[this] val nodeCache = new ArrayBuffer[Node]()
+  private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nodeCollie: NodeCollie = new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
     override def node(name: String): Future[Node] = Future.successful(
@@ -65,40 +58,15 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   private[this] val cleanup = true
 
   @Before
-  final def setup(): Unit = sys.env.get(key).foreach { info =>
-    info.split(",").foreach { nodeInfo =>
-      val user = nodeInfo.split(":").head
-      val password = nodeInfo.split("@").head.split(":").last
-      val hostname = nodeInfo.split("@").last.split(":").head
-      val port = nodeInfo.split("@").last.split(":").last.toInt
-      nodeCache.append(Node(hostname, port, user, password, Seq.empty, CommonUtil.current()))
-      val dockerClient = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
-      try {
-        withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-      } finally dockerClient.close()
-    }
-  }
+  final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtil.key} is required")
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
-
-  /**
-    * make sure all test cases here are executed only if we have defined the docker server.
-    * @param f test case
-    */
-  private[this] def runTest(f: () => Unit): Unit = if (nodeCache.isEmpty)
-    skipTest(s"$key doesn't exist so all tests in BasicTestsOfCollie are ignored")
-  else f()
 
   /**
     * create a zk cluster env in running test case.
     * @param f test case
     */
-  private[this] def testZk(f: ZookeeperClusterInfo => Unit): Unit = runTest { () =>
+  private[this] def testZk(f: ZookeeperClusterInfo => Unit): Unit = {
     log.info("start to run zookeeper cluster")
     val zookeeperCollie = clusterCollie.zookeepersCollie()
     val nodeName: String = result(nodeCollie.nodes()).head.name

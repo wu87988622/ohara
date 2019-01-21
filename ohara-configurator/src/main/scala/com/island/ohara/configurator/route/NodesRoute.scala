@@ -90,8 +90,8 @@ object NodesRoute {
             lastModified = CommonUtil.current()
           ))
       },
-      hookOfGet = (response: Node) => response,
-      hookOfList = (responses: Seq[Node]) => responses,
+      hookOfGet = (response: Node) => update(response),
+      hookOfList = (responses: Seq[Node]) => responses.map(update),
       hookBeforeDelete = (id: String) => id,
       hookOfDelete = (response: Node) => response
     )
