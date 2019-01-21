@@ -50,6 +50,21 @@ export const validateHdfs = async ({ uri }) => {
   }
 };
 
+export const updateHdfs = async params => {
+  try {
+    const res = await axiosInstance.put(`/api/hdfs/${params.id}`, params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const saveHdfs = async ({ name, uri }) => {
   try {
     const res = await axiosInstance.post('/api/hdfs', {

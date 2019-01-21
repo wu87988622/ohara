@@ -23,7 +23,7 @@ import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApis from 'apis/configurationApis';
-import { Input, Button, FormGroup } from 'common/Form';
+import { Input, Button, FormGroup, Label } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 
 const modalStyles = {
@@ -58,11 +58,6 @@ const Actions = styled.div`
   padding: 15px;
   border-top: 1px solid ${CSS_VARS.lighterGray};
   justify-content: flex-end;
-`;
-
-const Label = styled.label`
-  color: ${CSS_VARS.lightBlue};
-  margin-bottom: 20px;
 `;
 
 const TestBtn = styled(Button)`
@@ -112,6 +107,8 @@ const ComfirmBtn = styled(Button)`
 `;
 
 const Li = styled.li`
+  background-color: ${({ isSelected }) =>
+    isSelected ? CSS_VARS.white : CSS_VARS.whiteSmoke};
   color: ${CSS_VARS.lightBlue};
   cursor: pointer;
   border: 0;
@@ -145,15 +142,26 @@ class HdfsConfiguration extends React.Component {
     isTestBtnWorking: false,
   };
 
+  _isMounted = false;
+
   componentDidMount() {
+    this._isMounted = true;
     this.fetchHdfs();
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   fetchHdfs = async () => {
     const res = await configurationApis.fetchHdfs();
     const result = _.get(res, 'data.result', []);
 
-    if (!_.isEmptyArr(result)) {
+    result.forEach(conn => {
+      conn.isSelected = false;
+    });
+
+    if (!_.isEmptyArr(result) && this._isMounted) {
       this.setState({ connections: result });
     }
   };
@@ -164,7 +172,7 @@ class HdfsConfiguration extends React.Component {
     this.setState({
       connections: [
         ...connections,
-        { name: 'Untitled Connection', id: '', uri: '' },
+        { name: 'Untitled Connection', id: '', uri: '', isSelected: false },
       ],
     });
   };
@@ -204,7 +212,11 @@ class HdfsConfiguration extends React.Component {
 
   handleSave = async e => {
     e.preventDefault();
-    const { connectionName: name, connectionUrl: uri } = this.state;
+    const {
+      connectionName: name,
+      connectionUrl: uri,
+      connectionId: id,
+    } = this.state;
     if (!name) {
       toastr.error(MESSAGES.EMPTY_NAME_ERROR);
       return;
@@ -215,7 +227,13 @@ class HdfsConfiguration extends React.Component {
     }
     const isValid = this.state.isValidConnection;
     if (isValid) {
-      const res = await configurationApis.saveHdfs({ name, uri });
+      let res = null;
+      if (!id) {
+        res = await configurationApis.saveHdfs({ name, uri });
+      } else {
+        res = await configurationApis.updateHdfs({ id, name, uri });
+      }
+
       const isSuccess = _.get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
@@ -248,7 +266,11 @@ class HdfsConfiguration extends React.Component {
 
   handleApplyConnection = async e => {
     e.preventDefault();
-    const { connectionName: name, connectionUrl: uri } = this.state;
+    const {
+      connectionName: name,
+      connectionUrl: uri,
+      connectionId: id,
+    } = this.state;
     if (!name) {
       toastr.error(MESSAGES.EMPTY_NAME_ERROR);
       return;
@@ -259,7 +281,12 @@ class HdfsConfiguration extends React.Component {
     }
     const isValid = this.state.isValidConnection;
     if (isValid) {
-      const res = await configurationApis.saveHdfs({ name, uri });
+      let res = null;
+      if (!id) {
+        res = await configurationApis.saveHdfs({ name, uri });
+      } else {
+        res = await configurationApis.updateHdfs({ id, name, uri });
+      }
       const isSuccess = _.get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
@@ -295,16 +322,28 @@ class HdfsConfiguration extends React.Component {
       return conn.id === id;
     });
 
+    const { connections } = this.state;
+    connections.forEach(conn => {
+      if (conn.id === id) {
+        conn.isSelected = true;
+      } else {
+        conn.isSelected = false;
+      }
+    });
+
     this.setState({
       connectionName: result[0].name,
       connectionUrl: result[0].uri,
       connectionId: result[0].id,
     });
+    result[0].isSelected = true;
   };
 
   handleModalClose = () => {
     this.props.handleClose();
-    this.reset();
+    if (this._isMounted) {
+      this.reset();
+    }
   };
 
   reset = () => {
@@ -343,9 +382,13 @@ class HdfsConfiguration extends React.Component {
             </Block>
 
             <ul>
-              {connections.map(({ id, name }, idx) => {
+              {connections.map(({ id, name, isSelected }, idx) => {
                 return (
-                  <Li key={idx} onClick={e => this.setModalField(e, id)}>
+                  <Li
+                    isSelected={isSelected}
+                    key={idx}
+                    onClick={e => this.setModalField(e, id)}
+                  >
                     {name}
                   </Li>
                 );
