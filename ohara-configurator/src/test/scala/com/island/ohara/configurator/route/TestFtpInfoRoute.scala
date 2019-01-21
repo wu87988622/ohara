@@ -15,12 +15,22 @@
  */
 
 package com.island.ohara.configurator.route
-import com.island.ohara.client.configurator.v0.FtpApi.FtpInfoRequest
+
+import com.island.ohara.client.configurator.v0.FtpApi
+import com.island.ohara.client.configurator.v0.FtpApi.{FtpInfo, FtpInfoRequest}
 import com.island.ohara.common.rule.SmallTest
-import org.junit.Test
+import com.island.ohara.common.util.Releasable
+import com.island.ohara.configurator.Configurator
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+
 class TestFtpInfoRoute extends SmallTest with Matchers {
+  private[this] val configurator = Configurator.fake()
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def testValidateField(): Unit = {
@@ -96,4 +106,56 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
         password = "aaa"
       ))
   }
+
+  @Test
+  def test(): Unit = {
+    def compareRequestAndResponse(request: FtpInfoRequest, response: FtpInfo): FtpInfo = {
+      request.name shouldBe response.name
+      request.hostname shouldBe response.hostname
+      request.port shouldBe response.port
+      request.user shouldBe response.user
+      request.password shouldBe response.password
+      response
+    }
+
+    def compare2Response(lhs: FtpInfo, rhs: FtpInfo): Unit = {
+      lhs.id shouldBe rhs.id
+      lhs.name shouldBe lhs.name
+      lhs.hostname shouldBe lhs.hostname
+      lhs.port shouldBe lhs.port
+      lhs.user shouldBe lhs.user
+      lhs.password shouldBe lhs.password
+      lhs.lastModified shouldBe rhs.lastModified
+    }
+
+    val access = FtpApi.access().hostname(configurator.hostname).port(configurator.port)
+    // test add
+    result(access.list()).size shouldBe 0
+
+    val request = FtpInfoRequest("test", "152.22.23.12", 5, "test", "test")
+    val response = compareRequestAndResponse(request, result(access.add(request)))
+
+    // test get
+    compare2Response(response, result(access.get(response.id)))
+
+    // test update
+    val anotherRequest = FtpInfoRequest("test2", "152.22.23.125", 1222, "test", "test")
+    val newResponse =
+      compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
+
+    // test get
+    compare2Response(newResponse, result(access.get(newResponse.id)))
+
+    // test delete
+    result(access.list()).size shouldBe 1
+    result(access.delete(response.id)) shouldBe newResponse
+    result(access.list()).size shouldBe 0
+
+    // test nonexistent data
+    an[IllegalArgumentException] should be thrownBy result(access.get("asdadas"))
+    an[IllegalArgumentException] should be thrownBy result(access.update("asdadas", anotherRequest))
+  }
+
+  @After
+  def tearDown(): Unit = Releasable.close(configurator)
 }
