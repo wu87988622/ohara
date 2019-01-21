@@ -55,8 +55,15 @@ license {
   header = file("$rootDir/checkstyle/apacheV2.header")
   strictCheck true
   // VersionUtil.java is generated at runtime and its source code isn't public. Hence, we don't add header to it.
-  excludes(["**/VersionUtil.java", ".gradle", ".git", ".idea", "**/target",
-            "ohara-manager/**/node_modules", "ohara-manager/**/build", "ohara-manager/**/coverage"])
+  excludes(["**/VersionUtil.java",
+            ".gradle",
+            ".git",
+            ".idea",
+            "**/target",
+            "**/build",
+            "ohara-manager/**/node_modules",
+            "ohara-manager/**/coverage"
+  ])
   // http://code.mycila.com/license-maven-plugin/#supported-comment-types
   mapping {
     js='JAVADOC_STYLE'
