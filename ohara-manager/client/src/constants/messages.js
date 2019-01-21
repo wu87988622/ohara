@@ -56,6 +56,11 @@ export const PIPELINE_DELETION_ERROR =
 export const CANNOT_START_PIPELINE_ERROR =
   'Cannot complete your action, please check your connector settings';
 
+// Connectors
+export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
+export const CANNOT_START_CONNECTOR_ERROR =
+  'Cannot complete your action, please check your connector settings';
+
 export const NO_CONFIGURATION_FOUND_ERROR = `You don't have any HDFS connections set up yet, please create one before you can proceed`;
 
 export const EMPTY_PIPELINE_TITLE_ERROR = 'Pipeline title cannot be empty!';

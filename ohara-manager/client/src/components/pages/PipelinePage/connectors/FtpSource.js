@@ -18,26 +18,60 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { includes } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import { CONNECTOR_TYPES } from 'constants/pipelines';
+import {
+  CONNECTOR_TYPES,
+  CONNECTOR_STATES,
+  CONNECTOR_ACTIONS,
+} from 'constants/pipelines';
+import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
-import { lightBlue } from 'theme/variables';
+import * as CSS_VARS from 'theme/variables';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 
+const BoxWrapper = styled(Box).attrs({
+  padding: '25px 0',
+})``;
+
+const TitleWrapper = styled(FormGroup).attrs({
+  isInline: true,
+})`
+  position: relative;
+  margin: 0 25px 30px 25px;
+`;
+
 const H5Wrapper = styled(H5)`
   margin: 0;
   font-weight: normal;
-  color: ${lightBlue};
+  color: ${CSS_VARS.lightBlue};
 `;
 H5Wrapper.displayName = 'H5';
+
+const Controller = styled.div`
+  position: absolute;
+  right: 0;
+`;
+
+const ControlButton = styled.button`
+  color: ${CSS_VARS.lightBlue};
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover {
+    color: blue;
+  }
+`;
 
 const FormGroupWrapper = styled.div`
   display: flex;
@@ -65,6 +99,15 @@ class FtpSource extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    graph: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        id: PropTypes.string,
+        isActive: PropTypes.bool,
+        isExact: PropTypes.bool,
+        icon: PropTypes.string,
+      }),
+    ).isRequired,
     topics: PropTypes.array.isRequired,
   };
 
@@ -89,6 +132,7 @@ class FtpSource extends React.Component {
 
   state = {
     name: '',
+    state: '',
     host: '',
     port: '',
     username: '',
@@ -153,7 +197,13 @@ class FtpSource extends React.Component {
     const result = _.get(res, 'data.result', null);
 
     if (result) {
-      const { schema = '[]', name = '', configs, topics: prevTopics } = result;
+      const {
+        schema = '[]',
+        name = '',
+        state,
+        configs,
+        topics: prevTopics,
+      } = result;
       const {
         'ftp.user.name': username = '',
         'ftp.user.password': password = '',
@@ -178,6 +228,7 @@ class FtpSource extends React.Component {
 
       this.setState({
         name,
+        state,
         host,
         port,
         username,
@@ -487,9 +538,52 @@ class FtpSource extends React.Component {
     updateGraph(update, currSource.id);
   }, 1000);
 
+  handleStartBtnClick = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.start);
+  };
+
+  handleStopBtnClick = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.stop);
+  };
+
+  triggerConnector = async action => {
+    const { match } = this.props;
+    const sourceId = _.get(match, 'params.connectorId', null);
+    let res;
+    if (action === CONNECTOR_ACTIONS.start) {
+      res = await pipelinesApis.startSource(sourceId);
+    } else {
+      res = await pipelinesApis.stopSource(sourceId);
+    }
+
+    this.handleTriggerConnectorResponse(action, res);
+  };
+
+  handleTriggerConnectorResponse = (action, res) => {
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (!isSuccess) return;
+
+    const { match, graph, updateGraph } = this.props;
+    const sourceId = _.get(match, 'params.connectorId', null);
+    const state = _.get(res, 'data.result.state');
+    this.setState({ state });
+    const currSource = findByGraphId(graph, sourceId);
+    const update = { ...currSource, state };
+    updateGraph(update, currSource.id);
+
+    if (action === CONNECTOR_ACTIONS.start) {
+      if (state === CONNECTOR_STATES.running) {
+        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      } else {
+        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
+      }
+    }
+  };
+
   render() {
     const {
       name,
+      state,
       host,
       port,
       username,
@@ -512,241 +606,277 @@ class FtpSource extends React.Component {
       currType,
     } = this.state;
 
+    const isRunning = includes(
+      [CONNECTOR_STATES.running, CONNECTOR_STATES.failed],
+      state,
+    );
+
     return (
       <React.Fragment>
-        <Tabs>
-          <TabList>
-            <Tab>FTP Source 1/2</Tab>
-            <Tab>FTP Source 2/2</Tab>
-            <Tab>Output schema</Tab>
-          </TabList>
-          <ConfirmModal
-            isActive={isDeleteRowModalActive}
-            title="Delete row?"
-            confirmBtnText="Yes, Delete this row"
-            cancelBtnText="No, Keep it"
-            handleCancel={this.handleDeleteRowModalClose}
-            handleConfirm={this.handleRowDelete}
-            message="Are you sure you want to delete this row? This action cannot be redo!"
-            isDelete
-          />
-
-          <Modal
-            isActive={isNewRowModalActive}
-            title="New row"
-            width="290px"
-            confirmBtnText="Create"
-            handleConfirm={this.handleRowCreate}
-            handleCancel={this.handleNewRowModalClose}
-          >
-            <form>
-              <FormInner>
-                <FormGroup>
-                  <Label>Column name</Label>
-                  <Input
-                    name="columnName"
-                    width="250px"
-                    placeholder="Column name"
-                    value={columnName}
-                    data-testid="column-name-modal"
-                    handleChange={this.handleInputChange}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>New column name</Label>
-                  <Input
-                    name="newColumnName"
-                    width="100%"
-                    placeholder="New column name"
-                    value={newColumnName}
-                    data-testid="new-column-name-modal"
-                    handleChange={this.handleInputChange}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label>Type</Label>
-                  <Select
-                    name="types"
-                    width="100%"
-                    list={this.schemaTypes}
-                    selected={currType}
-                    handleChange={this.handleSelectChange}
-                  />
-                </FormGroup>
-              </FormInner>
-            </form>
-          </Modal>
-          <TabPanel>
-            <form>
-              <FormGroup>
-                <Label>Name</Label>
-                <Input
-                  name="name"
-                  width="100%"
-                  placeholder="FTP source name"
-                  value={name}
-                  data-testid="name-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>FTP host</Label>
-                <Input
-                  name="host"
-                  width="100%"
-                  placeholder="http://localhost"
-                  value={host}
-                  data-testid="host-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>FTP port</Label>
-                <Input
-                  name="port"
-                  width="100%"
-                  placeholder="21"
-                  value={port}
-                  data-testid="port-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>User name</Label>
-                <Input
-                  name="username"
-                  width="100%"
-                  placeholder="John Doe"
-                  value={username}
-                  data-testid="username-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  name="password"
-                  width="100%"
-                  placeholder="password"
-                  value={password}
-                  data-testid="password-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Button
-                  theme={primaryBtn}
-                  text="Test Connection"
-                  isWorking={IsTestConnectionBtnWorking}
-                  disabled={IsTestConnectionBtnWorking}
-                  data-testid="test-connection-btn"
-                  handleClick={this.handleTestConnection}
-                />
-              </FormGroup>
-            </form>
-          </TabPanel>
-
-          <TabPanel>
-            <form>
-              <FormGroupWrapper>
-                <FormGroup css={{ width: '70%', margin: '0 20px 0 0' }}>
-                  <Label>File encoding</Label>
-                  <Select
-                    name="fileEnconding"
-                    list={fileEncodings}
-                    selected={currFileEncoding}
-                    data-testid="file-enconding-select"
-                    handleChange={this.handleSelectChange}
-                  />
-                </FormGroup>
-
-                <FormGroup width="30%">
-                  <Label>Task</Label>
-                  <Select
-                    name="tasks"
-                    list={tasks}
-                    selected={currTask}
-                    data-testid="task-select"
-                    handleChange={this.handleSelectChange}
-                  />
-                </FormGroup>
-              </FormGroupWrapper>
-              <FormGroup>
-                <Label>Write topic</Label>
-                <Select
-                  isObject
-                  name="writeTopics"
-                  list={writeTopics}
-                  selected={currWriteTopic}
-                  width="100%"
-                  data-testid="write-topic-select"
-                  handleChange={this.handleSelectChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Input folder</Label>
-                <Input
-                  name="inputFolder"
-                  width="100%"
-                  placeholder="/path/to/the/input/folder"
-                  value={inputFolder}
-                  data-testid="input-folder-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Complete folder</Label>
-                <Input
-                  name="completeFolder"
-                  width="100%"
-                  placeholder="/path/to/the/complete/folder"
-                  value={completeFolder}
-                  data-testid="complete-folder-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Error folder</Label>
-                <Input
-                  name="errorFolder"
-                  width="100%"
-                  placeholder="/path/to/the/error/folder"
-                  value={errorFolder}
-                  data-testid="error-folder-input"
-                  handleChange={this.handleInputChange}
-                />
-              </FormGroup>
-            </form>
-          </TabPanel>
-          <TabPanel>
-            <NewRowBtn
-              text="New row"
-              theme={primaryBtn}
-              data-testid="new-row-btn"
-              handleClick={this.handleNewRowModalOpen}
+        <BoxWrapper>
+          <TitleWrapper>
+            <H5Wrapper>FTP connection</H5Wrapper>
+            <Controller>
+              <ControlButton
+                onClick={this.handleStartBtnClick}
+                data-testid="start-button"
+              >
+                <i className={`fa fa-play-circle`} />
+              </ControlButton>
+              <ControlButton
+                onClick={this.handleStopBtnClick}
+                data-testid="stop-button"
+              >
+                <i className={`fa fa-stop-circle`} />
+              </ControlButton>
+            </Controller>
+          </TitleWrapper>
+          <Tabs>
+            <TabList>
+              <Tab>FTP Source 1/2</Tab>
+              <Tab>FTP Source 2/2</Tab>
+              <Tab>Output schema</Tab>
+            </TabList>
+            <ConfirmModal
+              isActive={isDeleteRowModalActive}
+              title="Delete row?"
+              confirmBtnText="Yes, Delete this row"
+              cancelBtnText="No, Keep it"
+              handleCancel={this.handleDeleteRowModalClose}
+              handleConfirm={this.handleRowDelete}
+              message="Are you sure you want to delete this row? This action cannot be redo!"
+              isDelete
             />
-            <SchemaTable
-              headers={this.schemaHeader}
-              schema={schema}
-              dataTypes={this.schemaTypes}
-              handleTypeChange={this.handleTypeChange}
-              handleModalOpen={this.handleDeleteRowModalOpen}
-              handleUp={this.handleUp}
-              handleDown={this.handleDown}
-            />
-          </TabPanel>
-        </Tabs>
+
+            <Modal
+              isActive={isNewRowModalActive}
+              title="New row"
+              width="290px"
+              confirmBtnText="Create"
+              handleConfirm={this.handleRowCreate}
+              handleCancel={this.handleNewRowModalClose}
+            >
+              <form>
+                <FormInner>
+                  <FormGroup>
+                    <Label>Column name</Label>
+                    <Input
+                      name="columnName"
+                      width="250px"
+                      placeholder="Column name"
+                      value={columnName}
+                      data-testid="column-name-modal"
+                      handleChange={this.handleInputChange}
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <Label>New column name</Label>
+                    <Input
+                      name="newColumnName"
+                      width="100%"
+                      placeholder="New column name"
+                      value={newColumnName}
+                      data-testid="new-column-name-modal"
+                      handleChange={this.handleInputChange}
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <Label>Type</Label>
+                    <Select
+                      name="types"
+                      width="100%"
+                      list={this.schemaTypes}
+                      selected={currType}
+                      handleChange={this.handleSelectChange}
+                    />
+                  </FormGroup>
+                </FormInner>
+              </form>
+            </Modal>
+            <TabPanel>
+              <form>
+                <FormGroup>
+                  <Label>Name</Label>
+                  <Input
+                    name="name"
+                    width="100%"
+                    placeholder="FTP source name"
+                    value={name}
+                    data-testid="name-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>FTP host</Label>
+                  <Input
+                    name="host"
+                    width="100%"
+                    placeholder="http://localhost"
+                    value={host}
+                    data-testid="host-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>FTP port</Label>
+                  <Input
+                    name="port"
+                    width="100%"
+                    placeholder="21"
+                    value={port}
+                    data-testid="port-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>User name</Label>
+                  <Input
+                    name="username"
+                    width="100%"
+                    placeholder="John Doe"
+                    value={username}
+                    data-testid="username-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Password</Label>
+                  <Input
+                    type="password"
+                    name="password"
+                    width="100%"
+                    placeholder="password"
+                    value={password}
+                    data-testid="password-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Button
+                    theme={primaryBtn}
+                    text="Test Connection"
+                    isWorking={IsTestConnectionBtnWorking}
+                    disabled={IsTestConnectionBtnWorking || isRunning}
+                    data-testid="test-connection-btn"
+                    handleClick={this.handleTestConnection}
+                  />
+                </FormGroup>
+              </form>
+            </TabPanel>
+
+            <TabPanel>
+              <form>
+                <FormGroupWrapper>
+                  <FormGroup css={{ width: '70%', margin: '0 20px 0 0' }}>
+                    <Label>File encoding</Label>
+                    <Select
+                      name="fileEnconding"
+                      list={fileEncodings}
+                      selected={currFileEncoding}
+                      data-testid="file-enconding-select"
+                      handleChange={this.handleSelectChange}
+                      disabled={isRunning}
+                    />
+                  </FormGroup>
+
+                  <FormGroup width="30%">
+                    <Label>Task</Label>
+                    <Select
+                      name="tasks"
+                      list={tasks}
+                      selected={currTask}
+                      data-testid="task-select"
+                      handleChange={this.handleSelectChange}
+                      disabled={isRunning}
+                    />
+                  </FormGroup>
+                </FormGroupWrapper>
+                <FormGroup>
+                  <Label>Write topic</Label>
+                  <Select
+                    isObject
+                    name="writeTopics"
+                    list={writeTopics}
+                    selected={currWriteTopic}
+                    width="100%"
+                    data-testid="write-topic-select"
+                    handleChange={this.handleSelectChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Input folder</Label>
+                  <Input
+                    name="inputFolder"
+                    width="100%"
+                    placeholder="/path/to/the/input/folder"
+                    value={inputFolder}
+                    data-testid="input-folder-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Complete folder</Label>
+                  <Input
+                    name="completeFolder"
+                    width="100%"
+                    placeholder="/path/to/the/complete/folder"
+                    value={completeFolder}
+                    data-testid="complete-folder-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Error folder</Label>
+                  <Input
+                    name="errorFolder"
+                    width="100%"
+                    placeholder="/path/to/the/error/folder"
+                    value={errorFolder}
+                    data-testid="error-folder-input"
+                    handleChange={this.handleInputChange}
+                    disabled={isRunning}
+                  />
+                </FormGroup>
+              </form>
+            </TabPanel>
+            <TabPanel>
+              <NewRowBtn
+                text="New row"
+                theme={primaryBtn}
+                data-testid="new-row-btn"
+                handleClick={this.handleNewRowModalOpen}
+                disabled={isRunning}
+              />
+              <SchemaTable
+                headers={this.schemaHeader}
+                schema={schema}
+                dataTypes={this.schemaTypes}
+                handleTypeChange={this.handleTypeChange}
+                handleModalOpen={this.handleDeleteRowModalOpen}
+                handleUp={this.handleUp}
+                handleDown={this.handleDown}
+              />
+            </TabPanel>
+          </Tabs>
+        </BoxWrapper>
       </React.Fragment>
     );
   }

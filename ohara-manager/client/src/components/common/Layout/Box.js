@@ -21,7 +21,7 @@ import styled from 'styled-components';
 import { white, shadowNormal, radiusNormal } from '../../../theme/variables';
 
 const BoxWrapper = styled.div`
-  padding: 25px;
+  padding: ${props => props.padding};
   background-color: ${white};
   box-shadow: ${props => (props.shadow ? shadowNormal : '')};
   border-radius: ${radiusNormal};
@@ -40,6 +40,7 @@ Box.propTypes = {
 
 Box.defaultProps = {
   shadow: true,
+  padding: '25px',
 };
 
 export default Box;
