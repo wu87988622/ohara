@@ -63,22 +63,13 @@ docker run --rm -p 5050:5050 oharastream/manager:0.2-SNAPSHOT --port 5050 --conf
 ```
 gradle clean test
 ```
+NOTED: Some tests in ohara-it require "specified" env. Otherwise, they will be skipped.
+see the source code of ohara-it for more details. 
 
 ### Building project without manager
 ```
 gradle clean build -PskipManager
 ```
-
-### Run IT against actual systems
-```
-gradle clean ohara-it:test -PskipManager -Pbrokers="" -Pworkers=""
-```
-all integration tests currently live under the ohara-it. Without actual systems information, ohara-it use mini cluster 
-(embedded kafka, ftp server and database) to run all integration tests. All configured services and related "key" are shown below.
-* brokers: ohara.it.brokers
-* workers: ohara.it.workers
-* ftp: ohara.it.ftp
-* db: ohara.it.db
 
 ### build uber jar
 ```
@@ -94,10 +85,6 @@ the uber jar is under ohara-assembly/build/libs/
 * [SLF4J](https://www.slf4j.org/) - LOG wrapper
 * [SCALALOGGING](https://github.com/typesafehub/scalalogging) - LOG wrapper
 * [LOG4J](https://logging.apache.org/log4j/2.x/) - log plugin default
-
-### Versioning
-
-[TODO]
 
 ### Authors
 
