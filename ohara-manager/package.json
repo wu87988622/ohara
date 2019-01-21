@@ -34,7 +34,9 @@
     "clean:client": "rm -rf ./client/node_modules ./client/build",
     "build:client": "yarn --cwd client build",
     "format": "prettier --write \"**/*.*(js|json|html|md)\"",
-    "prepush": "run-s lint test format"
+    "license:test": "cd .. && gradle licenseTest",
+    "license:apply": "cd .. && gradle licenseApply",
+    "prepush": "run-s lint test license:apply format"
   },
   "dependencies": {
     "axios": "0.18.0",
