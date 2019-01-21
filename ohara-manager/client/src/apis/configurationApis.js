@@ -113,6 +113,21 @@ export const validateRdb = async params => {
   }
 };
 
+export const updateJdbc = async params => {
+  try {
+    const res = await axiosInstance.put(`/api/jdbc/${params.id}`, params);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const saveJdbc = async params => {
   try {
     const res = await axiosInstance.post('/api/jdbc', params);

@@ -108,6 +108,8 @@ const ComfirmBtn = styled(Button)`
 `;
 
 const Li = styled.li`
+  background-color: ${({ isSelected }) =>
+    isSelected ? CSS_VARS.white : CSS_VARS.whiteSmoke};
   color: ${CSS_VARS.lightBlue};
   cursor: pointer;
   border: 0;
@@ -129,7 +131,6 @@ class DbConfiguration extends React.Component {
   static propTypes = {
     handleClose: PropTypes.func.isRequired,
   };
-
   state = {
     databases: [],
     currDatabase: {},
@@ -145,16 +146,23 @@ class DbConfiguration extends React.Component {
     isTestBtnWorking: false,
   };
 
+  _isMounted = false;
+
   componentDidMount() {
+    this._isMounted = true;
     this.fetchCluster();
     this.fetchJdbc();
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   fetchCluster = async () => {
     const res = await fetchCluster();
     const databases = _.get(res, 'data.result.supportedDatabases', null);
 
-    if (databases) {
+    if (databases && this._isMounted) {
       this.setState({ databases, currDatabase: databases[0] });
     }
   };
@@ -163,7 +171,11 @@ class DbConfiguration extends React.Component {
     const res = await configurationApis.fetchJdbc();
     const result = _.get(res, 'data.result', []);
 
-    if (!_.isEmptyArr(result)) {
+    result.forEach(conn => {
+      conn.isSelected = false;
+    });
+
+    if (!_.isEmptyArr(result) && this._isMounted) {
       this.setState({ connections: result });
     }
   };
@@ -180,6 +192,7 @@ class DbConfiguration extends React.Component {
           url: '',
           user: '',
           password: '',
+          isSelected: false,
         },
       ],
     });
@@ -223,6 +236,7 @@ class DbConfiguration extends React.Component {
   handleSave = async e => {
     e.preventDefault();
     const {
+      connectionId: id,
       connectionName: name,
       connectionUrl: url,
       user,
@@ -247,12 +261,23 @@ class DbConfiguration extends React.Component {
     }
     const isValid = this.state.isValidConnection;
     if (isValid) {
-      const res = await configurationApis.saveJdbc({
-        name,
-        url,
-        user,
-        password,
-      });
+      let res = null;
+      if (!id) {
+        res = await configurationApis.saveJdbc({
+          name,
+          url,
+          user,
+          password,
+        });
+      } else {
+        res = await configurationApis.updateJdbc({
+          id,
+          name,
+          url,
+          user,
+          password,
+        });
+      }
       const isSuccess = _.get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
@@ -290,6 +315,7 @@ class DbConfiguration extends React.Component {
       connectionUrl: url,
       user,
       password,
+      connectionId: id,
     } = this.state;
 
     if (!name) {
@@ -310,12 +336,23 @@ class DbConfiguration extends React.Component {
     }
     const isValid = this.state.isValidConnection;
     if (isValid) {
-      const res = await configurationApis.saveJdbc({
-        name,
-        url,
-        user,
-        password,
-      });
+      let res = null;
+      if (!id) {
+        res = await configurationApis.saveJdbc({
+          name,
+          url,
+          user,
+          password,
+        });
+      } else {
+        res = await configurationApis.updateJdbc({
+          id,
+          name,
+          url,
+          user,
+          password,
+        });
+      }
       const isSuccess = _.get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
@@ -353,18 +390,31 @@ class DbConfiguration extends React.Component {
       return conn.id === id;
     });
 
+    const { connections } = this.state;
+    connections.forEach(conn => {
+      if (conn.id === id) {
+        conn.isSelected = true;
+      } else {
+        conn.isSelected = false;
+      }
+    });
+
     this.setState({
+      connections: connections,
       connectionName: result[0].name,
       connectionUrl: result[0].url,
       connectionId: result[0].id,
       user: result[0].user,
       password: result[0].password,
     });
+    result[0].isSelected = true;
   };
 
   handleModalClose = () => {
     this.props.handleClose();
-    this.reset();
+    if (this._isMounted) {
+      this.reset();
+    }
   };
 
   reset = () => {
@@ -409,9 +459,13 @@ class DbConfiguration extends React.Component {
             </Block>
 
             <ul>
-              {connections.map(({ id, name }, idx) => {
+              {connections.map(({ id, name, isSelected }, idx) => {
                 return (
-                  <Li key={idx} onClick={e => this.setModalField(e, id)}>
+                  <Li
+                    isSelected={isSelected}
+                    key={idx}
+                    onClick={e => this.setModalField(e, id)}
+                  >
                     {name}
                   </Li>
                 );
