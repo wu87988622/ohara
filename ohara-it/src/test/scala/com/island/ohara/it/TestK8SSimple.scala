@@ -103,6 +103,7 @@ class TestK8SSimple extends SmallTest with Matchers {
   }
 
   @Test
+  @Ignore
   def testK8SClientlog(): Unit = {
     val k8sClient = K8SClient(API_SERVER_URL.get)
     val timestamp: Long = System.currentTimeMillis()
