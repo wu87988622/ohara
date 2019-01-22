@@ -91,7 +91,7 @@ class NodeListPage extends React.Component {
   };
 
   render() {
-    const { nodes, activeModal, activeNode } = this.state;
+    const { nodes, isLoading, activeModal, activeNode } = this.state;
 
     return (
       <DocumentTitle title={NODES}>
@@ -109,7 +109,7 @@ class NodeListPage extends React.Component {
               />
             </s.TopWrapper>
             <Box>
-              <s.Table headers={this.headers}>
+              <s.Table headers={this.headers} isLoading={isLoading}>
                 {nodes.map(node => (
                   <tr key={node.name}>
                     <td>{node.name || ''}</td>

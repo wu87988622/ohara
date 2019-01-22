@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import { TableLoader } from 'common/Loader';
 import { darkerBlue, lighterGray, lightBlue } from 'theme/variables';
 
 const Table = styled.table`
@@ -50,8 +51,9 @@ const Th = styled.th`
 
 Th.displayName = 'Th';
 
-const DataTable = ({ headers, children, ...rest }) => {
+const DataTable = ({ headers, children, isLoading = false, ...rest }) => {
   if (!children) return null;
+  if (isLoading) return <TableLoader />;
   return (
     <Table {...rest}>
       <thead>
@@ -69,6 +71,7 @@ const DataTable = ({ headers, children, ...rest }) => {
 DataTable.propTypes = {
   headers: PropTypes.arrayOf(PropTypes.string).isRequired,
   children: PropTypes.any,
+  isLoading: PropTypes.bool,
 };
 
 export default DataTable;
