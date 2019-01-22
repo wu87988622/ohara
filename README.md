@@ -1,6 +1,6 @@
 ## Ohara
 
-An easy use visual stream processing tool based on Apache Kafka.
+An easy-to-use visual stream processing tool based on Apache Kafka.
 
 ### Getting Started
 
@@ -101,4 +101,4 @@ the uber jar is under ohara-assembly/build/libs/
 
 ### License
 
-Ohara is open source and available under the Apache 2.0 License.
+Ohara is an open source project and available under the Apache 2.0 License.
