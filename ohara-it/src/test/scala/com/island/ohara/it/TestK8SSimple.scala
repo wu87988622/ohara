@@ -15,7 +15,6 @@
  */
 
 package com.island.ohara.it
-import java.net.HttpRetryException
 import java.util.UUID
 
 import akka.actor.ActorSystem
@@ -25,8 +24,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.K8SClient
+import com.island.ohara.agent.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
-import com.island.ohara.client.kafka.WorkerJson.Error
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.it.TestK8SSimple.API_SERVER_URL
 import com.typesafe.scalalogging.Logger
@@ -119,6 +118,12 @@ class TestK8SSimple extends SmallTest with Matchers {
 
     val logs: String = k8sClient.log(podName)
     logs.contains("ZooKeeper JMX enabled by default") shouldBe true
+  }
+
+  @Test
+  def testErrorResponse(): Unit = {
+    val k8sClient = K8SClient(s"${API_SERVER_URL.get}/error_test")
+    an[RuntimeException] should be thrownBy k8sClient.containers()
   }
 
   @Test
@@ -231,14 +236,8 @@ object TestK8SSimple {
     if (response.status.isSuccess()) Unmarshal(response).to[T]
     else
       Unmarshal(response)
-        .to[Error]
+        .to[K8SErrorResponse]
         .flatMap(error => {
-          // this is a retriable exception
-          if (error.error_code == StatusCodes.Conflict.intValue)
-            Future.failed(new HttpRetryException(error.message, error.error_code))
-          else {
-            // convert the error response to runtime exception
-            Future.failed(new IllegalStateException(error.toString))
-          }
+          Future.failed(new RuntimeException(error.message))
         })
 }

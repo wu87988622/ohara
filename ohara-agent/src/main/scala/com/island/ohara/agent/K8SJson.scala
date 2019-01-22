@@ -92,4 +92,7 @@ object K8SJson {
   case class CreatePodResult(metadata: CreatePodResultMetaData, status: CreatePodResultStatus)
   implicit val CREATEPOD_RESULT_FORMAT: RootJsonFormat[CreatePodResult] = jsonFormat2(CreatePodResult)
 
+  //for error
+  case class K8SErrorResponse(message: String)
+  implicit val K8SERROR_RESPONSE_FORMAT: RootJsonFormat[K8SErrorResponse] = jsonFormat1(K8SErrorResponse)
 }

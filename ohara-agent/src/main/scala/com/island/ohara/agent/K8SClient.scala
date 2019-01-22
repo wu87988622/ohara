@@ -16,8 +16,6 @@
 
 package com.island.ohara.agent
 
-import java.net.HttpRetryException
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -35,13 +33,13 @@ import com.island.ohara.agent.K8SJson.{
   CreatePodPortMapping,
   CreatePodResult,
   CreatePodSpec,
+  K8SErrorResponse,
   K8SPodInfo
 }
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
-import com.island.ohara.client.kafka.WorkerJson.Error
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -223,17 +221,10 @@ object K8SClient {
         if (response.status.isSuccess()) Unmarshal(response).to[T]
         else
           Unmarshal(response)
-            .to[Error]
+            .to[K8SErrorResponse]
             .flatMap(error => {
-              // this is a retriable exception
-              if (error.error_code == StatusCodes.Conflict.intValue)
-                Future.failed(new HttpRetryException(error.message, error.error_code))
-              else {
-                // convert the error response to runtime exception
-                Future.failed(new IllegalStateException(error.toString))
-              }
+              Future.failed(new RuntimeException(error.message))
             })
-
     }
   }
 
