@@ -22,6 +22,7 @@ import {
   white,
   blue,
   lightBlue,
+  lightGray,
   lighterGray,
   radiusNormal,
   durationNormal,
@@ -30,7 +31,7 @@ import {
 const SelectWrapper = styled.select`
   font-size: 13px;
   font-family: inherit;
-  color: ${lightBlue};
+  color: ${({ disabled }) => (disabled ? lightGray : lightBlue)};
   border: 1px solid ${lighterGray};
   padding: 10px 10px 10px 15px;
   border-radius: ${radiusNormal};

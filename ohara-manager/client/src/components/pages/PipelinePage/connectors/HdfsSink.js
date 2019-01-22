@@ -23,27 +23,56 @@ import { Redirect } from 'react-router-dom';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as _ from 'utils/commonUtils';
-import { CONNECTOR_TYPES } from 'constants/pipelines';
+import {
+  CONNECTOR_TYPES,
+  CONNECTOR_STATES,
+  CONNECTOR_ACTIONS,
+} from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import { lightBlue } from 'theme/variables';
+import * as CSS_VARS from 'theme/variables';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchHdfs } from 'apis/configurationApis';
 import { CONFIGURATION } from 'constants/urls';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
+import { includes } from 'lodash';
+
+const TitleWrapper = styled(FormGroup).attrs({
+  isInline: true,
+})`
+  position: relative;
+  margin: 0 0 30px;
+`;
 
 const H5Wrapper = styled(H5)`
-  margin: 0 0 30px;
+  margin: 0;
   font-weight: normal;
-  color: ${lightBlue};
+  color: ${CSS_VARS.lightBlue};
 `;
 
 H5Wrapper.displayName = 'H5';
 
+const Controller = styled.div`
+  position: absolute;
+  right: 0;
+`;
+
+const ControlButton = styled.button`
+  color: ${CSS_VARS.lightBlue};
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: transparent;
+
+  &:hover {
+    color: blue;
+  }
+`;
+
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
   align-items: center;
-  color: ${lightBlue};
+  color: ${CSS_VARS.lightBlue};
 `;
 
 const Checkbox = styled(Input)`
@@ -66,6 +95,15 @@ class HdfsSink extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    graph: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        id: PropTypes.string,
+        isActive: PropTypes.bool,
+        isExact: PropTypes.bool,
+        icon: PropTypes.string,
+      }),
+    ).isRequired,
     topics: PropTypes.array.isRequired,
   };
 
@@ -76,6 +114,7 @@ class HdfsSink extends React.Component {
 
   state = {
     name: '',
+    state: '',
     readTopics: [],
     currReadTopic: {},
     hdfses: [],
@@ -133,7 +172,7 @@ class HdfsSink extends React.Component {
 
     if (result) {
       const { currHdfs } = this.state;
-      const { name, configs, topics: prevTopics } = result;
+      const { name, state, configs, topics: prevTopics } = result;
       const {
         hdfs = '{}',
         writePath = '',
@@ -161,6 +200,7 @@ class HdfsSink extends React.Component {
 
       this.setState({
         name,
+        state,
         writePath,
         currHdfs: _currHdfs,
         needHeader: _needHeader,
@@ -308,9 +348,52 @@ class HdfsSink extends React.Component {
     }
   }, 1000);
 
+  handleStartBtnClick = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.start);
+  };
+
+  handleStopBtnClick = async () => {
+    await this.triggerConnector(CONNECTOR_ACTIONS.stop);
+  };
+
+  triggerConnector = async action => {
+    const { match } = this.props;
+    const sinkId = _.get(match, 'params.connectorId', null);
+    let res;
+    if (action === CONNECTOR_ACTIONS.start) {
+      res = await pipelinesApis.startSink(sinkId);
+    } else {
+      res = await pipelinesApis.stopSink(sinkId);
+    }
+
+    this.handleTriggerConnectorResponse(action, res);
+  };
+
+  handleTriggerConnectorResponse = (action, res) => {
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (!isSuccess) return;
+
+    const { match, graph, updateGraph } = this.props;
+    const sinkId = _.get(match, 'params.connectorId', null);
+    const state = _.get(res, 'data.result.state');
+    this.setState({ state });
+    const currSink = findByGraphId(graph, sinkId);
+    const update = { ...currSink, state };
+    updateGraph(update, currSink.id);
+
+    if (action === CONNECTOR_ACTIONS.start) {
+      if (state === CONNECTOR_STATES.running) {
+        toastr.success(MESSAGES.START_CONNECTOR_SUCCESS);
+      } else {
+        toastr.error(MESSAGES.CANNOT_START_CONNECTOR_ERROR);
+      }
+    }
+  };
+
   render() {
     const {
       name,
+      state,
       readTopics,
       currReadTopic,
       hdfses,
@@ -329,9 +412,34 @@ class HdfsSink extends React.Component {
       return <Redirect to={CONFIGURATION} />;
     }
 
+    const isRunning = includes(
+      [
+        CONNECTOR_STATES.running,
+        CONNECTOR_STATES.paused,
+        CONNECTOR_STATES.failed,
+      ],
+      state,
+    );
+
     return (
       <Box>
-        <H5Wrapper>HDFS</H5Wrapper>
+        <TitleWrapper>
+          <H5Wrapper>HDFS connection</H5Wrapper>
+          <Controller>
+            <ControlButton
+              onClick={this.handleStartBtnClick}
+              data-testid="start-button"
+            >
+              <i className={`fa fa-play-circle`} />
+            </ControlButton>
+            <ControlButton
+              onClick={this.handleStopBtnClick}
+              data-testid="stop-button"
+            >
+              <i className={`fa fa-stop-circle`} />
+            </ControlButton>
+          </Controller>
+        </TitleWrapper>
         <form>
           <FormGroup data-testid="name">
             <Label>Name</Label>
@@ -342,6 +450,7 @@ class HdfsSink extends React.Component {
               value={name}
               data-testid="name-input"
               handleChange={this.handleInputChange}
+              disabled={isRunning}
             />
           </FormGroup>
           <FormGroup data-testid="read-from-topic">
@@ -354,6 +463,7 @@ class HdfsSink extends React.Component {
               width="100%"
               data-testid="topic-select"
               handleChange={this.handleSelectChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -367,6 +477,7 @@ class HdfsSink extends React.Component {
               width="100%"
               data-testid="hdfses-select"
               handleChange={this.handleSelectChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -379,6 +490,7 @@ class HdfsSink extends React.Component {
               value={writePath}
               data-testid="write-path-input"
               handleChange={this.handleInputChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -391,6 +503,7 @@ class HdfsSink extends React.Component {
               value={tempDirectory}
               data-testid="temp-directory"
               handleChange={this.handleInputChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -403,6 +516,7 @@ class HdfsSink extends React.Component {
               selected={currFileEncoding}
               list={fileEncodings}
               handleChange={this.handleSelectChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -415,6 +529,7 @@ class HdfsSink extends React.Component {
               value={rotateInterval}
               data-testid="rotate-interval"
               handleChange={this.handleInputChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -427,6 +542,7 @@ class HdfsSink extends React.Component {
               value={flushLineCount}
               data-testid="flush-line-count"
               handleChange={this.handleInputChange}
+              disabled={isRunning}
             />
           </FormGroup>
 
@@ -439,6 +555,7 @@ class HdfsSink extends React.Component {
               checked={needHeader}
               data-testid="needheader-input"
               handleChange={this.handleCheckboxChange}
+              disabled={isRunning}
             />
             Include header
           </FormGroupCheckbox>

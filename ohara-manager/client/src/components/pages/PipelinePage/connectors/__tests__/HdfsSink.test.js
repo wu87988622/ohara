@@ -26,6 +26,7 @@ const props = {
   updateHasChanges: jest.fn(),
   updateGraph: jest.fn(),
   loadGraph: jest.fn(),
+  graph: [],
   topics: [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }],
   match: {
     params: {
@@ -50,7 +51,7 @@ describe('<HdfsSink />', () => {
   it('renders <H5 /> ', () => {
     const h5 = wrapper.find('H5');
     expect(h5.length).toBe(1);
-    expect(h5.children().text()).toBe('HDFS');
+    expect(h5.children().text()).toBe('HDFS connection');
   });
 
   it('renders read from topic <FromGroup>', () => {
