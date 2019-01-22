@@ -22,7 +22,7 @@ import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { FormGroup } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
-import TableLoader from 'common/Loader';
+import { TableLoader } from 'common/Loader';
 
 import WorkerNewModal from '../WorkerNewModal';
 import * as s from './Styles';

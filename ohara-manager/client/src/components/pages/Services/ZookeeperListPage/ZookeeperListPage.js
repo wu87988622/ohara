@@ -20,7 +20,7 @@ import { isEmpty, join, map, get } from 'lodash';
 import * as zookeeperApis from 'apis/zookeeperApis';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
-import TableLoader from 'common/Loader';
+import { TableLoader } from 'common/Loader';
 import { FormGroup, Input, Label } from 'common/Form';
 
 class ZookeeperListPage extends React.Component {

@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import styled from 'styled-components';
-import { Facebook } from 'react-content-loader';
 import { find, some, endsWith } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
@@ -26,6 +25,7 @@ import * as CSS_VARS from 'theme/variables';
 import * as streamApis from 'apis/streamApis';
 import * as MESSAGES from 'constants/messages';
 import Editable from './Editable';
+import { ListLoader } from 'common/Loader';
 import { DataTable } from 'common/Table';
 import { ConfirmModal } from 'common/Modal';
 import { createConnector } from 'utils/pipelineToolbarUtils';
@@ -80,6 +80,10 @@ const Icon = styled.i`
 `;
 
 Icon.displayName = 'Icon';
+
+const LoaderWapper = styled.div`
+  margin: 20px 40px;
+`;
 
 class PipelineNewStream extends React.Component {
   static propTypes = {
@@ -265,7 +269,9 @@ class PipelineNewStream extends React.Component {
     return (
       <div>
         {isLoading ? (
-          <Facebook style={{ width: '70%', height: 'auto' }} />
+          <LoaderWapper>
+            <ListLoader />
+          </LoaderWapper>
         ) : (
           <React.Fragment>
             <FileUploadWrapper>

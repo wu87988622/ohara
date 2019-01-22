@@ -23,7 +23,7 @@ import { Link } from 'react-router-dom';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import TableLoader from 'common/Loader';
+import { TableLoader } from 'common/Loader';
 import { ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
 import { Box } from 'common/Layout';

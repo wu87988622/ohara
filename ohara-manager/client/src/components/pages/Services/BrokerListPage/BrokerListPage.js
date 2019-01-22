@@ -21,7 +21,7 @@ import * as brokerApis from 'apis/brokerApis';
 import * as topicApis from 'apis/topicApis';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
-import TableLoader from 'common/Loader';
+import { TableLoader } from 'common/Loader';
 import { FormGroup, Input, Label } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 

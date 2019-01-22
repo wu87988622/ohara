@@ -18,7 +18,6 @@ import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
-import { Facebook } from 'react-content-loader';
 
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
@@ -60,7 +59,6 @@ class PipelineNewTopic extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     topics: PropTypes.array.isRequired,
     currentTopic: PropTypes.object.isRequired,
-    isLoading: PropTypes.bool.isRequired,
     updateTopic: PropTypes.func.isRequired,
   };
 
@@ -84,24 +82,20 @@ class PipelineNewTopic extends React.Component {
   };
 
   render() {
-    const { isLoading, topics, currentTopic } = this.props;
+    const { topics, currentTopic } = this.props;
 
     if (!topics) return null;
 
     return (
       <Box shadow={false}>
-        {isLoading ? (
-          <Facebook style={{ width: '70%', height: 'auto' }} />
-        ) : (
-          <React.Fragment>
-            <Select
-              isObject
-              list={topics}
-              selected={currentTopic}
-              handleChange={this.handleSelectChange}
-            />
-          </React.Fragment>
-        )}
+        <React.Fragment>
+          <Select
+            isObject
+            list={topics}
+            selected={currentTopic}
+            handleChange={this.handleSelectChange}
+          />
+        </React.Fragment>
       </Box>
     );
   }

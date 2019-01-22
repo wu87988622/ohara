@@ -17,9 +17,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { Facebook } from 'react-content-loader';
 
 import * as _ from 'utils/commonUtils';
+import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { lightBlue } from 'theme/variables';
@@ -34,7 +34,6 @@ const H5Wrapper = styled(H5)`
 
 class Topic extends React.Component {
   static propTypes = {
-    isLoading: PropTypes.bool.isRequired,
     match: PropTypes.shape({
       isExact: PropTypes.bool,
       params: PropTypes.object,
@@ -44,7 +43,7 @@ class Topic extends React.Component {
   };
 
   state = {
-    topic: {},
+    topic: null,
     isLoading: true,
   };
 
@@ -79,7 +78,7 @@ class Topic extends React.Component {
     return (
       <Box>
         {isLoading ? (
-          <Facebook style={{ width: '70%', height: 'auto' }} />
+          <ListLoader />
         ) : (
           <React.Fragment>
             <H5Wrapper>Topic : {topic.name}</H5Wrapper>

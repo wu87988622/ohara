@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import TableLoader from './TableLoader';
-import ListLoader from './ListLoader';
+import React from 'react';
+import { List } from 'react-content-loader';
 
-export { TableLoader, ListLoader };
+const ListLoader = () => {
+  return <List />;
+};
+
+export default ListLoader;
