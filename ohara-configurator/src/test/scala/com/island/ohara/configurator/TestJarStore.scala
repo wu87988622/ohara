@@ -29,7 +29,7 @@ import scala.concurrent.{Await, Future}
 
 class TestJarStore extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] val access =
     JarApi.access().hostname(configurator.hostname).port(configurator.port)

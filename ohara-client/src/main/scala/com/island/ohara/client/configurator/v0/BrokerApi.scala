@@ -50,7 +50,13 @@ object BrokerApi {
                                      zookeeperClusterName: String,
                                      clientPort: Int,
                                      nodeNames: Seq[String])
-      extends ClusterInfo
+      extends ClusterInfo {
+
+    /**
+      * Our client to broker and worker accept the connection props:host:port,host2:port2
+      */
+    def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
+  }
   implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat5(BrokerClusterInfo)
 
   def access(): ClusterAccess[BrokerClusterCreationRequest, BrokerClusterInfo] =

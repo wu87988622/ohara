@@ -19,6 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -27,13 +28,12 @@ import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil._
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(id: String, request: ConnectorConfigurationRequest) =
+  private[this] def toRes(wkClusterName: String, id: Id, request: ConnectorConfigurationRequest) =
     ConnectorConfiguration(
       id = id,
       name = request.name,
@@ -41,6 +41,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       schema = request.schema,
       topics = request.topics,
       numberOfTasks = request.numberOfTasks,
+      workerClusterName = wkClusterName,
       state = None,
       configs = request.configs,
       lastModified = CommonUtil.current()
@@ -54,8 +55,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     request
   }
 
-  private[this] def update(connectorConfig: ConnectorConfiguration)(
-    implicit workerClient: WorkerClient): ConnectorConfiguration = {
+  private[this] def update(connectorConfig: ConnectorConfiguration,
+                           workerClient: WorkerClient): ConnectorConfiguration = {
     val state = try if (workerClient.exist(connectorConfig.id))
       Some(workerClient.status(connectorConfig.id).connector.state)
     else None
@@ -68,73 +69,129 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     newOne
   }
 
-  def apply(implicit store: Store, workerClient: WorkerClient): server.Route =
+  def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
     // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
     pathPrefix(CONNECTORS_PREFIX_PATH | "sources" | "sinks") {
       RouteUtil.basicRoute2[ConnectorConfigurationRequest, ConnectorConfiguration](
-        hookOfAdd = (id: String, request: ConnectorConfigurationRequest) => toRes(id, verify(request)),
-        hookOfUpdate = (id: String, request: ConnectorConfigurationRequest, _: ConnectorConfiguration) => {
-          if (workerClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
-          toRes(id, verify(request))
+        hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorConfigurationRequest) =>
+          CollieUtils.workerClient(targetCluster).map {
+            case (cluster, _) =>
+              toRes(cluster.name, id, verify(request))
+
         },
-        hookOfGet = update(_),
-        hookOfList = (responses: Seq[ConnectorConfiguration]) => responses.map(update),
-        hookBeforeDelete = (id: String) => {
-          assertNotRelated2Pipeline(id)
-          if (workerClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
-          id
+        hookOfUpdate = (id: Id, request: ConnectorConfigurationRequest, previous: ConnectorConfiguration) =>
+          CollieUtils.workerClient(Some(previous.workerClusterName)).map {
+            case (_, wkClient) =>
+              if (wkClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
+              else toRes(previous.workerClusterName, id, verify(request))
         },
-        hookOfDelete = (response: ConnectorConfiguration) => response
+        hookOfGet = (response: ConnectorConfiguration) =>
+          CollieUtils.workerClient(Some(response.workerClusterName)).map {
+            case (_, wkClient) =>
+              update(response, wkClient)
+        },
+        hookOfList = (responses: Seq[ConnectorConfiguration]) =>
+          Future.sequence(responses.map { response =>
+            CollieUtils.workerClient(Some(response.workerClusterName)).map {
+              case (_, wkClient) =>
+                update(response, wkClient)
+            }
+          }),
+        hookOfDelete = (response: ConnectorConfiguration) =>
+          CollieUtils.workerClient(Some(response.workerClusterName)).map {
+            case (_, wkClient) =>
+              if (wkClient.exist(response.id)) wkClient.delete(response.id)
+              response
+        },
+        hookBeforeDelete = (id: Id) =>
+          store.value[ConnectorConfiguration](id).flatMap { config =>
+            CollieUtils.workerClient(Some(config.workerClusterName)).map {
+              case (_, wkClient) =>
+                val lastConfig = update(config, wkClient)
+                if (lastConfig.state.isEmpty) lastConfig.id
+                else throw new IllegalArgumentException(s"Please stop connector:${lastConfig.id} first")
+            }
+        }
       )
     } ~
       // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
       pathPrefix((CONNECTORS_PREFIX_PATH | "sources" | "sinks") / Segment) { id =>
         path(START_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (workerClient.nonExist(connector.id)) {
-                if (connector.topics.isEmpty) throw new IllegalArgumentException("topics is required")
-                val invalidTopics =
-                  connector.topics.filterNot(t => Await.result(store.exist[TopicInfo](t), 30 seconds))
-                if (invalidTopics.nonEmpty) throw new IllegalArgumentException(s"$invalidTopics doesn't exist in ohara")
-                workerClient
-                  .connectorCreator()
-                  .name(connector.id)
-                  .disableConverter()
-                  .connectorClass(connector.className)
-                  .schema(connector.schema)
-                  .configs(connector.configs)
-                  .topics(connector.topics)
-                  .numberOfTasks(connector.numberOfTasks)
-                  .create()
-              }
-              complete(update(connector))
-            }
+            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+              CollieUtils
+                .workerClient(Some(connectorConfig.workerClusterName))
+                .flatMap {
+                  case (cluster, wkClient) =>
+                    store
+                      .values[TopicInfo]
+                      .map(
+                        topics =>
+                          (wkClient,
+                           topics
+                           // filter out nonexistent topics
+                             .filter(t => connectorConfig.topics.contains(t.id))
+                             // filter out topics having unmatched bk cluster
+                             .filter(t => t.brokerClusterName == cluster.brokerClusterName)))
+                }
+                .map {
+                  case (wkClient, topicInfos) =>
+                    connectorConfig.topics.foreach(t =>
+                      if (!topicInfos.exists(_.id == t))
+                        throw new IllegalArgumentException(
+                          s"$t is invalid. actual:${topicInfos.map(_.id).mkString(",")}"))
+                    if (wkClient.nonExist(connectorConfig.id)) {
+                      if (connectorConfig.topics.isEmpty) throw new IllegalArgumentException("topics is required")
+                      wkClient
+                        .connectorCreator()
+                        .name(connectorConfig.id)
+                        .disableConverter()
+                        .connectorClass(connectorConfig.className)
+                        .schema(connectorConfig.schema)
+                        .configs(connectorConfig.configs)
+                        .topics(connectorConfig.topics)
+                        .numberOfTasks(connectorConfig.numberOfTasks)
+                        .create()
+                    }
+                    update(connectorConfig, wkClient)
+                }
+            })(complete(_))
           }
         } ~ path(STOP_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (workerClient.exist(id)) workerClient.delete(id)
-              complete(update(connector))
-            }
+            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+              CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
+                case (_, wkClient) =>
+                  if (wkClient.exist(id)) wkClient.delete(id)
+                  update(connectorConfig, wkClient)
+              }
+            })(complete(_))
           }
         } ~ path(PAUSE_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (workerClient.nonExist(id))
-                throw new IllegalArgumentException(s"Connector is not running , using start command first . id:$id !!!")
-              workerClient.pause(id)
-              complete(update(connector))
-            }
+            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+              CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
+                case (_, wkClient) =>
+                  if (wkClient.nonExist(id))
+                    throw new IllegalArgumentException(
+                      s"Connector is not running , using start command first . id:$id !!!")
+                  wkClient.pause(id)
+                  update(connectorConfig, wkClient)
+              }
+            })(complete(_))
           }
         } ~ path(RESUME_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id)) { connector =>
-              if (workerClient.nonExist(id))
-                throw new IllegalArgumentException(s"Connector is not running , using start command first . id:$id !!!")
-              workerClient.resume(id)
-              complete(update(connector))
-            }
+            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+              CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
+                case (_, wkClient) =>
+                  if (wkClient.nonExist(id))
+                    throw new IllegalArgumentException(
+                      s"Connector is not running , using start command first . id:$id !!!")
+                  wkClient.resume(id)
+                  update(connectorConfig, wkClient)
+              }
+            })(complete(_))
           }
         }
       }

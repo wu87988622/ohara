@@ -28,7 +28,7 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestWorkerRoute extends MediumTest with Matchers {
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake(1, 0).build()
   private[this] val access = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: WorkerClusterCreationRequest, cluster: WorkerClusterInfo): Unit = {
@@ -39,7 +39,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
     request.nodeNames shouldBe cluster.nodeNames
   }
 
-  private[this] val bkClusterName = "bkCluster"
+  private[this] val bkClusterName = Await
+    .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+    .head
+    .name
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
@@ -61,25 +64,6 @@ class TestWorkerRoute extends MediumTest with Matchers {
     }
 
     Await.result(nodeAccess.list(), 10 seconds).size shouldBe nodeNames.size
-
-    val zkClusterName = "zkCluster"
-    Await
-      .result(ZookeeperApi
-                .access()
-                .hostname(configurator.hostname)
-                .port(configurator.port)
-                .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames)),
-              10 seconds)
-      .name shouldBe zkClusterName
-
-    Await
-      .result(BrokerApi
-                .access()
-                .hostname(configurator.hostname)
-                .port(configurator.port)
-                .add(BrokerApi.creationRequest(bkClusterName, nodeNames)),
-              10 seconds)
-      .name shouldBe bkClusterName
   }
 
   @Test
@@ -99,6 +83,15 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testDefaultBrokerInMultiBrokerCluster(): Unit = {
+    val zkClusterName = "zkCluster"
+    Await
+      .result(ZookeeperApi
+                .access()
+                .hostname(configurator.hostname)
+                .port(configurator.port)
+                .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames)),
+              10 seconds)
+      .name shouldBe zkClusterName
     val anotherBk = methodName()
     Await
       .result(BrokerApi
@@ -113,7 +106,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
         .size shouldBe 2
 
-      // there are two zk cluster so we have to assign the zk cluster...
+      // there are two bk cluster so we have to assign the bk cluster...
       an[IllegalArgumentException] should be thrownBy Await.result(
         access.add(
           WorkerApi.creationRequest(

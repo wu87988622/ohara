@@ -30,13 +30,11 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
-import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
-import com.island.ohara.kafka.BrokerClient
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsonParser}
 
@@ -53,15 +51,12 @@ import scala.reflect.{ClassTag, classTag}
   * @param advertisedPort    port from rest server
   * @param store    store
   */
-class Configurator private[configurator] (advertisedHostname: Option[String],
-                                          advertisedPort: Option[Int],
-                                          initializationTimeout: Duration,
-                                          terminationTimeout: Duration,
-                                          extraRoute: Option[server.Route])(implicit store: Store,
-                                                                            nodeCollie: NodeCollie,
-                                                                            clusterCollie: ClusterCollie,
-                                                                            brokerClient: BrokerClient,
-                                                                            workerClient: WorkerClient)
+class Configurator private[configurator] (
+  advertisedHostname: Option[String],
+  advertisedPort: Option[Int],
+  initializationTimeout: Duration,
+  terminationTimeout: Duration,
+  extraRoute: Option[server.Route])(implicit store: Store, nodeCollie: NodeCollie, clusterCollie: ClusterCollie)
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -124,8 +119,7 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
       extractRequest { request =>
-        log.error(
-          s"Request to ${request.uri} with ${request.entity} could not be handled normally because ${e.getMessage}")
+        log.error(s"Request to ${request.uri} with ${request.entity} could not be handled normally", e)
         complete(StatusCodes.BadRequest -> ErrorApi.of(e))
       }
     case e: Throwable =>
@@ -162,7 +156,7 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
     */
   private[this] def basicRoute(): server.Route = pathPrefix(ConfiguratorApiInfo.V0)(
     Seq[server.Route](
-      TopicsRoute.apply,
+      TopicRoute.apply,
       HdfsInfoRoute.apply,
       FtpInfoRoute.apply,
       JdbcInfoRoute.apply,
@@ -206,7 +200,6 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
   override protected def doClose(): Unit = {
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
-    Releasable.close(brokerClient)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)
@@ -220,12 +213,6 @@ object Configurator {
       Serializer.OBJECT.from(bytes).asInstanceOf[Data]
   }
 
-  /**
-    * set all client to fake mode. It means all request sent to configurator won't be executed. a testing-purpose method.
-    * @return a configurator with all fake clients
-    */
-  def fake(): Configurator = builder().fake().port(0).hostname(CommonUtil.hostname()).build()
-
   def builder(): ConfiguratorBuilder = new ConfiguratorBuilder()
 
   //----------------[main]----------------//
@@ -233,11 +220,7 @@ object Configurator {
   private[configurator] val HELP_KEY = "--help"
   private[configurator] val HOSTNAME_KEY = "--hostname"
   private[configurator] val PORT_KEY = "--port"
-  private[configurator] val BROKERS_KEY = "--brokers"
-  private[configurator] val WORKERS_KEY = "--workers"
-  private[configurator] val PARTITIONS_KEY = "--partitions"
-  private[configurator] val REPLICATIONS_KEY = "--replications"
-  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $BROKERS_KEY $PARTITIONS_KEY $REPLICATIONS_KEY"
+  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY"
 
   /**
     * Running a standalone configurator.
@@ -254,44 +237,15 @@ object Configurator {
     // TODO: make the parse more friendly
     var hostname = CommonUtil.anyLocalAddress
     var port: Int = 0
-    var brokers: Option[String] = None
-    var workers: Option[String] = None
-    var numberOfPartitions: Int = 1
-    var numberOfReplications: Short = 1
     args.sliding(2, 2).foreach {
-      case Array(HOSTNAME_KEY, value)     => hostname = value
-      case Array(PORT_KEY, value)         => port = value.toInt
-      case Array(BROKERS_KEY, value)      => brokers = Some(value)
-      case Array(WORKERS_KEY, value)      => workers = Some(value)
-      case Array(PARTITIONS_KEY, value)   => numberOfPartitions = value.toInt
-      case Array(REPLICATIONS_KEY, value) => numberOfReplications = value.toShort
-      case _                              => throw new IllegalArgumentException(USAGE)
+      case Array(HOSTNAME_KEY, value) => hostname = value
+      case Array(PORT_KEY, value)     => port = value.toInt
+      case _                          => throw new IllegalArgumentException(USAGE)
     }
-    var standalone = false
-    val configurator =
-      if (brokers.isEmpty && workers.isEmpty) {
-        standalone = true
-        Configurator
-          .builder()
-          .brokerClient(new FakeBrokerClient())
-          .connectClient(new FakeWorkerClient())
-          .hostname(hostname)
-          .port(port)
-          .build()
-      } else if (brokers.isEmpty ^ workers.isEmpty)
-        throw new IllegalArgumentException(s"brokers:$brokers workers:$workers")
-      else
-        Configurator
-          .builder()
-          .brokerClient(BrokerClient.of(brokers.get))
-          .connectClient(WorkerClient(workers.get))
-          .hostname(hostname)
-          .port(port)
-          .build()
+    val configurator = Configurator.builder().hostname(hostname).port(port).build()
     hasRunningConfigurator = true
     try {
-      LOG.info(
-        s"start a ${if (standalone) "standalone" else "truly"} configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
+      LOG.info(s"start a configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
       LOG.info("enter ctrl+c to terminate the configurator")
       while (!closeRunningConfigurator) {
         TimeUnit.SECONDS.sleep(2)
@@ -346,7 +300,7 @@ object Configurator {
       * @tparam T type from data
       * @return the removed data
       */
-    def update[T <: Data: ClassTag](id: String, data: T => T): Future[T] =
+    def update[T <: Data: ClassTag](id: String, data: T => Future[T]): Future[T] =
       value[T](id).flatMap(_ => store.update(id, v => data(v.asInstanceOf[T]))).map(_.asInstanceOf[T])
 
     def add[T <: Data](data: T): Future[T] = store.add(data.id, data).map(_.asInstanceOf[T])

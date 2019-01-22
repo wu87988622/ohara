@@ -23,11 +23,9 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.integration._
-import com.island.ohara.kafka.BrokerClient
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -219,8 +217,7 @@ object Backend {
     }
     val configurator = Configurator
       .builder()
-      .brokerClient(BrokerClient.of(brokers.connectionProps))
-      .connectClient(WorkerClient(workers.connectionProps))
+      .fake(brokers.connectionProps, workers.connectionProps)
       .hostname(CommonUtil.anyLocalAddress)
       .port(ports.configuratorPort)
       .extraRoute(dbRoute ~ servicesRoute)

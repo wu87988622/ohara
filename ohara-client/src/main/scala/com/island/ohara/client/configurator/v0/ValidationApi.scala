@@ -65,21 +65,88 @@ object ValidationApi {
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 
   sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
+
+    /**
+      * used to verify the hdfs information on "default" worker cluster
+      * @param request hdfs info
+      * @return validation reports
+      */
     def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]]
+
+    /**
+      * used to verify the hdfs information on specified worker cluster
+      * @param request hdfs info
+      * @param target worker cluster used to verify the request
+      * @return validation reports
+      */
+    def verify(request: HdfsValidationRequest, target: String): Future[Seq[ValidationReport]]
+
+    /**
+      * used to verify the rdb information on "default" worker cluster
+      * @param request rdb info
+      * @return validation reports
+      */
     def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]]
+
+    /**
+      * used to verify the rdb information on specified worker cluster
+      * @param request rdb info
+      * @param target worker cluster used to verify the request
+      * @return validation reports
+      */
+    def verify(request: RdbValidationRequest, target: String): Future[Seq[ValidationReport]]
+
+    /**
+      * used to verify the ftp information on "default" worker cluster
+      * @param request ftp info
+      * @return validation reports
+      */
     def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]]
+
+    /**
+      * used to verify the ftp information on specified worker cluster
+      * @param request ftp info
+      * @param target worker cluster used to verify the request
+      * @return validation reports
+      */
+    def verify(request: FtpValidationRequest, target: String): Future[Seq[ValidationReport]]
+
+    /**
+      * used to verify the node information on configurator
+      * @param request node info
+      * @return validation reports
+      */
     def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]]
   }
 
   def access(): Access = new Access(VALIDATION_PREFIX_PATH) {
-    private[this] def url(prefix: String): String = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix"
-    override def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[HdfsValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_HDFS_PREFIX_PATH), request)
-    override def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[RdbValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH), request)
-    override def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[FtpValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_FTP_PREFIX_PATH), request)
+
+    private[this] def url(prefix: String, target: String): String = {
+      val url = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix"
+      if (target == null) url
+      else Parameters.appendTargetCluster(url, target)
+    }
+
+    override def verify(request: HdfsValidationRequest, target: String): Future[Seq[ValidationReport]] =
+      exec.put[HdfsValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_HDFS_PREFIX_PATH, target),
+                                                                             request)
+
+    override def verify(request: RdbValidationRequest, target: String): Future[Seq[ValidationReport]] =
+      exec.put[RdbValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH, target),
+                                                                            request)
+
+    override def verify(request: FtpValidationRequest, target: String): Future[Seq[ValidationReport]] =
+      exec.put[FtpValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_FTP_PREFIX_PATH, target),
+                                                                            request)
+
     override def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]] =
-      exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH), request)
+      exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH, null),
+                                                                             request)
+
+    override def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
+
+    override def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
+
+    override def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
   }
 }

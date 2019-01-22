@@ -32,7 +32,7 @@ import scala.concurrent.Future
 
 /**
   * used to send http request to remote node. The operations implemented by this class includes 1) get, 2) delete, 3) put and 4) post.
-  * There are many different kinds of error response so this class "expose" the error as a input type and you have to define the json
+  * There are many different kinds of error response so this class "expose" the error as an input type and you have to define the json
   * format of error response. Also, this class assume the error response should have a field - message - at least. The message is used to
   * generate a throwable exception.
   *

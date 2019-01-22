@@ -45,7 +45,7 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
   /**
     * used to debug...
     */
-  private[this] val cleanup = false
+  private[this] val cleanup = true
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 

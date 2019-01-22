@@ -24,7 +24,7 @@ import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 import scala.concurrent.Future
 
 /**
-  * a interface of controlling zookeeper cluster.
+  * An interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
 trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {

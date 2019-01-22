@@ -26,8 +26,8 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-class TestTopicsRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.fake()
+class TestTopicRoute extends SmallTest with Matchers {
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

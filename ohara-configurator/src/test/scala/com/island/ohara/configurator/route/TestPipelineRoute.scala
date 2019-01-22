@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestPipelineRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -47,7 +47,6 @@ class TestPipelineRoute extends SmallTest with Matchers {
       lhs.name shouldBe rhs.name
       lhs.rules shouldBe rhs.rules
       lhs.objects shouldBe rhs.objects
-      lhs.lastModified shouldBe rhs.lastModified
     }
 
     // test add

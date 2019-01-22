@@ -39,11 +39,12 @@ object PipelineApi {
                             name: String,
                             rules: Map[String, String],
                             objects: Seq[ObjectAbstract],
+                            workerClusterName: String,
                             lastModified: Long)
       extends Data {
     override def kind: String = "pipeline"
   }
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat5(Pipeline)
+  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
 
   def access(): Access[PipelineCreationRequest, Pipeline] =
     new Access[PipelineCreationRequest, Pipeline](PIPELINES_PREFIX_PATH)

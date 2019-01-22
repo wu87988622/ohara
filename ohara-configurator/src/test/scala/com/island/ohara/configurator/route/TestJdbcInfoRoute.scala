@@ -28,7 +28,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestJdbcInfoRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

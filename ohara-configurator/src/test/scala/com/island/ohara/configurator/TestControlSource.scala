@@ -25,7 +25,6 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.WithBrokerWorker
-import com.island.ohara.kafka.BrokerClient
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceRecord, RowSourceTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -40,8 +39,7 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     .builder()
     .hostname("localhost")
     .port(0)
-    .brokerClient(BrokerClient.of(testUtil.brokersConnProps))
-    .connectClient(WorkerClient(testUtil.workersConnProps))
+    .fake(testUtil.brokersConnProps, testUtil().workersConnProps())
     .build()
 
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)

@@ -27,7 +27,7 @@ import com.island.ohara.common.util.{CommonUtil, Releasable, VersionUtil}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
+import com.island.ohara.kafka.{Consumer, Producer}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -43,8 +43,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .brokerClient(BrokerClient.of(testUtil.brokersConnProps))
-      .connectClient(WorkerClient(testUtil.workersConnProps))
+      .fake(testUtil.brokersConnProps(), testUtil().workersConnProps())
       .build()
 
   private[this] val connectorAccess = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)

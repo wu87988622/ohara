@@ -28,7 +28,7 @@ import scala.concurrent.Await
 
 class TestOhara450 extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 

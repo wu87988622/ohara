@@ -20,11 +20,15 @@ import java.util.Objects
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtil, VersionUtil}
-
+import com.island.ohara.kafka.BrokerClient
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait BrokerCollie extends Collie[BrokerClusterInfo] {
   def creator(): BrokerCollie.ClusterCreator
+  def createClient(clusterName: String): Future[(BrokerClusterInfo, BrokerClient)] = cluster(clusterName).map {
+    case (c, _) => (c, BrokerClient.of(c.connectionProps))
+  }
 }
 
 object BrokerCollie {

@@ -22,7 +22,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
 import com.island.ohara.agent.{Collie, NodeCollie}
 import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
-import com.island.ohara.client.configurator.v0.{ClusterCreationRequest, ClusterInfo, Data, ErrorApi}
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import spray.json.DefaultJsonProtocol._
@@ -32,9 +32,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
-private[configurator] object RouteUtil {
-  def rejectNonexistentUuid(uuid: String): StandardRoute = complete(
-    StatusCodes.BadRequest -> ErrorApi.of(new IllegalArgumentException(s"Failed to find a schema mapping to $uuid")))
+private[route] object RouteUtil {
+  // This is a query parameter.
+  type TargetCluster = Option[String]
+  type Id = String
+
+  def rejectNonexistentUuid(id: String): StandardRoute = complete(
+    StatusCodes.BadRequest -> ErrorApi.of(new IllegalArgumentException(s"Failed to find a schema mapping to $id")))
 
   def assertNotRelated2Pipeline(id: String)(implicit store: Store): Unit =
     if (Await.result(
@@ -46,31 +50,38 @@ private[configurator] object RouteUtil {
         ))
       throw new IllegalArgumentException(s"The id:$id is used by pipeline")
 
-  private[this] def routeOfAdd[Req, Res <: Data](
-    hook: (String, Req) => Res)(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]) = post {
+  private[this] def routeOfAdd[Req, Res <: Data](hook: (TargetCluster, Id, Req) => Future[Res])(
+    implicit store: Store,
+    rm: RootJsonFormat[Req],
+    rm2: RootJsonFormat[Res]) = post {
     entity(as[Req]) { req =>
-      onSuccess(store.add(hook(CommonUtil.uuid(), req)))(value => complete(value))
+      parameter(Parameters.CLUSTER_NAME.?)(name =>
+        onSuccess(hook(name, CommonUtil.uuid(), req).flatMap(store.add))(value => complete(value)))
     }
   }
-  private[this] def routeOfList[Req, Res <: Data: ClassTag](hook: Seq[Res] => Seq[Res])(implicit store: Store,
+
+  private[this] def routeOfList[Res <: Data: ClassTag](
+    hook: Seq[Res] => Future[Seq[Res]])(implicit store: Store, rm: RootJsonFormat[Res]) = get(
+    onSuccess(store.values[Res].flatMap(values => hook(values)))(values => complete(values)))
+
+  private[this] def routeOfGet[Res <: Data: ClassTag](id: Id, hook: Res => Future[Res])(implicit store: Store,
                                                                                         rm: RootJsonFormat[Res]) = get(
-    onSuccess(store.values[Res])(values => complete(hook(values))))
+    onSuccess(store.value[Res](id).flatMap(value => hook(value)))(value => complete(value)))
 
-  private[this] def routeOfGet[Req, Res <: Data: ClassTag](id: String, hook: Res => Res)(implicit store: Store,
-                                                                                         rm: RootJsonFormat[Res]) = get(
-    onSuccess(store.value[Res](id))(value => complete(hook(value))))
-
-  private[this] def routeOfDelete[Req, Res <: Data: ClassTag](id: String, hook: String => String, hook1: Res => Res)(
-    implicit store: Store,
-    rm: RootJsonFormat[Res]) =
-    delete(onSuccess(store.remove[Res](hook(id)))(value => complete(hook1(value))))
+  private[this] def routeOfDelete[Res <: Data: ClassTag](
+    id: Id,
+    hook: Res => Future[Res],
+    hookBeforeDelete: String => Future[String])(implicit store: Store, rm: RootJsonFormat[Res]) =
+    delete(onSuccess(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).flatMap(value => hook(value))))(value =>
+      complete(value)))
 
   private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](
-    id: String,
-    hook: (String, Req, Res) => Res)(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]) = put {
-    entity(as[Req])(req =>
-      onSuccess(store.update(id, (previous: Res) => hook(id, req, previous)))(value => complete(value)))
-  }
+    id: Id,
+    hook: (Id, Req, Res) => Future[Res])(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]) =
+    put {
+      entity(as[Req])(req =>
+        onSuccess(store.update(id, (previous: Res) => hook(id, req, previous)))(value => complete(value)))
+    }
 
   /**
     *  this is the basic route of all APIs to access ohara's data.
@@ -83,17 +94,16 @@ private[configurator] object RouteUtil {
     * @return route
     */
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
-                                             reqToRes: (String, Req) => Res,
-                                             resToRes: Res => Res = (r: Res) => r)(
+                                             reqToRes: (TargetCluster, Id, Req) => Future[Res],
+                                             resToRes: Res => Future[Res] = (r: Res) => Future.successful(r))(
     implicit store: Store,
     rm: RootJsonFormat[Req],
     rm2: RootJsonFormat[Res]): server.Route = basicRoute(
     root = root,
     hookOfAdd = reqToRes,
-    hookOfUpdate = (id: String, req: Req, _: Res) => reqToRes(id, req),
-    hookOfList = (r: Seq[Res]) => r.map(resToRes),
+    hookOfUpdate = (id: Id, req: Req, _: Res) => reqToRes(None, id, req),
+    hookOfList = (r: Seq[Res]) => Future.traverse(r)(resToRes),
     hookOfGet = (r: Res) => resToRes(r),
-    hookBeforeDelete = (id: String) => id,
     hookOfDelete = (r: Res) => resToRes(r)
   )
 
@@ -105,41 +115,42 @@ private[configurator] object RouteUtil {
     * @param hookOfUpdate used to convert request to response for Update function
     * @param hookOfList used to convert response for List function
     * @param hookOfGet used to convert response for Get function
-    * @param hookBeforeDelete used to check the id of data before doing delete
     * @param hookOfDelete used to convert response for Delete function
     * @tparam Req request
     * @tparam Res response
     * @return route
     */
-  def basicRoute[Req, Res <: Data: ClassTag](
-    root: String,
-    hookOfAdd: (String, Req) => Res,
-    hookOfUpdate: (String, Req, Res) => Res,
-    hookOfList: Seq[Res] => Seq[Res],
-    hookOfGet: Res => Res,
-    hookBeforeDelete: String => String,
-    hookOfDelete: Res => Res)(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]): server.Route =
+  def basicRoute[Req, Res <: Data: ClassTag](root: String,
+                                             hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
+                                             hookOfUpdate: (Id, Req, Res) => Future[Res],
+                                             hookOfList: Seq[Res] => Future[Seq[Res]],
+                                             hookOfGet: Res => Future[Res],
+                                             hookOfDelete: Res => Future[Res])(implicit store: Store,
+                                                                               rm: RootJsonFormat[Req],
+                                                                               rm2: RootJsonFormat[Res]): server.Route =
     pathPrefix(root) {
       pathEnd {
-        routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Req, Res](hookOfList)
+        routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
       } ~ path(Segment) { id =>
-        routeOfGet[Req, Res](id, hookOfGet) ~ routeOfDelete[Req, Res](id, hookBeforeDelete, hookOfDelete) ~
+        routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, id => Future.successful(id)) ~
           routeOfUpdate[Req, Res](id, hookOfUpdate)
       }
     }
 
   // TODO: remove this method after we resolve OHARA-1201 ... by chia
-  def basicRoute2[Req, Res <: Data: ClassTag](
-    hookOfAdd: (String, Req) => Res,
-    hookOfUpdate: (String, Req, Res) => Res,
-    hookOfList: Seq[Res] => Seq[Res],
-    hookOfGet: Res => Res,
-    hookBeforeDelete: String => String,
-    hookOfDelete: Res => Res)(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]): server.Route =
+  def basicRoute2[Req, Res <: Data: ClassTag](hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
+                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
+                                              hookOfList: Seq[Res] => Future[Seq[Res]],
+                                              hookOfGet: Res => Future[Res],
+                                              hookOfDelete: Res => Future[Res],
+                                              hookBeforeDelete: String => Future[String])(
+    implicit store: Store,
+    rm: RootJsonFormat[Req],
+    rm2: RootJsonFormat[Res]): server.Route =
     pathEnd {
-      routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Req, Res](hookOfList)
+      routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
     } ~ path(Segment) { id =>
-      routeOfGet[Req, Res](id, hookOfGet) ~ routeOfDelete[Req, Res](id, hookBeforeDelete, hookOfDelete) ~
+      routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, hookBeforeDelete) ~
         routeOfUpdate[Req, Res](id, hookOfUpdate)
     }
 

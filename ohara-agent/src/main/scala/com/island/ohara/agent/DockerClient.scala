@@ -24,7 +24,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
 /**
-  * a interface used to control remote node's docker service.
+  * An interface used to control remote node's docker service.
   * the default implementation is based on ssh client.
   * NOTED: All containers are executed background so as to avoid blocking call.
   */
@@ -192,7 +192,7 @@ object DockerClient {
   }
 
   /**
-    * a interface used to run a docker container on remote node
+    * An interface used to run a docker container on remote node
     */
   trait ContainerCreator {
 

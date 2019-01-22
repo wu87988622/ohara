@@ -23,7 +23,7 @@ import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 class TestConfiguratorStore extends MediumTest with Matchers {
 
@@ -43,6 +43,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
     Await.result(store.add(s), timeout)
@@ -62,14 +63,17 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
     store.add(s)
 
-    Await.result(store.update(s.id, (_: Data) => s.copy(name = "123")), 10 seconds).name shouldBe "123"
+    Await
+      .result(store.update(s.id, (_: Data) => Future.successful(s.copy(name = "123"))), 10 seconds)
+      .name shouldBe "123"
 
     an[NoSuchElementException] should be thrownBy Await
-      .result(store.update("asdasdasd", (_: Data) => s.copy(id = "123")), 10 seconds)
+      .result(store.update("asdasdasd", (_: Data) => Future.successful(s.copy(id = "123"))), 10 seconds)
   }
 
   @Test
@@ -83,6 +87,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
     store.add(s)
@@ -105,6 +110,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
     store.add(s)

@@ -17,81 +17,108 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
+import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 private[configurator] object PipelineRoute {
-  private[this] def toRes(id: String, request: PipelineCreationRequest)(implicit store: Store,
-                                                                        workerClient: WorkerClient) =
-    Pipeline(id, request.name, request.rules, abstracts(request.rules), CommonUtil.current())
 
-  private[this] def checkExist(ids: Set[String])(implicit store: Store): Unit = {
-    ids.foreach(
-      uuid =>
-        if (Await.result(store.nonExist[Data](uuid), 10 seconds))
-          throw new IllegalArgumentException(s"the uuid:$uuid does not exist"))
-  }
-
-  private[this] def abstracts(rules: Map[String, String])(implicit store: Store,
-                                                          workerClient: WorkerClient): Seq[ObjectAbstract] = {
-    val keys = rules.keys.filterNot(_ == UNKNOWN).toSet
-    checkExist(keys)
-    val values = rules.values.filterNot(_ == UNKNOWN).toSet
-    checkExist(values)
-    Await
-      .result(store.raw(), 30 seconds)
-      .filter(data => keys.contains(data.id) || values.contains(data.id))
-      .map {
-        case data: ConnectorConfiguration =>
-          ObjectAbstract(data.id,
-                         data.name,
-                         data.kind,
-                         if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
-                         else None,
-                         data.lastModified)
-        case data => ObjectAbstract(data.id, data.name, data.kind, None, data.lastModified)
+  private[this] def toRes(targetCluster: TargetCluster, id: String, request: PipelineCreationRequest)(
+    implicit store: Store,
+    workerCollie: WorkerCollie): Future[Pipeline] = CollieUtils.workerClient(targetCluster).flatMap {
+    case (cluster, client) =>
+      abstracts(cluster, request, client).map { abs =>
+        Pipeline(id, request.name, request.rules, abs, cluster.name, CommonUtil.current())
       }
-      .toList // NOTED: we have to return a "serializable" list!!!
   }
+
+  private[this] def abstracts(cluster: WorkerClusterInfo, request: PipelineCreationRequest, workerClient: WorkerClient)(
+    implicit store: Store): Future[List[ObjectAbstract]] =
+    verifyRules(cluster, request)
+      .flatMap { rules =>
+        Future.sequence(
+          rules
+            .flatMap {
+              case (k, v) => Seq(k, v)
+            }
+            .filterNot(_ == UNKNOWN)
+            .toSet
+            .map(id => store.value[Data](id)))
+      }
+      .map {
+        _.map {
+          case data: ConnectorConfiguration =>
+            ObjectAbstract(data.id,
+                           data.name,
+                           data.kind,
+                           if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
+                           else None,
+                           data.lastModified)
+          case data => ObjectAbstract(data.id, data.name, data.kind, None, data.lastModified)
+        }.toList // NOTED: we have to return a "serializable" list!!!
+      }
 
   /**
     * we should accept following data type only
     * [ConnectorConfiguration, TopicInfo, StreamApp]
     */
-  private[this] def verifyRules(pipeline: Pipeline)(implicit store: Store): Pipeline = {
-    def verify(id: String): Unit = if (id != UNKNOWN) {
-      val data = Await.result(store.raw(id), 10 seconds)
-      if (!data.isInstanceOf[ConnectorConfiguration] && !data.isInstanceOf[TopicInfo] && !data.isInstanceOf[StreamApp])
-        throw new IllegalArgumentException(s"""${data.getClass.getName} can't be placed at "from"""")
-    }
-    pipeline.rules.foreach {
-      case (k, v) =>
-        if (k == v) throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
-        verify(k)
-        verify(v)
-    }
-    pipeline
+  private[this] def verifyRules(cluster: WorkerClusterInfo, request: PipelineCreationRequest)(
+    implicit store: Store): Future[Map[String, String]] = {
+    def verify(id: String): Future[String] = if (id != UNKNOWN) {
+      store.raw(id).map {
+        case d: ConnectorConfiguration =>
+          if (d.workerClusterName != cluster.name)
+            throw new IllegalArgumentException(
+              s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:${request.name} which is placed at worker cluster:${cluster.name}")
+          else id
+        case d: TopicInfo =>
+          if (d.brokerClusterName != cluster.brokerClusterName)
+            throw new IllegalArgumentException(
+              s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:${request.name} which is placed at broker cluster:${cluster.brokerClusterName}")
+          else id
+        case _: StreamApp => id
+        case raw          => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
+      }
+    } else Future.successful(id)
+
+    Future
+      .sequence(request.rules.map {
+        case (k, v) =>
+          if (k == v) Future.failed(new IllegalArgumentException(s"the from:$k can't be equals to to:$v"))
+          else
+            verify(k).flatMap { k =>
+              verify(v).map(v => (k, v))
+            }
+      })
+      .map(_.toMap)
   }
 
-  private[this] def update(pipeline: Pipeline)(implicit store: Store, workerClient: WorkerClient): Pipeline =
-    pipeline.copy(objects = abstracts(pipeline.rules))
+  private[this] def update(pipeline: Pipeline)(implicit store: Store, workerCollie: WorkerCollie): Future[Pipeline] =
+    toRes(Some(pipeline.workerClusterName),
+          pipeline.id,
+          PipelineCreationRequest(
+            name = pipeline.name,
+            rules = pipeline.rules
+          ))
 
-  def apply(implicit store: Store, workerClient: WorkerClient): server.Route =
+  def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
     RouteUtil.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfAdd = (id: String, request: PipelineCreationRequest) => verifyRules(toRes(id, request)),
-      hookOfUpdate = (id: String, request: PipelineCreationRequest, _: Pipeline) => verifyRules(toRes(id, request)),
+      hookOfAdd = (t: TargetCluster, id: Id, request: PipelineCreationRequest) => toRes(t, id, request),
+      hookOfUpdate = (id: Id, request: PipelineCreationRequest, previous: Pipeline) =>
+        toRes(Some(previous.workerClusterName), id, request),
       hookOfGet = (response: Pipeline) => update(response),
-      hookOfList = (responses: Seq[Pipeline]) => responses.map(update),
-      hookBeforeDelete = (id: String) => id,
-      hookOfDelete = (response: Pipeline) => response
+      hookOfList = (responses: Seq[Pipeline]) => Future.sequence(responses.map(update)),
+      hookOfDelete = (response: Pipeline) => Future.successful(response)
     )
 }

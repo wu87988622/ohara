@@ -29,7 +29,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestBrokerRoute extends MediumTest with Matchers {
 
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
   private[this] val access = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: BrokerClusterCreationRequest, cluster: BrokerClusterInfo): Unit = {
@@ -180,7 +180,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
     assert(request1, Await.result(access.add(request1), 30 seconds))
 
     val clusters = Await.result(access.list(), 30 seconds)
-    clusters.size shouldBe 2
+    // In fake mode, we pre-create a fake cluster
+    clusters.size shouldBe 3
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
   }
@@ -216,7 +217,8 @@ class TestBrokerRoute extends MediumTest with Matchers {
     containers.size shouldBe request.nodeNames.size
 
     Await.result(access.delete(request.name), 30 seconds) shouldBe cluster
-    Await.result(access.list(), 30 seconds).size shouldBe 0
+    // in fake mode we should have single cluster
+    Await.result(access.list(), 30 seconds).size shouldBe 1
   }
 
   @Test

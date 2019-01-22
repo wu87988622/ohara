@@ -28,7 +28,7 @@ import scala.concurrent.Await
 
 class TestOhara764 extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   import scala.concurrent.duration._
   @Test

@@ -41,13 +41,15 @@ object WorkerRoute {
             brokerCollie
               .exists(bkName)
               .flatMap(if (_) Future.successful(bkName)
-              else Future.failed(new NoSuchElementException(s"$bkName doesn't exist")))
+              else Future.failed(new NoSuchElementException(s"$bkName doesn't exist.")))
           }
           .getOrElse {
             brokerCollie.clusters().map { clusters =>
               if (clusters.size != 1)
                 throw new IllegalArgumentException(
-                  s"You don't specify the zk cluster for ${req.name}, and there is no default zk cluster")
+                  s"You don't specify the broker cluster for ${req.name}, and there is no default broker cluster. actual:${clusters
+                    .map(_._1.name)
+                    .mkString(",")}")
               clusters.head._1.name
             }
           }

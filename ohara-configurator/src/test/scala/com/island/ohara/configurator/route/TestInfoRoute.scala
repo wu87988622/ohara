@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestInfoRoute extends SmallTest with Matchers {
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -36,12 +36,12 @@ class TestInfoRoute extends SmallTest with Matchers {
   def test(): Unit = {
     // only test the configurator based on mini cluster
     val clusterInformation = result(InfoApi.access().hostname(configurator.hostname).port(configurator.port).get())
-    clusterInformation.brokers shouldBe "Unknown"
-    clusterInformation.workers shouldBe "Unknown"
+    clusterInformation.brokers shouldBe "this field is deprecated. Use Brokers APIs instead"
+    clusterInformation.workers shouldBe "this field is deprecated. Use Workers APIs instead"
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
     clusterInformation.supportedDataTypes shouldBe DataType.all.asScala
-    clusterInformation.sources.foreach(_.className.contains("com.island") shouldBe true)
-    clusterInformation.sinks.foreach(_.className.contains("com.island") shouldBe true)
+    clusterInformation.sources.size shouldBe 0
+    clusterInformation.sinks.size shouldBe 0
     clusterInformation.versionInfo.version shouldBe VersionUtil.VERSION
     clusterInformation.versionInfo.user shouldBe VersionUtil.USER
     clusterInformation.versionInfo.revision shouldBe VersionUtil.REVISION

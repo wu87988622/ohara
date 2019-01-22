@@ -18,7 +18,6 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
-import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.BrokerClient
 import org.junit.Test
@@ -33,8 +32,7 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
       .builder()
       .hostname("localhost")
       .port(0)
-      .connectClient(WorkerClient(testUtil.workersConnProps))
-      .brokerClient(BrokerClient.of(testUtil.brokersConnProps))
+      .fake(testUtil.brokersConnProps(), testUtil().workersConnProps())
       .build()
 
   @Test

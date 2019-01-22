@@ -19,13 +19,17 @@ import java.net.URL
 import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 trait WorkerCollie extends Collie[WorkerClusterInfo] {
   def creator(): WorkerCollie.ClusterCreator
+  def createClient(clusterName: String): Future[(WorkerClusterInfo, WorkerClient)] = cluster(clusterName).map {
+    case (c, _) => (c, WorkerClient(c.connectionProps))
+  }
 }
 
 object WorkerCollie {

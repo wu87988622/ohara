@@ -28,7 +28,7 @@ import scala.concurrent.duration._
 class TestOhara1255 extends SmallTest with Matchers {
 
   private[this] val configurator =
-    Configurator.builder().brokerClient(new FakeBrokerClient()).connectClient(new FakeWorkerClient()).build()
+    Configurator.builder().fake().build()
 
   private[this] val access = NodeApi.access().hostname("localhost").port(configurator.port)
 

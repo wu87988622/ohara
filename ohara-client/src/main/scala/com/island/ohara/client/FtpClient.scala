@@ -35,7 +35,7 @@ trait FtpClient extends Releasable {
   def listFileNames(dir: String): Seq[String]
 
   /**
-    * open a input stream from a existent file. If file doesn't exist, an IllegalArgumentException will be thrown.
+    * open an input stream from a existent file. If file doesn't exist, an IllegalArgumentException will be thrown.
     * @param path file path
     * @return input stream
     */

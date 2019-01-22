@@ -38,10 +38,11 @@ object InfoApi {
   final case class ConnectorVersion(className: String, version: String, revision: String)
   implicit val CONNECTOR_VERSION_JSON_FORMAT: RootJsonFormat[ConnectorVersion] = jsonFormat3(ConnectorVersion)
 
-  final case class ConfiguratorInfo(brokers: String,
-                                    workers: String,
-                                    sources: Seq[ConnectorVersion],
-                                    sinks: Seq[ConnectorVersion],
+  // TODO: remove the variables having default value since they all are deprecated!!! by chia
+  final case class ConfiguratorInfo(brokers: String = "this field is deprecated. Use Brokers APIs instead",
+                                    workers: String = "this field is deprecated. Use Workers APIs instead",
+                                    sources: Seq[ConnectorVersion] = Seq.empty,
+                                    sinks: Seq[ConnectorVersion] = Seq.empty,
                                     supportedDatabases: Seq[String],
                                     supportedDataTypes: Seq[DataType],
                                     versionInfo: ConfiguratorVersion)

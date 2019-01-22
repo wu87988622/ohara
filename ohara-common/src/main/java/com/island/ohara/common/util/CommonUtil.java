@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 public final class CommonUtil {
   private static final Logger logger = LoggerFactory.getLogger(CommonUtil.class);
 
-  /** a interface used to represent current time. */
+  /** An interface used to represent current time. */
   @FunctionalInterface
   public interface Timer {
     /** @return current time in ms. */

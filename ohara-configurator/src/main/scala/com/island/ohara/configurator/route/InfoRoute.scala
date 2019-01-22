@@ -18,22 +18,22 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
+import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.InfoApi._
-import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
 import com.island.ohara.common.util.VersionUtil
-import com.island.ohara.kafka.BrokerClient
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 object InfoRoute extends SprayJsonSupport {
 
   private[this] val SUPPORTED_DATABASES = Seq("mysql")
 
-  def apply(implicit brokerClient: BrokerClient, workerClient: WorkerClient): server.Route =
+  def apply(implicit workerCollie: WorkerCollie): server.Route =
     // TODO: OHARA-1212 should remove "cluster" ... by chia
     path(INFO_PREFIX_PATH | "cluster") {
       get {
-        val plugins = workerClient.plugins()
-
         def toConnectorInfo(plugin: Plugin): ConnectorVersion = {
           val (version, revision) = try {
             // see com.island.ohara.kafka.connection.Version for the format from "kafka's version"
@@ -46,21 +46,26 @@ object InfoRoute extends SprayJsonSupport {
           ConnectorVersion(plugin.className, version, revision)
         }
         import scala.collection.JavaConverters._
-        complete(
-          ConfiguratorInfo(
-            brokerClient.connectionProps,
-            workerClient.connectionProps,
-            plugins.filter(_.typeName.toLowerCase == "source").map(toConnectorInfo),
-            plugins.filter(_.typeName.toLowerCase == "sink").map(toConnectorInfo),
-            SUPPORTED_DATABASES,
-            DataType.all.asScala,
-            ConfiguratorVersion(
-              version = VersionUtil.VERSION,
-              user = VersionUtil.USER,
-              revision = VersionUtil.REVISION,
-              date = VersionUtil.DATE
-            )
-          ))
+        onSuccess(workerCollie.clusters().flatMap { clusters =>
+          clusters.size match {
+            case 1 => workerCollie.createClient(clusters.head._1.name).map(_._2.plugins())
+            case _ => Future.successful(Seq.empty)
+          }
+        }) { plugins =>
+          complete(
+            ConfiguratorInfo(
+              sources = plugins.filter(_.typeName.toLowerCase == "source").map(toConnectorInfo),
+              sinks = plugins.filter(_.typeName.toLowerCase == "sink").map(toConnectorInfo),
+              supportedDatabases = SUPPORTED_DATABASES,
+              supportedDataTypes = DataType.all.asScala,
+              versionInfo = ConfiguratorVersion(
+                version = VersionUtil.VERSION,
+                user = VersionUtil.USER,
+                revision = VersionUtil.REVISION,
+                date = VersionUtil.DATE
+              )
+            ))
+        }
       }
     }
 }

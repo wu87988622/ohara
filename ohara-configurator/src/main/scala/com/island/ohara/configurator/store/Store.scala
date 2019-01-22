@@ -22,7 +22,8 @@ import java.util.concurrent.ConcurrentSkipListMap
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{ByteUtil, ReleaseOnce}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 /**
   * A key-value store. It is used to save the component information
@@ -46,7 +47,7 @@ trait Store[K, V] extends ReleaseOnce {
     * @param value value
     * @return the updated value
     */
-  def update(key: K, value: V => V): Future[V]
+  def update(key: K, value: V => Future[V]): Future[V]
 
   /**
     * Retrieve the value by specified key.
@@ -88,7 +89,7 @@ object Store {
     * @param valueSerializer value serializer
     * @tparam K key type
     * @tparam V value type
-    * @return a in-memory store
+    * @return An in-memory store
     */
   def inMemory[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] =
     new Store[K, V] {
@@ -98,10 +99,13 @@ object Store {
       private[this] def fromKey(key: Array[Byte]) = keySerializer.from(Objects.requireNonNull(key))
       private[this] def toValue(value: V) = valueSerializer.to(Objects.requireNonNull(value))
       private[this] def fromValue(value: Array[Byte]) = valueSerializer.from(Objects.requireNonNull(value))
-      override def update(key: K, value: V => V): Future[V] = Future.successful(
+      override def update(key: K, value: V => Future[V]): Future[V] = Future.successful(
         fromValue(
-          store.computeIfPresent(toKey(key),
-                                 (_: Array[Byte], previous: Array[Byte]) => toValue(value(fromValue(previous))))))
+          store.computeIfPresent(
+            toKey(key),
+            // we have to block the method since the in-memory store we use doesn't support async get-and-update...by chia
+            (_: Array[Byte], previous: Array[Byte]) => toValue(Await.result(value(fromValue(previous)), 30 seconds))
+          )))
 
       override def value(key: K): Future[V] = Future.successful(
         Option(store.get(toKey(key))).map(fromValue).getOrElse(throw new NoSuchElementException(s"$key doesn't exist")))

@@ -28,7 +28,7 @@ import scala.concurrent.duration._
 
 class TestStream extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
   private[this] val accessStreamList = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStreamProperty =
     StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)

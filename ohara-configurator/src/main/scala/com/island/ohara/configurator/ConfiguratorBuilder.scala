@@ -41,7 +41,6 @@ import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.kafka._
-import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -54,8 +53,6 @@ class ConfiguratorBuilder {
   private[this] var port: Option[Int] = None
   private[this] val store: Store = new Store(
     com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
-  private[this] var brokerClient: Option[BrokerClient] = None
-  private[this] var connectClient: Option[WorkerClient] = None
   private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
@@ -103,26 +100,116 @@ class ConfiguratorBuilder {
     this
   }
 
-  def brokerClient(brokerClient: BrokerClient): ConfiguratorBuilder = {
-    this.brokerClient = Some(brokerClient)
-    this
-  }
-
-  def connectClient(connectClient: WorkerClient): ConfiguratorBuilder = {
-    this.connectClient = Some(connectClient)
-    this
-  }
-
   /**
-    * set all client to fake mode. It means all request sent to configurator won't be executed. a testing-purpose method.
+    * set all client to fake mode with a pre-created broker cluster and worker cluster.
     *
     * @return this builder
     */
-  def fake(): ConfiguratorBuilder = {
-    brokerClient(new FakeBrokerClient())
-    connectClient(new FakeWorkerClient())
-    clusterCollie(new FakeClusterCollie)
+  def fake(): ConfiguratorBuilder = fake(1, 1)
+
+  /**
+    * set all client to fake mode but broker client and worker client is true that they are connecting to embedded cluster.
+    *
+    * @return this builder
+    */
+  def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder = {
+    val collie = new FakeClusterCollie(bkConnectionProps, wkConnectionProps)
+    val bkCluster = {
+      val pair = bkConnectionProps.split(",")
+      val host = pair.map(_.split(":").head).head
+      val port = pair.map(_.split(":").last).head.toInt
+      BrokerClusterInfo(
+        name = "embedded_broker_cluster",
+        imageName = "None",
+        zookeeperClusterName = "None",
+        clientPort = port,
+        nodeNames = Seq(host)
+      )
+    }
+    val wkCluster = {
+      val pair = wkConnectionProps.split(",")
+      val host = pair.map(_.split(":").head).head
+      val port = pair.map(_.split(":").last).head.toInt
+      WorkerClusterInfo(
+        name = "embedded_worker_cluster",
+        imageName = "None",
+        brokerClusterName = bkCluster.name,
+        clientPort = port,
+        groupId = "None",
+        statusTopicName = "None",
+        statusTopicPartitions = 1,
+        statusTopicReplications = 1.asInstanceOf[Short],
+        configTopicName = "None",
+        configTopicPartitions = 1,
+        configTopicReplications = 1.asInstanceOf[Short],
+        offsetTopicName = "None",
+        offsetTopicPartitions = 1,
+        offsetTopicReplications = 1.asInstanceOf[Short],
+        jarNames = Seq.empty,
+        nodeNames = Seq(host)
+      )
+    }
+    collie.brokerCollie().add(Seq.empty, bkCluster)
+    collie.workerCollie().add(Seq.empty, wkCluster)
+    clusterCollie(collie)
   }
+
+  /**
+    * Create a fake collie with specified number of broker/worker cluster.
+    * @param numberOfBrokerCluster number of broker cluster
+    * @param numberOfWorkerCluster number of worker cluster
+    * @return this builder
+    */
+  def fake(numberOfBrokerCluster: Int, numberOfWorkerCluster: Int): ConfiguratorBuilder = {
+    if (numberOfBrokerCluster <= 0)
+      throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
+    if (numberOfWorkerCluster < 0)
+      throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
+    val collie = new FakeClusterCollie(null, null)
+
+    // create fake bk clusters
+    val brokerClusters: Seq[BrokerClusterInfo] =
+      (0 until numberOfBrokerCluster).map(index => brokerClusterInfo(s"fake$index"))
+    brokerClusters.foreach(collie.brokerCollie().add(Seq.empty, _))
+
+    (0 until numberOfWorkerCluster).foreach { index =>
+      collie
+        .workerCollie()
+        .add(Seq.empty,
+             workerClusterInfo(brokerClusters((Math.random() % brokerClusters.size).asInstanceOf[Int]), s"fake$index"))
+    }
+    clusterCollie(collie)
+  }
+
+  private[this] def brokerClusterInfo(prefix: String): BrokerClusterInfo = BrokerClusterInfo(
+    name = s"${prefix}brokerCluster",
+    imageName = s"imageName$prefix",
+    zookeeperClusterName = s"zkClusterName$prefix",
+    // Assigning a negative value can make test fail quickly.
+    clientPort = -1,
+    nodeNames = Seq.empty
+  )
+
+  private[this] def workerClusterInfo(bkCluster: BrokerClusterInfo, prefix: String): WorkerClusterInfo =
+    WorkerClusterInfo(
+      name = s"${prefix}workerCluster",
+      imageName = s"imageName$prefix",
+      brokerClusterName = bkCluster.name,
+      // Assigning a negative value can make test fail quickly.
+      clientPort = -1,
+      groupId = s"groupId$prefix",
+      statusTopicName = s"statusTopicName$prefix",
+      statusTopicPartitions = 1,
+      statusTopicReplications = 1.asInstanceOf[Short],
+      configTopicName = s"configTopicName$prefix",
+      configTopicPartitions = 1,
+      configTopicReplications = 1.asInstanceOf[Short],
+      offsetTopicName = s"offsetTopicName$prefix",
+      offsetTopicPartitions = 1,
+      offsetTopicReplications = 1.asInstanceOf[Short],
+      jarNames = Seq.empty,
+      nodeNames = Seq.empty
+    )
 
   @Optional("default is implemented by ssh")
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
@@ -139,9 +226,7 @@ class ConfiguratorBuilder {
     new Configurator(hostname, port, initializationTimeout.get, terminationTimeout.get, extraRoute)(
       store = store,
       nodeCollie = nodeCollie(),
-      clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie())),
-      brokerClient = brokerClient.get,
-      workerClient = connectClient.get
+      clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie()))
     )
   }
 }
@@ -209,12 +294,10 @@ private[configurator] class FakeBrokerClient extends BrokerClient {
 
   import scala.collection.JavaConverters._
 
-  private[this] val log = Logger(classOf[FakeBrokerClient].getName)
   private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
 
   override def topicCreator(): TopicCreator = new TopicCreator() {
-    override def create(name: String): Unit = {
-      printDebugMessage()
+    override def create(name: String): Unit =
       cachedTopics.put(
         name,
         new TopicDescription(
@@ -230,38 +313,31 @@ private[configurator] class FakeBrokerClient extends BrokerClient {
           false
         )
       )
-    }
   }
 
-  private[this] def printDebugMessage(): Unit =
-    log.debug("You are using a empty kafka client!!! Please make sure this message only appear in testing")
+  override def exist(topicName: String): Boolean = cachedTopics.contains(topicName)
 
-  override def exist(topicName: String): Boolean = {
-    printDebugMessage()
-    cachedTopics.contains(topicName)
-  }
-
-  override def addPartitions(topicName: String, numberOfPartitions: Int): Unit = {
-    printDebugMessage()
-    Option(cachedTopics.get(topicName))
-      .map(
-        previous =>
-          new TopicDescription(
-            topicName,
-            numberOfPartitions,
-            previous.numberOfReplications(),
-            Seq.empty.asJava,
-            false
-        ))
-      .getOrElse(throw new IllegalArgumentException(s"the topic:$topicName doesn't exist"))
-  }
+  override def addPartitions(topicName: String, numberOfPartitions: Int): Unit = Option(cachedTopics.get(topicName))
+    .map(
+      previous =>
+        new TopicDescription(
+          topicName,
+          numberOfPartitions,
+          previous.numberOfReplications(),
+          Seq.empty.asJava,
+          false
+      ))
+    .getOrElse(throw new IllegalArgumentException(
+      s"the topic:$topicName doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"))
 
   override def deleteTopic(topicName: String): Unit =
     if (cachedTopics.remove(topicName) == null) throw new IllegalArgumentException(s"$topicName doesn't exist")
 
   override def connectionProps(): String = "Unknown"
 
-  override def close(): Unit = printDebugMessage()
+  override def close(): Unit = {
+    // do nothing
+  }
 
   override def topicDescriptions(): util.List[TopicDescription] =
     new util.ArrayList[TopicDescription](cachedTopics.values())
@@ -270,15 +346,17 @@ private[configurator] class FakeBrokerClient extends BrokerClient {
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[configurator] class FakeClusterCollie extends ClusterCollie {
-  private[this] val zkCollie: ZookeeperCollie = new FakeZookeeperCollie
-  private[this] val bkCollie: BrokerCollie = new FakeBrokerCollie
-  private[this] val wkCollie: WorkerCollie = new FakeWorkerCollie
-  override def zookeepersCollie(): ZookeeperCollie = zkCollie
+private[configurator] class FakeClusterCollie(bkConnectionProps: String, wkConnectionProps: String)
+    extends ClusterCollie {
+  private[this] val zkCollie: FakeZookeeperCollie = new FakeZookeeperCollie
+  private[this] val bkCollie: FakeBrokerCollie = new FakeBrokerCollie(bkConnectionProps)
+  private[this] val wkCollie: FakeWorkerCollie = new FakeWorkerCollie(wkConnectionProps)
 
-  override def brokerCollie(): BrokerCollie = bkCollie
+  override def zookeepersCollie(): FakeZookeeperCollie = zkCollie
 
-  override def workerCollie(): WorkerCollie = wkCollie
+  override def brokerCollie(): FakeBrokerCollie = bkCollie
+
+  override def workerCollie(): FakeWorkerCollie = wkCollie
 
   override def close(): Unit = {
     // do nothing
@@ -304,7 +382,7 @@ private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
     hostname = CommonUtil.randomString(10)
   )
   override def exists(clusterName: String): Future[Boolean] =
-    Future.successful(clusterCache.containsKey(clusterName) && containerCache.containsKey(clusterName))
+    Future.successful(clusterCache.containsKey(clusterName))
 
   override def remove(clusterName: String): Future[T] = exists(clusterName).flatMap(if (_) Future.successful {
     val cluster = clusterCache.remove(clusterName)
@@ -326,6 +404,11 @@ private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
         cluster -> containerCache.get(cluster.name)
       }
       .toMap)
+
+  def add(containers: Seq[ContainerInfo], cluster: T): Unit = {
+    clusterCache.put(cluster.name, cluster)
+    if (containers.nonEmpty) containerCache.put(cluster.name, containers)
+  }
 }
 
 private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterInfo] with ZookeeperCollie {
@@ -361,7 +444,19 @@ private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterInfo]
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 }
 
-private[this] class FakeBrokerCollie extends FakeCollie[BrokerClusterInfo] with BrokerCollie {
+private[this] class FakeBrokerCollie(bkConnectionProps: String)
+    extends FakeCollie[BrokerClusterInfo]
+    with BrokerCollie {
+
+  /**
+    * fake broker client cache all topics info in-memory so we should keep singleton.
+    */
+  private[this] val fakeBrokerClient = new FakeBrokerClient
+  override def createClient(clusterName: String): Future[(BrokerClusterInfo, BrokerClient)] =
+    Future.successful(
+      if (bkConnectionProps == null) (Some(clusterCache.get(clusterName)).get, fakeBrokerClient)
+      // embedded mode should have single one cluster ...
+      else (clusterCache.values().iterator().next(), BrokerClient.of(bkConnectionProps)))
   override def creator(): BrokerCollie.ClusterCreator =
     (clusterName, imageName, zookeeperClusterName, clientPort, _, nodeNames) =>
       Future.successful {
@@ -411,7 +506,17 @@ private[this] class FakeBrokerCollie extends FakeCollie[BrokerClusterInfo] with 
   }
 }
 
-private[this] class FakeWorkerCollie extends FakeCollie[WorkerClusterInfo] with WorkerCollie {
+private[this] class FakeWorkerCollie(wkConnectionProps: String)
+    extends FakeCollie[WorkerClusterInfo]
+    with WorkerCollie {
+  private[this] val fakeWorkerClient = new FakeWorkerClient
+  override def createClient(
+    clusterName: String
+  ): Future[(WorkerClusterInfo, WorkerClient)] =
+    Future.successful(
+      if (wkConnectionProps == null) (Some(clusterCache.get(clusterName)).get, fakeWorkerClient)
+      // embedded mode should have single one cluster ...
+      else (clusterCache.values().iterator().next(), WorkerClient(wkConnectionProps)))
   override def creator(): WorkerCollie.ClusterCreator =
     (clusterName,
      imageName,

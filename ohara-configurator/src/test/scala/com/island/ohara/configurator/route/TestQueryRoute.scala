@@ -31,7 +31,7 @@ import scala.concurrent.{Await, Future}
 
 class TestQueryRoute extends SmallTest with Matchers {
   private[this] val db = Database.local(0)
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

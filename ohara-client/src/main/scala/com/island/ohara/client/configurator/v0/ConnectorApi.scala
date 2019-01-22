@@ -58,6 +58,7 @@ object ConnectorApi {
                                           topics: Seq[String],
                                           numberOfTasks: Int,
                                           configs: Map[String, String],
+                                          workerClusterName: String,
                                           state: Option[ConnectorState],
                                           lastModified: Long)
       extends Data {
@@ -73,51 +74,49 @@ object ConnectorApi {
           .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
     }
 
-  sealed abstract class Access
-      extends com.island.ohara.client.configurator.v0.Access[ConnectorConfigurationRequest, ConnectorConfiguration](
-        CONNECTORS_PREFIX_PATH) {
+  class Access private[v0]
+      extends com.island.ohara.client.configurator.v0.AccessWithCluster[
+        ConnectorConfigurationRequest,
+        ConnectorConfiguration](CONNECTORS_PREFIX_PATH) {
+
+    private[this] def actionUrl(id: String, action: String): String =
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
 
     /**
       * start to run a connector on worker cluster.
       * @param id connector's id
       * @return the configuration of connector
       */
-    def start(id: String): Future[ConnectorConfiguration]
+    def start(id: String): Future[ConnectorConfiguration] =
+      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, START_COMMAND))
 
     /**
       * stop and remove a running connector.
       * @param id connector's id
       * @return the configuration of connector
       */
-    def stop(id: String): Future[ConnectorConfiguration]
+    def stop(id: String): Future[ConnectorConfiguration] =
+      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, STOP_COMMAND))
 
     /**
       * pause a running connector
       * @param id connector's id
       * @return the configuration of connector
       */
-    def pause(id: String): Future[ConnectorConfiguration]
+    def pause(id: String): Future[ConnectorConfiguration] =
+      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, PAUSE_COMMAND))
 
     /**
       * resume a paused connector
       * @param id connector's id
       * @return the configuration of connector
       */
-    def resume(id: String): Future[ConnectorConfiguration]
+    def resume(id: String): Future[ConnectorConfiguration] =
+      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
   }
 
-  implicit val CONNECTOR_CONFIGURATION_JSON_FORMAT: RootJsonFormat[ConnectorConfiguration] = jsonFormat9(
+  implicit val CONNECTOR_CONFIGURATION_JSON_FORMAT: RootJsonFormat[ConnectorConfiguration] = jsonFormat10(
     ConnectorConfiguration)
-  def access(): Access = new Access {
-    private[this] def url(id: String, action: String): String =
-      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
-    override def start(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, START_COMMAND))
-    override def stop(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, STOP_COMMAND))
-    override def pause(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, PAUSE_COMMAND))
-    override def resume(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](url(id, RESUME_COMMAND))
-  }
+
+  def access(): Access = new Access
 }

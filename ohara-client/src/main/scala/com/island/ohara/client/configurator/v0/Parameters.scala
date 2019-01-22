@@ -16,12 +16,17 @@
 
 package com.island.ohara.client.configurator.v0
 
+import java.util.Objects
+
 /**
-  * There are many kinds of cluster hosted by ohara. We extract an interface to define "what" information should be included by a "cluster
-  * information".
+  * a collection of query parameter
   */
-trait ClusterInfo {
-  def name: String
-  def imageName: String
-  def nodeNames: Seq[String]
+object Parameters {
+  val CLUSTER_NAME: String = "cluster"
+
+  /**
+    * CLUSTER is our first query parameter. We introduce this method to append cluster parameter to url.
+    */
+  def appendTargetCluster(url: String, target: String): String =
+    Objects.requireNonNull(url) + s"?$CLUSTER_NAME=${Objects.requireNonNull(target)}"
 }

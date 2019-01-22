@@ -22,6 +22,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.StreamClient
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.client.configurator.v0.StreamApi._
@@ -29,11 +30,10 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtil._
-import com.island.ohara.kafka.BrokerClient
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.sys.process._
 
 private[configurator] object StreamRoute {
@@ -60,7 +60,7 @@ private[configurator] object StreamRoute {
     data.toTopics.nonEmpty
   }
 
-  def apply(implicit store: Store, brokerClient: BrokerClient, jarStore: JarStore): server.Route =
+  def apply(implicit store: Store, brokerCollie: BrokerCollie, jarStore: JarStore): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
         complete(StatusCodes.BadRequest -> "wrong uri")
@@ -131,14 +131,15 @@ private[configurator] object StreamRoute {
                       f5 <- store.update[StreamApp](
                         id,
                         previous =>
-                          toStore(previous.pipelineId,
-                                  previous.id,
-                                  previous.name,
-                                  previous.instances,
-                                  f3,
-                                  previous.fromTopics,
-                                  previous.toTopics,
-                                  CommonUtil.current())
+                          Future.successful(
+                            toStore(previous.pipelineId,
+                                    previous.id,
+                                    previous.name,
+                                    previous.instances,
+                                    f3,
+                                    previous.fromTopics,
+                                    previous.toTopics,
+                                    CommonUtil.current()))
                       )
                     } yield f5
                     onSuccess(result) { newData =>
@@ -176,10 +177,10 @@ private[configurator] object StreamRoute {
                   entity(as[StreamPropertyRequest]) { req =>
                     if (req.instances < 1)
                       throw new IllegalArgumentException(s"Require instances bigger or equal to 1")
-                    onSuccess(
-                      store.update[StreamApp](
-                        id,
-                        oldData =>
+                    onSuccess(store.update[StreamApp](
+                      id,
+                      oldData =>
+                        Future.successful(
                           toStore(oldData.pipelineId,
                                   oldData.id,
                                   req.name,
@@ -187,8 +188,8 @@ private[configurator] object StreamRoute {
                                   oldData.jarInfo,
                                   req.fromTopics,
                                   req.toTopics,
-                                  CommonUtil.current())
-                      )) { newData =>
+                                  CommonUtil.current()))
+                    )) { newData =>
                       complete(
                         StreamPropertyResponse(id,
                                                newData.jarInfo.name,
@@ -217,10 +218,17 @@ private[configurator] object StreamRoute {
                 if (checkDocker.toLowerCase.contains("not found"))
                   throw new RuntimeException(s"This machine is not support docker command !")
 
+                // TODO: this is just a workaround ... by chia
+                import scala.concurrent.duration._
+                val bkClusters = Await.result(brokerCollie.clusters(), 30 seconds)
+                if (bkClusters.size != 1)
+                  throw new IllegalArgumentException(
+                    "there are too many broker clusters, so we can't pick up one as default")
+
                 //TODO : we hard code here currently. This should be called from agent ...by Sam
                 val dockerCmd =
                   s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
-                     | -e STREAMAPP_SERVERS=${brokerClient.connectionProps()}
+                     | -e STREAMAPP_SERVERS=${bkClusters.head._1.connectionProps}
                      | -e STREAMAPP_APPID=${data.name}
                      | -e STREAMAPP_FROMTOPIC=${data.fromTopics.head}
                      | -e STREAMAPP_TOTOPIC=${data.toTopics.head}

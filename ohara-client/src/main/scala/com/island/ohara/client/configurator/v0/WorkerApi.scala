@@ -64,7 +64,13 @@ object WorkerApi {
                                      offsetTopicReplications: Short,
                                      jarNames: Seq[String],
                                      nodeNames: Seq[String])
-      extends ClusterInfo
+      extends ClusterInfo {
+
+    /**
+      * Our client to broker and worker accept the connection props:host:port,host2:port2
+      */
+    def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
+  }
   implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[WorkerClusterInfo] = jsonFormat16(WorkerClusterInfo)
 
   def access(): ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] =

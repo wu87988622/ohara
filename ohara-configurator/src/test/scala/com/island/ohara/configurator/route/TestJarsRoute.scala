@@ -29,7 +29,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestJarsRoute extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.fake()
+  private[this] val configurator = Configurator.builder().fake().build()
   private[this] val access = JarApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def tmpFile(bytes: Array[Byte]): File = {
