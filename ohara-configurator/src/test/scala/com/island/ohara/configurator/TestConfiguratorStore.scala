@@ -43,6 +43,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      error = None,
       workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
@@ -63,6 +64,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      error = None,
       workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
@@ -87,6 +89,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      error = None,
       workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )
@@ -110,6 +113,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       numberOfTasks = 1,
       configs = Map.empty,
       state = None,
+      error = None,
       workerClusterName = methodName(),
       lastModified = CommonUtil.current()
     )

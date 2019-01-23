@@ -171,7 +171,8 @@ class Configurator private[configurator] (
       ZookeeperRoute.apply,
       BrokerRoute.apply,
       WorkerRoute.apply,
-      JarsRoute.apply
+      JarsRoute.apply,
+      LogRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] def privateRoute(): server.Route =

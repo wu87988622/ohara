@@ -23,6 +23,7 @@ import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil._
@@ -43,6 +44,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       numberOfTasks = request.numberOfTasks,
       workerClusterName = wkClusterName,
       state = None,
+      error = None,
       configs = request.configs,
       lastModified = CommonUtil.current()
     )
@@ -65,7 +67,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         LOG.error(s"failed to fetch stats for $connectorConfig", e)
         None
     }
-    val newOne = connectorConfig.copy(state = state)
+    val error = state
+      .filter(_ == ConnectorState.FAILED)
+      .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
+    val newOne = connectorConfig.copy(state = state, error = error)
     newOne
   }
 

@@ -60,6 +60,7 @@ object ConnectorApi {
                                           configs: Map[String, String],
                                           workerClusterName: String,
                                           state: Option[ConnectorState],
+                                          error: Option[String],
                                           lastModified: Long)
       extends Data {
     override def kind: String = className
@@ -115,7 +116,7 @@ object ConnectorApi {
       exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
   }
 
-  implicit val CONNECTOR_CONFIGURATION_JSON_FORMAT: RootJsonFormat[ConnectorConfiguration] = jsonFormat10(
+  implicit val CONNECTOR_CONFIGURATION_JSON_FORMAT: RootJsonFormat[ConnectorConfiguration] = jsonFormat11(
     ConnectorConfiguration)
 
   def access(): Access = new Access
