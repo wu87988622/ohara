@@ -57,7 +57,7 @@ class Configurator private[configurator] (
   advertisedPort: Option[Int],
   initializationTimeout: Duration,
   terminationTimeout: Duration,
-  extraRoute: Option[server.Route])(implicit store: Store, nodeCollie: NodeCollie, clusterCollie: ClusterCollie)
+  extraRoute: Option[server.Route])(implicit store: Store, nodeCollie: NodeCollie, val clusterCollie: ClusterCollie)
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -292,19 +292,15 @@ object Configurator {
         )
         LOG.info(s"succeed to create bk cluster:$bkCluster")
         // ensure that all pre-created cluster will be deleted when terminating jvm
+        // we can't use restful APIs since the akka system may be closed already ... by chia
         Runtime.getRuntime.addShutdownHook(new Thread() {
-          override def run(): Unit = try Await.result(
-            ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(zkCluster.name),
-            10 seconds)
-          finally Await.result(
-            BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(bkCluster.name),
-            30 seconds)
+          override def run(): Unit =
+            try Await.result(configurator.clusterCollie.brokerCollie().remove(bkCluster.name), 30 seconds)
+            finally Await.result(configurator.clusterCollie.zookeepersCollie().remove(zkCluster.name), 30 seconds)
         })
       } catch {
         case e: Throwable =>
-          Await.result(
-            ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(zkCluster.name),
-            10 seconds)
+          Await.result(configurator.clusterCollie.zookeepersCollie().remove(zkCluster.name), 30 seconds)
           throw e
       }
     } catch {
