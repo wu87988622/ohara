@@ -44,9 +44,12 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       cache.clear()
     }
   }
-  override def zookeepersCollie(): ZookeeperCollie = new ZookeeperCollieImpl
-  override def brokerCollie(): BrokerCollie = new BrokerCollieImpl
-  override def workerCollie(): WorkerCollie = new WorkerCollieImpl
+  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl
+  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl
+  private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl
+  override def zookeepersCollie(): ZookeeperCollie = zkCollie
+  override def brokerCollie(): BrokerCollie = bkCollie
+  override def workerCollie(): WorkerCollie = wkCollie
   override protected def doClose(): Unit = Releasable.close(clientCache)
 }
 

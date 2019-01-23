@@ -29,7 +29,8 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.{Data, ErrorApi}
+import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
@@ -220,7 +221,8 @@ object Configurator {
   private[configurator] val HELP_KEY = "--help"
   private[configurator] val HOSTNAME_KEY = "--hostname"
   private[configurator] val PORT_KEY = "--port"
-  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY"
+  private[configurator] val NODE_KEY = "--node"
+  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $NODE_KEY(form: user:password@hostname:port)"
 
   /**
     * Running a standalone configurator.
@@ -237,12 +239,79 @@ object Configurator {
     // TODO: make the parse more friendly
     var hostname = CommonUtil.anyLocalAddress
     var port: Int = 0
+    var nodeRequest: Option[NodeCreationRequest] = None
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value) => hostname = value
       case Array(PORT_KEY, value)     => port = value.toInt
-      case _                          => throw new IllegalArgumentException(USAGE)
+      case Array(NODE_KEY, value) =>
+        val user = value.split(":").head
+        val password = value.split("@").head.split(":").last
+        val hostname = value.split("@").last.split(":").head
+        val port = value.split("@").last.split(":").last.toInt
+        nodeRequest = Some(
+          NodeCreationRequest(
+            name = Some(hostname),
+            password = password,
+            user = user,
+            port = port
+          ))
+      case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
     val configurator = Configurator.builder().hostname(hostname).port(port).build()
+    try nodeRequest.foreach { req =>
+      LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
+      import scala.concurrent.duration._
+      val node =
+        Await.result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).add(req), 30 seconds)
+      val dockerClient =
+        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+      try {
+        val images = dockerClient.images()
+        if (!images.contains(ZookeeperCollie.IMAGE_NAME_DEFAULT))
+          throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")
+        if (!images.contains(BrokerCollie.IMAGE_NAME_DEFAULT))
+          throw new IllegalArgumentException(s"$node doesn't have ${BrokerCollie.IMAGE_NAME_DEFAULT}")
+      } finally dockerClient.close()
+      val zkCluster = Await.result(
+        ZookeeperApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .add(ZookeeperApi.creationRequest("preCreatedZkCluster", Seq(node.name))),
+        30 seconds
+      )
+      LOG.info(s"succeed to create zk cluster:$zkCluster")
+      try {
+        val bkCluster = Await.result(
+          BrokerApi
+            .access()
+            .hostname(configurator.hostname)
+            .port(configurator.port)
+            .add(BrokerApi.creationRequest("preCreatedBkCluster", Seq(node.name))),
+          30 seconds
+        )
+        LOG.info(s"succeed to create bk cluster:$bkCluster")
+        // ensure that all pre-created cluster will be deleted when terminating jvm
+        Runtime.getRuntime.addShutdownHook(new Thread() {
+          override def run(): Unit = try Await.result(
+            ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(zkCluster.name),
+            10 seconds)
+          finally Await.result(
+            BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(bkCluster.name),
+            30 seconds)
+        })
+      } catch {
+        case e: Throwable =>
+          Await.result(
+            ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).delete(zkCluster.name),
+            10 seconds)
+          throw e
+      }
+    } catch {
+      case e: Throwable =>
+        Releasable.close(configurator)
+        throw e
+    }
     hasRunningConfigurator = true
     try {
       LOG.info(s"start a configurator built on hostname:${configurator.hostname} and port:${configurator.port}")
@@ -255,7 +324,7 @@ object Configurator {
       case _: InterruptedException => LOG.info("prepare to die")
     } finally {
       hasRunningConfigurator = false
-      configurator.close()
+      Releasable.close(configurator)
     }
   }
 

@@ -74,21 +74,9 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     inputs << "--port"
     inputs << project.getProperty("port")
   }
-  if(project.hasProperty('brokers')) {
-    inputs << "--brokers"
-    inputs << project.getProperty('brokers')
-  }
-  if(project.hasProperty('partitions')) {
-    inputs << "--partitions"
-    inputs << project.getProperty('partitions')
-  }
-  if(project.hasProperty('replications')) {
-    inputs << "--replications"
-    inputs << project.getProperty('replications')
-  }
-  if(project.hasProperty('workers')) {
-    inputs << "--workers"
-    inputs << project.getProperty('workers')
+  if(project.hasProperty('node')) {
+    inputs << "--node"
+    inputs << project.getProperty('node')
   }
   args = inputs
 }
