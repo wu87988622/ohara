@@ -163,7 +163,7 @@ class ConfigurationModal extends React.Component {
             <ConfUl
               isSelected={isDatabaseSelected || isFtpSelected || isHdfsSelected}
             >
-              Configuration
+              Connections
               <ConfLi
                 isSelected={isDatabaseSelected}
                 onClick={() =>
