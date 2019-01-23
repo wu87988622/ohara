@@ -274,7 +274,16 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       result(workerCollie.exists(workerCluster.name)) shouldBe true
       log.info("[WORKER] verify:exist done")
       val workerClient = WorkerClient(s"${workerCluster.nodeNames.head}:${workerCluster.clientPort}")
-      workerClient.plugins().isEmpty shouldBe false
+      CommonUtil.await(
+        () =>
+          try workerClient.plugins().nonEmpty
+          catch {
+            case e: Throwable =>
+              log.info(s"[WORKER] worker cluster:${workerCluster.name} is starting ... retry", e)
+              false
+        },
+        Duration.ofSeconds(30)
+      )
       // we can't assume the size since other tests may create zk cluster at the same time
       result(workerCollie.clusters()).isEmpty shouldBe false
       log.info("[WORKER] verify:list done")
@@ -310,6 +319,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         // we can't add a nonexistent node
         an[NoSuchElementException] should be thrownBy result(
           workerCollie.addNode(previousCluster.name, CommonUtil.randomString()))
+        log.info(s"[WORKER] start to add node:${freeNodes.head.name} to a running worker cluster")
         val newCluster = result(workerCollie.addNode(previousCluster.name, freeNodes.head.name))
         newCluster.name shouldBe previousCluster.name
         newCluster.imageName shouldBe previousCluster.imageName
@@ -320,6 +330,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         newCluster.brokerClusterName shouldBe previousCluster.brokerClusterName
         newCluster.clientPort shouldBe previousCluster.clientPort
         newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
+        log.info(s"[WORKER] start to verify the added node:${freeNodes.head.name}")
         // worker is starting...
         CommonUtil.await(
           () =>
@@ -339,7 +350,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   protected def testRemoveNodeToRunningWorkerCluster(): Unit = testAddNodeToRunningWorkerCluster { previousCluster =>
     val workerCollie = clusterCollie.workerCollie()
     result(workerCollie.exists(previousCluster.name)) shouldBe true
-
+    log.info(s"[WORKER] start to remove node:${previousCluster.nodeNames.head} from ${previousCluster.name}")
     val newCluster = result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
     newCluster.name shouldBe previousCluster.name
     newCluster.imageName shouldBe previousCluster.imageName

@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.agent
 
+import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtil
 
@@ -37,4 +38,27 @@ private[agent] object CollieTestUtil {
       Node(hostname, port, user, password, Seq.empty, CommonUtil.current())
     }.toSeq)
     .getOrElse(Seq.empty)
+    .map { node =>
+      assertImages(node,
+                   Seq(
+                     "centos:7",
+                     ZookeeperCollie.IMAGE_NAME_DEFAULT,
+                     BrokerCollie.IMAGE_NAME_DEFAULT,
+                     WorkerCollie.IMAGE_NAME_DEFAULT
+                   ))
+      node
+    }
+
+  private[this] def assertImages(node: Node, imageNames: Seq[String]): Unit = {
+    val client =
+      DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+    try {
+      imageNames.foreach { image =>
+        import org.scalatest.Matchers._
+        val images = client.images()
+        withClue(s"The images in ${node.name} are ${images.mkString(",")}. Required:$image")(
+          client.images().contains(image) shouldBe true)
+      }
+    } finally client.close()
+  }
 }

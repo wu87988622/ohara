@@ -18,7 +18,10 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi._
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
@@ -29,53 +32,48 @@ import scala.concurrent.Future
 object NodesRoute {
   private[this] lazy val LOG = Logger(NodesRoute.getClass)
 
-  private[this] def update(res: Node)(implicit clusterCollie: ClusterCollie): Future[Node] = clusterCollie
-    .zookeepersCollie()
+  private[this] def update(node: Node)(implicit clusterCollie: ClusterCollie): Future[Node] =
+    update(Seq(node)).map(_.head)
+
+  private[this] def update(nodes: Seq[Node])(implicit clusterCollie: ClusterCollie): Future[Seq[Node]] = clusterCollie
     .clusters()
-    .map(_.filter(_._1.nodeNames.contains(res.name)).map(_._1.name).toSeq)
-    .flatMap { zks =>
-      clusterCollie
-        .brokerCollie()
-        .clusters()
-        .map(_.filter(_._1.nodeNames.contains(res.name)).map(_._1.name).toSeq)
-        .map { bks =>
-          (zks, bks)
-        }
-    }
-    .flatMap {
-      case (zks, bks) =>
-        clusterCollie
-          .workerCollie()
-          .clusters()
-          .map(_.filter(_._1.nodeNames.contains(res.name)).map(_._1.name).toSeq)
-          .map { wks =>
-            (zks, bks, wks)
-          }
-    }
-    .recover {
-      // all exceptions are swallowed since the ssh info may be wrong.
-      case e: Throwable =>
-        LOG.error("there is an invalid node!!!", e)
-        (Seq.empty, Seq.empty, Seq.empty)
-    }
-    .map {
-      case (zks, bks, wks) =>
-        res.copy(
+    .map(_.keys.toSeq)
+    .map { clusters =>
+      nodes.map { node =>
+        node.copy(
           services = Seq(
             NodeService(
               name = "zookeeper",
-              clusterNames = zks
+              clusterNames = clusters
+                .filter(_.isInstanceOf[ZookeeperClusterInfo])
+                .map(_.asInstanceOf[ZookeeperClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.name)
             ),
             NodeService(
               name = "broker",
-              clusterNames = bks
+              clusterNames = clusters
+                .filter(_.isInstanceOf[BrokerClusterInfo])
+                .map(_.asInstanceOf[BrokerClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.name)
             ),
             NodeService(
               name = "connect-worker",
-              clusterNames = wks
+              clusterNames = clusters
+                .filter(_.isInstanceOf[WorkerClusterInfo])
+                .map(_.asInstanceOf[WorkerClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.name)
             )
           )
         )
+      }
+    }
+    .recover {
+      case e: Throwable =>
+        LOG.error("failed to seek cluster information", e)
+        nodes
     }
 
   def apply(implicit store: Store, clusterCollie: ClusterCollie): server.Route =
@@ -110,7 +108,7 @@ object NodesRoute {
             ))
       },
       hookOfGet = (response: Node) => update(response),
-      hookOfList = (responses: Seq[Node]) => Future.sequence(responses.map(update)),
+      hookOfList = (responses: Seq[Node]) => update(responses),
       hookOfDelete = (response: Node) => Future.successful(response)
     )
 }

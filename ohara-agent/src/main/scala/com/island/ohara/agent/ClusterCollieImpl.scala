@@ -44,12 +44,114 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       cache.clear()
     }
   }
-  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl
-  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl
-  private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl
+  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl {
+    override def clusters(): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] =
+      ClusterCollieImpl.this.clusters().map {
+        _.filter(_._1.isInstanceOf[ZookeeperClusterInfo]).map {
+          case (c, cc) => c.asInstanceOf[ZookeeperClusterInfo] -> cc
+        }
+      }
+  }
+  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl {
+    override def clusters(): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] =
+      ClusterCollieImpl.this.clusters().map {
+        _.filter(_._1.isInstanceOf[BrokerClusterInfo]).map {
+          case (c, cc) => c.asInstanceOf[BrokerClusterInfo] -> cc
+        }
+      }
+  }
+  private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl {
+    override def clusters(): Future[Map[WorkerClusterInfo, Seq[ContainerInfo]]] =
+      ClusterCollieImpl.this.clusters().map {
+        _.filter(_._1.isInstanceOf[WorkerClusterInfo]).map {
+          case (c, cc) => c.asInstanceOf[WorkerClusterInfo] -> cc
+        }
+      }
+  }
   override def zookeepersCollie(): ZookeeperCollie = zkCollie
   override def brokerCollie(): BrokerCollie = bkCollie
   override def workerCollie(): WorkerCollie = wkCollie
+
+  private[this] def toZkCluster(clusterName: String, containers: Seq[ContainerInfo]): ClusterInfo = {
+    val first = containers.head
+    ZookeeperClusterInfo(
+      name = clusterName,
+      imageName = first.imageName,
+      clientPort = first.environments
+        .get(ZookeeperCollie.CLIENT_PORT_KEY)
+        .map(_.toInt)
+        .getOrElse(ZookeeperCollie.CLIENT_PORT_DEFAULT),
+      peerPort =
+        first.environments.get(ZookeeperCollie.PEER_PORT_KEY).map(_.toInt).getOrElse(ZookeeperCollie.PEER_PORT_DEFAULT),
+      electionPort = first.environments
+        .get(ZookeeperCollie.ELECTION_PORT_KEY)
+        .map(_.toInt)
+        .getOrElse(ZookeeperCollie.ELECTION_PORT_DEFAULT),
+      nodeNames = containers.map(_.nodeName)
+    )
+  }
+
+  private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo]): ClusterInfo =
+    WorkerClusterInfo(
+      name = clusterName,
+      imageName = containers.head.imageName,
+      brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
+      clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
+      groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
+      offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
+      offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
+      offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
+      configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
+      configTopicPartitions = 1,
+      configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
+      statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
+      statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
+      statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
+      jarNames = containers.head
+        .environments(WorkerCollie.PLUGINS_KEY)
+        .split(",")
+        .filter(_.nonEmpty)
+        .map(u => new URL(u).getFile),
+      nodeNames = containers.map(_.nodeName)
+    )
+
+  private[this] def toBkCluster(clusterName: String, containers: Seq[ContainerInfo]): ClusterInfo = {
+    val first = containers.head
+    BrokerClusterInfo(
+      name = clusterName,
+      imageName = first.imageName,
+      zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
+      clientPort =
+        first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
+      nodeNames = containers.map(_.nodeName)
+    )
+  }
+
+  override def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
+    nodeCollie
+      .nodes()
+      .flatMap(Future
+        .traverse(_) { node =>
+          // multi-thread to seek all containers from multi-nodes
+          Future { clientCache.get(node).containers() }
+        }
+        .map(_.flatten))
+      .map { allContainers =>
+        def parse(service: Service,
+                  f: (String, Seq[ContainerInfo]) => ClusterInfo): Map[ClusterInfo, Seq[ContainerInfo]] = allContainers
+          .filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER"))
+          .map(container => container.name.split(DIVIDER).head -> container)
+          .groupBy(_._1)
+          .map {
+            case (clusterName, value) => clusterName -> value.map(_._2)
+          }
+          .map {
+            case (clusterName, containers) => f(clusterName, containers) -> containers
+          }
+        parse(ZOOKEEPER, toZkCluster) ++ parse(BROKER, toBkCluster) ++ parse(WORKER, toWkCluster)
+      }
+  }
+
   override protected def doClose(): Unit = Releasable.close(clientCache)
 }
 
@@ -70,22 +172,6 @@ private object ClusterCollieImpl {
     val nodeCollie: NodeCollie
 
     val service: Service
-
-    protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): T
-
-    override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
-      .nodes()
-      .map(
-        _.flatMap(clientCache.get(_).containers().filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
-          .map(container => container.name.split(DIVIDER).head -> container)
-          .groupBy(_._1)
-          .map {
-            case (clusterName, value) => clusterName -> value.map(_._2)
-          }
-          .map {
-            case (clusterName, containers) => toClusterDescription(clusterName, containers) -> containers
-          }
-          .toMap)
 
     def updateRoute(client: DockerClient, containerName: String, route: Map[String, String]): Unit =
       client
@@ -186,7 +272,7 @@ private object ClusterCollieImpl {
         }
   }
 
-  private class ZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
+  private abstract class ZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
       extends ZookeeperCollie
       with BasicCollieImpl[ZookeeperClusterInfo] {
 
@@ -250,26 +336,6 @@ private object ClusterCollieImpl {
             )
         }
 
-    override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): ZookeeperClusterInfo = {
-      val first = containers.head
-      ZookeeperClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        clientPort = first.environments
-          .get(ZookeeperCollie.CLIENT_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.CLIENT_PORT_DEFAULT),
-        peerPort = first.environments
-          .get(ZookeeperCollie.PEER_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.PEER_PORT_DEFAULT),
-        electionPort = first.environments
-          .get(ZookeeperCollie.ELECTION_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.ELECTION_PORT_DEFAULT),
-        nodeNames = containers.map(_.nodeName)
-      )
-    }
     override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterInfo] =
       Future.failed(
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
@@ -281,7 +347,7 @@ private object ClusterCollieImpl {
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
   }
 
-  private class BrokerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
+  private abstract class BrokerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
       extends BrokerCollie
       with BasicCollieImpl[BrokerClusterInfo] {
 
@@ -394,17 +460,7 @@ private object ClusterCollieImpl {
                 nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
               )
         }
-    override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): BrokerClusterInfo = {
-      val first = containers.head
-      BrokerClusterInfo(
-        name = clusterName,
-        imageName = first.imageName,
-        zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
-        clientPort =
-          first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
-        nodeNames = containers.map(_.nodeName)
-      )
-    }
+
     override protected def doAddNode(previousCluster: BrokerClusterInfo,
                                      previousContainers: Seq[ContainerInfo],
                                      newNodeName: String): Future[BrokerClusterInfo] = creator()
@@ -416,7 +472,7 @@ private object ClusterCollieImpl {
       .create()
   }
 
-  private class WorkerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
+  private abstract class WorkerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
       extends WorkerCollie
       with BasicCollieImpl[WorkerClusterInfo] {
 
@@ -570,30 +626,6 @@ private object ClusterCollieImpl {
             )
       }
 
-    override def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): WorkerClusterInfo =
-      WorkerClusterInfo(
-        name = clusterName,
-        imageName = containers.head.imageName,
-        brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
-        clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
-        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
-        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
-        configTopicPartitions = 1,
-        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
-        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        jarNames = containers.head
-          .environments(WorkerCollie.PLUGINS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(u => new URL(u).getFile),
-        nodeNames = containers.map(_.nodeName)
-      )
-
     override protected def doAddNode(previousCluster: WorkerClusterInfo,
                                      previousContainers: Seq[ContainerInfo],
                                      newNodeName: String): Future[WorkerClusterInfo] = {
@@ -621,29 +653,29 @@ private object ClusterCollieImpl {
     * internal key used to save the broker cluster name.
     * All nodes of worker cluster should have this environment variable.
     */
-  private[this] val BROKER_CLUSTER_NAME = "CCI_BROKER_CLUSTER_NAME"
+  private val BROKER_CLUSTER_NAME = "CCI_BROKER_CLUSTER_NAME"
 
   /**
     * internal key used to save the zookeeper cluster name.
     * All nodes of broker cluster should have this environment variable.
     */
-  private[this] val ZOOKEEPER_CLUSTER_NAME = "CCI_ZOOKEEPER_CLUSTER_NAME"
+  private val ZOOKEEPER_CLUSTER_NAME = "CCI_ZOOKEEPER_CLUSTER_NAME"
 
   /**
     * used to distinguish the cluster name and service name
     */
-  private[this] val DIVIDER: String = "-"
+  private val DIVIDER: String = "-"
 
-  private[this] sealed abstract class Service {
+  private sealed abstract class Service {
     def name: String
   }
-  private[this] case object ZOOKEEPER extends Service {
+  private case object ZOOKEEPER extends Service {
     override def name: String = "zookeeper"
   }
-  private[this] case object BROKER extends Service {
+  private case object BROKER extends Service {
     override def name: String = "broker"
   }
-  private[this] case object WORKER extends Service {
+  private case object WORKER extends Service {
     override def name: String = "worker"
   }
 

@@ -22,6 +22,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
+import scala.concurrent.{Await, Future}
+
 private[agent] object DockerClientImpl {
   private val LOG = Logger(classOf[DockerClientImpl])
 
@@ -184,22 +186,29 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     }
   }
 
-  override def containers(): Seq[ContainerInfo] = agent
-    .execute(s"docker ps -a --format $LIST_PROCESS_FORMAT")
-    .map(_.split("\n"))
-    .map {
-      _.flatMap { line =>
-        try {
-          // filter out all empty string
-          val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
-          // not all containers have forward ports so length - 1
-          if (items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length
-              && items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length - 1)
-            throw new IllegalArgumentException(
-              s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
-          val id = items.head
-          Some(
-            ContainerInfo(
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration._
+  override def containers(): Seq[ContainerInfo] = Await.result(
+    Future
+      .traverse(
+        try agent.execute(s"docker ps -a --format $LIST_PROCESS_FORMAT").map(_.split("\n").toSeq).getOrElse(Seq.empty)
+        catch {
+          case e: Throwable =>
+            LOG.error(s"failed to list containers on $agent", e)
+            Seq.empty
+        }) { line =>
+        // TODO: change this to an async method... by chia
+        Future {
+          try {
+            // filter out all empty string
+            val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
+            // not all containers have forward ports so length - 1
+            if (items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length
+                && items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length - 1)
+              throw new IllegalArgumentException(
+                s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
+            val id = items.head
+            Some(ContainerInfo(
               nodeName = hostname,
               id = id,
               imageName = items(1),
@@ -239,16 +248,19 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
                 .map(_.replaceAll("\n", ""))
                 .get
             ))
-        } catch {
-          case e: Throwable =>
-            val errorMessage = s"failed to get container description from $hostname." +
-              "This error may be caused by operator conflict since we can't get container information by single command."
-            LOG.error(errorMessage, e)
-            None
+          } catch {
+            case e: Throwable =>
+              val errorMessage = s"failed to get container description from $hostname." +
+                "This error may be caused by operator conflict since we can't get container information by single command."
+              LOG.error(errorMessage, e)
+              None
+          }
         }
-      }.toSeq
-    }
-    .getOrElse(Seq.empty)
+
+      }
+      .map(_.flatten),
+    60 seconds
+  )
 
   override def stop(name: String): ContainerInfo =
     containers()

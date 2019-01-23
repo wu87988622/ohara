@@ -15,7 +15,12 @@
  */
 
 package com.island.ohara.agent
+import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.util.Releasable
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * This is the top-of-the-range "collie". It maintains and organizes all collies.
@@ -43,6 +48,24 @@ trait ClusterCollie extends Releasable {
     * @return worker collie
     */
   def workerCollie(): WorkerCollie
+
+  /**
+    * the default implementation is expensive!!! Please override this method if you are a good programmer.
+    * @return a collection of zk, bk and wk clusters
+    */
+  def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = zookeepersCollie().clusters().flatMap { zkMap =>
+    brokerCollie().clusters().flatMap { bkMap =>
+      workerCollie().clusters().map { wkMap =>
+        wkMap.map {
+          case (wk, wkContainers) => (wk.asInstanceOf[ClusterInfo], wkContainers)
+        } ++ bkMap.map {
+          case (bk, bkContainers) => (bk.asInstanceOf[ClusterInfo], bkContainers)
+        } ++ zkMap.map {
+          case (zk, zkContainers) => (zk.asInstanceOf[ClusterInfo], zkContainers)
+        }
+      }
+    }
+  }
 }
 
 object ClusterCollie {

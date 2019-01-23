@@ -133,6 +133,8 @@ object Agent {
         } finally session.close()
       }
       override protected def doClose(): Unit = Releasable.close(client)
+
+      override def toString: String = s"$user@$hostname:$port"
     }
   }
   private[this] val LOG = Logger(Agent.getClass)
