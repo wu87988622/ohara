@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PIPELINE, SERVICES, NODES, MONITORING } from './urls';
+import { PIPELINE, SERVICES, NODES } from './urls';
 
 const NAVS = [
   {
@@ -35,12 +35,13 @@ const NAVS = [
     text: 'Services',
     iconCls: 'fa-project-diagram',
   },
-  {
-    testId: 'monitoring-link',
-    to: MONITORING,
-    text: 'Monitoring',
-    iconCls: 'fa-desktop',
-  },
+  // Disable this nav item for now, monitoring page is not implemented in v0.2
+  // {
+  //   testId: 'monitoring-link',
+  //   to: MONITORING,
+  //   text: 'Monitoring',
+  //   iconCls: 'fa-desktop',
+  // },
 ];
 
 export default NAVS;

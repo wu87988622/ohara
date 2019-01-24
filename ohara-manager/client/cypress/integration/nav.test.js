@@ -30,16 +30,8 @@ describe('Header', () => {
       cy.location('pathname').should('eq', URLS.NODES);
 
       cy.getByText('Services').click();
-      cy.location('pathname').should('eq', URLS.SERVICES);
-
-      cy.getByText('Monitoring').click();
-      cy.location('pathname').should('eq', URLS.MONITORING);
+      cy.location('pathname').should('contains', URLS.SERVICES);
     });
-  });
-
-  it('visits Log in page', () => {
-    cy.getByText('Log in').click();
-    cy.location('pathname').should('eq', URLS.LOGIN);
   });
 
   it('toggles configuration modal', () => {

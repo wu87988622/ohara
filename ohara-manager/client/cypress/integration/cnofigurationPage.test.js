@@ -35,6 +35,7 @@ describe('configuration page', () => {
 
     cy.getByText('Test connection').click();
 
+    // Wait for the server response
     cy.wait(3000);
     cy.get('.toast-success').should('have.length.above', 1);
   });
@@ -48,6 +49,8 @@ describe('configuration page', () => {
       .type('somethingwrongaboutthisurl');
 
     cy.getByText('Test connection').click();
+
+    // Wait for the server response
     cy.wait(3000);
     cy.get('.toast-error').should('have.length', 1);
   });

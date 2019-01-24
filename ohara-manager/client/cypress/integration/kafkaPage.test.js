@@ -16,9 +16,8 @@
 
 import { KAFKA } from '../../src/constants/urls';
 
-// TODO: skip these tests for now since this will hit the real APIs
-// Need to start the Configurator when running on CI
-describe('KafkaPage', () => {
+// TODO: move the tests to configuration modal
+describe.skip('KafkaPage', () => {
   it('creates a new topic', () => {
     cy.visit(KAFKA);
 

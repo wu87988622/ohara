@@ -23,6 +23,9 @@ describe('PipelinePage', () => {
   });
 
   it('creates a pipeline and displays in the pipeline list page', () => {
+    // This is needed so cypress can get the correct DOM element to act on
+    cy.wait(300);
+
     const pipelineName = 'Test pipeline';
 
     cy.getByText('Untitled pipeline')
@@ -34,8 +37,6 @@ describe('PipelinePage', () => {
 
     cy.visit(URLS.HOME);
     cy.getByText(pipelineName).should('have.length', 1);
-
-    // TODO: remove testing pipeline
   });
 
   it('Creates a FTP source connector', () => {

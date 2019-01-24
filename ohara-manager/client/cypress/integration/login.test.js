@@ -18,7 +18,8 @@ import { INVALID_USER } from '../../src/constants/cypress';
 import * as MESSAGES from '../../src/constants/messages';
 import * as URLS from '../../src/constants/urls';
 
-describe('Login', () => {
+// Ignore the test for now, the login feature is not included in v0.2
+describe.skip('Login', () => {
   beforeEach(() => {
     cy.visit(URLS.LOGIN);
   });
