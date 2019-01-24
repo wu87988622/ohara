@@ -44,13 +44,10 @@ if [ "$service" == "manager" ]; then
 else
   if [ "$service" == "configurator" ]; then
     CLASS="com.island.ohara.configurator.Configurator"
-    shift 1
   elif [ "$service" == "backend" ]; then
     CLASS="com.island.ohara.demo.Backend"
-    shift 1
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
     CLASS="com.island.ohara.common.util.VersionUtil"
-    shift 1
   elif [ "$service" == "help" ]; then
     echo "Usage:"
     echo "Option                                   Description"
@@ -63,9 +60,11 @@ else
     echo "manager                                  Running Ohara Manager. After run this command, you can "
     echo "                                         connect to http://\${HostName or IP}:5050 url by browser."
     exit 1
-  else
+  elif [ "$service" == "" ]; then
     echo "Usage: (configurator|backend|manager|help) [<args>]"
     exit 1
+  else
+    CLASS=$service
   fi
   #----------[EXECUTION]----------#
   exec "$BIN_DIR/run_java.sh" $CLASS $ARGS

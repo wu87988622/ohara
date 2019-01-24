@@ -19,10 +19,7 @@ package com.island.ohara.integration;
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
@@ -67,6 +64,12 @@ public interface FtpServer extends Releasable {
   /** @return true if this ftp server is generated locally. */
   boolean isLocal();
 
+  String absolutePath();
+
+  static FtpServer local(int commandPort, int[] dataPorts) {
+    return local(CommonUtil.randomString(10), CommonUtil.randomString(10), commandPort, dataPorts);
+  }
+
   /**
    * create an embedded ftp server with specific port
    *
@@ -74,17 +77,15 @@ public interface FtpServer extends Releasable {
    * @param dataPorts bound port used to transfer data
    * @return an embedded ftp server
    */
-  static FtpServer local(int commandPort, int[] dataPorts) {
-    int count = 0;
-
+  static FtpServer local(String user, String password, int commandPort, int[] dataPorts) {
     File homeFolder = CommonUtil.createTempDir("ftp");
     PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
     UserManager userManager = userManagerFactory.createUserManager();
     BaseUser _user = new BaseUser();
-    _user.setName("user-" + (count++));
+    _user.setName(Objects.requireNonNull(user));
     _user.setAuthorities(Collections.singletonList(new WritePermission()));
     _user.setEnabled(true);
-    _user.setPassword("password-" + (count++));
+    _user.setPassword(Objects.requireNonNull(password));
     _user.setHomeDirectory(homeFolder.getAbsolutePath());
     try {
       userManager.save(_user);
@@ -150,6 +151,11 @@ public interface FtpServer extends Releasable {
       public boolean isLocal() {
         return true;
       }
+
+      @Override
+      public String absolutePath() {
+        return homeFolder.getAbsolutePath();
+      }
     };
   }
 
@@ -211,6 +217,11 @@ public interface FtpServer extends Releasable {
                     @Override
                     public boolean isLocal() {
                       return false;
+                    }
+
+                    @Override
+                    public String absolutePath() {
+                      return "/";
                     }
                   };
             })
