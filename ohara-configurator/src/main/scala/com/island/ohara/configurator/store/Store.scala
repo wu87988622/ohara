@@ -107,15 +107,19 @@ object Store {
             (_: Array[Byte], previous: Array[Byte]) => toValue(Await.result(value(fromValue(previous)), 30 seconds))
           )))
 
-      override def value(key: K): Future[V] = Future.successful(
-        Option(store.get(toKey(key))).map(fromValue).getOrElse(throw new NoSuchElementException(s"$key doesn't exist")))
-      override def values(keys: Seq[K]): Future[Map[K, V]] =
-        Future.successful(
-          keys
-            .map(key =>
-              key -> fromValue(
-                Option(store.get(toKey(key))).getOrElse(throw new NoSuchElementException(s"$key doesn't exist"))))
-            .toMap)
+      override def value(key: K): Future[V] = Option(store.get(toKey(key)))
+        .map(v => Future.successful(fromValue(v)))
+        .getOrElse(Future.failed(new NoSuchElementException(s"$key doesn't exist")))
+      override def values(keys: Seq[K]): Future[Map[K, V]] = {
+        val r = keys.flatMap { key =>
+          val value = store.get(key)
+          if (value == null) None else Some(key -> fromValue(value))
+        }.toMap
+        val miss = keys.filterNot(k => r.keys.exists(_ == k))
+        if (miss.isEmpty) Future.successful(r)
+        else Future.failed(new NoSuchElementException(s"${miss.mkString(",")} don't exist!!!"))
+      }
+
       import scala.collection.JavaConverters._
       override def values(): Future[Map[K, V]] = Future.successful(store.asScala.map {
         case (k, v) => fromKey(k) -> fromValue(v)

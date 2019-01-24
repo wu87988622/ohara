@@ -28,33 +28,34 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 private[configurator] object PipelineRoute {
-
+  private[this] val LOG = Logger(ConnectorRoute.getClass)
   private[this] def toRes(targetCluster: TargetCluster, id: String, request: PipelineCreationRequest)(
     implicit store: Store,
     workerCollie: WorkerCollie): Future[Pipeline] = CollieUtils.workerClient(targetCluster).flatMap {
     case (cluster, client) =>
-      abstracts(cluster, request, client).map { abs =>
-        Pipeline(id, request.name, request.rules, abs, cluster.name, CommonUtil.current())
+      verifyRules(cluster, request).flatMap { rules =>
+        abstracts(rules, client).map { abs =>
+          Pipeline(id, request.name, rules, abs, cluster.name, CommonUtil.current())
+        }
       }
   }
 
-  private[this] def abstracts(cluster: WorkerClusterInfo, request: PipelineCreationRequest, workerClient: WorkerClient)(
+  private[this] def abstracts(rules: Map[String, String], workerClient: WorkerClient)(
     implicit store: Store): Future[List[ObjectAbstract]] =
-    verifyRules(cluster, request)
-      .flatMap { rules =>
-        Future.sequence(
-          rules
-            .flatMap {
-              case (k, v) => Seq(k, v)
-            }
-            .filterNot(_ == UNKNOWN)
-            .toSet
-            .map(id => store.value[Data](id)))
-      }
+    Future
+      .sequence(
+        rules
+          .flatMap {
+            case (k, v) => Seq(k, v)
+          }
+          .filterNot(_ == UNKNOWN)
+          .toSet
+          .map(id => store.value[Data](id)))
       .map {
         _.map {
           case data: ConnectorConfiguration =>
@@ -75,30 +76,40 @@ private[configurator] object PipelineRoute {
   private[this] def verifyRules(cluster: WorkerClusterInfo, request: PipelineCreationRequest)(
     implicit store: Store): Future[Map[String, String]] = {
     def verify(id: String): Future[String] = if (id != UNKNOWN) {
-      store.raw(id).map {
-        case d: ConnectorConfiguration =>
-          if (d.workerClusterName != cluster.name)
-            throw new IllegalArgumentException(
-              s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:${request.name} which is placed at worker cluster:${cluster.name}")
-          else id
-        case d: TopicInfo =>
-          if (d.brokerClusterName != cluster.brokerClusterName)
-            throw new IllegalArgumentException(
-              s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:${request.name} which is placed at broker cluster:${cluster.brokerClusterName}")
-          else id
-        case _: StreamApp => id
-        case raw          => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
-      }
+      store
+        .raw(id)
+        .map {
+          case d: ConnectorConfiguration =>
+            if (d.workerClusterName != cluster.name)
+              throw new IllegalArgumentException(
+                s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:${request.name} which is placed at worker cluster:${cluster.name}")
+            else id
+          case d: TopicInfo =>
+            if (d.brokerClusterName != cluster.brokerClusterName)
+              throw new IllegalArgumentException(
+                s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:${request.name} which is placed at broker cluster:${cluster.brokerClusterName}")
+            else id
+          case _: StreamApp => id
+          case raw          => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
+        }
+        .recover {
+          // the component has been removed!
+          case e: NoSuchElementException =>
+            LOG.error(s"$id had been removed", e)
+            UNKNOWN
+        }
     } else Future.successful(id)
 
     Future
       .sequence(request.rules.map {
         case (k, v) =>
-          if (k == v) Future.failed(new IllegalArgumentException(s"the from:$k can't be equals to to:$v"))
-          else
-            verify(k).flatMap { k =>
-              verify(v).map(v => (k, v))
+          verify(k).flatMap { k =>
+            verify(v).map { v =>
+              if (k != UNKNOWN && v != UNKNOWN && k == v)
+                throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
+              k -> v
             }
+          }
       })
       .map(_.toMap)
   }
