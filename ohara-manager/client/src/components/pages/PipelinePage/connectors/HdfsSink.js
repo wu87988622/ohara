@@ -23,19 +23,19 @@ import { Redirect } from 'react-router-dom';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as _ from 'utils/commonUtils';
+import * as CSS_VARS from 'theme/variables';
+import { Box } from 'common/Layout';
+import { H5 } from 'common/Headings';
+import { Input, Select, FormGroup, Label } from 'common/Form';
+import { fetchHdfs } from 'apis/configurationApis';
+import { CONFIGURATION } from 'constants/urls';
+import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
+import { getCurrHdfsConnection, handleInputChange } from 'utils/hdfsSinkUtils';
 import {
   CONNECTOR_TYPES,
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
-import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
-import * as CSS_VARS from 'theme/variables';
-import { Input, Select, FormGroup, Label } from 'common/Form';
-import { fetchHdfs } from 'apis/configurationApis';
-import { CONFIGURATION } from 'constants/urls';
-import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
-import { includes } from 'lodash';
 
 const TitleWrapper = styled(FormGroup).attrs({
   isInline: true,
@@ -109,7 +109,7 @@ class HdfsSink extends React.Component {
 
   selectMaps = {
     topics: 'currReadTopic',
-    hdfses: 'currHdfs',
+    hdfsConnections: 'currHdfsConnection',
   };
 
   state = {
@@ -117,8 +117,8 @@ class HdfsSink extends React.Component {
     state: '',
     readTopics: [],
     currReadTopic: {},
-    hdfses: [],
-    currHdfs: {},
+    hdfsConnections: [],
+    currHdfsConnection: {},
     writePath: '',
     pipelines: {},
     fileEncodings: ['UTF-8'],
@@ -162,19 +162,18 @@ class HdfsSink extends React.Component {
   fetchData = () => {
     const sinkId = _.get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
-    this.fetchHdfs(sinkId);
     this.fetchSink(sinkId);
   };
 
   fetchSink = async sinkId => {
+    const hdfsConnections = await this.fetchHdfs(sinkId);
     const res = await pipelinesApis.fetchSink(sinkId);
     const result = _.get(res, 'data.result', null);
 
     if (result) {
-      const { currHdfs } = this.state;
       const { name, state, configs, topics: prevTopics } = result;
       const {
-        hdfs = '{}',
+        hdfsConnection = '',
         writePath = '',
         needHeader = false,
         'tmp.dir': tempDirectory = '',
@@ -193,46 +192,31 @@ class HdfsSink extends React.Component {
         this.setState({ readTopics: topics, currReadTopic });
       }
 
-      const prevHdfs = JSON.parse(hdfs);
-      const isDiffHdfs = prevHdfs !== currHdfs ? true : false;
-      const _currHdfs = isDiffHdfs ? currHdfs : prevHdfs;
+      const currHdfsConnection = getCurrHdfsConnection(
+        hdfsConnections,
+        hdfsConnection,
+      );
       const _needHeader = needHeader === 'true' ? true : false;
 
       this.setState({
         name,
         state,
         writePath,
-        currHdfs: _currHdfs,
+        hdfsConnections,
+        currHdfsConnection,
         needHeader: _needHeader,
         tempDirectory,
         flushLineCount,
         rotateInterval,
         currFileEncoding,
       });
-
-      if (isDiffHdfs) {
-        this.save();
-      }
     }
   };
 
   fetchHdfs = async () => {
-    const { currHdfs } = this.state;
     const res = await fetchHdfs();
-    const hdfses = await _.get(res, 'data.result', []);
-
-    if (!_.isEmpty(hdfses)) {
-      const mostRecent = hdfses.reduce((prev, curr) =>
-        prev.lastModified > curr.lastModified ? prev : curr,
-      );
-
-      const _currHdfs = _.isEmpty(currHdfs) ? mostRecent : currHdfs;
-
-      this.setState({ hdfses: [_currHdfs], currHdfs: _currHdfs });
-    } else {
-      this.setState({ isRedirect: true });
-      toastr.error(MESSAGES.NO_CONFIGURATION_FOUND_ERROR);
-    }
+    const hdfsConnections = await _.get(res, 'data.result', []);
+    return hdfsConnections;
   };
 
   setTopic = () => {
@@ -251,16 +235,11 @@ class HdfsSink extends React.Component {
   };
 
   handleInputChange = ({ target: { name, value } }) => {
-    this.setState({ [name]: value }, () => {
-      this.props.updateHasChanges(true);
-    });
+    this.setState(handleInputChange({ name, value }));
   };
 
-  handleCheckboxChange = ({ target }) => {
-    const { name, checked } = target;
-    this.setState({ [name]: checked }, () => {
-      this.props.updateHasChanges(true);
-    });
+  handleCheckboxChange = ({ target: { name, checked } }) => {
+    this.setState(handleInputChange({ name, checked }));
   };
 
   handleSelectChange = ({ target }) => {
@@ -287,15 +266,15 @@ class HdfsSink extends React.Component {
 
   save = _.debounce(async () => {
     const {
-      updateHasChanges,
       match,
       graph,
+      updateHasChanges,
       updateGraph,
       isPipelineRunning,
     } = this.props;
     const {
       name,
-      currHdfs,
+      currHdfsConnection,
       currReadTopic,
       writePath,
       needHeader,
@@ -322,13 +301,13 @@ class HdfsSink extends React.Component {
       numberOfTasks: 1,
       configs: {
         topic: JSON.stringify(currReadTopic),
-        hdfs: JSON.stringify(currHdfs),
+        hdfsConnection: currHdfsConnection && currHdfsConnection.id,
         needHeader: String(needHeader),
         writePath,
         'datafile.needheader': String(needHeader),
         'datafile.prefix.name': 'part',
         'data.dir': writePath,
-        'hdfs.url': currHdfs.uri,
+        'hdfs.url': currHdfsConnection.uri,
         'tmp.dir': tempDirectory,
         'flush.line.count': flushLineCount,
         'rotate.interval.ms': rotateInterval,
@@ -396,8 +375,8 @@ class HdfsSink extends React.Component {
       state,
       readTopics,
       currReadTopic,
-      hdfses,
-      currHdfs,
+      hdfsConnections,
+      currHdfsConnection,
       writePath,
       needHeader,
       isRedirect,
@@ -412,7 +391,7 @@ class HdfsSink extends React.Component {
       return <Redirect to={CONFIGURATION} />;
     }
 
-    const isRunning = includes(
+    const isRunning = _.includes(
       [
         CONNECTOR_STATES.running,
         CONNECTOR_STATES.paused,
@@ -467,15 +446,15 @@ class HdfsSink extends React.Component {
             />
           </FormGroup>
 
-          <FormGroup data-testid="hdfses">
-            <Label>HDFS</Label>
+          <FormGroup data-testid="hdfsConnections">
+            <Label>Connection</Label>
             <Select
               isObject
-              name="hdfses"
-              list={hdfses}
-              selected={currHdfs}
+              name="hdfsConnections"
+              list={hdfsConnections}
+              selected={currHdfsConnection}
               width="100%"
-              data-testid="hdfses-select"
+              data-testid="hdfsConnections-select"
               handleChange={this.handleSelectChange}
               disabled={isRunning}
             />

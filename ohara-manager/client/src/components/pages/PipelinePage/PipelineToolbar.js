@@ -95,9 +95,9 @@ class PipelineToolbar extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
     topics: PropTypes.array.isRequired,
-    currentTopic: PropTypes.object.isRequired,
     isLoading: PropTypes.bool.isRequired,
     updateCurrentTopic: PropTypes.func.isRequired,
+    currentTopic: PropTypes.object,
   };
 
   state = {
