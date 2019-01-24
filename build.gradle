@@ -25,8 +25,6 @@ allprojects {
   }
 }
 
-apply plugin: "com.github.hierynomus.license"
-
 def needHeaders() {
   return [
     fileTree(dir: ".").include("**/*.java"),
@@ -69,7 +67,6 @@ license {
     js='JAVADOC_STYLE'
     scala='JAVADOC_STYLE'
     gradle='JAVADOC_STYLE'
-    dockerfile='SCRIPT_STYLE'
     dockerfile='SCRIPT_STYLE'
     conf='SCRIPT_STYLE'
     yaml='SCRIPT_STYLE'
@@ -132,7 +129,7 @@ subprojects {
       tests.extendsFrom archives
     }
     task testJar(type: Jar, dependsOn: testClasses) {
-      classifier = 'tests'
+      archiveClassifier.set('tests')
       from sourceSets.test.output
     }
     artifacts {
