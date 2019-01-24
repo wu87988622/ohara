@@ -102,7 +102,7 @@ class PipelineListPage extends React.Component {
     }).isRequired,
   };
 
-  headers = ['#', 'name', 'status', 'edit', 'delete'];
+  headers = ['name', 'cluster', 'status', 'edit', 'delete'];
   state = {
     isSelectTopicModalActive: false,
     isDeletePipelineModalActive: false,
@@ -220,17 +220,16 @@ class PipelineListPage extends React.Component {
                 <TableLoader />
               ) : (
                 <Table headers={this.headers}>
-                  {pipelines.map((pipeline, idx) => {
-                    const { id, name, status } = pipeline;
+                  {pipelines.map(pipeline => {
+                    const { id, name, status, workerClusterName } = pipeline;
                     const isRunning = status === 'Running' ? true : false;
-
                     const trCls = isRunning ? 'is-running' : '';
                     const editUrl = getEditUrl(pipeline, match);
 
                     return (
                       <tr key={id} className={trCls}>
-                        <td>{idx}</td>
                         <td>{name}</td>
+                        <td>{workerClusterName}</td>
                         <td>{status}</td>
                         <td className="has-icon">
                           <LinkIcon to={editUrl}>

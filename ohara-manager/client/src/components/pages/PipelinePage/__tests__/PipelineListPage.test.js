@@ -34,12 +34,14 @@ jest.mock('utils/pipelineUtils');
 const pipelines = [
   {
     name: 'a',
+    workerClusterName: 'worker-a',
     status: 'Stopped',
     id: '1234',
     objects: [{ abc: 'def', kind: 'topic', id: '123' }],
   },
   {
     name: 'b',
+    workerClusterName: 'worker-b',
     status: 'Running',
     id: '5678',
     objects: [{ def: 'abc', kind: 'topic', id: '456' }],
@@ -165,8 +167,8 @@ describe('<PipelineListPage />', () => {
       const secondRow = rows.at(1).find('td');
 
       const createExpects = pipelines => {
-        return pipelines.map(({ name, status }, idx) => {
-          return [String(idx), name, status, 'LinkIcon', 'DeleteIcon'];
+        return pipelines.map(({ name, workerClusterName, status }) => {
+          return [name, workerClusterName, status, 'LinkIcon', 'DeleteIcon'];
         });
       };
 
