@@ -53,3 +53,13 @@ export const CONNECTOR_ACTIONS = {
   resume: 'resume',
   stop: 'stop',
 };
+
+export const STREAM_APP_STATES = {
+  running: 'RUNNING',
+  failed: 'FAILED',
+};
+
+export const STREAM_APP_ACTIONS = {
+  start: 'start',
+  stop: 'stop',
+};

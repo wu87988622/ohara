@@ -34,6 +34,7 @@ import { Box } from 'common/Layout';
 import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { JdbcSource, FtpSource, Topic, HdfsSink, FtpSink } from './connectors';
+import { StreamApp } from './streamapp';
 import {
   getConnectors,
   addPipelineStatus,
@@ -462,6 +463,17 @@ class PipelineNewPage extends React.Component {
                       hasChanges={hasChanges}
                       isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
+                    />
+                  )}
+                />
+
+                <Route
+                  path={`/pipelines/(new|edit)/streamApp`}
+                  render={() => (
+                    <StreamApp
+                      {...this.props}
+                      graph={graph}
+                      updateGraph={this.updateGraph}
                     />
                   )}
                 />

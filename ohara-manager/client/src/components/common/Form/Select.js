@@ -53,6 +53,7 @@ const Select = ({
   list = [],
   selected = '',
   handleChange,
+  placeholder,
   isObject = false,
   height = '32px',
   width = '100%',
@@ -68,6 +69,11 @@ const Select = ({
       height={height}
       {...rest}
     >
+      {placeholder && (
+        <option value="" disabled data-uuid="default-option">
+          {placeholder}
+        </option>
+      )}
       {isObject
         ? list.map(({ id, name }, idx) => {
             return (
@@ -86,6 +92,7 @@ const Select = ({
 Select.propTypes = {
   selected: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   handleChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
   isObject: PropTypes.bool,
   width: PropTypes.string,
   height: PropTypes.string,

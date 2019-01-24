@@ -30,9 +30,13 @@ export const CONFIG_DELETE_CHECK = 'Please select a connection to delete!';
 export const STREAM_APP_UPLOAD_SUCCESS = 'Stream app successfully uploaded!';
 export const STREAM_APP_RENAME_SUCCESS = 'Stream app successfully renamed!';
 export const STREAM_APP_DELETE_SUCCESS = 'Successfully deleted the stream app!';
+export const STREAM_APP_START_SUCCESS = 'Stream app successfully started!';
+export const STREAM_APP_STOP_SUCCESS = 'Stream app successfully stopped!';
 export const PLUGIN_UPLOAD_SUCCESS = 'Plugin successfully uploaded!';
 export const TEST_SUCCESS = 'Test has passed!';
 export const TEST_NOT_SUCCESS = 'Test has not passed!';
+export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
+export const AUTO_SAVE_SUCCESS = 'Successfully saved!';
 
 // Error messages
 export const EMPTY_NAME_ERROR = 'Name is a required field!';
@@ -57,9 +61,11 @@ export const CANNOT_START_PIPELINE_ERROR =
   'Failed to start the pipeline, please check your connector settings';
 
 // Connectors
-export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
 export const CANNOT_START_CONNECTOR_ERROR =
   'Cannot complete your action, please check your connector settings';
+
+export const CANNOT_START_STREAM_APP_ERROR =
+  'Cannot complete your action, please check your stream app settings';
 
 export const NO_CONFIGURATION_FOUND_ERROR = `You don't have any HDFS connections set up yet, please create one before you can proceed`;
 
