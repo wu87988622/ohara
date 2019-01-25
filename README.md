@@ -38,7 +38,7 @@ docker run --rm -p 12345:12345 oharastream/ohara:backend --configuratorPort 1234
 * ftpPort: bound by ftp server (default is random)
 * ttl: time to terminate backend-service (default is 365 days)
 
-The backend image is not in production release. Hence, there is no any guarantees to backend image.
+The backend image is not in production release. Hence, there is no guarantees to backend image.
 
 ### Running configurator by docker
 ```
@@ -48,8 +48,8 @@ docker run --rm -p 12345:12345 oharastream/configurator:0.2-SNAPSHOT --port 1234
 * brokers: broker information (ex. host0:port0,host1:port1)
 * workers: worker information (ex. host0:port0,host1:port1)
 
-If either brokers or workers is not defined, the configurator will be run with no-cluster mode. It means all data are 
-stored in memory. And connector-related commands are executed by nothing.
+If either brokers or workers are not defined, the configurator will be running with no-cluster mode. It means all data are 
+stored in memory, and connector-related commands are executed by nothing.
 
 ### Running manager by docker
 ```
