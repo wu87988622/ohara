@@ -1,0 +1,51 @@
+#
+# Copyright 2019 is-land
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+version: '3.3'
+services:
+
+  configurator:
+    image: oharastream/configurator:0.2-SNAPSHOT
+    hostname: configurator
+    command: ["--port", "12345"]
+    # You can add a node to initialize a zookeeper cluster and a broker cluster.
+    # command: ["--port", "12345", "--node", "username:password@hostname:port"]
+    ports:
+      - 12345:12345
+    # You have got to specify hostname mappings in order to enable configurator to connect to other nodes which are not hosted by docker-compose
+#    extra_hosts:
+#      - "node00:192.168.56.200"
+#      - "node01:192.168.56.201"
+#      - "node02:192.168.56.202"
+
+  ftp:
+    image: oharastream/ftp:0.2-SNAPSHOT
+    hostname: ftp
+    command: ["--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+      - 10003:10003
+      - 10004:10004
+      - 10005:10005
+
+  mysql:
+    image: oharastream/mysql:0.2-SNAPSHOT
+    hostname: mysql
+    command: ["--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
+    ports:
+      - 20000:20000
