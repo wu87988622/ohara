@@ -21,13 +21,14 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.integration.FtpServer
 
 object Ftp {
-  private[this] val USER = "--user"
-  private[this] val PASSWORD = "--password"
-  private[this] val CONTROL_PORT = "--controlPort"
-  private[this] val DATA_PORTS = "--dataPorts"
-  private[this] val TTL = "--ttl"
+  private[demo] val USER = "--user"
+  private[demo] val PASSWORD = "--password"
+  private[demo] val CONTROL_PORT = "--controlPort"
+  private[demo] val DATA_PORTS = "--dataPorts"
+  private[demo] val TTL = "--ttl"
   private[this] val USAGE = s"$USER $PASSWORD $CONTROL_PORT $DATA_PORTS(form: 12345,12346 or 12345-12350)"
-  def main(args: Array[String]): Unit = {
+
+  private[demo] def start(args: Array[String], callback: FtpServer => Unit = _ => {}): Unit = {
     var user = "user"
     var password = "password"
     var controlPort: Option[Int] = None
@@ -51,7 +52,10 @@ object Ftp {
     try {
       println(s"user:${ftp.user()} password:${ftp.password()} hostname:${ftp.hostname()} port:${ftp
         .port()} absolutePath:${ftp.absolutePath()}")
+      callback(ftp)
       TimeUnit.SECONDS.sleep(ttl)
     } finally ftp.close()
   }
+
+  def main(args: Array[String]): Unit = start(args)
 }
