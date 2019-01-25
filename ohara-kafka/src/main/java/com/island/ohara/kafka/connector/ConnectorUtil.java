@@ -57,7 +57,7 @@ public class ConnectorUtil {
     //    if (taskConfig.options.contains("name"))
     //      throw new IllegalArgumentException("DON'T touch \"name\" manually in row connector")
     if (taskConfig.topics().isEmpty())
-      throw new IllegalArgumentException("empty topics is invalid");
+      throw new IllegalArgumentException("Topics can't be empty!!!");
     Map<String, String> map = new HashMap<>(taskConfig.options());
 
     map.put(Column.COLUMN_KEY, Column.fromColumns(taskConfig.schema()));

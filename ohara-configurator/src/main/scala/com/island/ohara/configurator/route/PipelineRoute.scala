@@ -59,13 +59,11 @@ private[configurator] object PipelineRoute {
       .map {
         _.map {
           case data: ConnectorConfiguration =>
-            ObjectAbstract(data.id,
-                           data.name,
-                           data.kind,
-                           if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
-                           else None,
-                           data.lastModified)
-          case data => ObjectAbstract(data.id, data.name, data.kind, None, data.lastModified)
+            val state =
+              if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
+              else None
+            ObjectAbstract(data.id, data.name, data.kind, state, ConnectorRoute.errorMessage(state), data.lastModified)
+          case data => ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified)
         }.toList // NOTED: we have to return a "serializable" list!!!
       }
 

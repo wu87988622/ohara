@@ -57,6 +57,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
     request
   }
 
+  private[route] def errorMessage(state: Option[ConnectorState]): Option[String] = state
+    .filter(_ == ConnectorState.FAILED)
+    .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
   private[this] def update(connectorConfig: ConnectorConfiguration,
                            workerClient: WorkerClient): ConnectorConfiguration = {
     val state = try if (workerClient.exist(connectorConfig.id))
@@ -67,10 +70,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         LOG.error(s"failed to fetch stats for $connectorConfig", e)
         None
     }
-    val error = state
-      .filter(_ == ConnectorState.FAILED)
-      .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
-    val newOne = connectorConfig.copy(state = state, error = error)
+    val newOne = connectorConfig.copy(state = state, error = errorMessage(state))
     newOne
   }
 
@@ -145,8 +145,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                       if (!topicInfos.exists(_.id == t))
                         throw new IllegalArgumentException(
                           s"$t is invalid. actual:${topicInfos.map(_.id).mkString(",")}"))
+                    if (connectorConfig.topics.isEmpty) throw new IllegalArgumentException("topics are required")
                     if (wkClient.nonExist(connectorConfig.id)) {
-                      if (connectorConfig.topics.isEmpty) throw new IllegalArgumentException("topics is required")
                       wkClient
                         .connectorCreator()
                         .name(connectorConfig.id)

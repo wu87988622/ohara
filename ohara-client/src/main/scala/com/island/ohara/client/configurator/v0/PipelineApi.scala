@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.data.ConnectorState
-import spray.json.DefaultJsonProtocol.{jsonFormat5, _}
+import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 object PipelineApi {
@@ -30,10 +30,11 @@ object PipelineApi {
                                   name: String,
                                   kind: String,
                                   state: Option[ConnectorState],
+                                  error: Option[String],
                                   lastModified: Long)
       extends Data
   import com.island.ohara.client.configurator.v0.ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat5(ObjectAbstract)
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat6(ObjectAbstract)
 
   final case class Pipeline(id: String,
                             name: String,

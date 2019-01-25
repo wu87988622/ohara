@@ -25,11 +25,9 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.integration.WithBrokerWorker
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkRecord, RowSinkTask, TaskConfig}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -144,22 +142,4 @@ class TestControlSink extends WithBrokerWorker with Matchers {
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)
-}
-
-class DumbSink extends RowSinkConnector {
-  private[this] var config: TaskConfig = _
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[DumbSinkTask]
-  override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
-  override protected def _start(config: TaskConfig): Unit = {
-    this.config = config
-  }
-  override protected def _stop(): Unit = {}
-}
-
-class DumbSinkTask extends RowSinkTask {
-  override protected def _start(config: TaskConfig): Unit = {}
-
-  override protected def _stop(): Unit = {}
-
-  override protected def _put(records: java.util.List[RowSinkRecord]): Unit = {}
 }
