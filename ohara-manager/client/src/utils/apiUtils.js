@@ -15,18 +15,23 @@
  */
 
 import toastr from 'toastr';
-
+import { isString } from 'lodash';
 import * as _ from './commonUtils';
 
 export const handleError = err => {
   const message = _.get(err, 'data.errorMessage.message');
-
-  if (message) {
+  if (isString(message)) {
     toastr.error(message);
     return;
   }
 
-  toastr.error(err);
+  const errorMessage = _.get(err, 'data.errorMessage');
+  if (isString(errorMessage)) {
+    toastr.error(errorMessage);
+    return;
+  }
+
+  toastr.error(err || 'Internal Server Error');
 };
 
 export const getErrors = data => {

@@ -32,11 +32,13 @@ describe('handleError()', () => {
 
   it('calls toastr.error() with the given error object', () => {
     const err = {
-      errorMessage: { message: 'error' },
+      data: {
+        errorMessage: { message: 'error' },
+      },
     };
 
     handleError(err);
     expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(err);
+    expect(toastr.error).toHaveBeenCalledWith('error');
   });
 });

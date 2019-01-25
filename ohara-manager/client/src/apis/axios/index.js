@@ -78,10 +78,10 @@ function createAxios() {
       };
     },
     error => {
-      const { data: errorMessage } = error.response;
+      const { status, statusText, data: errorMessage } = error.response;
       return {
         data: {
-          errorMessage,
+          errorMessage: status >= 500 ? statusText : errorMessage,
           isSuccess: false,
         },
       };
