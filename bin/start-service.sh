@@ -59,6 +59,9 @@ else
     echo ""
     echo "manager                                  Running Ohara Manager. After run this command, you can "
     echo "                                         connect to http://\${HostName or IP}:5050 url by browser."
+    echo ""
+    echo "class name                               custom class which has main function"
+    echo ""
     exit 1
   elif [ "$service" == "" ]; then
     echo "Usage: (configurator|backend|manager|help) [<args>]"

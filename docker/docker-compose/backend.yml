@@ -32,9 +32,9 @@ services:
 #      - "node02:192.168.56.202"
 
   ftp:
-    image: oharastream/ftp:0.2-SNAPSHOT
+    image: oharastream/ohara:backend
     hostname: ftp
-    command: ["--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
+    command: ["com.island.ohara.demo.Ftp", "--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
     ports:
       - 10000:10000
       - 10001:10001
@@ -44,8 +44,8 @@ services:
       - 10005:10005
 
   mysql:
-    image: oharastream/mysql:0.2-SNAPSHOT
+    image: oharastream/ohara:backend
     hostname: mysql
-    command: ["--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
+    command: ["com.island.ohara.demo.MySql", "--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
     ports:
       - 20000:20000

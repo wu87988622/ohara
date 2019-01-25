@@ -65,4 +65,5 @@ RUN chmod +x /tini
 # change to user
 USER $USER
 
-ENTRYPOINT ["/tini", "--", "ohara.sh", "start", "backend"]
+# we don't specify class name since we allow users to "choose" the service they want to execute
+ENTRYPOINT ["/tini", "--", "ohara.sh", "start"]
