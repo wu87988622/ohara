@@ -25,13 +25,13 @@ import com.island.ohara.integration.Database
   * We can't stop to govern everything, but we all love use someone's code nevertheless.
   */
 object MySql {
-  private[this] val USER = "--user"
-  private[this] val PASSWORD = "--password"
-  private[this] val DB_NAME = "--dbName"
-  private[this] val PORT = "--port"
-  private[this] val TTL = "--ttl"
+  private[demo] val USER = "--user"
+  private[demo] val PASSWORD = "--password"
+  private[demo] val DB_NAME = "--dbName"
+  private[demo] val PORT = "--port"
+  private[demo] val TTL = "--ttl"
   private[this] val USAGE = s"$USER $PASSWORD $PORT $DB_NAME"
-  def main(args: Array[String]): Unit = {
+  private[demo] def start(args: Array[String], callback: Database => Unit = _ => {}): Unit = {
     var user = "user"
     var password = "password"
     var port: Option[Int] = None
@@ -50,7 +50,10 @@ object MySql {
     val database = Database.local(user, password, dbName, port.get)
     try {
       println(s"jdbc url:${database.url()} user:${database.user()} password:${database.password()}")
+      callback(database)
       TimeUnit.SECONDS.sleep(ttl)
     } finally database.close()
   }
+
+  def main(args: Array[String]): Unit = start(args)
 }
