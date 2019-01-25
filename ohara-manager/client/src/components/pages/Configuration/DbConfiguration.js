@@ -289,7 +289,7 @@ class DbConfiguration extends React.Component {
         toastr.error(MESSAGES.GENERIC_ERROR);
       }
     } else {
-      toastr.error(MESSAGES.TEST_NOT_SUCCESS);
+      toastr.error(MESSAGES.TEST_FAILED_ERROR);
     }
   };
 
@@ -363,7 +363,7 @@ class DbConfiguration extends React.Component {
         toastr.error(MESSAGES.GENERIC_ERROR);
       }
     } else {
-      toastr.error(MESSAGES.TEST_NOT_SUCCESS);
+      toastr.error(MESSAGES.TEST_FAILED_ERROR);
     }
   };
 

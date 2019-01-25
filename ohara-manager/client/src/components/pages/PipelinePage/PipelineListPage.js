@@ -24,15 +24,17 @@ import { Link } from 'react-router-dom';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { TableLoader } from 'common/Loader';
-import { ConfirmModal } from 'common/Modal';
+import { Modal, ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
 import { Box } from 'common/Layout';
+import { Warning } from 'common/Messages';
 import { H2 } from 'common/Headings';
-import { Button } from 'common/Form';
+import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
 import { lightBlue, blue, red, trBgColor } from 'theme/variables';
 import { addPipelineStatus, getEditUrl } from 'utils/pipelineListPageUtils';
+import { fetchWorkers } from 'apis/workerApis';
 import {
   fetchPipelines,
   createPipeline,
@@ -92,6 +94,10 @@ const DeleteIcon = styled.button`
 
 DeleteIcon.displayName = 'DeleteIcon';
 
+const Inner = styled.div`
+  padding: 30px 20px;
+`;
+
 class PipelineListPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
@@ -104,16 +110,27 @@ class PipelineListPage extends React.Component {
 
   headers = ['name', 'cluster', 'status', 'edit', 'delete'];
   state = {
-    isSelectTopicModalActive: false,
+    isSelectClusterModalActive: false,
     isDeletePipelineModalActive: false,
     isLoading: true,
     pipelines: [],
-    currentTopic: {},
+    workers: [],
+    currWorker: {},
   };
 
   componentDidMount() {
     this.fetchPipelines();
+    this.fetchWorkers();
   }
+
+  fetchWorkers = async () => {
+    const res = await fetchWorkers();
+    const workers = _.get(res, 'data.result', null);
+
+    if (workers) {
+      this.setState({ workers, currWorker: workers[0] });
+    }
+  };
 
   fetchPipelines = async () => {
     const res = await fetchPipelines();
@@ -131,21 +148,46 @@ class PipelineListPage extends React.Component {
     const { id } = target.options[selectedIdx].dataset;
 
     this.setState({
-      currentTopic: {
+      currWorker: {
         name: target.value,
         id,
       },
     });
   };
 
-  handleNewPipeline = async () => {
-    const { history, match } = this.props;
-    const params = { name: 'Untitled pipeline', rules: {} };
-    const res = await createPipeline(params);
+  handleSelectClusterModalClose = () => {
+    this.setState(({ workers }) => {
+      return {
+        isSelectClusterModalActive: false,
+        currWorker: workers[0],
+      };
+    });
+  };
 
+  handleSelectClusterModalOpen = e => {
+    e.preventDefault();
+    this.setState({ isSelectClusterModalActive: true });
+
+    if (_.isEmpty(this.state.workers)) {
+      toastr.error(MESSAGES.NO_WORKER_CLUSTER_FOUND_ERROR);
+    }
+  };
+
+  handleSelectClusterModalConfirm = async () => {
+    const { history, match } = this.props;
+    const { currWorker } = this.state;
+
+    const params = {
+      name: 'Untitled pipeline',
+      rules: {},
+      cluster: currWorker.name,
+    };
+    const res = await createPipeline(params);
     const pipelineId = _.get(res, 'data.result.id', null);
 
     if (pipelineId) {
+      this.handleSelectClusterModalClose();
+      toastr.success(MESSAGES.PIPELINE_CREATION_SUCCESS);
       history.push(`${match.url}/new/${pipelineId}`);
     }
   };
@@ -189,11 +231,38 @@ class PipelineListPage extends React.Component {
 
   render() {
     const { match } = this.props;
-    const { isDeletePipelineModalActive, pipelines, isLoading } = this.state;
+    const {
+      isDeletePipelineModalActive,
+      isSelectClusterModalActive,
+      pipelines,
+      isLoading,
+      workers,
+      currWorker,
+    } = this.state;
 
     return (
       <DocumentTitle title={PIPELINE}>
         <React.Fragment>
+          <Modal
+            isActive={isSelectClusterModalActive}
+            title="Select cluster"
+            width="370px"
+            confirmBtnText="Next"
+            handleConfirm={this.handleSelectClusterModalConfirm}
+            handleCancel={this.handleSelectClusterModalClose}
+            isConfirmDisabled={_.isEmpty(workers) ? true : false}
+          >
+            <Inner>
+              <Warning text="Please select a cluster for the new pipeline" />
+              <Select
+                isObject
+                list={workers}
+                selected={currWorker}
+                handleChange={this.handleSelectChange}
+              />
+            </Inner>
+          </Modal>
+
           <ConfirmModal
             isActive={isDeletePipelineModalActive}
             title="Delete pipeline?"
@@ -212,7 +281,7 @@ class PipelineListPage extends React.Component {
                 theme={primaryBtn}
                 text="New pipeline"
                 data-testid="new-pipeline"
-                handleClick={this.handleNewPipeline}
+                handleClick={this.handleSelectClusterModalOpen}
               />
             </TopWrapper>
             <Box>

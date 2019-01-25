@@ -22,6 +22,7 @@ import * as MESSAGES from 'constants/messages';
 import PipelineListPage from '../PipelineListPage';
 import { PIPELINE } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
+import { fetchWorkers } from 'apis/workerApis';
 import {
   createPipeline,
   deletePipeline,
@@ -30,6 +31,7 @@ import {
 
 jest.mock('apis/pipelinesApis');
 jest.mock('utils/pipelineUtils');
+jest.mock('apis/workerApis');
 
 const pipelines = [
   {
@@ -89,16 +91,55 @@ describe('<PipelineListPage />', () => {
   });
 
   it('creates a new pipeline', async () => {
-    const newBtn = wrapper.find('NewPipelineBtn');
+    const evt = { preventDefault: jest.fn() };
     const id = '1234';
     const expectedUrl = `${props.match.url}/new/${id}`;
     const res = { data: { result: { id } } };
+    const workersRes = {
+      data: {
+        result: [
+          {
+            name: 'worker-1',
+          },
+          {
+            name: 'worker-2',
+          },
+        ],
+      },
+    };
 
     createPipeline.mockImplementation(() => Promise.resolve(res));
-    await newBtn.prop('handleClick')();
+    fetchWorkers.mockImplementation(() => Promise.resolve(workersRes));
 
+    wrapper.find('NewPipelineBtn').prop('handleClick')(evt);
+
+    expect(wrapper.find('Modal').props().isActive).toBe(true);
+
+    await wrapper.find('Modal').prop('handleConfirm')();
+
+    expect(wrapper.find('Modal').props().isActive).toBe(false);
+    expect(toastr.success).toHaveBeenCalledTimes(1);
+    expect(toastr.success).toHaveBeenCalledWith(
+      MESSAGES.PIPELINE_CREATION_SUCCESS,
+    );
     expect(props.history.push).toHaveBeenCalledTimes(1);
     expect(props.history.push).toHaveBeenCalledWith(expectedUrl);
+  });
+
+  it(`throws an error message if there's no worker cluster present`, () => {
+    const evt = { preventDefault: jest.fn() };
+    const workersRes = { data: { result: [] } };
+
+    // Reset workers, so we can mimic the data fetching again
+    wrapper.setState({ workers: [] });
+
+    wrapper.find('NewPipelineBtn').prop('handleClick')(evt);
+    fetchWorkers.mockImplementation(() => Promise.resolve(workersRes));
+
+    expect(toastr.error).toHaveBeenCalledTimes(1);
+    expect(toastr.error).toHaveBeenCalledWith(
+      MESSAGES.NO_WORKER_CLUSTER_FOUND_ERROR,
+    );
   });
 
   it('renders <ConfirmModal />', () => {

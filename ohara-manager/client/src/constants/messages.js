@@ -14,29 +14,51 @@
  * limitations under the License.
  */
 
-// Success messages
+/******************************
+  Success messages -- green 
+*******************************/
+
+// Login
 export const LOGIN_SUCCESS = 'You are now logged in!';
 export const LOGOUT_SUCCESS = 'You are now logged out!';
 
+// Schema
 export const SCHEMA_CREATION_SUCCESS = 'Schema successfully created!';
+
+// Topic
 export const TOPIC_CREATION_SUCCESS = 'Topic successfully created!';
+
+// Node
 export const NODE_CREATION_SUCCESS = 'Node successfully created!';
-export const SERVICE_CREATION_SUCCESS = 'Service successfully created!';
 export const NODE_SAVE_SUCCESS = 'Node successfully saved!';
+
+// Service
+export const SERVICE_CREATION_SUCCESS = 'Service successfully created!';
+
+// Pipeline
+export const PIPELINE_CREATION_SUCCESS = 'Pipeline successfully created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
-export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
+export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
+
+// Configuration
 export const CONFIG_DELETE_SUCCESS = 'Successfully deleted the configuration:';
+export const CONFIG_SAVE_SUCCESS = 'Configuration successfully saved!';
 export const CONFIG_DELETE_CHECK = 'Please select a connection to delete!';
+export const TEST_SUCCESS = 'Test has passed!';
+
+// Stream app
 export const STREAM_APP_UPLOAD_SUCCESS = 'Stream app successfully uploaded!';
 export const STREAM_APP_RENAME_SUCCESS = 'Stream app successfully renamed!';
 export const STREAM_APP_DELETE_SUCCESS = 'Successfully deleted the stream app!';
 export const STREAM_APP_START_SUCCESS = 'Stream app successfully started!';
 export const STREAM_APP_STOP_SUCCESS = 'Stream app successfully stopped!';
 export const PLUGIN_UPLOAD_SUCCESS = 'Plugin successfully uploaded!';
-export const TEST_SUCCESS = 'Test has passed!';
-export const TEST_NOT_SUCCESS = 'Test has not passed!';
-export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
+
 export const AUTO_SAVE_SUCCESS = 'Successfully saved!';
+
+/******************************
+  Error messages -- red
+*******************************/
 
 // Error messages
 export const EMPTY_NAME_ERROR = 'Name is a required field!';
@@ -53,12 +75,15 @@ export const DUPLICATED_COLUMN_NAME_ERROR = 'Column Name cannot be repeated';
 export const ONLY_NUMBER_ALLOW_ERROR =
   'partition or replication only accept numeric values';
 export const INVALID_TOPIC_ID = `The selected topic doesn't exist!`;
+export const TEST_FAILED_ERROR = `Didn't pass the test!`;
 
 // Pipelines
 export const PIPELINE_DELETION_ERROR =
   'Oops, something went wrong, we cannot delete the selected pipeline:';
 export const CANNOT_START_PIPELINE_ERROR =
   'Failed to start the pipeline, please check your connector settings';
+export const NO_WORKER_CLUSTER_FOUND_ERROR =
+  'Please create a cluster before creating pipelines!';
 
 // Connectors
 export const CANNOT_START_CONNECTOR_ERROR =
@@ -74,6 +99,8 @@ export const CANNOT_UPDATE_WHILE_RUNNING_ERROR = `You cannot update the pipeline
 
 export const GENERIC_ERROR = 'Oops, something went wrong 😱 😱 😱';
 
-// Warning
+/******************************
+  Warning messages -- orange
+*******************************/
 export const LEAVE_WITHOUT_SAVE =
   'You have unsaved changes or pending requests, are you sure you want to leave?';

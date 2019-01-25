@@ -33,9 +33,11 @@ export const fetchPipelines = async () => {
   }
 };
 
-export const createPipeline = async params => {
+export const createPipeline = async ({ cluster, ...restParams }) => {
+  const url = `/api/pipelines?cluster=${cluster}`;
+
   try {
-    const res = await axiosInstance.post('/api/pipelines', params);
+    const res = await axiosInstance.post(url, restParams);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
