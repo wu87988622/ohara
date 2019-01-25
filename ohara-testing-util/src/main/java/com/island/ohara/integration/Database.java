@@ -51,30 +51,35 @@ public interface Database extends Releasable {
   /** @return true if this database is generated locally. */
   boolean isLocal();
 
+  static Database local(int port) {
+    return local(
+        CommonUtil.randomString(10),
+        CommonUtil.randomString(10),
+        CommonUtil.randomString(10),
+        port);
+  }
+
   /**
    * create an embedded mysql with specific port
    *
    * @param port bound port
    * @return an embedded mysql
    */
-  static Database local(int port) {
-    int count = 0;
-    port = CommonUtil.resolvePort(port);
+  static Database local(String user, String password, String dbName, int port) {
     MysqldConfig config =
         aMysqldConfig(v5_7_latest)
             .withCharset(UTF8)
-            .withUser("user-" + (count++), "password-" + (count++))
+            .withUser(user, password)
             .withTimeZone(CommonUtil.timezone())
             .withTimeout(2, TimeUnit.MINUTES)
             .withServerVariable("max_connect_errors", 666)
             .withTempDir(CommonUtil.createTempDir("my_sql").getAbsolutePath())
-            .withPort(port)
+            .withPort(CommonUtil.resolvePort(port))
             // make mysql use " replace '
             // see https://stackoverflow.com/questions/13884854/mysql-double-quoted-table-names
             .withServerVariable("sql-mode", "ANSI_QUOTES")
             .build();
-    String _dbName = "db-" + (count++);
-    EmbeddedMysql mysqld = anEmbeddedMysql(config).addSchema(_dbName).start();
+    EmbeddedMysql mysqld = anEmbeddedMysql(config).addSchema(dbName).start();
     return new Database() {
       private Connection connection = null;
 
@@ -96,7 +101,7 @@ public interface Database extends Releasable {
 
       @Override
       public String databaseName() {
-        return _dbName;
+        return dbName;
       }
 
       @Override

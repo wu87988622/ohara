@@ -28,7 +28,6 @@ object Ftp {
   private[this] val TTL = "--ttl"
   private[this] val USAGE = s"$USER $PASSWORD $CONTROL_PORT $DATA_PORTS(form: 12345,12346 or 12345-12350)"
   def main(args: Array[String]): Unit = {
-    println(args.mkString(","))
     var user = "user"
     var password = "password"
     var controlPort: Option[Int] = None
