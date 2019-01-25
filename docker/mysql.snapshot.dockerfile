@@ -14,46 +14,15 @@
 # limitations under the License.
 #
 
-FROM centos:7.6.1810 AS deps
+FROM oharastream/ohara:deps as deps
 
-# install tools
-RUN yum install -y \
-  git \
-  java-1.8.0-openjdk-devel \
-  wget \
-  unzip
-
-# export JAVA_HOME
-ENV JAVA_HOME=/usr/lib/jvm/java
-
-# install dependencies for mysql
-RUN yum install -y \
-  libaio \
-  numactl
-
-# download gradle
-ARG GRADLE_VERSION=5.1.1
-WORKDIR /opt/gradle
-RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
-RUN unzip gradle-$GRADLE_VERSION-bin.zip
-RUN rm -f gradle-$GRADLE_VERSION-bin.zip
-RUN ln -s /opt/gradle/gradle-$GRADLE_VERSION /opt/gradle/default
-
-# add gradle to path
-ENV GRADLE_HOME=/opt/gradle/default
-ENV PATH=$PATH:$GRADLE_HOME/bin
-
-# build ohara
 ARG BRANCH="master"
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone --single-branch -b $BRANCH $REPO /testpatch/ohara
-# Running this test case make gradle download mysql binary code
-RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
-
 
 # Add Tini
 ARG TINI_VERSION=v0.18.0

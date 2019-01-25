@@ -14,17 +14,7 @@
 # limitations under the License.
 #
 
-FROM centos:7.6.1810 as deps
-
-# install tools
-RUN yum install -y \
-  git \
-  java-1.8.0-openjdk-devel \
-  wget \
-  unzip
-
-# export JAVA_HOME
-ENV JAVA_HOME=/usr/lib/jvm/java
+FROM oharastream/ohara:deps as deps
 
 # download kafka
 # WARN: Please don't change the value of KAFKA_DIR
@@ -37,22 +27,12 @@ RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/true_version
 
-# download gradle
-ARG GRADLE_VERSION=5.1.1
-WORKDIR /opt/gradle
-RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
-RUN unzip gradle-$GRADLE_VERSION-bin.zip
-RUN rm -f gradle-$GRADLE_VERSION-bin.zip
-
-# add gradle to path
-ENV GRADLE_HOME=/opt/gradle/gradle-$GRADLE_VERSION
-ENV PATH=$PATH:$GRADLE_HOME/bin
-
 # build ohara
 # TODO: we should clone ohara libs from official release... by chia
 ARG OHARA_BRANCH="master"
+ARG OHARA_REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $OHARA_BRANCH https://github.com/oharastream/ohara.git /testpatch/ohara
+RUN git clone --single-branch -b $OHARA_BRANCH $OHARA_REPO /testpatch/ohara
 # we build ohara with specified version of kafka in order to keep the compatibility
 RUN gradle clean build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara
@@ -69,8 +49,7 @@ FROM centos:7.6.1810
 # install openjdk-1.8
 # we use wget to download custom plugin from configurator
 RUN yum install -y \
-  java-1.8.0-openjdk \
-  wget
+  java-1.8.0-openjdk
 
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
