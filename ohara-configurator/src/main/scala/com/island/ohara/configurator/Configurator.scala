@@ -282,28 +282,15 @@ object Configurator {
         30 seconds
       )
       LOG.info(s"succeed to create zk cluster:$zkCluster")
-      try {
-        val bkCluster = Await.result(
-          BrokerApi
-            .access()
-            .hostname(configurator.hostname)
-            .port(configurator.port)
-            .add(BrokerApi.creationRequest("preCreatedBkCluster", Seq(node.name))),
-          30 seconds
-        )
-        LOG.info(s"succeed to create bk cluster:$bkCluster")
-        // ensure that all pre-created cluster will be deleted when terminating jvm
-        // we can't use restful APIs since the akka system may be closed already ... by chia
-        Runtime.getRuntime.addShutdownHook(new Thread() {
-          override def run(): Unit =
-            try Await.result(configurator.clusterCollie.brokerCollie().remove(bkCluster.name), 30 seconds)
-            finally Await.result(configurator.clusterCollie.zookeepersCollie().remove(zkCluster.name), 30 seconds)
-        })
-      } catch {
-        case e: Throwable =>
-          Await.result(configurator.clusterCollie.zookeepersCollie().remove(zkCluster.name), 30 seconds)
-          throw e
-      }
+      val bkCluster = Await.result(
+        BrokerApi
+          .access()
+          .hostname(configurator.hostname)
+          .port(configurator.port)
+          .add(BrokerApi.creationRequest("preCreatedBkCluster", Seq(node.name))),
+        30 seconds
+      )
+      LOG.info(s"succeed to create bk cluster:$bkCluster")
     } catch {
       case e: Throwable =>
         Releasable.close(configurator)
