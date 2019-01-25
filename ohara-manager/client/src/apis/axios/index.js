@@ -15,6 +15,7 @@
  */
 
 import axios from 'axios';
+import { has } from 'lodash';
 import { getErrors } from 'utils/apiUtils';
 
 function createAxios() {
@@ -78,10 +79,12 @@ function createAxios() {
       };
     },
     error => {
-      const { status, statusText, data: errorMessage } = error.response;
+      const { statusText, data: errorMessage } = error.response;
       return {
         data: {
-          errorMessage: status >= 500 ? statusText : errorMessage,
+          errorMessage: has(errorMessage, 'message')
+            ? errorMessage
+            : statusText,
           isSuccess: false,
         },
       };
