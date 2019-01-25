@@ -489,7 +489,13 @@ class FtpSink extends React.Component {
   };
 
   save = _.debounce(async () => {
-    const { match, updateHasChanges, isPipelineRunning } = this.props;
+    const {
+      match,
+      graph,
+      updateGraph,
+      updateHasChanges,
+      isPipelineRunning,
+    } = this.props;
     const {
       name,
       host,
@@ -534,7 +540,19 @@ class FtpSink extends React.Component {
 
     await pipelinesApis.updateSink({ id: sinkId, params });
     updateHasChanges(false);
-    updateTopic(this.props, currReadTopic, 'sink');
+
+    const currTopicId = _.isEmpty(currReadTopic) ? '?' : currReadTopic.id;
+    const currSink = findByGraphId(graph, sinkId);
+    const topic = findByGraphId(graph, currTopicId);
+
+    let update;
+    if (topic) {
+      update = { ...topic, name, to: sinkId };
+      updateGraph(update, currTopicId);
+    } else {
+      update = { ...currSink, name };
+      updateGraph(update, currTopicId);
+    }
   }, 1000);
 
   handleStartBtnClick = async () => {

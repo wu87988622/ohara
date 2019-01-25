@@ -319,10 +319,15 @@ class HdfsSink extends React.Component {
     updateHasChanges(false);
 
     const currTopicId = _.isEmpty(currReadTopic) ? '?' : currReadTopic.id;
+    const currSink = findByGraphId(graph, sinkId);
     const topic = findByGraphId(graph, currTopicId);
 
+    let update;
     if (topic) {
-      const update = { ...topic, to: sinkId };
+      update = { ...topic, name, to: sinkId };
+      updateGraph(update, currTopicId);
+    } else {
+      update = { ...currSink, name };
       updateGraph(update, currTopicId);
     }
   }, 1000);

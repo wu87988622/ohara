@@ -364,7 +364,7 @@ class JdbcSource extends React.Component {
 
     const currSource = findByGraphId(graph, sourceId);
     const to = _.isEmpty(topics) ? '?' : topics[0];
-    const update = { ...currSource, to };
+    const update = { ...currSource, name, to };
     updateGraph(update, currSource.id);
   }, 1000);
 
