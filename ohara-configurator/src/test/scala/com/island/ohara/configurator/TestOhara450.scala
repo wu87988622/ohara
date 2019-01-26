@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
@@ -37,12 +37,12 @@ class TestOhara450 extends SmallTest with Matchers {
   def testUncreatablePipeline(): Unit = {
     val source = Await.result(
       access.add(
-        ConnectorConfigurationRequest(name = "abc",
-                                      className = "aaa.class",
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1,
-                                      schema = Seq.empty,
-                                      configs = Map.empty)),
+        ConnectorCreationRequest(name = "abc",
+                                 className = "aaa.class",
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1,
+                                 schema = Seq.empty,
+                                 configs = Map.empty)),
       10 seconds
     )
     Await.result(access.list(), 10 seconds).size shouldBe 1
@@ -52,12 +52,12 @@ class TestOhara450 extends SmallTest with Matchers {
       10 seconds)
     val sink = Await.result(
       access.add(
-        ConnectorConfigurationRequest(name = "abc",
-                                      className = "aaa.class",
-                                      schema = Seq.empty,
-                                      configs = Map.empty,
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1)),
+        ConnectorCreationRequest(name = "abc",
+                                 className = "aaa.class",
+                                 schema = Seq.empty,
+                                 configs = Map.empty,
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)),
       10 seconds
     )
     Await.result(access.list(), 10 seconds).size shouldBe 2

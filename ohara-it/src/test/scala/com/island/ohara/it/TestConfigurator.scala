@@ -18,7 +18,7 @@ package com.island.ohara.it
 import java.time.Duration
 
 import com.island.ohara.client.FtpClient
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, InfoApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
@@ -93,7 +93,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       TestFtp2Ftp.setupInput(ftpClient, sourceProps, header, data)
     } finally ftpClient.close()
 
-    val request = ConnectorConfigurationRequest(
+    val request = ConnectorCreationRequest(
       name = methodName,
       className = classOf[FtpSource].getName,
       schema = Seq(
@@ -174,7 +174,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     try {
       TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
 
-      val request = ConnectorConfigurationRequest(
+      val request = ConnectorCreationRequest(
         name = methodName,
         className = classOf[FtpSink].getName,
         schema = Seq.empty,

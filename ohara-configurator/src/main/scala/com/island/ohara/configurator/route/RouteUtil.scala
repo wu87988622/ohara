@@ -107,6 +107,24 @@ private[route] object RouteUtil {
     hookOfDelete = (r: Res) => resToRes(r)
   )
 
+  def basicRoute[Req, Res <: Data: ClassTag](root: String,
+                                             hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
+                                             hookOfUpdate: (Id, Req, Res) => Future[Res],
+                                             hookOfList: Seq[Res] => Future[Seq[Res]],
+                                             hookOfGet: Res => Future[Res],
+                                             hookOfDelete: Res => Future[Res])(implicit store: Store,
+                                                                               rm: RootJsonFormat[Req],
+                                                                               rm2: RootJsonFormat[Res]): server.Route =
+    basicRoute(
+      root = root,
+      hookOfAdd = hookOfAdd,
+      hookOfUpdate = hookOfUpdate,
+      hookOfList = hookOfList,
+      hookOfGet = hookOfGet,
+      hookBeforeDelete = id => Future.successful(id),
+      hookOfDelete = hookOfDelete
+    )
+
   /**
     *  this is the basic route of all APIs to access ohara's data.
     *  It implements 1) get, 2) list, 3) delete, 4) add and 5) update function.
@@ -125,6 +143,7 @@ private[route] object RouteUtil {
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
                                              hookOfGet: Res => Future[Res],
+                                             hookBeforeDelete: String => Future[String],
                                              hookOfDelete: Res => Future[Res])(implicit store: Store,
                                                                                rm: RootJsonFormat[Req],
                                                                                rm2: RootJsonFormat[Res]): server.Route =
@@ -132,7 +151,7 @@ private[route] object RouteUtil {
       pathEnd {
         routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
       } ~ path(Segment) { id =>
-        routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, id => Future.successful(id)) ~
+        routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, hookBeforeDelete) ~
           routeOfUpdate[Req, Res](id, hookOfUpdate)
       }
     }

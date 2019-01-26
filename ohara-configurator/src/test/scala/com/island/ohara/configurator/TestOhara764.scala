@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
@@ -36,12 +36,12 @@ class TestOhara764 extends SmallTest with Matchers {
     val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
     val source = Await.result(
       access.add(
-        ConnectorConfigurationRequest(name = "abc",
-                                      className = "aaa.class",
-                                      topics = Seq("abc"),
-                                      numberOfTasks = 1,
-                                      schema = Seq.empty,
-                                      configs = Map.empty)),
+        ConnectorCreationRequest(name = "abc",
+                                 className = "aaa.class",
+                                 topics = Seq("abc"),
+                                 numberOfTasks = 1,
+                                 schema = Seq.empty,
+                                 configs = Map.empty)),
       10 seconds
     )
 
@@ -52,12 +52,12 @@ class TestOhara764 extends SmallTest with Matchers {
       10 seconds)
     val source2 = Await.result(
       access.add(
-        ConnectorConfigurationRequest(name = "abc",
-                                      className = "aaa.class",
-                                      topics = Seq(topic.id),
-                                      numberOfTasks = 1,
-                                      schema = Seq.empty,
-                                      configs = Map.empty)),
+        ConnectorCreationRequest(name = "abc",
+                                 className = "aaa.class",
+                                 topics = Seq(topic.id),
+                                 numberOfTasks = 1,
+                                 schema = Seq.empty,
+                                 configs = Map.empty)),
       10 seconds
     )
     Await.result(access.start(source2.id), 30 seconds).id shouldBe source2.id

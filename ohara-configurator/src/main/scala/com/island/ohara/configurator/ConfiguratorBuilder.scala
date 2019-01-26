@@ -29,7 +29,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.WorkerJson.{
   ConnectorConfig,
-  ConnectorInformation,
+  ConnectorInfo,
   ConnectorStatus,
   CreateConnectorResponse,
   Plugin,
@@ -257,9 +257,9 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   override def plugins(): Seq[Plugin] = cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
   override def activeConnectors(): Seq[String] = cachedConnectors.keys.asScala.toSeq
   override def connectionProps: String = "Unknown"
-  override def status(name: String): ConnectorInformation = {
+  override def status(name: String): ConnectorInfo = {
     checkExist(name)
-    ConnectorInformation(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty)
+    ConnectorInfo(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty)
   }
 
   override def config(name: String): ConnectorConfig = {

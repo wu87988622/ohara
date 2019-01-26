@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.ConnectorApi
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorConfiguration, ConnectorConfigurationRequest}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorInfo, ConnectorCreationRequest}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -35,15 +35,14 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
   @Test
   def testSource(): Unit = {
-    def compareRequestAndResponse(request: ConnectorConfigurationRequest,
-                                  response: ConnectorConfiguration): ConnectorConfiguration = {
+    def compareRequestAndResponse(request: ConnectorCreationRequest, response: ConnectorInfo): ConnectorInfo = {
       request.name shouldBe response.name
       request.schema shouldBe response.schema
       request.configs shouldBe response.configs
       response
     }
 
-    def compare2Response(lhs: ConnectorConfiguration, rhs: ConnectorConfiguration): Unit = {
+    def compare2Response(lhs: ConnectorInfo, rhs: ConnectorInfo): Unit = {
       lhs.id shouldBe rhs.id
       lhs.name shouldBe rhs.name
       lhs.schema shouldBe rhs.schema
@@ -55,12 +54,12 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
     // test add
     result(access.list()).size shouldBe 0
-    val request = ConnectorConfigurationRequest(name = methodName,
-                                                className = "jdbc",
-                                                schema = schema,
-                                                configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                                topics = Seq.empty,
-                                                numberOfTasks = 1)
+    val request = ConnectorCreationRequest(name = methodName,
+                                           className = "jdbc",
+                                           schema = schema,
+                                           configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                           topics = Seq.empty,
+                                           numberOfTasks = 1)
     val response =
       compareRequestAndResponse(request, result(access.add(request)))
 
@@ -68,12 +67,12 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     compare2Response(response, result(access.get(response.id)))
 
     // test update
-    val anotherRequest = ConnectorConfigurationRequest(name = methodName,
-                                                       className = "jdbc",
-                                                       schema = schema,
-                                                       configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-                                                       topics = Seq.empty,
-                                                       numberOfTasks = 1)
+    val anotherRequest = ConnectorCreationRequest(name = methodName,
+                                                  className = "jdbc",
+                                                  schema = schema,
+                                                  configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                                  topics = Seq.empty,
+                                                  numberOfTasks = 1)
     val newResponse =
       compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
@@ -99,36 +98,35 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
     an[IllegalArgumentException] should be thrownBy result(
       access.add(
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = illegalOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1)))
+        ConnectorCreationRequest(name = methodName,
+                                 className = "jdbc",
+                                 schema = illegalOrder,
+                                 configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)))
     result(access.list()).size shouldBe 0
 
     val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
     an[IllegalArgumentException] should be thrownBy result(
       access.add(
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = duplicateOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1)))
+        ConnectorCreationRequest(name = methodName,
+                                 className = "jdbc",
+                                 schema = duplicateOrder,
+                                 configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)))
     result(access.list()).size shouldBe 0
   }
 
   @Test
   def testSink(): Unit = {
-    def compareRequestAndResponse(request: ConnectorConfigurationRequest,
-                                  response: ConnectorConfiguration): ConnectorConfiguration = {
+    def compareRequestAndResponse(request: ConnectorCreationRequest, response: ConnectorInfo): ConnectorInfo = {
       request.name shouldBe response.name
       request.configs shouldBe response.configs
       response
     }
 
-    def compare2Response(lhs: ConnectorConfiguration, rhs: ConnectorConfiguration): Unit = {
+    def compare2Response(lhs: ConnectorInfo, rhs: ConnectorInfo): Unit = {
       lhs.id shouldBe rhs.id
       lhs.name shouldBe rhs.name
       lhs.schema shouldBe rhs.schema
@@ -141,12 +139,12 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     // test add
     result(access.list()).size shouldBe 0
-    val request = ConnectorConfigurationRequest(name = methodName,
-                                                className = "jdbc",
-                                                schema = schema,
-                                                configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                                topics = Seq.empty,
-                                                numberOfTasks = 1)
+    val request = ConnectorCreationRequest(name = methodName,
+                                           className = "jdbc",
+                                           schema = schema,
+                                           configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                           topics = Seq.empty,
+                                           numberOfTasks = 1)
     val response =
       compareRequestAndResponse(request, result(access.add(request)))
 
@@ -154,12 +152,12 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     compare2Response(response, result(access.get(response.id)))
 
     // test update
-    val anotherRequest = ConnectorConfigurationRequest(name = methodName,
-                                                       className = "jdbc",
-                                                       schema = schema,
-                                                       configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-                                                       topics = Seq.empty,
-                                                       numberOfTasks = 1)
+    val anotherRequest = ConnectorCreationRequest(name = methodName,
+                                                  className = "jdbc",
+                                                  schema = schema,
+                                                  configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                                  topics = Seq.empty,
+                                                  numberOfTasks = 1)
     val newResponse =
       compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
@@ -185,23 +183,23 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
     an[IllegalArgumentException] should be thrownBy result(
       access.add(
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = illegalOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1)))
+        ConnectorCreationRequest(name = methodName,
+                                 className = "jdbc",
+                                 schema = illegalOrder,
+                                 configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)))
     result(access.list()).size shouldBe 0
 
     val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
     an[IllegalArgumentException] should be thrownBy result(
       access.add(
-        ConnectorConfigurationRequest(name = methodName,
-                                      className = "jdbc",
-                                      schema = duplicateOrder,
-                                      configs = Map("c0" -> "v0", "c1" -> "v1"),
-                                      topics = Seq.empty,
-                                      numberOfTasks = 1)))
+        ConnectorCreationRequest(name = methodName,
+                                 className = "jdbc",
+                                 schema = duplicateOrder,
+                                 configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)))
     result(access.list()).size shouldBe 0
   }
 

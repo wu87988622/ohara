@@ -42,26 +42,26 @@ object ConnectorApi {
       "order" -> JsNumber(obj.order)
     )
   }
-  final case class ConnectorConfigurationRequest(name: String,
-                                                 className: String,
-                                                 schema: Seq[Column],
-                                                 topics: Seq[String],
-                                                 numberOfTasks: Int,
-                                                 configs: Map[String, String])
-  implicit val CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorConfigurationRequest] = jsonFormat6(
-    ConnectorConfigurationRequest)
+  final case class ConnectorCreationRequest(name: String,
+                                            className: String,
+                                            schema: Seq[Column],
+                                            topics: Seq[String],
+                                            numberOfTasks: Int,
+                                            configs: Map[String, String])
+  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] = jsonFormat6(
+    ConnectorCreationRequest)
 
-  final case class ConnectorConfiguration(id: String,
-                                          name: String,
-                                          className: String,
-                                          schema: Seq[Column],
-                                          topics: Seq[String],
-                                          numberOfTasks: Int,
-                                          configs: Map[String, String],
-                                          workerClusterName: String,
-                                          state: Option[ConnectorState],
-                                          error: Option[String],
-                                          lastModified: Long)
+  final case class ConnectorInfo(id: String,
+                                 name: String,
+                                 className: String,
+                                 schema: Seq[Column],
+                                 topics: Seq[String],
+                                 numberOfTasks: Int,
+                                 configs: Map[String, String],
+                                 workerClusterName: String,
+                                 state: Option[ConnectorState],
+                                 error: Option[String],
+                                 lastModified: Long)
       extends Data {
     override def kind: String = className
   }
@@ -76,9 +76,8 @@ object ConnectorApi {
     }
 
   class Access private[v0]
-      extends com.island.ohara.client.configurator.v0.AccessWithCluster[
-        ConnectorConfigurationRequest,
-        ConnectorConfiguration](CONNECTORS_PREFIX_PATH) {
+      extends com.island.ohara.client.configurator.v0.AccessWithCluster[ConnectorCreationRequest, ConnectorInfo](
+        CONNECTORS_PREFIX_PATH) {
 
     private[this] def actionUrl(id: String, action: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
@@ -88,36 +87,35 @@ object ConnectorApi {
       * @param id connector's id
       * @return the configuration of connector
       */
-    def start(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, START_COMMAND))
+    def start(id: String): Future[ConnectorInfo] =
+      exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, START_COMMAND))
 
     /**
       * stop and remove a running connector.
       * @param id connector's id
       * @return the configuration of connector
       */
-    def stop(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, STOP_COMMAND))
+    def stop(id: String): Future[ConnectorInfo] =
+      exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, STOP_COMMAND))
 
     /**
       * pause a running connector
       * @param id connector's id
       * @return the configuration of connector
       */
-    def pause(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, PAUSE_COMMAND))
+    def pause(id: String): Future[ConnectorInfo] =
+      exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, PAUSE_COMMAND))
 
     /**
       * resume a paused connector
       * @param id connector's id
       * @return the configuration of connector
       */
-    def resume(id: String): Future[ConnectorConfiguration] =
-      exec.put[ConnectorConfiguration, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
+    def resume(id: String): Future[ConnectorInfo] =
+      exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
   }
 
-  implicit val CONNECTOR_CONFIGURATION_JSON_FORMAT: RootJsonFormat[ConnectorConfiguration] = jsonFormat11(
-    ConnectorConfiguration)
+  implicit val CONNECTOR_INFO_JSON_FORMAT: RootJsonFormat[ConnectorInfo] = jsonFormat11(ConnectorInfo)
 
   def access(): Access = new Access
 }

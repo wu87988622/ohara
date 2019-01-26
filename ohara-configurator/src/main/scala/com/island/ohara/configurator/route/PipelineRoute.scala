@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.WorkerCollie
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
@@ -58,7 +58,7 @@ private[configurator] object PipelineRoute {
           .map(id => store.value[Data](id)))
       .map {
         _.map {
-          case data: ConnectorConfiguration =>
+          case data: ConnectorInfo =>
             val state =
               if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
               else None
@@ -77,7 +77,7 @@ private[configurator] object PipelineRoute {
       store
         .raw(id)
         .map {
-          case d: ConnectorConfiguration =>
+          case d: ConnectorInfo =>
             if (d.workerClusterName != cluster.name)
               throw new IllegalArgumentException(
                 s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:${request.name} which is placed at worker cluster:${cluster.name}")
@@ -128,6 +128,26 @@ private[configurator] object PipelineRoute {
         toRes(Some(previous.workerClusterName), id, request),
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => Future.sequence(responses.map(update)),
+      hookBeforeDelete = (id: String) =>
+        store
+          .value[Pipeline](id)
+          .flatMap(update)
+          .flatMap { pipeline =>
+            // If any object has "state", we reject to delete pipeline. We can't stop all objects at once.
+            val running = pipeline.objects.filter(_.state.isDefined).map(_.id)
+            if (running.nonEmpty) Future.failed(new IllegalArgumentException(s"${running.mkString(",")} are running"))
+            else
+              Future.sequence(pipeline.objects.map(_.id).map(store.value[Data])).flatMap { objs =>
+                Future
+                  .sequence(
+                    objs
+                    // we only remove connectors. The streamapps and topics are still stored!
+                      .filter(_.isInstanceOf[ConnectorInfo])
+                      .map(_.id)
+                      .map(store.remove[ConnectorInfo]))
+                  .map(_ => pipeline.id)
+              }
+        },
       hookOfDelete = (response: Pipeline) => Future.successful(response)
     )
 }

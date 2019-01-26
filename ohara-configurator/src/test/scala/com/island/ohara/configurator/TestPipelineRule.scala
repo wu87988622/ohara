@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import java.io.File
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, StreamApi, TopicApi}
@@ -46,7 +46,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(TopicCreationRequest(methodName, 1, 1)),
       10 seconds
     )
-    val sourceRequest = ConnectorConfigurationRequest(
+    val sourceRequest = ConnectorCreationRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
@@ -108,7 +108,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       10 seconds
     )
 
-    val sourceRequest = ConnectorConfigurationRequest(
+    val sourceRequest = ConnectorCreationRequest(
       name = "source",
       className = "jdbc",
       schema = Seq.empty,
@@ -166,7 +166,7 @@ class TestPipelineRule extends SmallTest with Matchers {
 
   @Test
   def testUnknownObject(): Unit = {
-    val sourceRequest = ConnectorConfigurationRequest(
+    val sourceRequest = ConnectorCreationRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,
@@ -191,7 +191,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       10 seconds
     )
 
-    val sinkRequest = ConnectorConfigurationRequest(
+    val sinkRequest = ConnectorCreationRequest(
       name = "abc",
       className = "jdbc",
       schema = Seq.empty,

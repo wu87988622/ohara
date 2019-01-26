@@ -91,9 +91,8 @@ object WorkerJson {
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
   final case class TaskStatus(id: Int, state: ConnectorState, worker_id: String, trace: Option[String])
   implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)
-  final case class ConnectorInformation(name: String, connector: ConnectorStatus, tasks: Seq[TaskStatus])
-  implicit val CONNECTOR_INFORMATION_JSON_FORMAT: RootJsonFormat[ConnectorInformation] = jsonFormat3(
-    ConnectorInformation)
+  final case class ConnectorInfo(name: String, connector: ConnectorStatus, tasks: Seq[TaskStatus])
+  implicit val CONNECTOR_INFO_JSON_FORMAT: RootJsonFormat[ConnectorInfo] = jsonFormat3(ConnectorInfo)
 
   final case class Error(error_code: Int, message: String) extends HttpExecutor.Error
   implicit val ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[Error] = jsonFormat2(Error)

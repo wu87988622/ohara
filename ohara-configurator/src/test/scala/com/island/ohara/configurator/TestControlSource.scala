@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import java.time.Duration
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
@@ -55,12 +55,12 @@ class TestControlSource extends WithBrokerWorker with Matchers {
                                .port(configurator.port)
                                .add(TopicCreationRequest(topicName, 1, 1)),
                              10 seconds)
-    val request = ConnectorConfigurationRequest(name = methodName,
-                                                className = classOf[DumbSource].getName,
-                                                schema = Seq.empty,
-                                                topics = Seq(topic.id),
-                                                numberOfTasks = 1,
-                                                configs = Map.empty)
+    val request = ConnectorCreationRequest(name = methodName,
+                                           className = classOf[DumbSource].getName,
+                                           schema = Seq.empty,
+                                           topics = Seq(topic.id),
+                                           numberOfTasks = 1,
+                                           configs = Map.empty)
 
     val source = result(access.add(request))
 
@@ -113,12 +113,12 @@ class TestControlSource extends WithBrokerWorker with Matchers {
                                .port(configurator.port)
                                .add(TopicCreationRequest(topicName, 1, 1)),
                              10 seconds)
-    val request = ConnectorConfigurationRequest(name = methodName,
-                                                className = classOf[DumbSource].getName,
-                                                schema = Seq.empty,
-                                                topics = Seq(topic.id),
-                                                numberOfTasks = 1,
-                                                configs = Map.empty)
+    val request = ConnectorCreationRequest(name = methodName,
+                                           className = classOf[DumbSource].getName,
+                                           schema = Seq.empty,
+                                           topics = Seq(topic.id),
+                                           numberOfTasks = 1,
+                                           configs = Map.empty)
 
     val source = result(access.add(request))
     // test start

@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfiguration
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
@@ -34,7 +34,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
   @Test
   def testAdd(): Unit = {
-    val s = ConnectorConfiguration(
+    val s = ConnectorInfo(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -55,7 +55,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
   @Test
   def testUpdate(): Unit = {
-    val s = ConnectorConfiguration(
+    val s = ConnectorInfo(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -80,7 +80,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    val s = ConnectorConfiguration(
+    val s = ConnectorInfo(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -97,14 +97,14 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
     store.size shouldBe 1
 
-    Await.result(store.raw(), 10 seconds).head.asInstanceOf[ConnectorConfiguration] shouldBe s
+    Await.result(store.raw(), 10 seconds).head.asInstanceOf[ConnectorInfo] shouldBe s
 
-    Await.result(store.raw(s.id), 10 seconds).asInstanceOf[ConnectorConfiguration] shouldBe s
+    Await.result(store.raw(s.id), 10 seconds).asInstanceOf[ConnectorInfo] shouldBe s
   }
 
   @Test
   def testRemove(): Unit = {
-    val s = ConnectorConfiguration(
+    val s = ConnectorInfo(
       id = "asdad",
       name = "abc",
       className = "aaa.class",
@@ -122,10 +122,9 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     store.size shouldBe 1
 
     an[NoSuchElementException] should be thrownBy Await.result(store.remove("asdasd"), 50 seconds)
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorConfiguration]("asdasd"),
-                                                               50 seconds)
+    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorInfo]("asdasd"), 50 seconds)
 
-    Await.result(store.remove[ConnectorConfiguration](s.id), 50 seconds) shouldBe s
+    Await.result(store.remove[ConnectorInfo](s.id), 50 seconds) shouldBe s
 
     store.size shouldBe 0
   }

@@ -318,7 +318,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
     CommonUtil.await(
         () -> workerClient.status(connectorName).tasks().size() > 0, Duration.ofSeconds(10));
-    WorkerJson.ConnectorInformation status = workerClient.status(connectorName);
+    WorkerJson.ConnectorInfo status = workerClient.status(connectorName);
     assertNotNull(status.tasks().head());
 
     WorkerJson.TaskStatus task = workerClient.taskStatus(connectorName, status.tasks().head().id());

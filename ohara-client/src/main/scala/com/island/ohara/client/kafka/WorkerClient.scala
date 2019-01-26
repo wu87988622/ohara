@@ -48,7 +48,7 @@ trait WorkerClient {
 
   def connectionProps: String
 
-  def status(name: String): ConnectorInformation
+  def status(name: String): ConnectorInfo
 
   def config(name: String): ConnectorConfig
 
@@ -106,8 +106,8 @@ object WorkerClient {
 
       override def connectionProps: String = _connectionProps
 
-      override def status(name: String): ConnectorInformation = result(
-        () => HttpExecutor.SINGLETON.get[ConnectorInformation, Error](s"http://$workerAddress/connectors/$name/status"))
+      override def status(name: String): ConnectorInfo = result(
+        () => HttpExecutor.SINGLETON.get[ConnectorInfo, Error](s"http://$workerAddress/connectors/$name/status"))
 
       override def config(name: String): ConnectorConfig = result(
         () => HttpExecutor.SINGLETON.get[ConnectorConfig, Error](s"http://$workerAddress/connectors/$name/config"))

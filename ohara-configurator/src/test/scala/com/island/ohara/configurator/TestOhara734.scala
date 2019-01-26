@@ -63,7 +63,7 @@ class TestOhara734 extends SmallTest with Matchers {
   def testSourceRequest(): Unit = {
     import spray.json._
     val request =
-      ConnectorApi.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
         """
                                                             |{
                                                             |  "name":"perf",
@@ -97,7 +97,7 @@ class TestOhara734 extends SmallTest with Matchers {
     request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
 
     val request2 =
-      ConnectorApi.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
         """
                                                          |{
                                                          |  "name":"perf",
@@ -128,7 +128,7 @@ class TestOhara734 extends SmallTest with Matchers {
   def testSinkRequest(): Unit = {
     import spray.json._
     val request =
-      ConnectorApi.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
         """
                                                                |{
                                                                |  "name":"perf",
@@ -162,7 +162,7 @@ class TestOhara734 extends SmallTest with Matchers {
     request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
 
     val request2 =
-      ConnectorApi.CONNECTOR_CONFIGURATION_REQUEST_JSON_FORMAT.read(
+      ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
         """
                                                        |{
                                                        |  "name":"perf",

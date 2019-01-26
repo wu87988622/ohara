@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorConfigurationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.HadoopApi.HdfsInfoRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Pipeline, PipelineCreationRequest}
@@ -115,7 +115,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(
-          ConnectorConfigurationRequest(
+          ConnectorCreationRequest(
             name = methodName(),
             className = methodName(),
             topics = Seq.empty,

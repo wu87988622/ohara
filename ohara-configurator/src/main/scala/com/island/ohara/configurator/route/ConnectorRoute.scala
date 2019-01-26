@@ -34,8 +34,8 @@ import scala.concurrent.Future
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(wkClusterName: String, id: Id, request: ConnectorConfigurationRequest) =
-    ConnectorConfiguration(
+  private[this] def toRes(wkClusterName: String, id: Id, request: ConnectorCreationRequest) =
+    ConnectorInfo(
       id = id,
       name = request.name,
       className = request.className,
@@ -49,7 +49,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       lastModified = CommonUtil.current()
     )
 
-  private[this] def verify(request: ConnectorConfigurationRequest): ConnectorConfigurationRequest = {
+  private[this] def verify(request: ConnectorCreationRequest): ConnectorCreationRequest = {
     if (request.schema.exists(_.order < 1))
       throw new IllegalArgumentException(s"invalid order from column:${request.schema.map(_.order)}")
     if (request.schema.map(_.order).toSet.size != request.schema.size)
@@ -60,8 +60,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[route] def errorMessage(state: Option[ConnectorState]): Option[String] = state
     .filter(_ == ConnectorState.FAILED)
     .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
-  private[this] def update(connectorConfig: ConnectorConfiguration,
-                           workerClient: WorkerClient): ConnectorConfiguration = {
+  private[this] def update(connectorConfig: ConnectorInfo, workerClient: WorkerClient): ConnectorInfo = {
     val state = try if (workerClient.exist(connectorConfig.id))
       Some(workerClient.status(connectorConfig.id).connector.state)
     else None
@@ -77,39 +76,39 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
     // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
     pathPrefix(CONNECTORS_PREFIX_PATH | "sources" | "sinks") {
-      RouteUtil.basicRoute2[ConnectorConfigurationRequest, ConnectorConfiguration](
-        hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorConfigurationRequest) =>
+      RouteUtil.basicRoute2[ConnectorCreationRequest, ConnectorInfo](
+        hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorCreationRequest) =>
           CollieUtils.workerClient(targetCluster).map {
             case (cluster, _) =>
               toRes(cluster.name, id, verify(request))
 
         },
-        hookOfUpdate = (id: Id, request: ConnectorConfigurationRequest, previous: ConnectorConfiguration) =>
+        hookOfUpdate = (id: Id, request: ConnectorCreationRequest, previous: ConnectorInfo) =>
           CollieUtils.workerClient(Some(previous.workerClusterName)).map {
             case (_, wkClient) =>
               if (wkClient.exist(id)) throw new IllegalArgumentException(s"$id is not stopped")
               else toRes(previous.workerClusterName, id, verify(request))
         },
-        hookOfGet = (response: ConnectorConfiguration) =>
+        hookOfGet = (response: ConnectorInfo) =>
           CollieUtils.workerClient(Some(response.workerClusterName)).map {
             case (_, wkClient) =>
               update(response, wkClient)
         },
-        hookOfList = (responses: Seq[ConnectorConfiguration]) =>
+        hookOfList = (responses: Seq[ConnectorInfo]) =>
           Future.sequence(responses.map { response =>
             CollieUtils.workerClient(Some(response.workerClusterName)).map {
               case (_, wkClient) =>
                 update(response, wkClient)
             }
           }),
-        hookOfDelete = (response: ConnectorConfiguration) =>
+        hookOfDelete = (response: ConnectorInfo) =>
           CollieUtils.workerClient(Some(response.workerClusterName)).map {
             case (_, wkClient) =>
               if (wkClient.exist(response.id)) wkClient.delete(response.id)
               response
         },
         hookBeforeDelete = (id: Id) =>
-          store.value[ConnectorConfiguration](id).flatMap { config =>
+          store.value[ConnectorInfo](id).flatMap { config =>
             CollieUtils.workerClient(Some(config.workerClusterName)).map {
               case (_, wkClient) =>
                 val lastConfig = update(config, wkClient)
@@ -123,7 +122,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       pathPrefix((CONNECTORS_PREFIX_PATH | "sources" | "sinks") / Segment) { id =>
         path(START_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
               CollieUtils
                 .workerClient(Some(connectorConfig.workerClusterName))
                 .flatMap {
@@ -164,7 +163,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(STOP_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
                 case (_, wkClient) =>
                   if (wkClient.exist(id)) wkClient.delete(id)
@@ -174,7 +173,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(PAUSE_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
                 case (_, wkClient) =>
                   if (wkClient.nonExist(id))
@@ -187,7 +186,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(RESUME_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorConfiguration](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
                 case (_, wkClient) =>
                   if (wkClient.nonExist(id))
