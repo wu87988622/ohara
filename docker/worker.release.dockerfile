@@ -47,9 +47,9 @@ RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini 
 FROM centos:7.6.1810
 
 # install openjdk-1.8
-# we use wget to download custom plugin from configurator
 RUN yum install -y \
-  java-1.8.0-openjdk
+  java-1.8.0-openjdk \
+  wget # we use wget to download custom plugin from configurator
 
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
