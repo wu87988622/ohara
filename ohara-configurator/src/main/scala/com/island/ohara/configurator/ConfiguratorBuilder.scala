@@ -117,7 +117,9 @@ class ConfiguratorBuilder {
     def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
     (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
     // DON'T add duplicate nodes!!!
-    .toSet.map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current())).foreach(store.add)
+      .toSet[String]
+      .map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current()))
+      .foreach(store.add)
     val collie = new FakeClusterCollie(bkConnectionProps, wkConnectionProps)
     val bkCluster = {
       val pair = bkConnectionProps.split(",")
@@ -187,7 +189,7 @@ class ConfiguratorBuilder {
     brokerClusters
       .flatMap(_.nodeNames)
       // DON'T add duplicate nodes!!!
-      .toSet
+      .toSet[String]
       .map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current()))
       .foreach(store.add)
     clusterCollie(collie)
