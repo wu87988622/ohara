@@ -27,8 +27,13 @@ import org.scalatest.Matchers
 import scala.concurrent.{Await, Future}
 
 class TestNodesRoute extends SmallTest with Matchers {
+  private[this] val numberOfCluster = 1
+  private[this] val configurator = Configurator.builder().fake(numberOfCluster, numberOfCluster).build()
 
-  private[this] val configurator = Configurator.builder().fake().build()
+  /**
+    * a fake cluster has 3 fake node.
+    */
+  private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val access = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
   import scala.concurrent.duration._
@@ -58,8 +63,8 @@ class TestNodesRoute extends SmallTest with Matchers {
     val res = result(access.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe 1
-    compare(result(access.list()).head, res)
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    compare(result(access.list()).find(_.name == req.name.get).get, res)
   }
 
   @Test
@@ -68,10 +73,10 @@ class TestNodesRoute extends SmallTest with Matchers {
     val res = result(access.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     compare(result(access.delete(res.name)), res)
-    result(access.list()).size shouldBe 0
+    result(access.list()).size shouldBe numberOfDefaultNodes
   }
 
   @Test
@@ -80,13 +85,13 @@ class TestNodesRoute extends SmallTest with Matchers {
     val res = result(access.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     val req2 = NodeCreationRequest(Some("a"), 22, "b", "d")
     val res2 = result(access.update(res.name, req2))
     compare(req2, res2)
 
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     an[IllegalArgumentException] should be thrownBy result(
       access.update(res.id, NodeCreationRequest(Some("a2"), 22, "b", "d")))
@@ -98,7 +103,7 @@ class TestNodesRoute extends SmallTest with Matchers {
     val res = result(access.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     // we can't update an non-existent node
     an[IllegalArgumentException] should be thrownBy result(
@@ -111,12 +116,12 @@ class TestNodesRoute extends SmallTest with Matchers {
     val res2 = result(access.update(res.id, req2))
     compare(req2, res2)
 
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     val req3 = NodeCreationRequest(None, 22, "b", "zz")
     val res3 = result(access.update(res.id, req3))
     compare(req3, res3)
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
   }
 
   @After

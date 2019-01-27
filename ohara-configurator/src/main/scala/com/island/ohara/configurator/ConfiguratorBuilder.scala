@@ -113,6 +113,11 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder = {
+    // we fake nodes for embedded bk and wk
+    def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
+    (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
+    // DON'T add duplicate nodes!!!
+    .toSet.map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current())).foreach(store.add)
     val collie = new FakeClusterCollie(bkConnectionProps, wkConnectionProps)
     val bkCluster = {
       val pair = bkConnectionProps.split(",")
@@ -178,6 +183,13 @@ class ConfiguratorBuilder {
         .add(Seq.empty,
              workerClusterInfo(brokerClusters((Math.random() % brokerClusters.size).asInstanceOf[Int]), s"fake$index"))
     }
+    // fake nodes
+    brokerClusters
+      .flatMap(_.nodeNames)
+      // DON'T add duplicate nodes!!!
+      .toSet
+      .map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current()))
+      .foreach(store.add)
     clusterCollie(collie)
   }
 
@@ -187,7 +199,7 @@ class ConfiguratorBuilder {
     zookeeperClusterName = s"zkClusterName$prefix",
     // Assigning a negative value can make test fail quickly.
     clientPort = -1,
-    nodeNames = Seq.empty
+    nodeNames = (0 to 2).map(_ => CommonUtil.randomString(5))
   )
 
   private[this] def workerClusterInfo(bkCluster: BrokerClusterInfo, prefix: String): WorkerClusterInfo =
@@ -208,7 +220,7 @@ class ConfiguratorBuilder {
       offsetTopicPartitions = 1,
       offsetTopicReplications = 1.asInstanceOf[Short],
       jarNames = Seq.empty,
-      nodeNames = Seq.empty
+      nodeNames = bkCluster.nodeNames
     )
 
   @Optional("default is implemented by ssh")

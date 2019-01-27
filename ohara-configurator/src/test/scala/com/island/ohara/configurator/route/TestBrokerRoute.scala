@@ -28,8 +28,11 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestBrokerRoute extends MediumTest with Matchers {
-
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val numberOfCluster = 1
+  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
+    * a fake cluster has 3 fake node.
+    */
+  private[this] val numberOfDefaultNodes = 3 * numberOfCluster
   private[this] val access = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: BrokerClusterCreationRequest, cluster: BrokerClusterInfo): Unit = {
@@ -61,7 +64,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
                    10 seconds)
     }
 
-    Await.result(nodeAccess.list(), 10 seconds).size shouldBe nodeNames.size
+    Await.result(nodeAccess.list(), 10 seconds).size shouldBe (nodeNames.size + numberOfDefaultNodes)
 
     Await
       .result(ZookeeperApi

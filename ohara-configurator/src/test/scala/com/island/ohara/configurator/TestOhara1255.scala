@@ -27,8 +27,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestOhara1255 extends SmallTest with Matchers {
 
-  private[this] val configurator =
-    Configurator.builder().fake().build()
+  private[this] val numberOfCluster = 1
+  private[this] val configurator = Configurator.builder().fake(numberOfCluster, numberOfCluster).build() /**
+    * a fake cluster has 3 fake node.
+    */
+  private[this] val numberOfDefaultNodes = 3 * numberOfCluster
 
   private[this] val access = NodeApi.access().hostname("localhost").port(configurator.port)
 
@@ -46,7 +49,7 @@ class TestOhara1255 extends SmallTest with Matchers {
         ))
       .foreach(r => Await.result(access.add(r), 10 seconds))
 
-    Await.result(access.list(), 10 seconds).size shouldBe numberOfRequest
+    Await.result(access.list(), 10 seconds).size shouldBe (numberOfRequest + numberOfDefaultNodes)
   }
 
   @After

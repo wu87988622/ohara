@@ -57,7 +57,7 @@ class Configurator private[configurator] (
   advertisedPort: Option[Int],
   initializationTimeout: Duration,
   terminationTimeout: Duration,
-  extraRoute: Option[server.Route])(implicit store: Store, nodeCollie: NodeCollie, val clusterCollie: ClusterCollie)
+  extraRoute: Option[server.Route])(implicit val store: Store, nodeCollie: NodeCollie, val clusterCollie: ClusterCollie)
     extends ReleaseOnce
     with SprayJsonSupport {
 
