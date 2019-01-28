@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import ReactTooltip from 'react-tooltip';
 
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
@@ -253,6 +254,7 @@ class PipelineToolbar extends React.Component {
 
         <Icon
           className="fas fa-file-import"
+          data-tip="Add a source connector"
           onClick={() =>
             this.handleModalOpen(modalNames.ADD_SOURCE_CONNECTOR, 'sources')
           }
@@ -261,24 +263,29 @@ class PipelineToolbar extends React.Component {
         />
         <Icon
           className="fas fa-list-ul"
+          data-tip="Add a topic"
           onClick={() => this.handleModalOpen(modalNames.ADD_TOPIC)}
           data-id={modalNames.ADD_TOPIC}
           data-testid="toolbar-topics"
         />
         <Icon
           className="fas fa-wind"
+          data-tip="Add a stream app"
           onClick={() => this.handleModalOpen(modalNames.ADD_STREAM, 'stream')}
           data-id={modalNames.ADD_STREAM}
           data-testid="toolbar-streams"
         />
         <Icon
           className="fas fa-file-export"
+          data-tip="Add a sink connector"
           onClick={() =>
             this.handleModalOpen(modalNames.ADD_SINK_CONNECTOR, 'sinks')
           }
           data-id={ftpSource}
           data-testid="toolbar-sinks"
         />
+
+        <ReactTooltip />
 
         <FileSavingStatus>
           {hasChanges ? 'Saving...' : 'All changes saved'}

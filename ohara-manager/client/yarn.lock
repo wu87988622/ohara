@@ -1564,7 +1564,7 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-classnames@2.2.6, classnames@^2.2.0:
+classnames@2.2.6, classnames@^2.2.0, classnames@^2.2.5:
   version "2.2.6"
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
 
@@ -6921,6 +6921,13 @@ react-test-renderer@16.4.1, react-test-renderer@^16.0.0-0:
     object-assign "^4.1.1"
     prop-types "^15.6.0"
     react-is "^16.4.1"
+
+react-tooltip@3.9.2:
+  version "3.9.2"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-3.9.2.tgz#df74e6f5fd454bb15132d5d2d506895cf505cb5e"
+  dependencies:
+    classnames "^2.2.5"
+    prop-types "^15.6.0"
 
 react@16.4.1:
   version "16.4.1"

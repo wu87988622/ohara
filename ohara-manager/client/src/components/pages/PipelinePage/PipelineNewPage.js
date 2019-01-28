@@ -19,6 +19,7 @@ import styled from 'styled-components';
 import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import { Route } from 'react-router-dom';
 
 import * as _ from 'utils/commonUtils';
@@ -393,15 +394,18 @@ class PipelineNewPage extends React.Component {
                   <Operate>
                     <div className="actions">
                       <Heading3>Operate</Heading3>
+                      <ReactTooltip />
 
                       <div className="action-btns">
                         <button
+                          data-tip="Start pipeline"
                           onClick={this.handlePipelineStartClick}
                           data-testid="start-btn"
                         >
                           <i className="far fa-play-circle" />
                         </button>
                         <button
+                          data-tip="Stop pipeline"
                           onClick={this.handlePipelineStopClick}
                           data-testid="stop-btn"
                         >

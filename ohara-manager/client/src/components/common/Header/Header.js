@@ -17,6 +17,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import { NavLink } from 'react-router-dom';
 
 import * as URLS from 'constants/urls';
@@ -256,16 +257,20 @@ class Header extends React.Component {
 
           <RightCol>
             <Btn
+              data-tip="View ohara version"
               data-testid="version-btn"
               onClick={this.handleVersionModalOpen}
             >
               <i className="fas fa-info-circle" />
             </Btn>
-
-            <Btn data-testid="config-btn" onClick={this.handleConfigModalOpen}>
+            <Btn
+              data-tip="Add a new connection"
+              data-testid="config-btn"
+              onClick={this.handleConfigModalOpen}
+            >
               <i className="fas fa-cog" />
             </Btn>
-
+            <ReactTooltip />
             {/* v0.2 先不要顯示 Login */}
             {false && (
               <Login
