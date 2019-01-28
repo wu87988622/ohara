@@ -26,12 +26,12 @@ import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as topicApis from 'apis/topicApis';
+import * as CSS_VARS from 'theme/variables';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
 import { H2, H3 } from 'common/Headings';
 import { Box } from 'common/Layout';
-import { lightBlue, red, redHover, blue } from 'theme/variables';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { JdbcSource, FtpSource, Topic, HdfsSink, FtpSink } from './connectors';
 import { StreamApp } from './streamapp';
@@ -62,7 +62,7 @@ const Sidebar = styled.div`
 
 const Heading2 = styled(H2)`
   font-size: 16px;
-  color: ${lightBlue};
+  color: ${CSS_VARS.lightBlue};
 `;
 
 Heading2.displayName = 'H2';
@@ -70,33 +70,42 @@ Heading2.displayName = 'H2';
 const Heading3 = styled(H3)`
   font-size: 15px;
   font-weight: normal;
-  margin: 0 0 15px;
-  color: ${lightBlue};
+  margin: 0;
+  color: ${CSS_VARS.lightBlue};
 `;
 
 Heading3.displayName = 'H3';
 
-const StartBtn = styled.button`
-  color: ${({ isRunning }) => (isRunning ? red : lightBlue)};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-
-  &:hover {
-    color: ${({ isRunning }) => (isRunning ? redHover : blue)};
+const Operate = styled.div`
+  .actions {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
   }
-`;
 
-const StopBtn = styled.button`
-  color: ${({ isRunning }) => (isRunning ? red : lightBlue)};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
+  .action-btns {
+    margin-left: 10px;
 
-  &:hover {
-    color: ${({ isRunning }) => (isRunning ? redHover : blue)};
+    button {
+      color: ${CSS_VARS.dimBlue};
+      padding: 0 4px;
+      border: 0;
+      font-size: 20px;
+      cursor: pointer;
+      background-color: transparent;
+      transition: ${CSS_VARS.durationNormal} all;
+
+      &:hover {
+        color: ${CSS_VARS.blue};
+        transition: ${CSS_VARS.durationNormal} all;
+      }
+    }
+  }
+
+  .cluster-name {
+    display: block;
+    font-size: 12px;
+    color: ${CSS_VARS.lighterBlue};
   }
 `;
 
@@ -333,7 +342,11 @@ class PipelineNewPage extends React.Component {
     if (_.isEmpty(pipelines)) return null;
 
     const pipelineId = _.get(this, 'props.match.params.pipelineId', null);
-    const { name: pipelineTitle, status: pipelineStatus } = pipelines;
+    const {
+      name: pipelineTitle,
+      status: pipelineStatus,
+      workerClusterName,
+    } = pipelines;
 
     const isPipelineRunning = pipelineStatus === 'Running' ? true : false;
 
@@ -377,19 +390,29 @@ class PipelineNewPage extends React.Component {
                 </Heading2>
 
                 <Box>
-                  <Heading3>Operate</Heading3>
-                  <StartBtn
-                    onClick={this.handlePipelineStartClick}
-                    data-testid="start-btn"
-                  >
-                    <i className="fa fa-play-circle" />
-                  </StartBtn>
-                  <StopBtn
-                    onClick={this.handlePipelineStopClick}
-                    data-testid="stop-btn"
-                  >
-                    <i className="fa fa-stop-circle" />
-                  </StopBtn>
+                  <Operate>
+                    <div className="actions">
+                      <Heading3>Operate</Heading3>
+
+                      <div className="action-btns">
+                        <button
+                          onClick={this.handlePipelineStartClick}
+                          data-testid="start-btn"
+                        >
+                          <i className="far fa-play-circle" />
+                        </button>
+                        <button
+                          onClick={this.handlePipelineStopClick}
+                          data-testid="stop-btn"
+                        >
+                          <i className="far fa-stop-circle" />
+                        </button>
+                      </div>
+                    </div>
+                    <span className="cluster-name">
+                      This pipeline is running on: {workerClusterName}
+                    </span>
+                  </Operate>
                 </Box>
 
                 <Route
