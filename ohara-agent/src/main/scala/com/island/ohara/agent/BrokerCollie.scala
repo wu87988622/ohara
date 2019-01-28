@@ -27,9 +27,23 @@ import scala.concurrent.Future
 
 trait BrokerCollie extends Collie[BrokerClusterInfo] {
   def creator(): BrokerCollie.ClusterCreator
+
+  /**
+    * Create a topic admin according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterName target cluster
+    * @return cluster info and topic admin
+    */
   def topicAdmin(clusterName: String): Future[(BrokerClusterInfo, TopicAdmin)] = cluster(clusterName).map {
-    case (c, _) => (c, TopicAdmin(c.connectionProps))
+    case (c, _) => (c, topicAdmin(c))
   }
+
+  /**
+    * Create a topic admin according to passed cluster.
+    * @param cluster target cluster
+    * @return topic admin
+    */
+  def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin = TopicAdmin(cluster.connectionProps)
 }
 
 object BrokerCollie {

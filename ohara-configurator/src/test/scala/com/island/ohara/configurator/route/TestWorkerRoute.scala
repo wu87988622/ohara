@@ -243,8 +243,25 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = Await.result(access.add(request), 30 seconds)
     assert(request, cluster)
 
-    Await.result(access.addNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
-      nodeNames = cluster.nodeNames :+ nodeNames.last)
+    Await.result(access.addNode(cluster.name, nodeNames.last), 30 seconds) shouldBe
+      WorkerClusterInfo(
+        name = cluster.name,
+        imageName = cluster.imageName,
+        brokerClusterName = cluster.brokerClusterName,
+        clientPort = cluster.clientPort,
+        groupId = cluster.groupId,
+        statusTopicName = cluster.statusTopicName,
+        statusTopicPartitions = cluster.statusTopicPartitions,
+        statusTopicReplications = cluster.statusTopicReplications,
+        configTopicName = cluster.configTopicName,
+        configTopicPartitions = cluster.configTopicPartitions,
+        configTopicReplications = cluster.configTopicReplications,
+        offsetTopicName = cluster.offsetTopicName,
+        offsetTopicPartitions = cluster.offsetTopicPartitions,
+        offsetTopicReplications = cluster.offsetTopicReplications,
+        jarNames = cluster.jarNames,
+        nodeNames = cluster.nodeNames :+ nodeNames.last
+      )
   }
   @Test
   def testRemoveNode(): Unit = {
@@ -259,8 +276,24 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = Await.result(access.add(request), 30 seconds)
     assert(request, cluster)
 
-    Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
-      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last))
+    Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe WorkerClusterInfo(
+      name = cluster.name,
+      imageName = cluster.imageName,
+      brokerClusterName = cluster.brokerClusterName,
+      clientPort = cluster.clientPort,
+      groupId = cluster.groupId,
+      statusTopicName = cluster.statusTopicName,
+      statusTopicPartitions = cluster.statusTopicPartitions,
+      statusTopicReplications = cluster.statusTopicReplications,
+      configTopicName = cluster.configTopicName,
+      configTopicPartitions = cluster.configTopicPartitions,
+      configTopicReplications = cluster.configTopicReplications,
+      offsetTopicName = cluster.offsetTopicName,
+      offsetTopicPartitions = cluster.offsetTopicPartitions,
+      offsetTopicReplications = cluster.offsetTopicReplications,
+      jarNames = cluster.jarNames,
+      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
+    )
   }
 
   @Test

@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 object BrokerApi {
   val BROKER_PREFIX_PATH: String = "brokers"
@@ -45,19 +45,59 @@ object BrokerApi {
 
   implicit val BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[BrokerClusterCreationRequest] =
     jsonFormat5(BrokerClusterCreationRequest)
-  final case class BrokerClusterInfo(name: String,
-                                     imageName: String,
-                                     zookeeperClusterName: String,
-                                     clientPort: Int,
-                                     nodeNames: Seq[String])
-      extends ClusterInfo {
 
-    /**
-      * Our client to broker and worker accept the connection props:host:port,host2:port2
-      */
+  /**
+    * We need to fake cluster info in fake mode so we extract a layer to open the door to fake broker cluster.
+    */
+  trait BrokerClusterInfo extends ClusterInfo {
+    def zookeeperClusterName: String
+    def clientPort: Int
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
   }
-  implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] = jsonFormat5(BrokerClusterInfo)
+
+  implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] =
+    new RootJsonFormat[BrokerClusterInfo] {
+      override def read(json: JsValue): BrokerClusterInfo = BROKER_CLUSTER_INFO_IMPL_JSON_FORMAT.read(json)
+
+      override def write(obj: BrokerClusterInfo): JsValue = BROKER_CLUSTER_INFO_IMPL_JSON_FORMAT.write(
+        toCaseClass(obj)
+      )
+    }
+
+  private[this] def toCaseClass(obj: BrokerClusterInfo): BrokerClusterInfoImpl = obj match {
+    case _: BrokerClusterInfoImpl => obj.asInstanceOf[BrokerClusterInfoImpl]
+    case _ =>
+      BrokerClusterInfoImpl(
+        name = obj.name,
+        imageName = obj.imageName,
+        zookeeperClusterName = obj.zookeeperClusterName,
+        clientPort = obj.clientPort,
+        nodeNames = obj.nodeNames
+      )
+  }
+
+  object BrokerClusterInfo {
+    def apply(name: String,
+              imageName: String,
+              zookeeperClusterName: String,
+              clientPort: Int,
+              nodeNames: Seq[String]): BrokerClusterInfo = BrokerClusterInfoImpl(
+      name = name,
+      imageName = imageName,
+      zookeeperClusterName = zookeeperClusterName,
+      clientPort = clientPort,
+      nodeNames = nodeNames,
+    )
+  }
+
+  private[this] case class BrokerClusterInfoImpl(name: String,
+                                                 imageName: String,
+                                                 zookeeperClusterName: String,
+                                                 clientPort: Int,
+                                                 nodeNames: Seq[String])
+      extends BrokerClusterInfo
+  private[this] implicit val BROKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[BrokerClusterInfoImpl] = jsonFormat5(
+    BrokerClusterInfoImpl)
 
   def access(): ClusterAccess[BrokerClusterCreationRequest, BrokerClusterInfo] =
     new ClusterAccess[BrokerClusterCreationRequest, BrokerClusterInfo](BROKER_PREFIX_PATH)

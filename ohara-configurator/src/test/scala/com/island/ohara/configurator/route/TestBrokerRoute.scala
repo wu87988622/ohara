@@ -236,8 +236,13 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = Await.result(access.add(request), 30 seconds)
     assert(request, cluster)
 
-    Await.result(access.addNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
-      nodeNames = cluster.nodeNames :+ nodeNames.last)
+    Await.result(access.addNode(cluster.name, nodeNames.last), 30 seconds) shouldBe BrokerClusterInfo(
+      name = cluster.name,
+      imageName = cluster.imageName,
+      clientPort = cluster.clientPort,
+      zookeeperClusterName = cluster.zookeeperClusterName,
+      nodeNames = cluster.nodeNames :+ nodeNames.last
+    )
   }
   @Test
   def testRemoveNode(): Unit = {
@@ -251,8 +256,13 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = Await.result(access.add(request), 30 seconds)
     assert(request, cluster)
 
-    Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe cluster.copy(
-      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last))
+    Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe BrokerClusterInfo(
+      name = cluster.name,
+      imageName = cluster.imageName,
+      clientPort = cluster.clientPort,
+      zookeeperClusterName = cluster.zookeeperClusterName,
+      nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
+    )
   }
 
   @Test

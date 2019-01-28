@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 object WorkerApi {
   val WORKER_PREFIX_PATH: String = "workers"
@@ -48,30 +48,117 @@ object WorkerApi {
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
     jsonFormat6(WorkerClusterCreationRequest)
 
-  final case class WorkerClusterInfo(name: String,
-                                     imageName: String,
-                                     brokerClusterName: String,
-                                     clientPort: Int,
-                                     groupId: String,
-                                     statusTopicName: String,
-                                     statusTopicPartitions: Int,
-                                     statusTopicReplications: Short,
-                                     configTopicName: String,
-                                     configTopicPartitions: Int,
-                                     configTopicReplications: Short,
-                                     offsetTopicName: String,
-                                     offsetTopicPartitions: Int,
-                                     offsetTopicReplications: Short,
-                                     jarNames: Seq[String],
-                                     nodeNames: Seq[String])
-      extends ClusterInfo {
+  /**
+    * We need to fake cluster info in fake mode so we extract a layer to open the door to fake worker cluster.
+    */
+  trait WorkerClusterInfo extends ClusterInfo {
+    def brokerClusterName: String
+    def clientPort: Int
+    def groupId: String
+    def statusTopicName: String
+    def statusTopicPartitions: Int
+    def statusTopicReplications: Short
+    def configTopicName: String
+    def configTopicPartitions: Int
+    def configTopicReplications: Short
+    def offsetTopicName: String
+    def offsetTopicPartitions: Int
+    def offsetTopicReplications: Short
+    def jarNames: Seq[String]
 
     /**
       * Our client to broker and worker accept the connection props:host:port,host2:port2
       */
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
   }
-  implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[WorkerClusterInfo] = jsonFormat16(WorkerClusterInfo)
+
+  private[this] def toCaseClass(obj: WorkerClusterInfo): WorkerClusterInfoImpl = obj match {
+    case _: WorkerClusterInfoImpl => obj.asInstanceOf[WorkerClusterInfoImpl]
+    case _ =>
+      WorkerClusterInfoImpl(
+        name = obj.name,
+        imageName = obj.imageName,
+        brokerClusterName = obj.brokerClusterName,
+        clientPort = obj.clientPort,
+        groupId = obj.groupId,
+        statusTopicName = obj.statusTopicName,
+        statusTopicPartitions = obj.statusTopicPartitions,
+        statusTopicReplications = obj.statusTopicReplications,
+        configTopicName = obj.configTopicName,
+        configTopicPartitions = obj.configTopicPartitions,
+        configTopicReplications = obj.configTopicReplications,
+        offsetTopicName = obj.offsetTopicName,
+        offsetTopicPartitions = obj.offsetTopicPartitions,
+        offsetTopicReplications = obj.offsetTopicReplications,
+        jarNames = obj.jarNames,
+        nodeNames = obj.nodeNames
+      )
+  }
+
+  object WorkerClusterInfo {
+    def apply(name: String,
+              imageName: String,
+              brokerClusterName: String,
+              clientPort: Int,
+              groupId: String,
+              statusTopicName: String,
+              statusTopicPartitions: Int,
+              statusTopicReplications: Short,
+              configTopicName: String,
+              configTopicPartitions: Int,
+              configTopicReplications: Short,
+              offsetTopicName: String,
+              offsetTopicPartitions: Int,
+              offsetTopicReplications: Short,
+              jarNames: Seq[String],
+              nodeNames: Seq[String]): WorkerClusterInfo = WorkerClusterInfoImpl(
+      name = name,
+      imageName = imageName,
+      brokerClusterName = brokerClusterName,
+      clientPort = clientPort,
+      groupId = groupId,
+      statusTopicName = statusTopicName,
+      statusTopicPartitions = statusTopicPartitions,
+      statusTopicReplications = statusTopicReplications,
+      configTopicName = configTopicName,
+      configTopicPartitions = configTopicPartitions,
+      configTopicReplications = configTopicReplications,
+      offsetTopicName = offsetTopicName,
+      offsetTopicPartitions = offsetTopicPartitions,
+      offsetTopicReplications = offsetTopicReplications,
+      jarNames = jarNames,
+      nodeNames = nodeNames
+    )
+  }
+
+  implicit val WORKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[WorkerClusterInfo] =
+    new RootJsonFormat[WorkerClusterInfo] {
+      override def read(json: JsValue): WorkerClusterInfo = WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT.read(json)
+
+      override def write(obj: WorkerClusterInfo): JsValue = WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT.write(
+        toCaseClass(obj)
+      )
+    }
+
+  private[this] case class WorkerClusterInfoImpl(name: String,
+                                                 imageName: String,
+                                                 brokerClusterName: String,
+                                                 clientPort: Int,
+                                                 groupId: String,
+                                                 statusTopicName: String,
+                                                 statusTopicPartitions: Int,
+                                                 statusTopicReplications: Short,
+                                                 configTopicName: String,
+                                                 configTopicPartitions: Int,
+                                                 configTopicReplications: Short,
+                                                 offsetTopicName: String,
+                                                 offsetTopicPartitions: Int,
+                                                 offsetTopicReplications: Short,
+                                                 jarNames: Seq[String],
+                                                 nodeNames: Seq[String])
+      extends WorkerClusterInfo
+  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat16(
+    WorkerClusterInfoImpl)
 
   def access(): ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] =
     new ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo](WORKER_PREFIX_PATH)

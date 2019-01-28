@@ -33,34 +33,38 @@ object CollieUtils {
 
   private[route] def topicAdmin[T](clusterName: Option[String])(
     implicit brokerCollie: BrokerCollie): Future[(BrokerClusterInfo, TopicAdmin)] = clusterName
-    .map(Future.successful)
-    .getOrElse(brokerCollie.clusters().map { clusters =>
-      clusters.size match {
-        case 0 =>
-          throw new IllegalArgumentException(
-            s"we can't use default zookeeper cluster since there is no zookeeper cluster")
-        case 1 => clusters.keys.head.name
-        case _ =>
-          throw new IllegalArgumentException(
-            s"we can't use default zookeeper cluster since there are too many zookeeper cluster:${clusters.keys.map(_.name).mkString(",")}")
+    .map(brokerCollie.topicAdmin)
+    .getOrElse(brokerCollie
+      .clusters()
+      .map { clusters =>
+        clusters.size match {
+          case 0 =>
+            throw new IllegalArgumentException(
+              s"we can't use default zookeeper cluster since there is no zookeeper cluster")
+          case 1 => clusters.keys.head
+          case _ =>
+            throw new IllegalArgumentException(
+              s"we can't use default zookeeper cluster since there are too many zookeeper cluster:${clusters.keys.map(_.name).mkString(",")}")
+        }
       }
-    })
-    .flatMap(brokerCollie.topicAdmin)
+      .map(c => (c, brokerCollie.topicAdmin(c))))
 
   private[route] def workerClient[T](clusterName: Option[String])(
     implicit workerCollie: WorkerCollie): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
-    .map(Future.successful)
-    .getOrElse(workerCollie.clusters().map { clusters =>
-      clusters.size match {
-        case 0 =>
-          throw new IllegalArgumentException(s"we can't use default broker cluster since there is no broker cluster")
-        case 1 => clusters.keys.head.name
-        case _ =>
-          throw new IllegalArgumentException(
-            s"we can't use default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
+    .map(workerCollie.workerClient)
+    .getOrElse(workerCollie
+      .clusters()
+      .map { clusters =>
+        clusters.size match {
+          case 0 =>
+            throw new IllegalArgumentException(s"we can't use default broker cluster since there is no broker cluster")
+          case 1 => clusters.keys.head
+          case _ =>
+            throw new IllegalArgumentException(
+              s"we can't use default broker cluster since there are too many broker cluster:${clusters.keys.map(_.name).mkString(",")}")
+        }
       }
-    })
-    .flatMap(workerCollie.createClient)
+      .map(c => (c, workerCollie.workerClient(c))))
 
   private[route] def both[T](wkClusterName: Option[String])(
     implicit brokerCollie: BrokerCollie,

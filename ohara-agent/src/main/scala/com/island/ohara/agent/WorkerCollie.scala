@@ -27,9 +27,23 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 trait WorkerCollie extends Collie[WorkerClusterInfo] {
   def creator(): WorkerCollie.ClusterCreator
-  def createClient(clusterName: String): Future[(WorkerClusterInfo, WorkerClient)] = cluster(clusterName).map {
-    case (c, _) => (c, WorkerClient(c.connectionProps))
+
+  /**
+    * Create a worker client according to passed cluster name.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterName target cluster
+    * @return cluster info and client
+    */
+  def workerClient(clusterName: String): Future[(WorkerClusterInfo, WorkerClient)] = cluster(clusterName).map {
+    case (c, _) => (c, workerClient(c))
   }
+
+  /**
+    * Create a worker client according to passed cluster.
+    * @param cluster target cluster
+    * @return worker client
+    */
+  def workerClient(cluster: WorkerClusterInfo): WorkerClient = WorkerClient(cluster.connectionProps)
 }
 
 object WorkerCollie {
