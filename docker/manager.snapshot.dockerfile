@@ -20,7 +20,7 @@ ARG BRANCH="master"
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone --single-branch -b $BRANCH $REPO /testpatch/ohara
-RUN gradle clean build -x test -PskipManager
+RUN gradle clean build -x test
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
