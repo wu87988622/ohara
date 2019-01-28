@@ -62,39 +62,38 @@ class TestControlSink extends WithBrokerWorker with Matchers {
     val sink = result(access.add(request))
 
     // test idempotent start
-    (0 until 3).foreach(_ => Await.result(access.start(sink.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
+    (0 until 3).foreach(_ => Await.result(access.start(sink.id), 30 seconds).state.get shouldBe ConnectorState.RUNNING)
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
-
       CommonUtil.await(() =>
-                         try workerClient.exist(sink.id)
+                         try if (result(workerClient.exist(sink.id))) true else false
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil
-        .await(() => workerClient.status(sink.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
+                       Duration.ofSeconds(20))
       result(access.get(sink.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ => Await.result(access.pause(sink.id), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
-      CommonUtil
-        .await(() => workerClient.status(sink.id).connector.state == ConnectorState.PAUSED, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.PAUSED,
+                       Duration.ofSeconds(20))
       result(access.get(sink.id)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ =>
         Await.result(access.resume(sink.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
-      CommonUtil
-        .await(() => workerClient.status(sink.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
+                       Duration.ofSeconds(20))
       result(access.get(sink.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => Await.result(access.stop(sink.id), 10 seconds))
-      CommonUtil.await(() => workerClient.nonExist(sink.id), Duration.ofSeconds(20))
+      CommonUtil.await(() => if (result(workerClient.nonExist(sink.id))) true else false, Duration.ofSeconds(20))
       result(access.get(sink.id)).state shouldBe None
     } finally {
-      if (workerClient.exist(sink.id)) workerClient.delete(sink.id)
+      if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
     }
   }
 
@@ -120,23 +119,23 @@ class TestControlSink extends WithBrokerWorker with Matchers {
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try workerClient.exist(sink.id)
+                         try if (result(workerClient.exist(sink.id))) true else false
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil
-        .await(() => workerClient.status(sink.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
+                       Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(access.update(sink.id, request.copy(numberOfTasks = 2)))
       an[IllegalArgumentException] should be thrownBy result(access.delete(sink.id))
 
       // test stop. the connector should be removed
       Await.result(access.stop(sink.id), 10 seconds)
-      CommonUtil.await(() => workerClient.nonExist(sink.id), Duration.ofSeconds(20))
+      CommonUtil.await(() => if (result(workerClient.nonExist(sink.id))) true else false, Duration.ofSeconds(20))
       result(access.get(sink.id)).state shouldBe None
     } finally {
-      if (workerClient.exist(sink.id)) workerClient.delete(sink.id)
+      if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
     }
   }
 

@@ -36,10 +36,9 @@ class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val ftpServer = testUtil.ftpServer
   private[this] val rdb = testUtil.dataBase
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
-
   @Before
   def setup(): Unit = {
-    workerClient.plugins().exists(_.className == classOf[Validator].getName) shouldBe true
+    Await.result(workerClient.plugins(), 10 seconds).exists(_.className == classOf[Validator].getName) shouldBe true
   }
 
   private[this] def evaluate(f: Future[Seq[ValidationReport]]): Unit = {

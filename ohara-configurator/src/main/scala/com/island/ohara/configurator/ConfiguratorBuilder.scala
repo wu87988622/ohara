@@ -35,7 +35,7 @@ import com.island.ohara.client.kafka.WorkerJson.{
   Plugin,
   TaskStatus
 }
-import com.island.ohara.client.kafka.{ConnectorCreator, TopicAdmin, WorkerClient}
+import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
@@ -251,52 +251,49 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   private[this] val cachedConnectors = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, ConnectorState]()
 
-  override def connectorCreator(): ConnectorCreator = request => {
+  override def connectorCreator(): WorkerClient.Creator = request => {
     if (cachedConnectors.contains(request.name))
-      throw new IllegalStateException(s"the connector:${request.name} exists!")
+      Future.failed(new IllegalStateException(s"the connector:${request.name} exists!"))
     else {
       cachedConnectors.put(request.name, request.config)
       cachedConnectorsState.put(request.name, ConnectorState.RUNNING)
-      CreateConnectorResponse(request.name, request.config, Seq.empty, "source")
+      Future.successful(CreateConnectorResponse(request.name, request.config, Seq.empty, "source"))
     }
   }
 
-  override def delete(name: String): Unit =
-    try if (cachedConnectors.remove(name) == null)
-      throw new IllegalStateException(s"the connector:$name doesn't exist!")
-    finally cachedConnectorsState.remove(name)
+  override def delete(name: String): Future[Unit] = try if (cachedConnectors.remove(name) == null)
+    Future.failed(new IllegalStateException(s"the connector:$name doesn't exist!"))
+  else Future.successful(())
+  finally cachedConnectorsState.remove(name)
   import scala.collection.JavaConverters._
   // TODO; does this work? by chia
-  override def plugins(): Seq[Plugin] = cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq
-  override def activeConnectors(): Seq[String] = cachedConnectors.keys.asScala.toSeq
+  override def plugins(): Future[Seq[Plugin]] =
+    Future.successful(cachedConnectors.keys.asScala.map(Plugin(_, "unknown", "unknown")).toSeq)
+  override def activeConnectors(): Future[Seq[String]] = Future.successful(cachedConnectors.keys.asScala.toSeq)
   override def connectionProps: String = "Unknown"
-  override def status(name: String): ConnectorInfo = {
-    checkExist(name)
-    ConnectorInfo(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty)
-  }
+  override def status(name: String): Future[ConnectorInfo] =
+    if (!cachedConnectors.containsKey(name)) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
+    else
+      Future.successful(
+        ConnectorInfo(name, ConnectorStatus(cachedConnectorsState.get(name), "fake id", None), Seq.empty))
 
-  override def config(name: String): ConnectorConfig = {
+  override def config(name: String): Future[ConnectorConfig] = {
     val map = cachedConnectors.get(name)
-    if (map == null) throw new IllegalArgumentException(s"$name doesn't exist")
-    map.toJson.convertTo[ConnectorConfig]
+    if (map == null) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
+    else Future.successful(map.toJson.convertTo[ConnectorConfig])
   }
 
-  override def taskStatus(name: String, id: Int): TaskStatus = {
-    checkExist(name)
-    TaskStatus(0, cachedConnectorsState.get(name), "worker_id", None)
-  }
-  override def pause(name: String): Unit = {
-    checkExist(name)
-    cachedConnectorsState.put(name, ConnectorState.PAUSED)
-  }
+  override def taskStatus(name: String, id: Int): Future[TaskStatus] =
+    if (!cachedConnectors.containsKey(name)) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
+    else Future.successful(TaskStatus(0, cachedConnectorsState.get(name), "worker_id", None))
 
-  override def resume(name: String): Unit = {
-    checkExist(name)
-    cachedConnectorsState.put(name, ConnectorState.RUNNING)
-  }
+  override def pause(name: String): Future[Unit] =
+    if (!cachedConnectors.containsKey(name)) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
+    else Future.successful(cachedConnectorsState.put(name, ConnectorState.PAUSED))
 
-  private[this] def checkExist(name: String): Unit =
-    if (!cachedConnectors.containsKey(name)) throw new IllegalArgumentException(s"$name doesn't exist")
+  override def resume(name: String): Future[Unit] =
+    if (!cachedConnectors.containsKey(name)) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
+    else Future.successful(cachedConnectorsState.put(name, ConnectorState.RUNNING))
 }
 
 private[this] class FakeTopicAdmin extends TopicAdmin {
@@ -323,7 +320,7 @@ private[this] class FakeTopicAdmin extends TopicAdmin {
     cachedTopics.values().asScala.toSeq
   }
 
-  override def creator(): TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications) =>
+  override def creator(): TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications, _) =>
     if (cachedTopics.contains(name)) Future.failed(new IllegalArgumentException(s"$name already exists!"))
     else {
       cachedTopics.put(name, TopicInfo(name, numberOfPartitions, numberOfReplications))

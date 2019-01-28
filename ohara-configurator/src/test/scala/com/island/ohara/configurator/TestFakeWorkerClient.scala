@@ -20,27 +20,31 @@ import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 class TestFakeWorkerClient extends SmallTest with Matchers {
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test
   def testControlConnector(): Unit = {
     val connectorName = methodName
     val topicName = methodName
     val className = methodName
     val fake = new FakeWorkerClient()
-    fake.connectorCreator().name(connectorName).topic(topicName).numberOfTasks(1).connectorClass(className).create()
+    result(
+      fake.connectorCreator().name(connectorName).topic(topicName).numberOfTasks(1).connectorClass(className).create())
 
-    fake.exist(connectorName) shouldBe true
+    result(fake.exist(connectorName)) shouldBe true
 
-    fake.status(connectorName).connector.state shouldBe ConnectorState.RUNNING
+    result(fake.status(connectorName)).connector.state shouldBe ConnectorState.RUNNING
 
-    fake.pause(connectorName)
-    fake.status(connectorName).connector.state shouldBe ConnectorState.PAUSED
+    result(fake.pause(connectorName))
+    result(fake.status(connectorName)).connector.state shouldBe ConnectorState.PAUSED
 
-    fake.resume(connectorName)
-    fake.status(connectorName).connector.state shouldBe ConnectorState.RUNNING
+    result(fake.resume(connectorName))
+    result(fake.status(connectorName)).connector.state shouldBe ConnectorState.RUNNING
 
-    fake.delete(connectorName)
-    fake.exist(connectorName) shouldBe false
+    result(fake.delete(connectorName))
+    result(fake.exist(connectorName)) shouldBe false
   }
 }

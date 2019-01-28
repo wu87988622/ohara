@@ -24,6 +24,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
+import org.apache.kafka.common.config.TopicConfig
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -96,21 +97,28 @@ object TopicAdmin {
 
     override def close(): Unit = Releasable.close(admin)
 
-    override def creator(): Creator = (name: String, numberOfPartitions: Int, numberOfReplications: Short) =>
-      Future {
-        unwrap(
-          () =>
-            admin
-              .createTopics(util.Arrays.asList(new NewTopic(name, numberOfPartitions, numberOfReplications)))
-              .values()
-              .get(name)
-              .get())
-        TopicAdmin.TopicInfo(
-          name = name,
-          numberOfPartitions = numberOfPartitions,
-          numberOfReplications = numberOfReplications
-        )
-    }
+    override def creator(): Creator =
+      (name: String, numberOfPartitions: Int, numberOfReplications: Short, cleanupPolicy: CleanupPolicy) =>
+        Future {
+          unwrap(
+            () =>
+              admin
+                .createTopics(
+                  util.Arrays.asList(new NewTopic(name, numberOfPartitions, numberOfReplications).configs(Map(
+                    TopicConfig.CLEANUP_POLICY_CONFIG -> (cleanupPolicy match {
+                      case CleanupPolicy.COMPACTED => TopicConfig.CLEANUP_POLICY_COMPACT
+                      case _                       => TopicConfig.CLEANUP_POLICY_DELETE
+                    })
+                  ).asJava)))
+                .values()
+                .get(name)
+                .get())
+          TopicAdmin.TopicInfo(
+            name = name,
+            numberOfPartitions = numberOfPartitions,
+            numberOfReplications = numberOfReplications
+          )
+      }
 
     /**
       * list name of topics
@@ -168,6 +176,7 @@ object TopicAdmin {
     private[this] var name: String = _
     private[this] var numberOfPartitions: Int = 1
     private[this] var numberOfReplications: Short = 1
+    private[this] var cleanupPolicy: CleanupPolicy = CleanupPolicy.DELETE
 
     def name(name: String): Creator.this.type = {
       this.name = Objects.requireNonNull(name)
@@ -175,25 +184,33 @@ object TopicAdmin {
     }
 
     @Optional("default is 1")
-    def numberOfPartitions(numberOfPartitions: Int): Creator.this.type = {
+    def numberOfPartitions(numberOfPartitions: Int): Creator = {
       this.numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions)
       this
     }
 
     @Optional("default is 1")
-    def numberOfReplications(numberOfReplications: Short): Creator.this.type = {
+    def numberOfReplications(numberOfReplications: Short): Creator = {
       this.numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications)
+      this
+    }
+
+    @Optional("default is CleanupPolicy.DELETE")
+    def cleanupPolicy(cleanupPolicy: CleanupPolicy): Creator = {
+      this.cleanupPolicy = cleanupPolicy
       this
     }
 
     def create(): Future[TopicAdmin.TopicInfo] = doCreate(
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions),
-      numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications)
+      numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications),
+      cleanupPolicy
     )
 
     protected def doCreate(name: String,
                            numberOfPartitions: Int,
-                           numberOfReplications: Short): Future[TopicAdmin.TopicInfo]
+                           numberOfReplications: Short,
+                           cleanupPolicy: CleanupPolicy): Future[TopicAdmin.TopicInfo]
   }
 }

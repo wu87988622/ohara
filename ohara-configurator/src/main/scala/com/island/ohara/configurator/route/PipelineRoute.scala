@@ -56,15 +56,30 @@ private[configurator] object PipelineRoute {
           .filterNot(_ == UNKNOWN)
           .toSet
           .map(id => store.value[Data](id)))
-      .map {
-        _.map {
-          case data: ConnectorInfo =>
-            val state =
-              if (workerClient.exist(data.id)) Some(workerClient.status(data.id).connector.state)
-              else None
-            ObjectAbstract(data.id, data.name, data.kind, state, ConnectorRoute.errorMessage(state), data.lastModified)
-          case data => ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified)
-        }.toList // NOTED: we have to return a "serializable" list!!!
+      .flatMap { ids =>
+        Future
+          .sequence(ids.map {
+            case data: ConnectorInfo =>
+              workerClient
+                .status(data.id)
+                .map(c => Some(c.connector.state))
+                .recover {
+                  case e: Throwable =>
+                    LOG.error(s"Failed to get stats of connector:${data.id}", e)
+                    None
+                }
+                .map { state =>
+                  ObjectAbstract(data.id,
+                                 data.name,
+                                 data.kind,
+                                 state,
+                                 ConnectorRoute.errorMessage(state),
+                                 data.lastModified)
+                }
+            case data => Future.successful(ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified))
+          })
+          // NOTED: we have to return a "serializable" list!!!
+          .map(_.toList)
       }
 
   /**

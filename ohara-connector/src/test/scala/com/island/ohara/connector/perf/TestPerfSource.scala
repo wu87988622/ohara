@@ -23,6 +23,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestPerfSource extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
@@ -48,16 +49,19 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[PerfSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.toMap)
-      .create()
+    Await.result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[PerfSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.toMap)
+        .create(),
+      10 seconds
+    )
 
     try {
       PerfUtil.checkConnector(testUtil, connectorName)

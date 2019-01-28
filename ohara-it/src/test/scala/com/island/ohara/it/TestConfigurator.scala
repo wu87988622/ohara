@@ -129,7 +129,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       Await.result(connectorAccess.stop(source.id), 10 seconds)
       Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(source.id),
                    10 seconds) shouldBe source
-    } finally if (workerClient.exist(source.id)) workerClient.delete(source.id)
+    } finally if (Await.result(workerClient.exist(source.id), 10 seconds))
+      Await.result(workerClient.delete(source.id), 10 seconds)
 
   }
 
@@ -199,7 +200,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
         Await.result(connectorAccess.stop(sink.id), 10 seconds)
         Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(sink.id),
                      10 seconds) shouldBe sink
-      } finally if (workerClient.exist(sink.id)) workerClient.delete(sink.id)
+      } finally if (Await.result(workerClient.exist(sink.id), 10 seconds))
+        Await.result(workerClient.delete(sink.id), 10 seconds)
     } finally ftpClient.close()
   }
 

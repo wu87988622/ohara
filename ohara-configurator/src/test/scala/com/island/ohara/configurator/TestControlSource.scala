@@ -70,38 +70,36 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try workerClient.exist(source.id)
+                         try if (result(workerClient.exist(source.id))) true else false
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil
-        .await(() => workerClient.status(source.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(source.id)).connector.state == ConnectorState.RUNNING,
+                       Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent pause
       (0 until 3).foreach(_ =>
         Await.result(access.pause(source.id), 10 seconds).state.get shouldBe ConnectorState.PAUSED)
 
-      CommonUtil
-        .await(() => workerClient.status(source.id).connector.state == ConnectorState.PAUSED, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(source.id)).connector.state == ConnectorState.PAUSED,
+                       Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.PAUSED
 
       // test idempotent resume
       (0 until 3).foreach(_ =>
         Await.result(access.resume(source.id), 10 seconds).state.get shouldBe ConnectorState.RUNNING)
-      CommonUtil
-        .await(() => workerClient.status(source.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(source.id)).connector.state == ConnectorState.RUNNING,
+                       Duration.ofSeconds(20))
       result(access.get(source.id)).state.get shouldBe ConnectorState.RUNNING
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => Await.result(access.stop(source.id), 10 seconds))
 
-      CommonUtil.await(() => workerClient.nonExist(source.id), Duration.ofSeconds(20))
+      CommonUtil.await(() => if (result(workerClient.nonExist(source.id))) true else false, Duration.ofSeconds(20))
       result(access.get(source.id)).state shouldBe None
-    } finally {
-      if (workerClient.exist(source.id)) workerClient.delete(source.id)
-    }
+    } finally if (result(workerClient.exist(source.id))) result(workerClient.delete(source.id))
   }
 
   @Test
@@ -126,24 +124,22 @@ class TestControlSource extends WithBrokerWorker with Matchers {
     val workerClient = WorkerClient(testUtil.workersConnProps)
     try {
       CommonUtil.await(() =>
-                         try workerClient.exist(source.id)
+                         try if (result(workerClient.exist(source.id))) true else false
                          catch {
                            case _: Throwable => false
                        },
                        Duration.ofSeconds(30))
-      CommonUtil
-        .await(() => workerClient.status(source.id).connector.state == ConnectorState.RUNNING, Duration.ofSeconds(20))
+      CommonUtil.await(() => result(workerClient.status(source.id)).connector.state == ConnectorState.RUNNING,
+                       Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(access.update(source.id, request.copy(numberOfTasks = 2)))
       an[IllegalArgumentException] should be thrownBy result(access.delete(source.id))
 
       // test stop. the connector should be removed
       Await.result(access.stop(source.id), 10 seconds)
-      CommonUtil.await(() => workerClient.nonExist(source.id), Duration.ofSeconds(20))
+      CommonUtil.await(() => if (result(workerClient.nonExist(source.id))) true else false, Duration.ofSeconds(20))
       result(access.get(source.id)).state shouldBe None
-    } finally {
-      if (workerClient.exist(source.id)) workerClient.delete(source.id)
-    }
+    } finally if (result(workerClient.exist(source.id))) result(workerClient.delete(source.id))
   }
 
   @After

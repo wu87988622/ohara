@@ -15,25 +15,36 @@
  */
 
 package com.island.ohara.client
-import com.island.ohara.client.kafka.{ConnectorCreator, WorkerJson}
+import com.island.ohara.client.kafka.WorkerJson.CreateConnectorResponse
+import com.island.ohara.client.kafka.{WorkerClient, WorkerJson}
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara770 extends SmallTest with Matchers {
 
   @Test
   def configsNameShouldBeRemoved(): Unit = {
-    class DumbConnectorCreator extends ConnectorCreator {
-      override protected def send(request: WorkerJson.CreateConnectorRequest): WorkerJson.CreateConnectorResponse = {
+    class DumbConnectorCreator extends WorkerClient.Creator {
+      override protected def send(
+        request: WorkerJson.CreateConnectorRequest): Future[WorkerJson.CreateConnectorResponse] = Future {
         request.config.get("name") shouldBe None
-        null
+        CreateConnectorResponse(
+          name = "adas",
+          config = Map.empty,
+          tasks = Seq.empty,
+          typeName = "Adasd"
+        )
       }
     }
 
     val creator = new DumbConnectorCreator()
     // this should pass
-    creator.name("abc").connectorClass("asdasd").topic("aaa").config("name", "aa").create()
+    Await.result(creator.name("abc").connectorClass("asdasd").topic("aaa").configs(Map("name" -> "aa")).create(),
+                 10 seconds)
   }
 
 }

@@ -34,8 +34,9 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-
+import scala.concurrent.duration._
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val db = Database.of()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
@@ -98,25 +99,31 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     val hdfsSinkConnectorName: String = "hdfs-sink-connector-it-test"
     val topicName: String = "it-test"
 
-    workerClient
-      .connectorCreator()
-      .name(jdbcSourceConnectorName)
-      .connectorClass(classOf[JDBCSourceConnector])
-      .topic(topicName)
-      .numberOfTasks(1)
-      .configs(jdbcProps.toMap)
-      .disableConverter()
-      .create()
+    Await.result(
+      workerClient
+        .connectorCreator()
+        .name(jdbcSourceConnectorName)
+        .connectorClass(classOf[JDBCSourceConnector])
+        .topic(topicName)
+        .numberOfTasks(1)
+        .configs(jdbcProps.toMap)
+        .disableConverter()
+        .create(),
+      10 seconds
+    )
 
-    workerClient
-      .connectorCreator()
-      .name(hdfsSinkConnectorName)
-      .connectorClass(classOf[HDFSSinkConnector])
-      .topic(topicName)
-      .configs(hdfsProps.toMap)
-      .numberOfTasks(1)
-      .disableConverter()
-      .create()
+    Await.result(
+      workerClient
+        .connectorCreator()
+        .name(hdfsSinkConnectorName)
+        .connectorClass(classOf[HDFSSinkConnector])
+        .topic(topicName)
+        .configs(hdfsProps.toMap)
+        .numberOfTasks(1)
+        .disableConverter()
+        .create(),
+      10 seconds
+    )
 
     try {
       val storage = new HDFSStorage(testUtil.hdfs.fileSystem)

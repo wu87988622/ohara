@@ -29,6 +29,7 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 class TestFtpSource extends With3Brokers3Workers with Matchers {
 
@@ -80,6 +81,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       })
     } finally writer.close()
   }
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Before
   def setup(): Unit = {
@@ -134,16 +137,17 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testDuplicateInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
 
@@ -167,28 +171,29 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       records = pollData(topicName, 10 second)
       records.size shouldBe data.length
 
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testColumnRename(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(
-        Seq(
-          Column.of("name", "newName", DataType.STRING, 1),
-          Column.of("ranking", "newRanking", DataType.INT, 2),
-          Column.of("single", "newSingle", DataType.BOOLEAN, 3)
-        ))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(
+          Seq(
+            Column.of("name", "newName", DataType.STRING, 1),
+            Column.of("ranking", "newRanking", DataType.INT, 2),
+            Column.of("single", "newSingle", DataType.BOOLEAN, 3)
+          ))
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -212,28 +217,29 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row0.cell(2).name shouldBe "newSingle"
       row1.cell(2).value shouldBe rows(1).cell(2).value
 
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testObjectType(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(
-        Seq(
-          Column.of("name", DataType.OBJECT, 1),
-          Column.of("ranking", DataType.INT, 2),
-          Column.of("single", DataType.BOOLEAN, 3)
-        ))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(
+          Seq(
+            Column.of("name", DataType.OBJECT, 1),
+            Column.of("ranking", DataType.INT, 2),
+            Column.of("single", DataType.BOOLEAN, 3)
+          ))
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -251,23 +257,24 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -285,7 +292,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
 
   }
 
@@ -293,15 +300,16 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testNormalCaseWithoutSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -320,24 +328,25 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
       row1.cell(2) shouldBe Cell.of(rows(1).cell(2).name, rows(1).cell(2).value.toString)
 
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testPartialColumns(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      // skip last column
-      .schema(schema.slice(0, schema.length - 1))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        // skip last column
+        .schema(schema.slice(0, schema.length - 1))
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -352,25 +361,25 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.size shouldBe 2
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
-
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testUnmatchedSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      // the name can't be casted to int
-      .schema(Seq(Column.of("name", DataType.INT, 1)))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        // the name can't be casted to int
+        .schema(Seq(Column.of("name", DataType.INT, 1)))
+        .configs(props.toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 1)
@@ -381,23 +390,24 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       // add a file to input again
       setupInput()
       checkFileCount(0, 0, 2)
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testInvalidInput(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(inputFolder = "/abc").toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.copy(inputFolder = "/abc").toMap)
+        .create())
     FtpUtil.assertFailedConnector(testUtil, connectorName)
   }
 
@@ -405,22 +415,23 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def testInvalidSchema(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(
-        Seq(
-          // 0 is invalid
-          Column.of("name", DataType.STRING, 0),
-          Column.of("ranking", DataType.INT, 2),
-          Column.of("single", DataType.BOOLEAN, 3)
-        ))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(
+          Seq(
+            // 0 is invalid
+            Column.of("name", DataType.STRING, 0),
+            Column.of("ranking", DataType.INT, 2),
+            Column.of("single", DataType.BOOLEAN, 3)
+          ))
+        .configs(props.toMap)
+        .create())
     FtpUtil.assertFailedConnector(testUtil, connectorName)
   }
 
@@ -428,16 +439,17 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
     val topicName = methodName
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSource])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(completedFolder = None).toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSource])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.copy(completedFolder = None).toMap)
+        .create())
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 0)
@@ -455,7 +467,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
 
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
 
   }
 

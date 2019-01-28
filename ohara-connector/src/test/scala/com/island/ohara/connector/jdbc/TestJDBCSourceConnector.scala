@@ -29,6 +29,8 @@ import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Test the JDBC Source Connector
@@ -66,15 +68,18 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     val connectorName: String = "JDBC-Source-Connector-Test"
     val topicName: String = "topic-test-1"
 
-    workerClient
-      .connectorCreator()
-      .name(connectorName)
-      .connectorClass(classOf[JDBCSourceConnector])
-      .topic(topicName)
-      .numberOfTasks(1)
-      .configs(props.toMap)
-      .disableConverter()
-      .create()
+    Await.result(
+      workerClient
+        .connectorCreator()
+        .name(connectorName)
+        .connectorClass(classOf[JDBCSourceConnector])
+        .topic(topicName)
+        .numberOfTasks(1)
+        .configs(props.toMap)
+        .disableConverter()
+        .create(),
+      10 seconds
+    )
 
     val consumer =
       Consumer

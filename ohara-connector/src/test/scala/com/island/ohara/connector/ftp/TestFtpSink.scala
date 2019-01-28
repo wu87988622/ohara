@@ -28,7 +28,8 @@ import org.junit.{Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private val TOPIC = "TestFtpSink"
@@ -100,6 +101,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     .user(testUtil.ftpServer.user)
     .password(testUtil.ftpServer.password)
     .build()
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
   @Before
   def setup(): Unit = {
     if (ftpClient.exist(props.output)) {
@@ -124,16 +128,17 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       Column.of("b", DataType.INT, 2),
       Column.of("c", DataType.BOOLEAN, 1)
     )
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(newSchema)
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(newSchema)
+        .configs(props.toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -146,23 +151,24 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(2).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(0).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testHeader(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(needHeader = true).toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.copy(needHeader = true).toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -176,22 +182,23 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testHeaderWithoutSchema(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .configs(props.copy(needHeader = true).toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .configs(props.copy(needHeader = true).toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -205,7 +212,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
@@ -217,16 +224,17 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       Column.of("b", "bb", DataType.INT, 2),
       Column.of("c", "cc", DataType.BOOLEAN, 3)
     )
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.copy(needHeader = true).toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.copy(needHeader = true).toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -240,23 +248,24 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testNormalCase(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .schema(schema)
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        .configs(props.toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -269,22 +278,23 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testNormalCaseWithoutSchema(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .configs(props.toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -297,24 +307,25 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
       items(2) shouldBe data.cell(2).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testPartialColumns(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      // skip last column
-      .schema(schema.slice(0, schema.length - 1))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        // skip last column
+        .schema(schema.slice(0, schema.length - 1))
+        .configs(props.toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
@@ -326,29 +337,30 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       items.length shouldBe data.size - 1
       items(0) shouldBe data.cell(0).value.toString
       items(1) shouldBe data.cell(1).value.toString
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 
   @Test
   def testUnmatchedSchema(): Unit = {
     val topicName = TOPIC
     val connectorName = methodName
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(connectorName)
-      // the name can't be casted to int
-      .schema(Seq(Column.of("name", DataType.INT, 1)))
-      .configs(props.toMap)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        // the name can't be casted to int
+        .schema(Seq(Column.of("name", DataType.INT, 1)))
+        .configs(props.toMap)
+        .create())
 
     try {
       FtpUtil.checkConnector(testUtil, connectorName)
       TimeUnit.SECONDS.sleep(5)
       ftpClient.listFileNames(props.output).size shouldBe 0
-    } finally workerClient.delete(connectorName)
+    } finally result(workerClient.delete(connectorName))
   }
 }

@@ -276,7 +276,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       val workerClient = WorkerClient(s"${workerCluster.nodeNames.head}:${workerCluster.clientPort}")
       CommonUtil.await(
         () =>
-          try workerClient.plugins().nonEmpty
+          try result(workerClient.plugins()).nonEmpty
           catch {
             case e: Throwable =>
               log.info(s"[WORKER] worker cluster:${workerCluster.name} is starting ... retry", e)
@@ -337,7 +337,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
             try {
               val workersProps = s"${freeNodes.head.name}:${newCluster.clientPort}"
               val workerClient = WorkerClient(workersProps)
-              workerClient.plugins().nonEmpty
+              result(workerClient.plugins()).nonEmpty
             } catch {
               case _: Throwable => false
           },

@@ -138,8 +138,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
             val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
             CommonUtil.await(
               () =>
-                try workerClient.plugins().exists(_.className == "com.island.ohara.it.ItConnector")
-                  && workerClient.plugins().exists(_.className == "com.island.ohara.it.ItConnector2")
+                try result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector")
+                  && result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector2")
                 catch {
                   case _: Throwable => false
               },

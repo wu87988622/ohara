@@ -33,13 +33,17 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
   private[this] val schema = Seq(Column.of("cf0", DataType.BOOLEAN, 1))
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
   @Test
   def testTaskConfigs(): Unit = {
     val maxTasks = 5
@@ -74,16 +78,17 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsURLName = HDFS_URL
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    workerClient
-      .connectorCreator()
-      .name(connectorName)
-      .connectorClass(classOf[SimpleHDFSSinkConnector])
-      .topic(topicName)
-      .numberOfTasks(sinkTasks)
-      .disableConverter()
-      .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
-      .schema(schema)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .name(connectorName)
+        .connectorClass(classOf[SimpleHDFSSinkConnector])
+        .topic(topicName)
+        .numberOfTasks(sinkTasks)
+        .disableConverter()
+        .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
+        .schema(schema)
+        .create())
 
     CommonUtil
       .await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
@@ -120,23 +125,24 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    workerClient
-      .connectorCreator()
-      .name(connectorName)
-      .connectorClass(classOf[HDFSSinkConnector])
-      .topic(topicName)
-      .numberOfTasks(sinkTasks)
-      .disableConverter()
-      .configs(Map(
-        flushLineCountName -> flushLineCount,
-        tmpDirName -> tmpDirPath,
-        hdfsURLName -> localURL,
-        hdfsCreatorClassName -> hdfsCreatorClassNameValue,
-        dataDirName -> dataDirPath,
-        isHeader -> "false"
-      ))
-      .schema(schema)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .name(connectorName)
+        .connectorClass(classOf[HDFSSinkConnector])
+        .topic(topicName)
+        .numberOfTasks(sinkTasks)
+        .disableConverter()
+        .configs(Map(
+          flushLineCountName -> flushLineCount,
+          tmpDirName -> tmpDirPath,
+          hdfsURLName -> localURL,
+          hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+          dataDirName -> dataDirPath,
+          isHeader -> "false"
+        ))
+        .schema(schema)
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
@@ -200,23 +206,24 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    workerClient
-      .connectorCreator()
-      .name(connectorName)
-      .connectorClass(classOf[HDFSSinkConnector])
-      .topic(topicName)
-      .numberOfTasks(sinkTasks)
-      .disableConverter()
-      .configs(Map(
-        flushLineCountName -> flushLineCount,
-        tmpDirName -> tmpDirPath,
-        hdfsURLName -> localURL,
-        hdfsCreatorClassName -> hdfsCreatorClassNameValue,
-        needHeader -> "true",
-        dataDirName -> dataDirPath
-      ))
-      .schema(schema)
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .name(connectorName)
+        .connectorClass(classOf[HDFSSinkConnector])
+        .topic(topicName)
+        .numberOfTasks(sinkTasks)
+        .disableConverter()
+        .configs(Map(
+          flushLineCountName -> flushLineCount,
+          tmpDirName -> tmpDirPath,
+          hdfsURLName -> localURL,
+          hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+          needHeader -> "true",
+          dataDirName -> dataDirPath
+        ))
+        .schema(schema)
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
     storage
@@ -281,23 +288,24 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     } finally producer.close()
 
     val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
-    workerClient
-      .connectorCreator()
-      .name(connectorName)
-      .connectorClass(classOf[HDFSSinkConnector])
-      .topic(topicName)
-      .numberOfTasks(sinkTasks)
-      .disableConverter()
-      .configs(Map(
-        flushLineCountName -> flushLineCount,
-        tmpDirName -> tmpDirPath,
-        hdfsURLName -> localURL,
-        hdfsCreatorClassName -> hdfsCreatorClassNameValue,
-        dataDirName -> dataDirPath,
-        isHeader -> "false"
-      ))
-      .schema(Seq(Column.of("cccc", DataType.BOOLEAN, 1)))
-      .create()
+    result(
+      workerClient
+        .connectorCreator()
+        .name(connectorName)
+        .connectorClass(classOf[HDFSSinkConnector])
+        .topic(topicName)
+        .numberOfTasks(sinkTasks)
+        .disableConverter()
+        .configs(Map(
+          flushLineCountName -> flushLineCount,
+          tmpDirName -> tmpDirPath,
+          hdfsURLName -> localURL,
+          hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+          dataDirName -> dataDirPath,
+          isHeader -> "false"
+        ))
+        .schema(Seq(Column.of("cccc", DataType.BOOLEAN, 1)))
+        .create())
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"

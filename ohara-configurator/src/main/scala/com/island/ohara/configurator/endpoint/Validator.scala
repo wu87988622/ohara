@@ -138,57 +138,59 @@ object Validator {
     *
     * @param workerClient connector client
     * @param topicAdmin topic admin
-    * @param config config used to test
+    * @param configs config used to test
     * @param taskCount the number from task. It implies how many worker nodes should be verified
     * @return reports
     */
   private[this] def run(workerClient: WorkerClient,
                         topicAdmin: TopicAdmin,
                         target: String,
-                        config: Map[String, String],
+                        configs: Map[String, String],
                         taskCount: Int): Future[Seq[ValidationReport]] = workerClient match {
     // we expose the fake component...ugly way (TODO) by chia
     case _: FakeWorkerClient =>
       Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtil.hostname, "a fake report", true)))
     case _ =>
-      Future {
-        val requestId: String = CommonUtil.uuid()
-        val validationName = s"Validator-${CommonUtil.uuid()}"
-        workerClient
-          .connectorCreator()
-          .name(validationName)
-          .disableConverter()
-          .connectorClass(classOf[Validator].getName)
-          .numberOfTasks(taskCount)
-          .topic(INTERNAL_TOPIC)
-          .configs(config)
-          .config(REQUEST_ID, requestId)
-          .config(TARGET, target)
-          .create()
-        // TODO: receiving all messages may be expensive...by chia
-        val client = Consumer
-          .builder()
-          .connectionProps(topicAdmin.connectionProps)
-          .offsetFromBegin()
-          .topicName(INTERNAL_TOPIC)
-          .build(Serializer.STRING, Serializer.OBJECT)
-        try client
-          .poll(
-            java.time.Duration.ofNanos(TIMEOUT.toNanos),
-            taskCount,
-            new java.util.function.Function[util.List[Record[String, Object]], util.List[Record[String, Object]]] {
-              override def apply(records: util.List[Record[String, Object]]): util.List[Record[String, Object]] = {
-                records.asScala.filter(requestId == _.key.orElse(null)).asJava
+      val requestId: String = CommonUtil.uuid()
+      val validationName = s"Validator-${CommonUtil.randomString()}"
+      workerClient
+        .connectorCreator()
+        .name(validationName)
+        .disableConverter()
+        .connectorClass(classOf[Validator].getName)
+        .numberOfTasks(taskCount)
+        .topic(INTERNAL_TOPIC)
+        .configs(
+          configs ++ Map(
+            REQUEST_ID -> requestId,
+            TARGET -> target
+          ))
+        .create()
+        .map { _ =>
+          // TODO: receiving all messages may be expensive...by chia
+          val client = Consumer
+            .builder()
+            .connectionProps(topicAdmin.connectionProps)
+            .offsetFromBegin()
+            .topicName(INTERNAL_TOPIC)
+            .build(Serializer.STRING, Serializer.OBJECT)
+          try client
+            .poll(
+              java.time.Duration.ofNanos(TIMEOUT.toNanos),
+              taskCount,
+              new java.util.function.Function[util.List[Record[String, Object]], util.List[Record[String, Object]]] {
+                override def apply(records: util.List[Record[String, Object]]): util.List[Record[String, Object]] = {
+                  records.asScala.filter(requestId == _.key.orElse(null)).asJava
+                }
               }
-            }
-          )
-          .asScala
-          .map(_.value.get match {
-            case report: ValidationReport => report
-            case _                        => throw new IllegalStateException(s"Unknown report")
-          })
-        finally workerClient.delete(validationName)
-      }
+            )
+            .asScala
+            .map(_.value.get match {
+              case report: ValidationReport => report
+              case _                        => throw new IllegalStateException(s"Unknown report")
+            })
+          finally workerClient.delete(validationName)
+        }
   }
 
   val CONFIG_DEF: ConfigDef = new ConfigDef().define(TARGET, Type.STRING, null, Importance.HIGH, "target type")

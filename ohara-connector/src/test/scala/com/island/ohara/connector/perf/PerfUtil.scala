@@ -22,12 +22,15 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.OharaTestUtil
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 object PerfUtil {
   private[this] val TIMEOUT = Duration.ofSeconds(60)
   def assertFailedConnector(testUtil: OharaTestUtil, name: String): Unit = CommonUtil.await(
     () => {
       val client = WorkerClient(testUtil.workersConnProps)
-      try client.status(name).connector.state == ConnectorState.FAILED
+      try Await.result(client.status(name), 10 seconds).connector.state == ConnectorState.FAILED
       catch {
         case _: Throwable => false
       }
@@ -39,14 +42,14 @@ object PerfUtil {
     CommonUtil.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
-        workerClient.activeConnectors().contains(name)
+        Await.result(workerClient.activeConnectors(), 10 seconds).contains(name)
       },
       TIMEOUT
     )
     CommonUtil.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
-        try workerClient.status(name).connector.state == ConnectorState.RUNNING
+        try Await.result(workerClient.status(name), 10 seconds).connector.state == ConnectorState.RUNNING
         catch {
           case _: Throwable => false
         }

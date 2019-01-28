@@ -41,12 +41,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Test;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
+import scala.concurrent.Await;
 
 // TODO: we ought to write this one by scala ... by chia
 public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
@@ -106,17 +108,27 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
   }
 
   private void checkConnector(String name) {
-    CommonUtil.await(() -> workerClient.activeConnectors().contains(name), Duration.ofSeconds(30));
-    CommonUtil.await(() -> workerClient.config(name).topics().nonEmpty(), Duration.ofSeconds(30));
+    CommonUtil.await(
+        () -> result(workerClient.activeConnectors()).contains(name), Duration.ofSeconds(30));
+    CommonUtil.await(
+        () -> result(workerClient.config(name)).topics().nonEmpty(), Duration.ofSeconds(30));
     CommonUtil.await(
         () -> {
           try {
-            return workerClient.status(name).connector().state() == ConnectorState.RUNNING;
+            return result(workerClient.status(name)).connector().state() == ConnectorState.RUNNING;
           } catch (Throwable t) {
             return false;
           }
         },
         Duration.ofSeconds(30));
+  }
+
+  private static <T> T result(scala.concurrent.Future<T> f) {
+    try {
+      return Await.result(f, scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @After
@@ -291,7 +303,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
    * @see WorkerClient
    */
   @Test
-  public void testWorkerClient() {
+  public void testWorkerClient() throws Exception {
     String connectorName = methodName();
     List<String> topics = Arrays.asList(connectorName + "_topic", connectorName + "_topic2");
     String output_topic = connectorName + "_topic_output";
@@ -310,34 +322,30 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
         .configs(toScalaMap(configs))
         .create();
 
-    Seq<String> activeConnectors = workerClient.activeConnectors();
-    assertTrue(activeConnectors.contains(connectorName));
+    CommonUtil.await(
+        () -> result(workerClient.activeConnectors()).contains(connectorName),
+        Duration.ofSeconds(10));
 
-    WorkerJson.ConnectorConfig config = workerClient.config(connectorName);
+    WorkerJson.ConnectorConfig config = result(workerClient.config(connectorName));
     assertEquals(config.topics(), toScalaList(topics));
 
     CommonUtil.await(
-        () -> workerClient.status(connectorName).tasks().size() > 0, Duration.ofSeconds(10));
-    WorkerJson.ConnectorInfo status = workerClient.status(connectorName);
+        () -> result(workerClient.status(connectorName)).tasks().size() > 0,
+        Duration.ofSeconds(10));
+    WorkerJson.ConnectorInfo status = result(workerClient.status(connectorName));
     assertNotNull(status.tasks().head());
 
-    WorkerJson.TaskStatus task = workerClient.taskStatus(connectorName, status.tasks().head().id());
+    WorkerJson.TaskStatus task =
+        result(workerClient.taskStatus(connectorName, status.tasks().head().id()));
     assertNotNull(task);
     assertEquals(task, status.tasks().head());
     assertFalse(task.worker_id().isEmpty());
 
-    workerClient.delete(connectorName);
-    assertFalse(workerClient.activeConnectors().contains(connectorName));
+    result(workerClient.delete(connectorName));
+    assertFalse(result(workerClient.activeConnectors()).contains(connectorName));
   }
 
-  /**
-   * To scala map - befroe Connecter change to scala version
-   *
-   * @param javaMap
-   * @param <K>
-   * @param <V>
-   * @return
-   */
+  /** To scala map - befroe Connecter change to scala version */
   @SuppressWarnings("unchecked")
   private static <K, V> scala.collection.immutable.Map<K, V> toScalaMap(
       java.util.Map<K, V> javaMap) {

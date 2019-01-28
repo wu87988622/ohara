@@ -28,6 +28,9 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+
+import scala.concurrent.duration._
 
 /**
   * ftp csv -> topic -> ftp csv
@@ -92,29 +95,35 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     val sinkName = methodName + "-sink"
     val sourceName = methodName + "-source"
     // start sink
-    workerClient
-      .connectorCreator()
-      .topic(topicName)
-      .connectorClass(classOf[FtpSink])
-      .numberOfTasks(1)
-      .disableConverter()
-      .name(sinkName)
-      .schema(schema)
-      .configs(sinkProps.toMap)
-      .create()
+    Await.result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(sinkName)
+        .schema(schema)
+        .configs(sinkProps.toMap)
+        .create(),
+      10 seconds
+    )
 
     try {
       try {
-        workerClient
-          .connectorCreator()
-          .topic(topicName)
-          .connectorClass(classOf[FtpSource])
-          .numberOfTasks(1)
-          .disableConverter()
-          .name(sourceName)
-          .schema(schema)
-          .configs(sourceProps.toMap)
-          .create()
+        Await.result(
+          workerClient
+            .connectorCreator()
+            .topic(topicName)
+            .connectorClass(classOf[FtpSource])
+            .numberOfTasks(1)
+            .disableConverter()
+            .name(sourceName)
+            .schema(schema)
+            .configs(sourceProps.toMap)
+            .create(),
+          10 seconds
+        )
         CommonUtil.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
         CommonUtil
           .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
