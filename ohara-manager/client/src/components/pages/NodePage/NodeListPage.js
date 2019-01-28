@@ -101,7 +101,7 @@ class NodeListPage extends React.Component {
               <H2>Nodes</H2>
               <s.NewNodeBtn
                 theme={primaryBtn}
-                text="New Node"
+                text="New node"
                 data-testid="new-node"
                 handleClick={() => {
                   this.setState({ activeModal: NODE_NEW_MODAL });

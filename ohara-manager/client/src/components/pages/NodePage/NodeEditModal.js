@@ -16,20 +16,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Field, FormSpy } from 'react-final-form';
 import toastr from 'toastr';
-import { get } from 'lodash';
+import { Form, Field, FormSpy } from 'react-final-form';
 
 import * as _ from 'utils/commonUtils';
 import * as nodeApis from 'apis/nodeApis';
 import * as validateApis from 'apis/validateApis';
+import * as MESSAGES from 'constants/messages';
+import * as s from './Styles';
+import InputField from './InputField';
+import validate from './validate';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { FormGroup, Label } from 'common/Form';
-import * as MESSAGES from 'constants/messages';
-import InputField from './InputField';
-import validate from './validate';
-import * as s from './Styles';
 
 class NodeEditModal extends React.Component {
   static propTypes = {
@@ -46,6 +45,7 @@ class NodeEditModal extends React.Component {
 
   state = {
     isValidConnection: false,
+    isTestBtnWorking: false,
   };
 
   handleModalClose = () => {
@@ -63,26 +63,27 @@ class NodeEditModal extends React.Component {
   };
 
   testConnection = async values => {
-    const { name, port, user, password } = values;
+    const { name: hostname, port, user, password } = values;
+    this.setState({ isTestBtnWorking: true });
     const res = await validateApis.validateNode({
-      hostname: name,
+      hostname,
       port,
       user,
       password,
     });
 
-    const pass = get(res, 'data.result[0].pass', false);
-    this.setState({ isValidConnection: pass });
+    const pass = _.get(res, 'data.result[0].pass', false);
+    this.setState({ isValidConnection: pass, isTestBtnWorking: false });
     if (pass) {
       toastr.success(MESSAGES.TEST_SUCCESS);
     }
   };
 
   render() {
-    const { node } = this.props;
+    const { node, isActive } = this.props;
     if (!node) return null;
 
-    const { isValidConnection } = this.state;
+    const { isValidConnection, isTestBtnWorking } = this.state;
     const { name, port, user, password } = node;
 
     return (
@@ -93,8 +94,8 @@ class NodeEditModal extends React.Component {
         render={({ handleSubmit, form, submitting, invalid, values }) => {
           return (
             <Modal
-              title="Edit Ohara node"
-              isActive={this.props.isActive}
+              title="Edit ohara node"
+              isActive={isActive}
               width="320px"
               handleCancel={this.handleModalClose}
               handleConfirm={handleSubmit}
@@ -158,6 +159,7 @@ class NodeEditModal extends React.Component {
                   <FormGroup data-testid="view-topology">
                     <s.TestConnectionBtn
                       text="Test connection"
+                      isWorking={isTestBtnWorking}
                       data-testid="test-connection-button"
                       handleClick={e => {
                         e.preventDefault();

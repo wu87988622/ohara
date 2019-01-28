@@ -35,17 +35,6 @@ const Layout = styled.div`
     width: 100%;
     min-height: calc(100% - 100px);
 
-    & > div:first-child {
-      flex: 0 0 auto;
-      position: relative;
-      outline: none;
-      overflow: auto;
-      width: auto;
-      margin: 1rem 0;
-      padding: 0 1rem;
-      border-right: 1px solid #aaa;
-    }
-
     & > div:not(:first-child) {
       margin: 1rem 0;
       padding: 0 2rem;

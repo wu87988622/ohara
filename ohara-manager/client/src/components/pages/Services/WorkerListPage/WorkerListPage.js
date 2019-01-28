@@ -58,7 +58,7 @@ class WorkerListPage extends React.Component {
             <H2>Services > Connect</H2>
             <s.NewNodeBtn
               theme={primaryBtn}
-              text="New Cluster"
+              text="New cluster"
               data-testid="new-cluster"
               handleClick={() => {
                 this.setState({ isModalOpen: true });

@@ -16,15 +16,15 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Field } from 'react-final-form';
 import toastr from 'toastr';
+import { Form, Field } from 'react-final-form';
 
 import * as _ from 'utils/commonUtils';
 import * as topicApis from 'apis/topicApis';
+import * as MESSAGES from 'constants/messages';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { FormGroup, Label } from 'common/Form';
-import * as MESSAGES from 'constants/messages';
 import InputField from '../../NodePage/InputField';
 
 class TopicNewModal extends React.Component {
@@ -34,12 +34,18 @@ class TopicNewModal extends React.Component {
     onConfirm: PropTypes.func.isRequired,
   };
 
+  state = {
+    isSaveBtnWorking: false,
+  };
+
   handleClose = () => {
     this.props.onClose();
   };
 
   onSubmit = async (values, form) => {
+    this.setState({ isSaveBtnWorking: true });
     const res = await topicApis.createTopic(values);
+    this.setState({ isSaveBtnWorking: false });
     const isSuccess = _.get(res, 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
@@ -67,6 +73,7 @@ class TopicNewModal extends React.Component {
               handleConfirm={handleSubmit}
               confirmBtnText="Save"
               isConfirmDisabled={submitting || pristine || invalid}
+              isConfirmWorking={this.state.isSaveBtnWorking}
               showActions={true}
             >
               <form onSubmit={handleSubmit}>
