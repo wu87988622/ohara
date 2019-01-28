@@ -408,7 +408,7 @@ class HdfsSink extends React.Component {
     return (
       <Box>
         <TitleWrapper>
-          <H5Wrapper>HDFS connection</H5Wrapper>
+          <H5Wrapper>HDFS sink connector</H5Wrapper>
           <Controller>
             <ControlButton
               onClick={this.handleStartBtnClick}

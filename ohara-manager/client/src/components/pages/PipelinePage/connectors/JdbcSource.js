@@ -423,7 +423,7 @@ class JdbcSource extends React.Component {
       <React.Fragment>
         <Box>
           <TitleWrapper>
-            <H5Wrapper>JDBC connection</H5Wrapper>
+            <H5Wrapper>JDBC source connector</H5Wrapper>
             <Controller>
               <ControlButton
                 onClick={this.handleStartBtnClick}

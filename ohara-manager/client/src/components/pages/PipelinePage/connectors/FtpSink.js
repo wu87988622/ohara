@@ -635,7 +635,7 @@ class FtpSink extends React.Component {
       <React.Fragment>
         <BoxWrapper>
           <TitleWrapper>
-            <H5Wrapper>FTP connection</H5Wrapper>
+            <H5Wrapper>FTP sink connector</H5Wrapper>
             <Controller>
               <ControlButton
                 onClick={this.handleStartBtnClick}

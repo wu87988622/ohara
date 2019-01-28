@@ -51,7 +51,7 @@ describe('<HdfsSink />', () => {
   it('renders <H5 /> ', () => {
     const h5 = wrapper.find('H5');
     expect(h5.length).toBe(1);
-    expect(h5.children().text()).toBe('HDFS connection');
+    expect(h5.children().text()).toBe('HDFS sink connector');
   });
 
   it('renders read from topic <FromGroup>', () => {
