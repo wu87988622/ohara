@@ -16,15 +16,16 @@
 
 package com.island.ohara.agent
 import java.net.URL
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, TimeUnit}
 
 import com.island.ohara.agent.ClusterCollieImpl._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -72,59 +73,69 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
   override def brokerCollie(): BrokerCollie = bkCollie
   override def workerCollie(): WorkerCollie = wkCollie
 
-  private[this] def toZkCluster(clusterName: String, containers: Seq[ContainerInfo]): ClusterInfo = {
+  private[this] def toZkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
     val first = containers.head
-    ZookeeperClusterInfo(
-      name = clusterName,
-      imageName = first.imageName,
-      clientPort = first.environments
-        .get(ZookeeperCollie.CLIENT_PORT_KEY)
-        .map(_.toInt)
-        .getOrElse(ZookeeperCollie.CLIENT_PORT_DEFAULT),
-      peerPort =
-        first.environments.get(ZookeeperCollie.PEER_PORT_KEY).map(_.toInt).getOrElse(ZookeeperCollie.PEER_PORT_DEFAULT),
-      electionPort = first.environments
-        .get(ZookeeperCollie.ELECTION_PORT_KEY)
-        .map(_.toInt)
-        .getOrElse(ZookeeperCollie.ELECTION_PORT_DEFAULT),
-      nodeNames = containers.map(_.nodeName)
-    )
+    Future.successful(
+      ZookeeperClusterInfo(
+        name = clusterName,
+        imageName = first.imageName,
+        clientPort = first.environments
+          .get(ZookeeperCollie.CLIENT_PORT_KEY)
+          .map(_.toInt)
+          .getOrElse(ZookeeperCollie.CLIENT_PORT_DEFAULT),
+        peerPort = first.environments
+          .get(ZookeeperCollie.PEER_PORT_KEY)
+          .map(_.toInt)
+          .getOrElse(ZookeeperCollie.PEER_PORT_DEFAULT),
+        electionPort = first.environments
+          .get(ZookeeperCollie.ELECTION_PORT_KEY)
+          .map(_.toInt)
+          .getOrElse(ZookeeperCollie.ELECTION_PORT_DEFAULT),
+        nodeNames = containers.map(_.nodeName)
+      ))
   }
 
-  private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo]): ClusterInfo =
-    WorkerClusterInfo(
-      name = clusterName,
-      imageName = containers.head.imageName,
-      brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
-      clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
-      groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
-      offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-      offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-      offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-      configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
-      configTopicPartitions = 1,
-      configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-      statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
-      statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-      statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-      jarNames = containers.head
-        .environments(WorkerCollie.PLUGINS_KEY)
-        .split(",")
-        .filter(_.nonEmpty)
-        .map(u => new URL(u).getFile),
-      nodeNames = containers.map(_.nodeName)
-    )
+  private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
+    val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
+    WorkerClient(containers.map(c => s"${c.nodeName}:$port").mkString(",")).plugins().map { plugins =>
+      WorkerClusterInfo(
+        name = clusterName,
+        imageName = containers.head.imageName,
+        brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
+        clientPort = port,
+        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
+        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
+        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
+        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
+        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
+        configTopicPartitions = 1,
+        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
+        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
+        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
+        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
+        jarNames = containers.head
+          .environments(WorkerCollie.PLUGINS_KEY)
+          .split(",")
+          .filter(_.nonEmpty)
+          .map(u => new URL(u).getFile),
+        sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+        sinks = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+        nodeNames = containers.map(_.nodeName)
+      )
+    }
+  }
 
-  private[this] def toBkCluster(clusterName: String, containers: Seq[ContainerInfo]): ClusterInfo = {
+  private[this] def toBkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
     val first = containers.head
-    BrokerClusterInfo(
-      name = clusterName,
-      imageName = first.imageName,
-      zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
-      clientPort =
-        first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
-      nodeNames = containers.map(_.nodeName)
-    )
+    Future.successful(
+      BrokerClusterInfo(
+        name = clusterName,
+        imageName = first.imageName,
+        zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
+        clientPort =
+          first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
+        nodeNames = containers.map(_.nodeName)
+      ))
   }
 
   override def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = {
@@ -136,19 +147,30 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
           Future { clientCache.get(node).containers() }
         }
         .map(_.flatten))
-      .map { allContainers =>
-        def parse(service: Service,
-                  f: (String, Seq[ContainerInfo]) => ClusterInfo): Map[ClusterInfo, Seq[ContainerInfo]] = allContainers
-          .filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER"))
-          .map(container => container.name.split(DIVIDER).head -> container)
-          .groupBy(_._1)
-          .map {
-            case (clusterName, value) => clusterName -> value.map(_._2)
+      .flatMap { allContainers =>
+        def parse(
+          service: Service,
+          f: (String, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future
+          .sequence(
+            allContainers
+              .filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER"))
+              .map(container => container.name.split(DIVIDER).head -> container)
+              .groupBy(_._1)
+              .map {
+                case (clusterName, value) => clusterName -> value.map(_._2)
+              }
+              .map {
+                case (clusterName, containers) => f(clusterName, containers).map(_ -> containers)
+              })
+          .map(_.toMap)
+
+        parse(ZOOKEEPER, toZkCluster).flatMap { zkMap =>
+          parse(BROKER, toBkCluster).flatMap { bkMap =>
+            parse(WORKER, toWkCluster).map { wkMap =>
+              zkMap ++ bkMap ++ wkMap
+            }
           }
-          .map {
-            case (clusterName, containers) => f(clusterName, containers) -> containers
-          }
-        parse(ZOOKEEPER, toZkCluster) ++ parse(BROKER, toBkCluster) ++ parse(WORKER, toWkCluster)
+        }
       }
   }
 
@@ -541,7 +563,7 @@ private object ClusterCollieImpl {
                 throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
             query(brokerClusterName, BROKER).map((existNodes, newNodes, _))
         }
-        .map {
+        .flatMap {
           case (existNodes, newNodes, brokerContainers) =>
             if (brokerContainers.isEmpty)
               throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
@@ -606,24 +628,48 @@ private object ClusterCollieImpl {
               .toSeq
             if (successfulNodeNames.isEmpty)
               throw new IllegalArgumentException(s"failed to create $clusterName on $WORKER")
-            WorkerClusterInfo(
-              name = clusterName,
-              imageName = imageName,
-              brokerClusterName = brokerClusterName,
-              clientPort = clientPort,
-              groupId = groupId,
-              offsetTopicName = offsetTopicName,
-              offsetTopicPartitions = offsetTopicPartitions,
-              offsetTopicReplications = offsetTopicReplications,
-              configTopicName = configTopicName,
-              configTopicPartitions = 1,
-              configTopicReplications = configTopicReplications,
-              statusTopicName = statusTopicName,
-              statusTopicPartitions = statusTopicPartitions,
-              statusTopicReplications = statusTopicReplications,
-              jarNames = jarUrls.map(_.getFile),
-              nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-            )
+            val nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
+            val workerClient = WorkerClient(nodeNames.map(n => s"$n:$clientPort").mkString(","))
+            // It tried to fetch connector information from starting worker cluster
+            // However, it may be too slow to get latest connector information.
+            // We don't throw exception since it is a common case.
+            workerClient
+              .plugins()
+              .recoverWith {
+                case e: Throwable =>
+                  LOG.error(
+                    s"Failed to fetch connectors information of cluster:$nodeNames. Will retry it after 3 seconds",
+                    e)
+                  TimeUnit.SECONDS.sleep(3)
+                  workerClient.plugins().recover {
+                    case _ =>
+                      LOG.error(s"still can't fetch connectors of cluster:$nodeNames. Use empty list instead", e)
+                      Seq.empty
+                  }
+              }
+              .map { plugins =>
+                WorkerClusterInfo(
+                  name = clusterName,
+                  imageName = imageName,
+                  brokerClusterName = brokerClusterName,
+                  clientPort = clientPort,
+                  groupId = groupId,
+                  offsetTopicName = offsetTopicName,
+                  offsetTopicPartitions = offsetTopicPartitions,
+                  offsetTopicReplications = offsetTopicReplications,
+                  configTopicName = configTopicName,
+                  configTopicPartitions = 1,
+                  configTopicReplications = configTopicReplications,
+                  statusTopicName = statusTopicName,
+                  statusTopicPartitions = statusTopicPartitions,
+                  statusTopicReplications = statusTopicReplications,
+                  jarNames = jarUrls.map(_.getFile),
+                  sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+                  sinks = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+                  nodeNames = nodeNames
+                )
+              }
+
       }
 
     override protected def doAddNode(previousCluster: WorkerClusterInfo,

@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
@@ -35,8 +36,31 @@ object InfoApi {
 
   val INFO_PREFIX_PATH: String = "info"
 
-  final case class ConnectorVersion(className: String, version: String, revision: String)
-  implicit val CONNECTOR_VERSION_JSON_FORMAT: RootJsonFormat[ConnectorVersion] = jsonFormat3(ConnectorVersion)
+  final case class ConnectorVersion(className: String, typeName: String, version: String, revision: String)
+  implicit val CONNECTOR_VERSION_JSON_FORMAT: RootJsonFormat[ConnectorVersion] = jsonFormat4(ConnectorVersion)
+
+  /**
+    * ohara's official connectors have "specific" version information so we provide a way to convert it to
+    * our version
+    * @param plugin connector plugin
+    * @return ConnectorVersion
+    */
+  def toConnectorVersion(plugin: Plugin): ConnectorVersion = {
+    val (version, revision) = try {
+      // see com.island.ohara.kafka.connection.Version for the format from "kafka's version"
+      val index = plugin.version.lastIndexOf("_")
+      if (index < 0 || index >= plugin.version.length - 1) (plugin.version, "unknown")
+      else (plugin.version.substring(0, index), plugin.version.substring(index + 1))
+    } catch {
+      case _: Throwable => (plugin.version, "unknown")
+    }
+    ConnectorVersion(
+      className = plugin.className,
+      typeName = plugin.typeName,
+      version = version,
+      revision = revision
+    )
+  }
 
   // TODO: remove the variables having default value since they all are deprecated!!! by chia
   final case class ConfiguratorInfo(brokers: String = "this field is deprecated. Use Brokers APIs instead",

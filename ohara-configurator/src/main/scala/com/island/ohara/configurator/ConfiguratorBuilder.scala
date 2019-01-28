@@ -21,8 +21,9 @@ import java.util.concurrent.ConcurrentHashMap
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -44,7 +45,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class ConfiguratorBuilder {
@@ -132,6 +133,8 @@ class ConfiguratorBuilder {
         nodeNames = Seq(host)
       )
     }
+    val connectorVersions =
+      Await.result(WorkerClient(wkConnectionProps).plugins(), 10 seconds).map(InfoApi.toConnectorVersion)
     val wkCluster = {
       val pair = wkConnectionProps.split(",")
       val host = pair.map(_.split(":").head).head
@@ -152,6 +155,8 @@ class ConfiguratorBuilder {
         offsetTopicPartitions = 1,
         offsetTopicReplications = 1.asInstanceOf[Short],
         jarNames = Seq.empty,
+        sources = connectorVersions.filter(_.typeName.toLowerCase == "source"),
+        sinks = connectorVersions.filter(_.typeName.toLowerCase == "sink"),
         nodeNames = Seq(host)
       )
     }
@@ -221,6 +226,8 @@ class ConfiguratorBuilder {
       offsetTopicPartitions = 1,
       offsetTopicReplications = 1.asInstanceOf[Short],
       jarNames = Seq.empty,
+      sources = Seq.empty,
+      sinks = Seq.empty,
       nodeNames = bkCluster.nodeNames
     )
 
@@ -538,6 +545,8 @@ case class FakeWorkerClusterInfo(name: String,
                                  offsetTopicPartitions: Int,
                                  offsetTopicReplications: Short,
                                  jarNames: Seq[String],
+                                 sources: Seq[ConnectorVersion],
+                                 sinks: Seq[ConnectorVersion],
                                  nodeNames: Seq[String])
     extends WorkerClusterInfo
 
@@ -582,6 +591,8 @@ private[this] class FakeWorkerCollie(wkConnectionProps: String)
           statusTopicPartitions = statusTopicPartitions,
           statusTopicReplications = statusTopicReplications,
           jarNames = Seq.empty,
+          sources = Seq.empty,
+          sinks = Seq.empty,
           nodeNames = nodeNames
         )
         clusterCache.put(clusterName, cluster)
@@ -619,6 +630,8 @@ private[this] class FakeWorkerCollie(wkConnectionProps: String)
           offsetTopicPartitions = previous.offsetTopicPartitions,
           offsetTopicReplications = previous.offsetTopicReplications,
           jarNames = previous.jarNames,
+          sources = Seq.empty,
+          sinks = Seq.empty,
           nodeNames = previous.nodeNames.filterNot(_ == nodeName)
         )
         clusterCache.put(clusterName, newOne)
@@ -649,6 +662,8 @@ private[this] class FakeWorkerCollie(wkConnectionProps: String)
           offsetTopicPartitions = previous.offsetTopicPartitions,
           offsetTopicReplications = previous.offsetTopicReplications,
           jarNames = previous.jarNames,
+          sources = Seq.empty,
+          sinks = Seq.empty,
           nodeNames = previous.nodeNames :+ nodeName
         )
         clusterCache.put(clusterName, newOne)

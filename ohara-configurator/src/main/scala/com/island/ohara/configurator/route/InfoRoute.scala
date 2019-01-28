@@ -19,8 +19,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import com.island.ohara.agent.WorkerCollie
+import com.island.ohara.client.configurator.v0.InfoApi
 import com.island.ohara.client.configurator.v0.InfoApi._
-import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
 import com.island.ohara.common.util.VersionUtil
 
@@ -34,17 +34,6 @@ object InfoRoute extends SprayJsonSupport {
     // TODO: OHARA-1212 should remove "cluster" ... by chia
     path(INFO_PREFIX_PATH | "cluster") {
       get {
-        def toConnectorInfo(plugin: Plugin): ConnectorVersion = {
-          val (version, revision) = try {
-            // see com.island.ohara.kafka.connection.Version for the format from "kafka's version"
-            val index = plugin.version.lastIndexOf("_")
-            if (index < 0 || index >= plugin.version.length - 1) (plugin.version, "unknown")
-            else (plugin.version.substring(0, index), plugin.version.substring(index + 1))
-          } catch {
-            case _: Throwable => (plugin.version, "unknown")
-          }
-          ConnectorVersion(plugin.className, version, revision)
-        }
         import scala.collection.JavaConverters._
         onSuccess(workerCollie.clusters().flatMap { clusters =>
           clusters.size match {
@@ -54,8 +43,8 @@ object InfoRoute extends SprayJsonSupport {
         }) { plugins =>
           complete(
             ConfiguratorInfo(
-              sources = plugins.filter(_.typeName.toLowerCase == "source").map(toConnectorInfo),
-              sinks = plugins.filter(_.typeName.toLowerCase == "sink").map(toConnectorInfo),
+              sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+              sinks = plugins.filter(_.typeName.toLowerCase == "sink").map(InfoApi.toConnectorVersion),
               supportedDatabases = SUPPORTED_DATABASES,
               supportedDataTypes = DataType.all.asScala,
               versionInfo = ConfiguratorVersion(

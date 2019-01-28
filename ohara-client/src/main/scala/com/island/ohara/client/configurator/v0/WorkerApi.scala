@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -65,6 +66,8 @@ object WorkerApi {
     def offsetTopicPartitions: Int
     def offsetTopicReplications: Short
     def jarNames: Seq[String]
+    def sources: Seq[ConnectorVersion]
+    def sinks: Seq[ConnectorVersion]
 
     /**
       * Our client to broker and worker accept the connection props:host:port,host2:port2
@@ -91,6 +94,8 @@ object WorkerApi {
         offsetTopicPartitions = obj.offsetTopicPartitions,
         offsetTopicReplications = obj.offsetTopicReplications,
         jarNames = obj.jarNames,
+        sources = obj.sources,
+        sinks = obj.sinks,
         nodeNames = obj.nodeNames
       )
   }
@@ -110,6 +115,8 @@ object WorkerApi {
               offsetTopicName: String,
               offsetTopicPartitions: Int,
               offsetTopicReplications: Short,
+              sources: Seq[ConnectorVersion],
+              sinks: Seq[ConnectorVersion],
               jarNames: Seq[String],
               nodeNames: Seq[String]): WorkerClusterInfo = WorkerClusterInfoImpl(
       name = name,
@@ -127,6 +134,8 @@ object WorkerApi {
       offsetTopicPartitions = offsetTopicPartitions,
       offsetTopicReplications = offsetTopicReplications,
       jarNames = jarNames,
+      sources = sources,
+      sinks = sinks,
       nodeNames = nodeNames
     )
   }
@@ -155,9 +164,11 @@ object WorkerApi {
                                                  offsetTopicPartitions: Int,
                                                  offsetTopicReplications: Short,
                                                  jarNames: Seq[String],
+                                                 sources: Seq[ConnectorVersion],
+                                                 sinks: Seq[ConnectorVersion],
                                                  nodeNames: Seq[String])
       extends WorkerClusterInfo
-  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat16(
+  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat18(
     WorkerClusterInfoImpl)
 
   def access(): ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] =

@@ -464,6 +464,8 @@ private object K8SClusterCollieImpl {
               statusTopicPartitions = statusTopicPartitions,
               statusTopicReplications = statusTopicReplications,
               jarNames = jarUrls.map(_.getFile),
+              sources = Seq.empty,
+              sinks = Seq.empty,
               nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
             )
       }
@@ -512,6 +514,8 @@ private object K8SClusterCollieImpl {
           .split(",")
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),
+        sources = Seq.empty,
+        sinks = Seq.empty,
         nodeNames = containers.map(_.nodeName)
       )
     }
