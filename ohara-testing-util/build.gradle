@@ -54,13 +54,63 @@ dependencies {
 }
 
 /**
- * run ohara
+ * run ftp server
  */
-task runKafka(type: JavaExec, dependsOn: 'classes') {
-  description 'start a local broker cluster'
+task runFtp(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
-  main = "com.island.ohara.integration.OharaTestUtil"
-  String ttl = 9999 // seconds
-  if(project.hasProperty('ttl')) ttl = "${project.getProperty('ttl')}"
-  args = Arrays.asList("--ttl", ttl)
+  main = "com.island.ohara.integration.FtpServer"
+
+  def inputs = []
+  if(project.hasProperty('user')) {
+    inputs << "--user"
+    inputs << project.getProperty("user")
+  }
+  if(project.hasProperty('password')) {
+    inputs << "--password"
+    inputs << project.getProperty("password")
+  }
+  if(project.hasProperty('controlPort')) {
+    inputs << "--controlPort"
+    inputs << project.getProperty("controlPort")
+  }
+  if(project.hasProperty('dataPorts')) {
+    inputs << "--dataPorts"
+    inputs << project.getProperty("dataPorts")
+  }
+  if(project.hasProperty('ttl')) {
+    inputs << "--ttl"
+    inputs << project.getProperty("ttl")
+  }
+  args = inputs
+}
+
+/**
+ * run database
+ */
+task runDatabase(type: JavaExec, dependsOn: 'classes') {
+  classpath = sourceSets.main.runtimeClasspath
+  main = "com.island.ohara.integration.Database"
+
+  def inputs = []
+  if(project.hasProperty('user')) {
+    inputs << "--user"
+    inputs << project.getProperty("user")
+  }
+  if(project.hasProperty('password')) {
+    inputs << "--password"
+    inputs << project.getProperty("password")
+  }
+  if(project.hasProperty('port')) {
+    inputs << "--port"
+    inputs << project.getProperty("port")
+  }
+  if(project.hasProperty('dbName')) {
+    inputs << "--dbName"
+    inputs << project.getProperty("dbName")
+  }
+  if(project.hasProperty('ttl')) {
+    inputs << "--ttl"
+    inputs << project.getProperty("ttl")
+  }
+  args = inputs
 }

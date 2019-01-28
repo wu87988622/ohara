@@ -20,8 +20,11 @@ import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.UserManager;
@@ -59,7 +62,7 @@ public interface FtpServer extends Releasable {
    *
    * @return data port
    */
-  List<Integer> dataPort();
+  List<Integer> dataPorts();
 
   /** @return true if this ftp server is generated locally. */
   boolean isLocal();
@@ -143,7 +146,7 @@ public interface FtpServer extends Releasable {
       }
 
       @Override
-      public List<Integer> dataPort() {
+      public List<Integer> dataPorts() {
         return availableDataPorts;
       }
 
@@ -209,7 +212,7 @@ public interface FtpServer extends Releasable {
                     }
 
                     @Override
-                    public List<Integer> dataPort() {
+                    public List<Integer> dataPorts() {
                       throw new UnsupportedOperationException(
                           "TODO: can't get data port from actual ftp server");
                     }
@@ -230,5 +233,80 @@ public interface FtpServer extends Releasable {
 
   static String mkPortString(List<Integer> ports) {
     return ports.stream().map(String::valueOf).collect(Collectors.joining(","));
+  }
+
+  String USER = "--user";
+  String PASSWORD = "--password";
+  String CONTROL_PORT = "--controlPort";
+  String DATA_PORTS = "--dataPorts";
+  String TTL = "--ttl";
+  String USAGE =
+      String.join(
+          " ",
+          Arrays.asList(
+              USER, PASSWORD, CONTROL_PORT, DATA_PORTS, "(form: 12345,12346 or 12345-12347)", TTL));
+
+  static void start(String[] args, Consumer<FtpServer> consumer) throws InterruptedException {
+    String user = "user";
+    String password = "password";
+    int controlPort = -1;
+    int[] dataPorts = new int[0];
+    int ttl = Integer.MAX_VALUE;
+    if (args.length % 2 != 0) throw new IllegalArgumentException(USAGE);
+    for (int i = 0; i < args.length; i += 2) {
+      String value = args[i + 1];
+      switch (args[i]) {
+        case USER:
+          user = value;
+          break;
+        case PASSWORD:
+          password = value;
+          break;
+        case CONTROL_PORT:
+          controlPort = Integer.valueOf(value);
+          break;
+        case DATA_PORTS:
+          if (value.contains("-"))
+            dataPorts =
+                IntStream.range(
+                        Integer.valueOf(value.split("-")[0]),
+                        Integer.valueOf(value.split("-")[1]) + 1)
+                    .toArray();
+          else dataPorts = Stream.of(value.split(",")).mapToInt(Integer::valueOf).toArray();
+          break;
+        case TTL:
+          ttl = Integer.valueOf(value);
+          break;
+        default:
+          throw new IllegalArgumentException(USAGE);
+      }
+    }
+    CommonUtil.requirePositiveInt(controlPort, () -> CONTROL_PORT + " is required");
+    if (dataPorts.length == 0) throw new IllegalArgumentException(DATA_PORTS + " is required");
+
+    try (FtpServer ftp = FtpServer.local(user, password, controlPort, dataPorts)) {
+      System.out.println(
+          String.join(
+              " ",
+              Arrays.asList(
+                  "user:",
+                  ftp.user(),
+                  "password:",
+                  ftp.password(),
+                  "hostname:",
+                  ftp.hostname(),
+                  "port:",
+                  String.valueOf(ftp.port()),
+                  "data ports:",
+                  ftp.dataPorts().stream().map(String::valueOf).collect(Collectors.joining(",")),
+                  "absolutePath:",
+                  ftp.absolutePath())));
+      consumer.accept(ftp);
+      TimeUnit.SECONDS.sleep(ttl);
+    }
+  }
+
+  static void main(String[] args) throws InterruptedException {
+    start(args, ftp -> {});
   }
 }

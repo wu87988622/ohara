@@ -34,18 +34,17 @@ services:
   ftp:
     image: oharastream/ohara:backend
     hostname: ftp
-    command: ["com.island.ohara.demo.Ftp", "--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
+    command: ["com.island.ohara.integration.FtpServer", "--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
     ports:
       - 10000:10000
       - 10001:10001
       - 10002:10002
       - 10003:10003
       - 10004:10004
-      - 10005:10005
 
   mysql:
     image: oharastream/ohara:backend
     hostname: mysql
-    command: ["com.island.ohara.demo.MySql", "--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
+    command: ["com.island.ohara.integration.Database", "--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
     ports:
       - 20000:20000

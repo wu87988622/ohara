@@ -24,6 +24,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+@deprecated("embedded services are deprecated. We all should love docker, shouldn't we?", "0.2")
 class TestBackendConfigurator extends LargeTest with Matchers {
 
   @Test

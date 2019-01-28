@@ -18,7 +18,7 @@ package com.island.ohara.demo
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
-
+@deprecated("embedded services are deprecated. We all should love docker, shouldn't we?", "0.2")
 class TestBackendArguments extends SmallTest with Matchers {
 
   @Test

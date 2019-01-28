@@ -19,9 +19,7 @@ package com.island.ohara.integration;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.ReleaseOnce;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.IntStream;
 
 /**
  * This class create a kafka services having 1 zk instance and 1 broker default. Also, this class
@@ -181,54 +179,5 @@ public class OharaTestUtil extends ReleaseOnce {
    */
   public static OharaTestUtil localHDFS() {
     return new OharaTestUtil(null, null, null);
-  }
-
-  private static final String TTL_KEY = "--ttl";
-  private static final String USAGE = "[Usage]" + TTL_KEY;
-
-  public static void main(String args[]) throws InterruptedException {
-    String HELP_KEY = "--help";
-    if (args.length == 1 && args[0].equals(HELP_KEY)) {
-      System.out.println(USAGE);
-      return;
-    }
-    if (args.length % 2 != 0) {
-      throw new IllegalArgumentException(USAGE);
-    }
-
-    AtomicReference<Long> ttl = new AtomicReference<>();
-    ttl.set(9999L);
-    /*args.sliding(2, 2).foreach {
-      case Array(TTL_KEY, value) => ttl = value.toInt
-      case _                     => throw new IllegalArgumentException(USAGE)
-    }*/
-
-    IntStream.range(0, args.length)
-        .forEach(
-            index -> {
-              if (args[index].equals(TTL_KEY)) {
-                ttl.set(Long.parseLong(args[index + 1]));
-              }
-            });
-
-    try (OharaTestUtil util = OharaTestUtil.workers(3)) {
-      System.out.println("wait for the mini kafka cluster");
-      try {
-        TimeUnit.SECONDS.sleep(5);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-      System.out.println(
-          "Succeed to run the mini brokers: "
-              + util.brokers.connectionProps()
-              + " and workers: "
-              + util.workers.connectionProps());
-
-      System.out.println(
-          "enter ctrl+c to terminate the mini broker cluster (or the cluster will be terminated after "
-              + ttl
-              + " seconds");
-      TimeUnit.SECONDS.sleep(ttl.get());
-    }
   }
 }

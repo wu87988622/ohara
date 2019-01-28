@@ -36,6 +36,7 @@ import scala.concurrent.duration._
 /**
   * run a configurator based on 3 brokers and 3 workers.
   */
+@deprecated("embedded services are deprecated. We all should love docker, shouldn't we?", "0.2")
 object Backend {
   final case class Creation(name: String, schema: Seq[RdbColumn])
   implicit val CREATION_JSON_FORMAT: RootJsonFormat[Creation] = jsonFormat2(Creation)
@@ -201,7 +202,7 @@ object Backend {
               ftpServer = FtpServerInformation(
                 hostname = ftpServer.hostname,
                 port = ftpServer.port,
-                dataPort = ftpServer.dataPort().asScala.map(x => x.toInt),
+                dataPort = ftpServer.dataPorts().asScala.map(x => x.toInt),
                 user = ftpServer.user,
                 password = ftpServer.password
               ),

@@ -17,6 +17,13 @@
 package com.island.ohara.integration;
 
 import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.util.CommonUtil;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,7 +50,7 @@ public class TestFtpServer extends MediumTest {
   }
 
   @Test
-  public void testLocalMethod() throws Exception {
+  public void testLocalMethod() {
     String user = "user";
     String password = "password";
     String host = "host";
@@ -64,10 +71,133 @@ public class TestFtpServer extends MediumTest {
   }
 
   @Test
-  public void testRandomPort() throws Exception {
+  public void testRandomPort() {
     int[] dataPorts = {0};
     try (FtpServer ftpServer = FtpServer.local(0, dataPorts)) {
       Assert.assertNotEquals(0, ftpServer.port());
+    }
+  }
+
+  @Test
+  public void testTtl() throws InterruptedException {
+    int ttl = 3;
+    ExecutorService es = Executors.newSingleThreadExecutor();
+    try {
+      es.execute(
+          () -> {
+            try {
+              FtpServer.start(
+                  new String[] {
+                    FtpServer.CONTROL_PORT, String.valueOf(CommonUtil.availablePort()),
+                    FtpServer.DATA_PORTS, String.valueOf(CommonUtil.availablePort()),
+                    FtpServer.TTL, String.valueOf(ttl)
+                  },
+                  ftp -> {});
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          });
+    } finally {
+      es.shutdown();
+      assertTrue(es.awaitTermination(ttl * 2, TimeUnit.SECONDS));
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failWithoutDataPorts() throws InterruptedException {
+    FtpServer.start(
+        new String[] {FtpServer.CONTROL_PORT, String.valueOf(CommonUtil.availablePort())},
+        ftp -> {});
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void failWithoutControlPort() throws InterruptedException {
+    FtpServer.start(
+        new String[] {FtpServer.DATA_PORTS, String.valueOf(CommonUtil.availablePort())}, ftp -> {});
+  }
+
+  @Test
+  public void testInputs() throws InterruptedException {
+    String user = CommonUtil.randomString(5);
+    String password = CommonUtil.randomString(5);
+    int controlPort = CommonUtil.availablePort();
+    List<Integer> dataPorts =
+        IntStream.range(0, 3)
+            .map(i -> CommonUtil.availablePort())
+            .boxed()
+            .collect(Collectors.toList());
+    int ttl = 3;
+    ExecutorService es = Executors.newSingleThreadExecutor();
+    try {
+      es.execute(
+          () -> {
+            try {
+              FtpServer.start(
+                  new String[] {
+                    FtpServer.USER, user,
+                    FtpServer.PASSWORD, password,
+                    FtpServer.CONTROL_PORT, String.valueOf(controlPort),
+                    FtpServer.DATA_PORTS,
+                        dataPorts.stream().map(String::valueOf).collect(Collectors.joining(",")),
+                    FtpServer.TTL, String.valueOf(ttl)
+                  },
+                  ftp -> {
+                    assertEquals(ftp.user(), user);
+                    assertEquals(ftp.password(), password);
+                    assertEquals(ftp.port(), controlPort);
+                    assertEquals(ftp.dataPorts(), dataPorts);
+                  });
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          });
+    } finally {
+      es.shutdown();
+      assertTrue(es.awaitTermination(ttl * 2, TimeUnit.SECONDS));
+    }
+  }
+
+  @Test
+  public void testInputs2() throws InterruptedException {
+    String user = CommonUtil.randomString(5);
+    String password = CommonUtil.randomString(5);
+    int controlPort = CommonUtil.availablePort();
+    int portRange = 2;
+    int p = CommonUtil.availablePort();
+    List<Integer> dataPorts =
+        IntStream.range(p, p + portRange).boxed().collect(Collectors.toList());
+    int ttl = 3;
+    ExecutorService es = Executors.newSingleThreadExecutor();
+    try {
+      es.execute(
+          () -> {
+            try {
+              FtpServer.start(
+                  new String[] {
+                    FtpServer.USER,
+                    user,
+                    FtpServer.PASSWORD,
+                    password,
+                    FtpServer.CONTROL_PORT,
+                    String.valueOf(controlPort),
+                    FtpServer.DATA_PORTS,
+                    p + "-" + (p + portRange),
+                    FtpServer.TTL,
+                    String.valueOf(ttl)
+                  },
+                  ftp -> {
+                    assertEquals(ftp.user(), user);
+                    assertEquals(ftp.password(), password);
+                    assertEquals(ftp.port(), controlPort);
+                    assertEquals(ftp.dataPorts(), dataPorts);
+                  });
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          });
+    } finally {
+      es.shutdown();
+      assertTrue(es.awaitTermination(ttl * 2, TimeUnit.SECONDS));
     }
   }
 }
