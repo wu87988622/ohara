@@ -27,6 +27,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.client.kafka.WorkerJson.{
   ConnectorConfig,
   ConnectorInfo,
@@ -35,7 +36,7 @@ import com.island.ohara.client.kafka.WorkerJson.{
   Plugin,
   TaskStatus
 }
-import com.island.ohara.client.kafka.{ConnectorCreator, WorkerClient}
+import com.island.ohara.client.kafka.{ConnectorCreator, TopicAdmin, WorkerClient}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.{ConnectorState, Serializer}
 import com.island.ohara.common.util.CommonUtil
@@ -357,6 +358,50 @@ private[configurator] class FakeBrokerClient extends BrokerClient {
     new util.ArrayList[TopicDescription](cachedTopics.values())
 }
 
+private[configurator] class FakeTopicAdmin extends TopicAdmin {
+  import scala.collection.JavaConverters._
+
+  override val connectionProps: String = "Unknown"
+
+  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicInfo]()
+
+  override def changePartitions(name: String, numberOfPartitions: Int): Future[TopicInfo] =
+    Option(cachedTopics.get(name))
+      .map(
+        previous =>
+          Future.successful(
+            TopicInfo(
+              name,
+              numberOfPartitions,
+              previous.numberOfReplications
+            )))
+      .getOrElse(Future.failed(new NoSuchElementException(
+        s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}")))
+
+  override def list(): Future[Seq[TopicAdmin.TopicInfo]] = Future.successful {
+    cachedTopics.values().asScala.toSeq
+  }
+
+  override def creator(): TopicAdmin.Creator = (name, numberOfPartitions, numberOfReplications) =>
+    if (cachedTopics.contains(name)) Future.failed(new IllegalArgumentException(s"$name already exists!"))
+    else {
+      cachedTopics.put(name, TopicInfo(name, numberOfPartitions, numberOfReplications))
+      Future.successful(
+        TopicInfo(
+          name,
+          numberOfPartitions,
+          numberOfReplications
+        ))
+  }
+
+  override def close(): Unit = {
+    // do nothing
+  }
+  override def delete(name: String): Future[TopicInfo] = Option(cachedTopics.remove(name))
+    .map(Future.successful)
+    .getOrElse(Future.failed(new NoSuchElementException(s"the topic:$name doesn't exist")))
+}
+
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
@@ -465,12 +510,12 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
   /**
     * fake broker client cache all topics info in-memory so we should keep singleton.
     */
-  private[this] val fakeBrokerClient = new FakeBrokerClient
-  override def createClient(clusterName: String): Future[(BrokerClusterInfo, BrokerClient)] =
+  private[this] val fakeTopicAdmin = new FakeTopicAdmin
+  override def topicAdmin(clusterName: String): Future[(BrokerClusterInfo, TopicAdmin)] =
     Future.successful(
-      if (bkConnectionProps == null) (Some(clusterCache.get(clusterName)).get, fakeBrokerClient)
+      if (bkConnectionProps == null) (Some(clusterCache.get(clusterName)).get, fakeTopicAdmin)
       // embedded mode should have single one cluster ...
-      else (clusterCache.values().iterator().next(), BrokerClient.of(bkConnectionProps)))
+      else (clusterCache.values().iterator().next(), TopicAdmin(bkConnectionProps)))
   override def creator(): BrokerCollie.ClusterCreator =
     (clusterName, imageName, zookeeperClusterName, clientPort, _, nodeNames) =>
       Future.successful {

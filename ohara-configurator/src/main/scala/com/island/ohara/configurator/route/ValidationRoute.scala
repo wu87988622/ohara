@@ -53,23 +53,23 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
         verify = (clusterName, req: HdfsValidationRequest) =>
-          CollieUtils.bothClient(clusterName).flatMap {
-            case (_, brokerClient, _, workerClient) =>
-              Validator.run(workerClient, brokerClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+          CollieUtils.both(clusterName).flatMap {
+            case (_, topicAdmin, _, workerClient) =>
+              Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
         }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (clusterName, req: RdbValidationRequest) =>
-          CollieUtils.bothClient(clusterName).flatMap {
-            case (_, brokerClient, _, workerClient) =>
-              Validator.run(workerClient, brokerClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+          CollieUtils.both(clusterName).flatMap {
+            case (_, topicAdmin, _, workerClient) =>
+              Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
         }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (clusterName, req: FtpValidationRequest) =>
-          CollieUtils.bothClient(clusterName).flatMap {
-            case (_, brokerClient, _, workerClient) =>
-              Validator.run(workerClient, brokerClient, req, DEFAULT_NUMBER_OF_VALIDATION)
+          CollieUtils.both(clusterName).flatMap {
+            case (_, topicAdmin, _, workerClient) =>
+              Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
         }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,

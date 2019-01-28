@@ -22,10 +22,9 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.integration.With3Brokers3Workers
-import com.island.ohara.kafka.BrokerClient
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -33,7 +32,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestValidator extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
-  private[this] val brokerClient = BrokerClient.of(testUtil.brokersConnProps)
+  private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
   private[this] val ftpServer = testUtil.ftpServer
   private[this] val rdb = testUtil.dataBase
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
@@ -51,7 +50,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidationOfHdfs(): Unit = {
-    evaluate(Validator.run(workerClient, brokerClient, HdfsValidationRequest("file:///tmp"), taskCount))
+    evaluate(Validator.run(workerClient, topicAdmin, HdfsValidationRequest("file:///tmp"), taskCount))
   }
 
   @Test
@@ -59,7 +58,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
     evaluate(
       Validator.run(
         workerClient,
-        brokerClient,
+        topicAdmin,
         FtpValidationRequest(ftpServer.hostname, ftpServer.port, ftpServer.user, ftpServer.password),
         taskCount
       ))
@@ -70,7 +69,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
     evaluate(
       Validator.run(
         workerClient,
-        brokerClient,
+        topicAdmin,
         RdbValidationRequest(rdb.url, rdb.user, rdb.password),
         taskCount
       ))
@@ -78,6 +77,6 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(brokerClient)
+    Releasable.close(topicAdmin)
   }
 }

@@ -20,6 +20,7 @@ import java.sql.DriverManager
 import java.util
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.client.FtpClient
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
@@ -27,14 +28,13 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest,
   ValidationReport
 }
-import com.island.ohara.client.FtpClient
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.FakeWorkerClient
 import com.island.ohara.configurator.endpoint.Validator._
+import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
-import com.island.ohara.kafka.{BrokerClient, Consumer}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.kafka.common.config.ConfigDef
@@ -89,11 +89,11 @@ object Validator {
   private[endpoint] val TARGET_FTP = "ftp"
 
   def run(workerClient: WorkerClient,
-          brokerClient: BrokerClient,
+          topicAdmin: TopicAdmin,
           request: RdbValidationRequest,
           taskCount: Int): Future[Seq[ValidationReport]] = run(
     workerClient,
-    brokerClient,
+    topicAdmin,
     TARGET_RDB,
     ValidationApi.RDB_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
@@ -102,11 +102,11 @@ object Validator {
   )
 
   def run(workerClient: WorkerClient,
-          brokerClient: BrokerClient,
+          topicAdmin: TopicAdmin,
           request: HdfsValidationRequest,
           taskCount: Int): Future[Seq[ValidationReport]] = run(
     workerClient,
-    brokerClient,
+    topicAdmin,
     TARGET_HDFS,
     ValidationApi.HDFS_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) => (k, v.asInstanceOf[JsString].value)
@@ -115,11 +115,11 @@ object Validator {
   )
 
   def run(workerClient: WorkerClient,
-          brokerClient: BrokerClient,
+          topicAdmin: TopicAdmin,
           request: FtpValidationRequest,
           taskCount: Int): Future[Seq[ValidationReport]] = run(
     workerClient,
-    brokerClient,
+    topicAdmin,
     TARGET_FTP,
     ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
       case (k, v) =>
@@ -137,13 +137,13 @@ object Validator {
     * a helper method to run the validation process quickly.
     *
     * @param workerClient connector client
-    * @param brokerClient kafka client
+    * @param topicAdmin topic admin
     * @param config config used to test
     * @param taskCount the number from task. It implies how many worker nodes should be verified
     * @return reports
     */
   private[this] def run(workerClient: WorkerClient,
-                        brokerClient: BrokerClient,
+                        topicAdmin: TopicAdmin,
                         target: String,
                         config: Map[String, String],
                         taskCount: Int): Future[Seq[ValidationReport]] = workerClient match {
@@ -168,7 +168,7 @@ object Validator {
         // TODO: receiving all messages may be expensive...by chia
         val client = Consumer
           .builder()
-          .connectionProps(brokerClient.connectionProps())
+          .connectionProps(topicAdmin.connectionProps)
           .offsetFromBegin()
           .topicName(INTERNAL_TOPIC)
           .build(Serializer.STRING, Serializer.OBJECT)
