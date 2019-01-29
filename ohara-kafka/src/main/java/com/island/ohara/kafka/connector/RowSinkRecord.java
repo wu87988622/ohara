@@ -17,37 +17,71 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Row;
+import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.util.CommonUtil;
+import java.util.Objects;
+import org.apache.kafka.connect.sink.SinkRecord;
 
 /**
  * The methods it have are almost same with SinkRecord. It return Table rather than any object.
  * Also, it doesn't have method to return value schema because the value schema is useless to user.
- *
- * @param sinkRecord a sink record passed by kafka connector
  */
 public class RowSinkRecord {
+  /**
+   * The timestamp type of the records. NOTED: those names MUST be same with
+   * org.apache.kafka.common.record.TimestampType
+   */
+  enum TimestampType {
+    NO_TIMESTAMP_TYPE,
+    CREATE_TIME,
+    LOG_APPEND_TIME;
+
+    private static TimestampType to(org.apache.kafka.common.record.TimestampType type) {
+      if (type == org.apache.kafka.common.record.TimestampType.NO_TIMESTAMP_TYPE)
+        return NO_TIMESTAMP_TYPE;
+      if (type == org.apache.kafka.common.record.TimestampType.CREATE_TIME) return CREATE_TIME;
+      if (type == org.apache.kafka.common.record.TimestampType.LOG_APPEND_TIME)
+        return LOG_APPEND_TIME;
+      throw new IllegalArgumentException("unknown " + type);
+    }
+
+    private static org.apache.kafka.common.record.TimestampType to(TimestampType type) {
+      switch (type) {
+        case NO_TIMESTAMP_TYPE:
+          return org.apache.kafka.common.record.TimestampType.NO_TIMESTAMP_TYPE;
+        case CREATE_TIME:
+          return org.apache.kafka.common.record.TimestampType.CREATE_TIME;
+        case LOG_APPEND_TIME:
+          return org.apache.kafka.common.record.TimestampType.LOG_APPEND_TIME;
+        default:
+          throw new IllegalArgumentException("unknown " + type);
+      }
+    }
+  }
+
   private final String topic;
   private final byte[] key;
   private final Row row;
   private final int partition;
   private final long offset;
   private final long timestamp;
-  private final TimestampType timestampType;
+  private final TimestampType tsType;
 
-  public RowSinkRecord(
+  private RowSinkRecord(
       String topic,
       byte[] key,
       Row row,
       int partition,
       long offset,
       long timestamp,
-      TimestampType timestampType) {
+      TimestampType tsType) {
     this.topic = topic;
     this.key = key;
     this.row = row;
     this.partition = partition;
     this.offset = offset;
     this.timestamp = timestamp;
-    this.timestampType = timestampType;
+    this.tsType = tsType;
   }
 
   public String topic() {
@@ -75,6 +109,86 @@ public class RowSinkRecord {
   }
 
   public TimestampType timestampType() {
-    return timestampType;
+    return tsType;
+  }
+
+  /**
+   * @param record kafka's sink record
+   * @return ohara's sink record
+   */
+  static RowSinkRecord of(SinkRecord record) {
+    return builder()
+        .topic(record.topic())
+        .key((byte[]) record.key())
+        .row(Serializer.ROW.from((byte[]) record.value()))
+        .partition(record.kafkaPartition())
+        .offset(record.kafkaOffset())
+        .timestamp(record.timestamp())
+        .timestampType(TimestampType.to(record.timestampType()))
+        .build();
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private Builder() {
+      // do nothing
+    }
+
+    private String topic;
+    private byte[] key;
+    private Row row;
+    private Integer partition;
+    private Long offset;
+    private Long timestamp;
+    private TimestampType tsType;
+
+    public Builder topic(String topic) {
+      this.topic = Objects.requireNonNull(topic);
+      return this;
+    }
+
+    public Builder key(byte[] key) {
+      this.key = Objects.requireNonNull(key);
+      return this;
+    }
+
+    public Builder row(Row row) {
+      this.row = Objects.requireNonNull(row);
+      return this;
+    }
+
+    public Builder partition(int partition) {
+      this.partition = CommonUtil.requirePositiveInt(partition);
+      return this;
+    }
+
+    public Builder offset(long offset) {
+      this.offset = CommonUtil.requirePositiveLong(offset);
+      return this;
+    }
+
+    public Builder timestamp(long timestamp) {
+      this.timestamp = CommonUtil.requirePositiveLong(timestamp);
+      return this;
+    }
+
+    public Builder timestampType(TimestampType tsType) {
+      this.tsType = Objects.requireNonNull(tsType);
+      return this;
+    }
+
+    public RowSinkRecord build() {
+      return new RowSinkRecord(
+          Objects.requireNonNull(topic),
+          Objects.requireNonNull(key),
+          Objects.requireNonNull(row),
+          Objects.requireNonNull(partition),
+          Objects.requireNonNull(offset),
+          Objects.requireNonNull(timestamp),
+          Objects.requireNonNull(tsType));
+    }
   }
 }

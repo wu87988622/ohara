@@ -63,7 +63,8 @@ public class SimpleRowSourceTask extends RowSourceTask {
                           config
                               .topics()
                               .stream()
-                              .map(topic -> RowSourceRecord.builder().row(row).build(topic)))
+                              .map(
+                                  topic -> RowSourceRecord.builder().row(row).topic(topic).build()))
                   .forEach(
                       r -> {
                         try {

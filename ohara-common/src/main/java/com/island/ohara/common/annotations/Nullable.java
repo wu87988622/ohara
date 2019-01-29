@@ -14,27 +14,12 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector;
+package com.island.ohara.common.annotations;
 
 /**
- * use in RowSinkRecord
- *
- * @see RowSinkRecord
+ * OHARA has got to integrate many systems. It is hard to ensure all APIs have got rid of null! For
+ * example, kafka's APIs consists of a bunch of null instance!!!
  */
-public class TimestampType {
-  private final int id;
-  private final String name;
-
-  public TimestampType(int id, String name) {
-    this.id = id;
-    this.name = name;
-  }
-
-  public int id() {
-    return id;
-  }
-
-  public String name() {
-    return name;
-  }
+public @interface Nullable {
+  String value() default "This method or member is not required to call or use";
 }

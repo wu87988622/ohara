@@ -405,6 +405,15 @@ public final class CommonUtil {
     return value;
   }
 
+  public static long requirePositiveLong(long value) {
+    return requirePositiveLong(value, () -> value + " can't be negative");
+  }
+
+  public static long requirePositiveLong(long value, Supplier<String> msg) {
+    if (value < 0) throw new NullPointerException(msg.get());
+    return value;
+  }
+
   public static short requirePositiveShort(short value) {
     return (short) requirePositiveInt(value);
   }

@@ -16,29 +16,37 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.source.SourceRecord;
 
 /** A wrap to SourceRecord. Currently, only value schema and value are changed. */
 public class RowSourceRecord {
   private final Map<String, ?> sourcePartition;
   private final Map<String, ?> sourceOffset;
   private final String topic;
-  private final Optional<Integer> partition;
-  private final Row row;
-  private final Optional<Long> timestamp;
 
-  public RowSourceRecord(
+  @Nullable("thanks to kafka")
+  private final Integer partition;
+
+  private final Row row;
+
+  @Nullable("thanks to kafka")
+  private final Long timestamp;
+
+  private RowSourceRecord(
       Map<String, ?> sourcePartition,
       Map<String, ?> sourceOffset,
       String topic,
-      Optional<Integer> partition,
+      Integer partition,
       Row row,
-      Optional<Long> timestamp) {
+      Long timestamp) {
     this.sourcePartition = sourcePartition;
     this.sourceOffset = sourceOffset;
     this.topic = topic;
@@ -60,7 +68,7 @@ public class RowSourceRecord {
   }
 
   public Optional<Integer> partition() {
-    return partition;
+    return Optional.ofNullable(partition);
   }
 
   public Row row() {
@@ -68,7 +76,7 @@ public class RowSourceRecord {
   }
 
   public Optional<Long> timestamp() {
-    return timestamp;
+    return Optional.ofNullable(timestamp);
   }
 
   /**
@@ -81,61 +89,100 @@ public class RowSourceRecord {
   }
 
   public static RowSourceRecord of(String topic, Row row) {
-    return builder().row(row).build(topic);
+    return builder().row(row).topic(topic).build();
   }
 
-  public static RowSourceRecordBuilder builder() {
-    return new RowSourceRecordBuilder();
+  /**
+   * a helper method used to handle the fucking null produced by kafka...
+   *
+   * @param record kafka's source
+   * @return ohara's source
+   */
+  static RowSourceRecord of(SourceRecord record) {
+    Builder builder = new Builder();
+    builder.topic(record.topic());
+    // kakfa fucking love null!!! We have got to handle the null manually....
+    if (record.sourceOffset() != null) builder.sourceOffset(record.sourceOffset());
+    if (record.sourcePartition() != null) builder.sourcePartition(record.sourcePartition());
+    if (record.kafkaPartition() != null) builder.partition(record.kafkaPartition());
+    if (record.timestamp() != null) builder.timestamp(record.timestamp());
+    builder.row(Serializer.ROW.from((byte[]) record.value()));
+    return builder.build();
   }
 
-  public static class RowSourceRecordBuilder {
+  /**
+   * a helper method used to handle the fucking null produced by kafka...
+   *
+   * @return kafka's source
+   */
+  SourceRecord toSourceRecord() {
+    return new SourceRecord(
+        sourcePartition(),
+        sourceOffset(),
+        topic(),
+        partition,
+        Schema.BYTES_SCHEMA,
+        key(),
+        Schema.BYTES_SCHEMA,
+        Serializer.ROW.to(row()),
+        timestamp);
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private Builder() {
+      // do nothing
+    }
+
     private Map<String, ?> sourcePartition = Collections.emptyMap();
     private Map<String, ?> sourceOffset = Collections.emptyMap();
-    private Optional<Integer> partition = Optional.empty();
-    private Row row = Row.EMPTY;
-    private Optional<Long> timestamp = Optional.empty();
+    private Integer partition = null;
+    private Row row = null;
+    private Long timestamp = null;
+    private String topic = null;
 
-    public RowSourceRecordBuilder sourcePartition(Map<String, ?> sourcePartition) {
+    @com.island.ohara.common.annotations.Optional("default is empty")
+    public Builder sourcePartition(Map<String, ?> sourcePartition) {
       this.sourcePartition = Objects.requireNonNull(sourcePartition);
       return this;
     }
 
-    public RowSourceRecordBuilder sourceOffset(Map<String, ?> sourceOffset) {
+    @com.island.ohara.common.annotations.Optional("default is empty")
+    public Builder sourceOffset(Map<String, ?> sourceOffset) {
       this.sourceOffset = Objects.requireNonNull(sourceOffset);
       return this;
     }
 
-    public RowSourceRecordBuilder _partition(int partition) {
-      this.partition = Optional.of(partition);
-      return this;
-    }
-
-    /** this is a helper method for RowSourceTask */
-    public RowSourceRecordBuilder _partition(Optional<Integer> partition) {
+    @com.island.ohara.common.annotations.Optional(
+        "default is empty. It means target partition is computed by hash")
+    public Builder partition(int partition) {
       this.partition = partition;
       return this;
     }
 
-    public RowSourceRecordBuilder row(Row row) {
+    public Builder row(Row row) {
       this.row = Objects.requireNonNull(row);
       return this;
     }
 
-    public RowSourceRecordBuilder _timestamp(long timestamp) {
-      this.timestamp = Optional.of(timestamp);
-      return this;
-    }
-
-    /** this is a helper method for RowSourceTask */
-    public RowSourceRecordBuilder _timestamp(Optional<Long> timestamp) {
+    @com.island.ohara.common.annotations.Optional("default is current time")
+    public Builder timestamp(long timestamp) {
       this.timestamp = timestamp;
       return this;
     }
 
-    public RowSourceRecord build(String topic) {
+    public Builder topic(String topic) {
+      this.topic = topic;
+      return this;
+    }
+
+    public RowSourceRecord build() {
       return new RowSourceRecord(
-          sourcePartition,
-          sourceOffset,
+          Objects.requireNonNull(sourcePartition),
+          Objects.requireNonNull(sourceOffset),
           Objects.requireNonNull(topic),
           partition,
           Objects.requireNonNull(row),

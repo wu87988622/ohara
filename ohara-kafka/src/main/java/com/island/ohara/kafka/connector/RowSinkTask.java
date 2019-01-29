@@ -18,7 +18,6 @@ package com.island.ohara.kafka.connector;
 
 import static com.island.ohara.kafka.connector.ConnectorUtil.VERSION;
 
-import com.island.ohara.common.data.Serializer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -122,21 +121,7 @@ public abstract class RowSinkTask extends SinkTask {
   public final void put(Collection<SinkRecord> records) {
 
     if (records == null) _put(Collections.emptyList());
-    else
-      _put(
-          records
-              .stream()
-              .map(
-                  r ->
-                      new RowSinkRecord(
-                          r.topic(),
-                          (byte[]) r.key(),
-                          Serializer.ROW.from((byte[]) r.value()),
-                          r.kafkaPartition(),
-                          r.kafkaOffset(),
-                          r.timestamp(),
-                          new TimestampType(r.timestampType().id, r.timestampType().name)))
-              .collect(Collectors.toList()));
+    else _put(records.stream().map(RowSinkRecord::of).collect(Collectors.toList()));
   }
 
   @Override

@@ -18,13 +18,9 @@ package com.island.ohara.kafka.connector;
 
 import static com.island.ohara.kafka.connector.ConnectorUtil.VERSION;
 
-import com.island.ohara.common.data.Serializer;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.source.SourceTaskContext;
@@ -89,8 +85,8 @@ public abstract class RowSourceTask extends SourceTask {
   }
 
   /**
-   * @return RowSourceContext is provided to RowSourceTask to allow them to interact with the
-   *     underlying runtime.
+   * RowSourceContext is provided to RowSourceTask to allow them to interact with the underlying
+   * runtime.
    */
   protected RowSourceContext rowContext = null;
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
@@ -100,22 +96,7 @@ public abstract class RowSourceTask extends SourceTask {
     // kafka connector doesn't support the empty list in testing. see
     // https://github.com/apache/kafka/pull/4958
     if (value == null || value.isEmpty()) return null;
-    else
-      return value
-          .stream()
-          .map(
-              s ->
-                  new SourceRecord(
-                      s.sourcePartition(),
-                      s.sourceOffset(),
-                      s.topic(),
-                      s.partition().orElse(null),
-                      Schema.BYTES_SCHEMA,
-                      s.key(),
-                      Schema.BYTES_SCHEMA,
-                      Serializer.ROW.to(s.row()),
-                      s.timestamp().orElse(null)))
-          .collect(Collectors.toList());
+    else return value.stream().map(RowSourceRecord::toSourceRecord).collect(Collectors.toList());
   }
 
   @Override
@@ -136,18 +117,7 @@ public abstract class RowSourceTask extends SourceTask {
   // TODO: We do a extra conversion here (bytes => Row)... by chia
   @Override
   public final void commitRecord(SourceRecord record) {
-    _commitRecord(
-        RowSourceRecord.builder()
-            .sourcePartition(
-                record.sourcePartition() == null
-                    ? Collections.emptyMap()
-                    : record.sourcePartition())
-            .sourceOffset(
-                record.sourceOffset() == null ? Collections.emptyMap() : record.sourceOffset())
-            .row(Serializer.ROW.from((byte[]) record.value()))
-            ._timestamp(Optional.ofNullable(record.timestamp()))
-            ._partition(Optional.ofNullable(record.kafkaPartition()))
-            .build(record.topic()));
+    _commitRecord(RowSourceRecord.of(record));
   }
 
   @Override
