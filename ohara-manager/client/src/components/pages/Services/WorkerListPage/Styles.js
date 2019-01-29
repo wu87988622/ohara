@@ -28,7 +28,7 @@ const Wrapper = styled.div`
   margin: auto;
 `;
 
-const NewNodeBtn = styled(Button)`
+const NewClusterBtn = styled(Button)`
   margin-left: auto;
 `;
 
@@ -46,6 +46,10 @@ const Link = styled(NavLink)`
   &:hover {
     color: ${CSS_VARS.blue};
   }
+`;
+
+const TooltipWrapper = styled.div`
+  margin-left: auto;
 `;
 
 const Icon = styled.i`
@@ -67,4 +71,4 @@ const Icon = styled.i`
   }
 `;
 
-export { Wrapper, NewNodeBtn, Table, Link, Icon };
+export { Wrapper, NewClusterBtn, Table, Link, Icon, TooltipWrapper };

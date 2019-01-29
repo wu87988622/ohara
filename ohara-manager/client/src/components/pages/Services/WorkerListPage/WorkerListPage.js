@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import { join } from 'lodash';
 
 import { Box } from 'common/Layout';
@@ -46,24 +47,47 @@ class WorkerListPage extends React.Component {
 
   state = {
     isModalOpen: false,
+    isNewClusterBtnDisabled: false,
   };
+
+  componentDidUpdate(prevProps) {
+    const prevWorkerLen = prevProps.workers.length;
+    const nextWorkerLen = this.props.workers.length;
+
+    const isUpdate = prevWorkerLen !== nextWorkerLen;
+    if (isUpdate && nextWorkerLen >= 1) {
+      this.setState({
+        isNewClusterBtnDisabled: true,
+      });
+    }
+  }
 
   render() {
     const { workers, newWorkerSuccess, isLoading } = this.props;
-    const { isModalOpen } = this.state;
+    const { isModalOpen, isNewClusterBtnDisabled } = this.state;
     return (
       <React.Fragment>
         <Box>
           <FormGroup isInline>
             <H2>Services > Connect</H2>
-            <s.NewNodeBtn
-              theme={primaryBtn}
-              text="New cluster"
-              data-testid="new-cluster"
-              handleClick={() => {
-                this.setState({ isModalOpen: true });
-              }}
-            />
+            <s.TooltipWrapper
+              data-tip={
+                isNewClusterBtnDisabled
+                  ? 'You cannot create more than one cluster'
+                  : undefined
+              }
+            >
+              <s.NewClusterBtn
+                theme={primaryBtn}
+                text="New cluster"
+                disabled={isNewClusterBtnDisabled}
+                handleClick={() => {
+                  this.setState({ isModalOpen: true });
+                }}
+              />
+            </s.TooltipWrapper>
+
+            <ReactTooltip />
           </FormGroup>
           {isLoading ? (
             <TableLoader />
