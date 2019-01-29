@@ -25,7 +25,7 @@ import * as MESSAGES from 'constants/messages';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { FormGroup, Label } from 'common/Form';
-import InputField from '../../NodePage/InputField';
+import { InputField } from 'common/FormFields';
 
 class TopicNewModal extends React.Component {
   static propTypes = {
