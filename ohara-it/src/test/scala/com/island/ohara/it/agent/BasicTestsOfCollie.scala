@@ -268,6 +268,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
           .brokerClusterName(brokerCluster.name)
           .nodeName(nodeName)
           .create()))
+    log.info("[WORKER] create done")
     assert(result(workerCollie.cluster(workerCluster.name))._1)
     log.info("[WORKER] verify:create done")
     try {

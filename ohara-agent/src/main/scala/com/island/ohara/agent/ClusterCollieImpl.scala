@@ -26,6 +26,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -97,7 +98,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
 
   private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
     val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
-    WorkerClient(containers.map(c => s"${c.nodeName}:$port").mkString(",")).plugins().map { plugins =>
+    plugins(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { plugins =>
       WorkerClusterInfo(
         name = clusterName,
         imageName = containers.head.imageName,
@@ -178,6 +179,30 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
 }
 
 private object ClusterCollieImpl {
+
+  /**
+    * It tried to fetch connector information from starting worker cluster
+    * However, it may be too slow to get latest connector information.
+    * We don't throw exception since it is a common case.
+    * @param connectionProps worker connection props
+    * @return plugin description or nothing
+    */
+  private def plugins(connectionProps: String): Future[Seq[Plugin]] = {
+
+    val client = WorkerClient(connectionProps)
+    client.plugins().recoverWith {
+      case e: Throwable =>
+        LOG.error(s"Failed to fetch connectors information of cluster:$connectionProps. Will retry it after 3 seconds",
+                  e)
+        TimeUnit.SECONDS.sleep(3)
+        client.plugins().recover {
+          case _ =>
+            LOG.error(s"still can't fetch connectors of cluster:$connectionProps. Use empty list instead", e)
+            Seq.empty
+        }
+    }
+  }
+
   private[this] val LOG = Logger(classOf[ClusterCollieImpl])
 
   /**
@@ -629,46 +654,28 @@ private object ClusterCollieImpl {
             if (successfulNodeNames.isEmpty)
               throw new IllegalArgumentException(s"failed to create $clusterName on $WORKER")
             val nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-            val workerClient = WorkerClient(nodeNames.map(n => s"$n:$clientPort").mkString(","))
-            // It tried to fetch connector information from starting worker cluster
-            // However, it may be too slow to get latest connector information.
-            // We don't throw exception since it is a common case.
-            workerClient
-              .plugins()
-              .recoverWith {
-                case e: Throwable =>
-                  LOG.error(
-                    s"Failed to fetch connectors information of cluster:$nodeNames. Will retry it after 3 seconds",
-                    e)
-                  TimeUnit.SECONDS.sleep(3)
-                  workerClient.plugins().recover {
-                    case _ =>
-                      LOG.error(s"still can't fetch connectors of cluster:$nodeNames. Use empty list instead", e)
-                      Seq.empty
-                  }
-              }
-              .map { plugins =>
-                WorkerClusterInfo(
-                  name = clusterName,
-                  imageName = imageName,
-                  brokerClusterName = brokerClusterName,
-                  clientPort = clientPort,
-                  groupId = groupId,
-                  offsetTopicName = offsetTopicName,
-                  offsetTopicPartitions = offsetTopicPartitions,
-                  offsetTopicReplications = offsetTopicReplications,
-                  configTopicName = configTopicName,
-                  configTopicPartitions = 1,
-                  configTopicReplications = configTopicReplications,
-                  statusTopicName = statusTopicName,
-                  statusTopicPartitions = statusTopicPartitions,
-                  statusTopicReplications = statusTopicReplications,
-                  jarNames = jarUrls.map(_.getFile),
-                  sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-                  sinks = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-                  nodeNames = nodeNames
-                )
-              }
+            plugins(nodeNames.map(n => s"$n:$clientPort").mkString(",")).map { plugins =>
+              WorkerClusterInfo(
+                name = clusterName,
+                imageName = imageName,
+                brokerClusterName = brokerClusterName,
+                clientPort = clientPort,
+                groupId = groupId,
+                offsetTopicName = offsetTopicName,
+                offsetTopicPartitions = offsetTopicPartitions,
+                offsetTopicReplications = offsetTopicReplications,
+                configTopicName = configTopicName,
+                configTopicPartitions = 1,
+                configTopicReplications = configTopicReplications,
+                statusTopicName = statusTopicName,
+                statusTopicPartitions = statusTopicPartitions,
+                statusTopicReplications = statusTopicReplications,
+                jarNames = jarUrls.map(_.getFile),
+                sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+                sinks = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+                nodeNames = nodeNames
+              )
+            }
 
       }
 
