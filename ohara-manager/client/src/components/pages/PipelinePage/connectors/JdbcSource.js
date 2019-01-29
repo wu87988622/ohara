@@ -30,43 +30,13 @@ import {
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
 import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
 import { DataTable } from 'common/Table';
-import { lightBlue } from 'theme/variables';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchCluster } from 'apis/clusterApis';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 
-const TitleWrapper = styled(FormGroup).attrs({
-  isInline: true,
-})`
-  position: relative;
-  margin: 0 0 30px;
-`;
-
-const H5Wrapper = styled(H5)`
-  margin: 0;
-  font-weight: normal;
-  color: ${lightBlue};
-`;
-
-const Controller = styled.div`
-  position: absolute;
-  right: 0;
-`;
-
-const ControlButton = styled.button`
-  color: ${lightBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-
-  &:hover {
-    color: blue;
-  }
-`;
+import * as s from './Styles';
 
 const Fieldset = styled.fieldset`
   border: none;
@@ -422,23 +392,23 @@ class JdbcSource extends React.Component {
     return (
       <React.Fragment>
         <Box>
-          <TitleWrapper>
-            <H5Wrapper>JDBC source connector</H5Wrapper>
-            <Controller>
-              <ControlButton
+          <s.TitleWrapper>
+            <s.H5Wrapper>JDBC source connector</s.H5Wrapper>
+            <s.Controller>
+              <s.ControlButton
                 onClick={this.handleStartBtnClick}
                 data-testid="start-button"
               >
                 <i className={`fa fa-play-circle`} />
-              </ControlButton>
-              <ControlButton
+              </s.ControlButton>
+              <s.ControlButton
                 onClick={this.handleStopBtnClick}
                 data-testid="stop-button"
               >
                 <i className={`fa fa-stop-circle`} />
-              </ControlButton>
-            </Controller>
-          </TitleWrapper>
+              </s.ControlButton>
+            </s.Controller>
+          </s.TitleWrapper>
           <Fieldset disabled={isBtnWorking}>
             <FormGroup data-testid="name">
               <Label>Name</Label>
@@ -564,7 +534,7 @@ class JdbcSource extends React.Component {
 
         {!_.isEmpty(currTable) && (
           <Box>
-            <H5Wrapper>Database schemas</H5Wrapper>
+            <s.H5Wrapper>Database schemas</s.H5Wrapper>
             <DataTable headers={this.dbSchemasHeader}>
               {currTable.schema.map(({ name, dataType }, idx) => {
                 return (

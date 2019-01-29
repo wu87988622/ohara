@@ -34,8 +34,14 @@ import Editable from './Editable';
 import { H2, H3 } from 'common/Headings';
 import { Box } from 'common/Layout';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
-import { JdbcSource, FtpSource, Topic, HdfsSink, FtpSink } from './connectors';
-import { StreamApp } from './streamapp';
+import {
+  JdbcSource,
+  FtpSource,
+  Topic,
+  HdfsSink,
+  FtpSink,
+  StreamApp,
+} from './connectors';
 import {
   getConnectors,
   addPipelineStatus,

@@ -15,15 +15,20 @@
  */
 
 import styled from 'styled-components';
+import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { FormGroup, Button, Label } from 'common/Form';
 import * as CSS_VARS from 'theme/variables';
+
+const BoxWrapper = styled(Box)`
+  padding: ${props => props.padding || '25px'};
+`;
 
 const TitleWrapper = styled(FormGroup).attrs({
   isInline: true,
 })`
   position: relative;
-  margin: 0 0 30px;
+  margin: ${props => props.margin || '0 0 30px'};
 `;
 
 const H5Wrapper = styled(H5)`
@@ -31,6 +36,8 @@ const H5Wrapper = styled(H5)`
   font-weight: normal;
   color: ${CSS_VARS.lightBlue};
 `;
+
+H5Wrapper.displayName = 'H5';
 
 const Controller = styled.div`
   position: absolute;
@@ -75,6 +82,7 @@ const ViewTopologyBtn = styled(Button)`
 `;
 
 export {
+  BoxWrapper,
   TitleWrapper,
   H5Wrapper,
   Controller,

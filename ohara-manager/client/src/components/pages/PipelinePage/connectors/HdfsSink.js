@@ -25,7 +25,6 @@ import * as pipelinesApis from 'apis/pipelinesApis';
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
 import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchHdfs } from 'apis/configurationApis';
 import { CONFIGURATION } from 'constants/urls';
@@ -37,37 +36,7 @@ import {
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
 
-const TitleWrapper = styled(FormGroup).attrs({
-  isInline: true,
-})`
-  position: relative;
-  margin: 0 0 30px;
-`;
-
-const H5Wrapper = styled(H5)`
-  margin: 0;
-  font-weight: normal;
-  color: ${CSS_VARS.lightBlue};
-`;
-
-H5Wrapper.displayName = 'H5';
-
-const Controller = styled.div`
-  position: absolute;
-  right: 0;
-`;
-
-const ControlButton = styled.button`
-  color: ${CSS_VARS.lightBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-
-  &:hover {
-    color: blue;
-  }
-`;
+import * as s from './Styles';
 
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
@@ -407,23 +376,23 @@ class HdfsSink extends React.Component {
 
     return (
       <Box>
-        <TitleWrapper>
-          <H5Wrapper>HDFS sink connector</H5Wrapper>
-          <Controller>
-            <ControlButton
+        <s.TitleWrapper>
+          <s.H5Wrapper>HDFS sink connector</s.H5Wrapper>
+          <s.Controller>
+            <s.ControlButton
               onClick={this.handleStartBtnClick}
               data-testid="start-button"
             >
               <i className={`fa fa-play-circle`} />
-            </ControlButton>
-            <ControlButton
+            </s.ControlButton>
+            <s.ControlButton
               onClick={this.handleStopBtnClick}
               data-testid="stop-button"
             >
               <i className={`fa fa-stop-circle`} />
-            </ControlButton>
-          </Controller>
-        </TitleWrapper>
+            </s.ControlButton>
+          </s.Controller>
+        </s.TitleWrapper>
         <form>
           <FormGroup data-testid="name">
             <Label>Name</Label>

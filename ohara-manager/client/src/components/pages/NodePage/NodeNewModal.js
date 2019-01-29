@@ -24,7 +24,7 @@ import * as nodeApis from 'apis/nodeApis';
 import * as validateApis from 'apis/validateApis';
 import * as s from './Styles';
 import * as MESSAGES from 'constants/messages';
-import InputField from './InputField';
+import { InputField } from 'common/FormFields';
 import validate from './validate';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';

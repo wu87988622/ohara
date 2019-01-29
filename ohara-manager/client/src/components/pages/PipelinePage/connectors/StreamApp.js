@@ -26,8 +26,7 @@ import * as streamAppApis from 'apis/streamAppApis';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
-import InputField from 'pages/NodePage/InputField';
-import { SelectField, AutoSave } from 'common/FormFields';
+import { InputField, SelectField, AutoSave } from 'common/FormFields';
 import { findByGraphId } from 'utils/pipelineUtils';
 
 import * as s from './Styles';
@@ -254,7 +253,7 @@ class StreamApp extends React.Component {
               <s.FormRow>
                 <s.FormCol>
                   <s.ViewTopologyBtn
-                    text="View topolopy"
+                    text="View topology"
                     data-testid="view-topology-button"
                     disabled
                   />

@@ -26,7 +26,7 @@ import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
 import * as MESSAGES from 'constants/messages';
-import InputField from 'pages/NodePage/InputField';
+import { InputField } from 'common/FormFields';
 
 import NodeSelectModal from '../NodeSelectModal';
 import PluginSelectModal from '../PluginSelectModal';

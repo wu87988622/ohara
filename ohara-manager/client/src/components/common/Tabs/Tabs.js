@@ -26,10 +26,14 @@ import { white, shadowNormal, radiusNormal } from '../../../theme/variables';
 
 const Tabs = styled(UnstyledTabs)`
   background-color: ${white};
-  box-shadow: ${shadowNormal};
+  box-shadow: ${props => (props.showShadow ? shadowNormal : null)};
   border-radius: ${radiusNormal};
   margin-bottom: 20px;
 `;
+
+Tabs.defaultProps = {
+  showShadow: true,
+};
 
 const TabList = styled(UnstyledTabList)`
   display: flex;

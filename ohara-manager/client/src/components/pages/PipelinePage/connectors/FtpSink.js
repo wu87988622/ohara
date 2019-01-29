@@ -27,8 +27,6 @@ import {
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
-import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
@@ -38,40 +36,7 @@ import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 import { includes } from 'lodash';
 
-const BoxWrapper = styled(Box).attrs({
-  padding: '25px 0',
-})``;
-
-const TitleWrapper = styled(FormGroup).attrs({
-  isInline: true,
-})`
-  position: relative;
-  margin: 0 25px 30px 25px;
-`;
-
-const H5Wrapper = styled(H5)`
-  margin: 0;
-  font-weight: normal;
-  color: ${CSS_VARS.lightBlue};
-`;
-H5Wrapper.displayName = 'H5';
-
-const Controller = styled.div`
-  position: absolute;
-  right: 0;
-`;
-
-const ControlButton = styled.button`
-  color: ${CSS_VARS.lightBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-
-  &:hover {
-    color: blue;
-  }
-`;
+import * as s from './Styles';
 
 const FormGroupWrapper = styled.div`
   display: flex;
@@ -633,25 +598,25 @@ class FtpSink extends React.Component {
 
     return (
       <React.Fragment>
-        <BoxWrapper>
-          <TitleWrapper>
-            <H5Wrapper>FTP sink connector</H5Wrapper>
-            <Controller>
-              <ControlButton
+        <s.BoxWrapper padding="25px 0">
+          <s.TitleWrapper margin="0 25px 30px">
+            <s.H5Wrapper>FTP sink connector</s.H5Wrapper>
+            <s.Controller>
+              <s.ControlButton
                 onClick={this.handleStartBtnClick}
                 data-testid="start-button"
               >
                 <i className={`fa fa-play-circle`} />
-              </ControlButton>
-              <ControlButton
+              </s.ControlButton>
+              <s.ControlButton
                 onClick={this.handleStopBtnClick}
                 data-testid="stop-button"
               >
                 <i className={`fa fa-stop-circle`} />
-              </ControlButton>
-            </Controller>
-          </TitleWrapper>
-          <Tabs>
+              </s.ControlButton>
+            </s.Controller>
+          </s.TitleWrapper>
+          <Tabs showShadow={false}>
             <TabList>
               <Tab>FTP Sink 1/2</Tab>
               <Tab>FTP Sink 2/2</Tab>
@@ -885,7 +850,7 @@ class FtpSink extends React.Component {
               />
             </TabPanel>
           </Tabs>
-        </BoxWrapper>
+        </s.BoxWrapper>
       </React.Fragment>
     );
   }

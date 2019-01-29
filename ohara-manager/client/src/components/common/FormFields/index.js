@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
+import InputField from './InputField';
 import SelectField from './SelectField';
 import AutoSave from './AutoSave';
 
-export { SelectField, AutoSave };
+export { InputField, SelectField, AutoSave };
