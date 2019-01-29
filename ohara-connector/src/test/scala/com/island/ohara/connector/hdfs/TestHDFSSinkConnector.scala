@@ -22,7 +22,7 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.{ByteUtil, CommonUtil}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.integration._
@@ -33,8 +33,8 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
   private[this] val hdfsURL: String = "hdfs://host1:9000"
@@ -118,9 +118,9 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
     try {
-      0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
       producer.flush()
     } finally producer.close()
 
@@ -199,9 +199,9 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
     try {
-      0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
       producer.flush()
     } finally producer.close()
 
@@ -281,9 +281,9 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
     try {
-      0 until rowCount foreach (_ => producer.sender().key(ByteUtil.toBytes("key")).value(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
       producer.flush()
     } finally producer.close()
 

@@ -60,7 +60,6 @@ public class RowSinkRecord {
   }
 
   private final String topic;
-  private final byte[] key;
   private final Row row;
   private final int partition;
   private final long offset;
@@ -68,15 +67,8 @@ public class RowSinkRecord {
   private final TimestampType tsType;
 
   private RowSinkRecord(
-      String topic,
-      byte[] key,
-      Row row,
-      int partition,
-      long offset,
-      long timestamp,
-      TimestampType tsType) {
+      String topic, Row row, int partition, long offset, long timestamp, TimestampType tsType) {
     this.topic = topic;
-    this.key = key;
     this.row = row;
     this.partition = partition;
     this.offset = offset;
@@ -86,10 +78,6 @@ public class RowSinkRecord {
 
   public String topic() {
     return topic;
-  }
-
-  public byte[] key() {
-    return key;
   }
 
   public Row row() {
@@ -119,8 +107,7 @@ public class RowSinkRecord {
   static RowSinkRecord of(SinkRecord record) {
     return builder()
         .topic(record.topic())
-        .key((byte[]) record.key())
-        .row(Serializer.ROW.from((byte[]) record.value()))
+        .row(Serializer.ROW.from((byte[]) record.key()))
         .partition(record.kafkaPartition())
         .offset(record.kafkaOffset())
         .timestamp(record.timestamp())
@@ -138,7 +125,6 @@ public class RowSinkRecord {
     }
 
     private String topic;
-    private byte[] key;
     private Row row;
     private Integer partition;
     private Long offset;
@@ -147,11 +133,6 @@ public class RowSinkRecord {
 
     public Builder topic(String topic) {
       this.topic = Objects.requireNonNull(topic);
-      return this;
-    }
-
-    public Builder key(byte[] key) {
-      this.key = Objects.requireNonNull(key);
       return this;
     }
 
@@ -183,7 +164,6 @@ public class RowSinkRecord {
     public RowSinkRecord build() {
       return new RowSinkRecord(
           Objects.requireNonNull(topic),
-          Objects.requireNonNull(key),
           Objects.requireNonNull(row),
           Objects.requireNonNull(partition),
           Objects.requireNonNull(offset),

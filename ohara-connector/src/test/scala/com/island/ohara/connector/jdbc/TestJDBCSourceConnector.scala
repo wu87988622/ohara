@@ -87,24 +87,24 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
-        .build(Serializer.BYTES, Serializer.ROW)
+        .build(Serializer.ROW, Serializer.BYTES)
     try {
       val record = consumer.poll(java.time.Duration.ofSeconds(30), 3).asScala
-      val row0: Row = record.head.value.get
+      val row0: Row = record.head.key.get
       row0.size shouldBe 4
       row0.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:00.0").toString
       row0.cell(1) shouldBe Cell.of("column2", "a11")
       row0.cell(2) shouldBe Cell.of("column3", "a12")
       row0.cell(3).toString shouldBe Cell.of("column4", "1").toString
 
-      val row1: Row = record(1).value.get
+      val row1: Row = record(1).key.get
       row1.size shouldBe 4
       row1.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:01.0").toString
       row1.cell(1) shouldBe Cell.of("column2", "a21")
       row1.cell(2) shouldBe Cell.of("column3", "a22")
       row1.cell(3).toString shouldBe Cell.of("column4", "2").toString
 
-      val row2: Row = record(2).value.get
+      val row2: Row = record(2).key.get
       row2.size shouldBe 4
       row2.cell(0).toString shouldBe Cell.of("column1", "2018-09-01 00:00:02.0").toString
       row2.cell(1) shouldBe Cell.of("column2", "a31")

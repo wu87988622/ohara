@@ -21,15 +21,15 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.client.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.{ByteUtil, CommonUtil}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import org.junit.{Before, BeforeClass, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private val TOPIC = "TestFtpSink"
@@ -48,8 +48,8 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
     } finally client.close()
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
-    try producer.sender().key(ByteUtil.toBytes("key")).value(data).send(topicName)
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    try producer.sender().key(data).send(topicName)
     finally producer.close()
 
     val consumer = Consumer
@@ -57,10 +57,10 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       .topicName(topicName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .build(Serializer.BYTES, Serializer.ROW)
+      .build(Serializer.ROW, Serializer.BYTES)
     try {
       val records = consumer.poll(java.time.Duration.ofSeconds(60), 1)
-      val row = records.get(0).value.get
+      val row = records.get(0).key().get
       row.size shouldBe data.size
       row.cell("a").value shouldBe "abc"
       row.cell("b").value shouldBe 123

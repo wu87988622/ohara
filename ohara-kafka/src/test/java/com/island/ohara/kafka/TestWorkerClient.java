@@ -113,17 +113,17 @@ public class TestWorkerClient extends With3Brokers3Workers {
         .disableConverter()
         .create();
     CommonUtil.await(() -> exist(connectorName), Duration.ofSeconds(50));
-    try (Consumer<byte[], Row> consumer =
+    try (Consumer<Row, byte[]> consumer =
         Consumer.builder()
             .topicName(topicName)
             .offsetFromBegin()
             .connectionProps(testUtil.brokersConnProps())
-            .build(Serializer.BYTES, Serializer.ROW)) {
+            .build(Serializer.ROW, Serializer.BYTES)) {
 
       // try to receive some data from topic
-      List<Record<byte[], Row>> result = consumer.poll(Duration.ofSeconds(10), 1);
+      List<Record<Row, byte[]>> result = consumer.poll(Duration.ofSeconds(10), 1);
       assertNotEquals(result.size(), 0);
-      result.forEach(x -> assertEquals(x.value().get(), ROW));
+      result.forEach(x -> assertEquals(x.key().get(), ROW));
 
       // pause connector
       workerClient.pause(connectorName);
@@ -135,7 +135,7 @@ public class TestWorkerClient extends With3Brokers3Workers {
 
       // try to receive all data from topic...10 seconds should be enough in this case;
       result = consumer.poll(Duration.ofSeconds(10), Integer.MAX_VALUE);
-      result.forEach(x -> assertEquals(x.value().get(), ROW));
+      result.forEach(x -> assertEquals(x.key().get(), ROW));
 
       // connector is paused so there is no data
       result = consumer.poll(Duration.ofSeconds(20), 1);

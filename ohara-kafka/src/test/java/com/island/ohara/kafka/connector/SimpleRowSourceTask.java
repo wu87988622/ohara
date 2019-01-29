@@ -37,27 +37,27 @@ public class SimpleRowSourceTask extends RowSourceTask {
 
   private final LinkedBlockingQueue<RowSourceRecord> queue = new LinkedBlockingQueue<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private Consumer<byte[], Row> consumer = null;
+  private Consumer<Row, byte[]> consumer = null;
   private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
   @Override
   protected void _start(TaskConfig config) {
     CompletableFuture.runAsync(
         () -> {
-          try (Consumer<byte[], Row> consumer =
+          try (Consumer<Row, byte[]> consumer =
               Consumer.builder()
                   .connectionProps(config.options().get(BROKER))
                   .groupId(config.name())
                   .topicName(config.options().get(INPUT))
                   .offsetFromBegin()
-                  .build(Serializer.BYTES, Serializer.ROW)) {
+                  .build(Serializer.ROW, Serializer.BYTES)) {
             this.consumer = consumer;
             while (!closed.get()) {
-              List<Record<byte[], Row>> recordList = consumer.poll(Duration.ofSeconds(2));
+              List<Record<Row, byte[]>> recordList = consumer.poll(Duration.ofSeconds(2));
               recordList
                   .stream()
-                  .filter(r -> r.value().isPresent())
-                  .map(r -> r.value().get())
+                  .filter(r -> r.key().isPresent())
+                  .map(r -> r.key().get())
                   .flatMap(
                       row ->
                           config

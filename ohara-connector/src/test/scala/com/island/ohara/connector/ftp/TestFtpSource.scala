@@ -111,13 +111,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] def pollData(topicName: String,
                              timeout: scala.concurrent.duration.Duration = 100 seconds,
-                             size: Int = data.length): Seq[Record[Array[Byte], Row]] = {
+                             size: Int = data.length): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder()
       .topicName(methodName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .build(Serializer.BYTES, Serializer.ROW)
+      .build(Serializer.ROW, Serializer.BYTES)
     try consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), size).asScala
     finally consumer.close()
   }
@@ -154,12 +154,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       checkFileCount(0, 1, 0)
       var records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 3
       row0.cell(0) shouldBe rows.head.cell(0)
       row0.cell(1) shouldBe rows.head.cell(1)
       row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 3
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
@@ -200,7 +200,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
       val records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 3
       row0.cell(0).name shouldBe "newName"
       row0.cell(0).value shouldBe rows.head.cell(0).value
@@ -208,7 +208,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       row0.cell(1).value shouldBe rows.head.cell(1).value
       row0.cell(2).name shouldBe "newSingle"
       row0.cell(2).value shouldBe rows.head.cell(2).value
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 3
       row0.cell(0).name shouldBe "newName"
       row1.cell(0).value shouldBe rows(1).cell(0).value
@@ -246,12 +246,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
       val records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 3
       row0.cell(0) shouldBe rows.head.cell(0)
       row0.cell(1) shouldBe rows.head.cell(1)
       row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 3
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
@@ -281,12 +281,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
       val records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 3
       row0.cell(0) shouldBe rows.head.cell(0)
       row0.cell(1) shouldBe rows.head.cell(1)
       row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 3
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
@@ -316,13 +316,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
       val records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 3
       // NOTED: without schema all value are converted to string
       row0.cell(0) shouldBe Cell.of(rows.head.cell(0).name, rows.head.cell(0).value.toString)
       row0.cell(1) shouldBe Cell.of(rows.head.cell(1).name, rows.head.cell(1).value.toString)
       row0.cell(2) shouldBe Cell.of(rows.head.cell(2).name, rows.head.cell(2).value.toString)
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 3
       row1.cell(0) shouldBe Cell.of(rows(1).cell(0).name, rows(1).cell(0).value.toString)
       row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
@@ -353,11 +353,11 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
       val records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 2
       row0.cell(0) shouldBe rows.head.cell(0)
       row0.cell(1) shouldBe rows.head.cell(1)
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 2
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
@@ -456,12 +456,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
       val records = pollData(topicName)
       records.size shouldBe data.length
-      val row0 = records.head.value.get
+      val row0 = records.head.key.get
       row0.size shouldBe 3
       row0.cell(0) shouldBe rows.head.cell(0)
       row0.cell(1) shouldBe rows.head.cell(1)
       row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).value.get
+      val row1 = records(1).key.get
       row1.size shouldBe 3
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)

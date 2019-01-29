@@ -70,19 +70,19 @@ class TestConsumerAndProducer extends WithBroker with Matchers {
     } finally client.close()
 
     val producer =
-      Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.STRING, Serializer.ROW)
-    try producer.sender().key("key").value(data).send(topicName)
+      Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.STRING)
+    try producer.sender().key(data).send(topicName)
     finally producer.close()
     val consumer = Consumer
       .builder()
       .topicName(topicName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .build(Serializer.STRING, Serializer.ROW)
+      .build(Serializer.ROW, Serializer.STRING)
     try {
       consumer.subscription().asScala.toSet shouldBe Set(topicName)
       val record = consumer.poll(java.time.Duration.ofSeconds(20), 1)
-      record.get(0).value.get shouldBe data
+      record.get(0).key.get shouldBe data
     } finally consumer.close()
   }
 }

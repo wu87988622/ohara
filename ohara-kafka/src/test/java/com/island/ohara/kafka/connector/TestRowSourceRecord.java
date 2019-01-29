@@ -18,9 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.ByteUtil;
 import com.island.ohara.common.util.CommonUtil;
 import java.util.Collections;
 import java.util.Map;
@@ -50,7 +48,6 @@ public class TestRowSourceRecord extends SmallTest {
     assertFalse(r.timestamp().isPresent());
     assertTrue(r.sourceOffset().isEmpty());
     assertTrue(r.sourcePartition().isEmpty());
-    assertTrue(ByteUtil.equals(r.key(), Serializer.ROW.to(r.row())));
   }
 
   @Test
@@ -77,6 +74,5 @@ public class TestRowSourceRecord extends SmallTest {
     assertEquals(partition, (int) r.partition().get());
     assertEquals(sourceOffset, r.sourceOffset());
     assertEquals(sourcePartition, r.sourcePartition());
-    assertTrue(ByteUtil.equals(r.key(), Serializer.ROW.to(r.row())));
   }
 }

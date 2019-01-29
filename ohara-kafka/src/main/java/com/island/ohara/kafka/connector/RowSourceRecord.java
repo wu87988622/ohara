@@ -79,15 +79,6 @@ public class RowSourceRecord {
     return Optional.ofNullable(timestamp);
   }
 
-  /**
-   * TODO: we don't discuss the key from row yet...
-   *
-   * @return byte array from row
-   */
-  byte[] key() {
-    return Serializer.ROW.to(row);
-  }
-
   public static RowSourceRecord of(String topic, Row row) {
     return builder().row(row).topic(topic).build();
   }
@@ -106,7 +97,7 @@ public class RowSourceRecord {
     if (record.sourcePartition() != null) builder.sourcePartition(record.sourcePartition());
     if (record.kafkaPartition() != null) builder.partition(record.kafkaPartition());
     if (record.timestamp() != null) builder.timestamp(record.timestamp());
-    builder.row(Serializer.ROW.from((byte[]) record.value()));
+    builder.row(Serializer.ROW.from((byte[]) record.key()));
     return builder.build();
   }
 
@@ -122,9 +113,10 @@ public class RowSourceRecord {
         topic(),
         partition,
         Schema.BYTES_SCHEMA,
-        key(),
-        Schema.BYTES_SCHEMA,
         Serializer.ROW.to(row()),
+        // TODO: we keep empty value in order to reduce data size in transmission
+        Schema.BYTES_SCHEMA,
+        null,
         timestamp);
   }
 

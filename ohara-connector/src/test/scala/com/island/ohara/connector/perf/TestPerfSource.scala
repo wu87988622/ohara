@@ -71,7 +71,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
           .connectionProps(testUtil.brokersConnProps)
           .offsetFromBegin()
           .topicName(topicName)
-          .build(Serializer.BYTES, Serializer.ROW)
+          .build(Serializer.ROW, Serializer.BYTES)
       try {
         def matchType(lhs: Class[_], dataType: DataType): Unit = {
           dataType match {
@@ -92,7 +92,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         val records = consumer.poll(java.time.Duration.ofNanos((props.freq * 3).toNanos), props.batch)
         records.size >= props.batch shouldBe true
         records.asScala
-          .map(_.value.get)
+          .map(_.key.get)
           .foreach(row => {
             row.size shouldBe schema.size
             schema.foreach(c => {

@@ -28,7 +28,7 @@ import java.util.List;
 public class SimpleRowSinkTask extends RowSinkTask {
   private TaskConfig config = null;
   private String outputTopic = null;
-  private Producer<byte[], Row> producer = null;
+  private Producer<Row, byte[]> producer = null;
 
   @Override
   protected void _start(TaskConfig props) {
@@ -37,7 +37,7 @@ public class SimpleRowSinkTask extends RowSinkTask {
     producer =
         Producer.builder()
             .connectionProps(config.options().get(BROKER))
-            .build(Serializer.BYTES, Serializer.ROW);
+            .build(Serializer.ROW, Serializer.BYTES);
   }
 
   @Override
@@ -51,6 +51,6 @@ public class SimpleRowSinkTask extends RowSinkTask {
 
   @Override
   protected void _put(List<RowSinkRecord> records) {
-    records.forEach(r -> producer.sender().key(r.key()).value(r.row()).send(outputTopic));
+    records.forEach(r -> producer.sender().key(r.row()).send(outputTopic));
   }
 }

@@ -18,9 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.ByteUtil;
 import com.island.ohara.common.util.CommonUtil;
 import org.junit.Test;
 
@@ -29,19 +27,6 @@ public class TestRowSinkRecord extends SmallTest {
   @Test(expected = NullPointerException.class)
   public void requireTopic() {
     RowSinkRecord.builder()
-        .key(Serializer.ROW.to(Row.of(Cell.of(methodName(), 123))))
-        .row(Row.of(Cell.of(methodName(), 123)))
-        .timestamp(CommonUtil.current())
-        .partition(123)
-        .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
-        .offset(123)
-        .build();
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void requireKey() {
-    RowSinkRecord.builder()
-        .topic("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtil.current())
         .partition(123)
@@ -54,7 +39,6 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireRow() {
     RowSinkRecord.builder()
         .topic("asdasd")
-        .key(Serializer.ROW.to(Row.of(Cell.of(methodName(), 123))))
         .timestamp(CommonUtil.current())
         .partition(123)
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
@@ -66,7 +50,6 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireTimestamp() {
     RowSinkRecord.builder()
         .topic("asdasd")
-        .key(Serializer.ROW.to(Row.of(Cell.of(methodName(), 123))))
         .row(Row.of(Cell.of(methodName(), 123)))
         .partition(123)
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
@@ -78,7 +61,6 @@ public class TestRowSinkRecord extends SmallTest {
   public void requirePartition() {
     RowSinkRecord.builder()
         .topic("asdasd")
-        .key(Serializer.ROW.to(Row.of(Cell.of(methodName(), 123))))
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtil.current())
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
@@ -90,7 +72,6 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireTimestampType() {
     RowSinkRecord.builder()
         .topic("asdasd")
-        .key(Serializer.ROW.to(Row.of(Cell.of(methodName(), 123))))
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtil.current())
         .partition(123)
@@ -102,7 +83,6 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireOffset() {
     RowSinkRecord.builder()
         .topic("asdasd")
-        .key(Serializer.ROW.to(Row.of(Cell.of(methodName(), 123))))
         .row(Row.of(Cell.of(methodName(), 123)))
         .timestamp(CommonUtil.current())
         .partition(123)
@@ -122,7 +102,6 @@ public class TestRowSinkRecord extends SmallTest {
     RowSinkRecord r =
         RowSinkRecord.builder()
             .topic(topic)
-            .key(Serializer.ROW.to(row))
             .row(row)
             .timestamp(ts)
             .partition(partition)
@@ -133,7 +112,6 @@ public class TestRowSinkRecord extends SmallTest {
     assertEquals(row, r.row());
     assertEquals(ts, r.timestamp());
     assertEquals(partition, r.partition());
-    assertTrue(ByteUtil.equals(r.key(), Serializer.ROW.to(r.row())));
     assertEquals(tsType, r.timestampType());
     assertEquals(offset, r.offset());
   }

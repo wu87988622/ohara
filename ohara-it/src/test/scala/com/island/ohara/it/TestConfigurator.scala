@@ -116,13 +116,13 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       .connectionProps(testUtil.brokersConnProps)
       .offsetFromBegin()
       .topicName(topic.id)
-      .build(Serializer.BYTES, Serializer.ROW)
+      .build(Serializer.ROW, Serializer.BYTES)
     try {
       val records = consumer.poll(java.time.Duration.ofSeconds(20), rows.length).asScala
 
       records.length shouldBe rows.length
-      records.head.value.get shouldBe rows.head
-      records(1).value.get shouldBe rows(1)
+      records.head.key.get shouldBe rows.head
+      records(1).key.get shouldBe rows(1)
     } finally consumer.close()
 
     try {
@@ -160,8 +160,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       row.cells().asScala.map(_.value.toString).mkString(",")
     })
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.BYTES, Serializer.ROW)
-    try rows.foreach(row => producer.sender().value(row).send(topic.id))
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    try rows.foreach(row => producer.sender().key(row).send(topic.id))
     finally producer.close()
 
     // setup env
