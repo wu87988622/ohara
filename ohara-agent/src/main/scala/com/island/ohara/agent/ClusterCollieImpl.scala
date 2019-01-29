@@ -20,11 +20,11 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, TimeUnit}
 
 import com.island.ohara.agent.ClusterCollieImpl._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
@@ -32,6 +32,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.reflect.{ClassTag, classTag}
 
 private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends ReleaseOnce with ClusterCollie {
   private[this] implicit val clientCache: DockerClientCache = new DockerClientCache {
@@ -46,7 +47,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       cache.clear()
     }
   }
-  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl {
+  private[this] implicit val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl {
     override def clusters(): Future[Map[ZookeeperClusterInfo, Seq[ContainerInfo]]] =
       ClusterCollieImpl.this.clusters().map {
         _.filter(_._1.isInstanceOf[ZookeeperClusterInfo]).map {
@@ -54,7 +55,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         }
       }
   }
-  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl {
+  private[this] implicit val bkCollie: BrokerCollieImpl = new BrokerCollieImpl {
     override def clusters(): Future[Map[BrokerClusterInfo, Seq[ContainerInfo]]] =
       ClusterCollieImpl.this.clusters().map {
         _.filter(_._1.isInstanceOf[BrokerClusterInfo]).map {
@@ -145,16 +146,16 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       .flatMap(Future
         .traverse(_) { node =>
           // multi-thread to seek all containers from multi-nodes
-          Future { clientCache.get(node).containers() }
+          Future { clientCache.get(node).activeContainers() }
         }
         .map(_.flatten))
       .flatMap { allContainers =>
         def parse(
-          service: Service,
+          serviceName: String,
           f: (String, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future
           .sequence(
             allContainers
-              .filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER"))
+              .filter(_.name.contains(s"$DIVIDER$serviceName$DIVIDER"))
               .map(container => container.name.split(DIVIDER).head -> container)
               .groupBy(_._1)
               .map {
@@ -165,9 +166,9 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
               })
           .map(_.toMap)
 
-        parse(ZOOKEEPER, toZkCluster).flatMap { zkMap =>
-          parse(BROKER, toBkCluster).flatMap { bkMap =>
-            parse(WORKER, toWkCluster).map { wkMap =>
+        parse(zkCollie.serviceName, toZkCluster).flatMap { zkMap =>
+          parse(bkCollie.serviceName, toBkCluster).flatMap { bkMap =>
+            parse(wkCollie.serviceName, toWkCluster).map { wkMap =>
               zkMap ++ bkMap ++ wkMap
             }
           }
@@ -213,12 +214,15 @@ private object ClusterCollieImpl {
     def get(nodes: Seq[Node]): Seq[DockerClient] = nodes.map(get)
   }
 
-  private[this] trait BasicCollieImpl[T <: ClusterInfo] extends Collie[T] {
+  private[this] abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag](implicit clientCache: DockerClientCache,
+                                                                           nodeCollie: NodeCollie)
+      extends Collie[T] {
 
-    val clientCache: DockerClientCache
-    val nodeCollie: NodeCollie
-
-    val service: Service
+    val serviceName: String =
+      if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) "zookeeper"
+      else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) "broker"
+      else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) "worker"
+      else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
     def updateRoute(client: DockerClient, containerName: String, route: Map[String, String]): Unit =
       client
@@ -234,7 +238,8 @@ private object ClusterCollieImpl {
       * @param clusterName cluster name
       * @return a formatted string. form: ${clusterName}-${service}-${index}
       */
-    def format(clusterName: String): String = s"$clusterName-${service.name}-${CommonUtil.randomString(LENGTH_OF_UUID)}"
+    def format(clusterName: String): String =
+      s"$clusterName$DIVIDER$serviceName$DIVIDER${CommonUtil.randomString(LENGTH_OF_UUID)}"
 
     override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
       case (cluster, _) =>
@@ -252,7 +257,7 @@ private object ClusterCollieImpl {
       */
     def stopAndRemoveService(client: DockerClient, clusterName: String, swallow: Boolean): Unit =
       try {
-        val key = s"$clusterName$DIVIDER${service.name}"
+        val key = s"$clusterName$DIVIDER$serviceName"
         val containers = client.containers().filter(_.name.startsWith(key))
         if (containers.nonEmpty) {
           var lastException: Throwable = null
@@ -268,21 +273,20 @@ private object ClusterCollieImpl {
         }
       } catch {
         case e: Throwable =>
-          if (swallow) LOG.error(s"failed to cleanup $clusterName on $service", e)
+          if (swallow) LOG.error(s"failed to cleanup $clusterName on $serviceName", e)
           else throw e
       }
 
-    /**
-      * get all containers belonging to specified cluster.
-      * @param clusterName cluster name
-      * @return containers information
-      */
-    def query(clusterName: String, service: Service): Future[Seq[ContainerInfo]] = nodeCollie
+    override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = nodeCollie
       .nodes()
-      .map(_.flatMap(clientCache.get(_).containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))))
-
-    override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = query(clusterName, service).flatMap {
-      containers =>
+      .map(
+        _.flatMap(
+          clientCache
+            .get(_)
+            // we allow user to get logs from "exited" containers!
+            .containers()
+            .filter(_.name.startsWith(s"$clusterName$DIVIDER$serviceName"))))
+      .flatMap { containers =>
         nodeCollie
           .nodes(containers.map(_.nodeName))
           .map(n => clientCache.get(n))
@@ -291,7 +295,7 @@ private object ClusterCollieImpl {
               val container = containers(index)
               container -> client.log(container.name)
           }.toMap)
-    }
+      }
 
     override def removeNode(clusterName: String, nodeName: String): Future[T] = containers(clusterName)
       .flatMap { runningContainers =>
@@ -319,11 +323,9 @@ private object ClusterCollieImpl {
         }
   }
 
-  private abstract class ZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
-      extends ZookeeperCollie
-      with BasicCollieImpl[ZookeeperClusterInfo] {
-
-    override val service: Service = ZOOKEEPER
+  private abstract class ZookeeperCollieImpl(implicit nodeCollie: NodeCollie, clientCache: DockerClientCache)
+      extends BasicCollieImpl[ZookeeperClusterInfo]
+      with ZookeeperCollie {
 
     override def creator(): ZookeeperCollie.ClusterCreator =
       (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
@@ -372,7 +374,7 @@ private object ClusterCollieImpl {
               .map(_.nodeName)
               .toSeq
             if (successfulNodeNames.isEmpty)
-              throw new IllegalArgumentException(s"failed to create $clusterName on $ZOOKEEPER")
+              throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
             ZookeeperClusterInfo(
               name = clusterName,
               imageName = imageName,
@@ -394,11 +396,11 @@ private object ClusterCollieImpl {
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
   }
 
-  private abstract class BrokerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
-      extends BrokerCollie
-      with BasicCollieImpl[BrokerClusterInfo] {
-
-    override val service: Service = BROKER
+  private abstract class BrokerCollieImpl(implicit nodeCollie: NodeCollie,
+                                          clientCache: DockerClientCache,
+                                          zookeeperCollie: ZookeeperCollie)
+      extends BasicCollieImpl[BrokerClusterInfo]
+      with BrokerCollie {
 
     override def creator(): BrokerCollie.ClusterCreator =
       (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
@@ -433,7 +435,7 @@ private object ClusterCollieImpl {
               existNodes.keys.foreach(node =>
                 if (newNodes.keys.exists(_.name == node.name))
                   throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
-              query(zookeeperClusterName, ZOOKEEPER).map((existNodes, newNodes, _))
+              zookeeperCollie.cluster(zookeeperClusterName).map(_._2).map((existNodes, newNodes, _))
           }
           .map {
             case (existNodes, newNodes, zkContainers) =>
@@ -498,7 +500,7 @@ private object ClusterCollieImpl {
                 .map(_.nodeName)
                 .toSeq
               if (successfulNodeNames.isEmpty)
-                throw new IllegalArgumentException(s"failed to create $clusterName on $BROKER")
+                throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
               BrokerClusterInfo(
                 name = clusterName,
                 imageName = imageName,
@@ -519,11 +521,11 @@ private object ClusterCollieImpl {
       .create()
   }
 
-  private abstract class WorkerCollieImpl(implicit val nodeCollie: NodeCollie, val clientCache: DockerClientCache)
-      extends WorkerCollie
-      with BasicCollieImpl[WorkerClusterInfo] {
-
-    override val service: Service = WORKER
+  private abstract class WorkerCollieImpl(implicit nodeCollie: NodeCollie,
+                                          clientCache: DockerClientCache,
+                                          brokerCollie: BrokerCollie)
+      extends BasicCollieImpl[WorkerClusterInfo]
+      with WorkerCollie {
 
     /**
       * create a new worker cluster if there is no existent worker cluster. Otherwise, this method do the following
@@ -586,7 +588,7 @@ private object ClusterCollieImpl {
             existNodes.keys.foreach(node =>
               if (newNodes.keys.exists(_.name == node.name))
                 throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
-            query(brokerClusterName, BROKER).map((existNodes, newNodes, _))
+            brokerCollie.cluster(brokerClusterName).map(_._2).map((existNodes, newNodes, _))
         }
         .flatMap {
           case (existNodes, newNodes, brokerContainers) =>
@@ -652,7 +654,7 @@ private object ClusterCollieImpl {
               .map(_.nodeName)
               .toSeq
             if (successfulNodeNames.isEmpty)
-              throw new IllegalArgumentException(s"failed to create $clusterName on $WORKER")
+              throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
             val nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
             plugins(nodeNames.map(n => s"$n:$clientPort").mkString(",")).map { plugins =>
               WorkerClusterInfo(
@@ -718,19 +720,6 @@ private object ClusterCollieImpl {
     * used to distinguish the cluster name and service name
     */
   private val DIVIDER: String = "-"
-
-  private sealed abstract class Service {
-    def name: String
-  }
-  private case object ZOOKEEPER extends Service {
-    override def name: String = "zookeeper"
-  }
-  private case object BROKER extends Service {
-    override def name: String = "broker"
-  }
-  private case object WORKER extends Service {
-    override def name: String = "worker"
-  }
 
   private[this] val LENGTH_OF_UUID: Int = 10
 }

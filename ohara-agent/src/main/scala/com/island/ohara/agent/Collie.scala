@@ -38,7 +38,8 @@ trait Collie[T <: ClusterInfo] {
   def remove(clusterName: String): Future[T]
 
   /**
-    * get logs from all containers
+    * get logs from all containers.
+    * NOTED: It is ok to get logs from a "dead" cluster.
     * @param clusterName cluster name
     * @return all log content from cluster. Each container has a log.
     */
