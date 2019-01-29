@@ -45,13 +45,13 @@ private[configurator] object PipelineRoute {
       }
   }
 
-  private[this] def abstracts(rules: Map[String, String], workerClient: WorkerClient)(
+  private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient)(
     implicit store: Store): Future[List[ObjectAbstract]] =
     Future
       .sequence(
         rules
           .flatMap {
-            case (k, v) => Seq(k, v)
+            case (k, v) => Seq(k) ++ v
           }
           .filterNot(_ == UNKNOWN)
           .toSet
@@ -87,7 +87,7 @@ private[configurator] object PipelineRoute {
     * [ConnectorConfiguration, TopicInfo, StreamApp]
     */
   private[this] def verifyRules(cluster: WorkerClusterInfo, request: PipelineCreationRequest)(
-    implicit store: Store): Future[Map[String, String]] = {
+    implicit store: Store): Future[Map[String, Seq[String]]] = {
     def verify(id: String): Future[String] = if (id != UNKNOWN) {
       store
         .raw(id)
@@ -113,21 +113,37 @@ private[configurator] object PipelineRoute {
         }
     } else Future.successful(id)
 
+    def verify2(ids: Seq[String]): Future[Seq[String]] = Future.traverse(ids)(verify)
+
     Future
-      .sequence(request.rules.map {
-        case (k, v) =>
-          verify(k).flatMap { k =>
-            verify(v).map { v =>
-              if (k != UNKNOWN && v != UNKNOWN && k == v)
-                throw new IllegalArgumentException(s"the from:$k can't be equals to to:$v")
-              k -> v
-            }
+      .sequence(
+        request.rules
+        // pre-filter the unknown key
+          .filter {
+            case (k, _) => k != UNKNOWN
           }
-      })
-      .map(_.toMap.filter {
-        // If both "from" and "to" are UNKNOWN, we can just get rid of them since it is useless.
-        case (k, v) => k != UNKNOWN || v != UNKNOWN
-      })
+          .map {
+            case (k, v) =>
+              verify(k).flatMap { k =>
+                // we will remove unknown key later so it is unnecessary to fetch object for values.
+                if (k == UNKNOWN) Future.successful(k -> Seq.empty)
+                else
+                  verify2(v).map { v =>
+                    if (v.size == 1 && v.head == k)
+                      throw new IllegalArgumentException(s"the from:$k can't be equals to to:${v.head}")
+                    k -> v
+                  }
+              }
+          })
+      .map(_.toMap
+        .filter {
+          // if key is unknown, we remove it
+          case (k, _) => k != UNKNOWN
+        }
+        .map {
+          // remove unknown from value
+          case (k, ids) => k -> ids.filter(_ != UNKNOWN)
+        })
   }
 
   private[this] def update(pipeline: Pipeline)(implicit store: Store, workerCollie: WorkerCollie): Future[Pipeline] =

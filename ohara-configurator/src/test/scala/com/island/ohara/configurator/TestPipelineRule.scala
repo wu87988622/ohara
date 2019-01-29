@@ -64,7 +64,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "abc",
-            rules = Map(source.id -> PipelineApi.UNKNOWN)
+            rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
           )
         ),
       10 seconds
@@ -138,7 +138,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             pipeline.id,
             PipelineCreationRequest(
               name = "abc",
-              rules = Map(source.id -> topic.id)
+              rules = Map(source.id -> Seq(topic.id))
             )
           ),
         10 seconds
@@ -155,7 +155,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             pipeline.id,
             PipelineCreationRequest(
               name = "abc",
-              rules = Map(topic.id -> streamapp.head.id)
+              rules = Map(topic.id -> Seq(streamapp.head.id))
             )
           ),
         10 seconds
@@ -185,7 +185,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "abc",
-            rules = Map(source.id -> PipelineApi.UNKNOWN)
+            rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
           )
         ),
       10 seconds
@@ -210,7 +210,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "abc",
-            rules = Map(PipelineApi.UNKNOWN -> sink.id)
+            rules = Map(PipelineApi.UNKNOWN -> Seq(sink.id))
           )
         ),
       10 seconds

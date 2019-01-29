@@ -73,7 +73,7 @@ class TestOhara450 extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             "abc",
-            Map(source.id -> topic.id, topic.id -> sink.id)
+            Map(source.id -> Seq(topic.id), topic.id -> Seq(sink.id))
           )),
       10 seconds
     )

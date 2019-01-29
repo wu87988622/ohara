@@ -22,7 +22,7 @@ import spray.json.RootJsonFormat
 object PipelineApi {
   val UNKNOWN: String = "?"
   val PIPELINES_PREFIX_PATH: String = "pipelines"
-  final case class PipelineCreationRequest(name: String, rules: Map[String, String])
+  final case class PipelineCreationRequest(name: String, rules: Map[String, Seq[String]])
   implicit val PIPELINE_REQUEST_JSON_FORMAT: RootJsonFormat[PipelineCreationRequest] = jsonFormat2(
     PipelineCreationRequest)
 
@@ -38,7 +38,7 @@ object PipelineApi {
 
   final case class Pipeline(id: String,
                             name: String,
-                            rules: Map[String, String],
+                            rules: Map[String, Seq[String]],
                             objects: Seq[ObjectAbstract],
                             workerClusterName: String,
                             lastModified: Long)
