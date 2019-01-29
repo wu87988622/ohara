@@ -103,8 +103,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     // test invalid request: nonexistent uuid
     val invalidRequest = PipelineCreationRequest(methodName, Map("invalid" -> "invalid"))
     val pipeline = result(pipelineAccess.add(invalidRequest))
-    pipeline.rules.size shouldBe 1
-    pipeline.rules(PipelineApi.UNKNOWN) shouldBe PipelineApi.UNKNOWN
+    pipeline.rules.size shouldBe 0
   }
 
   @Test

@@ -124,7 +124,10 @@ private[configurator] object PipelineRoute {
             }
           }
       })
-      .map(_.toMap)
+      .map(_.toMap.filter {
+        // If both "from" and "to" are UNKNOWN, we can just get rid of them since it is useless.
+        case (k, v) => k != UNKNOWN || v != UNKNOWN
+      })
   }
 
   private[this] def update(pipeline: Pipeline)(implicit store: Store, workerCollie: WorkerCollie): Future[Pipeline] =
