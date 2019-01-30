@@ -20,7 +20,9 @@ import spray.json.RootJsonFormat
 
 object TopicApi {
   val TOPICS_PREFIX_PATH: String = "topics"
-  case class TopicCreationRequest(name: String, numberOfPartitions: Int, numberOfReplications: Short)
+  case class TopicCreationRequest(name: String, numberOfPartitions: Option[Int], numberOfReplications: Option[Short])
+
+  def creationRequest(name: String): TopicCreationRequest = TopicCreationRequest(name, None, None)
 
   implicit val TOPIC_CREATION_REQUEST_FORMAT: RootJsonFormat[TopicCreationRequest] = jsonFormat3(TopicCreationRequest)
 

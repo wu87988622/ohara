@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -48,7 +47,7 @@ class TestOhara450 extends SmallTest with Matchers {
     Await.result(access.list(), 10 seconds).size shouldBe 1
     import scala.concurrent.duration._
     val topic = Await.result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).add(TopicCreationRequest("abc", 1, 1)),
+      TopicApi.access().hostname(configurator.hostname).port(configurator.port).add(TopicApi.creationRequest("abc")),
       10 seconds)
     val sink = Await.result(
       access.add(

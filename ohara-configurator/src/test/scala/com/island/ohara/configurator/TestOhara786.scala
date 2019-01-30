@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.TopicApi
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.BrokerClient
 import org.junit.Test
@@ -43,7 +42,7 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
                                .access()
                                .hostname(configurator.hostname)
                                .port(configurator.port)
-                               .add(TopicCreationRequest(topicName, 1, 1)),
+                               .add(TopicApi.creationRequest(topicName)),
                              10 seconds)
     val brokerClient = BrokerClient.of(testUtil().brokersConnProps())
     try {

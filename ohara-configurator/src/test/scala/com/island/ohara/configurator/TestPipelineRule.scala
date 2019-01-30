@@ -20,7 +20,6 @@ import java.io.File
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, StreamApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
@@ -43,7 +42,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicCreationRequest(methodName, 1, 1)),
+        .add(TopicApi.creationRequest(methodName)),
       10 seconds
     )
     val sourceRequest = ConnectorCreationRequest(
@@ -104,7 +103,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicCreationRequest("testPipelineAllowData", 1, 1)),
+        .add(TopicApi.creationRequest("testPipelineAllowData")),
       10 seconds
     )
 

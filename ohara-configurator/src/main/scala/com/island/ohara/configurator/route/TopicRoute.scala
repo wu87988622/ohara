@@ -26,7 +26,8 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 private[configurator] object TopicRoute {
-
+  private[this] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
+  private[this] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   private[this] val LOG = Logger(TopicRoute.getClass)
   def apply(implicit store: Store, brokerCollie: BrokerCollie): server.Route =
     RouteUtil.basicRoute[TopicCreationRequest, TopicInfo](
@@ -38,8 +39,8 @@ private[configurator] object TopicRoute {
               .creator()
               // NOTED: we allow user to change topic's name arbitrarily
               .name(id)
-              .numberOfPartitions(request.numberOfPartitions)
-              .numberOfReplications(request.numberOfReplications)
+              .numberOfPartitions(request.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS))
+              .numberOfReplications(request.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS))
               .create()
               .map { info =>
                 try TopicInfo(id,
@@ -54,8 +55,14 @@ private[configurator] object TopicRoute {
       hookOfUpdate = (id: Id, request: TopicCreationRequest, previous: TopicInfo) =>
         CollieUtils.topicAdmin(Some(previous.brokerClusterName)).flatMap {
           case (cluster, client) =>
-            if (previous.numberOfPartitions != request.numberOfPartitions)
-              client.changePartitions(id, request.numberOfPartitions).map { info =>
+            val requestNumberOfPartitions = request.numberOfPartitions.getOrElse(previous.numberOfPartitions)
+            val requestNumberOfReplications = request.numberOfReplications.getOrElse(previous.numberOfReplications)
+            if (requestNumberOfReplications != previous.numberOfReplications) {
+              // we have got to release the client
+              Releasable.close(client)
+              Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
+            } else if (requestNumberOfPartitions != previous.numberOfPartitions)
+              client.changePartitions(id, request.numberOfPartitions.get).map { info =>
                 try TopicInfo(info.name,
                               request.name,
                               info.numberOfPartitions,
@@ -63,11 +70,7 @@ private[configurator] object TopicRoute {
                               cluster.name,
                               CommonUtil.current())
                 finally client.close()
-              } else if (previous.numberOfReplications != request.numberOfReplications) {
-              // we have got to release the client
-              Releasable.close(client)
-              Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
-            } else {
+              } else {
               // we have got to release the client
               Releasable.close(client)
               Future.successful(previous)

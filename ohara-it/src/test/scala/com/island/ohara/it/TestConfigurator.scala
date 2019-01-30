@@ -19,7 +19,6 @@ import java.time.Duration
 
 import com.island.ohara.client.FtpClient
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, InfoApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
@@ -56,7 +55,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
                                .access()
                                .hostname(configurator.hostname)
                                .port(configurator.port)
-                               .add(TopicCreationRequest(methodName, 1, 1)),
+                               .add(TopicApi.creationRequest(methodName)),
                              10 seconds)
     val sourceProps = FtpSourceProps(
       inputFolder = "/input",
@@ -140,7 +139,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
                                .access()
                                .hostname(configurator.hostname)
                                .port(configurator.port)
-                               .add(TopicCreationRequest(methodName, 1, 1)),
+                               .add(TopicApi.creationRequest(methodName)),
                              10 seconds)
     val sinkProps = FtpSinkProps(
       output = "/backup",

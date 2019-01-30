@@ -35,8 +35,8 @@ class TestTopicRoute extends SmallTest with Matchers {
   def test(): Unit = {
     def compareRequestAndResponse(request: TopicCreationRequest, response: TopicInfo): TopicInfo = {
       request.name shouldBe response.name
-      request.numberOfReplications shouldBe response.numberOfReplications
-      request.numberOfPartitions shouldBe response.numberOfPartitions
+      request.numberOfReplications.foreach(_ shouldBe response.numberOfReplications)
+      request.numberOfPartitions.foreach(_ shouldBe response.numberOfPartitions)
       response
     }
 
@@ -52,14 +52,14 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test add
     result(access.list()).size shouldBe 0
-    val request = TopicCreationRequest(methodName, 1, 1)
+    val request = TopicApi.creationRequest(methodName)
     val response = compareRequestAndResponse(request, result(access.add(request)))
 
     // test get
     compare2Response(response, result(access.get(response.id)))
 
     // test update
-    val anotherRequest = TopicCreationRequest(methodName, 2, 1)
+    val anotherRequest = TopicApi.creationRequest(methodName)
     val newResponse =
       compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
 
@@ -77,7 +77,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test same name
     val topicNames: Set[String] =
-      (0 until 5).map(index => result(access.add(TopicCreationRequest(s"topic-$index", 1, 1))).name).toSet
+      (0 until 5).map(index => result(access.add(TopicApi.creationRequest(s"topic-$index"))).name).toSet
     topicNames.size shouldBe 5
   }
 
