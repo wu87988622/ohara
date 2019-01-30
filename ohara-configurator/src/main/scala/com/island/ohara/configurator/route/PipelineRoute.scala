@@ -56,31 +56,30 @@ private[configurator] object PipelineRoute {
           .filterNot(_ == UNKNOWN)
           .toSet
           .map(id => store.value[Data](id)))
-      .flatMap { ids =>
-        Future
-          .sequence(ids.map {
-            case data: ConnectorInfo =>
-              workerClient
-                .status(data.id)
-                .map(c => Some(c.connector.state))
-                .recover {
-                  case e: Throwable =>
-                    LOG.error(s"Failed to get stats of connector:${data.id}", e)
-                    None
-                }
-                .map { state =>
-                  ObjectAbstract(data.id,
-                                 data.name,
-                                 data.kind,
-                                 state,
-                                 ConnectorRoute.errorMessage(state),
-                                 data.lastModified)
-                }
-            case data => Future.successful(ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified))
-          })
-          // NOTED: we have to return a "serializable" list!!!
-          .map(_.toList)
+      .flatMap { objs =>
+        Future.traverse(objs) {
+          case data: ConnectorInfo =>
+            workerClient
+              .status(data.id)
+              .map(c => Some(c.connector.state))
+              .recover {
+                case e: Throwable =>
+                  LOG.error(s"Failed to get stats of connector:${data.id}", e)
+                  None
+              }
+              .map { state =>
+                ObjectAbstract(data.id,
+                               data.name,
+                               data.kind,
+                               state,
+                               ConnectorRoute.errorMessage(state),
+                               data.lastModified)
+              }
+          case data => Future.successful(ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified))
+        }
       }
+      // NOTED: we have to return a "serializable" list!!!
+      .map(_.toList)
 
   /**
     * we should accept following data type only
