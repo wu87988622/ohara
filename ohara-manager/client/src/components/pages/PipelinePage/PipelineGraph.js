@@ -265,12 +265,16 @@ class PipelineGraph extends React.Component {
       });
 
       if (to) {
+        // Get dest graphs
         const dests = graph.map(x => x.id);
 
-        if (!dests.includes(to)) return;
+        // If the dest graphs are not listed in the graph object
+        // or it's not an array, return at this point
+        if (!dests.includes(to) && !Array.isArray(to)) return;
 
         if (Array.isArray(to)) {
-          to.forEach(t => {
+          // Exclude '?' as they're not valid targets
+          to.filter(t => t !== '?').forEach(t => {
             g.setEdge(id, t, {});
           });
           return;

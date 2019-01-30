@@ -178,9 +178,9 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  updateGraph = async (update, id) => {
+  updateGraph = async ({ update, ...rest }) => {
     this.setState(({ graph }) => {
-      return { graph: updateGraph(graph, update, id) };
+      return { graph: updateGraph({ graph, update, ...rest }) };
     });
     await this.updatePipeline(update);
   };

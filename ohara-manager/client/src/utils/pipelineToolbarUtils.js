@@ -74,13 +74,13 @@ export const createConnector = async ({ updateGraph, connector }) => {
   }
 
   const update = {
+    icon: ICON_MAPS[className],
+    isActive: false,
     name: connectorName,
     kind: className,
-    to: '?',
-    isActive: false,
-    icon: ICON_MAPS[className],
+    to: [],
     id,
   };
 
-  updateGraph(update, className);
+  updateGraph({ update });
 };

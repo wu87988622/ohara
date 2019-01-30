@@ -289,17 +289,18 @@ class HdfsSink extends React.Component {
     await pipelinesApis.updateSink({ id: sinkId, params });
     updateHasChanges(false);
 
-    const currTopicId = _.isEmpty(currReadTopic) ? '?' : currReadTopic.id;
+    const currTopicId = _.isEmpty(currReadTopic) ? [] : currReadTopic.id;
     const currSink = findByGraphId(graph, sinkId);
     const topic = findByGraphId(graph, currTopicId);
+    const to = [...new Set([...topic.to, sinkId])];
 
     let update;
     if (topic) {
-      update = { ...topic, name, to: sinkId };
-      updateGraph(update, currTopicId);
+      update = { ...topic, to };
+      updateGraph({ update, isSinkUpdate: true, updatedName: name, sinkId });
     } else {
-      update = { ...currSink, name };
-      updateGraph(update, currTopicId);
+      update = { ...currSink };
+      updateGraph({ update, updatedName: name, sinkId });
     }
   }, 1000);
 
@@ -346,7 +347,7 @@ class HdfsSink extends React.Component {
     this.setState({ state });
     const currSink = findByGraphId(graph, sinkId);
     const update = { ...currSink, state };
-    updateGraph(update, currSink.id);
+    updateGraph({ update });
 
     if (action === CONNECTOR_ACTIONS.start) {
       if (state === CONNECTOR_STATES.running) {

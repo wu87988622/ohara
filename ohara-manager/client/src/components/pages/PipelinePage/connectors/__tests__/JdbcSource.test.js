@@ -47,6 +47,7 @@ const props = {
   topics: [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }],
   match: { params: { connectorId: '1234' } },
   schema: [],
+  refreshGraph: jest.fn(),
 };
 
 describe('<FtpSource />', () => {

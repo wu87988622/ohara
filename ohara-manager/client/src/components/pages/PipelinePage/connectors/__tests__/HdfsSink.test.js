@@ -35,6 +35,7 @@ const props = {
   },
   schema: [],
   isRedirect: false,
+  refreshGraph: jest.fn(),
 };
 
 describe('<HdfsSink />', () => {

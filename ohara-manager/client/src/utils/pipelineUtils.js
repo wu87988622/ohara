@@ -35,20 +35,19 @@ export const updateTopic = (props, currTopic, connectorType) => {
   const { graph, match, updateGraph } = props;
   const connectorId = _.get(match, 'params.connectorId');
 
-  let updateId = '';
   let update = null;
 
   if (connectorType === 'source') {
     const currConnector = findByGraphId(graph, connectorId);
-    const to = _.isEmpty(currTopic) ? '?' : currTopic.id;
+    const topicId = _.isEmpty(currTopic) ? [] : currTopic.id;
+    const to = [...new Set([...currConnector.to, topicId])];
     update = { ...currConnector, to };
-    updateId = currConnector.id;
+    updateGraph({ update });
   } else {
-    const currTopicId = _.isEmpty(currTopic) ? '?' : currTopic.id;
+    const currTopicId = _.isEmpty(currTopic) ? [] : currTopic.id;
     const topic = findByGraphId(graph, currTopicId);
-    update = { ...topic, to: connectorId };
-    updateId = currTopicId;
+    const to = [...new Set([...topic.to, connectorId])];
+    update = { ...topic, to };
+    updateGraph({ update, isSinkUpdate: true });
   }
-
-  updateGraph(update, updateId);
 };

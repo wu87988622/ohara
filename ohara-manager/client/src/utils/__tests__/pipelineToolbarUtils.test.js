@@ -34,16 +34,15 @@ describe('createConnector()', () => {
     await createConnector({ graph, updateGraph, connector });
 
     expect(updateGraph).toHaveBeenCalledTimes(1);
-    expect(updateGraph).toHaveBeenCalledWith(
-      {
+    expect(updateGraph).toHaveBeenCalledWith({
+      update: {
         icon: 'fa-file-import',
         isActive: false,
         name: expect.any(String),
-        to: '?',
+        to: [],
         kind: CONNECTOR_TYPES.ftpSource,
         id: res.data.result.id,
       },
-      CONNECTOR_TYPES.ftpSource,
-    );
+    });
   });
 });

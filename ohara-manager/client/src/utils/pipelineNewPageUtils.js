@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as _ from './commonUtils';
 import { isSource, isSink, isTopic } from './pipelineUtils';
 
 export const getConnectors = connectors => {
@@ -48,46 +49,87 @@ export const addPipelineStatus = pipeline => {
 
 export const updatePipelineParams = (pipelines, update) => {
   const { name, rules } = pipelines;
+  const { id, to } = update;
+  const updateRule = { [id]: to };
 
-  let params;
-  let updateRule;
-
-  if (update && update.id) {
-    const { id, kind, to } = update;
-
-    if (to === '?') {
-      updateRule = isSink(kind) ? { '?': id } : { [id]: '?' };
-    } else if (isSink(kind)) {
-      const connector = Object.values(rules).find(x => x === id);
-      updateRule = { [to]: connector };
-    } else {
-      const connector = Object.keys(rules).find(x => x === id);
-      updateRule = { [connector]: to };
-    }
-
-    params = {
-      name,
-      rules: { ...rules, ...updateRule },
-    };
-  } else {
-    params = { name, rules };
-  }
+  const params = {
+    name,
+    rules: { ...rules, ...updateRule },
+  };
 
   return params;
 };
 
-export const updateGraph = (graph, update, id) => {
-  const idx = graph.findIndex(g => g.id === id);
-  let updatedGraph = [];
+const updateSinkName = (graph, updatedName, sinkId) => {
+  if (_.isNull(sinkId)) return;
 
-  if (idx === -1) {
-    updatedGraph = [...graph, update];
+  const sinkIdx = graph.findIndex(g => g.id === sinkId);
+  const result = [
+    ...graph.slice(0, sinkIdx),
+    { ...graph[sinkIdx], name: updatedName },
+    ...graph.slice(sinkIdx + 1),
+  ];
+
+  return result;
+};
+
+const updateSingleGraph = (graph, idx, key, value) => {
+  const result = [
+    ...graph.slice(0, idx),
+    {
+      ...graph[idx],
+      [key]: value,
+    },
+    ...graph.slice(idx + 1),
+  ];
+
+  return result;
+};
+
+export const updateGraph = ({
+  graph,
+  update,
+  updatedName,
+  isSinkUpdate = false,
+  sinkId = null,
+}) => {
+  let updatedGraph;
+  let idx = null;
+
+  if (isSinkUpdate) {
+    // Update the sink connector name
+    updatedGraph = updateSinkName(graph, updatedName, sinkId) || graph;
+
+    // Remove sink from other topics since our UI doesn't support this logic yet
+    if (sinkId) {
+      const prevTopicIdx = updatedGraph.findIndex(g => g.to.includes(sinkId));
+      const prevTopicTo = updatedGraph[prevTopicIdx].to.filter(
+        t => t !== sinkId,
+      );
+
+      updatedGraph = updateSingleGraph(
+        updatedGraph,
+        prevTopicIdx,
+        'to',
+        prevTopicTo,
+      );
+    }
+
+    // Update current topic
+    const topicIdx = updatedGraph.findIndex(g => g.id === update.id);
+    updatedGraph = updateSingleGraph(updatedGraph, topicIdx, 'to', update.to);
   } else {
-    updatedGraph = [
-      ...graph.slice(0, idx),
-      { ...graph[idx], ...update },
-      ...graph.slice(idx + 1),
-    ];
+    idx = graph.findIndex(g => g.id === update.id);
+
+    if (idx === -1) {
+      updatedGraph = [...graph, update];
+    } else {
+      updatedGraph = [
+        ...graph.slice(0, idx),
+        { ...graph[idx], ...update },
+        ...graph.slice(idx + 1),
+      ];
+    }
   }
 
   return updatedGraph;
@@ -95,17 +137,7 @@ export const updateGraph = (graph, update, id) => {
 
 export const loadGraph = pipelines => {
   const { objects, rules } = pipelines;
-
   const updatedGraph = Object.keys(rules).map(x => {
-    if (x === '?') {
-      const target = objects.find(object => object.id === rules[x]);
-
-      return {
-        ...target,
-        to: '?',
-      };
-    }
-
     const target = objects.find(object => object.id === x);
 
     if (rules[x] !== '?') {

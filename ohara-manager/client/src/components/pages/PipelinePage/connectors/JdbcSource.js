@@ -335,9 +335,9 @@ class JdbcSource extends React.Component {
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
-    const to = _.isEmpty(topics) ? '?' : topics[0];
-    const update = { ...currSource, name, to };
-    updateGraph(update, currSource.id);
+    const topicId = _.isEmpty(topics) ? [] : topics;
+    const update = { ...currSource, name, to: topicId };
+    updateGraph({ update });
   }, 1000);
 
   handleStartConnector = async () => {
@@ -375,7 +375,7 @@ class JdbcSource extends React.Component {
       this.setState({ state });
       const currSource = findByGraphId(graph, sourceId);
       const update = { ...currSource, state };
-      updateGraph(update, currSource.id);
+      updateGraph({ update });
     }
   };
 
