@@ -22,18 +22,14 @@ import {
   TabPanel as UnstyledTabPanel,
 } from 'react-tabs';
 
-import { white, shadowNormal, radiusNormal } from '../../../theme/variables';
+import * as CSS_VARS from 'theme/variables';
 
 const Tabs = styled(UnstyledTabs)`
-  background-color: ${white};
-  box-shadow: ${props => (props.showShadow ? shadowNormal : null)};
-  border-radius: ${radiusNormal};
+  background-color: ${CSS_VARS.white};
+  box-shadow: ${CSS_VARS.shadowNormal};
+  border-radius: ${CSS_VARS.radiusNormal};
   margin-bottom: 20px;
 `;
-
-Tabs.defaultProps = {
-  showShadow: true,
-};
 
 const TabList = styled(UnstyledTabList)`
   display: flex;

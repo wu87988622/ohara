@@ -182,3 +182,30 @@ export const stop = async id => {
     handleError(err);
   }
 };
+
+const mockDel = id => {
+  return new Promise(resolve => {
+    setTimeout(function() {
+      resolve({
+        data: {
+          isSuccess: true,
+        },
+      });
+    }, 1000);
+  });
+};
+
+export const del = async id => {
+  try {
+    const res = await mockDel(id);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

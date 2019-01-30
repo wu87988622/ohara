@@ -39,23 +39,6 @@ const H5Wrapper = styled(H5)`
 
 H5Wrapper.displayName = 'H5';
 
-const Controller = styled.div`
-  position: absolute;
-  right: 0;
-`;
-
-const ControlButton = styled.button`
-  color: ${CSS_VARS.lightBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-
-  &:hover {
-    color: blue;
-  }
-`;
-
 const FormRow = styled(FormGroup).attrs({
   isInline: true,
 })`
@@ -85,8 +68,6 @@ export {
   BoxWrapper,
   TitleWrapper,
   H5Wrapper,
-  Controller,
-  ControlButton,
   FormRow,
   FormCol,
   JarNameText,

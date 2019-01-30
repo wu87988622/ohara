@@ -205,6 +205,13 @@ class PipelineNewPage extends React.Component {
     });
   };
 
+  refreshGraph = () => {
+    const { pipelineId } = this.props.match.params;
+    if (pipelineId) {
+      this.fetchPipeline(pipelineId);
+    }
+  };
+
   handlePipelineTitleChange = ({ target: { value: title } }) => {
     this.setState(({ pipelines }) => {
       const updatedPipeline = { ...pipelines, name: title };
@@ -434,6 +441,7 @@ class PipelineNewPage extends React.Component {
                       topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
+                      refreshGraph={this.refreshGraph}
                       hasChanges={hasChanges}
                       isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
@@ -450,6 +458,7 @@ class PipelineNewPage extends React.Component {
                       topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
+                      refreshGraph={this.refreshGraph}
                       hasChanges={hasChanges}
                       isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
@@ -466,6 +475,7 @@ class PipelineNewPage extends React.Component {
                       topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
+                      refreshGraph={this.refreshGraph}
                       hasChanges={hasChanges}
                       isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
@@ -493,6 +503,7 @@ class PipelineNewPage extends React.Component {
                       topics={pipelineTopics}
                       loadGraph={this.loadGraph}
                       updateGraph={this.updateGraph}
+                      refreshGraph={this.refreshGraph}
                       hasChanges={hasChanges}
                       isPipelineRunning={isPipelineRunning}
                       updateHasChanges={this.updateHasChanges}
@@ -507,6 +518,7 @@ class PipelineNewPage extends React.Component {
                       {...this.props}
                       graph={graph}
                       updateGraph={this.updateGraph}
+                      refreshGraph={this.refreshGraph}
                     />
                   )}
                 />

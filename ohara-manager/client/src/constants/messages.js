@@ -39,6 +39,7 @@ export const SERVICE_CREATION_SUCCESS = 'Service successfully created!';
 export const PIPELINE_CREATION_SUCCESS = 'Pipeline successfully created!';
 export const PIPELINE_DELETION_SUCCESS = 'Successfully deleted the pipeline:';
 export const START_CONNECTOR_SUCCESS = 'Connector successfully started!';
+export const CONNECTOR_DELETION_SUCCESS = 'Successfully deleted the connector:';
 
 // Configuration
 export const CONFIG_DELETE_SUCCESS = 'Successfully deleted the configuration:';
@@ -53,6 +54,8 @@ export const STREAM_APP_DELETE_SUCCESS = 'Successfully deleted the stream app!';
 export const STREAM_APP_START_SUCCESS = 'Stream app successfully started!';
 export const STREAM_APP_STOP_SUCCESS = 'Stream app successfully stopped!';
 export const PLUGIN_UPLOAD_SUCCESS = 'Plugin successfully uploaded!';
+export const STREAM_APP_DELETION_SUCCESS =
+  'Successfully deleted the stream app';
 
 export const AUTO_SAVE_SUCCESS = 'Successfully saved!';
 

@@ -28,6 +28,7 @@ import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
 import { InputField, SelectField, AutoSave } from 'common/FormFields';
 import { findByGraphId } from 'utils/pipelineUtils';
+import Controller from './Controller';
 
 import * as s from './Styles';
 
@@ -49,6 +50,7 @@ class StreamApp extends React.Component {
       }),
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
+    refreshGraph: PropTypes.func.isRequired,
   };
 
   state = {
@@ -115,15 +117,26 @@ class StreamApp extends React.Component {
     }
   };
 
-  handleStartBtnClick = async () => {
-    await this.triggerConnector(STREAM_APP_ACTIONS.start);
+  handleStartStreamApp = async () => {
+    await this.triggerStreamApp(STREAM_APP_ACTIONS.start);
   };
 
-  handleStopBtnClick = async () => {
-    await this.triggerConnector(STREAM_APP_ACTIONS.stop);
+  handleStopStreamApp = async () => {
+    await this.triggerStreamApp(STREAM_APP_ACTIONS.stop);
   };
 
-  triggerConnector = async action => {
+  handleDeleteStreamApp = async () => {
+    const { refreshGraph } = this.props;
+    const { streamAppId } = this.state;
+    const res = await streamAppApis.del(streamAppId);
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      toastr.success(MESSAGES.STREAM_APP_DELETION_SUCCESS);
+      refreshGraph();
+    }
+  };
+
+  triggerStreamApp = async action => {
     const { streamAppId } = this.state;
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
@@ -131,10 +144,10 @@ class StreamApp extends React.Component {
     } else {
       res = await streamAppApis.stop(streamAppId);
     }
-    this.handleTriggerConnectorResponse(action, res);
+    this.handleTriggerStreamAppResponse(action, res);
   };
 
-  handleTriggerConnectorResponse = (action, res) => {
+  handleTriggerStreamAppResponse = (action, res) => {
     const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
 
@@ -180,20 +193,12 @@ class StreamApp extends React.Component {
               <AutoSave save={this.handleSave} />
               <s.TitleWrapper>
                 <s.H5Wrapper>Stream app</s.H5Wrapper>
-                <s.Controller>
-                  <s.ControlButton
-                    onClick={this.handleStartBtnClick}
-                    data-testid="start-button"
-                  >
-                    <i className={`fa fa-play-circle`} />
-                  </s.ControlButton>
-                  <s.ControlButton
-                    onClick={this.handleStopBtnClick}
-                    data-testid="stop-button"
-                  >
-                    <i className={`fa fa-stop-circle`} />
-                  </s.ControlButton>
-                </s.Controller>
+                <Controller
+                  kind="stream app"
+                  onStart={this.handleStartStreamApp}
+                  onStop={this.handleStopStreamApp}
+                  onDelete={this.handleDeleteStreamApp}
+                />
               </s.TitleWrapper>
               <s.FormRow>
                 <s.FormCol width="70%">

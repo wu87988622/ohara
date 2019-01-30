@@ -34,6 +34,7 @@ import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
+import Controller from './Controller';
 
 import * as s from './Styles';
 
@@ -57,6 +58,7 @@ class FtpSource extends React.Component {
     updateHasChanges: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
     loadGraph: PropTypes.func.isRequired,
+    refreshGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
       isExact: PropTypes.bool,
       params: PropTypes.object,
@@ -502,12 +504,24 @@ class FtpSource extends React.Component {
     updateGraph(update, currSource.id);
   }, 1000);
 
-  handleStartBtnClick = async () => {
+  handleStartConnector = async () => {
     await this.triggerConnector(CONNECTOR_ACTIONS.start);
   };
 
-  handleStopBtnClick = async () => {
+  handleStopConnector = async () => {
     await this.triggerConnector(CONNECTOR_ACTIONS.stop);
+  };
+
+  handleDeleteConnector = async () => {
+    const { match, refreshGraph } = this.props;
+    const connectorId = _.get(match, 'params.connectorId', null);
+    const res = await pipelinesApis.deleteSource(connectorId);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      const { name: connectorName } = this.state;
+      toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
+      refreshGraph();
+    }
   };
 
   triggerConnector = async action => {
@@ -577,25 +591,17 @@ class FtpSource extends React.Component {
 
     return (
       <React.Fragment>
-        <s.BoxWrapper padding="25px 0">
+        <s.BoxWrapper padding="25px 0 0 0">
           <s.TitleWrapper margin="0 25px 30px">
             <s.H5Wrapper>FTP source connector</s.H5Wrapper>
-            <s.Controller>
-              <s.ControlButton
-                onClick={this.handleStartBtnClick}
-                data-testid="start-button"
-              >
-                <i className={`fa fa-play-circle`} />
-              </s.ControlButton>
-              <s.ControlButton
-                onClick={this.handleStopBtnClick}
-                data-testid="stop-button"
-              >
-                <i className={`fa fa-stop-circle`} />
-              </s.ControlButton>
-            </s.Controller>
+            <Controller
+              kind="connector"
+              onStart={this.handleStartConnector}
+              onStop={this.handleStopConnector}
+              onDelete={this.handleDeleteConnector}
+            />
           </s.TitleWrapper>
-          <Tabs showShadow={false}>
+          <Tabs>
             <TabList>
               <Tab>FTP Source 1/2</Tab>
               <Tab>FTP Source 2/2</Tab>

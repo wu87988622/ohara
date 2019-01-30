@@ -275,6 +275,21 @@ export const stopSource = async id => {
   }
 };
 
+export const deleteSource = async id => {
+  try {
+    const res = await axiosInstance.delete(`/api/sources/${id}`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const startSink = async id => {
   try {
     const res = await axiosInstance.put(`/api/sinks/${id}/start`);
@@ -293,6 +308,21 @@ export const startSink = async id => {
 export const stopSink = async id => {
   try {
     const res = await axiosInstance.put(`/api/sinks/${id}/stop`);
+    const isSuccess = _.get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const deleteSink = async id => {
+  try {
+    const res = await axiosInstance.delete(`/api/sinks/${id}`);
     const isSuccess = _.get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
