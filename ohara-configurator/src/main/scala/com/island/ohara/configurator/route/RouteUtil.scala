@@ -161,15 +161,14 @@ private[route] object RouteUtil {
                                               hookOfUpdate: (Id, Req, Res) => Future[Res],
                                               hookOfList: Seq[Res] => Future[Seq[Res]],
                                               hookOfGet: Res => Future[Res],
-                                              hookOfDelete: Res => Future[Res],
-                                              hookBeforeDelete: String => Future[String])(
+                                              hookOfDelete: Res => Future[Res])(
     implicit store: Store,
     rm: RootJsonFormat[Req],
     rm2: RootJsonFormat[Res]): server.Route =
     pathEnd {
       routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
     } ~ path(Segment) { id =>
-      routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, hookBeforeDelete) ~
+      routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, id => Future.successful(id)) ~
         routeOfUpdate[Req, Res](id, hookOfUpdate)
     }
 

@@ -106,23 +106,17 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         hookOfDelete = (response: ConnectorInfo) =>
           CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
             case (_, wkClient) =>
-              wkClient
-                .delete(response.id)
-                .recover {
-                  case e: Throwable =>
-                    LOG.info(s"Failed to remove connector:${response.id}", e)
-                }
-                .map(_ => response)
-        },
-        hookBeforeDelete = (id: Id) =>
-          store.value[ConnectorInfo](id).flatMap { config =>
-            CollieUtils.workerClient(Some(config.workerClusterName)).flatMap {
-              case (_, wkClient) =>
-                update(config, wkClient).map { lastConfig =>
-                  if (lastConfig.state.isEmpty) lastConfig.id
-                  else throw new IllegalArgumentException(s"Please stop connector:${lastConfig.id} first")
-                }
-            }
+              wkClient.exist(response.id).flatMap {
+                if (_)
+                  wkClient
+                    .delete(response.id)
+                    .recover {
+                      case e: Throwable =>
+                        LOG.info(s"Failed to remove connector:${response.id}", e)
+                    }
+                    .map(_ => response)
+                else Future.successful(response)
+              }
         }
       )
     } ~
@@ -154,10 +148,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                           s"$t is invalid. actual:${topicInfos.map(_.id).mkString(",")}"))
                     if (connectorConfig.topics.isEmpty) throw new IllegalArgumentException("topics are required")
                     wkClient.exist(connectorConfig.id).flatMap {
-                      if (_) {
-                        println(s"[CHIA] started ~ $connectorConfig")
-                        update(connectorConfig, wkClient)
-                      } else
+                      if (_) update(connectorConfig, wkClient)
+                      else
                         wkClient
                           .connectorCreator()
                           .name(connectorConfig.id)

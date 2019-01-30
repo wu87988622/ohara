@@ -31,7 +31,7 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestControlSink extends WithBrokerWorker with Matchers {
+class TestControlConnector extends WithBrokerWorker with Matchers {
 
   private[this] val configurator = Configurator
     .builder()
@@ -43,6 +43,7 @@ class TestControlSink extends WithBrokerWorker with Matchers {
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
@@ -98,7 +99,7 @@ class TestControlSink extends WithBrokerWorker with Matchers {
   }
 
   @Test
-  def testUpdateRunningSink(): Unit = {
+  def testUpdateRunningConnector(): Unit = {
     val topicName = methodName
     val topic = Await.result(TopicApi
                                .access()
@@ -128,17 +129,45 @@ class TestControlSink extends WithBrokerWorker with Matchers {
                        Duration.ofSeconds(20))
 
       an[IllegalArgumentException] should be thrownBy result(access.update(sink.id, request.copy(numberOfTasks = 2)))
-      an[IllegalArgumentException] should be thrownBy result(access.delete(sink.id))
 
       // test stop. the connector should be removed
       Await.result(access.stop(sink.id), 10 seconds)
       CommonUtil.await(() => if (result(workerClient.nonExist(sink.id))) true else false, Duration.ofSeconds(20))
       result(access.get(sink.id)).state shouldBe None
-    } finally {
-      if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
-    }
+    } finally if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
   }
 
+  @Test
+  def deleteRunningConnector(): Unit = {
+    val topicName = methodName
+    val topic = Await.result(TopicApi
+                               .access()
+                               .hostname(configurator.hostname)
+                               .port(configurator.port)
+                               .add(TopicCreationRequest(topicName, 1, 1)),
+                             10 seconds)
+    val request = ConnectorCreationRequest(name = methodName,
+                                           className = classOf[DumbSink].getName,
+                                           schema = Seq.empty,
+                                           topics = Seq(topic.id),
+                                           numberOfTasks = 1,
+                                           configs = Map.empty)
+
+    val sink = result(access.add(request))
+    // test start
+    Await.result(access.start(sink.id), 10 seconds)
+    val workerClient = WorkerClient(testUtil.workersConnProps)
+    try {
+      CommonUtil.await(() =>
+                         try if (result(workerClient.exist(sink.id))) true else false
+                         catch {
+                           case _: Throwable => false
+                       },
+                       Duration.ofSeconds(30))
+      result(workerClient.delete(sink.id))
+      result(workerClient.exist(sink.id)) shouldBe false
+    } finally if (result(workerClient.exist(sink.id))) result(workerClient.delete(sink.id))
+  }
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
