@@ -51,6 +51,13 @@ class WorkerNewModal extends React.Component {
   };
 
   onSubmit = async (values, form) => {
+    const { clientPort } = values;
+    if (clientPort < 5000 || clientPort > 65535) {
+      toastr.error(
+        'Invalid port. The port has to be a value from 5000 to 65535.',
+      );
+      return;
+    }
     const res = await workerApis.createWorker({
       ...values,
       plugins: map(values.plugins, 'id'),
@@ -126,10 +133,10 @@ class WorkerNewModal extends React.Component {
                         name="clientPort"
                         component={InputField}
                         type="number"
-                        min={0}
+                        min={5000}
                         max={65535}
                         width="8rem"
-                        placeholder="1021"
+                        placeholder="5000"
                         data-testid="client-port-input"
                         disabled={submitting}
                       />
