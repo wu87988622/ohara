@@ -1,0 +1,90 @@
+#
+# Copyright 2019 is-land
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# this compose file is used to build ohara's images.
+# You can build all images by command "docker-compose -f ./build.yml build --parallel"
+# and then push them to docker hub by command "docker-compose -f ./build.yml push"
+version: '3'
+services:
+
+  configurator:
+    image: oharastream/configurator:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: configurator.dockerfile
+      args:
+        BRANCH: master
+        REPO: https://github.com/oharastream/ohara.git
+
+  manager:
+    image: oharastream/manager:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: manager.dockerfile
+      args:
+        BRANCH: master
+        REPO: https://github.com/oharastream/ohara.git
+
+  streamapp:
+    image: oharastream/streamapp:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: streamapp.dockerfile
+      args:
+        BRANCH: master
+        REPO: https://github.com/oharastream/ohara.git
+
+  # deprecated since 0.2 (TODO)
+  backend:
+    image: oharastream/ohara:backend
+    build:
+      context: .
+      dockerfile: backend.dockerfile
+      args:
+        BRANCH: master
+        REPO: https://github.com/oharastream/ohara.git
+
+  zookeeper:
+    image: oharastream/zookeeper:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: zookeeper.dockerfile
+      args:
+        ZOOKEEPER_VERSION: 3.4.13
+
+  broker:
+    image: oharastream/broker:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: broker.dockerfile
+      args:
+        KAFKA_VERSION: 1.0.2
+
+  worker:
+    image: oharastream/connect-worker:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: worker.dockerfile
+      args:
+        KAFKA_VERSION: 1.0.2
+        BRANCH: master
+        REPO: https://github.com/oharastream/ohara.git
+
+  swagger:
+    image: oharastream/swagger:0.2-SNAPSHOT
+    build:
+      context: .
+      dockerfile: swagger.dockerfile

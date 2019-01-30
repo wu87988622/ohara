@@ -17,12 +17,14 @@
 FROM oharastream/ohara:deps as deps
 
 ARG BRANCH="master"
+ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH $REPO /testpatch/ohara
+RUN git clone $REPO /testpatch/ohara
+RUN git checkout $COMMIT
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
-RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
+RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
 # Add Tini
 ARG TINI_VERSION=v0.18.0
@@ -37,11 +39,6 @@ RUN yum install -y \
 # export JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
-# install dependencies for mysql
-RUN yum install -y \
-  libaio \
-  numactl
-
 # add user
 ARG USER=ohara
 RUN groupadd $USER
@@ -53,11 +50,6 @@ RUN ln -s $(find "/home/$USER/" -maxdepth 1 -type d -name "ohara-*") /home/$USER
 ENV OHARA_HOME=/home/$USER/default
 ENV PATH=$PATH:$OHARA_HOME/bin
 
-# clone database
-RUN mkdir -p /home/$USER/.embedmysql
-COPY --from=deps /root/.embedmysql /home/$USER/.embedmysql
-RUN chown -R $USER:$USER /home/$USER/.embedmysql
-
 # clone Tini
 COPY --from=deps /tini /tini
 RUN chmod +x /tini
@@ -65,5 +57,4 @@ RUN chmod +x /tini
 # change to user
 USER $USER
 
-# we don't specify class name since we allow users to "choose" the service they want to execute
-ENTRYPOINT ["/tini", "--", "ohara.sh", "start"]
+ENTRYPOINT ["/tini", "--", "ohara.sh", "start", "configurator"]

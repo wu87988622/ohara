@@ -29,10 +29,12 @@ RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kaf
 
 # build ohara
 # TODO: we should clone ohara libs from official release... by chia
-ARG OHARA_BRANCH="master"
-ARG OHARA_REPO="https://github.com/oharastream/ohara.git"
+ARG BRANCH="master"
+ARG COMMIT=$BRANCH
+ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $OHARA_BRANCH $OHARA_REPO /testpatch/ohara
+RUN git clone $REPO /testpatch/ohara
+RUN git checkout $COMMIT
 # we build ohara with specified version of kafka in order to keep the compatibility
 RUN gradle clean build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara

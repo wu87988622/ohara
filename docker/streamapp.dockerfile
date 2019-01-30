@@ -42,9 +42,12 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 
 # build ohara-streams
 ARG BRANCH="master"
+ARG COMMIT=$BRANCH
+ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
-RUN git clone --single-branch -b $BRANCH https://github.com/oharastream/ohara.git /testpatch/ohara && \
- gradle :ohara-streams:jar -x test && \
+RUN git clone $REPO /testpatch/ohara
+RUN git checkout $COMMIT
+RUN gradle :ohara-streams:jar -x test && \
  cp /testpatch/ohara/ohara-streams/build/libs/*.jar /opt/lib
 
 FROM openjdk:8u171-jre-alpine
