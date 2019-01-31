@@ -81,13 +81,13 @@ public class TopicOption {
   public String toString() {
     return "key="
         + key
-        + "value="
+        + " value="
         + value
-        + "sensitive="
+        + " sensitive="
         + sensitive
-        + "default="
+        + " default="
         + isDefault
-        + "readOnly="
+        + " readOnly="
         + readOnly;
   }
 }
