@@ -36,6 +36,7 @@ import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchCluster } from 'apis/clusterApis';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 import Controller from './Controller';
+import { JdbcQuicklyFillIn } from './QuicklyFillIn';
 
 import * as s from './Styles';
 
@@ -67,6 +68,17 @@ const GetTablesBtn = styled(Button)`
   align-self: flex-start;
   margin-left: 20px;
   white-space: nowrap;
+`;
+
+const QuicklyFillInWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  margin-top: 4px;
+  & > :first-child {
+    position: absolute;
+    right: 0;
+    font-size: 11px;
+  }
 `;
 
 class JdbcSource extends React.Component {
@@ -379,6 +391,19 @@ class JdbcSource extends React.Component {
     }
   };
 
+  quicklyFillIn = values => {
+    this.setState(
+      {
+        url: values.url,
+        username: values.user,
+        password: values.password,
+      },
+      () => {
+        this.props.updateHasChanges(true);
+      },
+    );
+  };
+
   render() {
     const {
       name,
@@ -453,6 +478,9 @@ class JdbcSource extends React.Component {
                 handleChange={this.handleInputChange}
                 disabled={isRunning}
               />
+              <QuicklyFillInWrapper>
+                <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />
+              </QuicklyFillInWrapper>
             </FormGroup>
 
             <FormGroup>

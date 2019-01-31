@@ -35,6 +35,7 @@ import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 import Controller from './Controller';
+import { FtpQuicklyFillIn } from './QuicklyFillIn';
 
 import * as s from './Styles';
 
@@ -50,6 +51,17 @@ NewRowBtn.displayName = 'NewRowBtn';
 
 const FormInner = styled.div`
   padding: 20px;
+`;
+
+const QuicklyFillInWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  margin-top: 4px;
+  & > :first-child {
+    position: absolute;
+    right: 0;
+    font-size: 11px;
+  }
 `;
 
 class FtpSource extends React.Component {
@@ -558,6 +570,20 @@ class FtpSource extends React.Component {
     }
   };
 
+  quicklyFillIn = values => {
+    this.setState(
+      {
+        host: values.hostname,
+        port: values.port,
+        username: values.user,
+        password: values.password,
+      },
+      () => {
+        this.props.updateHasChanges(true);
+      },
+    );
+  };
+
   render() {
     const {
       name,
@@ -639,7 +665,6 @@ class FtpSource extends React.Component {
                       handleChange={this.handleInputChange}
                     />
                   </FormGroup>
-
                   <FormGroup>
                     <Label>New column name</Label>
                     <Input
@@ -651,7 +676,6 @@ class FtpSource extends React.Component {
                       handleChange={this.handleInputChange}
                     />
                   </FormGroup>
-
                   <FormGroup>
                     <Label>Type</Label>
                     <Select
@@ -679,7 +703,6 @@ class FtpSource extends React.Component {
                     disabled={isRunning}
                   />
                 </FormGroup>
-
                 <FormGroup>
                   <Label>FTP host</Label>
                   <Input
@@ -691,6 +714,9 @@ class FtpSource extends React.Component {
                     handleChange={this.handleInputChange}
                     disabled={isRunning}
                   />
+                  <QuicklyFillInWrapper>
+                    <FtpQuicklyFillIn onFillIn={this.quicklyFillIn} />
+                  </QuicklyFillInWrapper>
                 </FormGroup>
 
                 <FormGroup>
