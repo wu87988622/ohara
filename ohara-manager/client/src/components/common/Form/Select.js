@@ -70,7 +70,7 @@ const Select = ({
       {...rest}
     >
       {placeholder && (
-        <option value="" disabled data-uuid="default-option">
+        <option value="" disabled data-id="default-option">
           {placeholder}
         </option>
       )}
