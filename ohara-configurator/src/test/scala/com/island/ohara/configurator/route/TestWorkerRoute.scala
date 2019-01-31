@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterCreationRequest, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -96,7 +96,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
                 .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames)),
               10 seconds)
       .name shouldBe zkClusterName
-    val anotherBk = methodName()
+    val anotherBk = CommonUtil.randomString(10)
     Await
       .result(BrokerApi
                 .access()

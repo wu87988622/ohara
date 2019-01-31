@@ -100,6 +100,16 @@ trait Collie[T <: ClusterInfo] {
 }
 
 object Collie {
+
+  /**
+    * docker does limit the length of name (< 64). And we "may" salt the name so we release only 30 chars to user.
+    */
+  private[agent] val LIMIT_OF_NAME_LENGTH: Int = 30
+
+  private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_NAME_LENGTH)
+    throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_NAME_LENGTH. actual: ${s.length}")
+  else s
+
   trait ClusterCreator[T <: ClusterInfo] {
     protected var imageName: String = _
     protected var clusterName: String = _
@@ -119,7 +129,7 @@ object Collie {
     def imageName(name: String): ClusterCreator.this.type = imageName(Some(name))
 
     def clusterName(clusterName: String): ClusterCreator.this.type = {
-      this.clusterName = CommonUtil.assertOnlyNumberAndChar(clusterName)
+      this.clusterName = assertLength(CommonUtil.assertOnlyNumberAndChar(clusterName))
       this
     }
 

@@ -219,9 +219,9 @@ private object ClusterCollieImpl {
       extends Collie[T] {
 
     val serviceName: String =
-      if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) "zookeeper"
-      else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) "broker"
-      else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) "worker"
+      if (classTag[T].runtimeClass.isAssignableFrom(classOf[ZookeeperClusterInfo])) "zk"
+      else if (classTag[T].runtimeClass.isAssignableFrom(classOf[BrokerClusterInfo])) "bk"
+      else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) "wk"
       else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
     def updateRoute(client: DockerClient, containerName: String, route: Map[String, String]): Unit =
@@ -239,7 +239,7 @@ private object ClusterCollieImpl {
       * @return a formatted string. form: ${clusterName}-${service}-${index}
       */
     def format(clusterName: String): String =
-      s"$clusterName$DIVIDER$serviceName$DIVIDER${CommonUtil.randomString(LENGTH_OF_UUID)}"
+      s"$clusterName$DIVIDER$serviceName$DIVIDER${CommonUtil.randomString(LENGTH_OF_CONTAINER_NAME_ID)}"
 
     override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
       case (cluster, _) =>
@@ -721,5 +721,5 @@ private object ClusterCollieImpl {
     */
   private val DIVIDER: String = "-"
 
-  private[this] val LENGTH_OF_UUID: Int = 10
+  private[this] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
 }
