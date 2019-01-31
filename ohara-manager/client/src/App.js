@@ -23,7 +23,6 @@ import PipelinePage from 'components/pages/PipelinePage';
 import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
 import NodesPage from 'components/pages/NodePage/NodeListPage';
 import ServicesPage from 'components/pages/Services';
-import ConfigurationPage from 'components/pages/ConfigurationPage';
 import MonitoringPage from 'components/pages/MonitoringPage';
 import LoginPage from 'components/pages/LoginPage';
 import LogoutPage from 'components/pages/LogoutPage';
@@ -69,11 +68,6 @@ class App extends React.Component {
               path="/pipelines"
               component={PipelinePage}
               data-testid="pipeline-page"
-            />
-            <Route
-              path="/configuration"
-              component={ConfigurationPage}
-              data-testid="configuration-page"
             />
             <Route
               path="/nodes"

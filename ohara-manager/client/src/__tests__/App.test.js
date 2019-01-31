@@ -68,10 +68,6 @@ describe('<App />', () => {
         testId: 'pipeline-page',
       },
       {
-        path: '/configuration',
-        testId: 'configuration-page',
-      },
-      {
         path: '/nodes',
         testId: 'nodes-page',
       },
