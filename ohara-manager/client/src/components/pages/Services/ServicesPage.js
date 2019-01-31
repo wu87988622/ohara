@@ -62,6 +62,12 @@ class ServicesPage extends React.Component {
     }
   };
 
+  refreshData = () => {
+    this.setState({ isLoading: true }, () => {
+      this.fetchData();
+    });
+  };
+
   switchComponent = () => {
     const { match } = this.props;
     const { params } = match;
@@ -81,7 +87,7 @@ class ServicesPage extends React.Component {
           <WorkerListPage
             workers={workers}
             isLoading={isLoading}
-            newWorkerSuccess={this.fetchData}
+            newWorkerSuccess={this.refreshData}
           />
         );
       default:
