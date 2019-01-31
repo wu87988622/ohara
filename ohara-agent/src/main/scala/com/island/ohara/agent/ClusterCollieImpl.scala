@@ -434,7 +434,7 @@ private object ClusterCollieImpl {
             case (existNodes, newNodes) =>
               existNodes.keys.foreach(node =>
                 if (newNodes.keys.exists(_.name == node.name))
-                  throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
+                  throw new IllegalArgumentException(s"${node.name} has run the broker service for $clusterName"))
               zookeeperCollie.cluster(zookeeperClusterName).map(_._2).map((existNodes, newNodes, _))
           }
           .map {
