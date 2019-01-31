@@ -209,10 +209,11 @@ public interface Consumer<K, V> extends Releasable {
 
       Properties consumerConfig = new Properties();
 
-      consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
-      consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+      consumerConfig.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
+      consumerConfig.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
       // kafka demand us to pass lowe case words...
-      consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
+      consumerConfig.setProperty(
+          ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
 
       KafkaConsumer<K, V> kafkaConsumer =
           new KafkaConsumer<>(consumerConfig, wrap(keySerializer), wrap(valueSerializer));

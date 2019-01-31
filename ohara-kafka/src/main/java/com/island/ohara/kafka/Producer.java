@@ -117,8 +117,8 @@ public interface Producer<K, V> extends Releasable {
 
         private Properties getProducerConfig() {
           Properties props = new Properties();
-          props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
-          props.put(ProducerConfig.ACKS_CONFIG, String.valueOf(numberOfAcks));
+          props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
+          props.setProperty(ProducerConfig.ACKS_CONFIG, String.valueOf(numberOfAcks));
           return props;
         }
 
