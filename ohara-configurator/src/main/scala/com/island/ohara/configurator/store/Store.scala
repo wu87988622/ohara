@@ -107,9 +107,11 @@ object Store {
             (_: Array[Byte], previous: Array[Byte]) => toValue(Await.result(value(fromValue(previous)), 30 seconds))
           )))
 
+      import scala.collection.JavaConverters._
       override def value(key: K): Future[V] = Option(store.get(toKey(key)))
         .map(v => Future.successful(fromValue(v)))
-        .getOrElse(Future.failed(new NoSuchElementException(s"$key doesn't exist")))
+        .getOrElse(Future.failed(new NoSuchElementException(
+          s"$key doesn't exist. total:${store.keySet().asScala.map(fromKey).mkString(",")}")))
       override def values(keys: Seq[K]): Future[Map[K, V]] = {
         val r = keys.flatMap { key =>
           val value = store.get(key)

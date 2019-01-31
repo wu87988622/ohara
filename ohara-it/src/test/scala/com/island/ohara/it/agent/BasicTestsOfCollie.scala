@@ -70,7 +70,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     log.info("start to run zookeeper cluster")
     val zookeeperCollie = clusterCollie.zookeepersCollie()
     val nodeName: String = result(nodeCollie.nodes()).head.name
-    val clusterName = random()
+    val clusterName = CommonUtil.randomString(10)
     result(zookeeperCollie.nonExists(clusterName)) shouldBe true
     val clientPort = CommonUtil.availablePort()
     val electionPort = CommonUtil.availablePort()
@@ -128,7 +128,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     log.info("start to run broker cluster")
     val brokerCollie = clusterCollie.brokerCollie()
     val nodeName = result(nodeCollie.nodes()).head.name
-    val clusterName = random()
+    val clusterName = CommonUtil.randomString(10)
     result(brokerCollie.nonExists(clusterName)) shouldBe true
     log.info(s"verify existence of broker cluster:$clusterName...done")
     val clientPort = CommonUtil.availablePort()
@@ -242,7 +242,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     log.info("[WORKER] start to test worker")
     val workerCollie = clusterCollie.workerCollie()
     val nodeName = nodeCache.head.name
-    val clusterName = random()
+    val clusterName = CommonUtil.randomString(10)
     result(workerCollie.nonExists(clusterName)) shouldBe true
     log.info("[WORKER] verify:nonExists done")
     val clientPort = CommonUtil.availablePort()

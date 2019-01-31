@@ -293,6 +293,7 @@ object Configurator {
       LOG.info(s"succeed to create bk cluster:$bkCluster")
     } catch {
       case e: Throwable =>
+        LOG.error("failed to initialize cluster. Will close configurator", e)
         Releasable.close(configurator)
         throw e
     }

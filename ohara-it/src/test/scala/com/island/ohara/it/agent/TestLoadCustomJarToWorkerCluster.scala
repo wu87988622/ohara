@@ -99,7 +99,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       clusterCollie
         .zookeepersCollie()
         .creator()
-        .clusterName(CommonUtil.randomString())
+        .clusterName(CommonUtil.randomString(10))
         .clientPort(CommonUtil.availablePort())
         .electionPort(CommonUtil.availablePort())
         .peerPort(CommonUtil.availablePort())
@@ -110,7 +110,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         clusterCollie
           .brokerCollie()
           .creator()
-          .clusterName(CommonUtil.randomString())
+          .clusterName(CommonUtil.randomString(10))
           .clientPort(CommonUtil.availablePort())
           .exporterPort(CommonUtil.availablePort())
           .zookeeperClusterName(zkCluster.name)
@@ -122,7 +122,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           clusterCollie
             .workerCollie()
             .creator()
-            .clusterName(CommonUtil.randomString())
+            .clusterName(CommonUtil.randomString(10))
             .clientPort(CommonUtil.availablePort())
             .brokerClusterName(bkCluster.name)
             .nodeName(result(nodeCollie.nodes()).head.name)

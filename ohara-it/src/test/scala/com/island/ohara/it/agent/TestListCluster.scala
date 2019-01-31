@@ -57,7 +57,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   @Test
   def deadZookeeperClusterShouldDisappear(): Unit = {
 
-    val name = methodName() + CommonUtil.randomString(5)
+    val name = CommonUtil.randomString(10)
 
     // the port:22 is not illegal so we can't create zookeeper cluster
     try Await.result(clusterCollie
@@ -92,13 +92,13 @@ class TestListCluster extends IntegrationTest with Matchers {
         .creator()
         .clientPort(CommonUtil.availablePort())
         .nodeNames(nodeCache.map(_.name))
-        .clusterName(methodName() + CommonUtil.randomString(5))
+        .clusterName(CommonUtil.randomString(10))
         .create(),
       30 seconds
     )
 
     try {
-      val name = methodName() + CommonUtil.randomString(5)
+      val name = CommonUtil.randomString(10)
       try Await.result(
         clusterCollie
           .brokerCollie()

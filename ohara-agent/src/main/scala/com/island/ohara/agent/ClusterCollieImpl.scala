@@ -146,7 +146,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       .flatMap(Future
         .traverse(_) { node =>
           // multi-thread to seek all containers from multi-nodes
-          Future { clientCache.get(node).activeContainers() }
+          Future { clientCache.get(node).activeContainers(_.startsWith(PREFIX_KEY)) }
         }
         .map(_.flatten))
       .flatMap { allContainers =>
@@ -156,7 +156,8 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
           .sequence(
             allContainers
               .filter(_.name.contains(s"$DIVIDER$serviceName$DIVIDER"))
-              .map(container => container.name.split(DIVIDER).head -> container)
+              // form: PREFIX_KEY-CLUSTER_NAME-SERVICE-HASH
+              .map(container => container.name.split(DIVIDER)(1) -> container)
               .groupBy(_._1)
               .map {
                 case (clusterName, value) => clusterName -> value.map(_._2)
@@ -239,7 +240,12 @@ private object ClusterCollieImpl {
       * @return a formatted string. form: ${clusterName}-${service}-${index}
       */
     def format(clusterName: String): String =
-      s"$clusterName$DIVIDER$serviceName$DIVIDER${CommonUtil.randomString(LENGTH_OF_CONTAINER_NAME_ID)}"
+      Seq(
+        PREFIX_KEY,
+        clusterName,
+        serviceName,
+        CommonUtil.randomString(LENGTH_OF_CONTAINER_NAME_ID)
+      ).mkString(DIVIDER)
 
     override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
       case (cluster, _) =>
@@ -257,8 +263,8 @@ private object ClusterCollieImpl {
       */
     def stopAndRemoveService(client: DockerClient, clusterName: String, swallow: Boolean): Unit =
       try {
-        val key = s"$clusterName$DIVIDER$serviceName"
-        val containers = client.containers().filter(_.name.startsWith(key))
+        val key = s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName"
+        val containers = client.containers(_.startsWith(key))
         if (containers.nonEmpty) {
           var lastException: Throwable = null
           containers.foreach(
@@ -284,8 +290,7 @@ private object ClusterCollieImpl {
           clientCache
             .get(_)
             // we allow user to get logs from "exited" containers!
-            .containers()
-            .filter(_.name.startsWith(s"$clusterName$DIVIDER$serviceName"))))
+            .containers(_.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName"))))
       .flatMap { containers =>
         nodeCollie
           .nodes(containers.map(_.nodeName))
@@ -703,6 +708,13 @@ private object ClusterCollieImpl {
         .create()
     }
   }
+
+  /**
+    * We need this prefix in order to distinguish our containers from others.
+    * DON'T change this constant string. Otherwise, it will break compatibility.
+    * We don't use a complexe string since docker limit the length of name...
+    */
+  private val PREFIX_KEY = "occl"
 
   /**
     * internal key used to save the broker cluster name.

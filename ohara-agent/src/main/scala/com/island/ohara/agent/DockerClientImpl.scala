@@ -188,10 +188,13 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
-  override def containers(): Seq[ContainerInfo] = Await.result(
+  override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = Await.result(
     Future
       .traverse(
-        try agent.execute(s"docker ps -a --format $LIST_PROCESS_FORMAT").map(_.split("\n").toSeq).getOrElse(Seq.empty)
+        try agent
+          .execute(s"docker ps -a --format $LIST_PROCESS_FORMAT")
+          .map(_.split("\n").toSeq.filter(line => nameFilter(line.split(DIVIDER).filter(_.nonEmpty)(4))))
+          .getOrElse(Seq.empty)
         catch {
           case e: Throwable =>
             LOG.error(s"failed to list containers on $agent", e)

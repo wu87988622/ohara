@@ -108,8 +108,8 @@ object Agent {
       private[this] val user: String = Objects.requireNonNull(Builder.this.user)
       private[this] val password: String = Objects.requireNonNull(Builder.this.password)
       private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
-      private[this] val client = SshClient.setUpDefaultSimpleClient()
-      override def execute(command: String): Option[String] = {
+      private[this] var client = SshClient.setUpDefaultSimpleClient()
+      override def execute(command: String): Option[String] = try {
         // TODO: This method can't set the timeout...It is not ok in production I'd say...by chia
         val session = client.sessionLogin(hostname, port, user, password)
         try {
@@ -131,6 +131,12 @@ object Agent {
             } finally stdError.close()
           } finally stdOut.close()
         } finally session.close()
+      } catch {
+        case e: Throwable =>
+          LOG.info("renew ssh client")
+          Releasable.close(client)
+          client = SshClient.setUpDefaultSimpleClient()
+          throw e
       }
       override protected def doClose(): Unit = Releasable.close(client)
 

@@ -48,9 +48,22 @@ trait DockerClient extends Releasable {
   def activeContainers(): Seq[ContainerInfo] = containers().filter(_.state == ContainerState.RUNNING)
 
   /**
+    * the filter is used to reduce the possible communication across ssh.
+    * @return a collection of running docker containers
+    */
+  def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] =
+    containers(nameFilter).filter(_.state == ContainerState.RUNNING)
+
+  /**
     * @return a collection of docker containers
     */
-  def containers(): Seq[ContainerInfo]
+  def containers(): Seq[ContainerInfo] = containers(_ => true)
+
+  /**
+    * the filter is used to reduce the possible communication across ssh.
+    * @return a collection of docker containers
+    */
+  def containers(nameFilter: String => Boolean): Seq[ContainerInfo]
 
   /**
     * @param name container's name
