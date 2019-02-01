@@ -57,6 +57,7 @@ const Select = ({
   isObject = false,
   height = '32px',
   width = '100%',
+  clearable = false,
   ...rest
 }) => {
   const _selected = isObject ? selected && selected.name : selected;
@@ -69,9 +70,9 @@ const Select = ({
       height={height}
       {...rest}
     >
-      {placeholder && (
-        <option value="" disabled data-id="default-option">
-          {placeholder}
+      {(placeholder || clearable) && (
+        <option value="" disabled={!clearable} data-id="default-option">
+          {placeholder || 'Please select...'}
         </option>
       )}
       {isObject
@@ -97,6 +98,7 @@ Select.propTypes = {
   width: PropTypes.string,
   height: PropTypes.string,
   list: PropTypes.array,
+  clearable: PropTypes.bool,
 };
 
 export default Select;

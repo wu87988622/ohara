@@ -194,14 +194,14 @@ class FtpSource extends React.Component {
         currTask = '',
       } = configs;
 
-      if (_.isEmpty(prevTopics)) {
-        this.setTopic();
-      } else {
-        const { topics } = this.props;
-        const currWriteTopic = topics.find(topic => topic.id === prevTopics[0]);
+      const { topics: writeTopics } = this.props;
 
+      if (!_.isEmpty(prevTopics)) {
+        const currWriteTopic = writeTopics.find(
+          topic => topic.id === prevTopics[0],
+        );
         updateTopic(this.props, currWriteTopic, 'source');
-        this.setState({ writeTopics: topics, currWriteTopic });
+        this.setState({ currWriteTopic });
       }
 
       this.setState({
@@ -217,23 +217,9 @@ class FtpSource extends React.Component {
         currFileEncoding,
         currTask,
         schema,
+        writeTopics,
       });
     }
-  };
-
-  setTopic = () => {
-    const { topics } = this.props;
-
-    this.setState(
-      {
-        writeTopics: topics,
-        currWriteTopic: topics[0],
-      },
-      () => {
-        const { currWriteTopic } = this.state;
-        updateTopic(this.props, currWriteTopic, 'source');
-      },
-    );
   };
 
   handleInputChange = ({ target: { name, value } }) => {
@@ -810,6 +796,8 @@ class FtpSource extends React.Component {
                     data-testid="write-topic-select"
                     handleChange={this.handleSelectChange}
                     disabled={isRunning}
+                    placeholder="Please select a topic..."
+                    clearable
                   />
                 </FormGroup>
 

@@ -167,14 +167,15 @@ class JdbcSource extends React.Component {
         database = '{}',
       } = configs;
 
-      if (_.isEmpty(prevTopics)) {
-        this.setTopic();
-      } else {
-        const { topics } = this.props;
-        const currWriteTopic = topics.find(topic => topic.id === prevTopics[0]);
+      const { topics: writeTopics } = this.props;
+
+      if (!_.isEmpty(prevTopics)) {
+        const currWriteTopic = writeTopics.find(
+          topic => topic.id === prevTopics[0],
+        );
 
         updateTopic(this.props, currWriteTopic, 'source');
-        this.setState({ writeTopics: topics, currWriteTopic });
+        this.setState({ currWriteTopic });
       }
 
       let currTable = null;
@@ -206,6 +207,7 @@ class JdbcSource extends React.Component {
         password,
         username,
         url,
+        writeTopics,
       });
     }
   };
@@ -230,21 +232,6 @@ class JdbcSource extends React.Component {
     }
   };
 
-  setTopic = () => {
-    const { topics } = this.props;
-
-    this.setState(
-      {
-        writeTopics: topics,
-        currWriteTopic: topics[0],
-      },
-      () => {
-        const { currWriteTopic } = this.state;
-        updateTopic(this.props, currWriteTopic, 'source');
-      },
-    );
-  };
-
   handleInputChange = ({ target: { name, value } }) => {
     this.setState({ [name]: value }, () => {
       this.props.updateHasChanges(true);
@@ -255,6 +242,7 @@ class JdbcSource extends React.Component {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
     const { id } = options[selectedIdx].dataset;
+
     const current = this.selectMaps[name];
     const isTable = name.toLowerCase() === 'tables';
     const schema = isTable
@@ -264,11 +252,13 @@ class JdbcSource extends React.Component {
     this.setState(
       () => {
         return {
-          [current]: {
-            name: value,
-            id,
-            schema,
-          },
+          [current]: value
+            ? {
+                name: value,
+                id,
+                schema,
+              }
+            : {},
         };
       },
       () => {
@@ -560,7 +550,8 @@ class JdbcSource extends React.Component {
                 width="100%"
                 data-testid="write-topic-select"
                 handleChange={this.handleChangeSelect}
-                disabled={isRunning}
+                placeholder="Please select a topic..."
+                clearable
               />
             </FormGroup>
           </Fieldset>
