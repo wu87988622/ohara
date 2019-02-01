@@ -32,7 +32,7 @@ Note that `com.island.ohara.demo.Backend` is deprecated and will be removed in v
 (with 3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 
 ```
-docker run --rm -p 12345:12345 oharastream/ohara:backend com.island.ohara.demo.Backend --configuratorPort 12345
+docker run --rm -p 12345:12345 oharastream/backend:0.2-SNAPSHOT com.island.ohara.demo.Backend --configuratorPort 12345
 ```
 * configuratorPort: bound by Configurator (default is random)
 * zkPort: bound by zookeeper (default is random)
@@ -47,13 +47,13 @@ The backend image is not included in production release. Hence, there is no guar
 #### MySQL
 
 ```
-docker run --rm -p 20000:20000 oharastream/ohara:backend con.island.ohara.integration.Database --port 20000
+docker run --rm -p 20000:20000 oharastream/backend:0.2-SNAPSHOT con.island.ohara.integration.Database --port 20000
 ```
 
 #### FTP
 
 ```
-docker run --rm -p 10000-10010:10000-10010 oharastream/ohara:backend com.island.ohara.integration.FtpServer --controlPort 10000 --dataPorts 10001-10011
+docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.2-SNAPSHOT com.island.ohara.integration.FtpServer --controlPort 10000 --dataPorts 10001-10011
 ```
 
 ### Running configurator by docker

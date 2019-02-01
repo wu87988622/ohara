@@ -17,11 +17,12 @@
 # this compose file is used to build ohara's images.
 # You can build all images by command "docker-compose -f ./build.yml build --parallel"
 # and then push them to docker hub by command "docker-compose -f ./build.yml push"
+# NOTED: you can export a variable "TAG" to change tag of image. For example, export TAG=123 and build this file. All output will be tagged with "123"
 version: '3'
 services:
 
   configurator:
-    image: oharastream/configurator:0.2-SNAPSHOT
+    image: oharastream/configurator:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: configurator.dockerfile
@@ -30,7 +31,7 @@ services:
         REPO: https://github.com/oharastream/ohara.git
 
   manager:
-    image: oharastream/manager:0.2-SNAPSHOT
+    image: oharastream/manager:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: manager.dockerfile
@@ -39,7 +40,7 @@ services:
         REPO: https://github.com/oharastream/ohara.git
 
   streamapp:
-    image: oharastream/streamapp:0.2-SNAPSHOT
+    image: oharastream/streamapp:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: streamapp.dockerfile
@@ -48,7 +49,7 @@ services:
         REPO: https://github.com/oharastream/ohara.git
 
   shabondi:
-    image: oharastream/shabondi:0.3-SNAPSHOT
+    image: oharastream/shabondi:${TAG:-0.3-SNAPSHOT}
     build:
       context: .
       dockerfile: shabondi.dockerfile
@@ -56,9 +57,8 @@ services:
         BRANCH: master
         REPO: https://github.com/oharastream/ohara.git
 
-  # deprecated since 0.2 (TODO)
   backend:
-    image: oharastream/ohara:backend
+    image: oharastream/backend:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: backend.dockerfile
@@ -67,7 +67,7 @@ services:
         REPO: https://github.com/oharastream/ohara.git
 
   zookeeper:
-    image: oharastream/zookeeper:0.2-SNAPSHOT
+    image: oharastream/zookeeper:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: zookeeper.dockerfile
@@ -75,7 +75,7 @@ services:
         ZOOKEEPER_VERSION: 3.4.13
 
   broker:
-    image: oharastream/broker:0.2-SNAPSHOT
+    image: oharastream/broker:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: broker.dockerfile
@@ -83,7 +83,7 @@ services:
         KAFKA_VERSION: 1.0.2
 
   worker:
-    image: oharastream/connect-worker:0.2-SNAPSHOT
+    image: oharastream/connect-worker:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: worker.dockerfile
@@ -93,7 +93,7 @@ services:
         REPO: https://github.com/oharastream/ohara.git
 
   swagger:
-    image: oharastream/swagger:0.2-SNAPSHOT
+    image: oharastream/swagger:${TAG:-0.2-SNAPSHOT}
     build:
       context: .
       dockerfile: swagger.dockerfile
