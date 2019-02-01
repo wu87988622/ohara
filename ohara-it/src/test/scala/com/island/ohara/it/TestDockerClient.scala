@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortPair}
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -90,17 +90,16 @@ class TestDockerClient extends MediumTest with Matchers {
   @Test
   def testCleanup(): Unit = runTest { client =>
     // ping google 3 times
-    val container =
-      client
-        .containerCreator()
-        .imageName(imageName)
-        .cleanup()
-        .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
-        .run()
-        .get
-    TimeUnit.SECONDS.sleep(3)
-    client.exist(container.name) shouldBe false
-    client.nonExist(container.name) shouldBe true
+    val name = CommonUtil.randomString(5)
+    client
+      .containerCreator()
+      .name(name)
+      .imageName(imageName)
+      .cleanup()
+      .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
+      .run()
+    TimeUnit.SECONDS.sleep(2)
+    CommonUtil.await(() => client.nonExist(name), java.time.Duration.ofSeconds(10))
   }
 
   @Test
