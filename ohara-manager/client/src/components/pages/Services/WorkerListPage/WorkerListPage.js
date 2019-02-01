@@ -50,6 +50,12 @@ class WorkerListPage extends React.Component {
     isNewClusterBtnDisabled: false,
   };
 
+  componentDidMount() {
+    if (this.props.workers.length >= 1) {
+      this.setState({ isNewClusterBtnDisabled: true });
+    }
+  }
+
   componentDidUpdate(prevProps) {
     const prevWorkerLen = prevProps.workers.length;
     const nextWorkerLen = this.props.workers.length;

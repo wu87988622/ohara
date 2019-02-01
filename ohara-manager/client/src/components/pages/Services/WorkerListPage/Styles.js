@@ -32,6 +32,8 @@ const NewClusterBtn = styled(Button)`
   margin-left: auto;
 `;
 
+NewClusterBtn.displayName = 'NewClusterBtn';
+
 const Table = styled(DataTable)`
   text-align: left;
 
