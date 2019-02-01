@@ -15,17 +15,16 @@
  */
 
 import toastr from 'toastr';
-import { isString } from 'lodash';
-import * as _ from './commonUtils';
+import { isString, get } from 'lodash';
 
 export const handleError = err => {
-  const message = _.get(err, 'data.errorMessage.message');
+  const message = get(err, 'data.errorMessage.message');
   if (isString(message)) {
     toastr.error(message);
     return;
   }
 
-  const errorMessage = _.get(err, 'data.errorMessage');
+  const errorMessage = get(err, 'data.errorMessage');
   if (isString(errorMessage)) {
     toastr.error(errorMessage);
     return;

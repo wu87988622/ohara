@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { toNumber } from 'lodash';
+import { toNumber, get } from 'lodash';
+
 import axiosInstance from './axios';
-import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
 
 export const fetchTopic = async topicId => {
   try {
     const res = await axiosInstance.get(`/api/topics/${topicId}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -37,7 +37,7 @@ export const fetchTopic = async topicId => {
 export const fetchTopics = async () => {
   try {
     const res = await axiosInstance.get('/api/topics');
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -58,7 +58,7 @@ export const createTopic = async params => {
       numberOfReplications: toNumber(numberOfReplications),
     };
     const res = await axiosInstance.post('/api/topics', data);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

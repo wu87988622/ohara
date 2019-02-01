@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
@@ -160,7 +161,7 @@ class DbConfiguration extends React.Component {
 
   fetchCluster = async () => {
     const res = await fetchCluster();
-    const databases = _.get(res, 'data.result.supportedDatabases', null);
+    const databases = get(res, 'data.result.supportedDatabases', null);
 
     if (databases && this._isMounted) {
       this.setState({ databases, currDatabase: databases[0] });
@@ -169,7 +170,7 @@ class DbConfiguration extends React.Component {
 
   fetchJdbc = async () => {
     const res = await configurationApis.fetchJdbc();
-    const result = _.get(res, 'data.result', []);
+    const result = get(res, 'data.result', []);
 
     result.forEach(conn => {
       conn.isSelected = false;
@@ -210,7 +211,7 @@ class DbConfiguration extends React.Component {
       });
     } else {
       const res = await configurationApis.deleteJdbc(id);
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_DELETE_SUCCESS + name);
       }
@@ -278,7 +279,7 @@ class DbConfiguration extends React.Component {
           password,
         });
       }
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
         this.fetchJdbc();
@@ -300,7 +301,7 @@ class DbConfiguration extends React.Component {
     const res = await configurationApis.validateRdb({ url, user, password });
     this.updateBtn(false);
 
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
@@ -353,7 +354,7 @@ class DbConfiguration extends React.Component {
           password,
         });
       }
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
         this.fetchJdbc();

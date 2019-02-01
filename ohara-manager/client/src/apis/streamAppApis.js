@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+import { get } from 'lodash';
+
 import axiosInstance from './axios';
-import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 
 export const fetchJars = async pipelineId => {
   try {
     const res = await axiosInstance.get(`/api/stream/jars/${pipelineId}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -47,7 +48,7 @@ export const uploadJar = async params => {
     };
 
     const res = await axiosInstance.post(url, formData, config);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -64,7 +65,7 @@ export const deleteJar = async params => {
     const { id } = params;
     const url = `/api/stream/jars/${id}`;
     const res = await axiosInstance.delete(url);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -84,7 +85,7 @@ export const updateJarName = async params => {
       jarName,
     };
     const res = await axiosInstance.put(url, data);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -99,7 +100,7 @@ export const updateJarName = async params => {
 export const fetchProperty = async id => {
   try {
     const res = await axiosInstance.get(`/api/stream/property/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -122,7 +123,7 @@ export const updateProperty = async params => {
       instances: params.instances ? Number(params.instances) : 1,
     };
     const res = await axiosInstance.put(url, data);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -156,7 +157,7 @@ const mockStartOrStop = (id, action) => {
 export const start = async id => {
   try {
     const res = await mockStartOrStop(id, STREAM_APP_ACTIONS.start);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -171,7 +172,7 @@ export const start = async id => {
 export const stop = async id => {
   try {
     const res = await mockStartOrStop(id, STREAM_APP_ACTIONS.stop);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -198,7 +199,7 @@ const mockDel = id => {
 export const del = async id => {
   try {
     const res = await mockDel(id);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

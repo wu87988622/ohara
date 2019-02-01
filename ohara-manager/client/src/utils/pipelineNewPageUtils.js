@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import * as _ from './commonUtils';
+import { isNull } from 'lodash';
+
 import { isSource, isSink, isTopic } from './pipelineUtils';
 
 export const getConnectors = connectors => {
@@ -61,7 +62,7 @@ export const updatePipelineParams = (pipelines, update) => {
 };
 
 const updateSinkName = (graph, updatedName, sinkId) => {
-  if (_.isNull(sinkId)) return;
+  if (isNull(sinkId)) return;
 
   const sinkIdx = graph.findIndex(g => g.id === sinkId);
   const result = [

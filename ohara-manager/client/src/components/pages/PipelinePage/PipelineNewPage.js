@@ -21,8 +21,8 @@ import toastr from 'toastr';
 import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import { Route } from 'react-router-dom';
+import { get, isEmpty } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelinesApis from 'apis/pipelinesApis';
@@ -142,7 +142,7 @@ class PipelineNewPage extends React.Component {
 
   fetchData = async () => {
     const { match } = this.props;
-    const pipelineId = _.get(match, 'params.pipelineId', null);
+    const pipelineId = get(match, 'params.pipelineId', null);
 
     const fetchTopicsPromise = this.fetchTopics();
     const fetchPipelinePromise = this.fetchPipeline(pipelineId);
@@ -154,7 +154,7 @@ class PipelineNewPage extends React.Component {
     const res = await topicApis.fetchTopics();
     this.setState(() => ({ isLoading: false }));
 
-    const topics = _.get(res, 'data.result', null);
+    const topics = get(res, 'data.result', null);
     if (topics) {
       this.setState({ topics, currentTopic: topics[0] });
     }
@@ -164,7 +164,7 @@ class PipelineNewPage extends React.Component {
     if (!pipelineId) return;
 
     const res = await pipelinesApis.fetchPipeline(pipelineId);
-    const pipeline = _.get(res, 'data.result', null);
+    const pipeline = get(res, 'data.result', null);
 
     if (pipeline) {
       const updatedPipeline = addPipelineStatus(pipeline);
@@ -239,9 +239,9 @@ class PipelineNewPage extends React.Component {
     const params = updatePipelineParams(pipelines, update);
 
     const res = await pipelinesApis.updatePipeline({ id, params });
-    const updatedPipelines = _.get(res, 'data.result', null);
+    const updatedPipelines = get(res, 'data.result', null);
 
-    if (!_.isEmpty(updatedPipelines)) {
+    if (!isEmpty(updatedPipelines)) {
       const { topics: pipelineTopics } = getConnectors(
         updatedPipelines.objects,
       );
@@ -255,7 +255,7 @@ class PipelineNewPage extends React.Component {
   };
 
   checkPipelineStatus = async () => {
-    const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
+    const pipelineId = get(this.props.match, 'params.pipelineId', null);
     await this.fetchPipeline(pipelineId);
 
     const { status, objects: connectors } = this.state.pipelines;
@@ -335,7 +335,7 @@ class PipelineNewPage extends React.Component {
         });
       }
 
-      const pipelineId = _.get(this.props.match, 'params.pipelineId', null);
+      const pipelineId = get(this.props.match, 'params.pipelineId', null);
       this.fetchPipeline(pipelineId);
     } else {
       toastr.error(MESSAGES.CANNOT_START_PIPELINE_ERROR);
@@ -353,9 +353,9 @@ class PipelineNewPage extends React.Component {
       pipelines,
     } = this.state;
 
-    if (_.isEmpty(pipelines)) return null;
+    if (isEmpty(pipelines)) return null;
 
-    const pipelineId = _.get(this, 'props.match.params.pipelineId', null);
+    const pipelineId = get(this, 'props.match.params.pipelineId', null);
     const {
       name: pipelineTitle,
       status: pipelineStatus,

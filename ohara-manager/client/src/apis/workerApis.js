@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
+import { toNumber, get } from 'lodash';
+
 import axiosInstance from './axios';
-import { toNumber } from 'lodash';
-import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
 
 export const fetchWorkers = async () => {
   try {
     const res = await axiosInstance.get(`/api/workers`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -37,7 +37,7 @@ export const fetchWorkers = async () => {
 export const fetchWorker = async name => {
   try {
     const res = await axiosInstance.get(`/api/workers/${name}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -63,7 +63,7 @@ export const createWorker = async params => {
     };
 
     const res = await axiosInstance.post(url, data, config);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

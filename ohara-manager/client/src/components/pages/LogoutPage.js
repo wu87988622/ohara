@@ -18,8 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
+import { get } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import { logout } from 'apis/authApis';
 import { deleteUserKey } from 'utils/authUtils';
 import { HOME } from 'constants/urls';
@@ -36,7 +36,7 @@ class LogoutPage extends React.Component {
 
   async componentDidMount() {
     const res = await logout();
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       this.setState({ redirect: true });

@@ -18,9 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import styled from 'styled-components';
-import { find, some, endsWith } from 'lodash';
+import { find, some, endsWith, get, isNull } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
 import * as streamAppApis from 'apis/streamAppApis';
 import * as MESSAGES from 'constants/messages';
@@ -113,7 +112,7 @@ class PipelineNewStream extends React.Component {
 
   fetchData = async () => {
     const { match } = this.props;
-    const pipelineId = _.get(match, 'params.pipelineId', null);
+    const pipelineId = get(match, 'params.pipelineId', null);
     this.setState({ pipelineId }, () => {
       this.fetchJars();
     });
@@ -215,9 +214,9 @@ class PipelineNewStream extends React.Component {
     const res = await streamAppApis.fetchJars(pipelineId);
     this.setState(() => ({ isLoading: false }));
 
-    const result = _.get(res, 'data.result', null);
+    const result = get(res, 'data.result', null);
 
-    if (!_.isNull(result)) {
+    if (!isNull(result)) {
       this.setState({ jars: result });
     }
   };
@@ -225,7 +224,7 @@ class PipelineNewStream extends React.Component {
   uploadJar = async file => {
     const { pipelineId } = this.state;
     const res = await streamAppApis.uploadJar({ pipelineId, file });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
       this.setState({ file: null });
@@ -238,7 +237,7 @@ class PipelineNewStream extends React.Component {
       id: id,
       jarName: newJarName,
     });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_RENAME_SUCCESS);
     }
@@ -246,7 +245,7 @@ class PipelineNewStream extends React.Component {
 
   deleteJar = async id => {
     const res = await streamAppApis.deleteJar({ id: id });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
       this.handleDeleteRowModalClose();

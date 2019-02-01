@@ -16,17 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { includes, map, some, sortBy } from 'lodash';
 import toastr from 'toastr';
+import { includes, map, some, sortBy, get, isNull } from 'lodash';
 
 import * as jarApis from 'apis/jarApis';
-import * as _ from 'utils/commonUtils';
-
+import * as MESSAGES from 'constants/messages';
+import * as s from './Styles';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
-import * as MESSAGES from 'constants/messages';
-
-import * as s from './Styles';
 
 class PluginSelectModal extends React.Component {
   headers = ['#', 'PLUGIN', ''];
@@ -68,8 +65,8 @@ class PluginSelectModal extends React.Component {
   fetchData = async () => {
     const res = await jarApis.fetchJars();
     this.setState(() => ({ isLoading: false }));
-    const jars = _.get(res, 'data.result', null);
-    if (!_.isNull(jars)) {
+    const jars = get(res, 'data.result', null);
+    if (!isNull(jars)) {
       const sortedJars = sortBy(jars, 'name');
       this.setState({ jars: sortedJars });
     }
@@ -153,10 +150,10 @@ class PluginSelectModal extends React.Component {
 
   uploadJar = async file => {
     const res = await jarApis.createJar({ file });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.PLUGIN_UPLOAD_SUCCESS);
-      const jar = _.get(res, 'data.result', null);
+      const jar = get(res, 'data.result', null);
       jar.checked = true;
       this.setState(state => {
         const jars = [...state.jars, jar];

@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
+import { get, isEmpty, debounce } from 'lodash';
 
 import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
@@ -147,14 +148,14 @@ class JdbcSource extends React.Component {
   }
 
   fetchData = () => {
-    const sourceId = _.get(this.props.match, 'params.connectorId', null);
+    const sourceId = get(this.props.match, 'params.connectorId', null);
     this.fetchCluster();
     this.fetchSource(sourceId);
   };
 
   fetchSource = async sourceId => {
     const res = await pipelinesApis.fetchSource(sourceId);
-    const result = _.get(res, 'data.result', null);
+    const result = get(res, 'data.result', null);
 
     if (result) {
       const { name, state, configs, topics: prevTopics } = result;
@@ -169,7 +170,7 @@ class JdbcSource extends React.Component {
 
       const { topics: writeTopics } = this.props;
 
-      if (!_.isEmpty(prevTopics)) {
+      if (isEmpty(prevTopics)) {
         const currWriteTopic = writeTopics.find(
           topic => topic.id === prevTopics[0],
         );
@@ -215,8 +216,8 @@ class JdbcSource extends React.Component {
   fetchRdbTables = async () => {
     const { url, username, password, currTable } = this.state;
     const res = await pipelinesApis.queryRdb({ url, user: username, password });
-    const tables = _.get(res, 'data.result.tables', null);
-    const _currTable = _.isEmpty(currTable) ? tables[0] : currTable;
+    const tables = get(res, 'data.result.tables', null);
+    const _currTable = isEmpty(currTable) ? tables[0] : currTable;
 
     if (tables) {
       this.setState({ tables, currTable: _currTable });
@@ -225,7 +226,7 @@ class JdbcSource extends React.Component {
 
   fetchCluster = async () => {
     const res = await fetchCluster();
-    const databases = _.get(res, 'data.result.supportedDatabases', null);
+    const databases = get(res, 'data.result.supportedDatabases', null);
 
     if (databases) {
       this.setState({ databases, currDatabase: databases[0] });
@@ -274,7 +275,7 @@ class JdbcSource extends React.Component {
     this.updateIsBtnWorking(true);
     const res = await pipelinesApis.validateRdb({ user, password, url });
     this.updateIsBtnWorking(false);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
@@ -287,7 +288,7 @@ class JdbcSource extends React.Component {
     this.setState({ isBtnWorking: update });
   };
 
-  save = _.debounce(async () => {
+  save = debounce(async () => {
     const {
       match,
       updateHasChanges,
@@ -312,8 +313,8 @@ class JdbcSource extends React.Component {
       return;
     }
 
-    const sourceId = _.get(match, 'params.connectorId', null);
-    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
+    const sourceId = get(match, 'params.connectorId', null);
+    const topics = isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
 
     const params = {
       name,
@@ -337,7 +338,7 @@ class JdbcSource extends React.Component {
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
-    const topicId = _.isEmpty(topics) ? [] : topics;
+    const topicId = isEmpty(topics) ? [] : topics;
     const update = { ...currSource, name, to: topicId };
     updateGraph({ update });
   }, 1000);
@@ -352,9 +353,9 @@ class JdbcSource extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph } = this.props;
-    const connectorId = _.get(match, 'params.connectorId', null);
+    const connectorId = get(match, 'params.connectorId', null);
     const res = await pipelinesApis.deleteSource(connectorId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const { name: connectorName } = this.state;
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
@@ -364,16 +365,16 @@ class JdbcSource extends React.Component {
 
   triggerConnector = async action => {
     const { match, graph, updateGraph } = this.props;
-    const sourceId = _.get(match, 'params.connectorId', null);
+    const sourceId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
       res = await pipelinesApis.startSource(sourceId);
     } else {
       res = await pipelinesApis.stopSource(sourceId);
     }
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
-      const state = _.get(res, 'data.result.state');
+      const state = get(res, 'data.result.state');
       this.setState({ state });
       const currSource = findByGraphId(graph, sourceId);
       const update = { ...currSource, state };
@@ -557,7 +558,7 @@ class JdbcSource extends React.Component {
           </Fieldset>
         </Box>
 
-        {!_.isEmpty(currTable) && (
+        {!isEmpty(currTable) && (
           <Box>
             <s.H5Wrapper>Database schemas</s.H5Wrapper>
             <DataTable headers={this.dbSchemasHeader}>

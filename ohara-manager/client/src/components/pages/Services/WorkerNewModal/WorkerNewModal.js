@@ -16,11 +16,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Field } from 'react-final-form';
 import toastr from 'toastr';
-import { map, truncate } from 'lodash';
+import { map, truncate, get } from 'lodash';
+import { Form, Field } from 'react-final-form';
 
-import * as _ from 'utils/commonUtils';
 import * as workerApis from 'apis/workerApis';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
@@ -63,7 +62,7 @@ class WorkerNewModal extends React.Component {
       name: this.formatName(values.name),
       plugins: map(values.plugins, 'id'),
     });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
       toastr.success(MESSAGES.SERVICE_CREATION_SUCCESS);

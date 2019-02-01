@@ -18,8 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Form, Field } from 'react-final-form';
+import { get } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as topicApis from 'apis/topicApis';
 import * as MESSAGES from 'constants/messages';
 import { Modal } from 'common/Modal';
@@ -46,7 +46,7 @@ class TopicNewModal extends React.Component {
     this.setState({ isSaveBtnWorking: true });
     const res = await topicApis.createTopic(values);
     this.setState({ isSaveBtnWorking: false });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
       toastr.success(MESSAGES.TOPIC_CREATION_SUCCESS);

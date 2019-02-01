@@ -18,8 +18,8 @@ import React from 'react';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
+import { get, isEmpty, isNull, debounce } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import {
@@ -174,14 +174,14 @@ class FtpSink extends React.Component {
   };
 
   fetchData = () => {
-    const sinkId = _.get(this.props.match, 'params.connectorId', null);
+    const sinkId = get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
     this.fetchSink(sinkId);
   };
 
   fetchSink = async sinkId => {
     const res = await pipelinesApis.fetchSink(sinkId);
-    const result = _.get(res, 'data.result', false);
+    const result = get(res, 'data.result', false);
 
     if (result) {
       const {
@@ -202,7 +202,7 @@ class FtpSink extends React.Component {
         currTask,
       } = configs;
 
-      if (_.isEmpty(prevTopics)) {
+      if (isEmpty(prevTopics)) {
         this.setTopic();
       } else {
         const { topics } = this.props;
@@ -341,7 +341,7 @@ class FtpSink extends React.Component {
   };
 
   handleRowDelete = () => {
-    if (_.isNull(this.state.workingRow)) return;
+    if (isNull(this.state.workingRow)) return;
 
     this.setState(({ schema, workingRow }) => {
       const update = schema
@@ -381,7 +381,7 @@ class FtpSink extends React.Component {
         newColumnName: newName,
         currType: type,
       }) => {
-        const _order = _.isEmpty(schema)
+        const _order = isEmpty(schema)
           ? 1
           : schema[schema.length - 1].order + 1;
 
@@ -417,7 +417,7 @@ class FtpSink extends React.Component {
     });
     this.updateIsTestConnectionBtnWorking(false);
 
-    const _res = _.get(res, 'data.isSuccess', false);
+    const _res = get(res, 'data.isSuccess', false);
 
     if (_res) {
       toastr.success(MESSAGES.TEST_SUCCESS);
@@ -467,7 +467,7 @@ class FtpSink extends React.Component {
     );
   };
 
-  save = _.debounce(async () => {
+  save = debounce(async () => {
     const {
       match,
       graph,
@@ -495,9 +495,9 @@ class FtpSink extends React.Component {
       return;
     }
 
-    const sinkId = _.get(match, 'params.connectorId', null);
-    const _schema = _.isEmpty(schema) ? [] : schema;
-    const topics = _.isEmpty(currReadTopic) ? [] : [currReadTopic.id];
+    const sinkId = get(match, 'params.connectorId', null);
+    const _schema = isEmpty(schema) ? [] : schema;
+    const topics = isEmpty(currReadTopic) ? [] : [currReadTopic.id];
 
     const params = {
       name,
@@ -520,7 +520,7 @@ class FtpSink extends React.Component {
     await pipelinesApis.updateSink({ id: sinkId, params });
     updateHasChanges(false);
 
-    const currTopicId = _.isEmpty(currReadTopic) ? '?' : currReadTopic.id;
+    const currTopicId = isEmpty(currReadTopic) ? '?' : currReadTopic.id;
     const currSink = findByGraphId(graph, sinkId);
     const topic = findByGraphId(graph, currTopicId);
     const to = [...new Set([...topic.to, sinkId])];
@@ -545,9 +545,9 @@ class FtpSink extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph } = this.props;
-    const connectorId = _.get(match, 'params.connectorId', null);
+    const connectorId = get(match, 'params.connectorId', null);
     const res = await pipelinesApis.deleteSink(connectorId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const { name: connectorName } = this.state;
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
@@ -557,7 +557,7 @@ class FtpSink extends React.Component {
 
   triggerConnector = async action => {
     const { match } = this.props;
-    const sinkId = _.get(match, 'params.connectorId', null);
+    const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
       res = await pipelinesApis.startSink(sinkId);
@@ -569,12 +569,12 @@ class FtpSink extends React.Component {
   };
 
   handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
 
     const { match, graph, updateGraph } = this.props;
-    const sinkId = _.get(match, 'params.connectorId', null);
-    const state = _.get(res, 'data.result.state');
+    const sinkId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
     this.setState({ state });
     const currSink = findByGraphId(graph, sinkId);
     const update = { ...currSink, state };

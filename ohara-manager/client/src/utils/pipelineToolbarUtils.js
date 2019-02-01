@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import * as _ from 'utils/commonUtils';
+import { get, isObject } from 'lodash';
+
 import * as pipelinesApis from 'apis/pipelinesApis';
 import { isSource, isSink, isTopic, isStream } from './pipelineUtils';
 import { ICON_MAPS } from 'constants/pipelines';
@@ -34,7 +35,7 @@ const getNameByKind = kind => {
 const getClassName = connector => {
   let className = '';
 
-  if (_.isObject(connector)) {
+  if (isObject(connector)) {
     // TODO: figure out a better way to get topic class name
     className = connector.className || 'topic';
   } else {
@@ -67,10 +68,10 @@ export const createConnector = async ({ updateGraph, connector }) => {
     connectorName = connector.name;
   } else if (isSource(className)) {
     const res = await pipelinesApis.createSource(params);
-    id = _.get(res, 'data.result.id', null);
+    id = get(res, 'data.result.id', null);
   } else if (isSink(className)) {
     const res = await pipelinesApis.createSink(params);
-    id = _.get(res, 'data.result.id', null);
+    id = get(res, 'data.result.id', null);
   }
 
   const update = {

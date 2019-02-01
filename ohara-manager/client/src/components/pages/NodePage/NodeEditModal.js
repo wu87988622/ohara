@@ -18,8 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Form, Field, FormSpy } from 'react-final-form';
+import { get } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as nodeApis from 'apis/nodeApis';
 import * as validateApis from 'apis/validateApis';
 import * as MESSAGES from 'constants/messages';
@@ -54,7 +54,7 @@ class NodeEditModal extends React.Component {
 
   onSubmit = async values => {
     const res = await nodeApis.updateNode(values);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.NODE_SAVE_SUCCESS);
       this.props.handleConfirm();
@@ -72,7 +72,7 @@ class NodeEditModal extends React.Component {
       password,
     });
 
-    const pass = _.get(res, 'data.result[0].pass', false);
+    const pass = get(res, 'data.result[0].pass', false);
     this.setState({ isValidConnection: pass, isTestBtnWorking: false });
     if (pass) {
       toastr.success(MESSAGES.TEST_SUCCESS);

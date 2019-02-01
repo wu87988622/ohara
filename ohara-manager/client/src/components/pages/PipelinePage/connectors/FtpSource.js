@@ -18,9 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
-import { includes } from 'lodash';
+import { includes, get, isEmpty, isNull, debounce } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import {
@@ -165,14 +164,14 @@ class FtpSource extends React.Component {
   };
 
   fetchData = () => {
-    const sourceId = _.get(this.props.match, 'params.connectorId', null);
+    const sourceId = get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
     this.fetchSource(sourceId);
   };
 
   fetchSource = async sourceId => {
     const res = await pipelinesApis.fetchSource(sourceId);
-    const result = _.get(res, 'data.result', null);
+    const result = get(res, 'data.result', null);
 
     if (result) {
       const {
@@ -196,7 +195,7 @@ class FtpSource extends React.Component {
 
       const { topics: writeTopics } = this.props;
 
-      if (!_.isEmpty(prevTopics)) {
+      if (!isEmpty(prevTopics)) {
         const currWriteTopic = writeTopics.find(
           topic => topic.id === prevTopics[0],
         );
@@ -268,7 +267,7 @@ class FtpSource extends React.Component {
   };
 
   handleRowDelete = () => {
-    if (_.isNull(this.state.workingRow)) return;
+    if (isNull(this.state.workingRow)) return;
 
     this.setState(({ schema, workingRow }) => {
       const update = schema
@@ -354,7 +353,7 @@ class FtpSource extends React.Component {
         newColumnName: newName,
         currType: type,
       }) => {
-        const _order = _.isEmpty(schema)
+        const _order = isEmpty(schema)
           ? 1
           : schema[schema.length - 1].order + 1;
 
@@ -390,7 +389,7 @@ class FtpSource extends React.Component {
       password,
     });
     this.updateIsTestConnectionBtnWorking(false);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
@@ -441,7 +440,7 @@ class FtpSource extends React.Component {
     );
   };
 
-  save = _.debounce(async () => {
+  save = debounce(async () => {
     const {
       match,
       graph,
@@ -470,9 +469,9 @@ class FtpSource extends React.Component {
       return;
     }
 
-    const sourceId = _.get(match, 'params.connectorId', null);
-    const _schema = _.isEmpty(schema) ? [] : schema;
-    const topics = _.isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
+    const sourceId = get(match, 'params.connectorId', null);
+    const _schema = isEmpty(schema) ? [] : schema;
+    const topics = isEmpty(currWriteTopic) ? [] : [currWriteTopic.id];
 
     const params = {
       name,
@@ -497,7 +496,7 @@ class FtpSource extends React.Component {
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
-    const topicId = _.isEmpty(topics) ? [] : topics;
+    const topicId = isEmpty(topics) ? [] : topics;
     const update = { ...currSource, name, to: topicId };
     updateGraph({ update });
   }, 1000);
@@ -512,9 +511,9 @@ class FtpSource extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph } = this.props;
-    const connectorId = _.get(match, 'params.connectorId', null);
+    const connectorId = get(match, 'params.connectorId', null);
     const res = await pipelinesApis.deleteSource(connectorId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const { name: connectorName } = this.state;
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
@@ -524,7 +523,7 @@ class FtpSource extends React.Component {
 
   triggerConnector = async action => {
     const { match } = this.props;
-    const sourceId = _.get(match, 'params.connectorId', null);
+    const sourceId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
       res = await pipelinesApis.startSource(sourceId);
@@ -536,12 +535,12 @@ class FtpSource extends React.Component {
   };
 
   handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
 
     const { match, graph, updateGraph } = this.props;
-    const sourceId = _.get(match, 'params.connectorId', null);
-    const state = _.get(res, 'data.result.state');
+    const sourceId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
     this.setState({ state });
     const currSource = findByGraphId(graph, sourceId);
     const update = { ...currSource, state };

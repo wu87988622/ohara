@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
@@ -155,7 +156,7 @@ class HdfsConfiguration extends React.Component {
 
   fetchHdfs = async () => {
     const res = await configurationApis.fetchHdfs();
-    const result = _.get(res, 'data.result', []);
+    const result = get(res, 'data.result', []);
 
     result.forEach(conn => {
       conn.isSelected = false;
@@ -189,7 +190,7 @@ class HdfsConfiguration extends React.Component {
       });
     } else {
       const res = await configurationApis.deleteHdfs(id);
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_DELETE_SUCCESS + name);
       }
@@ -234,7 +235,7 @@ class HdfsConfiguration extends React.Component {
         res = await configurationApis.updateHdfs({ id, name, uri });
       }
 
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
         this.fetchHdfs();
@@ -256,7 +257,7 @@ class HdfsConfiguration extends React.Component {
     const res = await configurationApis.validateHdfs({ uri });
     this.updateBtn(false);
 
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
@@ -287,7 +288,7 @@ class HdfsConfiguration extends React.Component {
       } else {
         res = await configurationApis.updateHdfs({ id, name, uri });
       }
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
         this.fetchHdfs();

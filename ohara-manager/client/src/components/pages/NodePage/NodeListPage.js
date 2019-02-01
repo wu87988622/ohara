@@ -16,12 +16,10 @@
 
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import { reduce, map, join, sortBy } from 'lodash';
+import { reduce, map, join, sortBy, get, isNull } from 'lodash';
 
 import * as nodeApis from 'apis/nodeApis';
 import { NODES } from 'constants/documentTitles';
-import * as _ from 'utils/commonUtils';
-
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { primaryBtn } from 'theme/btnTheme';
@@ -50,8 +48,8 @@ class NodeListPage extends React.Component {
   fetchData = async () => {
     const res = await nodeApis.fetchNodes();
     this.setState(() => ({ isLoading: false }));
-    const nodes = _.get(res, 'data.result', null);
-    if (!_.isNull(nodes)) {
+    const nodes = get(res, 'data.result', null);
+    if (!isNull(nodes)) {
       this.setState({ nodes: sortBy(nodes, 'name') });
     }
   };

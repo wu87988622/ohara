@@ -20,8 +20,8 @@ import DocumentTitle from 'react-document-title';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import { Link } from 'react-router-dom';
+import { get, isEmpty } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import { TableLoader } from 'common/Loader';
 import { Modal, ConfirmModal } from 'common/Modal';
@@ -125,7 +125,7 @@ class PipelineListPage extends React.Component {
 
   fetchWorkers = async () => {
     const res = await fetchWorkers();
-    const workers = _.get(res, 'data.result', null);
+    const workers = get(res, 'data.result', null);
 
     if (workers) {
       this.setState({ workers, currWorker: workers[0] });
@@ -134,7 +134,7 @@ class PipelineListPage extends React.Component {
 
   fetchPipelines = async () => {
     const res = await fetchPipelines();
-    const result = _.get(res, 'data.result', null);
+    const result = get(res, 'data.result', null);
     this.setState({ isLoading: false });
 
     if (result) {
@@ -168,7 +168,7 @@ class PipelineListPage extends React.Component {
     e.preventDefault();
     this.setState({ isSelectClusterModalActive: true });
 
-    if (_.isEmpty(this.state.workers)) {
+    if (isEmpty(this.state.workers)) {
       toastr.error(MESSAGES.NO_WORKER_CLUSTER_FOUND_ERROR);
     }
   };
@@ -183,7 +183,7 @@ class PipelineListPage extends React.Component {
       cluster: currWorker.name,
     };
     const res = await createPipeline(params);
-    const pipelineId = _.get(res, 'data.result.id', null);
+    const pipelineId = get(res, 'data.result.id', null);
 
     if (pipelineId) {
       this.handleSelectClusterModalClose();
@@ -209,8 +209,8 @@ class PipelineListPage extends React.Component {
   handleDeletePipelineConfirm = async () => {
     const { deletePipelineId: id } = this.state;
     const res = await deletePipeline(id);
-    const deletedId = _.get(res, 'data.result.id', null);
-    const deletedPipeline = _.get(res, 'data.result.name', null);
+    const deletedId = get(res, 'data.result.id', null);
+    const deletedPipeline = get(res, 'data.result.name', null);
 
     if (deletedId) {
       this.setState(({ pipelines }) => {
@@ -250,7 +250,7 @@ class PipelineListPage extends React.Component {
             confirmBtnText="Next"
             handleConfirm={this.handleSelectClusterModalConfirm}
             handleCancel={this.handleSelectClusterModalClose}
-            isConfirmDisabled={_.isEmpty(workers) ? true : false}
+            isConfirmDisabled={isEmpty(workers) ? true : false}
           >
             <Inner>
               <Warning text="Please select a cluster for the new pipeline" />

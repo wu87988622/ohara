@@ -19,25 +19,24 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
+import { get, isEmpty, debounce, includes } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
+import * as s from './Styles';
 import { Box } from 'common/Layout';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchHdfs } from 'apis/configurationApis';
 import { CONFIGURATION } from 'constants/urls';
 import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
 import { getCurrHdfsConnection, handleInputChange } from 'utils/hdfsSinkUtils';
+import Controller from './Controller';
 import {
   CONNECTOR_TYPES,
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
-import Controller from './Controller';
-
-import * as s from './Styles';
 
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
@@ -131,7 +130,7 @@ class HdfsSink extends React.Component {
   };
 
   fetchData = () => {
-    const sinkId = _.get(this.props.match, 'params.connectorId', null);
+    const sinkId = get(this.props.match, 'params.connectorId', null);
     this.setDefaults();
     this.fetchSink(sinkId);
   };
@@ -139,7 +138,7 @@ class HdfsSink extends React.Component {
   fetchSink = async sinkId => {
     const hdfsConnections = await this.fetchHdfs(sinkId);
     const res = await pipelinesApis.fetchSink(sinkId);
-    const result = _.get(res, 'data.result', null);
+    const result = get(res, 'data.result', null);
 
     if (result) {
       const { name, state, configs, topics: prevTopics } = result;
@@ -153,7 +152,7 @@ class HdfsSink extends React.Component {
         'data.econde': currFileEncoding = '',
       } = configs;
 
-      if (_.isEmpty(prevTopics)) {
+      if (isEmpty(prevTopics)) {
         this.setTopic();
       } else {
         const { topics } = this.props;
@@ -186,7 +185,7 @@ class HdfsSink extends React.Component {
 
   fetchHdfs = async () => {
     const res = await fetchHdfs();
-    const hdfsConnections = await _.get(res, 'data.result', []);
+    const hdfsConnections = await get(res, 'data.result', []);
     return hdfsConnections;
   };
 
@@ -235,7 +234,7 @@ class HdfsSink extends React.Component {
     );
   };
 
-  save = _.debounce(async () => {
+  save = debounce(async () => {
     const {
       match,
       graph,
@@ -261,8 +260,8 @@ class HdfsSink extends React.Component {
       return;
     }
 
-    const sinkId = _.get(match, 'params.connectorId', null);
-    const topics = _.isEmpty(currReadTopic) ? [] : [currReadTopic.id];
+    const sinkId = get(match, 'params.connectorId', null);
+    const topics = isEmpty(currReadTopic) ? [] : [currReadTopic.id];
 
     const params = {
       name,
@@ -289,7 +288,7 @@ class HdfsSink extends React.Component {
     await pipelinesApis.updateSink({ id: sinkId, params });
     updateHasChanges(false);
 
-    const currTopicId = _.isEmpty(currReadTopic) ? [] : currReadTopic.id;
+    const currTopicId = isEmpty(currReadTopic) ? [] : currReadTopic.id;
     const currSink = findByGraphId(graph, sinkId);
     const topic = findByGraphId(graph, currTopicId);
     const to = [...new Set([...topic.to, sinkId])];
@@ -314,9 +313,9 @@ class HdfsSink extends React.Component {
 
   handleDeleteConnector = async () => {
     const { match, refreshGraph } = this.props;
-    const connectorId = _.get(match, 'params.connectorId', null);
+    const connectorId = get(match, 'params.connectorId', null);
     const res = await pipelinesApis.deleteSink(connectorId);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const { name: connectorName } = this.state;
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
@@ -326,7 +325,7 @@ class HdfsSink extends React.Component {
 
   triggerConnector = async action => {
     const { match } = this.props;
-    const sinkId = _.get(match, 'params.connectorId', null);
+    const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
       res = await pipelinesApis.startSink(sinkId);
@@ -338,12 +337,12 @@ class HdfsSink extends React.Component {
   };
 
   handleTriggerConnectorResponse = (action, res) => {
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
 
     const { match, graph, updateGraph } = this.props;
-    const sinkId = _.get(match, 'params.connectorId', null);
-    const state = _.get(res, 'data.result.state');
+    const sinkId = get(match, 'params.connectorId', null);
+    const state = get(res, 'data.result.state');
     this.setState({ state });
     const currSink = findByGraphId(graph, sinkId);
     const update = { ...currSink, state };
@@ -380,7 +379,7 @@ class HdfsSink extends React.Component {
       return <Redirect to={CONFIGURATION} />;
     }
 
-    const isRunning = _.includes(
+    const isRunning = includes(
       [
         CONNECTOR_STATES.running,
         CONNECTOR_STATES.paused,

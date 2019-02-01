@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { toNumber } from 'lodash';
+import { toNumber, get } from 'lodash';
+
 import axiosInstance from './axios';
-import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
 
 export const validateNode = async ({ hostname, port, user, password }) => {
@@ -28,7 +28,7 @@ export const validateNode = async ({ hostname, port, user, password }) => {
       password,
     });
 
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

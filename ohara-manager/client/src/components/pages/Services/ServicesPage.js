@@ -18,17 +18,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import { Redirect } from 'react-router-dom';
-import { isEmpty, sortBy } from 'lodash';
+import { isEmpty, sortBy, get } from 'lodash';
 
 import * as workerApis from 'apis/workerApis';
-import * as _ from 'utils/commonUtils';
+import * as s from './Styles';
 import { SERVICES } from 'constants/documentTitles';
-
 import BrokerListPage from './BrokerListPage';
 import ZookeeperListPage from './ZookeeperListPage';
 import WorkerListPage from './WorkerListPage';
 import WorkerDetailPage from './WorkerDetailPage';
-import * as s from './Styles';
 
 const BROKERS = 'brokers';
 const ZOOKEEPERS = 'zookeepers';
@@ -55,7 +53,7 @@ class ServicesPage extends React.Component {
 
   fetchData = async () => {
     const res = await workerApis.fetchWorkers();
-    const workers = _.get(res, 'data.result', []);
+    const workers = get(res, 'data.result', []);
     this.setState(() => ({ isLoading: false }));
     if (!isEmpty(workers)) {
       this.setState({ workers: sortBy(workers, 'name') });

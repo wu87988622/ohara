@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { isNull } from 'lodash';
+
 import * as _ from './commonUtils';
 
 export const getCurrHdfsConnection = (connections, targetId) => {
@@ -32,7 +34,7 @@ export const handleInputChange = ({ name, value, checked = null }) => {
     props.updateHasChanges(true);
 
     return {
-      [name]: _.isNull(checked) ? value : checked,
+      [name]: isNull(checked) ? value : checked,
     };
   };
 };

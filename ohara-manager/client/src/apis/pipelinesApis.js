@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
+import { get } from 'lodash';
+
 import axiosInstance from './axios';
-import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
 
 export const fetchPipelines = async () => {
   try {
     const res = await axiosInstance.get('/api/pipelines');
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -38,7 +39,7 @@ export const createPipeline = async ({ cluster, ...restParams }) => {
 
   try {
     const res = await axiosInstance.post(url, restParams);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -53,7 +54,7 @@ export const createPipeline = async ({ cluster, ...restParams }) => {
 export const updatePipeline = async ({ id, params }) => {
   try {
     const res = await axiosInstance.put(`/api/pipelines/${id}`, params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -68,7 +69,7 @@ export const updatePipeline = async ({ id, params }) => {
 export const deletePipeline = async id => {
   try {
     const res = await axiosInstance.delete(`/api/pipelines/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -83,7 +84,7 @@ export const deletePipeline = async id => {
 export const validateRdb = async params => {
   try {
     const res = await axiosInstance.put('/api/validate/rdb', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -98,7 +99,7 @@ export const validateRdb = async params => {
 export const validateFtp = async params => {
   try {
     const res = await axiosInstance.put('/api/validate/ftp', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -113,7 +114,7 @@ export const validateFtp = async params => {
 export const queryRdb = async params => {
   try {
     const res = await axiosInstance.post('/api/query/rdb', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -128,7 +129,7 @@ export const queryRdb = async params => {
 export const checkSource = async params => {
   try {
     const res = await axiosInstance.put('/api/validate/ftp', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -143,7 +144,7 @@ export const checkSource = async params => {
 export const createSource = async params => {
   try {
     const res = await axiosInstance.post('/api/sources', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -158,7 +159,7 @@ export const createSource = async params => {
 export const updateSource = async ({ id, params }) => {
   try {
     const res = await axiosInstance.put(`/api/sources/${id}`, params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -173,7 +174,7 @@ export const updateSource = async ({ id, params }) => {
 export const fetchSource = async id => {
   try {
     const res = await axiosInstance.get(`/api/sources/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -188,7 +189,7 @@ export const fetchSource = async id => {
 export const fetchPipeline = async id => {
   try {
     const res = await axiosInstance.get(`/api/pipelines/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -203,7 +204,7 @@ export const fetchPipeline = async id => {
 export const createSink = async params => {
   try {
     const res = await axiosInstance.post('/api/sinks', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -218,7 +219,7 @@ export const createSink = async params => {
 export const updateSink = async ({ id, params }) => {
   try {
     const res = await axiosInstance.put(`/api/sinks/${id}`, params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -233,7 +234,7 @@ export const updateSink = async ({ id, params }) => {
 export const fetchSink = async id => {
   try {
     const res = await axiosInstance.get(`/api/sinks/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -248,7 +249,7 @@ export const fetchSink = async id => {
 export const startSource = async id => {
   try {
     const res = await axiosInstance.put(`/api/sources/${id}/start`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -263,7 +264,7 @@ export const startSource = async id => {
 export const stopSource = async id => {
   try {
     const res = await axiosInstance.put(`/api/sources/${id}/stop`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -278,7 +279,7 @@ export const stopSource = async id => {
 export const deleteSource = async id => {
   try {
     const res = await axiosInstance.delete(`/api/sources/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -293,7 +294,7 @@ export const deleteSource = async id => {
 export const startSink = async id => {
   try {
     const res = await axiosInstance.put(`/api/sinks/${id}/start`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -308,7 +309,7 @@ export const startSink = async id => {
 export const stopSink = async id => {
   try {
     const res = await axiosInstance.put(`/api/sinks/${id}/stop`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -323,7 +324,7 @@ export const stopSink = async id => {
 export const deleteSink = async id => {
   try {
     const res = await axiosInstance.delete(`/api/sinks/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

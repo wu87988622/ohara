@@ -18,8 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+import { get, includes } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
 import * as PIPELINES from 'constants/pipelines';
 import PipelineNewStream from './PipelineNewStream';
@@ -117,7 +117,7 @@ class PipelineToolbar extends React.Component {
   fetchCluster = async () => {
     const res = await fetchCluster();
 
-    const result = _.get(res, 'data.result', null);
+    const result = get(res, 'data.result', null);
 
     if (!result) return;
 
@@ -236,7 +236,7 @@ class PipelineToolbar extends React.Component {
             />
           )}
 
-          {_.includes(
+          {includes(
             [modalNames.ADD_SOURCE_CONNECTOR, modalNames.ADD_SINK_CONNECTOR],
             modalName,
           ) && (

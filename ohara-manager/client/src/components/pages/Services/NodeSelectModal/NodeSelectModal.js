@@ -16,18 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, includes } from 'lodash';
+import { map, includes, get, isNull } from 'lodash';
 
 import * as nodeApis from 'apis/nodeApis';
-import * as _ from 'utils/commonUtils';
-
+import * as s from './Styles';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
-import * as s from './Styles';
 
 class NodeSelectModal extends React.Component {
-  headers = ['#', 'NODE NAME', 'PORT'];
-
   static propTypes = {
     isActive: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
@@ -38,6 +34,8 @@ class NodeSelectModal extends React.Component {
   static defaultProps = {
     initNodeNames: [],
   };
+
+  headers = ['#', 'NODE NAME', 'PORT'];
 
   state = {
     initNodeNames: null,
@@ -65,8 +63,8 @@ class NodeSelectModal extends React.Component {
   fetchData = async () => {
     const res = await nodeApis.fetchNodes();
     this.setState(() => ({ isLoading: false }));
-    const nodes = _.get(res, 'data.result', null);
-    if (!_.isNull(nodes)) {
+    const nodes = get(res, 'data.result', null);
+    if (!isNull(nodes)) {
       this.setState({ nodes });
     }
   };

@@ -18,8 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import styled from 'styled-components';
+import { isEmpty } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import { EMPTY_PIPELINE_TITLE_ERROR } from 'constants/messages';
 import { Input } from 'common/Form';
 
@@ -60,7 +60,7 @@ class EditableLabel extends React.Component {
     const { isEditing } = this.state;
 
     if (isEditing) {
-      if (_.isEmpty(title)) {
+      if (isEmpty(title)) {
         return toastr.error(EMPTY_PIPELINE_TITLE_ERROR);
       }
       handleFocusOut(isUpdate);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as _ from './commonUtils';
+import { get, isEmpty } from 'lodash';
 
 export const isSource = kind => kind.includes('Source');
 
@@ -30,21 +30,21 @@ export const findByGraphId = (graph, id) => {
 };
 
 export const updateTopic = (props, currTopic, connectorType) => {
-  if (!currTopic || _.isEmpty(currTopic)) return;
+  if (!currTopic || isEmpty(currTopic)) return;
 
   const { graph, match, updateGraph } = props;
-  const connectorId = _.get(match, 'params.connectorId');
+  const connectorId = get(match, 'params.connectorId');
 
   let update = null;
 
   if (connectorType === 'source') {
     const currConnector = findByGraphId(graph, connectorId);
-    const topicId = _.isEmpty(currTopic) ? [] : currTopic.id;
+    const topicId = isEmpty(currTopic) ? [] : currTopic.id;
     const to = [...new Set([...currConnector.to, topicId])];
     update = { ...currConnector, to };
     updateGraph({ update });
   } else {
-    const currTopicId = _.isEmpty(currTopic) ? [] : currTopic.id;
+    const currTopicId = isEmpty(currTopic) ? [] : currTopic.id;
     const topic = findByGraphId(graph, currTopicId);
     const to = [...new Set([...topic.to, connectorId])];
     update = { ...topic, to };

@@ -20,9 +20,9 @@ import styled from 'styled-components';
 import toastr from 'toastr';
 import DocumentTitle from 'react-document-title';
 import { Redirect } from 'react-router-dom';
+import { get } from 'lodash';
 
 import * as URL from 'constants/urls';
-import * as _ from 'utils/commonUtils';
 import * as LOGIN_PAGE from 'constants/login';
 import * as MESSAGES from 'constants/messages';
 import { Input, Button } from 'common/Form';
@@ -104,7 +104,7 @@ class LoginPage extends React.Component {
       password,
     });
 
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       this.setState({ isRedirect: true });

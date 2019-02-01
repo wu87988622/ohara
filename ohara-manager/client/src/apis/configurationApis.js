@@ -14,14 +14,30 @@
  * limitations under the License.
  */
 
+/*
+ * Copyright 2019 is-land
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { get } from 'lodash';
+
 import axiosInstance from './axios';
-import * as _ from 'utils/commonUtils';
 import { handleError } from 'utils/apiUtils';
 
 export const fetchHdfs = async () => {
   try {
     const res = await axiosInstance.get('/api/hdfs');
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -38,7 +54,7 @@ export const validateHdfs = async ({ uri }) => {
     const res = await axiosInstance.put('/api/validate/hdfs', {
       uri,
     });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -53,7 +69,7 @@ export const validateHdfs = async ({ uri }) => {
 export const updateHdfs = async params => {
   try {
     const res = await axiosInstance.put(`/api/hdfs/${params.id}`, params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -71,7 +87,7 @@ export const saveHdfs = async ({ name, uri }) => {
       name,
       uri,
     });
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -86,7 +102,7 @@ export const saveHdfs = async ({ name, uri }) => {
 export const deleteHdfs = async id => {
   try {
     const res = await axiosInstance.delete(`/api/hdfs/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -101,7 +117,7 @@ export const deleteHdfs = async id => {
 export const fetchJdbc = async () => {
   try {
     const res = await axiosInstance.get('/api/jdbc');
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -116,7 +132,7 @@ export const fetchJdbc = async () => {
 export const validateRdb = async params => {
   try {
     const res = await axiosInstance.put('/api/validate/rdb', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -131,7 +147,7 @@ export const validateRdb = async params => {
 export const updateJdbc = async params => {
   try {
     const res = await axiosInstance.put(`/api/jdbc/${params.id}`, params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -146,7 +162,7 @@ export const updateJdbc = async params => {
 export const saveJdbc = async params => {
   try {
     const res = await axiosInstance.post('/api/jdbc', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -161,7 +177,7 @@ export const saveJdbc = async params => {
 export const deleteJdbc = async id => {
   try {
     const res = await axiosInstance.delete(`/api/jdbc/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -176,7 +192,7 @@ export const deleteJdbc = async id => {
 export const fetchFtp = async () => {
   try {
     const res = await axiosInstance.get('/api/ftp');
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -191,7 +207,7 @@ export const fetchFtp = async () => {
 export const validateFtp = async params => {
   try {
     const res = await axiosInstance.put('/api/validate/ftp', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -206,7 +222,7 @@ export const validateFtp = async params => {
 export const updateFtp = async params => {
   try {
     const res = await axiosInstance.put(`/api/ftp/${params.id}`, params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -221,7 +237,7 @@ export const updateFtp = async params => {
 export const saveFtp = async params => {
   try {
     const res = await axiosInstance.post('/api/ftp', params);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);
@@ -236,7 +252,7 @@ export const saveFtp = async params => {
 export const deleteFtp = async id => {
   try {
     const res = await axiosInstance.delete(`/api/ftp/${id}`);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
       handleError(res);

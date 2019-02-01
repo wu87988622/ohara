@@ -18,8 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { Form, Field, FormSpy } from 'react-final-form';
+import { get } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
 import * as nodeApis from 'apis/nodeApis';
 import * as validateApis from 'apis/validateApis';
 import * as s from './Styles';
@@ -48,7 +48,7 @@ class NodeNewModal extends React.Component {
 
   onSubmit = async (values, form) => {
     const res = await nodeApis.createNode(values);
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
       toastr.success(MESSAGES.NODE_CREATION_SUCCESS);
@@ -67,7 +67,7 @@ class NodeNewModal extends React.Component {
       password,
     });
 
-    const pass = _.get(res, 'data.result[0].pass', false);
+    const pass = get(res, 'data.result[0].pass', false);
     this.setState({ isValidConnection: pass, isTestBtnWorking: false });
     if (pass) {
       toastr.success(MESSAGES.TEST_SUCCESS);

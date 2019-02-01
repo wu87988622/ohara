@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import toastr from 'toastr';
+import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
@@ -164,7 +165,7 @@ class FtpConfiguration extends React.Component {
 
   fetchFtp = async () => {
     const res = await configurationApis.fetchFtp();
-    const result = _.get(res, 'data.result', []);
+    const result = get(res, 'data.result', []);
 
     result.forEach(conn => {
       conn.port = String(conn.port);
@@ -207,7 +208,7 @@ class FtpConfiguration extends React.Component {
       });
     } else {
       const res = await configurationApis.deleteFtp(id);
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_DELETE_SUCCESS + name);
       }
@@ -280,7 +281,7 @@ class FtpConfiguration extends React.Component {
           password,
         });
       }
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
         this.fetchFtp();
@@ -307,7 +308,7 @@ class FtpConfiguration extends React.Component {
     });
     this.updateBtn(false);
 
-    const isSuccess = _.get(res, 'data.isSuccess', false);
+    const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
       toastr.success(MESSAGES.TEST_SUCCESS);
@@ -367,7 +368,7 @@ class FtpConfiguration extends React.Component {
           password,
         });
       }
-      const isSuccess = _.get(res, 'data.isSuccess', false);
+      const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_SAVE_SUCCESS);
         this.fetchFtp();
