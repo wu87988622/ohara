@@ -27,6 +27,7 @@ export const SCHEMA_CREATION_SUCCESS = 'Schema successfully created!';
 
 // Topic
 export const TOPIC_CREATION_SUCCESS = 'Topic successfully created!';
+export const TOPIC_DELETION_SUCCESS = 'Successfully deleted the topic:';
 
 // Node
 export const NODE_CREATION_SUCCESS = 'Node successfully created!';
@@ -96,6 +97,8 @@ export const CANNOT_START_STREAM_APP_ERROR =
   'Cannot complete your action, please check your stream app settings';
 
 export const NO_CONFIGURATION_FOUND_ERROR = `You don't have any HDFS connections set up yet, please create one before you can proceed`;
+
+export const CANNOT_DELETE_TOPIC_ERROR = `You cannot delete the topic while it has any connection`;
 
 export const EMPTY_PIPELINE_TITLE_ERROR = 'Pipeline title cannot be empty!';
 export const CANNOT_UPDATE_WHILE_RUNNING_ERROR = `You cannot update the pipeline while it's running`;

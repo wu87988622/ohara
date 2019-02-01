@@ -17,16 +17,31 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
+import { noop, includes } from 'lodash';
 
 import { ConfirmModal } from 'common/Modal';
 import * as s from './Styles';
 
+const START = 'start';
+const STOP = 'stop';
+const DELETE = 'delete';
+
 class Controller extends React.Component {
   static propTypes = {
     kind: PropTypes.string.isRequired,
-    onStart: PropTypes.func.isRequired,
-    onStop: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired,
+    onStart: PropTypes.func,
+    onStop: PropTypes.func,
+    onDelete: PropTypes.func,
+    show: PropTypes.arrayOf(PropTypes.oneOf([START, STOP, DELETE])),
+    disable: PropTypes.arrayOf(PropTypes.oneOf([START, STOP, DELETE])),
+  };
+
+  static defaultProps = {
+    onStart: noop,
+    onStop: noop,
+    onDelete: noop,
+    show: [START, STOP, DELETE],
+    disable: [],
   };
 
   state = {
@@ -49,34 +64,42 @@ class Controller extends React.Component {
   };
 
   render() {
-    const { kind, onStart, onStop } = this.props;
+    const { kind, onStart, onStop, show, disable } = this.props;
     const { isDeleteModalActive } = this.state;
     return (
       <s.Controller>
-        <s.ControlButton
-          data-tip={`Start ${kind}`}
-          onClick={onStart}
-          data-testid="start-button"
-        >
-          <i className={`fa fa-play-circle`} />
-        </s.ControlButton>
-        <s.ControlButton
-          data-tip={`Stop ${kind}`}
-          onClick={onStop}
-          data-testid="stop-button"
-        >
-          <i className={`fa fa-stop-circle`} />
-        </s.ControlButton>
-        <s.ControlButton
-          data-tip={`Delete ${kind}`}
-          onClick={e => {
-            this.handleDeleteModalOpen(e);
-          }}
-          data-testid="trash-button"
-        >
-          <i className={`fa fa-trash-alt`} />
-        </s.ControlButton>
-
+        {includes(show, START) && (
+          <s.ControlButton
+            data-tip={`Start ${kind}`}
+            onClick={onStart}
+            data-testid="start-button"
+            disabled={includes(disable, START)}
+          >
+            <i className={`fa fa-play-circle`} />
+          </s.ControlButton>
+        )}
+        {includes(show, STOP) && (
+          <s.ControlButton
+            data-tip={`Stop ${kind}`}
+            onClick={onStop}
+            data-testid="stop-button"
+            disabled={includes(disable, STOP)}
+          >
+            <i className={`fa fa-stop-circle`} />
+          </s.ControlButton>
+        )}
+        {includes(show, DELETE) && (
+          <s.ControlButton
+            data-tip={`Delete ${kind}`}
+            onClick={e => {
+              this.handleDeleteModalOpen(e);
+            }}
+            data-testid="delete-button"
+            disabled={includes(disable, DELETE)}
+          >
+            <i className={`fa fa-trash-alt`} />
+          </s.ControlButton>
+        )}
         <ReactTooltip />
         <ConfirmModal
           isActive={isDeleteModalActive}

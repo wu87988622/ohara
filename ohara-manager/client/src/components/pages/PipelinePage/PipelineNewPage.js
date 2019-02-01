@@ -488,8 +488,9 @@ class PipelineNewPage extends React.Component {
                   render={() => (
                     <Topic
                       {...this.props}
-                      isLoading={isLoading}
-                      isPipelineRunning={isPipelineRunning}
+                      pipeline={pipelines}
+                      graph={graph}
+                      refreshGraph={this.refreshGraph}
                     />
                   )}
                 />

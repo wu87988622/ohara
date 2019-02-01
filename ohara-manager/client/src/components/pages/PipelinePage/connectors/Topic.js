@@ -16,21 +16,17 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import { get, isEmpty, some, includes, omit } from 'lodash';
+import toastr from 'toastr';
 
-import * as _ from 'utils/commonUtils';
+import * as pipelinesApis from 'apis/pipelinesApis';
+import * as MESSAGES from 'constants/messages';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
-import { H5 } from 'common/Headings';
-import { lightBlue } from 'theme/variables';
+import { FormGroup, Label, Input } from 'common/Form';
 import { fetchTopic } from 'apis/topicApis';
-
-const H5Wrapper = styled(H5)`
-  font-size: 15px;
-  margin: 0 0 30px;
-  font-weight: normal;
-  color: ${lightBlue};
-`;
+import Controller from './Controller';
+import * as s from './Styles';
 
 class Topic extends React.Component {
   static propTypes = {
@@ -40,6 +36,22 @@ class Topic extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    history: PropTypes.object,
+    pipeline: PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+      rules: PropTypes.object,
+    }).isRequired,
+    graph: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        name: PropTypes.string,
+        id: PropTypes.string,
+        isActive: PropTypes.bool,
+        icon: PropTypes.string,
+      }),
+    ).isRequired,
+    refreshGraph: PropTypes.func.isRequired,
   };
 
   state = {
@@ -63,28 +75,76 @@ class Topic extends React.Component {
   fetchTopic = async () => {
     const { connectorId } = this.props.match.params;
     const res = await fetchTopic(connectorId);
-    const topic = _.get(res, 'data.result', null);
-
+    const topic = get(res, 'data.result', null);
     if (topic) {
-      this.setState({
-        topic,
-        isLoading: false,
-      });
+      this.setState({ topic });
+    }
+    this.setState({ isLoading: false });
+  };
+
+  deleteTopic = async () => {
+    const { match, history, pipeline, graph, refreshGraph } = this.props;
+    const connectorId = get(match, 'params.connectorId', null);
+
+    if (this.hasAnyConnection(graph, connectorId)) {
+      toastr.error(MESSAGES.CANNOT_DELETE_TOPIC_ERROR);
+      return;
+    }
+
+    const {
+      id: pipelineId,
+      name: pipelineName,
+      rules: pipelineRules,
+    } = pipeline;
+
+    const params = {
+      name: pipelineName,
+      rules: omit(pipelineRules, connectorId),
+    };
+
+    const res = await pipelinesApis.updatePipeline({ id: pipelineId, params });
+    const isSuccess = get(res, 'data.isSuccess', false);
+    if (isSuccess) {
+      const {
+        topic: { name: topicName },
+      } = this.state;
+      toastr.success(`${MESSAGES.TOPIC_DELETION_SUCCESS} ${topicName}`);
+      refreshGraph();
+      history.push(`/pipelines/edit/${pipelineId}`);
     }
   };
+
+  hasAnyConnection = (graph, connectorId) =>
+    some(graph, ({ id, to }) => {
+      if (id === connectorId && !isEmpty(to)) return true;
+      if (includes(to, connectorId)) return true;
+    });
 
   render() {
     const { topic, isLoading } = this.state;
     return (
-      <Box>
+      <React.Fragment>
         {isLoading ? (
-          <ListLoader />
+          <Box>
+            <ListLoader />
+          </Box>
         ) : (
-          <React.Fragment>
-            <H5Wrapper>Topic : {topic.name}</H5Wrapper>
-          </React.Fragment>
+          <Box>
+            <s.TitleWrapper>
+              <s.H5Wrapper>Topic</s.H5Wrapper>
+              <Controller
+                kind="topic"
+                onDelete={this.deleteTopic}
+                show={['delete']}
+              />
+            </s.TitleWrapper>
+            <FormGroup data-testid="name">
+              <Label>Name</Label>
+              <Input name="name" width="100%" value={topic.name} disabled />
+            </FormGroup>
+          </Box>
         )}
-      </Box>
+      </React.Fragment>
     );
   }
 }
