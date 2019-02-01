@@ -42,8 +42,9 @@ object WebServer {
         }
       }
 
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
-    println(s"Ohara http connector at http://localhost:8080/")
+    val interface = "0.0.0.0"
+    val bindingFuture = Http().bindAndHandle(route, interface, 8080)
+    println(s"Ohara http connector at http://$interface:8080/")
     println("Press RETURN to stop...")
 
     // Use following code if await infinite:

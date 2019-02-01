@@ -47,6 +47,15 @@ services:
         BRANCH: master
         REPO: https://github.com/oharastream/ohara.git
 
+  shabondi:
+    image: oharastream/shabondi:0.3-SNAPSHOT
+    build:
+      context: .
+      dockerfile: shabondi.dockerfile
+      args:
+        BRANCH: master
+        REPO: https://github.com/oharastream/ohara.git
+
   # deprecated since 0.2 (TODO)
   backend:
     image: oharastream/ohara:backend

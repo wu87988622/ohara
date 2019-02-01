@@ -23,6 +23,7 @@ dependencies {
   compile project(':ohara-kafka')
   compile project(':ohara-connector')
   compile project(':ohara-configurator')
+  compile project(':ohara-shabondi')
   // the following dependencies is required in runtime
   compile libs.postgresql
   compile libs.akkaSlf4j
