@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 import toastr from 'toastr';
-import { map } from 'lodash';
+import { map, truncate } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as workerApis from 'apis/workerApis';
@@ -60,6 +60,7 @@ class WorkerNewModal extends React.Component {
     }
     const res = await workerApis.createWorker({
       ...values,
+      name: this.formatName(values.name),
       plugins: map(values.plugins, 'id'),
     });
     const isSuccess = _.get(res, 'data.isSuccess', false);
@@ -72,13 +73,18 @@ class WorkerNewModal extends React.Component {
   };
 
   /**
-   * 只允許數字、字母大小寫
+   * 只允許數字、字母大小寫（最多 30 個字）
    *
    * @param value
    * @returns {string}
    */
-  formatName = value =>
-    value === undefined ? '' : value.replace(/[^0-9a-zA-Z]/g, '');
+  formatName = value => {
+    if (!value) return '';
+    return truncate(value.replace(/[^0-9a-zA-Z]/g, ''), {
+      length: 30,
+      omission: '',
+    });
+  };
 
   render() {
     const { activeModal } = this.state;
@@ -116,7 +122,19 @@ class WorkerNewModal extends React.Component {
                 <Box shadow={false}>
                   <s.FormRow>
                     <s.FormCol width="26rem">
-                      <Label>Service</Label>
+                      <Label
+                        tooltipRender={
+                          <div>
+                            <p>
+                              1. You can use both upper and lower case letters
+                              as well as numbers
+                            </p>
+                            <p>2. Must be between 1 and 30 characters long</p>
+                          </div>
+                        }
+                      >
+                        Service
+                      </Label>
                       <Field
                         name="name"
                         component={InputField}
@@ -128,7 +146,9 @@ class WorkerNewModal extends React.Component {
                       />
                     </s.FormCol>
                     <s.FormCol width="8rem">
-                      <Label>Port</Label>
+                      <Label tooltipString="Must be between 5000 and 65535">
+                        Port
+                      </Label>
                       <Field
                         name="clientPort"
                         component={InputField}

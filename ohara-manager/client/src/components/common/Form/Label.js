@@ -17,10 +17,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import ReactTooltip from 'react-tooltip';
+import uuid from 'uuid/v4';
 
 import { lightBlue } from 'theme/variables';
 
 const LabelWrapper = styled.label`
+  position: relative;
   color: ${lightBlue};
   width: ${({ width }) => width};
   font-size: 13px;
@@ -29,14 +32,37 @@ const LabelWrapper = styled.label`
 
 LabelWrapper.displayName = 'Label';
 
+const TooltipIcon = styled.span`
+  position: absolute;
+  right: -18px;
+  top: -2px;
+`;
+
 const Label = ({
   children,
   css = { margin: '0 0 8px', width: 'auto' },
+  tooltipId = uuid(),
+  tooltipString,
+  tooltipRender,
   ...rest
 }) => {
   return (
     <LabelWrapper {...css} {...rest}>
       {children}
+      {tooltipString && (
+        <TooltipIcon data-tip={tooltipString}>
+          <i className="fas fa-info-circle" />
+        </TooltipIcon>
+      )}
+      {tooltipString && <ReactTooltip />}
+      {tooltipRender && (
+        <TooltipIcon data-tip data-for={tooltipId}>
+          <i className="fas fa-info-circle" />
+        </TooltipIcon>
+      )}
+      {tooltipRender && (
+        <ReactTooltip id={tooltipId}>{tooltipRender}</ReactTooltip>
+      )}
     </LabelWrapper>
   );
 };
@@ -44,6 +70,9 @@ const Label = ({
 Label.propTypes = {
   children: PropTypes.any,
   css: PropTypes.object,
+  tooltipId: PropTypes.string,
+  tooltipString: PropTypes.string,
+  tooltipRender: PropTypes.any,
 };
 
 export default Label;
