@@ -48,15 +48,22 @@ export const addPipelineStatus = pipeline => {
   };
 };
 
-export const updatePipelineParams = (pipelines, update) => {
-  const { name, rules } = pipelines;
-  const { id, to } = update;
-  const updateRule = { [id]: to };
+export const updatePipelineParams = (pipelines, update = null) => {
+  let params = null;
 
-  const params = {
-    name,
-    rules: { ...rules, ...updateRule },
-  };
+  // If update is not specify, just pass down the entire pipeline
+  if (isNull(update)) {
+    params = pipelines;
+  } else {
+    const { rules } = pipelines;
+    const { id, to } = update;
+    const updateRule = { [id]: to };
+
+    params = {
+      ...pipelines,
+      rules: { ...rules, ...updateRule },
+    };
+  }
 
   return params;
 };
