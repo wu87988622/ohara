@@ -21,12 +21,12 @@ import java.util.concurrent.ConcurrentHashMap
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi, NodeApi}
 import com.island.ohara.client.kafka.TopicAdmin.TopicInfo
 import com.island.ohara.client.kafka.WorkerJson.{
   ConnectorConfig,
@@ -45,8 +45,8 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class ConfiguratorBuilder {
   private[this] var hostname: Option[String] = None
@@ -118,7 +118,7 @@ class ConfiguratorBuilder {
     (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
     // DON'T add duplicate nodes!!!
       .toSet[String]
-      .map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current()))
+      .map(NodeApi.node(_, 22, "fake", "fake"))
       .foreach(store.add)
     val collie = new FakeClusterCollie(bkConnectionProps, wkConnectionProps)
     val bkCluster = {
@@ -194,7 +194,7 @@ class ConfiguratorBuilder {
       .flatMap(_.nodeNames)
       // DON'T add duplicate nodes!!!
       .toSet[String]
-      .map(Node(_, 22, "fake", "fake", Seq.empty, CommonUtil.current()))
+      .map(NodeApi.node(_, 22, "fake", "fake"))
       .foreach(store.add)
     clusterCollie(collie)
   }

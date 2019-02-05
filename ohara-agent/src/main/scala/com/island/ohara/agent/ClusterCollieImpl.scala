@@ -146,7 +146,11 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       .flatMap(Future
         .traverse(_) { node =>
           // multi-thread to seek all containers from multi-nodes
-          Future { clientCache.get(node).activeContainers(_.startsWith(PREFIX_KEY)) }
+          Future { clientCache.get(node).activeContainers(_.startsWith(PREFIX_KEY)) }.recover {
+            case e: Throwable =>
+              ClusterCollieImpl.LOG.error(s"failed to get active containers from $node", e)
+              Seq.empty
+          }
         }
         .map(_.flatten))
       .flatMap { allContainers =>
@@ -205,7 +209,7 @@ private object ClusterCollieImpl {
     }
   }
 
-  private[this] val LOG = Logger(classOf[ClusterCollieImpl])
+  private val LOG = Logger(classOf[ClusterCollieImpl])
 
   /**
     * This interface enable us to reuse the docker client object.

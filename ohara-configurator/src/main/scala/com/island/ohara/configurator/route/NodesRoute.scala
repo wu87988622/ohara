@@ -19,10 +19,10 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
 import com.typesafe.scalalogging.Logger
@@ -83,13 +83,11 @@ object NodesRoute {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))
         else
           update(
-            Node(
+            NodeApi.node(
               name = request.name.get,
               port = request.port,
               user = request.user,
-              password = request.password,
-              services = Seq.empty,
-              lastModified = CommonUtil.current()
+              password = request.password
             ))
       },
       hookOfUpdate = (name: Id, request: NodeCreationRequest, previous: Node) => {
@@ -98,13 +96,11 @@ object NodesRoute {
             new IllegalArgumentException(s"the name from request is conflict with previous setting:${previous.name}"))
         else
           update(
-            Node(
+            NodeApi.node(
               name = name,
               port = request.port,
               user = request.user,
-              password = request.password,
-              services = Seq.empty,
-              lastModified = CommonUtil.current()
+              password = request.password
             ))
       },
       hookOfGet = (response: Node) => update(response),

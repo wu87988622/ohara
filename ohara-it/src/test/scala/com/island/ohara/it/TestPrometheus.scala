@@ -23,6 +23,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.{ClusterCollie, DockerClient, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtil
@@ -53,7 +54,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
             val password = nodeInfo.split("@").head.split(":").last
             val hostname = nodeInfo.split("@").last.split(":").head
             val port = nodeInfo.split("@").last.split(":").last.toInt
-            Node(hostname, port, user, password, Seq.empty, CommonUtil.current())
+            NodeApi.node(hostname, port, user, password)
           }
         )
         .toList

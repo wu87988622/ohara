@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.common.util.CommonUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -25,6 +26,15 @@ object NodeApi {
 
   case class NodeService(name: String, clusterNames: Seq[String])
   implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
+
+  def node(name: String, port: Int, user: String, password: String): Node = Node(
+    name = name,
+    port = port,
+    user = user,
+    password = password,
+    services = Seq.empty,
+    lastModified = CommonUtil.current()
+  )
 
   /**
     * NOTED: the field "services" is filled at runtime. If you are in testing, it is ok to assign empty to it.
