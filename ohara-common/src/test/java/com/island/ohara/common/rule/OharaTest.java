@@ -16,14 +16,11 @@
 
 package com.island.ohara.common.rule;
 
-import com.island.ohara.common.util.CommonUtil;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TestName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** import or extends to simplify test */
 public abstract class OharaTest extends Assert {
@@ -84,12 +81,6 @@ public abstract class OharaTest extends Assert {
               "Assert ERROR: exception msg \"%s\" ,but the expected msg is \"%s\"",
               e.getMessage(), s));
   }
-
-  public String random() {
-    return CommonUtil.randomString();
-  }
-
-  protected final Logger logger = LoggerFactory.getLogger(OharaTest.class);
 
   @Rule public final TestName name = new TestName();
 

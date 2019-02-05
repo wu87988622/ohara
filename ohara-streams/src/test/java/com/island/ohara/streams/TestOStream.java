@@ -36,10 +36,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class TestOStream extends With3Brokers {
-
+  public static final Logger LOG = LoggerFactory.getLogger(TestOStream.class);
   private final String appid = "test-app";
   private final String fromTopic = "stream-in";
   private final String toTopic = "stream-out";
@@ -67,7 +69,7 @@ public class TestOStream extends With3Brokers {
           .numberOfReplications(replications)
           .create(toTopic);
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      LOG.error(e.getMessage());
     }
   }
 

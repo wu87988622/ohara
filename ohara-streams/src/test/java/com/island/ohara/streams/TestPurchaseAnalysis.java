@@ -39,10 +39,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes"})
 public class TestPurchaseAnalysis extends With3Brokers {
-
+  private static final Logger LOG = LoggerFactory.getLogger(TestPurchaseAnalysis.class);
   private static final String appid = "test-purchase-analysis";
   private static final String resultTopic = "gender-amount";
   private static final String itemTopic = "items";
@@ -87,7 +89,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
           .numberOfReplications(replications)
           .create(orderuser_repartition);
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      LOG.error(e.getMessage());
     }
 
     // write users.csv to kafka broker
@@ -262,18 +264,18 @@ public class TestPurchaseAnalysis extends With3Brokers {
               object -> {
                 try {
                   List<Cell> cells = new ArrayList<>();
-                  logger.debug("Class Name : " + object.getClass().getName());
+                  LOG.debug("Class Name : " + object.getClass().getName());
                   String key = null;
                   for (Field f : object.getClass().getDeclaredFields()) {
                     f.setAccessible(true);
                     Cell cell = Cell.of(f.getName(), f.get(object));
                     cells.add(cell);
                     if (cell.name().equals(topicKey)) key = cell.value().toString();
-                    logger.debug("--" + f.getName() + ":" + f.get(object));
+                    LOG.debug("--" + f.getName() + ":" + f.get(object));
                   }
                   return new AbstractMap.SimpleEntry<>(key, Row.of(cells.toArray(new Cell[0])));
                 } catch (Exception e) {
-                  logger.debug(e.getMessage());
+                  LOG.debug(e.getMessage());
                   return new AbstractMap.SimpleEntry<>(null, Row.EMPTY);
                 }
               })
@@ -286,7 +288,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
                     .send(topicName);
               });
     } catch (Exception e) {
-      logger.debug(e.getMessage());
+      LOG.debug(e.getMessage());
     }
   }
 }

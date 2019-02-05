@@ -21,12 +21,14 @@ import java.util.regex.Pattern
 
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
 import com.island.ohara.it.IntegrationTest
+import com.typesafe.scalalogging.Logger
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
 
 class TestTestCases extends MediumTest with Matchers {
+  private[this] val log = Logger(classOf[TestTestCases])
   //Currently, We should implement following abstract class in all test cases
   private[this] val validTestCatalog: Array[Class[_]] =
     Array(
@@ -82,7 +84,7 @@ class TestTestCases extends MediumTest with Matchers {
                 val superClz = getValidSupperClass(clz)
                 if (superClz != null) buf += superClz.getName
                 clz.getAnnotatedInterfaces.foreach(interfaceClz => buf += interfaceClz.getType.getTypeName)
-                logger.info(s"${clz.getName} have ${buf.mkString(", ")}")
+                log.info(s"${clz.getName} have ${buf.mkString(", ")}")
                 buf.toArray
               }
               val clz = Class.forName(clzName)
@@ -91,8 +93,8 @@ class TestTestCases extends MediumTest with Matchers {
                 withClue(s"$clzName should extend one from ${validTestName.mkString(", ")}") {
                   validClzs.length shouldBe 1
                 }
-                logger.info(s"$clzName matches ${validClzs.head}")
-              } else logger.info(s"${clz.getName} doesn't belong to test case. Skip")
+                log.info(s"$clzName matches ${validClzs.head}")
+              } else log.info(s"${clz.getName} doesn't belong to test case. Skip")
             })
         } finally if (jarInput != null) jarInput.close()
       })
