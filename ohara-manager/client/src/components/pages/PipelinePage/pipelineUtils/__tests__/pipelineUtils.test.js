@@ -21,7 +21,7 @@ import {
   isTopic,
   isStream,
   findByGraphId,
-} from '../pipelineUtils';
+} from '../commonUtils';
 
 const { jdbcSource, ftpSource, hdfsSink, ftpSink, topic } = CONNECTOR_TYPES;
 

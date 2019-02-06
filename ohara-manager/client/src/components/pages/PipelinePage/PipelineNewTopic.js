@@ -22,7 +22,7 @@ import toastr from 'toastr';
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
 import { lighterBlue, durationNormal, blue } from 'theme/variables';
-import { createConnector } from 'utils/pipelineToolbarUtils';
+import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
 
 const Icon = styled.i`
   color: ${lighterBlue};

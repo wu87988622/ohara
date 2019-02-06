@@ -41,14 +41,14 @@ import {
   HdfsSink,
   FtpSink,
   StreamApp,
-} from './connectors';
+} from './Connectors';
 import {
   getConnectors,
   addPipelineStatus,
   updatePipelineParams,
   updateGraph,
   loadGraph,
-} from 'utils/pipelineNewPageUtils';
+} from './pipelineUtils/pipelineNewPageUtils';
 
 const Wrapper = styled.div`
   padding-top: 75px;

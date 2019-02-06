@@ -25,19 +25,19 @@ import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import {
-  CONNECTOR_TYPES,
-  CONNECTOR_STATES,
-  CONNECTOR_ACTIONS,
-} from 'constants/pipelines';
+import Controller from './Controller';
 import { Box } from 'common/Layout';
 import { DataTable } from 'common/Table';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { fetchCluster } from 'apis/clusterApis';
-import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
-import Controller from './Controller';
+import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { JdbcQuicklyFillIn } from './QuicklyFillIn';
+import {
+  CONNECTOR_TYPES,
+  CONNECTOR_STATES,
+  CONNECTOR_ACTIONS,
+} from 'constants/pipelines';
 
 import * as s from './Styles';
 

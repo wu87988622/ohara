@@ -27,7 +27,7 @@ import Editable from './Editable';
 import { ListLoader } from 'common/Loader';
 import { DataTable } from 'common/Table';
 import { ConfirmModal } from 'common/Modal';
-import { createConnector } from 'utils/pipelineToolbarUtils';
+import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
 
 const JAR_EXTENSION = '.jar';
 

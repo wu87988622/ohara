@@ -33,7 +33,10 @@ import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
 import { lightBlue, blue, red, trBgColor } from 'theme/variables';
-import { addPipelineStatus, getEditUrl } from 'utils/pipelineListPageUtils';
+import {
+  addPipelineStatus,
+  getEditUrl,
+} from './pipelineUtils/pipelineListPageUtils';
 import { fetchWorkers } from 'apis/workerApis';
 import {
   fetchPipelines,

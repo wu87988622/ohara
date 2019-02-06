@@ -22,9 +22,9 @@ import * as d3 from 'd3v4';
 
 import * as _ from 'utils/commonUtils';
 import * as CSS_VARS from 'theme/variables';
+import * as pipelineUtils from './pipelineUtils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import * as pipelineUtils from 'utils/pipelineUtils';
 
 const Wrapper = styled(Box)`
   width: 65%;

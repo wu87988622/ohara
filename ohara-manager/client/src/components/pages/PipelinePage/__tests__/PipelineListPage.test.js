@@ -30,7 +30,7 @@ import {
 } from 'apis/pipelinesApis';
 
 jest.mock('apis/pipelinesApis');
-jest.mock('utils/pipelineUtils');
+jest.mock('../pipelineUtils/commonUtils');
 jest.mock('apis/workerApis');
 
 const pipelines = [

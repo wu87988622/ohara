@@ -22,23 +22,22 @@ import { get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
+import * as CSS_VARS from 'theme/variables';
+import * as s from './Styles';
+import Controller from './Controller';
+import { SchemaTable } from 'common/Table';
+import { ConfirmModal, Modal } from 'common/Modal';
+import { primaryBtn } from 'theme/btnTheme';
+import { Input, Select, FormGroup, Label, Button } from 'common/Form';
+import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
+import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
+import { includes } from 'lodash';
+import { FtpQuicklyFillIn } from './QuicklyFillIn';
 import {
   CONNECTOR_TYPES,
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
-import { SchemaTable } from 'common/Table';
-import { ConfirmModal, Modal } from 'common/Modal';
-import { primaryBtn } from 'theme/btnTheme';
-import * as CSS_VARS from 'theme/variables';
-import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
-import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
-import { includes } from 'lodash';
-import Controller from './Controller';
-import { FtpQuicklyFillIn } from './QuicklyFillIn';
-
-import * as s from './Styles';
 
 const FormGroupWrapper = styled.div`
   display: flex;

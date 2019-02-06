@@ -17,7 +17,7 @@
 import { get, isObject } from 'lodash';
 
 import * as pipelinesApis from 'apis/pipelinesApis';
-import { isSource, isSink, isTopic, isStream } from './pipelineUtils';
+import { isSource, isSink, isTopic, isStream } from './commonUtils';
 import { ICON_MAPS } from 'constants/pipelines';
 
 const getNameByKind = kind => {

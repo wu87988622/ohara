@@ -16,7 +16,7 @@
 
 import { isNull } from 'lodash';
 
-import * as _ from './commonUtils';
+import * as _ from 'utils/commonUtils';
 
 export const getCurrHdfsConnection = (connections, targetId) => {
   let current;

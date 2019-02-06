@@ -16,7 +16,7 @@
 
 import { isNull } from 'lodash';
 
-import { isSource, isSink, isTopic } from './pipelineUtils';
+import { isSource, isSink, isTopic } from './commonUtils';
 
 export const getConnectors = connectors => {
   const sources = connectors

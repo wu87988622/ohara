@@ -21,12 +21,12 @@ import toastr from 'toastr';
 
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as MESSAGES from 'constants/messages';
+import * as s from './Styles';
+import Controller from './Controller';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
 import { FormGroup, Label, Input } from 'common/Form';
 import { fetchTopic } from 'apis/topicApis';
-import Controller from './Controller';
-import * as s from './Styles';
 
 class Topic extends React.Component {
   static propTypes = {

@@ -22,21 +22,20 @@ import { includes, get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import {
-  CONNECTOR_TYPES,
-  CONNECTOR_STATES,
-  CONNECTOR_ACTIONS,
-} from 'constants/pipelines';
+import * as s from './Styles';
+import Controller from './Controller';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { Tab, Tabs, TabList, TabPanel } from 'common/Tabs';
-import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
-import Controller from './Controller';
+import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { FtpQuicklyFillIn } from './QuicklyFillIn';
-
-import * as s from './Styles';
+import {
+  CONNECTOR_TYPES,
+  CONNECTOR_STATES,
+  CONNECTOR_ACTIONS,
+} from 'constants/pipelines';
 
 const FormGroupWrapper = styled.div`
   display: flex;

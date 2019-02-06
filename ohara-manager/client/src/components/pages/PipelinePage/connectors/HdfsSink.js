@@ -29,8 +29,11 @@ import { Box } from 'common/Layout';
 import { Input, Select, FormGroup, Label } from 'common/Form';
 import { fetchHdfs } from 'apis/configurationApis';
 import { CONFIGURATION } from 'constants/urls';
-import { updateTopic, findByGraphId } from 'utils/pipelineUtils';
-import { getCurrHdfsConnection, handleInputChange } from 'utils/hdfsSinkUtils';
+import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
+import {
+  getCurrHdfsConnection,
+  handleInputChange,
+} from '../pipelineUtils/hdfsSinkUtils';
 import Controller from './Controller';
 import {
   CONNECTOR_TYPES,

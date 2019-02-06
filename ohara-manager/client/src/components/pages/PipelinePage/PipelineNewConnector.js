@@ -21,7 +21,7 @@ import styled from 'styled-components';
 import * as PIPELINES from 'constants/pipelines';
 import { DataTable } from 'common/Table';
 import { lighterBlue, lightBlue, trBgColor } from 'theme/variables';
-import { createConnector } from 'utils/pipelineToolbarUtils';
+import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
 
 const TableWrapper = styled.div`
   margin: 30px 30px 40px;
