@@ -48,20 +48,52 @@ export const addPipelineStatus = pipeline => {
   };
 };
 
-export const updatePipelineParams = (pipelines, update = null) => {
+export const removePrevSinkConnection = (rules, sinkId) => {
+  const updatedRule = Object.keys(rules)
+    .map(key => {
+      // Remove the previous sinkId, if it exists
+      if (rules[key].includes(sinkId)) {
+        const updatedTo = rules[key].filter(rule => rule !== sinkId);
+        const result = { [key]: updatedTo };
+        return result;
+      }
+
+      return {
+        [key]: rules[key],
+      };
+    })
+    .reduce((acc, rule) => {
+      // Change the result data structure
+      acc = { ...acc, ...rule };
+      return acc;
+    }, {});
+
+  return updatedRule;
+};
+
+export const updatePipelineParams = ({
+  pipelines,
+  update = null,
+  sinkId = null,
+}) => {
   let params = null;
+  let { rules } = pipelines;
+
+  // Remove previous sink connection from graph
+  if (!isNull(sinkId)) {
+    rules = removePrevSinkConnection(rules, sinkId);
+  }
 
   // If update is not specify, just pass down the entire pipeline
   if (isNull(update)) {
     params = pipelines;
   } else {
-    const { rules } = pipelines;
     const { id, to } = update;
-    const updateRule = { [id]: to };
+    const updatedRule = { [id]: to };
 
     params = {
       ...pipelines,
-      rules: { ...rules, ...updateRule },
+      rules: { ...rules, ...updatedRule },
     };
   }
 

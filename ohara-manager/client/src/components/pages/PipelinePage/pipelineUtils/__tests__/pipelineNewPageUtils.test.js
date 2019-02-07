@@ -14,7 +14,28 @@
  * limitations under the License.
  */
 
-import { updatePipelineParams } from '../pipelineNewPageUtils';
+import {
+  updatePipelineParams,
+  removePrevSinkConnection,
+} from '../pipelineNewPageUtils';
+
+describe('removePrevSinkConnection()', () => {
+  it('removes previous sink connection', () => {
+    const rules = {
+      a: ['e', 'f'],
+      b: ['d'],
+    };
+
+    const sinkId = 'f';
+
+    const expected = {
+      ...rules,
+      a: ['e'],
+    };
+
+    expect(removePrevSinkConnection(rules, sinkId)).toEqual(expected);
+  });
+});
 
 describe('updatePipelineparams()', () => {
   it('returns the pipeline if the update is only for the pipeline name', () => {
@@ -24,7 +45,31 @@ describe('updatePipelineparams()', () => {
       rules: {},
     };
 
-    expect(updatePipelineParams(pipelines)).toBe(pipelines);
+    expect(updatePipelineParams({ pipelines })).toBe(pipelines);
+  });
+
+  it('updates params correctly', () => {
+    const pipelines = {
+      name: 'abc',
+      objects: {},
+      rules: {
+        a: ['c'],
+        b: ['d'],
+      },
+    };
+
+    const update = {
+      id: 'a',
+      to: ['g'],
+    };
+
+    const sinkId = 'c';
+
+    const expected = { ...pipelines, rules: { a: ['g'], b: ['d'] } };
+
+    expect(updatePipelineParams({ pipelines, update, sinkId })).toEqual(
+      expected,
+    );
   });
 
   it('updates the rules when the update includes rules update', () => {
@@ -43,11 +88,11 @@ describe('updatePipelineparams()', () => {
       [update.id]: update.to,
     };
 
-    const expectedParams = {
+    const expected = {
       ...pipelines,
       rules: { ...pipelines.rules, ...updateRule },
     };
 
-    expect(updatePipelineParams(pipelines, update)).toEqual(expectedParams);
+    expect(updatePipelineParams({ pipelines, update })).toEqual(expected);
   });
 });
