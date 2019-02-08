@@ -40,17 +40,17 @@ const BtnWrapper = styled.button`
   }
 
   &:focus {
-    border-color: ${props => props.btnTheme.blue};
+    border-color: ${props => props.theme.blue};
     box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
-    transition: ${props => props.btnTheme.durationNormal} all;
+    transition: ${props => props.theme.durationNormal} all;
   }
 
   &.is-working,
   &.is-disabled {
-    border: 1px solid ${props => props.btnTheme.lighterGray};
+    border: 1px solid ${props => props.theme.lighterGray};
     cursor: not-allowed;
-    color: ${props => props.btnTheme.lightGray};
-    background-color: ${props => props.btnTheme.white};
+    color: ${props => props.theme.lightGray};
+    background-color: ${props => props.theme.white};
   }
 `;
 
