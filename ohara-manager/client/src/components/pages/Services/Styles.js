@@ -16,7 +16,6 @@
 
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
-import * as CSS_VARS from 'theme/variables';
 
 const Layout = styled.div`
   padding-top: 75px;
@@ -44,7 +43,7 @@ const Layout = styled.div`
 `;
 
 const Link = styled(NavLink)`
-  color: ${CSS_VARS.dimBlue};
+  color: ${props => props.theme.dimBlue};
   font-size: 14px;
   padding: 0;
   margin: 0.5rem 1rem 0.5rem 0;
@@ -53,7 +52,7 @@ const Link = styled(NavLink)`
 
   &:hover,
   &.active {
-    color: ${CSS_VARS.blue};
+    color: ${props => props.theme.blue};
   }
 
   display: block;

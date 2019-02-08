@@ -18,7 +18,6 @@ import styled from 'styled-components';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
 import { FormGroup, Button, Label } from 'common/Form';
-import * as CSS_VARS from 'theme/variables';
 
 const BoxWrapper = styled(Box)`
   padding: ${props => props.padding || '25px'};
@@ -34,7 +33,7 @@ const TitleWrapper = styled(FormGroup).attrs({
 const H5Wrapper = styled(H5)`
   margin: 0;
   font-weight: normal;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 H5Wrapper.displayName = 'H5';
@@ -57,7 +56,7 @@ const FormCol = styled(FormGroup)`
 
 const JarNameText = styled(Label)`
   font-size: 12px;
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
 `;
 
 const ViewTopologyBtn = styled(Button)`

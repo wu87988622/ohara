@@ -20,45 +20,37 @@ import styled from 'styled-components';
 import cx from 'classnames';
 
 import { defaultBtn } from 'theme/btnTheme';
-import {
-  radiusNormal,
-  durationNormal,
-  lighterGray,
-  lightGray,
-  white,
-  blue,
-} from 'theme/variables';
 
 const BtnWrapper = styled.button`
   font-size: 13px;
   font-family: inherit;
-  border: ${props => props.theme.border};
-  border-radius: ${radiusNormal};
-  color: ${props => props.theme.color};
+  border: ${props => props.btnTheme.border};
+  border-radius: ${props => props.theme.radiusNormal};
+  color: ${props => props.btnTheme.color};
   padding: 12px 16px;
-  background-color: ${props => props.theme.bgColor};
+  background-color: ${props => props.btnTheme.bgColor};
   width: ${({ width }) => width};
-  transition: ${durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
 
   &:hover {
-    border: ${props => props.theme.borderHover};
-    background-color: ${props => props.theme.bgHover};
-    color: ${props => props.theme.colorHover};
-    transition: ${durationNormal} all;
+    border: ${props => props.btnTheme.borderHover};
+    background-color: ${props => props.btnTheme.bgHover};
+    color: ${props => props.btnTheme.colorHover};
+    transition: ${props => props.theme.durationNormal} all;
   }
 
   &:focus {
-    border-color: ${blue};
+    border-color: ${props => props.btnTheme.blue};
     box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
-    transition: ${durationNormal} all;
+    transition: ${props => props.btnTheme.durationNormal} all;
   }
 
   &.is-working,
   &.is-disabled {
-    border: 1px solid ${lighterGray};
+    border: 1px solid ${props => props.btnTheme.lighterGray};
     cursor: not-allowed;
-    color: ${lightGray};
-    background-color: ${white};
+    color: ${props => props.btnTheme.lightGray};
+    background-color: ${props => props.btnTheme.white};
   }
 `;
 
@@ -88,7 +80,7 @@ const Button = ({
       type={type}
       width={width}
       onClick={handleClick}
-      theme={theme}
+      btnTheme={theme}
       className={`${className} ${cls}`}
       disabled={disabled}
       {...rest}

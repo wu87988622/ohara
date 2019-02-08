@@ -20,7 +20,6 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { get, includes } from 'lodash';
 
-import * as CSS_VARS from 'theme/variables';
 import * as PIPELINES from 'constants/pipelines';
 import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
@@ -31,8 +30,8 @@ import { fetchCluster } from 'apis/clusterApis';
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
   padding: 15px 30px;
-  border: 1px solid ${CSS_VARS.lightestBlue};
-  border-radius: ${CSS_VARS.radiusNormal};
+  border: 1px solid ${props => props.theme.lightestBlue};
+  border-radius: ${props => props.theme.radiusNormal};
   display: flex;
   align-items: center;
 `;
@@ -40,16 +39,16 @@ const ToolbarWrapper = styled.div`
 ToolbarWrapper.displayName = 'ToolbarWrapper';
 
 const Icon = styled.i`
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
   font-size: 25px;
   margin-right: 20px;
-  transition: ${CSS_VARS.durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
   cursor: pointer;
 
   &:hover,
   &.is-active {
-    transition: ${CSS_VARS.durationNormal} all;
-    color: ${CSS_VARS.blue};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.blue};
   }
 
   &:last-child {
@@ -64,7 +63,7 @@ const FileSavingStatus = styled.div`
   margin-left: auto;
   color: red;
   font-size: 12px;
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
 `;
 
 FileSavingStatus.displayName = 'FileSavingStatus';

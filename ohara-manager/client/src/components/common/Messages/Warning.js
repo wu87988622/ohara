@@ -18,29 +18,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import {
-  lighterBlue,
-  lightYellow,
-  lightOrange,
-  radiusCompact,
-} from 'theme/variables';
-
 const WarningWrapper = styled.p`
   font-size: 13px;
   margin: 0 0 8px 0;
-  color: ${lighterBlue};
+  color: ${props => props.theme.lighterBlue};
   display: flex;
   align-items: center;
 `;
 
 const IconWrapper = styled.i`
   padding: 5px 10px;
-  background-color: ${lightYellow};
+  background-color: ${props => props.theme.lightYellow};
   margin-right: 10px;
   display: inline-block;
-  color: ${lightOrange};
+  color: ${props => props.theme.lightOrange};
   font-size: 12px;
-  border-radius: ${radiusCompact};
+  border-radius: ${props => props.theme.radiusCompact};
   align-self: flex-start;
 `;
 

@@ -23,7 +23,6 @@ import * as configurationApis from 'apis/configurationApis';
 import { Modal } from 'common/Modal';
 import { FormGroup, Label, Select } from 'common/Form';
 import { Box } from 'common/Layout';
-import * as CSS_VARS from 'theme/variables';
 
 const LinkWrapper = styled.div`
   cursor: pointer;
@@ -32,7 +31,7 @@ const LinkWrapper = styled.div`
 const PreviewWrapper = styled.div`
   margin-top: 16px;
   padding: 16px;
-  background-color: ${CSS_VARS.whiteSmoke};
+  background-color: ${props => props.theme.whiteSmoke};
 `;
 
 const Text = styled(Label)`

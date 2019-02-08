@@ -22,7 +22,6 @@ import { get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import * as CSS_VARS from 'theme/variables';
 import * as s from './Styles';
 import Controller from './Controller';
 import { SchemaTable } from 'common/Table';
@@ -47,7 +46,7 @@ const FormGroupWrapper = styled.div`
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
   align-items: center;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 const Checkbox = styled(Input)`

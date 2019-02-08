@@ -27,7 +27,6 @@ import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelinesApis from 'apis/pipelinesApis';
 import * as topicApis from 'apis/topicApis';
-import * as CSS_VARS from 'theme/variables';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
@@ -69,7 +68,7 @@ const Sidebar = styled.div`
 
 const Heading2 = styled(H2)`
   font-size: 16px;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 Heading2.displayName = 'H2';
@@ -78,7 +77,7 @@ const Heading3 = styled(H3)`
   font-size: 15px;
   font-weight: normal;
   margin: 0;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 Heading3.displayName = 'H3';
@@ -94,17 +93,17 @@ const Operate = styled.div`
     margin-left: 10px;
 
     button {
-      color: ${CSS_VARS.dimBlue};
+      color: ${props => props.theme.dimBlue};
       padding: 0 4px;
       border: 0;
       font-size: 20px;
       cursor: pointer;
       background-color: transparent;
-      transition: ${CSS_VARS.durationNormal} all;
+      transition: ${props => props.theme.durationNormal} all;
 
       &:hover {
-        color: ${CSS_VARS.blue};
-        transition: ${CSS_VARS.durationNormal} all;
+        color: ${props => props.theme.blue};
+        transition: ${props => props.theme.durationNormal} all;
       }
     }
   }
@@ -112,7 +111,7 @@ const Operate = styled.div`
   .cluster-name {
     display: block;
     font-size: 12px;
-    color: ${CSS_VARS.lighterBlue};
+    color: ${props => props.theme.lighterBlue};
   }
 `;
 

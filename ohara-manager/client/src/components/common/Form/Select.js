@@ -18,32 +18,23 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import {
-  white,
-  blue,
-  lightBlue,
-  lightGray,
-  lighterGray,
-  radiusNormal,
-  durationNormal,
-} from 'theme/variables';
-
 const SelectWrapper = styled.select`
   font-size: 13px;
   font-family: inherit;
-  color: ${({ disabled }) => (disabled ? lightGray : lightBlue)};
-  border: 1px solid ${lighterGray};
+  color: ${({ disabled, theme }) =>
+    disabled ? theme.lightGray : theme.lightBlue};
+  border: 1px solid ${props => props.theme.lighterGray};
   padding: 10px 10px 10px 15px;
-  border-radius: ${radiusNormal};
-  background-color: ${white};
+  border-radius: ${props => props.theme.radiusNormal};
+  background-color: ${props => props.theme.white};
   width: ${({ width }) => width};
   height: ${({ height }) => height};
   outline: 0;
 
   &:focus {
-    border-color: ${blue};
+    border-color: ${props => props.theme.blue};
     box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
-    transition: ${durationNormal} all;
+    transition: ${props => props.theme.durationNormal} all;
   }
 `;
 

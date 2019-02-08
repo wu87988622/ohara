@@ -21,7 +21,6 @@ import dagreD3 from 'dagre-d3';
 import * as d3 from 'd3v4';
 
 import * as _ from 'utils/commonUtils';
-import * as CSS_VARS from 'theme/variables';
 import * as pipelineUtils from './pipelineUtils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
@@ -37,7 +36,7 @@ Wrapper.displayName = 'Box';
 const H5Wrapper = styled(H5)`
   margin: 0 0 30px;
   font-weight: normal;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 H5Wrapper.displayName = 'H5Wrapper';
@@ -51,7 +50,7 @@ const Svg = styled.svg`
     rect {
       fill: transparent;
       cursor: pointer;
-      border: 1px solid ${CSS_VARS.whiteSmoke};
+      border: 1px solid ${props => props.theme.whiteSmoke};
     }
   }
 
@@ -61,7 +60,7 @@ const Svg = styled.svg`
 
   .node-name {
     font-size: 14px;
-    color: ${CSS_VARS.lightBlue};
+    color: ${props => props.theme.lightBlue};
   }
 
   .node-topic {
@@ -71,9 +70,9 @@ const Svg = styled.svg`
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid ${CSS_VARS.lighterGray};
-    border-radius: ${CSS_VARS.radiusRounded};
-    box-shadow: ${CSS_VARS.shadowNormal};
+    border: 1px solid ${props => props.theme.lighterGray};
+    border-radius: ${props => props.theme.radiusRounded};
+    box-shadow: ${props => props.theme.shadowNormal};
 
     .node-text-wrapper {
       position: absolute;
@@ -87,7 +86,7 @@ const Svg = styled.svg`
     }
 
     .node-icon {
-      color: ${CSS_VARS.dimBlue};
+      color: ${props => props.theme.dimBlue};
     }
   }
 
@@ -95,9 +94,9 @@ const Svg = styled.svg`
     width: 200px;
     min-height: 90px;
     padding: 15px 20px;
-    border: 1px solid ${CSS_VARS.lighterGray};
-    border-radius: ${CSS_VARS.radiusNormal};
-    box-shadow: ${CSS_VARS.shadowNormal};
+    border: 1px solid ${props => props.theme.lighterGray};
+    border-radius: ${props => props.theme.radiusNormal};
+    box-shadow: ${props => props.theme.shadowNormal};
     display: flex;
 
     .node-icon {
@@ -107,15 +106,15 @@ const Svg = styled.svg`
       width: 40px;
       height: 40px;
       margin-right: 8px;
-      color: ${CSS_VARS.white};
-      border-radius: ${CSS_VARS.radiusRounded};
-      background-color: ${CSS_VARS.lightestBlue};
+      color: ${props => props.theme.white};
+      border-radius: ${props => props.theme.radiusRounded};
+      background-color: ${props => props.theme.lightestBlue};
     }
 
     .node-text-wrapper {
       display: flex;
       flex-direction: column;
-      color: ${CSS_VARS.dimBlue};
+      color: ${props => props.theme.dimBlue};
     }
 
     .node-name {
@@ -127,7 +126,7 @@ const Svg = styled.svg`
 
     .node-status {
       font-size: 11px;
-      color: ${CSS_VARS.lighterBlue};
+      color: ${props => props.theme.lighterBlue};
       margin-bottom: 5px;
     }
 
@@ -141,13 +140,13 @@ const Svg = styled.svg`
 
     &.is-running {
       .node-icon {
-        background-color: ${CSS_VARS.green};
+        background-color: ${props => props.theme.green};
       }
     }
 
     &.is-failed {
       .node-icon {
-        background-color: ${CSS_VARS.red};
+        background-color: ${props => props.theme.red};
       }
     }
   }
@@ -157,8 +156,8 @@ const Svg = styled.svg`
   }
 
   path {
-    stroke: ${CSS_VARS.lighterGray};
-    fill: ${CSS_VARS.lighterGray};
+    stroke: ${props => props.theme.lighterGray};
+    fill: ${props => props.theme.lighterGray};
     stroke-width: 2px;
   }
 `;

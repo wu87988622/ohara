@@ -18,8 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { lighterGray } from 'theme/variables';
-
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -29,7 +27,7 @@ const Table = styled.table`
     text-align: center;
     font-size: 13px;
     padding: 20px 10px;
-    border-bottom: 1px solid ${lighterGray};
+    border-bottom: 1px solid ${props => props.theme.lighterGray};
   }
 `;
 

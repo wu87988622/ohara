@@ -18,37 +18,28 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import {
-  blue,
-  lightGray,
-  lighterGray,
-  radiusNormal,
-  durationNormal,
-  lightBlue,
-} from 'theme/variables';
-
 const InputWrapper = styled.input`
   font-size: 12px;
   font-family: inherit;
-  color: ${lightBlue};
-  border: 1px solid ${lighterGray};
+  color: ${props => props.theme.lightBlue};
+  border: 1px solid ${props => props.theme.lighterGray};
   padding: 10px 10px 10px 15px;
   width: ${({ width }) => width};
   height: ${({ height }) => height};
-  border-radius: ${radiusNormal};
+  border-radius: ${props => props.theme.radiusNormal};
   outline: none;
-  transition: ${durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
 
   &:focus {
-    border-color: ${blue};
+    border-color: ${props => props.theme.blue};
     box-shadow: 0 0 0 3px rgba(76, 132, 255, 0.25);
-    transition: ${durationNormal} all;
+    transition: ${props => props.theme.durationNormal} all;
   }
 
   &.is-disabled {
-    border: 1px solid ${lighterGray};
+    border: 1px solid ${props => props.theme.lighterGray};
     cursor: not-allowed;
-    color: ${lightGray};
+    color: ${props => props.theme.lightGray};
   }
 `;
 

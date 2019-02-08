@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import * as CSS_VARS from 'theme/variables';
 import { H2 } from 'common/Headings';
 import HdfsConfiguration from 'components/pages/Configuration/HdfsConfiguration';
 import DbConfiguration from 'components/pages/Configuration/DbConfiguration';
@@ -48,7 +47,7 @@ const ConfigurationList = styled.div`
 const H2Wrapper = styled(H2)`
   margin: 0;
   padding: 20px;
-  border-bottom: 1px solid ${CSS_VARS.lighterGray};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
 `;
 
 const CloseBtn = styled.div`
@@ -56,19 +55,19 @@ const CloseBtn = styled.div`
   right: 22px;
   top: 22px;
   cursor: pointer;
-  color: ${CSS_VARS.lightGray};
+  color: ${props => props.theme.lightGray};
   padding: 5px;
-  transition: ${CSS_VARS.durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
 
   &:hover {
-    transition: ${CSS_VARS.durationNormal} all;
-    color: ${CSS_VARS.red};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.red};
   }
 `;
 
 const ConfLi = styled.li`
   color: ${({ isSelected }) =>
-    isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
+    isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
   border: 0;
   font-size: 14px;
   cursor: pointer;
@@ -77,13 +76,13 @@ const ConfLi = styled.li`
 
   &:hover {
     color: ${({ isSelected }) =>
-      isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
+      isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
   }
 `;
 
 const ConfUl = styled.ul`
   color: ${({ isSelected }) =>
-    isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
+    isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
   border: 0;
   font-size: 14px;
   cursor: pointer;
@@ -91,7 +90,7 @@ const ConfUl = styled.ul`
 
   &:hover {
     color: ${({ isSelected }) =>
-      isSelected ? CSS_VARS.blue : CSS_VARS.lightBlue};
+      isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
   }
 `;
 

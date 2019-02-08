@@ -16,7 +16,6 @@
 
 import styled from 'styled-components';
 import { FormGroup } from 'common/Form';
-import * as CSS_VARS from 'theme/variables';
 
 const TopWrapper = styled.div`
   margin-bottom: 20px;
@@ -26,7 +25,7 @@ const TopWrapper = styled.div`
 
 const Text = styled.div`
   width: ${props => props.width || '100%'};
-  border: 1px solid ${CSS_VARS.lighterGray};
+  border: 1px solid ${props => props.theme.lighterGray};
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   font-size: 12px;
@@ -36,7 +35,7 @@ const Text = styled.div`
 const List = styled.div`
   position: relative;
   width: ${props => props.width || '100%'};
-  border: 1px solid ${CSS_VARS.lighterGray};
+  border: 1px solid ${props => props.theme.lighterGray};
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   min-height: 8rem;
@@ -44,7 +43,7 @@ const List = styled.div`
 `;
 
 const ListItem = styled.div`
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
   margin: 0.25rem 0;
   font-size: 13px;
 `;

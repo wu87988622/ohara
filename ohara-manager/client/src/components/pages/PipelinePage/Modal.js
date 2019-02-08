@@ -24,15 +24,6 @@ import { Input, Button } from 'common/Form';
 import { H2 } from 'common/Headings';
 import { cancelBtn, primaryBtn } from 'theme/btnTheme';
 import { Link } from 'react-router-dom';
-import {
-  lightBlue,
-  lightGray,
-  lighterGray,
-  red,
-  blue,
-  durationNormal,
-  white,
-} from 'theme/variables';
 
 const modalStyles = {
   content: {
@@ -53,7 +44,7 @@ const FormInner = styled.div`
 const H2Wrapper = styled(H2)`
   margin: 0;
   padding: 20px;
-  border-bottom: 1px solid ${lighterGray};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
 `;
 
 const FormGroup = styled.div`
@@ -69,12 +60,12 @@ const FormGroup = styled.div`
 const Actions = styled.div`
   display: flex;
   padding: 15px;
-  border-top: 1px solid ${lighterGray};
+  border-top: 1px solid ${props => props.theme.lighterGray};
   justify-content: flex-end;
 `;
 
 const Label = styled.label`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
   margin-bottom: 20px;
 `;
 
@@ -95,63 +86,63 @@ const CloseBtn = styled.div`
   right: 22px;
   top: 22px;
   cursor: pointer;
-  color: ${lightGray};
+  color: ${props => props.theme.lightGray};
   padding: 5px;
-  transition: ${durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
 
   &:hover {
-    transition: ${durationNormal} all;
-    color: ${red};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.red};
   }
 `;
 
 CloseBtn.displayName = 'CloseBtn';
 
 const LinkIcon = styled(Link)`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
 
   &:hover {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 LinkIcon.displayName = 'LinkIcon';
 
 const AddIcon = styled.button`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
   border: 0;
   font-size: 20px;
   cursor: pointer;
-  background: ${white};
+  background: ${props => props.theme.white};
 
   &:hover {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
 AddIcon.displayName = 'AddIcon';
 
 const DeleteIcon = styled.button`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
   border: 0;
   font-size: 20px;
   cursor: pointer;
-  background: ${white};
+  background: ${props => props.theme.white};
 
   &:hover {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
 DeleteIcon.displayName = 'DeleteIcon';
 
 const Li = styled.li`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
   border: 0;
   font-size: 14px;
   cursor: pointer;
 
   &:hover {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 

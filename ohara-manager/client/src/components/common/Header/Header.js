@@ -26,24 +26,15 @@ import NAVS from 'constants/navs';
 import ConfigurationModal from 'pages/ConfigurationModal';
 import { fetchCluster } from 'apis/clusterApis';
 import { InfoModal } from '../Modal';
-import {
-  white,
-  whiteSmoke,
-  blue,
-  dimBlue,
-  darkerBlue,
-  lightBlue,
-  lighterGray,
-} from 'theme/variables';
 
 const StyledHeader = styled.div`
-  background-color: ${white};
+  background-color: ${props => props.theme.white};
   position: fixed;
   left: 0;
   top: 0;
   right: 0;
   height: 59px;
-  border-bottom: 1px solid ${lighterGray};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
   padding: 0 50px;
   z-index: 100;
 `;
@@ -63,7 +54,7 @@ HeaderWrapper.displayName = 'Header';
 
 const Brand = styled(NavLink)`
   font-family: Merriweather, sans-serif;
-  color: ${blue};
+  color: ${props => props.theme.blue};
   font-size: 24px;
   padding: 0;
   display: block;
@@ -73,13 +64,13 @@ Brand.displayName = 'Brand';
 
 const Nav = styled.nav`
   margin-left: 54px;
-  background-color: ${white};
+  background-color: ${props => props.theme.white};
 `;
 
 Nav.displayName = 'Nav';
 
 const Link = styled(NavLink)`
-  color: ${dimBlue};
+  color: ${props => props.theme.dimBlue};
   font-size: 14px;
   padding: 15px 0;
   margin: 10px 20px;
@@ -88,7 +79,7 @@ const Link = styled(NavLink)`
 
   &:hover,
   &.active {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
@@ -96,13 +87,13 @@ Link.displayName = 'Link';
 
 const Btn = styled.button`
   border: none;
-  color: ${dimBlue};
+  color: ${props => props.theme.dimBlue};
   font-size: 18px;
   background-color: transparent;
 
   &:hover,
   &.active {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
@@ -138,12 +129,12 @@ const Ul = styled.ul`
   .item {
     margin-right: 10px;
     padding: 13px 15px;
-    color: ${darkerBlue};
-    background-color: ${whiteSmoke};
+    color: ${props => props.theme.darkerBlue};
+    background-color: ${props => props.theme.whiteSmoke};
   }
 
   .content {
-    color: ${lightBlue};
+    color: ${props => props.theme.lightBlue};
   }
 
   .item,

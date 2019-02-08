@@ -17,8 +17,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from 'App';
+import { ThemeProvider } from 'styled-components';
 
+import * as CSS_VARS from './theme/variables';
 import 'theme/globalStyle';
 import 'toastrConfigs';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(
+  <ThemeProvider theme={CSS_VARS}>
+    <App />
+  </ThemeProvider>,
+  document.getElementById('root'),
+);

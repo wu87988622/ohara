@@ -19,8 +19,6 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
-import { darkerBlue, lighterGray, lightBlue } from 'theme/variables';
-
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -29,11 +27,11 @@ const Table = styled.table`
   td {
     font-size: 13px;
     padding: 20px 10px;
-    border-bottom: 1px solid ${lighterGray};
+    border-bottom: 1px solid ${props => props.theme.lighterGray};
   }
 
   td {
-    color: ${lightBlue};
+    color: ${props => props.theme.lightBlue};
   }
 `;
 
@@ -42,7 +40,7 @@ Table.displayName = 'Table';
 const Th = styled.th`
   text-transform: uppercase;
   text-align: left;
-  color: ${darkerBlue};
+  color: ${props => props.theme.darkerBlue};
 `;
 
 Th.displayName = 'Th';

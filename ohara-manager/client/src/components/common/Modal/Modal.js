@@ -22,14 +22,6 @@ import styled from 'styled-components';
 import { Button } from 'common/Form';
 import { H2 } from 'common/Headings';
 import { cancelBtn, primaryBtn } from 'theme/btnTheme';
-import {
-  lightGray,
-  lighterGray,
-  white,
-  red,
-  durationNormal,
-  radiusNormal,
-} from 'theme/variables';
 
 const ModalWrapper = styled(ReactModal)`
   top: 15%;
@@ -39,10 +31,10 @@ const ModalWrapper = styled(ReactModal)`
   margin-right: -50%;
   transform: translate(-50%, 0);
   padding: 0;
-  background-color: ${white};
+  background-color: ${props => props.theme.white};
   position: absolute;
   width: ${props => props.width};
-  border-radius: ${radiusNormal};
+  border-radius: ${props => props.theme.radiusNormal};
 
   &:focus {
     outline: 0;
@@ -52,13 +44,13 @@ const ModalWrapper = styled(ReactModal)`
 const H2Wrapper = styled(H2)`
   margin: 0;
   padding: 20px;
-  border-bottom: 1px solid ${lighterGray};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
 `;
 
 const Actions = styled.div`
   display: flex;
   padding: 15px;
-  border-top: 1px solid ${lighterGray};
+  border-top: 1px solid ${props => props.theme.lighterGray};
   justify-content: flex-end;
 `;
 
@@ -73,13 +65,13 @@ const CloseBtn = styled.div`
   right: 22px;
   top: 22px;
   cursor: pointer;
-  color: ${lightGray};
+  color: ${props => props.theme.lightGray};
   padding: 5px;
-  transition: ${durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
 
   &:hover {
-    transition: ${durationNormal} all;
-    color: ${red};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.red};
   }
 `;
 

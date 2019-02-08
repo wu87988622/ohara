@@ -20,11 +20,9 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import uuid from 'uuid/v4';
 
-import { lightBlue } from 'theme/variables';
-
 const LabelWrapper = styled.label`
   position: relative;
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
   width: ${({ width }) => width};
   font-size: 13px;
   margin: ${({ margin }) => margin};

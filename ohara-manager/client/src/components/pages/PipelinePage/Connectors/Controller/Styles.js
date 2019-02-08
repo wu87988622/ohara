@@ -15,7 +15,6 @@
  */
 
 import styled from 'styled-components';
-import * as CSS_VARS from 'theme/variables';
 
 const Controller = styled.div`
   position: absolute;
@@ -23,14 +22,14 @@ const Controller = styled.div`
 `;
 
 const ControlButton = styled.button`
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
   border: 0;
   font-size: 20px;
   cursor: pointer;
   background-color: transparent;
 
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${props => props.theme.blue};
   }
 `;
 

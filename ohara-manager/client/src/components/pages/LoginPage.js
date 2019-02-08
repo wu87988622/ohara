@@ -30,13 +30,6 @@ import { setUserKey } from 'utils/authUtils';
 import { login } from 'apis/authApis';
 import { LOGIN } from 'constants/documentTitles';
 import { primaryBtn } from 'theme/btnTheme';
-import {
-  white,
-  radiusNormal,
-  lighterGray,
-  darkerBlue,
-  shadowNormal,
-} from 'theme/variables';
 
 const FormContainer = styled.div`
   display: flex;
@@ -45,7 +38,7 @@ const FormContainer = styled.div`
 
 const Heading3 = styled.h3`
   font-size: 24px;
-  color: ${darkerBlue};
+  color: ${props => props.theme.darkerBlue};
   text-transform: uppercase;
 `;
 
@@ -56,10 +49,10 @@ const Form = styled.form`
   padding: 25px 40px 70px 40px;
   margin: auto;
   text-align: center;
-  background-color: ${white};
-  border-radius: ${radiusNormal};
-  border: 1px solid ${lighterGray};
-  box-shadow: ${shadowNormal};
+  background-color: ${props => props.theme.white};
+  border-radius: ${props => props.theme.radiusNormal};
+  border: 1px solid ${props => props.theme.lighterGray};
+  box-shadow: ${props => props.theme.shadowNormal};
 `;
 
 Form.displayName = 'Form';

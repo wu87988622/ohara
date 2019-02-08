@@ -18,13 +18,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-import { white, shadowNormal, radiusNormal } from '../../../theme/variables';
-
 const BoxWrapper = styled.div`
   padding: ${props => props.padding};
-  background-color: ${white};
-  box-shadow: ${props => (props.shadow ? shadowNormal : '')};
-  border-radius: ${radiusNormal};
+  background-color: ${props => props.theme.white};
+  box-shadow: ${props => (props.shadow ? props.theme.shadowNormal : '')};
+  border-radius: ${props => props.theme.radiusNormal};
   margin-bottom: 20px;
 `;
 

@@ -23,7 +23,6 @@ import { get, isEmpty, debounce, includes } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelinesApis from 'apis/pipelinesApis';
-import * as CSS_VARS from 'theme/variables';
 import * as s from './Styles';
 import { Box } from 'common/Layout';
 import { Input, Select, FormGroup, Label } from 'common/Form';
@@ -44,7 +43,7 @@ import {
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
   align-items: center;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 const Checkbox = styled(Input)`

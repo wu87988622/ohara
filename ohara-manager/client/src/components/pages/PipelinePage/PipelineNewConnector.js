@@ -20,7 +20,6 @@ import styled from 'styled-components';
 
 import * as PIPELINES from 'constants/pipelines';
 import { DataTable } from 'common/Table';
-import { lighterBlue, lightBlue, trBgColor } from 'theme/variables';
 import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
 
 const TableWrapper = styled.div`
@@ -29,12 +28,12 @@ const TableWrapper = styled.div`
 
 const Table = styled(DataTable)`
   thead th {
-    color: ${lightBlue};
+    color: ${props => props.theme.lightBlue};
     font-weight: normal;
   }
 
   td {
-    color: ${lighterBlue};
+    color: ${props => props.theme.lighterBlue};
   }
 
   tbody tr {
@@ -42,7 +41,7 @@ const Table = styled(DataTable)`
   }
 
   .is-active {
-    background-color: ${trBgColor};
+    background-color: ${props => props.theme.trBgColor};
   }
 `;
 

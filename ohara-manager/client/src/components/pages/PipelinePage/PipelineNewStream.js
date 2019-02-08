@@ -20,7 +20,6 @@ import toastr from 'toastr';
 import styled from 'styled-components';
 import { find, some, endsWith, get, isNull } from 'lodash';
 
-import * as CSS_VARS from 'theme/variables';
 import * as streamAppApis from 'apis/streamAppApis';
 import * as MESSAGES from 'constants/messages';
 import Editable from './Editable';
@@ -41,12 +40,12 @@ const TableWrapper = styled.div`
 
 const Table = styled(DataTable)`
   thead th {
-    color: ${CSS_VARS.lightBlue};
+    color: ${props => props.theme.lightBlue};
     font-weight: normal;
   }
 
   td {
-    color: ${CSS_VARS.lighterBlue};
+    color: ${props => props.theme.lighterBlue};
     padding: 20px 10px;
   }
 
@@ -55,21 +54,21 @@ const Table = styled(DataTable)`
   }
 
   .is-active {
-    background-color: ${CSS_VARS.trBgColor};
+    background-color: ${props => props.theme.trBgColor};
   }
 `;
 
 const Icon = styled.i`
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
   font-size: 20px;
   margin-right: 20px;
-  transition: ${CSS_VARS.durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
   cursor: pointer;
 
   &:hover,
   &.is-active {
-    transition: ${CSS_VARS.durationNormal} all;
-    color: ${CSS_VARS.blue};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.blue};
   }
 
   &:last-child {

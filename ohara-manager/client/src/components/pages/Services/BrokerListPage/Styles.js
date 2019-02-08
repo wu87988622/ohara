@@ -19,7 +19,6 @@ import { NavLink } from 'react-router-dom';
 
 import { Button } from 'common/Form';
 import { DataTable } from 'common/Table';
-import * as CSS_VARS from 'theme/variables';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -42,29 +41,29 @@ const Table = styled(DataTable)`
   text-align: left;
 
   .is-running {
-    background: ${CSS_VARS.trBgColor};
+    background: ${props => props.theme.trBgColor};
   }
 `;
 
 const Link = styled(NavLink)`
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
 const Icon = styled.i`
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
   font-size: 20px;
   margin-right: 20px;
-  transition: ${CSS_VARS.durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
   cursor: pointer;
 
   &:hover,
   &.is-active {
-    transition: ${CSS_VARS.durationNormal} all;
-    color: ${CSS_VARS.blue};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.blue};
   }
 
   &:last-child {

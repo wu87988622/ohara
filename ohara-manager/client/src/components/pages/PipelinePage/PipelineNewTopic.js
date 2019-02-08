@@ -21,20 +21,19 @@ import toastr from 'toastr';
 
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
-import { lighterBlue, durationNormal, blue } from 'theme/variables';
 import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
 
 const Icon = styled.i`
-  color: ${lighterBlue};
+  color: ${props => props.theme.lighterBlue};
   font-size: 25px;
   margin-right: 20px;
-  transition: ${durationNormal} all;
+  transition: ${props => props.theme.durationNormal} all;
   cursor: pointer;
 
   &:hover,
   &.is-active {
-    transition: ${durationNormal} all;
-    color: ${blue};
+    transition: ${props => props.theme.durationNormal} all;
+    color: ${props => props.theme.blue};
   }
 
   &:last-child {

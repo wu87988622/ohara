@@ -32,7 +32,6 @@ import { H2 } from 'common/Headings';
 import { Button, Select } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { PIPELINE } from 'constants/documentTitles';
-import { lightBlue, blue, red, trBgColor } from 'theme/variables';
 import {
   addPipelineStatus,
   getEditUrl,
@@ -67,31 +66,31 @@ const Table = styled(DataTable)`
   text-align: center;
 
   .is-running {
-    background: ${trBgColor};
+    background: ${props => props.theme.trBgColor};
   }
 `;
 
 Table.displayName = 'Table';
 
 const LinkIcon = styled(Link)`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
 
   &:hover {
-    color: ${blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
 LinkIcon.displayName = 'LinkIcon';
 
 const DeleteIcon = styled.button`
-  color: ${lightBlue};
+  color: ${props => props.theme.lightBlue};
   border: 0;
   font-size: 20px;
   cursor: pointer;
   background-color: transparent;
 
   &:hover {
-    color: ${red};
+    color: ${props => props.theme.red};
   }
 `;
 

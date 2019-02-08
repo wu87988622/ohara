@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import { H2 } from 'common/Headings';
-import { white, radiusNormal, shadowNormal } from '../../../theme/variables';
 
 const Wrapper = styled.div`
   padding-top: 75px;
@@ -31,9 +30,9 @@ const Wrapper = styled.div`
 Wrapper.displayName = 'Wrapper';
 
 const Main = styled.div`
-  background-color: ${white};
-  border-radius: ${radiusNormal};
-  box-shadow: ${shadowNormal};
+  background-color: ${props => props.theme.white};
+  border-radius: ${props => props.theme.radiusNormal};
+  box-shadow: ${props => props.theme.shadowNormal};
 `;
 
 Main.displayName = 'Main';

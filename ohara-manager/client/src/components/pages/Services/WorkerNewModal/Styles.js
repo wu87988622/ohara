@@ -17,12 +17,11 @@
 import styled from 'styled-components';
 import { FormGroup, Button } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
-import * as CSS_VARS from 'theme/variables';
 
 const List = styled.div`
   position: relative;
   width: ${props => props.width || '100%'};
-  border: 1px solid ${CSS_VARS.lighterGray};
+  border: 1px solid ${props => props.theme.lighterGray};
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   min-height: 8rem;
@@ -31,7 +30,7 @@ const List = styled.div`
 const ListItem = styled.div`
   margin: 0.25rem 0;
   font-size: 13px;
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
 `;
 
 const FormRow = styled(FormGroup).attrs({

@@ -21,7 +21,6 @@ import toastr from 'toastr';
 import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
-import * as CSS_VARS from 'theme/variables';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApis from 'apis/configurationApis';
 import { Input, Button, FormGroup, Label } from 'common/Form';
@@ -47,7 +46,7 @@ const Connections = styled.div`
   padding: 0;
   width: 200px;
   overflow-y: auto;
-  background-color: ${CSS_VARS.whiteSmoke};
+  background-color: ${props => props.theme.whiteSmoke};
 `;
 
 const HdfsForm = styled.div`
@@ -57,13 +56,13 @@ const HdfsForm = styled.div`
 const Actions = styled.div`
   display: flex;
   padding: 15px;
-  border-top: 1px solid ${CSS_VARS.lighterGray};
+  border-top: 1px solid ${props => props.theme.lighterGray};
   justify-content: flex-end;
 `;
 
 const TestBtn = styled(Button)`
   margin-top: 20px;
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
   width: 140px;
 
   /* Prevent button from wrapping if the btn is working and therefore an extra loading icon is displayed */
@@ -71,26 +70,26 @@ const TestBtn = styled(Button)`
 `;
 
 const AddIcon = styled.button`
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
   cursor: pointer;
   border: 0;
   font-size: 20px;
   background: transparent;
 
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
 const DeleteIcon = styled.button`
-  color: ${CSS_VARS.lightBlue};
+  color: ${props => props.theme.lightBlue};
   cursor: pointer;
   border: 0;
   font-size: 20px;
   background: transparent;
 
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
@@ -100,7 +99,7 @@ const CancelBtn = styled(Button)`
 
 const ApplyBtn = styled(Button)`
   margin-right: 10px;
-  color: ${CSS_VARS.lighterBlue};
+  color: ${props => props.theme.lighterBlue};
 `;
 
 const ComfirmBtn = styled(Button)`
@@ -109,21 +108,21 @@ const ComfirmBtn = styled(Button)`
 
 const Li = styled.li`
   background-color: ${({ isSelected }) =>
-    isSelected ? CSS_VARS.white : CSS_VARS.whiteSmoke};
-  color: ${CSS_VARS.lightBlue};
+    isSelected ? props => props.theme.white : props => props.theme.whiteSmoke};
+  color: ${props => props.theme.lightBlue};
   cursor: pointer;
   border: 0;
   font-size: 13px;
   padding: 15px 20px;
-  border-bottom: 1px solid ${CSS_VARS.lighterGray};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
 
   &:hover {
-    color: ${CSS_VARS.blue};
+    color: ${props => props.theme.blue};
   }
 `;
 
 const Block = styled.div`
-  border-bottom: 1px solid ${CSS_VARS.lighterGray};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
   padding: 10px;
 `;
 
