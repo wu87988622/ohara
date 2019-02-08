@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.prometheus
+package com.island.ohara.it.prometheus
 
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node

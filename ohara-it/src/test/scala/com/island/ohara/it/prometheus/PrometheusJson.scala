@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.prometheus
+package com.island.ohara.it.prometheus
 
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}

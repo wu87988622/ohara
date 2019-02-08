@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.prometheus
+package com.island.ohara.it.prometheus
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -25,7 +25,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.configurator.v0.ErrorApi._
-import com.island.ohara.prometheus.PrometheusJson.{Config, Targets}
+import com.island.ohara.it.prometheus.PrometheusJson.{Config, Targets}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global

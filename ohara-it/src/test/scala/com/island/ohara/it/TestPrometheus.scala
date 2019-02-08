@@ -27,8 +27,8 @@ import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.prometheus.PrometheusJson.{Health, Targets}
-import com.island.ohara.prometheus.{PrometheusClient, PrometheusConfigUtil, PrometheusDescription, PrometheusServer}
+import com.island.ohara.it.prometheus.PrometheusJson.{Health, Targets}
+import com.island.ohara.it.prometheus.{PrometheusClient, PrometheusConfigUtil, PrometheusDescription, PrometheusServer}
 import org.junit.Assume._
 import org.junit.{Before, Ignore, Test}
 import org.scalatest.Matchers

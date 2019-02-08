@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.prometheus
+package com.island.ohara.it.prometheus
 
 import com.island.ohara.agent.DockerClient.ContainerInspector
 import spray.json.DefaultJsonProtocol._
