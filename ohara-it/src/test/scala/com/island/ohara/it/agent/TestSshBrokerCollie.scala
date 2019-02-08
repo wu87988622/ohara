@@ -25,7 +25,7 @@ import org.junit.Test
   * 3) add an new node to the running broker cluster
   * 4) remove a node from the running broker cluster
   */
-class TestBrokerCollie extends BasicTestsOfCollie {
+class TestSshBrokerCollie extends BasicTestsOfSshCollie {
 
   @Test
   def test(): Unit = testRemoveNodeToRunningBrokerCluster()

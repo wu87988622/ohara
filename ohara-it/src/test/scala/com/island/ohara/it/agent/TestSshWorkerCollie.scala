@@ -26,7 +26,7 @@ import org.junit.Test
   * 4) add an new node to the running worker cluster
   * 5) remove a node from the running worker cluster
   */
-class TestWorkerCollie extends BasicTestsOfCollie {
+class TestSshWorkerCollie extends BasicTestsOfSshCollie {
 
   @Test
   def test(): Unit = testRemoveNodeToRunningWorkerCluster()

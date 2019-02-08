@@ -29,7 +29,7 @@ import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.typesafe.scalalogging.Logger
-import org.junit.{After, Before}
+import org.junit.After
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
@@ -44,21 +44,13 @@ import scala.concurrent.{Await, Future}
   */
 abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[BasicTestsOfCollie])
-  private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
-  private[this] val nodeCollie: NodeCollie = new NodeCollie {
-    override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
-    override def node(name: String): Future[Node] = Future.successful(
-      nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
-  }
-  private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
+  protected def nodeCache: Seq[Node]
+  protected def clusterCollie: ClusterCollie
 
   /**
     * used to debug...
     */
   private[this] val cleanup = true
-
-  @Before
-  final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtil.key} is required")
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
@@ -69,7 +61,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   private[this] def testZk(f: ZookeeperClusterInfo => Unit): Unit = {
     log.info("start to run zookeeper cluster")
     val zookeeperCollie = clusterCollie.zookeepersCollie()
-    val nodeName: String = result(nodeCollie.nodes()).head.name
+    val nodeName: String = nodeCache.head.name
     val clusterName = CommonUtil.randomString(10)
     result(zookeeperCollie.nonExists(clusterName)) shouldBe true
     val clientPort = CommonUtil.availablePort()
@@ -127,7 +119,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   private[this] def testBroker(f: BrokerClusterInfo => Unit): Unit = testZk { zkCluster =>
     log.info("start to run broker cluster")
     val brokerCollie = clusterCollie.brokerCollie()
-    val nodeName = result(nodeCollie.nodes()).head.name
+    val nodeName = nodeCache.head.name
     val clusterName = CommonUtil.randomString(10)
     result(brokerCollie.nonExists(clusterName)) shouldBe true
     log.info(s"verify existence of broker cluster:$clusterName...done")
