@@ -95,6 +95,9 @@ class JdbcSource extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    history: PropTypes.shape({
+      push: PropTypes.func,
+    }).isRequired,
     topics: PropTypes.array.isRequired,
   };
 
@@ -352,14 +355,18 @@ class JdbcSource extends React.Component {
   };
 
   handleDeleteConnector = async () => {
-    const { match, refreshGraph } = this.props;
-    const connectorId = get(match, 'params.connectorId', null);
+    const { match, refreshGraph, history } = this.props;
+    const { connectorId, pipelineId } = match.params;
     const res = await pipelinesApis.deleteSource(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
+
     if (isSuccess) {
       const { name: connectorName } = this.state;
       toastr.success(`${MESSAGES.CONNECTOR_DELETION_SUCCESS} ${connectorName}`);
-      refreshGraph();
+      await refreshGraph();
+
+      const path = `/pipelines/edit/${pipelineId}`;
+      history.push(path);
     }
   };
 

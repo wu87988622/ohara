@@ -48,6 +48,9 @@ const props = {
   match: { params: { connectorId: '1234' } },
   schema: [],
   refreshGraph: jest.fn(),
+  history: {
+    push: jest.fn(),
+  },
 };
 
 describe('<FtpSource />', () => {
