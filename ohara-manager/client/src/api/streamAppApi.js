@@ -16,8 +16,7 @@
 
 import { get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 
 export const fetchJars = async pipelineId => {

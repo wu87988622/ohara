@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import axios from 'axios';
 import toastr from 'toastr';
-import { isString, get } from 'lodash';
+import { isString, get, has } from 'lodash';
 
 export const handleError = err => {
   const message = get(err, 'data.errorMessage.message');
@@ -41,3 +42,81 @@ export const getErrors = data => {
 
   return errors;
 };
+
+const createAxios = () => {
+  const instance = axios.create({
+    validateStatus: status => status >= 200 && status < 300,
+  });
+
+  // Add a request interceptor
+  instance.interceptors.request.use(config => {
+    let headers = config.headers;
+    if (
+      config.method === 'post' ||
+      config.method === 'put' ||
+      config.method === 'patch'
+    ) {
+      if (headers['Content-Type'] === undefined) {
+        headers = {
+          ...headers,
+          'Content-Type': 'application/json',
+        };
+      }
+    }
+
+    return {
+      ...config,
+      headers,
+    };
+  });
+
+  // Add a response interceptor
+  instance.interceptors.response.use(
+    response => {
+      if (response.config.url.includes('/validate')) {
+        const errors = getErrors(response.data);
+
+        if (errors.length > 0) {
+          return {
+            data: {
+              errorMessage: {
+                message:
+                  'Test failed, please check you configs and try again later!',
+              },
+              isSuccess: false,
+            },
+          };
+        }
+
+        return {
+          data: {
+            result: response.data,
+            isSuccess: true,
+          },
+        };
+      }
+
+      return {
+        data: {
+          result: response.data,
+          isSuccess: true,
+        },
+      };
+    },
+    error => {
+      const { statusText, data: errorMessage } = error.response;
+      return {
+        data: {
+          errorMessage: has(errorMessage, 'message')
+            ? errorMessage
+            : statusText,
+          isSuccess: false,
+        },
+      };
+    },
+  );
+
+  return instance;
+};
+
+export const axiosInstance = createAxios();

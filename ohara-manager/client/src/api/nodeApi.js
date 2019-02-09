@@ -16,12 +16,11 @@
 
 import { toNumber, get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchTopic = async topicId => {
+export const fetchNodes = async () => {
   try {
-    const res = await axiosInstance.get(`/api/topics/${topicId}`);
+    const res = await axiosInstance.get(`/api/nodes`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -34,9 +33,17 @@ export const fetchTopic = async topicId => {
   }
 };
 
-export const fetchTopics = async () => {
+export const createNode = async params => {
   try {
-    const res = await axiosInstance.get('/api/topics');
+    const url = `/api/nodes`;
+    const data = {
+      name: params.name,
+      port: toNumber(params.port),
+      user: params.user,
+      password: params.password,
+    };
+
+    const res = await axiosInstance.post(url, data);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -49,15 +56,18 @@ export const fetchTopics = async () => {
   }
 };
 
-export const createTopic = async params => {
-  const { name, numberOfPartitions, numberOfReplications } = params;
+export const updateNode = async params => {
   try {
+    const { name, port, user, password } = params;
+    const url = `/api/nodes/${name}`;
     const data = {
       name,
-      numberOfPartitions: toNumber(numberOfPartitions),
-      numberOfReplications: toNumber(numberOfReplications),
+      port: toNumber(port),
+      user,
+      password,
     };
-    const res = await axiosInstance.post('/api/topics', data);
+
+    const res = await axiosInstance.put(url, data);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

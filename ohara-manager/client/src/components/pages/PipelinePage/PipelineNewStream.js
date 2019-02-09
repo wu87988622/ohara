@@ -20,7 +20,7 @@ import toastr from 'toastr';
 import styled from 'styled-components';
 import { find, some, endsWith, get, isNull } from 'lodash';
 
-import * as streamAppApis from 'apis/streamAppApis';
+import * as streamAppApi from 'api/streamAppApi';
 import * as MESSAGES from 'constants/messages';
 import Editable from './Editable';
 import { ListLoader } from 'common/Loader';
@@ -210,7 +210,7 @@ class PipelineNewStream extends React.Component {
 
   fetchJars = async () => {
     const { pipelineId } = this.state;
-    const res = await streamAppApis.fetchJars(pipelineId);
+    const res = await streamAppApi.fetchJars(pipelineId);
     this.setState(() => ({ isLoading: false }));
 
     const result = get(res, 'data.result', null);
@@ -222,7 +222,7 @@ class PipelineNewStream extends React.Component {
 
   uploadJar = async file => {
     const { pipelineId } = this.state;
-    const res = await streamAppApis.uploadJar({ pipelineId, file });
+    const res = await streamAppApi.uploadJar({ pipelineId, file });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
@@ -232,7 +232,7 @@ class PipelineNewStream extends React.Component {
   };
 
   updateJar = async (id, newJarName) => {
-    const res = await streamAppApis.updateJarName({
+    const res = await streamAppApi.updateJarName({
       id: id,
       jarName: newJarName,
     });
@@ -243,7 +243,7 @@ class PipelineNewStream extends React.Component {
   };
 
   deleteJar = async id => {
-    const res = await streamAppApis.deleteJar({ id: id });
+    const res = await streamAppApi.deleteJar({ id: id });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);

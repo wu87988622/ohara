@@ -18,7 +18,7 @@ import React from 'react';
 import DocumentTitle from 'react-document-title';
 import { reduce, map, join, sortBy, get, isNull } from 'lodash';
 
-import * as nodeApis from 'apis/nodeApis';
+import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
@@ -46,7 +46,7 @@ class NodeListPage extends React.Component {
   }
 
   fetchData = async () => {
-    const res = await nodeApis.fetchNodes();
+    const res = await nodeApi.fetchNodes();
     this.setState(() => ({ isLoading: false }));
     const nodes = get(res, 'data.result', null);
     if (!isNull(nodes)) {

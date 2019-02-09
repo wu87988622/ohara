@@ -19,14 +19,14 @@ import PropTypes from 'prop-types';
 import { get, isEmpty, some, includes, omit } from 'lodash';
 import toastr from 'toastr';
 
-import * as pipelinesApis from 'apis/pipelinesApis';
+import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
 import * as s from './Styles';
 import Controller from './Controller';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
 import { FormGroup, Label, Input } from 'common/Form';
-import { fetchTopic } from 'apis/topicApis';
+import { fetchTopic } from 'api/topicApi';
 
 class Topic extends React.Component {
   static propTypes = {
@@ -102,7 +102,7 @@ class Topic extends React.Component {
       rules: omit(pipelineRules, connectorId),
     };
 
-    const res = await pipelinesApis.updatePipeline({ id: pipelineId, params });
+    const res = await pipelineApi.updatePipeline({ id: pipelineId, params });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       const {

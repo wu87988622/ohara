@@ -22,7 +22,7 @@ import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import * as configurationApis from 'apis/configurationApis';
+import * as configurationApi from 'api/configurationApi';
 import { Input, Button, FormGroup, Label } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 
@@ -154,7 +154,7 @@ class HdfsConfiguration extends React.Component {
   }
 
   fetchHdfs = async () => {
-    const res = await configurationApis.fetchHdfs();
+    const res = await configurationApi.fetchHdfs();
     const result = get(res, 'data.result', []);
 
     result.forEach(conn => {
@@ -188,7 +188,7 @@ class HdfsConfiguration extends React.Component {
         connections: [],
       });
     } else {
-      const res = await configurationApis.deleteHdfs(id);
+      const res = await configurationApi.deleteHdfs(id);
       const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_DELETE_SUCCESS + name);
@@ -229,9 +229,9 @@ class HdfsConfiguration extends React.Component {
     if (isValid) {
       let res = null;
       if (!id) {
-        res = await configurationApis.saveHdfs({ name, uri });
+        res = await configurationApi.saveHdfs({ name, uri });
       } else {
-        res = await configurationApis.updateHdfs({ id, name, uri });
+        res = await configurationApi.updateHdfs({ id, name, uri });
       }
 
       const isSuccess = get(res, 'data.isSuccess', false);
@@ -253,7 +253,7 @@ class HdfsConfiguration extends React.Component {
     e.preventDefault();
     const { connectionUrl: uri } = this.state;
     this.updateBtn(true);
-    const res = await configurationApis.validateHdfs({ uri });
+    const res = await configurationApi.validateHdfs({ uri });
     this.updateBtn(false);
 
     const isSuccess = get(res, 'data.isSuccess', false);
@@ -283,9 +283,9 @@ class HdfsConfiguration extends React.Component {
     if (isValid) {
       let res = null;
       if (!id) {
-        res = await configurationApis.saveHdfs({ name, uri });
+        res = await configurationApi.saveHdfs({ name, uri });
       } else {
-        res = await configurationApis.updateHdfs({ id, name, uri });
+        res = await configurationApi.updateHdfs({ id, name, uri });
       }
       const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {

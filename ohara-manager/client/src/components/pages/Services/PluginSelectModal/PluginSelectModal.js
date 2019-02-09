@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import toastr from 'toastr';
 import { includes, map, some, sortBy, get, isNull } from 'lodash';
 
-import * as jarApis from 'apis/jarApis';
+import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
 import * as s from './Styles';
 import { Modal } from 'common/Modal';
@@ -63,7 +63,7 @@ class PluginSelectModal extends React.Component {
   }
 
   fetchData = async () => {
-    const res = await jarApis.fetchJars();
+    const res = await jarApi.fetchJars();
     this.setState(() => ({ isLoading: false }));
     const jars = get(res, 'data.result', null);
     if (!isNull(jars)) {
@@ -149,7 +149,7 @@ class PluginSelectModal extends React.Component {
   };
 
   uploadJar = async file => {
-    const res = await jarApis.createJar({ file });
+    const res = await jarApi.createJar({ file });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.PLUGIN_UPLOAD_SUCCESS);

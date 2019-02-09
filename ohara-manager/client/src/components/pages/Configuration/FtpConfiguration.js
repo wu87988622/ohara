@@ -22,7 +22,7 @@ import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import * as configurationApis from 'apis/configurationApis';
+import * as configurationApi from 'api/configurationApi';
 import { Input, Button, FormGroup, Label } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 import { toNumber } from 'lodash';
@@ -163,7 +163,7 @@ class FtpConfiguration extends React.Component {
   }
 
   fetchFtp = async () => {
-    const res = await configurationApis.fetchFtp();
+    const res = await configurationApi.fetchFtp();
     const result = get(res, 'data.result', []);
 
     result.forEach(conn => {
@@ -206,7 +206,7 @@ class FtpConfiguration extends React.Component {
         connections: [],
       });
     } else {
-      const res = await configurationApis.deleteFtp(id);
+      const res = await configurationApi.deleteFtp(id);
       const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_DELETE_SUCCESS + name);
@@ -263,7 +263,7 @@ class FtpConfiguration extends React.Component {
     if (isValid) {
       let res = null;
       if (!id) {
-        res = await configurationApis.saveFtp({
+        res = await configurationApi.saveFtp({
           name,
           hostname,
           port: toNumber(port),
@@ -271,7 +271,7 @@ class FtpConfiguration extends React.Component {
           password,
         });
       } else {
-        res = await configurationApis.updateFtp({
+        res = await configurationApi.updateFtp({
           id,
           name,
           hostname,
@@ -299,7 +299,7 @@ class FtpConfiguration extends React.Component {
     e.preventDefault();
     const { hostname, port, user, password } = this.state;
     this.updateBtn(true);
-    const res = await configurationApis.validateFtp({
+    const res = await configurationApi.validateFtp({
       hostname,
       port,
       user,
@@ -350,7 +350,7 @@ class FtpConfiguration extends React.Component {
     if (isValid) {
       let res = null;
       if (!id) {
-        res = await configurationApis.saveFtp({
+        res = await configurationApi.saveFtp({
           name,
           hostname,
           port: toNumber(port),
@@ -358,7 +358,7 @@ class FtpConfiguration extends React.Component {
           password,
         });
       } else {
-        res = await configurationApis.updateFtp({
+        res = await configurationApi.updateFtp({
           id,
           name,
           hostname,

@@ -22,16 +22,16 @@ import * as MESSAGES from 'constants/messages';
 import PipelineListPage from '../PipelineListPage';
 import { PIPELINE } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
-import { fetchWorkers } from 'apis/workerApis';
+import { fetchWorkers } from 'api/workerApi';
 import {
   createPipeline,
   deletePipeline,
   fetchPipelines,
-} from 'apis/pipelinesApis';
+} from 'api/pipelineApi';
 
-jest.mock('apis/pipelinesApis');
+jest.mock('api/pipelineApi');
 jest.mock('../pipelineUtils/commonUtils');
-jest.mock('apis/workerApis');
+jest.mock('api/workerApi');
 
 const pipelines = [
   {

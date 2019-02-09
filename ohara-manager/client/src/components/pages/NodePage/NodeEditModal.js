@@ -20,8 +20,8 @@ import toastr from 'toastr';
 import { Form, Field, FormSpy } from 'react-final-form';
 import { get } from 'lodash';
 
-import * as nodeApis from 'apis/nodeApis';
-import * as validateApis from 'apis/validateApis';
+import * as nodeApi from 'api/nodeApi';
+import * as validateApi from 'api/validateApi';
 import * as MESSAGES from 'constants/messages';
 import * as s from './Styles';
 import { InputField } from 'common/FormFields';
@@ -53,7 +53,7 @@ class NodeEditModal extends React.Component {
   };
 
   onSubmit = async values => {
-    const res = await nodeApis.updateNode(values);
+    const res = await nodeApi.updateNode(values);
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.NODE_SAVE_SUCCESS);
@@ -65,7 +65,7 @@ class NodeEditModal extends React.Component {
   testConnection = async values => {
     const { name: hostname, port, user, password } = values;
     this.setState({ isTestBtnWorking: true });
-    const res = await validateApis.validateNode({
+    const res = await validateApi.validateNode({
       hostname,
       port,
       user,

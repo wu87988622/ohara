@@ -20,9 +20,9 @@ import { shallow } from 'enzyme';
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
 import { getTestById } from 'utils/testUtils';
-import { fetchCluster } from 'apis/clusterApis';
+import { fetchCluster } from 'api/clusterApi';
 
-jest.mock('apis/clusterApis');
+jest.mock('api/clusterApi');
 
 const props = {
   match: {

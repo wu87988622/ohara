@@ -24,13 +24,13 @@ import { get, isEmpty, debounce } from 'lodash';
 import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import * as pipelinesApis from 'apis/pipelinesApis';
+import * as pipelineApi from 'api/pipelineApi';
 import Controller from './Controller';
 import { Box } from 'common/Layout';
 import { DataTable } from 'common/Table';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { fetchCluster } from 'apis/clusterApis';
+import { fetchCluster } from 'api/clusterApi';
 import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { JdbcQuicklyFillIn } from './QuicklyFillIn';
 import {
@@ -157,7 +157,7 @@ class JdbcSource extends React.Component {
   };
 
   fetchSource = async sourceId => {
-    const res = await pipelinesApis.fetchSource(sourceId);
+    const res = await pipelineApi.fetchSource(sourceId);
     const result = get(res, 'data.result', null);
 
     if (result) {
@@ -218,7 +218,7 @@ class JdbcSource extends React.Component {
 
   fetchRdbTables = async () => {
     const { url, username, password, currTable } = this.state;
-    const res = await pipelinesApis.queryRdb({ url, user: username, password });
+    const res = await pipelineApi.queryRdb({ url, user: username, password });
     const tables = get(res, 'data.result.tables', null);
     const _currTable = isEmpty(currTable) ? tables[0] : currTable;
 
@@ -276,7 +276,7 @@ class JdbcSource extends React.Component {
     const { username: user, password, url } = this.state;
 
     this.updateIsBtnWorking(true);
-    const res = await pipelinesApis.validateRdb({ user, password, url });
+    const res = await pipelineApi.validateRdb({ user, password, url });
     this.updateIsBtnWorking(false);
     const isSuccess = get(res, 'data.isSuccess', false);
 
@@ -337,7 +337,7 @@ class JdbcSource extends React.Component {
       },
     };
 
-    await pipelinesApis.updateSource({ id: sourceId, params });
+    await pipelineApi.updateSource({ id: sourceId, params });
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
@@ -357,7 +357,7 @@ class JdbcSource extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId, pipelineId } = match.params;
-    const res = await pipelinesApis.deleteSource(connectorId);
+    const res = await pipelineApi.deleteSource(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -375,9 +375,9 @@ class JdbcSource extends React.Component {
     const sourceId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await pipelinesApis.startSource(sourceId);
+      res = await pipelineApi.startSource(sourceId);
     } else {
-      res = await pipelinesApis.stopSource(sourceId);
+      res = await pipelineApi.stopSource(sourceId);
     }
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {

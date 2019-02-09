@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { noop, get, isEmpty, sortBy, map, find } from 'lodash';
 
-import * as configurationApis from 'apis/configurationApis';
+import * as configurationApi from 'api/configurationApi';
 import { Modal } from 'common/Modal';
 import { FormGroup, Label, Select } from 'common/Form';
 import { Box } from 'common/Layout';
@@ -56,7 +56,7 @@ class FtpQuicklyFillIn extends React.Component {
   };
 
   fetchData = async () => {
-    const res = await configurationApis.fetchFtp();
+    const res = await configurationApi.fetchFtp();
     const ftpConfigurations = get(res, 'data.result', []);
     this.setState(() => ({ isLoading: false }));
     if (!isEmpty(ftpConfigurations)) {

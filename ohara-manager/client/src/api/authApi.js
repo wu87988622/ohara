@@ -16,12 +16,14 @@
 
 import { get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchJars = async () => {
+export const login = async ({ username, password }) => {
   try {
-    const res = await axiosInstance.get(`/api/jars`);
+    const res = await axiosInstance.post('/api/login', {
+      username,
+      password,
+    });
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -34,36 +36,9 @@ export const fetchJars = async () => {
   }
 };
 
-export const createJar = async params => {
+export const logout = async () => {
   try {
-    const { file } = params;
-    const url = `/api/jars`;
-    const formData = new FormData();
-    formData.append('jar', file);
-    const config = {
-      headers: {
-        'content-type': 'multipart/form-data',
-      },
-    };
-
-    const res = await axiosInstance.post(url, formData, config);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const deleteJar = async params => {
-  try {
-    const { id } = params;
-    const url = `/api/jars/${id}`;
-    const res = await axiosInstance.delete(url);
+    const res = await axiosInstance.get('/api/logout');
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

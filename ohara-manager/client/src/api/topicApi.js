@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+import { toNumber, get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const login = async ({ username, password }) => {
+export const fetchTopic = async topicId => {
   try {
-    const res = await axiosInstance.post('/api/login', {
-      username,
-      password,
-    });
+    const res = await axiosInstance.get(`/api/topics/${topicId}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -37,9 +33,30 @@ export const login = async ({ username, password }) => {
   }
 };
 
-export const logout = async () => {
+export const fetchTopics = async () => {
   try {
-    const res = await axiosInstance.get('/api/logout');
+    const res = await axiosInstance.get('/api/topics');
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const createTopic = async params => {
+  const { name, numberOfPartitions, numberOfReplications } = params;
+  try {
+    const data = {
+      name,
+      numberOfPartitions: toNumber(numberOfPartitions),
+      numberOfReplications: toNumber(numberOfReplications),
+    };
+    const res = await axiosInstance.post('/api/topics', data);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

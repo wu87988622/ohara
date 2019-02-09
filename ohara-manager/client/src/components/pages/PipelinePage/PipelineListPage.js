@@ -36,12 +36,12 @@ import {
   addPipelineStatus,
   getEditUrl,
 } from './pipelineUtils/pipelineListPageUtils';
-import { fetchWorkers } from 'apis/workerApis';
+import { fetchWorkers } from 'api/workerApi';
 import {
   fetchPipelines,
   createPipeline,
   deletePipeline,
-} from 'apis/pipelinesApis';
+} from 'api/pipelineApi';
 
 const Wrapper = styled.div`
   padding-top: 75px;

@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import axiosInstance from '../axios';
-import { login, logout } from '../authApis';
-import { handleError } from 'utils/apiUtils';
+import { login, logout } from '../authApi';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-jest.mock('../axios');
 jest.mock('utils/apiUtils');
 
-describe('authApis', () => {
+describe('authApi', () => {
   afterEach(jest.clearAllMocks);
 
   describe('login()', () => {

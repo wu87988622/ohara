@@ -16,8 +16,7 @@
 
 import { toNumber, get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
 export const validateNode = async ({ hostname, port, user, password }) => {
   try {

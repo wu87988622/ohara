@@ -24,7 +24,7 @@ import { get } from 'lodash';
 import * as URLS from 'constants/urls';
 import NAVS from 'constants/navs';
 import ConfigurationModal from 'pages/ConfigurationModal';
-import { fetchCluster } from 'apis/clusterApis';
+import { fetchCluster } from 'api/clusterApi';
 import { InfoModal } from '../Modal';
 
 const StyledHeader = styled.div`

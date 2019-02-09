@@ -23,13 +23,13 @@ import LogoutPage from '../LogoutPage';
 import { HOME } from 'constants/urls';
 import { LOGOUT_SUCCESS } from 'constants/messages';
 import { deleteUserKey } from 'utils/authUtils';
-import { logout } from 'apis/authApis';
+import { logout } from 'api/authApi';
 
 window.localStorage = localStorageMock;
 
-jest.mock('apis/axios');
+jest.mock('utils/apiUtils');
 jest.mock('utils/authUtils');
-jest.mock('apis/authApis');
+jest.mock('api/authApi');
 
 const props = {
   updateLoginState: jest.fn(),

@@ -17,8 +17,8 @@
 import React from 'react';
 import { isEmpty, join, map, get, orderBy } from 'lodash';
 
-import * as brokerApis from 'apis/brokerApis';
-import * as topicApis from 'apis/topicApis';
+import * as brokerApi from 'api/brokerApi';
+import * as topicApi from 'api/topicApi';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { TableLoader } from 'common/Loader';
@@ -50,7 +50,7 @@ class BrokerListPage extends React.Component {
   };
 
   fetchBrokers = async () => {
-    const res = await brokerApis.fetchBrokers();
+    const res = await brokerApi.fetchBrokers();
     const brokers = get(res, 'data.result', []);
     if (!isEmpty(brokers)) {
       this.setState({ broker: brokers[0] });
@@ -58,7 +58,7 @@ class BrokerListPage extends React.Component {
   };
 
   fetchTopics = async () => {
-    const res = await topicApis.fetchTopics();
+    const res = await topicApi.fetchTopics();
     const topics = get(res, 'data.result', []);
     if (!isEmpty(topics)) {
       this.setState({ topics: orderBy(topics, 'name') });

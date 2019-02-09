@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import axiosInstance from '../axios';
-import { fetchCluster } from '..//clusterApis';
-import { handleError } from 'utils/apiUtils';
+import { fetchCluster } from '../clusterApi';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-jest.mock('../axios');
 jest.mock('utils/apiUtils');
 
-describe('clusterApis', () => {
+describe('clusterApi', () => {
   afterEach(jest.clearAllMocks);
 
   it('handles success http call', async () => {

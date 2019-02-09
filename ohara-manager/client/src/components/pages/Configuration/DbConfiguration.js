@@ -22,8 +22,8 @@ import { get } from 'lodash';
 
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
-import * as configurationApis from 'apis/configurationApis';
-import { fetchCluster } from 'apis/clusterApis';
+import * as configurationApi from 'api/configurationApi';
+import { fetchCluster } from 'api/clusterApi';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 
@@ -168,7 +168,7 @@ class DbConfiguration extends React.Component {
   };
 
   fetchJdbc = async () => {
-    const res = await configurationApis.fetchJdbc();
+    const res = await configurationApi.fetchJdbc();
     const result = get(res, 'data.result', []);
 
     result.forEach(conn => {
@@ -209,7 +209,7 @@ class DbConfiguration extends React.Component {
         connections: [],
       });
     } else {
-      const res = await configurationApis.deleteJdbc(id);
+      const res = await configurationApi.deleteJdbc(id);
       const isSuccess = get(res, 'data.isSuccess', false);
       if (isSuccess) {
         toastr.success(MESSAGES.CONFIG_DELETE_SUCCESS + name);
@@ -263,14 +263,14 @@ class DbConfiguration extends React.Component {
     if (isValid) {
       let res = null;
       if (!id) {
-        res = await configurationApis.saveJdbc({
+        res = await configurationApi.saveJdbc({
           name,
           url,
           user,
           password,
         });
       } else {
-        res = await configurationApis.updateJdbc({
+        res = await configurationApi.updateJdbc({
           id,
           name,
           url,
@@ -297,7 +297,7 @@ class DbConfiguration extends React.Component {
     e.preventDefault();
     const { connectionUrl: url, user, password } = this.state;
     this.updateBtn(true);
-    const res = await configurationApis.validateRdb({ url, user, password });
+    const res = await configurationApi.validateRdb({ url, user, password });
     this.updateBtn(false);
 
     const isSuccess = get(res, 'data.isSuccess', false);
@@ -338,14 +338,14 @@ class DbConfiguration extends React.Component {
     if (isValid) {
       let res = null;
       if (!id) {
-        res = await configurationApis.saveJdbc({
+        res = await configurationApi.saveJdbc({
           name,
           url,
           user,
           password,
         });
       } else {
-        res = await configurationApis.updateJdbc({
+        res = await configurationApi.updateJdbc({
           id,
           name,
           url,

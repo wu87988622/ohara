@@ -25,7 +25,7 @@ import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'common/Modal';
-import { fetchCluster } from 'apis/clusterApis';
+import { fetchCluster } from 'api/clusterApi';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;

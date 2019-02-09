@@ -20,7 +20,7 @@ import toastr from 'toastr';
 import { map, truncate, get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
-import * as workerApis from 'apis/workerApis';
+import * as workerApi from 'api/workerApi';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
@@ -57,7 +57,7 @@ class WorkerNewModal extends React.Component {
       );
       return;
     }
-    const res = await workerApis.createWorker({
+    const res = await workerApi.createWorker({
       ...values,
       name: this.formatName(values.name),
       plugins: map(values.plugins, 'id'),

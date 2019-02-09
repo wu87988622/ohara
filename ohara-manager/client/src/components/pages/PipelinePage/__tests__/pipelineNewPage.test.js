@@ -28,9 +28,9 @@ import {
   stopSink,
   stopSource,
   fetchPipeline,
-} from 'apis/pipelinesApis';
+} from 'api/pipelineApi';
 
-jest.mock('apis/pipelinesApis');
+jest.mock('api/pipelineApi');
 
 const props = {
   match: {

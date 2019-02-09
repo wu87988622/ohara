@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { toNumber, get } from 'lodash';
+import { get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchWorkers = async () => {
+export const fetchZookeepers = async () => {
   try {
-    const res = await axiosInstance.get(`/api/workers`);
+    const res = await axiosInstance.get(`/api/zookeepers`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -34,29 +33,12 @@ export const fetchWorkers = async () => {
   }
 };
 
-export const fetchWorker = async name => {
+export const createZookeeper = async params => {
   try {
-    const res = await axiosInstance.get(`/api/workers/${name}`);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const createWorker = async params => {
-  try {
-    const url = `/api/workers`;
+    const url = `/api/zookeepers`;
     const data = {
       name: params.name,
-      clientPort: toNumber(params.clientPort),
       nodeNames: params.nodeNames || [],
-      jars: params.plugins || [],
     };
     const config = {
       timeout: 3 * 60 * 1000, // set timeout to 3 minutes.

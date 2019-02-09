@@ -16,12 +16,11 @@
 
 import { get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchZookeepers = async () => {
+export const fetchJars = async () => {
   try {
-    const res = await axiosInstance.get(`/api/zookeepers`);
+    const res = await axiosInstance.get(`/api/jars`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -34,18 +33,36 @@ export const fetchZookeepers = async () => {
   }
 };
 
-export const createZookeeper = async params => {
+export const createJar = async params => {
   try {
-    const url = `/api/zookeepers`;
-    const data = {
-      name: params.name,
-      nodeNames: params.nodeNames || [],
-    };
+    const { file } = params;
+    const url = `/api/jars`;
+    const formData = new FormData();
+    formData.append('jar', file);
     const config = {
-      timeout: 3 * 60 * 1000, // set timeout to 3 minutes.
+      headers: {
+        'content-type': 'multipart/form-data',
+      },
     };
 
-    const res = await axiosInstance.post(url, data, config);
+    const res = await axiosInstance.post(url, formData, config);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const deleteJar = async params => {
+  try {
+    const { id } = params;
+    const url = `/api/jars/${id}`;
+    const res = await axiosInstance.delete(url);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

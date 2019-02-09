@@ -25,8 +25,8 @@ import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
-import * as pipelinesApis from 'apis/pipelinesApis';
-import * as topicApis from 'apis/topicApis';
+import * as pipelineApi from 'api/pipelineApi';
+import * as topicApi from 'api/topicApi';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
@@ -150,7 +150,7 @@ class PipelineNewPage extends React.Component {
   };
 
   fetchTopics = async () => {
-    const res = await topicApis.fetchTopics();
+    const res = await topicApi.fetchTopics();
     this.setState(() => ({ isLoading: false }));
 
     const topics = get(res, 'data.result', null);
@@ -162,7 +162,7 @@ class PipelineNewPage extends React.Component {
   fetchPipeline = async pipelineId => {
     if (!pipelineId) return;
 
-    const res = await pipelinesApis.fetchPipeline(pipelineId);
+    const res = await pipelineApi.fetchPipeline(pipelineId);
     const pipeline = get(res, 'data.result', null);
 
     if (pipeline) {
@@ -246,7 +246,7 @@ class PipelineNewPage extends React.Component {
     const { id, status } = pipelines;
     const params = updatePipelineParams({ pipelines, ...update });
 
-    const res = await pipelinesApis.updatePipeline({ id, params });
+    const res = await pipelineApi.updatePipeline({ id, params });
     const updatedPipelines = get(res, 'data.result', null);
 
     if (!isEmpty(updatedPipelines)) {
@@ -299,9 +299,9 @@ class PipelineNewPage extends React.Component {
     const { sources, sinks } = getConnectors(connectors);
 
     const sourcePromise = sources.map(source =>
-      pipelinesApis.startSource(source),
+      pipelineApi.startSource(source),
     );
-    const sinkPromise = sinks.map(sink => pipelinesApis.startSink(sink));
+    const sinkPromise = sinks.map(sink => pipelineApi.startSink(sink));
 
     return Promise.all([...sourcePromise, ...sinkPromise]).then(
       result => result,
@@ -310,10 +310,8 @@ class PipelineNewPage extends React.Component {
 
   stopConnectors = connectors => {
     const { sources, sinks } = getConnectors(connectors);
-    const sourcePromise = sources.map(source =>
-      pipelinesApis.stopSource(source),
-    );
-    const sinkPromise = sinks.map(sink => pipelinesApis.stopSink(sink));
+    const sourcePromise = sources.map(source => pipelineApi.stopSource(source));
+    const sinkPromise = sinks.map(sink => pipelineApi.stopSink(sink));
     return Promise.all([...sourcePromise, ...sinkPromise]).then(
       result => result,
     );

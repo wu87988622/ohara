@@ -15,11 +15,11 @@
  */
 
 import { CONNECTOR_TYPES } from 'constants/pipelines';
-import { createSource } from 'apis/pipelinesApis';
+import { createSource } from 'api/pipelineApi';
 
 import { createConnector } from '../pipelineToolbarUtils';
 
-jest.mock('apis/pipelinesApis');
+jest.mock('api/pipelineApi');
 
 describe('createConnector()', () => {
   it('should call updateGraph function if the given type is not exist in the current graph', async () => {

@@ -20,9 +20,9 @@ import { shallow } from 'enzyme';
 import * as URLS from 'constants/urls';
 import Header from '../Header';
 import NAVS from 'constants/navs';
-import { fetchCluster } from 'apis/clusterApis';
+import { fetchCluster } from 'api/clusterApi';
 
-jest.mock('apis/clusterApis');
+jest.mock('api/clusterApi');
 
 fetchCluster.mockImplementation(() =>
   Promise.resolve({ data: { result: { versionInfo: {} }, isSuccess: true } }),

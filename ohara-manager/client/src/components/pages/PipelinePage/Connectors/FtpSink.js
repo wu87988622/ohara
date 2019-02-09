@@ -21,7 +21,7 @@ import PropTypes from 'prop-types';
 import { get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import * as pipelinesApis from 'apis/pipelinesApis';
+import * as pipelineApi from 'api/pipelineApi';
 import * as s from './Styles';
 import Controller from './Controller';
 import { SchemaTable } from 'common/Table';
@@ -181,7 +181,7 @@ class FtpSink extends React.Component {
   };
 
   fetchSink = async sinkId => {
-    const res = await pipelinesApis.fetchSink(sinkId);
+    const res = await pipelineApi.fetchSink(sinkId);
     const result = get(res, 'data.result', false);
 
     if (result) {
@@ -410,7 +410,7 @@ class FtpSink extends React.Component {
     const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await pipelinesApis.validateFtp({
+    const res = await pipelineApi.validateFtp({
       hostname,
       port,
       user,
@@ -518,7 +518,7 @@ class FtpSink extends React.Component {
       },
     };
 
-    await pipelinesApis.updateSink({ id: sinkId, params });
+    await pipelineApi.updateSink({ id: sinkId, params });
     updateHasChanges(false);
 
     const currTopicId = isEmpty(currReadTopic) ? '?' : currReadTopic.id;
@@ -547,7 +547,7 @@ class FtpSink extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId, pipelineId } = match.params;
-    const res = await pipelinesApis.deleteSink(connectorId);
+    const res = await pipelineApi.deleteSink(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -565,9 +565,9 @@ class FtpSink extends React.Component {
     const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await pipelinesApis.startSink(sinkId);
+      res = await pipelineApi.startSink(sinkId);
     } else {
-      res = await pipelinesApis.stopSink(sinkId);
+      res = await pipelineApi.stopSink(sinkId);
     }
 
     this.handleTriggerConnectorResponse(action, res);

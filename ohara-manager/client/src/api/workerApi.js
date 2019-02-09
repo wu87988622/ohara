@@ -16,12 +16,11 @@
 
 import { toNumber, get } from 'lodash';
 
-import axiosInstance from './axios';
-import { handleError } from 'utils/apiUtils';
+import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchNodes = async () => {
+export const fetchWorkers = async () => {
   try {
-    const res = await axiosInstance.get(`/api/nodes`);
+    const res = await axiosInstance.get(`/api/workers`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -34,41 +33,35 @@ export const fetchNodes = async () => {
   }
 };
 
-export const createNode = async params => {
+export const fetchWorker = async name => {
   try {
-    const url = `/api/nodes`;
+    const res = await axiosInstance.get(`/api/workers/${name}`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+export const createWorker = async params => {
+  try {
+    const url = `/api/workers`;
     const data = {
       name: params.name,
-      port: toNumber(params.port),
-      user: params.user,
-      password: params.password,
+      clientPort: toNumber(params.clientPort),
+      nodeNames: params.nodeNames || [],
+      jars: params.plugins || [],
+    };
+    const config = {
+      timeout: 3 * 60 * 1000, // set timeout to 3 minutes.
     };
 
-    const res = await axiosInstance.post(url, data);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const updateNode = async params => {
-  try {
-    const { name, port, user, password } = params;
-    const url = `/api/nodes/${name}`;
-    const data = {
-      name,
-      port: toNumber(port),
-      user,
-      password,
-    };
-
-    const res = await axiosInstance.put(url, data);
+    const res = await axiosInstance.post(url, data, config);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

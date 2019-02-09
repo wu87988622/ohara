@@ -20,7 +20,7 @@ import toastr from 'toastr';
 import { Redirect } from 'react-router-dom';
 import { get } from 'lodash';
 
-import { logout } from 'apis/authApis';
+import { logout } from 'api/authApi';
 import { deleteUserKey } from 'utils/authUtils';
 import { HOME } from 'constants/urls';
 import { LOGOUT_SUCCESS } from 'constants/messages';

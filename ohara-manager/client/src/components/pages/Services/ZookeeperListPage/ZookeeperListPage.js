@@ -17,7 +17,7 @@
 import React from 'react';
 import { isEmpty, join, map, get } from 'lodash';
 
-import * as zookeeperApis from 'apis/zookeeperApis';
+import * as zookeeperApi from 'api/zookeeperApi';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { TableLoader } from 'common/Loader';
@@ -34,7 +34,7 @@ class ZookeeperListPage extends React.Component {
   }
 
   fetchZookeepers = async () => {
-    const res = await zookeeperApis.fetchZookeepers();
+    const res = await zookeeperApi.fetchZookeepers();
     const zookeepers = get(res, 'data.result', []);
     if (!isEmpty(zookeepers)) {
       this.setState({ zookeeper: zookeepers[0] });

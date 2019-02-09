@@ -21,9 +21,9 @@ import { Field, Form } from 'react-final-form';
 import toastr from 'toastr';
 
 import * as MESSAGES from 'constants/messages';
-import * as streamAppApis from 'apis/streamAppApis';
+import * as streamAppApi from 'api/streamAppApi';
 import Controller from './Controller';
-import { fetchTopics } from 'apis/topicApis';
+import { fetchTopics } from 'api/topicApi';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
@@ -86,7 +86,7 @@ class StreamApp extends React.Component {
   };
 
   fetchStreamApp = async id => {
-    const res = await streamAppApis.fetchProperty(id);
+    const res = await streamAppApi.fetchProperty(id);
     const isSuccess = get(res, 'data.isSuccess', null);
 
     if (isSuccess) {
@@ -104,7 +104,7 @@ class StreamApp extends React.Component {
       toTopics: values.toTopic ? [values.toTopic] : [],
     };
 
-    const res = await streamAppApis.updateProperty(params);
+    const res = await streamAppApi.updateProperty(params);
 
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
@@ -128,7 +128,7 @@ class StreamApp extends React.Component {
   handleDeleteStreamApp = async () => {
     const { refreshGraph } = this.props;
     const { streamAppId } = this.state;
-    const res = await streamAppApis.del(streamAppId);
+    const res = await streamAppApi.del(streamAppId);
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETION_SUCCESS);
@@ -140,9 +140,9 @@ class StreamApp extends React.Component {
     const { streamAppId } = this.state;
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamAppApis.start(streamAppId);
+      res = await streamAppApi.start(streamAppId);
     } else {
-      res = await streamAppApis.stop(streamAppId);
+      res = await streamAppApi.stop(streamAppId);
     }
     this.handleTriggerStreamAppResponse(action, res);
   };

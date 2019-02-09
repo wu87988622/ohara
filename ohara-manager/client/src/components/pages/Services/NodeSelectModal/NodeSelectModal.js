@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { map, includes, get, isNull } from 'lodash';
 
-import * as nodeApis from 'apis/nodeApis';
+import * as nodeApi from 'api/nodeApi';
 import * as s from './Styles';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
@@ -61,7 +61,7 @@ class NodeSelectModal extends React.Component {
   }
 
   fetchData = async () => {
-    const res = await nodeApis.fetchNodes();
+    const res = await nodeApi.fetchNodes();
     this.setState(() => ({ isLoading: false }));
     const nodes = get(res, 'data.result', null);
     if (!isNull(nodes)) {

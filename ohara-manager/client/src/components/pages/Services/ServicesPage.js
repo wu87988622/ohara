@@ -20,7 +20,7 @@ import DocumentTitle from 'react-document-title';
 import { Redirect } from 'react-router-dom';
 import { isEmpty, sortBy, get } from 'lodash';
 
-import * as workerApis from 'apis/workerApis';
+import * as workerApi from 'api/workerApi';
 import * as s from './Styles';
 import { SERVICES } from 'constants/documentTitles';
 import BrokerListPage from './BrokerListPage';
@@ -52,7 +52,7 @@ class ServicesPage extends React.Component {
   }
 
   fetchData = async () => {
-    const res = await workerApis.fetchWorkers();
+    const res = await workerApi.fetchWorkers();
     const workers = get(res, 'data.result', []);
     this.setState(() => ({ isLoading: false }));
     if (!isEmpty(workers)) {

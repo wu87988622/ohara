@@ -20,7 +20,7 @@ import toastr from 'toastr';
 import { Form, Field } from 'react-final-form';
 import { get } from 'lodash';
 
-import * as topicApis from 'apis/topicApis';
+import * as topicApi from 'api/topicApi';
 import * as MESSAGES from 'constants/messages';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
@@ -44,7 +44,7 @@ class TopicNewModal extends React.Component {
 
   onSubmit = async (values, form) => {
     this.setState({ isSaveBtnWorking: true });
-    const res = await topicApis.createTopic(values);
+    const res = await topicApi.createTopic(values);
     this.setState({ isSaveBtnWorking: false });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {

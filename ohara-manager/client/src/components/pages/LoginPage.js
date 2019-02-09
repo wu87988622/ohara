@@ -27,7 +27,7 @@ import * as LOGIN_PAGE from 'constants/login';
 import * as MESSAGES from 'constants/messages';
 import { Input, Button } from 'common/Form';
 import { setUserKey } from 'utils/authUtils';
-import { login } from 'apis/authApis';
+import { login } from 'api/authApi';
 import { LOGIN } from 'constants/documentTitles';
 import { primaryBtn } from 'theme/btnTheme';
 
