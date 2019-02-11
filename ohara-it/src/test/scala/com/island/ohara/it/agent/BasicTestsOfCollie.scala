@@ -395,6 +395,103 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     }
   }
 
+  @Test
+  def testMultiWkClustersOnSingleNode(): Unit = {
+    val zkName = CommonUtil.randomString(10)
+    val bkName = CommonUtil.randomString(10)
+    val wkNames = (0 to 2).map(_ => CommonUtil.randomString(10))
+    try {
+      val zk = Await.result(
+        clusterCollie
+          .zookeepersCollie()
+          .creator()
+          .clusterName(zkName)
+          .clientPort(CommonUtil.availablePort())
+          .electionPort(CommonUtil.availablePort())
+          .peerPort(CommonUtil.availablePort())
+          .nodeName(nodeCache.head.name)
+          .create(),
+        30 seconds
+      )
+      val bk = Await.result(
+        clusterCollie
+          .brokerCollie()
+          .creator()
+          .zookeeperClusterName(zk.name)
+          .clusterName(bkName)
+          .clientPort(CommonUtil.availablePort())
+          .nodeName(nodeCache.head.name)
+          .create(),
+        30 seconds
+      )
+      val clusters = wkNames.map { name =>
+        Await.result(
+          clusterCollie
+            .workerCollie()
+            .creator()
+            .brokerClusterName(bk.name)
+            .clusterName(name)
+            .clientPort(CommonUtil.availablePort())
+            .groupId(CommonUtil.randomString(5))
+            .configTopicName(CommonUtil.randomString(10))
+            .statusTopicName(CommonUtil.randomString(10))
+            .offsetTopicName(CommonUtil.randomString(10))
+            .nodeName(nodeCache.head.name)
+            .create(),
+          30 seconds
+        )
+      }
+      val clusters2 = Await.result(clusterCollie.workerCollie().clusters(), 20 seconds)
+      clusters.foreach { c =>
+        val another = clusters2.find(_._1.name == c.name).get._1
+        another.name shouldBe c.name
+        another.brokerClusterName shouldBe c.brokerClusterName
+        another.clientPort shouldBe c.clientPort
+        another.groupId shouldBe c.groupId
+        another.configTopicName shouldBe c.configTopicName
+        another.configTopicPartitions shouldBe c.configTopicPartitions
+        another.configTopicReplications shouldBe c.configTopicReplications
+        another.statusTopicName shouldBe c.statusTopicName
+        another.statusTopicPartitions shouldBe c.statusTopicPartitions
+        another.statusTopicReplications shouldBe c.statusTopicReplications
+        another.offsetTopicName shouldBe c.offsetTopicName
+        another.offsetTopicPartitions shouldBe c.offsetTopicPartitions
+        another.offsetTopicReplications shouldBe c.offsetTopicReplications
+        another.jarNames shouldBe c.jarNames
+        another.imageName shouldBe c.imageName
+        CommonUtil.await(
+          () =>
+            try {
+              val workersProps = s"${clusters.head.nodeNames.head}:${clusters.head.clientPort}"
+              val workerClient = WorkerClient(workersProps)
+              result(workerClient.plugins()).nonEmpty
+            } catch {
+              case _: Throwable => false
+          },
+          Duration.ofSeconds(10)
+        )
+      }
+    } finally {
+      try Await.result(clusterCollie.zookeepersCollie().remove(zkName), 10 seconds)
+      catch {
+        case _: Throwable =>
+        // do nothing
+      }
+      try Await.result(clusterCollie.brokerCollie().remove(bkName), 10 seconds)
+      catch {
+        case _: Throwable =>
+        // do nothing
+      }
+      wkNames.foreach { name =>
+        try Await.result(clusterCollie.workerCollie().remove(name), 10 seconds)
+        catch {
+          case _: Throwable =>
+          // do nothing
+        }
+      }
+    }
+  }
+
   @After
   final def tearDown(): Unit = Releasable.close(clusterCollie)
 }
