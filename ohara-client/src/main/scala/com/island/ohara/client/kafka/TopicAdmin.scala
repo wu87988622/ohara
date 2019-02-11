@@ -18,6 +18,7 @@ package com.island.ohara.client.kafka
 
 import java.util
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{Collections, Objects, Properties}
 
 import com.island.ohara.common.annotations.Optional
@@ -69,12 +70,17 @@ trait TopicAdmin extends Releasable {
     * @return connection props
     */
   def connectionProps: String
+
+  def closed(): Boolean
 }
 
 object TopicAdmin {
 
   def apply(_connectionProps: String): TopicAdmin = new TopicAdmin {
+    private[this] val _closed = new AtomicBoolean(false)
     override val connectionProps: String = _connectionProps
+
+    override def closed(): Boolean = _closed.get()
 
     /**
       * extract the exception wrapped in ExecutionException.
@@ -95,7 +101,7 @@ object TopicAdmin {
 
     private[this] val admin = AdminClient.create(toAdminProps(connectionProps))
 
-    override def close(): Unit = Releasable.close(admin)
+    override def close(): Unit = if (_closed.compareAndSet(false, true)) Releasable.close(admin)
 
     override def creator(): Creator =
       (name: String, numberOfPartitions: Int, numberOfReplications: Short, cleanupPolicy: CleanupPolicy) =>

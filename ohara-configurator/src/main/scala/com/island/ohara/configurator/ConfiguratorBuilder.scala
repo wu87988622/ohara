@@ -340,10 +340,12 @@ private[this] class FakeTopicAdmin extends TopicAdmin {
           numberOfReplications
         ))
   }
-
+  private[this] var _closed = false
   override def close(): Unit = {
-    // do nothing
+    _closed = true
   }
+
+  override def closed(): Boolean = _closed
   override def delete(name: String): Future[TopicInfo] = Option(cachedTopics.remove(name))
     .map(Future.successful)
     .getOrElse(Future.failed(new NoSuchElementException(s"the topic:$name doesn't exist")))

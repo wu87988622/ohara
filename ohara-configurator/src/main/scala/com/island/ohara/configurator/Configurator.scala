@@ -302,6 +302,7 @@ object Configurator {
         LOG.error("failed to initialize cluster. Will close configurator", e)
         Releasable.close(configurator)
         HttpExecutor.close()
+        CollieUtils.close()
         throw e
     }
     hasRunningConfigurator = true
@@ -318,6 +319,7 @@ object Configurator {
       hasRunningConfigurator = false
       Releasable.close(configurator)
       HttpExecutor.close()
+      CollieUtils.close()
     }
   }
 

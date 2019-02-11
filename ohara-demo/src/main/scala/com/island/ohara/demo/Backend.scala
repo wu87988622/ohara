@@ -25,6 +25,7 @@ import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.route.CollieUtils
 import com.island.ohara.integration._
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -231,6 +232,7 @@ object Backend {
       Releasable.close(workers)
       Releasable.close(brokers)
       Releasable.close(zk)
+      CollieUtils.close()
     }
   }
 }
