@@ -53,6 +53,7 @@ object BrokerRoute {
             .creator()
             .clusterName(req.name)
             .clientPort(req.clientPort)
+            .exporterPort(req.exporterPort)
             .zookeeperClusterName(zkName)
             .imageName(req.imageName)
             .nodeNames(req.nodeNames)

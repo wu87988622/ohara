@@ -130,6 +130,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           name = methodName(),
           imageName = Some("abcdef"),
           zookeeperClusterName = None,
+          exporterPort = None,
           clientPort = Some(123),
           nodeNames = Seq.empty
         )),
@@ -143,6 +144,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       zookeeperClusterName = Some("Asdasdasd"),
+      exporterPort = None,
       clientPort = Some(123),
       nodeNames = nodeNames
     )
@@ -157,6 +159,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       zookeeperClusterName = Some(zkClusterName),
+      exporterPort = None,
       clientPort = Some(123),
       nodeNames = nodeNames
     )
@@ -168,6 +171,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val request0 = BrokerClusterCreationRequest(
       name = methodName(),
       imageName = Some("abcdef"),
+      exporterPort = None,
       clientPort = Some(123),
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
@@ -176,6 +180,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val request1 = BrokerClusterCreationRequest(
       name = methodName() + "2",
       imageName = Some("abcdef"),
+      exporterPort = None,
       clientPort = Some(123),
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
@@ -195,6 +200,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
+      exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -210,6 +216,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
+      exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -230,6 +237,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
+      exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = Seq(nodeNames.head)
     )
@@ -240,6 +248,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = cluster.name,
       imageName = cluster.imageName,
       clientPort = cluster.clientPort,
+      exporterPort = cluster.exporterPort,
       zookeeperClusterName = cluster.zookeeperClusterName,
       nodeNames = cluster.nodeNames :+ nodeNames.last
     )
@@ -250,6 +259,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = methodName(),
       imageName = Some("abcdef"),
       clientPort = Some(123),
+      exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )
@@ -260,6 +270,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = cluster.name,
       imageName = cluster.imageName,
       clientPort = cluster.clientPort,
+      exporterPort = cluster.exporterPort,
       zookeeperClusterName = cluster.zookeeperClusterName,
       nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
     )
@@ -271,6 +282,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       name = "--1",
       imageName = Some("abcdef"),
       clientPort = Some(123),
+      exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
       nodeNames = nodeNames
     )

@@ -66,10 +66,12 @@ object BrokerCollie {
     def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
 
     @Optional("default port is 7071")
-    def exporterPort(exporterPort: Int): ClusterCreator = {
-      this.exporterPort = exporterPort
+    def exporterPort(exporterPort: Option[Int]): ClusterCreator = {
+      exporterPort.foreach(this.exporterPort = _)
       this
     }
+
+    def exporterPort(port: Int): ClusterCreator = exporterPort(Some(port))
 
     override def create(): Future[BrokerClusterInfo] = doCreate(
       clusterName = Objects.requireNonNull(clusterName),

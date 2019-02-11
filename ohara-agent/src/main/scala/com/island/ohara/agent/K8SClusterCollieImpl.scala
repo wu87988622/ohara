@@ -308,6 +308,7 @@ private object K8SClusterCollieImpl {
                 name = clusterName,
                 imageName = imageName,
                 zookeeperClusterName = zookeeperClusterName,
+                exporterPort = exporterPort,
                 clientPort = clientPort,
                 nodeNames = nodeNames
               )
@@ -319,6 +320,7 @@ private object K8SClusterCollieImpl {
       .clusterName(previousCluster.name)
       .zookeeperClusterName(previousCluster.zookeeperClusterName)
       .clientPort(previousCluster.clientPort)
+      .exporterPort(previousCluster.exporterPort)
       .imageName(previousCluster.imageName)
       .nodeName(newNodeName)
       .create()
@@ -332,6 +334,10 @@ private object K8SClusterCollieImpl {
         name = clusterName,
         imageName = first.imageName,
         zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
+        exporterPort = first.environments
+          .get(BrokerCollie.EXPORTER_PORT_KEY)
+          .map(_.toInt)
+          .getOrElse(BrokerCollie.EXPORTER_PORT_DEFAULT),
         clientPort =
           first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
         nodeNames = containers.map(_.nodeName)

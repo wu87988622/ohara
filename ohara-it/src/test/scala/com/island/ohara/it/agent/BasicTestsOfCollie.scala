@@ -130,6 +130,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       brokerCluster.name shouldBe clusterName
       brokerCluster.nodeNames.head shouldBe nodeName
       brokerCluster.clientPort shouldBe clientPort
+      brokerCluster.exporterPort shouldBe exporterPort
       brokerCluster
     }
     val brokerCluster = assert(
@@ -212,6 +213,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         newCluster.name shouldBe previousCluster.name
         newCluster.imageName shouldBe previousCluster.imageName
         newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
+        newCluster.exporterPort shouldBe previousCluster.exporterPort
         newCluster.clientPort shouldBe previousCluster.clientPort
         newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
         f(newCluster)

@@ -63,6 +63,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
               name = methodName(),
               zookeeperClusterName = None,
               imageName = None,
+              exporterPort = None,
               clientPort = None,
               nodeNames = nodes.map(_.name)
             )),
@@ -96,6 +97,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
               name = methodName(),
               zookeeperClusterName = Some(zk.name),
               imageName = None,
+              exporterPort = None,
               clientPort = None,
               nodeNames = nodes.map(_.name)
             )),

@@ -33,18 +33,20 @@ object BrokerApi {
       name = name,
       imageName = None,
       zookeeperClusterName = None,
+      exporterPort = None,
       clientPort = None,
       nodeNames = nodeNames
     )
   final case class BrokerClusterCreationRequest(name: String,
                                                 imageName: Option[String],
                                                 zookeeperClusterName: Option[String],
+                                                exporterPort: Option[Int],
                                                 clientPort: Option[Int],
                                                 nodeNames: Seq[String])
       extends ClusterCreationRequest
 
   implicit val BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[BrokerClusterCreationRequest] =
-    jsonFormat5(BrokerClusterCreationRequest)
+    jsonFormat6(BrokerClusterCreationRequest)
 
   /**
     * We need to fake cluster info in fake mode so we extract a layer to open the door to fake broker cluster.
@@ -52,6 +54,7 @@ object BrokerApi {
   trait BrokerClusterInfo extends ClusterInfo {
     def zookeeperClusterName: String
     def clientPort: Int
+    def exporterPort: Int
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
   }
 
@@ -72,6 +75,7 @@ object BrokerApi {
         imageName = obj.imageName,
         zookeeperClusterName = obj.zookeeperClusterName,
         clientPort = obj.clientPort,
+        exporterPort = obj.exporterPort,
         nodeNames = obj.nodeNames
       )
   }
@@ -80,12 +84,14 @@ object BrokerApi {
     def apply(name: String,
               imageName: String,
               zookeeperClusterName: String,
+              exporterPort: Int,
               clientPort: Int,
               nodeNames: Seq[String]): BrokerClusterInfo = BrokerClusterInfoImpl(
       name = name,
       imageName = imageName,
       zookeeperClusterName = zookeeperClusterName,
       clientPort = clientPort,
+      exporterPort = exporterPort,
       nodeNames = nodeNames,
     )
   }
@@ -94,9 +100,10 @@ object BrokerApi {
                                                  imageName: String,
                                                  zookeeperClusterName: String,
                                                  clientPort: Int,
+                                                 exporterPort: Int,
                                                  nodeNames: Seq[String])
       extends BrokerClusterInfo
-  private[this] implicit val BROKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[BrokerClusterInfoImpl] = jsonFormat5(
+  private[this] implicit val BROKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[BrokerClusterInfoImpl] = jsonFormat6(
     BrokerClusterInfoImpl)
 
   def access(): ClusterAccess[BrokerClusterCreationRequest, BrokerClusterInfo] =

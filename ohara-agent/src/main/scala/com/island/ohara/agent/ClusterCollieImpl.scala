@@ -134,6 +134,10 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         name = clusterName,
         imageName = first.imageName,
         zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
+        exporterPort = first.environments
+          .get(BrokerCollie.EXPORTER_PORT_KEY)
+          .map(_.toInt)
+          .getOrElse(BrokerCollie.EXPORTER_PORT_DEFAULT),
         clientPort =
           first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
         nodeNames = containers.map(_.nodeName)
@@ -514,6 +518,7 @@ private object ClusterCollieImpl {
                 name = clusterName,
                 imageName = imageName,
                 zookeeperClusterName = zookeeperClusterName,
+                exporterPort = exporterPort,
                 clientPort = clientPort,
                 nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
               )
@@ -524,6 +529,7 @@ private object ClusterCollieImpl {
                                      newNodeName: String): Future[BrokerClusterInfo] = creator()
       .clusterName(previousCluster.name)
       .zookeeperClusterName(previousCluster.zookeeperClusterName)
+      .exporterPort(previousCluster.exporterPort)
       .clientPort(previousCluster.clientPort)
       .imageName(previousCluster.imageName)
       .nodeName(newNodeName)

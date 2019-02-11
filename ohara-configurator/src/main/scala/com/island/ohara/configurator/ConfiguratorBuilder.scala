@@ -129,6 +129,7 @@ class ConfiguratorBuilder {
         name = "embedded_broker_cluster",
         imageName = "None",
         zookeeperClusterName = "None",
+        exporterPort = -1,
         clientPort = port,
         nodeNames = Seq(host)
       )
@@ -204,6 +205,7 @@ class ConfiguratorBuilder {
     imageName = s"imageName$prefix",
     zookeeperClusterName = s"zkClusterName$prefix",
     // Assigning a negative value can make test fail quickly.
+    exporterPort = -1,
     clientPort = -1,
     nodeNames = (0 to 2).map(_ => CommonUtil.randomString(5))
   )
@@ -456,12 +458,13 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
     */
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
   override def creator(): BrokerCollie.ClusterCreator =
-    (clusterName, imageName, zookeeperClusterName, clientPort, _, nodeNames) =>
+    (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
       Future.successful {
         val cluster = FakeBrokerClusterInfo(
           name = clusterName,
           imageName = imageName,
           clientPort = clientPort,
+          exporterPort = exporterPort,
           zookeeperClusterName = zookeeperClusterName,
           nodeNames = nodeNames
         )
@@ -488,6 +491,7 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
           name = previous.name,
           imageName = previous.imageName,
           zookeeperClusterName = previous.zookeeperClusterName,
+          exporterPort = previous.exporterPort,
           clientPort = previous.clientPort,
           nodeNames = previous.nodeNames.filterNot(_ == nodeName)
         )
@@ -508,6 +512,7 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
           imageName = previous.imageName,
           zookeeperClusterName = previous.zookeeperClusterName,
           clientPort = previous.clientPort,
+          exporterPort = previous.exporterPort,
           nodeNames = previous.nodeNames :+ nodeName
         )
         clusterCache.put(clusterName, newOne)
@@ -526,6 +531,7 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
 case class FakeBrokerClusterInfo(name: String,
                                  imageName: String,
                                  zookeeperClusterName: String,
+                                 exporterPort: Int,
                                  clientPort: Int,
                                  nodeNames: Seq[String])
     extends BrokerClusterInfo
