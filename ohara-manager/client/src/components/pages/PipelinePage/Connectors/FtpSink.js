@@ -210,7 +210,7 @@ class FtpSink extends React.Component {
         const currReadTopic = topics.find(topic => topic.id === prevTopics[0]);
 
         updateTopic(this.props, currReadTopic, 'sink');
-        this.setState({ ReadTopics: topics, currReadTopic });
+        this.setState({ readTopics: topics, currReadTopic });
       }
 
       const _needHeader = needHeader === 'true' ? true : false;
