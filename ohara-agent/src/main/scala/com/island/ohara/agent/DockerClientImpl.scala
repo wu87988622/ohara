@@ -119,7 +119,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       val cmd = dockerCommand()
       LOG.info(s"docker command:$cmd")
       agent.execute(cmd)
-      activeContainers().find(_.name == name)
+      activeContainers(_ == name).headOption
     }
 
     override def command(command: String): ContainerCreator = {
