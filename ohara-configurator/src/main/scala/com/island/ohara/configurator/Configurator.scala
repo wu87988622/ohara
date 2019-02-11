@@ -28,6 +28,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
+import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0._
@@ -185,7 +186,7 @@ class Configurator private[configurator] (
   private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
   private[this] val httpServer: Http.ServerBinding =
-    Await.result(
+    try Await.result(
       Http().bindAndHandle(
         handleExceptions(exceptionHandler())(
           handleRejections(rejectionHandler())(basicRoute() ~ privateRoute() ~ jarDownloadRoute()) ~ finalRoute()),
@@ -195,6 +196,11 @@ class Configurator private[configurator] (
       ),
       initializationTimeout.toMillis milliseconds
     )
+    catch {
+      case e: Throwable =>
+        Releasable.close(this)
+        throw e
+    }
 
   /**
     * Do what you want to do when calling closing.
@@ -295,6 +301,7 @@ object Configurator {
       case e: Throwable =>
         LOG.error("failed to initialize cluster. Will close configurator", e)
         Releasable.close(configurator)
+        HttpExecutor.close()
         throw e
     }
     hasRunningConfigurator = true
@@ -310,6 +317,7 @@ object Configurator {
     } finally {
       hasRunningConfigurator = false
       Releasable.close(configurator)
+      HttpExecutor.close()
     }
   }
 

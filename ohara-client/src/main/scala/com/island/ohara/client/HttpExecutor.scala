@@ -25,10 +25,11 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import com.island.ohara.common.util.Releasable
 import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 /**
   * used to send http request to remote node. The operations implemented by this class includes 1) get, 2) delete, 3) put and 4) post.
@@ -82,7 +83,16 @@ private[client] trait HttpExecutor {
                                                                   rm1: RootJsonFormat[E]): Future[Res]
 }
 
-private[client] object HttpExecutor {
+/**
+  * ohara configurator needs to access this class so we open the package-private to c.i.o.
+  */
+private[ohara] object HttpExecutor {
+
+  /**
+    * Close the singleton http executor.
+    * NOTED: After calling this method, the singleton object won't be used anymore. Normally, only configurator needs this method...
+    */
+  def close(): Unit = Releasable.close(SINGLETON.asInstanceOf[HttpExecutorImpl])
 
   /**
     * a basic error when remote node fails to handle your request. Probably not all restful server have implemented the error response. However,
@@ -101,7 +111,12 @@ private[client] object HttpExecutor {
     *  ActorSystem is a heavy component in akka, so we should reuse it as much as possible. We don't need to close it programmatically since
     *  it is a singleton object in whole jvm. And it will be released in closing jvm.
     */
-  implicit lazy val SINGLETON: HttpExecutor = new HttpExecutor {
+  implicit lazy val SINGLETON: HttpExecutor = new HttpExecutorImpl
+
+  /**
+    * a http executor with releasable interface. Actor system has to be closed in order to terminate process graceful.
+    */
+  private[this] class HttpExecutorImpl extends HttpExecutor with Releasable {
     private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-SINGLETON")
     private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
     //-------------------------------------------------[PRIVATE]-------------------------------------------------//
@@ -157,5 +172,12 @@ private[client] object HttpExecutor {
     override def request[Res, E <: HttpExecutor.Error](request: HttpRequest)(implicit rm0: RootJsonFormat[Res],
                                                                              rm1: RootJsonFormat[E]): Future[Res] =
       Http().singleRequest(request).flatMap(unmarshal[Res, E])
+
+    import scala.concurrent.duration._
+
+    /**
+      * I hate hard code but this method is used only when terminating configurator. Hence, it should be ok... by chia
+      */
+    override def close(): Unit = Await.result(actorSystem.terminate(), 30 seconds)
   }
 }
