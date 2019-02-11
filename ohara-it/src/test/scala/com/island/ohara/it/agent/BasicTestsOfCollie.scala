@@ -29,7 +29,7 @@ import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.typesafe.scalalogging.Logger
-import org.junit.After
+import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
@@ -218,16 +218,17 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       }
   }
 
-  protected def testRemoveNodeToRunningBrokerCluster(): Unit = testAddNodeToRunningBrokerCluster { previousCluster =>
-    val brokerCollie = clusterCollie.brokerCollie()
-    result(brokerCollie.exists(previousCluster.name)) shouldBe true
+  private[this] def testRemoveNodeToRunningBrokerCluster(): Unit = testAddNodeToRunningBrokerCluster {
+    previousCluster =>
+      val brokerCollie = clusterCollie.brokerCollie()
+      result(brokerCollie.exists(previousCluster.name)) shouldBe true
 
-    val newCluster = result(brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
-    newCluster.name shouldBe previousCluster.name
-    newCluster.imageName shouldBe previousCluster.imageName
-    newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
-    newCluster.clientPort shouldBe previousCluster.clientPort
-    previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
+      val newCluster = result(brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      newCluster.name shouldBe previousCluster.name
+      newCluster.imageName shouldBe previousCluster.imageName
+      newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
+      newCluster.clientPort shouldBe previousCluster.clientPort
+      previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
   }
 
   private[this] def testWorker(f: WorkerClusterInfo => Unit): Unit = testBroker { brokerCluster =>
@@ -340,20 +341,58 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       }
   }
 
-  protected def testRemoveNodeToRunningWorkerCluster(): Unit = testAddNodeToRunningWorkerCluster { previousCluster =>
-    val workerCollie = clusterCollie.workerCollie()
-    result(workerCollie.exists(previousCluster.name)) shouldBe true
-    log.info(s"[WORKER] start to remove node:${previousCluster.nodeNames.head} from ${previousCluster.name}")
-    val newCluster = result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
-    newCluster.name shouldBe previousCluster.name
-    newCluster.imageName shouldBe previousCluster.imageName
-    newCluster.configTopicName shouldBe previousCluster.configTopicName
-    newCluster.statusTopicName shouldBe previousCluster.statusTopicName
-    newCluster.offsetTopicName shouldBe previousCluster.offsetTopicName
-    newCluster.groupId shouldBe previousCluster.groupId
-    newCluster.brokerClusterName shouldBe previousCluster.brokerClusterName
-    newCluster.clientPort shouldBe previousCluster.clientPort
-    previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
+  private[this] def testRemoveNodeToRunningWorkerCluster(): Unit = testAddNodeToRunningWorkerCluster {
+    previousCluster =>
+      val workerCollie = clusterCollie.workerCollie()
+      result(workerCollie.exists(previousCluster.name)) shouldBe true
+      log.info(s"[WORKER] start to remove node:${previousCluster.nodeNames.head} from ${previousCluster.name}")
+      val newCluster = result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      newCluster.name shouldBe previousCluster.name
+      newCluster.imageName shouldBe previousCluster.imageName
+      newCluster.configTopicName shouldBe previousCluster.configTopicName
+      newCluster.statusTopicName shouldBe previousCluster.statusTopicName
+      newCluster.offsetTopicName shouldBe previousCluster.offsetTopicName
+      newCluster.groupId shouldBe previousCluster.groupId
+      newCluster.brokerClusterName shouldBe previousCluster.brokerClusterName
+      newCluster.clientPort shouldBe previousCluster.clientPort
+      previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
+  }
+
+  @Test
+  def testBrokerCollie(): Unit = testRemoveNodeToRunningBrokerCluster()
+
+  @Test
+  def testWorkerCollie(): Unit = testRemoveNodeToRunningWorkerCluster()
+
+  @Test
+  def testMultiZkClustersOnSingleNode(): Unit = {
+    val names = (0 to 2).map(_ => CommonUtil.randomString(10))
+    try {
+      val clusters = names.map { name =>
+        Await.result(
+          clusterCollie
+            .zookeepersCollie()
+            .creator()
+            .clusterName(name)
+            .clientPort(CommonUtil.availablePort())
+            .electionPort(CommonUtil.availablePort())
+            .peerPort(CommonUtil.availablePort())
+            .nodeName(nodeCache.head.name)
+            .create(),
+          30 seconds
+        )
+      }
+      val clusters2 = Await.result(clusterCollie.zookeepersCollie().clusters(), 20 seconds)
+      clusters.foreach { c =>
+        clusters2.find(_._1.name == c.name).get._1 shouldBe c
+      }
+    } finally names.foreach { name =>
+      try Await.result(clusterCollie.zookeepersCollie().remove(name), 10 seconds)
+      catch {
+        case _: Throwable =>
+        // do nothing
+      }
+    }
   }
 
   @After

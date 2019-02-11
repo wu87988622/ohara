@@ -16,16 +16,13 @@
 
 package com.island.ohara.it.agent
 
-import com.island.ohara.agent._
+import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import org.junit.Before
 
 import scala.concurrent.Future
 
-/**
-  * a basic test for ssh collie. It instantiate a ssh collie based on passed arguments.
-  */
-abstract class BasicTestsOfSshCollie extends BasicTestsOfCollie {
+class TestSshCollie extends BasicTestsOfCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   override protected val clusterCollie: ClusterCollie = ClusterCollie(new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
