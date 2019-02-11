@@ -1,10 +1,20 @@
-# Guidelines for Pull Request
+# Contributing
 
-All we love is only Pull Request so we have some rules used to make your PR lovely for reviewers.
+All we love is only pull request so we have some rules used to make your PR looks good for reviewers.
+
+> Note that you should file a new issue in our jira board to discuss the PR detail before submitting a PR.
+
+## Quick start
+
+- Fork and clone the repo
+- Install dependencies. See our [README.md](README.md) for development machine setup
+- Create a branch with your PR with `git checkout -b ${your-branch-name}`
+- Push your PR to remote: `git push origin ${your-branch-name}`
+- Create the PR with GitHub web UI and wait for reviews
 
 ## Pull request commands:
 
-These commands are handy when you want to test your PR on our QA(CI server).
+These commands will come in handy when you want to test your PR on our QA(CI server).
 
 To start a QA run, you can simply leave a comment with one of the following commands in the PR:
 
@@ -12,45 +22,42 @@ To start a QA run, you can simply leave a comment with one of the following comm
 
 - **retry**: execute a full QA
 - **retry -fae**: execute a full QA even when some fail
-- **retry {moduleName}**: execute a QA for a specific module. If a module is named **ohara-awesome**, you can enter **retry awesome** to run the QA against this specific module. Note that module prefix **ohara-** is not needed.
+- **retry \${moduleName}**: execute a QA for a specific module. If a module is named **ohara-awesome**, you can enter **retry awesome** to run the QA against this specific module. Note that module prefix **ohara-** is not needed.
 - **run**: execute both the Configurator and the Manager on jenkins server. If the PR makes some changes to UI, you can run this command to see the changes
 
-After a command is successfully executed, Ohara-bot will leave a new comment in your PR's comment thread. And this comment will be updated after the command is finish running.
+The build status can be seen at the bottom of your PR.
 
-# A pull request MUST:
+## A pull request must:
 
-## pass all tests
+#### Pass all tests
 
-Any PR making OHARA unstable should be reverted ASAP. A software engineer who can't stabilize tests should be fired ASAP.
+- Your PR should not make ohara unstable, if it does. It should be reverted ASAP.
+- You can either run these tests on your local (see our [README.md](README.md) for more info on how to run tests) or by opening the PR on our repo. These tests will be running on your CI server.
 
-## pass checkstyle (enter "gradle spotlessApply" to auto-apply checkstyle fix)
+#### Pass code style check
 
-Don't make you code style same with your bad-looking face
+You can automatically fix these issues with a single command:
 
-## have a name starting with "OHARA-XXX" or "Minor:"
+```sh
+gradle spotlessApply
+```
 
-If your PR has only a bit changes, naming you PR with "Minor:" is ok. Otherwise, file a JIRA first.
+#### Address all reviewers' comments
 
-## address all reviewers' comments
+## A pull request should:
 
-Please don't be an asshole.
+#### Be as small in scope as possible.
 
-# A pull request SHOULD:
+Large PR is often hard to review.
 
-## be as small in scope as possible.
+#### Add new tests
 
-Please don't file a PR with 10000000 changes. No one can do a great review for large PR.
+## A pull request should not:
 
-## add new tests
+#### Bring in new libraries (or updating libraries to new version) without prior discussion
 
-Please add some tests to prove your are a valid software engineer.
+Do not update the dependencies unless you have a good reason.
 
-# A pull request SHOULD NOT:
+#### Bring in new module without prior discussion
 
-## bring in new libraries (or updating libraries to new version) without discussion first
-
-Updating the dependencies unless you have a good reason.
-
-## bring in new module without discussion first
-
-## bring in new APIs for Configurator without discussion first
+#### Bring in new APIs for Configurator without prior discussion
