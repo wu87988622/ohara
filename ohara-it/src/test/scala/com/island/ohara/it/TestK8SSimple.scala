@@ -23,11 +23,11 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.K8SClient
+import com.island.ohara.agent.{K8SClient, ZookeeperCollie}
 import com.island.ohara.agent.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.it.TestK8SSimple.API_SERVER_URL
+import com.island.ohara.common.util.CommonUtil
 import com.typesafe.scalalogging.Logger
 import org.junit._
 import org.scalatest.Matchers
@@ -39,29 +39,31 @@ import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{Await, Future}
 
 class TestK8SSimple extends SmallTest with Matchers {
-  private val log = Logger(classOf[TestK8SSimple])
+  private[this] val log = Logger(classOf[TestK8SSimple])
+  private[this] var k8sApiServerURL: String = _
+  private[this] var nodeServerNames: Seq[String] = _
 
   @Before
   def testBefore(): Unit = {
     val message = s"The k8s is skip test, Please setting ${TestK8SSimple.K8S_API_SERVER_URL_KEY} properties"
-    if (API_SERVER_URL.isEmpty) {
+    if (TestK8SSimple.API_SERVER_URL.isEmpty || TestK8SSimple.NODE_SERVER_NAME.isEmpty) {
       log.info(message)
       skipTest(message)
     }
+    k8sApiServerURL = TestK8SSimple.API_SERVER_URL.get
+    nodeServerNames = TestK8SSimple.NODE_SERVER_NAME.get.split(",").toSeq
 
-    val k8sApiServerURL: String = TestK8SSimple.API_SERVER_URL.get
     val uuid: String = TestK8SSimple.uuid
 
     if (!TestK8SSimple.hasPod(k8sApiServerURL, uuid)) {
       //Create a container for pod
-      TestK8SSimple.createNginxPod(k8sApiServerURL, uuid)
+      TestK8SSimple.createZookeeperPod(k8sApiServerURL, uuid)
     }
 
   }
 
   @Test
   def testCheckPodExists(): Unit = {
-    val k8sApiServerURL: String = TestK8SSimple.API_SERVER_URL.get
     val uuid: String = TestK8SSimple.uuid
     TestK8SSimple.hasPod(k8sApiServerURL, uuid) shouldBe true
   }
@@ -73,7 +75,7 @@ class TestK8SSimple extends SmallTest with Matchers {
 
   @Test
   def testK8SClientContainer(): Unit = {
-    val k8sClient = K8SClient(API_SERVER_URL.get)
+    val k8sClient = K8SClient(k8sApiServerURL)
 
     val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.name.equals(TestK8SSimple.uuid))
     val containerSize: Int = containers.size
@@ -83,65 +85,79 @@ class TestK8SSimple extends SmallTest with Matchers {
     container.environments.size shouldBe 1
     container.environments.get("key1") shouldBe Some("value1")
     container.hostname shouldBe TestK8SSimple.uuid
-    container.imageName shouldBe "nginx:1.7.9"
+    container.imageName shouldBe "oharastream/zookeeper:0.2-SNAPSHOT"
     container.name shouldBe TestK8SSimple.uuid
     container.size shouldBe "Unknown"
   }
 
   @Test
   def testK8SClientRemoveContainer(): Unit = {
-    val k8sClient = K8SClient(API_SERVER_URL.get)
+    val k8sClient = K8SClient(k8sApiServerURL)
     val podName: String = UUID.randomUUID().toString + "-pod123"
 
-    //Create Pod for test delete
-    TestK8SSimple.createNginxPod(TestK8SSimple.API_SERVER_URL.get, podName)
-    val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.name.equals(podName))
-    containers.size shouldBe 1
-
-    //Remove a container
-    k8sClient.remove(podName).name shouldBe podName
+    try {
+      //Create Pod for test delete
+      TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
+      val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.hostname.equals(podName))
+      containers.size shouldBe 1
+    } finally {
+      //Remove a container
+      k8sClient.remove(podName).name shouldBe podName
+    }
   }
 
   @Test
-  @Ignore
   def testK8SClientlog(): Unit = {
-    val k8sClient = K8SClient(API_SERVER_URL.get)
-    val timestamp: Long = System.currentTimeMillis()
-    val podName: String = s"zookeeper-${timestamp}"
-    TestK8SSimple.createZookeeperPod(API_SERVER_URL.get, podName)
+    //Must confirm to microk8s is running
+    val k8sClient = K8SClient(k8sApiServerURL)
+    val podName: String = s"zookeeper-${CommonUtil.randomString(10)}"
+    try {
+      TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
 
-    var isContainerRunning: Boolean = false
-    while (!isContainerRunning) {
-      if (k8sClient.containers().filter(c => c.name.contains(podName) && c.state == ContainerState.RUNNING).size == 1) {
-        isContainerRunning = true
+      var isContainerRunning: Boolean = false
+      while (!isContainerRunning) {
+        if (k8sClient
+              .containers()
+              .filter(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING)
+              .size == 1) {
+          isContainerRunning = true
+        }
       }
-    }
 
-    val logs: String = k8sClient.log(podName)
-    logs.contains("ZooKeeper JMX enabled by default") shouldBe true
+      val logs: String = k8sClient.log(podName)
+      logs.contains("ZooKeeper JMX enabled by default") shouldBe true
+    } finally {
+      k8sClient.remove(podName).name shouldBe podName
+    }
   }
 
   @Test
   def testErrorResponse(): Unit = {
-    val k8sClient = K8SClient(s"${API_SERVER_URL.get}/error_test")
+    val k8sClient = K8SClient(s"$k8sApiServerURL/error_test")
     an[RuntimeException] should be thrownBy k8sClient.containers()
   }
 
   @Test
   def testK8SClientCreator(): Unit = {
-    //TODO Test create container from client to K8S server
-    /*val containerName: String = s"broker-container-${System.currentTimeMillis()}"
-    val k8sClient = K8SClient(API_SERVER_URL.get)
-    val result: Option[ContainerInfo] = k8sClient
-      .containerCreator()
-      .name(containerName)
-      .nodename(TestK8SSimple.NODE_SERVER_HOST.get)
-      .hostname(containerName)
-      .imageName("islandsystems/kafka:1.0.2")
-      .envs(Map())
-      .portMappings(Map())
-      .run()
-    result.get.name shouldBe containerName*/
+    val containerName: String = s"zookeeper-container-${CommonUtil.randomString(10)}"
+    val k8sClient = K8SClient(k8sApiServerURL)
+    try {
+      val result: Option[ContainerInfo] = k8sClient
+        .containerCreator()
+        .name(containerName)
+        .domainName("default")
+        .labelName("ohara")
+        .nodename(nodeServerNames.head)
+        .hostname(containerName)
+        .imageName(ZookeeperCollie.IMAGE_NAME_DEFAULT)
+        .envs(Map())
+        .portMappings(Map())
+        .run()
+      result.get.name shouldBe containerName
+    } finally {
+      // Remove a container
+      k8sClient.remove(containerName).name shouldBe containerName
+    }
   }
 }
 
@@ -151,15 +167,15 @@ object TestK8SSimple {
 
   val TIMEOUT: FiniteDuration = 30 seconds
   val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
+  val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
+
   val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
-  //val API_SERVER_URL: Option[String] = Option("http://10.1.3.102:8080/api/v1")
-  //val NODE_SERVER_HOST: Option[String] = Option("jack-pc")
+  val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
 
   val uuid: String = UUID.randomUUID().toString
 
   @AfterClass
   def afterClass(): Unit = {
-    val uuid: String = TestK8SSimple.uuid
     if (TestK8SSimple.API_SERVER_URL.nonEmpty && hasPod(TestK8SSimple.API_SERVER_URL.get, uuid)) {
       Await.result(Http().singleRequest(
                      HttpRequest(HttpMethods.DELETE,
@@ -171,8 +187,8 @@ object TestK8SSimple {
     Await.result(actorSystem.terminate(), 60 seconds)
   }
 
-  def createNginxPod(k8sApiServerURL: String, uuid: String): Unit = {
-    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + uuid + "\" },\"spec\": {\"containers\": [{\"name\": \"" + uuid + "\", \"image\": \"nginx:1.7.9\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 80}]}]}}"
+  def createZookeeperPod(k8sApiServerURL: String, podName: String): Unit = {
+    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"oharastream/zookeeper:0.2-SNAPSHOT\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
 
     Await.result(
       Http().singleRequest(
@@ -183,19 +199,7 @@ object TestK8SSimple {
     )
   }
 
-  def createZookeeperPod(k8sApiServerURL: String, uuid: String): Unit = {
-    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + uuid + "\" },\"spec\": {\"containers\": [{\"name\": \"" + uuid + "\", \"image\": \"oharastream/zookeeper:0.2-SNAPSHOT\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
-
-    Await.result(
-      Http().singleRequest(
-        HttpRequest(HttpMethods.POST,
-                    entity = HttpEntity(ContentTypes.`application/json`, podJSON),
-                    uri = s"${k8sApiServerURL}/namespaces/default/pods")),
-      TestK8SSimple.TIMEOUT
-    )
-  }
-
-  def hasPod(k8sApiServerURL: String, uuid: String): Boolean = {
+  def hasPod(k8sApiServerURL: String, podName: String): Boolean = {
     case class Metadata(name: String)
     case class Item(metadata: Metadata)
     case class PodInfo(items: Seq[Item])
@@ -208,7 +212,7 @@ object TestK8SSimple {
       Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/pods")).flatMap(unmarshal[PodInfo]),
       TIMEOUT
     )
-    podInfo.items.map(x => x.metadata.name).filter(x => x.equals(uuid)).nonEmpty
+    podInfo.items.map(x => x.metadata.name).filter(x => x.equals(podName)).nonEmpty
   }
 
   def nodeInfo(): Seq[String] = {

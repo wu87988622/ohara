@@ -20,17 +20,17 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
 object K8SJson {
   //for show container information
-  final case class EnvInfo(name: String, value: String)
+  final case class EnvInfo(name: String, value: Option[String])
   implicit val ENVINFO_JSON_FORM: RootJsonFormat[EnvInfo] = jsonFormat2(EnvInfo)
 
   final case class PortInfo(hostPort: Option[Int], containerPort: Int)
   implicit val PORTINFO_JSON_FORMAT: RootJsonFormat[PortInfo] = jsonFormat2(PortInfo)
 
-  final case class Container(image: String, name: String, ports: Seq[PortInfo], env: Option[Seq[EnvInfo]])
+  final case class Container(image: String, name: String, ports: Option[Seq[PortInfo]], env: Option[Seq[EnvInfo]])
   implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat4(Container)
 
-  final case class Spec(nodeName: Option[String], containers: Seq[Container])
-  implicit val SPEC_JSON_FORMAT: RootJsonFormat[Spec] = jsonFormat2(Spec)
+  final case class Spec(nodeName: Option[String], containers: Seq[Container], hostname: Option[String])
+  implicit val SPEC_JSON_FORMAT: RootJsonFormat[Spec] = jsonFormat3(Spec)
 
   final case class Metadata(uid: String, creationTimestamp: String)
   implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat2(Metadata)
@@ -70,11 +70,17 @@ object K8SJson {
       )
     }
 
-  case class CreatePodSpec(nodeSelector: CreatePodNodeSelector, containers: Seq[CreatePodContainer])
-  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat2(CreatePodSpec)
+  case class CreatePodSpec(nodeSelector: CreatePodNodeSelector,
+                           hostname: String,
+                           subdomain: String,
+                           containers: Seq[CreatePodContainer])
+  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat4(CreatePodSpec)
 
-  case class CreatePodMetadata(name: String)
-  implicit val CREATEPOD_METADATA_FORMAT: RootJsonFormat[CreatePodMetadata] = jsonFormat1(CreatePodMetadata)
+  case class CreatePodLabel(name: String)
+  implicit val CREATEPOD_LABEL_FORMAT: RootJsonFormat[CreatePodLabel] = jsonFormat1(CreatePodLabel)
+
+  case class CreatePodMetadata(name: String, labels: CreatePodLabel)
+  implicit val CREATEPOD_METADATA_FORMAT: RootJsonFormat[CreatePodMetadata] = jsonFormat2(CreatePodMetadata)
 
   case class CreatePod(apiVersion: String, kind: String, metadata: CreatePodMetadata, spec: CreatePodSpec)
   implicit val CREATEPOD_FORMAT: RootJsonFormat[CreatePod] = jsonFormat4(CreatePod)

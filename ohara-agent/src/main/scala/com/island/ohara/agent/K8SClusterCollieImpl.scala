@@ -55,13 +55,14 @@ private object K8SClusterCollieImpl {
 
     protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String): Future[T]
 
-    override def addNode(clusterName: String, nodeName: String): Future[T] =
+    override def addNode(clusterName: String, nodeName: String): Future[T] = {
       nodeCollie
         .node(nodeName) // make sure there is a exist node.
         .flatMap(_ => cluster(clusterName))
         .flatMap {
           case (c, cs) => doAddNode(c, cs, nodeName)
         }
+    }
 
     /**
       * generate unique name for the container.
@@ -73,12 +74,14 @@ private object K8SClusterCollieImpl {
 
     protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): T
 
-    override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
-      case (cluster, _) =>
-        nodeCollie.nodes(cluster.nodeNames).map { nodes =>
-          k8sClient.remove(clusterName)
-          cluster
-        }
+    override def remove(clusterName: String): Future[T] = {
+      cluster(clusterName).flatMap {
+        case (cluster, container) =>
+          container.map(c => k8sClient.remove(c.name))
+          nodeCollie.nodes(cluster.nodeNames).map { nodes =>
+            cluster
+          }
+      }
     }
 
     override def removeNode(clusterName: String, nodeName: String): Future[T] = containers(clusterName)
@@ -102,7 +105,7 @@ private object K8SClusterCollieImpl {
           .containers()
           .filter(_.name.startsWith(clusterName))
           .map(container => {
-            container -> k8sClient.log(container.name)
+            container -> k8sClient.log(container.hostname)
           })
           .toMap
       }
@@ -110,19 +113,25 @@ private object K8SClusterCollieImpl {
 
     def query(clusterName: String, service: Service): Future[Seq[ContainerInfo]] = nodeCollie
       .nodes()
-      .map(_.flatMap(_ => k8sClient.containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))))
+      .map(_.flatMap(_ => {
+        k8sClient.containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))
+      }))
 
     override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
       .nodes()
       .map(
-        _.flatMap(_ => k8sClient.containers().filter(_.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
+        _.flatMap(node =>
+          k8sClient
+            .containers()
+            .filter(x => x.nodeName.equals(node.name) && x.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
           .map(container => container.name.split(DIVIDER).head -> container)
           .groupBy(_._1)
           .map {
             case (clusterName, value) => clusterName -> value.map(_._2)
           }
           .map {
-            case (clusterName, containers) => toClusterDescription(clusterName, containers) -> containers
+            case (clusterName, containers) =>
+              toClusterDescription(clusterName, containers) -> containers
           }
           .toMap)
 
@@ -155,7 +164,10 @@ private object K8SClusterCollieImpl {
                         peerPort -> peerPort,
                         electionPort -> electionPort
                       ))
+                    .nodename(node.name)
                     .hostname(hostname)
+                    .labelName(OHARA_LABEL)
+                    .domainName(K8S_DOMAIN_NAME)
                     .envs(Map(
                       ZookeeperCollie.ID_KEY -> index.toString,
                       ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
@@ -232,7 +244,9 @@ private object K8SClusterCollieImpl {
             nodeCollie
               .nodes(existContainers.map(_.nodeName))
               .map(_.zipWithIndex.map {
-                case (node, index) => node -> existContainers(index)
+                case (node, index) => {
+                  node -> existContainers(index)
+                }
               }.toMap)
               .map { existNodes =>
                 // if there is a running cluster already, we should check the consistency of configuration
@@ -256,7 +270,8 @@ private object K8SClusterCollieImpl {
             case (existNodes, newNodes) =>
               existNodes.keys.foreach(node =>
                 if (newNodes.keys.exists(_.name == node.name))
-                  throw new IllegalArgumentException(s"${node.name} has run the worker service for $clusterName"))
+                  throw new IllegalArgumentException(s"${node.name} has run the broker service for $clusterName"))
+
               query(zookeeperClusterName, ZOOKEEPER).map((existNodes, newNodes, _))
           }
           .map {
@@ -264,7 +279,8 @@ private object K8SClusterCollieImpl {
               if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName doesn't exist")
               val zookeepers = zkContainers
                 .map(c =>
-                  s"${c.nodeName}:${c.environments.getOrElse(ZookeeperCollie.CLIENT_PORT_KEY, ZookeeperCollie.CLIENT_PORT_DEFAULT)}")
+                  s"${c.hostname}.${K8S_DOMAIN_NAME}:${c.environments.getOrElse(ZookeeperCollie.CLIENT_PORT_KEY,
+                                                                                ZookeeperCollie.CLIENT_PORT_DEFAULT)}")
                 .mkString(",")
 
               val maxId: Int =
@@ -278,6 +294,9 @@ private object K8SClusterCollieImpl {
                     try client
                       .containerCreator()
                       .imageName(imageName)
+                      .nodename(node.name)
+                      .labelName(OHARA_LABEL)
+                      .domainName(K8S_DOMAIN_NAME)
                       .portMappings(Map(
                         clientPort -> clientPort,
                         exporterPort -> exporterPort
@@ -287,7 +306,7 @@ private object K8SClusterCollieImpl {
                         BrokerCollie.ID_KEY -> (maxId + index).toString,
                         BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
                         BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> s"$hostname.${K8S_DOMAIN_NAME}",
                         BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                         BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                         ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
@@ -310,7 +329,7 @@ private object K8SClusterCollieImpl {
                 zookeeperClusterName = zookeeperClusterName,
                 exporterPort = exporterPort,
                 clientPort = clientPort,
-                nodeNames = nodeNames
+                nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
               )
         }
 
@@ -413,7 +432,7 @@ private object K8SClusterCollieImpl {
               throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
             val brokers = brokerContainers
               .map(c =>
-                s"${c.nodeName}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerCollie.CLIENT_PORT_DEFAULT)}")
+                s"${c.hostname}.${K8S_DOMAIN_NAME}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerCollie.CLIENT_PORT_DEFAULT)}")
               .mkString(",")
 
             val successfulNodeNames = newNodes
@@ -425,6 +444,7 @@ private object K8SClusterCollieImpl {
                     .imageName(imageName)
                     .portMappings(Map(clientPort -> clientPort))
                     .hostname(hostname)
+                    .nodename(node.name)
                     .envs(Map(
                       WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
                       WorkerCollie.BROKERS_KEY -> brokers,
@@ -437,11 +457,13 @@ private object K8SClusterCollieImpl {
                       WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
                       WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
                       WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> s"$hostname.${K8S_DOMAIN_NAME}",
                       WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                       WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
                       BROKER_CLUSTER_NAME -> brokerClusterName
                     ))
+                    .labelName(OHARA_LABEL)
+                    .domainName(K8S_DOMAIN_NAME)
                     .name(hostname)
                     .run()
                   catch {
@@ -526,6 +548,10 @@ private object K8SClusterCollieImpl {
       )
     }
   }
+
+  val K8S_DOMAIN_NAME: String = "default"
+
+  val OHARA_LABEL: String = "ohara"
 
   private[this] val BROKER_CLUSTER_NAME = "K8S_BROKER_CLUSTER_NAME"
 

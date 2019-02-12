@@ -67,7 +67,7 @@ class TestListCluster extends IntegrationTest with Matchers {
                        .nodeNames(nodeCache.map(_.name))
                        .clusterName(name)
                        .create(),
-                     30 seconds)
+                     60 seconds)
     catch {
       case _: Throwable =>
       // creation is "async" so we can't assume the result...
@@ -80,8 +80,8 @@ class TestListCluster extends IntegrationTest with Matchers {
       finally dockerClient.close()
     }
 
-    CommonUtil.await(() => Await.result(clusterCollie.zookeepersCollie().clusters(), 30 seconds).isEmpty,
-                     java.time.Duration.ofSeconds(10))
+    CommonUtil.await(() => Await.result(clusterCollie.zookeepersCollie().clusters(), 60 seconds).isEmpty,
+                     java.time.Duration.ofSeconds(30))
   }
 
   @Test
@@ -122,9 +122,9 @@ class TestListCluster extends IntegrationTest with Matchers {
         finally dockerClient.close()
       }
 
-      CommonUtil.await(() => Await.result(clusterCollie.brokerCollie().clusters(), 30 seconds).isEmpty,
-                       java.time.Duration.ofSeconds(10))
-    } finally Await.result(clusterCollie.zookeepersCollie().remove(zkCluster.name), 30 seconds)
+      CommonUtil.await(() => Await.result(clusterCollie.brokerCollie().clusters(), 60 seconds).isEmpty,
+                       java.time.Duration.ofSeconds(30))
+    } finally Await.result(clusterCollie.zookeepersCollie().remove(zkCluster.name), 60 seconds)
   }
 
   @After

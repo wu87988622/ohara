@@ -28,6 +28,7 @@ import com.island.ohara.agent.K8SJson.{
   CreatePod,
   CreatePodContainer,
   CreatePodEnv,
+  CreatePodLabel,
   CreatePodMetadata,
   CreatePodNodeSelector,
   CreatePodPortMapping,
@@ -46,7 +47,7 @@ import scala.concurrent.{Await, Future}
 trait K8SClient extends ReleaseOnce {
   def containers(): Seq[ContainerInfo]
   def remove(name: String): ContainerInfo
-  def removeNode(clusterName: String, nodeName: String, serviceName: String)
+  def removeNode(clusterName: String, nodeName: String, serviceName: String): Seq[ContainerInfo]
   def log(name: String): String
   def containerCreator(): ContainerCreator
 }
@@ -85,12 +86,14 @@ object K8SClient {
             ContainerState.k8sAll
               .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
               .getOrElse(ContainerState.UNKNOWN),
-            containerInfo.name,
+            item.spec.hostname.getOrElse(""),
             "Unknown",
-            containerInfo.ports.map(x =>
-              PortMapping(hostIP.getOrElse("Unknown"), Seq(PortPair(x.hostPort.getOrElse(0), x.containerPort)))),
-            containerInfo.env.getOrElse(Seq()).map(x => (x.name -> x.value)).toMap,
-            containerInfo.name
+            containerInfo.ports
+              .getOrElse(Seq())
+              .map(x =>
+                PortMapping(hostIP.getOrElse("Unknown"), Seq(PortPair(x.hostPort.getOrElse(0), x.containerPort)))),
+            containerInfo.env.getOrElse(Seq()).map(x => (x.name -> x.value.getOrElse(""))).toMap,
+            item.spec.hostname.getOrElse("")
           )
         })
       }
@@ -99,6 +102,8 @@ object K8SClient {
         containers()
           .find(_.name == name)
           .map(container => {
+            LOG.info(s"Container ${container.name} is removing")
+
             Await.result(
               Http().singleRequest(
                 HttpRequest(HttpMethods.DELETE, uri = s"${k8sApiServerURL}/namespaces/default/pods/${container.name}")),
@@ -109,7 +114,7 @@ object K8SClient {
           .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
       }
 
-      override def removeNode(clusterName: String, nodeName: String, serviceName: String): Unit = {
+      override def removeNode(clusterName: String, nodeName: String, serviceName: String): Seq[ContainerInfo] = {
         val key = s"$clusterName${K8SClusterCollieImpl.DIVIDER}${serviceName}"
         containers()
           .filter(c => c.name.startsWith(key) && c.nodeName.equals(nodeName))
@@ -119,6 +124,7 @@ object K8SClient {
                 HttpRequest(HttpMethods.DELETE, uri = s"${k8sApiServerURL}/namespaces/default/pods/${container.name}")),
               TIMEOUT
             )
+            container
           })
       }
 
@@ -139,6 +145,8 @@ object K8SClient {
         private[this] var imageName: String = _
         private[this] var hostname: String = _
         private[this] var nodename: String = _
+        private[this] var domainName: String = _
+        private[this] var labelName: String = _
         private[this] var envs: Map[String, String] = Map.empty
         private[this] var ports: Map[Int, Int] = Map.empty
 
@@ -172,17 +180,30 @@ object K8SClient {
           this
         }
 
+        override def domainName(domainName: String): ContainerCreator = {
+          this.domainName = domainName
+          this
+        }
+
+        override def labelName(labelName: String): ContainerCreator = {
+          this.labelName = labelName
+          this
+        }
+
         override def run(): Option[ContainerInfo] = {
           val podSpec = CreatePodSpec(
             CreatePodNodeSelector(nodename),
+            hostname,
+            domainName,
             Seq(
-              CreatePodContainer(name,
+              CreatePodContainer(labelName,
                                  imageName,
                                  envs.map(x => CreatePodEnv(x._1, x._2)).toSeq,
                                  ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq))
           )
 
-          val requestJson = CreatePod("v1", "Pod", CreatePodMetadata(hostname), podSpec).toJson.toString
+          val requestJson =
+            CreatePod("v1", "Pod", CreatePodMetadata(hostname, CreatePodLabel(labelName)), podSpec).toJson.toString
           LOG.info(s"create pod request json: ${requestJson}")
 
           val createPodInfo = Await.result(
@@ -242,6 +263,10 @@ object K8SClient {
     def nodename(nodename: String): ContainerCreator
 
     def run(): Option[ContainerInfo]
+
+    def domainName(domainName: String): ContainerCreator
+
+    def labelName(labelName: String): ContainerCreator
   }
 
 }
