@@ -60,6 +60,7 @@ const JarNameText = styled(Label)`
 `;
 
 const ViewTopologyBtn = styled(Button)`
+  display: none;
   margin-right: auto;
 `;
 
