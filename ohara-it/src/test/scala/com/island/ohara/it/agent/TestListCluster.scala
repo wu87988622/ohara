@@ -61,7 +61,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     // the port:22 is not illegal so we can't create zookeeper cluster
     try Await.result(clusterCollie
-                       .zookeepersCollie()
+                       .zookeeperCollie()
                        .creator()
                        .clientPort(1000)
                        .nodeNames(nodeCache.map(_.name))
@@ -80,7 +80,7 @@ class TestListCluster extends IntegrationTest with Matchers {
       finally dockerClient.close()
     }
 
-    CommonUtil.await(() => Await.result(clusterCollie.zookeepersCollie().clusters(), 60 seconds).isEmpty,
+    CommonUtil.await(() => Await.result(clusterCollie.zookeeperCollie().clusters(), 60 seconds).isEmpty,
                      java.time.Duration.ofSeconds(30))
   }
 
@@ -88,7 +88,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   def deadBrokerClusterShouldDisappear(): Unit = {
     val zkCluster = Await.result(
       clusterCollie
-        .zookeepersCollie()
+        .zookeeperCollie()
         .creator()
         .clientPort(CommonUtil.availablePort())
         .nodeNames(nodeCache.map(_.name))
@@ -124,7 +124,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
       CommonUtil.await(() => Await.result(clusterCollie.brokerCollie().clusters(), 60 seconds).isEmpty,
                        java.time.Duration.ofSeconds(30))
-    } finally Await.result(clusterCollie.zookeepersCollie().remove(zkCluster.name), 60 seconds)
+    } finally Await.result(clusterCollie.zookeeperCollie().remove(zkCluster.name), 60 seconds)
   }
 
   @After

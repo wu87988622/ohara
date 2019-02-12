@@ -97,7 +97,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
                           new File(currentPath, s"src/test/resources/ItConnector2.jar")))(jarStore.add))
     val zkCluster = result(
       clusterCollie
-        .zookeepersCollie()
+        .zookeeperCollie()
         .creator()
         .clusterName(CommonUtil.randomString(10))
         .clientPort(CommonUtil.availablePort())
@@ -153,8 +153,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         result(clusterCollie.brokerCollie().clusters()).foreach(c =>
           result(clusterCollie.brokerCollie().remove(c._1.name)))
     } finally if (cleanup)
-      result(clusterCollie.zookeepersCollie().clusters()).foreach(c =>
-        result(clusterCollie.zookeepersCollie().remove(c._1.name)))
+      result(clusterCollie.zookeeperCollie().clusters()).foreach(c =>
+        result(clusterCollie.zookeeperCollie().remove(c._1.name)))
   }
 
   @After

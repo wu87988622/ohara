@@ -28,10 +28,10 @@ class TestNameLimitOfCluster extends SmallTest with Matchers {
   @Test
   def testZk(): Unit = {
     // pass
-    collie.zookeepersCollie().creator().clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH))
+    collie.zookeeperCollie().creator().clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH))
 
     an[IllegalArgumentException] should be thrownBy collie
-      .zookeepersCollie()
+      .zookeeperCollie()
       .creator()
       .clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
   }
@@ -42,7 +42,7 @@ class TestNameLimitOfCluster extends SmallTest with Matchers {
     collie.brokerCollie().creator().clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH))
 
     an[IllegalArgumentException] should be thrownBy collie
-      .zookeepersCollie()
+      .zookeeperCollie()
       .creator()
       .clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
   }
@@ -53,7 +53,7 @@ class TestNameLimitOfCluster extends SmallTest with Matchers {
     collie.workerCollie().creator().clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH))
 
     an[IllegalArgumentException] should be thrownBy collie
-      .zookeepersCollie()
+      .zookeeperCollie()
       .creator()
       .clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
   }

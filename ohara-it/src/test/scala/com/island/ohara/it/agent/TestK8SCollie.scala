@@ -72,18 +72,18 @@ class TestK8SCollie extends IntegrationTest with Matchers {
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
 
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
 
     val clientPort: Int = CommonUtil.availablePort()
     val peerPort: Int = CommonUtil.availablePort()
     val electionPort: Int = CommonUtil.availablePort()
 
     val zookeeperClusterInfo =
-      createZookeeperCollie(zookeepersCollie, clusterName, firstNode, clientPort, peerPort, electionPort)
+      createZookeeperCollie(zookeeperCollie, clusterName, firstNode, clientPort, peerPort, electionPort)
 
     try {
       intercept[UnsupportedOperationException] {
-        result(zookeepersCollie.addNode(clusterName, firstNode))
+        result(zookeeperCollie.addNode(clusterName, firstNode))
       }.getMessage() shouldBe "zookeeper collie doesn't support to add node from a running cluster"
 
       zookeeperClusterInfo.name shouldBe clusterName
@@ -94,7 +94,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       zookeeperClusterInfo.electionPort shouldBe electionPort
     } finally {
       //Remove Zookeeper Cluster
-      result(zookeepersCollie.remove(clusterName))
+      result(zookeeperCollie.remove(clusterName))
     }
   }
 
@@ -106,12 +106,12 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val zkClientPort: Int = CommonUtil.availablePort()
     val zkPeerPort: Int = CommonUtil.availablePort()
     val zkElectionPort: Int = CommonUtil.availablePort()
 
-    createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+    createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     //Create broker cluster service
     val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
@@ -136,7 +136,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       try {
         result(brokerCollie.remove(brokerClusterName))
       } finally {
-        result(zookeepersCollie.remove(zkClusterName))
+        result(zookeeperCollie.remove(zkClusterName))
       }
     }
   }
@@ -149,12 +149,12 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val zkClientPort: Int = CommonUtil.availablePort()
     val zkPeerPort: Int = CommonUtil.availablePort()
     val zkElectionPort: Int = CommonUtil.availablePort()
 
-    createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+    createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     //Create broker cluster service
     val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
@@ -189,7 +189,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
         try {
           result(brokerCollie.remove(brokerClusterName))
         } finally {
-          result(zookeepersCollie.remove(zkClusterName))
+          result(zookeeperCollie.remove(zkClusterName))
         }
       }
     }
@@ -207,12 +207,12 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val zkClientPort: Int = CommonUtil.availablePort()
     val zkPeerPort: Int = CommonUtil.availablePort()
     val zkElectionPort: Int = CommonUtil.availablePort()
 
-    createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+    createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     //Create broker cluster service
     val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
@@ -246,7 +246,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       try {
         result(brokerCollie.remove(brokerClusterName))
       } finally {
-        result(zookeepersCollie.remove(zkClusterName))
+        result(zookeeperCollie.remove(zkClusterName))
       }
     }
   }
@@ -262,12 +262,12 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val zkClientPort: Int = CommonUtil.availablePort()
     val zkPeerPort: Int = CommonUtil.availablePort()
     val zkElectionPort: Int = CommonUtil.availablePort()
 
-    createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+    createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     //Create broker cluster service
     val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
@@ -305,7 +305,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
         try {
           result(brokerCollie.remove(brokerClusterName))
         } finally {
-          result(zookeepersCollie.remove(zkClusterName))
+          result(zookeeperCollie.remove(zkClusterName))
         }
       }
     }
@@ -322,7 +322,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
     val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
     try {
@@ -330,7 +330,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       val zkPeerPort: Int = CommonUtil.availablePort()
       val zkElectionPort: Int = CommonUtil.availablePort()
 
-      createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+      createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
       //Create broker cluster service
 
@@ -363,7 +363,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       try {
         result(brokerCollie.remove(brokerClusterName))
       } finally {
-        result(zookeepersCollie.remove(zkClusterName))
+        result(zookeeperCollie.remove(zkClusterName))
       }
     }
   }
@@ -379,7 +379,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
     val workerCollie: WorkerCollie = clusterCollie.workerCollie()
     val workerClusterName: String = s"workercluster${CommonUtil.randomString(10)}"
@@ -390,7 +390,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       val zkPeerPort: Int = CommonUtil.availablePort()
       val zkElectionPort: Int = CommonUtil.availablePort()
 
-      createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+      createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
       //Create broker cluster service
       val brokerClientPort = CommonUtil.availablePort()
@@ -429,7 +429,7 @@ class TestK8SCollie extends IntegrationTest with Matchers {
         try {
           result(brokerCollie.remove(brokerClusterName))
         } finally {
-          result(zookeepersCollie.remove(zkClusterName))
+          result(zookeeperCollie.remove(zkClusterName))
         }
       }
     }
@@ -443,8 +443,8 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = s"zk${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
-    result(zookeepersCollie.clusters())
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
+    result(zookeeperCollie.clusters())
       .flatMap(x => x._2)
       .filter(x => x.hostname.contains(zkClusterName1))
       .size shouldBe 0
@@ -454,13 +454,13 @@ class TestK8SCollie extends IntegrationTest with Matchers {
       val zkPeerPort1: Int = CommonUtil.availablePort()
       val zkElectionPort1: Int = CommonUtil.availablePort()
 
-      createZookeeperCollie(zookeepersCollie, zkClusterName1, firstNode, zkClientPort1, zkPeerPort1, zkElectionPort1)
-      result(zookeepersCollie.clusters())
+      createZookeeperCollie(zookeeperCollie, zkClusterName1, firstNode, zkClientPort1, zkPeerPort1, zkElectionPort1)
+      result(zookeeperCollie.clusters())
         .flatMap(x => x._2)
         .filter(x => x.hostname.contains(zkClusterName1))
         .size shouldBe 1
     } finally {
-      result(zookeepersCollie.remove(zkClusterName1))
+      result(zookeeperCollie.remove(zkClusterName1))
     }
   }
 
@@ -472,12 +472,12 @@ class TestK8SCollie extends IntegrationTest with Matchers {
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
-    val zookeepersCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val zkClientPort: Int = CommonUtil.availablePort()
     val zkPeerPort: Int = CommonUtil.availablePort()
     val zkElectionPort: Int = CommonUtil.availablePort()
 
-    createZookeeperCollie(zookeepersCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
+    createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     //Create broker cluster service
     val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
@@ -534,20 +534,20 @@ class TestK8SCollie extends IntegrationTest with Matchers {
         try {
           result(brokerCollie.remove(brokerClusterName))
         } finally {
-          result(zookeepersCollie.remove(zkClusterName))
+          result(zookeeperCollie.remove(zkClusterName))
         }
       }
     }
   }
 
-  private[this] def createZookeeperCollie(zookeepersCollie: ZookeeperCollie,
+  private[this] def createZookeeperCollie(zookeeperCollie: ZookeeperCollie,
                                           clusterName: String,
                                           nodeName: String,
                                           clientPort: Int,
                                           peerPort: Int,
                                           electionPort: Int): ZookeeperClusterInfo = {
     result(
-      zookeepersCollie
+      zookeeperCollie
         .creator()
         .clusterName(clusterName)
         .clientPort(clientPort)

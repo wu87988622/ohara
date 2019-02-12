@@ -114,7 +114,7 @@ class Configurator private[configurator] (
     }
   }
 
-  private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeepersCollie()
+  private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
 

@@ -109,7 +109,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val electionPort = CommonUtil.availablePort()
     val peerPort = CommonUtil.availablePort()
     val clientPort = CommonUtil.availablePort()
-    val zookeeperCollie = clusterCollie.zookeepersCollie()
+    val zookeeperCollie = clusterCollie.zookeeperCollie()
 
     try f(
       Await.result(

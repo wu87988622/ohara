@@ -71,7 +71,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         }
       }
   }
-  override def zookeepersCollie(): ZookeeperCollie = zkCollie
+  override def zookeeperCollie(): ZookeeperCollie = zkCollie
   override def brokerCollie(): BrokerCollie = bkCollie
   override def workerCollie(): WorkerCollie = wkCollie
 
@@ -158,7 +158,6 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         }
         .map(_.flatten))
       .flatMap { allContainers =>
-        println(s"[CHIA] allContainers:${allContainers.map(_.name)}")
         def parse(
           serviceName: String,
           f: (String, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future
@@ -259,8 +258,7 @@ private object ClusterCollieImpl {
     override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
       case (cluster, _) =>
         nodeCollie.nodes(cluster.nodeNames).map { nodes =>
-          println(s"[CHIA] clusterName:$clusterName nodes:${nodes.map(_.name)} cluster.nodeNames:${cluster.nodeNames}")
-          nodes.foreach(node => stopAndRemoveService(clientCache.get(node), clusterName, true))
+          nodes.foreach(node => stopAndRemoveService(clientCache.get(node), clusterName, true, true))
           cluster
         }
     }
@@ -271,16 +269,15 @@ private object ClusterCollieImpl {
       * @param client docker client
       * @param clusterName cluster name
       */
-    def stopAndRemoveService(client: DockerClient, clusterName: String, swallow: Boolean): Unit =
+    def stopAndRemoveService(client: DockerClient, clusterName: String, swallow: Boolean, force: Boolean): Unit =
       try {
         val key = s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName"
         val containers = client.containers(_.startsWith(key))
-        println(s"[CHIA] containers:${containers.map(_.name)}")
         if (containers.nonEmpty) {
           var lastException: Throwable = null
           containers.foreach(
             container =>
-              try client.forceRemove(container.name)
+              try if (force) client.forceRemove(container.name) else client.stop(container.name)
               catch {
                 case e: Throwable =>
                   LOG.error(s"failed to stop $container", e)
@@ -324,7 +321,7 @@ private object ClusterCollieImpl {
         }
       }
       .flatMap { targetNode =>
-        stopAndRemoveService(clientCache.get(targetNode), clusterName, false)
+        stopAndRemoveService(clientCache.get(targetNode), clusterName, false, false)
         cluster(clusterName).map(_._1)
       }
 
@@ -383,7 +380,7 @@ private object ClusterCollieImpl {
                     .run()
                   catch {
                     case e: Throwable =>
-                      stopAndRemoveService(client, clusterName, true)
+                      stopAndRemoveService(client, clusterName, true, true)
                       LOG.error(s"failed to start $clusterName", e)
                       None
                   }
@@ -509,7 +506,7 @@ private object ClusterCollieImpl {
                       .run()
                     catch {
                       case e: Throwable =>
-                        stopAndRemoveService(client, clusterName, true)
+                        stopAndRemoveService(client, clusterName, true, true)
                         LOG.error(s"failed to start $imageName on ${node.name}", e)
                         None
                     }
@@ -665,7 +662,7 @@ private object ClusterCollieImpl {
                     .run()
                   catch {
                     case e: Throwable =>
-                      stopAndRemoveService(client, clusterName, true)
+                      stopAndRemoveService(client, clusterName, true, true)
                       LOG.error(s"failed to start $imageName", e)
                       None
                   }

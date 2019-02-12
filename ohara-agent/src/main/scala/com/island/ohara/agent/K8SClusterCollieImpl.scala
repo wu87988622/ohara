@@ -34,7 +34,7 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
     extends ReleaseOnce
     with ClusterCollie {
 
-  override def zookeepersCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl
+  override def zookeeperCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl
 
   override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl
 

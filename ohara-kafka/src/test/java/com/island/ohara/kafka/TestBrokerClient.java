@@ -40,12 +40,12 @@ public class TestBrokerClient extends With3Brokers {
     client.topicCreator().numberOfPartitions(1).numberOfReplications((short) 1).create(topicName);
     assertEquals(client.topicDescription(topicName).numberOfPartitions(), 1);
 
-    client.addPartitions(topicName, 2);
+    client.createPartitions(topicName, 2);
     assertEquals(client.topicDescription(topicName).numberOfPartitions(), 2);
     // decrease the number
-    assertException(IllegalArgumentException.class, () -> client.addPartitions(topicName, 1));
+    assertException(IllegalArgumentException.class, () -> client.createPartitions(topicName, 1));
     // alter an nonexistent topic
-    assertException(IllegalArgumentException.class, () -> client.addPartitions("Xxx", 2));
+    assertException(IllegalArgumentException.class, () -> client.createPartitions("Xxx", 2));
   }
 
   @Test

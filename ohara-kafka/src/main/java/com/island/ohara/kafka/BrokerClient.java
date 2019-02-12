@@ -40,6 +40,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.Node;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
@@ -52,13 +53,18 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  */
 public interface BrokerClient extends Releasable {
 
+  /**
+   * start a progress to create topic
+   *
+   * @return creator
+   */
   TopicCreator topicCreator();
 
+  /**
+   * @param topicName topic name
+   * @return true if topic exists. Otherwise, false
+   */
   boolean exist(String topicName);
-
-  default boolean nonExist(String topicName) {
-    return !exist(topicName);
-  }
 
   /**
    * describe the topic existing in kafka. If the topic doesn't exist, exception will be thrown
@@ -77,13 +83,39 @@ public interface BrokerClient extends Releasable {
         .collect(Collectors.toList());
   }
 
+  /**
+   * list all topics details from kafka
+   *
+   * @return topic details
+   */
   List<TopicDescription> topicDescriptions();
 
-  void addPartitions(String topicName, int numberOfPartitions);
+  /**
+   * create new partitions for specified topic
+   *
+   * @param topicName topic name
+   * @param numberOfPartitions number of new partitions
+   */
+  void createPartitions(String topicName, int numberOfPartitions);
 
+  /**
+   * remove topic.
+   *
+   * @param topicName topic name
+   */
   void deleteTopic(String topicName);
 
+  /** @return Connection information. form: host:port,host:port */
   String connectionProps();
+
+  /**
+   * list all active brokers' ports. This is different to {@link #connectionProps()} since this
+   * method will fetch the "really" active brokers from cluster. {@link #connectionProps()} may
+   * include dead or nonexistent broker nodes.
+   *
+   * @return active brokers' ports
+   */
+  Map<String, Integer> brokerPorts();
 
   static BrokerClient of(String connectionProps) {
     Duration timeout = Duration.ofSeconds(30);
@@ -200,7 +232,7 @@ public interface BrokerClient extends Releasable {
       }
 
       @Override
-      public void addPartitions(String topicName, int numberOfPartitions) {
+      public void createPartitions(String topicName, int numberOfPartitions) {
         TopicDescription current = topicDescription(topicName);
         if (current.numberOfPartitions() > numberOfPartitions)
           throw new IllegalArgumentException("Reducing the number from partitions is disallowed");
@@ -237,6 +269,19 @@ public interface BrokerClient extends Releasable {
       @Override
       public String connectionProps() {
         return connectionProps;
+      }
+
+      @Override
+      public Map<String, Integer> brokerPorts() {
+        return CheckedExceptionUtil.wrap(
+            () ->
+                admin
+                    .describeCluster()
+                    .nodes()
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+                    .stream()
+                    .collect(Collectors.toMap(Node::host, Node::port)),
+            handler);
       }
 
       /**

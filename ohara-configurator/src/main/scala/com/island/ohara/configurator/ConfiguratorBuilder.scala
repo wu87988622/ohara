@@ -359,7 +359,7 @@ private[this] class FakeClusterCollie(bkConnectionProps: String, wkConnectionPro
   private[this] val bkCollie: FakeBrokerCollie = new FakeBrokerCollie(bkConnectionProps)
   private[this] val wkCollie: FakeWorkerCollie = new FakeWorkerCollie(wkConnectionProps)
 
-  override def zookeepersCollie(): FakeZookeeperCollie = zkCollie
+  override def zookeeperCollie(): FakeZookeeperCollie = zkCollie
 
   override def brokerCollie(): FakeBrokerCollie = bkCollie
 

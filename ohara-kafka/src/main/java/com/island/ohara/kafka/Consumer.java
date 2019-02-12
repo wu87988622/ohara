@@ -118,7 +118,7 @@ public interface Consumer<K, V> extends Releasable {
 
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private List<String> topicNames;
-    private String groupId = String.format("ohara-consumer- %s", CommonUtil.uuid());
+    private String groupId = String.format("ohara-consumer-%s", CommonUtil.uuid());
     private String connectionProps;
 
     private Builder() {

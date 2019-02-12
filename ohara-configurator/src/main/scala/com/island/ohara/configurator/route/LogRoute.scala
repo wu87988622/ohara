@@ -63,7 +63,7 @@ object LogRoute {
     pathPrefix("logs") {
       path(ZOOKEEPER_PREFIX_PATH) {
         parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
-          onSuccess(collie.zookeepersCollie().logs(zkClusterName))(data => route(zkClusterName, data))
+          onSuccess(collie.zookeeperCollie().logs(zkClusterName))(data => route(zkClusterName, data))
         }
       } ~ path(BROKER_PREFIX_PATH) {
         parameter(Parameters.CLUSTER_NAME) { bkClusterName =>

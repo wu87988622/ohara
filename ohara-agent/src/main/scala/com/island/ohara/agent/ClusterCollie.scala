@@ -35,7 +35,7 @@ trait ClusterCollie extends Releasable {
     * create a collie for zookeeper cluster
     * @return zookeeper collie
     */
-  def zookeepersCollie(): ZookeeperCollie
+  def zookeeperCollie(): ZookeeperCollie
 
   /**
     * create a collie for broker cluster
@@ -53,7 +53,7 @@ trait ClusterCollie extends Releasable {
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of zk, bk and wk clusters
     */
-  def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = zookeepersCollie().clusters().flatMap { zkMap =>
+  def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = zookeeperCollie().clusters().flatMap { zkMap =>
     brokerCollie().clusters().flatMap { bkMap =>
       workerCollie().clusters().map { wkMap =>
         wkMap.map {
