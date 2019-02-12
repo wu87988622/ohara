@@ -557,7 +557,7 @@ class JdbcSource extends React.Component {
                 selected={currWriteTopic}
                 width="100%"
                 data-testid="write-topic-select"
-                handleChange={this.handleChangeSelect}
+                handleChange={this.handleSelectChange}
                 placeholder="Please select a topic..."
                 clearable
               />
