@@ -76,7 +76,7 @@ class TestListCluster extends IntegrationTest with Matchers {
     nodeCache.foreach { node =>
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-      try dockerClient.containers().count(_.name.contains(name)) shouldBe 1
+      try dockerClient.containers(_.contains(name)).size shouldBe 1
       finally dockerClient.close()
     }
 
@@ -118,7 +118,7 @@ class TestListCluster extends IntegrationTest with Matchers {
       nodeCache.foreach { node =>
         val dockerClient =
           DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-        try dockerClient.containers().count(_.name.contains(name)) shouldBe 1
+        try dockerClient.containers(_.contains(name)).size shouldBe 1
         finally dockerClient.close()
       }
 

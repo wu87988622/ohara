@@ -34,7 +34,7 @@ trait DockerClient extends Releasable {
     * @param name container's name
     * @return true if container exists. otherwise, false
     */
-  def exist(name: String): Boolean = containers().exists(_.name == name)
+  def exist(name: String): Boolean = containers(_ == name).nonEmpty
 
   /**
     * @param name container's name
@@ -54,6 +54,8 @@ trait DockerClient extends Releasable {
   def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] =
     containers(nameFilter).filter(_.state == ContainerState.RUNNING)
 
+  def names(): Seq[String]
+
   /**
     * @return a collection of docker containers
     */
@@ -69,13 +71,7 @@ trait DockerClient extends Releasable {
     * @param name container's name
     * @return container description or None if container doesn't exist
     */
-  def container(name: String): Option[ContainerInfo] = containers().find(_.name == name)
-
-  /**
-    * @param name container's id
-    * @return container description or None if container doesn't exist
-    */
-  def containerById(id: String): Option[ContainerInfo] = containers().find(_.id == id)
+  def container(name: String): Option[ContainerInfo] = containers(_ == name).headOption
 
   /**
     * start a docker container.
@@ -85,54 +81,21 @@ trait DockerClient extends Releasable {
 
   /**
     * stop a running container. If the container doesn't exist, exception will be thrown.
-    * Noted: Please use #stopById to stop container by id
     * @param name container's name
-    * @return container information.
     */
-  def stop(name: String): ContainerInfo
+  def stop(name: String): Unit
 
   /**
     * remove a stopped container. If the container doesn't exist, exception will be thrown.
-    * Noted: Please use #stopById to remove container by id
     * @param name container's name
-    * @return container information.
     */
-  def remove(name: String): ContainerInfo
+  def remove(name: String): Unit
 
   /**
     * remove a container. If the container doesn't exist, exception will be thrown.
     * @param name container's name
-    * @return container information.
     */
-  def forceRemove(name: String): ContainerInfo
-
-  /**
-    * stop a running container. If the container doesn't exist, exception will be thrown.
-    * Noted: Please use #stop to stop container by name
-    * @param id container's id
-    * @return container information.
-    */
-  def stopById(id: String): ContainerInfo
-
-  /**
-    * remove a stopped container. If the container doesn't exist, exception will be thrown.
-    * Noted: Please use #stop to remove container by name
-    * @param id container's id
-    * @return container information.
-    */
-  def removeById(id: String): ContainerInfo
-
-  /**
-    * @param id container's id
-    * @return true if container exists. otherwise, false
-    */
-  def existById(id: String): Boolean = containers().exists(_.id == id)
-
-  /**
-    * @param id container's id
-    * @return true if container does not exist. otherwise, true
-    */
-  def nonExistById(id: String): Boolean = !existById(id)
+  def forceRemove(name: String): Unit
 
   /**
     * check whether the remote node is capable of running docker.

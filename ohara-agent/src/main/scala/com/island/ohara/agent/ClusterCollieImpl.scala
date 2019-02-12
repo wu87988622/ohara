@@ -158,6 +158,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         }
         .map(_.flatten))
       .flatMap { allContainers =>
+        println(s"[CHIA] allContainers:${allContainers.map(_.name)}")
         def parse(
           serviceName: String,
           f: (String, Seq[ContainerInfo]) => Future[ClusterInfo]): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = Future
@@ -258,6 +259,7 @@ private object ClusterCollieImpl {
     override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
       case (cluster, _) =>
         nodeCollie.nodes(cluster.nodeNames).map { nodes =>
+          println(s"[CHIA] clusterName:$clusterName nodes:${nodes.map(_.name)} cluster.nodeNames:${cluster.nodeNames}")
           nodes.foreach(node => stopAndRemoveService(clientCache.get(node), clusterName, true))
           cluster
         }
@@ -273,6 +275,7 @@ private object ClusterCollieImpl {
       try {
         val key = s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName"
         val containers = client.containers(_.startsWith(key))
+        println(s"[CHIA] containers:${containers.map(_.name)}")
         if (containers.nonEmpty) {
           var lastException: Throwable = null
           containers.foreach(
@@ -352,10 +355,10 @@ private object ClusterCollieImpl {
               case (node, _) =>
                 node.name -> CommonUtil.address(node.name)
             }
-            val zkServers: String = nodes.values.mkString(" ")
+            val zkServers: String = nodes.keys.map(_.name).mkString(" ")
             val successfulNodeNames: Seq[String] = nodes.zipWithIndex
               .flatMap {
-                case ((node, hostname), index) =>
+                case ((node, containerName), index) =>
                   val client = clientCache.get(node)
                   try client
                     .containerCreator()
@@ -366,7 +369,8 @@ private object ClusterCollieImpl {
                         peerPort -> peerPort,
                         electionPort -> electionPort
                       ))
-                    .hostname(hostname)
+                    // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                    .hostname(node.name)
                     .envs(Map(
                       ZookeeperCollie.ID_KEY -> index.toString,
                       ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
@@ -374,7 +378,7 @@ private object ClusterCollieImpl {
                       ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
                       ZookeeperCollie.SERVERS_KEY -> zkServers
                     ))
-                    .name(hostname)
+                    .name(containerName)
                     .route(route)
                     .run()
                   catch {

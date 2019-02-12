@@ -75,16 +75,16 @@ class TestDockerClient extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = runTest { client =>
-    val before = client.containers()
+    val before = client.names()
     val container =
       client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     try {
       container.state shouldBe ContainerState.RUNNING
-      val after = client.containers()
-      before.exists(_.name == container.name) shouldBe false
-      after.exists(_.name == container.name) shouldBe true
+      val after = client.names()
+      before.contains(container.name) shouldBe false
+      after.contains(container.name) shouldBe true
     } finally client.stop(container.name)
-    client.containers().exists(_.name == container.name) shouldBe false
+    client.names().contains(container.name) shouldBe false
   }
 
   @Test
@@ -111,34 +111,6 @@ class TestDockerClient extends MediumTest with Matchers {
       TimeUnit.SECONDS.sleep(3)
       client.container(container.name).get.state shouldBe ContainerState.EXITED
     } finally client.remove(container.name)
-  }
-
-  @Test
-  def testStopById(): Unit = runTest { client =>
-    // ping google 3 times
-    val container =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
-    client.stopById(container.id)
-    TimeUnit.SECONDS.sleep(3)
-    client.exist(container.name) shouldBe false
-    client.existById(container.id) shouldBe false
-  }
-
-  @Test
-  def testRemoveById(): Unit = runTest { client =>
-    // ping google 3 times
-    val container =
-      client.containerCreator().imageName(imageName).command(s"""/bin/bash -c \"ping $webHost\"""").run().get
-    try {
-      client.stopById(container.id)
-      TimeUnit.SECONDS.sleep(3)
-      client.containerById(container.id).get.state shouldBe ContainerState.EXITED
-      client.exist(container.name) shouldBe true
-      client.existById(container.id) shouldBe true
-    } finally if (client.exist(container.name)) {
-      client.stop(container.name)
-      client.remove(container.name)
-    }
   }
 
   @Test

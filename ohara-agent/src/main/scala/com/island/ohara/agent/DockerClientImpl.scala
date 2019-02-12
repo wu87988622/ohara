@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DockerClient._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
@@ -186,6 +187,9 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     }
   }
 
+  override def names(): Seq[String] =
+    agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
+
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
   override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = Await.result(
@@ -200,115 +204,82 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
             LOG.error(s"failed to list containers on $agent", e)
             Seq.empty
         }) { line =>
-        // TODO: change this to an async method... by chia
-        Future {
-          try {
-            // filter out all empty string
-            val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
-            // not all containers have forward ports so length - 1
-            if (items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length
-                && items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length - 1)
-              throw new IllegalArgumentException(
-                s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
-            val id = items.head
-            Some(ContainerInfo(
-              nodeName = hostname,
-              id = id,
-              imageName = items(1),
-              created = items(2),
-              state = ContainerState.all
-                .find(s => items(3).toLowerCase.contains(s.name.toLowerCase))
-                // the running container show "up to xxx"
-                .getOrElse(ContainerState.RUNNING),
-              name = items(4),
-              size = items(5),
-              portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6)),
-              environments = agent
-                .execute(s"docker inspect $id --format '{{.Config.Env}}'")
-                .map(_.replaceAll("\n", ""))
-                // form: [abc=123 aa=111]
-                .filter(_.length > 2)
-                .map(_.substring(1))
-                .map(s => s.substring(0, s.length - 1))
-                .map { s =>
-                  s.split(" ")
-                    .filterNot(_.isEmpty)
-                    .map { line =>
-                      val items = line.split("=")
-                      items.size match {
-                        case 1 => items.head -> ""
-                        case 2 => items.head -> items.last
-                        case _ => throw new IllegalArgumentException(s"invalid format of environment:$line")
-                      }
+        def toContainerInfo: ContainerInfo = {
+          // filter out all empty string
+          val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
+          // not all containers have forward ports so length - 1
+          if (items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length
+              && items.length != LIST_PROCESS_FORMAT.split(DIVIDER).length - 1)
+            throw new IllegalArgumentException(
+              s"the expected number of items in $line is ${LIST_PROCESS_FORMAT.split(DIVIDER).length} or ${LIST_PROCESS_FORMAT.split(DIVIDER).length - 1}")
+          val id = items.head
+          ContainerInfo(
+            nodeName = hostname,
+            id = id,
+            imageName = items(1),
+            created = items(2),
+            state = ContainerState.all
+              .find(s => items(3).toLowerCase.contains(s.name.toLowerCase))
+              // the running container show "up to xxx"
+              .getOrElse(ContainerState.RUNNING),
+            name = items(4),
+            size = items(5),
+            portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6)),
+            environments = agent
+              .execute(s"docker inspect $id --format '{{.Config.Env}}'")
+              .map(_.replaceAll("\n", ""))
+              // form: [abc=123 aa=111]
+              .filter(_.length > 2)
+              .map(_.substring(1))
+              .map(s => s.substring(0, s.length - 1))
+              .map { s =>
+                s.split(" ")
+                  .filterNot(_.isEmpty)
+                  .map { line =>
+                    val items = line.split("=")
+                    items.size match {
+                      case 1 => items.head -> ""
+                      case 2 => items.head -> items.last
+                      case _ => throw new IllegalArgumentException(s"invalid format of environment:$line")
                     }
-                    .toMap
-                }
-                .getOrElse(Map.empty),
-              // we can't cat file from a exited container
-              hostname = agent
-                .execute(s"docker inspect $id --format '{{.Config.Hostname}}'")
-                // remove new line
-                .map(_.replaceAll("\n", ""))
-                .get
-            ))
-          } catch {
-            case e: Throwable =>
-              val errorMessage = s"failed to get container description from $hostname." +
-                "This error may be caused by operator conflict since we can't get container information by single command."
-              LOG.error(errorMessage, e)
-              None
-          }
+                  }
+                  .toMap
+              }
+              .getOrElse(Map.empty),
+            // we can't cat file from a exited container
+            hostname = agent
+              .execute(s"docker inspect $id --format '{{.Config.Hostname}}'")
+              // remove new line
+              .map(_.replaceAll("\n", ""))
+              .get
+          )
         }
-
+        Future { Some(toContainerInfo) }.recover {
+          case e: Throwable =>
+            val errorMessage = s"failed to get container description from $hostname." +
+              "This error may be caused by operator conflict since we can't get container information by single command." +
+              "will retry it after 1 second"
+            LOG.error(errorMessage, e)
+            // TODO: ssh is fucking easy to shutdown if we "touch" it violently... by chia
+            try {
+              TimeUnit.SECONDS.sleep(1)
+              Some(toContainerInfo)
+            } catch {
+              case e: Throwable =>
+                LOG.error(s"still fail to fetch containers from $hostname", e)
+                None
+            }
+        }
       }
       .map(_.flatten),
     60 seconds
   )
 
-  override def stop(name: String): ContainerInfo =
-    containers()
-      .find(_.name == name)
-      .map { container =>
-        agent.execute(s"docker stop $name")
-        container
-      }
-      .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
+  override def stop(name: String): Unit = agent.execute(s"docker stop $name")
 
-  override def remove(name: String): ContainerInfo =
-    containers()
-      .find(_.name == name)
-      .map { container =>
-        agent.execute(s"docker rm $name")
-        container
-      }
-      .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
+  override def remove(name: String): Unit = agent.execute(s"docker rm $name")
 
-  override def forceRemove(name: String): ContainerInfo =
-    containers()
-      .find(_.name == name)
-      .map { container =>
-        agent.execute(s"docker rm -f $name")
-        container
-      }
-      .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
-
-  override def stopById(id: String): ContainerInfo =
-    containers()
-      .find(_.id == id)
-      .map { container =>
-        agent.execute(s"docker stop $id")
-        container
-      }
-      .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
-
-  override def removeById(id: String): ContainerInfo =
-    containers()
-      .find(_.id == id)
-      .map { container =>
-        agent.execute(s"docker rm $id")
-        container
-      }
-      .getOrElse(throw new IllegalArgumentException(s"Id:$id doesn't exist"))
+  override def forceRemove(name: String): Unit = agent.execute(s"docker rm -f $name")
 
   override def verify(): Boolean =
     agent.execute("docker run --rm hello-world").exists(_.contains("Hello from Docker!"))

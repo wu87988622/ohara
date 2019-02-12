@@ -103,7 +103,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       log.info(s"get containers from zk:$clusterName... done")
       container.nodeName shouldBe nodeName
       container.name.contains(clusterName) shouldBe true
-      container.hostname.contains(clusterName) shouldBe true
+      container.hostname.contains(nodeName) shouldBe true
       container.portMappings.head.portPairs.size shouldBe 3
       container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
       container.portMappings.head.portPairs.exists(_.containerPort == electionPort) shouldBe true
@@ -286,7 +286,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       result(workerCollie.logs(clusterName)).size shouldBe 1
       result(workerCollie.logs(clusterName)).values.foreach(log =>
         withClue(log) {
-          log.contains("exception") shouldBe false
+          log.contains("- ERROR") shouldBe false
           log.isEmpty shouldBe false
       })
       log.info("[WORKER] verify:log done")
@@ -379,7 +379,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
             .clientPort(CommonUtil.availablePort())
             .electionPort(CommonUtil.availablePort())
             .peerPort(CommonUtil.availablePort())
-            .nodeName(nodeCache.head.name)
+            .nodeNames(nodeCache.map(_.name))
             .create(),
           30 seconds
         )
@@ -387,6 +387,10 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       val clusters2 = Await.result(clusterCollie.zookeepersCollie().clusters(), 20 seconds)
       clusters.foreach { c =>
         clusters2.find(_._1.name == c.name).get._1 shouldBe c
+        Await.result(clusterCollie.zookeepersCollie().logs(c.name), 10 seconds).values.foreach { log =>
+          withClue(log)(log.contains("- ERROR") shouldBe false)
+          log.isEmpty shouldBe false
+        }
       }
     } finally names.foreach { name =>
       try Await.result(clusterCollie.zookeepersCollie().remove(name), 10 seconds)
@@ -422,6 +426,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
           .zookeeperClusterName(zk.name)
           .clusterName(bkName)
           .clientPort(CommonUtil.availablePort())
+          .exporterPort(CommonUtil.availablePort())
           .nodeName(nodeCache.head.name)
           .create(),
         30 seconds
@@ -438,7 +443,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
             .configTopicName(CommonUtil.randomString(10))
             .statusTopicName(CommonUtil.randomString(10))
             .offsetTopicName(CommonUtil.randomString(10))
-            .nodeName(nodeCache.head.name)
+            .nodeNames(nodeCache.map(_.name))
             .create(),
           30 seconds
         )
@@ -461,17 +466,21 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         another.offsetTopicReplications shouldBe c.offsetTopicReplications
         another.jarNames shouldBe c.jarNames
         another.imageName shouldBe c.imageName
-        CommonUtil.await(
-          () =>
-            try {
-              val workersProps = s"${clusters.head.nodeNames.head}:${clusters.head.clientPort}"
-              val workerClient = WorkerClient(workersProps)
-              result(workerClient.plugins()).nonEmpty
-            } catch {
-              case _: Throwable => false
-          },
-          Duration.ofSeconds(10)
-        )
+        clusters
+          .flatMap { cluster =>
+            cluster.nodeNames.map(n => s"$n:${cluster.clientPort}")
+          }
+          .foreach { workersProps =>
+            CommonUtil.await(
+              () =>
+                try result(WorkerClient(workersProps).plugins()).nonEmpty
+                catch {
+                  case _: Throwable => false
+              },
+              Duration.ofSeconds(10)
+            )
+          }
+
       }
     } finally {
       try Await.result(clusterCollie.zookeepersCollie().remove(zkName), 10 seconds)
