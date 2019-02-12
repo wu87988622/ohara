@@ -16,19 +16,6 @@
 
 import { isNull } from 'lodash';
 
-import * as _ from 'utils/commonUtils';
-
-export const getCurrHdfsConnection = (connections, targetId) => {
-  let current;
-  if (_.isEmptyStr(targetId)) {
-    current = connections[0] || {};
-  } else {
-    current = connections.find(c => c.id === targetId);
-  }
-
-  return current;
-};
-
 export const handleInputChange = ({ name, value, checked = null }) => {
   return (state, props) => {
     props.updateHasChanges(true);

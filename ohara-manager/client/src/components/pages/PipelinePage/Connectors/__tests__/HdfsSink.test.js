@@ -74,20 +74,19 @@ describe('<HdfsSink />', () => {
     expect(_props.handleChange).toBeDefined();
   });
 
-  it('renders hdfseConnections <FromGroup>', () => {
-    const fromGroup = wrapper.find(getTestById('hdfsConnections'));
+  it('renders hdfs connection url <FromGroup>', () => {
+    const fromGroup = wrapper.find(getTestById('hdfsConnectionUrl'));
     const label = fromGroup.find('Label');
-    const select = fromGroup.find('Select');
-    const _props = select.props();
+    const input = fromGroup.find('Input');
+    const _props = input.props();
 
-    expect(label.children().text()).toBe('Connection');
-    expect(select.length).toBe(1);
-    expect(select.name()).toBe('Select');
-    expect(_props).toHaveProperty('isObject');
-    expect(_props.name).toBe('hdfsConnections');
-    expect(_props.list).toEqual(wrapper.state().readTopics);
-    expect(_props.selected).toEqual(wrapper.state().currReadTopic);
+    expect(label.children().text()).toBe('Connection URL');
+    expect(input.length).toBe(1);
+    expect(input.name()).toBe('Input');
+    expect(_props.name).toBe('hdfsConnectionUrl');
     expect(_props.width).toBe('100%');
+    expect(_props.placeholder).toBe('file://');
+    expect(_props.value).toEqual(wrapper.state().writePath);
     expect(_props.handleChange).toBeDefined();
   });
 

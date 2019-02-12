@@ -15,6 +15,7 @@
  */
 
 import FtpQuicklyFillIn from './FtpQuicklyFillIn';
+import HdfsQuicklyFillIn from './HdfsQuicklyFillIn';
 import JdbcQuicklyFillIn from './JdbcQuicklyFillIn';
 
-export { FtpQuicklyFillIn, JdbcQuicklyFillIn };
+export { FtpQuicklyFillIn, HdfsQuicklyFillIn, JdbcQuicklyFillIn };

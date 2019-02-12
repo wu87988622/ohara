@@ -14,32 +14,7 @@
  * limitations under the License.
  */
 
-import { getCurrHdfsConnection, handleInputChange } from '../hdfsSinkUtils';
-
-describe('getCurrHdfsConnection()', () => {
-  it('gets the correct connection', () => {
-    const connections = [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }];
-    const targetId = '5678';
-
-    const result = getCurrHdfsConnection(connections, targetId);
-    expect(result).toEqual(connections[1]);
-  });
-
-  it('gets the default connection', () => {
-    const connections = [{ name: 'a', id: '1234' }, { name: 'b', id: '5678' }];
-    const targetId = '';
-
-    const result = getCurrHdfsConnection(connections, targetId);
-    expect(result).toEqual(connections[0]);
-  });
-
-  it('returns an empty object targetId is an empty string and connections is an empty array', () => {
-    const connections = [];
-    const targetId = '';
-    const result = getCurrHdfsConnection(connections, targetId);
-    expect(result).toEqual({});
-  });
-});
+import { handleInputChange } from '../hdfsSinkUtils';
 
 describe('handleInputChange()', () => {
   it('returns text input update', () => {
