@@ -77,20 +77,29 @@ private[configurator] object TopicRoute {
             }
       },
       hookOfDelete = (response: TopicInfo) =>
-        CollieUtils.topicAdmin(Some(response.brokerClusterName)).flatMap {
-          case (_, client) =>
-            client
-              .delete(response.id)
-              .map { _ =>
-                try response
-                finally Releasable.close(client)
-              }
-              .recover {
-                case e: Throwable =>
-                  LOG.error(s"failed to remove topic:${response.id} from kafka", e)
-                  response
-              }
-      },
+        CollieUtils
+          .topicAdmin(Some(response.brokerClusterName))
+          .flatMap {
+            case (_, client) =>
+              client
+                .delete(response.id)
+                .map { _ =>
+                  try response
+                  finally Releasable.close(client)
+                }
+                .recover {
+                  case e: Throwable =>
+                    LOG.error(s"failed to remove topic:${response.id} from kafka", e)
+                    response
+                }
+          }
+          .recover {
+            case e: NoSuchElementException =>
+              LOG.warn(
+                s"the cluster:${response.brokerClusterName} doesn't exist!!! just remove topic from configurator",
+                e)
+              response
+        },
       hookOfGet = (response: TopicInfo) => Future.successful(response),
       hookOfList = (responses: Seq[TopicInfo]) => Future.successful(responses)
     )

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.TopicApi
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -26,8 +26,12 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicRoute extends SmallTest with Matchers {
+
   private[this] val configurator = Configurator.builder().fake().build()
+
+  private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -48,37 +52,53 @@ class TestTopicRoute extends SmallTest with Matchers {
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val access = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
-
     // test add
-    result(access.list()).size shouldBe 0
+    result(topicApi.list()).size shouldBe 0
     val request = TopicApi.creationRequest(methodName)
-    val response = compareRequestAndResponse(request, result(access.add(request)))
+    val response = compareRequestAndResponse(request, result(topicApi.add(request)))
 
     // test get
-    compare2Response(response, result(access.get(response.id)))
+    compare2Response(response, result(topicApi.get(response.id)))
 
     // test update
     val anotherRequest = TopicApi.creationRequest(methodName)
     val newResponse =
-      compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
+      compareRequestAndResponse(anotherRequest, result(topicApi.update(response.id, anotherRequest)))
 
     // test get
-    compare2Response(newResponse, result(access.get(newResponse.id)))
+    compare2Response(newResponse, result(topicApi.get(newResponse.id)))
 
     // test delete
-    result(access.list()).size shouldBe 1
-    result(access.delete(response.id)) shouldBe newResponse
-    result(access.list()).size shouldBe 0
+    result(topicApi.list()).size shouldBe 1
+    result(topicApi.delete(response.id)) shouldBe newResponse
+    result(topicApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(access.get("123"))
-    an[IllegalArgumentException] should be thrownBy result(access.update("777", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(topicApi.get("123"))
+    an[IllegalArgumentException] should be thrownBy result(topicApi.update("777", anotherRequest))
 
     // test same name
     val topicNames: Set[String] =
-      (0 until 5).map(index => result(access.add(TopicApi.creationRequest(s"topic-$index"))).name).toSet
+      (0 until 5).map(index => result(topicApi.add(TopicApi.creationRequest(s"topic-$index"))).name).toSet
     topicNames.size shouldBe 5
+  }
+
+  @Test
+  def removeTopicFromNonexistentBrokerCluster(): Unit = {
+    val name = methodName()
+    result(
+      topicApi
+        .add(TopicApi.creationRequest(name))
+        .flatMap { topicInfo =>
+          BrokerApi
+            .access()
+            .hostname(configurator.hostname)
+            .port(configurator.port)
+            .delete(topicInfo.brokerClusterName)
+            .flatMap(_ => topicApi.delete(topicInfo.id))
+        }
+        .flatMap(_ => topicApi.list())
+        .map(topics => topics.exists(_.name == name))) shouldBe false
   }
 
   @After
