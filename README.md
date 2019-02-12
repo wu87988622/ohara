@@ -13,7 +13,7 @@ An easy-to-use visual stream processing tool based on Apache Kafka.
 * gradle 5.1+
 * Node.js 8.12.0
 * Yarn 1.7.0. (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)
-* Docker 17.05+ (Multi-stage is required in building ohara images, and it is supported by Docker 17.05 or higher. see https://docs.docker.com/develop/develop-images/multistage-build/ for more details)
+* Docker 18.09+ (Official QA is on docker 18.09. Also, docker multi-stage, which is supported by Docker 17.05 or higher, is required in building ohara images. see https://docs.docker.com/develop/develop-images/multistage-build/ for more details)
 
 ### Apply header or checkstyle to code base
 ```

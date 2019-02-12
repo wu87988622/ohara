@@ -8,7 +8,7 @@ machine to use ohara's docker-compose file).
 ## Prerequisites
 
 * Centos 7.6+ (supported by official community. However, other GNU/Linux should work well also)
-* Docker 17.05+
+* Docker 18.09+
 * Docker-compose 1.23.2+
 
 ## How to install docker
