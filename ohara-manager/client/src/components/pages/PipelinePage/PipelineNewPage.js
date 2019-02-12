@@ -20,7 +20,7 @@ import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
-import { Route } from 'react-router-dom';
+import { Route, Prompt } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
@@ -130,6 +130,7 @@ class PipelineNewPage extends React.Component {
     currentTopic: {},
     graph: [],
     isLoading: true,
+    isUpdating: false,
     hasChanges: false,
     pipelines: {},
     pipelineTopics: [],
@@ -243,21 +244,23 @@ class PipelineNewPage extends React.Component {
     const { pipelines } = this.state;
     const { id, status } = pipelines;
     const params = updatePipelineParams({ pipelines, ...update });
+    this.setState({ isUpdating: true }, async () => {
+      const res = await pipelineApi.updatePipeline({ id, params });
+      this.setState({ isUpdating: false });
 
-    const res = await pipelineApi.updatePipeline({ id, params });
-    const updatedPipelines = get(res, 'data.result', null);
+      const updatedPipelines = get(res, 'data.result', null);
+      if (!isEmpty(updatedPipelines)) {
+        const { topics: pipelineTopics } = getConnectors(
+          updatedPipelines.objects,
+        );
 
-    if (!isEmpty(updatedPipelines)) {
-      const { topics: pipelineTopics } = getConnectors(
-        updatedPipelines.objects,
-      );
-
-      // Keep the pipeline status since that's not stored on the configurator
-      this.setState({
-        pipelines: { ...updatedPipelines, status },
-        pipelineTopics,
-      });
-    }
+        // Keep the pipeline status since that's not stored on the configurator
+        this.setState({
+          pipelines: { ...updatedPipelines, status },
+          pipelineTopics,
+        });
+      }
+    });
   };
 
   checkPipelineStatus = async () => {
@@ -349,6 +352,7 @@ class PipelineNewPage extends React.Component {
   render() {
     const {
       isLoading,
+      isUpdating,
       graph,
       topics,
       pipelineTopics,
@@ -378,6 +382,7 @@ class PipelineNewPage extends React.Component {
     return (
       <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>
         <React.Fragment>
+          <Prompt message={MESSAGES.LEAVE_WITHOUT_SAVE} when={isUpdating} />
           <Wrapper>
             <PipelineToolbar
               {...this.props}
