@@ -62,10 +62,12 @@ export const createConnector = async ({ updateGraph, connector }) => {
 
   let id;
 
-  if (isTopic(className) || isStream(className)) {
+  if (isTopic(className)) {
     // Topic was created beforehand, it already has an ID.
     id = connector.id;
     connectorName = connector.name;
+  } else if (isStream(className)) {
+    id = connector.id;
   } else if (isSource(className)) {
     const res = await pipelineApi.createSource(params);
     id = get(res, 'data.result.id', null);

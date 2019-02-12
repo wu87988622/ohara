@@ -22,18 +22,20 @@ const SelectField = ({
   input: { name, onChange, value, ...restInput },
   meta,
   ...rest
-}) => (
-  <Select
-    {...rest}
-    name={name}
-    helperText={meta.touched ? meta.error : undefined}
-    error={meta.error && meta.touched}
-    inputProps={restInput}
-    handleChange={onChange}
-    value={value}
-    selected={value}
-  />
-);
+}) => {
+  return (
+    <Select
+      {...rest}
+      name={name}
+      helperText={meta.touched ? meta.error : undefined}
+      error={meta.error && meta.touched}
+      inputProps={restInput}
+      handleChange={onChange}
+      value={value}
+      selected={value}
+    />
+  );
+};
 
 SelectField.propTypes = {
   input: PropTypes.shape({

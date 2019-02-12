@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
+import { isSource, isSink, isTopic, isStream } from './commonUtils';
 
-const Controller = styled.div`
-  position: absolute;
-  right: 0;
-`;
+export const getIcon = kind => {
+  let icon = '';
 
-const ControlButton = styled.button`
-  color: ${props => props.theme.lightBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-  transition: ${props => props.theme.durationNormal} all;
-
-  &:hover {
-    color: ${props => props.theme.blue};
+  if (isSource(kind)) {
+    icon = 'fa-file-import';
+  } else if (isSink(kind)) {
+    icon = 'fa-file-export';
+  } else if (isTopic(kind)) {
+    icon = 'fa-list-ul';
+  } else if (isStream(kind)) {
+    icon = 'fa-wind';
   }
-`;
 
-export { Controller, ControlButton };
+  return icon;
+};

@@ -58,8 +58,6 @@ export const PLUGIN_UPLOAD_SUCCESS = 'Plugin successfully uploaded!';
 export const STREAM_APP_DELETION_SUCCESS =
   'Successfully deleted the stream app';
 
-export const AUTO_SAVE_SUCCESS = 'Successfully saved!';
-
 /******************************
   Error messages -- red
 *******************************/

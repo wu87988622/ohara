@@ -21,9 +21,9 @@ import dagreD3 from 'dagre-d3';
 import * as d3 from 'd3v4';
 
 import * as _ from 'utils/commonUtils';
-import * as pipelineUtils from './pipelineUtils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
+import { getIcon } from './pipelineUtils/pipelineGraphUtils';
 
 const Wrapper = styled(Box)`
   width: 65%;
@@ -214,23 +214,6 @@ class PipelineGraph extends React.Component {
     }
   };
 
-  getIcon = kind => {
-    const { isSource, isSink, isTopic, isStream } = pipelineUtils;
-    let icon = '';
-
-    if (isSource(kind)) {
-      icon = 'fa-file-import';
-    } else if (isSink(kind)) {
-      icon = 'fa-file-export';
-    } else if (isTopic(kind)) {
-      icon = 'fa-list-ul';
-    } else if (isStream(kind)) {
-      icon = 'fa-wind';
-    }
-
-    return icon;
-  };
-
   renderGraph = () => {
     const { graph } = this.props;
     const g = new dagreD3.graphlib.Graph().setGraph({});
@@ -244,7 +227,7 @@ class PipelineGraph extends React.Component {
       const topicCls = isTopic ? 'node-topic' : 'node-connector';
       const stateCls = !_.isEmptyStr(state) ? `is-${state.toLowerCase()}` : '';
       const status = !_.isEmptyStr(state) ? state.toLowerCase() : 'stopped';
-      const icon = this.getIcon(kind);
+      const icon = getIcon(kind);
 
       const html = `<div class="node-graph ${topicCls} ${isActiveCls} ${stateCls}">
         <span class="node-icon"><i class="fa ${icon}"></i></span>

@@ -16,7 +16,8 @@
 
 import { isNull } from 'lodash';
 
-import { isSource, isSink, isTopic } from './commonUtils';
+import { isSource, isSink, isTopic, isStream } from './commonUtils';
+import { isEmptyStr } from 'utils/commonUtils';
 
 export const getConnectors = connectors => {
   const sources = connectors
@@ -180,16 +181,18 @@ export const loadGraph = pipelines => {
   const updatedGraph = Object.keys(rules).map(x => {
     const target = objects.find(object => object.id === x);
 
-    if (rules[x] !== '?') {
+    // Stream doesn't have a default name, we should provide one
+    if (isStream(target.kind) && isEmptyStr(target.name)) {
       return {
         ...target,
         to: rules[x],
+        name: 'Untitled stream app',
       };
     }
 
     return {
       ...target,
-      to: '?',
+      to: rules[x],
     };
   });
 

@@ -19,6 +19,7 @@ export const CONNECTOR_TYPES = {
   ftpSource: 'com.island.ohara.connector.ftp.FtpSource',
   hdfsSink: 'com.island.ohara.connector.hdfs.HDFSSinkConnector',
   ftpSink: 'com.island.ohara.connector.ftp.FtpSink',
+  streamApp: 'streamApp',
   topic: 'topic',
 };
 
@@ -28,6 +29,7 @@ export const ICON_MAPS = {
   [CONNECTOR_TYPES.topic]: 'fa-list-ul',
   [CONNECTOR_TYPES.hdfsSink]: 'fa-file-export',
   [CONNECTOR_TYPES.ftpSink]: 'fa-file-export',
+  [CONNECTOR_TYPES.streamApp]: 'fa-wind',
 };
 
 export const TABLE_HEADERS = ['connector name', 'version', 'revision'];

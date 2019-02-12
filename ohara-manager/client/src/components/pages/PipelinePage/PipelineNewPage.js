@@ -194,8 +194,6 @@ class PipelineNewPage extends React.Component {
   };
 
   loadGraph = pipelines => {
-    if (!pipelines) return;
-
     this.setState(() => {
       return { graph: loadGraph(pipelines) };
     });
@@ -524,8 +522,10 @@ class PipelineNewPage extends React.Component {
                     <StreamApp
                       {...this.props}
                       graph={graph}
+                      topics={pipelineTopics}
                       updateGraph={this.updateGraph}
                       refreshGraph={this.refreshGraph}
+                      updateHasChanges={this.updateHasChanges}
                     />
                   )}
                 />

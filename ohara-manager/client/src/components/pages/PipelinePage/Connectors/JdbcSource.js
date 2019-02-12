@@ -242,7 +242,7 @@ class JdbcSource extends React.Component {
     });
   };
 
-  handleChangeSelect = ({ target }) => {
+  handleSelectChange = ({ target }) => {
     const { name, options, value } = target;
     const selectedIdx = options.selectedIndex;
     const { id } = options[selectedIdx].dataset;
@@ -460,7 +460,7 @@ class JdbcSource extends React.Component {
                 selected={currDatabase}
                 width="100%"
                 data-testid="dataset-select"
-                handleChange={this.handleChangeSelect}
+                handleChange={this.handleSelectChange}
                 disabled={isRunning}
               />
             </FormGroup>
@@ -520,7 +520,7 @@ class JdbcSource extends React.Component {
                   selected={currTable}
                   width="100%"
                   data-testid="table-select"
-                  handleChange={this.handleChangeSelect}
+                  handleChange={this.handleSelectChange}
                   disabled={isRunning}
                 />
 

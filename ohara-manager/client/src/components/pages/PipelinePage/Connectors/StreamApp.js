@@ -16,14 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, get, isEmpty } from 'lodash';
-import { Field, Form } from 'react-final-form';
 import toastr from 'toastr';
+import { Field, Form } from 'react-final-form';
+import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as streamAppApi from 'api/streamAppApi';
+import * as _ from 'utils/commonUtils';
 import Controller from './Controller';
-import { fetchTopics } from 'api/topicApi';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
@@ -51,6 +51,12 @@ class StreamApp extends React.Component {
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
+    updateHasChanges: PropTypes.func.isRequired,
+    topics: PropTypes.array.isRequired,
+  };
+
+  selectMaps = {
+    fromTopics: 'currFromTopic',
   };
 
   state = {
@@ -58,39 +64,24 @@ class StreamApp extends React.Component {
     streamApp: null,
     state: null,
     topics: [],
+    currFromTopic: {},
   };
 
   componentDidMount() {
-    const { match } = this.props;
-    const streamAppId = get(match, 'params.connectorId', null);
+    const streamAppId = get(this.props.match, 'params.connectorId', null);
+
+    this.setState({ topics: this.props.topics });
     this.setState({ streamAppId }, () => {
-      this.fetchData();
+      this.fetchStreamApp(streamAppId);
     });
   }
 
-  fetchData = () => {
-    const { streamAppId } = this.state;
-    const fetchTopicsPromise = this.fetchTopics();
-    const fetchStreamAppPromise = this.fetchStreamApp(streamAppId);
-
-    Promise.all([fetchTopicsPromise, fetchStreamAppPromise]);
-  };
-
-  fetchTopics = async () => {
-    const res = await fetchTopics();
-    const isSuccess = get(res, 'data.isSuccess', null);
-    if (isSuccess) {
-      const topics = get(res, 'data.result', []);
-      this.setState({ topics: map(topics, 'name') });
-    }
-  };
-
   fetchStreamApp = async id => {
     const res = await streamAppApi.fetchProperty(id);
-    const isSuccess = get(res, 'data.isSuccess', null);
+    const streamApp = get(res, 'data.result', null);
 
-    if (isSuccess) {
-      this.setState({ streamApp: res.data.result });
+    if (!isEmpty(streamApp)) {
+      this.setState({ streamApp });
     }
   };
 
@@ -105,15 +96,14 @@ class StreamApp extends React.Component {
     };
 
     const res = await streamAppApi.updateProperty(params);
-
     const isSuccess = get(res, 'data.isSuccess', false);
+
     if (isSuccess) {
       const { graph, updateGraph } = this.props;
       const streamAppId = params.id;
       const currStreamApp = findByGraphId(graph, streamAppId);
       const update = { ...currStreamApp, ...params };
-      updateGraph(update, currStreamApp.id);
-      toastr.success(MESSAGES.AUTO_SAVE_SUCCESS);
+      updateGraph({ update });
     }
   };
 
@@ -134,6 +124,27 @@ class StreamApp extends React.Component {
       toastr.success(MESSAGES.STREAM_APP_DELETION_SUCCESS);
       refreshGraph();
     }
+  };
+
+  handleSelectChange = ({ target }) => {
+    const { name, options, value } = target;
+    const selectedIdx = options.selectedIndex;
+    const { id } = options[selectedIdx].dataset;
+    const current = this.selectMaps[name];
+
+    this.setState(
+      () => {
+        return {
+          [current]: {
+            name: value,
+            id,
+          },
+        };
+      },
+      () => {
+        this.props.updateHasChanges(true);
+      },
+    );
   };
 
   triggerStreamApp = async action => {
@@ -177,7 +188,7 @@ class StreamApp extends React.Component {
 
     const { name, instances, jarName, fromTopics, toTopics } = streamApp;
     const initialValues = {
-      name,
+      name: _.isEmptyStr(name) ? 'Untitled stream app' : name,
       instances: `${instances}`,
       fromTopic: !isEmpty(fromTopics) ? fromTopics[0] : null,
       toTopic: !isEmpty(toTopics) ? toTopics[0] : null,
@@ -229,12 +240,13 @@ class StreamApp extends React.Component {
                 <s.FormCol width="50%">
                   <Label>From topic</Label>
                   <Field
-                    name="fromTopic"
+                    name="fromTopics"
                     component={SelectField}
                     list={topics}
                     width="100%"
-                    placeholder="Select topic ..."
+                    placeholder="select a topic ..."
                     data-testid="from-topic-select"
+                    onChange={this.handleSelectChange}
                   />
                 </s.FormCol>
                 <s.FormCol width="50%">
@@ -244,7 +256,7 @@ class StreamApp extends React.Component {
                     component={SelectField}
                     list={topics}
                     width="100%"
-                    placeholder="Select topic ..."
+                    placeholder="select a topic ..."
                     data-testid="to-topic-select"
                   />
                 </s.FormCol>
