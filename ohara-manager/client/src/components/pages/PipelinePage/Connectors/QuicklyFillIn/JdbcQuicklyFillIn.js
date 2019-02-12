@@ -123,6 +123,7 @@ class JdbcQuicklyFillIn extends React.Component {
           handleCancel={this.handleModalClose}
           handleConfirm={this.handleFillIn}
           confirmBtnText="Fill in"
+          isConfirmDisabled={!currJdbcConfiguration}
         >
           <Box shadow={false}>
             <FormGroup>

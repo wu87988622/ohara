@@ -121,6 +121,7 @@ class HdfsQuicklyFillIn extends React.Component {
           handleCancel={this.handleModalClose}
           handleConfirm={this.handleFillIn}
           confirmBtnText="Fill in"
+          isConfirmDisabled={!currHdfsConfiguration}
         >
           <Box shadow={false}>
             <FormGroup>

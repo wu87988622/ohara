@@ -122,6 +122,7 @@ class FtpQuicklyFillIn extends React.Component {
           handleCancel={this.handleModalClose}
           handleConfirm={this.handleFillIn}
           confirmBtnText="Fill in"
+          isConfirmDisabled={!currFtpConfiguration}
         >
           <Box shadow={false}>
             <FormGroup>
