@@ -18,8 +18,9 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import toastr from 'toastr';
 
+import * as MESSAGES from 'constants/messages';
 import PipelineNewPage from '../PipelineNewPage';
-import { CONNECTOR_KEYS } from 'constants/pipelines';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
 import {
@@ -106,11 +107,11 @@ describe('<PipelineNewPage />', () => {
     expect(button.find('i').props().className).toMatch(/^far fa-stop-circle$/);
   });
 
-  it.skip('displays an error message if pipeline does not have status', async () => {
+  it('displays an error message if pipeline does not have status', async () => {
     const data = {
       result: {
         name: 'newPipeline',
-        objects: [{ kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' }],
+        objects: [{ kind: CONNECTOR_TYPES.topic, name: 'a', id: '1' }],
         rules: {},
       },
     };
@@ -124,24 +125,24 @@ describe('<PipelineNewPage />', () => {
       Promise.resolve({ data: { isSuccess: true } }),
     );
 
-    await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
+    await wrapper.find(getTestById('start-btn')).prop('onClick')();
 
     expect(toastr.error).toHaveBeenCalledTimes(1);
     expect(toastr.error).toHaveBeenCalledWith(
-      'Cannot complete your action, please check your connector settings',
+      MESSAGES.CANNOT_START_PIPELINE_ERROR,
     );
   });
 
   // TODO: fix this failing test, the UI is working as expected but the test somehow fails...
-  it.skip('starts the pipeline if the pipeline status is stopped', async () => {
+  it('starts the pipeline', async () => {
     const data = {
       result: {
         name: 'test',
         status: 'Stopped',
         objects: [
-          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', id: '3' },
-          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', id: '2' },
-          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' },
+          { kind: CONNECTOR_TYPES.jdbcSource, name: 'c', id: '3' },
+          { kind: CONNECTOR_TYPES.hdfsSink, name: 'b', id: '2' },
+          { kind: CONNECTOR_TYPES.topic, name: 'a', id: '1' },
         ],
         rules: {},
       },
@@ -156,25 +157,22 @@ describe('<PipelineNewPage />', () => {
       Promise.resolve({ data: { isSuccess: true } }),
     );
 
-    await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
+    await wrapper.find(getTestById('start-btn')).prop('onClick')();
 
     expect(startSource).toHaveBeenCalledTimes(1);
     expect(startSource).toHaveBeenCalledWith(data.result.objects[0].id);
     expect(startSink).toHaveBeenCalledTimes(1);
     expect(startSink).toHaveBeenCalledWith(data.result.objects[1].id);
-
-    const button = wrapper.find(getTestById('start-stop-icon'));
-    expect(button.find('i').props().className).toMatch(/^fa fa-stop-circle$/);
   });
 
-  it.skip('stops the pipeline if the pipeline status is started', async () => {
+  it('stops the pipeline', async () => {
     const data = {
       result: {
         name: 'test',
         objects: [
-          { kind: CONNECTOR_KEYS.jdbcSource, name: 'c', id: '3' },
-          { kind: CONNECTOR_KEYS.hdfsSink, name: 'b', id: '2' },
-          { kind: CONNECTOR_KEYS.topic, name: 'a', id: '1' },
+          { kind: CONNECTOR_TYPES.jdbcSource, name: 'c', id: '3' },
+          { kind: CONNECTOR_TYPES.hdfsSink, name: 'b', id: '2' },
+          { kind: CONNECTOR_TYPES.topic, name: 'a', id: '1' },
         ],
         rules: {},
       },
@@ -182,25 +180,19 @@ describe('<PipelineNewPage />', () => {
 
     fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
 
-    startSink.mockImplementation(() =>
+    stopSink.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
-    startSource.mockImplementation(() =>
+    stopSource.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
-
-    // Start the pipeline
-    await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
 
     // Stop the pipeline
-    await wrapper.find(getTestById('start-stop-icon')).prop('onClick')();
+    await wrapper.find(getTestById('stop-btn')).prop('onClick')();
 
     expect(stopSource).toHaveBeenCalledTimes(1);
     expect(stopSource).toHaveBeenCalledWith(data.result.objects[0].id);
     expect(stopSink).toHaveBeenCalledTimes(1);
     expect(stopSink).toHaveBeenCalledWith(data.result.objects[1].id);
-
-    const button = wrapper.find(getTestById('start-stop-icon'));
-    expect(button.find('i').props().className).toMatch(/^fa fa-play-circle$/);
   });
 });
