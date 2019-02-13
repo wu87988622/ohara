@@ -20,6 +20,7 @@ describe('PipelinePage', () => {
   beforeEach(() => {
     cy.visit(URLS.PIPELINE);
     cy.getByTestId('new-pipeline').click();
+    cy.getByText('Next').click();
   });
 
   it('creates a pipeline and displays in the pipeline list page', () => {
@@ -36,7 +37,14 @@ describe('PipelinePage', () => {
       .blur();
 
     cy.visit(URLS.HOME);
-    cy.getByText(pipelineName).should('have.length', 1);
+    cy.getByText(pipelineName)
+      .should('have.length', 1)
+      .siblings('td')
+      .getByTestId('delete-pipeline')
+      .find('button')
+      .click()
+      .getByText('Yes, Delete this pipeline')
+      .click();
   });
 
   it('Creates a FTP source connector', () => {
