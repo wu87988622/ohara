@@ -41,27 +41,32 @@ const Tab = styled(UnstyledTab).attrs({
   selectedClassName: 'selected',
   disabledClassName: 'disabled',
 })`
+  font-size: 15px;
   flex-grow: 1;
   text-align: center;
   padding: 12px 0;
   list-style: none;
   cursor: pointer;
-  color: #888;
-  border-left: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
-  font-size: 15px;
+  color: ${props => props.theme.lightBlue};
+  border-bottom: 1px solid ${props => props.theme.lighterGray};
+  transition: ${props => props.theme.durationNormal} all;
+
+  &:hover {
+    transition: ${props => props.theme.durationNormal} color;
+    color: ${props => props.theme.blue};
+  }
 
   &:first-child {
     border-left: none;
   }
 
   &.selected {
-    color: #0097ff;
-    border-bottom: none;
+    color: ${props => props.theme.blue};
+    border-bottom: 2px solid ${props => props.theme.blue};
   }
 
   &.disabled {
-    color: #e0e0e0;
+    color: ${props => props.theme.lighterGray};
     cursor: not-allowed;
   }
 `;
