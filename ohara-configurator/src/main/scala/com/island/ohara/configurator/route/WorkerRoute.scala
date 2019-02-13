@@ -47,7 +47,7 @@ object WorkerRoute {
             brokerCollie.clusters().map { clusters =>
               if (clusters.size != 1)
                 throw new IllegalArgumentException(
-                  s"You don't specify the broker cluster for ${req.name}, and there is no default broker cluster. actual:${clusters
+                  s"You didn't specify the broker cluster for ${req.name}, and there is no default broker cluster. actual:${clusters
                     .map(_._1.name)
                     .mkString(",")}")
               clusters.head._1.name

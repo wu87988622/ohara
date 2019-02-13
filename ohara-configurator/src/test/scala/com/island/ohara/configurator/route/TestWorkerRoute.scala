@@ -25,8 +25,8 @@ import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
@@ -50,6 +50,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Before
   def setup(): Unit = {
     val nodeAccess = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -57,138 +58,124 @@ class TestWorkerRoute extends MediumTest with Matchers {
     nodeNames.isEmpty shouldBe false
 
     nodeNames.foreach { n =>
-      Await.result(nodeAccess.add(
-                     NodeCreationRequest(
-                       name = Some(n),
-                       port = 22,
-                       user = "user",
-                       password = "pwd"
-                     )),
-                   10 seconds)
+      result(
+        nodeAccess.add(
+          NodeCreationRequest(
+            name = Some(n),
+            port = 22,
+            user = "user",
+            password = "pwd"
+          )))
     }
 
-    Await.result(nodeAccess.list(), 10 seconds).size shouldBe (nodeNames.size + numberOfDefaultNodes)
+    result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)
   }
 
   @Test
   def testDefaultBk(): Unit = {
     val request = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       brokerClusterName = Some("Asdasdasd"),
       clientPort = Some(123),
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    an[IllegalArgumentException] should be thrownBy assert(request, Await.result(access.add(request), 30 seconds))
+    an[IllegalArgumentException] should be thrownBy assert(request, result(access.add(request)))
     val anotherRequest = request.copy(brokerClusterName = None)
-    assert(anotherRequest, Await.result(access.add(anotherRequest), 30 seconds))
+    assert(anotherRequest, result(access.add(anotherRequest)))
   }
 
   @Test
   def testDefaultBrokerInMultiBrokerCluster(): Unit = {
     val zkClusterName = "zkCluster"
-    Await
-      .result(ZookeeperApi
-                .access()
-                .hostname(configurator.hostname)
-                .port(configurator.port)
-                .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames)),
-              10 seconds)
-      .name shouldBe zkClusterName
+    result(
+      ZookeeperApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames))).name shouldBe zkClusterName
     val anotherBk = CommonUtil.randomString(10)
-    Await
-      .result(BrokerApi
-                .access()
-                .hostname(configurator.hostname)
-                .port(configurator.port)
-                .add(BrokerApi.creationRequest(anotherBk, nodeNames)),
-              10 seconds)
-      .name shouldBe anotherBk
+    result(
+      BrokerApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(BrokerApi.creationRequest(anotherBk, nodeNames))).name shouldBe anotherBk
     try {
-      Await
-        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
-        .size shouldBe 2
+      result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
 
       // there are two bk cluster so we have to assign the bk cluster...
-      an[IllegalArgumentException] should be thrownBy Await.result(
+      an[IllegalArgumentException] should be thrownBy result(
         access.add(
           WorkerApi.creationRequest(
-            name = methodName(),
+            name = CommonUtil.randomString(10),
             nodeNames = nodeNames
-          )),
-        30 seconds
+          ))
       )
-    } finally {
-      Await
-        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherBk),
-                10 seconds)
-        .name shouldBe anotherBk
-    }
+    } finally result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(anotherBk)).name shouldBe anotherBk
   }
 
   @Test
   def testCreateOnNonexistentNode(): Unit = {
-    an[IllegalArgumentException] should be thrownBy Await.result(
+    an[IllegalArgumentException] should be thrownBy result(
       access.add(
         WorkerApi.creationRequest(
-          name = methodName(),
+          name = CommonUtil.randomString(10),
           nodeNames = Seq("asdasdasd")
-        )),
-      30 seconds
+        ))
     )
   }
 
   @Test
   def testEmptyNodes(): Unit = {
-    an[IllegalArgumentException] should be thrownBy Await.result(
+    an[IllegalArgumentException] should be thrownBy result(
       access.add(
         WorkerClusterCreationRequest(
-          name = methodName(),
+          name = CommonUtil.randomString(10),
           imageName = Some("abcdef"),
           brokerClusterName = Some(bkClusterName),
           clientPort = Some(123),
           jars = Seq.empty,
           nodeNames = Seq.empty
-        )),
-      30 seconds
+        ))
     )
   }
   @Test
   def testCreate(): Unit = {
     val request = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(123),
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    assert(request, Await.result(access.add(request), 30 seconds))
+    assert(request, result(access.add(request)))
   }
 
   @Test
   def testList(): Unit = {
     val request0 = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       clientPort = Some(123),
       jars = Seq.empty,
       brokerClusterName = Some(bkClusterName),
       nodeNames = nodeNames
     )
-    assert(request0, Await.result(access.add(request0), 30 seconds))
+    assert(request0, result(access.add(request0)))
     val request1 = WorkerClusterCreationRequest(
-      name = methodName() + "2",
+      name = CommonUtil.randomString(10) + "2",
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    assert(request1, Await.result(access.add(request1), 30 seconds))
+    assert(request1, result(access.add(request1)))
 
-    val clusters = Await.result(access.list(), 30 seconds)
+    val clusters = result(access.list())
     clusters.size shouldBe 2
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
@@ -197,53 +184,53 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def testRemove(): Unit = {
     val request = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    val cluster = Await.result(access.add(request), 30 seconds)
+    val cluster = result(access.add(request))
     assert(request, cluster)
 
-    Await.result(access.delete(request.name), 30 seconds) shouldBe cluster
+    result(access.delete(request.name)) shouldBe cluster
   }
 
   @Test
   def testGetContainers(): Unit = {
     val request = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    val cluster = Await.result(access.add(request), 30 seconds)
+    val cluster = result(access.add(request))
     assert(request, cluster)
 
-    val containers = Await.result(access.get(request.name), 30 seconds)
+    val containers = result(access.get(request.name))
     containers.size shouldBe request.nodeNames.size
 
-    Await.result(access.delete(request.name), 30 seconds) shouldBe cluster
-    Await.result(access.list(), 30 seconds).size shouldBe 0
+    result(access.delete(request.name)) shouldBe cluster
+    result(access.list()).size shouldBe 0
   }
 
   @Test
   def testAddNode(): Unit = {
     val request = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
       jars = Seq.empty,
       nodeNames = Seq(nodeNames.head)
     )
-    val cluster = Await.result(access.add(request), 30 seconds)
+    val cluster = result(access.add(request))
     assert(request, cluster)
 
-    Await.result(access.addNode(cluster.name, nodeNames.last), 30 seconds) shouldBe
+    result(access.addNode(cluster.name, nodeNames.last)) shouldBe
       WorkerClusterInfo(
         name = cluster.name,
         imageName = cluster.imageName,
@@ -268,17 +255,17 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def testRemoveNode(): Unit = {
     val request = WorkerClusterCreationRequest(
-      name = methodName(),
+      name = CommonUtil.randomString(10),
       imageName = Some("abcdef"),
       clientPort = Some(123),
       brokerClusterName = Some(bkClusterName),
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    val cluster = Await.result(access.add(request), 30 seconds)
+    val cluster = result(access.add(request))
     assert(request, cluster)
 
-    Await.result(access.removeNode(cluster.name, nodeNames.last), 30 seconds) shouldBe WorkerClusterInfo(
+    result(access.removeNode(cluster.name, nodeNames.last)) shouldBe WorkerClusterInfo(
       name = cluster.name,
       imageName = cluster.imageName,
       brokerClusterName = cluster.brokerClusterName,
@@ -310,7 +297,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    an[IllegalArgumentException] should be thrownBy Await.result(access.add(request), 30 seconds)
+    an[IllegalArgumentException] should be thrownBy result(access.add(request))
+  }
+
+  @Test
+  def createWkClusterWithSameName(): Unit = {
+    val request = WorkerApi.creationRequest(
+      name = CommonUtil.randomString(10),
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(request))
+
+    // we don't need to create another bk cluster since it is feasible to create multi wk cluster on same broker cluster
+    an[IllegalArgumentException] should be thrownBy result(access.add(request))
   }
 
   @After
