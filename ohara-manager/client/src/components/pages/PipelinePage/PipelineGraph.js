@@ -52,6 +52,10 @@ const Svg = styled.svg`
       cursor: pointer;
       border: 1px solid ${props => props.theme.whiteSmoke};
     }
+    foreignObject {
+      /* Make topic name visible */
+      overflow: visible;
+    }
   }
 
   .node-graph {
