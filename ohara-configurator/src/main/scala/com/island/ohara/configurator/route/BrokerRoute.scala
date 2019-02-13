@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NodeCollie}
+import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, _}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
@@ -41,7 +41,7 @@ object BrokerRoute {
                   .filter(_.isInstanceOf[ZookeeperClusterInfo])
                   .find(_.name == zkName)
                   .map(_.name)
-                  .getOrElse(throw new NoSuchElementException(s"$zkName doesn't exist"))
+                  .getOrElse(throw new NoSuchClusterException(s"$zkName doesn't exist"))
               }
               .getOrElse {
                 val zkClusters = clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo])

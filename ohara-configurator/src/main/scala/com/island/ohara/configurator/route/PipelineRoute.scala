@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.WorkerCollie
+import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.PipelineApi._
@@ -164,7 +164,12 @@ private[configurator] object PipelineRoute {
       hookBeforeDelete = (id: String) =>
         store
           .value[Pipeline](id)
-          .flatMap(update)
+          .flatMap { pipeline =>
+            update(pipeline).recover {
+              // keep working even through the wk cluster is gone.
+              case _: NoSuchClusterException => pipeline
+            }
+          }
           .flatMap { pipeline =>
             // If any object has "state", we reject to delete pipeline. We can't stop all objects at once.
             val running = pipeline.objects.filter(_.state.isDefined).map(_.id)

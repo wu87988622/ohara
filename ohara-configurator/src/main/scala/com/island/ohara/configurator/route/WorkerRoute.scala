@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, NodeCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.configurator.jar.JarStore
 
@@ -41,7 +41,7 @@ object WorkerRoute {
             brokerCollie
               .exists(bkName)
               .flatMap(if (_) Future.successful(bkName)
-              else Future.failed(new NoSuchElementException(s"$bkName doesn't exist.")))
+              else Future.failed(new NoSuchClusterException(s"$bkName doesn't exist.")))
           }
           .getOrElse {
             brokerCollie.clusters().map { clusters =>

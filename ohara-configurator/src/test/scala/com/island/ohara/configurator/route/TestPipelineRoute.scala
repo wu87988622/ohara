@@ -36,13 +36,13 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] val pipelineAccess = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
   @Test
   def testMultiWorkerCluster(): Unit = {
 
     val pipeline0 = result(
-      pipelineAccess.add(
+      pipelineApi.add(
         PipelineCreationRequest(
           name = methodName(),
           rules = Map.empty
@@ -82,16 +82,16 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline1 = result(
-      pipelineAccess.add(wkCluster.name,
-                         PipelineCreationRequest(
-                           name = methodName(),
-                           rules = Map.empty
-                         ))
+      pipelineApi.add(wkCluster.name,
+                      PipelineCreationRequest(
+                        name = methodName(),
+                        rules = Map.empty
+                      ))
     )
 
     pipeline1.workerClusterName shouldBe wkCluster.name
 
-    val pipelines = result(pipelineAccess.list())
+    val pipelines = result(pipelineApi.list())
     pipelines.size shouldBe 2
     pipelines.find(_.id == pipeline0.id).get.workerClusterName shouldBe pipeline0.workerClusterName
     pipelines.find(_.id == pipeline1.id).get.workerClusterName shouldBe pipeline1.workerClusterName
@@ -101,7 +101,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
   def testUnmatchedId(): Unit = {
     // test invalid request: nonexistent uuid
     val invalidRequest = PipelineCreationRequest(methodName, Map("invalid" -> Seq("invalid")))
-    val pipeline = result(pipelineAccess.add(invalidRequest))
+    val pipeline = result(pipelineApi.add(invalidRequest))
     pipeline.rules.size shouldBe 0
   }
 
@@ -134,7 +134,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = Await.result(
-      pipelineAccess.add(
+      pipelineApi.add(
         PipelineCreationRequest(
           name = methodName(),
           rules = Map(connector.id -> Seq(topic.id))
@@ -149,11 +149,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
     Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(connector.id),
                  10 seconds)
 
-    val pipeline2 = Await.result(pipelineAccess.get(pipeline.id), 10 seconds)
+    val pipeline2 = Await.result(pipelineApi.get(pipeline.id), 10 seconds)
 
     pipeline2.rules.size shouldBe 0
 
-    val pipelines = Await.result(pipelineAccess.list(), 10 seconds)
+    val pipelines = Await.result(pipelineApi.list(), 10 seconds)
 
     pipelines.size shouldBe 1
     pipelines.head.rules.size shouldBe 0
@@ -180,33 +180,33 @@ class TestPipelineRoute extends SmallTest with Matchers {
     val uuid_1 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
     val uuid_2 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
 
-    result(pipelineAccess.list()).size shouldBe 0
+    result(pipelineApi.list()).size shouldBe 0
 
     val request = PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_1)))
-    val response = compareRequestAndResponse(request, result(pipelineAccess.add(request)))
+    val response = compareRequestAndResponse(request, result(pipelineApi.add(request)))
 
     // test get
-    compare2Response(response, result(pipelineAccess.get(response.id)))
+    compare2Response(response, result(pipelineApi.get(response.id)))
 
     // test update
     val anotherRequest = PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_2)))
     val newResponse =
-      compareRequestAndResponse(anotherRequest, result(pipelineAccess.update(response.id, anotherRequest)))
+      compareRequestAndResponse(anotherRequest, result(pipelineApi.update(response.id, anotherRequest)))
 
     // topics should have no state
     newResponse.objects.foreach(_.state shouldBe None)
 
     // test get
-    compare2Response(newResponse, result(pipelineAccess.get(newResponse.id)))
+    compare2Response(newResponse, result(pipelineApi.get(newResponse.id)))
 
     // test delete
-    result(pipelineAccess.list()).size shouldBe 1
-    result(pipelineAccess.delete(response.id)) shouldBe newResponse
-    result(pipelineAccess.list()).size shouldBe 0
+    result(pipelineApi.list()).size shouldBe 1
+    result(pipelineApi.delete(response.id)) shouldBe newResponse
+    result(pipelineApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(pipelineAccess.get("asdasdsad"))
-    an[IllegalArgumentException] should be thrownBy result(pipelineAccess.update("asdasdsad", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(pipelineApi.get("asdasdsad"))
+    an[IllegalArgumentException] should be thrownBy result(pipelineApi.update("asdasdsad", anotherRequest))
   }
 
   @Test
@@ -222,33 +222,33 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     // uuid_0 -> uuid_0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_0)))))
+      pipelineApi.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_0)))))
     // uuid_1 can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_1)))))
+      pipelineApi.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_1)))))
     // uuid_2 can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_2)))))
+      pipelineApi.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_2)))))
 
-    val res = result(pipelineAccess.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_3)))))
+    val res = result(pipelineApi.add(PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_3)))))
     // uuid_0 -> uuid_0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_0)))))
+      pipelineApi.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_0)))))
     // uuid_1 can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_1)))))
+      pipelineApi.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_1)))))
     // uuid_2 can't be applied to pipeline
     an[IllegalArgumentException] should be thrownBy result(
-      pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_2)))))
+      pipelineApi.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_2)))))
 
     // good case
-    result(pipelineAccess.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_3))))).name shouldBe methodName
+    result(pipelineApi.update(res.id, PipelineCreationRequest(methodName, Map(uuid_0 -> Seq(uuid_3))))).name shouldBe methodName
   }
 
   @Test
   def unknownKeyShouldBeFiltered(): Unit = {
     val pipeline = Await.result(
-      pipelineAccess.add(
+      pipelineApi.add(
         PipelineCreationRequest(
           name = methodName(),
           rules = Map(PipelineApi.UNKNOWN -> Seq("Adasd", "asdasd"))
@@ -271,7 +271,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = Await.result(
-      pipelineAccess.add(
+      pipelineApi.add(
         PipelineCreationRequest(
           name = methodName(),
           rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
@@ -281,6 +281,32 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     pipeline.rules.size shouldBe 1
     pipeline.rules(topic.id).size shouldBe 0
+  }
+
+  @Test
+  def removeConnectorFromDeletedCluster(): Unit = {
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(TopicApi.creationRequest(name = methodName())),
+      10 seconds
+    )
+
+    val pipeline = result(
+      pipelineApi.add(
+        PipelineCreationRequest(
+          name = methodName(),
+          rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
+        )))
+
+    val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
+    wk.name shouldBe pipeline.workerClusterName
+
+    result(pipelineApi.delete(pipeline.id))
+
+    result(pipelineApi.list()).exists(_.id == pipeline.id) shouldBe false
   }
 
   @After

@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import java.io.File
 import java.net.URL
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ExecutionException, TimeUnit}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -38,7 +38,7 @@ import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
 import com.typesafe.scalalogging.Logger
-import spray.json.{DeserializationException, JsonParser}
+import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
@@ -119,14 +119,16 @@ class Configurator private[configurator] (
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
-    case e: IllegalArgumentException =>
+    case e @ (_: DeserializationException | _: ParsingException) =>
       extractRequest { request =>
         log.error(s"Request to ${request.uri} with ${request.entity} could not be handled normally", e)
         complete(StatusCodes.BadRequest -> ErrorApi.of(e))
       }
     case e: Throwable =>
-      log.error("What happens here?", e)
-      complete(StatusCodes.ServiceUnavailable -> ErrorApi.of(e))
+      extractRequest { request =>
+        log.error(s"Request to ${request.uri} with ${request.entity} could not be handled normally", e)
+        complete(StatusCodes.ServiceUnavailable -> ErrorApi.of(e))
+      }
   }
 
   /**
@@ -136,20 +138,9 @@ class Configurator private[configurator] (
     RejectionHandler
       .newBuilder()
       .handle {
-        case MalformedRequestContentRejection(_, cause) =>
-          // TODO: ohara needs exception hierarchy ... by chia
-          cause match {
-            case e: DeserializationException =>
-              throw new IllegalArgumentException(s"Deserialized Error :${e.getMessage}", e)
-            case e: JsonParser.ParsingException =>
-              throw new IllegalArgumentException(s"JSON Parse Error :${e.getMessage}", e)
-            case e: Throwable =>
-              throw new IllegalArgumentException(s"Error :${e.getMessage}.")
-          }
-      }
-      //which handles undefined Rejections to Exceptions , like ValidationRejection(java.lang.NumberFormatException)
-      .handle {
-        case otherRejection => throw new IllegalArgumentException(s"Ohata Error occur : $otherRejection")
+        // seek the true exception
+        case MalformedRequestContentRejection(_, cause) if cause != null => throw cause
+        case e: ExecutionException if e.getCause != null                 => throw e.getCause
       }
       .result()
 

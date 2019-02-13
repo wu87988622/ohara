@@ -395,7 +395,7 @@ private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
     val cluster = clusterCache.remove(clusterName)
     containerCache.remove(clusterName)
     cluster
-  } else Future.failed(new NoSuchElementException(s"$clusterName doesn't exist")))
+  } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
 
   override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = Future.successful(Map.empty)
 
@@ -484,7 +484,7 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
 
   override def removeNode(clusterName: String, nodeName: String): Future[FakeBrokerClusterInfo] = {
     val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
     else if (!previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
     else
@@ -504,7 +504,7 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
 
   override def addNode(clusterName: String, nodeName: String): Future[FakeBrokerClusterInfo] = {
     val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
     else if (previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
     else
@@ -617,7 +617,7 @@ private[this] class FakeWorkerCollie(wkConnectionProps: String)
 
   override def removeNode(clusterName: String, nodeName: String): Future[FakeWorkerClusterInfo] = {
     val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
     else if (!previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
     else
@@ -649,7 +649,7 @@ private[this] class FakeWorkerCollie(wkConnectionProps: String)
 
   override def addNode(clusterName: String, nodeName: String): Future[FakeWorkerClusterInfo] = {
     val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new IllegalArgumentException(s"$clusterName doesn't exists!!!"))
+    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
     else if (previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
     else

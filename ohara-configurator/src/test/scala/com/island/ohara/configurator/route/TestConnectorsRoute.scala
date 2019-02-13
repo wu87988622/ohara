@@ -33,6 +33,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
+  private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
   @Test
   def testSource(): Unit = {
     def compareRequestAndResponse(request: ConnectorCreationRequest, response: ConnectorInfo): ConnectorInfo = {
@@ -49,11 +50,10 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       lhs.configs shouldBe rhs.configs
       lhs.lastModified shouldBe rhs.lastModified
     }
-    val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
     val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
     // test add
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
     val request = ConnectorCreationRequest(name = methodName,
                                            className = "jdbc",
                                            schema = schema,
@@ -61,10 +61,10 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                                            topics = Seq.empty,
                                            numberOfTasks = 1)
     val response =
-      compareRequestAndResponse(request, result(access.add(request)))
+      compareRequestAndResponse(request, result(connectorApi.add(request)))
 
     // test get
-    compare2Response(response, result(access.get(response.id)))
+    compare2Response(response, result(connectorApi.get(response.id)))
 
     // test update
     val anotherRequest = ConnectorCreationRequest(name = methodName,
@@ -74,48 +74,46 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                                                   topics = Seq.empty,
                                                   numberOfTasks = 1)
     val newResponse =
-      compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
+      compareRequestAndResponse(anotherRequest, result(connectorApi.update(response.id, anotherRequest)))
 
     // test get
-    compare2Response(newResponse, result(access.get(newResponse.id)))
+    compare2Response(newResponse, result(connectorApi.get(newResponse.id)))
 
     // test delete
-    result(access.list()).size shouldBe 1
-    result(access.delete(response.id)) shouldBe newResponse
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 1
+    result(connectorApi.delete(response.id)) shouldBe newResponse
+    result(connectorApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(access.get("asdasdasd"))
-    an[IllegalArgumentException] should be thrownBy result(access.update("Asdasd", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.get("asdasdasd"))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.update("Asdasd", anotherRequest))
   }
 
   @Test
   def testInvalidSource(): Unit = {
-    val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
-
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
 
     val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(
+      connectorApi.add(
         ConnectorCreationRequest(name = methodName,
                                  className = "jdbc",
                                  schema = illegalOrder,
                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
                                  topics = Seq.empty,
                                  numberOfTasks = 1)))
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
 
     val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(
+      connectorApi.add(
         ConnectorCreationRequest(name = methodName,
                                  className = "jdbc",
                                  schema = duplicateOrder,
                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
                                  topics = Seq.empty,
                                  numberOfTasks = 1)))
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
   }
 
   @Test
@@ -134,11 +132,10 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
     val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 2))
 
     // test add
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
     val request = ConnectorCreationRequest(name = methodName,
                                            className = "jdbc",
                                            schema = schema,
@@ -146,10 +143,10 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                                            topics = Seq.empty,
                                            numberOfTasks = 1)
     val response =
-      compareRequestAndResponse(request, result(access.add(request)))
+      compareRequestAndResponse(request, result(connectorApi.add(request)))
 
     // test get
-    compare2Response(response, result(access.get(response.id)))
+    compare2Response(response, result(connectorApi.get(response.id)))
 
     // test update
     val anotherRequest = ConnectorCreationRequest(name = methodName,
@@ -159,48 +156,66 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                                                   topics = Seq.empty,
                                                   numberOfTasks = 1)
     val newResponse =
-      compareRequestAndResponse(anotherRequest, result(access.update(response.id, anotherRequest)))
+      compareRequestAndResponse(anotherRequest, result(connectorApi.update(response.id, anotherRequest)))
 
     // test get
-    compare2Response(newResponse, result(access.get(newResponse.id)))
+    compare2Response(newResponse, result(connectorApi.get(newResponse.id)))
 
     // test delete
-    result(access.list()).size shouldBe 1
-    result(access.delete(response.id)) shouldBe newResponse
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 1
+    result(connectorApi.delete(response.id)) shouldBe newResponse
+    result(connectorApi.list()).size shouldBe 0
 
     // test nonexistent data
-    an[IllegalArgumentException] should be thrownBy result(access.get("asdasdasd"))
-    an[IllegalArgumentException] should be thrownBy result(access.update("Asdasd", anotherRequest))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.get("asdasdasd"))
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.update("Asdasd", anotherRequest))
   }
 
   @Test
   def testInvalidSink(): Unit = {
-    val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
 
     val illegalOrder = Seq(Column.of("cf", DataType.BOOLEAN, 0), Column.of("cf", DataType.BOOLEAN, 2))
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(
+      connectorApi.add(
         ConnectorCreationRequest(name = methodName,
                                  className = "jdbc",
                                  schema = illegalOrder,
                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
                                  topics = Seq.empty,
                                  numberOfTasks = 1)))
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
 
     val duplicateOrder = Seq(Column.of("cf", DataType.BOOLEAN, 1), Column.of("cf", DataType.BOOLEAN, 1))
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(
+      connectorApi.add(
         ConnectorCreationRequest(name = methodName,
                                  className = "jdbc",
                                  schema = duplicateOrder,
                                  configs = Map("c0" -> "v0", "c1" -> "v1"),
                                  topics = Seq.empty,
                                  numberOfTasks = 1)))
-    result(access.list()).size shouldBe 0
+    result(connectorApi.list()).size shouldBe 0
+  }
+
+  @Test
+  def removeConnectorFromDeletedCluster(): Unit = {
+    val connector = result(
+      connectorApi.add(
+        ConnectorCreationRequest(name = methodName,
+                                 className = "jdbc",
+                                 schema = Seq.empty,
+                                 configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)))
+
+    val wk = result(configurator.clusterCollie.workerCollie().remove(connector.workerClusterName))
+    wk.name shouldBe connector.workerClusterName
+
+    result(connectorApi.delete(connector.id))
+
+    result(connectorApi.list()).exists(_.id == connector.id) shouldBe false
   }
 
   @After

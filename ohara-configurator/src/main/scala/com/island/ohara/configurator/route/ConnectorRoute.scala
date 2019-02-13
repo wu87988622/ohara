@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.WorkerCollie
+import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -104,20 +104,25 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             }
           }),
         hookOfDelete = (response: ConnectorInfo) =>
-          CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
-            case (_, wkClient) =>
-              wkClient.exist(response.id).flatMap {
-                if (_)
-                  wkClient
-                    .delete(response.id)
-                    .recover {
-                      case e: Throwable =>
-                        LOG.info(s"Failed to remove connector:${response.id}", e)
-                    }
-                    .map(_ => response)
-                else Future.successful(response)
-              }
-        }
+          CollieUtils
+            .workerClient(Some(response.workerClusterName))
+            .flatMap {
+              case (_, wkClient) =>
+                wkClient.exist(response.id).flatMap {
+                  if (_)
+                    wkClient
+                      .delete(response.id)
+                      .recover {
+                        case e: Throwable =>
+                          LOG.info(s"Failed to remove connector:${response.id}", e)
+                      }
+                      .map(_ => response)
+                  else Future.successful(response)
+                }
+            }
+            .recover {
+              case _: NoSuchClusterException => response
+          }
       )
     } ~
       // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia

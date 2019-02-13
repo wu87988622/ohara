@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.island.ohara.agent.BrokerCollie
+import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator.Store
@@ -94,7 +94,7 @@ private[configurator] object TopicRoute {
                 }
           }
           .recover {
-            case e: NoSuchElementException =>
+            case e: NoSuchClusterException =>
               LOG.warn(
                 s"the cluster:${response.brokerClusterName} doesn't exist!!! just remove topic from configurator",
                 e)

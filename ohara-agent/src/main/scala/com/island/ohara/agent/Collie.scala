@@ -66,7 +66,7 @@ trait Collie[T <: ClusterInfo] {
     * @return cluster information
     */
   def cluster(name: String): Future[(T, Seq[ContainerInfo])] =
-    clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchElementException(s"$name doesn't exist")))
+    clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
 
   /**
     * @param clusterName cluster name
