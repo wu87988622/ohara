@@ -17,9 +17,11 @@
 package com.island.ohara.configurator
 import java.io.File
 
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, StreamPropertyRequest}
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -32,6 +34,8 @@ class TestStream extends SmallTest with Matchers {
   private[this] val accessStreamList = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStreamProperty =
     StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
+  private[this] val accessStreamAction =
+    StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
 
   private[this] val pipeline_id = "pipeline-id"
 
@@ -76,6 +80,8 @@ class TestStream extends SmallTest with Matchers {
       10 seconds
     )
     updated.jarName shouldBe "la-new.jar"
+
+    filePaths.foreach(new File(_).deleteOnExit())
   }
 
   @Test
@@ -105,6 +111,31 @@ class TestStream extends SmallTest with Matchers {
     res2.fromTopics.size shouldBe 1
     res2.toTopics.size shouldBe 1
     res2.instances shouldBe 2
+
+    filePaths.foreach(new File(_).deleteOnExit())
+  }
+
+  @Test
+  def testStreamAppAction(): Unit = {
+    val file = File.createTempFile("empty_", ".jar")
+
+    val jarData = Await.result(
+      accessStreamList.upload(pipeline_id, Seq(file.getPath)),
+      30 seconds
+    )
+    jarData.size shouldBe 1
+    val req = StreamPropertyRequest(CommonUtil.randomString(5), Seq("from-topic"), Seq("to-topic"), 1)
+    Await.result(accessStreamProperty.update(jarData.head.id, req), 10 seconds)
+
+    // Test Action : start
+    val res1 = Await.result(accessStreamAction.start(jarData.head.id), 3 seconds)
+    res1.state.get shouldBe ContainerState.RUNNING
+
+    // Test Action : stop
+    val res2 = Await.result(accessStreamAction.stop(jarData.head.id), 3 seconds)
+    res2.state shouldBe None
+
+    file.deleteOnExit()
   }
 
   @After

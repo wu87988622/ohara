@@ -22,10 +22,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.StreamClient
-import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.client.configurator.v0.StreamApi._
+import com.island.ohara.client.configurator.v0.{ContainerApi, JarApi}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
@@ -33,7 +32,7 @@ import com.island.ohara.configurator.route.RouteUtil._
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.sys.process._
 
 private[configurator] object StreamRoute {
@@ -60,7 +59,7 @@ private[configurator] object StreamRoute {
     data.toTopics.nonEmpty
   }
 
-  def apply(implicit store: Store, brokerCollie: BrokerCollie, jarStore: JarStore): server.Route =
+  def apply(implicit store: Store, jarStore: JarStore): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
         complete(StatusCodes.BadRequest -> "wrong uri")
@@ -89,6 +88,8 @@ private[configurator] object StreamRoute {
                       store.add(toStore(id, jarId, jarInfo, time))
                       StreamListResponse(jarId, jarInfo.name, time)
                     }
+                    //delete temp jars after success
+                    files.foreach { case (_, file) => file.deleteOnExit() }
                     complete(jars)
                   }
                 }
@@ -206,56 +207,27 @@ private[configurator] object StreamRoute {
         pathEnd {
           complete(StatusCodes.BadRequest -> "wrong uri")
         } ~
-          // start streamapp
+          //TODO : implement start action...by Sam
+          // start streamApp
           path(START_COMMAND) {
             put {
               onSuccess(store.value[StreamApp](id)) { data =>
                 if (!assertParameters(data))
                   throw new IllegalArgumentException(
                     s"StreamData with id : ${data.id} not match the parameter requirement.")
-                val checkDocker = "which docker" !!
-
-                if (checkDocker.toLowerCase.contains("not found"))
-                  throw new RuntimeException(s"This machine is not support docker command !")
-
-                // TODO: this is just a workaround ... by chia
-                import scala.concurrent.duration._
-                val bkClusters = Await.result(brokerCollie.clusters(), 30 seconds)
-                if (bkClusters.size != 1)
-                  throw new IllegalArgumentException(
-                    "there are too many broker clusters, so we can't pick up one as default")
-
-                //TODO : we hard code here currently. This should be called from agent ...by Sam
-                val dockerCmd =
-                  s"""docker run -d -h "${data.name}" -v /home/docker/streamapp:/opt/ohara/streamapp --rm --name "${data.name}"
-                     | -e STREAMAPP_SERVERS=${bkClusters.head._1.connectionProps}
-                     | -e STREAMAPP_APPID=${data.name}
-                     | -e STREAMAPP_FROMTOPIC=${data.fromTopics.head}
-                     | -e STREAMAPP_TOTOPIC=${data.toTopics.head}
-                     | ${StreamClient.STREAMAPP_IMAGE}
-                     | "example.MyApp"
-                          """.stripMargin
-
-                // TODO: use LOG instead...by Sam
-                System.out.println(s"command : $dockerCmd")
-                complete(if (Process(dockerCmd).run.exitValue() == 0) StatusCodes.OK else StatusCodes.BadRequest)
+                complete(StreamActionResponse(id, Some(ContainerApi.ContainerState.RUNNING)))
               }
             }
           } ~
-          // stop streamapp
+          //TODO : implement stop action...by Sam
+          // stop streamApp
           path(STOP_COMMAND) {
             put {
               onSuccess(store.value[StreamApp](id)) { data =>
-                val checkDocker = "which docker" !!
-
-                if (checkDocker.toLowerCase.contains("not found"))
-                  throw new RuntimeException(s"This machine is not support docker command !")
-
-                //TODO : we hard code here currently. This should be called by agent ...by Sam
-                val dockerCmd =
-                  s"""docker stop ${data.name}
-               """.stripMargin
-                complete(if (Process(dockerCmd).run.exitValue() == 0) StatusCodes.OK else StatusCodes.BadRequest)
+                if (!assertParameters(data))
+                  throw new IllegalArgumentException(
+                    s"StreamData with id : ${data.id} not match the parameter requirement.")
+                complete(StreamActionResponse(id, None))
               }
             }
           }

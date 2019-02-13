@@ -59,13 +59,19 @@ object StreamApi {
     override def kind: String = "streamApp"
   }
 
+  // StreamApp Action Response Body
+  final case class StreamActionResponse(id: String, state: Option[ContainerApi.ContainerState])
+  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamActionResponse] = jsonFormat2(
+    StreamActionResponse)
+
   // StreamApp List Request Body
   final case class StreamListRequest(jarName: String)
   implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
 
   // StreamApp List Page Response Body
   final case class StreamListResponse(id: String, jarName: String, lastModified: Long)
-  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamListResponse] = jsonFormat3(StreamListResponse)
+  implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamListResponse] =
+    jsonFormat3(StreamListResponse)
 
   // StreamApp Property Request Body
   final case class StreamPropertyRequest(name: String, fromTopics: Seq[String], toTopics: Seq[String], instances: Int)
@@ -81,12 +87,31 @@ object StreamApi {
                                           instances: Int,
                                           lastModified: Long)
   implicit val STREAM_PROPERTY_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamPropertyResponse] = jsonFormat7(
-    StreamPropertyResponse)
+    StreamPropertyResponse
+  )
+
+  sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
+    def start(id: String): Future[StreamActionResponse]
+    def stop(id: String): Future[StreamActionResponse]
+  }
+  def accessOfAction(): ActionAccess = new ActionAccess {
+    private[this] def url(id: String, action: String): String =
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
+    override def start(id: String): Future[StreamActionResponse] =
+      exec.put[StreamActionResponse, ErrorApi.Error](url(id, START_COMMAND))
+    override def stop(id: String): Future[StreamActionResponse] =
+      exec.put[StreamActionResponse, ErrorApi.Error](url(id, STOP_COMMAND))
+  }
 
   sealed abstract class ListAccess extends BasicAccess(s"$STREAM_PREFIX_PATH/$STREAM_LIST_PREFIX_PATH") {
     def list(pipeline_id: String): Future[Seq[StreamListResponse]]
     def upload(pipeline_id: String, filePaths: Seq[String]): Future[Seq[StreamListResponse]] =
-      upload(pipeline_id: String, filePaths: Seq[String], StreamClient.INPUT_KEY, StreamClient.CONTENT_TYPE)
+      upload(
+        pipeline_id: String,
+        filePaths: Seq[String],
+        StreamClient.INPUT_KEY,
+        StreamClient.CONTENT_TYPE
+      )
     def upload(pipeline_id: String,
                filePaths: Seq[String],
                inputKey: String,
@@ -103,10 +128,17 @@ object StreamApi {
       Marshal(Multipart.FormData(filePaths.map(filePath => {
         Multipart.FormData.BodyPart.Strict(
           inputKey,
-          HttpEntity(contentType, ByteString(Source.fromFile(filePath).mkString)),
+          HttpEntity(
+            contentType,
+            ByteString(Source.fromFile(filePath).mkString)
+          ),
           Map("filename" -> new File(filePath).getName)
         )
-      }): _*)).to[RequestEntity].map(entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity))
+      }): _*))
+        .to[RequestEntity]
+        .map(
+          entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity)
+        )
 
     override def list(pipeline_id: String): Future[Seq[StreamListResponse]] =
       exec.get[Seq[StreamListResponse], ErrorApi.Error](
@@ -125,7 +157,8 @@ object StreamApi {
     override def update(jar_id: String, request: StreamListRequest): Future[StreamListResponse] =
       exec.put[StreamListRequest, StreamListResponse, ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id",
-        request)
+        request
+      )
   }
 
   sealed trait PropertyAccess {
@@ -137,7 +170,9 @@ object StreamApi {
 
   def accessOfProperty(): PropertyAccess = new PropertyAccess {
     private[this] val access: Access[StreamPropertyRequest, StreamPropertyResponse] =
-      new Access[StreamPropertyRequest, StreamPropertyResponse](s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH")
+      new Access[StreamPropertyRequest, StreamPropertyResponse](
+        s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH"
+      )
 
     override def hostname(hostname: String): PropertyAccess = {
       access.hostname(hostname)
@@ -148,8 +183,12 @@ object StreamApi {
       this
     }
 
-    override def get(id: String): Future[StreamPropertyResponse] = access.get(id)
-    override def update(id: String, request: StreamPropertyRequest): Future[StreamPropertyResponse] =
+    override def get(id: String): Future[StreamPropertyResponse] =
+      access.get(id)
+    override def update(
+      id: String,
+      request: StreamPropertyRequest
+    ): Future[StreamPropertyResponse] =
       access.update(id, request)
   }
 }
