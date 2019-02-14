@@ -382,7 +382,15 @@ class PipelineNewPage extends React.Component {
     return (
       <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>
         <React.Fragment>
-          <Prompt message={MESSAGES.LEAVE_WITHOUT_SAVE} when={isUpdating} />
+          <Prompt
+            message={location =>
+              location.pathname.startsWith('/pipelines/new') ||
+              location.pathname.startsWith('/pipelines/edit')
+                ? true
+                : MESSAGES.LEAVE_WITHOUT_SAVE
+            }
+            when={isUpdating}
+          />
           <Wrapper>
             <PipelineToolbar
               {...this.props}
