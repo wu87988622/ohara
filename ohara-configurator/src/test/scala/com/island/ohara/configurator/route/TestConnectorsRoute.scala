@@ -17,7 +17,7 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.ConnectorApi
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorInfo, ConnectorCreationRequest}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorInfo}
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -34,6 +34,21 @@ class TestConnectorsRoute extends SmallTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   private[this] val connectorApi = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
+
+  @Test
+  def runConnectorWithoutTopic(): Unit = {
+    val connector = result(
+      connectorApi.add(
+        ConnectorCreationRequest(name = methodName,
+                                 className = "jdbc",
+                                 schema = Seq.empty,
+                                 configs = Map("c0" -> "v0", "c1" -> "v1"),
+                                 topics = Seq.empty,
+                                 numberOfTasks = 1)))
+
+    an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.id))
+  }
+
   @Test
   def testSource(): Unit = {
     def compareRequestAndResponse(request: ConnectorCreationRequest, response: ConnectorInfo): ConnectorInfo = {
