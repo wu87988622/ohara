@@ -36,4 +36,10 @@ class StreamsConfig {
   static final String THREADS = org.apache.kafka.streams.StreamsConfig.NUM_STREAM_THREADS_CONFIG;
   static final String GUARANTEE =
       org.apache.kafka.streams.StreamsConfig.PROCESSING_GUARANTEE_CONFIG;
+
+  // for docker usage
+  static final String DOCKER_BOOTSTRAP_SERVERS = "STREAMAPP_SERVERS";
+  static final String DOCKER_APPID = "STREAMAPP_APPID";
+  static final String DOCKER_FROM_TOPICS = "STREAMAPP_FROMTOPIC";
+  static final String DOCKER_TO_TOPICS = "STREAMAPP_TOTOPIC";
 }

@@ -17,7 +17,6 @@
 package com.island.ohara.configurator
 import java.io.File
 
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, StreamPropertyRequest}
 import com.island.ohara.common.rule.SmallTest
@@ -105,37 +104,62 @@ class TestStream extends SmallTest with Matchers {
     res1.instances shouldBe 1
 
     // Test PUT method
-    val req = StreamPropertyRequest("my-app", Seq("from-topic"), Seq("to-topic"), 2)
+    val appId = CommonUtil.randomString(5)
+    val req = StreamPropertyRequest(appId, Seq("from-topic"), Seq("to-topic"), 1)
     val res2 = Await.result(accessStreamProperty.update(id, req), 10 seconds)
-    res2.name shouldBe "my-app"
+    res2.name shouldBe appId
     res2.fromTopics.size shouldBe 1
     res2.toTopics.size shouldBe 1
-    res2.instances shouldBe 2
+    res2.instances shouldBe 1
 
     filePaths.foreach(new File(_).deleteOnExit())
   }
 
   @Test
-  def testStreamAppAction(): Unit = {
-    val file = File.createTempFile("empty_", ".jar")
+  def testStreamAppPropertyWithWrongParameters(): Unit = {
+    val filePath = Seq(File.createTempFile("empty_", ".jar").getPath)
 
     val jarData = Await.result(
-      accessStreamList.upload(pipeline_id, Seq(file.getPath)),
+      accessStreamList.upload(pipeline_id, filePath),
       30 seconds
     )
-    jarData.size shouldBe 1
-    val req = StreamPropertyRequest(CommonUtil.randomString(5), Seq("from-topic"), Seq("to-topic"), 1)
+
+    val appId = CommonUtil.randomString(5)
+
+    var req = StreamPropertyRequest(appId, Seq("foo"), Seq("bar"), 0)
+    an[IllegalArgumentException] should be thrownBy Await.result(accessStreamProperty.update(jarData.head.id, req),
+                                                                 20 seconds)
+
+    req = StreamPropertyRequest(appId, Seq(""), Seq("bar"), 1)
+    an[IllegalArgumentException] should be thrownBy Await.result(accessStreamProperty.update(jarData.head.id, req),
+                                                                 20 seconds)
+
+    req = StreamPropertyRequest(appId, Seq("foo"), Seq(""), 1)
+    an[IllegalArgumentException] should be thrownBy Await.result(accessStreamProperty.update(jarData.head.id, req),
+                                                                 20 seconds)
+
+    req = StreamPropertyRequest("", Seq("foo"), Seq("bar"), 1)
+    an[IllegalArgumentException] should be thrownBy Await.result(accessStreamProperty.update(jarData.head.id, req),
+                                                                 20 seconds)
+
+    filePath.foreach(new File(_).deleteOnExit())
+  }
+
+  @Test
+  def testStreamAppActionFail(): Unit = {
+    val filePath = Seq(File.createTempFile("empty_", ".jar").getPath)
+
+    val jarData = Await.result(
+      accessStreamList.upload(pipeline_id, filePath),
+      30 seconds
+    )
+
+    val appId = CommonUtil.randomString(5)
+    val req = StreamPropertyRequest(appId, Seq("foo"), Seq("bar"), 1)
     Await.result(accessStreamProperty.update(jarData.head.id, req), 10 seconds)
+    an[IllegalArgumentException] should be thrownBy Await.result(accessStreamAction.start(jarData.head.id), 20 seconds)
 
-    // Test Action : start
-    val res1 = Await.result(accessStreamAction.start(jarData.head.id), 3 seconds)
-    res1.state.get shouldBe ContainerState.RUNNING
-
-    // Test Action : stop
-    val res2 = Await.result(accessStreamAction.stop(jarData.head.id), 3 seconds)
-    res2.state shouldBe None
-
-    file.deleteOnExit()
+    filePath.foreach(new File(_).deleteOnExit())
   }
 
   @After

@@ -43,6 +43,8 @@ object StreamClient {
 
   final val TMP_ROOT = System.getProperty("java.io.tmpdir")
 
+  final val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
+
   /**
     * StreamApp Docker Image name
     */

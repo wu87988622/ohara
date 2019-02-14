@@ -28,10 +28,13 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Serialized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
 
+  private final Logger log = LoggerFactory.getLogger(OStreamImpl.class);
   private Topology topology = null;
 
   OStreamImpl(OStreamBuilder ob) {
@@ -121,6 +124,9 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
           new org.apache.kafka.streams.StreamsConfig(prop);
 
       topology = new Topology(innerBuilder, config, builder.isCleanStart(), isDryRun);
+      if (builder.isOharaEnv()) {
+        log.info(topology.getPoneglyphs().toString());
+      }
     }
   }
 

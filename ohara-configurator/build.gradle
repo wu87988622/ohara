@@ -17,10 +17,11 @@
 apply from: "$rootDir/gradle/dependencies.gradle"
 
 dependencies {
+  implementation project(':ohara-agent')
   implementation project(':ohara-common')
   implementation project(':ohara-client')
   implementation project(':ohara-kafka')
-  implementation project(':ohara-agent')
+  implementation project(":ohara-streams")
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *

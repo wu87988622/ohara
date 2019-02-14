@@ -18,9 +18,19 @@ package com.island.ohara.streams;
 
 import com.island.ohara.kafka.exception.CheckedExceptionUtil;
 import com.island.ohara.streams.ostream.LaunchImpl;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class StreamApp {
+
+  private static final String JAR_ROOT = "STREAMAPP_JARROOT";
 
   /**
    * Running a standalone streamApp. This method is usually called from the main(). It must not be
@@ -112,4 +122,48 @@ public abstract class StreamApp {
   public abstract void start() throws Exception;
 
   public void stop() throws Exception {}
+
+  /** for ohara container use */
+  public static void main(String[] args) {
+    CheckedExceptionUtil.wrap(
+        () -> {
+          String entryClass = findStreamAppEntry(System.getenv(JAR_ROOT));
+          Class<?> clz = Class.forName(entryClass);
+          Object obj = clz.newInstance();
+          Method method = clz.getMethod("start");
+          method.invoke(obj);
+        });
+  }
+
+  private static String findStreamAppEntry(String jarPath)
+      throws IOException, ClassNotFoundException {
+    String jarHeader = "jar:file:";
+    String jarTail = "!/";
+
+    File dir = new File(jarPath);
+    if (!dir.isDirectory() || !dir.exists())
+      throw new IllegalArgumentException("the parameter should be a valid directory");
+    File[] files = dir.listFiles((File d, String name) -> name.endsWith(".jar"));
+    if (files == null || files.length == 0) {
+      throw new RuntimeException("the path is not contained any jars");
+    }
+
+    JarFile jar = new JarFile(files[0]);
+    Enumeration<JarEntry> e = jar.entries();
+
+    URL[] urls = {new URL(jarHeader + files[0] + jarTail)};
+    URLClassLoader cl = URLClassLoader.newInstance(urls);
+
+    while (e.hasMoreElements()) {
+      JarEntry entry = e.nextElement();
+      if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+        String className = entry.getName().replace(".class", "").replaceAll("/", ".");
+        Class c = cl.loadClass(className);
+        if (StreamApp.class.isAssignableFrom(c)) {
+          return c.getName();
+        }
+      }
+    }
+    return null;
+  }
 }

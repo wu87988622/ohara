@@ -20,6 +20,8 @@ MAINTAINER sam cho <sam@is-land.com.tw>
 ARG KAFKA_VERSION=1.0.2
 ARG LOG_VERSION=1.7.25
 ARG GRADLE_VERSION=5.1.1
+ARG COMMON_LANG_VERSION=3.7
+ARG ROCKDB_VERSION=5.7.3
 
 RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
  mkdir -p /opt/lib/streamapp && \
@@ -27,6 +29,8 @@ RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
  curl -L http://central.maven.org/maven2/org/apache/kafka/kafka-clients/${KAFKA_VERSION}/kafka-clients-${KAFKA_VERSION}.jar -o /opt/lib/kafka-clients.jar && \
  curl -L http://central.maven.org/maven2/org/slf4j/slf4j-api/${LOG_VERSION}/slf4j-api-${LOG_VERSION}.jar -o /opt/lib/slf4j-api.jar && \
  curl -L http://central.maven.org/maven2/org/slf4j/slf4j-simple/${LOG_VERSION}/slf4j-simple-${LOG_VERSION}.jar -o /opt/lib/slf4j-simple.jar && \
+ curl -L http://central.maven.org/maven2/org/apache/commons/commons-lang3/${COMMON_LANG_VERSION}/commons-lang3-${COMMON_LANG_VERSION}.jar -o /opt/lib/commons-lang3.jar && \
+ curl -L http://central.maven.org/maven2/org/rocksdb/rocksdbjni/${ROCKDB_VERSION}/rocksdbjni-${ROCKDB_VERSION}.jar -o /opt/lib/rocksdbjni.jar && \
  rm -rf /var/lib/apt/lists/*
 
 # download gradle
@@ -47,13 +51,21 @@ ARG REPO="https://github.com/oharastream/ohara.git"
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
-RUN gradle :ohara-streams:jar -x test && \
- cp /testpatch/ohara/ohara-streams/build/libs/*.jar /opt/lib
+RUN gradle jar -x test && \
+ cp /testpatch/ohara/ohara-common/build/libs/*.jar /testpatch/ohara/ohara-kafka/build/libs/*.jar /testpatch/ohara/ohara-streams/build/libs/*.jar /opt/lib
 
-FROM openjdk:8u171-jre-alpine
+FROM centos:7.6.1810
 
-# add tini
-RUN apk add --no-cache tini
+RUN yum -y update && \
+ yum -y install java-1.8.0-openjdk-headless wget && \
+ yum clean all && \
+ rm -rf /var/cache/yum
+
+# Add Tini
+ARG TINI_VERSION=v0.18.0
+RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
+
+RUN chmod +x /tini
 
 WORKDIR /opt/ohara
 
@@ -61,4 +73,4 @@ COPY --from=deps /opt/lib/* /opt/ohara/
 
 VOLUME ["/opt/ohara/streamapp"]
 
-ENTRYPOINT ["/sbin/tini", "--", "/usr/bin/java", "-cp", "/opt/ohara/*:/opt/ohara/streamapp/*"]
+ENTRYPOINT ["/tini", "--", "/usr/bin/java", "-cp", "/opt/ohara/*:/opt/ohara/streamapp/*"]

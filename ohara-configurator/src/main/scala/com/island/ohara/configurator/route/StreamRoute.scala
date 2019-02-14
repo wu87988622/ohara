@@ -17,11 +17,13 @@
 package com.island.ohara.configurator.route
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.StreamClient
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.{ContainerApi, JarApi}
@@ -29,14 +31,17 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtil._
+import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.sys.process._
 
 private[configurator] object StreamRoute {
 
+  private[this] val log = LoggerFactory.getLogger(StreamRoute.getClass)
   private[this] def toStore(pipelineId: String, jarId: String, jarInfo: JarApi.JarInfo, lastModified: Long): StreamApp =
     StreamApp(pipelineId, jarId, "", 1, jarInfo, Seq.empty, Seq.empty, lastModified)
 
@@ -51,15 +56,19 @@ private[configurator] object StreamRoute {
     StreamApp(pipelineId, jarId, appId, instances, jarInfo, fromTopics, toTopics, lastModified)
 
   private[this] def assertParameters(data: StreamApp): Boolean = {
+    def isNotNullOrEmpty(str: String): Boolean = { str != null && str.nonEmpty }
     data.pipelineId.nonEmpty &&
     data.id.nonEmpty &&
     data.name.nonEmpty &&
-    data.instances >= 1 &&
+    // TODO : we only support 1 instance for v0.2...by Sam
+    data.instances == 1 &&
     data.fromTopics.nonEmpty &&
-    data.toTopics.nonEmpty
+    data.fromTopics.forall(isNotNullOrEmpty) &&
+    data.toTopics.nonEmpty &&
+    data.toTopics.forall(isNotNullOrEmpty)
   }
 
-  def apply(implicit store: Store, jarStore: JarStore): server.Route =
+  def apply(implicit store: Store, brokerCollie: BrokerCollie, jarStore: JarStore): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
         complete(StatusCodes.BadRequest -> "wrong uri")
@@ -176,21 +185,23 @@ private[configurator] object StreamRoute {
                 // update
                 put {
                   entity(as[StreamPropertyRequest]) { req =>
-                    if (req.instances < 1)
-                      throw new IllegalArgumentException(s"Require instances bigger or equal to 1")
-                    onSuccess(store.update[StreamApp](
-                      id,
-                      oldData =>
-                        Future.successful(
-                          toStore(oldData.pipelineId,
-                                  oldData.id,
-                                  req.name,
-                                  req.instances,
-                                  oldData.jarInfo,
-                                  req.fromTopics,
-                                  req.toTopics,
-                                  CommonUtil.current()))
-                    )) { newData =>
+                    onSuccess(store.value[StreamApp](id).flatMap { data =>
+                      val newData = toStore(data.pipelineId,
+                                            data.id,
+                                            req.name,
+                                            req.instances,
+                                            data.jarInfo,
+                                            req.fromTopics,
+                                            req.toTopics,
+                                            CommonUtil.current())
+                      if (!assertParameters(newData))
+                        throw new IllegalArgumentException(
+                          s"StreamApp with id : ${data.id} not match the parameter requirement.")
+                      store.update[StreamApp](
+                        id,
+                        _ => Future.successful(newData)
+                      )
+                    }) { newData =>
                       complete(
                         StreamPropertyResponse(id,
                                                newData.jarInfo.name,
@@ -207,28 +218,134 @@ private[configurator] object StreamRoute {
         pathEnd {
           complete(StatusCodes.BadRequest -> "wrong uri")
         } ~
-          //TODO : implement start action...by Sam
           // start streamApp
           path(START_COMMAND) {
             put {
-              onSuccess(store.value[StreamApp](id)) { data =>
-                if (!assertParameters(data))
-                  throw new IllegalArgumentException(
-                    s"StreamData with id : ${data.id} not match the parameter requirement.")
-                complete(StreamActionResponse(id, Some(ContainerApi.ContainerState.RUNNING)))
-              }
+              onSuccess(
+                store.value[StreamApp](id).flatMap { data =>
+                  // TODO : Use Collie as parameter to run streamApp instead ; need support multiple topics...by Sam
+                  // for v0.2, we only run streamApp with the following conditions:
+                  // 1) use "this configurator" machine as the docker client
+                  // 2) only support one from/to topic
+                  // 3) choose any existing broker cluster to run
+                  // 4) only run 1 instance
+
+                  val localPath = s"${StreamClient.TMP_ROOT}${File.separator}StreamApp-${data.name}"
+
+                  val clusters = Await.result(brokerCollie.clusters().map { bkMap =>
+                    bkMap.keys.toSeq
+                  }, Duration(10, TimeUnit.SECONDS))
+
+                  val brokers = clusters
+                    .find { cluster =>
+                      val topics = Await.result(
+                        CollieUtils
+                          .topicAdmin(Some(cluster.name))
+                          .flatMap {
+                            case (_, client) =>
+                              client.list()
+                          }
+                          .map { infos =>
+                            infos.map(info => info.name)
+                          },
+                        Duration(10, TimeUnit.SECONDS)
+                      )
+                      topics.contains(data.fromTopics.head) && topics.contains(data.toTopics.head)
+                    }
+                    .getOrElse(throw new NoSuchElementException(
+                      "Can not find andy math broker cluster for this streamApp"))
+                    .nodeNames
+                    .map(_ + ":9092")
+                    .mkString(",")
+
+                  def dockerCmd(instance: Int): String = {
+                    s"""docker run
+                       | -h ${data.name}
+                       | -d
+                       | --name ${data.name}-$instance
+                       | -e "STREAMAPP_JARROOT=/opt/ohara/streamapp"
+                       | -e "STREAMAPP_FROMTOPIC=${data.fromTopics.head}"
+                       | -e "STREAMAPP_APPID=${data.name}"
+                       | -e "STREAMAPP_SERVERS=$brokers"
+                       | -e "STREAMAPP_TOTOPIC=${data.toTopics.head}"
+                       | -v "$localPath:/opt/ohara/streamapp"
+                       | ${StreamClient.STREAMAPP_IMAGE}
+                       | ${StreamClient.MAIN_ENTRY}""".stripMargin
+                  }
+                  def dockerLog(instance: Int): String =
+                    s"docker logs ${data.name}-$instance"
+                  def dockerInspectStatus(instance: Int): String =
+                    s"docker inspect --format {{.State.Status}} ${data.name}-$instance"
+
+                  val dir = new File(localPath)
+                  if (!dir.exists()) dir.mkdirs()
+                  val f = new File(localPath, data.jarInfo.name)
+
+                  jarStore
+                    .url(data.jarInfo.id)
+                    .flatMap { url =>
+                      //download the jar file from remote ftp server by URL...use more readable code ?...by Sam
+                      Future { url #> f !! }
+                    }
+                    .flatMap { _ =>
+                      Future {
+                        (1 to data.instances).map(i => {
+                          log.info(dockerCmd(i))
+                          log.info(dockerLog(i))
+                          Process(dockerCmd(i)).!(ProcessLogger(out => log.info(out), err => log.info(err)))
+                          Process(dockerLog(i)).!(ProcessLogger(out => log.info(out), err => log.info(err)))
+                        })
+                      }
+                    }
+                    .map { _ =>
+                      StreamActionResponse(
+                        id,
+                        Some(ContainerApi.ContainerState.all
+                          .find(_.name.compareToIgnoreCase(dockerInspectStatus(1).lineStream.head) == 0)
+                          .getOrElse(throw new IllegalArgumentException(s"Unknown state name")))
+                      )
+                    }
+                    .recover {
+                      case ex: Throwable =>
+                        log.error(ex.getMessage)
+                        StreamActionResponse(
+                          id,
+                          Some(ContainerApi.ContainerState.EXITED)
+                        )
+                    }
+                }
+              )(complete(_))
             }
           } ~
-          //TODO : implement stop action...by Sam
           // stop streamApp
           path(STOP_COMMAND) {
             put {
-              onSuccess(store.value[StreamApp](id)) { data =>
-                if (!assertParameters(data))
-                  throw new IllegalArgumentException(
-                    s"StreamData with id : ${data.id} not match the parameter requirement.")
-                complete(StreamActionResponse(id, None))
-              }
+              onSuccess(store.value[StreamApp](id).flatMap { data =>
+                // TODO : Use Collie as parameter to run streamApp instead ; need support multiple topics...by Sam
+                def dockerCmd(instance: Int): String =
+                  s"docker rm -f ${data.name}-$instance"
+
+                for {
+                  exitCode <- Future {
+                    (1 to data.instances).map(i => {
+                      log.info(dockerCmd(i))
+                      Process(dockerCmd(i)).!(ProcessLogger(out => log.info(out), err => log.error(err)))
+                    })
+                  }
+                  res <- Future {
+                    StreamActionResponse(
+                      id,
+                      None
+                    )
+                  }.recover {
+                    case _: Throwable =>
+                      StreamActionResponse(
+                        id,
+                        Some(ContainerApi.ContainerState.EXITED)
+                      )
+                  }
+                } yield res
+              })(complete(_))
             }
           }
       }

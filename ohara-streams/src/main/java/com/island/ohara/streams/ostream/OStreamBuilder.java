@@ -18,6 +18,7 @@ package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.streams.OStream;
+import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -32,6 +33,8 @@ public final class OStreamBuilder<K, V> {
   private Class<? extends TimestampExtractor> extractor = null;
   private boolean cleanStart = false;
 
+  // for inner use
+  private boolean isOharaEnv = false;
   private Serde<K> builderKeySerde;
   private Serde<V> builderValueSerde;
 
@@ -140,6 +143,26 @@ public final class OStreamBuilder<K, V> {
     return new OStreamImpl<>(this);
   }
 
+  /**
+   * For running a standalone application inside ohara environment. This method will override ALL
+   * changes you made by this builder. note : this is for the production usage
+   *
+   * @return
+   */
+  public OStream<K, V> toOharaEnvStream() {
+    Map<String, String> envs = System.getenv();
+    if (envs.isEmpty() || !envs.containsKey(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS)) {
+      throw new RuntimeException("You are not running this application in ohara environment ?");
+    }
+    this.bootstrapServers = envs.get(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS);
+    this.appId = envs.get(StreamsConfig.DOCKER_APPID);
+    this.fromTopic(envs.get(StreamsConfig.DOCKER_FROM_TOPICS));
+    this.toTopic(envs.get(StreamsConfig.DOCKER_TO_TOPICS));
+    this.isOharaEnv = true;
+
+    return new OStreamImpl<>(this);
+  }
+
   // Getters
   public String getBootstrapServers() {
     return bootstrapServers;
@@ -171,5 +194,9 @@ public final class OStreamBuilder<K, V> {
 
   public boolean isCleanStart() {
     return cleanStart;
+  }
+
+  boolean isOharaEnv() {
+    return isOharaEnv;
   }
 }

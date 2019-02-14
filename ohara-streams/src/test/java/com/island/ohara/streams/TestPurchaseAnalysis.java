@@ -19,7 +19,7 @@ package com.island.ohara.streams;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.integration.With3Brokers;
+import com.island.ohara.integration.WithBroker;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Consumer.Record;
@@ -32,9 +32,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"rawtypes"})
-public class TestPurchaseAnalysis extends With3Brokers {
+public class TestPurchaseAnalysis extends WithBroker {
   private static final Logger LOG = LoggerFactory.getLogger(TestPurchaseAnalysis.class);
   private static final String appid = "test-purchase-analysis";
   private static final String resultTopic = "gender-amount";
@@ -60,7 +58,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
   @Before
   public void prepareData() {
 
-    int partitions = 3;
+    int partitions = 1;
     short replications = 1;
     try {
       client
@@ -122,14 +120,22 @@ public class TestPurchaseAnalysis extends With3Brokers {
             + records.size(),
         records.size() >= 2 && records.size() <= 4);
 
+    Map<String, Double[]> actualResultMap = new HashMap<>();
+    actualResultMap.put("male", new Double[] {60000D, 69000D});
+    actualResultMap.put("female", new Double[] {15000D, 45000D});
+    final double THRESHOLD = 0.0001;
+
     records.forEach(
         record -> {
           if (record.key().isPresent()) {
-            System.out.println(
-                "key : "
-                    + record.key().get()
-                    + ", values : "
-                    + (record.value().isPresent() ? record.value().get() : null));
+            Assert.assertTrue(
+                "the result should be contain in actualResultMap",
+                actualResultMap.containsKey(record.key().get())
+                    && actualResultMap
+                        .values()
+                        .stream()
+                        .flatMap(doubles -> Arrays.stream(doubles))
+                        .anyMatch((d) -> Math.abs(d - record.value().get()) < THRESHOLD));
           }
         });
 

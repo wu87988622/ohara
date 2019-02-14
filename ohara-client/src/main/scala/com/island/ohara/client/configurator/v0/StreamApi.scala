@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import java.io.File
+import java.nio.charset.CodingErrorAction
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
@@ -26,7 +27,7 @@ import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.io.Source
+import scala.io.{Codec, Source}
 
 object StreamApi {
   val STREAM_PREFIX_PATH: String = "stream"
@@ -68,7 +69,7 @@ object StreamApi {
   final case class StreamListRequest(jarName: String)
   implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
 
-  // StreamApp List Page Response Body
+  // StreamApp List Response Body
   final case class StreamListResponse(id: String, jarName: String, lastModified: Long)
   implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamListResponse] =
     jsonFormat3(StreamListResponse)
@@ -78,7 +79,7 @@ object StreamApi {
   implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat4(
     StreamPropertyRequest)
 
-  // StreamApp Property Page Response Body
+  // StreamApp Property Response Body
   final case class StreamPropertyResponse(id: String,
                                           jarName: String,
                                           name: String,
@@ -120,6 +121,10 @@ object StreamApi {
     def update(jar_id: String, request: StreamListRequest): Future[StreamListResponse]
   }
 
+  // To avoid different charset handle, replace the malformedInput and unMappable char
+  implicit val codec = Codec("UTF-8")
+  codec.onMalformedInput(CodingErrorAction.REPLACE)
+  codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
   def accessOfList(): ListAccess = new ListAccess {
     private[this] def request(target: String,
                               inputKey: String,

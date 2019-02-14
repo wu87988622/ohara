@@ -61,6 +61,11 @@ dependencies {
   testImplementation libs.akkaStream
 }
 
+// Since ohara-it:TestStream need streamApp client jar, we add the jar to build folder
+task includeStreamAppJar(dependsOn: ':ohara-streams:testJar', type: Copy){
+  from tasks.getByPath(':ohara-streams:testJar')
+  into "$buildDir/resources/test"
+}
 
 test {
   String FTP_SERVER = "ohara.it.ftp"
@@ -92,3 +97,5 @@ test {
   String KUBERNETES_NODE_NAME = "ohara.it.k8s.nodename"
   if(project.hasProperty(KUBERNETES_NODE_NAME)) environment KUBERNETES_NODE_NAME, project.getProperty(KUBERNETES_NODE_NAME)
 }
+
+test.dependsOn includeStreamAppJar
