@@ -16,6 +16,10 @@
 
 package com.island.ohara.kafka;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.integration.OharaTestUtil;
 import com.island.ohara.integration.With3Brokers;

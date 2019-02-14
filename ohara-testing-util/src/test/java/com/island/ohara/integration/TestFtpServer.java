@@ -16,6 +16,11 @@
 
 package com.island.ohara.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.island.ohara.common.rule.MediumTest;
 import com.island.ohara.common.util.CommonUtil;
 import java.util.List;
@@ -24,7 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class TestFtpServer extends MediumTest {
@@ -43,10 +47,10 @@ public class TestFtpServer extends MediumTest {
     int port = 123;
 
     FtpServer result = FtpServer.of(user + ":" + password + "@" + host + ":" + port);
-    Assert.assertEquals(user, result.user());
-    Assert.assertEquals(password, result.password());
-    Assert.assertEquals(host, result.hostname());
-    Assert.assertEquals(port, result.port());
+    assertEquals(user, result.user());
+    assertEquals(password, result.password());
+    assertEquals(host, result.hostname());
+    assertEquals(port, result.port());
   }
 
   @Test
@@ -59,10 +63,10 @@ public class TestFtpServer extends MediumTest {
     try (FtpServer externalFtpServer =
         FtpServer.of(user + ":" + password + "@" + host + ":" + port); ) {
       assertFalse(externalFtpServer.isLocal());
-      Assert.assertEquals(user, externalFtpServer.user());
-      Assert.assertEquals(password, externalFtpServer.password());
-      Assert.assertEquals(host, externalFtpServer.hostname());
-      Assert.assertEquals(port, externalFtpServer.port());
+      assertEquals(user, externalFtpServer.user());
+      assertEquals(password, externalFtpServer.password());
+      assertEquals(host, externalFtpServer.hostname());
+      assertEquals(port, externalFtpServer.port());
     }
 
     try (FtpServer localFtpServer = FtpServer.of()) {
@@ -74,7 +78,7 @@ public class TestFtpServer extends MediumTest {
   public void testRandomPort() {
     int[] dataPorts = {0};
     try (FtpServer ftpServer = FtpServer.local(0, dataPorts)) {
-      Assert.assertNotEquals(0, ftpServer.port());
+      assertNotEquals(0, ftpServer.port());
     }
   }
 

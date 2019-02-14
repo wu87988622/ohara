@@ -16,6 +16,10 @@
 
 package com.island.ohara.kafka;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+
 import com.island.ohara.client.kafka.WorkerClient;
 import com.island.ohara.client.kafka.WorkerClient$;
 import com.island.ohara.common.data.Cell;

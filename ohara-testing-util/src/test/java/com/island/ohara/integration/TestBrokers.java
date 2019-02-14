@@ -16,8 +16,12 @@
 
 package com.island.ohara.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.island.ohara.common.rule.MediumTest;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class TestBrokers extends MediumTest {
@@ -43,7 +47,7 @@ public class TestBrokers extends MediumTest {
             },
             1)) {
 
-      Assert.assertEquals(connProps, external.connectionProps());
+      assertEquals(connProps, external.connectionProps());
       assertFalse(external.isLocal());
     }
   }
@@ -61,8 +65,7 @@ public class TestBrokers extends MediumTest {
     int[] ports = {0};
     try (Zookeepers zk = Zookeepers.local(0);
         Brokers brokers = Brokers.local(zk, ports)) {
-      Assert.assertNotEquals(
-          0, Integer.parseInt(brokers.connectionProps().split(",")[0].split(":")[1]));
+      assertNotEquals(0, Integer.parseInt(brokers.connectionProps().split(",")[0].split(":")[1]));
     }
   }
 }

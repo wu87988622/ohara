@@ -16,12 +16,16 @@
 
 package com.island.ohara.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.island.ohara.common.rule.MediumTest;
 import com.island.ohara.common.util.CommonUtil;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class TestDatabase extends MediumTest {
@@ -78,11 +82,11 @@ public class TestDatabase extends MediumTest {
                 + "/"
                 + dbName);
 
-    Assert.assertEquals(user, result.user());
-    Assert.assertEquals(password, result.password());
-    Assert.assertEquals(host, result.hostname());
-    Assert.assertEquals(port, result.port());
-    Assert.assertEquals(dbName, result.databaseName());
+    assertEquals(user, result.user());
+    assertEquals(password, result.password());
+    assertEquals(host, result.hostname());
+    assertEquals(port, result.port());
+    assertEquals(dbName, result.databaseName());
   }
 
   @Test
@@ -109,11 +113,11 @@ public class TestDatabase extends MediumTest {
             + dbName;
     try (Database externaldb = Database.of(dbConnectionString)) {
       assertFalse(externaldb.isLocal());
-      Assert.assertEquals(user, externaldb.user());
-      Assert.assertEquals(password, externaldb.password());
-      Assert.assertEquals(host, externaldb.hostname());
-      Assert.assertEquals(port, externaldb.port());
-      Assert.assertEquals(dbName, externaldb.databaseName());
+      assertEquals(user, externaldb.user());
+      assertEquals(password, externaldb.password());
+      assertEquals(host, externaldb.hostname());
+      assertEquals(port, externaldb.port());
+      assertEquals(dbName, externaldb.databaseName());
     }
 
     try (Database localdb = Database.of()) {
@@ -124,7 +128,7 @@ public class TestDatabase extends MediumTest {
   @Test
   public void testRandomPort() {
     try (Database db = Database.local(0)) {
-      Assert.assertNotEquals(0, db.port());
+      assertNotEquals(0, db.port());
     }
   }
 

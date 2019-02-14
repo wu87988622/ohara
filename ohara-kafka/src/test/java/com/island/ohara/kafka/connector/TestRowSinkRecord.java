@@ -16,6 +16,8 @@
 
 package com.island.ohara.kafka.connector;
 
+import static org.junit.Assert.assertEquals;
+
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
