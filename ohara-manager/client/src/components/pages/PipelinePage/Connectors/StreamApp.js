@@ -139,7 +139,7 @@ class StreamApp extends React.Component {
 
         updateGraph({
           update: fromUpdate,
-          isStreamAppFromUpdate: true,
+          isFromTopic: true,
           streamAppId,
           updatedName: params.name,
         });

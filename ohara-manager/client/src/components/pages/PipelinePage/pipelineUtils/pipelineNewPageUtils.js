@@ -41,11 +41,11 @@ export const getConnectors = connectors => {
 
 export const addPipelineStatus = pipeline => {
   const status = pipeline.objects.filter(p => p.state === 'RUNNING');
-  const _status = status.length >= 2 ? 'Running' : 'Stopped';
+  const updatedStatus = status.length >= 2 ? 'Running' : 'Stopped';
 
   return {
     ...pipeline,
-    status: _status,
+    status: updatedStatus,
   };
 };
 
@@ -104,20 +104,10 @@ export const updatePipelineParams = ({
   return params;
 };
 
-const updateConnectorName = (graph, updatedName, connectorId) => {
+const updateSingleGraph = (graph, id, transformer) => {
   return graph.map(g => {
-    if (g.id === connectorId) {
-      return { ...g, name: updatedName };
-    }
-
-    return g;
-  });
-};
-
-const updateSingleGraph = (graph, targetIdx, key, value) => {
-  return graph.map((g, idx) => {
-    if (idx === targetIdx) {
-      return { ...g, [key]: value };
+    if (g.id === id) {
+      return { ...transformer(g) };
     }
 
     return g;
@@ -126,26 +116,18 @@ const updateSingleGraph = (graph, targetIdx, key, value) => {
 
 const cleanPrevConnection = (graph, connectorId, updatedName) => {
   // Update the sink connector name
+  const transformer = g => ({ ...g, name: updatedName });
   let updatedGraph =
-    updateConnectorName(graph, updatedName, connectorId) || graph;
+    updateSingleGraph(graph, connectorId, transformer) || graph;
 
   // Remove sink from other topics since our UI doesn't support this logic yet
   if (connectorId) {
-    const prevTopicIdx = updatedGraph.findIndex(g =>
-      g.to.includes(connectorId),
-    );
+    const prevTopic = updatedGraph.find(g => g.to.includes(connectorId));
 
-    if (prevTopicIdx !== -1) {
-      const prevTopicTo = updatedGraph[prevTopicIdx].to.filter(
-        t => t !== connectorId,
-      );
-
-      updatedGraph = updateSingleGraph(
-        updatedGraph,
-        prevTopicIdx,
-        'to',
-        prevTopicTo,
-      );
+    if (prevTopic) {
+      const prevTopicTo = prevTopic.to.filter(t => t !== connectorId);
+      const transformer = g => ({ ...g, to: prevTopicTo });
+      updatedGraph = updateSingleGraph(updatedGraph, prevTopic.id, transformer);
     }
   }
 
@@ -156,35 +138,29 @@ export const updateGraph = ({
   graph,
   update,
   updatedName,
-  isSinkUpdate = false,
-  isStreamAppFromUpdate = false,
+  isFromTopic,
   streamAppId = null,
   sinkId = null,
 }) => {
   let updatedGraph;
 
-  if (isSinkUpdate || isStreamAppFromUpdate) {
+  if (isFromTopic) {
     const connectorId = sinkId || streamAppId;
 
     // clean up previous connections
     updatedGraph = cleanPrevConnection(graph, connectorId, updatedName);
 
     // Update current topic
-    const topicIdx = updatedGraph.findIndex(g => g.id === update.id);
-    updatedGraph = updateSingleGraph(updatedGraph, topicIdx, 'to', update.to);
+    const transformer = g => ({ ...g, to: update.to });
+    updatedGraph = updateSingleGraph(updatedGraph, update.id, transformer);
   } else {
     const target = graph.find(g => g.id === update.id);
 
     if (isEmpty(target)) {
       updatedGraph = [...graph, update];
     } else {
-      updatedGraph = graph.map(g => {
-        if (g.id === target.id) {
-          return { ...g, ...update };
-        }
-
-        return g;
-      });
+      const transformer = g => ({ ...g, ...update });
+      updatedGraph = updateSingleGraph(graph, target.id, transformer);
     }
   }
 

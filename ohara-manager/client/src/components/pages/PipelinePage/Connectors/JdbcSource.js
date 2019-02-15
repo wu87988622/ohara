@@ -173,7 +173,7 @@ class JdbcSource extends React.Component {
 
       const { topics: writeTopics } = this.props;
 
-      if (isEmpty(prevTopics)) {
+      if (!isEmpty(prevTopics)) {
         const currWriteTopic = writeTopics.find(
           topic => topic.id === prevTopics[0],
         );
@@ -558,6 +558,7 @@ class JdbcSource extends React.Component {
                 width="100%"
                 data-testid="write-topic-select"
                 handleChange={this.handleSelectChange}
+                disabled={isRunning}
                 placeholder="Please select a topic..."
                 clearable
               />

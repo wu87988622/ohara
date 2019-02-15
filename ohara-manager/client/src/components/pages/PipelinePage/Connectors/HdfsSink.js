@@ -162,14 +162,15 @@ class HdfsSink extends React.Component {
         'data.econde': currFileEncoding = '',
       } = configs;
 
-      if (isEmpty(prevTopics)) {
-        this.setTopic();
-      } else {
-        const { topics } = this.props;
-        const currReadTopic = topics.find(topic => topic.id === prevTopics[0]);
+      const { topics: readTopics } = this.props;
+
+      if (!isEmpty(prevTopics)) {
+        const currReadTopic = readTopics.find(
+          topic => topic.id === prevTopics[0],
+        );
 
         updateTopic(this.props, currReadTopic, 'sink');
-        this.setState({ readTopics: topics, currReadTopic });
+        this.setState({ currReadTopic });
       }
 
       const _needHeader = needHeader === 'true' ? true : false;
@@ -184,23 +185,9 @@ class HdfsSink extends React.Component {
         flushLineCount,
         rotateInterval,
         currFileEncoding,
+        readTopics,
       });
     }
-  };
-
-  setTopic = () => {
-    const { topics } = this.props;
-
-    this.setState(
-      {
-        readTopics: topics,
-        currReadTopic: topics[0],
-      },
-      () => {
-        const { currReadTopic } = this.state;
-        updateTopic(this.props, currReadTopic, 'sink');
-      },
-    );
   };
 
   handleInputChange = ({ target: { name, value } }) => {
@@ -289,16 +276,16 @@ class HdfsSink extends React.Component {
     const currTopicId = isEmpty(currReadTopic) ? [] : currReadTopic.id;
     const currSink = findByGraphId(graph, sinkId);
     const topic = findByGraphId(graph, currTopicId);
-    const to = [...new Set([...topic.to, sinkId])];
 
     let update;
     if (topic) {
+      const to = [...new Set([...topic.to, sinkId])];
       update = { ...topic, to };
-      updateGraph({ update, isSinkUpdate: true, updatedName: name, sinkId });
     } else {
       update = { ...currSink };
-      updateGraph({ update, updatedName: name, sinkId });
     }
+
+    updateGraph({ update, isFromTopic: true, updatedName: name, sinkId });
   }, 1000);
 
   handleStartConnector = async () => {
@@ -435,6 +422,8 @@ class HdfsSink extends React.Component {
               data-testid="topic-select"
               handleChange={this.handleSelectChange}
               disabled={isRunning}
+              placeholder="Please select a topic..."
+              clearable
             />
           </FormGroup>
 
