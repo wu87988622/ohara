@@ -16,9 +16,6 @@
 
 apply from: "$rootDir/gradle/dependencies.gradle"
 
-// TODO: Why we set the time zone in testing??? We can get the system timezone through Calendar.getInstance().getTimeZone... by chia
-test.systemProperty("user.timezone", "Asia/Taipei")
-
 // We include the simple streamApp client application for IT test
 testJar {
     include '**/SimpleApplicationForOharaEnv.class'

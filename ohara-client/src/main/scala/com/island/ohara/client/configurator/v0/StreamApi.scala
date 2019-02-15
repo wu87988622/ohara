@@ -37,16 +37,17 @@ object StreamApi {
   val STOP_COMMAND: String = "stop"
 
   /**
-    * the streamapp data keeps into ohara Stores
+    * the streamApp data keeps into ohara Stores
     *
     * @param pipelineId the ohara pipeline id
-    * @param id the streamapp unique id
-    * @param name streamapp running configuration : application.id
-    * @param instances streamapp running configuration : num.stream.threads
-    * @param jarInfo saving jar inrfomation
-    * @param fromTopics the candidate topics for streamapp consume from
-    * @param toTopics the candidate topics for streamapp produce to
+    * @param id the streamApp unique id
+    * @param name streamApp running configuration : application.id
+    * @param instances streamApp running configuration : num.stream.threads
+    * @param jarInfo saving jar information
+    * @param fromTopics the candidate topics for streamApp consume from
+    * @param toTopics the candidate topics for streamApp produce to
     * @param lastModified this data change time
+    * @param node the streamApp running node
     */
   final case class StreamApp(pipelineId: String,
                              id: String,
@@ -55,7 +56,8 @@ object StreamApi {
                              jarInfo: JarApi.JarInfo,
                              fromTopics: Seq[String],
                              toTopics: Seq[String],
-                             lastModified: Long)
+                             lastModified: Long,
+                             node: Option[NodeApi.Node] = None)
       extends Data {
     override def kind: String = "streamApp"
   }

@@ -17,17 +17,18 @@
 package com.island.ohara.configurator.route
 
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, TimeUnit}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.BrokerCollie
+import com.island.ohara.agent.{BrokerCollie, DockerClient, NodeCollie}
 import com.island.ohara.client.StreamClient
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.{ContainerApi, JarApi}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtil._
@@ -38,6 +39,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.sys.process._
+import scala.util.Random
 
 private[configurator] object StreamRoute {
 
@@ -68,7 +70,27 @@ private[configurator] object StreamRoute {
     data.toTopics.forall(isNotNullOrEmpty)
   }
 
-  def apply(implicit store: Store, brokerCollie: BrokerCollie, jarStore: JarStore): server.Route =
+  private[this] val clientCache: DockerClientCache = new DockerClientCache {
+    private[this] val cache: ConcurrentMap[Node, DockerClient] = new ConcurrentHashMap[Node, DockerClient]()
+    override def get(node: Node): DockerClient = cache.computeIfAbsent(
+      node,
+      node =>
+        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build())
+
+    override def close(): Unit = {
+      cache.values().forEach(client => Releasable.close(client))
+      cache.clear()
+    }
+  }
+  private trait DockerClientCache extends Releasable {
+    def get(node: Node): DockerClient
+    def get(nodes: Seq[Node]): Seq[DockerClient] = nodes.map(get)
+  }
+
+  def apply(implicit store: Store,
+            brokerCollie: BrokerCollie,
+            nodeCollie: NodeCollie,
+            jarStore: JarStore): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
         complete(StatusCodes.BadRequest -> "wrong uri")
@@ -134,6 +156,7 @@ private[configurator] object StreamRoute {
                       f1 <- store.value[StreamApp](id)
                       f2 <- jarStore.url(f1.jarInfo.id)
                       f3 <- {
+                        //download the jar file from remote ftp server by URL...use more readable code ?...by Sam
                         { f2 #> f !! }
                         jarStore.add(f, req.jarName)
                       }
@@ -223,96 +246,112 @@ private[configurator] object StreamRoute {
                   if (!assertParameters(data))
                     throw new IllegalArgumentException(
                       s"StreamApp with id : ${data.id} not match the parameter requirement.")
-                  // TODO : Use Collie as parameter to run streamApp instead ; need support multiple topics...by Sam
+
                   // for v0.2, we only run streamApp with the following conditions:
-                  // 1) use "this configurator" machine as the docker client
+                  // 1) use any available node to run streamApp
                   // 2) only support one from/to topic
                   // 3) choose any existing broker cluster to run
                   // 4) only run 1 instance
-
                   val localPath = s"${StreamClient.TMP_ROOT}${File.separator}StreamApp-${data.name}"
 
-                  val clusters = Await.result(brokerCollie.clusters().map { bkMap =>
-                    bkMap.keys.toSeq
-                  }, Duration(10, TimeUnit.SECONDS))
-
-                  val brokers = clusters
-                    .find { cluster =>
-                      val topics = Await.result(
-                        CollieUtils
-                          .topicAdmin(Some(cluster.name))
-                          .flatMap {
-                            case (_, client) =>
-                              client.list()
-                          }
-                          .map { infos =>
-                            infos.map(info => info.name)
-                          },
-                        Duration(10, TimeUnit.SECONDS)
-                      )
-                      topics.contains(data.fromTopics.head) && topics.contains(data.toTopics.head)
-                    }
-                    .getOrElse(throw new NoSuchElementException(
-                      "Can not find andy math broker cluster for this streamApp"))
-                    .nodeNames
-                    .map(_ + ":9092")
-                    .mkString(",")
-
-                  def dockerCmd(instance: Int): String = {
-                    s"""docker run
-                       | -h ${data.name}
-                       | -d
-                       | --name ${data.name}-$instance
-                       | -e "STREAMAPP_JARROOT=/opt/ohara/streamapp"
-                       | -e "STREAMAPP_FROMTOPIC=${data.fromTopics.head}"
-                       | -e "STREAMAPP_APPID=${data.name}"
-                       | -e "STREAMAPP_SERVERS=$brokers"
-                       | -e "STREAMAPP_TOTOPIC=${data.toTopics.head}"
-                       | -v "$localPath:/opt/ohara/streamapp"
-                       | ${StreamClient.STREAMAPP_IMAGE}
-                       | ${StreamClient.MAIN_ENTRY}""".stripMargin
-                  }
-                  def dockerLog(instance: Int): String =
-                    s"docker logs ${data.name}-$instance"
-                  def dockerInspectStatus(instance: Int): String =
-                    s"docker inspect --format {{.State.Status}} ${data.name}-$instance"
-
-                  val dir = new File(localPath)
-                  if (!dir.exists()) dir.mkdirs()
-                  val f = new File(localPath, data.jarInfo.name)
-
-                  jarStore
-                    .url(data.jarInfo.id)
-                    .flatMap { url =>
-                      //download the jar file from remote ftp server by URL...use more readable code ?...by Sam
-                      Future { url #> f !! }
-                    }
-                    .flatMap { _ =>
-                      Future {
-                        (1 to data.instances).map(i => {
-                          log.info(dockerCmd(i))
-                          log.info(dockerLog(i))
-                          Process(dockerCmd(i)).!(ProcessLogger(out => log.info(out), err => log.info(err)))
-                          Process(dockerLog(i)).!(ProcessLogger(out => log.info(out), err => log.info(err)))
-                        })
+                  val result = for {
+                    dockerClient <- nodeCollie
+                      .nodes()
+                      .map { nodes =>
+                        Random
+                          .shuffle(nodes)
+                          .take(data.instances)
+                          //we only accept 1 instance for 0.2...by Sam
+                          .headOption
+                          .getOrElse(throw new IllegalArgumentException(s"there is no any available node"))
                       }
-                    }
-                    .map { _ =>
-                      StreamActionResponse(
-                        id,
-                        Some(ContainerApi.ContainerState.all
-                          .find(_.name.compareToIgnoreCase(dockerInspectStatus(1).lineStream.head) == 0)
-                          .getOrElse(throw new IllegalArgumentException(s"Unknown state name")))
-                      )
-                    }
-                    .recover {
-                      case ex: Throwable =>
-                        log.error(ex.getMessage)
-                        StreamActionResponse(
-                          id,
-                          Some(ContainerApi.ContainerState.EXITED)
-                        )
-                    }
+                      .map { n =>
+                        store.update[StreamApp](id, data => Future.successful(data.copy(node = Some(n))))
+                        clientCache.get(n)
+                      }
+                    brokerInfos <- brokerCollie
+                      .clusters()
+                      .map { bkMap =>
+                        bkMap.keys.toSeq
+                      }
+                      .map { clusters =>
+                        clusters.filter { cluster =>
+                          Await
+                            .result(
+                              CollieUtils
+                                .topicAdmin(Some(cluster.name))
+                                .flatMap {
+                                  case (_, client) =>
+                                    client.list()
+                                }
+                                .filter { infos =>
+                                  infos.map(info => info.name).contains(data.fromTopics.head) &&
+                                  infos.map(info => info.name).contains(data.toTopics.head)
+                                },
+                              Duration(10, TimeUnit.SECONDS)
+                            )
+                            .nonEmpty
+                        }
+                      }
+                    //there should be only one possible broker cluster
+                  } yield (dockerClient -> brokerInfos.headOption)
+
+                  result.map {
+                    case (client, brokerInfo) =>
+                      if (brokerInfo.isEmpty) {
+                        throw new RuntimeException("Can not find andy math broker cluster for this streamApp")
+                      }
+                      val brokers = brokerInfo.get.nodeNames.map(_ + ":9092").mkString(",")
+
+                      val dir = new File(localPath)
+                      if (!dir.exists()) dir.mkdirs()
+                      val f = new File(localPath, data.jarInfo.name)
+                      jarStore
+                        .url(data.jarInfo.id)
+                        .map { url => //download the jar file from remote ftp server by URL...use more readable code ?...by Sam
+                        { url #> f !! }
+                        }
+                        .map {
+                          _ =>
+                            client
+                              .container(data.name)
+                              .getOrElse(
+                                client
+                                  .containerCreator()
+                                  .hostname(data.name)
+                                  .name(s"${data.name}")
+                                  .envs(
+                                    Map(
+                                      "STREAMAPP_JARROOT" -> "/opt/ohara/streamapp",
+                                      "STREAMAPP_APPID" -> data.name,
+                                      "STREAMAPP_SERVERS" -> brokers,
+                                      "STREAMAPP_FROMTOPIC" -> data.fromTopics.head,
+                                      "STREAMAPP_TOTOPIC" -> data.toTopics.head
+                                    )
+                                  )
+                                  .volumnMapping(Map(localPath -> "/opt/ohara/streamapp"))
+                                  .imageName(StreamClient.STREAMAPP_IMAGE)
+                                  .command(StreamClient.MAIN_ENTRY)
+                                  .run()
+                                  .get
+                              )
+                        }
+                        .map { c =>
+                          log.info(s"container [${c.name}] logs : s${client.log(c.name)}")
+                          StreamActionResponse(
+                            id,
+                            Some(c.state)
+                          )
+                        }
+                        .recover {
+                          case ex: Throwable =>
+                            log.error(ex.getMessage)
+                            StreamActionResponse(
+                              id,
+                              Some(ContainerApi.ContainerState.EXITED)
+                            )
+                        }
+                  }
                 }
               )(complete(_))
             }
@@ -321,30 +360,23 @@ private[configurator] object StreamRoute {
           path(STOP_COMMAND) {
             put {
               onSuccess(store.value[StreamApp](id).flatMap { data =>
-                // TODO : Use Collie as parameter to run streamApp instead ; need support multiple topics...by Sam
-                def dockerCmd(instance: Int): String =
-                  s"docker rm -f ${data.name}-$instance"
-
-                for {
-                  exitCode <- Future {
-                    (1 to data.instances).map(i => {
-                      log.info(dockerCmd(i))
-                      Process(dockerCmd(i)).!(ProcessLogger(out => log.info(out), err => log.error(err)))
-                    })
-                  }
-                  res <- Future {
+                val node = data.node.getOrElse(
+                  throw new RuntimeException(s"the streamApp [$id] is not running at any node. we cannot stop it."))
+                Future
+                  .successful(clientCache.get(node).forceRemove(data.name))
+                  .map { _ =>
                     StreamActionResponse(
                       id,
                       None
                     )
-                  }.recover {
+                  }
+                  .recover {
                     case _: Throwable =>
                       StreamActionResponse(
                         id,
                         Some(ContainerApi.ContainerState.EXITED)
                       )
                   }
-                } yield res
               })(complete(_))
             }
           }
