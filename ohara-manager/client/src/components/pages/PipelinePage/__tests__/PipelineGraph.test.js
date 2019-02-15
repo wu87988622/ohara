@@ -44,6 +44,9 @@ const props = {
       icon: '',
     },
   ],
+  pipeline: {
+    workerClusterName: 'wk00',
+  },
   resetGraph: jest.fn(),
   updateGraph: jest.fn(),
   match: {},

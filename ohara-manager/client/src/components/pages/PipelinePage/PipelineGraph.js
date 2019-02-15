@@ -23,7 +23,7 @@ import * as d3 from 'd3v4';
 import * as _ from 'utils/commonUtils';
 import { Box } from 'common/Layout';
 import { H5 } from 'common/Headings';
-import { getIcon } from './pipelineUtils/pipelineGraphUtils';
+import { getIcon, getStatusIcon } from './pipelineUtils/pipelineGraphUtils';
 
 const Wrapper = styled(Box)`
   width: 65%;
@@ -92,6 +92,9 @@ const Svg = styled.svg`
     .node-icon {
       color: ${props => props.theme.dimBlue};
     }
+    .status-icon {
+      display: none;
+    }
   }
 
   .node-connector {
@@ -142,6 +145,15 @@ const Svg = styled.svg`
       overflow: hidden;
     }
 
+    .status-icon {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      right: 8px;
+      top: 7px;
+      display: none;
+    }
+
     &.is-running {
       .node-icon {
         background-color: ${props => props.theme.green};
@@ -151,6 +163,10 @@ const Svg = styled.svg`
     &.is-failed {
       .node-icon {
         background-color: ${props => props.theme.red};
+      }
+      .status-icon {
+        color: ${props => props.theme.red};
+        display: block;
       }
     }
   }
@@ -179,6 +195,9 @@ class PipelineGraph extends React.Component {
         icon: PropTypes.string,
       }),
     ).isRequired,
+    pipeline: PropTypes.shape({
+      workerClusterName: PropTypes.string,
+    }).isRequired,
     resetGraph: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
@@ -219,7 +238,8 @@ class PipelineGraph extends React.Component {
   };
 
   renderGraph = () => {
-    const { graph } = this.props;
+    const { graph, pipeline = {} } = this.props;
+    const { workerClusterName } = pipeline;
     const g = new dagreD3.graphlib.Graph().setGraph({});
 
     graph.forEach(({ name, kind, to, id, isActive = false, state = '' }) => {
@@ -232,6 +252,7 @@ class PipelineGraph extends React.Component {
       const stateCls = !_.isEmptyStr(state) ? `is-${state.toLowerCase()}` : '';
       const status = !_.isEmptyStr(state) ? state.toLowerCase() : 'stopped';
       const icon = getIcon(kind);
+      const statusIcon = getStatusIcon(state);
 
       const html = `<div class="node-graph ${topicCls} ${isActiveCls} ${stateCls}">
         <span class="node-icon"><i class="fa ${icon}"></i></span>
@@ -240,6 +261,9 @@ class PipelineGraph extends React.Component {
           <span class="node-status">Status: ${status}</span>
           <span class="node-type">${displayKind}</span>
         </div>
+        <a class="status-icon" href="/logs/workers/${workerClusterName}" target="_blank">
+          <i class="fas ${statusIcon}"></i>
+        </a>
       </div>`;
 
       g.setNode(id, {

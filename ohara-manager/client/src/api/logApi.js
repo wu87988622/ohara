@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-export const HOME = 'Ohara - Home';
-export const LOGIN = 'Ohara - Login';
-export const PIPELINE = 'Ohara - Pipelines';
-export const PIPELINE_NEW = 'Ohara - New Pipeline';
-export const PIPELINE_EDIT = 'Ohara - Edit Pipeline';
-export const KAFKA = 'Ohara - Kafka';
-export const NODES = 'Ohara - Nodes';
-export const SERVICES = 'Ohara - Services';
-export const MONITORING = 'Ohara - Monitoring';
-export const LOGS = 'Ohara - Logs';
-export const CONFIGURATION = 'Ohara - Configuration';
+import { get } from 'lodash';
 
-export const NOT_FOUND_PAGE = 'Ohara - 404 page not found';
+import { handleError, axiosInstance } from 'utils/apiUtils';
+
+export const fetchLogs = async (serviceName, clusterName) => {
+  try {
+    const res = await axiosInstance.get(
+      `/api/logs/${serviceName}?cluster=${clusterName}`,
+    );
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

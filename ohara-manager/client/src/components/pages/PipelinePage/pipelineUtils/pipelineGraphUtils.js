@@ -15,6 +15,7 @@
  */
 
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
+import { CONNECTOR_STATES } from 'constants/pipelines';
 
 export const getIcon = kind => {
   let icon = '';
@@ -27,6 +28,16 @@ export const getIcon = kind => {
     icon = 'fa-list-ul';
   } else if (isStream(kind)) {
     icon = 'fa-wind';
+  }
+
+  return icon;
+};
+
+export const getStatusIcon = state => {
+  let icon = '';
+
+  if (state === CONNECTOR_STATES.failed) {
+    icon = 'fa-exclamation-circle';
   }
 
   return icon;

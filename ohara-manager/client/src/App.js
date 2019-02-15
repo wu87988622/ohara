@@ -24,6 +24,7 @@ import PipelineNewPage from 'components/pages/PipelinePage/PipelineNewPage';
 import NodesPage from 'components/pages/NodePage/NodeListPage';
 import ServicesPage from 'components/pages/Services';
 import MonitoringPage from 'components/pages/MonitoringPage';
+import LogsPage from 'components/pages/LogsPage';
 import LoginPage from 'components/pages/LoginPage';
 import LogoutPage from 'components/pages/LogoutPage';
 import NotFoundPage from 'components/pages/NotFoundPage';
@@ -83,6 +84,11 @@ class App extends React.Component {
               path="/monitoring"
               component={MonitoringPage}
               data-testid="monitoring-page"
+            />
+            <Route
+              path="/logs/:serviceName/:clusterName"
+              component={LogsPage}
+              data-testid="logs-page"
             />
             <Route
               path="/login"

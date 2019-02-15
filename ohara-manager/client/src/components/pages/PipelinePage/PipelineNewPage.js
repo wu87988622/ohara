@@ -405,6 +405,7 @@ class PipelineNewPage extends React.Component {
               <PipelineGraph
                 {...this.props}
                 graph={graph}
+                pipeline={pipelines}
                 updateGraph={this.updateGraph}
                 resetGraph={this.resetGraph}
               />
