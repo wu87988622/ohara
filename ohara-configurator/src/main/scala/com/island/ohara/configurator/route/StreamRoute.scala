@@ -194,9 +194,6 @@ private[configurator] object StreamRoute {
                                             req.fromTopics,
                                             req.toTopics,
                                             CommonUtil.current())
-                      if (!assertParameters(newData))
-                        throw new IllegalArgumentException(
-                          s"StreamApp with id : ${data.id} not match the parameter requirement.")
                       store.update[StreamApp](
                         id,
                         _ => Future.successful(newData)
@@ -223,6 +220,9 @@ private[configurator] object StreamRoute {
             put {
               onSuccess(
                 store.value[StreamApp](id).flatMap { data =>
+                  if (!assertParameters(data))
+                    throw new IllegalArgumentException(
+                      s"StreamApp with id : ${data.id} not match the parameter requirement.")
                   // TODO : Use Collie as parameter to run streamApp instead ; need support multiple topics...by Sam
                   // for v0.2, we only run streamApp with the following conditions:
                   // 1) use "this configurator" machine as the docker client
