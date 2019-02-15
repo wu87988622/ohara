@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isNull } from 'lodash';
+import { isNull, isEmpty } from 'lodash';
 
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
 import { isEmptyStr } from 'utils/commonUtils';
@@ -49,12 +49,12 @@ export const addPipelineStatus = pipeline => {
   };
 };
 
-export const removePrevSinkConnection = (rules, sinkId) => {
+export const removePrevConnector = (rules, connectorId) => {
   const updatedRule = Object.keys(rules)
     .map(key => {
       // Remove the previous sinkId, if it exists
-      if (rules[key].includes(sinkId)) {
-        const updatedTo = rules[key].filter(rule => rule !== sinkId);
+      if (rules[key].includes(connectorId)) {
+        const updatedTo = rules[key].filter(rule => rule !== connectorId);
         const result = { [key]: updatedTo };
         return result;
       }
@@ -76,13 +76,16 @@ export const updatePipelineParams = ({
   pipelines,
   update = null,
   sinkId = null,
+  streamAppId = null,
 }) => {
   let params = null;
   let { rules } = pipelines;
 
-  // Remove previous sink connection from graph
-  if (!isNull(sinkId)) {
-    rules = removePrevSinkConnection(rules, sinkId);
+  // Remove previous connector from the graph as we're only allowing single
+  // connection in v0.2
+  if (!isNull(sinkId) || !isNull(streamAppId)) {
+    const connectorId = sinkId || streamAppId;
+    rules = removePrevConnector(rules, connectorId);
   }
 
   // If update is not specify, just pass down the entire pipeline
@@ -101,51 +104,40 @@ export const updatePipelineParams = ({
   return params;
 };
 
-const updateSinkName = (graph, updatedName, sinkId) => {
-  if (isNull(sinkId)) return;
+const updateConnectorName = (graph, updatedName, connectorId) => {
+  return graph.map(g => {
+    if (g.id === connectorId) {
+      return { ...g, name: updatedName };
+    }
 
-  const sinkIdx = graph.findIndex(g => g.id === sinkId);
-  const result = [
-    ...graph.slice(0, sinkIdx),
-    { ...graph[sinkIdx], name: updatedName },
-    ...graph.slice(sinkIdx + 1),
-  ];
-
-  return result;
+    return g;
+  });
 };
 
-const updateSingleGraph = (graph, idx, key, value) => {
-  const result = [
-    ...graph.slice(0, idx),
-    {
-      ...graph[idx],
-      [key]: value,
-    },
-    ...graph.slice(idx + 1),
-  ];
+const updateSingleGraph = (graph, targetIdx, key, value) => {
+  return graph.map((g, idx) => {
+    if (idx === targetIdx) {
+      return { ...g, [key]: value };
+    }
 
-  return result;
+    return g;
+  });
 };
 
-export const updateGraph = ({
-  graph,
-  update,
-  updatedName,
-  isSinkUpdate = false,
-  sinkId = null,
-}) => {
-  let updatedGraph;
-  let idx = null;
+const cleanPrevConnection = (graph, connectorId, updatedName) => {
+  // Update the sink connector name
+  let updatedGraph =
+    updateConnectorName(graph, updatedName, connectorId) || graph;
 
-  if (isSinkUpdate) {
-    // Update the sink connector name
-    updatedGraph = updateSinkName(graph, updatedName, sinkId) || graph;
+  // Remove sink from other topics since our UI doesn't support this logic yet
+  if (connectorId) {
+    const prevTopicIdx = updatedGraph.findIndex(g =>
+      g.to.includes(connectorId),
+    );
 
-    // Remove sink from other topics since our UI doesn't support this logic yet
-    if (sinkId) {
-      const prevTopicIdx = updatedGraph.findIndex(g => g.to.includes(sinkId));
+    if (prevTopicIdx !== -1) {
       const prevTopicTo = updatedGraph[prevTopicIdx].to.filter(
-        t => t !== sinkId,
+        t => t !== connectorId,
       );
 
       updatedGraph = updateSingleGraph(
@@ -155,21 +147,44 @@ export const updateGraph = ({
         prevTopicTo,
       );
     }
+  }
+
+  return updatedGraph;
+};
+
+export const updateGraph = ({
+  graph,
+  update,
+  updatedName,
+  isSinkUpdate = false,
+  isStreamAppFromUpdate = false,
+  streamAppId = null,
+  sinkId = null,
+}) => {
+  let updatedGraph;
+
+  if (isSinkUpdate || isStreamAppFromUpdate) {
+    const connectorId = sinkId || streamAppId;
+
+    // clean up previous connections
+    updatedGraph = cleanPrevConnection(graph, connectorId, updatedName);
 
     // Update current topic
     const topicIdx = updatedGraph.findIndex(g => g.id === update.id);
     updatedGraph = updateSingleGraph(updatedGraph, topicIdx, 'to', update.to);
   } else {
-    idx = graph.findIndex(g => g.id === update.id);
+    const target = graph.find(g => g.id === update.id);
 
-    if (idx === -1) {
+    if (isEmpty(target)) {
       updatedGraph = [...graph, update];
     } else {
-      updatedGraph = [
-        ...graph.slice(0, idx),
-        { ...graph[idx], ...update },
-        ...graph.slice(idx + 1),
-      ];
+      updatedGraph = graph.map(g => {
+        if (g.id === target.id) {
+          return { ...g, ...update };
+        }
+
+        return g;
+      });
     }
   }
 

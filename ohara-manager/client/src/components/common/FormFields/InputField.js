@@ -22,17 +22,19 @@ const InputField = ({
   input: { name, onChange, value, ...restInput },
   meta,
   ...rest
-}) => (
-  <Input
-    {...rest}
-    name={name}
-    helperText={meta.touched ? meta.error : undefined}
-    error={meta.error && meta.touched}
-    inputProps={restInput}
-    handleChange={onChange}
-    value={value}
-  />
-);
+}) => {
+  return (
+    <Input
+      {...rest}
+      name={name}
+      helperText={meta.touched ? meta.error : undefined}
+      error={meta.error && meta.touched}
+      inputProps={restInput}
+      handleChange={onChange}
+      value={value}
+    />
+  );
+};
 
 InputField.propTypes = {
   input: PropTypes.shape({

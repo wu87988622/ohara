@@ -178,20 +178,17 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  updateGraph = async ({ update, isSinkUpdate, sinkId, updatedName }) => {
+  updateGraph = async params => {
     this.setState(({ graph }) => {
       return {
         graph: updateGraph({
           graph,
-          update,
-          isSinkUpdate,
-          sinkId,
-          updatedName,
+          ...params,
         }),
       };
     });
 
-    await this.updatePipeline({ update, sinkId });
+    await this.updatePipeline({ ...params });
   };
 
   loadGraph = pipelines => {
@@ -244,11 +241,12 @@ class PipelineNewPage extends React.Component {
     const { pipelines } = this.state;
     const { id, status } = pipelines;
     const params = updatePipelineParams({ pipelines, ...update });
+
     this.setState({ isUpdating: true }, async () => {
       const res = await pipelineApi.updatePipeline({ id, params });
       this.setState({ isUpdating: false });
-
       const updatedPipelines = get(res, 'data.result', null);
+
       if (!isEmpty(updatedPipelines)) {
         const { topics: pipelineTopics } = getConnectors(
           updatedPipelines.objects,

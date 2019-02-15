@@ -16,10 +16,10 @@
 
 import {
   updatePipelineParams,
-  removePrevSinkConnection,
+  removePrevConnector,
 } from '../pipelineNewPageUtils';
 
-describe('removePrevSinkConnection()', () => {
+describe('removePrevConnector()', () => {
   it('removes previous sink connection', () => {
     const rules = {
       a: ['e', 'f'],
@@ -33,7 +33,7 @@ describe('removePrevSinkConnection()', () => {
       a: ['e'],
     };
 
-    expect(removePrevSinkConnection(rules, sinkId)).toEqual(expected);
+    expect(removePrevConnector(rules, sinkId)).toEqual(expected);
   });
 });
 

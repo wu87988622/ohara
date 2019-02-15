@@ -64,14 +64,13 @@ class StreamApp extends React.Component {
     streamApp: null,
     state: null,
     topics: [],
-    currFromTopic: {},
   };
 
   componentDidMount() {
-    const streamAppId = get(this.props.match, 'params.connectorId', null);
+    const { match, topics } = this.props;
+    const streamAppId = get(match, 'params.connectorId', null);
 
-    this.setState({ topics: this.props.topics });
-    this.setState({ streamAppId }, () => {
+    this.setState({ streamAppId, topics }, () => {
       this.fetchStreamApp(streamAppId);
     });
   }
@@ -85,25 +84,66 @@ class StreamApp extends React.Component {
     }
   };
 
-  handleSave = async values => {
+  handleSave = async ({ name, instances, fromTopic, toTopic }) => {
+    const { topics, updateHasChanges, graph, updateGraph } = this.props;
     const { streamAppId } = this.state;
+
+    const fromTopics = topics.reduce((acc, { name, id }) => {
+      return name === fromTopic ? [...acc, id] : acc;
+    }, []);
+
+    const toTopics = topics.reduce((acc, { name, id }) => {
+      return name === toTopic ? [...acc, id] : acc;
+    }, []);
+
     const params = {
       id: streamAppId,
-      name: values.name,
-      instances: values.instances,
-      fromTopics: values.fromTopic ? [values.fromTopic] : [],
-      toTopics: values.toTopic ? [values.toTopic] : [],
+      name,
+      instances,
+      fromTopics,
+      toTopics,
     };
 
+    updateHasChanges(true);
     const res = await streamAppApi.updateProperty(params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
-      const { graph, updateGraph } = this.props;
-      const streamAppId = params.id;
-      const currStreamApp = findByGraphId(graph, streamAppId);
-      const update = { ...currStreamApp, ...params };
-      updateGraph({ update });
+      const [streamApp] = graph.filter(g => g.id === streamAppId);
+      const [prevFromTopic] = graph.filter(g => g.to.includes(streamAppId));
+      const isToUpdate = streamApp.to[0] !== toTopics[0];
+
+      if (isToUpdate) {
+        const currStreamApp = findByGraphId(graph, streamAppId);
+        const toUpdate = { ...currStreamApp, to: toTopics };
+        updateGraph({ update: toUpdate });
+      } else {
+        let currTopic = findByGraphId(graph, fromTopics[0]);
+        let fromUpdateTo;
+
+        if (currTopic) {
+          fromUpdateTo = [...new Set([...currTopic.to, streamAppId])];
+        } else {
+          if (prevFromTopic) {
+            fromUpdateTo = prevFromTopic.to.filter(t => t !== streamAppId);
+          } else {
+            fromUpdateTo = [];
+          }
+          currTopic = prevFromTopic;
+        }
+
+        const fromUpdate = {
+          ...currTopic,
+          to: fromUpdateTo,
+        };
+
+        updateGraph({
+          update: fromUpdate,
+          isStreamAppFromUpdate: true,
+          streamAppId,
+          updatedName: params.name,
+        });
+      }
     }
   };
 
@@ -124,27 +164,6 @@ class StreamApp extends React.Component {
       toastr.success(MESSAGES.STREAM_APP_DELETION_SUCCESS);
       refreshGraph();
     }
-  };
-
-  handleSelectChange = ({ target }) => {
-    const { name, options, value } = target;
-    const selectedIdx = options.selectedIndex;
-    const { id } = options[selectedIdx].dataset;
-    const current = this.selectMaps[name];
-
-    this.setState(
-      () => {
-        return {
-          [current]: {
-            name: value,
-            id,
-          },
-        };
-      },
-      () => {
-        this.props.updateHasChanges(true);
-      },
-    );
   };
 
   triggerStreamApp = async action => {
@@ -183,15 +202,20 @@ class StreamApp extends React.Component {
   };
 
   render() {
+    const { updateHasChanges } = this.props;
     const { topics, streamApp } = this.state;
+
     if (!streamApp) return null;
 
     const { name, instances, jarName, fromTopics, toTopics } = streamApp;
+    const from = topics.find(({ id }) => id === fromTopics[0]);
+    const to = topics.find(({ id }) => id === toTopics[0]);
+
     const initialValues = {
       name: _.isEmptyStr(name) ? 'Untitled stream app' : name,
       instances: `${instances}`,
-      fromTopic: !isEmpty(fromTopics) ? fromTopics[0] : null,
-      toTopic: !isEmpty(toTopics) ? toTopics[0] : null,
+      fromTopic: !isEmpty(from) ? from.name : null,
+      toTopic: !isEmpty(to) ? to.name : null,
     };
 
     return (
@@ -201,7 +225,10 @@ class StreamApp extends React.Component {
           initialValues={initialValues}
           render={() => (
             <Box>
-              <AutoSave save={this.handleSave} />
+              <AutoSave
+                save={this.handleSave}
+                updateHasChanges={updateHasChanges}
+              />
               <s.TitleWrapper>
                 <s.H5Wrapper>Stream app</s.H5Wrapper>
                 <Controller
@@ -219,7 +246,6 @@ class StreamApp extends React.Component {
                     component={InputField}
                     width="100%"
                     placeholder="Stream app name"
-                    data-testid="name-input"
                   />
                 </s.FormCol>
                 <s.FormCol width="30%">
@@ -232,7 +258,6 @@ class StreamApp extends React.Component {
                     max={100}
                     width="100%"
                     placeholder="1"
-                    data-testid="instances-input"
                   />
                 </s.FormCol>
               </s.FormRow>
@@ -240,13 +265,13 @@ class StreamApp extends React.Component {
                 <s.FormCol width="50%">
                   <Label>From topic</Label>
                   <Field
-                    name="fromTopics"
+                    name="fromTopic"
                     component={SelectField}
                     list={topics}
                     width="100%"
                     placeholder="select a topic ..."
-                    data-testid="from-topic-select"
-                    onChange={this.handleSelectChange}
+                    isObject
+                    clearable
                   />
                 </s.FormCol>
                 <s.FormCol width="50%">
@@ -257,7 +282,8 @@ class StreamApp extends React.Component {
                     list={topics}
                     width="100%"
                     placeholder="select a topic ..."
-                    data-testid="to-topic-select"
+                    isObject
+                    clearable
                   />
                 </s.FormCol>
               </s.FormRow>
@@ -269,11 +295,7 @@ class StreamApp extends React.Component {
               </s.FormRow>
               <s.FormRow>
                 <s.FormCol>
-                  <s.ViewTopologyBtn
-                    text="View topology"
-                    data-testid="view-topology-button"
-                    disabled
-                  />
+                  <s.ViewTopologyBtn text="View topology" disabled />
                 </s.FormCol>
               </s.FormRow>
             </Box>

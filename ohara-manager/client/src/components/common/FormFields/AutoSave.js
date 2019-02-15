@@ -16,13 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FormSpy } from 'react-final-form';
 import diff from 'deep-diff';
+import { FormSpy } from 'react-final-form';
 import { debounce } from 'lodash';
 
 class AutoSave extends React.Component {
   static propTypes = {
-    values: PropTypes.object,
+    values: PropTypes.object.isRequired,
+    updateHasChanges: PropTypes.func.isRequired,
   };
 
   state = {
@@ -34,12 +35,14 @@ class AutoSave extends React.Component {
   }
 
   save = debounce(async () => {
-    const { values, save } = this.props;
+    const { values, save, updateHasChanges } = this.props;
     const difference = diff(this.state.values, values);
+
     if (difference && difference.length) {
       // values have changed
       this.setState({ values });
       await save(values);
+      updateHasChanges(false);
     }
   }, 1000);
 

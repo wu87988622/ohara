@@ -21,6 +21,7 @@ import { Select } from 'common/Form';
 const SelectField = ({
   input: { name, onChange, value, ...restInput },
   meta,
+  list,
   ...rest
 }) => {
   return (
@@ -31,6 +32,7 @@ const SelectField = ({
       error={meta.error && meta.touched}
       inputProps={restInput}
       handleChange={onChange}
+      list={list}
       value={value}
       selected={value}
     />
@@ -47,6 +49,7 @@ SelectField.propTypes = {
     touched: PropTypes.bool,
     error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }).isRequired,
+  list: PropTypes.array.isRequired,
 };
 
 export default SelectField;
