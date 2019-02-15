@@ -159,6 +159,15 @@ class TestK8SSimple extends SmallTest with Matchers {
       k8sClient.remove(containerName).name shouldBe containerName
     }
   }
+
+  @Test
+  def testK8SNodeInfo(): Unit = {
+    val k8sClient = K8SClient(k8sApiServerURL)
+    val nodes = k8sClient.nodeNameIPInfo()
+    nodes.size shouldBe 3
+
+    nodes.map(x => x.hostnames.head).mkString(",").contains(TestK8SSimple.NODE_SERVER_NAME.get) shouldBe true
+  }
 }
 
 object TestK8SSimple {

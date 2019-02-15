@@ -218,7 +218,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         () => {
           brokerClient.brokerPorts().size() == cluster.nodeNames.size
         },
-        java.time.Duration.ofSeconds(20)
+        java.time.Duration.ofSeconds(60)
       )
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames} ... done")
       CommonUtil.await(
@@ -388,7 +388,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)
             false
       },
-      Duration.ofSeconds(30)
+      Duration.ofSeconds(60)
     )
     cluster
   }
@@ -426,7 +426,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
           } catch {
             case _: Throwable => false
         },
-        Duration.ofSeconds(10)
+        Duration.ofSeconds(60)
       )
       newCluster
     } else previousCluster
@@ -470,13 +470,13 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       val clusters2 = Await.result(zookeeperCollie.clusters(), 20 seconds)
       clusters.foreach { c =>
         clusters2.find(_._1.name == c.name).get._1 shouldBe c
-        Await.result(zookeeperCollie.logs(c.name), 10 seconds).values.foreach { log =>
+        Await.result(zookeeperCollie.logs(c.name), 60 seconds).values.foreach { log =>
           withClue(log)(log.contains("- ERROR") shouldBe false)
           log.isEmpty shouldBe false
         }
       }
     } finally if (cleanup) names.foreach { name =>
-      try Await.result(zookeeperCollie.remove(name), 10 seconds)
+      try Await.result(zookeeperCollie.remove(name), 60 seconds)
       catch {
         case _: Throwable =>
         // do nothing
@@ -525,14 +525,14 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       }
     } finally if (cleanup) {
       zkNames.foreach { name =>
-        try Await.result(zookeeperCollie.remove(name), 10 seconds)
+        try Await.result(zookeeperCollie.remove(name), 60 seconds)
         catch {
           case _: Throwable =>
           // do nothing
         }
       }
       bkNames.foreach { name =>
-        try Await.result(brokerCollie.remove(name), 10 seconds)
+        try Await.result(brokerCollie.remove(name), 60 seconds)
         catch {
           case _: Throwable =>
           // do nothing
@@ -606,18 +606,18 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         testPlugins(c)
       }
     } finally if (cleanup) {
-      try Await.result(zookeeperCollie.remove(zkName), 10 seconds)
+      try Await.result(zookeeperCollie.remove(zkName), 60 seconds)
       catch {
         case _: Throwable =>
         // do nothing
       }
-      try Await.result(brokerCollie.remove(bkName), 10 seconds)
+      try Await.result(brokerCollie.remove(bkName), 60 seconds)
       catch {
         case _: Throwable =>
         // do nothing
       }
       wkNames.foreach { name =>
-        try Await.result(workerCollie.remove(name), 10 seconds)
+        try Await.result(workerCollie.remove(name), 60 seconds)
         catch {
           case _: Throwable =>
           // do nothing

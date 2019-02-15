@@ -95,7 +95,7 @@ private object K8SClusterCollieImpl {
         }
       }
       .flatMap { targetNode =>
-        k8sClient.removeNode(clusterName, nodeName, service.name)
+        k8sClient.removeNode(clusterName, targetNode.name, service.name)
         cluster(clusterName).map(_._1)
       }
 
@@ -165,7 +165,7 @@ private object K8SClusterCollieImpl {
                         electionPort -> electionPort
                       ))
                     .nodename(node.name)
-                    .hostname(hostname)
+                    .hostname(s"${hostname}-${node.name}")
                     .labelName(OHARA_LABEL)
                     .domainName(K8S_DOMAIN_NAME)
                     .envs(Map(
@@ -306,7 +306,7 @@ private object K8SClusterCollieImpl {
                         BrokerCollie.ID_KEY -> (maxId + index).toString,
                         BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
                         BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> s"$hostname.${K8S_DOMAIN_NAME}",
+                        BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                         BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
                         BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                         ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
@@ -457,7 +457,7 @@ private object K8SClusterCollieImpl {
                       WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
                       WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
                       WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> s"$hostname.${K8S_DOMAIN_NAME}",
+                      WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                       WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                       WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
                       BROKER_CLUSTER_NAME -> brokerClusterName

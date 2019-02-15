@@ -34,13 +34,16 @@ import com.island.ohara.agent.K8SJson.{
   CreatePodPortMapping,
   CreatePodResult,
   CreatePodSpec,
+  HostAliases,
   K8SErrorResponse,
+  K8SNodeInfo,
   K8SPodInfo
 }
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -49,6 +52,7 @@ trait K8SClient extends ReleaseOnce {
   def remove(name: String): ContainerInfo
   def removeNode(clusterName: String, nodeName: String, serviceName: String): Seq[ContainerInfo]
   def log(name: String): String
+  def nodeNameIPInfo(): Seq[HostAliases]
   def containerCreator(): ContainerCreator
 }
 
@@ -88,10 +92,10 @@ object K8SClient {
               .getOrElse(ContainerState.UNKNOWN),
             item.spec.hostname.getOrElse(""),
             "Unknown",
-            containerInfo.ports
-              .getOrElse(Seq())
-              .map(x =>
-                PortMapping(hostIP.getOrElse("Unknown"), Seq(PortPair(x.hostPort.getOrElse(0), x.containerPort)))),
+            Seq(
+              PortMapping(
+                hostIP.getOrElse("Unknown"),
+                containerInfo.ports.getOrElse(Seq()).map(x => PortPair(x.hostPort.getOrElse(0), x.containerPort)))),
             containerInfo.env.getOrElse(Seq()).map(x => (x.name -> x.value.getOrElse(""))).toMap,
             item.spec.hostname.getOrElse("")
           )
@@ -116,7 +120,7 @@ object K8SClient {
 
       override def removeNode(clusterName: String, nodeName: String, serviceName: String): Seq[ContainerInfo] = {
         val key = s"$clusterName${K8SClusterCollieImpl.DIVIDER}${serviceName}"
-        containers()
+        val removeContainer: Seq[ContainerInfo] = containers()
           .filter(c => c.name.startsWith(key) && c.nodeName.equals(nodeName))
           .map(container => {
             Await.result(
@@ -126,6 +130,14 @@ object K8SClient {
             )
             container
           })
+
+        var isRemovedContainer: Boolean = false
+        while (!isRemovedContainer) {
+          if (containers().filter(c => c.name.startsWith(key) && c.nodeName.equals(nodeName)).size == 0) {
+            isRemovedContainer = true
+          }
+        }
+        removeContainer
       }
 
       override def log(name: String): String = {
@@ -138,6 +150,23 @@ object K8SClient {
         Option(Await.result(log, TIMEOUT))
           .map(msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else msg)
           .getOrElse(throw new IllegalArgumentException(s"no response from $name contains"))
+      }
+
+      override def nodeNameIPInfo(): Seq[HostAliases] = {
+        val k8sNodeInfo: K8SNodeInfo = Await.result(
+          Http()
+            .singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes"))
+            .flatMap(unmarshal[K8SNodeInfo]),
+          TIMEOUT
+        )
+
+        k8sNodeInfo.items.map(item => {
+          val internalIP: String =
+            item.status.addresses.filter(node => node.nodeType.equals("InternalIP")).head.nodeAddress
+          val hostName: String = item.status.addresses.filter(node => node.nodeType.equals("Hostname")).head.nodeAddress
+          HostAliases(internalIP, Seq(hostName))
+        })
+
       }
 
       override def containerCreator(): ContainerCreator = new ContainerCreator() {
@@ -195,6 +224,7 @@ object K8SClient {
             CreatePodNodeSelector(nodename),
             hostname,
             domainName,
+            nodeNameIPInfo(),
             Seq(
               CreatePodContainer(labelName,
                                  imageName,

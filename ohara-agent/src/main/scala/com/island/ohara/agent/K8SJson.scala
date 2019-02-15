@@ -44,17 +44,48 @@ object K8SJson {
   final case class K8SPodInfo(items: Seq[Items])
   implicit val K8SPODINFO_JSON_FORMAT: RootJsonFormat[K8SPodInfo] = jsonFormat1(K8SPodInfo)
 
+  //for show node infomation
+
+  final case class NodeAddresses(nodeType: String, nodeAddress: String)
+  implicit val NODE_HOSTINFO_FORMAT: RootJsonFormat[NodeAddresses] =
+    new RootJsonFormat[NodeAddresses] {
+      override def write(obj: NodeAddresses): JsValue = JsObject(
+        "type" -> JsString(obj.nodeType),
+        "address" -> JsString(obj.nodeAddress)
+      )
+
+      override def read(json: JsValue): NodeAddresses =
+        json.asJsObject.getFields("type", "address") match {
+          case Seq(JsString(nodeType), JsString(nodeAddress)) =>
+            NodeAddresses(nodeType, nodeAddress)
+          case other: Any =>
+            throw DeserializationException(s"${classOf[NodeAddresses].getSimpleName} expected but $other")
+        }
+    }
+
+  final case class NodeStatus(addresses: Seq[NodeAddresses])
+  implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat1(NodeStatus)
+
+  final case class NodeItems(status: NodeStatus)
+  implicit val NODEITEMS_JSON_FORMAT: RootJsonFormat[NodeItems] = jsonFormat1(NodeItems)
+
+  final case class K8SNodeInfo(items: Seq[NodeItems])
+  implicit val K8SNODEINFO_JSON_FORMAT: RootJsonFormat[K8SNodeInfo] = jsonFormat1(K8SNodeInfo)
+
   //for create container
-  case class CreatePodPortMapping(containerPort: Int, hostPort: Int)
+  final case class CreatePodPortMapping(containerPort: Int, hostPort: Int)
   implicit val CREATEPOD_PORT_MAPPING_FORMAT: RootJsonFormat[CreatePodPortMapping] = jsonFormat2(CreatePodPortMapping)
 
-  case class CreatePodEnv(name: String, value: String)
+  final case class CreatePodEnv(name: String, value: String)
   implicit val CREATEPOD_ENV_FORMAT: RootJsonFormat[CreatePodEnv] = jsonFormat2(CreatePodEnv)
 
-  case class CreatePodContainer(name: String, image: String, env: Seq[CreatePodEnv], ports: Seq[CreatePodPortMapping])
+  final case class CreatePodContainer(name: String,
+                                      image: String,
+                                      env: Seq[CreatePodEnv],
+                                      ports: Seq[CreatePodPortMapping])
   implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = jsonFormat4(CreatePodContainer)
 
-  case class CreatePodNodeSelector(hostname: String)
+  final case class CreatePodNodeSelector(hostname: String)
   implicit val CREATEPOD_NODESELECTOR_FORMAT: RootJsonFormat[CreatePodNodeSelector] =
     new RootJsonFormat[CreatePodNodeSelector] {
       override def read(json: JsValue): CreatePodNodeSelector =
@@ -70,35 +101,40 @@ object K8SJson {
       )
     }
 
-  case class CreatePodSpec(nodeSelector: CreatePodNodeSelector,
-                           hostname: String,
-                           subdomain: String,
-                           containers: Seq[CreatePodContainer])
-  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat4(CreatePodSpec)
+  final case class HostAliases(ip: String, hostnames: Seq[String])
+  implicit val HOST_ALIASES_FORMAT: RootJsonFormat[HostAliases] = jsonFormat2(HostAliases)
 
-  case class CreatePodLabel(name: String)
+  final case class CreatePodSpec(nodeSelector: CreatePodNodeSelector,
+                                 hostname: String,
+                                 subdomain: String,
+                                 hostAliases: Seq[HostAliases],
+                                 containers: Seq[CreatePodContainer])
+
+  implicit val CREATEPOD_SPEC_FORMAT: RootJsonFormat[CreatePodSpec] = jsonFormat5(CreatePodSpec)
+
+  final case class CreatePodLabel(name: String)
   implicit val CREATEPOD_LABEL_FORMAT: RootJsonFormat[CreatePodLabel] = jsonFormat1(CreatePodLabel)
 
-  case class CreatePodMetadata(name: String, labels: CreatePodLabel)
+  final case class CreatePodMetadata(name: String, labels: CreatePodLabel)
   implicit val CREATEPOD_METADATA_FORMAT: RootJsonFormat[CreatePodMetadata] = jsonFormat2(CreatePodMetadata)
 
-  case class CreatePod(apiVersion: String, kind: String, metadata: CreatePodMetadata, spec: CreatePodSpec)
+  final case class CreatePod(apiVersion: String, kind: String, metadata: CreatePodMetadata, spec: CreatePodSpec)
   implicit val CREATEPOD_FORMAT: RootJsonFormat[CreatePod] = jsonFormat4(CreatePod)
 
   //for create container result
 
-  case class CreatePodResultMetaData(name: String, uid: String, creationTimestamp: String)
+  final case class CreatePodResultMetaData(name: String, uid: String, creationTimestamp: String)
   implicit val CREATEPOD_RESULT_METADATA_FORMAT: RootJsonFormat[CreatePodResultMetaData] = jsonFormat3(
     CreatePodResultMetaData)
 
-  case class CreatePodResultStatus(phase: String)
+  final case class CreatePodResultStatus(phase: String)
   implicit val CREATEPOD_RESULT_STATUS_FORMAT: RootJsonFormat[CreatePodResultStatus] = jsonFormat1(
     CreatePodResultStatus)
 
-  case class CreatePodResult(metadata: CreatePodResultMetaData, status: CreatePodResultStatus)
+  final case class CreatePodResult(metadata: CreatePodResultMetaData, status: CreatePodResultStatus)
   implicit val CREATEPOD_RESULT_FORMAT: RootJsonFormat[CreatePodResult] = jsonFormat2(CreatePodResult)
 
   //for error
-  case class K8SErrorResponse(message: String)
+  final case class K8SErrorResponse(message: String)
   implicit val K8SERROR_RESPONSE_FORMAT: RootJsonFormat[K8SErrorResponse] = jsonFormat1(K8SErrorResponse)
 }
