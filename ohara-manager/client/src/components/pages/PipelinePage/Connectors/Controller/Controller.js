@@ -66,6 +66,7 @@ class Controller extends React.Component {
   render() {
     const { kind, onStart, onStop, show, disable } = this.props;
     const { isDeleteModalActive } = this.state;
+
     return (
       <s.Controller>
         {includes(show, START) && (

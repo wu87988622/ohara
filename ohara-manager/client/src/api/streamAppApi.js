@@ -17,7 +17,6 @@
 import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
-import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
 
 export const fetchJars = async pipelineId => {
   try {
@@ -134,28 +133,9 @@ export const updateProperty = async params => {
   }
 };
 
-const mockStartOrStop = (id, action) => {
-  return new Promise(resolve => {
-    setTimeout(function() {
-      resolve({
-        data: {
-          isSuccess: true,
-          result: {
-            id,
-            state:
-              action === STREAM_APP_ACTIONS.start
-                ? STREAM_APP_STATES.running
-                : '',
-          },
-        },
-      });
-    }, 1000);
-  });
-};
-
 export const start = async id => {
   try {
-    const res = await mockStartOrStop(id, STREAM_APP_ACTIONS.start);
+    const res = await axiosInstance.put(`/api/stream/${id}/start`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -170,7 +150,7 @@ export const start = async id => {
 
 export const stop = async id => {
   try {
-    const res = await mockStartOrStop(id, STREAM_APP_ACTIONS.stop);
+    const res = await axiosInstance.put(`/api/stream/${id}/stop`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

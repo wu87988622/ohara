@@ -188,7 +188,7 @@ class StreamApp extends React.Component {
 
     const currStreamApp = findByGraphId(graph, streamAppId);
     const update = { ...currStreamApp, state };
-    updateGraph(update, currStreamApp.id);
+    updateGraph({ update });
 
     if (action === STREAM_APP_ACTIONS.start) {
       if (state === STREAM_APP_STATES.running) {
@@ -235,7 +235,7 @@ class StreamApp extends React.Component {
                   kind="stream app"
                   onStart={this.handleStartStreamApp}
                   onStop={this.handleStopStreamApp}
-                  onDelete={this.handleDeleteStreamApp}
+                  show={['start', 'stop']}
                 />
               </s.TitleWrapper>
               <s.FormRow>
