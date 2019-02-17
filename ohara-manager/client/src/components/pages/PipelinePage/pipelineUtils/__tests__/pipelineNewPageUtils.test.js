@@ -15,23 +15,62 @@
  */
 
 import {
-  updatePipelineParams,
+  getConnectors,
   removePrevConnector,
+  updatePipelineParams,
+  updateSingleGraph,
+  loadGraph,
 } from '../pipelineNewPageUtils';
+
+describe('getConnectors()', () => {
+  it('returns the correct connectors', () => {
+    const connectors = [
+      {
+        id: '1',
+        kind: 'aSourceConnector',
+      },
+      {
+        id: '2',
+        kind: 'anotherSource',
+      },
+      {
+        id: '3',
+        kind: 'Sink',
+      },
+      {
+        id: '4',
+        kind: 'topic',
+      },
+      {
+        id: '5',
+        kind: 'streamApp',
+      },
+    ];
+
+    const { sources, sinks, topics, streams } = getConnectors(connectors);
+
+    expect(sources.length).toBe(2);
+    expect(sinks.length).toBe(1);
+    expect(topics.length).toBe(1);
+    expect(streams.length).toBe(1);
+  });
+
+  it('returns empty array if there is no matched', () => {
+    const connectors = [{ id: '1', kind: 'Nah' }];
+    const { sources, sinks, topics, streams } = getConnectors(connectors);
+
+    expect(sources.length).toBe(0);
+    expect(sinks.length).toBe(0);
+    expect(topics.length).toBe(0);
+    expect(streams.length).toBe(0);
+  });
+});
 
 describe('removePrevConnector()', () => {
   it('removes previous sink connection', () => {
-    const rules = {
-      a: ['e', 'f'],
-      b: ['d'],
-    };
-
+    const rules = { a: ['e', 'f'], b: ['d'] };
     const sinkId = 'f';
-
-    const expected = {
-      ...rules,
-      a: ['e'],
-    };
+    const expected = { ...rules, a: ['e'] };
 
     expect(removePrevConnector(rules, sinkId)).toEqual(expected);
   });
@@ -57,14 +96,8 @@ describe('updatePipelineparams()', () => {
         b: ['d'],
       },
     };
-
-    const update = {
-      id: 'a',
-      to: ['g'],
-    };
-
+    const update = { id: 'a', to: ['g'] };
     const sinkId = 'c';
-
     const expected = { ...pipelines, rules: { a: ['g'], b: ['d'] } };
 
     expect(updatePipelineParams({ pipelines, update, sinkId })).toEqual(
@@ -78,21 +111,65 @@ describe('updatePipelineparams()', () => {
       objects: {},
       rules: {},
     };
-
-    const update = {
-      id: 'a',
-      to: ['b', 'c'],
-    };
-
+    const update = { id: 'a', to: ['b', 'c'] };
     const updateRule = {
       [update.id]: update.to,
     };
-
     const expected = {
       ...pipelines,
       rules: { ...pipelines.rules, ...updateRule },
     };
 
     expect(updatePipelineParams({ pipelines, update })).toEqual(expected);
+  });
+});
+
+describe('updateSingleGraph', () => {
+  it('updates the target graph', () => {
+    const graph = [{ id: '1', name: 'a' }, { id: '2', name: 'b' }];
+
+    const updated = updateSingleGraph(graph, '1', g => {
+      return { ...g, name: 'new name' };
+    });
+
+    expect(updated[0].name).toBe('new name');
+  });
+});
+
+describe('loadGraph()', () => {
+  it('creates the correct data structure', () => {
+    const pipelines = {
+      objects: [
+        { id: '1', name: 'a', kind: 'Source' },
+        { id: '2', name: 'b', kind: 'Sink' },
+        { id: '3', name: 'c', kind: 'topic' },
+      ],
+      rules: { '1': ['3'], '3': ['2'], '2': [] },
+    };
+
+    const expected = [
+      { id: '1', name: 'a', kind: 'Source', to: ['3'] },
+      { id: '2', name: 'b', kind: 'Sink', to: [] },
+      { id: '3', name: 'c', kind: 'topic', to: ['2'] },
+    ];
+
+    expect(loadGraph(pipelines)).toEqual(expected);
+  });
+
+  it('adds a default name for stream app', () => {
+    const pipelines = {
+      objects: [
+        { id: '1', name: 'a', kind: 'topic' },
+        { id: '2', name: '', kind: 'streamApp' },
+      ],
+      rules: { '1': ['2'], '2': [] },
+    };
+
+    const expected = [
+      { id: '1', name: 'a', kind: 'topic', to: ['2'] },
+      { id: '2', name: 'Untitled stream app', kind: 'streamApp', to: [] },
+    ];
+
+    expect(loadGraph(pipelines)).toEqual(expected);
   });
 });

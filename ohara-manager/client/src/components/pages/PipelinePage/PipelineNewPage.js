@@ -26,6 +26,7 @@ import { get, isEmpty } from 'lodash';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelineApi from 'api/pipelineApi';
+import * as streamApi from 'api/streamAppApi';
 import * as topicApi from 'api/topicApi';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';
@@ -132,6 +133,7 @@ class PipelineNewPage extends React.Component {
     isLoading: true,
     isUpdating: false,
     hasChanges: false,
+    runningConnectors: 0,
     pipelines: {},
     pipelineTopics: [],
   };
@@ -295,50 +297,52 @@ class PipelineNewPage extends React.Component {
   };
 
   startConnectors = async connectors => {
-    const { sources, sinks } = getConnectors(connectors);
+    const { sources, sinks, streams } = getConnectors(connectors);
+    const runningConnectors = sources.concat([sinks, streams]).length;
+    this.setState({ runningConnectors });
 
-    const sourcePromise = sources.map(source =>
+    const sourcePromises = sources.map(source =>
       pipelineApi.startSource(source),
     );
-    const sinkPromise = sinks.map(sink => pipelineApi.startSink(sink));
+    const sinkPromises = sinks.map(sink => pipelineApi.startSink(sink));
+    const streamsPromises = streams.map(stream => streamApi.start(stream));
 
-    return Promise.all([...sourcePromise, ...sinkPromise]).then(
-      result => result,
-    );
+    return Promise.all([
+      ...sourcePromises,
+      ...sinkPromises,
+      ...streamsPromises,
+    ]).then(result => result);
   };
 
   stopConnectors = connectors => {
-    const { sources, sinks } = getConnectors(connectors);
-    const sourcePromise = sources.map(source => pipelineApi.stopSource(source));
-    const sinkPromise = sinks.map(sink => pipelineApi.stopSink(sink));
-    return Promise.all([...sourcePromise, ...sinkPromise]).then(
-      result => result,
+    const { sources, sinks, streams } = getConnectors(connectors);
+    const sourcePromises = sources.map(source =>
+      pipelineApi.stopSource(source),
     );
+    const sinkPromises = sinks.map(sink => pipelineApi.stopSink(sink));
+    const streamsPromises = streams.map(stream => streamApi.stop(stream));
+
+    return Promise.all([
+      ...sourcePromises,
+      ...sinkPromises,
+      ...streamsPromises,
+    ]).then(result => result);
   };
 
   handleConnectorResponse = (isSuccess, action) => {
-    if (isSuccess.length >= 2) {
+    if (isSuccess.length === this.state.runningConnectors) {
       toastr.success(`Pipeline has been successfully ${action}!`);
+      let status = action === 'started' ? 'Running' : 'Stopped';
 
-      if (action === 'started') {
-        this.setState(({ pipelines }) => {
-          return {
-            pipelines: {
-              ...pipelines,
-              status: 'Running',
-            },
-          };
-        });
-      } else if (action === 'stopped') {
-        this.setState(({ pipelines }) => {
-          return {
-            pipelines: {
-              ...pipelines,
-              status: 'Stopped',
-            },
-          };
-        });
-      }
+      this.setState(({ pipelines }) => {
+        return {
+          runningConnectors: 0,
+          pipelines: {
+            ...pipelines,
+            status,
+          },
+        };
+      });
 
       const pipelineId = get(this.props.match, 'params.pipelineId', null);
       this.fetchPipeline(pipelineId);

@@ -20,23 +20,30 @@ import { isSource, isSink, isTopic, isStream } from './commonUtils';
 import { isEmptyStr } from 'utils/commonUtils';
 
 export const getConnectors = connectors => {
-  const sources = connectors
-    .filter(({ kind }) => {
-      return isSource(kind);
-    })
-    .map(({ id }) => id);
+  const init = {
+    sources: [],
+    sinks: [],
+    topics: [],
+    streams: [],
+  };
 
-  const sinks = connectors
-    .filter(({ kind }) => {
-      return isSink(kind);
-    })
-    .map(({ id }) => id);
+  const result = connectors.reduce((acc, connector) => {
+    const { kind, id } = connector;
 
-  const topics = connectors.filter(({ kind }) => {
-    return isTopic(kind);
-  });
+    if (isSource(kind)) {
+      acc.sources.push(id);
+    } else if (isSink(kind)) {
+      acc.sinks.push(id);
+    } else if (isStream(kind)) {
+      acc.streams.push(id);
+    } else if (isTopic(kind)) {
+      acc.topics.push(connector);
+    }
 
-  return { sources, sinks, topics };
+    return acc;
+  }, init);
+
+  return result;
 };
 
 export const addPipelineStatus = pipeline => {
@@ -104,7 +111,7 @@ export const updatePipelineParams = ({
   return params;
 };
 
-const updateSingleGraph = (graph, id, transformer) => {
+export const updateSingleGraph = (graph, id, transformer) => {
   return graph.map(g => {
     if (g.id === id) {
       return { ...transformer(g) };
@@ -181,6 +188,7 @@ export const loadGraph = pipelines => {
       };
     }
 
+    // Add a to prop in local state so we can create graph with this prop
     return {
       ...target,
       to: rules[x],
