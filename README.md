@@ -32,7 +32,7 @@ Note that `com.island.ohara.demo.Backend` is deprecated and will be removed in v
 (with 3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 
 ```
-docker run --rm -p 12345:12345 oharastream/backend:0.2-SNAPSHOT com.island.ohara.demo.Backend --configuratorPort 12345
+docker run --rm -p 12345:12345 oharastream/backend:0.3-SNAPSHOT com.island.ohara.demo.Backend --configuratorPort 12345
 ```
 * configuratorPort: bound by Configurator (default is random)
 * zkPort: bound by zookeeper (default is random)
@@ -47,18 +47,18 @@ The backend image is not included in production release. Hence, there is no guar
 #### MySQL
 
 ```
-docker run --rm -p 20000:20000 oharastream/backend:0.2-SNAPSHOT con.island.ohara.integration.Database --port 20000
+docker run --rm -p 20000:20000 oharastream/backend:0.3-SNAPSHOT con.island.ohara.integration.Database --port 20000
 ```
 
 #### FTP
 
 ```
-docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.2-SNAPSHOT com.island.ohara.integration.FtpServer --controlPort 10000 --dataPorts 10001-10011
+docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.3-SNAPSHOT com.island.ohara.integration.FtpServer --controlPort 10000 --dataPorts 10001-10011
 ```
 
 ### Running configurator by docker
 ```
-docker run --rm -p 12345:12345 oharastream/configurator:0.2-SNAPSHOT --port 12345
+docker run --rm -p 12345:12345 oharastream/configurator:0.3-SNAPSHOT --port 12345
 ```
 * port: bound by Configurator (default is random)
 * brokers: broker information (ex. host0:port0,host1:port1)
@@ -69,7 +69,7 @@ stored in memory, and connector-related commands are executed by nothing.
 
 ### Running manager by docker
 ```
-docker run --rm -p 5050:5050 oharastream/manager:0.2-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
+docker run --rm -p 5050:5050 oharastream/manager:0.3-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
 ```
 * port: bound by manager (default is 5050)
 * configurator: basic form of restful API of configurator
