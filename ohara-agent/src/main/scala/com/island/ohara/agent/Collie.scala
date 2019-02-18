@@ -72,13 +72,13 @@ trait Collie[T <: ClusterInfo] {
     * @param clusterName cluster name
     * @return true if the broker cluster exists
     */
-  def exists(clusterName: String): Future[Boolean] = clusters().map(_.exists(_._1.name == clusterName))
+  def exist(clusterName: String): Future[Boolean] = clusters().map(_.exists(_._1.name == clusterName))
 
   /**
     * @param clusterName cluster name
     * @return true if the broker cluster doesn't exist
     */
-  def nonExists(clusterName: String): Future[Boolean] = exists(clusterName).map(!_)
+  def nonExist(clusterName: String): Future[Boolean] = exist(clusterName).map(!_)
 
   /**
     * add a node to a running broker cluster

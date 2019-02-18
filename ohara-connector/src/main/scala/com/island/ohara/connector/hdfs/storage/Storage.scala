@@ -62,7 +62,7 @@ abstract class Storage extends Releasable {
     * @param path
     * @return
     */
-  def exists(path: String): Boolean
+  def exist(path: String): Boolean
 
   /**
     * Delete the file or folder

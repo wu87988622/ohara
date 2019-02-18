@@ -388,10 +388,10 @@ private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
     environments = Map.empty,
     hostname = CommonUtil.randomString(10)
   )
-  override def exists(clusterName: String): Future[Boolean] =
+  override def exist(clusterName: String): Future[Boolean] =
     Future.successful(clusterCache.containsKey(clusterName))
 
-  override def remove(clusterName: String): Future[T] = exists(clusterName).flatMap(if (_) Future.successful {
+  override def remove(clusterName: String): Future[T] = exist(clusterName).flatMap(if (_) Future.successful {
     val cluster = clusterCache.remove(clusterName)
     containerCache.remove(clusterName)
     cluster
@@ -400,7 +400,7 @@ private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
   override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = Future.successful(Map.empty)
 
   override def containers(clusterName: String): Future[Seq[ContainerInfo]] =
-    exists(clusterName).map(if (_) containerCache.get(clusterName) else Seq.empty)
+    exist(clusterName).map(if (_) containerCache.get(clusterName) else Seq.empty)
 
   import scala.collection.JavaConverters._
   override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = Future.successful(

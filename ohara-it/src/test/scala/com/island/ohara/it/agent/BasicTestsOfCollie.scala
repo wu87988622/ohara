@@ -66,7 +66,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     log.info("start to run zookeeper cluster")
     val nodeName: String = nodeCache.head.name
     val clusterName = CommonUtil.randomString(10)
-    result(zookeeperCollie.nonExists(clusterName)) shouldBe true
+    result(zookeeperCollie.nonExist(clusterName)) shouldBe true
     val clientPort = CommonUtil.availablePort()
     val electionPort = CommonUtil.availablePort()
     val peerPort = CommonUtil.availablePort()
@@ -91,7 +91,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     try {
       assert(result(zookeeperCollie.cluster(zkCluster.name))._1)
       log.info("start to run zookeeper cluster ... done")
-      result(zookeeperCollie.exists(zkCluster.name)) shouldBe true
+      result(zookeeperCollie.exist(zkCluster.name)) shouldBe true
       // we can't assume the size since other tests may create zk cluster at the same time
       result(zookeeperCollie.clusters()).isEmpty shouldBe false
       log.info(s"verify number of zk clusters... done")
@@ -132,7 +132,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       log.info("[BROKER] start to run broker cluster")
       val nodeName = nodeCache.head.name
       val clusterName = CommonUtil.randomString(10)
-      result(brokerCollie.nonExists(clusterName)) shouldBe true
+      result(brokerCollie.nonExist(clusterName)) shouldBe true
       log.info(s"[BROKER] verify existence of broker cluster:$clusterName...done")
       val clientPort = CommonUtil.availablePort()
       val exporterPort = CommonUtil.availablePort()
@@ -158,7 +158,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       assert(result(brokerCollie.cluster(bkCluster.name))._1)
       log.info("[BROKER] verify cluster api...done")
       try {
-        result(brokerCollie.exists(bkCluster.name)) shouldBe true
+        result(brokerCollie.exist(bkCluster.name)) shouldBe true
         // we can't assume the size since other tests may create zk cluster at the same time
         result(brokerCollie.clusters()).isEmpty shouldBe false
         result(brokerCollie.logs(clusterName)).size shouldBe 1
@@ -181,7 +181,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    result(brokerCollie.exists(previousCluster.name)) shouldBe true
+    result(brokerCollie.exist(previousCluster.name)) shouldBe true
     log.info(s"[BROKER] nodeCache:$nodeCache previous:${previousCluster.nodeNames}")
     an[IllegalArgumentException] should be thrownBy result(
       brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
@@ -280,7 +280,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    result(brokerCollie.exists(previousCluster.name)) shouldBe true
+    result(brokerCollie.exist(previousCluster.name)) shouldBe true
     if (previousCluster.nodeNames.size > 1) {
       log.info(
         s"[BROKER] start to remove node:${previousCluster.nodeNames.head} from bk cluster:${previousCluster.name}")
@@ -321,7 +321,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         log.info("[WORKER] start to test worker")
         val nodeName = nodeCache.head.name
         val clusterName = CommonUtil.randomString(10)
-        result(workerCollie.nonExists(clusterName)) shouldBe true
+        result(workerCollie.nonExist(clusterName)) shouldBe true
         log.info("[WORKER] verify:nonExists done")
         val clientPort = CommonUtil.availablePort()
         def assert(workerCluster: WorkerClusterInfo): WorkerClusterInfo = {
@@ -350,7 +350,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         assert(result(workerCollie.cluster(wkCluster.name))._1)
         log.info("[WORKER] verify:create done")
         try {
-          result(workerCollie.exists(wkCluster.name)) shouldBe true
+          result(workerCollie.exist(wkCluster.name)) shouldBe true
           log.info("[WORKER] verify:exist done")
           // we can't assume the size since other tests may create zk cluster at the same time
           result(workerCollie.clusters()).isEmpty shouldBe false
@@ -393,7 +393,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     cluster
   }
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    result(workerCollie.exists(previousCluster.name)) shouldBe true
+    result(workerCollie.exist(previousCluster.name)) shouldBe true
     an[IllegalArgumentException] should be thrownBy result(
       workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
@@ -433,7 +433,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def testRemoveNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    result(workerCollie.exists(previousCluster.name)) shouldBe true
+    result(workerCollie.exist(previousCluster.name)) shouldBe true
     if (previousCluster.nodeNames.size > 1) {
       log.info(s"[WORKER] start to remove node:${previousCluster.nodeNames.head} from ${previousCluster.name}")
       val newCluster = result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))

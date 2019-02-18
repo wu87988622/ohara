@@ -39,7 +39,7 @@ object WorkerRoute {
         req.brokerClusterName
           .map { bkName =>
             brokerCollie
-              .exists(bkName)
+              .exist(bkName)
               .flatMap(if (_) Future.successful(bkName)
               else Future.failed(new NoSuchClusterException(s"$bkName doesn't exist.")))
           }

@@ -29,10 +29,10 @@ trait NodeCollie {
   def nodes(): Future[Seq[Node]]
   def node(name: String): Future[Node]
   def nodes(names: Seq[String]): Future[Seq[Node]] = Future.traverse(names)(node)
-  def exists(name: String): Future[Boolean] = node(name).map(_ => true).recover {
+  def exist(name: String): Future[Boolean] = node(name).map(_ => true).recover {
     case _: Throwable => false
   }
-  def exists(names: Seq[String]): Future[Boolean] = nodes(names).map(_ => true).recover {
+  def exist(names: Seq[String]): Future[Boolean] = nodes(names).map(_ => true).recover {
     case _: Throwable => false
   }
 }

@@ -83,7 +83,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
     }
 
     //Time is up and have the tmp file then running commit file
-    if (isTimeCommit(startTimeMS, rotateInterval) && storage.exists(tmpFilePath)) {
+    if (isTimeCommit(startTimeMS, rotateInterval) && storage.exist(tmpFilePath)) {
       runningCommitFile()
     }
   }
@@ -113,7 +113,7 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   }
 
   def close(): Unit = {
-    if (storage.exists(tmpDir))
+    if (storage.exist(tmpDir))
       storage.delete(tmpDir, true)
   }
 
@@ -150,13 +150,13 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   }
 
   protected def createTmpDirIfNotExists(tmpDirPath: String): Unit = {
-    if (!storage.exists(tmpDirPath)) {
+    if (!storage.exist(tmpDirPath)) {
       storage.mkdirs(tmpDirPath)
     }
   }
 
   protected def createDataDirIfNotExists(offsetDirPath: String): Unit = {
-    if (!storage.exists(offsetDirPath)) {
+    if (!storage.exist(offsetDirPath)) {
       storage.mkdirs(offsetDirPath)
     }
   }
