@@ -121,24 +121,21 @@ export const updateSingleGraph = (graph, id, transformer) => {
   });
 };
 
-const cleanPrevConnection = (graph, connectorId, updatedName) => {
-  // Update the sink connector name
-  const transformer = g => ({ ...g, name: updatedName });
-  let updatedGraph =
-    updateSingleGraph(graph, connectorId, transformer) || graph;
+export const cleanPrevFromTopics = (graph, connectorId) => {
+  // See if the connectorId is connected with a topic in the graph
+  const prevTopic = graph.find(g => g.to.includes(connectorId));
 
-  // Remove sink from other topics since our UI doesn't support this logic yet
-  if (connectorId) {
-    const prevTopic = updatedGraph.find(g => g.to.includes(connectorId));
+  if (prevTopic) {
+    // Remove previous "form topic"
+    const prevTopicTo = prevTopic.to.filter(t => t !== connectorId);
+    const transformer = g => ({ ...g, to: prevTopicTo });
+    const updatedGraph = updateSingleGraph(graph, prevTopic.id, transformer);
 
-    if (prevTopic) {
-      const prevTopicTo = prevTopic.to.filter(t => t !== connectorId);
-      const transformer = g => ({ ...g, to: prevTopicTo });
-      updatedGraph = updateSingleGraph(updatedGraph, prevTopic.id, transformer);
-    }
+    return updatedGraph;
   }
 
-  return updatedGraph;
+  // if there's no update, return the graph
+  return graph;
 };
 
 export const updateGraph = ({
@@ -151,21 +148,29 @@ export const updateGraph = ({
 }) => {
   let updatedGraph;
 
+  // From topic update -- sink connectors or the fromTopic in stream apps
   if (isFromTopic) {
     const connectorId = sinkId || streamAppId;
 
+    // Update the sink connector name
+    const nameTransformer = g => ({ ...g, name: updatedName });
+    updatedGraph =
+      updateSingleGraph(graph, connectorId, nameTransformer) || graph;
+
     // clean up previous connections
-    updatedGraph = cleanPrevConnection(graph, connectorId, updatedName);
+    updatedGraph = cleanPrevFromTopics(updatedGraph, connectorId);
 
     // Update current topic
-    const transformer = g => ({ ...g, to: update.to });
-    updatedGraph = updateSingleGraph(updatedGraph, update.id, transformer);
+    const toTransformer = g => ({ ...g, to: update.to });
+    updatedGraph = updateSingleGraph(updatedGraph, update.id, toTransformer);
   } else {
     const target = graph.find(g => g.id === update.id);
 
+    // Adds the connector to graph
     if (isEmpty(target)) {
       updatedGraph = [...graph, update];
     } else {
+      // Updates the target connector
       const transformer = g => ({ ...g, ...update });
       updatedGraph = updateSingleGraph(graph, target.id, transformer);
     }

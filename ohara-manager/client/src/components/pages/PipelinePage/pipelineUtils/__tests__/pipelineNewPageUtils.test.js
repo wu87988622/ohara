@@ -16,9 +16,11 @@
 
 import {
   getConnectors,
+  cleanPrevFromTopics,
   removePrevConnector,
   updatePipelineParams,
   updateSingleGraph,
+  updateGraph,
   loadGraph,
 } from '../pipelineNewPageUtils';
 
@@ -124,7 +126,7 @@ describe('updatePipelineparams()', () => {
   });
 });
 
-describe('updateSingleGraph', () => {
+describe('updateSingleGraph()', () => {
   it('updates the target graph', () => {
     const graph = [{ id: '1', name: 'a' }, { id: '2', name: 'b' }];
 
@@ -133,6 +135,114 @@ describe('updateSingleGraph', () => {
     });
 
     expect(updated[0].name).toBe('new name');
+  });
+});
+
+describe('cleanPrevFromTopics', () => {
+  it('removes the previous topic', () => {
+    const graph = [
+      {
+        id: '1',
+        name: 'a',
+        to: ['2', '3', '4'],
+      },
+      {
+        id: '2',
+        name: 'b',
+        to: ['5'],
+      },
+    ];
+
+    const expected = [
+      {
+        id: '1',
+        name: 'a',
+        to: ['3', '4'],
+      },
+      {
+        id: '2',
+        name: 'b',
+        to: ['5'],
+      },
+    ];
+
+    expect(cleanPrevFromTopics(graph, '2')).toEqual(expected);
+  });
+
+  it(`returns the given graph if there's no matched of previous topic`, () => {
+    const graph = [
+      {
+        id: '1',
+        name: 'a',
+        to: ['2', '3', '4'],
+      },
+      {
+        id: '2',
+        name: 'b',
+        to: ['5'],
+      },
+    ];
+    expect(cleanPrevFromTopics(graph, '1')).toEqual(graph);
+  });
+});
+
+describe('updateGraph()', () => {
+  it(`Adds a new connector to the current graph if it's not being found in the current graph`, () => {
+    const graph = [{ id: '1', name: 'a', to: ['2'] }];
+    const update = { id: '2', name: 'b', to: [] };
+    const expected = [...graph, update];
+
+    expect(updateGraph({ graph, update })).toEqual(expected);
+  });
+
+  it(`updates the correct connector in the graph`, () => {
+    const graph = [{ id: '1', name: 'a', to: [] }];
+    const update = { id: '1', name: 'test', to: ['2', '3', '4'] };
+    const expected = [{ ...graph[0], ...update }];
+
+    expect(updateGraph({ graph, update })).toEqual(expected);
+  });
+
+  it('updates formTopic and sink connectors', () => {
+    const graph = [
+      {
+        id: '1',
+        name: 'a',
+        to: ['2', '3', '4'],
+      },
+      {
+        id: '2',
+        name: 'b',
+        to: ['5'],
+      },
+    ];
+
+    const sinkId = '2';
+    const updatedName = 'test';
+    const update = { id: '3', name: 'c', to: ['5'] };
+
+    const result = updateGraph({
+      graph,
+      update,
+      updatedName,
+      sinkId,
+      isFromTopic: true,
+    });
+
+    const expected = [
+      {
+        id: '1',
+        name: 'a',
+        to: ['3', '4'],
+      },
+      {
+        id: '2',
+        name: 'test',
+        to: ['5'],
+      },
+    ];
+
+    expect(result).toEqual(expected);
   });
 });
 
