@@ -40,6 +40,7 @@ class AutoSave extends React.Component {
 
     if (difference && difference.length) {
       // values have changed
+      updateHasChanges(true);
       this.setState({ values });
       await save(values);
       updateHasChanges(false);

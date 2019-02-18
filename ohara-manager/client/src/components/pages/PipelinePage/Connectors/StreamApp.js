@@ -68,11 +68,24 @@ class StreamApp extends React.Component {
 
   componentDidMount() {
     const { match, topics } = this.props;
-    const streamAppId = get(match, 'params.connectorId', null);
+    const { connectorId: streamAppId } = match.params;
 
     this.setState({ streamAppId, topics }, () => {
       this.fetchStreamApp(streamAppId);
     });
+  }
+
+  componentDidUpdate(prevProps) {
+    const { connectorId: prevConnectorId } = prevProps.match.params;
+    const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevConnectorId !== currConnectorId) {
+      const streamAppId = currConnectorId;
+
+      this.setState({ streamAppId }, () => {
+        this.fetchStreamApp(streamAppId);
+      });
+    }
   }
 
   fetchStreamApp = async id => {
@@ -85,7 +98,7 @@ class StreamApp extends React.Component {
   };
 
   handleSave = async ({ name, instances, fromTopic, toTopic }) => {
-    const { topics, updateHasChanges, graph, updateGraph } = this.props;
+    const { topics, graph, updateGraph } = this.props;
     const { streamAppId } = this.state;
 
     const fromTopics = topics.reduce((acc, { name, id }) => {
@@ -104,7 +117,6 @@ class StreamApp extends React.Component {
       toTopics,
     };
 
-    updateHasChanges(true);
     const res = await streamAppApi.updateProperty(params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
