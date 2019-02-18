@@ -77,10 +77,10 @@ class TestHDFSStorage extends LargeTest with Matchers {
     fileSystem.create(new Path(folderName))
 
     val hdfsStorage: Storage = new HDFSStorage(fileSystem)
-    hdfsStorage.exists(folderName) shouldBe true
+    hdfsStorage.exist(folderName) shouldBe true
     hdfsStorage.renameFile(folderName, newFolderName) shouldBe true
-    hdfsStorage.exists(folderName) shouldBe false
-    hdfsStorage.exists(newFolderName) shouldBe true
+    hdfsStorage.exist(folderName) shouldBe false
+    hdfsStorage.exist(newFolderName) shouldBe true
   }
 
   @Test

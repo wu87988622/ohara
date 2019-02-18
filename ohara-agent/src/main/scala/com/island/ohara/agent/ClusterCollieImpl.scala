@@ -342,7 +342,7 @@ private object ClusterCollieImpl {
 
     override def creator(): ZookeeperCollie.ClusterCreator =
       (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-        exists(clusterName)
+        exist(clusterName)
           .flatMap(if (_) Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
           else nodeCollie.nodes(nodeNames))
           .map(_.map(node => node -> format(clusterName)).toMap)
@@ -418,7 +418,7 @@ private object ClusterCollieImpl {
 
     override def creator(): BrokerCollie.ClusterCreator =
       (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
-        exists(clusterName)
+        exist(clusterName)
           .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
           .flatMap(existContainers =>
             nodeCollie
@@ -563,7 +563,7 @@ private object ClusterCollieImpl {
                                                            configTopicReplications,
                                                            jarUrls,
                                                            nodeNames) =>
-      exists(clusterName)
+      exist(clusterName)
         .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
         .flatMap(
           existContainers =>

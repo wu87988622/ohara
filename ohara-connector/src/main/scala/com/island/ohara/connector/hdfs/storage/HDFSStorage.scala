@@ -91,7 +91,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     * @param path
     * @return
     */
-  override def exists(path: String): Boolean = {
+  override def exist(path: String): Boolean = {
     fileSystem.exists(new Path(path))
   }
 
@@ -111,7 +111,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     * @param targetPath
     */
   override def renameFile(sourcePath: String, targetPath: String): Boolean = {
-    if (exists(targetPath)) {
+    if (exist(targetPath)) {
       val errorMessage = s"The target path: $targetPath is exists"
       throw new RuntimeException(errorMessage)
     }
@@ -124,7 +124,7 @@ class HDFSStorage(fileSystem: FileSystem) extends Storage {
     val srcPath = new Path(sourcePath)
     val dstPath = new Path(targetPath)
 
-    if (exists(sourcePath)) {
+    if (exist(sourcePath)) {
       fileSystem.rename(srcPath, dstPath)
     } else {
       val errorMessage = s"The source path: $sourcePath is exists"

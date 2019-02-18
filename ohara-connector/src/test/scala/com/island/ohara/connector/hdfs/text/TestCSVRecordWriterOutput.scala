@@ -42,7 +42,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(false, schema, row)
     csvRecordWriter.close()
-    storage.exists(tempFilePath) shouldBe true
+    storage.exist(tempFilePath) shouldBe true
 
     val inputStream = fileSystem.open(new Path(tempFilePath))
     try {
@@ -68,7 +68,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
-    storage.exists(tempFilePath) shouldBe true
+    storage.exist(tempFilePath) shouldBe true
 
     val inputStream = fileSystem.open(new Path(tempFilePath))
     try {
@@ -95,7 +95,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
-    storage.exists(tempFilePath) shouldBe true
+    storage.exist(tempFilePath) shouldBe true
 
     val inputStream = fileSystem.open(new Path(tempFilePath))
     try {
@@ -121,7 +121,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
-    storage.exists(tempFilePath) shouldBe true
+    storage.exist(tempFilePath) shouldBe true
 
     val inputStream = fileSystem.open(new Path(tempFilePath))
     try {
@@ -149,7 +149,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"), Cell.of("column3", "value3"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
-    storage.exists(tempFilePath) shouldBe true
+    storage.exist(tempFilePath) shouldBe true
 
     val inputStream = fileSystem.open(new Path(tempFilePath))
     try {
@@ -185,7 +185,7 @@ class TestCSVRecordWriterOutput extends MediumTest with Matchers {
       csvRecordWriter.write(needHeader, Seq(Column.of("c", "c", DataType.DOUBLE, 0)), row)
     } finally csvRecordWriter.close()
     println("tempfilepath:" + tempFilePath)
-    storage.exists(tempFilePath) shouldBe false
+    storage.exist(tempFilePath) shouldBe false
   }
 
 }

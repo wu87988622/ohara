@@ -184,7 +184,7 @@ private[route] object RouteUtil {
         post {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
-            onSuccess(collie.nonExists(req.name).flatMap {
+            onSuccess(collie.nonExist(req.name).flatMap {
               if (_) nodeCollie.nodes(req.nodeNames).flatMap(_ => hookOfCreation(req))
               else Future.failed(new IllegalArgumentException(s"${req.name} is already running"))
             })(complete(_))
