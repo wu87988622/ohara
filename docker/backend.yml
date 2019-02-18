@@ -18,7 +18,7 @@ version: '3.3'
 services:
 
   configurator:
-    image: oharastream/configurator:${TAG:-0.2-SNAPSHOT}
+    image: oharastream/configurator:${TAG:-0.3-SNAPSHOT}
     hostname: configurator
     command: ["--port", "12345"]
     # You can add a node to initialize a zookeeper cluster and a broker cluster.
@@ -32,7 +32,7 @@ services:
 #      - "node02:192.168.56.202"
 
   ftp:
-    image: oharastream/backend:${TAG:-0.2-SNAPSHOT}
+    image: oharastream/backend:${TAG:-0.3-SNAPSHOT}
     hostname: ftp
     command: ["com.island.ohara.integration.FtpServer", "--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
     ports:
@@ -43,7 +43,7 @@ services:
       - 10004:10004
 
   mysql:
-    image: oharastream/backend:${TAG:-0.2-SNAPSHOT}
+    image: oharastream/backend:${TAG:-0.3-SNAPSHOT}
     hostname: mysql
     command: ["com.island.ohara.integration.Database", "--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
     ports:
