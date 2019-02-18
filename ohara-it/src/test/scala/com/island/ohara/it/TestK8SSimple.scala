@@ -85,7 +85,7 @@ class TestK8SSimple extends SmallTest with Matchers {
     container.environments.size shouldBe 1
     container.environments.get("key1") shouldBe Some("value1")
     container.hostname shouldBe TestK8SSimple.uuid
-    container.imageName shouldBe "oharastream/zookeeper:0.2-SNAPSHOT"
+    container.imageName shouldBe ZookeeperCollie.IMAGE_NAME_DEFAULT
     container.name shouldBe TestK8SSimple.uuid
     container.size shouldBe "Unknown"
   }
@@ -197,7 +197,7 @@ object TestK8SSimple {
   }
 
   def createZookeeperPod(k8sApiServerURL: String, podName: String): Unit = {
-    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"oharastream/zookeeper:0.2-SNAPSHOT\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
+    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"" + ZookeeperCollie.IMAGE_NAME_DEFAULT + "\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
 
     Await.result(
       Http().singleRequest(
