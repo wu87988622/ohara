@@ -76,7 +76,7 @@ class Controller extends React.Component {
             data-testid="start-button"
             disabled={includes(disable, START)}
           >
-            <i className={`fa fa-play-circle`} />
+            <i className={`far fa-play-circle`} />
           </s.ControlButton>
         )}
         {includes(show, STOP) && (
@@ -86,7 +86,7 @@ class Controller extends React.Component {
             data-testid="stop-button"
             disabled={includes(disable, STOP)}
           >
-            <i className={`fa fa-stop-circle`} />
+            <i className={`far fa-stop-circle`} />
           </s.ControlButton>
         )}
         {includes(show, DELETE) && (
@@ -98,7 +98,7 @@ class Controller extends React.Component {
             data-testid="delete-button"
             disabled={includes(disable, DELETE)}
           >
-            <i className={`fa fa-trash-alt`} />
+            <i className={`far fa-trash-alt`} />
           </s.ControlButton>
         )}
         <ReactTooltip />

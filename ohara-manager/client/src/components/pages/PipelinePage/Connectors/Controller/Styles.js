@@ -22,7 +22,7 @@ const Controller = styled.div`
 `;
 
 const ControlButton = styled.button`
-  color: ${props => props.theme.lightBlue};
+  color: ${props => props.theme.dimBlue};
   border: 0;
   font-size: 20px;
   cursor: pointer;
