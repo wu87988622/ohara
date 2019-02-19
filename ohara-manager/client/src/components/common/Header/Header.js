@@ -255,7 +255,7 @@ class Header extends React.Component {
               <i className="fas fa-info-circle" />
             </Btn>
             <Btn
-              data-tip="Add a new connection"
+              data-tip="Add a new configuration"
               data-testid="config-btn"
               onClick={this.handleConfigModalOpen}
             >
