@@ -22,11 +22,10 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BROKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.Parameters
+import com.island.ohara.client.configurator.v0.{LogApi, Parameters}
 import com.island.ohara.client.configurator.v0.WorkerApi.WORKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZOOKEEPER_PREFIX_PATH
-import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import com.island.ohara.client.configurator.v0.LogApi._
 
 /**
   * Used to take log from specified cluster. We haven't log infra to provide UI to get log from specified "connector".
@@ -34,11 +33,6 @@ import spray.json.RootJsonFormat
   * this is just a workaround.
   */
 object LogRoute {
-  private[this] case class NodeLog(name: String, value: String)
-  private[this] implicit val NODE_LOG_FORMAT: RootJsonFormat[NodeLog] = jsonFormat2(NodeLog)
-
-  private[this] case class ClusterLog(name: String, logs: Seq[NodeLog])
-  private[this] implicit val CLUSTER_LOG_FORMAT: RootJsonFormat[ClusterLog] = jsonFormat2(ClusterLog)
 
   private[this] def route(clusterName: String, data: Map[ContainerInfo, String]): server.Route =
     complete(
@@ -60,7 +54,7 @@ object LogRoute {
         ))
 
   def apply(implicit collie: ClusterCollie): server.Route =
-    pathPrefix("logs") {
+    pathPrefix(LogApi.LOG_PREFIX_PATH) {
       path(ZOOKEEPER_PREFIX_PATH) {
         parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
           onSuccess(collie.zookeeperCollie().logs(zkClusterName))(data => route(zkClusterName, data))

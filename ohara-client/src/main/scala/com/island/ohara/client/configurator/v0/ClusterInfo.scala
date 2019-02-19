@@ -21,7 +21,26 @@ package com.island.ohara.client.configurator.v0
   * information".
   */
 trait ClusterInfo {
+
+  /**
+    * @return cluster name
+    */
   def name: String
+
+  /**
+    * @return docker image name used to build container for this cluster
+    */
   def imageName: String
+
+  /**
+    * All services hosted by ohara should use some ports, which are used to communicate.
+    * We "highlight" this method since port checking is a important thing for configurator
+    * @return ports used by this cluster
+    */
+  def ports: Seq[Int]
+
+  /**
+    * @return nodes running this cluster
+    */
   def nodeNames: Seq[String]
 }

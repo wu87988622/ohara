@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsValue, RootJsonFormat}
 
 object ZookeeperApi {
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
@@ -47,16 +47,60 @@ object ZookeeperApi {
   implicit val ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ZookeeperClusterCreationRequest] =
     jsonFormat6(ZookeeperClusterCreationRequest)
 
-  final case class ZookeeperClusterInfo(name: String,
-                                        imageName: String,
-                                        clientPort: Int,
-                                        peerPort: Int,
-                                        electionPort: Int,
-                                        nodeNames: Seq[String])
-      extends ClusterInfo
+  trait ZookeeperClusterInfo extends ClusterInfo {
+    def clientPort: Int
+    def peerPort: Int
+    def electionPort: Int
+    override def ports: Seq[Int] = Set(clientPort, peerPort, electionPort).toSeq
+  }
 
-  implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfo] = jsonFormat6(
-    ZookeeperClusterInfo)
+  object ZookeeperClusterInfo {
+    def apply(name: String,
+              imageName: String,
+              clientPort: Int,
+              peerPort: Int,
+              electionPort: Int,
+              nodeNames: Seq[String]): ZookeeperClusterInfo = ZookeeperClusterInfoImpl(
+      name = name,
+      imageName = imageName,
+      clientPort = clientPort,
+      peerPort = peerPort,
+      electionPort = electionPort,
+      nodeNames = nodeNames
+    )
+  }
+
+  implicit val ZOOKEEPER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfo] =
+    new RootJsonFormat[ZookeeperClusterInfo] {
+      override def read(json: JsValue): ZookeeperClusterInfo = ZOOKEEPER_CLUSTER_INFO_IMPL_JSON_FORMAT.read(json)
+
+      override def write(obj: ZookeeperClusterInfo): JsValue =
+        ZOOKEEPER_CLUSTER_INFO_IMPL_JSON_FORMAT.write(toCaseClass(obj))
+    }
+
+  private[this] def toCaseClass(obj: ZookeeperClusterInfo): ZookeeperClusterInfoImpl = obj match {
+    case _: ZookeeperClusterInfoImpl => obj.asInstanceOf[ZookeeperClusterInfoImpl]
+    case _ =>
+      ZookeeperClusterInfoImpl(
+        name = obj.name,
+        imageName = obj.imageName,
+        clientPort = obj.clientPort,
+        peerPort = obj.peerPort,
+        electionPort = obj.electionPort,
+        nodeNames = obj.nodeNames
+      )
+  }
+
+  final case class ZookeeperClusterInfoImpl(name: String,
+                                            imageName: String,
+                                            clientPort: Int,
+                                            peerPort: Int,
+                                            electionPort: Int,
+                                            nodeNames: Seq[String])
+      extends ZookeeperClusterInfo
+
+  private[this] implicit val ZOOKEEPER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfoImpl] =
+    jsonFormat6(ZookeeperClusterInfoImpl)
 
   def access(): ClusterAccess[ZookeeperClusterCreationRequest, ZookeeperClusterInfo] =
     new ClusterAccess[ZookeeperClusterCreationRequest, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH)

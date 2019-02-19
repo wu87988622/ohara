@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -44,13 +44,14 @@ import com.island.ohara.configurator.Configurator.Store
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class ConfiguratorBuilder {
-  private[this] var hostname: Option[String] = None
-  private[this] var port: Option[Int] = None
+  private[this] var advertisedHostname: Option[String] = None
+  private[this] var advertisedPort: Option[Int] = None
   private[this] val store: Store = new Store(
     com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
   private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
@@ -70,21 +71,21 @@ class ConfiguratorBuilder {
     * @param hostname used to build the rest server
     * @return this builder
     */
-  @Optional("default is 0.0.0.0")
-  def hostname(hostname: String): ConfiguratorBuilder = {
-    this.hostname = Some(hostname)
+  @Optional("default is localhost")
+  def advertisedHostname(hostname: String): ConfiguratorBuilder = {
+    this.advertisedHostname = Some(hostname)
     this
   }
 
   /**
     * set advertised port which will be exposed by configurator.
-    *
+    * Noted: configurator is bound on this port also.
     * @param port used to build the rest server
     * @return this builder
     */
   @Optional("default is random port")
-  def port(port: Int): ConfiguratorBuilder = {
-    this.port = Some(port)
+  def advertisedPort(port: Int): ConfiguratorBuilder = {
+    this.advertisedPort = Some(port)
     this
   }
 
@@ -161,8 +162,8 @@ class ConfiguratorBuilder {
         nodeNames = Seq(host)
       )
     }
-    collie.brokerCollie().add(Seq.empty, bkCluster)
-    collie.workerCollie().add(Seq.empty, wkCluster)
+    collie.brokerCollie().addCluster(bkCluster)
+    collie.workerCollie().addCluster(wkCluster)
     clusterCollie(collie)
   }
 
@@ -173,25 +174,74 @@ class ConfiguratorBuilder {
     * @return this builder
     */
   def fake(numberOfBrokerCluster: Int, numberOfWorkerCluster: Int): ConfiguratorBuilder = {
-    if (numberOfBrokerCluster <= 0)
+    if (numberOfBrokerCluster < 0)
       throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
     if (numberOfWorkerCluster < 0)
       throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
+    if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
+      throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
     val collie = new FakeClusterCollie(null, null)
 
-    // create fake bk clusters
-    val brokerClusters: Seq[BrokerClusterInfo] =
-      (0 until numberOfBrokerCluster).map(index => brokerClusterInfo(s"fake$index"))
-    brokerClusters.foreach(collie.brokerCollie().add(Seq.empty, _))
+    val zkClusters = (0 until numberOfBrokerCluster).map { index =>
+      collie
+        .zookeeperCollie()
+        .addCluster(FakeZookeeperClusterInfo(
+          name = s"fakeZkCluster$index",
+          imageName = s"fakeImage$index",
+          // Assigning a negative value can make test fail quickly.
+          clientPort = -1,
+          electionPort = -1,
+          peerPort = -1,
+          nodeNames = (0 to 2).map(_ => CommonUtil.randomString(5))
+        ))
+    }
 
+    // add broker cluster
+    val bkClusters = zkClusters.zipWithIndex.map {
+      case (zkCluster, index) =>
+        collie
+          .brokerCollie()
+          .addCluster(FakeBrokerClusterInfo(
+            name = s"fakeBkCluster$index",
+            imageName = s"fakeImage$index",
+            zookeeperClusterName = zkCluster.name,
+            // Assigning a negative value can make test fail quickly.
+            clientPort = -1,
+            exporterPort = -1,
+            nodeNames = zkCluster.nodeNames
+          ))
+    }
+
+    // we don't need to collect wk clusters
     (0 until numberOfWorkerCluster).foreach { index =>
+      val bkCluster = bkClusters((Math.random() % bkClusters.size).asInstanceOf[Int])
       collie
         .workerCollie()
-        .add(Seq.empty,
-             workerClusterInfo(brokerClusters((Math.random() % brokerClusters.size).asInstanceOf[Int]), s"fake$index"))
+        .addCluster(FakeWorkerClusterInfo(
+          name = s"fakeWkCluster$index",
+          imageName = s"fakeImage$index",
+          brokerClusterName = bkCluster.name,
+          // Assigning a negative value can make test fail quickly.
+          clientPort = -1,
+          groupId = s"groupId$index",
+          statusTopicName = s"statusTopicName$index",
+          statusTopicPartitions = 1,
+          statusTopicReplications = 1.asInstanceOf[Short],
+          configTopicName = s"configTopicName$index",
+          configTopicPartitions = 1,
+          configTopicReplications = 1.asInstanceOf[Short],
+          offsetTopicName = s"offsetTopicName$index",
+          offsetTopicPartitions = 1,
+          offsetTopicReplications = 1.asInstanceOf[Short],
+          jarNames = Seq.empty,
+          sources = Seq.empty,
+          sinks = Seq.empty,
+          nodeNames = bkCluster.nodeNames
+        ))
+
     }
     // fake nodes
-    brokerClusters
+    zkClusters
       .flatMap(_.nodeNames)
       // DON'T add duplicate nodes!!!
       .toSet[String]
@@ -200,41 +250,9 @@ class ConfiguratorBuilder {
     clusterCollie(collie)
   }
 
-  private[this] def brokerClusterInfo(prefix: String): BrokerClusterInfo = FakeBrokerClusterInfo(
-    name = s"${prefix}brokerCluster",
-    imageName = s"imageName$prefix",
-    zookeeperClusterName = s"zkClusterName$prefix",
-    // Assigning a negative value can make test fail quickly.
-    exporterPort = -1,
-    clientPort = -1,
-    nodeNames = (0 to 2).map(_ => CommonUtil.randomString(5))
-  )
-
-  private[this] def workerClusterInfo(bkCluster: BrokerClusterInfo, prefix: String): WorkerClusterInfo =
-    FakeWorkerClusterInfo(
-      name = s"${prefix}workerCluster",
-      imageName = s"imageName$prefix",
-      brokerClusterName = bkCluster.name,
-      // Assigning a negative value can make test fail quickly.
-      clientPort = -1,
-      groupId = s"groupId$prefix",
-      statusTopicName = s"statusTopicName$prefix",
-      statusTopicPartitions = 1,
-      statusTopicReplications = 1.asInstanceOf[Short],
-      configTopicName = s"configTopicName$prefix",
-      configTopicPartitions = 1,
-      configTopicReplications = 1.asInstanceOf[Short],
-      offsetTopicName = s"offsetTopicName$prefix",
-      offsetTopicPartitions = 1,
-      offsetTopicReplications = 1.asInstanceOf[Short],
-      jarNames = Seq.empty,
-      sources = Seq.empty,
-      sinks = Seq.empty,
-      nodeNames = bkCluster.nodeNames
-    )
-
   @Optional("default is implemented by ssh")
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
+    if (this.clusterCollie.isDefined) throw new IllegalArgumentException(s"cluster collie is defined!!!")
     this.clusterCollie = Some(clusterCollie)
     this
   }
@@ -245,7 +263,7 @@ class ConfiguratorBuilder {
   }
 
   def build(): Configurator = {
-    new Configurator(hostname, port, initializationTimeout.get, terminationTimeout.get, extraRoute)(
+    new Configurator(advertisedHostname, advertisedPort, initializationTimeout.get, terminationTimeout.get, extraRoute)(
       store = store,
       nodeCollie = nodeCollie(),
       clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie()))
@@ -371,76 +389,60 @@ private[this] class FakeClusterCollie(bkConnectionProps: String, wkConnectionPro
 }
 
 private[this] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
-  protected val clusterCache = new ConcurrentHashMap[String, T]()
-  protected val containerCache = new ConcurrentHashMap[String, Seq[ContainerInfo]]()
+  protected val clusterCache = new mutable.HashMap[T, Seq[ContainerInfo]]()
 
-  protected def generateContainerDescription(nodeName: String,
-                                             imageName: String,
-                                             state: ContainerState): ContainerInfo = ContainerInfo(
-    nodeName = nodeName,
-    id = CommonUtil.randomString(10),
-    imageName = imageName,
-    created = "unknown",
-    state = state,
-    name = CommonUtil.randomString(10),
-    size = "unknown",
-    portMappings = Seq.empty,
-    environments = Map.empty,
-    hostname = CommonUtil.randomString(10)
-  )
+  def addCluster(cluster: T): T = {
+    def genContainers(cluster: T): Seq[ContainerInfo] = cluster.nodeNames.map { nodeName =>
+      ContainerInfo(
+        nodeName = nodeName,
+        id = CommonUtil.randomString(10),
+        imageName = cluster.imageName,
+        created = "unknown",
+        state = ContainerState.RUNNING,
+        name = CommonUtil.randomString(10),
+        size = "unknown",
+        portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)))),
+        environments = Map.empty,
+        hostname = CommonUtil.randomString(10)
+      )
+    }
+    clusterCache.put(cluster, genContainers(cluster))
+    cluster
+  }
   override def exist(clusterName: String): Future[Boolean] =
-    Future.successful(clusterCache.containsKey(clusterName))
+    Future.successful(clusterCache.keys.exists(_.name == clusterName))
 
   override def remove(clusterName: String): Future[T] = exist(clusterName).flatMap(if (_) Future.successful {
-    val cluster = clusterCache.remove(clusterName)
-    containerCache.remove(clusterName)
+    val cluster = clusterCache.keys.find(_.name == clusterName).get
+    clusterCache.remove(cluster)
     cluster
   } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
 
-  override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = Future.successful(Map.empty)
+  override def logs(clusterName: String): Future[Map[ContainerInfo, String]] =
+    exist(clusterName).flatMap(if (_) Future.successful {
+      val containers = clusterCache.find(_._1.name == clusterName).get._2
+      containers.map(_ -> "fake log").toMap
+    } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
 
   override def containers(clusterName: String): Future[Seq[ContainerInfo]] =
-    exist(clusterName).map(if (_) containerCache.get(clusterName) else Seq.empty)
+    exist(clusterName).map(if (_) clusterCache.find(_._1.name == clusterName).get._2 else Seq.empty)
 
-  import scala.collection.JavaConverters._
-  override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = Future.successful(
-    clusterCache
-      .values()
-      .asScala
-      .map { cluster =>
-        cluster -> containerCache.get(cluster.name)
-      }
-      .toMap)
-
-  def add(containers: Seq[ContainerInfo], cluster: T): Unit = {
-    clusterCache.put(cluster.name, cluster)
-    if (containers.nonEmpty) containerCache.put(cluster.name, containers)
-  }
+  override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = Future.successful(clusterCache.toMap)
 }
 
 private[this] class FakeZookeeperCollie extends FakeCollie[ZookeeperClusterInfo] with ZookeeperCollie {
   override def creator(): ZookeeperCollie.ClusterCreator =
     (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-      Future.successful {
-        val cluster = ZookeeperClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          clientPort = clientPort,
-          peerPort = peerPort,
-          electionPort = electionPort,
-          nodeNames = nodeNames
-        )
-        clusterCache.put(clusterName, cluster)
-        containerCache.put(clusterName,
-                           nodeNames.map(
-                             nodeName =>
-                               generateContainerDescription(
-                                 nodeName = nodeName,
-                                 imageName = imageName,
-                                 state = ContainerState.RUNNING
-                             )))
-        cluster
-    }
+      Future.successful(
+        addCluster(
+          FakeZookeeperClusterInfo(
+            name = clusterName,
+            imageName = imageName,
+            clientPort = clientPort,
+            peerPort = peerPort,
+            electionPort = electionPort,
+            nodeNames = nodeNames
+          )))
 
   override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterInfo] =
     Future.failed(
@@ -461,65 +463,49 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
   override def creator(): BrokerCollie.ClusterCreator =
     (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
-      Future.successful {
-        val cluster = FakeBrokerClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          clientPort = clientPort,
-          exporterPort = exporterPort,
-          zookeeperClusterName = zookeeperClusterName,
-          nodeNames = nodeNames
-        )
-        clusterCache.put(clusterName, cluster)
-        containerCache.put(clusterName,
-                           nodeNames.map(
-                             nodeName =>
-                               generateContainerDescription(
-                                 nodeName = nodeName,
-                                 imageName = imageName,
-                                 state = ContainerState.RUNNING
-                             )))
-        cluster
-    }
+      Future.successful(
+        addCluster(
+          FakeBrokerClusterInfo(
+            name = clusterName,
+            imageName = imageName,
+            clientPort = clientPort,
+            exporterPort = exporterPort,
+            zookeeperClusterName = zookeeperClusterName,
+            nodeNames = nodeNames
+          )))
 
-  override def removeNode(clusterName: String, nodeName: String): Future[FakeBrokerClusterInfo] = {
-    val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
-    else if (!previous.nodeNames.contains(nodeName))
+  override def removeNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo] = {
+    val previous = clusterCache.find(_._1.name == clusterName).get._1
+    if (!previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
     else
-      Future.successful {
-        val newOne = FakeBrokerClusterInfo(
-          name = previous.name,
-          imageName = previous.imageName,
-          zookeeperClusterName = previous.zookeeperClusterName,
-          exporterPort = previous.exporterPort,
-          clientPort = previous.clientPort,
-          nodeNames = previous.nodeNames.filterNot(_ == nodeName)
-        )
-        clusterCache.put(clusterName, newOne)
-        newOne
-      }
+      Future.successful(
+        addCluster(
+          FakeBrokerClusterInfo(
+            name = previous.name,
+            imageName = previous.imageName,
+            zookeeperClusterName = previous.zookeeperClusterName,
+            exporterPort = previous.exporterPort,
+            clientPort = previous.clientPort,
+            nodeNames = previous.nodeNames.filterNot(_ == nodeName)
+          )))
   }
 
-  override def addNode(clusterName: String, nodeName: String): Future[FakeBrokerClusterInfo] = {
-    val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
-    else if (previous.nodeNames.contains(nodeName))
+  override def addNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo] = {
+    val previous = clusterCache.find(_._1.name == clusterName).get._1
+    if (previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
     else
-      Future.successful {
-        val newOne = FakeBrokerClusterInfo(
-          name = previous.name,
-          imageName = previous.imageName,
-          zookeeperClusterName = previous.zookeeperClusterName,
-          clientPort = previous.clientPort,
-          exporterPort = previous.exporterPort,
-          nodeNames = previous.nodeNames :+ nodeName
-        )
-        clusterCache.put(clusterName, newOne)
-        newOne
-      }
+      Future.successful(
+        addCluster(
+          FakeBrokerClusterInfo(
+            name = previous.name,
+            imageName = previous.imageName,
+            zookeeperClusterName = previous.zookeeperClusterName,
+            clientPort = previous.clientPort,
+            exporterPort = previous.exporterPort,
+            nodeNames = previous.nodeNames :+ nodeName
+          )))
   }
   override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin =
     // < 0 means it is a fake cluster
@@ -529,6 +515,14 @@ private[this] class FakeBrokerCollie(bkConnectionProps: String)
       if (r == null) fake else r
     } else TopicAdmin(bkConnectionProps)
 }
+
+case class FakeZookeeperClusterInfo(name: String,
+                                    imageName: String,
+                                    clientPort: Int,
+                                    peerPort: Int,
+                                    electionPort: Int,
+                                    nodeNames: Seq[String])
+    extends ZookeeperClusterInfo
 
 case class FakeBrokerClusterInfo(name: String,
                                  imageName: String,
@@ -580,103 +574,87 @@ private[this] class FakeWorkerCollie(wkConnectionProps: String)
      statusTopicPartitions,
      configTopicName,
      configTopicReplications,
-     jarUrls,
+     _,
      nodeNames) =>
-      Future.successful {
-        val cluster = FakeWorkerClusterInfo(
-          name = clusterName,
-          imageName = imageName,
-          brokerClusterName = brokerClusterName,
-          clientPort = clientPort,
-          groupId = groupId,
-          offsetTopicName = offsetTopicName,
-          offsetTopicPartitions = offsetTopicPartitions,
-          offsetTopicReplications = offsetTopicReplications,
-          configTopicName = configTopicName,
-          configTopicPartitions = 1,
-          configTopicReplications = configTopicReplications,
-          statusTopicName = statusTopicName,
-          statusTopicPartitions = statusTopicPartitions,
-          statusTopicReplications = statusTopicReplications,
-          jarNames = Seq.empty,
-          sources = Seq.empty,
-          sinks = Seq.empty,
-          nodeNames = nodeNames
-        )
-        clusterCache.put(clusterName, cluster)
-        containerCache.put(clusterName,
-                           nodeNames.map(
-                             nodeName =>
-                               generateContainerDescription(
-                                 nodeName = nodeName,
-                                 imageName = imageName,
-                                 state = ContainerState.RUNNING
-                             )))
-        cluster
-    }
+      Future.successful(
+        addCluster(
+          FakeWorkerClusterInfo(
+            name = clusterName,
+            imageName = imageName,
+            brokerClusterName = brokerClusterName,
+            clientPort = clientPort,
+            groupId = groupId,
+            offsetTopicName = offsetTopicName,
+            offsetTopicPartitions = offsetTopicPartitions,
+            offsetTopicReplications = offsetTopicReplications,
+            configTopicName = configTopicName,
+            configTopicPartitions = 1,
+            configTopicReplications = configTopicReplications,
+            statusTopicName = statusTopicName,
+            statusTopicPartitions = statusTopicPartitions,
+            statusTopicReplications = statusTopicReplications,
+            jarNames = Seq.empty,
+            sources = Seq.empty,
+            sinks = Seq.empty,
+            nodeNames = nodeNames
+          )))
 
-  override def removeNode(clusterName: String, nodeName: String): Future[FakeWorkerClusterInfo] = {
-    val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
-    else if (!previous.nodeNames.contains(nodeName))
+  override def removeNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo] = {
+    val previous = clusterCache.find(_._1.name == clusterName).get._1
+    if (!previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
     else
-      Future.successful {
-        val newOne = FakeWorkerClusterInfo(
-          name = previous.name,
-          imageName = previous.imageName,
-          brokerClusterName = previous.brokerClusterName,
-          clientPort = previous.clientPort,
-          groupId = previous.groupId,
-          statusTopicName = previous.statusTopicName,
-          statusTopicPartitions = previous.statusTopicPartitions,
-          statusTopicReplications = previous.statusTopicReplications,
-          configTopicName = previous.configTopicName,
-          configTopicPartitions = previous.configTopicPartitions,
-          configTopicReplications = previous.configTopicReplications,
-          offsetTopicName = previous.offsetTopicName,
-          offsetTopicPartitions = previous.offsetTopicPartitions,
-          offsetTopicReplications = previous.offsetTopicReplications,
-          jarNames = previous.jarNames,
-          sources = Seq.empty,
-          sinks = Seq.empty,
-          nodeNames = previous.nodeNames.filterNot(_ == nodeName)
-        )
-        clusterCache.put(clusterName, newOne)
-        newOne
-      }
+      Future.successful(
+        addCluster(
+          FakeWorkerClusterInfo(
+            name = previous.name,
+            imageName = previous.imageName,
+            brokerClusterName = previous.brokerClusterName,
+            clientPort = previous.clientPort,
+            groupId = previous.groupId,
+            statusTopicName = previous.statusTopicName,
+            statusTopicPartitions = previous.statusTopicPartitions,
+            statusTopicReplications = previous.statusTopicReplications,
+            configTopicName = previous.configTopicName,
+            configTopicPartitions = previous.configTopicPartitions,
+            configTopicReplications = previous.configTopicReplications,
+            offsetTopicName = previous.offsetTopicName,
+            offsetTopicPartitions = previous.offsetTopicPartitions,
+            offsetTopicReplications = previous.offsetTopicReplications,
+            jarNames = previous.jarNames,
+            sources = Seq.empty,
+            sinks = Seq.empty,
+            nodeNames = previous.nodeNames.filterNot(_ == nodeName)
+          )))
   }
 
-  override def addNode(clusterName: String, nodeName: String): Future[FakeWorkerClusterInfo] = {
-    val previous = clusterCache.get(clusterName)
-    if (previous == null) Future.failed(new NoSuchClusterException(s"$clusterName doesn't exists!!!"))
-    else if (previous.nodeNames.contains(nodeName))
+  override def addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo] = {
+    val previous = clusterCache.find(_._1.name == clusterName).get._1
+    if (previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))
     else
-      Future.successful {
-        val newOne = FakeWorkerClusterInfo(
-          name = previous.name,
-          imageName = previous.imageName,
-          brokerClusterName = previous.brokerClusterName,
-          clientPort = previous.clientPort,
-          groupId = previous.groupId,
-          statusTopicName = previous.statusTopicName,
-          statusTopicPartitions = previous.statusTopicPartitions,
-          statusTopicReplications = previous.statusTopicReplications,
-          configTopicName = previous.configTopicName,
-          configTopicPartitions = previous.configTopicPartitions,
-          configTopicReplications = previous.configTopicReplications,
-          offsetTopicName = previous.offsetTopicName,
-          offsetTopicPartitions = previous.offsetTopicPartitions,
-          offsetTopicReplications = previous.offsetTopicReplications,
-          jarNames = previous.jarNames,
-          sources = Seq.empty,
-          sinks = Seq.empty,
-          nodeNames = previous.nodeNames :+ nodeName
-        )
-        clusterCache.put(clusterName, newOne)
-        newOne
-      }
+      Future.successful(
+        addCluster(
+          FakeWorkerClusterInfo(
+            name = previous.name,
+            imageName = previous.imageName,
+            brokerClusterName = previous.brokerClusterName,
+            clientPort = previous.clientPort,
+            groupId = previous.groupId,
+            statusTopicName = previous.statusTopicName,
+            statusTopicPartitions = previous.statusTopicPartitions,
+            statusTopicReplications = previous.statusTopicReplications,
+            configTopicName = previous.configTopicName,
+            configTopicPartitions = previous.configTopicPartitions,
+            configTopicReplications = previous.configTopicReplications,
+            offsetTopicName = previous.offsetTopicName,
+            offsetTopicPartitions = previous.offsetTopicPartitions,
+            offsetTopicReplications = previous.offsetTopicReplications,
+            jarNames = previous.jarNames,
+            sources = Seq.empty,
+            sinks = Seq.empty,
+            nodeNames = previous.nodeNames :+ nodeName
+          )))
   }
   override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
     // < 0 means it is a fake cluster

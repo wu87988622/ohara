@@ -17,24 +17,30 @@
 package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import com.island.ohara.agent.{BrokerCollie, ClusterCollie, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, _}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
 import scala.concurrent.ExecutionContext.Implicits.global
 object BrokerRoute {
 
-  def apply(implicit brokerCollie: BrokerCollie, collie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
+  def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
     RouteUtil.basicRouteOfCluster(
+      collie = clusterCollie.brokerCollie(),
       root = BROKER_PREFIX_PATH,
       hookOfCreation = (req: BrokerClusterCreationRequest) =>
         // we need to handle the "default name" of zookeeper cluster
         // this is important since user can't assign zk in ohara 0.2 so request won't carry the zk name.
         // we have to reassign the zk name manually.
         // TODO: remove this "friendly" helper in ohara 0.3
-        collie
+        clusterCollie
           .clusters()
           .map { clusters =>
+            if (clusters.keys
+                  .filter(_.isInstanceOf[BrokerClusterInfo])
+                  .map(_.asInstanceOf[BrokerClusterInfo])
+                  .exists(_.name == req.name))
+              throw new IllegalArgumentException(s"broker cluster:${req.name} is running")
             val zkName = req.zookeeperClusterName
               .map { zkName =>
                 clusters.keys
@@ -45,22 +51,29 @@ object BrokerRoute {
               }
               .getOrElse {
                 val zkClusters = clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo])
-                if (zkClusters.size != 1)
-                  throw new IllegalArgumentException(
-                    s"You didn't specify the zk cluster for ${req.name}, and there is no default zk cluster")
-                zkClusters.head.name
+                zkClusters.size match {
+                  case 0 =>
+                    throw new IllegalArgumentException(
+                      s"You didn't specify the zk cluster for bk cluster:${req.name}, and there is no default zk cluster")
+                  case 1 => zkClusters.head.name
+                  case _ =>
+                    throw new IllegalArgumentException(
+                      s"You didn't specify the zk cluster for bk cluster ${req.name}, and there are too many zk clusters:{${zkClusters
+                        .map(_.name)}}")
+                }
               }
-            val sameNameClusters = clusters.keys
+            val sameZkNameClusters = clusters.keys
               .filter(_.isInstanceOf[BrokerClusterInfo])
               .map(_.asInstanceOf[BrokerClusterInfo])
               .filter(_.zookeeperClusterName == zkName)
-            if (sameNameClusters.nonEmpty)
+            if (sameZkNameClusters.nonEmpty)
               throw new IllegalArgumentException(
-                s"zk cluster:$zkName is already used by ${sameNameClusters.map(_.name)}")
+                s"zk cluster:$zkName is already used by ${sameZkNameClusters.map(_.name)}")
             zkName
           }
           .flatMap { zkName =>
-            brokerCollie
+            clusterCollie
+              .brokerCollie()
               .creator()
               .clusterName(req.name)
               .clientPort(req.clientPort)

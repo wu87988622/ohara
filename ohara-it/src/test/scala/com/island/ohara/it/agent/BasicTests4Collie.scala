@@ -19,20 +19,20 @@ package com.island.ohara.it.agent
 import java.time.Duration
 import java.util.concurrent.ExecutionException
 
-import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.exception.OharaExecutionException
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{InvalidReplicationFactorException, UnknownTopicOrPartitionException}
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
@@ -45,28 +45,78 @@ import scala.concurrent.{Await, Future}
   *
   * NOTED: this test will forward random ports so it would be better to "close" firewall of remote node.
   */
-abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
-  private[this] val log = Logger(classOf[BasicTestsOfCollie])
+abstract class BasicTests4Collie extends IntegrationTest with Matchers {
+  private[this] val log = Logger(classOf[BasicTests4Collie])
   private[this] val numberOfClusters = 2
-  protected def nodeCache: Seq[Node]
-  protected def clusterCollie: ClusterCollie
-  protected def zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-  protected def brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
-  protected def workerCollie: WorkerCollie = clusterCollie.workerCollie()
+  protected val nodeCache: Seq[Node]
+
+  //--------------------------------------------------[zk operations]--------------------------------------------------//
+  protected def zk_exist(clusterName: String): Future[Boolean]
+  protected def zk_create(clusterName: String,
+                          clientPort: Int,
+                          electionPort: Int,
+                          peerPort: Int,
+                          nodeNames: Seq[String]): Future[ZookeeperClusterInfo]
+  protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo]
+  protected def zk_clusters(): Future[Seq[ZookeeperClusterInfo]]
+  protected def zk_logs(clusterName: String): Future[Seq[String]]
+  protected def zk_containers(clusterName: String): Future[Seq[ContainerInfo]]
+  protected def zk_delete(clusterName: String): Future[ZookeeperClusterInfo]
+
+  //--------------------------------------------------[bk operations]--------------------------------------------------//
+  protected def bk_exist(clusterName: String): Future[Boolean]
+  protected def bk_create(clusterName: String,
+                          clientPort: Int,
+                          exporterPort: Int,
+                          zkClusterName: String,
+                          nodeNames: Seq[String]): Future[BrokerClusterInfo]
+  protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo]
+  protected def bk_clusters(): Future[Seq[BrokerClusterInfo]]
+  protected def bk_logs(clusterName: String): Future[Seq[String]]
+  protected def bk_containers(clusterName: String): Future[Seq[ContainerInfo]]
+  protected def bk_delete(clusterName: String): Future[BrokerClusterInfo]
+  protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo]
+  protected def bk_removeNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo]
+
+  //--------------------------------------------------[wk operations]--------------------------------------------------//
+  protected def wk_exist(clusterName: String): Future[Boolean]
+  protected def wk_create(clusterName: String,
+                          clientPort: Int,
+                          bkClusterName: String,
+                          nodeNames: Seq[String]): Future[WorkerClusterInfo]
+  protected def wk_create(clusterName: String,
+                          clientPort: Int,
+                          groupId: String,
+                          configTopicName: String,
+                          statusTopicName: String,
+                          offsetTopicName: String,
+                          bkClusterName: String,
+                          nodeNames: Seq[String]): Future[WorkerClusterInfo]
+  protected def wk_cluster(clusterName: String): Future[WorkerClusterInfo]
+  protected def wk_clusters(): Future[Seq[WorkerClusterInfo]]
+  protected def wk_logs(clusterName: String): Future[Seq[String]]
+  protected def wk_containers(clusterName: String): Future[Seq[ContainerInfo]]
+  protected def wk_delete(clusterName: String): Future[WorkerClusterInfo]
+  protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo]
+  protected def wk_removeNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo]
 
   /**
     * used to debug...
     */
-  private[this] val cleanup = true
+  protected val cleanup: Boolean = true
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 120 seconds)
+
+  private[this] def await(s: () => Boolean): Unit = CommonUtil.await(() => s(), Duration.ofSeconds(120))
+
+  protected def generateClusterName(): String
 
   @Test
   def testZk(): Unit = {
     log.info("start to run zookeeper cluster")
     val nodeName: String = nodeCache.head.name
-    val clusterName = CommonUtil.randomString(10)
-    result(zookeeperCollie.nonExist(clusterName)) shouldBe true
+    val clusterName = generateClusterName()
+    result(zk_exist(clusterName)) shouldBe false
     val clientPort = CommonUtil.availablePort()
     val electionPort = CommonUtil.availablePort()
     val peerPort = CommonUtil.availablePort()
@@ -78,31 +128,31 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       zkCluster.electionPort shouldBe electionPort
       zkCluster
     }
+
     val zkCluster = assert(
       result(
-        zookeeperCollie
-          .creator()
-          .clientPort(clientPort)
-          .electionPort(electionPort)
-          .peerPort(peerPort)
-          .clusterName(clusterName)
-          .nodeName(nodeName)
-          .create()))
+        zk_create(
+          clusterName = clusterName,
+          clientPort = clientPort,
+          electionPort = electionPort,
+          peerPort = peerPort,
+          nodeNames = Seq(nodeName)
+        )))
     try {
-      assert(result(zookeeperCollie.cluster(zkCluster.name))._1)
+      assert(result(zk_cluster(zkCluster.name)))
       log.info("start to run zookeeper cluster ... done")
-      result(zookeeperCollie.exist(zkCluster.name)) shouldBe true
+      result(zk_exist(zkCluster.name)) shouldBe true
       // we can't assume the size since other tests may create zk cluster at the same time
-      result(zookeeperCollie.clusters()).isEmpty shouldBe false
+      result(zk_clusters()).isEmpty shouldBe false
       log.info(s"verify number of zk clusters... done")
-      result(zookeeperCollie.logs(clusterName)).size shouldBe 1
-      result(zookeeperCollie.logs(clusterName)).values.foreach(log =>
+      result(zk_logs(clusterName)).size shouldBe 1
+      result(zk_logs(clusterName)).foreach(log =>
         withClue(log) {
           log.contains("exception") shouldBe false
           log.isEmpty shouldBe false
       })
       log.info(s"verify log of zk clusters... done")
-      val container = result(zookeeperCollie.containers(clusterName)).head
+      val container = result(zk_containers(clusterName)).head
       log.info(s"get containers from zk:$clusterName... done")
       container.nodeName shouldBe nodeName
       container.name.contains(clusterName) shouldBe true
@@ -114,26 +164,25 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       container.environments.exists(_._2 == clientPort.toString) shouldBe true
       container.environments.exists(_._2 == electionPort.toString) shouldBe true
       container.environments.exists(_._2 == peerPort.toString) shouldBe true
-    } finally if (cleanup) result(zookeeperCollie.remove(zkCluster.name))
+    } finally if (cleanup) result(zk_delete(zkCluster.name))
   }
 
   @Test
   def testBroker(): Unit = {
     val zkCluster = result(
-      zookeeperCollie
-        .creator()
-        .clientPort(CommonUtil.availablePort())
-        .electionPort(CommonUtil.availablePort())
-        .peerPort(CommonUtil.availablePort())
-        .clusterName(CommonUtil.randomString(10))
-        .nodeName(nodeCache.head.name)
-        .create())
+      zk_create(
+        clusterName = generateClusterName(),
+        clientPort = CommonUtil.availablePort(),
+        electionPort = CommonUtil.availablePort(),
+        peerPort = CommonUtil.availablePort(),
+        nodeNames = Seq(nodeCache.head.name)
+      ))
     try {
       log.info("[BROKER] start to run broker cluster")
-      val nodeName = nodeCache.head.name
-      val clusterName = CommonUtil.randomString(10)
-      result(brokerCollie.nonExist(clusterName)) shouldBe true
+      val clusterName = generateClusterName()
+      result(bk_exist(clusterName)) shouldBe false
       log.info(s"[BROKER] verify existence of broker cluster:$clusterName...done")
+      val nodeName: String = nodeCache.head.name
       val clientPort = CommonUtil.availablePort()
       val exporterPort = CommonUtil.availablePort()
       def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
@@ -144,30 +193,30 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         brokerCluster.exporterPort shouldBe exporterPort
         brokerCluster
       }
+
       val bkCluster = assert(
         result(
-          brokerCollie
-            .creator()
-            .clusterName(clusterName)
-            .clientPort(clientPort)
-            .exporterPort(exporterPort)
-            .zookeeperClusterName(zkCluster.name)
-            .nodeName(nodeName)
-            .create()))
+          bk_create(
+            clusterName = clusterName,
+            clientPort = clientPort,
+            exporterPort = exporterPort,
+            zkClusterName = zkCluster.name,
+            nodeNames = Seq(nodeName)
+          )))
       log.info("[BROKER] start to run broker cluster...done")
-      assert(result(brokerCollie.cluster(bkCluster.name))._1)
+      assert(result(bk_cluster(bkCluster.name)))
       log.info("[BROKER] verify cluster api...done")
       try {
-        result(brokerCollie.exist(bkCluster.name)) shouldBe true
+        result(bk_exist(bkCluster.name)) shouldBe true
         // we can't assume the size since other tests may create zk cluster at the same time
-        result(brokerCollie.clusters()).isEmpty shouldBe false
-        result(brokerCollie.logs(clusterName)).size shouldBe 1
-        result(brokerCollie.logs(clusterName)).values.foreach(log =>
+        result(bk_clusters()).isEmpty shouldBe false
+        result(bk_logs(clusterName)).size shouldBe 1
+        result(bk_logs(clusterName)).foreach(log =>
           withClue(log) {
             log.contains("exception") shouldBe false
             log.isEmpty shouldBe false
         })
-        val container = result(brokerCollie.containers(clusterName)).head
+        val container = result(bk_containers(clusterName)).head
         container.nodeName shouldBe nodeName
         container.name.contains(clusterName) shouldBe true
         container.hostname.contains(clusterName) shouldBe true
@@ -176,25 +225,26 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
         testTopic(
           testRemoveNodeToRunningBrokerCluster(testTopic(testAddNodeToRunningBrokerCluster(testTopic(bkCluster)))))
-      } finally if (cleanup) result(brokerCollie.remove(bkCluster.name))
-    } finally if (cleanup) result(zookeeperCollie.remove(zkCluster.name))
+      } finally if (cleanup) result(bk_delete(bkCluster.name))
+    } finally if (cleanup) result(zk_delete(zkCluster.name))
   }
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    result(brokerCollie.exist(previousCluster.name)) shouldBe true
+    result(bk_exist(previousCluster.name)) shouldBe true
     log.info(s"[BROKER] nodeCache:$nodeCache previous:${previousCluster.nodeNames}")
     an[IllegalArgumentException] should be thrownBy result(
-      brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
       // we can't add duplicate node
       an[IllegalArgumentException] should be thrownBy result(
-        brokerCollie.addNode(previousCluster.name, previousCluster.nodeNames.head))
+        bk_addNode(previousCluster.name, previousCluster.nodeNames.head))
       // we can't add a nonexistent node
-      an[NoSuchElementException] should be thrownBy result(
-        brokerCollie.addNode(previousCluster.name, CommonUtil.randomString()))
+      // we always get IllegalArgumentException if we sent request by restful api
+      // However, if we use collie impl, an NoSuchElementException will be thrown...
+      an[Throwable] should be thrownBy result(bk_addNode(previousCluster.name, CommonUtil.randomString()))
       log.info(s"[BROKER] add new node:${freeNodes.head.name} to cluster:${previousCluster.name}")
-      val newCluster = result(brokerCollie.addNode(previousCluster.name, freeNodes.head.name))
+      val newCluster = result(bk_addNode(previousCluster.name, freeNodes.head.name))
       log.info(s"[BROKER] add new node:${freeNodes.head.name} to cluster:${previousCluster.name}...done")
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
@@ -245,7 +295,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       val producer = Producer.builder().connectionProps(brokers).allAcks().build(Serializer.STRING, Serializer.STRING)
       log.info(s"[BROKER] start to send data")
       try {
-        CommonUtil.await(
+        await(
           () => {
             try producer.sender().key("abc").value("abc_value").send(topicName).get().topic() == topicName
             catch {
@@ -254,8 +304,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
                   case _: UnknownTopicOrPartitionException => false
                 }
             }
-          },
-          java.time.Duration.ofSeconds(10)
+          }
         )
 
       } finally producer.close()
@@ -280,11 +329,11 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    result(brokerCollie.exist(previousCluster.name)) shouldBe true
+    result(bk_exist(previousCluster.name)) shouldBe true
     if (previousCluster.nodeNames.size > 1) {
       log.info(
         s"[BROKER] start to remove node:${previousCluster.nodeNames.head} from bk cluster:${previousCluster.name}")
-      val newCluster = result(brokerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      val newCluster = result(bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
       log.info(
         s"[BROKER] start to remove node:${previousCluster.nodeNames.head} from bk cluster:${previousCluster.name} ... done")
       newCluster.name shouldBe previousCluster.name
@@ -299,29 +348,28 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
   @Test
   def testWorker(): Unit = {
     val zkCluster = result(
-      zookeeperCollie
-        .creator()
-        .clientPort(CommonUtil.availablePort())
-        .electionPort(CommonUtil.availablePort())
-        .peerPort(CommonUtil.availablePort())
-        .clusterName(CommonUtil.randomString(10))
-        .nodeName(nodeCache.head.name)
-        .create())
+      zk_create(
+        clusterName = generateClusterName(),
+        clientPort = CommonUtil.availablePort(),
+        electionPort = CommonUtil.availablePort(),
+        peerPort = CommonUtil.availablePort(),
+        nodeNames = Seq(nodeCache.head.name)
+      ))
     try {
+
       val bkCluster = result(
-        brokerCollie
-          .creator()
-          .clusterName(CommonUtil.randomString(10))
-          .clientPort(CommonUtil.availablePort())
-          .exporterPort(CommonUtil.availablePort())
-          .zookeeperClusterName(zkCluster.name)
-          .nodeName(nodeCache.head.name)
-          .create())
+        bk_create(
+          clusterName = generateClusterName(),
+          clientPort = CommonUtil.availablePort(),
+          exporterPort = CommonUtil.availablePort(),
+          zkClusterName = zkCluster.name,
+          nodeNames = Seq(nodeCache.head.name)
+        ))
       try {
         log.info("[WORKER] start to test worker")
         val nodeName = nodeCache.head.name
-        val clusterName = CommonUtil.randomString(10)
-        result(workerCollie.nonExist(clusterName)) shouldBe true
+        val clusterName = generateClusterName()
+        result(wk_exist(clusterName)) shouldBe false
         log.info("[WORKER] verify:nonExists done")
         val clientPort = CommonUtil.availablePort()
         def assert(workerCluster: WorkerClusterInfo): WorkerClusterInfo = {
@@ -337,32 +385,32 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
           workerCluster.offsetTopicReplications shouldBe 1
           workerCluster
         }
+
         val wkCluster = assert(
           result(
-            workerCollie
-              .creator()
-              .clusterName(clusterName)
-              .clientPort(clientPort)
-              .brokerClusterName(bkCluster.name)
-              .nodeName(nodeName)
-              .create()))
+            wk_create(
+              clusterName = clusterName,
+              clientPort = clientPort,
+              bkClusterName = bkCluster.name,
+              nodeNames = Seq(nodeName)
+            )))
         log.info("[WORKER] create done")
-        assert(result(workerCollie.cluster(wkCluster.name))._1)
+        assert(result(wk_cluster(wkCluster.name)))
         log.info("[WORKER] verify:create done")
         try {
-          result(workerCollie.exist(wkCluster.name)) shouldBe true
+          result(wk_exist(wkCluster.name)) shouldBe true
           log.info("[WORKER] verify:exist done")
           // we can't assume the size since other tests may create zk cluster at the same time
-          result(workerCollie.clusters()).isEmpty shouldBe false
+          result(wk_clusters()).isEmpty shouldBe false
           log.info("[WORKER] verify:list done")
-          result(workerCollie.logs(clusterName)).size shouldBe 1
-          result(workerCollie.logs(clusterName)).values.foreach(log =>
+          result(wk_logs(clusterName)).size shouldBe 1
+          result(wk_logs(clusterName)).foreach(log =>
             withClue(log) {
               log.contains("- ERROR") shouldBe false
               log.isEmpty shouldBe false
           })
           log.info("[WORKER] verify:log done")
-          val container = result(workerCollie.containers(clusterName)).head
+          val container = result(wk_containers(clusterName)).head
           container.nodeName shouldBe nodeName
           container.name.contains(clusterName) shouldBe true
           container.hostname.contains(clusterName) shouldBe true
@@ -372,9 +420,9 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
           testPlugins(
             testRemoveNodeToRunningWorkerCluster(
               testPlugins(testAddNodeToRunningWorkerCluster(testPlugins(wkCluster)))))
-        } finally if (cleanup) result(workerCollie.remove(wkCluster.name))
-      } finally if (cleanup) result(brokerCollie.remove(bkCluster.name))
-    } finally if (cleanup) result(zookeeperCollie.remove(zkCluster.name))
+        } finally if (cleanup) result(wk_delete(wkCluster.name))
+      } finally if (cleanup) result(bk_delete(bkCluster.name))
+    } finally if (cleanup) result(zk_delete(zkCluster.name))
 
   }
 
@@ -393,19 +441,20 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
     cluster
   }
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    result(workerCollie.exist(previousCluster.name)) shouldBe true
+    result(wk_exist(previousCluster.name)) shouldBe true
     an[IllegalArgumentException] should be thrownBy result(
-      workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      wk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
       // we can't add duplicate node
       an[IllegalArgumentException] should be thrownBy result(
-        workerCollie.addNode(previousCluster.name, previousCluster.nodeNames.head))
+        wk_addNode(previousCluster.name, previousCluster.nodeNames.head))
       // we can't add a nonexistent node
-      an[NoSuchElementException] should be thrownBy result(
-        workerCollie.addNode(previousCluster.name, CommonUtil.randomString()))
+      // we always get IllegalArgumentException if we sent request by restful api
+      // However, if we use collie impl, an NoSuchElementException will be thrown...
+      an[Throwable] should be thrownBy result(wk_addNode(previousCluster.name, CommonUtil.randomString()))
       log.info(s"[WORKER] start to add node:${freeNodes.head.name} to a running worker cluster")
-      val newCluster = result(workerCollie.addNode(previousCluster.name, freeNodes.head.name))
+      val newCluster = result(wk_addNode(previousCluster.name, freeNodes.head.name))
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.configTopicName shouldBe previousCluster.configTopicName
@@ -417,7 +466,7 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
       log.info(s"[WORKER] start to verify the added node:${freeNodes.head.name}")
       // worker is starting...
-      CommonUtil.await(
+      await(
         () =>
           try {
             val workersProps = s"${freeNodes.head.name}:${newCluster.clientPort}"
@@ -425,18 +474,17 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
             result(workerClient.plugins()).nonEmpty
           } catch {
             case _: Throwable => false
-        },
-        Duration.ofSeconds(60)
+        }
       )
       newCluster
     } else previousCluster
   }
 
   private[this] def testRemoveNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    result(workerCollie.exist(previousCluster.name)) shouldBe true
+    result(wk_exist(previousCluster.name)) shouldBe true
     if (previousCluster.nodeNames.size > 1) {
       log.info(s"[WORKER] start to remove node:${previousCluster.nodeNames.head} from ${previousCluster.name}")
-      val newCluster = result(workerCollie.removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      val newCluster = result(wk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.configTopicName shouldBe previousCluster.configTopicName
@@ -452,31 +500,34 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiZkClustersOnSingleNode(): Unit = {
-    val names = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val names = (0 until numberOfClusters).map(_ => generateClusterName())
     try {
       val clusters = names.map { name =>
-        Await.result(
-          zookeeperCollie
-            .creator()
-            .clusterName(name)
-            .clientPort(CommonUtil.availablePort())
-            .electionPort(CommonUtil.availablePort())
-            .peerPort(CommonUtil.availablePort())
-            .nodeNames(nodeCache.map(_.name))
-            .create(),
-          30 seconds
-        )
+        result(
+          zk_create(
+            clusterName = name,
+            clientPort = CommonUtil.availablePort(),
+            electionPort = CommonUtil.availablePort(),
+            peerPort = CommonUtil.availablePort(),
+            nodeNames = nodeCache.map(_.name)
+          ))
       }
-      val clusters2 = Await.result(zookeeperCollie.clusters(), 20 seconds)
+      val clusters2 = Await.result(zk_clusters(), 20 seconds)
       clusters.foreach { c =>
-        clusters2.find(_._1.name == c.name).get._1 shouldBe c
-        Await.result(zookeeperCollie.logs(c.name), 60 seconds).values.foreach { log =>
+        val another = clusters2.find(_.name == c.name).get
+        another.name shouldBe c.name
+        another.peerPort shouldBe c.peerPort
+        another.clientPort shouldBe c.clientPort
+        another.imageName shouldBe c.imageName
+        another.electionPort shouldBe c.electionPort
+        another.nodeNames.toSet shouldBe c.nodeNames.toSet
+        result(zk_logs(c.name)).foreach { log =>
           withClue(log)(log.contains("- ERROR") shouldBe false)
           log.isEmpty shouldBe false
         }
       }
     } finally if (cleanup) names.foreach { name =>
-      try Await.result(zookeeperCollie.remove(name), 60 seconds)
+      try Await.result(zk_delete(name), 60 seconds)
       catch {
         case _: Throwable =>
         // do nothing
@@ -486,53 +537,47 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiBkClustersOnSingleNode(): Unit = {
-    val zkNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
-    val bkNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val zkNames = (0 until numberOfClusters).map(_ => generateClusterName())
+    val bkNames = (0 until numberOfClusters).map(_ => generateClusterName())
     try {
       // NOTED: It is illegal to run multi bk clusters on same zk cluster so we have got to instantiate multi zk clusters first.
       val zks = zkNames.map { name =>
-        Await.result(
-          zookeeperCollie
-            .creator()
-            .clusterName(name)
-            .clientPort(CommonUtil.availablePort())
-            .electionPort(CommonUtil.availablePort())
-            .peerPort(CommonUtil.availablePort())
-            .nodeName(nodeCache.head.name)
-            .create(),
-          30 seconds
-        )
+        result(
+          zk_create(
+            clusterName = name,
+            clientPort = CommonUtil.availablePort(),
+            electionPort = CommonUtil.availablePort(),
+            peerPort = CommonUtil.availablePort(),
+            nodeNames = Seq(nodeCache.head.name)
+          ))
       }
 
       val clusters = zks.zipWithIndex.map {
         case (zk, index) =>
-          Await.result(
-            brokerCollie
-              .creator()
-              .zookeeperClusterName(zk.name)
-              .clusterName(bkNames(index))
-              .clientPort(CommonUtil.availablePort())
-              .exporterPort(CommonUtil.availablePort())
-              .nodeName(nodeCache.head.name)
-              .create(),
-            30 seconds
-          )
+          result(
+            bk_create(
+              clusterName = bkNames(index),
+              clientPort = CommonUtil.availablePort(),
+              exporterPort = CommonUtil.availablePort(),
+              zkClusterName = zk.name,
+              nodeNames = Seq(nodeCache.head.name)
+            ))
       }
-      val clusters2 = Await.result(brokerCollie.clusters(), 20 seconds)
+      val clusters2 = Await.result(bk_clusters(), 20 seconds)
       clusters.foreach { c =>
-        clusters2.find(_._1.name == c.name).get._1 shouldBe c
+        clusters2.find(_.name == c.name).get shouldBe c
         testTopic(c)
       }
     } finally if (cleanup) {
       zkNames.foreach { name =>
-        try Await.result(zookeeperCollie.remove(name), 60 seconds)
+        try Await.result(zk_delete(name), 60 seconds)
         catch {
           case _: Throwable =>
           // do nothing
         }
       }
       bkNames.foreach { name =>
-        try Await.result(brokerCollie.remove(name), 60 seconds)
+        try Await.result(bk_delete(name), 60 seconds)
         catch {
           case _: Throwable =>
           // do nothing
@@ -543,51 +588,65 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
 
   @Test
   def testMultiWkClustersOnSingleNode(): Unit = {
-    val zkName = CommonUtil.randomString(10)
-    val bkName = CommonUtil.randomString(10)
-    val wkNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val zkName = generateClusterName()
+    val bkName = generateClusterName()
+    val wkNames = (0 until numberOfClusters).map(_ => generateClusterName())
+    val groupIds = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val configTopicNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val offsetTopicNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val statusTopicNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
     try {
-      val zk = Await.result(
-        zookeeperCollie
-          .creator()
-          .clusterName(zkName)
-          .clientPort(CommonUtil.availablePort())
-          .electionPort(CommonUtil.availablePort())
-          .peerPort(CommonUtil.availablePort())
-          .nodeName(nodeCache.head.name)
-          .create(),
-        30 seconds
-      )
-      val bk = Await.result(
-        brokerCollie
-          .creator()
-          .zookeeperClusterName(zk.name)
-          .clusterName(bkName)
-          .clientPort(CommonUtil.availablePort())
-          .exporterPort(CommonUtil.availablePort())
-          .nodeName(nodeCache.head.name)
-          .create(),
-        30 seconds
-      )
-      val clusters = wkNames.map { name =>
-        Await.result(
-          workerCollie
-            .creator()
-            .brokerClusterName(bk.name)
-            .clusterName(name)
-            .clientPort(CommonUtil.availablePort())
-            .groupId(CommonUtil.randomString(5))
-            .configTopicName(CommonUtil.randomString(10))
-            .statusTopicName(CommonUtil.randomString(10))
-            .offsetTopicName(CommonUtil.randomString(10))
-            .nodeNames(nodeCache.map(_.name))
-            .create(),
-          30 seconds
+      log.info(s"start to run zk cluster:$zkName")
+      val zk = result(
+        zk_create(
+          clusterName = zkName,
+          clientPort = CommonUtil.availablePort(),
+          electionPort = CommonUtil.availablePort(),
+          peerPort = CommonUtil.availablePort(),
+          nodeNames = Seq(nodeCache.head.name)
         )
+      )
+
+      log.info(s"start to run bk cluster:$bkName")
+      val bk = result(
+        bk_create(
+          clusterName = bkName,
+          clientPort = CommonUtil.availablePort(),
+          exporterPort = CommonUtil.availablePort(),
+          zkClusterName = zk.name,
+          nodeNames = Seq(nodeCache.head.name)
+        ))
+
+      log.info(s"start to run multi wk clusters:$wkNames")
+      val clusters = wkNames.zipWithIndex.map {
+        case (wkName, index) =>
+          result(
+            wk_create(
+              clusterName = wkName,
+              clientPort = CommonUtil.availablePort(),
+              bkClusterName = bk.name,
+              groupId = groupIds(index),
+              configTopicName = configTopicNames(index),
+              offsetTopicName = offsetTopicNames(index),
+              statusTopicName = statusTopicNames(index),
+              nodeNames = nodeCache.map(_.name)
+            ))
       }
-      val clusters2 = Await.result(workerCollie.clusters(), 20 seconds)
+
+      log.info(s"check multi wk clusters:$wkNames")
+      wkNames.zipWithIndex.map {
+        case (wkName, index) =>
+          clusters.find(_.name == wkName).get.groupId shouldBe groupIds(index)
+          clusters.find(_.name == wkName).get.configTopicName shouldBe configTopicNames(index)
+          clusters.find(_.name == wkName).get.offsetTopicName shouldBe offsetTopicNames(index)
+          clusters.find(_.name == wkName).get.statusTopicName shouldBe statusTopicNames(index)
+          clusters.find(_.name == wkName).get.brokerClusterName shouldBe bk.name
+      }
+
+      log.info(s"check multi wk clusters:$wkNames by list")
+      val clusters2 = Await.result(wk_clusters(), 20 seconds)
       clusters.foreach { c =>
-        val another = clusters2.find(_._1.name == c.name).get._1
+        val another = clusters2.find(_.name == c.name).get
         another.name shouldBe c.name
         another.brokerClusterName shouldBe c.brokerClusterName
         another.clientPort shouldBe c.clientPort
@@ -606,18 +665,18 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
         testPlugins(c)
       }
     } finally if (cleanup) {
-      try Await.result(zookeeperCollie.remove(zkName), 60 seconds)
+      try Await.result(zk_delete(zkName), 60 seconds)
       catch {
         case _: Throwable =>
         // do nothing
       }
-      try Await.result(brokerCollie.remove(bkName), 60 seconds)
+      try Await.result(bk_delete(bkName), 60 seconds)
       catch {
         case _: Throwable =>
         // do nothing
       }
       wkNames.foreach { name =>
-        try Await.result(workerCollie.remove(name), 60 seconds)
+        try Await.result(wk_delete(name), 60 seconds)
         catch {
           case _: Throwable =>
           // do nothing
@@ -625,7 +684,4 @@ abstract class BasicTestsOfCollie extends IntegrationTest with Matchers {
       }
     }
   }
-
-  @After
-  final def tearDown(): Unit = Releasable.close(clusterCollie)
 }

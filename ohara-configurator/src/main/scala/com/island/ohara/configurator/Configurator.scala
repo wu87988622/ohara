@@ -114,20 +114,20 @@ class Configurator private[configurator] (
     }
   }
 
-  private[this] implicit val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
-    case e @ (_: DeserializationException | _: ParsingException) =>
+    case e @ (_: DeserializationException | _: ParsingException | _: IllegalArgumentException |
+        _: NoSuchElementException) =>
       extractRequest { request =>
-        log.error(s"Request to ${request.uri} with ${request.entity} could not be handled normally", e)
+        log.error(s"Request to ${request.uri} with ${request.entity} is wrong", e)
         complete(StatusCodes.BadRequest -> ErrorApi.of(e))
       }
     case e: Throwable =>
       extractRequest { request =>
         log.error(s"Request to ${request.uri} with ${request.entity} could not be handled normally", e)
-        complete(StatusCodes.ServiceUnavailable -> ErrorApi.of(e))
+        complete(StatusCodes.InternalServerError -> ErrorApi.of(e))
       }
   }
 
@@ -197,11 +197,13 @@ class Configurator private[configurator] (
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
+    val start = CommonUtil.current()
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)
+    log.info(s"succeed to close configurator. elapsed:${CommonUtil.current() - start} ms")
   }
 }
 
@@ -255,7 +257,7 @@ object Configurator {
           ))
       case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
-    val configurator = Configurator.builder().hostname(hostname).port(port).build()
+    val configurator = Configurator.builder().advertisedHostname(hostname).advertisedPort(port).build()
     try nodeRequest.foreach { req =>
       LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
       import scala.concurrent.duration._

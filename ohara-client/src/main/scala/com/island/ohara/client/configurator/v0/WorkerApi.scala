@@ -35,19 +35,39 @@ object WorkerApi {
       imageName = None,
       brokerClusterName = None,
       clientPort = None,
+      groupId = None,
+      statusTopicName = None,
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = None,
+      configTopicReplications = None,
+      offsetTopicName = None,
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
       jars = Seq.empty,
       nodeNames = nodeNames
     )
+
   final case class WorkerClusterCreationRequest(name: String,
                                                 imageName: Option[String],
                                                 brokerClusterName: Option[String],
                                                 clientPort: Option[Int],
+                                                groupId: Option[String],
+                                                configTopicName: Option[String],
+                                                // configTopicPartitions must be 1
+                                                configTopicReplications: Option[Short],
+                                                offsetTopicName: Option[String],
+                                                offsetTopicPartitions: Option[Int],
+                                                offsetTopicReplications: Option[Short],
+                                                statusTopicName: Option[String],
+                                                statusTopicPartitions: Option[Int],
+                                                statusTopicReplications: Option[Short],
                                                 jars: Seq[String],
                                                 nodeNames: Seq[String])
       extends ClusterCreationRequest
 
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
-    jsonFormat6(WorkerClusterCreationRequest)
+    jsonFormat15(WorkerClusterCreationRequest)
 
   /**
     * We need to fake cluster info in fake mode so we extract a layer to open the door to fake worker cluster.
@@ -73,6 +93,7 @@ object WorkerApi {
       * Our client to broker and worker accept the connection props:host:port,host2:port2
       */
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
+    override def ports: Seq[Int] = Seq(clientPort)
   }
 
   private[this] def toCaseClass(obj: WorkerClusterInfo): WorkerClusterInfoImpl = obj match {

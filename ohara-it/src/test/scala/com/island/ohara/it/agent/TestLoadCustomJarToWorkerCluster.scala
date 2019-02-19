@@ -17,13 +17,17 @@
 package com.island.ohara.it.agent
 import java.io.File
 
-import com.island.ohara.agent._
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
+import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
+import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -32,6 +36,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
+
+  private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 
   /**
     * we need to export port to enable remote node download jar from this node
@@ -45,12 +51,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
 
-  private[this] val nodeCollie: NodeCollie = new NodeCollie {
-    override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
-    override def node(name: String): Future[Node] = Future.successful(
-      nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
-  }
-
   private[this] val invalidHostname = "unknown"
 
   private[this] val invalidPort = 0
@@ -60,106 +60,111 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val publicPort = sys.env.get(portKey).map(_.toInt).getOrElse(invalidPort)
 
   private[this] val configurator: Configurator =
-    Configurator.builder().fake().hostname(publicHostname).port(publicPort).build()
+    Configurator.builder().advertisedHostname(publicHostname).advertisedPort(publicPort).build()
   private[this] val jarStore: JarStore = configurator.jarStore
-  private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
-
-  /**
-    * used to debug...
-    */
-  private[this] val cleanup = true
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
+  private[this] val zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val bkApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val wkApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
   @Before
   def setup(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
     skipTest(
       s"${CollieTestUtil.key}, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
+  else {
+
+    val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+    nodeCache.foreach { node =>
+      result(
+        nodeApi.add(
+          NodeApi.NodeCreationRequest(
+            name = Some(node.name),
+            port = node.port,
+            user = node.user,
+            password = node.password
+          )))
+    }
+  }
 
   @Test
   def test(): Unit = {
-    nodeCache.foreach { node =>
-      val dockerClient =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-      try {
-        withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-      } finally dockerClient.close()
-    }
     val currentPath = new File(".").getCanonicalPath
     // Both jars are pre-generated. see readme in test/resources
     val jars = result(
       Future.traverse(Seq(new File(currentPath, s"src/test/resources/ItConnector.jar"),
                           new File(currentPath, s"src/test/resources/ItConnector2.jar")))(jarStore.add))
-    val zkCluster = result(
-      clusterCollie
-        .zookeeperCollie()
-        .creator()
-        .clusterName(CommonUtil.randomString(10))
-        .clientPort(CommonUtil.availablePort())
-        .electionPort(CommonUtil.availablePort())
-        .peerPort(CommonUtil.availablePort())
-        .nodeName(result(nodeCollie.nodes()).head.name)
-        .create())
-    try {
-      val bkCluster = result(
-        clusterCollie
-          .brokerCollie()
-          .creator()
-          .clusterName(CommonUtil.randomString(10))
-          .clientPort(CommonUtil.availablePort())
-          .exporterPort(CommonUtil.availablePort())
-          .zookeeperClusterName(zkCluster.name)
-          .nodeName(result(nodeCollie.nodes()).head.name)
-          .create())
 
-      try {
-        val wkCluster = result(
-          clusterCollie
-            .workerCollie()
-            .creator()
-            .clusterName(CommonUtil.randomString(10))
-            .clientPort(CommonUtil.availablePort())
-            .brokerClusterName(bkCluster.name)
-            .nodeName(result(nodeCollie.nodes()).head.name)
-            .jarUrls(result(jarStore.urls(jars.map(_.id))))
-            .create())
-        try {
-          // add all remaining node to the running worker cluster
-          result(nodeCollie.nodes()).filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
-            result(clusterCollie.workerCollie().addNode(wkCluster.name, n.name))
-          }
-          // make sure all workers have loaded the test-purposed connector.
-          result(clusterCollie.workerCollie().cluster(wkCluster.name))._1.nodeNames.foreach { name =>
-            val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
-            CommonUtil.await(
-              () =>
-                try result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector")
-                  && result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector2")
-                catch {
-                  case _: Throwable => false
-              },
-              java.time.Duration.ofSeconds(30)
-            )
-          }
-        } finally if (cleanup)
-          result(clusterCollie.workerCollie().clusters()).foreach(c =>
-            result(clusterCollie.workerCollie().remove(c._1.name)))
-      } finally if (cleanup)
-        result(clusterCollie.brokerCollie().clusters()).foreach(c =>
-          result(clusterCollie.brokerCollie().remove(c._1.name)))
-    } finally if (cleanup)
-      result(clusterCollie.zookeeperCollie().clusters()).foreach(c =>
-        result(clusterCollie.zookeeperCollie().remove(c._1.name)))
+    val zkCluster = result(
+      zkApi.add(
+        ZookeeperClusterCreationRequest(
+          name = nameHolder.generateClusterName(),
+          imageName = None,
+          clientPort = Some(CommonUtil.availablePort()),
+          electionPort = Some(CommonUtil.availablePort()),
+          peerPort = Some(CommonUtil.availablePort()),
+          nodeNames = nodeCache.map(_.name)
+        )
+      ))
+    log.info(s"zkCluster:$zkCluster")
+    val bkCluster = result(
+      bkApi.add(
+        BrokerClusterCreationRequest(
+          name = nameHolder.generateClusterName(),
+          imageName = None,
+          clientPort = Some(CommonUtil.availablePort()),
+          exporterPort = Some(CommonUtil.availablePort()),
+          zookeeperClusterName = Some(zkCluster.name),
+          nodeNames = nodeCache.map(_.name)
+        )
+      ))
+    log.info(s"bkCluster:$bkCluster")
+    val wkCluster = result(
+      wkApi.add(
+        WorkerClusterCreationRequest(
+          name = nameHolder.generateClusterName(),
+          imageName = None,
+          clientPort = Some(CommonUtil.availablePort()),
+          brokerClusterName = Some(bkCluster.name),
+          groupId = None,
+          configTopicName = None,
+          configTopicReplications = None,
+          offsetTopicName = None,
+          offsetTopicPartitions = None,
+          offsetTopicReplications = None,
+          statusTopicName = None,
+          statusTopicPartitions = None,
+          statusTopicReplications = None,
+          jars = jars.map(_.id),
+          nodeNames = Seq(nodeCache.head.name)
+        )
+      ))
+    // add all remaining node to the running worker cluster
+    nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
+      result(wkApi.addNode(wkCluster.name, n.name))
+    }
+    // make sure all workers have loaded the test-purposed connector.
+    result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
+      val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
+      CommonUtil.await(
+        () =>
+          try result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector")
+            && result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector2")
+          catch {
+            case _: Throwable => false
+        },
+        java.time.Duration.ofSeconds(120)
+      )
+    }
   }
 
   @After
   final def tearDown(): Unit = {
     Releasable.close(configurator)
-    Releasable.close(clusterCollie)
+    Releasable.close(nameHolder)
   }
 }

@@ -58,7 +58,7 @@ public class TestDataTransmissionOnCluster extends With3Brokers3Workers {
 
   private final OharaTestUtil testUtil = testUtil();
   private final WorkerClient workerClient =
-      WorkerClient$.MODULE$.apply(testUtil.workersConnProps());
+      WorkerClient$.MODULE$.apply(testUtil.workersConnProps(), 10);
 
   private final BrokerClient brokerClient = BrokerClient.of(testUtil.brokersConnProps());
   private final Row row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11));

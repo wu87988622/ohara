@@ -36,11 +36,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import scala.concurrent.Await;
 
+// TODO: rewrite this stuff by scala ... by chia
 public class TestWorkerClient extends With3Brokers3Workers {
   private final OharaTestUtil testUtil = testUtil();
 
   private final WorkerClient workerClient =
-      WorkerClient$.MODULE$.apply(testUtil.workersConnProps());
+      WorkerClient$.MODULE$.apply(testUtil.workersConnProps(), 10);
 
   private static <T> T result(scala.concurrent.Future<T> f) {
     try {

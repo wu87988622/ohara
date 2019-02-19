@@ -20,7 +20,6 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.HadoopApi.HdfsInfoRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Pipeline, PipelineCreationRequest}
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
@@ -70,15 +69,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          WorkerClusterCreationRequest(
-            name = methodName(),
-            imageName = None,
-            brokerClusterName = None,
-            clientPort = None,
-            nodeNames = Seq(methodName()),
-            jars = Seq.empty
-          ))
+        .add(WorkerApi.creationRequest(methodName(), Seq(methodName())))
     )
 
     val pipeline1 = result(

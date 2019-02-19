@@ -23,10 +23,10 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.typesafe.scalalogging.Logger
-import org.junit.{Before, Test}
+import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
@@ -591,4 +591,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+
+  @After
+  final def tearDown(): Unit = Releasable.close(clusterCollie)
 }

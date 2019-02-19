@@ -18,36 +18,36 @@ package com.island.ohara.it.agent
 import com.island.ohara.agent.{ClusterCollie, K8SClient, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.common.util.CommonUtil
 import org.junit.Before
 
 import scala.concurrent.Future
 
-class TestK8SCollie extends BasicTestsOfCollie {
+class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
 
   private[this] val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
 
-  var nodeCache: Seq[Node] = Seq()
+  override protected val nodeCache: Seq[Node] =
+    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
+    else NODE_SERVER_NAME.get.split(",").map(node => NodeApi.node(node, 0, "", ""))
   implicit var k8sClient: K8SClient = _
 
-  override protected def clusterCollie: ClusterCollie = ClusterCollie.k8s(
+  override protected val clusterCollie: ClusterCollie = ClusterCollie.k8s(
     new NodeCollie {
       override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
       override def node(name: String): Future[Node] = Future.successful(
         nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
     },
-    k8sClient
+    // It is ok to pass null since we will skip test if no k8s env exists
+    if (API_SERVER_URL.isEmpty) null else K8SClient(API_SERVER_URL.get)
   )
 
   @Before
-  final def setup(): Unit = {
-    val message = s"The k8s is skip test, Please setting $K8S_API_SERVER_URL_KEY and $K8S_API_NODE_NAME_KEY properties"
-    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) {
-      skipTest(message)
-    }
-    k8sClient = K8SClient(API_SERVER_URL.get)
-    nodeCache = NODE_SERVER_NAME.get.split(",").map(node => NodeApi.node(node, 0, "", ""))
-  }
+  final def setup(): Unit = if (nodeCache.isEmpty)
+    skipTest(s"The k8s is skip test, Please setting $K8S_API_SERVER_URL_KEY and $K8S_API_NODE_NAME_KEY properties")
+
+  override protected def generateClusterName(): String = CommonUtil.randomString(10)
 }
