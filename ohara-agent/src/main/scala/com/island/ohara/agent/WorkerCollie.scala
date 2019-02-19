@@ -56,6 +56,7 @@ object WorkerCollie {
     private[this] var offsetTopicPartitions: Int = 1
     private[this] var configTopicName = s"$groupId-config-topic"
     private[this] var configTopicReplications: Short = 1
+    // configTopicPartitions must be 1
     private[this] var statusTopicName = s"$groupId-status-topic"
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
@@ -68,7 +69,7 @@ object WorkerCollie {
 
     @Optional("default is 8083")
     def clientPort(port: Option[Int]): ClusterCreator = {
-      port.foreach(this.clientPort = _)
+      port.foreach(clientPort = _)
       this
     }
 
@@ -76,50 +77,85 @@ object WorkerCollie {
     def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
 
     @Optional("group id can be generated automatically")
-    def groupId(groupId: String): ClusterCreator = {
-      this.groupId = groupId
+    def groupId(id: Option[String]): ClusterCreator = {
+      id.foreach(groupId = _)
       this
     }
+
     @Optional("group id can be generated automatically")
-    def offsetTopicName(offsetTopicName: String): ClusterCreator = {
-      this.offsetTopicName = offsetTopicName
+    def groupId(id: String): ClusterCreator = groupId(Some(id))
+
+    @Optional("group id can be generated automatically")
+    def offsetTopicName(name: Option[String]): ClusterCreator = {
+      name.foreach(offsetTopicName = _)
       this
     }
+
+    @Optional("group id can be generated automatically")
+    def offsetTopicName(name: String): ClusterCreator = offsetTopicName(Some(name))
+
     @Optional("default number is 1")
-    def offsetTopicReplications(numberOfReplications: Short): ClusterCreator = {
-      this.offsetTopicReplications = numberOfReplications
+    def offsetTopicReplications(replications: Option[Short]): ClusterCreator = {
+      replications.foreach(offsetTopicReplications = _)
       this
     }
+
     @Optional("default number is 1")
-    def offsetTopicPartitions(numberOfPartitions: Int): ClusterCreator = {
-      this.offsetTopicPartitions = numberOfPartitions
+    def offsetTopicReplications(replications: Short): ClusterCreator = offsetTopicReplications(Some(replications))
+
+    @Optional("default number is 1")
+    def offsetTopicPartitions(partitions: Option[Int]): ClusterCreator = {
+      partitions.foreach(offsetTopicPartitions = _)
       this
     }
+
+    @Optional("default number is 1")
+    def offsetTopicPartitions(partitions: Int): ClusterCreator = offsetTopicPartitions(Some(partitions))
+
     @Optional("status topic can be generated automatically")
-    def statusTopicName(statusTopicName: String): ClusterCreator = {
-      this.statusTopicName = statusTopicName
+    def statusTopicName(name: Option[String]): ClusterCreator = {
+      name.foreach(statusTopicName = _)
       this
     }
+
+    @Optional("status topic can be generated automatically")
+    def statusTopicName(name: String): ClusterCreator = statusTopicName(Some(name))
+
     @Optional("default number is 1")
-    def statusTopicReplications(numberOfReplications: Short): ClusterCreator = {
-      this.statusTopicReplications = numberOfReplications
+    def statusTopicReplications(replications: Option[Short]): ClusterCreator = {
+      replications.foreach(statusTopicReplications = _)
       this
     }
+
     @Optional("default number is 1")
-    def statusTopicPartitions(numberOfPartitions: Int): ClusterCreator = {
-      this.statusTopicPartitions = numberOfPartitions
+    def statusTopicReplications(replications: Short): ClusterCreator = statusTopicReplications(Some(replications))
+
+    @Optional("default number is 1")
+    def statusTopicPartitions(partitions: Option[Int]): ClusterCreator = {
+      partitions.foreach(statusTopicPartitions = _)
       this
     }
+
+    @Optional("default number is 1")
+    def statusTopicPartitions(partitions: Int): ClusterCreator = statusTopicPartitions(Some(partitions))
+
     @Optional("config topic can be generated automatically")
-    def configTopicName(configTopicName: String): ClusterCreator = {
-      this.configTopicName = configTopicName
+    def configTopicName(name: Option[String]): ClusterCreator = {
+      name.foreach(configTopicName = _)
       this
     }
+
+    @Optional("config topic can be generated automatically")
+    def configTopicName(name: String): ClusterCreator = configTopicName(Some(name))
+
     @Optional("default number is 1")
-    def configTopicReplications(numberOfReplications: Short): ClusterCreator = {
-      this.configTopicReplications = numberOfReplications
+    def configTopicReplications(replications: Option[Short]): ClusterCreator = {
+      replications.foreach(configTopicReplications = _)
       this
     }
+
+    @Optional("default number is 1")
+    def configTopicReplications(replications: Short): ClusterCreator = configTopicReplications(Some(replications))
 
     @Optional("default is empty")
     def jarUrl(jarUrl: URL): ClusterCreator = jarUrls(Seq(jarUrl))

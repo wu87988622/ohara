@@ -23,7 +23,7 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.route.CollieUtils
 import com.island.ohara.integration._
@@ -220,8 +220,7 @@ object Backend {
     val configurator = Configurator
       .builder()
       .fake(brokers.connectionProps, workers.connectionProps)
-      .hostname(CommonUtil.anyLocalAddress)
-      .port(ports.configuratorPort)
+      .advertisedPort(ports.configuratorPort)
       .extraRoute(dbRoute ~ servicesRoute)
       .build()
     try stopped(configurator, zk, brokers, workers, dataBase, ftpServer)

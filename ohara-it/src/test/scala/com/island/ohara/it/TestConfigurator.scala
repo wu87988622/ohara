@@ -38,12 +38,7 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val configurator =
-    Configurator
-      .builder()
-      .hostname("localhost")
-      .port(0)
-      .fake(testUtil.brokersConnProps(), testUtil().workersConnProps())
-      .build()
+    Configurator.builder().fake(testUtil.brokersConnProps(), testUtil().workersConnProps()).build()
 
   private[this] val connectorAccess = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 

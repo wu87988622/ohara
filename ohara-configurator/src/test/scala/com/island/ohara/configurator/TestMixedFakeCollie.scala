@@ -113,15 +113,23 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(
-            WorkerClusterCreationRequest(
-              name = methodName(),
-              brokerClusterName = Some(bk.name),
-              imageName = None,
-              clientPort = None,
-              jars = Seq.empty,
-              nodeNames = nodes.map(_.name)
-            )),
+          .add(WorkerClusterCreationRequest(
+            name = methodName(),
+            imageName = None,
+            brokerClusterName = Some(bk.name),
+            clientPort = None,
+            groupId = None,
+            configTopicName = None,
+            configTopicReplications = None,
+            offsetTopicName = None,
+            offsetTopicPartitions = None,
+            offsetTopicReplications = None,
+            statusTopicName = None,
+            statusTopicPartitions = None,
+            statusTopicReplications = None,
+            jars = Seq.empty,
+            nodeNames = nodes.map(_.name)
+          )),
         10 seconds
       )
 

@@ -56,6 +56,7 @@ object BrokerApi {
     def clientPort: Int
     def exporterPort: Int
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
+    override def ports: Seq[Int] = Set(clientPort, exporterPort).toSeq
   }
 
   implicit val BROKER_CLUSTER_INFO_JSON_FORMAT: RootJsonFormat[BrokerClusterInfo] =

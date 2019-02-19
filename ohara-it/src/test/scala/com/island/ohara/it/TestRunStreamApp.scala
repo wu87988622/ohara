@@ -32,7 +32,7 @@ import scala.concurrent.duration._
 
 class TestRunStreamApp extends IntegrationTest with Matchers {
   private[this] val configurator =
-    Configurator.builder().hostname(CommonUtil.hostname()).port(0).fake().build()
+    Configurator.builder().advertisedHostname(CommonUtil.hostname()).advertisedPort(0).fake().build()
 
   private[this] val pipeline_id = "pipeline-id"
   private[this] val instances = 1

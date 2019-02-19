@@ -40,9 +40,7 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
 
   override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl
 
-  override protected def doClose(): Unit = {
-    //Nothing
-  }
+  override protected def doClose(): Unit = Releasable.close(k8sClient)
 }
 
 private object K8SClusterCollieImpl {

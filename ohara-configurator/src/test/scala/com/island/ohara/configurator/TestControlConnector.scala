@@ -32,12 +32,8 @@ import scala.concurrent.{Await, Future}
 
 class TestControlConnector extends WithBrokerWorker with Matchers {
 
-  private[this] val configurator = Configurator
-    .builder()
-    .hostname("localhost")
-    .port(0)
-    .fake(testUtil.brokersConnProps, testUtil().workersConnProps())
-    .build()
+  private[this] val configurator =
+    Configurator.builder().fake(testUtil.brokersConnProps, testUtil().workersConnProps()).build()
 
   private[this] val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
 

@@ -172,10 +172,10 @@ private[route] object RouteUtil {
         routeOfUpdate[Req, Res](id, hookOfUpdate)
     }
 
-  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo](root: String,
+  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo](collie: Collie[Res],
+                                                                             root: String,
                                                                              hookOfCreation: Req => Future[Res])(
-    implicit collie: Collie[Res],
-    nodeCollie: NodeCollie,
+    implicit nodeCollie: NodeCollie,
     rm: RootJsonFormat[Req],
     rm1: RootJsonFormat[Res]): server.Route =
     pathPrefix(root) {
@@ -184,10 +184,8 @@ private[route] object RouteUtil {
         post {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
-            onSuccess(collie.nonExist(req.name).flatMap {
-              if (_) nodeCollie.nodes(req.nodeNames).flatMap(_ => hookOfCreation(req))
-              else Future.failed(new IllegalArgumentException(s"${req.name} is already running"))
-            })(complete(_))
+            // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
+            onSuccess(nodeCollie.nodes(req.nodeNames).flatMap(_ => hookOfCreation(req)))(complete(_))
           }
         } ~ get(onSuccess(collie.clusters()) { clusters =>
           complete(clusters.keys)

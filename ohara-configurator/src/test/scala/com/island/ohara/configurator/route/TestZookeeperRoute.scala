@@ -131,7 +131,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     assert(request1, result(access.add(request1)))
 
     val clusters = result(access.list())
-    clusters.size shouldBe 2
+    clusters.size shouldBe 3
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
   }
@@ -169,7 +169,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     containers.size shouldBe request.nodeNames.size
 
     result(access.delete(request.name)) shouldBe cluster
-    result(access.list()).size shouldBe 0
+    result(access.list()).size shouldBe 1
   }
 
   @Test

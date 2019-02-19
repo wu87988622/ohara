@@ -21,6 +21,7 @@ import java.util.Objects
 import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
@@ -115,7 +116,16 @@ trait WorkerClient {
 
 object WorkerClient {
   private[this] val LOG = Logger(WorkerClient.getClass)
-  def apply(_connectionProps: String): WorkerClient = {
+
+  /**
+    * Create a default implementation of worker client.
+    * NOTED: default implementation use a global akka system to handle http request/response. It means the connection
+    * sent by this worker client may be influenced by other instances.
+    * @param _connectionProps connection props
+    * @param maxRetry times to retry
+    * @return worker client
+    */
+  def apply(_connectionProps: String, maxRetry: Int = 3): WorkerClient = {
     val workerList = _connectionProps.split(",")
     if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_connectionProps}")
     new WorkerClient() with SprayJsonSupport {
@@ -128,43 +138,54 @@ object WorkerClient {
         * @tparam T response type
         * @return response
         */
-      private[this] def retry[T](exec: () => Future[T]): Future[T] = exec().recoverWith {
-        case _: HttpRetryException =>
-          TimeUnit.SECONDS.sleep(1)
-          retry(exec)
-      }
+      private[this] def retry[T](exec: () => Future[T], msg: String, retryCount: Int = 0): Future[T] =
+        exec().recoverWith {
+          case e @ (_: HttpRetryException | _: StreamTcpException) =>
+            LOG.info(s"$msg $retryCount/$maxRetry", e)
+            if (retryCount < maxRetry) {
+              TimeUnit.SECONDS.sleep(3)
+              retry(exec, msg, retryCount + 1)
+            } else throw e
+        }
 
       override def connectorCreator(): Creator = request =>
         retry(
           () =>
             HttpExecutor.SINGLETON.post[CreateConnectorRequest, CreateConnectorResponse, Error](
               s"http://$workerAddress/connectors",
-              request)
+              request),
+          "connectorCreator"
       )
 
       override def delete(name: String): Future[Unit] =
-        retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$name"))
+        retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$name"), s"delete $name")
 
       override def plugins(): Future[Seq[Plugin]] = retry(
-        () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"))
+        () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
+        s"fetch plugins $workerAddress")
       override def activeConnectors(): Future[Seq[String]] = retry(
-        () => HttpExecutor.SINGLETON.get[Seq[String], Error](s"http://$workerAddress/connectors"))
+        () => HttpExecutor.SINGLETON.get[Seq[String], Error](s"http://$workerAddress/connectors"),
+        "fetch active connectors")
 
       override def connectionProps: String = _connectionProps
 
       override def status(name: String): Future[ConnectorInfo] = retry(
-        () => HttpExecutor.SINGLETON.get[ConnectorInfo, Error](s"http://$workerAddress/connectors/$name/status"))
+        () => HttpExecutor.SINGLETON.get[ConnectorInfo, Error](s"http://$workerAddress/connectors/$name/status"),
+        s"status of $name")
 
       override def config(name: String): Future[ConnectorConfig] = retry(
-        () => HttpExecutor.SINGLETON.get[ConnectorConfig, Error](s"http://$workerAddress/connectors/$name/config"))
+        () => HttpExecutor.SINGLETON.get[ConnectorConfig, Error](s"http://$workerAddress/connectors/$name/config"),
+        s"config of $name")
 
       override def taskStatus(name: String, id: Int): Future[TaskStatus] = retry(
-        () => HttpExecutor.SINGLETON.get[TaskStatus, Error](s"http://$workerAddress/connectors/$name/tasks/$id/status"))
-      override def pause(name: String): Future[Unit] = retry(
-        () => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/pause"))
+        () => HttpExecutor.SINGLETON.get[TaskStatus, Error](s"http://$workerAddress/connectors/$name/tasks/$id/status"),
+        s"status of $name/$id")
+      override def pause(name: String): Future[Unit] =
+        retry(() => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/pause"), s"pause $name")
 
       override def resume(name: String): Future[Unit] = retry(
-        () => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/resume"))
+        () => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/resume"),
+        s"resume $name")
     }
   }
 

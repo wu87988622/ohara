@@ -31,12 +31,7 @@ import scala.concurrent.{Await, Future}
 class TestOhara1415 extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
-    Configurator
-      .builder()
-      .hostname("localhost")
-      .port(0)
-      .fake(testUtil.brokersConnProps(), testUtil().workersConnProps())
-      .build()
+    Configurator.builder().fake(testUtil.brokersConnProps(), testUtil().workersConnProps()).build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 

@@ -130,12 +130,21 @@ private[ohara] object HttpExecutor {
       else asError(res)
 
     private[this] def asError[E <: HttpExecutor.Error](res: HttpResponse)(implicit rm: RootJsonFormat[E]) =
-      Unmarshal(res.entity).to[E].flatMap { error =>
-        // TODO: Which code we should wrap to HttpRetryException?  by chia
-        if (res.status.intValue() == StatusCodes.Conflict.intValue)
-          Future.failed(new HttpRetryException(error.message, res.status.intValue()))
-        else Future.failed(new IllegalArgumentException(error.message))
-      }
+      Unmarshal(res.entity)
+        .to[E]
+        .flatMap { error =>
+          // TODO: Which code we should wrap to HttpRetryException?  by chia
+          if (res.status.intValue() == StatusCodes.Conflict.intValue)
+            Future.failed(new HttpRetryException(error.message, res.status.intValue()))
+          else Future.failed(new IllegalArgumentException(error.message))
+        }
+        .recoverWith {
+          case e: Throwable =>
+            // ServiceUnavailable may be temporary so we throw HttpRetryException to remind caller.
+            if (res.status.intValue() == StatusCodes.ServiceUnavailable.intValue)
+              Future.failed(new HttpRetryException(res.toString(), StatusCodes.ServiceUnavailable.intValue))
+            else Future.failed(e)
+        }
     //-------------------------------------------------[GET]-------------------------------------------------//
     override def get[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
                                                                 rm1: RootJsonFormat[E]): Future[Res] =

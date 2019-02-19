@@ -16,10 +16,12 @@
 
 package com.island.ohara.configurator
 
+import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
+import org.scalatest.mockito.MockitoSugar
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -40,7 +42,8 @@ class TestFakeConfigurator extends SmallTest with Matchers {
           Await.result(configurator.clusterCollie.workerCollie().clusters(), 10 seconds).size shouldBe numberOfWorkers
           Await
             .result(configurator.clusterCollie.clusters(), 10 seconds)
-            .size shouldBe (numberOfBrokers + numberOfWorkers)
+            // one broker generates one zk cluster
+            .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
           val nodes = Await.result(configurator.store.values[Node], 10 seconds)
           nodes.isEmpty shouldBe false
           Await
@@ -49,5 +52,37 @@ class TestFakeConfigurator extends SmallTest with Matchers {
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
         } finally configurator.close()
     }
+  }
+
+  @Test
+  def createWorkerClusterWihtoutBrokerCluster(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Configurator.builder().fake(0, 1).build()
+  }
+
+  @Test
+  def createFakeConfiguratorWithoutClusters(): Unit = {
+    val configurator = Configurator.builder().fake(0, 0).build()
+    try Await.result(configurator.clusterCollie.clusters(), 10 seconds).size shouldBe 0
+    finally configurator.close()
+  }
+
+  @Test
+  def reassignClusterCollie(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Configurator
+      .builder()
+      // in fake mode, a fake collie will be created
+      .fake(1, 1)
+      .clusterCollie(MockitoSugar.mock[ClusterCollie])
+      .build()
+  }
+
+  @Test
+  def reassignClusterCollieㄉ(): Unit = {
+    an[IllegalArgumentException] should be thrownBy Configurator
+      .builder()
+      .clusterCollie(MockitoSugar.mock[ClusterCollie])
+      // in fake mode, a fake collie will be created
+      .fake(1, 1)
+      .build()
   }
 }

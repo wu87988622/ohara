@@ -28,11 +28,7 @@ import org.scalatest.Matchers
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 class TestBrokerRoute extends MediumTest with Matchers {
-  private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
-    * a fake cluster has 3 fake node.
-    */
-  private[this] val numberOfDefaultNodes = 3 * numberOfCluster
+  private[this] val configurator = Configurator.builder().fake(0, 0).build()
   private[this] val access = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: BrokerClusterCreationRequest, cluster: BrokerClusterInfo): Unit = {
@@ -43,7 +39,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     request.nodeNames shouldBe cluster.nodeNames
   }
 
-  private[this] val zkClusterName = "zkCluster"
+  private[this] val zkClusterName = CommonUtil.randomString(10)
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
@@ -66,7 +62,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           )))
     }
 
-    result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)
+    result(nodeAccess.list()).size shouldBe nodeNames.size
 
     result(
       ZookeeperApi
@@ -186,8 +182,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     assert(request1, result(access.add(request1)))
 
     val clusters = result(access.list())
-    // In fake mode, we pre-create a fake cluster
-    clusters.size shouldBe 3
+    clusters.size shouldBe 2
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
   }
@@ -225,8 +220,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     containers.size shouldBe request.nodeNames.size
 
     result(access.delete(request.name)) shouldBe cluster
-    // in fake mode we should have single cluster
-    result(access.list()).size shouldBe 1
+    result(access.list()).size shouldBe 0
   }
 
   @Test

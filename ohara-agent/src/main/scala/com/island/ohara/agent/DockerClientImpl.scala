@@ -190,13 +190,18 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
   override def names(): Seq[String] =
     agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
 
+  override def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] = containers(nameFilter, true)
+
+  override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = containers(nameFilter, false)
+
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
-  override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = Await.result(
+  private[this] def containers(nameFilter: String => Boolean, active: Boolean): Seq[ContainerInfo] = Await.result(
     Future
       .traverse(
         try agent
-          .execute(s"docker ps -a --format $LIST_PROCESS_FORMAT")
+          .execute(
+            if (active) s"docker ps --format $LIST_PROCESS_FORMAT" else s"docker ps -a --format $LIST_PROCESS_FORMAT")
           .map(_.split("\n").toSeq.filter(line => nameFilter(line.split(DIVIDER).filter(_.nonEmpty)(4))))
           .getOrElse(Seq.empty)
         catch {
@@ -262,7 +267,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
             LOG.error(errorMessage, e)
             // TODO: ssh is fucking easy to shutdown if we "touch" it violently... by chia
             try {
-              TimeUnit.SECONDS.sleep(1)
+              TimeUnit.SECONDS.sleep(3)
               Some(toContainerInfo)
             } catch {
               case e: Throwable =>

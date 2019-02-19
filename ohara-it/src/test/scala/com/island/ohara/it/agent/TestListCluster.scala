@@ -28,6 +28,7 @@ import scala.concurrent.{Await, Future}
 class TestListCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
+  private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
   private[this] val nodeCollie: NodeCollie = new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
@@ -57,7 +58,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   @Test
   def deadZookeeperClusterShouldDisappear(): Unit = {
 
-    val name = CommonUtil.randomString(10)
+    val name = nameHolder.generateClusterName()
 
     // the port:22 is not illegal so we can't create zookeeper cluster
     try Await.result(clusterCollie
@@ -80,8 +81,9 @@ class TestListCluster extends IntegrationTest with Matchers {
       finally dockerClient.close()
     }
 
-    CommonUtil.await(() => Await.result(clusterCollie.zookeeperCollie().clusters(), 60 seconds).isEmpty,
-                     java.time.Duration.ofSeconds(30))
+    CommonUtil.await(
+      () => !Await.result(clusterCollie.zookeeperCollie().clusters(), 60 seconds).exists(_._1.name == name),
+      java.time.Duration.ofSeconds(30))
   }
 
   @Test
@@ -92,13 +94,13 @@ class TestListCluster extends IntegrationTest with Matchers {
         .creator()
         .clientPort(CommonUtil.availablePort())
         .nodeNames(nodeCache.map(_.name))
-        .clusterName(CommonUtil.randomString(10))
+        .clusterName(nameHolder.generateClusterName())
         .create(),
       30 seconds
     )
 
     try {
-      val name = CommonUtil.randomString(10)
+      val name = nameHolder.generateClusterName()
       try Await.result(
         clusterCollie
           .brokerCollie()
@@ -122,11 +124,15 @@ class TestListCluster extends IntegrationTest with Matchers {
         finally dockerClient.close()
       }
 
-      CommonUtil.await(() => Await.result(clusterCollie.brokerCollie().clusters(), 60 seconds).isEmpty,
-                       java.time.Duration.ofSeconds(30))
+      CommonUtil.await(
+        () => !Await.result(clusterCollie.brokerCollie().clusters(), 60 seconds).exists(_._1.name == name),
+        java.time.Duration.ofSeconds(30))
     } finally Await.result(clusterCollie.zookeeperCollie().remove(zkCluster.name), 60 seconds)
   }
 
   @After
-  def tearDown(): Unit = Releasable.close(clusterCollie)
+  def tearDown(): Unit = {
+    Releasable.close(clusterCollie)
+    Releasable.close(nameHolder)
+  }
 }

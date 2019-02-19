@@ -27,12 +27,7 @@ import scala.concurrent.duration._
 class TestOhara786 extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
-    Configurator
-      .builder()
-      .hostname("localhost")
-      .port(0)
-      .fake(testUtil.brokersConnProps(), testUtil().workersConnProps())
-      .build()
+    Configurator.builder().fake(testUtil.brokersConnProps(), testUtil().workersConnProps()).build()
 
   @Test
   def deleteAnTopicRemovedFromKafka(): Unit = {

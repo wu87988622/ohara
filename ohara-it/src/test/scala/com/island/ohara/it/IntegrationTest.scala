@@ -16,10 +16,12 @@
 
 package com.island.ohara.it
 
+import java.util.concurrent.TimeUnit
+
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Rule
 import org.junit.rules.Timeout
 
 class IntegrationTest extends OharaTest {
-  @Rule def globalTimeout: Timeout = Timeout.seconds(60 * 2)
+  @Rule def globalTimeout: Timeout = new Timeout(12, TimeUnit.MINUTES)
 }
