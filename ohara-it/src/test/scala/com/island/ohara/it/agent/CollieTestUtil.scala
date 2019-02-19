@@ -17,7 +17,6 @@
 package com.island.ohara.it.agent
 
 import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie, ZookeeperCollie}
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 
 private[agent] object CollieTestUtil {
@@ -35,7 +34,7 @@ private[agent] object CollieTestUtil {
       val password = nodeInfo.split("@").head.split(":").last
       val hostname = nodeInfo.split("@").last.split(":").head
       val port = nodeInfo.split("@").last.split(":").last.toInt
-      NodeApi.node(hostname, port, user, password)
+      Node(hostname, port, user, password)
     }.toSeq)
     .getOrElse(Seq.empty)
     .map { node =>

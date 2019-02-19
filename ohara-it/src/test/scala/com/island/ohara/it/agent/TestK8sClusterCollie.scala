@@ -16,7 +16,6 @@
 
 package com.island.ohara.it.agent
 import com.island.ohara.agent.{ClusterCollie, K8SClient, NodeCollie}
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtil
 import org.junit.Before
@@ -32,7 +31,7 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
 
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
-    else NODE_SERVER_NAME.get.split(",").map(node => NodeApi.node(node, 0, "", ""))
+    else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
   implicit var k8sClient: K8SClient = _
 
   override protected val clusterCollie: ClusterCollie = ClusterCollie.k8s(

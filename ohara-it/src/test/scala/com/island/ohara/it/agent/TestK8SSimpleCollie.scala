@@ -70,7 +70,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val clusterName: String = s"cluster${CommonUtil.randomString(10)}"
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
 
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
 
@@ -102,7 +102,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testBrokerCollie(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
@@ -145,7 +145,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testWorkerCollie(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
@@ -202,8 +202,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
-    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
@@ -257,8 +257,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
-    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
@@ -317,8 +317,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
-    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
@@ -374,8 +374,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     val secondNode: String = nodeNames(1)
 
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
-    nodeCache.append(Node(secondNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
+    nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
@@ -439,7 +439,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testClusters(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = s"zk${CommonUtil.randomString(10)}"
@@ -468,7 +468,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   def testLog(): Unit = {
     val firstNode: String = nodeNames.head
     nodeCache.clear()
-    nodeCache.append(Node(firstNode, 22, "", "", Seq.empty, CommonUtil.current()))
+    nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
     val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"

@@ -18,59 +18,21 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi._
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-object NodesRoute {
-  private[this] lazy val LOG = Logger(NodesRoute.getClass)
+object NodeRoute {
+  private[this] lazy val LOG = Logger(NodeRoute.getClass)
 
   private[this] def update(node: Node)(implicit clusterCollie: ClusterCollie): Future[Node] =
     update(Seq(node)).map(_.head)
 
-  private[this] def update(nodes: Seq[Node])(implicit clusterCollie: ClusterCollie): Future[Seq[Node]] = clusterCollie
-    .clusters()
-    .map(_.keys.toSeq)
-    .map { clusters =>
-      nodes.map { node =>
-        node.copy(
-          services = Seq(
-            NodeService(
-              name = "zookeeper",
-              clusterNames = clusters
-                .filter(_.isInstanceOf[ZookeeperClusterInfo])
-                .map(_.asInstanceOf[ZookeeperClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
-                .map(_.name)
-            ),
-            NodeService(
-              name = "broker",
-              clusterNames = clusters
-                .filter(_.isInstanceOf[BrokerClusterInfo])
-                .map(_.asInstanceOf[BrokerClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
-                .map(_.name)
-            ),
-            NodeService(
-              name = "connect-worker",
-              clusterNames = clusters
-                .filter(_.isInstanceOf[WorkerClusterInfo])
-                .map(_.asInstanceOf[WorkerClusterInfo])
-                .filter(_.nodeNames.contains(node.name))
-                .map(_.name)
-            )
-          )
-        )
-      }
-    }
-    .recover {
+  private[this] def update(nodes: Seq[Node])(implicit clusterCollie: ClusterCollie): Future[Seq[Node]] =
+    clusterCollie.fetchServices(nodes).recover {
       case e: Throwable =>
         LOG.error("failed to seek cluster information", e)
         nodes
@@ -83,7 +45,7 @@ object NodesRoute {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))
         else
           update(
-            NodeApi.node(
+            Node(
               name = request.name.get,
               port = request.port,
               user = request.user,
@@ -96,7 +58,7 @@ object NodesRoute {
             new IllegalArgumentException(s"the name from request is conflict with previous setting:${previous.name}"))
         else
           update(
-            NodeApi.node(
+            Node(
               name = name,
               port = request.port,
               user = request.user,

@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
+  NodeValidationRequest,
   RdbValidationRequest
 }
 import com.island.ohara.common.rule.SmallTest
@@ -35,8 +36,9 @@ class TestValidationRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
   @Test
-  def testValidationOfHdfs(): Unit = {
+  def validateHdfs(): Unit = {
     val report = result(
       ValidationApi
         .access()
@@ -48,7 +50,7 @@ class TestValidationRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def testValidationOfRdb(): Unit = {
+  def validateRdb(): Unit = {
     val report = result(
       ValidationApi
         .access()
@@ -60,13 +62,25 @@ class TestValidationRoute extends SmallTest with Matchers {
   }
 
   @Test
-  def testValidationOfFtp(): Unit = {
+  def validateFtp(): Unit = {
     val report = result(
       ValidationApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
         .verify(FtpValidationRequest("fake_server", 22, "fake_user", "fake_password")))
+    report.isEmpty shouldBe false
+    report.foreach(_.pass shouldBe true)
+  }
+
+  @Test
+  def validateNode(): Unit = {
+    val report = result(
+      ValidationApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .verify(NodeValidationRequest("fake_server", 22, "fake_user", "fake_password")))
     report.isEmpty shouldBe false
     report.foreach(_.pass shouldBe true)
   }

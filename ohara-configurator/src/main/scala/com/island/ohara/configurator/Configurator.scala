@@ -159,7 +159,7 @@ class Configurator private[configurator] (
       ConnectorRoute.apply,
       InfoRoute.apply,
       StreamRoute.apply,
-      NodesRoute.apply,
+      NodeRoute.apply,
       ZookeeperRoute.apply,
       BrokerRoute.apply,
       WorkerRoute.apply,

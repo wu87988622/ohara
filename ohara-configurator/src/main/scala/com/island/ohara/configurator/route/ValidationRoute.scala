@@ -22,6 +22,7 @@ import com.island.ohara.agent.{Agent, BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.configurator.endpoint.Validator
+import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -73,30 +74,41 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
-        verify = (_, req: NodeValidationRequest) =>
-          Future {
-            val cmd = "ls /tmp"
-            val message = s"test $cmd on ${req.hostname}:${req.port}"
-            Seq[ValidationReport](
-              try {
-                val agent =
-                  Agent.builder().hostname(req.hostname).port(req.port).user(req.user).password(req.password).build()
-                try agent.execute(cmd)
-                finally agent.close()
+        verify = (_, req: NodeValidationRequest) => {
+          val cmd = "ls /tmp"
+          val message = s"test $cmd on ${req.hostname}:${req.port}"
+          // TODO: ugly ... please refactor this fucking code. by chia
+          if (brokerCollie.isInstanceOf[FakeBrokerCollie] || workerCollie.isInstanceOf[FakeWorkerCollie])
+            Future.successful(
+              Seq(
                 ValidationReport(
                   hostname = req.hostname,
-                  message = message,
+                  message = s"This is fake mode so we didn't test connection actually...",
                   pass = true
-                )
-              } catch {
-                case e: Throwable =>
+                )))
+          else
+            Future {
+              Seq(
+                try {
+                  val agent =
+                    Agent.builder().hostname(req.hostname).port(req.port).user(req.user).password(req.password).build()
+                  try agent.execute(cmd)
+                  finally agent.close()
                   ValidationReport(
                     hostname = req.hostname,
-                    message = s"$message (failed by ${e.getMessage})",
-                    pass = false
+                    message = message,
+                    pass = true
                   )
-              }
-            )
+                } catch {
+                  case e: Throwable =>
+                    ValidationReport(
+                      hostname = req.hostname,
+                      message = s"$message (failed by ${e.getMessage})",
+                      pass = false
+                    )
+                }
+              )
+            }
         }
       )
     }

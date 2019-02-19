@@ -91,12 +91,12 @@ object ZookeeperApi {
       )
   }
 
-  final case class ZookeeperClusterInfoImpl(name: String,
-                                            imageName: String,
-                                            clientPort: Int,
-                                            peerPort: Int,
-                                            electionPort: Int,
-                                            nodeNames: Seq[String])
+  private[this] case class ZookeeperClusterInfoImpl(name: String,
+                                                    imageName: String,
+                                                    clientPort: Int,
+                                                    peerPort: Int,
+                                                    electionPort: Int,
+                                                    nodeNames: Seq[String])
       extends ZookeeperClusterInfo
 
   private[this] implicit val ZOOKEEPER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[ZookeeperClusterInfoImpl] =
