@@ -43,6 +43,10 @@ const FormGroupCheckbox = styled(FormGroup)`
   color: ${props => props.theme.lightBlue};
 `;
 
+const CheckBoxLabel = styled(Label)`
+  margin-bottom: 0;
+`;
+
 const Checkbox = styled(Input)`
   height: auto;
   width: auto;
@@ -519,7 +523,7 @@ class HdfsSink extends React.Component {
               handleChange={this.handleCheckboxChange}
               disabled={isRunning}
             />
-            Include header
+            <CheckBoxLabel>Include header</CheckBoxLabel>
           </FormGroupCheckbox>
         </form>
       </Box>
