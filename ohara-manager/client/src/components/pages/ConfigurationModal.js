@@ -65,6 +65,14 @@ const CloseBtn = styled.div`
   }
 `;
 
+const ConfUl = styled.ul`
+  color: ${props => props.theme.lightBlue};
+  border: 0;
+  font-size: 14px;
+  cursor: pointer;
+  padding-top: 20px;
+`;
+
 const ConfLi = styled.li`
   color: ${({ isSelected }) =>
     isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
@@ -73,20 +81,6 @@ const ConfLi = styled.li`
   cursor: pointer;
   padding-top: 20px;
   padding-left: 10px;
-
-  &:hover {
-    color: ${({ isSelected }) =>
-      isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
-  }
-`;
-
-const ConfUl = styled.ul`
-  color: ${({ isSelected }) =>
-    isSelected ? props => props.theme.blue : props => props.theme.lightBlue};
-  border: 0;
-  font-size: 14px;
-  cursor: pointer;
-  padding-top: 20px;
 
   &:hover {
     color: ${({ isSelected }) =>
@@ -188,7 +182,6 @@ class ConfigurationModal extends React.Component {
                 HDFS
               </ConfLi>
             </ConfUl>
-            <ConfUl>Kafka</ConfUl>
           </ConfigurationList>
 
           {childName === childNames.DATABASE_CONFIGURATION ? (
