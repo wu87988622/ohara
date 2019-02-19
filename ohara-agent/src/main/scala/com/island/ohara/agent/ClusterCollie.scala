@@ -15,8 +15,12 @@
  */
 
 package com.island.ohara.agent
-import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -66,6 +70,55 @@ trait ClusterCollie extends Releasable {
       }
     }
   }
+
+  /**
+    * fetch all clusters and then update the services of input nodes.
+    * NOTED: The input nodes which are not hosted by this cluster collie are not updated!!!
+    * @param nodes nodes
+    * @return updated nodes
+    */
+  def fetchServices(nodes: Seq[Node]): Future[Seq[Node]] = clusters().map(_.keys.toSeq).map { clusters =>
+    nodes.map { node =>
+      update(
+        node = node,
+        services = Seq(
+          NodeService(
+            name = NodeApi.ZOOKEEPER_SERVICE_NAME,
+            clusterNames = clusters
+              .filter(_.isInstanceOf[ZookeeperClusterInfo])
+              .map(_.asInstanceOf[ZookeeperClusterInfo])
+              .filter(_.nodeNames.contains(node.name))
+              .map(_.name)
+          ),
+          NodeService(
+            name = NodeApi.BROKER_SERVICE_NAME,
+            clusterNames = clusters
+              .filter(_.isInstanceOf[BrokerClusterInfo])
+              .map(_.asInstanceOf[BrokerClusterInfo])
+              .filter(_.nodeNames.contains(node.name))
+              .map(_.name)
+          ),
+          NodeService(
+            name = NodeApi.WORKER_SERVICE_NAME,
+            clusterNames = clusters
+              .filter(_.isInstanceOf[WorkerClusterInfo])
+              .map(_.asInstanceOf[WorkerClusterInfo])
+              .filter(_.nodeNames.contains(node.name))
+              .map(_.name)
+          )
+        )
+      )
+    }
+  }
+
+  /**
+    * In fake mode we use FakeNode instead of NodeImpl. Hence, we open a door to let fake CC override this method to
+    * keep the fake implementation
+    * @param node previous node
+    * @param services new servies
+    * @return update node
+    */
+  protected def update(node: Node, services: Seq[NodeService]): Node = NodeApi.copy(node, services)
 }
 
 object ClusterCollie {

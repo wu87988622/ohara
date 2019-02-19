@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
 
-class TestNodesRoute extends SmallTest with Matchers {
+class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder().fake(numberOfCluster, numberOfCluster).build()
 
@@ -34,7 +34,7 @@ class TestNodesRoute extends SmallTest with Matchers {
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
-  private[this] val access = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
 
   import scala.concurrent.duration._
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
@@ -55,73 +55,80 @@ class TestNodesRoute extends SmallTest with Matchers {
     lhs.port shouldBe rhs.port
     lhs.user shouldBe rhs.user
     lhs.password shouldBe rhs.password
-    lhs.lastModified shouldBe rhs.lastModified
   }
+
+  @Test
+  def testServices(): Unit = {
+    val nodes = result(nodeApi.list())
+    nodes.isEmpty shouldBe false
+    nodes.foreach(_.services.isEmpty shouldBe false)
+  }
+
   @Test
   def testAdd(): Unit = {
     val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(access.add(req))
+    val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
-    compare(result(access.list()).find(_.name == req.name.get).get, res)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    compare(result(nodeApi.list()).find(_.name == req.name.get).get, res)
   }
 
   @Test
   def testDelete(): Unit = {
     val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(access.add(req))
+    val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
-    compare(result(access.delete(res.name)), res)
-    result(access.list()).size shouldBe numberOfDefaultNodes
+    compare(result(nodeApi.delete(res.name)), res)
+    result(nodeApi.list()).size shouldBe numberOfDefaultNodes
   }
 
   @Test
   def testUpdate(): Unit = {
     val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(access.add(req))
+    val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     val req2 = NodeCreationRequest(Some("a"), 22, "b", "d")
-    val res2 = result(access.update(res.name, req2))
+    val res2 = result(nodeApi.update(res.name, req2))
     compare(req2, res2)
 
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     an[IllegalArgumentException] should be thrownBy result(
-      access.update(res.id, NodeCreationRequest(Some("a2"), 22, "b", "d")))
+      nodeApi.update(res.id, NodeCreationRequest(Some("a2"), 22, "b", "d")))
   }
 
   @Test
   def testInvalidNameOfUpdate(): Unit = {
     val req = NodeCreationRequest(Some("a"), 22, "b", "c")
-    val res = result(access.add(req))
+    val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     // we can't update an non-existent node
     an[IllegalArgumentException] should be thrownBy result(
-      access.update("xxxxxx", NodeCreationRequest(Some("a"), 22, "b", "d")))
+      nodeApi.update("xxxxxx", NodeCreationRequest(Some("a"), 22, "b", "d")))
     // we can't update an existent node by unmatched name
     an[IllegalArgumentException] should be thrownBy result(
-      access.update(res.id, NodeCreationRequest(Some("xxxxxx"), 22, "b", "d")))
+      nodeApi.update(res.id, NodeCreationRequest(Some("xxxxxx"), 22, "b", "d")))
 
     val req2 = NodeCreationRequest(Some(res.id), 22, "b", "d")
-    val res2 = result(access.update(res.id, req2))
+    val res2 = result(nodeApi.update(res.id, req2))
     compare(req2, res2)
 
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
 
     val req3 = NodeCreationRequest(None, 22, "b", "zz")
-    val res3 = result(access.update(res.id, req3))
+    val res3 = result(nodeApi.update(res.id, req3))
     compare(req3, res3)
-    result(access.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
   }
 
   @After

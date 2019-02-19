@@ -31,8 +31,8 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.configurator.FakeWorkerClient
 import com.island.ohara.configurator.endpoint.Validator._
+import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.Consumer.Record
 import org.apache.hadoop.conf.Configuration
