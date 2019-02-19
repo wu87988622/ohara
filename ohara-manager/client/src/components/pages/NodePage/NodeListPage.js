@@ -107,7 +107,11 @@ class NodeListPage extends React.Component {
               />
             </s.TopWrapper>
             <Box>
-              <s.Table headers={this.headers} isLoading={isLoading}>
+              <s.Table
+                headers={this.headers}
+                isLoading={isLoading}
+                data-testid="node-list"
+              >
                 {nodes.map(node => (
                   <tr key={node.name}>
                     <td>{node.name || ''}</td>
@@ -116,6 +120,7 @@ class NodeListPage extends React.Component {
                     <td className="has-icon">
                       <s.Icon
                         className="far fa-edit"
+                        data-testid="edit-node-icon"
                         onClick={() => this.handleEditClick(node)}
                       />
                     </td>
