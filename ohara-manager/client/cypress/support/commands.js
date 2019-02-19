@@ -41,3 +41,34 @@ Cypress.Commands.add('login', () => {
     }
   });
 });
+
+Cypress.Commands.add('deleteAllNodes', () => {
+  Cypress.log({
+    name: 'DELETE_ALL_NODES',
+  });
+
+  const _ = Cypress._;
+
+  cy.request('GET', 'api/nodes')
+    .then(res => res.body)
+    .then(nodes => {
+      if (!_.isEmpty(nodes)) {
+        _.forEach(nodes, node => {
+          cy.request('DELETE', `api/nodes/${node.name}`);
+        });
+      }
+    });
+});
+
+Cypress.Commands.add('insertNode', node => {
+  Cypress.log({
+    name: 'INSERT_NODE',
+  });
+
+  cy.request('POST', 'api/nodes', {
+    name: node.name,
+    port: node.port,
+    user: node.user,
+    password: node.password,
+  });
+});
