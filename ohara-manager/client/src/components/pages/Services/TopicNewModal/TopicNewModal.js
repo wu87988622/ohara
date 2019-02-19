@@ -84,7 +84,7 @@ class TopicNewModal extends React.Component {
                       name="name"
                       component={InputField}
                       width="100%"
-                      placeholder="kafka-cluster"
+                      placeholder="Kafka Topic"
                       data-testid="name-input"
                     />
                   </FormGroup>
