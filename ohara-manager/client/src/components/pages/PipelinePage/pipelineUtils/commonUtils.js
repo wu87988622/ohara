@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { get, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 
 export const isSource = kind => kind.includes('Source');
 
@@ -24,16 +24,13 @@ export const isTopic = kind => kind === 'topic';
 
 export const isStream = kind => kind === 'streamApp';
 
-export const findByGraphId = (graph, id) => {
-  const result = graph.find(x => x.id === id);
-  return result;
-};
+export const findByGraphId = (graph, id) => graph.find(x => x.id === id);
 
 export const updateTopic = (props, currTopic, connectorType) => {
   if (!currTopic || isEmpty(currTopic)) return;
 
   const { graph, match, updateGraph } = props;
-  const connectorId = get(match, 'params.connectorId');
+  const { connectorId } = match.params;
 
   let update = null;
 
@@ -42,12 +39,14 @@ export const updateTopic = (props, currTopic, connectorType) => {
     const topicId = isEmpty(currTopic) ? [] : currTopic.id;
     const to = [...new Set([...currConnector.to, topicId])];
     update = { ...currConnector, to };
+
     updateGraph({ update });
   } else {
     const currTopicId = isEmpty(currTopic) ? [] : currTopic.id;
     const topic = findByGraphId(graph, currTopicId);
     const to = [...new Set([...topic.to, connectorId])];
     update = { ...topic, to };
+
     updateGraph({ update, isSinkUpdate: true });
   }
 };
