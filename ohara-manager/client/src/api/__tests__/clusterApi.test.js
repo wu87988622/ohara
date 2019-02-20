@@ -19,7 +19,7 @@ import { handleError, axiosInstance } from 'utils/apiUtils';
 
 jest.mock('utils/apiUtils');
 
-describe('clusterApi', () => {
+describe('fetchCluster()', () => {
   afterEach(jest.clearAllMocks);
 
   it('handles success http call', async () => {
