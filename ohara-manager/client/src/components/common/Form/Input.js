@@ -21,13 +21,13 @@ import styled from 'styled-components';
 const InputWrapper = styled.input`
   font-size: 12px;
   font-family: inherit;
-  color: ${props => props.theme.lightBlue};
-  border: 1px solid ${props => props.theme.lighterGray};
-  padding: 10px 10px 10px 15px;
-  width: ${({ width }) => width};
-  height: ${({ height }) => height};
-  border-radius: ${props => props.theme.radiusNormal};
+  text-indent: 8px;
   outline: none;
+  border: 1px solid ${props => props.theme.lighterGray};
+  color: ${props => props.theme.lightBlue};
+  width: ${({ width }) => (width ? width : '120px')};
+  height: ${({ height }) => (height ? height : '36px')};
+  border-radius: ${props => props.theme.radiusNormal};
   transition: ${props => props.theme.durationNormal} all;
 
   &:focus {
@@ -47,12 +47,12 @@ InputWrapper.displayName = 'Input';
 
 const Input = ({
   type = 'text',
-  value,
-  handleChange,
   placeholder = '',
-  width = '120px',
-  height = '32px',
   disabled = false,
+  handleChange,
+  value,
+  width,
+  height,
   ...rest
 }) => {
   const disableCls = disabled ? 'is-disabled' : '';

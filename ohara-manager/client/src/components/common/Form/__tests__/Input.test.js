@@ -33,21 +33,12 @@ describe('<Input />', () => {
 
   it('renders self', () => {
     const input = wrapper.find('Input');
-    const {
-      type,
-      value,
-      placeholder,
-      width,
-      height,
-      disabled,
-    } = wrapper.props();
+    const { type, value, placeholder, disabled } = wrapper.props();
 
     expect(input.length).toBe(1);
     expect(type).toBe('text');
     expect(value).toBe(props.value);
     expect(placeholder).toBe(props.placeholder);
-    expect(width).toBe('120px');
-    expect(height).toBe('32px');
     expect(disabled).toBe(false);
   });
 

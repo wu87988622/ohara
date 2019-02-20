@@ -24,11 +24,10 @@ const SelectWrapper = styled.select`
   color: ${({ disabled, theme }) =>
     disabled ? theme.lightGray : theme.lightBlue};
   border: 1px solid ${props => props.theme.lighterGray};
-  padding: 10px 10px 10px 15px;
   border-radius: ${props => props.theme.radiusNormal};
   background-color: ${props => props.theme.white};
-  width: ${({ width }) => width};
-  height: ${({ height }) => height};
+  width: ${({ width }) => (width ? width : '100%')};
+  height: ${({ height }) => (height ? height : '36px')};
   outline: 0;
 
   &:focus {
@@ -45,9 +44,9 @@ const Select = ({
   selected = '',
   handleChange,
   placeholder,
+  height,
+  width,
   isObject = false,
-  height = '32px',
-  width = '100%',
   clearable = false,
   ...rest
 }) => {
