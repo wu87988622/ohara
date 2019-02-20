@@ -86,6 +86,7 @@ export const CANNOT_START_PIPELINE_ERROR =
   'Failed to start the pipeline, please check your connector settings';
 export const NO_WORKER_CLUSTER_FOUND_ERROR =
   'Please create a cluster before creating pipelines!';
+export const NO_TOPIC_IS_SUPPLIED = 'Please select a topic!';
 
 // Connectors
 export const CANNOT_START_CONNECTOR_ERROR =

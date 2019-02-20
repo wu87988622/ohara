@@ -19,9 +19,11 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 
+import * as MESSAGES from 'constants/messages';
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
 import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
+import { findByGraphId } from './pipelineUtils/commonUtils';
 
 const Icon = styled.i`
   color: ${props => props.theme.lighterBlue};
@@ -70,14 +72,19 @@ class PipelineNewTopic extends React.Component {
   };
 
   update = () => {
-    const { updateGraph, currentTopic } = this.props;
+    const { graph, updateGraph, currentTopic } = this.props;
 
     if (!currentTopic) {
-      return toastr.error('Please select a topic!');
+      return toastr.error(MESSAGES.NO_TOPIC_IS_SUPPLIED);
     }
 
-    const connector = { ...currentTopic, className: 'topic' };
-    createConnector({ updateGraph, connector });
+    // Don't add a same topic more than one time
+    const isTopicExist = findByGraphId(graph, currentTopic.id);
+
+    if (!isTopicExist) {
+      const connector = { ...currentTopic, className: 'topic' };
+      createConnector({ updateGraph, connector });
+    }
   };
 
   render() {
