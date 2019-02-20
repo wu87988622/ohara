@@ -34,6 +34,38 @@ object WorkerRoute {
       hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
         jarStore
           .urls(req.jars)
+          .map { jars =>
+            val wkClusters = clusters.filter(_.isInstanceOf[WorkerClusterInfo]).map(_.asInstanceOf[WorkerClusterInfo])
+
+            // check group id
+            req.groupId.foreach(groupId =>
+              wkClusters
+                .find(_.groupId == groupId)
+                .foreach(c => throw new IllegalArgumentException(s"group id:$groupId is used by wk cluster:${c.name}")))
+
+            // check config topic
+            req.configTopicName.foreach(configTopicName =>
+              wkClusters
+                .find(_.configTopicName == configTopicName)
+                .foreach(c =>
+                  throw new IllegalArgumentException(s"config topic:$configTopicName is used by wk cluster:${c.name}")))
+
+            // check offset topic
+            req.offsetTopicName.foreach(offsetTopicName =>
+              wkClusters
+                .find(_.offsetTopicName == offsetTopicName)
+                .foreach(c =>
+                  throw new IllegalArgumentException(s"offset topic:$offsetTopicName is used by wk cluster:${c.name}")))
+
+            // check status topic
+            req.statusTopicName.foreach(statusTopicName =>
+              wkClusters
+                .find(_.statusTopicName == statusTopicName)
+                .foreach(c =>
+                  throw new IllegalArgumentException(s"status topic$statusTopicName is used by wk cluster:${c.name}")))
+
+            jars
+          }
           // match the broker cluster
           .map(req.brokerClusterName
             .map { bkName =>

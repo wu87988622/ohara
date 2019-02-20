@@ -52,26 +52,6 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
-  private[this] def creationRequest(name: String,
-                                    brokerClusterName: String,
-                                    nodeNames: Seq[String]): WorkerClusterCreationRequest =
-    WorkerClusterCreationRequest(
-      name = name,
-      imageName = None,
-      brokerClusterName = Some(brokerClusterName),
-      clientPort = None,
-      groupId = None,
-      statusTopicName = None,
-      statusTopicPartitions = None,
-      statusTopicReplications = None,
-      configTopicName = None,
-      configTopicReplications = None,
-      offsetTopicName = None,
-      offsetTopicPartitions = None,
-      offsetTopicReplications = None,
-      jars = Seq.empty,
-      nodeNames = nodeNames
-    )
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Before
   def setup(): Unit = {
@@ -95,14 +75,65 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testDefaultBk(): Unit = {
-    val request = creationRequest(
+    val request0 = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = "Asdasdasd",
+      imageName = None,
+      brokerClusterName = None,
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
-    an[IllegalArgumentException] should be thrownBy assert(request, result(access.add(request)))
-    val anotherRequest = request.copy(brokerClusterName = None)
-    assert(anotherRequest, result(access.add(anotherRequest)))
+    assert(request0, result(access.add(request0)))
+
+    val request1 = WorkerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+    assert(request1, result(access.add(request1)))
+  }
+
+  @Test
+  def runOnIncorrectBk(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(
+      access.add(WorkerClusterCreationRequest(
+        name = CommonUtil.randomString(10),
+        imageName = None,
+        brokerClusterName = Some(CommonUtil.randomString(10)),
+        clientPort = Some(CommonUtil.availablePort()),
+        groupId = Some(CommonUtil.randomString(10)),
+        statusTopicName = Some(CommonUtil.randomString(10)),
+        statusTopicPartitions = None,
+        statusTopicReplications = None,
+        configTopicName = Some(CommonUtil.randomString(10)),
+        configTopicReplications = None,
+        offsetTopicName = Some(CommonUtil.randomString(10)),
+        offsetTopicPartitions = None,
+        offsetTopicReplications = None,
+        jars = Seq.empty,
+        nodeNames = nodeNames
+      )))
   }
 
   @Test
@@ -186,34 +217,64 @@ class TestWorkerRoute extends MediumTest with Matchers {
   def testCreateOnNonexistentNode(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
       access.add(
-        WorkerApi.creationRequest(
+        WorkerClusterCreationRequest(
           name = CommonUtil.randomString(10),
-          nodeNames = Seq("asdasdasd")
+          imageName = None,
+          brokerClusterName = Some(bkClusterName),
+          clientPort = Some(CommonUtil.availablePort()),
+          groupId = Some(CommonUtil.randomString(10)),
+          statusTopicName = Some(CommonUtil.randomString(10)),
+          statusTopicPartitions = None,
+          statusTopicReplications = None,
+          configTopicName = Some(CommonUtil.randomString(10)),
+          configTopicReplications = None,
+          offsetTopicName = Some(CommonUtil.randomString(10)),
+          offsetTopicPartitions = None,
+          offsetTopicReplications = None,
+          jars = Seq.empty,
+          nodeNames = Seq(CommonUtil.randomString(10))
         ))
     )
   }
 
   @Test
   def testEmptyNodes(): Unit = {
-    creationRequest(
-      name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
-      nodeNames = Seq.empty
-    )
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(
-        creationRequest(
-          name = CommonUtil.randomString(10),
-          brokerClusterName = bkClusterName,
-          nodeNames = Seq.empty
-        ))
-    )
+      access.add(WorkerClusterCreationRequest(
+        name = CommonUtil.randomString(10),
+        imageName = None,
+        brokerClusterName = Some(bkClusterName),
+        clientPort = Some(CommonUtil.availablePort()),
+        groupId = Some(CommonUtil.randomString(10)),
+        statusTopicName = Some(CommonUtil.randomString(10)),
+        statusTopicPartitions = None,
+        statusTopicReplications = None,
+        configTopicName = Some(CommonUtil.randomString(10)),
+        configTopicReplications = None,
+        offsetTopicName = Some(CommonUtil.randomString(10)),
+        offsetTopicPartitions = None,
+        offsetTopicReplications = None,
+        jars = Seq.empty,
+        nodeNames = Seq.empty
+      )))
   }
   @Test
   def testCreate(): Unit = {
-    val request = creationRequest(
+    val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     assert(request, result(access.add(request)))
@@ -221,18 +282,43 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    val request0 = creationRequest(
+    val request0 = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
-    ).copy(clientPort = Some(CommonUtil.availablePort()))
+    )
 
     assert(request0, result(access.add(request0)))
-    val request1 = creationRequest(
+
+    val request1 = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
-    ).copy(clientPort = Some(CommonUtil.availablePort()))
+    )
     assert(request1, result(access.add(request1)))
 
     val clusters = result(access.list())
@@ -243,9 +329,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testRemove(): Unit = {
-    val request = creationRequest(
+    val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = result(access.add(request))
@@ -256,9 +354,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testGetContainers(): Unit = {
-    val request = creationRequest(
+    val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = result(access.add(request))
@@ -273,9 +383,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def testAddNode(): Unit = {
-    val request = creationRequest(
+    val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = Seq(nodeNames.head)
     )
     val cluster = result(access.add(request))
@@ -305,9 +427,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
   }
   @Test
   def testRemoveNode(): Unit = {
-    val request = creationRequest(
+    val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
     val cluster = result(access.add(request))
@@ -359,8 +493,21 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def createWkClusterWithSameName(): Unit = {
-    val request = WorkerApi.creationRequest(
+    val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
     )
 
@@ -374,20 +521,141 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def clientPortConflict(): Unit = {
     val clientPort = CommonUtil.availablePort()
-    val request = creationRequest(
+
+    def createReq() = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      brokerClusterName = bkClusterName,
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(clientPort),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
       nodeNames = nodeNames
-    ).copy(clientPort = Some(clientPort))
+    )
 
     // pass
-    result(access.add(request))
+    result(access.add(createReq()))
 
-    an[IllegalArgumentException] should be thrownBy result(
-      access.add(request.copy(name = CommonUtil.randomString(10), clientPort = Some(clientPort))))
+    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+
+    // pass by different port
+    result(access.add(createReq().copy(clientPort = Some(CommonUtil.availablePort()))))
+  }
+
+  @Test
+  def duplicateGroupId(): Unit = {
+    val groupId = CommonUtil.randomString(10)
+
+    def createReq() = WorkerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(groupId),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
 
     // pass
-    result(access.add(request.copy(name = CommonUtil.randomString(10), clientPort = Some(CommonUtil.availablePort()))))
+    result(access.add(createReq()))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+  }
+
+  @Test
+  def duplicateConfigTopic(): Unit = {
+    val configTopic = CommonUtil.randomString(10)
+    def createReq() = WorkerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(configTopic),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(createReq()))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+  }
+
+  @Test
+  def duplicateOffsetTopic(): Unit = {
+    val offsetTopic = CommonUtil.randomString(10)
+    def createReq() = WorkerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(offsetTopic),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(createReq()))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+  }
+
+  @Test
+  def duplicateStatusTopic(): Unit = {
+    val statusTopic = CommonUtil.randomString(10)
+    def createReq() = WorkerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(statusTopic),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(createReq()))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
   }
 
   @After
