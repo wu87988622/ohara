@@ -18,9 +18,9 @@ import { toNumber, get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchWorkers = async () => {
+export const fetchWorker = async name => {
   try {
-    const res = await axiosInstance.get(`/api/workers`);
+    const res = await axiosInstance.get(`/api/workers/${name}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -33,9 +33,9 @@ export const fetchWorkers = async () => {
   }
 };
 
-export const fetchWorker = async name => {
+export const fetchWorkers = async () => {
   try {
-    const res = await axiosInstance.get(`/api/workers/${name}`);
+    const res = await axiosInstance.get(`/api/workers`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
