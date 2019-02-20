@@ -20,10 +20,10 @@ import java.net.URL
 
 import com.island.ohara.agent.K8SClusterCollieImpl.{K8SBrokerCollieImpl, K8SWorkerCollieImpl, K8SZookeeperCollieImpl}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -213,18 +213,9 @@ private object K8SClusterCollieImpl {
       ZookeeperClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        clientPort = first.environments
-          .get(ZookeeperCollie.CLIENT_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.CLIENT_PORT_DEFAULT),
-        peerPort = first.environments
-          .get(ZookeeperCollie.PEER_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.PEER_PORT_DEFAULT),
-        electionPort = first.environments
-          .get(ZookeeperCollie.ELECTION_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.ELECTION_PORT_DEFAULT),
+        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
+        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
+        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       )
     }
@@ -242,9 +233,7 @@ private object K8SClusterCollieImpl {
             nodeCollie
               .nodes(existContainers.map(_.nodeName))
               .map(_.zipWithIndex.map {
-                case (node, index) => {
-                  node -> existContainers(index)
-                }
+                case (node, index) => node -> existContainers(index)
               }.toMap)
               .map { existNodes =>
                 // if there is a running cluster already, we should check the consistency of configuration
@@ -276,9 +265,7 @@ private object K8SClusterCollieImpl {
             case (existNodes, newNodes, zkContainers) =>
               if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName doesn't exist")
               val zookeepers = zkContainers
-                .map(c =>
-                  s"${c.hostname}.${K8S_DOMAIN_NAME}:${c.environments.getOrElse(ZookeeperCollie.CLIENT_PORT_KEY,
-                                                                                ZookeeperCollie.CLIENT_PORT_DEFAULT)}")
+                .map(c => s"${c.hostname}.$K8S_DOMAIN_NAME:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
                 .mkString(",")
 
               val maxId: Int =
@@ -351,12 +338,8 @@ private object K8SClusterCollieImpl {
         name = clusterName,
         imageName = first.imageName,
         zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
-        exporterPort = first.environments
-          .get(BrokerCollie.EXPORTER_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(BrokerCollie.EXPORTER_PORT_DEFAULT),
-        clientPort =
-          first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
+        exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
+        clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       )
     }
@@ -430,7 +413,7 @@ private object K8SClusterCollieImpl {
               throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
             val brokers = brokerContainers
               .map(c =>
-                s"${c.hostname}.${K8S_DOMAIN_NAME}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerCollie.CLIENT_PORT_DEFAULT)}")
+                s"${c.hostname}.${K8S_DOMAIN_NAME}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerApi.CLIENT_PORT_DEFAULT)}")
               .mkString(",")
 
             val successfulNodeNames = newNodes

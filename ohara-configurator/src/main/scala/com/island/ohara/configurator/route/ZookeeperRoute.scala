@@ -18,9 +18,8 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
-
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object ZookeeperRoute {
 
@@ -28,23 +27,16 @@ object ZookeeperRoute {
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.zookeeperCollie(),
       root = ZOOKEEPER_PREFIX_PATH,
-      hookOfCreation = (req: ZookeeperClusterCreationRequest) =>
-        clusterCollie.clusters().flatMap { clusters =>
-          if (clusters.keys
-                .filter(_.isInstanceOf[ZookeeperClusterInfo])
-                .map(_.asInstanceOf[ZookeeperClusterInfo])
-                .exists(_.name == req.name))
-            throw new IllegalArgumentException(s"zookeeper cluster:${req.name} is running")
-          clusterCollie
-            .zookeeperCollie()
-            .creator()
-            .clusterName(req.name)
-            .clientPort(req.clientPort)
-            .electionPort(req.electionPort)
-            .peerPort(req.peerPort)
-            .imageName(req.imageName)
-            .nodeNames(req.nodeNames)
-            .create()
-      }
+      hookOfCreation = (_, req: ZookeeperClusterCreationRequest) =>
+        clusterCollie
+          .zookeeperCollie()
+          .creator()
+          .clusterName(req.name)
+          .clientPort(req.clientPort.getOrElse(ZookeeperApi.CLIENT_PORT_DEFAULT))
+          .electionPort(req.electionPort.getOrElse(ZookeeperApi.ELECTION_PORT_DEFAULT))
+          .peerPort(req.peerPort.getOrElse(ZookeeperApi.PEER_PORT_DEFAULT))
+          .imageName(req.imageName.getOrElse(ZookeeperApi.IMAGE_NAME_DEFAULT))
+          .nodeNames(req.nodeNames)
+          .create()
     )
 }

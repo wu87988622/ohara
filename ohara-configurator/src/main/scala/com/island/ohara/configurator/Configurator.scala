@@ -30,7 +30,9 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
@@ -267,17 +269,23 @@ object Configurator {
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
         val images = dockerClient.images()
-        if (!images.contains(ZookeeperCollie.IMAGE_NAME_DEFAULT))
-          throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")
-        if (!images.contains(BrokerCollie.IMAGE_NAME_DEFAULT))
-          throw new IllegalArgumentException(s"$node doesn't have ${BrokerCollie.IMAGE_NAME_DEFAULT}")
+        if (!images.contains(ZookeeperApi.IMAGE_NAME_DEFAULT))
+          throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
+        if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))
+          throw new IllegalArgumentException(s"$node doesn't have ${BrokerApi.IMAGE_NAME_DEFAULT}")
       } finally dockerClient.close()
       val zkCluster = Await.result(
         ZookeeperApi
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(ZookeeperApi.creationRequest("preCreatedZkCluster", Seq(node.name))),
+          .add(
+            ZookeeperClusterCreationRequest(name = "preCreatedZkCluster",
+                                            imageName = None,
+                                            clientPort = None,
+                                            electionPort = None,
+                                            peerPort = None,
+                                            nodeNames = Seq(node.name))),
         30 seconds
       )
       LOG.info(s"succeed to create zk cluster:$zkCluster")
@@ -286,7 +294,13 @@ object Configurator {
           .access()
           .hostname(configurator.hostname)
           .port(configurator.port)
-          .add(BrokerApi.creationRequest("preCreatedBkCluster", Seq(node.name))),
+          .add(
+            BrokerClusterCreationRequest(name = "preCreatedBkCluster",
+                                         imageName = None,
+                                         zookeeperClusterName = Some(zkCluster.name),
+                                         exporterPort = None,
+                                         clientPort = None,
+                                         nodeNames = Seq(node.name))),
         30 seconds
       )
       LOG.info(s"succeed to create bk cluster:$bkCluster")

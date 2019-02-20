@@ -17,6 +17,19 @@
 package com.island.ohara.client.configurator.v0
 
 trait ClusterCreationRequest {
+
+  /**
+    * @return cluster name
+    */
   def name: String
+
+  /**
+    * @return nodes to run this cluster
+    */
   def nodeNames: Seq[String]
+
+  /**
+    * @return ports used by this cluster
+    */
+  def ports: Seq[Int]
 }

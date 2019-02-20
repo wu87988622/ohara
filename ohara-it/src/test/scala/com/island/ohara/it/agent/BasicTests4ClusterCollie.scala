@@ -18,7 +18,7 @@ package com.island.ohara.it.agent
 
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.After
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -45,6 +45,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Seq[String]): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkCollie
       .creator()
+      .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .peerPort(peerPort)
@@ -77,6 +78,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Seq[String]): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie
       .creator()
+      .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .exporterPort(exporterPort)
@@ -113,9 +115,14 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie
       .creator()
+      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .brokerClusterName(bkClusterName)
+      .groupId(CommonUtil.randomString(10))
+      .configTopicName(CommonUtil.randomString(10))
+      .statusTopicName(CommonUtil.randomString(10))
+      .offsetTopicName(CommonUtil.randomString(10))
       .nodeNames(nodeNames)
       .create()
 
@@ -129,14 +136,15 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
                                    nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie
       .creator()
+      .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
       .brokerClusterName(bkClusterName)
-      .nodeNames(nodeNames)
       .groupId(groupId)
       .configTopicName(configTopicName)
       .statusTopicName(statusTopicName)
       .offsetTopicName(offsetTopicName)
+      .nodeNames(nodeNames)
       .create()
 
   override protected def wk_cluster(clusterName: String): Future[WorkerApi.WorkerClusterInfo] =

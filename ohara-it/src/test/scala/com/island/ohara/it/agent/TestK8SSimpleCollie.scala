@@ -16,12 +16,12 @@
 
 package com.island.ohara.it.agent
 
-import scala.concurrent.duration._
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
@@ -30,6 +30,7 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
@@ -84,11 +85,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     try {
       intercept[UnsupportedOperationException] {
         result(zookeeperCollie.addNode(clusterName, firstNode))
-      }.getMessage() shouldBe "zookeeper collie doesn't support to add node from a running cluster"
+      }.getMessage shouldBe "zookeeper collie doesn't support to add node from a running cluster"
 
       zookeeperClusterInfo.name shouldBe clusterName
       zookeeperClusterInfo.nodeNames.size shouldBe 1
-      zookeeperClusterInfo.imageName shouldBe ZookeeperCollie.IMAGE_NAME_DEFAULT
+      zookeeperClusterInfo.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
       zookeeperClusterInfo.clientPort shouldBe clientPort
       zookeeperClusterInfo.peerPort shouldBe peerPort
       zookeeperClusterInfo.electionPort shouldBe electionPort
@@ -549,6 +550,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(
       zookeeperCollie
         .creator()
+        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .clusterName(clusterName)
         .clientPort(clientPort)
         .peerPort(peerPort)
@@ -566,6 +568,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(
       brokerCollie
         .creator()
+        .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
         .clusterName(cluseterName)
         .clientPort(clientPort)
         .exporterPort(exporterPort)
@@ -582,9 +585,14 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     result(
       workerCollie
         .creator()
+        .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
         .clusterName(clusterName)
         .clientPort(clientPort)
         .brokerClusterName(brokerClusterName)
+        .groupId(CommonUtil.randomString(10))
+        .configTopicName(CommonUtil.randomString(10))
+        .statusTopicName(CommonUtil.randomString(10))
+        .offsetTopicName(CommonUtil.randomString(10))
         .nodeName(nodeName)
         .create()
     )

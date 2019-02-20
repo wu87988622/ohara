@@ -18,8 +18,9 @@ package com.island.ohara.it.agent
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
@@ -43,8 +44,8 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
-        withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.images().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
     nodeCache.foreach { node =>
@@ -64,7 +65,14 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperApi.creationRequest(methodName(), nodeCache.map(_.name))))
+        .add(ZookeeperClusterCreationRequest(
+          name = CommonUtil.randomString(10),
+          imageName = None,
+          clientPort = Some(CommonUtil.availablePort()),
+          electionPort = Some(CommonUtil.availablePort()),
+          peerPort = Some(CommonUtil.availablePort()),
+          nodeNames = nodeCache.map(_.name)
+        )))
 
     try {
       val nodes = result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list())

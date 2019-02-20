@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.client
+
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.VersionUtil
 import org.junit.Test
@@ -24,16 +26,16 @@ class TestVersion extends SmallTest with Matchers {
 
   @Test
   def testZookeeper(): Unit = {
-    ZookeeperCollie.IMAGE_NAME_DEFAULT shouldBe s"oharastream/zookeeper:${VersionUtil.VERSION}"
+    ZookeeperApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/zookeeper:${VersionUtil.VERSION}"
   }
 
   @Test
   def testBroker(): Unit = {
-    BrokerCollie.IMAGE_NAME_DEFAULT shouldBe s"oharastream/broker:${VersionUtil.VERSION}"
+    BrokerApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/broker:${VersionUtil.VERSION}"
   }
 
   @Test
   def testWorker(): Unit = {
-    WorkerCollie.IMAGE_NAME_DEFAULT shouldBe s"oharastream/connect-worker:${VersionUtil.VERSION}"
+    WorkerApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/connect-worker:${VersionUtil.VERSION}"
   }
 }

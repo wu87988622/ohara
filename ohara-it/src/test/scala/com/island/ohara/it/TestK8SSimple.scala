@@ -23,9 +23,10 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.{K8SClient, ZookeeperCollie}
+import com.island.ohara.agent.K8SClient
 import com.island.ohara.agent.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtil
 import com.typesafe.scalalogging.Logger
@@ -77,7 +78,7 @@ class TestK8SSimple extends SmallTest with Matchers {
   def testK8SClientContainer(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
 
-    val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.name.equals(TestK8SSimple.uuid))
+    val containers: Seq[ContainerInfo] = k8sClient.containers().filter(_.name.equals(TestK8SSimple.uuid))
     val containerSize: Int = containers.size
     containerSize shouldBe 1
     val container: ContainerInfo = containers.head
@@ -85,7 +86,7 @@ class TestK8SSimple extends SmallTest with Matchers {
     container.environments.size shouldBe 1
     container.environments.get("key1") shouldBe Some("value1")
     container.hostname shouldBe TestK8SSimple.uuid
-    container.imageName shouldBe ZookeeperCollie.IMAGE_NAME_DEFAULT
+    container.imageName shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
     container.name shouldBe TestK8SSimple.uuid
     container.size shouldBe "Unknown"
   }
@@ -98,7 +99,7 @@ class TestK8SSimple extends SmallTest with Matchers {
     try {
       //Create Pod for test delete
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
-      val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.hostname.equals(podName))
+      val containers: Seq[ContainerInfo] = k8sClient.containers().filter(_.hostname.equals(podName))
       containers.size shouldBe 1
     } finally {
       //Remove a container
@@ -116,10 +117,7 @@ class TestK8SSimple extends SmallTest with Matchers {
 
       var isContainerRunning: Boolean = false
       while (!isContainerRunning) {
-        if (k8sClient
-              .containers()
-              .filter(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING)
-              .size == 1) {
+        if (k8sClient.containers().count(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING) == 1) {
           isContainerRunning = true
         }
       }
@@ -149,7 +147,7 @@ class TestK8SSimple extends SmallTest with Matchers {
         .labelName("ohara")
         .nodename(nodeServerNames.head)
         .hostname(containerName)
-        .imageName(ZookeeperCollie.IMAGE_NAME_DEFAULT)
+        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .envs(Map())
         .portMappings(Map())
         .run()
@@ -186,10 +184,10 @@ object TestK8SSimple {
   @AfterClass
   def afterClass(): Unit = {
     if (TestK8SSimple.API_SERVER_URL.nonEmpty && hasPod(TestK8SSimple.API_SERVER_URL.get, uuid)) {
-      Await.result(Http().singleRequest(
-                     HttpRequest(HttpMethods.DELETE,
-                                 uri = s"${TestK8SSimple.API_SERVER_URL.get}/namespaces/default/pods/${uuid}")),
-                   TIMEOUT)
+      Await.result(
+        Http().singleRequest(
+          HttpRequest(HttpMethods.DELETE, uri = s"${TestK8SSimple.API_SERVER_URL.get}/namespaces/default/pods/$uuid")),
+        TIMEOUT)
     }
 
     //Terminate actor system
@@ -197,13 +195,13 @@ object TestK8SSimple {
   }
 
   def createZookeeperPod(k8sApiServerURL: String, podName: String): Unit = {
-    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"" + ZookeeperCollie.IMAGE_NAME_DEFAULT + "\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
+    val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"" + ZookeeperApi.IMAGE_NAME_DEFAULT + "\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
 
     Await.result(
       Http().singleRequest(
         HttpRequest(HttpMethods.POST,
                     entity = HttpEntity(ContentTypes.`application/json`, podJSON),
-                    uri = s"${k8sApiServerURL}/namespaces/default/pods")),
+                    uri = s"$k8sApiServerURL/namespaces/default/pods")),
       TestK8SSimple.TIMEOUT
     )
   }
@@ -218,10 +216,10 @@ object TestK8SSimple {
     implicit val PODINFO_JSON_FORMAT: RootJsonFormat[PodInfo] = jsonFormat1(PodInfo)
 
     val podInfo: PodInfo = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/pods")).flatMap(unmarshal[PodInfo]),
+      Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"$k8sApiServerURL/pods")).flatMap(unmarshal[PodInfo]),
       TIMEOUT
     )
-    podInfo.items.map(x => x.metadata.name).filter(x => x.equals(podName)).nonEmpty
+    podInfo.items.map(x => x.metadata.name).exists(x => x.equals(podName))
   }
 
   def nodeInfo(): Seq[String] = {

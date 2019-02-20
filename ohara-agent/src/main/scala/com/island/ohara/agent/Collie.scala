@@ -18,11 +18,10 @@ package com.island.ohara.agent
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtil
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
@@ -116,18 +115,21 @@ object Collie {
     protected var nodeNames: Seq[String] = _
 
     /**
-      * In route we accept the option arguments from restful APIs. This method help caller to apply fluent pattern.
+      * set the image name used to create cluster's container.
+      * Currently, there are three kind of services are supported by community. zk, bk and wk.
       * @param imageName image name
       * @return this creator
       */
-    @Optional("we have default image for each collie")
-    def imageName(imageName: Option[String]): ClusterCreator.this.type = {
-      imageName.foreach(this.imageName = _)
+    def imageName(imageName: String): ClusterCreator.this.type = {
+      this.imageName = imageName
       this
     }
 
-    def imageName(name: String): ClusterCreator.this.type = imageName(Some(name))
-
+    /**
+      * set the cluster name. Noted: All collie impls are unsupported to use duplicate cluster name.
+      * @param clusterName cluster name
+      * @return this creator
+      */
     def clusterName(clusterName: String): ClusterCreator.this.type = {
       this.clusterName = assertLength(CommonUtil.assertOnlyNumberAndChar(clusterName))
       this

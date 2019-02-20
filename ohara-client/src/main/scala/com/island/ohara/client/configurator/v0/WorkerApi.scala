@@ -17,11 +17,22 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
+import com.island.ohara.common.util.VersionUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
 object WorkerApi {
   val WORKER_PREFIX_PATH: String = "workers"
+
+  /**
+    * the default docker image used to run containers of worker cluster
+    */
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtil.VERSION}"
+
+  /**
+    * bound by worker. It supplies the restful APIs of worker.
+    */
+  val CLIENT_PORT_DEFAULT: Int = 8083
 
   /**
     * Create a basic request with default value.
@@ -64,7 +75,9 @@ object WorkerApi {
                                                 statusTopicReplications: Option[Short],
                                                 jars: Seq[String],
                                                 nodeNames: Seq[String])
-      extends ClusterCreationRequest
+      extends ClusterCreationRequest {
+    override def ports: Seq[Int] = Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT))
+  }
 
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
     jsonFormat15(WorkerClusterCreationRequest)

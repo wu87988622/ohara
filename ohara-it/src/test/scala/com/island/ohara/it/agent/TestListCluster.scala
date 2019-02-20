@@ -18,6 +18,7 @@ package com.island.ohara.it.agent
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
@@ -38,6 +39,8 @@ class TestListCluster extends IntegrationTest with Matchers {
 
   private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
 
+  private[this] val cleanup: Boolean = true
+
   @Before
   def setup(): Unit = if (nodeCache.isEmpty)
     skipTest(s"${CollieTestUtil.key} don't exist so all tests in ${classOf[TestListCluster].getSimpleName} are ignored")
@@ -46,12 +49,12 @@ class TestListCluster extends IntegrationTest with Matchers {
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
-        withClue(s"failed to find ${ZookeeperCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(ZookeeperCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${BrokerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(BrokerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
-        withClue(s"failed to find ${WorkerCollie.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(WorkerCollie.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.images().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.images().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+        withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
+          dockerClient.images().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
 
@@ -60,15 +63,20 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     val name = nameHolder.generateClusterName()
 
-    // the port:22 is not illegal so we can't create zookeeper cluster
-    try Await.result(clusterCollie
-                       .zookeeperCollie()
-                       .creator()
-                       .clientPort(1000)
-                       .nodeNames(nodeCache.map(_.name))
-                       .clusterName(name)
-                       .create(),
-                     60 seconds)
+    try Await.result(
+      clusterCollie
+        .zookeeperCollie()
+        .creator()
+        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
+        // the port:1000 is not illegal so we can't create zookeeper cluster
+        .clientPort(1000)
+        .peerPort(CommonUtil.availablePort())
+        .electionPort(CommonUtil.availablePort())
+        .nodeNames(nodeCache.map(_.name))
+        .clusterName(name)
+        .create(),
+      60 seconds
+    )
     catch {
       case _: Throwable =>
       // creation is "async" so we can't assume the result...
@@ -92,7 +100,10 @@ class TestListCluster extends IntegrationTest with Matchers {
       clusterCollie
         .zookeeperCollie()
         .creator()
+        .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .clientPort(CommonUtil.availablePort())
+        .peerPort(CommonUtil.availablePort())
+        .electionPort(CommonUtil.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(nameHolder.generateClusterName())
         .create(),
@@ -105,7 +116,10 @@ class TestListCluster extends IntegrationTest with Matchers {
         clusterCollie
           .brokerCollie()
           .creator()
+          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
+          // the port:1000 is not illegal so we can't create broker cluster
           .clientPort(1000)
+          .exporterPort(CommonUtil.availablePort())
           .nodeNames(nodeCache.map(_.name))
           .clusterName(name)
           .zookeeperClusterName(zkCluster.name)
@@ -127,12 +141,12 @@ class TestListCluster extends IntegrationTest with Matchers {
       CommonUtil.await(
         () => !Await.result(clusterCollie.brokerCollie().clusters(), 60 seconds).exists(_._1.name == name),
         java.time.Duration.ofSeconds(30))
-    } finally Await.result(clusterCollie.zookeeperCollie().remove(zkCluster.name), 60 seconds)
+    } finally if (cleanup) Await.result(clusterCollie.zookeeperCollie().remove(zkCluster.name), 60 seconds)
   }
 
   @After
   def tearDown(): Unit = {
     Releasable.close(clusterCollie)
-    Releasable.close(nameHolder)
+    if (cleanup) Releasable.close(nameHolder)
   }
 }
