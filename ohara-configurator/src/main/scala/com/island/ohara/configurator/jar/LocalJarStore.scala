@@ -93,9 +93,10 @@ private[configurator] abstract class LocalJarStore(val homeFolder: String) exten
 
   override def url(id: String): Future[URL] = doUrls().map(_(id))
 
-  override def urls(ids: Seq[String]): Future[Seq[URL]] = doUrls().map(_.filter {
-    case (id, url) => ids.contains(id)
-  }.values.toSeq)
+  override def urls(ids: Seq[String]): Future[Seq[URL]] = doUrls().map { idAndUrl =>
+    ids.foreach(id => if (!idAndUrl.exists(_._1 == id)) throw new NoSuchElementException(s"$id doesn't exist"))
+    idAndUrl.values.toSeq
+  }
 
   override def urls(): Future[Seq[URL]] = doUrls().map(_.values.toSeq)
 

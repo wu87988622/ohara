@@ -70,7 +70,10 @@ trait JarStore extends Releasable {
     Future.failed(new IllegalArgumentException(s"$id can't be empty"))
   else jarInfos().map(_.find(_.id == id).head)
 
-  def jarInfos(ids: String): Future[Seq[JarInfo]] = jarInfos().map(_.filter(p => ids.contains(p.id)))
+  def jarInfos(ids: Seq[String]): Future[Seq[JarInfo]] = jarInfos().map { jars =>
+    ids.foreach(id => if (!jars.exists(_.id == id)) throw new NoSuchElementException(s"$id doesn't exist"))
+    jars.filter(jar => ids.contains(jar.id))
+  }
 
   def jarInfos(): Future[Seq[JarInfo]]
 
