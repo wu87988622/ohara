@@ -81,18 +81,9 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       ZookeeperClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        clientPort = first.environments
-          .get(ZookeeperCollie.CLIENT_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.CLIENT_PORT_DEFAULT),
-        peerPort = first.environments
-          .get(ZookeeperCollie.PEER_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.PEER_PORT_DEFAULT),
-        electionPort = first.environments
-          .get(ZookeeperCollie.ELECTION_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(ZookeeperCollie.ELECTION_PORT_DEFAULT),
+        clientPort = first.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt,
+        peerPort = first.environments(ZookeeperCollie.PEER_PORT_KEY).toInt,
+        electionPort = first.environments(ZookeeperCollie.ELECTION_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       ))
   }
@@ -134,12 +125,8 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         name = clusterName,
         imageName = first.imageName,
         zookeeperClusterName = first.environments(ZOOKEEPER_CLUSTER_NAME),
-        exporterPort = first.environments
-          .get(BrokerCollie.EXPORTER_PORT_KEY)
-          .map(_.toInt)
-          .getOrElse(BrokerCollie.EXPORTER_PORT_DEFAULT),
-        clientPort =
-          first.environments.get(BrokerCollie.CLIENT_PORT_KEY).map(_.toInt).getOrElse(BrokerCollie.CLIENT_PORT_DEFAULT),
+        exporterPort = first.environments(BrokerCollie.EXPORTER_PORT_KEY).toInt,
+        clientPort = first.environments(BrokerCollie.CLIENT_PORT_KEY).toInt,
         nodeNames = containers.map(_.nodeName)
       ))
   }
@@ -446,8 +433,7 @@ private object ClusterCollieImpl {
             case (existNodes, newNodes, zkContainers) =>
               if (zkContainers.isEmpty) throw new IllegalArgumentException(s"$clusterName doesn't exist")
               val zookeepers = zkContainers
-                .map(c =>
-                  s"${c.nodeName}:${c.environments.getOrElse(ZookeeperCollie.CLIENT_PORT_KEY, ZookeeperCollie.CLIENT_PORT_DEFAULT)}")
+                .map(c => s"${c.nodeName}:${c.environments(ZookeeperCollie.CLIENT_PORT_KEY).toInt}")
                 .mkString(",")
 
               val existRoute: Map[String, String] = existNodes.map {
@@ -602,8 +588,7 @@ private object ClusterCollieImpl {
             if (brokerContainers.isEmpty)
               throw new IllegalArgumentException(s"broker cluster:$brokerClusterName doesn't exist")
             val brokers = brokerContainers
-              .map(c =>
-                s"${c.nodeName}:${c.environments.getOrElse(BrokerCollie.CLIENT_PORT_KEY, BrokerCollie.CLIENT_PORT_DEFAULT)}")
+              .map(c => s"${c.nodeName}:${c.environments(BrokerCollie.CLIENT_PORT_KEY).toInt}")
               .mkString(",")
 
             val existRoute: Map[String, String] = existNodes.map {

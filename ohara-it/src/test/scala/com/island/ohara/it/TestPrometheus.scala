@@ -22,6 +22,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.{ClusterCollie, DockerClient, NodeCollie}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -104,7 +105,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
 
 //  val clientPort = CommonUtil.availablePort()
   def startZK(f: ZookeeperClusterInfo => Unit): Unit = {
-    val clusterName = methodName()
+    val clusterName = CommonUtil.randomString(10)
     val electionPort = CommonUtil.availablePort()
     val peerPort = CommonUtil.availablePort()
     val clientPort = CommonUtil.availablePort()
@@ -114,6 +115,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
       Await.result(
         zookeeperCollie
           .creator()
+          .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
           .clientPort(clientPort)
           .electionPort(electionPort)
           .peerPort(peerPort)
@@ -126,7 +128,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
   }
 
   def startBroker(zkClusterName: String, f: (Int, BrokerClusterInfo) => Unit): Unit = {
-    val clusterName = methodName()
+    val clusterName = CommonUtil.randomString(10)
     val clientPort = CommonUtil.availablePort()
     val exporterPort = CommonUtil.availablePort()
     val brokerCollie = clusterCollie.brokerCollie()
@@ -136,6 +138,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
       Await.result(
         brokerCollie
           .creator()
+          .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           .clusterName(clusterName)
           .clientPort(clientPort)
           .exporterPort(exporterPort)

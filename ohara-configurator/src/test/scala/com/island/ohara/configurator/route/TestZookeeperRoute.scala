@@ -113,19 +113,19 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testList(): Unit = {
     val request0 = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      imageName = Some(CommonUtil.randomString(10)),
+      clientPort = Some(CommonUtil.availablePort()),
+      electionPort = Some(CommonUtil.availablePort()),
+      peerPort = Some(CommonUtil.availablePort()),
       nodeNames = nodeNames
     )
     assert(request0, result(access.add(request0)))
     val request1 = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10) + "2",
-      imageName = Some("abcdef"),
-      clientPort = Some(123),
-      electionPort = Some(456),
-      peerPort = Some(1345),
+      imageName = Some(CommonUtil.randomString(10)),
+      clientPort = Some(CommonUtil.availablePort()),
+      electionPort = Some(CommonUtil.availablePort()),
+      peerPort = Some(CommonUtil.availablePort()),
       nodeNames = nodeNames
     )
     assert(request1, result(access.add(request1)))
@@ -220,8 +220,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def createZkClusterWithSameName(): Unit = {
-    val request = ZookeeperApi.creationRequest(
+    val request = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
+      imageName = None,
+      clientPort = Some(CommonUtil.availablePort()),
+      electionPort = Some(CommonUtil.availablePort()),
+      peerPort = Some(CommonUtil.availablePort()),
       nodeNames = nodeNames
     )
 
@@ -229,6 +233,105 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     result(access.add(request))
 
     an[IllegalArgumentException] should be thrownBy result(access.add(request))
+  }
+
+  @Test
+  def clientPortConflict(): Unit = {
+    val clientPort = CommonUtil.availablePort()
+    val request = ZookeeperClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      clientPort = Some(clientPort),
+      electionPort = Some(CommonUtil.availablePort()),
+      peerPort = Some(CommonUtil.availablePort()),
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(request))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(request.copy(name = CommonUtil.randomString(10))))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      access.add(
+        request.copy(name = CommonUtil.randomString(10),
+                     electionPort = Some(CommonUtil.availablePort()),
+                     peerPort = Some(CommonUtil.availablePort()))))
+
+    // pass
+    result(
+      access.add(request.copy(
+        name = CommonUtil.randomString(10),
+        clientPort = Some(CommonUtil.availablePort()),
+        electionPort = Some(CommonUtil.availablePort()),
+        peerPort = Some(CommonUtil.availablePort())
+      )))
+  }
+
+  @Test
+  def peerPortConflict(): Unit = {
+    val peerPort = CommonUtil.availablePort()
+    val request = ZookeeperClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      clientPort = Some(CommonUtil.availablePort()),
+      electionPort = Some(CommonUtil.availablePort()),
+      peerPort = Some(peerPort),
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(request))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(request.copy(name = CommonUtil.randomString(10))))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      access.add(
+        request.copy(name = CommonUtil.randomString(10),
+                     electionPort = Some(CommonUtil.availablePort()),
+                     clientPort = Some(CommonUtil.availablePort()))))
+
+    // pass
+    result(
+      access.add(request.copy(
+        name = CommonUtil.randomString(10),
+        clientPort = Some(CommonUtil.availablePort()),
+        electionPort = Some(CommonUtil.availablePort()),
+        peerPort = Some(CommonUtil.availablePort())
+      )))
+  }
+
+  @Test
+  def electionPortConflict(): Unit = {
+    val electionPort = CommonUtil.availablePort()
+    val request = ZookeeperClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      clientPort = Some(CommonUtil.availablePort()),
+      electionPort = Some(electionPort),
+      peerPort = Some(CommonUtil.availablePort()),
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(access.add(request))
+
+    an[IllegalArgumentException] should be thrownBy result(access.add(request.copy(name = CommonUtil.randomString(10))))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      access.add(
+        request.copy(name = CommonUtil.randomString(10),
+                     peerPort = Some(CommonUtil.availablePort()),
+                     clientPort = Some(CommonUtil.availablePort()))))
+
+    // pass
+    result(
+      access.add(request.copy(
+        name = CommonUtil.randomString(10),
+        clientPort = Some(CommonUtil.availablePort()),
+        electionPort = Some(CommonUtil.availablePort()),
+        peerPort = Some(CommonUtil.availablePort())
+      )))
   }
 
   @After

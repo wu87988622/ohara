@@ -19,6 +19,7 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.{WorkerClusterCreationRequest, WorkerClusterInfo}
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtil, Releasable}
@@ -145,7 +146,14 @@ class TestWorkerRoute extends MediumTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ZookeeperApi.creationRequest(zkClusterName, nodeNames))).name shouldBe zkClusterName
+        .add(ZookeeperClusterCreationRequest(
+          name = zkClusterName,
+          imageName = None,
+          clientPort = Some(CommonUtil.availablePort()),
+          electionPort = Some(CommonUtil.availablePort()),
+          peerPort = Some(CommonUtil.availablePort()),
+          nodeNames = nodeNames
+        ))).name shouldBe zkClusterName
     val anotherBk = CommonUtil.randomString(10)
     result(
       BrokerApi
@@ -217,13 +225,14 @@ class TestWorkerRoute extends MediumTest with Matchers {
       name = CommonUtil.randomString(10),
       brokerClusterName = bkClusterName,
       nodeNames = nodeNames
-    )
+    ).copy(clientPort = Some(CommonUtil.availablePort()))
+
     assert(request0, result(access.add(request0)))
     val request1 = creationRequest(
       name = CommonUtil.randomString(10),
       brokerClusterName = bkClusterName,
       nodeNames = nodeNames
-    )
+    ).copy(clientPort = Some(CommonUtil.availablePort()))
     assert(request1, result(access.add(request1)))
 
     val clusters = result(access.list())
@@ -360,6 +369,25 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
     // we don't need to create another bk cluster since it is feasible to create multi wk cluster on same broker cluster
     an[IllegalArgumentException] should be thrownBy result(access.add(request))
+  }
+
+  @Test
+  def clientPortConflict(): Unit = {
+    val clientPort = CommonUtil.availablePort()
+    val request = creationRequest(
+      name = CommonUtil.randomString(10),
+      brokerClusterName = bkClusterName,
+      nodeNames = nodeNames
+    ).copy(clientPort = Some(clientPort))
+
+    // pass
+    result(access.add(request))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      access.add(request.copy(name = CommonUtil.randomString(10), clientPort = Some(clientPort))))
+
+    // pass
+    result(access.add(request.copy(name = CommonUtil.randomString(10), clientPort = Some(CommonUtil.availablePort()))))
   }
 
   @After

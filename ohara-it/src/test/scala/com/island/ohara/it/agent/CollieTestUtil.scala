@@ -16,8 +16,9 @@
 
 package com.island.ohara.it.agent
 
-import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie, ZookeeperCollie}
+import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 
 private[agent] object CollieTestUtil {
 
@@ -41,9 +42,9 @@ private[agent] object CollieTestUtil {
       assertImages(node,
                    Seq(
                      "centos:7",
-                     ZookeeperCollie.IMAGE_NAME_DEFAULT,
-                     BrokerCollie.IMAGE_NAME_DEFAULT,
-                     WorkerCollie.IMAGE_NAME_DEFAULT
+                     ZookeeperApi.IMAGE_NAME_DEFAULT,
+                     BrokerApi.IMAGE_NAME_DEFAULT,
+                     WorkerApi.IMAGE_NAME_DEFAULT
                    ))
       node
     }

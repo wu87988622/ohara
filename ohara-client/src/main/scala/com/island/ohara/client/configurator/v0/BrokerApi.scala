@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.common.util.VersionUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -23,27 +24,30 @@ object BrokerApi {
   val BROKER_PREFIX_PATH: String = "brokers"
 
   /**
-    * Create a basic request with default value.
-    * @param name cluster name
-    * @param nodeNames node names
-    * @return request
+    * the default docker image used to run containers of broker cluster
     */
-  def creationRequest(name: String, nodeNames: Seq[String]): BrokerClusterCreationRequest =
-    BrokerClusterCreationRequest(
-      name = name,
-      imageName = None,
-      zookeeperClusterName = None,
-      exporterPort = None,
-      clientPort = None,
-      nodeNames = nodeNames
-    )
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtil.VERSION}"
+
+  /**
+    * client port bound by broker is used to communicate to client's producer/consumer
+    */
+  val CLIENT_PORT_DEFAULT: Int = 9092
+
+  /**
+    * exporter port is used to export metrics from broker.
+    */
+  val EXPORTER_PORT_DEFAULT: Int = 7071
+
   final case class BrokerClusterCreationRequest(name: String,
                                                 imageName: Option[String],
                                                 zookeeperClusterName: Option[String],
                                                 exporterPort: Option[Int],
                                                 clientPort: Option[Int],
                                                 nodeNames: Seq[String])
-      extends ClusterCreationRequest
+      extends ClusterCreationRequest {
+    override def ports: Seq[Int] =
+      Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT), exporterPort.getOrElse(EXPORTER_PORT_DEFAULT))
+  }
 
   implicit val BROKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[BrokerClusterCreationRequest] =
     jsonFormat6(BrokerClusterCreationRequest)

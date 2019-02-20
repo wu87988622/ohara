@@ -20,8 +20,11 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
-import com.island.ohara.agent.{Collie, NodeCollie}
+import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
@@ -31,7 +34,7 @@ import spray.json.RootJsonFormat
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtil {
   // This is a query parameter.
   type TargetCluster = Option[String]
@@ -172,12 +175,13 @@ private[route] object RouteUtil {
         routeOfUpdate[Req, Res](id, hookOfUpdate)
     }
 
-  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo](collie: Collie[Res],
-                                                                             root: String,
-                                                                             hookOfCreation: Req => Future[Res])(
-    implicit nodeCollie: NodeCollie,
-    rm: RootJsonFormat[Req],
-    rm1: RootJsonFormat[Res]): server.Route =
+  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
+    collie: Collie[Res],
+    root: String,
+    hookOfCreation: (Seq[ClusterInfo], Req) => Future[Res])(implicit clusterCollie: ClusterCollie,
+                                                            nodeCollie: NodeCollie,
+                                                            rm: RootJsonFormat[Req],
+                                                            rm1: RootJsonFormat[Res]): server.Route =
     pathPrefix(root) {
       pathEnd {
         // create cluster
@@ -185,7 +189,40 @@ private[route] object RouteUtil {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
             // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
-            onSuccess(nodeCollie.nodes(req.nodeNames).flatMap(_ => hookOfCreation(req)))(complete(_))
+            onSuccess(
+              nodeCollie
+                .nodes(req.nodeNames)
+                .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
+                .flatMap { clusters =>
+                  def serviceName(cluster: ClusterInfo): String = cluster match {
+                    case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
+                    case _: BrokerClusterInfo    => s"broker cluster:${cluster.name}"
+                    case _: WorkerClusterInfo    => s"worker cluster:${cluster.name}"
+                    case _                       => s"cluster:${cluster.name}"
+                  }
+                  // check name conflict
+                  clusters
+                    .filter(c => classTag[Res].runtimeClass.isInstance(c))
+                    .map(_.asInstanceOf[Res])
+                    .find(_.name == req.name)
+                    .foreach(conflictCluster =>
+                      new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
+
+                  // check port conflict
+                  Some(clusters
+                    .flatMap { cluster =>
+                      val conflictPorts = cluster.ports.filter(p => req.ports.contains(p))
+                      if (conflictPorts.isEmpty) None
+                      else Some(cluster -> conflictPorts)
+                    }
+                    .map {
+                      case (cluster, conflictPorts) =>
+                        s"ports:${conflictPorts.mkString(",")} are used by ${serviceName(cluster)}"
+                    }
+                    .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
+
+                  hookOfCreation(clusters, req)
+                })(complete(_))
           }
         } ~ get(onSuccess(collie.clusters()) { clusters =>
           complete(clusters.keys)

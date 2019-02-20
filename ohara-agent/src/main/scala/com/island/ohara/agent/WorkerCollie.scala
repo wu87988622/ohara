@@ -21,7 +21,7 @@ import java.util.Objects
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.{CommonUtil, VersionUtil}
+import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -48,16 +48,16 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] var clientPort: Int = WorkerCollie.CLIENT_PORT_DEFAULT
+    private[this] var clientPort: Int = -1
     private[this] var brokerClusterName: String = _
-    private[this] var groupId: String = CommonUtil.randomString()
-    private[this] var offsetTopicName = s"$groupId-offset-topic"
+    private[this] var groupId: String = _
+    private[this] var offsetTopicName: String = _
     private[this] var offsetTopicReplications: Short = 1
     private[this] var offsetTopicPartitions: Int = 1
-    private[this] var configTopicName = s"$groupId-config-topic"
+    private[this] var configTopicName: String = _
     private[this] var configTopicReplications: Short = 1
     // configTopicPartitions must be 1
-    private[this] var statusTopicName = s"$groupId-status-topic"
+    private[this] var statusTopicName: String = _
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
     private[this] var jarUrls: Seq[URL] = Seq.empty
@@ -67,32 +67,20 @@ object WorkerCollie {
       this
     }
 
-    @Optional("default is 8083")
-    def clientPort(port: Option[Int]): ClusterCreator = {
-      port.foreach(clientPort = _)
+    def clientPort(clientPort: Int): ClusterCreator = {
+      this.clientPort = clientPort
       this
     }
 
-    @Optional("default is 8083")
-    def clientPort(port: Int): ClusterCreator = clientPort(Some(port))
-
-    @Optional("group id can be generated automatically")
-    def groupId(id: Option[String]): ClusterCreator = {
-      id.foreach(groupId = _)
+    def groupId(groupId: String): ClusterCreator = {
+      this.groupId = groupId
       this
     }
 
-    @Optional("group id can be generated automatically")
-    def groupId(id: String): ClusterCreator = groupId(Some(id))
-
-    @Optional("group id can be generated automatically")
-    def offsetTopicName(name: Option[String]): ClusterCreator = {
-      name.foreach(offsetTopicName = _)
+    def offsetTopicName(offsetTopicName: String): ClusterCreator = {
+      this.offsetTopicName = offsetTopicName
       this
     }
-
-    @Optional("group id can be generated automatically")
-    def offsetTopicName(name: String): ClusterCreator = offsetTopicName(Some(name))
 
     @Optional("default number is 1")
     def offsetTopicReplications(replications: Option[Short]): ClusterCreator = {
@@ -112,14 +100,10 @@ object WorkerCollie {
     @Optional("default number is 1")
     def offsetTopicPartitions(partitions: Int): ClusterCreator = offsetTopicPartitions(Some(partitions))
 
-    @Optional("status topic can be generated automatically")
-    def statusTopicName(name: Option[String]): ClusterCreator = {
-      name.foreach(statusTopicName = _)
+    def statusTopicName(statusTopicName: String): ClusterCreator = {
+      this.statusTopicName = statusTopicName
       this
     }
-
-    @Optional("status topic can be generated automatically")
-    def statusTopicName(name: String): ClusterCreator = statusTopicName(Some(name))
 
     @Optional("default number is 1")
     def statusTopicReplications(replications: Option[Short]): ClusterCreator = {
@@ -139,14 +123,10 @@ object WorkerCollie {
     @Optional("default number is 1")
     def statusTopicPartitions(partitions: Int): ClusterCreator = statusTopicPartitions(Some(partitions))
 
-    @Optional("config topic can be generated automatically")
-    def configTopicName(name: Option[String]): ClusterCreator = {
-      name.foreach(configTopicName = _)
+    def configTopicName(configTopicName: String): ClusterCreator = {
+      this.configTopicName = configTopicName
       this
     }
-
-    @Optional("config topic can be generated automatically")
-    def configTopicName(name: String): ClusterCreator = configTopicName(Some(name))
 
     @Optional("default number is 1")
     def configTopicReplications(replications: Option[Short]): ClusterCreator = {
@@ -168,26 +148,26 @@ object WorkerCollie {
 
     override def create(): Future[WorkerClusterInfo] = doCreate(
       clusterName = Objects.requireNonNull(clusterName),
-      imageName = Option(imageName).getOrElse(WorkerCollie.IMAGE_NAME_DEFAULT),
+      imageName = Objects.requireNonNull(imageName),
       brokerClusterName = Objects.requireNonNull(brokerClusterName),
-      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort should be positive number"),
+      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort is required"),
       groupId = Objects.requireNonNull(groupId),
       offsetTopicName = Objects.requireNonNull(offsetTopicName),
-      offsetTopicReplications = CommonUtil
-        .requirePositiveShort(offsetTopicReplications, () => "offsetTopicReplications should be positive number"),
+      offsetTopicReplications =
+        CommonUtil.requirePositiveShort(offsetTopicReplications, () => "offsetTopicReplications is required"),
       offsetTopicPartitions =
-        CommonUtil.requirePositiveInt(offsetTopicPartitions, () => "offsetTopicPartitions should be positive number"),
+        CommonUtil.requirePositiveInt(offsetTopicPartitions, () => "offsetTopicPartitions is required"),
       statusTopicName = Objects.requireNonNull(statusTopicName),
-      statusTopicReplications = CommonUtil
-        .requirePositiveShort(statusTopicReplications, () => "statusTopicReplications should be positive number"),
+      statusTopicReplications =
+        CommonUtil.requirePositiveShort(statusTopicReplications, () => "statusTopicReplications is required"),
       statusTopicPartitions =
-        CommonUtil.requirePositiveInt(statusTopicPartitions, () => "statusTopicPartitions should be positive number"),
+        CommonUtil.requirePositiveInt(statusTopicPartitions, () => "statusTopicPartitions is required"),
       configTopicName = Objects.requireNonNull(configTopicName),
-      configTopicReplications = CommonUtil
-        .requirePositiveShort(configTopicReplications, () => "configTopicReplications should be positive number"),
+      configTopicReplications =
+        CommonUtil.requirePositiveShort(configTopicReplications, () => "configTopicReplications is required"),
       Objects.requireNonNull(jarUrls),
       nodeNames =
-        if (nodeNames == null || nodeNames.isEmpty) throw new IllegalArgumentException("nodes can't be empty")
+        if (nodeNames == null || nodeNames.isEmpty) throw new NullPointerException("nodes can't be empty")
         else nodeNames
     )
 
@@ -207,11 +187,6 @@ object WorkerCollie {
                            jarUrls: Seq[URL],
                            nodeNames: Seq[String]): Future[WorkerClusterInfo]
   }
-
-  /**
-    * ohara-it needs this property for testing.
-    */
-  private[ohara] val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtil.VERSION}"
   private[agent] val GROUP_ID_KEY: String = "WORKER_GROUP"
   private[agent] val OFFSET_TOPIC_KEY: String = "WORKER_OFFSET_TOPIC"
   private[agent] val OFFSET_TOPIC_REPLICATIONS_KEY: String = "WORKER_OFFSET_TOPIC_REPLICATIONS"
@@ -225,7 +200,6 @@ object WorkerCollie {
   private[agent] val ADVERTISED_HOSTNAME_KEY: String = "WORKER_ADVERTISED_HOSTNAME"
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "WORKER_ADVERTISED_CLIENT_PORT"
   private[agent] val CLIENT_PORT_KEY: String = "WORKER_CLIENT_PORT"
-  private[agent] val CLIENT_PORT_DEFAULT: Int = 8083
   private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
 
 }

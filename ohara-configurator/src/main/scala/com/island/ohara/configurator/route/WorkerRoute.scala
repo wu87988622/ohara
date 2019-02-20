@@ -19,7 +19,9 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,60 +31,49 @@ object WorkerRoute {
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
       root = WORKER_PREFIX_PATH,
-      hookOfCreation = (req: WorkerClusterCreationRequest) =>
-        // we need to handle the "default name" of broker cluster
-        // this is important since user can't assign zk in ohara 0.2 so request won't carry the broker name.
-        // we have to reassign the broker name manually.
-        // TODO: remove this "friendly" helper in ohara 0.3
-        clusterCollie
-          .clusters()
-          .map { clusters =>
-            if (clusters.keys
-                  .filter(_.isInstanceOf[WorkerClusterInfo])
-                  .map(_.asInstanceOf[WorkerClusterInfo])
-                  .exists(_.name == req.name))
-              throw new IllegalArgumentException(s"worker cluster:${req.name} is running")
-            req.brokerClusterName
-              .map { bkName =>
-                clusters.keys
-                  .filter(_.isInstanceOf[BrokerClusterInfo])
-                  .find(_.name == bkName)
-                  .map(_.name)
-                  .getOrElse(throw new NoSuchClusterException(s"$bkName doesn't exist"))
+      hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
+        jarStore
+          .urls(req.jars)
+          // match the broker cluster
+          .map(req.brokerClusterName
+            .map { bkName =>
+              clusters
+                .filter(_.isInstanceOf[BrokerClusterInfo])
+                .find(_.name == bkName)
+                .map(_.name)
+                .getOrElse(throw new NoSuchClusterException(s"$bkName doesn't exist"))
+            }
+            .getOrElse {
+              val bkClusters = clusters.filter(_.isInstanceOf[BrokerClusterInfo])
+              bkClusters.size match {
+                case 0 =>
+                  throw new IllegalArgumentException(
+                    s"You didn't specify the bk cluster for wk cluster:${req.name}, and there is no default bk cluster")
+                case 1 => bkClusters.head.name
+                case _ =>
+                  throw new IllegalArgumentException(
+                    s"You didn't specify the bk cluster for wk cluster ${req.name}, and there are too many bk clusters:{${bkClusters
+                      .map(_.name)}}")
               }
-              .getOrElse {
-                val bkClusters = clusters.keys.filter(_.isInstanceOf[BrokerClusterInfo])
-                bkClusters.size match {
-                  case 0 =>
-                    throw new IllegalArgumentException(
-                      s"You didn't specify the bk cluster for wk cluster:${req.name}, and there is no default bk cluster")
-                  case 1 => bkClusters.head.name
-                  case _ =>
-                    throw new IllegalArgumentException(
-                      s"You didn't specify the bk cluster for wk cluster ${req.name}, and there are too many bk clusters:{${bkClusters
-                        .map(_.name)}}")
-                }
-              }
-          }
-          .flatMap(bkName => jarStore.urls(req.jars).map(bkName -> _))
+            } -> _)
           .flatMap {
             case (bkName, urls) =>
               clusterCollie
                 .workerCollie()
                 .creator()
                 .clusterName(req.name)
-                .clientPort(req.clientPort)
+                .clientPort(req.clientPort.getOrElse(WorkerApi.CLIENT_PORT_DEFAULT))
                 .brokerClusterName(bkName)
-                .groupId(req.groupId)
-                .configTopicName(req.configTopicName)
+                .groupId(req.groupId.getOrElse(CommonUtil.randomString(10)))
+                .configTopicName(req.configTopicName.getOrElse(s"config-${CommonUtil.randomString(10)}"))
                 .configTopicReplications(req.configTopicReplications)
-                .offsetTopicName(req.offsetTopicName)
+                .offsetTopicName(req.offsetTopicName.getOrElse(s"offset-${CommonUtil.randomString(10)}"))
                 .offsetTopicPartitions(req.offsetTopicPartitions)
                 .offsetTopicReplications(req.offsetTopicReplications)
-                .statusTopicName(req.statusTopicName)
+                .statusTopicName(req.statusTopicName.getOrElse(s"status-${CommonUtil.randomString(10)}"))
                 .statusTopicPartitions(req.statusTopicPartitions)
                 .statusTopicReplications(req.statusTopicReplications)
-                .imageName(req.imageName)
+                .imageName(req.imageName.getOrElse(WorkerApi.IMAGE_NAME_DEFAULT))
                 .jarUrls(urls)
                 .nodeNames(req.nodeNames)
                 .create()

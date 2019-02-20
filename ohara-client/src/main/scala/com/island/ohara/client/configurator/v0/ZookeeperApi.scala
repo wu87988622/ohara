@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.common.util.VersionUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -22,27 +23,36 @@ object ZookeeperApi {
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
   /**
-    * Create a basic request with default value.
-    * @param name cluster name
-    * @param nodeNames node names
-    * @return request
+    * the default docker image used to run containers of worker cluster
     */
-  def creationRequest(name: String, nodeNames: Seq[String]): ZookeeperClusterCreationRequest =
-    ZookeeperClusterCreationRequest(
-      name = name,
-      imageName = None,
-      clientPort = None,
-      peerPort = None,
-      electionPort = None,
-      nodeNames = nodeNames
-    )
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtil.VERSION}"
+
+  /**
+    * used to access zookeeper cluster's data
+    */
+  val CLIENT_PORT_DEFAULT: Int = 2181
+
+  /**
+    * zookeeper's inner port which is used to communicate with other zk nodes.
+    */
+  val PEER_PORT_DEFAULT: Int = 2888
+
+  /**
+    * used to run election process.
+    */
+  val ELECTION_PORT_DEFAULT: Int = 3888
+
   final case class ZookeeperClusterCreationRequest(name: String,
                                                    imageName: Option[String],
                                                    clientPort: Option[Int],
                                                    peerPort: Option[Int],
                                                    electionPort: Option[Int],
                                                    nodeNames: Seq[String])
-      extends ClusterCreationRequest
+      extends ClusterCreationRequest {
+    override def ports: Seq[Int] = Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT),
+                                       peerPort.getOrElse(PEER_PORT_DEFAULT),
+                                       electionPort.getOrElse(ELECTION_PORT_DEFAULT))
+  }
 
   implicit val ZOOKEEPER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ZookeeperClusterCreationRequest] =
     jsonFormat6(ZookeeperClusterCreationRequest)
