@@ -41,7 +41,7 @@ class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
                        user = node.user,
                        password = node.password
                      )),
-                   30 seconds)
+                   120 seconds)
     }
 
     val nodes = Await.result(nodeApi.list(), 120 seconds)
