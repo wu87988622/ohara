@@ -45,8 +45,30 @@ class TestJarStore extends SmallTest with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
+  def listNonexistentId(): Unit = {
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfo("Asdasd"))
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfos(Seq("Asdasd")))
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.url("Asdasd"))
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.urls(Seq("Asdasd")))
+  }
+
+  @Test
+  def listNonexistentIdWithExistOne(): Unit = {
+    val f = generateFile(CommonUtil.randomString().getBytes)
+    val plugin = result(access.upload(f))
+    val jars = result(configurator.jarStore.jarInfos(Seq(plugin.id)))
+    jars.size shouldBe 1
+    jars.head shouldBe plugin
+
+    result(configurator.jarStore.jarInfo(plugin.id)) shouldBe plugin
+
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.jarInfos(Seq("Asdasd", plugin.id)))
+    an[NoSuchElementException] should be thrownBy result(configurator.jarStore.urls(Seq("Asdasd", plugin.id)))
+  }
+
+  @Test
   def testDownload(): Unit = {
-    val content = methodName()
+    val content = CommonUtil.randomString()
     val f = generateFile(content.getBytes)
 
     val plugin = result(access.upload(f))
