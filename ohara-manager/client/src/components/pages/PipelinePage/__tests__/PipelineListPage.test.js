@@ -71,11 +71,11 @@ describe('<PipelineListPage />', () => {
     expect(wrapper.dive().props().title).toBe(PIPELINE);
   });
 
-  it('renders a loading indicator when this.state.isLoading is true', () => {
-    wrapper.setState({ isLoading: true });
+  it('renders a loading indicator when the pipeline data is still loading', () => {
+    wrapper.setState({ isFetchingPipeline: true });
     expect(wrapper.find('TableLoader').length).toBe(1);
 
-    wrapper.setState({ isLoading: false });
+    wrapper.setState({ isFetchingPipeline: false });
     expect(wrapper.find('TableLoader').length).toBe(0);
   });
 
@@ -126,20 +126,24 @@ describe('<PipelineListPage />', () => {
     expect(props.history.push).toHaveBeenCalledWith(expectedUrl);
   });
 
-  it(`throws an error message if there's no worker cluster present`, () => {
-    const evt = { preventDefault: jest.fn() };
-    const workersRes = { data: { result: [] } };
+  it(`toggles <Modal />'s confirm button state if there's no worker cluster present`, async () => {
+    const workersRes = {
+      data: {
+        result: [
+          {
+            name: 'worker-1',
+          },
+        ],
+      },
+    };
 
-    // Reset workers, so we can mimic the data fetching again
-    wrapper.setState({ workers: [] });
+    wrapper.setState({ workers: [], currWorker: {} });
+    expect(wrapper.find('Modal').props().isConfirmDisabled).toBe(true);
 
-    wrapper.find('NewPipelineBtn').prop('handleClick')(evt);
     fetchWorkers.mockImplementation(() => Promise.resolve(workersRes));
+    wrapper = await shallow(<PipelineListPage {...props} />);
 
-    expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(
-      MESSAGES.NO_WORKER_CLUSTER_FOUND_ERROR,
-    );
+    expect(wrapper.find('Modal').props().isConfirmDisabled).toBe(false);
   });
 
   it('renders <ConfirmModal />', () => {

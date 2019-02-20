@@ -23,7 +23,7 @@ import { Link } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import { TableLoader } from 'common/Loader';
+import { TableLoader, ListLoader } from 'common/Loader';
 import { Modal, ConfirmModal } from 'common/Modal';
 import { DataTable } from 'common/Table';
 import { Box } from 'common/Layout';
@@ -100,6 +100,10 @@ const Inner = styled.div`
   padding: 30px 20px;
 `;
 
+const LoaderWrapper = styled.div`
+  margin: 30px;
+`;
+
 class PipelineListPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
@@ -114,7 +118,8 @@ class PipelineListPage extends React.Component {
   state = {
     isSelectClusterModalActive: false,
     isDeletePipelineModalActive: false,
-    isLoading: true,
+    isFetchingPipeline: true,
+    isFetchingWorker: true,
     pipelines: [],
     workers: [],
     currWorker: {},
@@ -128,6 +133,7 @@ class PipelineListPage extends React.Component {
   fetchWorkers = async () => {
     const res = await fetchWorkers();
     const workers = get(res, 'data.result', null);
+    this.setState({ isFetchingWorker: false });
 
     if (workers) {
       this.setState({ workers, currWorker: workers[0] });
@@ -137,7 +143,7 @@ class PipelineListPage extends React.Component {
   fetchPipelines = async () => {
     const res = await fetchPipelines();
     const result = get(res, 'data.result', null);
-    this.setState({ isLoading: false });
+    this.setState({ isFetchingPipeline: false });
 
     if (result) {
       const pipelines = addPipelineStatus(result);
@@ -169,10 +175,6 @@ class PipelineListPage extends React.Component {
   handleSelectClusterModalOpen = e => {
     e.preventDefault();
     this.setState({ isSelectClusterModalActive: true });
-
-    if (isEmpty(this.state.workers)) {
-      toastr.error(MESSAGES.NO_WORKER_CLUSTER_FOUND_ERROR);
-    }
   };
 
   handleSelectClusterModalConfirm = async () => {
@@ -237,7 +239,8 @@ class PipelineListPage extends React.Component {
       isDeletePipelineModalActive,
       isSelectClusterModalActive,
       pipelines,
-      isLoading,
+      isFetchingPipeline,
+      isFetchingWorker,
       workers,
       currWorker,
     } = this.state;
@@ -254,15 +257,21 @@ class PipelineListPage extends React.Component {
             handleCancel={this.handleSelectClusterModalClose}
             isConfirmDisabled={isEmpty(workers) ? true : false}
           >
-            <Inner>
-              <Warning text="Please select a cluster for the new pipeline" />
-              <Select
-                isObject
-                list={workers}
-                selected={currWorker}
-                handleChange={this.handleSelectChange}
-              />
-            </Inner>
+            {isFetchingWorker ? (
+              <LoaderWrapper>
+                <ListLoader />
+              </LoaderWrapper>
+            ) : (
+              <Inner>
+                <Warning text="Please select a cluster for the new pipeline" />
+                <Select
+                  isObject
+                  list={workers}
+                  selected={currWorker}
+                  handleChange={this.handleSelectChange}
+                />
+              </Inner>
+            )}
           </Modal>
 
           <ConfirmModal
@@ -287,7 +296,7 @@ class PipelineListPage extends React.Component {
               />
             </TopWrapper>
             <Box>
-              {isLoading ? (
+              {isFetchingPipeline ? (
                 <TableLoader />
               ) : (
                 <Table headers={this.headers}>
