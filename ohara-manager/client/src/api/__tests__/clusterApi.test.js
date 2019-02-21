@@ -33,7 +33,7 @@ describe('fetchCluster()', () => {
 
     const result = await fetchCluster();
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith('/api/cluster');
+    expect(axiosInstance.get).toHaveBeenCalledWith('/api/info');
     expect(result).toBe(res);
   });
 
@@ -48,7 +48,7 @@ describe('fetchCluster()', () => {
     const result = await fetchCluster();
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith('/api/cluster');
+    expect(axiosInstance.get).toHaveBeenCalledWith('/api/info');
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });

@@ -65,20 +65,16 @@ task runManager {
       commandLine 'yarn'
     }
     exec {
-      commandLine 'yarn', 'clean'
-    }
-    exec {
       commandLine 'yarn', 'setup'
     }
     exec {
-      String configuratorPort = 9999
-      if(project.hasProperty('configuratorPort')) configuratorPort = "${project.getProperty('configuratorPort')}"
-      String configuratorHost = "localhost"
-      if(project.hasProperty('configuratorHost')) configuratorHost = "${project.getProperty('configuratorHost')}"
-      environment "CONFIGURATOR_API", "http://" + configuratorHost + ":" + configuratorPort + "/v0"
+      String port = 22222
+      if(project.hasProperty('port')) port = project.getProperty('port')
 
-      // Run the gradle command like this: gradle runManager -PconfiguratorHost=http://10.1.0.161:7777/v0
-      commandLine 'yarn', 'start:prod', '--configurator', configuratorHost
+      if(!project.hasProperty('configurator')) throw new IllegalArgumentException("configurator is required")
+      String configurator = project.getProperty('configurator')
+
+      commandLine 'node', './index.js', '--port', port, "--configurator", configurator
     }
   }
 }

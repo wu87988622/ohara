@@ -31,8 +31,7 @@ object InfoRoute extends SprayJsonSupport {
   private[this] val SUPPORTED_DATABASES = Seq("mysql")
 
   def apply(implicit workerCollie: WorkerCollie): server.Route =
-    // TODO: OHARA-1212 should remove "cluster" ... by chia
-    path(INFO_PREFIX_PATH | "cluster") {
+    path(INFO_PREFIX_PATH) {
       get {
         import scala.collection.JavaConverters._
         onSuccess(workerCollie.clusters().flatMap { clusters =>
