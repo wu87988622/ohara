@@ -87,6 +87,14 @@ class TestNodeRoute extends SmallTest with Matchers {
   }
 
   @Test
+  def disableToDeleteNodeRunningService(): Unit = {
+    val nodes = result(nodeApi.list())
+    val runningNode = nodes.filter(_.services.exists(_.clusterNames.nonEmpty)).head
+
+    an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.id))
+  }
+
+  @Test
   def testUpdate(): Unit = {
     val req = NodeCreationRequest(Some("a"), 22, "b", "c")
     val res = result(nodeApi.add(req))
