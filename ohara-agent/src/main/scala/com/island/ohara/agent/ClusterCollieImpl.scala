@@ -173,6 +173,18 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
   }
 
   override protected def doClose(): Unit = Releasable.close(clientCache)
+
+  override def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]] =
+    Future
+      .traverse(nodes) { node =>
+        Future {
+          val dockerClient =
+            DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
+          try node -> dockerClient.images()
+          finally dockerClient.close()
+        }
+      }
+      .map(_.toMap)
 }
 
 private object ClusterCollieImpl {

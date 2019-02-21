@@ -178,6 +178,7 @@ private[route] object RouteUtil {
 
   def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
     collie: Collie[Res],
+    defaultImage: String,
     root: String,
     hookBeforeDelete: (Seq[ClusterInfo], String) => Future[String],
     hookOfCreation: (Seq[ClusterInfo], Req) => Future[Res])(implicit clusterCollie: ClusterCollie,
@@ -194,6 +195,17 @@ private[route] object RouteUtil {
             onSuccess(
               nodeCollie
                 .nodes(req.nodeNames)
+                .flatMap(clusterCollie.images)
+                // check the docker images
+                .map { nodesImages =>
+                  val image = req.imageName.getOrElse(defaultImage)
+                  nodesImages
+                    .filterNot(_._2.contains(image))
+                    .keys
+                    .map(_.name)
+                    .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
+                  nodesImages
+                }
                 .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
                 .flatMap { clusters =>
                   def serviceName(cluster: ClusterInfo): String = cluster match {

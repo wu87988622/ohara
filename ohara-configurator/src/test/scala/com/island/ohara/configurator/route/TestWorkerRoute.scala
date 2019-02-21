@@ -35,7 +35,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
-  private[this] val access = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val workerApi = WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def assert(request: WorkerClusterCreationRequest, cluster: WorkerClusterInfo): Unit = {
     cluster.name shouldBe request.name
@@ -92,7 +92,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    assert(request0, result(access.add(request0)))
+    assert(request0, result(workerApi.add(request0)))
 
     val request1 = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
@@ -111,13 +111,13 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    assert(request1, result(access.add(request1)))
+    assert(request1, result(workerApi.add(request1)))
   }
 
   @Test
   def runOnIncorrectBk(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(WorkerClusterCreationRequest(
+      workerApi.add(WorkerClusterCreationRequest(
         name = CommonUtil.randomString(10),
         imageName = None,
         brokerClusterName = Some(CommonUtil.randomString(10)),
@@ -140,7 +140,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
   def testAllSetting(): Unit = {
     val request = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some(CommonUtil.randomString(10)),
+      imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(123),
       groupId = Some(CommonUtil.randomString(10)),
@@ -156,7 +156,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       nodeNames = nodeNames
     )
 
-    val wkCluster = result(access.add(request))
+    val wkCluster = result(workerApi.add(request))
     wkCluster.clientPort shouldBe request.clientPort.get
     wkCluster.groupId shouldBe request.groupId.get
     wkCluster.configTopicName shouldBe request.configTopicName.get
@@ -204,7 +204,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
       // there are two bk cluster so we have to assign the bk cluster...
       an[IllegalArgumentException] should be thrownBy result(
-        access.add(
+        workerApi.add(
           WorkerApi.creationRequest(
             name = CommonUtil.randomString(10),
             nodeNames = nodeNames
@@ -216,7 +216,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def testCreateOnNonexistentNode(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(
+      workerApi.add(
         WorkerClusterCreationRequest(
           name = CommonUtil.randomString(10),
           imageName = None,
@@ -240,7 +240,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
   @Test
   def testEmptyNodes(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
-      access.add(WorkerClusterCreationRequest(
+      workerApi.add(WorkerClusterCreationRequest(
         name = CommonUtil.randomString(10),
         imageName = None,
         brokerClusterName = Some(bkClusterName),
@@ -258,6 +258,37 @@ class TestWorkerRoute extends MediumTest with Matchers {
         nodeNames = Seq.empty
       )))
   }
+
+  @Test
+  def testImageName(): Unit = {
+    def request() = WorkerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtil.availablePort()),
+      groupId = Some(CommonUtil.randomString(10)),
+      statusTopicName = Some(CommonUtil.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtil.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtil.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+
+    // pass by default image
+    result(workerApi.add(request()))
+
+    // pass by latest image (since it is default image)
+    result(workerApi.add(request().copy(imageName = Some(WorkerApi.IMAGE_NAME_DEFAULT))))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      workerApi.add(request().copy(imageName = Some(CommonUtil.randomString()))))
+  }
+
   @Test
   def testCreate(): Unit = {
     val request = WorkerClusterCreationRequest(
@@ -277,7 +308,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    assert(request, result(access.add(request)))
+    assert(request, result(workerApi.add(request)))
   }
 
   @Test
@@ -300,7 +331,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       nodeNames = nodeNames
     )
 
-    assert(request0, result(access.add(request0)))
+    assert(request0, result(workerApi.add(request0)))
 
     val request1 = WorkerClusterCreationRequest(
       name = CommonUtil.randomString(10),
@@ -319,9 +350,9 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    assert(request1, result(access.add(request1)))
+    assert(request1, result(workerApi.add(request1)))
 
-    val clusters = result(access.list())
+    val clusters = result(workerApi.list())
     clusters.size shouldBe 2
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
@@ -346,10 +377,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    val cluster = result(access.add(request))
+    val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    result(access.delete(request.name)) shouldBe cluster
+    result(workerApi.delete(request.name)) shouldBe cluster
   }
 
   @Test
@@ -371,14 +402,14 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    val cluster = result(access.add(request))
+    val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    val containers = result(access.get(request.name))
+    val containers = result(workerApi.get(request.name))
     containers.size shouldBe request.nodeNames.size
 
-    result(access.delete(request.name)) shouldBe cluster
-    result(access.list()).size shouldBe 0
+    result(workerApi.delete(request.name)) shouldBe cluster
+    result(workerApi.list()).size shouldBe 0
   }
 
   @Test
@@ -400,10 +431,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = Seq(nodeNames.head)
     )
-    val cluster = result(access.add(request))
+    val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    result(access.addNode(cluster.name, nodeNames.last)) shouldBe
+    result(workerApi.addNode(cluster.name, nodeNames.last)) shouldBe
       WorkerClusterInfo(
         name = cluster.name,
         imageName = cluster.imageName,
@@ -444,10 +475,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    val cluster = result(access.add(request))
+    val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    result(access.removeNode(cluster.name, nodeNames.last)) shouldBe WorkerClusterInfo(
+    result(workerApi.removeNode(cluster.name, nodeNames.last)) shouldBe WorkerClusterInfo(
       name = cluster.name,
       imageName = cluster.imageName,
       brokerClusterName = cluster.brokerClusterName,
@@ -488,7 +519,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       jars = Seq.empty,
       nodeNames = nodeNames
     )
-    an[IllegalArgumentException] should be thrownBy result(access.add(request))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(request))
   }
 
   @Test
@@ -512,10 +543,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(access.add(request))
+    result(workerApi.add(request))
 
     // we don't need to create another bk cluster since it is feasible to create multi wk cluster on same broker cluster
-    an[IllegalArgumentException] should be thrownBy result(access.add(request))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(request))
   }
 
   @Test
@@ -541,12 +572,12 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(access.add(createReq()))
+    result(workerApi.add(createReq()))
 
-    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
 
     // pass by different port
-    result(access.add(createReq().copy(clientPort = Some(CommonUtil.availablePort()))))
+    result(workerApi.add(createReq().copy(clientPort = Some(CommonUtil.availablePort()))))
   }
 
   @Test
@@ -572,9 +603,9 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(access.add(createReq()))
+    result(workerApi.add(createReq()))
 
-    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
   }
 
   @Test
@@ -599,9 +630,9 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(access.add(createReq()))
+    result(workerApi.add(createReq()))
 
-    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
   }
 
   @Test
@@ -626,9 +657,9 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(access.add(createReq()))
+    result(workerApi.add(createReq()))
 
-    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
   }
 
   @Test
@@ -653,9 +684,9 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(access.add(createReq()))
+    result(workerApi.add(createReq()))
 
-    an[IllegalArgumentException] should be thrownBy result(access.add(createReq()))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
   }
 
   @After

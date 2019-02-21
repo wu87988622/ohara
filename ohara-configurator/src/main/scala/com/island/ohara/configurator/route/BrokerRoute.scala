@@ -30,6 +30,7 @@ object BrokerRoute {
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.brokerCollie(),
       root = BROKER_PREFIX_PATH,
+      defaultImage = BrokerApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (clusters, name) =>
         CollieUtils
           .as[WorkerClusterInfo](clusters)

@@ -32,6 +32,7 @@ object WorkerRoute {
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
       root = WORKER_PREFIX_PATH,
+      defaultImage = WorkerApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
         jarStore

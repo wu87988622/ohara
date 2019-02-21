@@ -19,10 +19,10 @@ package com.island.ohara.it.agent
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
-import org.junit.{After, Before}
+import org.junit.{After, Before, Test}
 
-import scala.concurrent.Future
-
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 class TestSshClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
@@ -36,6 +36,13 @@ class TestSshClusterCollie extends BasicTests4ClusterCollie {
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
 
   override protected def generateClusterName(): String = nameHolder.generateClusterName()
+
+  @Test
+  def testListImages(): Unit = {
+    val images = Await.result(clusterCollie.images(nodeCache), 120 seconds)
+    images.isEmpty shouldBe false
+    images.foreach(_._2.isEmpty shouldBe false)
+  }
 
   @After
   def cleanupContainers(): Unit = if (cleanup) Releasable.close(nameHolder)

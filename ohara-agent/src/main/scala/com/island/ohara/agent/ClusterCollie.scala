@@ -72,6 +72,13 @@ trait ClusterCollie extends Releasable {
   }
 
   /**
+    * list the docker images hosted by input nodes
+    * @param nodes remote nodes
+    * @return the images stored by each node
+    */
+  def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]]
+
+  /**
     * fetch all clusters and then update the services of input nodes.
     * NOTED: The input nodes which are not hosted by this cluster collie are not updated!!!
     * @param nodes nodes
