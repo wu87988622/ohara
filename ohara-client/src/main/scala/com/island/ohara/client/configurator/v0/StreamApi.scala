@@ -20,8 +20,9 @@ import java.nio.charset.CodingErrorAction
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.directives.FileInfo
 import akka.util.ByteString
-import com.island.ohara.client.StreamClient
+import com.island.ohara.common.util.VersionUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -30,6 +31,65 @@ import scala.concurrent.Future
 import scala.io.{Codec, Source}
 
 object StreamApi {
+
+  /**
+    * StreamApp List Page max acceptable upload file size (1 MB currently)
+    */
+  final val MAX_FILE_SIZE = 1 * 1024 * 1024L
+
+  /**
+    * StreamApp List Page "key name" for form-data
+    */
+  final val INPUT_KEY = "streamapp"
+
+  final val CONTENT_TYPE = MediaTypes.`application/java-archive`
+
+  final val TMP_ROOT = System.getProperty("java.io.tmpdir")
+
+  /**
+    * the only entry for ohara streamApp
+    */
+  final val MAIN_ENTRY = "com.island.ohara.streams.StreamApp"
+
+  /**
+    *  limit the length of docker container name (&lt; 60).
+    */
+  final val LIMIT_OF_DOCKER_NAME_LENGTH: Int = 60
+
+  private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_DOCKER_NAME_LENGTH)
+    throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_DOCKER_NAME_LENGTH. actual: ${s.length}")
+  else s
+
+  final val PREFIX_KEY = "ost"
+
+  final val DIVIDER: String = "-"
+
+  /**
+    * format unique applicationId for the streamApp.
+    * It can be used in setting container's hostname and name
+    * @param streamId the streamApp id
+    * @return a formatted string. form: ${prefix}-${streamId}
+    */
+  def formatAppId(streamId: String): String =
+    assertLength(
+      Seq(
+        PREFIX_KEY,
+        streamId
+      ).mkString(DIVIDER))
+
+  /**
+    * StreamApp Docker Image name
+    */
+  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtil.VERSION}"
+
+  /**
+    * create temp file(with suffix .tmp) inside temp folder
+    *
+    * @param fileInfo the request file
+    * @return the tmp file
+    */
+  def saveTmpFile(fileInfo: FileInfo): File = File.createTempFile(fileInfo.fileName, ".tmp")
+
   val STREAM_PREFIX_PATH: String = "stream"
   val STREAM_LIST_PREFIX_PATH: String = "jars"
   val STREAM_PROPERTY_PREFIX_PATH: String = "property"
@@ -41,7 +101,7 @@ object StreamApi {
     *
     * @param pipelineId the ohara pipeline id
     * @param id the streamApp unique id
-    * @param name streamApp running configuration : application.id
+    * @param name streamApp name in pipeline
     * @param instances streamApp running configuration : num.stream.threads
     * @param jarInfo saving jar information
     * @param fromTopics the candidate topics for streamApp consume from
@@ -112,8 +172,8 @@ object StreamApi {
       upload(
         pipeline_id: String,
         filePaths: Seq[String],
-        StreamClient.INPUT_KEY,
-        StreamClient.CONTENT_TYPE
+        INPUT_KEY,
+        CONTENT_TYPE
       )
     def upload(pipeline_id: String,
                filePaths: Seq[String],

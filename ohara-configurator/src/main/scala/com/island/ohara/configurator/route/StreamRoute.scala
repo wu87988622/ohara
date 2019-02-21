@@ -24,10 +24,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{BrokerCollie, DockerClient, NodeCollie}
-import com.island.ohara.client.StreamClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
-import com.island.ohara.client.configurator.v0.{ContainerApi, JarApi}
+import com.island.ohara.client.configurator.v0.{ContainerApi, JarApi, StreamApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
@@ -44,18 +43,16 @@ import scala.util.Random
 private[configurator] object StreamRoute {
 
   private[this] val log = LoggerFactory.getLogger(StreamRoute.getClass)
-  private[this] def toStore(pipelineId: String, jarId: String, jarInfo: JarApi.JarInfo, lastModified: Long): StreamApp =
-    StreamApp(pipelineId, jarId, "", 1, jarInfo, Seq.empty, Seq.empty, lastModified)
 
   private[this] def toStore(pipelineId: String,
-                            jarId: String,
-                            appId: String,
-                            instances: Int,
+                            streamId: String,
+                            name: String = "Untitled stream app",
+                            instances: Int = 1,
                             jarInfo: JarApi.JarInfo,
-                            fromTopics: Seq[String],
-                            toTopics: Seq[String],
+                            fromTopics: Seq[String] = Seq.empty,
+                            toTopics: Seq[String] = Seq.empty,
                             lastModified: Long): StreamApp =
-    StreamApp(pipelineId, jarId, appId, instances, jarInfo, fromTopics, toTopics, lastModified)
+    StreamApp(pipelineId, streamId, name, instances, jarInfo, fromTopics, toTopics, lastModified)
 
   private[this] def assertParameters(data: StreamApp): Boolean = {
     def isNotNullOrEmpty(str: String): Boolean = { str != null && str.nonEmpty }
@@ -102,22 +99,22 @@ private[configurator] object StreamRoute {
             path(Segment) { id =>
               //upload jars
               post {
-                storeUploadedFiles(StreamClient.INPUT_KEY, StreamClient.saveTmpFile) { files =>
+                storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
                   onSuccess(
                     Future.sequence(files.map {
                       case (metadata, file) =>
-                        if (file.length() > StreamClient.MAX_FILE_SIZE) {
+                        if (file.length() > StreamApi.MAX_FILE_SIZE) {
                           throw new RuntimeException(
-                            s"the file : ${metadata.fileName} size is bigger than ${StreamClient.MAX_FILE_SIZE / 1024 / 1024} MB.")
+                            s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB.")
                         }
                         jarStore.add(file, s"${metadata.fileName}")
                     })
                   ) { jarInfos =>
                     val jars = jarInfos.map { jarInfo =>
                       val time = CommonUtil.current()
-                      val jarId = CommonUtil.uuid()
-                      store.add(toStore(id, jarId, jarInfo, time))
-                      StreamListResponse(jarId, jarInfo.name, time)
+                      val streamId = CommonUtil.uuid()
+                      store.add(toStore(pipelineId = id, streamId = streamId, jarInfo = jarInfo, lastModified = time))
+                      StreamListResponse(streamId, jarInfo.name, time)
                     }
                     //delete temp jars after success
                     files.foreach { case (_, file) => file.deleteOnExit() }
@@ -135,7 +132,7 @@ private[configurator] object StreamRoute {
                 } ~
                 //delete jar
                 delete {
-                  //TODO : check streamapp is not at running state...by Sam
+                  //TODO : check streamApp is not at running state...by Sam
                   assertNotRelated2Pipeline(id)
                   val result = for {
                     f1 <- store.remove[StreamApp](id)
@@ -151,7 +148,7 @@ private[configurator] object StreamRoute {
                   entity(as[StreamListRequest]) { req =>
                     if (req.jarName == null || req.jarName.isEmpty)
                       throw new IllegalArgumentException(s"Require jarName")
-                    val f = new File(StreamClient.TMP_ROOT, CommonUtil.randomString(5))
+                    val f = new File(StreamApi.TMP_ROOT, CommonUtil.randomString(5))
                     val result = for {
                       f1 <- store.value[StreamApp](id)
                       f2 <- jarStore.url(f1.jarInfo.id)
@@ -188,7 +185,7 @@ private[configurator] object StreamRoute {
             complete(StatusCodes.BadRequest -> "wrong uri")
           } ~
             path(Segment) { id =>
-              //add property is impossible, we need streamapp id first
+              //add property is impossible, we need streamApp id first
               post { complete("unsupported method") } ~
                 // delete property is useless, we handle this in StreamApp List -> DELETE method
                 delete { complete("unsupported method") } ~
@@ -209,14 +206,16 @@ private[configurator] object StreamRoute {
                 put {
                   entity(as[StreamPropertyRequest]) { req =>
                     onSuccess(store.value[StreamApp](id).flatMap { data =>
-                      val newData = toStore(data.pipelineId,
-                                            data.id,
-                                            req.name,
-                                            req.instances,
-                                            data.jarInfo,
-                                            req.fromTopics,
-                                            req.toTopics,
-                                            CommonUtil.current())
+                      val newData = toStore(
+                        pipelineId = data.pipelineId,
+                        streamId = data.id,
+                        name = req.name,
+                        instances = req.instances,
+                        jarInfo = data.jarInfo,
+                        fromTopics = req.fromTopics,
+                        toTopics = req.toTopics,
+                        lastModified = CommonUtil.current()
+                      )
                       store.update[StreamApp](
                         id,
                         _ => Future.successful(newData)
@@ -303,25 +302,25 @@ private[configurator] object StreamRoute {
                       jarStore
                         .url(data.jarInfo.id)
                         .map {
+                          val appId = StreamApi.formatAppId(data.id)
                           url =>
                             client
-                              .container(data.name)
+                              .container(appId)
                               .getOrElse(
                                 client
                                   .containerCreator()
-                                  .hostname(data.name)
-                                  .name(s"${data.name}")
+                                  .name(appId)
                                   .envs(
                                     Map(
                                       "STREAMAPP_JARURL" -> url.toString,
-                                      "STREAMAPP_APPID" -> data.name,
+                                      "STREAMAPP_APPID" -> appId,
                                       "STREAMAPP_SERVERS" -> brokers,
                                       "STREAMAPP_FROMTOPIC" -> data.fromTopics.head,
                                       "STREAMAPP_TOTOPIC" -> data.toTopics.head
                                     )
                                   )
-                                  .imageName(StreamClient.STREAMAPP_IMAGE)
-                                  .command(StreamClient.MAIN_ENTRY)
+                                  .imageName(StreamApi.STREAMAPP_IMAGE)
+                                  .command(StreamApi.MAIN_ENTRY)
                                   .run()
                                   .get
                               )
@@ -353,7 +352,7 @@ private[configurator] object StreamRoute {
                 val node = data.node.getOrElse(
                   throw new RuntimeException(s"the streamApp [$id] is not running at any node. we cannot stop it."))
                 Future
-                  .successful(clientCache.get(node).forceRemove(data.name))
+                  .successful(clientCache.get(node).forceRemove(StreamApi.formatAppId(data.id)))
                   .map { _ =>
                     StreamActionResponse(
                       id,

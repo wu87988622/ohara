@@ -126,11 +126,15 @@ class TestStream extends SmallTest with Matchers {
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
     an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
 
+    req = StreamPropertyRequest("any-name contain blank should still work", Seq("foo"), Seq("bar"), 1)
+    awaitResult(accessStreamProperty.update(jarData.head.id, req))
+    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+
     filePath.foreach(new File(_).deleteOnExit())
   }
 
   @Test
-  def testStreamAppActionFail(): Unit = {
+  def testStreamAppActionFailWithRunJar(): Unit = {
     val filePath = Seq(File.createTempFile("empty_", ".jar").getPath)
 
     val jarData = awaitResult(accessStreamList.upload(pipeline_id, filePath))
