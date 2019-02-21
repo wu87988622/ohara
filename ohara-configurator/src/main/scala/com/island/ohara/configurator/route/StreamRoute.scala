@@ -252,8 +252,6 @@ private[configurator] object StreamRoute {
                   // 2) only support one from/to topic
                   // 3) choose any existing broker cluster to run
                   // 4) only run 1 instance
-                  val localPath = s"${StreamClient.TMP_ROOT}${File.separator}StreamApp-${data.name}"
-
                   val result = for {
                     dockerClient <- nodeCollie
                       .nodes()
@@ -302,17 +300,10 @@ private[configurator] object StreamRoute {
                         throw new RuntimeException("Can not find andy math broker cluster for this streamApp")
                       }
                       val brokers = brokerInfo.get.nodeNames.map(_ + ":9092").mkString(",")
-
-                      val dir = new File(localPath)
-                      if (!dir.exists()) dir.mkdirs()
-                      val f = new File(localPath, data.jarInfo.name)
                       jarStore
                         .url(data.jarInfo.id)
-                        .map { url => //download the jar file from remote ftp server by URL...use more readable code ?...by Sam
-                        { url #> f !! }
-                        }
                         .map {
-                          _ =>
+                          url =>
                             client
                               .container(data.name)
                               .getOrElse(
@@ -322,14 +313,13 @@ private[configurator] object StreamRoute {
                                   .name(s"${data.name}")
                                   .envs(
                                     Map(
-                                      "STREAMAPP_JARROOT" -> "/opt/ohara/streamapp",
+                                      "STREAMAPP_JARURL" -> url.toString,
                                       "STREAMAPP_APPID" -> data.name,
                                       "STREAMAPP_SERVERS" -> brokers,
                                       "STREAMAPP_FROMTOPIC" -> data.fromTopics.head,
                                       "STREAMAPP_TOTOPIC" -> data.toTopics.head
                                     )
                                   )
-                                  .volumnMapping(Map(localPath -> "/opt/ohara/streamapp"))
                                   .imageName(StreamClient.STREAMAPP_IMAGE)
                                   .command(StreamClient.MAIN_ENTRY)
                                   .run()

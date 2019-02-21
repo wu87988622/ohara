@@ -26,11 +26,14 @@ import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.apache.commons.io.FileUtils;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class StreamApp {
 
-  private static final String JAR_ROOT = "STREAMAPP_JARROOT";
+  private static final String JAR_URL = "STREAMAPP_JARURL";
+  private static final int CONNECT_TIMEOUT = 30 * 1000;
+  private static final int READ_TIMEOUT = 30 * 1000;
 
   /**
    * Running a standalone streamApp. This method is usually called from the main(). It must not be
@@ -127,31 +130,34 @@ public abstract class StreamApp {
   public static void main(String[] args) {
     CheckedExceptionUtil.wrap(
         () -> {
-          String entryClass = findStreamAppEntry(System.getenv(JAR_ROOT));
-          Class<?> clz = Class.forName(entryClass);
+          String entryClass = findStreamAppEntry(System.getenv(JAR_URL));
+
+          ClassLoader loader =
+              URLClassLoader.newInstance(
+                  new URL[] {new URL(System.getenv(JAR_URL))}, StreamApp.class.getClassLoader());
+          Class<?> clz = Class.forName(entryClass, true, loader);
           Object obj = clz.newInstance();
           Method method = clz.getMethod("start");
           method.invoke(obj);
         });
   }
 
-  private static String findStreamAppEntry(String jarPath)
+  private static String findStreamAppEntry(String jarUrl)
       throws IOException, ClassNotFoundException {
     String jarHeader = "jar:file:";
     String jarTail = "!/";
+    File outputFile = File.createTempFile("streamApp-", ".jar");
 
-    File dir = new File(jarPath);
-    if (!dir.isDirectory() || !dir.exists())
-      throw new IllegalArgumentException("the parameter should be a valid directory");
-    File[] files = dir.listFiles((File d, String name) -> name.endsWith(".jar"));
-    if (files == null || files.length == 0) {
-      throw new RuntimeException("the path is not contained any jars");
-    }
+    URL url = new URL(jarUrl);
 
-    JarFile jar = new JarFile(files[0]);
+    // Download the jar
+    FileUtils.copyURLToFile(url, outputFile, CONNECT_TIMEOUT, READ_TIMEOUT);
+
+    // Find the StreamApp entry class name
+    JarFile jar = new JarFile(outputFile);
     Enumeration<JarEntry> e = jar.entries();
 
-    URL[] urls = {new URL(jarHeader + files[0] + jarTail)};
+    URL[] urls = {new URL(jarHeader + outputFile + jarTail)};
     URLClassLoader cl = URLClassLoader.newInstance(urls);
 
     while (e.hasMoreElements()) {
