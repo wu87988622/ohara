@@ -21,12 +21,15 @@ import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+
+import scala.reflect.{ClassTag, classTag}
 
 /**
   * TODO: this is just a workaround in ohara 0.2. It handles the following trouble:
@@ -123,4 +126,7 @@ object CollieUtils {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
         }
     }
+
+  private[route] def as[T <: ClusterInfo: ClassTag](clusters: Seq[ClusterInfo]): Seq[T] =
+    clusters.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
 }

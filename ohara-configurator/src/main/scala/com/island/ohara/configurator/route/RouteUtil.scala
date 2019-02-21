@@ -20,7 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
-import com.island.ohara.agent.{ClusterCollie, Collie, NodeCollie}
+import com.island.ohara.agent.{ClusterCollie, Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -179,6 +179,7 @@ private[route] object RouteUtil {
   def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
     collie: Collie[Res],
     root: String,
+    hookBeforeDelete: (Seq[ClusterInfo], String) => Future[String],
     hookOfCreation: (Seq[ClusterInfo], Req) => Future[Res])(implicit clusterCollie: ClusterCollie,
                                                             nodeCollie: NodeCollie,
                                                             rm: RootJsonFormat[Req],
@@ -237,7 +238,16 @@ private[route] object RouteUtil {
           }
         } ~ pathEnd {
           delete {
-            onComplete(collie.remove(clusterName))(cluster => complete(cluster))
+            onSuccess(
+              clusterCollie
+                .clusters()
+                .map(_.keys.toSeq)
+                // if cluster doesn't exist, we throw exception directly.
+                .map(clusters =>
+                  if (clusters.exists(_.name == clusterName)) clusters
+                  else throw new NoSuchClusterException(s"$clusterName doesn't exist"))
+                .flatMap(clusters => hookBeforeDelete(clusters, clusterName))
+                .flatMap(_ => collie.remove(clusterName)))(complete(_))
           } ~ get {
             complete(collie.containers(clusterName))
           }

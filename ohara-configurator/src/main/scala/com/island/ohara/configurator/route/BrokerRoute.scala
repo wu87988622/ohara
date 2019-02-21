@@ -20,13 +20,24 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest, _}
+import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+
+import scala.concurrent.Future
 object BrokerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.brokerCollie(),
       root = BROKER_PREFIX_PATH,
+      hookBeforeDelete = (clusters, name) =>
+        CollieUtils
+          .as[WorkerClusterInfo](clusters)
+          .find(_.brokerClusterName == name)
+          .map(c =>
+            Future.failed(new IllegalArgumentException(
+              s"you can't remove broker cluster:$name since it is used by worker cluster:${c.name}")))
+          .getOrElse(Future.successful(name)),
       hookOfCreation = (clusters, req: BrokerClusterCreationRequest) => {
         val zkName = req.zookeeperClusterName
           .map { zkName =>

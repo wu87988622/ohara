@@ -18,8 +18,11 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
+
+import scala.concurrent.Future
 
 object ZookeeperRoute {
 
@@ -27,6 +30,14 @@ object ZookeeperRoute {
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.zookeeperCollie(),
       root = ZOOKEEPER_PREFIX_PATH,
+      hookBeforeDelete = (clusters, name) =>
+        CollieUtils
+          .as[BrokerClusterInfo](clusters)
+          .find(_.zookeeperClusterName == name)
+          .map(c =>
+            Future.failed(new IllegalArgumentException(
+              s"you can't remove zookeeper cluster:$name since it is used by broker cluster:${c.name}")))
+          .getOrElse(Future.successful(name)),
       hookOfCreation = (_, req: ZookeeperClusterCreationRequest) =>
         clusterCollie
           .zookeeperCollie()
