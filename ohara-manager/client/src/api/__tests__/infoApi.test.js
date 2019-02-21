@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { fetchCluster } from '../clusterApi';
+import { fetchInfo } from '../infoApi';
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
 jest.mock('utils/apiUtils');
 
-describe('fetchCluster()', () => {
+describe('fetchInfo()', () => {
   afterEach(jest.clearAllMocks);
 
   it('handles success http call', async () => {
@@ -31,7 +31,7 @@ describe('fetchCluster()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await fetchCluster();
+    const result = await fetchInfo();
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith('/api/info');
     expect(result).toBe(res);
@@ -45,7 +45,7 @@ describe('fetchCluster()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await fetchCluster();
+    const result = await fetchInfo();
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith('/api/info');
@@ -64,7 +64,7 @@ describe('fetchCluster()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
-    await fetchCluster();
+    await fetchInfo();
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);

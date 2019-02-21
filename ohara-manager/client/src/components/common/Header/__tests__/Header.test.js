@@ -20,11 +20,11 @@ import { shallow } from 'enzyme';
 import * as URLS from 'constants/urls';
 import Header from '../Header';
 import NAVS from 'constants/navs';
-import { fetchCluster } from 'api/clusterApi';
+import { fetchInfo } from 'api/infoApi';
 
-jest.mock('api/clusterApi');
+jest.mock('api/infoApi');
 
-fetchCluster.mockImplementation(() =>
+fetchInfo.mockImplementation(() =>
   Promise.resolve({ data: { result: { versionInfo: {} }, isSuccess: true } }),
 );
 
@@ -36,7 +36,7 @@ describe('<Header />', () => {
   let wrapper;
 
   beforeEach(() => {
-    fetchCluster.mockImplementation(() =>
+    fetchInfo.mockImplementation(() =>
       Promise.resolve({
         data: {
           result: {
@@ -59,7 +59,7 @@ describe('<Header />', () => {
   });
 
   it('should not render if cluster info not provided', () => {
-    fetchCluster.mockImplementation(() => Promise.resolve({}));
+    fetchInfo.mockImplementation(() => Promise.resolve({}));
 
     wrapper = shallow(<Header {...props} />);
     expect(wrapper.name()).toBe(null);

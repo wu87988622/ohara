@@ -24,7 +24,7 @@ import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApi from 'api/configurationApi';
 import * as validateApi from 'api/validateApi';
-import { fetchCluster } from 'api/clusterApi';
+import { fetchInfo } from 'api/infoApi';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 
@@ -151,7 +151,7 @@ class DbConfiguration extends React.Component {
 
   componentDidMount() {
     this._isMounted = true;
-    this.fetchCluster();
+    this.fetchInfo();
     this.fetchJdbc();
   }
 
@@ -159,8 +159,8 @@ class DbConfiguration extends React.Component {
     this._isMounted = false;
   }
 
-  fetchCluster = async () => {
-    const res = await fetchCluster();
+  fetchInfo = async () => {
+    const res = await fetchInfo();
     const databases = get(res, 'data.result.supportedDatabases', null);
 
     if (databases && this._isMounted) {

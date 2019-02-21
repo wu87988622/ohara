@@ -20,9 +20,9 @@ import { shallow } from 'enzyme';
 import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
 import { getTestById } from 'utils/testUtils';
-import { fetchCluster } from 'api/clusterApi';
+import { fetchInfo } from 'api/infoApi';
 
-jest.mock('api/clusterApi');
+jest.mock('api/infoApi');
 
 const props = {
   match: {
@@ -53,7 +53,7 @@ const props = {
 describe('<PipelineToolbar />', () => {
   let wrapper;
   beforeEach(() => {
-    fetchCluster.mockImplementation(() =>
+    fetchInfo.mockImplementation(() =>
       Promise.resolve({ sources: [], sinks: [] }),
     );
 

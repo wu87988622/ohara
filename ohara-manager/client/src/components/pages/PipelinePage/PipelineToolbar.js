@@ -25,7 +25,7 @@ import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'common/Modal';
-import { fetchCluster } from 'api/clusterApi';
+import { fetchInfo } from 'api/infoApi';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
@@ -109,12 +109,12 @@ class PipelineToolbar extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchCluster();
+    this.fetchInfo();
     this.modalChild = React.createRef();
   }
 
-  fetchCluster = async () => {
-    const res = await fetchCluster();
+  fetchInfo = async () => {
+    const res = await fetchInfo();
 
     const result = get(res, 'data.result', null);
 
