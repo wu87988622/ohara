@@ -25,12 +25,14 @@ import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 object WorkerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie, jarStore: JarStore): server.Route =
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
       root = WORKER_PREFIX_PATH,
+      hookBeforeDelete = (_, name) => Future.successful(name),
       hookOfCreation = (clusters, req: WorkerClusterCreationRequest) =>
         jarStore
           .urls(req.jars)

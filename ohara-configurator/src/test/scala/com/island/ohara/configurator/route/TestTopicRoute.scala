@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicRoute extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.builder().fake().build()
+  private[this] val configurator = Configurator.builder().fake(1, 0).build()
 
   private[this] val topicApi = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
 
