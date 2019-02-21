@@ -23,6 +23,20 @@ gradle licenseApply
 
 ### Installing
 
+**Running Ohara In Docker**
+- - - 
+* Ensure your nodes (actual machine or VM) are installed Docker 18.09+
+* Download required images
+    * oharastream/broker:0.3-SNAPSHOT
+    * oharastream/zookeeper:0.3-SNAPSHOT
+    * oharastream/connect-worker:0.3-SNAPSHOT
+    * oharastream/configurator:0.3-SNAPSHOT
+    * oharastream/manager:0.3-SNAPSHOT
+    * oharastream/streamapp:0.3-SNAPSHOT
+* [Running configurator by docker](#running-configurator-by-docker)
+
+**Running Ohara From Build**
+- - -
 [TODO]
 
 ### Running all backend-services by docker
@@ -47,25 +61,33 @@ The backend image is not included in production release. Hence, there is no guar
 #### MySQL
 
 ```
-docker run --rm -p 20000:20000 oharastream/backend:0.3-SNAPSHOT con.island.ohara.integration.Database --port 20000
+docker run --rm -p ${port}:${port} oharastream/backend:0.3-SNAPSHOT com.island.ohara.integration.Database --port ${port} --user ${USERNAME} --password ${PASSWORD}
 ```
+* port: bound by MySQL
+* user: username for MySQL
+* password: password for MySQL
 
 #### FTP
 
 ```
 docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.3-SNAPSHOT com.island.ohara.integration.FtpServer --controlPort 10000 --dataPorts 10001-10011
 ```
+* controlPort: bound by FTP Server
+* dataPorts: bound by data transportation in FTP Server
 
 ### Running configurator by docker
 ```
-docker run --rm -p 12345:12345 oharastream/configurator:0.3-SNAPSHOT --port 12345
+docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.3-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
 ```
 * port: bound by Configurator (default is random)
-* brokers: broker information (ex. host0:port0,host1:port1)
-* workers: worker information (ex. host0:port0,host1:port1)
+* add-host: adding a host mapping to /etc/hosts in configurator (nodeHostName:nodeHostIP)
+* hostname: hostname to run configurator (default is 0.0.0.0)
+* node: running a configurator with "pre-created" broker and zookeeper clusters (for testing purpose)
 
-If either brokers or workers are not defined, the configurator will be running with no-cluster mode. It means all data are 
-stored in memory, and connector-related commands are executed by nothing.
+If `node` property was not specified, the configurator will be running with no-cluster mode. You will need to add clusters
+by APIs.
+
+**NOTED:** you should pull the broker and zookeeper images in each node for pre-created clusters if you added the `node` property
 
 ### Running manager by docker
 ```
@@ -79,7 +101,7 @@ docker run --rm -p 5050:5050 oharastream/manager:0.3-SNAPSHOT --port 5050 --conf
 ```
 gradle clean test
 ```
-NOTED: Some tests in ohara-it require "specified" env. Otherwise, they will be skipped.
+**NOTED:** Some tests in ohara-it require "specific" env variables. Otherwise, they will be skipped.
 see the source code of ohara-it for more details. 
 
 ### Building project without manager
@@ -89,7 +111,7 @@ gradle clean build -PskipManager
 
 ### build uber jar
 ```
-gradle clean uberJar
+gradle clean uberJar -PskipManager
 ```
 the uber jar is under ohara-assembly/build/libs/
 
