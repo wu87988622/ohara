@@ -106,6 +106,7 @@ class PipelineToolbar extends React.Component {
     sinks: [],
     activeConnector: null,
     connectorType: '',
+    isAddBtnDisabled: false,
   };
 
   componentDidMount() {
@@ -168,6 +169,10 @@ class PipelineToolbar extends React.Component {
     });
   };
 
+  updateAddBtnStatus = streamAppId => {
+    this.setState({ isAddBtnDisabled: !streamAppId });
+  };
+
   render() {
     const {
       hasChanges,
@@ -184,6 +189,7 @@ class PipelineToolbar extends React.Component {
       modalName,
       connectorType,
       activeConnector,
+      isAddBtnDisabled,
     } = this.state;
 
     const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
@@ -214,11 +220,13 @@ class PipelineToolbar extends React.Component {
           handleConfirm={this.handleConfirm}
           confirmBtnText="Add"
           showActions={true}
+          isConfirmDisabled={isAddBtnDisabled}
         >
           {modalName === modalNames.ADD_STREAM && (
             <PipelineNewStream
               {...this.props}
               activeConnector={activeConnector}
+              updateAddBtnStatus={this.updateAddBtnStatus}
               ref={this.modalChild}
             />
           )}
