@@ -14,68 +14,14 @@
  * limitations under the License.
  */
 
-import { toNumber } from 'lodash';
-
-import { fetchTopic, fetchTopics, createTopic } from '../topicApi';
+import { fetchJars, deleteJar, createJar } from '../jarApi';
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
 jest.mock('utils/apiUtils');
-const url = '/api/topics';
 
-describe('fetchTopic()', () => {
-  afterEach(jest.clearAllMocks);
-  const topicId = 'abc';
+const url = '/api/jars';
 
-  it('handles success http call', async () => {
-    const res = {
-      data: {
-        isSuccess: true,
-      },
-    };
-
-    axiosInstance.get.mockImplementation(() => Promise.resolve(res));
-
-    const result = await fetchTopic(topicId);
-    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${topicId}`);
-    expect(result).toBe(res);
-  });
-
-  it('handles success http call but with server error', async () => {
-    const res = {
-      data: {
-        isSuccess: false,
-      },
-    };
-    axiosInstance.get.mockImplementation(() => Promise.resolve(res));
-
-    const result = await fetchTopic(topicId);
-
-    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith(`${url}/${topicId}`);
-    expect(handleError).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledWith(result);
-  });
-
-  it('handles failed http call', async () => {
-    const res = {
-      data: {
-        errorMessage: {
-          message: 'error!',
-        },
-      },
-    };
-
-    axiosInstance.get.mockImplementation(() => Promise.reject(res));
-
-    await fetchTopic();
-    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledTimes(1);
-    expect(handleError).toHaveBeenCalledWith(res);
-  });
-});
-
-describe('fetchTopics()', () => {
+describe('fetchJars()', () => {
   afterEach(jest.clearAllMocks);
 
   it('handles success http call', async () => {
@@ -87,7 +33,7 @@ describe('fetchTopics()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await fetchTopics();
+    const result = await fetchJars();
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith(url);
     expect(result).toBe(res);
@@ -101,7 +47,7 @@ describe('fetchTopics()', () => {
     };
     axiosInstance.get.mockImplementation(() => Promise.resolve(res));
 
-    const result = await fetchTopics();
+    const result = await fetchJars();
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(axiosInstance.get).toHaveBeenCalledWith(url);
@@ -120,26 +66,27 @@ describe('fetchTopics()', () => {
 
     axiosInstance.get.mockImplementation(() => Promise.reject(res));
 
-    await fetchTopics();
+    await fetchJars();
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });
 });
 
-describe('createTopic()', () => {
+describe('createJar()', () => {
   afterEach(jest.clearAllMocks);
 
   const params = {
-    name: 'abc',
-    numberOfPartitions: '1',
-    numberOfReplications: '2',
+    file: {},
   };
 
-  const expectedParams = {
-    name: params.name,
-    numberOfPartitions: toNumber(params.numberOfPartitions),
-    numberOfReplications: toNumber(params.numberOfReplications),
+  const formData = new FormData();
+  formData.append('jar', params.file);
+
+  const config = {
+    headers: {
+      'content-type': 'multipart/form-data',
+    },
   };
 
   it('handles success http call', async () => {
@@ -151,9 +98,9 @@ describe('createTopic()', () => {
 
     axiosInstance.post.mockImplementation(() => Promise.resolve(res));
 
-    const result = await createTopic(params);
+    const result = await createJar(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(url, expectedParams);
+    expect(axiosInstance.post).toHaveBeenCalledWith(url, formData, config);
     expect(result).toBe(res);
   });
 
@@ -165,10 +112,10 @@ describe('createTopic()', () => {
     };
     axiosInstance.post.mockImplementation(() => Promise.resolve(res));
 
-    const result = await createTopic(params);
+    const result = await createJar(params);
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(url, expectedParams);
+    expect(axiosInstance.post).toHaveBeenCalledWith(url, formData, config);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });
@@ -184,8 +131,64 @@ describe('createTopic()', () => {
 
     axiosInstance.post.mockImplementation(() => Promise.reject(res));
 
-    await createTopic(params);
+    await createJar(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(res);
+  });
+});
+
+describe('deleteJar()', () => {
+  afterEach(jest.clearAllMocks);
+
+  const params = {
+    id: '1234',
+  };
+
+  it('handles success http call', async () => {
+    const res = {
+      data: {
+        isSuccess: true,
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await deleteJar(params);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${params.id}`);
+    expect(result).toBe(res);
+  });
+
+  it('handles success http call but with server error', async () => {
+    const res = {
+      data: {
+        isSuccess: false,
+      },
+    };
+    axiosInstance.delete.mockImplementation(() => Promise.resolve(res));
+
+    const result = await deleteJar(params);
+
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
+    expect(axiosInstance.delete).toHaveBeenCalledWith(`${url}/${params.id}`);
+    expect(handleError).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalledWith(result);
+  });
+
+  it('handles failed http call', async () => {
+    const res = {
+      data: {
+        errorMessage: {
+          message: 'error!',
+        },
+      },
+    };
+
+    axiosInstance.delete.mockImplementation(() => Promise.reject(res));
+
+    await deleteJar(params);
+    expect(axiosInstance.delete).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(res);
   });
