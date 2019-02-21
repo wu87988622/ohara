@@ -23,6 +23,7 @@ import { get } from 'lodash';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApi from 'api/configurationApi';
+import * as validateApi from 'api/validateApi';
 import { Input, Button, FormGroup, Label } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 import { toNumber } from 'lodash';
@@ -299,7 +300,7 @@ class FtpConfiguration extends React.Component {
     e.preventDefault();
     const { hostname, port, user, password } = this.state;
     this.updateBtn(true);
-    const res = await configurationApi.validateFtp({
+    const res = await validateApi.validateFtp({
       hostname,
       port,
       user,

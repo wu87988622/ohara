@@ -33,23 +33,6 @@ export const fetchHdfs = async () => {
   }
 };
 
-export const validateHdfs = async ({ uri }) => {
-  try {
-    const res = await axiosInstance.put('/api/validate/hdfs', {
-      uri,
-    });
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
 export const updateHdfs = async params => {
   try {
     const res = await axiosInstance.put(`/api/hdfs/${params.id}`, params);
@@ -65,12 +48,9 @@ export const updateHdfs = async params => {
   }
 };
 
-export const saveHdfs = async ({ name, uri }) => {
+export const saveHdfs = async params => {
   try {
-    const res = await axiosInstance.post('/api/hdfs', {
-      name,
-      uri,
-    });
+    const res = await axiosInstance.post('/api/hdfs', params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -101,21 +81,6 @@ export const deleteHdfs = async id => {
 export const fetchJdbc = async () => {
   try {
     const res = await axiosInstance.get('/api/jdbc');
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const validateRdb = async params => {
-  try {
-    const res = await axiosInstance.put('/api/validate/rdb', params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -176,21 +141,6 @@ export const deleteJdbc = async id => {
 export const fetchFtp = async () => {
   try {
     const res = await axiosInstance.get('/api/ftp');
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const validateFtp = async params => {
-  try {
-    const res = await axiosInstance.put('/api/validate/ftp', params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

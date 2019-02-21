@@ -23,6 +23,7 @@ import { get } from 'lodash';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApi from 'api/configurationApi';
+import * as validateApi from 'api/validateApi';
 import { fetchCluster } from 'api/clusterApi';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
@@ -297,7 +298,7 @@ class DbConfiguration extends React.Component {
     e.preventDefault();
     const { connectionUrl: url, user, password } = this.state;
     this.updateBtn(true);
-    const res = await configurationApi.validateRdb({ url, user, password });
+    const res = await validateApi.validateRdb({ url, user, password });
     this.updateBtn(false);
 
     const isSuccess = get(res, 'data.isSuccess', false);

@@ -25,6 +25,7 @@ import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelineApi from 'api/pipelineApi';
+import * as validateApi from 'api/validateApi';
 import Controller from './Controller';
 import { Box } from 'common/Layout';
 import { DataTable } from 'common/Table';
@@ -276,7 +277,7 @@ class JdbcSource extends React.Component {
     const { username: user, password, url } = this.state;
 
     this.updateIsBtnWorking(true);
-    const res = await pipelineApi.validateRdb({ user, password, url });
+    const res = await validateApi.validateRdb({ user, password, url });
     this.updateIsBtnWorking(false);
     const isSuccess = get(res, 'data.isSuccess', false);
 

@@ -22,6 +22,7 @@ import { get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as pipelineApi from 'api/pipelineApi';
+import * as validateApi from 'api/validateApi';
 import * as s from './Styles';
 import Controller from './Controller';
 import { SchemaTable } from 'common/Table';
@@ -396,7 +397,7 @@ class FtpSink extends React.Component {
     const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await pipelineApi.validateFtp({
+    const res = await validateApi.validateFtp({
       hostname,
       port,
       user,
