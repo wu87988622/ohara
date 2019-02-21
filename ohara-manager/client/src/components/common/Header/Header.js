@@ -24,7 +24,7 @@ import { get } from 'lodash';
 import * as URLS from 'constants/urls';
 import NAVS from 'constants/navs';
 import ConfigurationModal from 'pages/ConfigurationModal';
-import { fetchCluster } from 'api/clusterApi';
+import { fetchInfo } from 'api/infoApi';
 import { InfoModal } from '../Modal';
 
 const StyledHeader = styled.div`
@@ -157,11 +157,11 @@ class Header extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchCluster();
+    this.fetchInfo();
   }
 
-  fetchCluster = async () => {
-    const res = await fetchCluster();
+  fetchInfo = async () => {
+    const res = await fetchInfo();
     const versionInfo = get(res, 'data.result.versionInfo', null);
     if (versionInfo) {
       this.setState({ versionInfo });
