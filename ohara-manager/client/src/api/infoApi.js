@@ -18,9 +18,9 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchCluster = async () => {
+export const fetchInfo = async () => {
   try {
-    const res = await axiosInstance.get('/api/cluster');
+    const res = await axiosInstance.get('/api/info');
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

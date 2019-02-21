@@ -31,7 +31,7 @@ import { Box } from 'common/Layout';
 import { DataTable } from 'common/Table';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { fetchCluster } from 'api/clusterApi';
+import { fetchInfo } from 'api/infoApi';
 import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { JdbcQuicklyFillIn } from './QuicklyFillIn';
 import {
@@ -153,7 +153,7 @@ class JdbcSource extends React.Component {
 
   fetchData = () => {
     const sourceId = get(this.props.match, 'params.connectorId', null);
-    this.fetchCluster();
+    this.fetchInfo();
     this.fetchSource(sourceId);
   };
 
@@ -228,8 +228,8 @@ class JdbcSource extends React.Component {
     }
   };
 
-  fetchCluster = async () => {
-    const res = await fetchCluster();
+  fetchInfo = async () => {
+    const res = await fetchInfo();
     const databases = get(res, 'data.result.supportedDatabases', null);
 
     if (databases) {
