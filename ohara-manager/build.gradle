@@ -62,9 +62,6 @@ task runManager {
   description 'run a manager'
   doLast {
     exec {
-      commandLine 'yarn'
-    }
-    exec {
       commandLine 'yarn', 'setup'
     }
     exec {
