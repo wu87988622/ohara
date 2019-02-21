@@ -22,6 +22,7 @@ ARG LOG_VERSION=1.7.25
 ARG GRADLE_VERSION=5.1.1
 ARG COMMON_LANG_VERSION=3.7
 ARG ROCKDB_VERSION=5.7.3
+ARG COMMONS_IO=2.4
 
 RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
  mkdir -p /opt/lib/streamapp && \
@@ -31,6 +32,7 @@ RUN apk --no-cache add git curl && rm -rf /tmp/* /var/cache/apk/* && \
  curl -L http://central.maven.org/maven2/org/slf4j/slf4j-simple/${LOG_VERSION}/slf4j-simple-${LOG_VERSION}.jar -o /opt/lib/slf4j-simple.jar && \
  curl -L http://central.maven.org/maven2/org/apache/commons/commons-lang3/${COMMON_LANG_VERSION}/commons-lang3-${COMMON_LANG_VERSION}.jar -o /opt/lib/commons-lang3.jar && \
  curl -L http://central.maven.org/maven2/org/rocksdb/rocksdbjni/${ROCKDB_VERSION}/rocksdbjni-${ROCKDB_VERSION}.jar -o /opt/lib/rocksdbjni.jar && \
+ curl -L http://central.maven.org/maven2/commons-io/commons-io/${COMMONS_IO}/commons-io-${COMMONS_IO}.jar -o /opt/lib/commons-io.jar && \
  rm -rf /var/lib/apt/lists/*
 
 # download gradle
@@ -71,6 +73,4 @@ WORKDIR /opt/ohara
 
 COPY --from=deps /opt/lib/* /opt/ohara/
 
-VOLUME ["/opt/ohara/streamapp"]
-
-ENTRYPOINT ["/tini", "--", "/usr/bin/java", "-cp", "/opt/ohara/*:/opt/ohara/streamapp/*"]
+ENTRYPOINT ["/tini", "--", "/usr/bin/java", "-cp", "/opt/ohara/*"]
