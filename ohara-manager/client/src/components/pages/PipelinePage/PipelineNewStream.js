@@ -93,6 +93,7 @@ class PipelineNewStream extends React.Component {
     }).isRequired,
     activeConnector: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
     updateGraph: PropTypes.func.isRequired,
+    updateAddBtnStatus: PropTypes.func.isRequired,
   };
 
   state = {
@@ -213,11 +214,14 @@ class PipelineNewStream extends React.Component {
     const res = await streamAppApi.fetchJars(pipelineId);
     this.setState(() => ({ isLoading: false }));
 
-    const result = get(res, 'data.result', null);
+    const jars = get(res, 'data.result', null);
+    const activeId = get(jars, '[0].id', null);
 
-    if (!isNull(result)) {
-      this.setState({ jars: result });
+    if (!isNull(jars)) {
+      this.setState({ jars, activeId });
     }
+
+    this.props.updateAddBtnStatus(activeId);
   };
 
   uploadJar = async file => {
