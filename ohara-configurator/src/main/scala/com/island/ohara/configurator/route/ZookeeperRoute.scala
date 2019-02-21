@@ -30,6 +30,7 @@ object ZookeeperRoute {
     RouteUtil.basicRouteOfCluster(
       collie = clusterCollie.zookeeperCollie(),
       root = ZOOKEEPER_PREFIX_PATH,
+      defaultImage = ZookeeperApi.IMAGE_NAME_DEFAULT,
       hookBeforeDelete = (clusters, name) =>
         CollieUtils
           .as[BrokerClusterInfo](clusters)

@@ -29,6 +29,11 @@ trait ClusterCreationRequest {
   def nodeNames: Seq[String]
 
   /**
+    * @return image used to build cluster
+    */
+  def imageName: Option[String]
+
+  /**
     * @return ports used by this cluster
     */
   def ports: Seq[Int]

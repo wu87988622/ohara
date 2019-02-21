@@ -94,7 +94,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       zookeeperApi.add(
         ZookeeperClusterCreationRequest(
           name = CommonUtil.randomString(10),
-          imageName = Some("abcdef"),
+          imageName = None,
           clientPort = Some(123),
           electionPort = Some(456),
           peerPort = Some(1345),
@@ -109,7 +109,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
       zookeeperApi.add(
         ZookeeperClusterCreationRequest(
           name = CommonUtil.randomString(10),
-          imageName = Some("abcdef"),
+          imageName = None,
           clientPort = Some(123),
           electionPort = Some(456),
           peerPort = Some(1345),
@@ -119,10 +119,32 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   }
 
   @Test
+  def testImageName(): Unit = {
+
+    def request() = ZookeeperClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      clientPort = Some(CommonUtil.availablePort()),
+      electionPort = Some(CommonUtil.availablePort()),
+      peerPort = Some(CommonUtil.availablePort()),
+      nodeNames = nodeNames
+    )
+
+    // pass by default image
+    result(zookeeperApi.add(request()))
+
+    // pass by latest image (since it is default image)
+    result(zookeeperApi.add(request().copy(imageName = Some(ZookeeperApi.IMAGE_NAME_DEFAULT))))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      zookeeperApi.add(request().copy(imageName = Some(CommonUtil.randomString()))))
+  }
+
+  @Test
   def testCreate(): Unit = {
     val request = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       electionPort = Some(456),
       peerPort = Some(1345),
@@ -135,7 +157,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testList(): Unit = {
     val request0 = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some(CommonUtil.randomString(10)),
+      imageName = None,
       clientPort = Some(CommonUtil.availablePort()),
       electionPort = Some(CommonUtil.availablePort()),
       peerPort = Some(CommonUtil.availablePort()),
@@ -144,7 +166,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     assert(request0, result(zookeeperApi.add(request0)))
     val request1 = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10) + "2",
-      imageName = Some(CommonUtil.randomString(10)),
+      imageName = None,
       clientPort = Some(CommonUtil.availablePort()),
       electionPort = Some(CommonUtil.availablePort()),
       peerPort = Some(CommonUtil.availablePort()),
@@ -162,7 +184,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testRemove(): Unit = {
     val request = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       electionPort = Some(456),
       peerPort = Some(1345),
@@ -178,7 +200,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testGetContainers(): Unit = {
     val request = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       electionPort = Some(456),
       peerPort = Some(1345),
@@ -198,7 +220,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testAddNode(): Unit = {
     val request = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       electionPort = Some(456),
       peerPort = Some(1345),
@@ -214,7 +236,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testRemoveNode(): Unit = {
     val request = ZookeeperClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       electionPort = Some(456),
       peerPort = Some(1345),
@@ -231,7 +253,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
   def testInvalidClusterName(): Unit = {
     val request = ZookeeperClusterCreationRequest(
       name = "abc def",
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       electionPort = Some(456),
       peerPort = Some(1345),

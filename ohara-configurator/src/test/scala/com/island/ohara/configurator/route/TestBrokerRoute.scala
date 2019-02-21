@@ -85,14 +85,15 @@ class TestBrokerRoute extends MediumTest with Matchers {
   @Test
   def removeBrokerClusterUsedByWorkerCluster(): Unit = {
     val bk = result(
-      brokerApi.add(BrokerClusterCreationRequest(
-        name = CommonUtil.randomString(10),
-        imageName = Some("abcdef"),
-        zookeeperClusterName = Some(zkClusterName),
-        exporterPort = None,
-        clientPort = Some(123),
-        nodeNames = nodeNames
-      )))
+      brokerApi.add(
+        BrokerClusterCreationRequest(
+          name = CommonUtil.randomString(10),
+          imageName = None,
+          zookeeperClusterName = Some(zkClusterName),
+          exporterPort = None,
+          clientPort = Some(123),
+          nodeNames = nodeNames
+        )))
 
     val wk = result(
       WorkerApi
@@ -187,7 +188,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
       brokerApi.add(
         BrokerClusterCreationRequest(
           name = CommonUtil.randomString(10),
-          imageName = Some("abcdef"),
+          imageName = None,
           zookeeperClusterName = None,
           exporterPort = None,
           clientPort = Some(123),
@@ -200,7 +201,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testDefaultZk(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       zookeeperClusterName = Some("Asdasdasd"),
       exporterPort = None,
       clientPort = Some(123),
@@ -212,10 +213,34 @@ class TestBrokerRoute extends MediumTest with Matchers {
   }
 
   @Test
+  def testImageName(): Unit = {
+
+    def request() = BrokerClusterCreationRequest(
+      name = CommonUtil.randomString(10),
+      imageName = None,
+      zookeeperClusterName = Some(zkClusterName),
+      exporterPort = None,
+      clientPort = Some(CommonUtil.availablePort()),
+      nodeNames = nodeNames
+    )
+
+    // pass by default image
+    var bk = result(brokerApi.add(request()))
+    result(brokerApi.delete(bk.name))
+
+    // pass by latest image (since it is default image)
+    bk = result(brokerApi.add(request().copy(imageName = Some(BrokerApi.IMAGE_NAME_DEFAULT))))
+    result(brokerApi.delete(bk.name))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      brokerApi.add(request().copy(imageName = Some(CommonUtil.randomString()))))
+  }
+
+  @Test
   def testCreate(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       zookeeperClusterName = Some(zkClusterName),
       exporterPort = None,
       clientPort = Some(123),
@@ -228,7 +253,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testList(): Unit = {
     val request0 = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some(CommonUtil.randomString(10)),
+      imageName = None,
       exporterPort = Some(CommonUtil.availablePort()),
       clientPort = Some(CommonUtil.availablePort()),
       zookeeperClusterName = Some(zkClusterName),
@@ -252,7 +277,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     val request1 = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some(CommonUtil.randomString(10)),
+      imageName = None,
       exporterPort = Some(CommonUtil.availablePort()),
       clientPort = Some(CommonUtil.availablePort()),
       zookeeperClusterName = Some(zk2.name),
@@ -270,7 +295,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testRemove(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
@@ -286,7 +311,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testGetContainers(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
@@ -306,7 +331,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testAddNode(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
@@ -328,7 +353,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testRemoveNode(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
@@ -351,7 +376,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def testInvalidClusterName(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = "--1",
-      imageName = Some("abcdef"),
+      imageName = None,
       clientPort = Some(123),
       exporterPort = None,
       zookeeperClusterName = Some(zkClusterName),
@@ -364,7 +389,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def runMultiBkClustersOnSameZkCluster(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       exporterPort = None,
       clientPort = Some(123),
       zookeeperClusterName = Some(zkClusterName),
@@ -383,7 +408,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
   def createBkClusterWithSameName(): Unit = {
     val request = BrokerClusterCreationRequest(
       name = CommonUtil.randomString(10),
-      imageName = Some("abcdef"),
+      imageName = None,
       exporterPort = None,
       clientPort = Some(123),
       zookeeperClusterName = Some(zkClusterName),

@@ -119,7 +119,7 @@ class ConfiguratorBuilder {
         )
       }
       .foreach(store.add)
-    val collie = new FakeClusterCollie(bkConnectionProps, wkConnectionProps)
+    val collie = new FakeClusterCollie(store, bkConnectionProps, wkConnectionProps)
     val bkCluster = {
       val pair = bkConnectionProps.split(",")
       val host = pair.map(_.split(":").head).head
@@ -178,7 +178,7 @@ class ConfiguratorBuilder {
       throw new IllegalArgumentException(s"numberOfWorkerCluster:$numberOfWorkerCluster should be positive")
     if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
       throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
-    val collie = new FakeClusterCollie(null, null)
+    val collie = new FakeClusterCollie(store)
 
     val zkClusters = (0 until numberOfBrokerCluster).map { index =>
       collie
