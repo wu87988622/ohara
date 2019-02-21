@@ -24,7 +24,7 @@ import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApi from 'api/configurationApi';
 import * as validateApi from 'api/validateApi';
-import { fetchCluster } from 'api/infoApi';
+import { fetchInfo } from 'api/infoApi';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 
