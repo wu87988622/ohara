@@ -292,6 +292,7 @@ class PipelineNewStream extends React.Component {
                       className={isActive}
                       key={id}
                       onClick={() => this.handleTrSelect(id)}
+                      data-testid="stream-app-item"
                     >
                       <td>
                         <Editable
@@ -312,6 +313,7 @@ class PipelineNewStream extends React.Component {
                       <td>
                         <Icon
                           className="far fa-trash-alt"
+                          data-testid="delete-stream-app"
                           onClick={e => {
                             this.handleDeleteRowModalOpen(e, id);
                           }}
