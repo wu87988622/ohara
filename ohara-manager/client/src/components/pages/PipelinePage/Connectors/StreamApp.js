@@ -76,8 +76,14 @@ class StreamApp extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
+    const { topics: prevTopics } = prevProps;
+    const { topics: currTopics } = this.props;
     const { connectorId: prevConnectorId } = prevProps.match.params;
     const { connectorId: currConnectorId } = this.props.match.params;
+
+    if (prevTopics !== currTopics) {
+      this.setState({ topics: currTopics });
+    }
 
     if (prevConnectorId !== currConnectorId) {
       const streamAppId = currConnectorId;
