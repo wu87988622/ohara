@@ -109,7 +109,7 @@ public abstract class StreamApp {
   /**
    * User defined initialize stage before running streamapp
    *
-   * @throws Exception
+   * @throws Exception initial Exception
    */
   public void init() throws Exception {}
 
@@ -121,15 +121,24 @@ public abstract class StreamApp {
    *   .fromTopic("topic-name")
    *   ...
    * </pre>
+   *
+   * @throws Exception start Exception
    */
   public abstract void start() throws Exception;
 
   public void stop() throws Exception {}
 
-  /** for ohara container use */
+  /**
+   * for ohara container use
+   *
+   * @param args arguments
+   */
   public static void main(String[] args) {
     CheckedExceptionUtil.wrap(
         () -> {
+          if (System.getenv(JAR_URL) == null) {
+            throw new RuntimeException("It seems you are not running in Ohara Environment?");
+          }
           String entryClass = findStreamAppEntry(System.getenv(JAR_URL));
 
           ClassLoader loader =
