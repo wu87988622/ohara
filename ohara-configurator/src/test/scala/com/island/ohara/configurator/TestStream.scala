@@ -53,21 +53,25 @@ class TestStream extends SmallTest with Matchers {
     val res1 = awaitResult(accessStreamList.upload(pipeline_id, filePaths))
     res1.foreach(jar => {
       jar.jarName.startsWith("empty_") shouldBe true
+      jar.name shouldBe "Untitled stream app"
     })
 
     // Test GET method
     val res2 = awaitResult(accessStreamList.list(pipeline_id))
+    res2.forall(r => r.name.equals("Untitled stream app")) shouldBe true
     res2.size shouldBe 3
 
     // Test DELETE method
     val deleteJar = res1.head
     val d = awaitResult(accessStreamList.delete(deleteJar.id))
+    d.name shouldBe "Untitled stream app"
     d.jarName shouldBe deleteJar.jarName
 
     //Test PUT method
     val originJar = res1.last
     val anotherJar = StreamListRequest("la-new.jar")
     val updated = awaitResult(accessStreamList.update(originJar.id, anotherJar))
+    updated.name shouldBe "Untitled stream app"
     updated.jarName shouldBe "la-new.jar"
 
     filePaths.foreach(new File(_).deleteOnExit())

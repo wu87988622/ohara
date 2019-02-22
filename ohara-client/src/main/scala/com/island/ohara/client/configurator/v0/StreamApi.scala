@@ -132,9 +132,9 @@ object StreamApi {
   implicit val STREAM_LIST_REQUEST_JSON_FORMAT: RootJsonFormat[StreamListRequest] = jsonFormat1(StreamListRequest)
 
   // StreamApp List Response Body
-  final case class StreamListResponse(id: String, jarName: String, lastModified: Long)
+  final case class StreamListResponse(id: String, name: String, jarName: String, lastModified: Long)
   implicit val STREAM_JAR_JSON_FORMAT: RootJsonFormat[StreamListResponse] =
-    jsonFormat3(StreamListResponse)
+    jsonFormat4(StreamListResponse)
 
   // StreamApp Property Request Body
   final case class StreamPropertyRequest(name: String, fromTopics: Seq[String], toTopics: Seq[String], instances: Int)
