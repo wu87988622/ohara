@@ -110,7 +110,9 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(PipelineCreationRequest(methodName(), Map(topic.id -> Seq(connector.id)))))
+        .add(PipelineCreationRequest(name = methodName(),
+                                     workerClusterName = None,
+                                     rules = Map(topic.id -> Seq(connector.id)))))
     pipeline.objects.find(_.id == connector.id).get.state shouldBe Some(ConnectorState.FAILED)
   }
 

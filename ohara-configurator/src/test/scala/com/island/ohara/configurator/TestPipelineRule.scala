@@ -63,6 +63,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "abc",
+            workerClusterName = None,
             rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
           )
         ),
@@ -92,6 +93,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "testPipelineAllowData",
+            workerClusterName = None,
             rules = Map.empty
           )
         ),
@@ -137,6 +139,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             pipeline.id,
             PipelineCreationRequest(
               name = "abc",
+              workerClusterName = None,
               rules = Map(source.id -> Seq(topic.id))
             )
           ),
@@ -154,6 +157,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             pipeline.id,
             PipelineCreationRequest(
               name = "abc",
+              workerClusterName = None,
               rules = Map(topic.id -> Seq(streamapp.head.id))
             )
           ),
@@ -184,6 +188,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "abc",
+            workerClusterName = None,
             rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
           )
         ),
@@ -209,6 +214,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .add(
           PipelineCreationRequest(
             name = "abc",
+            workerClusterName = None,
             rules = Map(PipelineApi.UNKNOWN -> Seq(sink.id))
           )
         ),

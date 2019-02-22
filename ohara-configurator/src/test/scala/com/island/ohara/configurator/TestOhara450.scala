@@ -71,8 +71,9 @@ class TestOhara450 extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           PipelineCreationRequest(
-            "abc",
-            Map(source.id -> Seq(topic.id), topic.id -> Seq(sink.id))
+            name = "abc",
+            workerClusterName = None,
+            rules = Map(source.id -> Seq(topic.id), topic.id -> Seq(sink.id))
           )),
       10 seconds
     )

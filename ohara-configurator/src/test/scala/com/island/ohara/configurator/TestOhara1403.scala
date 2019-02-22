@@ -60,7 +60,10 @@ class TestOhara1403 extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(PipelineCreationRequest(methodName(), Map(topic.id -> Seq(connector.id)))),
+        .add(
+          PipelineCreationRequest(name = methodName(),
+                                  workerClusterName = None,
+                                  rules = Map(topic.id -> Seq(connector.id)))),
       10 seconds
     )
 
