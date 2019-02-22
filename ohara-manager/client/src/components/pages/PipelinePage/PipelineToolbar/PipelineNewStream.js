@@ -22,11 +22,11 @@ import { find, some, endsWith, get, isNull } from 'lodash';
 
 import * as streamAppApi from 'api/streamAppApi';
 import * as MESSAGES from 'constants/messages';
-import Editable from './Editable';
+import Editable from '../Editable';
 import { ListLoader } from 'common/Loader';
 import { DataTable } from 'common/Table';
 import { ConfirmModal } from 'common/Modal';
-import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
+import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 
 const JAR_EXTENSION = '.jar';
 
@@ -159,7 +159,7 @@ class PipelineNewStream extends React.Component {
     this.setState({ isDeleteRowModalActive: false, activeJar: null });
   };
 
-  handleEditIconClick = id => {
+  handleEditIconClick = () => {
     this.setState({ isTitleEditing: true });
   };
 

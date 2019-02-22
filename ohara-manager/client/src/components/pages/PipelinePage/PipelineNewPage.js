@@ -129,7 +129,7 @@ class PipelineNewPage extends React.Component {
 
   state = {
     topics: [],
-    currentTopic: {},
+    currentTopic: null,
     graph: [],
     isLoading: true,
     isUpdating: false,
