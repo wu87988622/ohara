@@ -26,6 +26,7 @@ import { get, isEmpty } from 'lodash';
 import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamAppApi';
 import * as topicApi from 'api/topicApi';
 import PipelineToolbar from './PipelineToolbar';
@@ -302,9 +303,9 @@ class PipelineNewPage extends React.Component {
     this.setState({ runningConnectors });
 
     const sourcePromises = sources.map(source =>
-      pipelineApi.startSource(source),
+      connectorApi.startConnector(source),
     );
-    const sinkPromises = sinks.map(sink => pipelineApi.startSink(sink));
+    const sinkPromises = sinks.map(sink => connectorApi.startConnector(sink));
     const streamsPromises = streams.map(stream => streamApi.start(stream));
 
     return Promise.all([
@@ -317,9 +318,9 @@ class PipelineNewPage extends React.Component {
   stopConnectors = connectors => {
     const { sources, sinks, streams } = getConnectors(connectors);
     const sourcePromises = sources.map(source =>
-      pipelineApi.stopSource(source),
+      connectorApi.stopConnector(source),
     );
-    const sinkPromises = sinks.map(sink => pipelineApi.stopSink(sink));
+    const sinkPromises = sinks.map(sink => connectorApi.stopConnector(sink));
     const streamsPromises = streams.map(stream => streamApi.stop(stream));
 
     return Promise.all([

@@ -18,9 +18,9 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchPipelines = async () => {
+export const createConnector = async params => {
   try {
-    const res = await axiosInstance.get('/api/pipelines');
+    const res = await axiosInstance.post('/api/connectors', params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -33,11 +33,9 @@ export const fetchPipelines = async () => {
   }
 };
 
-export const createPipeline = async ({ cluster, ...restParams }) => {
-  const url = `/api/pipelines?cluster=${cluster}`;
-
+export const updateConnector = async ({ id, params }) => {
   try {
-    const res = await axiosInstance.post(url, restParams);
+    const res = await axiosInstance.put(`/api/connectors/${id}`, params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -50,9 +48,9 @@ export const createPipeline = async ({ cluster, ...restParams }) => {
   }
 };
 
-export const updatePipeline = async ({ id, params }) => {
+export const fetchConnector = async id => {
   try {
-    const res = await axiosInstance.put(`/api/pipelines/${id}`, params);
+    const res = await axiosInstance.get(`/api/connectors/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -65,9 +63,9 @@ export const updatePipeline = async ({ id, params }) => {
   }
 };
 
-export const deletePipeline = async id => {
+export const startConnector = async id => {
   try {
-    const res = await axiosInstance.delete(`/api/pipelines/${id}`);
+    const res = await axiosInstance.put(`/api/connectors/${id}/start`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -80,9 +78,9 @@ export const deletePipeline = async id => {
   }
 };
 
-export const queryRdb = async params => {
+export const stopConnector = async id => {
   try {
-    const res = await axiosInstance.post('/api/query/rdb', params);
+    const res = await axiosInstance.put(`/api/connectors/${id}/stop`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
@@ -95,9 +93,9 @@ export const queryRdb = async params => {
   }
 };
 
-export const fetchPipeline = async id => {
+export const deleteConnector = async id => {
   try {
-    const res = await axiosInstance.get(`/api/pipelines/${id}`);
+    const res = await axiosInstance.delete(`/api/connectors/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

@@ -160,22 +160,6 @@ private[route] object RouteUtil {
       }
     }
 
-  // TODO: remove this method after we resolve OHARA-1201 ... by chia
-  def basicRoute2[Req, Res <: Data: ClassTag](hookOfAdd: (TargetCluster, Id, Req) => Future[Res],
-                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
-                                              hookOfList: Seq[Res] => Future[Seq[Res]],
-                                              hookOfGet: Res => Future[Res],
-                                              hookOfDelete: Res => Future[Res])(
-    implicit store: Store,
-    rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res]): server.Route =
-    pathEnd {
-      routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
-    } ~ path(Segment) { id =>
-      routeOfGet[Res](id, hookOfGet) ~ routeOfDelete[Res](id, hookOfDelete, id => Future.successful(id)) ~
-        routeOfUpdate[Req, Res](id, hookOfUpdate)
-    }
-
   def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
     collie: Collie[Res],
     defaultImage: String,

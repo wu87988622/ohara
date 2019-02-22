@@ -15,21 +15,20 @@
  */
 
 import { CONNECTOR_TYPES } from 'constants/pipelines';
-import { createSource } from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 
 import { createConnector } from '../pipelineToolbarUtils';
 
-jest.mock('api/pipelineApi');
+jest.mock('api/connectorApi');
 
 describe('createConnector()', () => {
   it('should call updateGraph function if the given type is not exist in the current graph', async () => {
     const graph = [{ name: 'a', type: CONNECTOR_TYPES.topic }];
     const updateGraph = jest.fn();
     const connector = { className: CONNECTOR_TYPES.ftpSource };
-
     const res = { data: { result: { id: '1234' } } };
 
-    createSource.mockImplementation(() => Promise.resolve(res));
+    connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
 
     await createConnector({ graph, updateGraph, connector });
 

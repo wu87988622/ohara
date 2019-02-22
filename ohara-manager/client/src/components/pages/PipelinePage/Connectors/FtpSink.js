@@ -21,7 +21,7 @@ import PropTypes from 'prop-types';
 import { get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 import * as validateApi from 'api/validateApi';
 import * as s from './Styles';
 import Controller from './Controller';
@@ -182,7 +182,7 @@ class FtpSink extends React.Component {
   };
 
   fetchSink = async sinkId => {
-    const res = await pipelineApi.fetchSink(sinkId);
+    const res = await connectorApi.fetchConnector(sinkId);
     const result = get(res, 'data.result', false);
 
     if (result) {
@@ -505,7 +505,7 @@ class FtpSink extends React.Component {
       },
     };
 
-    await pipelineApi.updateSink({ id: sinkId, params });
+    await connectorApi.updateConnector({ id: sinkId, params });
     updateHasChanges(false);
 
     const currTopicId = isEmpty(currReadTopic) ? '?' : currReadTopic.id;
@@ -534,7 +534,7 @@ class FtpSink extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId, pipelineId } = match.params;
-    const res = await pipelineApi.deleteSink(connectorId);
+    const res = await connectorApi.deleteConnector(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -552,9 +552,9 @@ class FtpSink extends React.Component {
     const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await pipelineApi.startSink(sinkId);
+      res = await connectorApi.startConnector(sinkId);
     } else {
-      res = await pipelineApi.stopSink(sinkId);
+      res = await connectorApi.stopConnector(sinkId);
     }
 
     this.handleTriggerConnectorResponse(action, res);

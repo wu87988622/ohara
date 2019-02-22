@@ -22,7 +22,7 @@ import { Redirect } from 'react-router-dom';
 import { get, isEmpty, debounce, includes } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 import * as s from './Styles';
 import { Box } from 'common/Layout';
 import { Input, Select, FormGroup, Label } from 'common/Form';
@@ -151,7 +151,7 @@ class HdfsSink extends React.Component {
   };
 
   fetchSink = async sinkId => {
-    const res = await pipelineApi.fetchSink(sinkId);
+    const res = await connectorApi.fetchConnector(sinkId);
     const result = get(res, 'data.result', null);
 
     if (result) {
@@ -274,7 +274,7 @@ class HdfsSink extends React.Component {
       },
     };
 
-    await pipelineApi.updateSink({ id: sinkId, params });
+    await connectorApi.updateConnector({ id: sinkId, params });
     updateHasChanges(false);
 
     const currTopicId = isEmpty(currReadTopic) ? [] : currReadTopic.id;
@@ -303,7 +303,7 @@ class HdfsSink extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId, pipelineId } = match.params;
-    const res = await pipelineApi.deleteSink(connectorId);
+    const res = await connectorApi.deleteConnector(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -321,9 +321,9 @@ class HdfsSink extends React.Component {
     const sinkId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await pipelineApi.startSink(sinkId);
+      res = await connectorApi.startConnector(sinkId);
     } else {
-      res = await pipelineApi.stopSink(sinkId);
+      res = await connectorApi.stopConnector(sinkId);
     }
 
     this.handleTriggerConnectorResponse(action, res);

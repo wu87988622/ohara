@@ -21,7 +21,8 @@ import toastr from 'toastr';
 import { includes, get, isEmpty, isNull, debounce } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
+import * as validateApi from 'api/validateApi';
 import * as s from './Styles';
 import Controller from './Controller';
 import { SchemaTable } from 'common/Table';
@@ -172,7 +173,7 @@ class FtpSource extends React.Component {
   };
 
   fetchSource = async sourceId => {
-    const res = await pipelineApi.fetchSource(sourceId);
+    const res = await connectorApi.fetchConnector(sourceId);
     const result = get(res, 'data.result', null);
 
     if (result) {
@@ -384,7 +385,7 @@ class FtpSource extends React.Component {
     const { host: hostname, port, username: user, password } = this.state;
 
     this.updateIsTestConnectionBtnWorking(true);
-    const res = await pipelineApi.checkSource({
+    const res = await validateApi.validateFtp({
       hostname,
       port,
       user,
@@ -494,7 +495,7 @@ class FtpSource extends React.Component {
       },
     };
 
-    await pipelineApi.updateSource({ id: sourceId, params });
+    await connectorApi.updateConnector({ id: sourceId, params });
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
@@ -514,7 +515,7 @@ class FtpSource extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId, pipelineId } = match.params;
-    const res = await pipelineApi.deleteSource(connectorId);
+    const res = await connectorApi.deleteConnector(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -532,9 +533,9 @@ class FtpSource extends React.Component {
     const sourceId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await pipelineApi.startSource(sourceId);
+      res = await connectorApi.startConnector(sourceId);
     } else {
-      res = await pipelineApi.stopSource(sourceId);
+      res = await connectorApi.stopConnector(sourceId);
     }
 
     this.handleTriggerConnectorResponse(action, res);

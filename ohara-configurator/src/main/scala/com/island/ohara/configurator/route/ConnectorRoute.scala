@@ -74,57 +74,55 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
 
   def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
-    // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
-    pathPrefix(CONNECTORS_PREFIX_PATH | "sources" | "sinks") {
-      RouteUtil.basicRoute2[ConnectorCreationRequest, ConnectorInfo](
-        hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorCreationRequest) =>
-          CollieUtils.workerClient(targetCluster).map {
-            case (cluster, _) =>
-              toRes(cluster.name, id, verify(request))
+    RouteUtil.basicRoute[ConnectorCreationRequest, ConnectorInfo](
+      root = CONNECTORS_PREFIX_PATH,
+      hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorCreationRequest) =>
+        CollieUtils.workerClient(targetCluster).map {
+          case (cluster, _) =>
+            toRes(cluster.name, id, verify(request))
 
-        },
-        hookOfUpdate = (id: Id, request: ConnectorCreationRequest, previous: ConnectorInfo) =>
-          CollieUtils.workerClient(Some(previous.workerClusterName)).flatMap {
-            case (_, wkClient) =>
-              wkClient.exist(id).map {
-                if (_) throw new IllegalArgumentException(s"$id is not stopped")
-                else toRes(previous.workerClusterName, id, verify(request))
-              }
-        },
-        hookOfGet = (response: ConnectorInfo) =>
+      },
+      hookOfUpdate = (id: Id, request: ConnectorCreationRequest, previous: ConnectorInfo) =>
+        CollieUtils.workerClient(Some(previous.workerClusterName)).flatMap {
+          case (_, wkClient) =>
+            wkClient.exist(id).map {
+              if (_) throw new IllegalArgumentException(s"$id is not stopped")
+              else toRes(previous.workerClusterName, id, verify(request))
+            }
+      },
+      hookOfGet = (response: ConnectorInfo) =>
+        CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
+          case (_, wkClient) =>
+            update(response, wkClient)
+      },
+      hookOfList = (responses: Seq[ConnectorInfo]) =>
+        Future.sequence(responses.map { response =>
           CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
             case (_, wkClient) =>
               update(response, wkClient)
-        },
-        hookOfList = (responses: Seq[ConnectorInfo]) =>
-          Future.sequence(responses.map { response =>
-            CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
-              case (_, wkClient) =>
-                update(response, wkClient)
-            }
-          }),
-        hookOfDelete = (response: ConnectorInfo) =>
-          CollieUtils
-            .workerClient(Some(response.workerClusterName))
-            .flatMap {
-              case (_, wkClient) =>
-                wkClient.exist(response.id).flatMap {
-                  if (_)
-                    wkClient
-                      .delete(response.id)
-                      .recover {
-                        case e: Throwable =>
-                          LOG.info(s"Failed to remove connector:${response.id}", e)
-                      }
-                      .map(_ => response)
-                  else Future.successful(response)
-                }
-            }
-            .recover {
-              case _: NoSuchClusterException => response
           }
-      )
-    } ~
+        }),
+      hookOfDelete = (response: ConnectorInfo) =>
+        CollieUtils
+          .workerClient(Some(response.workerClusterName))
+          .flatMap {
+            case (_, wkClient) =>
+              wkClient.exist(response.id).flatMap {
+                if (_)
+                  wkClient
+                    .delete(response.id)
+                    .recover {
+                      case e: Throwable =>
+                        LOG.info(s"Failed to remove connector:${response.id}", e)
+                    }
+                    .map(_ => response)
+                else Future.successful(response)
+              }
+          }
+          .recover {
+            case _: NoSuchClusterException => response
+        }
+    ) ~
       // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
       pathPrefix((CONNECTORS_PREFIX_PATH | "sources" | "sinks") / Segment) { id =>
         path(START_COMMAND) {
