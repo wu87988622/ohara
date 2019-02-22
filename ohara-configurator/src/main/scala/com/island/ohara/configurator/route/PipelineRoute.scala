@@ -34,17 +34,77 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 private[configurator] object PipelineRoute {
   private[this] val LOG = Logger(ConnectorRoute.getClass)
-  private[this] def toRes(targetCluster: TargetCluster, id: String, request: PipelineCreationRequest)(
-    implicit store: Store,
-    workerCollie: WorkerCollie): Future[Pipeline] = CollieUtils.workerClient(targetCluster).flatMap {
-    case (cluster, client) =>
-      verifyRules(cluster, request).flatMap { rules =>
-        abstracts(rules, client).map { abs =>
-          Pipeline(id, request.name, rules, abs, cluster.name, CommonUtil.current())
+
+  private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
+    implicit workerCollie: WorkerCollie,
+    store: Store): Future[Pipeline] =
+    toRes(Map(id -> request), swallow).map(_.head)
+
+  /**
+    * convert the request to response.
+    * NOTED: it includes all checks to request.
+    * @param swallow true if you don't want to see the exception in checking.
+    * @return response
+    */
+  private[this] def toRes(reqs: Map[String, PipelineCreationRequest],
+                          swallow: Boolean)(implicit workerCollie: WorkerCollie, store: Store): Future[Seq[Pipeline]] =
+    workerCollie
+      .clusters()
+      .map { clusters =>
+        reqs.map {
+          case (id, request) =>
+            // we must find a name for pipeline even if the name is not mapped to active worker cluster
+            val wkName = request.workerClusterName.getOrElse {
+              if (clusters.size == 1) clusters.head._1.name
+              else
+                throw new IllegalStateException(
+                  s"can't match default worker cluster from ${clusters.map(_._1.name).mkString(",")}")
+            }
+            val wkCluster = clusters.keys.find(_.name == wkName)
+            if (!swallow && wkCluster.isEmpty)
+              throw new IllegalArgumentException(s"failed to find matched worker cluster. " +
+                s"${request.workerClusterName.map(n => s"request:$n").getOrElse("")} actual:${clusters.map(_._1.name).mkString(",")}")
+            Pipeline(
+              id = id,
+              name = request.name,
+              rules = request.rules,
+              objects = Seq.empty,
+              workerClusterName = wkName,
+              lastModified = CommonUtil.current()
+            ) -> wkCluster
         }
       }
-  }
+      .map(_.toMap)
+      .flatMap(entries =>
+        // if the backend worker cluster is gone, we don't do any checks for this pipeline
+        Future.sequence(entries.map {
+          case (pipeline, clusterOption) =>
+            clusterOption
+              .map(cluster =>
+                verifyRules(pipeline.id, pipeline.rules, cluster).map { rules =>
+                  pipeline.copy(rules = rules) -> Some(cluster)
+              })
+              .getOrElse(Future.successful(pipeline -> None))
+        }))
+      .flatMap(entries =>
+        // if the backend worker cluster is gone, we don't do any checks for this pipeline
+        Future.sequence(entries.map {
+          case (pipeline, clusterOption) =>
+            clusterOption
+              .map(cluster =>
+                abstracts(pipeline.rules, workerCollie.workerClient(cluster)).map(objects =>
+                  pipeline.copy(objects = objects)))
+              .getOrElse(Future.successful(pipeline))
+        }))
+      .map(_.toSeq)
 
+  /**
+    * generate the description of all objects hosted by pipeline
+    * @param rules pipeline's rules
+    * @param workerClient used to communicate to the worker cluster running the pipeline
+    * @param store store
+    * @return description of objects
+    */
   private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient)(
     implicit store: Store): Future[List[ObjectAbstract]] =
     Future
@@ -85,8 +145,15 @@ private[configurator] object PipelineRoute {
     * we should accept following data type only
     * [ConnectorConfiguration, TopicInfo, StreamApp]
     */
-  private[this] def verifyRules(cluster: WorkerClusterInfo, request: PipelineCreationRequest)(
+  private[this] def verifyRules(name: String, rules: Map[String, Seq[String]], cluster: WorkerClusterInfo)(
     implicit store: Store): Future[Map[String, Seq[String]]] = {
+
+    // pipeline is bound on specific worker cluster. And all objects in this pipeline should be bound on same cluster.
+    // for example:
+    // topic -> the broker cluster must be bound by same worker cluster
+    // connector -> it's worker cluster must be same to pipeline's worker cluster
+    // streamapp -> TODO: should we bind it on same worker cluster ??? by chia
+    // others -> unsupported
     def verify(id: String): Future[String] = if (id != UNKNOWN) {
       store
         .raw(id)
@@ -94,12 +161,12 @@ private[configurator] object PipelineRoute {
           case d: ConnectorInfo =>
             if (d.workerClusterName != cluster.name)
               throw new IllegalArgumentException(
-                s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:${request.name} which is placed at worker cluster:${cluster.name}")
+                s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:$name which is placed at worker cluster:${cluster.name}")
             else id
           case d: TopicInfo =>
             if (d.brokerClusterName != cluster.brokerClusterName)
               throw new IllegalArgumentException(
-                s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:${request.name} which is placed at broker cluster:${cluster.brokerClusterName}")
+                s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:$name which is placed at broker cluster:${cluster.brokerClusterName}")
             else id
           case _: StreamApp => id
           case raw          => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
@@ -112,11 +179,14 @@ private[configurator] object PipelineRoute {
         }
     } else Future.successful(id)
 
+    // filter out illegal rules. the following rules are illegal.
+    // 1) "a": ["a"] => this case will cause a exception
+    // 2) unknown -> others => this will be removed
+    // 3) unknown -> ["unknown", others] => the "unknown" in value will be removed
     def verify2(ids: Seq[String]): Future[Seq[String]] = Future.traverse(ids)(verify)
-
     Future
       .sequence(
-        request.rules
+        rules
         // pre-filter the unknown key
           .filter {
             case (k, _) => k != UNKNOWN
@@ -146,21 +216,41 @@ private[configurator] object PipelineRoute {
   }
 
   private[this] def update(pipeline: Pipeline)(implicit store: Store, workerCollie: WorkerCollie): Future[Pipeline] =
-    toRes(Some(pipeline.workerClusterName),
-          pipeline.id,
-          PipelineCreationRequest(
-            name = pipeline.name,
-            rules = pipeline.rules
-          ))
+    update(Seq(pipeline)).map(_.head)
+
+  /**
+    * update the response.
+    * Noted: it swallows the exception since it is possible that the backed worker cluster is gone.
+    */
+  private[this] def update(pipelines: Seq[Pipeline])(implicit store: Store,
+                                                     workerCollie: WorkerCollie): Future[Seq[Pipeline]] =
+    toRes(
+      pipelines.map { pipeline =>
+        pipeline.id -> PipelineCreationRequest(
+          name = pipeline.name,
+          workerClusterName = Some(pipeline.workerClusterName),
+          rules = pipeline.rules
+        )
+      }.toMap,
+      true
+    )
+
+  /**
+    * TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
+    */
+  private[this] def updateWorkerClusterName(request: PipelineCreationRequest,
+                                            t: TargetCluster): PipelineCreationRequest =
+    if (request.workerClusterName.isEmpty) request.copy(workerClusterName = t) else request
 
   def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
     RouteUtil.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfAdd = (t: TargetCluster, id: Id, request: PipelineCreationRequest) => toRes(t, id, request),
+      hookOfAdd =
+        (t: TargetCluster, id: Id, request: PipelineCreationRequest) => toRes(id, updateWorkerClusterName(request, t)),
       hookOfUpdate = (id: Id, request: PipelineCreationRequest, previous: Pipeline) =>
-        toRes(Some(previous.workerClusterName), id, request),
+        toRes(id, request.copy(workerClusterName = Some(previous.workerClusterName))),
       hookOfGet = (response: Pipeline) => update(response),
-      hookOfList = (responses: Seq[Pipeline]) => Future.sequence(responses.map(update)),
+      hookOfList = (responses: Seq[Pipeline]) => update(responses),
       hookBeforeDelete = (id: String) =>
         store
           .value[Pipeline](id)
