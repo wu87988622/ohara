@@ -110,12 +110,15 @@ private[configurator] object StreamRoute {
                         jarStore.add(file, s"${metadata.fileName}")
                     })
                   ) { jarInfos =>
-                    val jars = jarInfos.map { jarInfo =>
+                    val jars = Future.sequence(jarInfos.map { jarInfo =>
                       val time = CommonUtil.current()
                       val streamId = CommonUtil.uuid()
-                      store.add(toStore(pipelineId = id, streamId = streamId, jarInfo = jarInfo, lastModified = time))
-                      StreamListResponse(streamId, jarInfo.name, time)
-                    }
+                      store
+                        .add(toStore(pipelineId = id, streamId = streamId, jarInfo = jarInfo, lastModified = time))
+                        .map { data =>
+                          StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified)
+                        }
+                    })
                     //delete temp jars after success
                     files.foreach { case (_, file) => file.deleteOnExit() }
                     complete(jars)
@@ -127,7 +130,7 @@ private[configurator] object StreamRoute {
                   onSuccess(store.values[StreamApp]) { values =>
                     complete(values
                       .filter(f => f.pipelineId.equals(id)) //note : this id is given by UI (pipeline_id)
-                      .map(data => StreamListResponse(data.id, data.jarInfo.name, data.lastModified)))
+                      .map(data => StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified)))
                   }
                 } ~
                 //delete jar
@@ -140,7 +143,7 @@ private[configurator] object StreamRoute {
                   } yield f1
 
                   onSuccess(result) { data =>
-                    complete(StreamListResponse(data.id, data.jarInfo.name, data.lastModified))
+                    complete(StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified))
                   }
                 } ~
                 //update jar name
@@ -173,7 +176,7 @@ private[configurator] object StreamRoute {
                       )
                     } yield f5
                     onSuccess(result) { newData =>
-                      complete(StreamListResponse(newData.id, newData.jarInfo.name, newData.lastModified))
+                      complete(StreamListResponse(newData.id, newData.name, newData.jarInfo.name, newData.lastModified))
                     }
                   }
                 }

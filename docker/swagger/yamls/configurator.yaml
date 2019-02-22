@@ -446,6 +446,8 @@ components:
       properties:
         id:
           type: "string"
+        name:
+          type: "string"
         jarName:
           type: "string"
         lastModified:
