@@ -23,15 +23,11 @@ import PipelineNewPage from '../PipelineNewPage';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import { getTestById } from 'utils/testUtils';
-import {
-  startSink,
-  startSource,
-  stopSink,
-  stopSource,
-  fetchPipeline,
-} from 'api/pipelineApi';
+import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 
 jest.mock('api/pipelineApi');
+jest.mock('api/connectorApi');
 
 const props = {
   match: {
@@ -116,12 +112,11 @@ describe('<PipelineNewPage />', () => {
       },
     };
 
-    fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
-
-    startSink.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } }),
+    pipelineApi.fetchPipeline.mockImplementation(() =>
+      Promise.resolve({ data }),
     );
-    startSource.mockImplementation(() =>
+
+    connectorApi.startConnector.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
 
@@ -148,21 +143,23 @@ describe('<PipelineNewPage />', () => {
       },
     };
 
-    fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
-
-    startSink.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } }),
+    pipelineApi.fetchPipeline.mockImplementation(() =>
+      Promise.resolve({ data }),
     );
-    startSource.mockImplementation(() =>
+
+    connectorApi.startConnector.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
 
     await wrapper.find(getTestById('start-btn')).prop('onClick')();
 
-    expect(startSource).toHaveBeenCalledTimes(1);
-    expect(startSource).toHaveBeenCalledWith(data.result.objects[0].id);
-    expect(startSink).toHaveBeenCalledTimes(1);
-    expect(startSink).toHaveBeenCalledWith(data.result.objects[1].id);
+    expect(connectorApi.startConnector).toHaveBeenCalledTimes(2);
+    expect(connectorApi.startConnector).toHaveBeenCalledWith(
+      data.result.objects[0].id,
+    );
+    expect(connectorApi.startConnector).toHaveBeenCalledWith(
+      data.result.objects[1].id,
+    );
   });
 
   it('stops the pipeline', async () => {
@@ -178,21 +175,23 @@ describe('<PipelineNewPage />', () => {
       },
     };
 
-    fetchPipeline.mockImplementation(() => Promise.resolve({ data }));
-
-    stopSink.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } }),
+    pipelineApi.fetchPipeline.mockImplementation(() =>
+      Promise.resolve({ data }),
     );
-    stopSource.mockImplementation(() =>
+
+    connectorApi.stopConnector.mockImplementation(() =>
       Promise.resolve({ data: { isSuccess: true } }),
     );
 
     // Stop the pipeline
     await wrapper.find(getTestById('stop-btn')).prop('onClick')();
 
-    expect(stopSource).toHaveBeenCalledTimes(1);
-    expect(stopSource).toHaveBeenCalledWith(data.result.objects[0].id);
-    expect(stopSink).toHaveBeenCalledTimes(1);
-    expect(stopSink).toHaveBeenCalledWith(data.result.objects[1].id);
+    expect(connectorApi.stopConnector).toHaveBeenCalledTimes(2);
+    expect(connectorApi.stopConnector).toHaveBeenCalledWith(
+      data.result.objects[0].id,
+    );
+    expect(connectorApi.stopConnector).toHaveBeenCalledWith(
+      data.result.objects[1].id,
+    );
   });
 });

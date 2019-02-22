@@ -25,6 +25,7 @@ import * as URLS from 'constants/urls';
 import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 import * as validateApi from 'api/validateApi';
 import Controller from './Controller';
 import { Box } from 'common/Layout';
@@ -158,7 +159,7 @@ class JdbcSource extends React.Component {
   };
 
   fetchSource = async sourceId => {
-    const res = await pipelineApi.fetchSource(sourceId);
+    const res = await connectorApi.fetchConnector(sourceId);
     const result = get(res, 'data.result', null);
 
     if (result) {
@@ -338,7 +339,7 @@ class JdbcSource extends React.Component {
       },
     };
 
-    await pipelineApi.updateSource({ id: sourceId, params });
+    await connectorApi.updateConnector({ id: sourceId, params });
     updateHasChanges(false);
 
     const currSource = findByGraphId(graph, sourceId);
@@ -358,7 +359,7 @@ class JdbcSource extends React.Component {
   handleDeleteConnector = async () => {
     const { match, refreshGraph, history } = this.props;
     const { connectorId, pipelineId } = match.params;
-    const res = await pipelineApi.deleteSource(connectorId);
+    const res = await connectorApi.deleteConnector(connectorId);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -376,9 +377,9 @@ class JdbcSource extends React.Component {
     const sourceId = get(match, 'params.connectorId', null);
     let res;
     if (action === CONNECTOR_ACTIONS.start) {
-      res = await pipelineApi.startSource(sourceId);
+      res = await connectorApi.startConnector(sourceId);
     } else {
-      res = await pipelineApi.stopSource(sourceId);
+      res = await connectorApi.stopConnector(sourceId);
     }
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {

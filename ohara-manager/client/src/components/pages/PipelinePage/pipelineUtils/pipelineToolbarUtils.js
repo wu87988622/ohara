@@ -16,7 +16,7 @@
 
 import { get, isObject } from 'lodash';
 
-import * as pipelineApi from 'api/pipelineApi';
+import * as connectorApi from 'api/connectorApi';
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
 import { ICON_MAPS } from 'constants/pipelines';
 
@@ -69,10 +69,10 @@ export const createConnector = async ({ updateGraph, connector }) => {
   } else if (isStream(className)) {
     id = connector.id;
   } else if (isSource(className)) {
-    const res = await pipelineApi.createSource(params);
+    const res = await connectorApi.createConnector(params);
     id = get(res, 'data.result.id', null);
   } else if (isSink(className)) {
-    const res = await pipelineApi.createSink(params);
+    const res = await connectorApi.createConnector(params);
     id = get(res, 'data.result.id', null);
   }
 
