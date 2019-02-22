@@ -12,6 +12,14 @@ This module contains Ohara manager (an HTTP server powered by [Node.js](https://
 
 4.  **Optional**: If you're using Visual Studio Code as your editor, have a look at our [Editors](#editor) section.
 
+### <a name="init-mac">Mac</a>
+
+Make sure you have `watchman` installed on your machine. You can do this with homebrew:
+
+```sh
+brew install watchman
+```
+
 ### Linux
 
 Install these dependencies for cypress:
@@ -319,9 +327,19 @@ We highly recommend that you use [Visual Studio Code](https://code.visualstudio.
 
   use `yarn clean:process` command or `pkill node` to kill all the node.js processes
 
-- **Ohara manager is not able to connect to Configurator**
+- **While running test in jest's watch modal, an error is thrown**
 
-  And i'm seeing something like:
+  ```
+  Error watching file for changes: EMFILE
+  ```
+
+  Try installing `watchman` for your mac with the [instruction](#init-mac)
+
+  For more info: https://github.com/facebook/jest/issues/1767
+
+* **Ohara manager is not able to connect to Configurator**
+
+  And I'm seeing something like:
 
   ```
   --configurator: we're not able to connect to http://host:port/v0
@@ -331,10 +349,10 @@ We highly recommend that you use [Visual Studio Code](https://code.visualstudio.
   [nodemon] app crashed - waiting for file changes before starting...
   ```
 
-  This could happen with several factors:
+  This could happen due to several factors:
 
-  - **Configurator hasn't fully started**: after you start the configurator container. The container needs some time to fully initialize the service. This usually takes about a minute or so. And as we're doing the API check by hitting the real API in Ohara manager. This results to the error in the above.
+  - **Configurator hasn't fully started yet**: after you start the configurator container. The container needs some time to fully initialize the service. This usually takes about a minute or so. And as we're doing the API check by hitting the real API in Ohara manager. This results to the error in the above.
 
-  - **You're not using the correct IP in Manager container**: If you start a configurator container in your local as well as a manager. You should specify an IP instead of something like localhost in: --configurator http://localhost:12345/v0 This won't work as the manager is started in the container so it won't be able to connect to the configurator without a real IP
+  - **You're not using the correct IP in Manager container**: if you start a configurator container in your local as well as a manager. You should specify an IP instead of something like localhost in: --configurator http://localhost:12345/v0 This won't work as the manager is started in the container so it won't be able to connect to the configurator without a real IP
 
   - **As we mentioned in the previous sections. Please double check your configurator URL spelling. This is usually the cause of the above-mentioned error**
