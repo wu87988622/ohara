@@ -302,7 +302,7 @@ class FtpConfiguration extends React.Component {
     this.updateBtn(true);
     const res = await validateApi.validateFtp({
       hostname,
-      port,
+      port: Number(port), // This needs to be a number!
       user,
       password,
     });
@@ -549,6 +549,7 @@ class FtpConfiguration extends React.Component {
                 type="password"
                 id="password"
                 name="password"
+                placeholder="password"
                 width="250px"
                 value={password}
                 data-testid="password-input"

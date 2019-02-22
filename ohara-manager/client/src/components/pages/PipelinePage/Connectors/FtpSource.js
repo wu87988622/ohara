@@ -387,7 +387,7 @@ class FtpSource extends React.Component {
     this.updateIsTestConnectionBtnWorking(true);
     const res = await validateApi.validateFtp({
       hostname,
-      port,
+      port: Number(port), // This needs to be a number!
       user,
       password,
     });
