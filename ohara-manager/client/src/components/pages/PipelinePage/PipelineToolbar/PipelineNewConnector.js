@@ -20,7 +20,7 @@ import styled from 'styled-components';
 
 import * as PIPELINES from 'constants/pipelines';
 import { DataTable } from 'common/Table';
-import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
+import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 
 const TableWrapper = styled.div`
   margin: 30px 30px 40px;
@@ -51,7 +51,12 @@ class PipelineNewConnector extends React.Component {
     onSelect: PropTypes.func.isRequired,
     updateGraph: PropTypes.func.isRequired,
     activeConnector: PropTypes.object,
+    updateAddBtnStatus: PropTypes.func.isRequired,
   };
+
+  componentDidMount() {
+    this.props.updateAddBtnStatus(this.props.activeConnector);
+  }
 
   update = () => {
     const { updateGraph, activeConnector: connector } = this.props;

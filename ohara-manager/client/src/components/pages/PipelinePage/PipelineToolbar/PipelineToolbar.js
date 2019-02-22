@@ -169,8 +169,8 @@ class PipelineToolbar extends React.Component {
     });
   };
 
-  updateAddBtnStatus = streamAppId => {
-    this.setState({ isAddBtnDisabled: !streamAppId });
+  updateAddBtnStatus = currConnector => {
+    this.setState({ isAddBtnDisabled: !currConnector });
   };
 
   render() {
@@ -240,6 +240,7 @@ class PipelineToolbar extends React.Component {
               isLoading={isLoading}
               updateTopic={updateCurrentTopic}
               ref={this.modalChild}
+              updateAddBtnStatus={this.updateAddBtnStatus}
             />
           )}
 
@@ -255,6 +256,7 @@ class PipelineToolbar extends React.Component {
               onSelect={this.handleTrSelect}
               updateGraph={updateGraph}
               graph={graph}
+              updateAddBtnStatus={this.updateAddBtnStatus}
             />
           )}
         </Modal>

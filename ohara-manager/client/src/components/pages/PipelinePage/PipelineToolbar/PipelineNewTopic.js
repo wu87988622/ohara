@@ -22,8 +22,8 @@ import toastr from 'toastr';
 import * as MESSAGES from 'constants/messages';
 import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
-import { createConnector } from './pipelineUtils/pipelineToolbarUtils';
-import { findByGraphId } from './pipelineUtils/commonUtils';
+import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
+import { findByGraphId } from '../pipelineUtils/commonUtils';
 
 const Icon = styled.i`
   color: ${props => props.theme.lighterBlue};
@@ -61,7 +61,12 @@ class PipelineNewTopic extends React.Component {
     topics: PropTypes.array.isRequired,
     currentTopic: PropTypes.object.isRequired,
     updateTopic: PropTypes.func.isRequired,
+    updateAddBtnStatus: PropTypes.func.isRequired,
   };
+
+  componentDidMount() {
+    this.props.updateAddBtnStatus(this.props.currentTopic);
+  }
 
   handleSelectChange = ({ target }) => {
     const selectedIdx = target.options.selectedIndex;
