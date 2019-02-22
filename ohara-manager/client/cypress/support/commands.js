@@ -72,3 +72,54 @@ Cypress.Commands.add('insertNode', node => {
     password: node.password,
   });
 });
+
+Cypress.Commands.add('deleteAllPipelines', () => {
+  Cypress.log({
+    name: 'DELETE_ALL_PIPELINES',
+  });
+
+  const _ = Cypress._;
+
+  cy.request('GET', 'api/pipelines')
+    .then(res => res.body)
+    .then(pipelines => {
+      if (!_.isEmpty(pipelines)) {
+        _.forEach(pipelines, pipeline => {
+          cy.request('DELETE', `api/pipelines/${pipeline.id}`);
+        });
+      }
+    });
+});
+
+Cypress.Commands.add('insertPipeline', (cluster, pipeline) => {
+  Cypress.log({
+    name: 'INSERT_PIPELINE',
+  });
+
+  cy.request('POST', `/api/pipelines?cluster=${cluster}`, {
+    name: pipeline.name || 'Untitled pipeline',
+    rules: pipeline.rules || {},
+    cluster,
+  });
+});
+
+/**
+ * Usage: cy.get('input[type=file]').uploadFile('example.json')
+ */
+Cypress.Commands.add(
+  'uploadFile',
+  { prevSubject: 'element' },
+  (subject, fileName) => {
+    Cypress.log({
+      name: 'UPLOAD_FILE',
+    });
+
+    return cy.fixture(fileName, 'binary').then(content => {
+      const el = subject[0];
+      const testFile = new File([content], fileName);
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(testFile);
+      el.files = dataTransfer.files;
+    });
+  },
+);

@@ -311,7 +311,7 @@ class PipelineListPage extends React.Component {
                         <td>{name}</td>
                         <td>{workerClusterName}</td>
                         <td>{status}</td>
-                        <td className="has-icon">
+                        <td data-testid="edit-pipeline" className="has-icon">
                           <LinkIcon to={editUrl}>
                             <i className="far fa-edit" />
                           </LinkIcon>
