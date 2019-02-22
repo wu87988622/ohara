@@ -55,11 +55,19 @@ public final class OStreamBuilder<K, V> {
     this.cleanStart = builder.cleanStart;
   }
 
+  /**
+   * @param bootstrapServers broker list
+   * @return this builder
+   */
   public OStreamBuilder<K, V> bootstrapServers(String bootstrapServers) {
     this.bootstrapServers = bootstrapServers;
     return this;
   }
 
+  /**
+   * @param appId the application.id you want to group streamApp for
+   * @return this builder
+   */
   public OStreamBuilder<K, V> appid(String appId) {
     this.appId = appId;
     return this;
@@ -70,6 +78,7 @@ public final class OStreamBuilder<K, V> {
    * Serdes.Row>}
    *
    * @param fromTopic the topic name
+   * @return this builder
    */
   public OStreamBuilder<K, V> fromTopic(String fromTopic) {
     this.fromTopic = fromTopic;
@@ -83,6 +92,9 @@ public final class OStreamBuilder<K, V> {
    * @param fromTopic the topic name
    * @param key the serialize type for topic key
    * @param value the serialize type for topic value
+   * @param <S> the source topic key type
+   * @param <U> the source topic value type
+   * @return this builder
    */
   public <S, U> OStreamBuilder<S, U> fromTopicWith(String fromTopic, Serde<S> key, Serde<U> value) {
     this.fromTopic = fromTopic;
@@ -95,6 +107,7 @@ public final class OStreamBuilder<K, V> {
    * Serdes.Row>}
    *
    * @param toTopic the topic name
+   * @return this builder
    */
   public OStreamBuilder<K, V> toTopic(String toTopic) {
     return toTopicWith(toTopic, builderKeySerde, builderValueSerde);
@@ -106,6 +119,9 @@ public final class OStreamBuilder<K, V> {
    * @param toTopic the topic name
    * @param key the serialize type for topic key
    * @param value the serialize type for topic value
+   * @param <S> the target topic key type
+   * @param <U> the target topic value type
+   * @return this builder
    */
   public <S, U> OStreamBuilder<K, V> toTopicWith(String toTopic, Serde<S> key, Serde<U> value) {
     this.toTopic = toTopic;
@@ -113,7 +129,11 @@ public final class OStreamBuilder<K, V> {
     return this;
   }
 
-  /** control this stream application should clean all state data before start. */
+  /**
+   * control this stream application should clean all state data before start.
+   *
+   * @return this builder
+   */
   public OStreamBuilder<K, V> cleanStart() {
     this.cleanStart = true;
     return this;
@@ -123,6 +143,7 @@ public final class OStreamBuilder<K, V> {
    * define timestamp of fromTopic records.
    *
    * @param extractor class extends {@code TimestampExtractor}
+   * @return this builder
    */
   public OStreamBuilder<K, V> timestampExactor(Class<? extends TimestampExtractor> extractor) {
     this.extractor = extractor;
@@ -147,7 +168,7 @@ public final class OStreamBuilder<K, V> {
    * For running a standalone application inside ohara environment. This method will override ALL
    * changes you made by this builder. note : this is for the production usage
    *
-   * @return
+   * @return the logic entry {@code OStream}
    */
   public OStream<K, V> toOharaEnvStream() {
     Map<String, String> envs = System.getenv();

@@ -4,7 +4,31 @@ An easy-to-use visual stream processing tool based on Apache Kafka.
 
 ### Getting Started
 
-[TODO]
+**Start Your Own Ohara StreamApp**
+
+For development
+* you need to include the following jars in your project
+```
+gradle clean jar -PskipManager
+cp ohara-common/build/libs/*.jar ohara-kafka/build/libs/*.jar ohara-streams/build/libs/*.jar  your_project
+```
+* sample ohara code can be found in
+```
+# for external cluster
+ohara-streams/src/test/java/com/island/ohara/streams/SimpleApplicationForExternalEnv.java
+# for ohara environment
+ohara-streams/src/test/java/com/island/ohara/streams/SimpleApplicationForOharaEnv.java
+```
+
+For compilation
+* In addition to ohara libraries, you will also need to include kafka libraries
+```
+<dependency>
+    <groupId>org.apache.kafka</groupId>
+    <artifactId>kafka-streams</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
 
 ### Prerequisites
 
@@ -24,8 +48,7 @@ gradle licenseApply
 ### Installing
 
 **Running Ohara In Docker**
-- - - 
-* Ensure your nodes (actual machine or VM) are installed Docker 18.09+
+* Ensure your nodes (actual machine or VM) have installed Docker 18.09+
 * Download required images
     * oharastream/broker:0.3-SNAPSHOT
     * oharastream/zookeeper:0.3-SNAPSHOT
@@ -36,7 +59,7 @@ gradle licenseApply
 * [Running configurator by docker](#running-configurator-by-docker)
 
 **Running Ohara From Build**
-- - -
+
 [TODO]
 
 ### Running all backend-services by docker

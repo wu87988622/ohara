@@ -18,17 +18,22 @@ package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Row;
 
-public class SimpleApplicationForOharaEnv extends StreamApp {
+public class SimpleApplicationForExternalEnv extends StreamApp {
 
   /**
-   * This is a simple version of streamApp running in ohara environment. Please packaging this file
-   * into a jar, and uploading by API or Ohara UI
+   * This is a simple version of streamApp running in an external environment.
    *
    * @throws Exception
    */
   @Override
   public void start() throws Exception {
-    OStream<String, Row> ostream = OStream.builder().toOharaEnvStream();
+    OStream<String, Row> ostream =
+        OStream.builder()
+            .bootstrapServers("your_broker_list")
+            .appid("simple-application-for-external")
+            .fromTopic("consume_topic_name")
+            .toTopic("target_topic_name")
+            .build();
 
     // do nothing but only start streamApp
     ostream.start();
