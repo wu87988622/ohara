@@ -103,7 +103,8 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     private[this] var ports: Map[Int, Int] = Map.empty
     private[this] var envs: Map[String, String] = Map.empty
     private[this] var route: Map[String, String] = Map.empty
-    private[this] var volumnMapping: Map[String, String] = Map.empty
+    private[this] var volumeMapping: Map[String, String] = Map.empty
+    private[this] var networkDriver: NetworkDriver = NetworkDriver.BRIDGE
     private[this] var hostname: String = _
 
     override def name(name: String): ContainerCreator = {
@@ -148,11 +149,15 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
           case (key, value) => s"""-e \"$key=$value\""""
         }
         .mkString(" "),
-      volumnMapping
+      volumeMapping
         .map {
           case (key, value) => s"""-v \"$key:$value\""""
         }
         .mkString(" "),
+      networkDriver match {
+        case NetworkDriver.HOST   => "--network=host"
+        case NetworkDriver.BRIDGE => "--network=bridge"
+      },
       Objects.requireNonNull(imageName),
       if (command == null) "" else command
     ).filter(_.nonEmpty).mkString(" ")
@@ -162,8 +167,13 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       this
     }
 
-    override def volumnMapping(volumnMapping: Map[String, String]): ContainerCreator = {
-      this.volumnMapping = volumnMapping
+    override def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator = {
+      this.volumeMapping = volumeMapping
+      this
+    }
+
+    override def networkDriver(driver: NetworkDriver): ContainerCreator = {
+      this.networkDriver = driver
       this
     }
 

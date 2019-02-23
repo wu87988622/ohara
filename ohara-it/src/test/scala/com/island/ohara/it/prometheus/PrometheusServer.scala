@@ -87,7 +87,7 @@ object PrometheusCreator {
             client
               .containerCreator()
               .imageName(imageName)
-              .volumnMapping({
+              .volumeMapping({
                 Option(targetConfigDir)
                   .map(x => Map(x -> PrometheusServer.PROMETHEUS_TARGET_CONFIG_DIR))
                   .getOrElse(Map()) ++

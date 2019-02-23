@@ -626,6 +626,8 @@ private object ClusterCollieImpl {
                   try client
                     .containerCreator()
                     .imageName(imageName)
+                    // In --network=host mode, we don't need to export port for containers.
+                    // However, this op doesn't hurt us so we don't remove it.
                     .portMappings(Map(clientPort -> clientPort))
                     .hostname(hostname)
                     .envs(Map(
@@ -647,6 +649,12 @@ private object ClusterCollieImpl {
                     ))
                     .name(hostname)
                     .route(route ++ existRoute)
+                    // we use --network=host for worker cluster since the connectors run on worker cluster may need to
+                    // access external system to request data. In ssh mode, dns service "may" be not deployed.
+                    // In order to simplify their effort, we directly mount host's route on the container.
+                    // This is not a normal case I'd say. However, we always meet special case which must be addressed
+                    // by this "special" solution...
+                    .networkDriver(NETWORK_DRIVER)
                     .run()
                   catch {
                     case e: Throwable =>
@@ -733,4 +741,9 @@ private object ClusterCollieImpl {
   private val DIVIDER: String = "-"
 
   private[this] val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
+
+  /**
+    * In ssh mode we use host driver to mount /etc/hosts from container host.
+    */
+  private val NETWORK_DRIVER: NetworkDriver = NetworkDriver.HOST
 }
