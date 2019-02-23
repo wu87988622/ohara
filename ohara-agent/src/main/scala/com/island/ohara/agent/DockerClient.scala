@@ -228,7 +228,14 @@ object DockerClient {
       * docker -v
       * @return process information
       */
-    def volumnMapping(ports: Map[String, String]): ContainerCreator
+    def volumeMapping(ports: Map[String, String]): ContainerCreator
+
+    /**
+      * set docker container's network driver. implement by --network=$value
+      * @param driver network driver
+      * @return this creator
+      */
+    def networkDriver(driver: NetworkDriver): ContainerCreator
 
     /**
       * execute the docker container on background
