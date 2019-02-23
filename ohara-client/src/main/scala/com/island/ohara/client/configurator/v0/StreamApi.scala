@@ -77,6 +77,12 @@ object StreamApi {
         streamId
       ).mkString(DIVIDER))
 
+  final val JARURL_KEY: String = "STREAMAPP_JARURL"
+  final val APPID_KEY: String = "STREAMAPP_APPID"
+  final val SERVERS_KEY: String = "STREAMAPP_SERVERS"
+  final val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
+  final val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
+
   /**
     * StreamApp Docker Image name
     */

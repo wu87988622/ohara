@@ -189,9 +189,15 @@ private[configurator] object StreamRoute {
           } ~
             path(Segment) { id =>
               //add property is impossible, we need streamApp id first
-              post { complete("unsupported method") } ~
+              post {
+                complete(StatusCodes.BadRequest ->
+                  "You should upload a jar first and use PUT method to update properties.")
+              } ~
                 // delete property is useless, we handle this in StreamApp List -> DELETE method
-                delete { complete("unsupported method") } ~
+                delete {
+                  complete(StatusCodes.BadRequest ->
+                    "You cannot delete properties only. Please use DELETE method in StreamApp List API instead. ")
+                } ~
                 // get property
                 get {
                   onSuccess(store.value[StreamApp](id)) { data =>
@@ -315,11 +321,11 @@ private[configurator] object StreamRoute {
                                   .name(appId)
                                   .envs(
                                     Map(
-                                      "STREAMAPP_JARURL" -> url.toString,
-                                      "STREAMAPP_APPID" -> appId,
-                                      "STREAMAPP_SERVERS" -> brokers,
-                                      "STREAMAPP_FROMTOPIC" -> data.fromTopics.head,
-                                      "STREAMAPP_TOTOPIC" -> data.toTopics.head
+                                      StreamApi.JARURL_KEY -> url.toString,
+                                      StreamApi.APPID_KEY -> appId,
+                                      StreamApi.SERVERS_KEY -> brokers,
+                                      StreamApi.FROM_TOPIC_KEY -> data.fromTopics.head,
+                                      StreamApi.TO_TOPIC_KEY -> data.toTopics.head
                                     )
                                   )
                                   .imageName(StreamApi.STREAMAPP_IMAGE)
