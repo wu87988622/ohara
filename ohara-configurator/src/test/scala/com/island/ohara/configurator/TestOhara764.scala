@@ -17,9 +17,10 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -47,8 +48,17 @@ class TestOhara764 extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy Await.result(access.start(source.id), 30 seconds)
 
     val topic = Await.result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).add(TopicApi.creationRequest("abc")),
-      10 seconds)
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val source2 = Await.result(
       access.add(
         ConnectorCreationRequest(name = "abc",

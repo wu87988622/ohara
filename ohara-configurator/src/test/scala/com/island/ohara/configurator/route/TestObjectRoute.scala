@@ -46,19 +46,17 @@ class TestObjectRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(
-          TopicCreationRequest(
-            name = CommonUtil.randomString(10),
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)))
 
     var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
 
-    objs.head.id shouldBe topic0.id
-    objs.head.name shouldBe topic0.name
-    objs.head.lastModified shouldBe topic0.lastModified
-    objs.head.kind shouldBe topic0.kind
+    objs.find(_.id == topic0.id).get.name shouldBe topic0.name
+    objs.find(_.id == topic0.id).get.kind shouldBe topic0.kind
+    objs.find(_.id == topic0.id).get.lastModified shouldBe topic0.lastModified
 
     val topic1 = result(
       TopicApi
@@ -66,11 +64,10 @@ class TestObjectRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(
-          TopicCreationRequest(
-            name = CommonUtil.randomString(10),
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)))
 
     objs = result(objectApi.list())
 
@@ -81,6 +78,7 @@ class TestObjectRoute extends SmallTest with Matchers {
     objs.find(_.id == topic1.id).get.lastModified shouldBe topic1.lastModified
   }
 
+  @Test
   def testConnector(): Unit = {
     val connector0 = result(
       ConnectorApi
@@ -99,10 +97,9 @@ class TestObjectRoute extends SmallTest with Matchers {
     var objs = result(objectApi.list())
     objs.size shouldBe (1 + initialSize)
 
-    objs.head.id shouldBe connector0.id
-    objs.head.name shouldBe connector0.name
-    objs.head.lastModified shouldBe connector0.lastModified
-    objs.head.kind shouldBe connector0.kind
+    objs.find(_.id == connector0.id).get.name shouldBe connector0.name
+    objs.find(_.id == connector0.id).get.kind shouldBe connector0.kind
+    objs.find(_.id == connector0.id).get.lastModified shouldBe connector0.lastModified
 
     val connector1 = result(
       ConnectorApi
@@ -127,6 +124,7 @@ class TestObjectRoute extends SmallTest with Matchers {
     objs.find(_.id == connector1.id).get.lastModified shouldBe connector1.lastModified
   }
 
+  @Test
   def listTopicAndConnector(): Unit = {
     val connector = result(
       ConnectorApi
@@ -148,11 +146,10 @@ class TestObjectRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(
-          TopicCreationRequest(
-            name = CommonUtil.randomString(10),
-            numberOfPartitions = None,
-            numberOfReplications = None
-          )))
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)))
 
     val objs = result(objectApi.list())
 

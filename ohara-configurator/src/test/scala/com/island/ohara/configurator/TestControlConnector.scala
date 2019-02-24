@@ -19,6 +19,7 @@ package com.island.ohara.configurator
 import java.time.Duration
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
@@ -42,12 +43,18 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def testNormalCase(): Unit = {
     val topicName = methodName
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicApi.creationRequest(topicName)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val request = ConnectorCreationRequest(name = methodName,
                                            className = classOf[DumbSink].getName,
                                            schema = Seq.empty,
@@ -96,12 +103,18 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def testUpdateRunningConnector(): Unit = {
     val topicName = methodName
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicApi.creationRequest(topicName)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val request = ConnectorCreationRequest(name = methodName,
                                            className = classOf[DumbSink].getName,
                                            schema = Seq.empty,
@@ -135,12 +148,18 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
   @Test
   def deleteRunningConnector(): Unit = {
     val topicName = methodName
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicApi.creationRequest(topicName)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val request = ConnectorCreationRequest(name = methodName,
                                            className = classOf[DumbSink].getName,
                                            schema = Seq.empty,

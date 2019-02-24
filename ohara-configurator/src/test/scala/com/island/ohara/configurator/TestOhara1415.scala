@@ -18,6 +18,7 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, Releasable}
@@ -44,7 +45,11 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(topicName)))
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)))
 
     val connector = result(
       ConnectorApi
@@ -73,7 +78,11 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(topicName)))
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)))
 
     val connector = result(
       ConnectorApi

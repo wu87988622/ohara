@@ -19,6 +19,7 @@ import java.time.Duration
 
 import com.island.ohara.client.FtpClient
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, InfoApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data._
@@ -46,12 +47,18 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRunFtpSource(): Unit = {
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicApi.creationRequest(methodName)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val sourceProps = FtpSourceProps(
       inputFolder = "/input",
       completedFolder = "/backup",
@@ -130,12 +137,18 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testRunFtpSink(): Unit = {
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicApi.creationRequest(methodName)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val sinkProps = FtpSinkProps(
       output = "/backup",
       needHeader = false,

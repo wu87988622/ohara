@@ -16,17 +16,19 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi._
+import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
+import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestTopicRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake(1, 0).build()
@@ -38,7 +40,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     def compareRequestAndResponse(request: TopicCreationRequest, response: TopicInfo): TopicInfo = {
-      request.name shouldBe response.name
+      request.name.foreach(_ shouldBe response.name)
       request.numberOfReplications.foreach(_ shouldBe response.numberOfReplications)
       request.numberOfPartitions.foreach(_ shouldBe response.numberOfPartitions)
       response
@@ -54,14 +56,20 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test add
     result(topicApi.list()).size shouldBe 0
-    val request = TopicApi.creationRequest(methodName)
+    val request = TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                                       brokerClusterName = None,
+                                       numberOfPartitions = None,
+                                       numberOfReplications = None)
     val response = compareRequestAndResponse(request, result(topicApi.add(request)))
 
     // test get
     compare2Response(response, result(topicApi.get(response.id)))
 
     // test update
-    val anotherRequest = TopicApi.creationRequest(methodName)
+    val anotherRequest = TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                                              brokerClusterName = None,
+                                              numberOfPartitions = None,
+                                              numberOfReplications = None)
     val newResponse =
       compareRequestAndResponse(anotherRequest, result(topicApi.update(response.id, anotherRequest)))
 
@@ -79,7 +87,16 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test same name
     val topicNames: Set[String] =
-      (0 until 5).map(index => result(topicApi.add(TopicApi.creationRequest(s"topic-$index"))).name).toSet
+      (0 until 5)
+        .map(
+          index =>
+            result(
+              topicApi.add(
+                TopicCreationRequest(name = Some(s"topic-$index"),
+                                     brokerClusterName = None,
+                                     numberOfPartitions = None,
+                                     numberOfReplications = None))).name)
+        .toSet
     topicNames.size shouldBe 5
   }
 
@@ -88,7 +105,11 @@ class TestTopicRoute extends SmallTest with Matchers {
     val name = methodName()
     result(
       topicApi
-        .add(TopicApi.creationRequest(name))
+        .add(
+          TopicCreationRequest(name = Some(name),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None))
         .flatMap { topicInfo =>
           BrokerApi
             .access()
@@ -99,6 +120,141 @@ class TestTopicRoute extends SmallTest with Matchers {
         }
         .flatMap(_ => topicApi.list())
         .map(topics => topics.exists(_.name == name))) shouldBe false
+  }
+
+  @Test
+  def createTopicOnNonexistentCluster(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = Some(CommonUtil.randomString(10)),
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+  }
+
+  @Test
+  def addWithName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.add(
+        TopicCreationRequest(name = None,
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+  }
+
+  @Test
+  def createTopicWithoutBrokerClusterName(): Unit = {
+    val zk = result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list()).head
+
+    val zk2 = result(
+      ZookeeperApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(ZookeeperClusterCreationRequest(
+          name = CommonUtil.randomString(10),
+          imageName = None,
+          clientPort = Some(CommonUtil.availablePort()),
+          electionPort = Some(CommonUtil.availablePort()),
+          peerPort = Some(CommonUtil.availablePort()),
+          nodeNames = zk.nodeNames
+        )))
+
+    val bk2 = result(
+      BrokerApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          BrokerClusterCreationRequest(
+            name = CommonUtil.randomString(10),
+            imageName = None,
+            zookeeperClusterName = Some(zk2.name),
+            exporterPort = None,
+            clientPort = Some(123),
+            nodeNames = zk2.nodeNames
+          )))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+
+    topicApi.add(
+      TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                           brokerClusterName = Some(bk2.name),
+                           numberOfPartitions = None,
+                           numberOfReplications = None))
+  }
+
+  @Test
+  def testPartitions(): Unit = {
+    val topic0 = result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+
+    // we can't reduce number of partitions
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.update(topic0.id,
+                      TopicCreationRequest(name = None,
+                                           brokerClusterName = None,
+                                           numberOfPartitions = Some(topic0.numberOfPartitions - 1),
+                                           numberOfReplications = None)))
+
+    val topic1 = result(
+      topicApi.update(topic0.id,
+                      TopicCreationRequest(name = None,
+                                           brokerClusterName = None,
+                                           numberOfPartitions = Some(topic0.numberOfPartitions + 1),
+                                           numberOfReplications = None)))
+
+    topic0.id shouldBe topic1.id
+    topic0.name shouldBe topic1.name
+    topic0.numberOfPartitions + 1 shouldBe topic1.numberOfPartitions
+    topic0.numberOfReplications shouldBe topic1.numberOfReplications
+  }
+
+  @Test
+  def testReplications(): Unit = {
+    val topic0 = result(
+      topicApi.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None)))
+
+    // we can't reduce number of replications
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.update(
+        topic0.id,
+        TopicCreationRequest(name = None,
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = Some((topic0.numberOfReplications - 1).asInstanceOf[Short]))
+      ))
+
+    // we can't add number of replications
+    an[IllegalArgumentException] should be thrownBy result(
+      topicApi.update(
+        topic0.id,
+        TopicCreationRequest(name = None,
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = Some((topic0.numberOfReplications + 1).asInstanceOf[Short]))
+      ))
+
+    // pass since we don't make changes on number of replications
+    result(
+      topicApi.update(topic0.id,
+                      TopicCreationRequest(name = None,
+                                           brokerClusterName = None,
+                                           numberOfPartitions = None,
+                                           numberOfReplications = Some(topic0.numberOfReplications))))
   }
 
   @After

@@ -15,16 +15,17 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
+import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 object TopicApi {
   val TOPICS_PREFIX_PATH: String = "topics"
-  case class TopicCreationRequest(name: String, numberOfPartitions: Option[Int], numberOfReplications: Option[Short])
+  case class TopicCreationRequest(name: Option[String],
+                                  brokerClusterName: Option[String],
+                                  numberOfPartitions: Option[Int],
+                                  numberOfReplications: Option[Short])
 
-  def creationRequest(name: String): TopicCreationRequest = TopicCreationRequest(name, None, None)
-
-  implicit val TOPIC_CREATION_REQUEST_FORMAT: RootJsonFormat[TopicCreationRequest] = jsonFormat3(TopicCreationRequest)
+  implicit val TOPIC_CREATION_REQUEST_FORMAT: RootJsonFormat[TopicCreationRequest] = jsonFormat4(TopicCreationRequest)
 
   case class TopicInfo(id: String,
                        name: String,
@@ -38,6 +39,6 @@ object TopicApi {
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = jsonFormat6(TopicInfo)
 
-  def access(): AccessWithCluster[TopicCreationRequest, TopicInfo] =
-    new AccessWithCluster[TopicCreationRequest, TopicInfo](TOPICS_PREFIX_PATH)
+  def access(): Access[TopicCreationRequest, TopicInfo] =
+    new Access[TopicCreationRequest, TopicInfo](TOPICS_PREFIX_PATH)
 }
