@@ -24,6 +24,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import akka.stream.ActorMaterializer
 import com.island.ohara.common.util.Releasable
 import spray.json.RootJsonFormat
@@ -139,12 +140,14 @@ private[ohara] object HttpExecutor {
           else Future.failed(new IllegalArgumentException(error.message))
         }
         .recoverWith {
-          case e: Throwable =>
+          case _: UnsupportedContentTypeException => Future.failed(new IllegalArgumentException(res.toString()))
+          case e: Throwable                       =>
             // ServiceUnavailable may be temporary so we throw HttpRetryException to remind caller.
             if (res.status.intValue() == StatusCodes.ServiceUnavailable.intValue)
               Future.failed(new HttpRetryException(res.toString(), StatusCodes.ServiceUnavailable.intValue))
             else Future.failed(e)
         }
+
     //-------------------------------------------------[GET]-------------------------------------------------//
     override def get[Res, E <: HttpExecutor.Error](url: String)(implicit rm0: RootJsonFormat[Res],
                                                                 rm1: RootJsonFormat[E]): Future[Res] =
