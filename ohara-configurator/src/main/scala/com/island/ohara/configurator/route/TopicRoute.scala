@@ -29,11 +29,18 @@ private[configurator] object TopicRoute {
   private[this] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   private[this] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
   private[this] val LOG = Logger(TopicRoute.getClass)
-  def apply(implicit store: Store, brokerCollie: BrokerCollie): server.Route =
-    RouteUtil.basicRoute[TopicCreationRequest, TopicInfo](
-      root = TOPICS_PREFIX_PATH,
-      hookOfAdd = (targetCluster: TargetCluster, id: Id, request: TopicCreationRequest) =>
-        CollieUtils.topicAdmin(targetCluster).flatMap {
+
+  /**
+    * TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
+    */
+  private[this] def updateBrokerClusterName(request: TopicCreationRequest, t: TargetCluster): TopicCreationRequest =
+    if (request.brokerClusterName.isEmpty) request.copy(brokerClusterName = t) else request
+
+  private[this] def hookOfAdd(id: Id, request: TopicCreationRequest)(
+    implicit brokerCollie: BrokerCollie): Future[TopicInfo] =
+    request.name
+      .map { name =>
+        CollieUtils.topicAdmin(request.brokerClusterName).flatMap {
           case (cluster, client) =>
             client
               .creator()
@@ -44,14 +51,22 @@ private[configurator] object TopicRoute {
               .create()
               .map { info =>
                 try TopicInfo(id,
-                              request.name,
+                              name,
                               info.numberOfPartitions,
                               info.numberOfReplications,
                               cluster.name,
                               CommonUtil.current())
                 finally client.close()
               }
-      },
+        }
+      }
+      .getOrElse(Future.failed(new NoSuchElementException(s"name is required")))
+
+  def apply(implicit store: Store, brokerCollie: BrokerCollie): server.Route =
+    RouteUtil.basicRoute[TopicCreationRequest, TopicInfo](
+      root = TOPICS_PREFIX_PATH,
+      hookOfAdd = (targetCluster: TargetCluster, id: Id, request: TopicCreationRequest) =>
+        hookOfAdd(id, updateBrokerClusterName(request, targetCluster)),
       hookOfUpdate = (id: Id, request: TopicCreationRequest, previous: TopicInfo) =>
         CollieUtils.topicAdmin(Some(previous.brokerClusterName)).flatMap {
           case (cluster, client) =>
@@ -61,19 +76,22 @@ private[configurator] object TopicRoute {
               // we have got to release the client
               Releasable.close(client)
               Future.failed(new IllegalArgumentException("Non-support to change the number from replications"))
-            } else if (requestNumberOfPartitions != previous.numberOfPartitions)
+            } else if (requestNumberOfPartitions > previous.numberOfPartitions)
               client.changePartitions(id, request.numberOfPartitions.get).map { info =>
                 try TopicInfo(info.name,
-                              request.name,
+                              request.name.getOrElse(previous.name),
                               info.numberOfPartitions,
                               info.numberOfReplications,
                               cluster.name,
                               CommonUtil.current())
                 finally client.close()
-              } else {
+              } else if (requestNumberOfPartitions < previous.numberOfPartitions) {
+              Releasable.close(client)
+              Future.failed(new IllegalArgumentException("Reducing the number from partitions is disallowed"))
+            } else {
               // we have got to release the client
               Releasable.close(client)
-              Future.successful(previous)
+              Future.successful(request.name.map(n => previous.copy(name = n)).getOrElse(previous))
             }
       },
       hookOfDelete = (response: TopicInfo) =>

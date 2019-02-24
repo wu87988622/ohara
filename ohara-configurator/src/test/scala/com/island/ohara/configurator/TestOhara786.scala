@@ -17,6 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.TopicApi
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.BrokerClient
 import org.junit.Test
@@ -33,12 +34,18 @@ class TestOhara786 extends WithBrokerWorker with Matchers {
   def deleteAnTopicRemovedFromKafka(): Unit = {
     val topicName = methodName
 
-    val topic = Await.result(TopicApi
-                               .access()
-                               .hostname(configurator.hostname)
-                               .port(configurator.port)
-                               .add(TopicApi.creationRequest(topicName)),
-                             10 seconds)
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
     val brokerClient = BrokerClient.of(testUtil().brokersConnProps())
     try {
       brokerClient.deleteTopic(topic.id)

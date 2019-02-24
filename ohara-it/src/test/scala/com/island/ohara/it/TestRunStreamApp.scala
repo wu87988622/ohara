@@ -60,7 +60,11 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicCreationRequest(from, Some(1), Some(1))),
+        .add(
+          TopicCreationRequest(name = Some(from),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
     Await.result(
@@ -68,7 +72,11 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicCreationRequest(to, Some(1), Some(1))),
+        .add(
+          TopicCreationRequest(name = Some(to),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 

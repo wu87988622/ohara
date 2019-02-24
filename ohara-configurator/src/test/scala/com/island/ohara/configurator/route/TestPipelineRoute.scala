@@ -20,6 +20,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.HadoopApi.HdfsInfoRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.{Pipeline, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtil, Releasable}
@@ -123,7 +124,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -171,9 +176,24 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     // test add
     val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
-    val uuid_0 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
-    val uuid_1 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
-    val uuid_2 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
+    val uuid_0 = result(
+      topicAccess.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None))).id
+    val uuid_1 = result(
+      topicAccess.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None))).id
+    val uuid_2 = result(
+      topicAccess.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None))).id
 
     result(pipelineApi.list()).size shouldBe 0
 
@@ -210,10 +230,20 @@ class TestPipelineRoute extends SmallTest with Matchers {
   def testBindInvalidObjects2Pipeline(): Unit = {
     val topicAccess = TopicApi.access().hostname(configurator.hostname).port(configurator.port)
     val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    val uuid_0 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
+    val uuid_0 = result(
+      topicAccess.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None))).id
     val uuid_1 = result(hdfsAccess.add(HdfsInfoRequest(methodName, "file:///"))).id
     val uuid_2 = result(hdfsAccess.add(HdfsInfoRequest(methodName, "file:///"))).id
-    val uuid_3 = result(topicAccess.add(TopicApi.creationRequest(methodName()))).id
+    val uuid_3 = result(
+      topicAccess.add(
+        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                             brokerClusterName = None,
+                             numberOfPartitions = None,
+                             numberOfReplications = None))).id
     result(topicAccess.list()).size shouldBe 2
     result(hdfsAccess.list()).size shouldBe 2
 
@@ -279,7 +309,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -304,7 +338,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -331,7 +369,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -363,7 +405,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -372,7 +418,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -415,7 +465,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
@@ -424,7 +478,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(name = methodName())),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 

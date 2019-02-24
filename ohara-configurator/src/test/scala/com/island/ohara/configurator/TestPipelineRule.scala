@@ -20,10 +20,11 @@ import java.io.File
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, StreamApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -42,7 +43,11 @@ class TestPipelineRule extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest(methodName)),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
     val sourceRequest = ConnectorCreationRequest(
@@ -105,7 +110,11 @@ class TestPipelineRule extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(TopicApi.creationRequest("testPipelineAllowData")),
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
       10 seconds
     )
 
