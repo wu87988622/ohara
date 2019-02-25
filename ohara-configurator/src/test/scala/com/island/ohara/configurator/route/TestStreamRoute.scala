@@ -14,31 +14,40 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator
+package com.island.ohara.configurator.route
+
 import java.io.File
 
-import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, StreamPropertyRequest}
+import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
+import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStream extends SmallTest with Matchers {
+class TestStreamRoute extends SmallTest with Matchers {
 
-  private[this] val configurator = Configurator.builder().fake().build()
+  // create all fake cluster
+  private[this] val configurator = Configurator.builder().fake(1, 1).build()
   private[this] val accessStreamList = StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStreamProperty =
     StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStreamAction =
     StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
+  private[this] val accessTopic =
+    TopicApi.access().hostname(configurator.hostname).port(configurator.port)
+  private[this] val accessWorker =
+    WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] val pipeline_id = "pipeline-id"
 
-  private[this] def awaitResult[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def awaitResult[T](f: Future[T]): T =
+    Await.result(f, 20 seconds)
 
   @Before
   def tearUp(): Unit = {}
@@ -96,7 +105,8 @@ class TestStream extends SmallTest with Matchers {
 
     // Test PUT method
     val appId = CommonUtil.randomString(5)
-    val req = StreamPropertyRequest(appId, Seq("from-topic"), Seq("to-topic"), 1)
+    val req =
+      StreamPropertyRequest(appId, Seq("from-topic"), Seq("to-topic"), 1)
     val res2 = awaitResult(accessStreamProperty.update(id, req))
     res2.name shouldBe appId
     res2.fromTopics.size shouldBe 1
@@ -116,37 +126,73 @@ class TestStream extends SmallTest with Matchers {
 
     var req = StreamPropertyRequest(appId, Seq("foo"), Seq("bar"), 0)
     accessStreamProperty.update(jarData.head.id, req)
-    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      accessStreamAction.start(jarData.head.id)
+    )
 
     req = StreamPropertyRequest(appId, Seq(""), Seq("bar"), 1)
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
-    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      accessStreamAction.start(jarData.head.id)
+    )
 
     req = StreamPropertyRequest(appId, Seq("foo"), Seq(""), 1)
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
-    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      accessStreamAction.start(jarData.head.id)
+    )
 
     req = StreamPropertyRequest("", Seq("foo"), Seq("bar"), 1)
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
-    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      accessStreamAction.start(jarData.head.id)
+    )
 
-    req = StreamPropertyRequest("any-name contain blank should still work", Seq("foo"), Seq("bar"), 1)
+    req = StreamPropertyRequest(
+      "any-name contain blank should still work",
+      Seq("foo"),
+      Seq("bar"),
+      1
+    )
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
-    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+    an[IllegalArgumentException] should be thrownBy awaitResult(
+      accessStreamAction.start(jarData.head.id)
+    )
 
     filePath.foreach(new File(_).deleteOnExit())
   }
 
   @Test
-  def testStreamAppActionFailWithRunJar(): Unit = {
-    val filePath = Seq(File.createTempFile("empty_", ".jar").getPath)
+  def testStreamRunFailWithFakeNode(): Unit = {
+    val fromTopic = "foo"
+    val toTopic = "bar"
 
+    //Upload file
+    val filePath = Seq(File.createTempFile("empty_", ".jar").getPath)
     val jarData = awaitResult(accessStreamList.upload(pipeline_id, filePath))
 
+    //Get Worker Cluster
+    val clusters = awaitResult(accessWorker.list())
+    clusters.size shouldBe 1
+    val bkCluster = clusters.head.brokerClusterName
+
+    //create topic
+    val req1 = TopicCreationRequest.apply(Some(fromTopic), Some(bkCluster), None, None)
+    val from = awaitResult(accessTopic.add(req1)).id
+    val req2 = TopicCreationRequest.apply(Some(toTopic), Some(bkCluster), None, None)
+    val to = awaitResult(accessTopic.add(req2)).id
+
     val appId = CommonUtil.randomString(5)
-    val req = StreamPropertyRequest(appId, Seq("foo"), Seq("bar"), 1)
+    val req = StreamPropertyRequest(appId, Seq(from), Seq(to), 1)
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
-    an[IllegalArgumentException] should be thrownBy awaitResult(accessStreamAction.start(jarData.head.id))
+    val res = awaitResult(accessStreamAction.start(jarData.head.id))
+    res.state.nonEmpty shouldBe true
+    res.state.get shouldBe ContainerApi.ContainerState.EXITED
+
+    // idempotent
+    val res2 = awaitResult(accessStreamAction.start(jarData.head.id))
+    res2.state.nonEmpty shouldBe true
+    res2.state.get shouldBe ContainerApi.ContainerState.EXITED
 
     filePath.foreach(new File(_).deleteOnExit())
   }

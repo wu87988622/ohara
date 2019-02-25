@@ -17,16 +17,19 @@
 package com.island.ohara.configurator.route
 
 import java.io.File
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{BrokerCollie, DockerClient, NodeCollie}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
-import com.island.ohara.client.configurator.v0.{ContainerApi, JarApi, StreamApi}
+import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
+import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
+import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
@@ -35,8 +38,7 @@ import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.sys.process._
 import scala.util.Random
 
@@ -52,7 +54,14 @@ private[configurator] object StreamRoute {
                             fromTopics: Seq[String] = Seq.empty,
                             toTopics: Seq[String] = Seq.empty,
                             lastModified: Long): StreamApp =
-    StreamApp(pipelineId, streamId, name, instances, jarInfo, fromTopics, toTopics, lastModified)
+    StreamApp(pipelineId = pipelineId,
+              id = streamId,
+              name = name,
+              instances = instances,
+              jarInfo = jarInfo,
+              fromTopics = fromTopics,
+              toTopics = toTopics,
+              lastModified = lastModified)
 
   private[this] def assertParameters(data: StreamApp): Boolean = {
     def isNotNullOrEmpty(str: String): Boolean = { str != null && str.nonEmpty }
@@ -65,6 +74,23 @@ private[configurator] object StreamRoute {
     data.fromTopics.forall(isNotNullOrEmpty) &&
     data.toTopics.nonEmpty &&
     data.toTopics.forall(isNotNullOrEmpty)
+  }
+
+  // TODO this is a workaround for 0.2 to solve not-compatible state between pipeline and streamApp
+  // Maybe we need refactor the "state" to be more general...by sam
+  private[this] def toConnectorState(state: Option[ContainerState]): ConnectorState = {
+    ConnectorState.values
+      .find { value =>
+        state.nonEmpty &&
+        (value.toString match {
+          case ContainerState.EXITED.name =>
+            ConnectorState.FAILED.toString
+          case _ =>
+            value.toString
+        }).equalsIgnoreCase(state.get.name)
+      }
+      .getOrElse(throw new IllegalArgumentException(
+        s"Unknown state name: [${state.getOrElse(ContainerState.UNKNOWN).name}]"))
   }
 
   private[this] val clientCache: DockerClientCache = new DockerClientCache {
@@ -84,6 +110,7 @@ private[configurator] object StreamRoute {
     def get(nodes: Seq[Node]): Seq[DockerClient] = nodes.map(get)
   }
 
+  //TODO : Remove brokerCollie and nodeCollie with workerCollie after issue #321...by Sam
   def apply(implicit store: Store,
             brokerCollie: BrokerCollie,
             nodeCollie: NodeCollie,
@@ -253,103 +280,122 @@ private[configurator] object StreamRoute {
                 store.value[StreamApp](id).flatMap { data =>
                   if (!assertParameters(data))
                     throw new IllegalArgumentException(
-                      s"StreamApp with id : ${data.id} not match the parameter requirement.")
-
+                      s"StreamApp with id : ${data.id} not match the parameter requirement."
+                    )
                   // for v0.2, we only run streamApp with the following conditions:
                   // 1) use any available node to run streamApp
                   // 2) only support one from/to topic
                   // 3) choose any existing broker cluster to run
                   // 4) only run 1 instance
-                  val result = for {
-                    dockerClient <- nodeCollie
-                      .nodes()
-                      .map { nodes =>
-                        Random
-                          .shuffle(nodes)
-                          .take(data.instances)
-                          //we only accept 1 instance for 0.2...by Sam
-                          .headOption
-                          .getOrElse(throw new IllegalArgumentException(s"there is no any available node"))
-                      }
-                      .map { n =>
-                        store.update[StreamApp](id, data => Future.successful(data.copy(node = Some(n))))
-                        clientCache.get(n)
-                      }
-                    brokerInfos <- brokerCollie
-                      .clusters()
-                      .map { bkMap =>
-                        bkMap.keys.toSeq
-                      }
-                      .map { clusters =>
-                        clusters.filter { cluster =>
-                          Await
-                            .result(
-                              CollieUtils
-                                .topicAdmin(Some(cluster.name))
-                                .flatMap {
-                                  case (_, client) =>
-                                    client.list()
-                                }
-                                .filter { infos =>
-                                  infos.map(info => info.name).contains(data.fromTopics.head) &&
-                                  infos.map(info => info.name).contains(data.toTopics.head)
-                                },
-                              Duration(10, TimeUnit.SECONDS)
-                            )
-                            .nonEmpty
-                        }
-                      }
-                    //there should be only one possible broker cluster
-                  } yield (dockerClient -> brokerInfos.headOption)
 
-                  result.map {
-                    case (client, brokerInfo) =>
-                      if (brokerInfo.isEmpty) {
-                        throw new RuntimeException("Can not find andy math broker cluster for this streamApp")
-                      }
-                      val brokers = brokerInfo.get.nodeNames.map(_ + ":9092").mkString(",")
-                      jarStore
-                        .url(data.jarInfo.id)
-                        .map {
-                          val appId = StreamApi.formatAppId(data.id)
-                          url =>
-                            client
-                              .container(appId)
-                              .getOrElse(
-                                client
-                                  .containerCreator()
-                                  .name(appId)
-                                  .envs(
-                                    Map(
-                                      StreamApi.JARURL_KEY -> url.toString,
-                                      StreamApi.APPID_KEY -> appId,
-                                      StreamApi.SERVERS_KEY -> brokers,
-                                      StreamApi.FROM_TOPIC_KEY -> data.fromTopics.head,
-                                      StreamApi.TO_TOPIC_KEY -> data.toTopics.head
+                  // get the brokerClusterName from the desire topics
+                  store
+                    .values[TopicInfo]
+                    .map { topics =>
+                      topics
+                      // filter out not exists topics
+                        .filter(
+                          t => {
+                            data.fromTopics.contains(t.id) || data.toTopics.contains(t.id)
+                          }
+                        )
+                        .map(_.brokerClusterName)
+                        //there should be only one possible broker cluster contains the desire topics
+                        .headOption
+                        .getOrElse(
+                          throw new RuntimeException(
+                            "Can not find andy match cluster for this streamApp"
+                          )
+                        )
+                    }
+                    // get the (brokerInfo, nodeName) for the streamApp (node could be random get)
+                    .flatMap {
+                      clusterName =>
+                        brokerCollie.cluster(clusterName).map {
+                          case (info, _) =>
+                            (info,
+                             //check if there has a running streamApp node
+                             data.nodes
+                               .find(node => info.nodeNames.contains(node.name))
+                               .map(_.name)
+                               .getOrElse(
+                                 Random
+                                   .shuffle(info.nodeNames)
+                                   .take(data.instances)
+                                   //we only accept 1 instance for 0.2...by Sam
+                                   .headOption
+                                   .getOrElse(
+                                     throw new IllegalArgumentException(
+                                       s"there is no any available node"
+                                     )
+                                   )
+                               ))
+                        }
+                    }
+                    // get jar info and start streamApp if not exists
+                    .map {
+                      case (info, nodeName) =>
+                        nodeCollie
+                          .node(nodeName)
+                          .map { node =>
+                            (info, clientCache.get(node), node)
+                          }
+                          .map {
+                            case (brokerInfo, client, node) =>
+                              val brokerList =
+                                brokerInfo.nodeNames.map(n => s"$n:${brokerInfo.clientPort}").mkString(",")
+                              jarStore
+                                .url(data.jarInfo.id)
+                                .map {
+                                  val appId = StreamApi.formatAppId(data.id)
+                                  url =>
+                                    client
+                                      .container(appId)
+                                      .getOrElse(
+                                        client
+                                          .containerCreator()
+                                          .name(appId)
+                                          .envs(
+                                            Map(
+                                              StreamApi.JARURL_KEY -> url.toString,
+                                              StreamApi.APPID_KEY -> appId,
+                                              StreamApi.SERVERS_KEY -> brokerList,
+                                              StreamApi.FROM_TOPIC_KEY -> data.fromTopics.head,
+                                              StreamApi.TO_TOPIC_KEY -> data.toTopics.head
+                                            )
+                                          )
+                                          .imageName(StreamApi.STREAMAPP_IMAGE)
+                                          .command(StreamApi.MAIN_ENTRY)
+                                          .run()
+                                          .get
+                                      )
+                                }
+                                .map { container =>
+                                  log.info(
+                                    s"container [${container.name}] logs : s${client.log(container.name)}"
+                                  )
+                                  StreamActionResponse(id, Some(container.state))
+                                }
+                                .recover {
+                                  case ex: Throwable =>
+                                    log.error(ex.getMessage)
+                                    StreamActionResponse(id, Some(ContainerState.EXITED))
+                                }
+                                .map { res =>
+                                  store.update[StreamApp](
+                                    id,
+                                    d =>
+                                      Future.successful(
+                                        d.copy(
+                                          state = Some(toConnectorState(res.state)),
+                                          nodes = Seq(node)
+                                        )
                                     )
                                   )
-                                  .imageName(StreamApi.STREAMAPP_IMAGE)
-                                  .command(StreamApi.MAIN_ENTRY)
-                                  .run()
-                                  .get
-                              )
-                        }
-                        .map { c =>
-                          log.info(s"container [${c.name}] logs : s${client.log(c.name)}")
-                          StreamActionResponse(
-                            id,
-                            Some(c.state)
-                          )
-                        }
-                        .recover {
-                          case ex: Throwable =>
-                            log.error(ex.getMessage)
-                            StreamActionResponse(
-                              id,
-                              Some(ContainerApi.ContainerState.EXITED)
-                            )
-                        }
-                  }
+                                  res
+                                }
+                          }
+                    }
                 }
               )(complete(_))
             }
@@ -358,7 +404,8 @@ private[configurator] object StreamRoute {
           path(STOP_COMMAND) {
             put {
               onSuccess(store.value[StreamApp](id).flatMap { data =>
-                val node = data.node.getOrElse(
+                // support 1 instance for 0.2...by Sam
+                val node = data.nodes.headOption.getOrElse(
                   throw new RuntimeException(s"the streamApp [$id] is not running at any node. we cannot stop it."))
                 Future
                   .successful(clientCache.get(node).forceRemove(StreamApi.formatAppId(data.id)))
@@ -372,7 +419,7 @@ private[configurator] object StreamRoute {
                     case _: Throwable =>
                       StreamActionResponse(
                         id,
-                        Some(ContainerApi.ContainerState.EXITED)
+                        Some(ContainerState.EXITED)
                       )
                   }
               })(complete(_))
