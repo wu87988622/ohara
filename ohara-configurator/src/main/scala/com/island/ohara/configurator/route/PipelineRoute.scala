@@ -135,6 +135,9 @@ private[configurator] object PipelineRoute {
                                ConnectorRoute.errorMessage(state),
                                data.lastModified)
               }
+          case data: StreamApp =>
+            Future.successful(ObjectAbstract(data.id, data.name, data.kind, data.state, None, data.lastModified))
+
           case data => Future.successful(ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified))
         }
       }
@@ -152,7 +155,7 @@ private[configurator] object PipelineRoute {
     // for example:
     // topic -> the broker cluster must be bound by same worker cluster
     // connector -> it's worker cluster must be same to pipeline's worker cluster
-    // streamapp -> TODO: should we bind it on same worker cluster ??? by chia
+    // streamapp -> TODO: it should be bound by worker cluster after issue #321 ...by Sam
     // others -> unsupported
     def verify(id: String): Future[String] = if (id != UNKNOWN) {
       store

@@ -22,6 +22,7 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.util.ByteString
+import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.VersionUtil
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -113,7 +114,8 @@ object StreamApi {
     * @param fromTopics the candidate topics for streamApp consume from
     * @param toTopics the candidate topics for streamApp produce to
     * @param lastModified this data change time
-    * @param node the streamApp running node
+    * @param state this streamApp current state
+    * @param nodes the streamApp running nodes
     */
   final case class StreamApp(pipelineId: String,
                              id: String,
@@ -123,7 +125,8 @@ object StreamApi {
                              fromTopics: Seq[String],
                              toTopics: Seq[String],
                              lastModified: Long,
-                             node: Option[NodeApi.Node] = None)
+                             state: Option[ConnectorState] = None,
+                             nodes: Seq[NodeApi.Node] = Seq.empty)
       extends Data {
     override def kind: String = "streamApp"
   }
