@@ -42,13 +42,14 @@ object ConnectorApi {
       "order" -> JsNumber(obj.order)
     )
   }
-  final case class ConnectorCreationRequest(name: String,
+  final case class ConnectorCreationRequest(name: Option[String],
+                                            workerClusterName: Option[String],
                                             className: String,
                                             schema: Seq[Column],
                                             topics: Seq[String],
                                             numberOfTasks: Int,
                                             configs: Map[String, String])
-  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] = jsonFormat6(
+  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] = jsonFormat7(
     ConnectorCreationRequest)
 
   final case class ConnectorInfo(id: String,
@@ -76,7 +77,7 @@ object ConnectorApi {
     }
 
   class Access private[v0]
-      extends com.island.ohara.client.configurator.v0.AccessWithCluster[ConnectorCreationRequest, ConnectorInfo](
+      extends com.island.ohara.client.configurator.v0.Access[ConnectorCreationRequest, ConnectorInfo](
         CONNECTORS_PREFIX_PATH) {
 
     private[this] def actionUrl(id: String, action: String): String =

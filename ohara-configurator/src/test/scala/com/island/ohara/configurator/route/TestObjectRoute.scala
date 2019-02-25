@@ -86,7 +86,8 @@ class TestObjectRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = CommonUtil.randomString(10),
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
           className = "com.island.ohara.connector.ftp.FtpSink",
           schema = Seq.empty,
           topics = Seq.empty,
@@ -107,7 +108,8 @@ class TestObjectRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = CommonUtil.randomString(10),
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
           className = "com.island.ohara.connector.ftp.FtpSink",
           schema = Seq.empty,
           topics = Seq.empty,
@@ -132,7 +134,8 @@ class TestObjectRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = CommonUtil.randomString(10),
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
           className = "com.island.ohara.connector.ftp.FtpSink",
           schema = Seq.empty,
           topics = Seq.empty,
