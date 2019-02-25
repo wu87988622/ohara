@@ -37,12 +37,15 @@ class TestOhara450 extends SmallTest with Matchers {
   def testUncreatablePipeline(): Unit = {
     val source = Await.result(
       access.add(
-        ConnectorCreationRequest(name = "abc",
-                                 className = "aaa.class",
-                                 topics = Seq.empty,
-                                 numberOfTasks = 1,
-                                 schema = Seq.empty,
-                                 configs = Map.empty)),
+        ConnectorCreationRequest(
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
+          className = "aaa.class",
+          topics = Seq.empty,
+          numberOfTasks = 1,
+          schema = Seq.empty,
+          configs = Map.empty
+        )),
       10 seconds
     )
     Await.result(access.list(), 10 seconds).size shouldBe 1
@@ -61,12 +64,15 @@ class TestOhara450 extends SmallTest with Matchers {
     )
     val sink = Await.result(
       access.add(
-        ConnectorCreationRequest(name = "abc",
-                                 className = "aaa.class",
-                                 schema = Seq.empty,
-                                 configs = Map.empty,
-                                 topics = Seq.empty,
-                                 numberOfTasks = 1)),
+        ConnectorCreationRequest(
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
+          className = "aaa.class",
+          schema = Seq.empty,
+          configs = Map.empty,
+          topics = Seq.empty,
+          numberOfTasks = 1
+        )),
       10 seconds
     )
     Await.result(access.list(), 10 seconds).size shouldBe 2

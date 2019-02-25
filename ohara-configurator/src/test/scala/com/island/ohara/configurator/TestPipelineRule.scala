@@ -51,7 +51,8 @@ class TestPipelineRule extends SmallTest with Matchers {
       10 seconds
     )
     val sourceRequest = ConnectorCreationRequest(
-      name = "abc",
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
       className = "jdbc",
       schema = Seq.empty,
       topics = Seq(topic.id),
@@ -119,7 +120,8 @@ class TestPipelineRule extends SmallTest with Matchers {
     )
 
     val sourceRequest = ConnectorCreationRequest(
-      name = "source",
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
       className = "jdbc",
       schema = Seq.empty,
       topics = Seq(topic.id),
@@ -179,7 +181,8 @@ class TestPipelineRule extends SmallTest with Matchers {
   @Test
   def testUnknownObject(): Unit = {
     val sourceRequest = ConnectorCreationRequest(
-      name = "abc",
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
       className = "jdbc",
       schema = Seq.empty,
       topics = Seq.empty,
@@ -204,14 +207,13 @@ class TestPipelineRule extends SmallTest with Matchers {
       10 seconds
     )
 
-    val sinkRequest = ConnectorCreationRequest(
-      name = "abc",
-      className = "jdbc",
-      schema = Seq.empty,
-      topics = Seq.empty,
-      configs = Map.empty,
-      numberOfTasks = 1
-    )
+    val sinkRequest = ConnectorCreationRequest(name = Some(CommonUtil.randomString(10)),
+                                               workerClusterName = None,
+                                               className = "jdbc",
+                                               schema = Seq.empty,
+                                               topics = Seq.empty,
+                                               configs = Map.empty,
+                                               numberOfTasks = 1)
 
     val sink = Await.result(access.add(sinkRequest), 10 seconds)
 

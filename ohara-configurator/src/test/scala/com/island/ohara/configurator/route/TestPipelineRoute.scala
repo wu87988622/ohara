@@ -107,15 +107,15 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(
-          ConnectorCreationRequest(
-            name = CommonUtil.randomString(10),
-            className = CommonUtil.randomString(10),
-            topics = Seq.empty,
-            numberOfTasks = 1,
-            schema = Seq.empty,
-            configs = Map.empty
-          )),
+        .add(ConnectorCreationRequest(
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
+          className = CommonUtil.randomString(10),
+          topics = Seq.empty,
+          numberOfTasks = 1,
+          schema = Seq.empty,
+          configs = Map.empty
+        )),
       10 seconds
     )
 

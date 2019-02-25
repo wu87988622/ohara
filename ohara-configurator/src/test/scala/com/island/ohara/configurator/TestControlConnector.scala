@@ -55,12 +55,15 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
                                numberOfReplications = None)),
       10 seconds
     )
-    val request = ConnectorCreationRequest(name = methodName,
-                                           className = classOf[DumbSink].getName,
-                                           schema = Seq.empty,
-                                           topics = Seq(topic.id),
-                                           numberOfTasks = 1,
-                                           configs = Map.empty)
+    val request = ConnectorCreationRequest(
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
+      className = classOf[DumbSink].getName,
+      schema = Seq.empty,
+      topics = Seq(topic.id),
+      numberOfTasks = 1,
+      configs = Map.empty
+    )
 
     val sink = result(access.add(request))
 
@@ -115,12 +118,15 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
                                numberOfReplications = None)),
       10 seconds
     )
-    val request = ConnectorCreationRequest(name = methodName,
-                                           className = classOf[DumbSink].getName,
-                                           schema = Seq.empty,
-                                           topics = Seq(topic.id),
-                                           numberOfTasks = 1,
-                                           configs = Map.empty)
+    val request = ConnectorCreationRequest(
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
+      className = classOf[DumbSink].getName,
+      schema = Seq.empty,
+      topics = Seq(topic.id),
+      numberOfTasks = 1,
+      configs = Map.empty
+    )
 
     val sink = result(access.add(request))
     // test start
@@ -160,12 +166,15 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
                                numberOfReplications = None)),
       10 seconds
     )
-    val request = ConnectorCreationRequest(name = methodName,
-                                           className = classOf[DumbSink].getName,
-                                           schema = Seq.empty,
-                                           topics = Seq(topic.id),
-                                           numberOfTasks = 1,
-                                           configs = Map.empty)
+    val request = ConnectorCreationRequest(
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
+      className = classOf[DumbSink].getName,
+      schema = Seq.empty,
+      topics = Seq(topic.id),
+      numberOfTasks = 1,
+      configs = Map.empty
+    )
 
     val sink = result(access.add(request))
     // test start

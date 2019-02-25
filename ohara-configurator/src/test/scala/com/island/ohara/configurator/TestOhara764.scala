@@ -36,12 +36,15 @@ class TestOhara764 extends SmallTest with Matchers {
     val access = ConnectorApi.access().hostname(configurator.hostname).port(configurator.port)
     val source = Await.result(
       access.add(
-        ConnectorCreationRequest(name = "abc",
-                                 className = "aaa.class",
-                                 topics = Seq("abc"),
-                                 numberOfTasks = 1,
-                                 schema = Seq.empty,
-                                 configs = Map.empty)),
+        ConnectorCreationRequest(
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
+          className = "aaa.class",
+          topics = Seq("abc"),
+          numberOfTasks = 1,
+          schema = Seq.empty,
+          configs = Map.empty
+        )),
       10 seconds
     )
 
@@ -61,12 +64,15 @@ class TestOhara764 extends SmallTest with Matchers {
     )
     val source2 = Await.result(
       access.add(
-        ConnectorCreationRequest(name = "abc",
-                                 className = "aaa.class",
-                                 topics = Seq(topic.id),
-                                 numberOfTasks = 1,
-                                 schema = Seq.empty,
-                                 configs = Map.empty)),
+        ConnectorCreationRequest(
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
+          className = "aaa.class",
+          topics = Seq(topic.id),
+          numberOfTasks = 1,
+          schema = Seq.empty,
+          configs = Map.empty
+        )),
       10 seconds
     )
     Await.result(access.start(source2.id), 30 seconds).id shouldBe source2.id

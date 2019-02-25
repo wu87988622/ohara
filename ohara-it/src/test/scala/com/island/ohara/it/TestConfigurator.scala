@@ -95,7 +95,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
     } finally ftpClient.close()
 
     val request = ConnectorCreationRequest(
-      name = methodName,
+      name = Some(CommonUtil.randomString(10)),
+      workerClusterName = None,
       className = classOf[FtpSource].getName,
       schema = Seq(
         Column.of("name", DataType.STRING, 1),
@@ -183,7 +184,8 @@ class TestConfigurator extends With3Brokers3Workers with Matchers {
       TestFtp2Ftp.rebuild(ftpClient, sinkProps.output)
 
       val request = ConnectorCreationRequest(
-        name = methodName,
+        name = Some(CommonUtil.randomString(10)),
+        workerClusterName = None,
         className = classOf[FtpSink].getName,
         schema = Seq.empty,
         topics = Seq(topic.id),
