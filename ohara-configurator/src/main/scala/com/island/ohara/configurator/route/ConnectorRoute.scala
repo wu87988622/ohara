@@ -123,8 +123,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             case _: NoSuchClusterException => response
         }
     ) ~
-      // TODO: OHARA-1201 should remove the "sources" and "sinks" ... by chia
-      pathPrefix((CONNECTORS_PREFIX_PATH | "sources" | "sinks") / Segment) { id =>
+      pathPrefix((CONNECTORS_PREFIX_PATH) / Segment) { id =>
         path(START_COMMAND) {
           put {
             onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
