@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.kafka
 
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.integration.With3Brokers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -26,20 +27,20 @@ import scala.concurrent.duration._
 class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
-  def test(): Unit = {
-    val name = methodName()
-    val numberOfPartitions: Int = 2
-    val numberOfReplications: Short = 2
+  def createTopic(): Unit = {
+    val name = CommonUtil.randomString(10)
+    val numberOfPartitions: Int = 1
+    val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try {
       val topic = Await.result(topicAdmin
                                  .creator()
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
-                                 .name(methodName())
+                                 .name(name)
                                  .create(),
                                30 seconds)
-      topic.name shouldBe methodName()
+      topic.name shouldBe name
       topic.numberOfPartitions shouldBe numberOfPartitions
       topic.numberOfReplications shouldBe numberOfReplications
 
@@ -48,6 +49,83 @@ class TestTopicAdmin extends With3Brokers with Matchers {
       Await.result(topicAdmin.delete(name), 30 seconds) shouldBe topic
 
       Await.result(topicAdmin.list(), 30 seconds).find(_.name == name) shouldBe None
+    } finally topicAdmin.close()
+  }
+
+  @Test
+  def addPartitions(): Unit = {
+    val numberOfPartitions: Int = 1
+    val numberOfReplications: Short = 1
+    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
+    try {
+      val topic = Await.result(
+        topicAdmin
+          .creator()
+          .numberOfPartitions(numberOfPartitions)
+          .numberOfReplications(numberOfReplications)
+          .name(CommonUtil.randomString(10))
+          .create(),
+        30 seconds
+      )
+      val topic2 = Await.result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1), 30 seconds)
+      topic2 shouldBe topic.copy(numberOfPartitions = numberOfPartitions + 1)
+    } finally topicAdmin.close()
+  }
+
+  @Test
+  def reducePartitions(): Unit = {
+    val name = CommonUtil.randomString(10)
+    val numberOfPartitions: Int = 2
+    val numberOfReplications: Short = 1
+    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
+    try {
+      val topic = Await.result(topicAdmin
+                                 .creator()
+                                 .numberOfPartitions(numberOfPartitions)
+                                 .numberOfReplications(numberOfReplications)
+                                 .name(name)
+                                 .create(),
+                               30 seconds)
+      an[IllegalArgumentException] should be thrownBy Await
+        .result(topicAdmin.changePartitions(topic.name, numberOfPartitions - 1), 30 seconds)
+    } finally topicAdmin.close()
+  }
+
+  @Test
+  def negativePartitions(): Unit = {
+    val name = CommonUtil.randomString(10)
+    val numberOfPartitions: Int = 2
+    val numberOfReplications: Short = 1
+    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
+    try {
+      val topic = Await.result(topicAdmin
+                                 .creator()
+                                 .numberOfPartitions(numberOfPartitions)
+                                 .numberOfReplications(numberOfReplications)
+                                 .name(name)
+                                 .create(),
+                               30 seconds)
+      an[IllegalArgumentException] should be thrownBy Await.result(topicAdmin.changePartitions(topic.name, -10),
+                                                                   30 seconds)
+    } finally topicAdmin.close()
+  }
+
+  @Test
+  def keepPartitions(): Unit = {
+    val name = CommonUtil.randomString(10)
+    val numberOfPartitions: Int = 2
+    val numberOfReplications: Short = 1
+    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
+    try {
+      val topic = Await.result(topicAdmin
+                                 .creator()
+                                 .numberOfPartitions(numberOfPartitions)
+                                 .numberOfReplications(numberOfReplications)
+                                 .name(name)
+                                 .create(),
+                               30 seconds)
+
+      topic shouldBe Await.result(topicAdmin.changePartitions(topic.name, numberOfPartitions), 30 seconds)
     } finally topicAdmin.close()
   }
 }

@@ -164,7 +164,7 @@ object TopicAdmin {
                     .createPartitions(Collections.singletonMap(name, NewPartitions.increaseTo(numberOfPartitions)))
                     .all()
                     .get())
-            }.map(_ => topicInfo)
+            }.map(_ => topicInfo.copy(numberOfPartitions = numberOfPartitions))
         }
         .getOrElse(Future.failed(new NoSuchElementException(s"$name doesn't exist"))))
 
