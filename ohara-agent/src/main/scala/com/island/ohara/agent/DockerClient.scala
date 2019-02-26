@@ -238,6 +238,13 @@ object DockerClient {
     def networkDriver(driver: NetworkDriver): ContainerCreator
 
     /**
+      * execute the docker container on background.
+      * NOTED: If you don't care the result of execution, you should use this method to replace run() since it doesn't
+      * invoke one more ssh connection to fetch container information.
+      */
+    def execute(): Unit
+
+    /**
       * execute the docker container on background
       * @return process information
       */

@@ -524,8 +524,9 @@ class TestWorkerRoute extends MediumTest with Matchers {
 
   @Test
   def createWkClusterWithSameName(): Unit = {
-    val request = WorkerClusterCreationRequest(
-      name = CommonUtil.randomString(10),
+    val name = CommonUtil.randomString(10)
+    def request() = WorkerClusterCreationRequest(
+      name = name,
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtil.availablePort()),
@@ -543,10 +544,10 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(workerApi.add(request))
+    result(workerApi.add(request()))
 
     // we don't need to create another bk cluster since it is feasible to create multi wk cluster on same broker cluster
-    an[IllegalArgumentException] should be thrownBy result(workerApi.add(request))
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(request()))
   }
 
   @Test
