@@ -406,8 +406,9 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
   @Test
   def createBkClusterWithSameName(): Unit = {
-    val request = BrokerClusterCreationRequest(
-      name = CommonUtil.randomString(10),
+    val name = CommonUtil.randomString(10)
+    def request() = BrokerClusterCreationRequest(
+      name = name,
       imageName = None,
       exporterPort = None,
       clientPort = Some(123),
@@ -416,7 +417,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(brokerApi.add(request))
+    result(brokerApi.add(request()))
 
     val zk2 = result(
       ZookeeperApi
@@ -434,7 +435,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
 
     an[IllegalArgumentException] should be thrownBy result(
       brokerApi.add(
-        request.copy(
+        request().copy(
           zookeeperClusterName = Some(zk2.name)
         )))
   }

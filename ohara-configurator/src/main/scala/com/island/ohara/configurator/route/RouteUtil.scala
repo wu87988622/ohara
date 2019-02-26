@@ -204,7 +204,7 @@ private[route] object RouteUtil {
                     .map(_.asInstanceOf[Res])
                     .find(_.name == req.name)
                     .foreach(conflictCluster =>
-                      new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
+                      throw new IllegalArgumentException(s"${serviceName(conflictCluster)} is running"))
 
                   // check port conflict
                   Some(clusters

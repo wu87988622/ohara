@@ -264,8 +264,9 @@ class TestZookeeperRoute extends MediumTest with Matchers {
 
   @Test
   def createZkClusterWithSameName(): Unit = {
-    val request = ZookeeperClusterCreationRequest(
-      name = CommonUtil.randomString(10),
+    val name = CommonUtil.randomString(10)
+    def request() = ZookeeperClusterCreationRequest(
+      name = name,
       imageName = None,
       clientPort = Some(CommonUtil.availablePort()),
       electionPort = Some(CommonUtil.availablePort()),
@@ -274,9 +275,9 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     )
 
     // pass
-    result(zookeeperApi.add(request))
+    result(zookeeperApi.add(request()))
 
-    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.add(request))
+    an[IllegalArgumentException] should be thrownBy result(zookeeperApi.add(request()))
   }
 
   @Test

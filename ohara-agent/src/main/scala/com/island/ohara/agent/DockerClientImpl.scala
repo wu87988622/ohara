@@ -117,6 +117,12 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       this
     }
 
+    override def execute(): Unit = {
+      val cmd = dockerCommand()
+      LOG.info(s"docker command:$cmd")
+      agent.execute(cmd)
+    }
+
     override def run(): Option[ContainerInfo] = {
       val cmd = dockerCommand()
       LOG.info(s"docker command:$cmd")
