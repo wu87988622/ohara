@@ -33,7 +33,7 @@ object LogApi {
   class Access extends BasicAccess(LOG_PREFIX_PATH) {
 
     private[this] def url(service: String, clusterName: String): String =
-      Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$service", clusterName)
+      s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$service/$clusterName"
 
     def log4ZookeeperCluster(clusterName: String): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](url(ZookeeperApi.ZOOKEEPER_PREFIX_PATH, clusterName))

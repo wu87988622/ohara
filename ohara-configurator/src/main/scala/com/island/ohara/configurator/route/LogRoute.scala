@@ -55,18 +55,27 @@ object LogRoute {
 
   def apply(implicit collie: ClusterCollie): server.Route =
     pathPrefix(LogApi.LOG_PREFIX_PATH) {
-      path(ZOOKEEPER_PREFIX_PATH) {
-        parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
+      pathPrefix(ZOOKEEPER_PREFIX_PATH) {
+        path(Segment) { zkClusterName =>
           onSuccess(collie.zookeeperCollie().logs(zkClusterName))(data => route(zkClusterName, data))
-        }
-      } ~ path(BROKER_PREFIX_PATH) {
-        parameter(Parameters.CLUSTER_NAME) { bkClusterName =>
+        } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
+          // TODO: this api is deprecated
+          onSuccess(collie.zookeeperCollie().logs(zkClusterName))(data => route(zkClusterName, data))
+        })
+      } ~ pathPrefix(BROKER_PREFIX_PATH) {
+        path(Segment) { bkClusterName =>
           onSuccess(collie.brokerCollie().logs(bkClusterName))(data => route(bkClusterName, data))
-        }
-      } ~ path(WORKER_PREFIX_PATH) {
-        parameter(Parameters.CLUSTER_NAME) { wkClusterName =>
+        } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { bkClusterName =>
+          // TODO: this api is deprecated
+          onSuccess(collie.brokerCollie().logs(bkClusterName))(data => route(bkClusterName, data))
+        })
+      } ~ pathPrefix(WORKER_PREFIX_PATH) {
+        path(Segment) { wkClusterName =>
           onSuccess(collie.workerCollie().logs(wkClusterName))(data => route(wkClusterName, data))
-        }
+        } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { wkClusterName =>
+          // TODO: this api is deprecated
+          onSuccess(collie.workerCollie().logs(wkClusterName))(data => route(wkClusterName, data))
+        })
       }
     }
 }
