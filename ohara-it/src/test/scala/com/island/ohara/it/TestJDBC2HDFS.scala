@@ -36,7 +36,6 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.duration._
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val db = Database.of()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
@@ -128,10 +127,11 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
     try {
       val storage = new HDFSStorage(testUtil.hdfs.fileSystem)
       val hdfsResultFolder = s"${testUtil.hdfs.tmpDirectory}/data/$topicName/partition0"
+
       CommonUtil.await(() => storage.list(hdfsResultFolder).size == 2, java.time.Duration.ofSeconds(20))
 
       val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-      val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000099.csv"
+      val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000100.csv"
       val lineCountFile1 = {
         val reader = new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath1))))
         try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
@@ -139,7 +139,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       }
       lineCountFile1.length shouldBe 51
 
-      val resultPath2: String = s"$hdfsResultFolder/part-000000000-000000049.csv"
+      val resultPath2: String = s"$hdfsResultFolder/part-000000000-000000050.csv"
       val lineCountFile2 = {
         val reader = new BufferedReader(new InputStreamReader(fileSystem.open(new Path(resultPath2))))
         try Iterator.continually(reader.readLine()).takeWhile(_ != null).toArray
