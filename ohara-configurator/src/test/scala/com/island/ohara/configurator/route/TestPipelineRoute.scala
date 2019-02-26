@@ -75,12 +75,12 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline1 = result(
-      pipelineApi.add(wkCluster.name,
-                      PipelineCreationRequest(
-                        name = CommonUtil.randomString(10),
-                        workerClusterName = None,
-                        rules = Map.empty
-                      ))
+      pipelineApi.add(
+        PipelineCreationRequest(
+          name = CommonUtil.randomString(10),
+          workerClusterName = Some(wkCluster.name),
+          rules = Map.empty
+        ))
     )
 
     pipeline1.workerClusterName shouldBe wkCluster.name

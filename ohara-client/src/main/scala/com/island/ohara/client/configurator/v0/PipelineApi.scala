@@ -49,6 +49,6 @@ object PipelineApi {
   }
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat6(Pipeline)
 
-  def access(): AccessWithCluster[PipelineCreationRequest, Pipeline] =
-    new AccessWithCluster[PipelineCreationRequest, Pipeline](PIPELINES_PREFIX_PATH)
+  def access(): Access[PipelineCreationRequest, Pipeline] =
+    new Access[PipelineCreationRequest, Pipeline](PIPELINES_PREFIX_PATH)
 }
