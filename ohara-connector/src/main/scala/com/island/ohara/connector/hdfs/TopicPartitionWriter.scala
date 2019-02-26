@@ -118,20 +118,16 @@ class TopicPartitionWriter(config: HDFSSinkConnectorConfig,
   }
 
   def flushFilePath(fileList: Iterator[String], dataDir: String): String = {
-    var startOffset: Long = FileUtils.getStopOffset(fileList)
+    val startOffset: Long = FileUtils.getStopOffset(fileList)
 
     //if flush size = 10
-    //first  commit startOffset=0  and endOffset=9
-    //second commit startOffset=10 and endOffset=19 (startOffset=first commit endOffset + 1, so startOffset=9+1)
-    //third  commit startOffset=20 and endOffset=29
-    if (startOffset > 1) {
-      startOffset = startOffset + 1
-    }
+    //first  commit startOffset=0  and endOffset=10
+    //second commit startOffset=10 and endOffset=20
+    //third  commit startOffset=20 and endOffset=30
 
-    var stopOffset: Long = startOffset + processLineCount - 1
-    if (stopOffset < 0) {
-      stopOffset = 0
-    }
+    var stopOffset: Long = startOffset
+    if (processLineCount > 0) stopOffset = stopOffset + processLineCount
+
     val fileName = s"$dataDir/${FileUtils.offsetFileName(filePrefixName, startOffset, stopOffset)}"
     logger.info(s"flush file path is: $fileName")
     fileName

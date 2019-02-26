@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 
 class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
   val HDFS_URL_VALUE = "hdfs://test:9000"
+
   @Test
   def testGetFlushLineCount(): Unit = {
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig =

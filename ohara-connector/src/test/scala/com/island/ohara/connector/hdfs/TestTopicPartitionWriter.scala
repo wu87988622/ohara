@@ -194,17 +194,17 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
     topicPartitionWriter.processLineCount = 1000
     val dataDir = "/data/partition1"
     var flushFilePath = topicPartitionWriter.flushFilePath(Iterator(), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000000000-000000999.csv"
+    flushFilePath shouldBe "/data/partition1/part-000000000-000001000.csv"
 
     flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000000000-000000999.csv"), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000001000-000001999.csv"
+    flushFilePath shouldBe "/data/partition1/part-000000999-000001999.csv"
 
     flushFilePath = topicPartitionWriter
       .flushFilePath(Iterator("part-000000000-000000999.csv", "part-000001000-000001999.csv"), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000002000-000002999.csv"
+    flushFilePath shouldBe "/data/partition1/part-000001999-000002999.csv"
 
     flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000002000-000002999.csv"), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000003000-000003999.csv"
+    flushFilePath shouldBe "/data/partition1/part-000002999-000003999.csv"
   }
 
   @Test
@@ -221,14 +221,14 @@ class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSuga
 
     topicPartitionWriter.processLineCount = 1000
     var flushFilePath = topicPartitionWriter.flushFilePath(Iterator(), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000000000-000000999.csv"
+    flushFilePath shouldBe "/data/partition1/part-000000000-000001000.csv"
 
     topicPartitionWriter.processLineCount = 500
     flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000000000-000000999.csv"), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000001000-000001499.csv"
+    flushFilePath shouldBe "/data/partition1/part-000000999-000001499.csv"
 
     topicPartitionWriter.processLineCount = 222
     flushFilePath = topicPartitionWriter.flushFilePath(Iterator("part-000001000-000001499.csv"), dataDir)
-    flushFilePath shouldBe "/data/partition1/part-000001500-000001721.csv"
+    flushFilePath shouldBe "/data/partition1/part-000001499-000001721.csv"
   }
 }

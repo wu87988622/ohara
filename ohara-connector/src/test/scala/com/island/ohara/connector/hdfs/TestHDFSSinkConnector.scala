@@ -150,23 +150,108 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     CommonUtil.await(
       () =>
-        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 99,
+        FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 100,
       Duration.ofSeconds(20))
 
     CommonUtil.await(() =>
                        storage
                          .list(s"$dataDirPath/$topicName/$partitionID")
                          .map(FileUtils.fileName)
-                         .contains("part-000000090-000000099.csv"),
+                         .contains("part-000000090-000000100.csv"),
                      Duration.ofSeconds(20))
 
-    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000090-000000099.csv")
+    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000090-000000100.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
     try {
       val rowDataCount = Stream.continually(bufferedReaderStream.readLine()).takeWhile(_ != null).toList.size
       rowDataCount shouldBe 10
+    } finally {
+      bufferedReaderStream.close()
+      streamReader.close()
+      file.close()
+    }
+  }
+
+  @Test
+  def testFlushSizeOne(): Unit = {
+    val sinkTasks = 1
+    val flushLineCountName = FLUSH_LINE_COUNT
+    val flushLineCount = "1"
+    val tmpDirName = TMP_DIR
+    val dataDirName = DATA_DIR
+    val isHeader = DATAFILE_NEEDHEADER
+    val hdfsURLName = HDFS_URL
+    val connectorName = methodName
+    val topicName = methodName
+    val rowCount = 10
+    val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
+    val hdfsCreatorClassName = HDFS_STORAGE_CREATOR_CLASS
+    val hdfsCreatorClassNameValue = classOf[LocalHDFSStorageCreator].getName
+
+    val fileSystem = testUtil.hdfs.fileSystem()
+    val storage = new HDFSStorage(fileSystem)
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
+    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    try {
+      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
+      producer.flush()
+    } finally producer.close()
+
+    val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
+    result(
+      workerClient
+        .connectorCreator()
+        .name(connectorName)
+        .connectorClass(classOf[HDFSSinkConnector])
+        .topic(topicName)
+        .numberOfTasks(sinkTasks)
+        .disableConverter()
+        .configs(Map(
+          flushLineCountName -> flushLineCount,
+          tmpDirName -> tmpDirPath,
+          hdfsURLName -> localURL,
+          hdfsCreatorClassName -> hdfsCreatorClassNameValue,
+          dataDirName -> dataDirPath,
+          isHeader -> "false"
+        ))
+        .schema(schema)
+        .create())
+
+    TimeUnit.SECONDS.sleep(5)
+    val partitionID: String = "partition0"
+    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(30))
+
+    CommonUtil.await(() =>
+                       storage
+                         .list(s"$dataDirPath/$topicName/$partitionID")
+                         .map(FileUtils.fileName)
+                         .contains("part-000000000-000000001.csv"),
+                     Duration.ofSeconds(20))
+
+    CommonUtil.await(() =>
+                       storage
+                         .list(s"$dataDirPath/$topicName/$partitionID")
+                         .map(FileUtils.fileName)
+                         .contains("part-000000001-000000002.csv"),
+                     Duration.ofSeconds(20))
+
+    CommonUtil.await(() =>
+                       storage
+                         .list(s"$dataDirPath/$topicName/$partitionID")
+                         .map(FileUtils.fileName)
+                         .contains("part-000000008-000000009.csv"),
+                     Duration.ofSeconds(20))
+
+    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000005-000000006.csv")
+    val file: InputStream = testUtil.hdfs.fileSystem.open(path)
+    val streamReader: InputStreamReader = new InputStreamReader(file)
+    val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
+    try {
+      val rowDataCount = Stream.continually(bufferedReaderStream.readLine()).takeWhile(_ != null).toList.size
+      rowDataCount shouldBe 1
     } finally {
       bufferedReaderStream.close()
       streamReader.close()
@@ -226,11 +311,6 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .create())
 
     TimeUnit.SECONDS.sleep(5)
-    storage
-      .list(s"$dataDirPath/$topicName/$partitionID")
-      .foreach(x => {
-        println(s"file path: $x")
-      })
     CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, Duration.ofSeconds(20))
 
     CommonUtil.await(
@@ -242,10 +322,10 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
                        storage
                          .list(s"$dataDirPath/$topicName/$partitionID")
                          .map(FileUtils.fileName)
-                         .contains("part-000000100-000000199.csv"),
+                         .contains("part-000000099-000000199.csv"),
                      Duration.ofSeconds(20))
 
-    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000100-000000199.csv")
+    val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000099-000000199.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
     val streamReader: InputStreamReader = new InputStreamReader(file)
     val bufferedReaderStream: BufferedReader = new BufferedReader(streamReader)
