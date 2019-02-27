@@ -44,10 +44,14 @@ class JDBCSourceConnector extends RowSourceConnector {
     val dbUserName = jdbcSourceConnectorConfig.dbUserName
     val dbPassword = jdbcSourceConnectorConfig.dbPassword
     val tableName = jdbcSourceConnectorConfig.dbTableName
+    val timestampColumnName = jdbcSourceConnectorConfig.timestampColumnName
+
     val dbTableDataProvider: DBTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
     try {
+      checkTimestampColumnName(timestampColumnName)
+
       if (!dbTableDataProvider.isTableExists(tableName))
-        throw new NoSuchElementException(s"$tableName table is not found")
+        throw new NoSuchElementException(s"$tableName table is not found.")
 
     } finally dbTableDataProvider.close()
   }
@@ -76,6 +80,17 @@ class JDBCSourceConnector extends RowSourceConnector {
     */
   override protected def _stop(): Unit = {
     //TODO
+  }
+
+  protected[jdbc] def checkTimestampColumnName(timestampColumnName: String): Unit = {
+    if (timestampColumnName == null)
+      throw new NoSuchElementException(s"Timestamp column is null, Please input timestamp type column name.")
+
+    if (timestampColumnName.isEmpty)
+      throw new NoSuchElementException(s"Timestamp column is empty, Please input timestamp type column name.")
+
+    if (!timestampColumnName.matches("^[a-zA-Z]{1}.*"))
+      throw new IllegalArgumentException("Your column name input error, Please checkout your column name.")
   }
 }
 

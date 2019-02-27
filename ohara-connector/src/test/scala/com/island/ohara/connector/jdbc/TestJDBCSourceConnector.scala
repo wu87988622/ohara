@@ -115,6 +115,42 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
     } finally consumer.close()
   }
 
+  @Test
+  def testTimestampColumnNameEmpty(): Unit = {
+    val jdbcSourceConnector: JDBCSourceConnector = new JDBCSourceConnector()
+
+    intercept[NoSuchElementException] {
+      jdbcSourceConnector.checkTimestampColumnName("")
+    }
+  }
+
+  @Test
+  def testTimestampColumnNameNull(): Unit = {
+    val jdbcSourceConnector: JDBCSourceConnector = new JDBCSourceConnector()
+
+    intercept[NoSuchElementException] {
+      jdbcSourceConnector.checkTimestampColumnName(null)
+    }
+  }
+
+  @Test
+  def testTimestampColumnName(): Unit = {
+    val jdbcSourceConnector: JDBCSourceConnector = new JDBCSourceConnector()
+    jdbcSourceConnector.checkTimestampColumnName("column1")
+    jdbcSourceConnector.checkTimestampColumnName("Column1col1")
+    jdbcSourceConnector.checkTimestampColumnName("col1")
+    jdbcSourceConnector.checkTimestampColumnName("col-1")
+
+    //Input error column name
+    intercept[IllegalArgumentException] {
+      jdbcSourceConnector.checkTimestampColumnName("1COLUMN1")
+    }
+
+    intercept[IllegalArgumentException] {
+      jdbcSourceConnector.checkTimestampColumnName("100col")
+    }
+  }
+
   private[this] val props = JDBCSourceConnectorConfig(
     Map(DB_URL -> db.url,
         DB_USERNAME -> db.user,
