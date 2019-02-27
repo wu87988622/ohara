@@ -42,7 +42,7 @@ import org.apache.kafka.common.config.ConfigDef.{Importance, Type}
 import org.apache.kafka.connect.connector.Task
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTask}
-import spray.json.{JsNumber, JsObject, JsString}
+import spray.json.{JsNull, JsNumber, JsObject, JsString}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -121,15 +121,23 @@ object Validator {
     workerClient,
     topicAdmin,
     TARGET_FTP,
-    ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT.write(request).asJsObject.fields.map {
-      case (k, v) =>
-        v match {
-          case s: JsString => (k, s.value)
-          // port is Int type
-          case n: JsNumber => (k, n.value.toString)
-          case _           => throw new IllegalArgumentException("what is this??")
-        }
-    },
+    ValidationApi.FTP_VALIDATION_REQUEST_JSON_FORMAT
+      .write(request)
+      .asJsObject
+      .fields
+      .map {
+        case (k, v) =>
+          v match {
+            case s: JsString => Some((k, s.value))
+            // port is Int type
+            case n: JsNumber => Some((k, n.value.toString))
+            // worker cluster name is useless here
+            case JsNull => None
+            case _      => throw new IllegalArgumentException("what is this??")
+          }
+      }
+      .flatten
+      .toMap,
     taskCount
   )
 

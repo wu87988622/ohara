@@ -15,44 +15,61 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import spray.json.DefaultJsonProtocol.{jsonFormat1, jsonFormat3, _}
-import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
+import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.Future
 object ValidationApi {
   val VALIDATION_PREFIX_PATH: String = "validate"
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
-  final case class HdfsValidationRequest(uri: String)
-  implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidationRequest] = jsonFormat1(
+  final case class HdfsValidationRequest(uri: String, workerClusterName: Option[String])
+  implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidationRequest] = jsonFormat2(
     HdfsValidationRequest)
 
   val VALIDATION_RDB_PREFIX_PATH: String = "rdb"
-  final case class RdbValidationRequest(url: String, user: String, password: String)
-  implicit val RDB_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[RdbValidationRequest] = jsonFormat3(
+  final case class RdbValidationRequest(url: String, user: String, password: String, workerClusterName: Option[String])
+  implicit val RDB_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[RdbValidationRequest] = jsonFormat4(
     RdbValidationRequest)
 
   val VALIDATION_FTP_PREFIX_PATH: String = "ftp"
-  final case class FtpValidationRequest(hostname: String, port: Int, user: String, password: String)
+  final case class FtpValidationRequest(hostname: String,
+                                        port: Int,
+                                        user: String,
+                                        password: String,
+                                        workerClusterName: Option[String])
   implicit val FTP_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[FtpValidationRequest] =
     new RootJsonFormat[FtpValidationRequest] {
-      override def read(json: JsValue): FtpValidationRequest =
-        json.asJsObject.getFields("hostname", "port", "user", "password") match {
-          case Seq(JsString(hostname), JsNumber(port), JsString(user), JsString(password)) =>
-            FtpValidationRequest(hostname, port.toInt, user, password)
-          // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
-          // TODO: we should not support the wrong json data... by chia
-          case Seq(JsString(hostname), JsString(port), JsString(user), JsString(password)) =>
-            FtpValidationRequest(hostname, port.toInt, user, password)
+      override def read(json: JsValue): FtpValidationRequest = {
+        val (hostname, user, password) = json.asJsObject.getFields("hostname", "user", "password") match {
+          case Seq(JsString(hostname), JsString(user), JsString(password)) => (hostname, user, password)
           case _ =>
-            throw new UnsupportedOperationException(
-              s"invalid format from ${classOf[FtpValidationRequest].getSimpleName}")
+            throw new UnsupportedOperationException("failed to parse request for \"hostname\", \"user\", \"password\"")
         }
+        // we will convert a Map[String, String] to FtpValidationRequest in kafka connector so this method can save us from spray's ClassCastException
+        val port: Int = json.asJsObject.getFields("port") match {
+          case Seq(JsString(port)) => port.toInt
+          case Seq(JsNumber(port)) => port.toInt
+          case _ =>
+            throw new UnsupportedOperationException("failed to parse request for \"port\"")
+        }
+
+        val workerClusterName: Option[String] = json.asJsObject.getFields("workerClusterName") match {
+          case Seq(JsString(workerClusterName)) => Some(workerClusterName)
+          case _                                => None
+        }
+        FtpValidationRequest(hostname = hostname,
+                             user = user,
+                             password = password,
+                             port = port,
+                             workerClusterName = workerClusterName)
+      }
 
       override def write(obj: FtpValidationRequest): JsValue = JsObject(
         "hostname" -> JsString(obj.hostname),
         "port" -> JsNumber(obj.port),
         "user" -> JsString(obj.user),
-        "password" -> JsString(obj.password)
+        "password" -> JsString(obj.password),
+        "workerClusterName" -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull)
       )
     }
 

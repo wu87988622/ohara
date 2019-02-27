@@ -54,21 +54,21 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
         verify = (clusterName, req: HdfsValidationRequest) =>
-          CollieUtils.both(clusterName).flatMap {
+          CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
         }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (clusterName, req: RdbValidationRequest) =>
-          CollieUtils.both(clusterName).flatMap {
+          CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
         }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (clusterName, req: FtpValidationRequest) =>
-          CollieUtils.both(clusterName).flatMap {
+          CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
               Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
         }
