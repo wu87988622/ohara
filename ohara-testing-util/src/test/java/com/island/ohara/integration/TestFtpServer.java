@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.rule.MediumTest;
 import com.island.ohara.common.util.CommonUtil;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,6 +33,41 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 public class TestFtpServer extends MediumTest {
+
+  @Test(expected = NullPointerException.class)
+  public void nullUser() {
+    FtpServer.builder().user(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullPassword() {
+    FtpServer.builder().password(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullDataPorts() {
+    FtpServer.builder().dataPorts(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void emptyDataPorts() {
+    FtpServer.builder().dataPorts(Collections.emptyList()).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void negativeControlPort() {
+    FtpServer.builder().controlPort(-1).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void negativeDataPort() {
+    FtpServer.builder().dataPorts(Collections.singletonList(-1)).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullAdvertisedHostname() {
+    FtpServer.builder().advertisedHostname(null).build();
+  }
 
   @Test(expected = IllegalArgumentException.class)
   public void testErrorFtpConnectionString() {
@@ -76,8 +112,8 @@ public class TestFtpServer extends MediumTest {
 
   @Test
   public void testRandomPort() {
-    int[] dataPorts = {0};
-    try (FtpServer ftpServer = FtpServer.local(0, dataPorts)) {
+    List<Integer> dataPorts = Collections.singletonList(0);
+    try (FtpServer ftpServer = FtpServer.builder().controlPort(0).dataPorts(dataPorts).build()) {
       assertNotEquals(0, ftpServer.port());
     }
   }

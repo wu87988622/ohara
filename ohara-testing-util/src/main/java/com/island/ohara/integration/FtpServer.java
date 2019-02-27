@@ -69,97 +69,152 @@ public interface FtpServer extends Releasable {
 
   String absolutePath();
 
-  static FtpServer local(int commandPort, int[] dataPorts) {
-    return local(CommonUtil.randomString(10), CommonUtil.randomString(10), commandPort, dataPorts);
+  static Builder builder() {
+    return new Builder();
   }
 
-  /**
-   * create an embedded ftp server with specific port
-   *
-   * @param commandPort bound port used to control
-   * @param dataPorts bound port used to transfer data
-   * @return an embedded ftp server
-   */
-  static FtpServer local(String user, String password, int commandPort, int[] dataPorts) {
-    File homeFolder = CommonUtil.createTempDir("ftp");
-    PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
-    UserManager userManager = userManagerFactory.createUserManager();
-    BaseUser _user = new BaseUser();
-    _user.setName(Objects.requireNonNull(user));
-    _user.setAuthorities(Collections.singletonList(new WritePermission()));
-    _user.setEnabled(true);
-    _user.setPassword(Objects.requireNonNull(password));
-    _user.setHomeDirectory(homeFolder.getAbsolutePath());
-    try {
-      userManager.save(_user);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+  class Builder {
+    private Builder() {}
+
+    private String advertisedHostname = CommonUtil.hostname();
+    private String user = "user";
+    private String password = "password";
+    private Integer controlPort = 0;
+    private List<Integer> dataPorts = Collections.singletonList(0);
+
+    @com.island.ohara.common.annotations.Optional("default is local hostname")
+    public Builder advertisedHostname(String advertisedHostname) {
+      this.advertisedHostname = advertisedHostname;
+      return this;
     }
-    ListenerFactory listenerFactory = new ListenerFactory();
-    listenerFactory.setPort(commandPort);
-    DataConnectionConfigurationFactory connectionConfig = new DataConnectionConfigurationFactory();
 
-    List<Integer> availableDataPorts =
-        Arrays.stream(dataPorts).mapToObj(CommonUtil::resolvePort).collect(Collectors.toList());
-
-    connectionConfig.setActiveEnabled(false);
-    connectionConfig.setPassivePorts(mkPortString(availableDataPorts));
-    listenerFactory.setDataConnectionConfiguration(
-        connectionConfig.createDataConnectionConfiguration());
-
-    Listener listener = listenerFactory.createListener();
-    FtpServerFactory factory = new FtpServerFactory();
-    factory.setUserManager(userManager);
-    factory.addListener("default", listener);
-    org.apache.ftpserver.FtpServer server = factory.createServer();
-    try {
-      server.start();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    @com.island.ohara.common.annotations.Optional("default is user")
+    public Builder user(String user) {
+      this.user = user;
+      return this;
     }
-    return new FtpServer() {
 
-      @Override
-      public void close() {
-        server.stop();
-        CommonUtil.deleteFiles(homeFolder);
-      }
+    @com.island.ohara.common.annotations.Optional("default is password")
+    public Builder password(String password) {
+      this.password = password;
+      return this;
+    }
 
-      @Override
-      public String hostname() {
-        return CommonUtil.hostname();
-      }
+    @com.island.ohara.common.annotations.Optional("default is random port")
+    public Builder controlPort(int controlPort) {
+      this.controlPort = controlPort;
+      return this;
+    }
 
-      @Override
-      public int port() {
-        return listener.getPort();
-      }
+    /**
+     * set the ports used to translate data. NOTED: the max connection of data is equal to number of
+     * data ports.
+     *
+     * @param dataPorts data ports
+     * @return this builder
+     */
+    @com.island.ohara.common.annotations.Optional("default is single random port")
+    public Builder dataPorts(List<Integer> dataPorts) {
+      this.dataPorts = dataPorts;
+      return this;
+    }
 
-      @Override
-      public String user() {
-        return _user.getName();
-      }
+    private void checkArguements() {
+      Objects.requireNonNull(advertisedHostname);
+      Objects.requireNonNull(user);
+      Objects.requireNonNull(password);
+      CommonUtil.requirePositiveInt(controlPort);
+      if (dataPorts == null || dataPorts.isEmpty())
+        throw new NullPointerException("empty dataPorts is illegal!");
+      dataPorts.forEach(CommonUtil::requirePositiveInt);
+    }
 
-      @Override
-      public String password() {
-        return _user.getPassword();
+    public FtpServer build() {
+      checkArguements();
+      File homeFolder = CommonUtil.createTempDir("ftp");
+      PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
+      UserManager userManager = userManagerFactory.createUserManager();
+      BaseUser _user = new BaseUser();
+      _user.setName(Objects.requireNonNull(user));
+      _user.setAuthorities(Collections.singletonList(new WritePermission()));
+      _user.setEnabled(true);
+      _user.setPassword(Objects.requireNonNull(password));
+      _user.setHomeDirectory(homeFolder.getAbsolutePath());
+      try {
+        userManager.save(_user);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
+      ListenerFactory listenerFactory = new ListenerFactory();
+      listenerFactory.setPort(controlPort);
+      DataConnectionConfigurationFactory connectionConfig =
+          new DataConnectionConfigurationFactory();
 
-      @Override
-      public List<Integer> dataPorts() {
-        return availableDataPorts;
-      }
+      List<Integer> availableDataPorts =
+          dataPorts.stream().map(CommonUtil::resolvePort).collect(Collectors.toList());
 
-      @Override
-      public boolean isLocal() {
-        return true;
-      }
+      connectionConfig.setActiveEnabled(false);
+      connectionConfig.setPassiveExternalAddress(advertisedHostname);
+      connectionConfig.setPassivePorts(mkPortString(availableDataPorts));
+      listenerFactory.setDataConnectionConfiguration(
+          connectionConfig.createDataConnectionConfiguration());
 
-      @Override
-      public String absolutePath() {
-        return homeFolder.getAbsolutePath();
+      Listener listener = listenerFactory.createListener();
+      FtpServerFactory factory = new FtpServerFactory();
+      factory.setUserManager(userManager);
+      factory.addListener("default", listener);
+      org.apache.ftpserver.FtpServer server = factory.createServer();
+      try {
+        server.start();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-    };
+      return new FtpServer() {
+
+        @Override
+        public void close() {
+          server.stop();
+          CommonUtil.deleteFiles(homeFolder);
+        }
+
+        @Override
+        public String hostname() {
+          return CommonUtil.hostname();
+        }
+
+        @Override
+        public int port() {
+          return listener.getPort();
+        }
+
+        @Override
+        public String user() {
+          return _user.getName();
+        }
+
+        @Override
+        public String password() {
+          return _user.getPassword();
+        }
+
+        @Override
+        public List<Integer> dataPorts() {
+          return Stream.of(connectionConfig.getPassivePorts().split(","))
+              .map(Integer::valueOf)
+              .collect(Collectors.toList());
+        }
+
+        @Override
+        public boolean isLocal() {
+          return true;
+        }
+
+        @Override
+        public String absolutePath() {
+          return homeFolder.getAbsolutePath();
+        }
+      };
+    }
   }
 
   static FtpServer of() {
@@ -228,13 +283,23 @@ public interface FtpServer extends Releasable {
                     }
                   };
             })
-        .orElseGet(() -> local(0, IntStream.range(0, NUMBER_OF_SERVERS).map(x -> 0).toArray()));
+        .orElseGet(
+            () ->
+                builder()
+                    .advertisedHostname(CommonUtil.hostname())
+                    .controlPort(0)
+                    .dataPorts(
+                        IntStream.range(0, NUMBER_OF_SERVERS)
+                            .mapToObj(x -> 0)
+                            .collect(Collectors.toList()))
+                    .build());
   }
 
   static String mkPortString(List<Integer> ports) {
     return ports.stream().map(String::valueOf).collect(Collectors.joining(","));
   }
 
+  String ADVERTISED_HOSTNAME = "--hostname";
   String USER = "--user";
   String PASSWORD = "--password";
   String CONTROL_PORT = "--controlPort";
@@ -244,18 +309,28 @@ public interface FtpServer extends Releasable {
       String.join(
           " ",
           Arrays.asList(
-              USER, PASSWORD, CONTROL_PORT, DATA_PORTS, "(form: 12345,12346 or 12345-12347)", TTL));
+              ADVERTISED_HOSTNAME,
+              USER,
+              PASSWORD,
+              CONTROL_PORT,
+              DATA_PORTS,
+              "(form: 12345,12346 or 12345-12346)",
+              TTL));
 
   static void start(String[] args, Consumer<FtpServer> consumer) throws InterruptedException {
+    String advertisedHostname = CommonUtil.hostname();
     String user = "user";
     String password = "password";
     int controlPort = -1;
-    int[] dataPorts = new int[0];
+    List<Integer> dataPorts = Collections.emptyList();
     int ttl = Integer.MAX_VALUE;
     if (args.length % 2 != 0) throw new IllegalArgumentException(USAGE);
     for (int i = 0; i < args.length; i += 2) {
       String value = args[i + 1];
       switch (args[i]) {
+        case ADVERTISED_HOSTNAME:
+          advertisedHostname = value;
+          break;
         case USER:
           user = value;
           break;
@@ -271,20 +346,30 @@ public interface FtpServer extends Releasable {
                 IntStream.range(
                         Integer.valueOf(value.split("-")[0]),
                         Integer.valueOf(value.split("-")[1]) + 1)
-                    .toArray();
-          else dataPorts = Stream.of(value.split(",")).mapToInt(Integer::valueOf).toArray();
+                    .boxed()
+                    .collect(Collectors.toList());
+          else
+            dataPorts =
+                Stream.of(value.split(",")).map(Integer::valueOf).collect(Collectors.toList());
           break;
         case TTL:
           ttl = Integer.valueOf(value);
           break;
         default:
-          throw new IllegalArgumentException(USAGE);
+          throw new IllegalArgumentException("unknown key:" + args[i] + " " + USAGE);
       }
     }
     CommonUtil.requirePositiveInt(controlPort, () -> CONTROL_PORT + " is required");
-    if (dataPorts.length == 0) throw new IllegalArgumentException(DATA_PORTS + " is required");
+    if (dataPorts.isEmpty()) throw new IllegalArgumentException(DATA_PORTS + " is required");
 
-    try (FtpServer ftp = FtpServer.local(user, password, controlPort, dataPorts)) {
+    try (FtpServer ftp =
+        FtpServer.builder()
+            .advertisedHostname(advertisedHostname)
+            .user(user)
+            .password(password)
+            .controlPort(controlPort)
+            .dataPorts(dataPorts)
+            .build()) {
       System.out.println(
           String.join(
               " ",

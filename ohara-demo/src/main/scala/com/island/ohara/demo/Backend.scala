@@ -158,7 +158,11 @@ object Backend {
       rs += workers
       val database = Database.local(ports.dbPort)
       rs += database
-      val ftpServer = FtpServer.local(ports.ftpPort, ports.ftpDataPorts.toArray)
+      val ftpServer = FtpServer
+        .builder()
+        .controlPort(ports.ftpPort)
+        .dataPorts(ports.ftpDataPorts.map(i => new Integer(i)).asJava)
+        .build()
       rs += ftpServer
       (zk, brokers, workers, database, ftpServer)
     } catch {
