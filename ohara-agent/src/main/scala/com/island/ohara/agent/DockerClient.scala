@@ -53,7 +53,10 @@ trait DockerClient extends Releasable {
     */
   def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo]
 
-  def names(): Seq[String]
+  /**
+    * @return all containers' name
+    */
+  def containerNames(): Seq[String]
 
   /**
     * @return a collection of docker containers
@@ -109,7 +112,7 @@ trait DockerClient extends Releasable {
     */
   def log(name: String): String
 
-  def images(): Seq[String]
+  def imageNames(): Seq[String]
 
   def containerInspector(containerName: String): ContainerInspector
 }

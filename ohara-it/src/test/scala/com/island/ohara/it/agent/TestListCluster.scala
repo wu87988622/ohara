@@ -50,11 +50,11 @@ class TestListCluster extends IntegrationTest with Matchers {
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
         withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
+          dockerClient.imageNames().contains(ZookeeperApi.IMAGE_NAME_DEFAULT) shouldBe true)
         withClue(s"failed to find ${BrokerApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+          dockerClient.imageNames().contains(BrokerApi.IMAGE_NAME_DEFAULT) shouldBe true)
         withClue(s"failed to find ${WorkerApi.IMAGE_NAME_DEFAULT}")(
-          dockerClient.images().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
+          dockerClient.imageNames().contains(WorkerApi.IMAGE_NAME_DEFAULT) shouldBe true)
       } finally dockerClient.close()
     }
 

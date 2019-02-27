@@ -269,7 +269,7 @@ object Configurator {
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
-        val images = dockerClient.images()
+        val images = dockerClient.imageNames()
         if (!images.contains(ZookeeperApi.IMAGE_NAME_DEFAULT))
           throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
         if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))

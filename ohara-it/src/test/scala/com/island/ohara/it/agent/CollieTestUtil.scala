@@ -55,9 +55,9 @@ private[agent] object CollieTestUtil {
     try {
       imageNames.foreach { image =>
         import org.scalatest.Matchers._
-        val images = client.images()
+        val images = client.imageNames()
         withClue(s"The images in ${node.name} are ${images.mkString(",")}. Required:$image")(
-          client.images().contains(image) shouldBe true)
+          client.imageNames().contains(image) shouldBe true)
       }
     } finally client.close()
   }

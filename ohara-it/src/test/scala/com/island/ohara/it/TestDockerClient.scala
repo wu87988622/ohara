@@ -53,7 +53,7 @@ class TestDockerClient extends MediumTest with Matchers {
     val port = info.split("@").last.split(":").last.toInt
     client = DockerClient.builder().hostname(hostname).port(port).user(user).password(password).build()
     remoteHostname = hostname
-    client.images().contains(imageName) shouldBe true
+    client.imageNames().contains(imageName) shouldBe true
   }
 
   /**
@@ -75,16 +75,16 @@ class TestDockerClient extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = runTest { client =>
-    val before = client.names()
+    val before = client.containerNames()
     val container =
       client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
     try {
       container.state shouldBe ContainerState.RUNNING
-      val after = client.names()
+      val after = client.containerNames()
       before.contains(container.name) shouldBe false
       after.contains(container.name) shouldBe true
     } finally client.stop(container.name)
-    client.names().contains(container.name) shouldBe false
+    client.containerNames().contains(container.name) shouldBe false
   }
 
   @Test

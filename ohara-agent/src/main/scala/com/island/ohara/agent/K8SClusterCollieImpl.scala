@@ -52,7 +52,7 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
         Future {
           val dockerClient =
             DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-          try node -> dockerClient.images()
+          try node -> dockerClient.imageNames()
           finally dockerClient.close()
         }
       }
