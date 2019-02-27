@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 
 class TestOhara743 extends SmallTest with Matchers {
 
-  private[this] val ftpServer = FtpServer.local(0, Array(0))
+  private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
 
   @Test
   def testAutoCreateOutput(): Unit = {
