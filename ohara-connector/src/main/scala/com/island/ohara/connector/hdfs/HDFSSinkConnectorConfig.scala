@@ -62,15 +62,21 @@ object HDFSSinkConnectorConfig {
   def apply(props: Map[String, String]): HDFSSinkConnectorConfig = {
     val prefixFileName: String = props.getOrElse(DATAFILE_PREFIX_NAME, DATAFILE_PREFIX_NAME_DEFAULT)
     if (!prefixFileName.matches(PREFIX_FILENAME_PATTERN)) {
-      throw new RuntimeException("The " + DATAFILE_PREFIX_NAME + " value only a-z or A-Z or 0-9")
+      throw new IllegalArgumentException("The " + DATAFILE_PREFIX_NAME + " value only a-z or A-Z or 0-9")
+    }
+
+    val tmpDir: String = props.getOrElse(TMP_DIR, TMP_DIR_DEFAULT)
+    val dataDir: String = props.getOrElse(DATA_DIR, DATA_DIR_DEFAULT)
+    if (tmpDir.equals(dataDir)) {
+      throw new IllegalArgumentException("The tmpDir path same as dataDir path, Please input different path.")
     }
 
     HDFSSinkConnectorConfig(
       hdfsURL = props(HDFS_URL),
       flushLineCount = props.getOrElse(FLUSH_LINE_COUNT, FLUSH_LINE_COUNT_DEFAULT.toString).toInt,
       rotateIntervalMS = props.getOrElse(ROTATE_INTERVAL_MS, ROTATE_INTERVAL_MS_DEFAULT.toString).toLong,
-      tmpDir = props.getOrElse(TMP_DIR, TMP_DIR_DEFAULT.toString),
-      dataDir = props.getOrElse(DATA_DIR, DATA_DIR_DEFAULT),
+      tmpDir = tmpDir,
+      dataDir = dataDir,
       dataFilePrefixName = prefixFileName,
       dataFileNeedHeader = props.getOrElse(DATAFILE_NEEDHEADER, DATAFILE_NEEDHEADER_DEFAULT.toString).toBoolean,
       dataBufferCount = props.getOrElse(DATA_BUFFER_COUNT, DATA_BUFFER_COUNT_DEFAULT.toString).toLong,
