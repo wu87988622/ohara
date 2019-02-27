@@ -203,7 +203,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     }
   }
 
-  override def names(): Seq[String] =
+  override def containerNames(): Seq[String] =
     agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
 
   override def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] = containers(nameFilter, true)
@@ -333,7 +333,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
       override def asRoot(): ContainerInspector = containerInspector(containerName, true)
     }
 
-  override def images(): Seq[String] = agent
+  override def imageNames(): Seq[String] = agent
     .execute("docker images --format {{.Repository}}:{{.Tag}}")
     .map(_.split("\n").toSeq)
     .filter(_.nonEmpty)

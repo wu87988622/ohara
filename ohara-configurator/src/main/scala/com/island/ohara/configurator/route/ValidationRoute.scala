@@ -15,14 +15,18 @@
  */
 
 package com.island.ohara.configurator.route
+import java.util.concurrent.TimeUnit
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
-import com.island.ohara.agent.{Agent, BrokerCollie, WorkerCollie}
+import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie}
 import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.ValidationApi._
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
+import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -30,7 +34,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
-
+  private[this] val LOG = Logger(ValidationRoute.getClass)
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
 
   private[this] def verifyRoute[Req](root: String, verify: (Option[String], Req) => Future[Seq[ValidationReport]])(
@@ -75,8 +79,6 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,
         verify = (_, req: NodeValidationRequest) => {
-          val cmd = "ls /tmp"
-          val message = s"test $cmd on ${req.hostname}:${req.port}"
           // TODO: ugly ... please refactor this fucking code. by chia
           if (brokerCollie.isInstanceOf[FakeBrokerCollie] || workerCollie.isInstanceOf[FakeWorkerCollie])
             Future.successful(
@@ -90,20 +92,60 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
             Future {
               Seq(
                 try {
-                  val agent =
-                    Agent.builder().hostname(req.hostname).port(req.port).user(req.user).password(req.password).build()
-                  try agent.execute(cmd)
-                  finally agent.close()
-                  ValidationReport(
-                    hostname = req.hostname,
-                    message = message,
-                    pass = true
-                  )
+                  val name = CommonUtil.randomString(10)
+                  val dockerClient = DockerClient
+                    .builder()
+                    .hostname(req.hostname)
+                    .port(req.port)
+                    .user(req.user)
+                    .password(req.password)
+                    .build()
+                  try {
+                    val helloWorldImage = "hello-world"
+                    dockerClient.containerCreator().name(name).imageName(helloWorldImage).execute()
+
+                    // TODO: should we directly reject the node which doesn't have hello-world image??? by chia
+                    def checkImage(): Boolean = {
+                      val endTime = CommonUtil.current() + 3 * 1000 // 3 seconds to timeout
+                      while (endTime >= CommonUtil.current()) {
+                        if (dockerClient.imageNames().contains(s"$helloWorldImage:latest")) return true
+                        else TimeUnit.SECONDS.sleep(1)
+                      }
+                      dockerClient.imageNames().contains(helloWorldImage)
+                    }
+
+                    // there are two checks.
+                    // 1) is there hello-world image?
+                    // 2) did we succeed to run hello-world container?
+                    if (!checkImage())
+                      ValidationReport(
+                        hostname = req.hostname,
+                        message = s"Failed to download $helloWorldImage image",
+                        pass = true
+                      )
+                    else if (dockerClient.containerNames().contains(name))
+                      ValidationReport(
+                        hostname = req.hostname,
+                        message = s"succeed to run $helloWorldImage on ${req.hostname}",
+                        pass = true
+                      )
+                    else
+                      ValidationReport(
+                        hostname = req.hostname,
+                        message = s"failed to run container $helloWorldImage",
+                        pass = false
+                      )
+                  } finally try dockerClient.forceRemove(name)
+                  catch {
+                    case e: Throwable =>
+                      LOG.error(s"failed to remove container:$name", e)
+                  } finally dockerClient.close()
+
                 } catch {
                   case e: Throwable =>
                     ValidationReport(
                       hostname = req.hostname,
-                      message = s"$message (failed by ${e.getMessage})",
+                      message = e.getMessage,
                       pass = false
                     )
                 }

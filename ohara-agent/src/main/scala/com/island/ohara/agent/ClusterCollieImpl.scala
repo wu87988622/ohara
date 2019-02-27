@@ -169,7 +169,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
         Future {
           val dockerClient =
             DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-          try node -> dockerClient.images()
+          try node -> dockerClient.imageNames()
           finally dockerClient.close()
         }
       }
@@ -260,7 +260,7 @@ private object ClusterCollieImpl {
     def stopAndRemoveService(client: DockerClient, clusterName: String, swallow: Boolean, force: Boolean): Unit =
       try {
         val key = s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName"
-        val containerNames = client.names().filter(_.startsWith(key))
+        val containerNames = client.containerNames().filter(_.startsWith(key))
         if (containerNames.nonEmpty) {
           var lastException: Throwable = null
           containerNames.foreach(

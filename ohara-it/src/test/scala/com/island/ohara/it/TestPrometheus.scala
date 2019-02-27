@@ -70,7 +70,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val client =
       DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
     try {
-      assumeTrue(client.images().contains(PrometheusServer.IMAGE_NAME_DEFAULT))
+      assumeTrue(client.imageNames().contains(PrometheusServer.IMAGE_NAME_DEFAULT))
     } finally client.close()
   }
 
