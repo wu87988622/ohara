@@ -104,14 +104,14 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
 
   @Test
   def testGetDataFilePrefixNameException1(): Unit = {
-    intercept[RuntimeException] {
+    intercept[IllegalArgumentException] {
       HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "datapart123AAA-"))
     }.getMessage shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
   }
 
   @Test
   def testGetDataFilePrefixNameException2(): Unit = {
-    intercept[RuntimeException] {
+    intercept[IllegalArgumentException] {
       HDFSSinkConnectorConfig(Map(HDFS_URL -> HDFS_URL_VALUE, DATAFILE_PREFIX_NAME -> "data-part123-AAA"))
     }.getMessage shouldBe "The datafile.prefix.name value only a-z or A-Z or 0-9"
   }
@@ -132,4 +132,10 @@ class TestHDFSSinkConnectorConfig extends SmallTest with Matchers {
     hdfsSinkConnectorConfig.dataBufferCount shouldBe 100
   }
 
+  @Test
+  def testTmpDirSameDataDir(): Unit = {
+    intercept[IllegalArgumentException] {
+      HDFSSinkConnectorConfig(Map(TMP_DIR -> "/tmp", DATA_DIR -> "/tmp"))
+    }
+  }
 }
