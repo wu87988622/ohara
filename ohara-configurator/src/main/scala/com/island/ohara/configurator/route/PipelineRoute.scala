@@ -120,21 +120,55 @@ private[configurator] object PipelineRoute {
         Future.traverse(objs) {
           case data: ConnectorInfo =>
             workerClient
-              .status(data.id)
-              .map(c => Some(c.connector.state))
+              .exist(data.id)
+              .flatMap {
+                if (_)
+                  workerClient
+                    .status(data.id)
+                    .map(c => Some(c.connector.state))
+                    .map { state =>
+                      ObjectAbstract(id = data.id,
+                                     name = data.name,
+                                     kind = data.kind,
+                                     state = state,
+                                     error = ConnectorRoute.errorMessage(state),
+                                     lastModified = data.lastModified)
+                    }
+                    .recover {
+                      case e: Throwable =>
+                        LOG.error(s"Failed to get status of connector:${data.id}", e)
+                        ObjectAbstract(
+                          id = data.id,
+                          name = data.name,
+                          kind = data.kind,
+                          state = None,
+                          error = Some(s"Failed to get status of connector:${data.id}." +
+                            s"This may be temporary since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
+                          lastModified = data.lastModified
+                        )
+                    } else
+                  Future.successful(
+                    ObjectAbstract(id = data.id,
+                                   name = data.name,
+                                   kind = data.kind,
+                                   state = None,
+                                   error = None,
+                                   lastModified = data.lastModified))
+              }
               .recover {
+                // if the target worker cluster is gone, we will fail to check existence of connector.
                 case e: Throwable =>
-                  LOG.error(s"Failed to get stats of connector:${data.id}", e)
-                  None
+                  ObjectAbstract(
+                    id = data.id,
+                    name = data.name,
+                    kind = data.kind,
+                    state = None,
+                    error =
+                      Some(s"failed to connect to worker cluster:${workerClient.connectionProps}. ${e.getMessage}"),
+                    lastModified = data.lastModified
+                  )
               }
-              .map { state =>
-                ObjectAbstract(data.id,
-                               data.name,
-                               data.kind,
-                               state,
-                               ConnectorRoute.errorMessage(state),
-                               data.lastModified)
-              }
+
           case data: StreamApp =>
             Future.successful(ObjectAbstract(data.id, data.name, data.kind, data.state, None, data.lastModified))
 
