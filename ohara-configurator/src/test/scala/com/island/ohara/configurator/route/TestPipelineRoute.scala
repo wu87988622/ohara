@@ -508,6 +508,52 @@ class TestPipelineRoute extends SmallTest with Matchers {
     pipelines.exists(_.id == pipeline1.id) shouldBe true
   }
 
+  @Test
+  def listConnectorWhichIsNotRunning(): Unit = {
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
+
+    val connector = Await.result(
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(ConnectorCreationRequest(
+          name = Some(CommonUtil.randomString(10)),
+          workerClusterName = None,
+          className = CommonUtil.randomString(10),
+          topics = Seq.empty,
+          numberOfTasks = 1,
+          schema = Seq.empty,
+          configs = Map.empty
+        )),
+      10 seconds
+    )
+
+    val pipeline = result(
+      pipelineApi.add(
+        PipelineCreationRequest(
+          name = CommonUtil.randomString(10),
+          workerClusterName = None,
+          rules = Map(topic.id -> Seq(connector.id))
+        )))
+    pipeline.objects.size shouldBe 2
+    pipeline.objects.foreach { obj =>
+      obj.error shouldBe None
+      obj.state shouldBe None
+    }
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
