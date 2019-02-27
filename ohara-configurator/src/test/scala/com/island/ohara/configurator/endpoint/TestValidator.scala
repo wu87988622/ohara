@@ -49,7 +49,9 @@ class TestValidator extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidationOfHdfs(): Unit = {
-    evaluate(Validator.run(workerClient, topicAdmin, HdfsValidationRequest("file:///tmp"), taskCount))
+    evaluate(
+      Validator
+        .run(workerClient, topicAdmin, HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None), taskCount))
   }
 
   @Test
@@ -58,7 +60,11 @@ class TestValidator extends With3Brokers3Workers with Matchers {
       Validator.run(
         workerClient,
         topicAdmin,
-        FtpValidationRequest(ftpServer.hostname, ftpServer.port, ftpServer.user, ftpServer.password),
+        FtpValidationRequest(hostname = ftpServer.hostname,
+                             port = ftpServer.port,
+                             user = ftpServer.user,
+                             password = ftpServer.password,
+                             workerClusterName = None),
         taskCount
       ))
   }
@@ -69,7 +75,7 @@ class TestValidator extends With3Brokers3Workers with Matchers {
       Validator.run(
         workerClient,
         topicAdmin,
-        RdbValidationRequest(rdb.url, rdb.user, rdb.password),
+        RdbValidationRequest(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
         taskCount
       ))
   }
