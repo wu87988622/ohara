@@ -89,7 +89,7 @@ class FtpSourceTask extends RowSourceTask {
       .apply()
   } catch {
     case e: Throwable =>
-      if (props.completedFolder.isDefined) LOG.error(s"failed to move $path to ${props.completedFolder}", e)
+      if (props.completedFolder.isDefined) LOG.error(s"failed to move $path to ${props.completedFolder.get}", e)
       else LOG.error(s"failed to remove $path", e)
   }
 
