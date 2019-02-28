@@ -101,13 +101,16 @@ object WorkerRoute {
                 .brokerClusterName(bkName)
                 .groupId(req.groupId.getOrElse(CommonUtil.randomString(10)))
                 .configTopicName(req.configTopicName.getOrElse(s"config-${CommonUtil.randomString(10)}"))
-                .configTopicReplications(req.configTopicReplications)
+                .configTopicReplications(req.configTopicReplications.getOrElse(
+                  WorkerApi.CONFIG_TOPIC_REPLICATIONS_DEFAULT))
                 .offsetTopicName(req.offsetTopicName.getOrElse(s"offset-${CommonUtil.randomString(10)}"))
-                .offsetTopicPartitions(req.offsetTopicPartitions)
-                .offsetTopicReplications(req.offsetTopicReplications)
+                .offsetTopicPartitions(req.offsetTopicPartitions.getOrElse(WorkerApi.OFFSET_TOPIC_PARTITIONS_DEFAULT))
+                .offsetTopicReplications(req.offsetTopicReplications.getOrElse(
+                  WorkerApi.OFFSET_TOPIC_REPLICATIONS_DEFAULT))
                 .statusTopicName(req.statusTopicName.getOrElse(s"status-${CommonUtil.randomString(10)}"))
-                .statusTopicPartitions(req.statusTopicPartitions)
-                .statusTopicReplications(req.statusTopicReplications)
+                .statusTopicPartitions(req.statusTopicPartitions.getOrElse(WorkerApi.STATUS_TOPIC_PARTITIONS_DEFAULT))
+                .statusTopicReplications(req.statusTopicReplications.getOrElse(
+                  WorkerApi.STATUS_TOPIC_REPLICATIONS_DEFAULT))
                 .imageName(req.imageName.getOrElse(WorkerApi.IMAGE_NAME_DEFAULT))
                 .jarUrls(urls)
                 .nodeNames(req.nodeNames)

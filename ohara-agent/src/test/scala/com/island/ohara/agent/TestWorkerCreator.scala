@@ -85,142 +85,108 @@ class TestWorkerCreator extends SmallTest with Matchers {
 
   @Test
   def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().imageName(null)
+  }
+
+  @Test
+  def emptyImage(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().imageName("")
   }
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().clusterName(null)
   }
 
   @Test
-  def nullClientPort(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+  def emptyClusterName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().clusterName("")
+  }
+
+  @Test
+  def negativeClientPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().clientPort(-1)
   }
 
   @Test
   def nullBkClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().brokerClusterName(null)
+  }
+
+  @Test
+  def emptyBkClusterName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().brokerClusterName("")
   }
 
   @Test
   def nullGroupId(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().groupId(null)
+  }
+
+  @Test
+  def emptyGroupId(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().groupId("")
   }
 
   @Test
   def nullConfigTopicName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().configTopicName(null)
+  }
+
+  @Test
+  def emptyConfigTopicName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().configTopicName("")
+  }
+
+  @Test
+  def negativeConfigTopicReplications(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().configTopicReplications(-1)
   }
 
   @Test
   def nullStatusTopicName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().statusTopicName(null)
+  }
+
+  @Test
+  def emptyStatusTopicName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().statusTopicName("")
+  }
+  @Test
+  def negativeStatusTopicPartitions(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().statusTopicPartitions(-1)
+  }
+  @Test
+  def negativeStatusTopicReplications(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().statusTopicReplications(-1)
   }
 
   @Test
   def nullOffsetTopicName(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().offsetTopicName(null)
+  }
+
+  @Test
+  def emptyOffsetTopicName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().offsetTopicName("")
   }
   @Test
+  def negativeOffsetTopicPartitions(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().offsetTopicPartitions(-1)
+  }
+  @Test
+  def negativeOffsetTopicReplications(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().offsetTopicReplications(-1)
+  }
+
+  @Test
   def nullNodes(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .create()
+    an[NullPointerException] should be thrownBy wkCreator().nodeNames(null)
   }
 
   @Test
   def emptyNodes(): Unit = {
-    an[NullPointerException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .nodeNames(Seq.empty)
-      .create()
+    an[IllegalArgumentException] should be thrownBy wkCreator().nodeNames(Seq.empty)
   }
 
   @Test

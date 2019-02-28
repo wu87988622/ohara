@@ -391,8 +391,39 @@ public final class CommonUtil {
     return s == null || s.isEmpty();
   }
 
+  public static String requireNonEmpty(String s) {
+    return requireNonEmpty(s, () -> "");
+  }
+  /**
+   * throw exception if the input string is either null or empty.
+   *
+   * @param s input string
+   * @param msg error message
+   * @throws NullPointerException if {@code s} is {@code null}
+   * @throws IllegalArgumentException if {@code s} is empty
+   * @return input string
+   */
   public static String requireNonEmpty(String s, Supplier<String> msg) {
-    if (s == null || s.isEmpty()) throw new NullPointerException(msg.get());
+    if (Objects.requireNonNull(s).isEmpty()) throw new IllegalArgumentException(msg.get());
+    return s;
+  }
+
+  public static <T extends Collection<?>> T requireNonEmpty(T s) {
+    return requireNonEmpty(s, () -> "");
+  }
+
+  /**
+   * throw exception if the input collection is either null or empty.
+   *
+   * @param s input collection
+   * @param msg error message
+   * @param <T> collection type
+   * @throws NullPointerException if {@code s} is {@code null}
+   * @throws IllegalArgumentException if {@code s} is empty
+   * @return input collection
+   */
+  public static <T extends Collection<?>> T requireNonEmpty(T s, Supplier<String> msg) {
+    if (Objects.requireNonNull(s).isEmpty()) throw new IllegalArgumentException(msg.get());
     return s;
   }
 
@@ -401,7 +432,7 @@ public final class CommonUtil {
   }
 
   public static int requirePositiveInt(int value, Supplier<String> msg) {
-    if (value < 0) throw new NullPointerException(msg.get());
+    if (value < 0) throw new IllegalArgumentException(msg.get());
     return value;
   }
 
@@ -410,7 +441,7 @@ public final class CommonUtil {
   }
 
   public static long requirePositiveLong(long value, Supplier<String> msg) {
-    if (value < 0) throw new NullPointerException(msg.get());
+    if (value < 0) throw new IllegalArgumentException(msg.get());
     return value;
   }
 

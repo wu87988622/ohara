@@ -15,9 +15,8 @@
  */
 
 package com.island.ohara.agent
-import java.util.Objects
-
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.Future
@@ -32,34 +31,35 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {
-    private[this] var clientPort: Int = -1
-    private[this] var peerPort: Int = -1
-    private[this] var electionPort: Int = -1
+    private[this] var clientPort: Int = CommonUtil.availablePort()
+    private[this] var peerPort: Int = CommonUtil.availablePort()
+    private[this] var electionPort: Int = CommonUtil.availablePort()
 
+    @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = clientPort
+      this.clientPort = CommonUtil.requirePositiveInt(clientPort)
       this
     }
 
+    @Optional("default is random port")
     def peerPort(peerPort: Int): ClusterCreator = {
-      this.peerPort = peerPort
+      this.peerPort = CommonUtil.requirePositiveInt(peerPort)
       this
     }
 
+    @Optional("default is random port")
     def electionPort(electionPort: Int): ClusterCreator = {
-      this.electionPort = electionPort
+      this.electionPort = CommonUtil.requirePositiveInt(electionPort)
       this
     }
 
     override def create(): Future[ZookeeperClusterInfo] = doCreate(
-      clusterName = Objects.requireNonNull(clusterName),
-      imageName = Objects.requireNonNull(imageName),
-      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort is required"),
-      peerPort = CommonUtil.requirePositiveInt(peerPort, () => "peerPort is required"),
-      electionPort = CommonUtil.requirePositiveInt(electionPort, () => "electionPort is required"),
-      nodeNames =
-        if (nodeNames == null || nodeNames.isEmpty) throw new NullPointerException("nodes can't be empty")
-        else nodeNames
+      clusterName = CommonUtil.requireNonEmpty(clusterName),
+      imageName = CommonUtil.requireNonEmpty(imageName),
+      clientPort = CommonUtil.requirePositiveInt(clientPort),
+      peerPort = CommonUtil.requirePositiveInt(peerPort),
+      electionPort = CommonUtil.requirePositiveInt(electionPort),
+      nodeNames = requireNonEmpty(nodeNames)
     )
 
     protected def doCreate(clusterName: String,
