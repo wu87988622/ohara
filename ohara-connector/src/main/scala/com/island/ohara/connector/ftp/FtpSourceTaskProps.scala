@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.connector.ftp
+import com.island.ohara.common.util.CommonUtil
 
 case class FtpSourceTaskProps(hash: Int,
                               total: Int,
@@ -30,9 +31,9 @@ case class FtpSourceTaskProps(hash: Int,
     FTP_HASH -> hash.toString,
     FTP_TOTAL -> total.toString,
     FTP_INPUT -> inputFolder,
-    FTP_COMPLETED_FOLDER -> completedFolder.getOrElse("null"),
+    FTP_COMPLETED_FOLDER -> completedFolder.getOrElse(""),
     FTP_ERROR -> errorFolder,
-    FTP_ENCODE -> encode.getOrElse("null"),
+    FTP_ENCODE -> encode.getOrElse(""),
     FTP_HOSTNAME -> hostname,
     FTP_PORT -> port.toString,
     FTP_USER_NAME -> user,
@@ -66,9 +67,9 @@ object FtpSourceTaskProps {
     hash = props(FTP_HASH).toInt,
     total = props(FTP_TOTAL).toInt,
     inputFolder = props(FTP_INPUT),
-    completedFolder = props.get(FTP_COMPLETED_FOLDER).filter(_.toLowerCase != "null"),
+    completedFolder = props.get(FTP_COMPLETED_FOLDER).filterNot(CommonUtil.isEmpty),
     errorFolder = props(FTP_ERROR),
-    encode = props.get(FTP_ENCODE).filter(_.toLowerCase != "null"),
+    encode = props.get(FTP_ENCODE).filterNot(CommonUtil.isEmpty),
     hostname = props(FTP_HOSTNAME),
     port = props(FTP_PORT).toInt,
     user = props(FTP_USER_NAME),

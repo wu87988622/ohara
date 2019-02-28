@@ -145,6 +145,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
       items.length shouldBe data.size
@@ -175,6 +176,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 2
       lines.head shouldBe schema.sortBy(_.order).map(_.name).mkString(",")
       val items = lines(1).split(",")
@@ -205,6 +207,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 2
       lines.head shouldBe data.cells().asScala.map(_.name).mkString(",")
       val items = lines(1).split(",")
@@ -241,6 +244,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 2
       lines.head shouldBe schema.sortBy(_.order).map(_.newName).mkString(",")
       val items = lines(1).split(",")
@@ -272,6 +276,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
       items.length shouldBe data.size
@@ -301,6 +306,71 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
+      lines.length shouldBe 1
+      val items = lines.head.split(",")
+      items.length shouldBe data.size
+      items(0) shouldBe data.cell(0).value.toString
+      items(1) shouldBe data.cell(1).value.toString
+      items(2) shouldBe data.cell(2).value.toString
+    } finally result(workerClient.delete(connectorName))
+  }
+
+  @Test
+  def testNormalCaseWithNullEncode(): Unit = {
+    val topicName = TOPIC
+    val connectorName = methodName
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        //will use default UTF-8
+        .configs(props.copy(encode = None).toMap)
+        .create())
+
+    try {
+      FtpUtil.checkConnector(testUtil, connectorName)
+      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      val lines = ftpClient.readLines(
+        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
+      lines.length shouldBe 1
+      val items = lines.head.split(",")
+      items.length shouldBe data.size
+      items(0) shouldBe data.cell(0).value.toString
+      items(1) shouldBe data.cell(1).value.toString
+      items(2) shouldBe data.cell(2).value.toString
+    } finally result(workerClient.delete(connectorName))
+  }
+
+  @Test
+  def testNormalCaseWithEmptyEncode(): Unit = {
+    val topicName = TOPIC
+    val connectorName = methodName
+    result(
+      workerClient
+        .connectorCreator()
+        .topic(topicName)
+        .connectorClass(classOf[FtpSink])
+        .numberOfTasks(1)
+        .disableConverter()
+        .name(connectorName)
+        .schema(schema)
+        //will use default UTF-8
+        .configs(props.copy(encode = Some("")).toMap)
+        .create())
+
+    try {
+      FtpUtil.checkConnector(testUtil, connectorName)
+      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      val lines = ftpClient.readLines(
+        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
       items.length shouldBe data.size
@@ -332,6 +402,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
         com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+      ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
       items.length shouldBe data.size - 1
@@ -361,6 +432,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
       FtpUtil.checkConnector(testUtil, connectorName)
       TimeUnit.SECONDS.sleep(5)
       ftpClient.listFileNames(props.output).size shouldBe 0
+      ftpClient.close()
     } finally result(workerClient.delete(connectorName))
   }
 }

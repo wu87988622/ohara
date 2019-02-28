@@ -84,4 +84,62 @@ class TestFtpProperties extends SmallTest with Matchers {
     val copy = FtpSourceTaskProps(props.toMap)
     copy shouldBe props
   }
+
+  @Test
+  def testFtpSourcePropsWithNullOrEmptyEncode(): Unit = {
+    val props1 = FtpSourceProps(
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error/",
+      user = "user",
+      password = "pwd",
+      hostname = "hostname",
+      port = 123,
+      encode = None
+    ).toMap
+    props1.get("encode") shouldBe None
+
+    val props2 = FtpSourceProps(
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error/",
+      user = "user",
+      password = "pwd",
+      hostname = "hostname",
+      port = 123,
+      encode = Some("")
+    ).toMap
+    props2.get("encode") shouldBe None
+  }
+
+  @Test
+  def testFtpSourceTaskPropsWithNullOrEmptyEncode(): Unit = {
+    val props1 = FtpSourceTaskProps(
+      hash = 123,
+      total = 4,
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error/",
+      user = "user",
+      password = "pwd",
+      hostname = "hostname",
+      port = 123,
+      encode = None
+    ).toMap
+    props1.get("encode") shouldBe None
+
+    val props2 = FtpSourceTaskProps(
+      hash = 123,
+      total = 4,
+      inputFolder = "/input",
+      completedFolder = "/output",
+      errorFolder = "/error/",
+      user = "user",
+      password = "pwd",
+      hostname = "hostname",
+      port = 123,
+      encode = Some("")
+    ).toMap
+    props2.get("encode") shouldBe None
+  }
 }
