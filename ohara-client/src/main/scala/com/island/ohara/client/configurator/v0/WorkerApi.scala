@@ -34,6 +34,16 @@ object WorkerApi {
     */
   val CLIENT_PORT_DEFAULT: Int = 8083
 
+  val CONFIG_TOPIC_REPLICATIONS_DEFAULT: Short = 1
+
+  val STATUS_TOPIC_PARTITIONS_DEFAULT: Int = 1
+
+  val STATUS_TOPIC_REPLICATIONS_DEFAULT: Short = 1
+
+  val OFFSET_TOPIC_PARTITIONS_DEFAULT: Int = 1
+
+  val OFFSET_TOPIC_REPLICATIONS_DEFAULT: Short = 1
+
   /**
     * Create a basic request with default value.
     * @param name cluster name

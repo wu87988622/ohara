@@ -52,80 +52,52 @@ class TestBrokerCreator extends SmallTest with Matchers {
 
   @Test
   def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy bkCreator().imageName(null)
+  }
+
+  @Test
+  def emptyImage(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().imageName("")
   }
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy bkCreator().clusterName(null)
+  }
+
+  @Test
+  def emptyClusterName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().clusterName("")
   }
 
   @Test
   def nullZkClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy bkCreator().zookeeperClusterName(null)
   }
 
   @Test
-  def nullClientPort(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+  def emptyZkClusterName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().zookeeperClusterName("")
   }
 
   @Test
-  def nullExporterPort(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .zookeeperClusterName("zk")
-      .clientPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+  def negativeClientPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().clientPort(-1)
+  }
+
+  @Test
+  def negativeExporterPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy bkCreator().exporterPort(-1)
   }
 
   @Test
   def nullNodes(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .create()
+    an[NullPointerException] should be thrownBy bkCreator().nodeNames(null)
   }
 
   @Test
   def emptyNodes(): Unit = {
-    an[NullPointerException] should be thrownBy bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .nodeNames(Seq.empty)
-      .create()
+    an[IllegalArgumentException] should be thrownBy bkCreator().nodeNames(Seq.empty)
   }
 
   @Test

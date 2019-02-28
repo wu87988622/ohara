@@ -52,80 +52,47 @@ class TestZookeeperCreator extends SmallTest with Matchers {
 
   @Test
   def nullImage(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy zkCreator().imageName(null)
+  }
+
+  @Test
+  def emptyImage(): Unit = {
+    an[IllegalArgumentException] should be thrownBy zkCreator().imageName("")
   }
 
   @Test
   def nullClusterName(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+    an[NullPointerException] should be thrownBy zkCreator().clusterName(null)
   }
 
   @Test
-  def nullClientPort(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+  def emptyClusterName(): Unit = {
+    an[IllegalArgumentException] should be thrownBy zkCreator().clusterName("")
   }
 
   @Test
-  def nullPeerPort(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+  def negativeClientPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy zkCreator().clientPort(-1)
   }
 
   @Test
-  def nullElectionPort(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+  def negativePeerPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy zkCreator().peerPort(-1)
+  }
+
+  @Test
+  def negativeElectionPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy zkCreator().electionPort(-1)
   }
 
   @Test
   def nullNodes(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
-      .create()
+    an[NullPointerException] should be thrownBy zkCreator().nodeNames(null)
   }
 
   @Test
   def emptyNodes(): Unit = {
-    an[NullPointerException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
-      .nodeNames(Seq.empty)
-      .create()
+    an[IllegalArgumentException] should be thrownBy zkCreator().nodeNames(Seq.empty)
   }
 
   @Test

@@ -15,10 +15,9 @@
  */
 
 package com.island.ohara.agent
-import java.util.Objects
-
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -47,34 +46,34 @@ trait BrokerCollie extends Collie[BrokerClusterInfo] {
 
 object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
-    private[this] var clientPort: Int = -1
+    private[this] var clientPort: Int = CommonUtil.availablePort()
     private[this] var zookeeperClusterName: String = _
-    private[this] var exporterPort: Int = -1
+    private[this] var exporterPort: Int = CommonUtil.availablePort()
 
-    def zookeeperClusterName(name: String): ClusterCreator = {
-      this.zookeeperClusterName = name
+    def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
+      this.zookeeperClusterName = CommonUtil.requireNonEmpty(zookeeperClusterName)
       this
     }
 
+    @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = clientPort
+      this.clientPort = CommonUtil.requirePositiveInt(clientPort)
       this
     }
 
+    @Optional("default is random port")
     def exporterPort(exporterPort: Int): ClusterCreator = {
-      this.exporterPort = exporterPort
+      this.exporterPort = CommonUtil.requirePositiveInt(exporterPort)
       this
     }
 
     override def create(): Future[BrokerClusterInfo] = doCreate(
-      clusterName = Objects.requireNonNull(clusterName),
-      imageName = Objects.requireNonNull(imageName),
-      zookeeperClusterName = Objects.requireNonNull(zookeeperClusterName),
-      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort is required"),
-      exporterPort = CommonUtil.requirePositiveInt(exporterPort, () => "exporterPort is required"),
-      nodeNames =
-        if (nodeNames == null || nodeNames.isEmpty) throw new NullPointerException("nodes can't be empty")
-        else nodeNames
+      clusterName = CommonUtil.requireNonEmpty(clusterName),
+      imageName = CommonUtil.requireNonEmpty(imageName),
+      zookeeperClusterName = CommonUtil.requireNonEmpty(zookeeperClusterName),
+      clientPort = CommonUtil.requirePositiveInt(clientPort),
+      exporterPort = CommonUtil.requirePositiveInt(exporterPort),
+      nodeNames = requireNonEmpty(nodeNames)
     )
 
     protected def doCreate(clusterName: String,

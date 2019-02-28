@@ -25,6 +25,7 @@ import com.island.ohara.common.rule.MediumTest;
 import com.island.ohara.common.util.CommonUtil;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -49,17 +50,17 @@ public class TestFtpServer extends MediumTest {
     FtpServer.builder().dataPorts(null).build();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void emptyDataPorts() {
     FtpServer.builder().dataPorts(Collections.emptyList()).build();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void negativeControlPort() {
     FtpServer.builder().controlPort(-1).build();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void negativeDataPort() {
     FtpServer.builder().dataPorts(Collections.singletonList(-1)).build();
   }
@@ -143,17 +144,27 @@ public class TestFtpServer extends MediumTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void failWithoutDataPorts() throws InterruptedException {
-    FtpServer.start(
-        new String[] {FtpServer.CONTROL_PORT, String.valueOf(CommonUtil.availablePort())},
-        ftp -> {});
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void failWithoutControlPort() throws InterruptedException {
-    FtpServer.start(
-        new String[] {FtpServer.DATA_PORTS, String.valueOf(CommonUtil.availablePort())}, ftp -> {});
+  @Test
+  public void defaultMain() throws InterruptedException {
+    ExecutorService es = Executors.newSingleThreadExecutor();
+    try {
+      CountDownLatch latch = new CountDownLatch(1);
+      es.execute(
+          () -> {
+            try {
+              FtpServer.start(
+                  new String[0],
+                  ftp -> {
+                    latch.countDown();
+                  });
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          });
+      assertTrue(latch.await(10, TimeUnit.SECONDS));
+    } finally {
+      es.shutdownNow();
+    }
   }
 
   @Test

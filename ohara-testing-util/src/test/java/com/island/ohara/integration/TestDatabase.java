@@ -143,7 +143,7 @@ public class TestDatabase extends MediumTest {
               Database.start(
                   new String[] {
                     Database.PORT, String.valueOf(CommonUtil.availablePort()),
-                    FtpServer.TTL, String.valueOf(ttl)
+                    Database.TTL, String.valueOf(ttl)
                   },
                   mysql -> {});
             } catch (InterruptedException e) {
@@ -156,9 +156,9 @@ public class TestDatabase extends MediumTest {
     }
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void failWithoutPort() throws InterruptedException {
-    FtpServer.start(new String[] {}, mysql -> {});
+    Database.start(new String[] {}, mysql -> {});
   }
 
   @Test
@@ -179,7 +179,7 @@ public class TestDatabase extends MediumTest {
                     Database.PASSWORD, password,
                     Database.PORT, String.valueOf(port),
                     Database.DB_NAME, dbName,
-                    FtpServer.TTL, String.valueOf(ttl)
+                    Database.TTL, String.valueOf(ttl)
                   },
                   mysql -> {
                     assertEquals(mysql.user(), user);

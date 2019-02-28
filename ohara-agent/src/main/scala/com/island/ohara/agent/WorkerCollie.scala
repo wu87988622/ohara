@@ -48,127 +48,107 @@ trait WorkerCollie extends Collie[WorkerClusterInfo] {
 
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] var clientPort: Int = -1
+    private[this] var clientPort: Int = CommonUtil.availablePort()
     private[this] var brokerClusterName: String = _
-    private[this] var groupId: String = _
-    private[this] var offsetTopicName: String = _
+    private[this] var groupId: String = CommonUtil.randomString(10)
+    private[this] var offsetTopicName: String = s"$groupId-offsetTopicName"
     private[this] var offsetTopicReplications: Short = 1
     private[this] var offsetTopicPartitions: Int = 1
-    private[this] var configTopicName: String = _
+    private[this] var configTopicName: String = s"$groupId-configTopicName"
     private[this] var configTopicReplications: Short = 1
     // configTopicPartitions must be 1
-    private[this] var statusTopicName: String = _
+    private[this] var statusTopicName: String = s"$groupId-statusTopicName"
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
     private[this] var jarUrls: Seq[URL] = Seq.empty
 
     def brokerClusterName(name: String): ClusterCreator = {
-      this.brokerClusterName = name
+      this.brokerClusterName = CommonUtil.requireNonEmpty(name)
       this
     }
 
+    @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = clientPort
+      this.clientPort = CommonUtil.requirePositiveInt(clientPort)
       this
     }
 
+    @Optional("default is random string")
     def groupId(groupId: String): ClusterCreator = {
-      this.groupId = groupId
+      this.groupId = CommonUtil.requireNonEmpty(groupId)
       this
     }
 
+    @Optional("default is random string")
     def offsetTopicName(offsetTopicName: String): ClusterCreator = {
-      this.offsetTopicName = offsetTopicName
+      this.offsetTopicName = CommonUtil.requireNonEmpty(offsetTopicName)
       this
     }
 
     @Optional("default number is 1")
-    def offsetTopicReplications(replications: Option[Short]): ClusterCreator = {
-      replications.foreach(offsetTopicReplications = _)
+    def offsetTopicReplications(offsetTopicReplications: Short): ClusterCreator = {
+      this.offsetTopicReplications = CommonUtil.requirePositiveShort(offsetTopicReplications)
+      this
+    }
+    @Optional("default number is 1")
+    def offsetTopicPartitions(offsetTopicPartitions: Int): ClusterCreator = {
+      this.offsetTopicPartitions = CommonUtil.requirePositiveInt(offsetTopicPartitions)
       this
     }
 
-    @Optional("default number is 1")
-    def offsetTopicReplications(replications: Short): ClusterCreator = offsetTopicReplications(Some(replications))
-
-    @Optional("default number is 1")
-    def offsetTopicPartitions(partitions: Option[Int]): ClusterCreator = {
-      partitions.foreach(offsetTopicPartitions = _)
-      this
-    }
-
-    @Optional("default number is 1")
-    def offsetTopicPartitions(partitions: Int): ClusterCreator = offsetTopicPartitions(Some(partitions))
-
+    @Optional("default is random string")
     def statusTopicName(statusTopicName: String): ClusterCreator = {
-      this.statusTopicName = statusTopicName
+      this.statusTopicName = CommonUtil.requireNonEmpty(statusTopicName)
       this
     }
 
     @Optional("default number is 1")
-    def statusTopicReplications(replications: Option[Short]): ClusterCreator = {
-      replications.foreach(statusTopicReplications = _)
+    def statusTopicReplications(statusTopicReplications: Short): ClusterCreator = {
+      this.statusTopicReplications = CommonUtil.requirePositiveShort(statusTopicReplications)
       this
     }
-
     @Optional("default number is 1")
-    def statusTopicReplications(replications: Short): ClusterCreator = statusTopicReplications(Some(replications))
-
-    @Optional("default number is 1")
-    def statusTopicPartitions(partitions: Option[Int]): ClusterCreator = {
-      partitions.foreach(statusTopicPartitions = _)
+    def statusTopicPartitions(statusTopicPartitions: Int): ClusterCreator = {
+      this.statusTopicPartitions = CommonUtil.requirePositiveInt(statusTopicPartitions)
       this
     }
-
-    @Optional("default number is 1")
-    def statusTopicPartitions(partitions: Int): ClusterCreator = statusTopicPartitions(Some(partitions))
 
     def configTopicName(configTopicName: String): ClusterCreator = {
-      this.configTopicName = configTopicName
+      this.configTopicName = CommonUtil.requireNonEmpty(configTopicName)
       this
     }
 
     @Optional("default number is 1")
-    def configTopicReplications(replications: Option[Short]): ClusterCreator = {
-      replications.foreach(configTopicReplications = _)
+    def configTopicReplications(configTopicReplications: Short): ClusterCreator = {
+      this.configTopicReplications = CommonUtil.requirePositiveShort(configTopicReplications)
       this
     }
-
-    @Optional("default number is 1")
-    def configTopicReplications(replications: Short): ClusterCreator = configTopicReplications(Some(replications))
 
     @Optional("default is empty")
     def jarUrl(jarUrl: URL): ClusterCreator = jarUrls(Seq(jarUrl))
 
     @Optional("default is empty")
     def jarUrls(jarUrls: Seq[URL]): ClusterCreator = {
-      this.jarUrls = jarUrls
+      this.jarUrls = Objects.requireNonNull(jarUrls)
       this
     }
 
     override def create(): Future[WorkerClusterInfo] = doCreate(
-      clusterName = Objects.requireNonNull(clusterName),
-      imageName = Objects.requireNonNull(imageName),
-      brokerClusterName = Objects.requireNonNull(brokerClusterName),
-      clientPort = CommonUtil.requirePositiveInt(clientPort, () => "clientPort is required"),
-      groupId = Objects.requireNonNull(groupId),
-      offsetTopicName = Objects.requireNonNull(offsetTopicName),
-      offsetTopicReplications =
-        CommonUtil.requirePositiveShort(offsetTopicReplications, () => "offsetTopicReplications is required"),
-      offsetTopicPartitions =
-        CommonUtil.requirePositiveInt(offsetTopicPartitions, () => "offsetTopicPartitions is required"),
-      statusTopicName = Objects.requireNonNull(statusTopicName),
-      statusTopicReplications =
-        CommonUtil.requirePositiveShort(statusTopicReplications, () => "statusTopicReplications is required"),
-      statusTopicPartitions =
-        CommonUtil.requirePositiveInt(statusTopicPartitions, () => "statusTopicPartitions is required"),
-      configTopicName = Objects.requireNonNull(configTopicName),
-      configTopicReplications =
-        CommonUtil.requirePositiveShort(configTopicReplications, () => "configTopicReplications is required"),
-      Objects.requireNonNull(jarUrls),
-      nodeNames =
-        if (nodeNames == null || nodeNames.isEmpty) throw new NullPointerException("nodes can't be empty")
-        else nodeNames
+      clusterName = CommonUtil.requireNonEmpty(clusterName),
+      imageName = CommonUtil.requireNonEmpty(imageName),
+      brokerClusterName = CommonUtil.requireNonEmpty(brokerClusterName),
+      clientPort = CommonUtil.requirePositiveInt(clientPort),
+      groupId = CommonUtil.requireNonEmpty(groupId),
+      offsetTopicName = CommonUtil.requireNonEmpty(offsetTopicName),
+      offsetTopicReplications = CommonUtil.requirePositiveShort(offsetTopicReplications),
+      offsetTopicPartitions = CommonUtil.requirePositiveInt(offsetTopicPartitions),
+      statusTopicName = CommonUtil.requireNonEmpty(statusTopicName),
+      statusTopicReplications = CommonUtil.requirePositiveShort(statusTopicReplications),
+      statusTopicPartitions = CommonUtil.requirePositiveInt(statusTopicPartitions),
+      configTopicName = CommonUtil.requireNonEmpty(configTopicName),
+      configTopicReplications = CommonUtil.requirePositiveShort(configTopicReplications),
+      jarUrls = Objects.requireNonNull(jarUrls),
+      nodeNames = requireNonEmpty(nodeNames)
     )
 
     protected def doCreate(clusterName: String,

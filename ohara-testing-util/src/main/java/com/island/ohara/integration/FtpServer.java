@@ -84,25 +84,25 @@ public interface FtpServer extends Releasable {
 
     @com.island.ohara.common.annotations.Optional("default is local hostname")
     public Builder advertisedHostname(String advertisedHostname) {
-      this.advertisedHostname = advertisedHostname;
+      this.advertisedHostname = CommonUtil.requireNonEmpty(advertisedHostname);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is user")
     public Builder user(String user) {
-      this.user = user;
+      this.user = CommonUtil.requireNonEmpty(user);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is password")
     public Builder password(String password) {
-      this.password = password;
+      this.password = CommonUtil.requireNonEmpty(password);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is random port")
     public Builder controlPort(int controlPort) {
-      this.controlPort = controlPort;
+      this.controlPort = CommonUtil.requirePositiveInt(controlPort);
       return this;
     }
 
@@ -115,30 +115,29 @@ public interface FtpServer extends Releasable {
      */
     @com.island.ohara.common.annotations.Optional("default is single random port")
     public Builder dataPorts(List<Integer> dataPorts) {
+      CommonUtil.requireNonEmpty(dataPorts).forEach(CommonUtil::requirePositiveInt);
       this.dataPorts = dataPorts;
       return this;
     }
 
-    private void checkArguements() {
-      Objects.requireNonNull(advertisedHostname);
-      Objects.requireNonNull(user);
-      Objects.requireNonNull(password);
+    private void checkArguments() {
+      CommonUtil.requireNonEmpty(advertisedHostname);
+      CommonUtil.requireNonEmpty(user);
+      CommonUtil.requireNonEmpty(password);
       CommonUtil.requirePositiveInt(controlPort);
-      if (dataPorts == null || dataPorts.isEmpty())
-        throw new NullPointerException("empty dataPorts is illegal!");
-      dataPorts.forEach(CommonUtil::requirePositiveInt);
+      CommonUtil.requireNonEmpty(dataPorts).forEach(CommonUtil::requirePositiveInt);
     }
 
     public FtpServer build() {
-      checkArguements();
+      checkArguments();
       File homeFolder = CommonUtil.createTempDir("ftp");
       PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
       UserManager userManager = userManagerFactory.createUserManager();
       BaseUser _user = new BaseUser();
-      _user.setName(Objects.requireNonNull(user));
+      _user.setName(user);
       _user.setAuthorities(Collections.singletonList(new WritePermission()));
       _user.setEnabled(true);
-      _user.setPassword(Objects.requireNonNull(password));
+      _user.setPassword(password);
       _user.setHomeDirectory(homeFolder.getAbsolutePath());
       try {
         userManager.save(_user);
@@ -321,8 +320,8 @@ public interface FtpServer extends Releasable {
     String advertisedHostname = CommonUtil.hostname();
     String user = "user";
     String password = "password";
-    int controlPort = -1;
-    List<Integer> dataPorts = Collections.emptyList();
+    int controlPort = 0;
+    List<Integer> dataPorts = Arrays.asList(0, 0, 0);
     int ttl = Integer.MAX_VALUE;
     if (args.length % 2 != 0) throw new IllegalArgumentException(USAGE);
     for (int i = 0; i < args.length; i += 2) {
@@ -341,7 +340,9 @@ public interface FtpServer extends Releasable {
           controlPort = Integer.valueOf(value);
           break;
         case DATA_PORTS:
-          if (value.contains("-"))
+          if (value.startsWith("-"))
+            throw new IllegalArgumentException("dataPorts must be positive");
+          else if (value.contains("-"))
             dataPorts =
                 IntStream.range(
                         Integer.valueOf(value.split("-")[0]),
@@ -359,9 +360,6 @@ public interface FtpServer extends Releasable {
           throw new IllegalArgumentException("unknown key:" + args[i] + " " + USAGE);
       }
     }
-    CommonUtil.requirePositiveInt(controlPort, () -> CONTROL_PORT + " is required");
-    if (dataPorts.isEmpty()) throw new IllegalArgumentException(DATA_PORTS + " is required");
-
     try (FtpServer ftp =
         FtpServer.builder()
             .advertisedHostname(advertisedHostname)
