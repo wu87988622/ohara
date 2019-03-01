@@ -61,6 +61,10 @@ task runFtp(type: JavaExec, dependsOn: 'classes') {
   main = "com.island.ohara.integration.FtpServer"
 
   def inputs = []
+  if(project.hasProperty('homeFolder')) {
+    inputs << "--homeFolder"
+    inputs << project.getProperty("homeFolder")
+  }
   if(project.hasProperty('hostname')) {
     inputs << "--hostname"
     inputs << project.getProperty("hostname")

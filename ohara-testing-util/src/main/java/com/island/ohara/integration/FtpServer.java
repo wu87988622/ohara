@@ -77,10 +77,17 @@ public interface FtpServer extends Releasable {
     private Builder() {}
 
     private String advertisedHostname = CommonUtil.hostname();
+    private File homeFolder = CommonUtil.createTempDir("localFtp_" + CommonUtil.randomString(5));
     private String user = "user";
     private String password = "password";
     private Integer controlPort = 0;
     private List<Integer> dataPorts = Collections.singletonList(0);
+
+    @com.island.ohara.common.annotations.Optional("default is local hostname")
+    public Builder homeFolder(File homeFolder) {
+      this.homeFolder = Objects.requireNonNull(homeFolder);
+      return this;
+    }
 
     @com.island.ohara.common.annotations.Optional("default is local hostname")
     public Builder advertisedHostname(String advertisedHostname) {
@@ -115,22 +122,22 @@ public interface FtpServer extends Releasable {
      */
     @com.island.ohara.common.annotations.Optional("default is single random port")
     public Builder dataPorts(List<Integer> dataPorts) {
-      CommonUtil.requireNonEmpty(dataPorts).forEach(CommonUtil::requirePositiveInt);
+      CommonUtil.requireNonEmpty(
+              Objects.requireNonNull(dataPorts), () -> "dataPorts can't be empty")
+          .forEach(CommonUtil::requirePositiveInt);
       this.dataPorts = dataPorts;
       return this;
     }
 
     private void checkArguments() {
-      CommonUtil.requireNonEmpty(advertisedHostname);
-      CommonUtil.requireNonEmpty(user);
-      CommonUtil.requireNonEmpty(password);
-      CommonUtil.requirePositiveInt(controlPort);
-      CommonUtil.requireNonEmpty(dataPorts).forEach(CommonUtil::requirePositiveInt);
+      if (!homeFolder.exists() && !homeFolder.mkdir())
+        throw new IllegalStateException("fail to create folder on " + homeFolder.getAbsolutePath());
+      if (!homeFolder.isDirectory())
+        throw new IllegalArgumentException(homeFolder.getAbsolutePath() + " is not folder");
     }
 
     public FtpServer build() {
       checkArguments();
-      File homeFolder = CommonUtil.createTempDir("ftp");
       PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
       UserManager userManager = userManagerFactory.createUserManager();
       BaseUser _user = new BaseUser();
@@ -298,6 +305,7 @@ public interface FtpServer extends Releasable {
     return ports.stream().map(String::valueOf).collect(Collectors.joining(","));
   }
 
+  String HOME_FOLDER = "--homeFolder";
   String ADVERTISED_HOSTNAME = "--hostname";
   String USER = "--user";
   String PASSWORD = "--password";
@@ -308,6 +316,7 @@ public interface FtpServer extends Releasable {
       String.join(
           " ",
           Arrays.asList(
+              HOME_FOLDER,
               ADVERTISED_HOSTNAME,
               USER,
               PASSWORD,
@@ -317,6 +326,7 @@ public interface FtpServer extends Releasable {
               TTL));
 
   static void start(String[] args, Consumer<FtpServer> consumer) throws InterruptedException {
+    File homeFolder = CommonUtil.createTempDir(CommonUtil.randomString(5));
     String advertisedHostname = CommonUtil.hostname();
     String user = "user";
     String password = "password";
@@ -327,6 +337,9 @@ public interface FtpServer extends Releasable {
     for (int i = 0; i < args.length; i += 2) {
       String value = args[i + 1];
       switch (args[i]) {
+        case HOME_FOLDER:
+          homeFolder = new File(value);
+          break;
         case ADVERTISED_HOSTNAME:
           advertisedHostname = value;
           break;
@@ -362,6 +375,7 @@ public interface FtpServer extends Releasable {
     }
     try (FtpServer ftp =
         FtpServer.builder()
+            .homeFolder(homeFolder)
             .advertisedHostname(advertisedHostname)
             .user(user)
             .password(password)

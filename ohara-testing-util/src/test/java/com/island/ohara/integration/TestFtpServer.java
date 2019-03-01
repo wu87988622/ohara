@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.rule.MediumTest;
 import com.island.ohara.common.util.CommonUtil;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -68,6 +69,17 @@ public class TestFtpServer extends MediumTest {
   @Test(expected = NullPointerException.class)
   public void nullAdvertisedHostname() {
     FtpServer.builder().advertisedHostname(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullHomeFolder() {
+    FtpServer.builder().homeFolder(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void setFileToHomeFolder() {
+    File f = CommonUtil.createTempFile(CommonUtil.randomString(5));
+    FtpServer.builder().homeFolder(f).build();
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -249,6 +261,19 @@ public class TestFtpServer extends MediumTest {
     } finally {
       es.shutdown();
       assertTrue(es.awaitTermination(ttl * 2, TimeUnit.SECONDS));
+    }
+  }
+
+  @Test
+  public void testHomeFolder() {
+    String prefix = CommonUtil.randomString(5);
+    File f = CommonUtil.createTempDir(prefix);
+    assertTrue(f.delete());
+    assertFalse(f.exists());
+    try (FtpServer ftpServer = FtpServer.builder().homeFolder(f).build()) {
+      assertTrue(ftpServer.isLocal());
+      assertTrue(f.exists());
+      assertEquals(ftpServer.absolutePath(), f.getAbsolutePath());
     }
   }
 }
