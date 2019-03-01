@@ -39,11 +39,6 @@ RUN yum install -y \
 # export JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
-# install dependencies for mysql
-RUN yum install -y \
-  libaio \
-  numactl
-
 # add user
 ARG USER=ohara
 RUN groupadd $USER
@@ -54,11 +49,6 @@ COPY --from=deps /opt/ohara /home/$USER
 RUN ln -s $(find "/home/$USER/" -maxdepth 1 -type d -name "ohara-*") /home/$USER/default
 ENV OHARA_HOME=/home/$USER/default
 ENV PATH=$PATH:$OHARA_HOME/bin
-
-# clone database
-RUN mkdir -p /home/$USER/.embedmysql
-COPY --from=deps /root/.embedmysql /home/$USER/.embedmysql
-RUN chown -R $USER:$USER /home/$USER/.embedmysql
 
 # clone Tini
 COPY --from=deps /tini /tini

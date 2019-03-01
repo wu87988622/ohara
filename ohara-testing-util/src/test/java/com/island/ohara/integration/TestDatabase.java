@@ -22,10 +22,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.common.util.CommonUtil;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class TestDatabase extends MediumTest {
@@ -129,71 +125,6 @@ public class TestDatabase extends MediumTest {
   public void testRandomPort() {
     try (Database db = Database.local(0)) {
       assertNotEquals(0, db.port());
-    }
-  }
-
-  @Test
-  public void testTtl() throws InterruptedException {
-    int ttl = 3;
-    ExecutorService es = Executors.newSingleThreadExecutor();
-    try {
-      es.execute(
-          () -> {
-            try {
-              Database.start(
-                  new String[] {
-                    Database.PORT, String.valueOf(CommonUtil.availablePort()),
-                    Database.TTL, String.valueOf(ttl)
-                  },
-                  mysql -> {});
-            } catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-          });
-    } finally {
-      es.shutdown();
-      assertTrue(es.awaitTermination(ttl * 10, TimeUnit.SECONDS));
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void failWithoutPort() throws InterruptedException {
-    Database.start(new String[] {}, mysql -> {});
-  }
-
-  @Test
-  public void testInputs() throws InterruptedException {
-    String user = CommonUtil.randomString(5);
-    String password = CommonUtil.randomString(5);
-    String dbName = CommonUtil.randomString(5);
-    int port = CommonUtil.availablePort();
-    int ttl = 3;
-    ExecutorService es = Executors.newSingleThreadExecutor();
-    try {
-      es.execute(
-          () -> {
-            try {
-              Database.start(
-                  new String[] {
-                    Database.USER, user,
-                    Database.PASSWORD, password,
-                    Database.PORT, String.valueOf(port),
-                    Database.DB_NAME, dbName,
-                    Database.TTL, String.valueOf(ttl)
-                  },
-                  mysql -> {
-                    assertEquals(mysql.user(), user);
-                    assertEquals(mysql.password(), password);
-                    assertEquals(mysql.port(), port);
-                    assertEquals(mysql.databaseName(), dbName);
-                  });
-            } catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-          });
-    } finally {
-      es.shutdown();
-      assertTrue(es.awaitTermination(ttl * 10, TimeUnit.SECONDS));
     }
   }
 }

@@ -43,9 +43,12 @@ services:
       - 10004:10004
       - 10005:10005
 
-  mysql:
-    image: oharastream/backend:${TAG:-0.3-SNAPSHOT}
-    hostname: mysql
-    command: ["com.island.ohara.integration.Database", "--port", "20000", "--user", "user", "--password", "password", "--dbName", "ohara"]
+  postgresql:
+    image: islandsystems/postgresql:${TAG:-9.2.24}
+    hostname: postgresql
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-ohara}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-ohara}
     ports:
-      - 20000:20000
+      - 20000:5432
