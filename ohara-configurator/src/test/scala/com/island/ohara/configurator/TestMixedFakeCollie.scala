@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRe
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.integration.WithBrokerWorker
+import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 

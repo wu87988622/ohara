@@ -22,9 +22,9 @@ import com.island.ohara.client.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
-import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.{BrokerClient, Consumer}
+import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 

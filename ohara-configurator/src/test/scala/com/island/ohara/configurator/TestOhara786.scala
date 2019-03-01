@@ -18,8 +18,8 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
-import com.island.ohara.integration.WithBrokerWorker
 import com.island.ohara.kafka.BrokerClient
+import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 

@@ -14,32 +14,25 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.util.CommonUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestZookeepers extends MediumTest {
 
   @Test
-  public void testLocalMethod() throws Exception {
-    String url = "localhost:12345";
-    try (Zookeepers external = Zookeepers.of(url)) {
-      assertFalse(external.isLocal());
-      Assert.assertEquals(url, external.connectionProps());
-    }
-
-    try (Zookeepers zookeepers = Zookeepers.of()) {
-      assertTrue(zookeepers.isLocal());
+  public void testSpecificPort() {
+    int port = CommonUtil.availablePort();
+    try (Zookeepers zk = Zookeepers.local(port)) {
+      Assert.assertEquals(port, Integer.parseInt(zk.connectionProps().split(":")[1]));
     }
   }
 
   @Test
-  public void testRandomPort() throws Exception {
+  public void testRandomPort() {
     try (Zookeepers zk = Zookeepers.local(0)) {
       Assert.assertNotEquals(0, Integer.parseInt(zk.connectionProps().split(":")[1]));
     }

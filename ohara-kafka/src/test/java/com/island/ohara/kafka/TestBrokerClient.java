@@ -21,9 +21,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.integration.OharaTestUtil;
-import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.exception.OharaExecutionException;
+import com.island.ohara.testing.OharaTestUtil;
+import com.island.ohara.testing.With3Brokers;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;

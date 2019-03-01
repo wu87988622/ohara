@@ -68,18 +68,6 @@ task includeStreamAppJar(dependsOn: ':ohara-streams:testJar', type: Copy){
 }
 
 test {
-  String FTP_SERVER = "ohara.it.ftp"
-  if(project.hasProperty(FTP_SERVER)) environment FTP_SERVER, project.getProperty(FTP_SERVER)
-
-  String DB_SERVER = "ohara.it.db"
-  if(project.hasProperty(DB_SERVER)) environment DB_SERVER, project.getProperty(DB_SERVER)
-
-  String BROKERS = "ohara.it.brokers"
-  if(project.hasProperty(BROKERS)) environment BROKERS, project.getProperty(BROKERS)
-
-  String WORKERS = "ohara.it.workers"
-  if(project.hasProperty(WORKERS)) environment WORKERS, project.getProperty(WORKERS)
-
   String DOCKER = "ohara.it.docker"
   if(project.hasProperty(DOCKER)) environment DOCKER, project.getProperty(DOCKER)
 

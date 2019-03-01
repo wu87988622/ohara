@@ -58,7 +58,7 @@ dependencies {
  */
 task runFtp(type: JavaExec, dependsOn: 'classes') {
   classpath = sourceSets.main.runtimeClasspath
-  main = "com.island.ohara.integration.FtpServer"
+  main = "com.island.ohara.testing.service.FtpServer"
 
   def inputs = []
   if(project.hasProperty('homeFolder')) {

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.connector.ftp
+
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
@@ -22,14 +23,12 @@ import com.island.ohara.client.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
-import com.island.ohara.connector.ftp.{FtpSink, FtpSinkProps, FtpSource, FtpSourceProps}
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-
 import scala.concurrent.duration._
 
 /**
@@ -146,7 +145,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   }
 }
 
-private[it] object TestFtp2Ftp extends Matchers {
+object TestFtp2Ftp extends Matchers {
 
   /**
     * delete all stuffs in the path and then recreate it as a folder

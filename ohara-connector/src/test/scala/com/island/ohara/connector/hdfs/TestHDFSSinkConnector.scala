@@ -25,9 +25,9 @@ import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
-import com.island.ohara.integration._
 import com.island.ohara.kafka.Producer
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
+import com.island.ohara.testing.With3Brokers3Workers
 import org.apache.hadoop.fs.Path
 import org.junit.Test
 import org.scalatest.Matchers
@@ -94,7 +94,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       .await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
     CommonUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, Duration.ofSeconds(20))
     CommonUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, Duration.ofSeconds(10))
-    CommonUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == "/data", Duration.ofSeconds(20))
+    CommonUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == HDFSSinkConnectorConfig.DATA_DIR_DEFAULT,
+                     Duration.ofSeconds(20))
     CommonUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount == 2000, Duration.ofSeconds(20))
   }
 
@@ -116,8 +117,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     val fileSystem = testUtil.hdfs.fileSystem()
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
-    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
     val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
     try {
       0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
@@ -277,9 +278,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     val fileSystem = testUtil.hdfs.fileSystem()
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
-    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
     //Before running the Kafka Connector, create the file to local hdfs for test recover offset
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
@@ -358,8 +358,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     val fileSystem = testUtil.hdfs.fileSystem
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
-    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
 
     val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
     try {

@@ -52,7 +52,7 @@ object HDFSSinkConnectorConfig {
   private[this] val FLUSH_LINE_COUNT_DEFAULT: Int = 1000
   private[this] val ROTATE_INTERVAL_MS_DEFAULT: Long = 60000
   private[this] val TMP_DIR_DEFAULT: String = "/tmp"
-  private[this] val DATA_DIR_DEFAULT = "/data"
+  private[connector] val DATA_DIR_DEFAULT = "/data"
   private[this] val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
   private[this] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
   private[this] val DATA_BUFFER_COUNT_DEFAULT: Long = 100

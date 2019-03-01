@@ -19,26 +19,24 @@ package com.island.ohara.connector.hdfs
 import java.io.OutputStream
 
 import com.island.ohara.common.data.{Cell, Column, Row}
-import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.text.RecordWriterOutput
-import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
+import com.island.ohara.testing.WithTestUtil
 import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-class TestTopicPartitionWriter extends MediumTest with Matchers with MockitoSugar {
+class TestTopicPartitionWriter extends WithTestUtil with Matchers with MockitoSugar {
 
   @Test
   def testOpenTempFile(): Unit = {
     val hdfsSinkConnectorConfig = HDFSSinkConnectorConfig(Map(HDFS_URL -> "", TMP_DIR -> "/tmp"))
     val sinkTaskContext = mock[RowSinkContext]
     val topicPartition = new TopicPartition("topic1", 0)
-    val testUtil = OharaTestUtil.localHDFS()
     val storage = new HDFSStorage(testUtil.hdfs.fileSystem())
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)

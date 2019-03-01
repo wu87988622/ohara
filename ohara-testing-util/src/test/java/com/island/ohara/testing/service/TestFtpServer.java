@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,9 +41,19 @@ public class TestFtpServer extends MediumTest {
     FtpServer.builder().user(null).build();
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyUser() {
+    FtpServer.builder().user("").build();
+  }
+
   @Test(expected = NullPointerException.class)
   public void nullPassword() {
     FtpServer.builder().password(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyPassword() {
+    FtpServer.builder().password("").build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -82,49 +92,33 @@ public class TestFtpServer extends MediumTest {
     FtpServer.builder().homeFolder(f).build();
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testErrorFtpConnectionString() {
-    // a random string
-    FtpServer.of("adadasdasd");
-  }
-
   @Test
-  public void testExternalFtpServer() {
-    String user = "user";
-    String password = "password";
-    String host = "host";
-    int port = 123;
-
-    FtpServer result = FtpServer.of(user + ":" + password + "@" + host + ":" + port);
-    assertEquals(user, result.user());
-    assertEquals(password, result.password());
-    assertEquals(host, result.hostname());
-    assertEquals(port, result.port());
-  }
-
-  @Test
-  public void testLocalMethod() {
-    String user = "user";
-    String password = "password";
-    String host = "host";
-    int port = 123;
-
-    try (FtpServer externalFtpServer =
-        FtpServer.of(user + ":" + password + "@" + host + ":" + port); ) {
-      assertFalse(externalFtpServer.isLocal());
-      assertEquals(user, externalFtpServer.user());
-      assertEquals(password, externalFtpServer.password());
-      assertEquals(host, externalFtpServer.hostname());
-      assertEquals(port, externalFtpServer.port());
-    }
-
-    try (FtpServer localFtpServer = FtpServer.of()) {
-      assertTrue(localFtpServer.isLocal());
+  public void testSpecificDataPort() {
+    int port = CommonUtil.availablePort();
+    try (FtpServer ftpServer =
+        FtpServer.builder().dataPorts(Collections.singletonList(port)).build()) {
+      assertEquals(port, (int) ftpServer.dataPorts().get(0));
     }
   }
 
   @Test
-  public void testRandomPort() {
+  public void testRandomDataPort() {
+    try (FtpServer ftpServer = FtpServer.builder().build()) {
+      assertFalse(ftpServer.dataPorts().isEmpty());
+      ftpServer.dataPorts().forEach(p -> assertNotEquals(0, (long) p));
+    }
+  }
+
+  @Test
+  public void testSpecificControlPort() {
+    int port = CommonUtil.availablePort();
+    try (FtpServer ftpServer = FtpServer.builder().controlPort(port).build()) {
+      assertEquals(port, ftpServer.port());
+    }
+  }
+
+  @Test
+  public void testRandomControlPort() {
     List<Integer> dataPorts = Collections.singletonList(0);
     try (FtpServer ftpServer = FtpServer.builder().controlPort(0).dataPorts(dataPorts).build()) {
       assertNotEquals(0, ftpServer.port());
@@ -274,6 +268,13 @@ public class TestFtpServer extends MediumTest {
       assertTrue(ftpServer.isLocal());
       assertTrue(f.exists());
       assertEquals(ftpServer.absolutePath(), f.getAbsolutePath());
+    }
+  }
+
+  @Test
+  public void testPortOfLocal() {
+    try (FtpServer ftpServer = FtpServer.local()) {
+      assertNotEquals(0, ftpServer.port());
     }
   }
 }

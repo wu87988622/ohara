@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.util.Optional;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 public interface Zookeepers extends Releasable {
-
-  String ZOOKEEPER_CONNECTION_PROPS = "ohara.it.zookeepers";
 
   /** @return zookeeper information. the form is "host_a:port_a,host_b:port_b" */
   String connectionProps();
@@ -36,8 +33,8 @@ public interface Zookeepers extends Releasable {
 
   static Zookeepers local(int port) {
     final NIOServerCnxnFactory factory;
-    File snapshotDir = CommonUtil.createTempDir("local-zk-snapshot");
-    File logDir = CommonUtil.createTempDir("local-zk-log");
+    File snapshotDir = CommonUtil.createTempDir("local_zk_snapshot");
+    File logDir = CommonUtil.createTempDir("local_zk_log");
 
     try {
       factory = new NIOServerCnxnFactory();
@@ -66,33 +63,5 @@ public interface Zookeepers extends Releasable {
         return true;
       }
     };
-  }
-
-  static Zookeepers of() {
-    return of(System.getenv(ZOOKEEPER_CONNECTION_PROPS));
-  }
-
-  static Zookeepers of(String zookeepers) {
-    return Optional.ofNullable(zookeepers)
-        .map(
-            s ->
-                (Zookeepers)
-                    new Zookeepers() {
-                      @Override
-                      public void close() {
-                        // Nothing
-                      }
-
-                      @Override
-                      public String connectionProps() {
-                        return s;
-                      }
-
-                      @Override
-                      public boolean isLocal() {
-                        return false;
-                      }
-                    })
-        .orElseGet(() -> local(0));
   }
 }

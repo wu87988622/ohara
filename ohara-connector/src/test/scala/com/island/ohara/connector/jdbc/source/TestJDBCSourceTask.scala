@@ -23,8 +23,8 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.data.{Column, DataType, Row}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.connector.jdbc.util.ColumnInfo
-import com.island.ohara.integration.Database
 import com.island.ohara.kafka.connector.{RowSourceRecord, TaskConfig}
+import com.island.ohara.testing.service.Database
 import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{Before, Test}
@@ -35,7 +35,7 @@ import org.scalatest.mockito.MockitoSugar
 import scala.collection.JavaConverters._
 
 class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
-  private[this] val db = Database.of()
+  private[this] val db = Database.local()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "TABLE1"
   private[this] val timestampColumnName = "COLUMN1"

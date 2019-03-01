@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
@@ -61,61 +61,12 @@ public interface SshdServer extends Releasable {
     List<String> execute(String cmd);
   }
 
-  String SSHD_SERVER = "ohara.it.sshd";
-
-  static SshdServer of() {
-    return of(System.getenv(SSHD_SERVER));
-  }
-
-  static List<String> parseString(String sshdString) {
-    return Arrays.asList(
-        sshdString.split(":")[0],
-        sshdString.split(":")[1].split("@")[0],
-        sshdString.split(":")[1].split("@")[1],
-        sshdString.split(":")[2]);
-  }
-
-  static SshdServer of(String sshdString) {
-    if (sshdString == null) return local(0, Collections.emptyList());
-    else {
-      // format => user:password@host:port
-      List<String> ss = parseString(sshdString);
-      String user = ss.get(0);
-      String password = ss.get(1);
-      String host = ss.get(2);
-      int port = Integer.parseInt(ss.get(3));
-      return new SshdServer() {
-
-        @Override
-        public void close() {
-          // do nothing
-        }
-
-        @Override
-        public String hostname() {
-          return host;
-        }
-
-        @Override
-        public int port() {
-          return port;
-        }
-
-        @Override
-        public String user() {
-          return user;
-        }
-
-        @Override
-        public String password() {
-          return password;
-        }
-      };
-    }
-  }
-
   static SshdServer local() {
-    return local(0, Collections.emptyList());
+    return local(0);
+  }
+
+  static SshdServer local(int port) {
+    return local(port, Collections.emptyList());
   }
 
   static SshdServer local(int port, List<CommandHandler> handlers) {

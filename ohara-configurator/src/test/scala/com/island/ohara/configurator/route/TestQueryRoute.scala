@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.{RdbColumn, RdbInfo, Rdb
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.integration.Database
+import com.island.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestQueryRoute extends SmallTest with Matchers {
-  private[this] val db = Database.local(0)
+  private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)

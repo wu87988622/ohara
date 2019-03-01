@@ -14,50 +14,25 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.rule.MediumTest;
+import com.island.ohara.common.util.CommonUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestWorkers extends MediumTest {
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testWorkersNull() {
-    Workers.of(
-        null,
-        () -> {
-          throw new IllegalArgumentException("you can't pass");
-        },
-        1);
-  }
-
   @Test
-  public void testHaveWorkers() {
-    String connProps = "localhost:12345";
+  public void testSpecificPort() {
+    int[] brokerPorts = {0};
+    int workerPort = CommonUtil.availablePort();
 
-    try (Workers external =
-        Workers.of(
-            connProps,
-            () -> {
-              throw new IllegalArgumentException("you can't pass");
-            },
-            1)) {
-      Assert.assertEquals(connProps, external.connectionProps());
-      assertFalse(external.isLocal());
-    }
-  }
-
-  @Test
-  public void testLocalMethod() throws Exception {
-    try (Zookeepers zk = Zookeepers.of();
-        Brokers brokers = Brokers.of(() -> zk, 1)) {
-      try (Workers local = Workers.of(() -> brokers, 1)) {
-        assertTrue(local.isLocal());
-      }
+    try (Zookeepers zk = Zookeepers.local(0);
+        Brokers brokers = Brokers.local(zk, brokerPorts);
+        Workers workers = Workers.local(brokers, new int[] {workerPort})) {
+      Assert.assertEquals(
+          workerPort, Integer.parseInt(workers.connectionProps().split(",")[0].split(":")[1]));
     }
   }
 
