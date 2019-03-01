@@ -88,15 +88,19 @@ class TestPrometheus extends IntegrationTest with Matchers {
         (exporterPort, _) => {
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+          val url = "http://" + node.name + ":" + exporterPort + "/metrics"
           import scala.concurrent.ExecutionContext.Implicits.global
           import scala.concurrent.duration._
           try {
-            val url = "http://" + node.name + ":" + exporterPort + "/metrics"
-            val txt =
-              Await.result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(Unmarshal(_).to[String]),
-                           10 seconds)
-            txt.isEmpty shouldBe false
-            txt.contains("kafka") shouldBe true
+            CommonUtil.await(
+              () => {
+                val txt =
+                  Await.result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(Unmarshal(_).to[String]),
+                               10 seconds)
+                txt.contains("kafka")
+              },
+              java.time.Duration.ofSeconds(30)
+            )
           } finally actorSystem.terminate()
         }
       )
