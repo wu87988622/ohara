@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.client
 
 import java.nio.charset.Charset
 
-import com.island.ohara.client.{FileType, FtpClient}
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{ByteUtil, Releasable}
-import com.island.ohara.integration.FtpServer
+import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 class TestFtpClient extends MediumTest with Matchers {
 
-  private[this] val server = FtpServer.of()
+  private[this] val server = FtpServer.local()
 
   private[this] val client =
     FtpClient.builder().user(server.user).password(server.password).hostname(server.hostname).port(server.port).build()

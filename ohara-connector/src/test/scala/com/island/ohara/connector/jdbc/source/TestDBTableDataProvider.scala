@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
-import com.island.ohara.integration.Database
+import com.island.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -31,7 +31,7 @@ import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends MediumTest with Matchers {
 
-  private[this] val db = Database.of()
+  private[this] val db = Database.local()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
   private[this] val tableName = "table1"
 

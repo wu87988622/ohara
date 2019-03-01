@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtil, Releasable}
-import com.island.ohara.integration.WithBrokerWorker
+import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

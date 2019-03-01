@@ -21,7 +21,7 @@ import com.island.ohara.connector.hdfs.storage.Storage
 /**
   * This abstract for define the storage instance
   */
-abstract class StorageCreator {
+trait StorageCreator {
 
   /**
     * get storage instance

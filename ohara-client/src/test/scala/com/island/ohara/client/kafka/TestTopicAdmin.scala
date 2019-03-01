@@ -17,7 +17,7 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.integration.With3Brokers
+import com.island.ohara.testing.With3Brokers
 import org.junit.Test
 import org.scalatest.Matchers
 

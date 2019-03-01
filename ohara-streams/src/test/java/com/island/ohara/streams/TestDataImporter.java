@@ -18,9 +18,9 @@ package com.island.ohara.streams;
 
 import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 
-import com.island.ohara.integration.With3Brokers;
 import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.TopicDescription;
+import com.island.ohara.testing.With3Brokers;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing;
 
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.ReleaseOnce;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
+import com.island.ohara.testing.service.Brokers;
+import com.island.ohara.testing.service.Database;
+import com.island.ohara.testing.service.FtpServer;
+import com.island.ohara.testing.service.Hdfs;
+import com.island.ohara.testing.service.Workers;
+import com.island.ohara.testing.service.Zookeepers;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 /**
  * This class create a kafka services having 1 zk instance and 1 broker default. Also, this class
@@ -36,18 +42,14 @@ import java.util.concurrent.atomic.AtomicReference;
  * including the passed consumers (see run())
  */
 public class OharaTestUtil extends ReleaseOnce {
-  private Database localDb;
-  private FtpServer localFtpServer;
-  private Hdfs localHdfs;
-  private final Zookeepers zk;
-  private final Brokers brokers;
-  private final Workers workers;
+  private Database database;
+  private FtpServer ftpServer;
+  private Hdfs hdfs;
+  private Zookeepers zk;
+  private Brokers brokers;
+  private Workers workers;
 
-  private OharaTestUtil(Zookeepers zk, Brokers brokers, Workers workers) {
-    this.zk = zk;
-    this.brokers = brokers;
-    this.workers = workers;
-  }
+  private OharaTestUtil() {}
 
   /**
    * Exposing the brokers connection. This list should be in the form <code>
@@ -56,12 +58,28 @@ public class OharaTestUtil extends ReleaseOnce {
    * @return brokers connection information
    */
   public String brokersConnProps() {
-    return Optional.ofNullable(brokers)
-        .map(Brokers::connectionProps)
-        .orElseThrow(
-            () ->
-                new RuntimeException(
-                    "Brokers do not exist. Because Workers exist in supply environment, then we don't create embedded Brokers. Please do not operate it"));
+    try2CreateBrokers(1);
+    return brokers.connectionProps();
+  }
+
+  private void try2CreateZookeeper() {
+    if (zk == null) {
+      zk = Zookeepers.local(0);
+    }
+  }
+
+  private void try2CreateBrokers(int numberOfBrokers) {
+    if (brokers == null) {
+      try2CreateZookeeper();
+      brokers = Brokers.local(zk, IntStream.range(0, numberOfBrokers).map(i -> 0).toArray());
+    }
+  }
+
+  private void try2CreateWorkers(int numberOfWorkers) {
+    if (workers == null) {
+      try2CreateBrokers(1);
+      workers = Workers.local(brokers, IntStream.range(0, numberOfWorkers).map(i -> 0).toArray());
+    }
   }
 
   /**
@@ -71,31 +89,35 @@ public class OharaTestUtil extends ReleaseOnce {
    * @return workers connection information
    */
   public String workersConnProps() {
-    return Optional.ofNullable(workers)
-        .map(Workers::connectionProps)
-        .orElseThrow(() -> new RuntimeException("Workers do not exist"));
+    try2CreateWorkers(1);
+    return workers.connectionProps();
   }
 
   public Hdfs hdfs() {
-    if (localHdfs == null) localHdfs = Hdfs.of();
-    return localHdfs;
+    if (hdfs == null) hdfs = Hdfs.local();
+    return hdfs;
   }
 
   public Database dataBase() {
-    if (localDb == null) localDb = Database.of();
-    return localDb;
+    if (database == null) database = Database.builder().build();
+    return database;
   }
 
   public FtpServer ftpServer() {
-    if (localFtpServer == null) localFtpServer = FtpServer.of();
-    return localFtpServer;
+    if (ftpServer == null)
+      ftpServer =
+          FtpServer.builder()
+              // 3 data ports -> 3 connection
+              .dataPorts(Arrays.asList(0, 0, 0))
+              .build();
+    return ftpServer;
   }
 
   @Override
   protected void doClose() {
-    Releasable.close(localDb);
-    Releasable.close(localFtpServer);
-    Releasable.close(localHdfs);
+    Releasable.close(database);
+    Releasable.close(ftpServer);
+    Releasable.close(hdfs);
     Releasable.close(workers);
     Releasable.close(brokers);
     Releasable.close(zk);
@@ -107,7 +129,7 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  public static OharaTestUtil broker() {
+  static OharaTestUtil broker() {
     return brokers(1);
   }
 
@@ -117,18 +139,10 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  public static OharaTestUtil brokers(int numberOfBrokers) {
-    AtomicReference<Zookeepers> zk = new AtomicReference<>();
-    Brokers brokers =
-        Brokers.of(
-            () -> {
-              if (zk.get() == null) {
-                zk.set(Zookeepers.of());
-              }
-              return zk.get();
-            },
-            numberOfBrokers);
-    return new OharaTestUtil(zk.get(), brokers, null);
+  static OharaTestUtil brokers(int numberOfBrokers) {
+    OharaTestUtil util = new OharaTestUtil();
+    util.try2CreateBrokers(numberOfBrokers);
+    return util;
   }
 
   /**
@@ -137,8 +151,8 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  public static OharaTestUtil worker() {
-    return workers(1);
+  static OharaTestUtil worker() {
+    return workers(1, 1);
   }
 
   /**
@@ -149,35 +163,19 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  public static OharaTestUtil workers(int numberOfWorkers) {
-    AtomicReference<Zookeepers> zk = new AtomicReference<>();
-    AtomicReference<Brokers> brokers = new AtomicReference<>();
-
-    Workers workers =
-        Workers.of(
-            () -> {
-              if (brokers.get() == null) {
-                brokers.set(
-                    Brokers.of(
-                        () -> {
-                          if (zk.get() == null) zk.set(Zookeepers.of());
-                          return zk.get();
-                        },
-                        numberOfWorkers));
-              }
-              return brokers.get();
-            },
-            numberOfWorkers);
-    return new OharaTestUtil(zk.get(), brokers.get(), workers);
+  static OharaTestUtil workers(int numberOfBrokers, int numberOfWorkers) {
+    OharaTestUtil util = new OharaTestUtil();
+    util.try2CreateBrokers(numberOfBrokers);
+    util.try2CreateWorkers(numberOfWorkers);
+    return util;
   }
 
   /**
-   * Create a test util with local file system. NOTED: don't call the workers and brokers service.
-   * otherwise you will get exception
+   * Create a test util without any pre-created services.
    *
    * @return a test util
    */
-  public static OharaTestUtil localHDFS() {
-    return new OharaTestUtil(null, null, null);
+  static OharaTestUtil of() {
+    return new OharaTestUtil();
   }
 }

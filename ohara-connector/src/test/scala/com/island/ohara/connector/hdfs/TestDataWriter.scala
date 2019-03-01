@@ -17,18 +17,16 @@
 package com.island.ohara.connector.hdfs
 
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.integration.OharaTestUtil
 import com.island.ohara.kafka.connector.{RowSinkContext, TopicPartition}
+import com.island.ohara.testing.WithTestUtil
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-class TestDataWriter extends MediumTest with Matchers with MockitoSugar {
+class TestDataWriter extends WithTestUtil with Matchers with MockitoSugar {
 
   @Test
   def testCreatePartitionDataWriters(): Unit = {
-    val testUtil = OharaTestUtil.localHDFS()
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = HDFSSinkConnectorConfig(
       Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
     val context: RowSinkContext = mock[RowSinkContext]
@@ -45,7 +43,6 @@ class TestDataWriter extends MediumTest with Matchers with MockitoSugar {
 
   @Test
   def testWriterEmpty(): Unit = {
-    val testUtil = OharaTestUtil.localHDFS()
     val hdfsSinkConnectorConfig: HDFSSinkConnectorConfig = HDFSSinkConnectorConfig(
       Map(HDFS_URL -> s"${testUtil.hdfs.hdfsURL}"))
     val context: RowSinkContext = mock[RowSinkContext]

@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.net.BindException;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -39,10 +37,6 @@ import org.apache.kafka.connect.storage.KafkaOffsetBackingStore;
 import org.apache.kafka.connect.storage.KafkaStatusBackingStore;
 
 public interface Workers extends Releasable {
-  String WORKER_CONNECTION_PROPS = "ohara.it.workers";
-
-  int NUMBER_OF_WORKERS = 3;
-
   /** @return workers information. the form is "host_a:port_a,host_b:port_b" */
   String connectionProps();
 
@@ -161,34 +155,5 @@ public interface Workers extends Releasable {
         return true;
       }
     };
-  }
-
-  static Workers of(Supplier<Brokers> brokers, int numberOfWorkers) {
-    return of(System.getenv(WORKER_CONNECTION_PROPS), brokers, numberOfWorkers);
-  }
-
-  static Workers of(String workers, Supplier<Brokers> brokers, int numberOfWorkers) {
-    return Optional.ofNullable(workers)
-        .map(
-            w ->
-                (Workers)
-                    new Workers() {
-                      @Override
-                      public void close() {
-                        // Nothing
-                      }
-
-                      @Override
-                      public String connectionProps() {
-                        return w;
-                      }
-
-                      @Override
-                      public boolean isLocal() {
-                        return false;
-                      }
-                    })
-        .orElseGet(
-            () -> local(brokers.get(), IntStream.range(0, numberOfWorkers).map(x -> 0).toArray()));
   }
 }

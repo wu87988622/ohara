@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.route.CollieUtils
-import com.island.ohara.integration._
+import com.island.ohara.testing.service._
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -156,7 +156,7 @@ object Backend {
       rs += brokers
       val workers = Workers.local(brokers, ports.workersPort.toArray)
       rs += workers
-      val database = Database.local(ports.dbPort)
+      val database = Database.builder().port(ports.dbPort).build()
       rs += database
       val ftpServer = FtpServer
         .builder()

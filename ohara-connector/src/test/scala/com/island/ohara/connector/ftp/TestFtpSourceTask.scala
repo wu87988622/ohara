@@ -19,8 +19,8 @@ import com.island.ohara.client.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtil, Releasable}
-import com.island.ohara.integration.FtpServer
 import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
+import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 

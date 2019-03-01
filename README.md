@@ -84,7 +84,7 @@ The backend image is not included in production release. Hence, there is no guar
 #### MySQL
 
 ```
-docker run --rm -p ${port}:${port} oharastream/backend:0.3-SNAPSHOT com.island.ohara.integration.Database --port ${port} --user ${USERNAME} --password ${PASSWORD}
+docker run --rm -p ${port}:${port} oharastream/backend:0.3-SNAPSHOT com.island.ohara.testing.service.Database --port ${port} --user ${USERNAME} --password ${PASSWORD}
 ```
 * port: bound by MySQL
 * user: username for MySQL
@@ -93,7 +93,7 @@ docker run --rm -p ${port}:${port} oharastream/backend:0.3-SNAPSHOT com.island.o
 #### FTP
 
 ```
-docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.3-SNAPSHOT com.island.ohara.integration.FtpServer --controlPort 10000 --dataPorts 10001-10011
+docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.3-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011
 ```
 * controlPort: bound by FTP Server
 * dataPorts: bound by data transportation in FTP Server

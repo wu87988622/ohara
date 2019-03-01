@@ -14,32 +14,31 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing;
 
 import com.island.ohara.common.rule.LargeTest;
 import com.island.ohara.common.util.Releasable;
+import java.util.NoSuchElementException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- * This class create a mini broker/worker cluster with single node. And the cluster will be closed
- * after all test cases have been done.
- *
- * <p>NOTED: You can't create a topic with multi-partitions or multi-replication in this env,
+ * This class create a mini broker/worker cluster with 3 nodes. And the cluster will be closed after
+ * all test cases have been done.
  *
  * <p>NOTED: All subclass has "same" reference to util. This is ok in junit test since it default
  * run each test on "different" jvm. The "same" static member won't cause trouble in testing.
  * However, you should move the static "util" into your test if you don't depend on junit...by chia
  */
-public abstract class WithBrokerWorker extends LargeTest {
+public abstract class With3Brokers3Workers extends LargeTest {
   protected static OharaTestUtil util;
 
   @BeforeClass
   public static void beforeAll() {
     if (util != null)
-      throw new IllegalArgumentException(
+      throw new NoSuchElementException(
           "The test util had been initialized!!! This happens on your tests don't run on different jvm");
-    util = OharaTestUtil.worker();
+    util = OharaTestUtil.workers(3, 3);
   }
 
   protected OharaTestUtil testUtil() {

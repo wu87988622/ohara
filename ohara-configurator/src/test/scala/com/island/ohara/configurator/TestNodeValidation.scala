@@ -19,7 +19,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.integration.SshdServer
+import com.island.ohara.testing.service.SshdServer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 

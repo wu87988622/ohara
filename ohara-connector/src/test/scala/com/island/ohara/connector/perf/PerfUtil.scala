@@ -21,7 +21,7 @@ import java.time.Duration
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.testing.OharaTestUtil
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

@@ -18,20 +18,17 @@ package com.island.ohara.connector.hdfs.storage
 
 import java.io.{InputStream, OutputStream}
 
-import com.island.ohara.common.rule.LargeTest
-import com.island.ohara.integration.OharaTestUtil
+import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.testing.WithTestUtil
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.junit.{After, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
-class TestHDFSStorage extends LargeTest with Matchers {
-
-  private[this] val testUtil = OharaTestUtil.localHDFS()
-
+class TestHDFSStorage extends WithTestUtil with Matchers {
   @Test
   def testHdfsStorage(): Unit = {
     val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-    val hdfsTempDir: String = testUtil.hdfs.tmpDirectory
+    val hdfsTempDir: String = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
     val hdfsStorage: Storage = new HDFSStorage(fileSystem)
     hdfsStorage.list(hdfsTempDir).size shouldBe 0
 
@@ -94,10 +91,5 @@ class TestHDFSStorage extends LargeTest with Matchers {
 
     hdfsStorage.mkdirs("test")
 
-  }
-
-  @After
-  def tearDown(): Unit = {
-    testUtil.hdfs.close()
   }
 }

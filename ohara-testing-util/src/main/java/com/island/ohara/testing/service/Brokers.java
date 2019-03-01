@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import kafka.server.KafkaConfig;
@@ -32,8 +30,6 @@ import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.utils.SystemTime;
 
 public interface Brokers extends Releasable {
-  String BROKER_CONNECTION_PROPS = "ohara.it.brokers";
-
   /** @return brokers information. the form is "host_a:port_a,host_b:port_b" */
   String connectionProps();
 
@@ -43,7 +39,7 @@ public interface Brokers extends Releasable {
   static Brokers local(Zookeepers zk, int[] ports) {
     List<File> tempFolders =
         IntStream.range(0, ports.length)
-            .mapToObj(i -> CommonUtil.createTempDir("kafka-local"))
+            .mapToObj(i -> CommonUtil.createTempDir("local_kafka"))
             .collect(Collectors.toList());
     List<KafkaServer> brokers =
         IntStream.range(0, ports.length)
@@ -109,43 +105,5 @@ public interface Brokers extends Releasable {
         return true;
       }
     };
-  }
-
-  static Brokers of(Supplier<Zookeepers> zk, int numberOfBrokers) {
-    return of(System.getenv(BROKER_CONNECTION_PROPS), zk, numberOfBrokers);
-  }
-
-  static Brokers of(String brokers, Supplier<Zookeepers> zk, int numberOfBrokers) {
-    return Optional.ofNullable(brokers)
-        .map(
-            s ->
-                (Brokers)
-                    new Brokers() {
-                      @Override
-                      public void close() {
-                        // Nothing
-                      }
-
-                      @Override
-                      public String connectionProps() {
-                        if (s.split(",").length != numberOfBrokers)
-                          throw new IllegalArgumentException(
-                              "Expected number of brokers is "
-                                  + numberOfBrokers
-                                  + " but actual is "
-                                  + s.split(",").length
-                                  + "("
-                                  + s
-                                  + ")");
-                        return s;
-                      }
-
-                      @Override
-                      public boolean isLocal() {
-                        return false;
-                      }
-                    })
-        .orElseGet(
-            () -> local(zk.get(), IntStream.range(0, numberOfBrokers).map(i -> 0).toArray()));
   }
 }

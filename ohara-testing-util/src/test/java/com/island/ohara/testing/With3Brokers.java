@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing;
 
 import com.island.ohara.common.rule.LargeTest;
 import com.island.ohara.common.util.Releasable;
+import java.util.NoSuchElementException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -35,7 +36,7 @@ public abstract class With3Brokers extends LargeTest {
   @BeforeClass
   public static void beforeAll() {
     if (util != null)
-      throw new IllegalArgumentException(
+      throw new NoSuchElementException(
           "The test util had been initialized!!! This happens on your tests don't run on different jvm");
     util = OharaTestUtil.brokers(3);
   }

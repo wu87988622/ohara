@@ -17,8 +17,8 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Serializer}
-import com.island.ohara.integration.With3Brokers3Workers
 import com.island.ohara.kafka.Consumer
+import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
 

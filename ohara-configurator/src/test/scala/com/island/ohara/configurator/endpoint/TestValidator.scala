@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
 }
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.integration.With3Brokers3Workers
+import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 

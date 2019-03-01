@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.connector.jdbc
+
 import java.io.{BufferedReader, InputStreamReader}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
@@ -27,9 +28,9 @@ import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
-import com.island.ohara.connector.jdbc.JDBCSourceConnector
 import com.island.ohara.connector.jdbc.source._
-import com.island.ohara.integration.{Database, OharaTestUtil, With3Brokers3Workers}
+import com.island.ohara.testing.With3Brokers3Workers
+import com.island.ohara.testing.service.Hdfs
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -37,9 +38,9 @@ import org.scalatest.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
-  private[this] val db = Database.of()
+  private[this] val db = testUtil().dataBase()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
-  private[this] val tableName = "testtable"
+  private[this] val tableName = CommonUtil.randomString(10)
   private[this] val timestampColumnName = "CREATE_DATE"
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
@@ -157,21 +158,17 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   }
 
   @After
-  def afterTest(): Unit = {
-    client.dropTable(tableName)
-    Releasable.close(client)
-  }
+  def afterTest(): Unit = Releasable.close(client)
 }
 
 class LocalHDFSStorageCreator(config: HDFSSinkConnectorConfig) extends StorageCreator {
-  private[this] val fileSystem: FileSystem = OharaTestUtil.localHDFS().hdfs.fileSystem
-  private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(fileSystem)
+  // TODO: we SHOULD NOT import hdfs directly... by chia
+  private[this] val hdfs = Hdfs.local()
+  private[this] val hdfsStorage: HDFSStorage = new HDFSStorage(hdfs.fileSystem())
 
   override def storage(): Storage = {
     hdfsStorage
   }
 
-  override def close(): Unit = {
-    Releasable.close(fileSystem)
-  }
+  override def close(): Unit = Releasable.close(hdfs)
 }

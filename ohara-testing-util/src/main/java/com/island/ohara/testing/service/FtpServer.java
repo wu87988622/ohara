@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.integration;
+package com.island.ohara.testing.service;
 
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
@@ -45,10 +45,6 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
  * <p>If ohara.it.ftp exists in env variables, local ftp server is not created.
  */
 public interface FtpServer extends Releasable {
-  String FTP_SERVER = "ohara.it.ftp";
-
-  int NUMBER_OF_SERVERS = 3;
-
   String hostname();
 
   int port();
@@ -77,10 +73,10 @@ public interface FtpServer extends Releasable {
     private Builder() {}
 
     private String advertisedHostname = CommonUtil.hostname();
-    private File homeFolder = CommonUtil.createTempDir("localFtp_" + CommonUtil.randomString(5));
+    private File homeFolder = CommonUtil.createTempDir("local_ftp");
     private String user = "user";
     private String password = "password";
-    private Integer controlPort = 0;
+    private int controlPort = 0;
     private List<Integer> dataPorts = Collections.singletonList(0);
 
     @com.island.ohara.common.annotations.Optional("default is local hostname")
@@ -223,82 +219,8 @@ public interface FtpServer extends Releasable {
     }
   }
 
-  static FtpServer of() {
-    return of(System.getenv(FTP_SERVER));
-  }
-
-  static FtpServer of(String ftpString) {
-    return Optional.ofNullable(ftpString)
-        .map(
-            f -> {
-              String user;
-              String password;
-              String host;
-              int port;
-
-              try {
-                user = ftpString.split(":")[0];
-                password = ftpString.split("@")[0].split(":")[1];
-                host = ftpString.split("@")[1].split(":")[0];
-                port = Integer.parseInt(ftpString.split("@")[1].split(":")[1]);
-              } catch (Exception e) {
-                throw new IllegalArgumentException("invalid value from " + FTP_SERVER, e);
-              }
-              // FtpServerInfo ftpServerInfo = parseString(f);
-              return (FtpServer)
-                  new FtpServer() {
-                    @Override
-                    public void close() {
-                      // Nothing
-                    }
-
-                    @Override
-                    public String hostname() {
-                      return host;
-                    }
-
-                    @Override
-                    public int port() {
-                      return port;
-                    }
-
-                    @Override
-                    public String user() {
-                      return user;
-                    }
-
-                    @Override
-                    public String password() {
-                      return password;
-                    }
-
-                    @Override
-                    public List<Integer> dataPorts() {
-                      throw new UnsupportedOperationException(
-                          "TODO: can't get data port from actual ftp server");
-                    }
-
-                    @Override
-                    public boolean isLocal() {
-                      return false;
-                    }
-
-                    @Override
-                    public String absolutePath() {
-                      return "/";
-                    }
-                  };
-            })
-        .orElseGet(
-            () ->
-                builder()
-                    .advertisedHostname(CommonUtil.hostname())
-                    .controlPort(0)
-                    .dataPorts(
-                        IntStream.range(0, NUMBER_OF_SERVERS)
-                            .mapToObj(x -> 0)
-                            .collect(Collectors.toList()))
-                    .build());
+  static FtpServer local() {
+    return FtpServer.builder().dataPorts(Arrays.asList(0, 0, 0)).build();
   }
 
   static String mkPortString(List<Integer> ports) {
