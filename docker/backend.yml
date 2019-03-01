@@ -34,7 +34,12 @@ services:
   ftp:
     image: oharastream/backend:${TAG:-0.3-SNAPSHOT}
     hostname: ftp
-    command: ["com.island.ohara.integration.FtpServer", "--controlPort", "10000", "--dataPorts", "10001-10005", "--user", "user", "--password", "password"]
+    command: ["com.island.ohara.integration.FtpServer",
+              "--homeFolder", "/tmp/ohara_ftpserver",
+              "--controlPort", "10000",
+              "--dataPorts", "10001-10005",
+              "--user", "user",
+              "--password", "password"]
     ports:
       - 10000:10000
       - 10001:10001
