@@ -51,6 +51,14 @@ $ sudo chmod +x ./docker-compose
 see https://github.com/docker/compose/releases for more details
 
 ## How to start services by docker-compose file
+Before start services, you must set postgresql connection info for environment variable, example:
+```
+export POSTGRES_DB=postgres
+export POSTGRES_USER=username
+export POSTGRES_PASSWORD=password
+```
+
+Start services command
 ```
 $ ./docker-compose -f {docker-compose file} up
 ```

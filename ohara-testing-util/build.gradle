@@ -87,34 +87,3 @@ task runFtp(type: JavaExec, dependsOn: 'classes') {
   }
   args = inputs
 }
-
-/**
- * run database
- */
-task runDatabase(type: JavaExec, dependsOn: 'classes') {
-  classpath = sourceSets.main.runtimeClasspath
-  main = "com.island.ohara.integration.Database"
-
-  def inputs = []
-  if(project.hasProperty('user')) {
-    inputs << "--user"
-    inputs << project.getProperty("user")
-  }
-  if(project.hasProperty('password')) {
-    inputs << "--password"
-    inputs << project.getProperty("password")
-  }
-  if(project.hasProperty('port')) {
-    inputs << "--port"
-    inputs << project.getProperty("port")
-  }
-  if(project.hasProperty('dbName')) {
-    inputs << "--dbName"
-    inputs << project.getProperty("dbName")
-  }
-  if(project.hasProperty('ttl')) {
-    inputs << "--ttl"
-    inputs << project.getProperty("ttl")
-  }
-  args = inputs
-}

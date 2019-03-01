@@ -27,10 +27,8 @@ import com.wix.mysql.EmbeddedMysql;
 import com.wix.mysql.config.MysqldConfig;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 public interface Database extends Releasable {
 
@@ -222,56 +220,5 @@ public interface Database extends Releasable {
                   };
             })
         .orElseGet(() -> local(0));
-  }
-
-  String USER = "--user";
-  String PASSWORD = "--password";
-  String DB_NAME = "--dbName";
-  String PORT = "--port";
-  String TTL = "--ttl";
-  String USAGE = String.join(" ", Arrays.asList(USER, PASSWORD, PORT, DB_NAME, TTL));
-
-  static void start(String[] args, Consumer<Database> consumer) throws InterruptedException {
-    String user = "user";
-    String password = "password";
-    String dbName = "ohara";
-    int port = -1;
-    int ttl = Integer.MAX_VALUE;
-    for (int i = 0; i < args.length; i += 2) {
-      String value = args[i + 1];
-      switch (args[i]) {
-        case USER:
-          user = value;
-          break;
-        case PASSWORD:
-          password = value;
-          break;
-        case PORT:
-          port = Integer.valueOf(value);
-          break;
-        case DB_NAME:
-          dbName = value;
-          break;
-        case TTL:
-          ttl = Integer.valueOf(value);
-          break;
-        default:
-          throw new IllegalArgumentException(USAGE);
-      }
-    }
-    CommonUtil.requirePositiveInt(port, () -> PORT + " is required");
-    try (Database mysql = Database.local(user, password, dbName, port)) {
-      System.out.println(
-          String.join(
-              " ",
-              Arrays.asList(
-                  "user:", mysql.user(), "password:", mysql.password(), "jdbc:", mysql.url())));
-      consumer.accept(mysql);
-      TimeUnit.SECONDS.sleep(ttl);
-    }
-  }
-
-  static void main(String[] args) throws InterruptedException {
-    start(args, mysql -> {});
   }
 }
