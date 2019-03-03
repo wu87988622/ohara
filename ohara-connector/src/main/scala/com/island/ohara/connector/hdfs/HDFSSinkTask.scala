@@ -17,6 +17,7 @@
 package com.island.ohara.connector.hdfs
 import java.util
 
+import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
 
@@ -59,7 +60,7 @@ class HDFSSinkTask extends RowSinkTask {
 
   override protected def _stop(): Unit = {
     logger.info("running stop function")
-    hdfsWriter.stop()
+    Releasable.close(hdfsWriter)
   }
 
   override protected def _put(records: util.List[RowSinkRecord]): Unit =

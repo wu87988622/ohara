@@ -28,7 +28,7 @@ import scala.collection.mutable
   * @param config
   * @param context
   */
-class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schema: Seq[Column]) {
+class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schema: Seq[Column]) extends AutoCloseable {
 
   private[this] val createStorage: StorageCreator = Class
     .forName(config.hdfsStorageCreateClass)
@@ -85,7 +85,7 @@ class DataWriter(config: HDFSSinkConnectorConfig, context: RowSinkContext, schem
   /**
     * Stop task and close FileSystem object
     */
-  def stop(): Unit = {
+  override def close(): Unit = {
     createStorage.close()
   }
 }
