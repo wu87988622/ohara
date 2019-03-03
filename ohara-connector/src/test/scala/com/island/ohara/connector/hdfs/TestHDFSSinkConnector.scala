@@ -391,6 +391,24 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").isEmpty, Duration.ofSeconds(20))
   }
+
+  @Test
+  def testStopTask(): Unit = {
+    val hdfsSinkTask = new HDFSSinkTask()
+    val map: java.util.Map[String, String] = new java.util.HashMap[String, String]()
+    val localURL = s"file://${testUtil.hdfs.tmpDirectory}"
+    map.put("topics", "topic1")
+    map.put("name", "name1")
+    map.put(HDFS_URL, localURL)
+    hdfsSinkTask.start(map)
+    hdfsSinkTask.stop()
+  }
+
+  @Test
+  def testStopTaskNotNPE(): Unit = {
+    val hdfsSinkTask = new HDFSSinkTask()
+    hdfsSinkTask.stop()
+  }
 }
 
 class SimpleHDFSSinkConnector extends HDFSSinkConnector {
