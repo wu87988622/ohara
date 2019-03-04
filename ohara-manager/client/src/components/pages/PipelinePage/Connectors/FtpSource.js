@@ -159,22 +159,16 @@ class FtpSource extends React.Component {
     }
   }
 
-  setDefaults = () => {
-    this.setState(({ fileEncodings, tasks }) => ({
-      currFileEncoding: fileEncodings[0],
-      currTask: tasks[0],
-    }));
-  };
-
   fetchData = () => {
     const sourceId = get(this.props.match, 'params.connectorId', null);
-    this.setDefaults();
     this.fetchSource(sourceId);
   };
 
   fetchSource = async sourceId => {
     const res = await connectorApi.fetchConnector(sourceId);
     const result = get(res, 'data.result', null);
+
+    const { fileEncodings, tasks } = this.state;
 
     if (result) {
       const {
@@ -192,8 +186,8 @@ class FtpSource extends React.Component {
         'ftp.input.folder': inputFolder = '',
         'ftp.completed.folder': completeFolder = '',
         'ftp.error.folder': errorFolder = '',
-        'ftp.encode': currFileEncoding = '',
-        currTask = '',
+        'ftp.encode': currFileEncoding = fileEncodings[0],
+        currTask = tasks[0],
       } = configs;
 
       const { topics: writeTopics } = this.props;

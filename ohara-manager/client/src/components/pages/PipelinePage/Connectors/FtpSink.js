@@ -168,22 +168,15 @@ class FtpSink extends React.Component {
     }
   }
 
-  setDefaults = () => {
-    this.setState(({ fileEncodings, tasks }) => ({
-      currFileEncoding: fileEncodings[0],
-      currTask: tasks[0],
-    }));
-  };
-
   fetchData = () => {
     const sinkId = get(this.props.match, 'params.connectorId', null);
-    this.setDefaults();
     this.fetchSink(sinkId);
   };
 
   fetchSink = async sinkId => {
     const res = await connectorApi.fetchConnector(sinkId);
     const result = get(res, 'data.result', false);
+    const { fileEncodings, tasks } = this.state;
 
     if (result) {
       const {
@@ -199,9 +192,9 @@ class FtpSink extends React.Component {
         'ftp.user.name': username = '',
         'ftp.user.password': password = '',
         'ftp.output.folder': outputfolder = '',
-        'ftp.encode': currFileEncoding = '',
+        'ftp.encode': currFileEncoding = fileEncodings[0],
         'ftp.needHeader': needHeader = false,
-        currTask,
+        currTask = tasks[0],
       } = configs;
 
       const { topics: readTopics } = this.props;
