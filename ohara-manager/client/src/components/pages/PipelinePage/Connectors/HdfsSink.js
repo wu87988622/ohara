@@ -138,21 +138,15 @@ class HdfsSink extends React.Component {
     }
   }
 
-  setDefaults = () => {
-    this.setState(({ fileEncodings }) => ({
-      currFileEncoding: fileEncodings[0],
-    }));
-  };
-
   fetchData = () => {
     const sinkId = get(this.props.match, 'params.connectorId', null);
-    this.setDefaults();
     this.fetchSink(sinkId);
   };
 
   fetchSink = async sinkId => {
     const res = await connectorApi.fetchConnector(sinkId);
     const result = get(res, 'data.result', null);
+    const { fileEncodings } = this.state;
 
     if (result) {
       const { name, state, configs, topics: prevTopics } = result;
@@ -163,7 +157,7 @@ class HdfsSink extends React.Component {
         'tmp.dir': tempDirectory = '',
         'flush.line.count': flushLineCount = '',
         'rotate.interval.ms': rotateInterval = '',
-        'data.econde': currFileEncoding = '',
+        'data.econde': currFileEncoding = fileEncodings[0],
       } = configs;
 
       const { topics: readTopics } = this.props;
