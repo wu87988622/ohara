@@ -18,6 +18,21 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
+export const fetchPipeline = async id => {
+  try {
+    const res = await axiosInstance.get(`/api/pipelines/${id}`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const fetchPipelines = async () => {
   try {
     const res = await axiosInstance.get('/api/pipelines');
@@ -34,7 +49,7 @@ export const fetchPipelines = async () => {
 };
 
 export const createPipeline = async ({ cluster, ...restParams }) => {
-    // TODO: cluster=xx is deprecated. the parameter "cluster name" is carried by request body now ... by chia
+  // TODO: cluster=xx is deprecated. the parameter "cluster name" is carried by request body now ... by chia
   const url = `/api/pipelines?cluster=${cluster}`;
 
   try {
@@ -84,21 +99,6 @@ export const deletePipeline = async id => {
 export const queryRdb = async params => {
   try {
     const res = await axiosInstance.post('/api/query/rdb', params);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const fetchPipeline = async id => {
-  try {
-    const res = await axiosInstance.get(`/api/pipelines/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

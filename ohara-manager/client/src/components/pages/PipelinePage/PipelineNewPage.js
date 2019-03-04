@@ -27,7 +27,7 @@ import * as MESSAGES from 'constants/messages';
 import * as PIPELINES from 'constants/pipelines';
 import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
-import * as streamApi from 'api/streamAppApi';
+import * as streamApi from 'api/streamApi';
 import * as topicApi from 'api/topicApi';
 import PipelineToolbar from './PipelineToolbar';
 import PipelineGraph from './PipelineGraph';

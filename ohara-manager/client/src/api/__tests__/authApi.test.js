@@ -19,6 +19,9 @@ import { handleError, axiosInstance } from 'utils/apiUtils';
 
 jest.mock('utils/apiUtils');
 
+const loginUrl = '/api/login';
+const logoutUrl = '/api/logout';
+
 describe('authApi', () => {
   afterEach(jest.clearAllMocks);
 
@@ -36,7 +39,7 @@ describe('authApi', () => {
 
       const result = await login(params);
       expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-      expect(axiosInstance.post).toHaveBeenCalledWith('/api/login', params);
+      expect(axiosInstance.post).toHaveBeenCalledWith(loginUrl, params);
       expect(result).toBe(res);
     });
 
@@ -52,7 +55,7 @@ describe('authApi', () => {
       const result = await login(params);
 
       expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-      expect(axiosInstance.post).toHaveBeenCalledWith('/api/login', params);
+      expect(axiosInstance.post).toHaveBeenCalledWith(loginUrl, params);
       expect(handleError).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledWith(result);
     });
@@ -89,7 +92,7 @@ describe('authApi', () => {
       const result = await logout();
 
       expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-      expect(axiosInstance.get).toHaveBeenCalledWith('/api/logout');
+      expect(axiosInstance.get).toHaveBeenCalledWith(logoutUrl);
       expect(result).toBe(res);
     });
 
@@ -105,7 +108,7 @@ describe('authApi', () => {
       const result = await logout();
 
       expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-      expect(axiosInstance.get).toHaveBeenCalledWith('/api/logout');
+      expect(axiosInstance.get).toHaveBeenCalledWith(logoutUrl);
       expect(handleError).toHaveBeenCalledTimes(1);
       expect(handleError).toHaveBeenCalledWith(result);
     });

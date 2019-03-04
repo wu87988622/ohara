@@ -20,7 +20,7 @@ import toastr from 'toastr';
 import styled from 'styled-components';
 import { find, some, endsWith, get, isNull } from 'lodash';
 
-import * as streamAppApi from 'api/streamAppApi';
+import * as streamApi from 'api/streamApi';
 import * as MESSAGES from 'constants/messages';
 import Editable from '../Editable';
 import { ListLoader } from 'common/Loader';
@@ -114,7 +114,7 @@ class PipelineNewStream extends React.Component {
     const { match } = this.props;
     const pipelineId = get(match, 'params.pipelineId', null);
     this.setState({ pipelineId }, () => {
-      this.fetchJars();
+      this.fetchJar();
     });
   };
 
@@ -209,9 +209,9 @@ class PipelineNewStream extends React.Component {
     }
   };
 
-  fetchJars = async () => {
+  fetchJar = async () => {
     const { pipelineId } = this.state;
-    const res = await streamAppApi.fetchJars(pipelineId);
+    const res = await streamApi.fetchJar(pipelineId);
     this.setState(() => ({ isLoading: false }));
 
     const jars = get(res, 'data.result', null);
@@ -226,17 +226,17 @@ class PipelineNewStream extends React.Component {
 
   uploadJar = async file => {
     const { pipelineId } = this.state;
-    const res = await streamAppApi.uploadJar({ pipelineId, file });
+    const res = await streamApi.uploadJar({ pipelineId, file });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_UPLOAD_SUCCESS);
       this.setState({ file: null });
-      this.fetchJars();
+      this.fetchJar();
     }
   };
 
   updateJar = async (id, newJarName) => {
-    const res = await streamAppApi.updateJarName({
+    const res = await streamApi.updateJarName({
       id: id,
       jarName: newJarName,
     });
@@ -247,12 +247,12 @@ class PipelineNewStream extends React.Component {
   };
 
   deleteJar = async id => {
-    const res = await streamAppApi.deleteJar({ id: id });
+    const res = await streamApi.deleteJar({ id: id });
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       toastr.success(MESSAGES.STREAM_APP_DELETE_SUCCESS);
       this.handleDeleteRowModalClose();
-      this.fetchJars();
+      this.fetchJar();
     }
   };
 

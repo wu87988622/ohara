@@ -18,7 +18,7 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
-export const fetchJars = async pipelineId => {
+export const fetchJar = async pipelineId => {
   try {
     const res = await axiosInstance.get(`/api/stream/jars/${pipelineId}`);
     const isSuccess = get(res, 'data.isSuccess', false);
@@ -151,33 +151,6 @@ export const start = async id => {
 export const stop = async id => {
   try {
     const res = await axiosInstance.put(`/api/stream/${id}/stop`);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-const mockDel = id => {
-  return new Promise(resolve => {
-    setTimeout(function() {
-      resolve({
-        data: {
-          isSuccess: true,
-        },
-      });
-    }, 1000);
-  });
-};
-
-export const del = async id => {
-  try {
-    const res = await mockDel(id);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {
