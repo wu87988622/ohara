@@ -120,7 +120,7 @@ class FtpSink extends React.Component {
     'Delete',
   ];
 
-  schemaTypes = ['string', 'integer', 'boolean'];
+  schemaTypes = ['string', 'int', 'boolean'];
 
   state = {
     name: '',
