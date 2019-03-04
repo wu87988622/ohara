@@ -25,12 +25,12 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.client.configurator.v0.ErrorApi._
+import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.prometheus.PrometheusJson.{Config, Targets}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 /**
   * Prometheus supplies rest api for query .
@@ -50,7 +50,6 @@ trait PrometheusClient {
 object PrometheusClient {
 
   private[this] val COUNTER = new AtomicInteger(0)
-  private[this] val TIMEOUT = 20 seconds
   private[this] val url_preffix = "/api/"
   private[this] val schema = "http"
 
@@ -62,7 +61,7 @@ object PrometheusClient {
 
     private def send[T](path: String, apiVersion: String = "v1")(implicit rm: RootJsonFormat[T]) = {
       val url = schema + "://" + prometheusURL + url_preffix + apiVersion + path
-      Await.result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[T](_)), TIMEOUT)
+      IntegrationTest.result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(unmarshal[T](_)))
     }
     private[this] def unmarshal[T](res: HttpResponse)(implicit rm: RootJsonFormat[T]): Future[T] =
       if (res.status.isSuccess()) Unmarshal(res.entity).to[T]

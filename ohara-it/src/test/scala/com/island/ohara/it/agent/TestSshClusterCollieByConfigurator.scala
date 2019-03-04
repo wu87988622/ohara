@@ -21,9 +21,6 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before}
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
 class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
@@ -34,17 +31,17 @@ class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
   else {
     val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
     nodeCache.foreach { node =>
-      Await.result(nodeApi.add(
-                     NodeApi.NodeCreationRequest(
-                       name = Some(node.name),
-                       port = node.port,
-                       user = node.user,
-                       password = node.password
-                     )),
-                   120 seconds)
+      result(
+        nodeApi.add(
+          NodeApi.NodeCreationRequest(
+            name = Some(node.name),
+            port = node.port,
+            user = node.user,
+            password = node.password
+          )))
     }
 
-    val nodes = Await.result(nodeApi.list(), 120 seconds)
+    val nodes = result(nodeApi.list())
     nodes.size shouldBe nodeCache.size
     nodeCache.foreach(node => nodes.exists(_.name == node.name) shouldBe true)
 

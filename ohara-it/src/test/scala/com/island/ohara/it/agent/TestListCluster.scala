@@ -24,8 +24,8 @@ import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
+
 class TestListCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
@@ -63,7 +63,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     val name = nameHolder.generateClusterName()
 
-    try Await.result(
+    try result(
       clusterCollie
         .zookeeperCollie()
         .creator()
@@ -74,8 +74,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .electionPort(CommonUtil.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(name)
-        .create(),
-      60 seconds
+        .create()
     )
     catch {
       case _: Throwable =>
@@ -89,14 +88,12 @@ class TestListCluster extends IntegrationTest with Matchers {
       finally dockerClient.close()
     }
 
-    CommonUtil.await(
-      () => !Await.result(clusterCollie.zookeeperCollie().clusters(), 60 seconds).exists(_._1.name == name),
-      java.time.Duration.ofSeconds(30))
+    await(() => !result(clusterCollie.zookeeperCollie().clusters()).exists(_._1.name == name))
   }
 
   @Test
   def deadBrokerClusterShouldDisappear(): Unit = {
-    val zkCluster = Await.result(
+    val zkCluster = result(
       clusterCollie
         .zookeeperCollie()
         .creator()
@@ -106,13 +103,12 @@ class TestListCluster extends IntegrationTest with Matchers {
         .electionPort(CommonUtil.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(nameHolder.generateClusterName())
-        .create(),
-      30 seconds
+        .create()
     )
 
     try {
       val name = nameHolder.generateClusterName()
-      try Await.result(
+      try result(
         clusterCollie
           .brokerCollie()
           .creator()
@@ -123,8 +119,7 @@ class TestListCluster extends IntegrationTest with Matchers {
           .nodeNames(nodeCache.map(_.name))
           .clusterName(name)
           .zookeeperClusterName(zkCluster.name)
-          .create(),
-        30 seconds
+          .create()
       )
       catch {
         case _: Throwable =>
@@ -138,10 +133,8 @@ class TestListCluster extends IntegrationTest with Matchers {
         finally dockerClient.close()
       }
 
-      CommonUtil.await(
-        () => !Await.result(clusterCollie.brokerCollie().clusters(), 60 seconds).exists(_._1.name == name),
-        java.time.Duration.ofSeconds(30))
-    } finally if (cleanup) Await.result(clusterCollie.zookeeperCollie().remove(zkCluster.name), 60 seconds)
+      await(() => !result(clusterCollie.brokerCollie().clusters()).exists(_._1.name == name))
+    } finally if (cleanup) result(clusterCollie.zookeeperCollie().remove(zkCluster.name))
   }
 
   @After

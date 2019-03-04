@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.it.agent
+
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortPair}
-import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -29,7 +30,7 @@ import org.scalatest.Matchers
   * You can run following command to pass the information of remote node.
   * $ gradle clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
   */
-class TestDockerClient extends MediumTest with Matchers {
+class TestDockerClient extends IntegrationTest with Matchers {
 
   /**
     * form: user:password@hostname:port.
@@ -99,7 +100,7 @@ class TestDockerClient extends MediumTest with Matchers {
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
       .run()
     TimeUnit.SECONDS.sleep(2)
-    CommonUtil.await(() => client.nonExist(name), java.time.Duration.ofSeconds(10))
+    await(() => client.nonExist(name))
   }
 
   @Test

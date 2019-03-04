@@ -35,8 +35,7 @@ import org.apache.kafka.common.errors.{InvalidReplicationFactorException, Unknow
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 /**
   * This abstract class extracts the "required" information of running tests on true env.
@@ -104,10 +103,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     * used to debug...
     */
   protected val cleanup: Boolean = true
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 120 seconds)
-
-  private[this] def await(s: () => Boolean): Unit = CommonUtil.await(() => s(), Duration.ofSeconds(120))
 
   protected def generateClusterName(): String
 
@@ -264,14 +259,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     try {
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames}")
       // make sure all active broker nodes are sync!
-      CommonUtil.await(
+      await(
         () => {
           brokerClient.brokerPorts().size() == cluster.nodeNames.size
-        },
-        java.time.Duration.ofSeconds(60)
+        }
       )
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames} ... done")
-      CommonUtil.await(
+      await(
         () => {
           try {
             brokerClient
@@ -288,8 +282,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                 case _: Throwable                         => throw e.getCause
               }
           }
-        },
-        java.time.Duration.ofSeconds(20)
+        }
       )
       log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers ... done")
       val producer = Producer.builder().connectionProps(brokers).allAcks().build(Serializer.STRING, Serializer.STRING)
@@ -430,15 +423,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   private[this] def testPlugins(cluster: WorkerClusterInfo): WorkerClusterInfo = {
     val workerClient = WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}")
-    CommonUtil.await(
+    await(
       () =>
         try result(workerClient.plugins()).nonEmpty
         catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)
             false
-      },
-      Duration.ofSeconds(60)
+      }
     )
     cluster
   }
@@ -514,7 +506,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = nodeCache.map(_.name)
           ))
       }
-      val clusters2 = Await.result(zk_clusters(), 20 seconds)
+      val clusters2 = result(zk_clusters())
       clusters.foreach { c =>
         val another = clusters2.find(_.name == c.name).get
         another.name shouldBe c.name
@@ -529,7 +521,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         }
       }
     } finally if (cleanup) names.foreach { name =>
-      try Await.result(zk_delete(name), 60 seconds)
+      try result(zk_delete(name))
       catch {
         case _: Throwable =>
         // do nothing
@@ -565,21 +557,21 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               nodeNames = Seq(nodeCache.head.name)
             ))
       }
-      val clusters2 = Await.result(bk_clusters(), 20 seconds)
+      val clusters2 = result(bk_clusters())
       clusters.foreach { c =>
         clusters2.find(_.name == c.name).get shouldBe c
         testTopic(c)
       }
     } finally if (cleanup) {
       bkNames.foreach { name =>
-        try Await.result(bk_delete(name), 60 seconds)
+        try result(bk_delete(name))
         catch {
           case _: Throwable =>
           // do nothing
         }
       }
       zkNames.foreach { name =>
-        try Await.result(zk_delete(name), 60 seconds)
+        try result(zk_delete(name))
         catch {
           case _: Throwable =>
           // do nothing
@@ -646,7 +638,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
 
       log.info(s"check multi wk clusters:$wkNames by list")
-      val clusters2 = Await.result(wk_clusters(), 20 seconds)
+      val clusters2 = result(wk_clusters())
       clusters.foreach { c =>
         val another = clusters2.find(_.name == c.name).get
         another.name shouldBe c.name
@@ -668,18 +660,18 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
     } finally if (cleanup) {
       wkNames.foreach { name =>
-        try Await.result(wk_delete(name), 60 seconds)
+        try result(wk_delete(name))
         catch {
           case _: Throwable =>
           // do nothing
         }
       }
-      try Await.result(bk_delete(bkName), 60 seconds)
+      try result(bk_delete(bkName))
       catch {
         case _: Throwable =>
         // do nothing
       }
-      try Await.result(zk_delete(zkName), 60 seconds)
+      try result(zk_delete(zkName))
       catch {
         case _: Throwable =>
         // do nothing

@@ -32,9 +32,7 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
+import scala.concurrent.Future
 class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
 
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
@@ -62,8 +60,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   private[this] val configurator: Configurator =
     Configurator.builder().advertisedHostname(publicHostname).advertisedPort(publicPort).build()
   private[this] val jarStore: JarStore = configurator.jarStore
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   private[this] val zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -150,14 +146,13 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     // make sure all workers have loaded the test-purposed connector.
     result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
       val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
-      CommonUtil.await(
+      await(
         () =>
           try result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector")
             && result(workerClient.plugins()).exists(_.className == "com.island.ohara.it.ItConnector2")
           catch {
             case _: Throwable => false
-        },
-        java.time.Duration.ofSeconds(120)
+        }
       )
     }
   }

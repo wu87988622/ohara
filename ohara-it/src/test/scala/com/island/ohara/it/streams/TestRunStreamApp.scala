@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.it.streams
 
 import java.io.File
 
@@ -24,11 +24,9 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{StreamApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 class TestRunStreamApp extends IntegrationTest with Matchers {
   private[this] val configurator =
@@ -55,7 +53,7 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
     val from = "fromTopic"
     val to = "toTopic"
 
-    Await.result(
+    result(
       TopicApi
         .access()
         .hostname(configurator.hostname)
@@ -64,10 +62,9 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
           TopicCreationRequest(name = Some(from),
                                brokerClusterName = None,
                                numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
+                               numberOfReplications = None))
     )
-    Await.result(
+    result(
       TopicApi
         .access()
         .hostname(configurator.hostname)
@@ -76,8 +73,7 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
           TopicCreationRequest(name = Some(to),
                                brokerClusterName = None,
                                numberOfPartitions = None,
-                               numberOfReplications = None)),
-      10 seconds
+                               numberOfReplications = None))
     )
 
     val userJarPath =
@@ -90,15 +86,13 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
         .toSeq
 
     // Upload Jar
-    val jarData = Await.result(
-      streamAppListAccess.upload(pipeline_id, filePaths),
-      30 seconds
+    val jarData = result(
+      streamAppListAccess.upload(pipeline_id, filePaths)
     )
 
     //Get topic information
-    val topicInfos = Await.result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).list(),
-      10 seconds
+    val topicInfos = result(
+      TopicApi.access().hostname(configurator.hostname).port(configurator.port).list()
     )
     val fromTopic = topicInfos
       .filter { info =>
@@ -120,9 +114,8 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
       Seq(toTopic),
       instances
     )
-    val streamAppProp = Await.result(
-      streamAppPropertyAccess.update(jarData.head.id, req),
-      10 seconds
+    val streamAppProp = result(
+      streamAppPropertyAccess.update(jarData.head.id, req)
     )
     streamAppProp.fromTopics.size shouldBe 1
     streamAppProp.toTopics.size shouldBe 1
@@ -130,13 +123,13 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
 
     //Start StreamApp
     val res1 =
-      Await.result(streamAppActionAccess.start(jarData.head.id), 60 seconds)
+      result(streamAppActionAccess.start(jarData.head.id))
     res1.id shouldBe jarData.head.id
     res1.state.getOrElse("") shouldBe ContainerState.RUNNING
 
     //Stop StreamApp
     val res2 =
-      Await.result(streamAppActionAccess.stop(jarData.head.id), 60 seconds)
+      result(streamAppActionAccess.stop(jarData.head.id))
     res2.state.isEmpty shouldBe true
   }
 
