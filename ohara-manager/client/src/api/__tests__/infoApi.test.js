@@ -19,6 +19,8 @@ import { handleError, axiosInstance } from 'utils/apiUtils';
 
 jest.mock('utils/apiUtils');
 
+const url = '/api/info';
+
 describe('fetchInfo()', () => {
   afterEach(jest.clearAllMocks);
 
@@ -33,7 +35,7 @@ describe('fetchInfo()', () => {
 
     const result = await fetchInfo();
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith('/api/info');
+    expect(axiosInstance.get).toHaveBeenCalledWith(url);
     expect(result).toBe(res);
   });
 
@@ -48,7 +50,7 @@ describe('fetchInfo()', () => {
     const result = await fetchInfo();
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.get).toHaveBeenCalledWith('/api/info');
+    expect(axiosInstance.get).toHaveBeenCalledWith(url);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });

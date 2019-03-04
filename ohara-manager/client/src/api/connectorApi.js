@@ -18,6 +18,21 @@ import { get } from 'lodash';
 
 import { handleError, axiosInstance } from 'utils/apiUtils';
 
+export const fetchConnector = async id => {
+  try {
+    const res = await axiosInstance.get(`/api/connectors/${id}`);
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 export const createConnector = async params => {
   try {
     const res = await axiosInstance.post('/api/connectors', params);
@@ -36,21 +51,6 @@ export const createConnector = async params => {
 export const updateConnector = async ({ id, params }) => {
   try {
     const res = await axiosInstance.put(`/api/connectors/${id}`, params);
-    const isSuccess = get(res, 'data.isSuccess', false);
-
-    if (!isSuccess) {
-      handleError(res);
-    }
-
-    return res;
-  } catch (err) {
-    handleError(err);
-  }
-};
-
-export const fetchConnector = async id => {
-  try {
-    const res = await axiosInstance.get(`/api/connectors/${id}`);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

@@ -21,7 +21,7 @@ import { Field, Form } from 'react-final-form';
 import { get, isEmpty } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
-import * as streamAppApi from 'api/streamAppApi';
+import * as streamApi from 'api/streamApi';
 import * as _ from 'utils/commonUtils';
 import Controller from './Controller';
 import { STREAM_APP_STATES, STREAM_APP_ACTIONS } from 'constants/pipelines';
@@ -95,7 +95,7 @@ class StreamApp extends React.Component {
   }
 
   fetchStreamApp = async id => {
-    const res = await streamAppApi.fetchProperty(id);
+    const res = await streamApi.fetchProperty(id);
     const streamApp = get(res, 'data.result', null);
 
     if (!isEmpty(streamApp)) {
@@ -123,7 +123,7 @@ class StreamApp extends React.Component {
       toTopics,
     };
 
-    const res = await streamAppApi.updateProperty(params);
+    const res = await streamApi.updateProperty(params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (isSuccess) {
@@ -173,24 +173,13 @@ class StreamApp extends React.Component {
     await this.triggerStreamApp(STREAM_APP_ACTIONS.stop);
   };
 
-  handleDeleteStreamApp = async () => {
-    const { refreshGraph } = this.props;
-    const { streamAppId } = this.state;
-    const res = await streamAppApi.del(streamAppId);
-    const isSuccess = get(res, 'data.isSuccess', false);
-    if (isSuccess) {
-      toastr.success(MESSAGES.STREAM_APP_DELETION_SUCCESS);
-      refreshGraph();
-    }
-  };
-
   triggerStreamApp = async action => {
     const { streamAppId } = this.state;
     let res;
     if (action === STREAM_APP_ACTIONS.start) {
-      res = await streamAppApi.start(streamAppId);
+      res = await streamApi.start(streamAppId);
     } else {
-      res = await streamAppApi.stop(streamAppId);
+      res = await streamApi.stop(streamAppId);
     }
     this.handleTriggerStreamAppResponse(action, res);
   };
