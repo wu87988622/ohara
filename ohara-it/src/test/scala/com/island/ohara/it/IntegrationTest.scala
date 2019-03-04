@@ -16,12 +16,27 @@
 
 package com.island.ohara.it
 
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.common.rule.OharaTest
+import com.island.ohara.common.util.CommonUtil
 import org.junit.Rule
 import org.junit.rules.Timeout
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+
 class IntegrationTest extends OharaTest {
   @Rule def globalTimeout: Timeout = new Timeout(12, TimeUnit.MINUTES)
+
+  protected def result[T](f: Future[T]): T = IntegrationTest.result(f)
+
+  protected def await(f: () => Boolean): Unit = IntegrationTest.await(f)
+}
+
+object IntegrationTest {
+  def result[T](f: Future[T]): T = Await.result(f, 300 seconds)
+
+  def await(f: () => Boolean): Unit = CommonUtil.await(() => f(), Duration.ofSeconds(300))
 }

@@ -21,8 +21,8 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.typesafe.scalalogging.Logger
@@ -30,9 +30,7 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
+import scala.concurrent.Future
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestK8SSimpleCollie])
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
@@ -67,13 +65,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def waitBrokerCluster(clusterName: String): Unit = {
-    CommonUtil.await(() => result(clusterCollie.brokerCollie().clusters()).exists(_._1.name == clusterName),
-                     java.time.Duration.ofSeconds(30))
+    await(() => result(clusterCollie.brokerCollie().clusters()).exists(_._1.name == clusterName))
   }
 
   private[this] def waitWorkerCluster(clusterName: String): Unit = {
-    CommonUtil.await(() => result(clusterCollie.workerCollie().clusters()).exists(_._1.name == clusterName),
-                     java.time.Duration.ofSeconds(30))
+    await(() => result(clusterCollie.workerCollie().clusters()).exists(_._1.name == clusterName))
   }
 
   @Test
@@ -342,8 +338,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         result(brokerCollie.removeNode(brokerClusterName, firstNode))
 
         val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-        CommonUtil.await(() => !k8sClient.containers().exists(c => c.hostname.contains(firstContainerName)),
-                         java.time.Duration.ofSeconds(30))
+        await(() => !k8sClient.containers().exists(c => c.hostname.contains(firstContainerName)))
         result(brokerCollie.cluster(brokerClusterName))._2.size shouldBe 1
       } finally result(brokerCollie.remove(brokerClusterName))
     } finally result(zookeeperCollie.remove(zkClusterName))
@@ -395,8 +390,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           result(workerCollie.removeNode(workerClusterName, firstNode))
 
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-          CommonUtil.await(() => !k8sClient.containers().exists(c => c.hostname.contains(firstContainerName)),
-                           java.time.Duration.ofSeconds(30))
+          await(() => !k8sClient.containers().exists(c => c.hostname.contains(firstContainerName)))
           result(workerCollie.cluster(workerClusterName))._2.size shouldBe 1
         } finally result(workerCollie.remove(workerClusterName))
       } finally result(brokerCollie.remove(brokerClusterName))
@@ -467,17 +461,15 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           val workerContainerHostName: String = result(workerCollie.cluster(workerClusterName))._2.head.hostname
 
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-          CommonUtil.await(
+          await(
             () =>
               k8sClient
                 .containers()
-                .count(c => c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING) == 1,
-            java.time.Duration.ofSeconds(30)
+                .count(c => c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING) == 1
           )
 
           val logMessage: String = "Kafka Connect distributed worker initializing ..."
-          CommonUtil.await(() => result(workerCollie.logs(workerClusterName)).head._2.contains(logMessage),
-                           java.time.Duration.ofSeconds(30))
+          await(() => result(workerCollie.logs(workerClusterName)).head._2.contains(logMessage))
           val workerlogs: Map[ContainerInfo, String] = result(workerCollie.logs(workerClusterName))
           workerlogs.size shouldBe 1
 
@@ -545,8 +537,6 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .create()
     )
   }
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   @After
   final def tearDown(): Unit = Releasable.close(clusterCollie)

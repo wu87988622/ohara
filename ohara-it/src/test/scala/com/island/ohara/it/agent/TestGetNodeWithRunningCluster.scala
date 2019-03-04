@@ -25,17 +25,11 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
 class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
 
   private[this] val configurator: Configurator = Configurator.builder().build()
-
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
   @Before
   def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtil.key} is required")

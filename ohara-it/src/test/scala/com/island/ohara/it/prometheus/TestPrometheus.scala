@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.it.prometheus
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -22,26 +22,23 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent.{ClusterCollie, DockerClient, NodeCollie}
-import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.prometheus.PrometheusJson.{Health, Targets}
-import com.island.ohara.it.prometheus.{PrometheusClient, PrometheusConfigUtil, PrometheusDescription, PrometheusServer}
 import org.junit.Assume._
 import org.junit.{Before, Ignore, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
 
 class TestPrometheus extends IntegrationTest with Matchers {
 
   private val nodes_key = "ohara.it.docker"
-
-  private val timeout: java.time.Duration = java.time.Duration.ofSeconds(50)
 
   private val nodes: Option[Seq[Node]] = sys.env
     .get(nodes_key)
@@ -90,16 +87,13 @@ class TestPrometheus extends IntegrationTest with Matchers {
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
           val url = "http://" + node.name + ":" + exporterPort + "/metrics"
           import scala.concurrent.ExecutionContext.Implicits.global
-          import scala.concurrent.duration._
           try {
-            CommonUtil.await(
+            await(
               () => {
                 val txt =
-                  Await.result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(Unmarshal(_).to[String]),
-                               10 seconds)
+                  result(Http().singleRequest(HttpRequest(HttpMethods.GET, url)).flatMap(Unmarshal(_).to[String]))
                 txt.contains("kafka")
-              },
-              java.time.Duration.ofSeconds(30)
+              }
             )
           } finally actorSystem.terminate()
         }
@@ -116,7 +110,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     val zookeeperCollie = clusterCollie.zookeeperCollie()
 
     try f(
-      Await.result(
+      result(
         zookeeperCollie
           .creator()
           .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
@@ -124,11 +118,10 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .electionPort(electionPort)
           .peerPort(peerPort)
           .clusterName(clusterName)
-          .nodeName(Await.result(nodeCollie.nodes(), 10 seconds).head.name)
-          .create(),
-        2 minutes
+          .nodeName(result(nodeCollie.nodes()).head.name)
+          .create()
       ))
-    finally Await.result(zookeeperCollie.remove(clusterName), 60 seconds)
+    finally result(zookeeperCollie.remove(clusterName))
   }
 
   def startBroker(zkClusterName: String, f: (Int, BrokerClusterInfo) => Unit): Unit = {
@@ -139,7 +132,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
 
     try f(
       exporterPort,
-      Await.result(
+      result(
         brokerCollie
           .creator()
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
@@ -147,12 +140,11 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .clientPort(clientPort)
           .exporterPort(exporterPort)
           .zookeeperClusterName(zkClusterName)
-          .nodeName(Await.result(nodeCollie.nodes(), 10 seconds).head.name)
-          .create(),
-        2 minutes
+          .nodeName(result(nodeCollie.nodes()).head.name)
+          .create()
       )
     )
-    finally Await.result(brokerCollie.remove(clusterName), 60 seconds)
+    finally result(brokerCollie.remove(clusterName))
   }
 
   private val fakeUrl = "128.128.128.128"
@@ -176,18 +168,17 @@ class TestPrometheus extends IntegrationTest with Matchers {
             val pclient = PrometheusClient(node.name + ":" + desc.clientPort)
 
             //check not in  target
-            CommonUtil.await(() => !isContain(pclient.targets(), "123.123.123.123:" + desc.clientPort), timeout)
+            await(() => !isContain(pclient.targets(), "123.123.123.123:" + desc.clientPort))
 
             //check inactive target
-            CommonUtil.await(() => isActive(pclient.targets(), fakeUrl + ":" + desc.clientPort, health = false),
-                             timeout)
+            await(() => isActive(pclient.targets(), fakeUrl + ":" + desc.clientPort, health = false))
 
             //check add targets
             ports
               .map(node.name + ":" + _)
               .foreach(target => {
                 util.addTarget(target)
-                CommonUtil.await(() => isActive(pclient.targets(), target), timeout)
+                await(() => isActive(pclient.targets(), target))
               })
 
             //       check remove targets
@@ -195,7 +186,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
               .map(node.name + ":" + _)
               .foreach(target => {
                 util.removeTarget(target)
-                CommonUtil.await(() => !isContain(pclient.targets(), target), timeout)
+                await(() => !isContain(pclient.targets(), target))
               })
           } finally client.close()
         }

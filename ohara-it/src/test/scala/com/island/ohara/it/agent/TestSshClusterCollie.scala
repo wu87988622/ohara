@@ -21,8 +21,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 import org.junit.{After, Before, Test}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
+import scala.concurrent.Future
 class TestSshClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
@@ -39,7 +38,7 @@ class TestSshClusterCollie extends BasicTests4ClusterCollie {
 
   @Test
   def testListImages(): Unit = {
-    val images = Await.result(clusterCollie.images(nodeCache), 120 seconds)
+    val images = result(clusterCollie.images(nodeCache))
     images.isEmpty shouldBe false
     images.foreach(_._2.isEmpty shouldBe false)
   }

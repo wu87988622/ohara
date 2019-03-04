@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it
+package com.island.ohara.it.agent
+
 import java.util.UUID
 
 import akka.actor.ActorSystem
@@ -27,8 +28,8 @@ import com.island.ohara.agent.K8SClient
 import com.island.ohara.agent.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.client.configurator.v0.ZookeeperApi
-import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.it.IntegrationTest
 import com.typesafe.scalalogging.Logger
 import org.junit._
 import org.scalatest.Matchers
@@ -36,10 +37,9 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{FiniteDuration, _}
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-class TestK8SSimple extends SmallTest with Matchers {
+class TestK8SSimple extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestK8SSimple])
   private[this] var k8sApiServerURL: String = _
   private[this] var nodeServerNames: Seq[String] = _
@@ -171,8 +171,6 @@ class TestK8SSimple extends SmallTest with Matchers {
 object TestK8SSimple {
   implicit val actorSystem: ActorSystem = ActorSystem("TestK8SServer")
   implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
-
-  val TIMEOUT: FiniteDuration = 30 seconds
   val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
 
@@ -184,25 +182,23 @@ object TestK8SSimple {
   @AfterClass
   def afterClass(): Unit = {
     if (TestK8SSimple.API_SERVER_URL.nonEmpty && hasPod(TestK8SSimple.API_SERVER_URL.get, uuid)) {
-      Await.result(
+      IntegrationTest.result(
         Http().singleRequest(
-          HttpRequest(HttpMethods.DELETE, uri = s"${TestK8SSimple.API_SERVER_URL.get}/namespaces/default/pods/$uuid")),
-        TIMEOUT)
+          HttpRequest(HttpMethods.DELETE, uri = s"${TestK8SSimple.API_SERVER_URL.get}/namespaces/default/pods/$uuid")))
     }
 
     //Terminate actor system
-    Await.result(actorSystem.terminate(), 60 seconds)
+    IntegrationTest.result(actorSystem.terminate())
   }
 
   def createZookeeperPod(k8sApiServerURL: String, podName: String): Unit = {
     val podJSON = "{\"apiVersion\": \"v1\", \"kind\": \"Pod\", \"metadata\": { \"name\": \"" + podName + "\" },\"spec\": {\"hostname\": \"" + podName + "\", \"containers\": [{\"name\": \"" + podName + "\", \"image\": \"" + ZookeeperApi.IMAGE_NAME_DEFAULT + "\", \"env\": [{\"name\": \"key1\", \"value\": \"value1\"}],\"ports\": [{\"containerPort\": 2181}]}]}}"
 
-    Await.result(
+    IntegrationTest.result(
       Http().singleRequest(
         HttpRequest(HttpMethods.POST,
                     entity = HttpEntity(ContentTypes.`application/json`, podJSON),
-                    uri = s"$k8sApiServerURL/namespaces/default/pods")),
-      TestK8SSimple.TIMEOUT
+                    uri = s"$k8sApiServerURL/namespaces/default/pods"))
     )
   }
 
@@ -215,9 +211,8 @@ object TestK8SSimple {
     implicit val ITEM_JSON_FORMAT: RootJsonFormat[Item] = jsonFormat1(Item)
     implicit val PODINFO_JSON_FORMAT: RootJsonFormat[PodInfo] = jsonFormat1(PodInfo)
 
-    val podInfo: PodInfo = Await.result(
-      Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"$k8sApiServerURL/pods")).flatMap(unmarshal[PodInfo]),
-      TIMEOUT
+    val podInfo: PodInfo = IntegrationTest.result(
+      Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"$k8sApiServerURL/pods")).flatMap(unmarshal[PodInfo])
     )
     podInfo.items.map(x => x.metadata.name).exists(x => x.equals(podName))
   }
@@ -233,12 +228,11 @@ object TestK8SSimple {
     implicit val ITEM_JSON_FORMAT: RootJsonFormat[Item] = jsonFormat1(Item)
     implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat1(Node)
 
-    Await
+    IntegrationTest
       .result(
         Http()
           .singleRequest(HttpRequest(HttpMethods.GET, uri = s"${API_SERVER_URL.get}/nodes"))
-          .flatMap(unmarshal[Node]),
-        TIMEOUT
+          .flatMap(unmarshal[Node])
       )
       .items
       .map(x => x.status.nodeInfo.machineID)
