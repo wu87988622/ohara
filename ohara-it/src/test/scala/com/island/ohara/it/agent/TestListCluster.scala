@@ -21,12 +21,13 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
+import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Future
 class TestListCluster extends IntegrationTest with Matchers {
-
+  private[this] val log = Logger(classOf[TestListCluster])
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
@@ -61,7 +62,7 @@ class TestListCluster extends IntegrationTest with Matchers {
   def deadZookeeperClusterShouldDisappear(): Unit = {
 
     val name = nameHolder.generateClusterName()
-
+    log.info(s"[TestListCluster] before create zk cluster:$name")
     try result(
       clusterCollie
         .zookeeperCollie()
@@ -80,18 +81,21 @@ class TestListCluster extends IntegrationTest with Matchers {
       // creation is "async" so we can't assume the result...
     }
 
+    log.info("[TestListCluster] before check zk containers")
     nodeCache.foreach { node =>
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-      try dockerClient.containers(_.contains(name)).size shouldBe 1
+      try await(() => dockerClient.activeContainers(_.contains(name)).isEmpty)
       finally dockerClient.close()
     }
 
+    log.info("[TestListCluster] before check zk clusters")
     await(() => !result(clusterCollie.zookeeperCollie().clusters()).exists(_._1.name == name))
   }
 
   @Test
   def deadBrokerClusterShouldDisappear(): Unit = {
+    log.info("[TestListCluster] before create zk cluster")
     val zkCluster = result(
       clusterCollie
         .zookeeperCollie()
@@ -105,6 +109,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .create()
     )
 
+    log.info("[TestListCluster] before create bk cluster")
     try {
       val name = nameHolder.generateClusterName()
       try result(
@@ -125,13 +130,15 @@ class TestListCluster extends IntegrationTest with Matchers {
         // creation is "async" so we can't assume the result...
       }
 
+      log.info("[TestListCluster] before check bk containers")
       nodeCache.foreach { node =>
         val dockerClient =
           DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-        try dockerClient.containers(_.contains(name)).size shouldBe 1
+        try await(() => dockerClient.activeContainers(_.contains(name)).isEmpty)
         finally dockerClient.close()
       }
 
+      log.info("[TestListCluster] before check bk clusters")
       await(() => !result(clusterCollie.brokerCollie().clusters()).exists(_._1.name == name))
     } finally if (cleanup) result(clusterCollie.zookeeperCollie().remove(zkCluster.name))
   }
