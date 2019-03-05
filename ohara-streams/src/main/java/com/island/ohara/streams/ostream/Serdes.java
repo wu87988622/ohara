@@ -24,6 +24,7 @@ public class Serdes {
   public static Serde<String> STRING = StringSerde.get();
   public static Serde<Row> ROW = RowSerde.get();
   public static Serde<Double> DOUBLE = DoubleSerde.get();
+  public static Serde<byte[]> BYTES = BytesSerde.get();
 
   protected static class WrapperSerde<T> implements Serde<T> {
 
@@ -83,6 +84,16 @@ public class Serdes {
 
     static Serde<Double> get() {
       return new WrapperSerde<>(new DoubleSerializer(), new DoubleDeserializer());
+    }
+  }
+
+  public static final class BytesSerde extends WrapperSerde<byte[]> {
+    public BytesSerde() {
+      super(new BytesSerializer(), new BytesDeserializer());
+    }
+
+    static Serde<byte[]> get() {
+      return new WrapperSerde<>(new BytesSerializer(), new BytesDeserializer());
     }
   }
 }

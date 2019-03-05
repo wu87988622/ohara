@@ -16,7 +16,9 @@
 
 package com.island.ohara.streams;
 
+import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
+import com.island.ohara.streams.ostream.KeyValue;
 
 public class SimpleApplicationForOharaEnv extends StreamApp {
 
@@ -28,9 +30,35 @@ public class SimpleApplicationForOharaEnv extends StreamApp {
    */
   @Override
   public void start() throws Exception {
-    OStream<String, Row> ostream = OStream.builder().toOharaEnvStream();
+    OStream<Row, byte[]> ostream = OStream.builder().toOharaEnvStream();
 
-    // do nothing but only start streamApp
-    ostream.start();
+    // A simple sample to illustrate how to use OStream
+    // for example :
+    // Topic-A <Row, byte[]> -> Topic-B <Row, byte[]>
+    //
+    // Topic-A data is
+    // index,name,age
+    // 1,samcho,31
+    // 2,johndoe,20
+    //
+    // will transform and save to Topic-B
+    //
+    // index,name,age
+    // 1,SAMCHO,31
+    // 2,JOHNDOE,20
+    //
+    // Note : It will do nothing if there was no data in Topic-A
+    ostream
+        .map(
+            (row, value) ->
+                new KeyValue<>(
+                    row.size() > 0
+                        ? Row.of(
+                            row.cell("index"),
+                            Cell.of("name", row.cell("name").value().toString().toUpperCase()),
+                            row.cell("age"))
+                        : Row.EMPTY,
+                    value))
+        .start();
   }
 }

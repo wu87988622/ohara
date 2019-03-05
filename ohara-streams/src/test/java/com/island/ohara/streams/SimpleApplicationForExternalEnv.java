@@ -17,6 +17,7 @@
 package com.island.ohara.streams;
 
 import com.island.ohara.common.data.Row;
+import com.island.ohara.streams.ostream.Serdes;
 
 public class SimpleApplicationForExternalEnv extends StreamApp {
 
@@ -31,7 +32,7 @@ public class SimpleApplicationForExternalEnv extends StreamApp {
         OStream.builder()
             .bootstrapServers("your_broker_list")
             .appid("simple-application-for-external")
-            .fromTopic("consume_topic_name")
+            .fromTopicWith("consume_topic_name", Serdes.STRING, Serdes.ROW)
             .toTopic("target_topic_name")
             .build();
 

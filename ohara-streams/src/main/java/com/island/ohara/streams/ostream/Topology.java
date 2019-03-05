@@ -111,7 +111,7 @@ public class Topology implements AutoCloseable {
                                     .collect(Collectors.toList()));
                           })
                       .collect(Collectors.toList());
-              steles.forEach(stele -> pg.addStele(stele));
+              steles.forEach(pg::addStele);
               return pg;
             })
         .collect(Collectors.toList());
