@@ -78,19 +78,16 @@ private[configurator] object StreamRoute {
 
   // TODO this is a workaround for 0.2 to solve not-compatible state between pipeline and streamApp
   // Maybe we need refactor the "state" to be more general...by sam
-  private[this] def toConnectorState(state: Option[ContainerState]): ConnectorState = {
-    ConnectorState.values
-      .find { value =>
-        state.nonEmpty &&
-        (value.toString match {
-          case ContainerState.EXITED.name =>
-            ConnectorState.FAILED.toString
-          case _ =>
-            value.toString
-        }).equalsIgnoreCase(state.get.name)
-      }
-      .getOrElse(throw new IllegalArgumentException(
-        s"Unknown state name: [${state.getOrElse(ContainerState.UNKNOWN).name}]"))
+  private[this] def toConnectorState(state: Option[ContainerState]): Option[ConnectorState] = {
+    ConnectorState.values.find { value =>
+      state.nonEmpty &&
+      (value.toString match {
+        case ContainerState.EXITED.name =>
+          ConnectorState.FAILED.toString
+        case _ =>
+          value.toString
+      }).equalsIgnoreCase(state.get.name)
+    }
   }
 
   private[this] val clientCache: DockerClientCache = new DockerClientCache {
@@ -387,7 +384,7 @@ private[configurator] object StreamRoute {
                                     d =>
                                       Future.successful(
                                         d.copy(
-                                          state = Some(toConnectorState(res.state)),
+                                          state = toConnectorState(res.state),
                                           nodes = Seq(node)
                                         )
                                     )
@@ -421,6 +418,18 @@ private[configurator] object StreamRoute {
                         id,
                         Some(ContainerState.EXITED)
                       )
+                  }
+                  .map { res =>
+                    store.update[StreamApp](
+                      id,
+                      d =>
+                        Future.successful(
+                          d.copy(
+                            state = toConnectorState(res.state)
+                          )
+                      )
+                    )
+                    res
                   }
               })(complete(_))
             }
