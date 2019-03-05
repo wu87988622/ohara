@@ -64,43 +64,17 @@ class Configurator private[configurator] (
     extends ReleaseOnce
     with SprayJsonSupport {
 
-  //-----------------[public interfaces]-----------------//
-
-  val hostname: String = advertisedHostname.getOrElse(CommonUtil.hostname())
-
-  /**
-    * we assign the port manually since we have to create a jar store in order to create related routes. And then
-    * the http server can be created by the routes. Hence, we can't get free port through http server.
-    * TODO: this won't hurt the production but it may unstabilize our tests because of port conflict...by chia
-    */
-  val port: Int = advertisedPort.map(CommonUtil.resolvePort).getOrElse(CommonUtil.availablePort())
-
-  def size: Int = store.size
+  private def size: Int = store.size
 
   private[this] val log = Logger(classOf[Configurator])
 
   private[this] val jarLocalHome = CommonUtil.createTempDir("Configurator").getAbsolutePath
-  private[this] val jarDownloadPath = "jar"
-
-  /**
-    * We create an internal jar store based on http server of configurator.
-    */
-  implicit val jarStore: JarStore = new LocalJarStore(jarLocalHome) {
-    log.info(s"path of jar:$jarLocalHome")
-    override protected def doUrls(): Future[Map[String, URL]] = jarInfos().map(_.map { plugin =>
-      plugin.id -> new URL(s"http://${CommonUtil.address(hostname)}:$port/$jarDownloadPath/${plugin.id}.jar")
-    }.toMap)
-
-    override protected def doClose(): Unit = {
-      // do nothing
-    }
-  }
 
   /**
     * the route is exposed to worker cluster. They will download all assigned jars to start worker process.
     * TODO: should we integrate this route to our public API?? by chia
     */
-  private[this] def jarDownloadRoute(): server.Route = path(jarDownloadPath / Segment) { idWithExtension =>
+  private[this] def jarDownloadRoute(): server.Route = path(JarApi.JAR_PREFIX_PATH / Segment) { idWithExtension =>
     // We force all url end with .jar
     if (!idWithExtension.endsWith(".jar")) complete(StatusCodes.NotFound -> s"$idWithExtension doesn't exist")
     else {
@@ -182,11 +156,11 @@ class Configurator private[configurator] (
   private[this] val httpServer: Http.ServerBinding =
     try Await.result(
       Http().bindAndHandle(
-        handleExceptions(exceptionHandler())(
+        handler = handleExceptions(exceptionHandler())(
           handleRejections(rejectionHandler())(basicRoute() ~ privateRoute() ~ jarDownloadRoute()) ~ finalRoute()),
         // we bind the service on all network adapter.
-        CommonUtil.anyLocalAddress(),
-        port
+        interface = CommonUtil.anyLocalAddress(),
+        port = advertisedPort.getOrElse(0)
       ),
       initializationTimeout.toMillis milliseconds
     )
@@ -195,6 +169,32 @@ class Configurator private[configurator] (
         Releasable.close(this)
         throw e
     }
+
+  /**
+    * If you don't assign a advertised hostname explicitly, local hostname will be chosen.
+    * @return advertised hostname of configurator.
+    */
+  def hostname: String = advertisedHostname.getOrElse(CommonUtil.hostname())
+
+  /**
+    * If you don't assign a port explicitly, a random port will be chosen.
+    * @return port bound by configurator.
+    */
+  def port: Int = httpServer.localAddress.getPort
+
+  /**
+    * We create an internal jar store based on http server of configurator.
+    */
+  implicit val jarStore: JarStore = new LocalJarStore(jarLocalHome) {
+    log.info(s"path of jar:$jarLocalHome")
+    override protected def doUrls(): Future[Map[String, URL]] = jarInfos().map(_.map { plugin =>
+      plugin.id -> new URL(s"http://${CommonUtil.address(hostname)}:$port/${JarApi.JAR_PREFIX_PATH}/${plugin.id}.jar")
+    }.toMap)
+
+    override protected def doClose(): Unit = {
+      // do nothing
+    }
+  }
 
   /**
     * Do what you want to do when calling closing.
@@ -239,13 +239,12 @@ object Configurator {
       println(USAGE)
       return
     }
-    // TODO: make the parse more friendly
-    var hostname = CommonUtil.anyLocalAddress
-    var port: Int = 0
+
+    val configuratorBuilder = Configurator.builder()
     var nodeRequest: Option[NodeCreationRequest] = None
     args.sliding(2, 2).foreach {
-      case Array(HOSTNAME_KEY, value) => hostname = value
-      case Array(PORT_KEY, value)     => port = value.toInt
+      case Array(HOSTNAME_KEY, value) => configuratorBuilder.advertisedHostname(value)
+      case Array(PORT_KEY, value)     => configuratorBuilder.advertisedPort(value.toInt)
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head
         val password = value.split("@").head.split(":").last
@@ -260,7 +259,7 @@ object Configurator {
           ))
       case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
-    val configurator = Configurator.builder().advertisedHostname(hostname).advertisedPort(port).build()
+    val configurator = configuratorBuilder.build()
     try nodeRequest.foreach { req =>
       LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
       import scala.concurrent.duration._
