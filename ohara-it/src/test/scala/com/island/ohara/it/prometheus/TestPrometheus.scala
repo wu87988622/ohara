@@ -72,7 +72,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
   }
 
   protected val nodeCollie: NodeCollie = NodeCollie.inMemory(Seq(node))
-  protected val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
+  protected val clusterCollie: ClusterCollie = ClusterCollie.ssh(nodeCollie)
 
   /**
     * test kafka can export metric

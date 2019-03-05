@@ -206,13 +206,13 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
   override def containerNames(): Seq[String] =
     agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
 
-  override def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] = containers(nameFilter, true)
+  override def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] = listContainers(nameFilter, true)
 
-  override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = containers(nameFilter, false)
+  override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = listContainers(nameFilter, false)
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
-  private[this] def containers(nameFilter: String => Boolean, active: Boolean): Seq[ContainerInfo] = Await.result(
+  private[this] def listContainers(nameFilter: String => Boolean, active: Boolean): Seq[ContainerInfo] = Await.result(
     Future
       .traverse(
         try agent

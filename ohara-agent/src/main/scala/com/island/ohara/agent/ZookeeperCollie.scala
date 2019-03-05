@@ -25,9 +25,7 @@ import scala.concurrent.Future
   * An interface of controlling zookeeper cluster.
   * It isolates the implementation of container manager from Configurator.
   */
-trait ZookeeperCollie extends Collie[ZookeeperClusterInfo] {
-  override def creator(): ZookeeperCollie.ClusterCreator
-}
+trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator]
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {

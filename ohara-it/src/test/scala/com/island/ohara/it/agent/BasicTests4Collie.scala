@@ -545,7 +545,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = Seq(nodeCache.head.name)
           ))
       }
-
       val clusters = zks.zipWithIndex.map {
         case (zk, index) =>
           result(

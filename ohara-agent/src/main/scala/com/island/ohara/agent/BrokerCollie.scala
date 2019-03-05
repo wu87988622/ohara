@@ -23,8 +23,7 @@ import com.island.ohara.common.util.CommonUtil
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait BrokerCollie extends Collie[BrokerClusterInfo] {
-  def creator(): BrokerCollie.ClusterCreator
+trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
   /**
     * Create a topic admin according to passed cluster name.

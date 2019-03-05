@@ -25,19 +25,18 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Future
-
 class TestListCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
-  private[this] val nodeCollie: NodeCollie = new NodeCollie {
+  private[this] implicit val nodeCollie: NodeCollie = new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
     override def node(name: String): Future[Node] = Future.successful(
       nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
   }
 
-  private[this] val clusterCollie: ClusterCollie = ClusterCollie(nodeCollie)
+  private[this] val clusterCollie: ClusterCollie = ClusterCollie.ssh
 
   private[this] val cleanup: Boolean = true
 

@@ -16,11 +16,11 @@
 
 package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -129,7 +129,6 @@ trait ClusterCollie extends Releasable {
 }
 
 object ClusterCollie {
-  def apply(implicit nodeCollie: NodeCollie): ClusterCollie = ssh
 
   /**
     * the default implementation uses ssh and docker command to manage all clusters.
@@ -139,7 +138,8 @@ object ClusterCollie {
     * node-1 => workercluster-worker-1
     * node-2 => workercluster-worker-2
     */
-  def ssh(implicit nodeCollie: NodeCollie): ClusterCollie = new ClusterCollieImpl
+  def ssh(implicit nodeCollie: NodeCollie): ClusterCollie =
+    new com.island.ohara.agent.ssh.ClusterCollieImpl()
 
   /**
     * create kubernetes implements
