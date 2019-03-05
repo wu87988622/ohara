@@ -537,6 +537,7 @@ class DbConfiguration extends React.Component {
                 text="Test Connection"
                 theme={defaultBtn}
                 isWorking={isTestBtnWorking}
+                disabled={isTestBtnWorking}
                 data-testid="test-connection-btn"
                 handleClick={this.handleTestConnection}
               />
