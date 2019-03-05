@@ -162,6 +162,7 @@ class NodeNewModal extends React.Component {
                       text="Test connection"
                       data-testid="test-connection-button"
                       isWorking={isTestBtnWorking}
+                      disabled={isTestBtnWorking}
                       handleClick={e => {
                         e.preventDefault();
                         this.testConnection(values);
