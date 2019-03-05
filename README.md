@@ -105,15 +105,14 @@ docker run --rm -p 12345:12345 oharastream/backend:0.3-SNAPSHOT com.island.ohara
 
 The backend image is not included in production release. Hence, there is no guarantee to backend image.
 
-#### MySQL
+#### PostgreSQL
 
-```sh
-docker run --rm -p ${port}:${port} oharastream/backend:0.3-SNAPSHOT com.island.ohara.testing.service.Database --port ${port} --user ${USERNAME} --password ${PASSWORD}
 ```
-
-- port: bound by MySQL
-- user: username for MySQL
-- password: password for MySQL
+docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} --env POSTGRES_USER=${USER_NAME} --env POSTGRES_PASSWORD=${PASSWORD} -it islandsystems/postgresql:9.2.24
+```
+* POSTGRES_DB: PostgreSQL DataBase name
+* POSTGRES_USER: PostgreSQL login user name
+* POSTGRES_PASSWORD: PostgreSQL login password
 
 #### FTP
 
