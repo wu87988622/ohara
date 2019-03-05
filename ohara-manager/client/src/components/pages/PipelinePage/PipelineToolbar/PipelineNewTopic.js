@@ -83,7 +83,7 @@ class PipelineNewTopic extends React.Component {
       return toastr.error(MESSAGES.NO_TOPIC_IS_SUPPLIED);
     }
 
-    // Don't add a same topic more than one time
+    // Don't add a topic if it's already existed in the pipeline graph
     const isTopicExist = findByGraphId(graph, currentTopic.id);
 
     if (!isTopicExist) {
