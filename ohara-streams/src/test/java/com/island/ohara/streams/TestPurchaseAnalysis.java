@@ -163,7 +163,7 @@ public class TestPurchaseAnalysis extends WithBroker {
           OStream.builder()
               .appid(appid)
               .bootstrapServers(brokers)
-              .fromTopic(orderTopic)
+              .fromTopicWith(orderTopic, Serdes.STRING, Serdes.ROW)
               .toTopicWith(resultTopic, Serdes.STRING, Serdes.DOUBLE)
               .cleanStart()
               .timestampExactor(MyExtractor.class)

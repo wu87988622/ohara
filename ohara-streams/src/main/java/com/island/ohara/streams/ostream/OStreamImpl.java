@@ -111,8 +111,8 @@ class OStreamImpl<K, V> extends AbstractStream<K, V> implements OStream<K, V> {
       prop.setProperty(StreamsConfig.BOOTSTRAP_SERVERS, builder.getBootstrapServers());
       prop.setProperty(StreamsConfig.APP_ID, builder.getAppId());
       prop.setProperty(StreamsConfig.CLIENT_ID, builder.getAppId());
-      prop.setProperty(StreamsConfig.DEFAULT_KEY_SERDE, Serdes.StringSerde.class.getName());
-      prop.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE, Serdes.RowSerde.class.getName());
+      prop.setProperty(StreamsConfig.DEFAULT_KEY_SERDE, Serdes.BytesSerde.class.getName());
+      prop.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE, Serdes.BytesSerde.class.getName());
       if (builder.getExtractor() != null) {
         prop.setProperty(StreamsConfig.TIMESTAMP_EXTRACTOR, builder.getExtractor().getName());
       }

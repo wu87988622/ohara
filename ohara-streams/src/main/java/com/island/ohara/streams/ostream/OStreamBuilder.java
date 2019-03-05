@@ -16,6 +16,7 @@
 
 package com.island.ohara.streams.ostream;
 
+import com.island.ohara.common.data.Row;
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.streams.OStream;
 import java.util.Map;
@@ -170,15 +171,15 @@ public final class OStreamBuilder<K, V> {
    *
    * @return the logic entry {@code OStream}
    */
-  public OStream<K, V> toOharaEnvStream() {
+  public OStream<Row, byte[]> toOharaEnvStream() {
     Map<String, String> envs = System.getenv();
     if (envs.isEmpty() || !envs.containsKey(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS)) {
       throw new RuntimeException("You are not running this application in ohara environment ?");
     }
     this.bootstrapServers = envs.get(StreamsConfig.DOCKER_BOOTSTRAP_SERVERS);
     this.appId = envs.get(StreamsConfig.DOCKER_APPID);
-    this.fromTopic(envs.get(StreamsConfig.DOCKER_FROM_TOPICS));
-    this.toTopic(envs.get(StreamsConfig.DOCKER_TO_TOPICS));
+    this.fromTopicWith(envs.get(StreamsConfig.DOCKER_FROM_TOPICS), Serdes.ROW, Serdes.BYTES);
+    this.toTopicWith(envs.get(StreamsConfig.DOCKER_TO_TOPICS), Serdes.ROW, Serdes.BYTES);
     this.isOharaEnv = true;
 
     return new OStreamImpl<>(this);

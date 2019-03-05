@@ -16,7 +16,6 @@
 
 package com.island.ohara.streams;
 
-import com.island.ohara.common.data.Row;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.ostream.*;
 import java.util.List;
@@ -48,8 +47,8 @@ public interface OStream<K, V> {
 
   List<Poneglyph> getPoneglyph();
 
-  static OStreamBuilder<String, Row> builder() {
-    // By default, we use the <String, Row> as the stream topic consume with
-    return new OStreamBuilder<>(Serdes.STRING, Serdes.ROW);
+  static OStreamBuilder<byte[], byte[]> builder() {
+    // By default, we use the <byte[], byte[]> type for generic as the stream topic consume with
+    return new OStreamBuilder<>(Serdes.BYTES, Serdes.BYTES);
   }
 }
