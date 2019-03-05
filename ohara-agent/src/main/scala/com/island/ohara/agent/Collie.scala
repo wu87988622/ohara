@@ -29,7 +29,7 @@ import scala.concurrent.Future
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
   * @tparam T cluster description
   */
-trait Collie[T <: ClusterInfo] {
+trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 
   /**
     * remove whole cluster by specified name.
@@ -50,7 +50,7 @@ trait Collie[T <: ClusterInfo] {
     * create a cluster creator
     * @return creator of broker cluster
     */
-  def creator(): ClusterCreator[T]
+  def creator(): Creator
 
   /**
     * get the containers information from a1 cluster

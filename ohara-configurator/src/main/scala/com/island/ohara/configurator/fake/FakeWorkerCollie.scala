@@ -25,7 +25,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import scala.concurrent.Future
 
 private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
-    extends FakeCollie[WorkerClusterInfo]
+    extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator]
     with WorkerCollie {
 
   /**

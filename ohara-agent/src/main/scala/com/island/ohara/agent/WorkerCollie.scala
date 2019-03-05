@@ -25,8 +25,7 @@ import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-trait WorkerCollie extends Collie[WorkerClusterInfo] {
-  def creator(): WorkerCollie.ClusterCreator
+trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
   /**
     * Create a worker client according to passed cluster name.

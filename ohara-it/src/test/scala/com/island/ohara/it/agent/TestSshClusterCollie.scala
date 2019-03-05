@@ -25,7 +25,7 @@ import scala.concurrent.Future
 class TestSshClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
-  override protected val clusterCollie: ClusterCollie = ClusterCollie(new NodeCollie {
+  override protected val clusterCollie: ClusterCollie = ClusterCollie.ssh(new NodeCollie {
     override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
     override def node(name: String): Future[Node] = Future.successful(
       nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))

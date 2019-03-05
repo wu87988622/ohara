@@ -20,6 +20,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
+import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{ClusterCollie, Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
@@ -28,6 +29,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.Configurator.Store
+import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -36,6 +38,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtil {
+  val LOG = Logger(RouteUtil.getClass)
   // This is a query parameter.
   type TargetCluster = Option[String]
   type Id = String
@@ -160,8 +163,8 @@ private[route] object RouteUtil {
       }
     }
 
-  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag](
-    collie: Collie[Res],
+  def basicRouteOfCluster[Req <: ClusterCreationRequest, Res <: ClusterInfo: ClassTag, Creator <: ClusterCreator[Res]](
+    collie: Collie[Res, Creator],
     defaultImage: String,
     root: String,
     hookBeforeDelete: (Seq[ClusterInfo], String) => Future[String],

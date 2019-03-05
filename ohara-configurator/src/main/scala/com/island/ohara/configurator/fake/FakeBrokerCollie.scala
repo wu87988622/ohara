@@ -25,7 +25,7 @@ import com.island.ohara.client.kafka.TopicAdmin
 import scala.concurrent.Future
 
 private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
-    extends FakeCollie[BrokerClusterInfo]
+    extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator]
     with BrokerCollie {
 
   /**

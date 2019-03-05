@@ -16,6 +16,7 @@
 
 package com.island.ohara.configurator.fake
 
+import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{Collie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
@@ -24,7 +25,8 @@ import com.island.ohara.common.util.CommonUtil
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-private[configurator] abstract class FakeCollie[T <: ClusterInfo] extends Collie[T] {
+private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: ClusterCreator[T]]
+    extends Collie[T, Creator] {
   protected val clusterCache = new mutable.HashMap[T, Seq[ContainerInfo]]()
 
   def addCluster(cluster: T): T = {

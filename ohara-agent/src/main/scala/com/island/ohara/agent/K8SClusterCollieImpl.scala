@@ -18,6 +18,7 @@ package com.island.ohara.agent
 
 import java.net.URL
 
+import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.K8SClusterCollieImpl.{K8SBrokerCollieImpl, K8SWorkerCollieImpl, K8SZookeeperCollieImpl}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
@@ -62,7 +63,9 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
 private object K8SClusterCollieImpl {
   private[this] val LOG = Logger(classOf[K8SClusterCollieImpl])
 
-  private[this] trait K8SBasicCollieImpl[T <: ClusterInfo] extends Collie[T] with Releasable {
+  private[this] trait K8SBasicCollieImpl[T <: ClusterInfo, Creator <: ClusterCreator[T]]
+      extends Collie[T, Creator]
+      with Releasable {
     val nodeCollie: NodeCollie
     val k8sClient: K8SClient
     val service: Service
@@ -156,7 +159,7 @@ private object K8SClusterCollieImpl {
 
   private class K8SZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val k8sClient: K8SClient)
       extends ZookeeperCollie
-      with K8SBasicCollieImpl[ZookeeperClusterInfo] {
+      with K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
 
     override def creator(): ZookeeperCollie.ClusterCreator =
       (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
@@ -239,7 +242,7 @@ private object K8SClusterCollieImpl {
 
   private class K8SBrokerCollieImpl(implicit val nodeCollie: NodeCollie, val k8sClient: K8SClient)
       extends BrokerCollie
-      with K8SBasicCollieImpl[BrokerClusterInfo] {
+      with K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
     override def creator(): BrokerCollie.ClusterCreator =
       (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
@@ -363,7 +366,7 @@ private object K8SClusterCollieImpl {
 
   private class K8SWorkerCollieImpl(implicit val nodeCollie: NodeCollie, val k8sClient: K8SClient)
       extends WorkerCollie
-      with K8SBasicCollieImpl[WorkerClusterInfo] {
+      with K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
     override def creator(): WorkerCollie.ClusterCreator = (clusterName,
                                                            imageName,
