@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import java.util
 
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Column
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
 import org.slf4j.{Logger, LoggerFactory}

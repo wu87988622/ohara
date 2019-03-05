@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
 import com.island.ohara.common.util.CommonUtil

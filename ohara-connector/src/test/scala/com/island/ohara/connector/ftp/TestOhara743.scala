@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.ftp
 
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.connector.TaskConfig
