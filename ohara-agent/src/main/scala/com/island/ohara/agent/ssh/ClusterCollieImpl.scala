@@ -89,7 +89,7 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),
         sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-        sinks = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
+        sinks = plugins.filter(_.typeName.toLowerCase == "sink").map(InfoApi.toConnectorVersion),
         nodeNames = containers.map(_.nodeName)
       )
     }
