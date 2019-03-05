@@ -75,3 +75,18 @@ $ docker rm -f $(docker ps -q -a)
 ```
 We are talking about tests, right? You should have a machine for testing only so it is ok to remove all containers quickly.
 That does simplify your work and life.
+
+## How to enable IPv4 IP Forwarding
+
+```
+$ sudo vi /usr/lib/sysctl.d/00-system.conf
+```
+Add the following line.
+```
+net.ipv4.ip_forward=1
+```
+Save and exit the file. Restart network:
+```
+$ sudo systemctl restart network
+```
+see https://github.com/docker/compose/releases for more details
