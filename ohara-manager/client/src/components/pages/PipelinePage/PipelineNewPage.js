@@ -234,6 +234,10 @@ class PipelineNewPage extends React.Component {
     this.setState({ currentTopic });
   };
 
+  resetCurrentTopic = () => {
+    this.setState(({ topics }) => ({ currentTopic: topics[0] }));
+  };
+
   handleFocusOut = async isUpdate => {
     if (isUpdate) {
       return this.updatePipeline();
@@ -403,6 +407,7 @@ class PipelineNewPage extends React.Component {
               topics={topics}
               currentTopic={currentTopic}
               isLoading={isLoading}
+              resetCurrentTopic={this.resetCurrentTopic}
               updateCurrentTopic={this.updateCurrentTopic}
             />
 

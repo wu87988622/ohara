@@ -97,6 +97,7 @@ class PipelineToolbar extends React.Component {
     topics: PropTypes.array.isRequired,
     isLoading: PropTypes.bool.isRequired,
     updateCurrentTopic: PropTypes.func.isRequired,
+    resetCurrentTopic: PropTypes.func.isRequired,
     currentTopic: PropTypes.object,
   };
 
@@ -150,6 +151,10 @@ class PipelineToolbar extends React.Component {
 
   handleModalClose = () => {
     this.setState({ isModalActive: false, activeConnector: null });
+
+    if (this.state.modalName === 'topics') {
+      this.props.resetCurrentTopic();
+    }
   };
 
   handleConfirm = () => {
