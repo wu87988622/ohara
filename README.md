@@ -93,7 +93,7 @@ docker run --rm -p ${port}:${port} oharastream/backend:0.3-SNAPSHOT com.island.o
 #### FTP
 
 ```
-docker run --rm -p 10000-10010:10000-10010 oharastream/backend:0.3-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011
+docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.3-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 ```
 * controlPort: bound by FTP Server
 * dataPorts: bound by data transportation in FTP Server
