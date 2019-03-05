@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.util
 
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.connector.ftp.FtpSinkTask._

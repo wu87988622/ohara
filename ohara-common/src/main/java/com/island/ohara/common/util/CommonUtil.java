@@ -428,12 +428,19 @@ public final class CommonUtil {
   }
 
   public static int requirePositiveInt(int value) {
-    return requirePositiveInt(value, () -> value + " can't be negative");
+    return (int) requirePositiveLong(value);
   }
 
   public static int requirePositiveInt(int value, Supplier<String> msg) {
-    if (value < 0) throw new IllegalArgumentException(msg.get());
-    return value;
+    return (int) requirePositiveLong(value, msg);
+  }
+
+  public static short requirePositiveShort(short value) {
+    return (short) requirePositiveLong(value);
+  }
+
+  public static short requirePositiveShort(short value, Supplier<String> msg) {
+    return (short) requirePositiveLong(value, msg);
   }
 
   public static long requirePositiveLong(long value) {
@@ -443,14 +450,6 @@ public final class CommonUtil {
   public static long requirePositiveLong(long value, Supplier<String> msg) {
     if (value < 0) throw new IllegalArgumentException(msg.get());
     return value;
-  }
-
-  public static short requirePositiveShort(short value) {
-    return (short) requirePositiveInt(value);
-  }
-
-  public static short requirePositiveShort(short value, Supplier<String> msg) {
-    return (short) requirePositiveInt(value, msg);
   }
 
   /**

@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import java.util
 
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.connector.ftp.FtpSource.LOG

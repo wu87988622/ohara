@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client
+package com.island.ohara.client.ftp
 
 import java.nio.charset.Charset
 

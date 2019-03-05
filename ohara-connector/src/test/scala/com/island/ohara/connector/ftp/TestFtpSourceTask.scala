@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.ftp
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtil, Releasable}

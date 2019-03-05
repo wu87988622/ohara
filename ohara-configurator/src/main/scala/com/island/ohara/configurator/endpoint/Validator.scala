@@ -20,7 +20,6 @@ import java.sql.DriverManager
 import java.util
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.client.FtpClient
 import com.island.ohara.client.configurator.v0.ValidationApi
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
@@ -28,6 +27,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest,
   ValidationReport
 }
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtil

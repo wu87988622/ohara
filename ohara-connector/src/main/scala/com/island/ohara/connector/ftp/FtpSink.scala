@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 
 import java.util
 
-import com.island.ohara.client.FtpClient
+import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.connector._
 
