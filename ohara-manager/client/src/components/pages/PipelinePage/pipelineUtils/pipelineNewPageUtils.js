@@ -16,35 +16,8 @@
 
 import { isNull, isEmpty } from 'lodash';
 
-import { isSource, isSink, isTopic, isStream } from './commonUtils';
+import { isStream } from './commonUtils';
 import { isEmptyStr } from 'utils/commonUtils';
-
-export const getConnectors = connectors => {
-  const init = {
-    sources: [],
-    sinks: [],
-    topics: [],
-    streams: [],
-  };
-
-  const result = connectors.reduce((acc, connector) => {
-    const { kind, id } = connector;
-
-    if (isSource(kind)) {
-      acc.sources.push(id);
-    } else if (isSink(kind)) {
-      acc.sinks.push(id);
-    } else if (isStream(kind)) {
-      acc.streams.push(id);
-    } else if (isTopic(kind)) {
-      acc.topics.push(connector);
-    }
-
-    return acc;
-  }, init);
-
-  return result;
-};
 
 export const addPipelineStatus = pipeline => {
   const status = pipeline.objects.filter(p => p.state === 'RUNNING');

@@ -15,7 +15,6 @@
  */
 
 import {
-  getConnectors,
   cleanPrevFromTopics,
   removePrevConnector,
   updatePipelineParams,
@@ -23,50 +22,6 @@ import {
   updateGraph,
   loadGraph,
 } from '../pipelineNewPageUtils';
-
-describe('getConnectors()', () => {
-  it('returns the correct connectors', () => {
-    const connectors = [
-      {
-        id: '1',
-        kind: 'aSourceConnector',
-      },
-      {
-        id: '2',
-        kind: 'anotherSource',
-      },
-      {
-        id: '3',
-        kind: 'Sink',
-      },
-      {
-        id: '4',
-        kind: 'topic',
-      },
-      {
-        id: '5',
-        kind: 'streamApp',
-      },
-    ];
-
-    const { sources, sinks, topics, streams } = getConnectors(connectors);
-
-    expect(sources.length).toBe(2);
-    expect(sinks.length).toBe(1);
-    expect(topics.length).toBe(1);
-    expect(streams.length).toBe(1);
-  });
-
-  it('returns empty array if there is no matched', () => {
-    const connectors = [{ id: '1', kind: 'Nah' }];
-    const { sources, sinks, topics, streams } = getConnectors(connectors);
-
-    expect(sources.length).toBe(0);
-    expect(sinks.length).toBe(0);
-    expect(topics.length).toBe(0);
-    expect(streams.length).toBe(0);
-  });
-});
 
 describe('removePrevConnector()', () => {
   it('removes previous sink connection', () => {

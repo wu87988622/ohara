@@ -26,6 +26,34 @@ export const isStream = kind => kind === 'streamApp';
 
 export const findByGraphId = (graph, id) => graph.find(x => x.id === id);
 
+export const getConnectors = connectors => {
+  const init = {
+    sources: [],
+    sinks: [],
+    topics: [],
+    streams: [],
+  };
+
+  const result = connectors.reduce((acc, connector) => {
+    const { kind, id } = connector;
+
+    if (isSource(kind)) {
+      acc.sources.push(id);
+    } else if (isSink(kind)) {
+      acc.sinks.push(id);
+    } else if (isStream(kind)) {
+      acc.streams.push(id);
+    } else if (isTopic(kind)) {
+      // TODO: this should behave the same way as the rest of connectors
+      acc.topics.push(connector);
+    }
+
+    return acc;
+  }, init);
+
+  return result;
+};
+
 export const updateTopic = (props, currTopic, connectorType) => {
   if (!currTopic || isEmpty(currTopic)) return;
 
