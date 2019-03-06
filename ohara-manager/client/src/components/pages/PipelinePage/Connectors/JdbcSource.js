@@ -32,7 +32,6 @@ import { Box } from 'common/Layout';
 import { DataTable } from 'common/Table';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
-import { fetchInfo } from 'api/infoApi';
 import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { JdbcQuicklyFillIn } from './QuicklyFillIn';
 import {
@@ -104,7 +103,6 @@ class JdbcSource extends React.Component {
   };
 
   selectMaps = {
-    databases: 'currDatabase',
     tables: 'currTable',
     writeTopics: 'currWriteTopic',
   };
@@ -114,8 +112,6 @@ class JdbcSource extends React.Component {
   state = {
     name: '',
     state: '',
-    databases: [],
-    currDatabase: {},
     tables: [],
     currTable: {},
     writeTopics: [],
@@ -130,7 +126,7 @@ class JdbcSource extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchData();
+    this.fetchSource();
   }
 
   async componentDidUpdate(prevProps) {
@@ -144,7 +140,7 @@ class JdbcSource extends React.Component {
     }
 
     if (prevConnectorId !== currConnectorId) {
-      this.fetchData();
+      this.fetchSource();
     }
 
     if (hasChanges) {
@@ -152,13 +148,8 @@ class JdbcSource extends React.Component {
     }
   }
 
-  fetchData = () => {
+  fetchSource = async () => {
     const sourceId = get(this.props.match, 'params.connectorId', null);
-    this.fetchInfo();
-    this.fetchSource(sourceId);
-  };
-
-  fetchSource = async sourceId => {
     const res = await connectorApi.fetchConnector(sourceId);
     const result = get(res, 'data.result', null);
 
@@ -170,7 +161,6 @@ class JdbcSource extends React.Component {
         'source.db.password': password = '',
         'source.db.url': url = '',
         table = '{}',
-        database = '{}',
       } = configs;
 
       const { topics: writeTopics } = this.props;
@@ -191,11 +181,6 @@ class JdbcSource extends React.Component {
         tables = [currTable];
       }
 
-      const _db = JSON.parse(database);
-      const currDatabase = this.state.databases.find(
-        db => db.name === _db.name,
-      );
-
       const hasValidProps = [username, password, url].map(x => {
         return x.length > 0;
       });
@@ -206,7 +191,6 @@ class JdbcSource extends React.Component {
         name,
         state,
         isFormDisabled,
-        currDatabase,
         tables,
         currTable,
         timestamp,
@@ -226,15 +210,6 @@ class JdbcSource extends React.Component {
 
     if (tables) {
       this.setState({ tables, currTable: _currTable });
-    }
-  };
-
-  fetchInfo = async () => {
-    const res = await fetchInfo();
-    const databases = get(res, 'data.result.supportedDatabases', null);
-
-    if (databases) {
-      this.setState({ databases, currDatabase: databases[0] });
     }
   };
 
@@ -303,7 +278,6 @@ class JdbcSource extends React.Component {
     } = this.props;
     const {
       name,
-      currDatabase,
       currWriteTopic,
       currTable,
       timestamp,
@@ -334,7 +308,6 @@ class JdbcSource extends React.Component {
         'source.db.password': password,
         'source.timestamp.column.name': timestamp,
         'source.schema.pattern': '',
-        database: JSON.stringify(currDatabase),
         table: JSON.stringify(currTable),
       },
     };
@@ -411,8 +384,6 @@ class JdbcSource extends React.Component {
       url,
       username,
       password,
-      databases,
-      currDatabase,
       isBtnWorking,
       tables,
       currTable,
@@ -450,19 +421,6 @@ class JdbcSource extends React.Component {
                 value={name}
                 data-testid="name-input"
                 handleChange={this.handleInputChange}
-                disabled={isRunning}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Database</Label>
-              <Select
-                name="databases"
-                list={databases}
-                selected={currDatabase}
-                width="100%"
-                data-testid="dataset-select"
-                handleChange={this.handleSelectChange}
                 disabled={isRunning}
               />
             </FormGroup>
