@@ -34,6 +34,7 @@ import PipelineGraph from './PipelineGraph';
 import Editable from './Editable';
 import { H2, H3 } from 'common/Headings';
 import { Box } from 'common/Layout';
+import { getConnectors } from './pipelineUtils/commonUtils';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import {
   JdbcSource,
@@ -44,7 +45,6 @@ import {
   StreamApp,
 } from './Connectors';
 import {
-  getConnectors,
   addPipelineStatus,
   updatePipelineParams,
   updateGraph,

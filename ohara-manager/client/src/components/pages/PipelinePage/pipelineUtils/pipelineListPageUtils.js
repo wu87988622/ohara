@@ -14,21 +14,34 @@
  * limitations under the License.
  */
 
+import { getConnectors } from './commonUtils';
+
 export const addPipelineStatus = (pipelines = []) => {
-  const _pipelines = pipelines.reduce((acc, pipeline) => {
-    const status = pipeline.objects.filter(p => p.state === 'RUNNING');
-    const _status = status.length >= 2 ? 'Running' : 'Stopped';
+  const updatedPipeline = pipelines.reduce((acc, pipeline) => {
+    const { objects } = pipeline;
+
+    const status = objects.filter(p => p.state === 'RUNNING');
+    const { sources, sinks, streams } = getConnectors(objects);
+    const connectorLength = [...sources, ...sinks, ...streams].length;
+
+    let updatedStatus = '';
+
+    if (status.length !== 0 && status.length >= connectorLength) {
+      updatedStatus = 'Running';
+    } else {
+      updatedStatus = 'Stopped';
+    }
 
     return [
       ...acc,
       {
         ...pipeline,
-        status: _status,
+        status: updatedStatus,
       },
     ];
   }, []);
 
-  return _pipelines;
+  return updatedPipeline;
 };
 
 export const getEditUrl = (pipeline, match) => {
