@@ -48,6 +48,7 @@ const props = {
   currentTopic: {},
   isLoading: false,
   updateCurrentTopic: jest.fn(),
+  resetCurrentTopic: jest.fn(),
 };
 
 describe('<PipelineToolbar />', () => {
