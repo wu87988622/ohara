@@ -37,7 +37,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
   def allClusters(containerNameFilter: String => Boolean): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
 
   final override def clusters(): Future[Map[T, Seq[ContainerInfo]]] =
-    allClusters(_ => true).map {
+    allClusters(_.contains(s"$DIVIDER$serviceName$DIVIDER")).map {
       _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
         case (cluster, containers) => cluster.asInstanceOf[T] -> containers
       }
