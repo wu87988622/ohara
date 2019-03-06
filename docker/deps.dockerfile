@@ -68,7 +68,7 @@ RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
 # Running this test case make gradle download mysql binary code
 RUN gradle clean build -x test -PskipManager
-RUN gradle clean ohara-it:test --tests *TestDatabaseClient -PskipManager
+RUN gradle clean ohara-client:test --tests TestDatabaseClient -PskipManager
 RUN rm -rf /testpatch/ohara
 
 # change to root
