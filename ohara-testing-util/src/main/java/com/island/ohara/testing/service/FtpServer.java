@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.apache.ftpserver.ConnectionConfigFactory;
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.UserManager;
@@ -77,7 +78,7 @@ public interface FtpServer extends Releasable {
     private String user = "user";
     private String password = "password";
     private int controlPort = 0;
-    private List<Integer> dataPorts = Collections.singletonList(0);
+    private List<Integer> dataPorts = Arrays.asList(0, 0, 0);
 
     @com.island.ohara.common.annotations.Optional("default is local hostname")
     public Builder homeFolder(File homeFolder) {
@@ -116,7 +117,7 @@ public interface FtpServer extends Releasable {
      * @param dataPorts data ports
      * @return this builder
      */
-    @com.island.ohara.common.annotations.Optional("default is single random port")
+    @com.island.ohara.common.annotations.Optional("default is three random ports")
     public Builder dataPorts(List<Integer> dataPorts) {
       CommonUtil.requireNonEmpty(
               Objects.requireNonNull(dataPorts), () -> "dataPorts can't be empty")
@@ -165,6 +166,10 @@ public interface FtpServer extends Releasable {
       FtpServerFactory factory = new FtpServerFactory();
       factory.setUserManager(userManager);
       factory.addListener("default", listener);
+      ConnectionConfigFactory connectionConfigFactory = new ConnectionConfigFactory();
+      // we disallow user to access ftp server by anonymous
+      connectionConfigFactory.setAnonymousLoginEnabled(false);
+      factory.setConnectionConfig(connectionConfigFactory.createConnectionConfig());
       org.apache.ftpserver.FtpServer server = factory.createServer();
       try {
         server.start();
@@ -219,6 +224,12 @@ public interface FtpServer extends Releasable {
     }
   }
 
+  /**
+   * create a ftp server on local. It use a random port for handling control command, and three
+   * random ports are used to send/receive data to/from client.
+   *
+   * @return ftp server
+   */
   static FtpServer local() {
     return FtpServer.builder().dataPorts(Arrays.asList(0, 0, 0)).build();
   }

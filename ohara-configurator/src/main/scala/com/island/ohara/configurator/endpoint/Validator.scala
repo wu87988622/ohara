@@ -225,9 +225,7 @@ class ValidatorTask extends SourceTask {
       case info: FtpValidationRequest  => toSourceRecord(ValidationReport(hostname, validate(info), true))
     } catch {
       case e: Throwable => toSourceRecord(ValidationReport(hostname, e.getMessage, false))
-    } finally {
-      done = true
-    }
+    } finally done = true
 
   override def stop(): Unit = {
     // do nothing
@@ -251,7 +249,8 @@ class ValidatorTask extends SourceTask {
   private[this] def validate(info: FtpValidationRequest): String = {
     val client =
       FtpClient.builder().hostname(info.hostname).port(info.port).user(info.user).password(info.password).build()
-    try s"succeed to establish the connection:${info.hostname}:${info.port} with status:${client.status()}"
+    try s"succeed to establish the connection:${info.hostname}:${info.port}. test account:${info.user}" +
+      s"by getting working folder:${client.workingFolder()}"
     finally client.close()
   }
 

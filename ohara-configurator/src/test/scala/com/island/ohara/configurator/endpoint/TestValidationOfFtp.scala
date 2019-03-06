@@ -16,47 +16,45 @@
 
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{
-  FtpValidationRequest,
-  HdfsValidationRequest,
-  RdbValidationRequest,
-  ValidationReport
-}
+import com.island.ohara.client.configurator.v0.ValidationApi.{FtpValidationRequest, ValidationReport}
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestValidator extends With3Brokers3Workers with Matchers {
+
+class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
   private[this] val ftpServer = testUtil.ftpServer
-  private[this] val rdb = testUtil.dataBase
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+
   @Before
-  def setup(): Unit = {
+  def setup(): Unit =
     Await.result(workerClient.plugins(), 10 seconds).exists(_.className == classOf[Validator].getName) shouldBe true
-  }
 
-  private[this] def evaluate(f: Future[Seq[ValidationReport]]): Unit = {
-    val reports = Await.result(f, 60 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+
+  private[this] def assertFailure(f: Future[Seq[ValidationReport]]): Unit = {
+    val reports = result(f)
+    reports.size shouldBe taskCount
     reports.isEmpty shouldBe false
-    reports.foreach(_.pass shouldBe true)
+    reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
+  }
+
+  private[this] def assertSuccess(f: Future[Seq[ValidationReport]]): Unit = {
+    val reports = result(f)
+    reports.size shouldBe taskCount
+    reports.isEmpty shouldBe false
+    reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
   }
 
   @Test
-  def testValidationOfHdfs(): Unit = {
-    evaluate(
-      Validator
-        .run(workerClient, topicAdmin, HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None), taskCount))
-  }
-
-  @Test
-  def testValidationOfFtp(): Unit = {
-    evaluate(
+  def goodCase(): Unit = {
+    assertSuccess(
       Validator.run(
         workerClient,
         topicAdmin,
@@ -70,18 +68,20 @@ class TestValidator extends With3Brokers3Workers with Matchers {
   }
 
   @Test
-  def testValidationOfRdb(): Unit = {
-    evaluate(
+  def basCase(): Unit = {
+    assertFailure(
       Validator.run(
         workerClient,
         topicAdmin,
-        RdbValidationRequest(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
+        FtpValidationRequest(hostname = ftpServer.hostname,
+                             port = ftpServer.port,
+                             user = CommonUtil.randomString(10),
+                             password = ftpServer.password,
+                             workerClusterName = None),
         taskCount
       ))
   }
 
   @After
-  def tearDown(): Unit = {
-    Releasable.close(topicAdmin)
-  }
+  def tearDown(): Unit = Releasable.close(topicAdmin)
 }

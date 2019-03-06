@@ -31,28 +31,28 @@ class TestFtpClient extends MediumTest with Matchers {
   private[this] val client =
     FtpClient.builder().user(server.user).password(server.password).hostname(server.hostname).port(server.port).build()
 
-  private[this] def tmpPath() = s"${client.tmpFolder}/$methodName"
+  private[this] def tmpPath() = s"${client.tmpFolder()}/$methodName"
 
   @Before
-  def setup(): Unit = if (!client.exist(client.tmpFolder)) client.mkdir(client.tmpFolder)
+  def setup(): Unit = if (!client.exist(client.tmpFolder())) client.mkdir(client.tmpFolder())
 
   @Test
   def testDelete(): Unit = {
-    val before = client.listFileNames(client.tmpFolder).size
+    val before = client.listFileNames(client.tmpFolder()).size
     client.attach(tmpPath(), "hello world")
-    val after = client.listFileNames(client.tmpFolder).size
+    val after = client.listFileNames(client.tmpFolder()).size
     after - before shouldBe 1
 
     client.delete(tmpPath())
-    client.listFileNames(client.tmpFolder).size shouldBe before
+    client.listFileNames(client.tmpFolder()).size shouldBe before
   }
 
   @Test
   def testList(): Unit = {
     if (client.exist(tmpPath())) client.delete(tmpPath())
-    val before = client.listFileNames(client.tmpFolder).size
+    val before = client.listFileNames(client.tmpFolder()).size
     client.attach(tmpPath(), "message")
-    val after = client.listFileNames(client.tmpFolder).size
+    val after = client.listFileNames(client.tmpFolder()).size
     after - before shouldBe 1
   }
 
@@ -91,7 +91,7 @@ class TestFtpClient extends MediumTest with Matchers {
     val lineCount = 100
     client.attach(tmpPath(), (0 until lineCount).map(_.toString))
 
-    val folder = s"${client.tmpFolder}/hello"
+    val folder = s"${client.tmpFolder()}/hello"
     if (client.exist(folder)) {
       client.delete(folder)
     }

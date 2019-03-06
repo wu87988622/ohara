@@ -134,7 +134,7 @@ trait FtpClient extends Releasable {
   /**
     * @return temporary folder of ftp server
     */
-  def tmpFolder: String
+  def tmpFolder(): String
 
   /**
     * @param path file path
@@ -160,6 +160,7 @@ trait FtpClient extends Releasable {
   def status(): String
 
   /**
+    * Get the working folder of account. An exception will be thrown if it fails to get working folder.
     * @return current working folder
     */
   def workingFolder(): String
@@ -277,7 +278,7 @@ object FtpClient {
         override def moveFile(from: String, to: String): Unit = retry(() => client.moveFile(from, to))
         override def mkdir(path: String): Unit = retry(() => client.mkdir(path))
         override def delete(path: String): Unit = retry(() => client.delete(path))
-        override def tmpFolder: String = client.tmpFolder
+        override def tmpFolder(): String = client.tmpFolder()
         override def exist(path: String): Boolean = retry(() => client.exist(path))
         override def fileType(path: String): FileType = retry(() => client.fileType(path))
         override def status(): String = retry(() => client.status())
@@ -294,7 +295,8 @@ object FtpClient {
         if (_client == null) _client = new FTPClient
         _client.connect(hostname, port)
         _client.enterLocalPassiveMode()
-        _client.login(user, password)
+        if (!_client.login(user, password))
+          throw new IllegalArgumentException(s"fail to login ftp server:$hostname by account:$user")
         _client
       }
 
@@ -419,14 +421,17 @@ object FtpClient {
           if (!client.deleteFile(path))
             throw new IllegalStateException(s"failed to delete $path because from ${client.getReplyCode}")
         case FileType.FOLDER =>
-          val clinet = connectIfNeeded()
-          if (!clinet.removeDirectory(path))
-            throw new IllegalStateException(s"failed to delete $path because from ${clinet.getReplyCode}")
+          val client = connectIfNeeded()
+          if (!client.removeDirectory(path))
+            throw new IllegalStateException(s"failed to delete $path because from ${client.getReplyCode}")
         case FileType.NONEXISTENT => throw new IllegalStateException(s"$path doesn't exist")
 
       }
 
-      override def tmpFolder: String = "/tmp"
+      override def tmpFolder(): String = {
+        connectIfNeeded()
+        "/tmp"
+      }
       override def exist(path: String): Boolean = {
         val client = connectIfNeeded()
         val result = client.getStatus(path)
@@ -443,6 +448,7 @@ object FtpClient {
 
       override def fileType(path: String): FileType = if (exist(path)) {
         val client = connectIfNeeded()
+        // cache current working folder
         val current = client.printWorkingDirectory()
         try client.cwd(path) match {
           case 250 => FileType.FOLDER
@@ -452,7 +458,9 @@ object FtpClient {
 
       override def status(): String = connectIfNeeded().getStatus
 
-      override def workingFolder(): String = connectIfNeeded().printWorkingDirectory()
+      override def workingFolder(): String = Option(connectIfNeeded().printWorkingDirectory())
+        .getOrElse(throw new IllegalStateException(s"failed to get working folder for account:$user"))
+
     }
   }
 }
