@@ -301,10 +301,14 @@ class PipelineNewPage extends React.Component {
     }
   };
 
+  updateRunningConnectors = (sources, sinks, streams) => {
+    const runningConnectors = [...sources, ...sinks, ...streams].length;
+    this.setState({ runningConnectors });
+  };
+
   startConnectors = async connectors => {
     const { sources, sinks, streams } = getConnectors(connectors);
-    const runningConnectors = sources.concat([sinks, streams]).length;
-    this.setState({ runningConnectors });
+    this.updateRunningConnectors(sources, sinks, streams);
 
     const sourcePromises = sources.map(source =>
       connectorApi.startConnector(source),
@@ -321,6 +325,8 @@ class PipelineNewPage extends React.Component {
 
   stopConnectors = connectors => {
     const { sources, sinks, streams } = getConnectors(connectors);
+    this.updateRunningConnectors(sources, sinks, streams);
+
     const sourcePromises = sources.map(source =>
       connectorApi.stopConnector(source),
     );
