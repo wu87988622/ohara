@@ -38,8 +38,9 @@ const InputWrapper = styled.input`
 
   &.is-disabled {
     border: 1px solid ${props => props.theme.lighterGray};
+    background-color: ${props => props.theme.whiteSmoke};
     cursor: not-allowed;
-    color: ${props => props.theme.lightGray};
+    color: ${props => props.theme.lighterBlue};
   }
 `;
 
