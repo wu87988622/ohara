@@ -16,9 +16,7 @@
 
 import React from 'react';
 import { shallow } from 'enzyme';
-import toastr from 'toastr';
 
-import * as MESSAGES from 'constants/messages';
 import PipelineNewPage from '../PipelineNewPage';
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
