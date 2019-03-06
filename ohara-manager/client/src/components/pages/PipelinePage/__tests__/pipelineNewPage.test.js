@@ -103,32 +103,6 @@ describe('<PipelineNewPage />', () => {
     expect(button.find('i').props().className).toMatch(/^far fa-stop-circle$/);
   });
 
-  it('displays an error message if pipeline does not have status', async () => {
-    const data = {
-      result: {
-        name: 'newPipeline',
-        objects: [{ kind: CONNECTOR_TYPES.topic, name: 'a', id: '1' }],
-        rules: {},
-      },
-    };
-
-    pipelineApi.fetchPipeline.mockImplementation(() =>
-      Promise.resolve({ data }),
-    );
-
-    connectorApi.startConnector.mockImplementation(() =>
-      Promise.resolve({ data: { isSuccess: true } }),
-    );
-
-    await wrapper.find(getTestById('start-btn')).prop('onClick')();
-
-    expect(toastr.error).toHaveBeenCalledTimes(1);
-    expect(toastr.error).toHaveBeenCalledWith(
-      MESSAGES.CANNOT_START_PIPELINE_ERROR,
-    );
-  });
-
-  // TODO: fix this failing test, the UI is working as expected but the test somehow fails...
   it('starts the pipeline', async () => {
     const data = {
       result: {
