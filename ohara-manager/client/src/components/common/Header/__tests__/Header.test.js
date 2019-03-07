@@ -58,13 +58,6 @@ describe('<Header />', () => {
     expect(wrapper.name()).toBe('StyledHeader');
   });
 
-  it('should not render if cluster info not provided', () => {
-    fetchInfo.mockImplementation(() => Promise.resolve({}));
-
-    wrapper = shallow(<Header {...props} />);
-    expect(wrapper.name()).toBe(null);
-  });
-
   it('renders <Brand />', () => {
     const brand = wrapper.find('Brand');
     const _props = brand.props();
