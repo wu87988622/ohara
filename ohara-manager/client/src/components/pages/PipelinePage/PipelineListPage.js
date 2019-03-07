@@ -123,6 +123,8 @@ class PipelineListPage extends React.Component {
     pipelines: [],
     workers: [],
     currWorker: {},
+    isNewPipelineWorking: false,
+    isDeletePipelineWorking: false,
   };
 
   componentDidMount() {
@@ -186,7 +188,10 @@ class PipelineListPage extends React.Component {
       rules: {},
       cluster: currWorker.name,
     };
+
+    this.setState({ isNewPipelineWorking: true });
     const res = await createPipeline(params);
+    this.setState({ isNewPipelineWorking: false });
     const pipelineId = get(res, 'data.result.id', null);
 
     if (pipelineId) {
@@ -212,7 +217,9 @@ class PipelineListPage extends React.Component {
 
   handleDeletePipelineConfirm = async () => {
     const { deletePipelineId: id } = this.state;
+    this.setState({ isDeletePipelineWorking: true });
     const res = await deletePipeline(id);
+    this.setState({ isDeletePipelineWorking: false });
     const deletedId = get(res, 'data.result.id', null);
     const deletedPipeline = get(res, 'data.result.name', null);
 
@@ -238,9 +245,11 @@ class PipelineListPage extends React.Component {
     const {
       isDeletePipelineModalActive,
       isSelectClusterModalActive,
-      pipelines,
       isFetchingPipeline,
       isFetchingWorker,
+      isNewPipelineWorking,
+      isDeletePipelineWorking,
+      pipelines,
       workers,
       currWorker,
     } = this.state;
@@ -256,6 +265,7 @@ class PipelineListPage extends React.Component {
             handleConfirm={this.handleSelectClusterModalConfirm}
             handleCancel={this.handleSelectClusterModalClose}
             isConfirmDisabled={isEmpty(workers) ? true : false}
+            isConfirmWorking={isNewPipelineWorking}
           >
             {isFetchingWorker ? (
               <LoaderWrapper>
@@ -281,6 +291,7 @@ class PipelineListPage extends React.Component {
             cancelBtnText="No, Keep it"
             handleCancel={this.handleDeletePipelineModalClose}
             handleConfirm={this.handleDeletePipelineConfirm}
+            isConfirmWorking={isDeletePipelineWorking}
             message="Are you sure you want to delete this pipeline? This action cannot be redo!"
             isDelete
           />

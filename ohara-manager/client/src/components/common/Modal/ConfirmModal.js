@@ -104,6 +104,7 @@ const ConfirmModal = ({
   confirmBtnText = 'Delete',
   cancelBtnText = 'Cancel',
   isConfirmDisabled = false,
+  isConfirmWorking = false,
   isDelete = false,
 }) => {
   return (
@@ -135,6 +136,7 @@ const ConfirmModal = ({
           handleClick={handleConfirm}
           data-testid="confirm-modal-confirm-btn"
           disabled={isConfirmDisabled}
+          isWorking={isConfirmWorking}
         />
       </Actions>
     </ModalWrapper>
@@ -152,6 +154,7 @@ ConfirmModal.propTypes = {
   isConfirmDisabled: PropTypes.bool,
   width: PropTypes.string,
   isDelete: PropTypes.bool,
+  isConfirmWorking: PropTypes.bool,
 };
 
 export default ConfirmModal;

@@ -24,6 +24,7 @@ import { get } from 'lodash';
 import * as URLS from 'constants/urls';
 import NAVS from 'constants/navs';
 import ConfigurationModal from 'pages/ConfigurationModal';
+import { ListLoader } from 'common/Loader';
 import { fetchInfo } from 'api/infoApi';
 import { InfoModal } from '../Modal';
 
@@ -143,17 +144,22 @@ const Ul = styled.ul`
   }
 `;
 
+const LoaderWrapper = styled.div`
+  margin: 30px;
+`;
+
 class Header extends React.Component {
+  static propTypes = {
+    isLogin: PropTypes.bool.isRequired,
+    versionInfo: PropTypes.object,
+  };
+
   state = {
     isConfigModalActive: false,
     isVersionModalActive: false,
     partitions: '',
     replicationFactor: '',
-  };
-
-  static propTypes = {
-    isLogin: PropTypes.bool.isRequired,
-    versionInfo: PropTypes.object,
+    isLoading: true,
   };
 
   componentDidMount() {
@@ -162,6 +168,7 @@ class Header extends React.Component {
 
   fetchInfo = async () => {
     const res = await fetchInfo();
+    this.setState({ isLoading: false });
     const versionInfo = get(res, 'data.result.versionInfo', null);
     if (versionInfo) {
       this.setState({ versionInfo });
@@ -189,12 +196,11 @@ class Header extends React.Component {
     const {
       isConfigModalActive,
       isVersionModalActive,
-      versionInfo,
+      versionInfo = {},
+      isLoading,
     } = this.state;
 
-    if (!versionInfo) return null;
-
-    const { version, revision, date } = versionInfo;
+    const { version = '', revision = '', date = '' } = versionInfo;
 
     return (
       <StyledHeader>
@@ -212,20 +218,26 @@ class Header extends React.Component {
           onRequestClose={this.handleVersionModalClose}
           handleCancel={this.handleVersionModalClose}
         >
-          <Ul>
-            <li>
-              <span className="item">Version:</span>
-              <span className="content">{version}</span>
-            </li>
-            <li>
-              <span className="item">Revision:</span>
-              <span className="content">{revision}</span>
-            </li>
-            <li>
-              <span className="item">Build date:</span>
-              <span className="content">{date}</span>
-            </li>
-          </Ul>
+          {isLoading ? (
+            <LoaderWrapper>
+              <ListLoader />
+            </LoaderWrapper>
+          ) : (
+            <Ul>
+              <li>
+                <span className="item">Version:</span>
+                <span className="content">{version}</span>
+              </li>
+              <li>
+                <span className="item">Revision:</span>
+                <span className="content">{revision}</span>
+              </li>
+              <li>
+                <span className="item">Build date:</span>
+                <span className="content">{date}</span>
+              </li>
+            </Ul>
+          )}
         </InfoModal>
         <HeaderWrapper>
           <Brand to={URLS.HOME}>Ohara</Brand>
