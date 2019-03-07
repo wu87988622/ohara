@@ -748,7 +748,7 @@ class FtpSink extends React.Component {
                   <Input
                     name="username"
                     width="100%"
-                    placeholder="John Doe"
+                    placeholder="admin"
                     value={username}
                     data-testid="username-input"
                     handleChange={this.handleInputChange}

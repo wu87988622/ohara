@@ -83,14 +83,14 @@ export const TEST_FAILED_ERROR = `Didn't pass the test!`;
 export const PIPELINE_DELETION_ERROR =
   'Oops, something went wrong, we cannot delete the selected pipeline:';
 export const CANNOT_START_PIPELINE_ERROR =
-  'Failed to start the pipeline, please check your connector settings';
+  'Failed to start the pipeline, please check your pipeline settings';
 export const NO_WORKER_CLUSTER_FOUND_ERROR =
   'Please create a cluster before creating pipelines!';
 export const NO_TOPIC_IS_SUPPLIED = 'Please select a topic!';
 
 // Connectors
 export const CANNOT_START_CONNECTOR_ERROR =
-  'Cannot complete your action, please check your connector settings';
+  'Cannot complete your action, please check your settings';
 
 export const CANNOT_START_STREAM_APP_ERROR =
   'Cannot complete your action, please check your stream app settings';

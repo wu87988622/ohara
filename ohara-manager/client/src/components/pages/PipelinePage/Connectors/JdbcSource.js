@@ -430,7 +430,7 @@ class JdbcSource extends React.Component {
               <Input
                 name="url"
                 width="100%"
-                placeholder="jdbc:mysql://localhost:3030/my-db"
+                placeholder="jdbc:postgresql://localhost:5432/db"
                 value={url}
                 data-testid="url-input"
                 handleChange={this.handleInputChange}
@@ -446,7 +446,7 @@ class JdbcSource extends React.Component {
               <Input
                 name="username"
                 width="100%"
-                placeholder="John Doe"
+                placeholder="admin"
                 value={username}
                 data-testid="username-input"
                 handleChange={this.handleInputChange}
@@ -500,7 +500,7 @@ class JdbcSource extends React.Component {
               <Input
                 name="timestamp"
                 width="100%"
-                placeholder="cf3"
+                placeholder="column1"
                 value={timestamp}
                 data-testid="timestamp-input"
                 handleChange={this.handleInputChange}

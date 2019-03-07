@@ -477,7 +477,7 @@ class DbConfiguration extends React.Component {
                 id="connectionUrl"
                 name="connectionUrl"
                 width="250px"
-                placeholder="jdbc:mysql://localhost:3306/dbname"
+                placeholder="jdbc:postgresql://localhost:5432/db"
                 value={connectionUrl}
                 data-testid="connection-url-input"
                 handleChange={this.handleChange}
@@ -489,7 +489,7 @@ class DbConfiguration extends React.Component {
                 id="user"
                 name="user"
                 width="250px"
-                placeholder="System admin"
+                placeholder="admin"
                 value={user}
                 data-testid="user-input"
                 handleChange={this.handleChange}
