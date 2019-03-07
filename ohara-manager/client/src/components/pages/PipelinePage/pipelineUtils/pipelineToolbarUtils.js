@@ -87,3 +87,9 @@ export const createConnector = async ({ updateGraph, connector }) => {
 
   updateGraph({ update });
 };
+
+export const trimString = string => {
+  // Only displays the first 8 digits of the git sha instead so
+  // it won't break our layout
+  return string.substring(0, 7);
+};

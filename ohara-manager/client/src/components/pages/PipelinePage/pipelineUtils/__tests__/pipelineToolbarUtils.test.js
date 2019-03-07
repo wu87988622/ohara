@@ -17,7 +17,7 @@
 import { CONNECTOR_TYPES } from 'constants/pipelines';
 import * as connectorApi from 'api/connectorApi';
 
-import { createConnector } from '../pipelineToolbarUtils';
+import { createConnector, trimString } from '../pipelineToolbarUtils';
 
 jest.mock('api/connectorApi');
 
@@ -43,5 +43,11 @@ describe('createConnector()', () => {
         id: res.data.result.id,
       },
     });
+  });
+});
+
+describe('trimString()', () => {
+  it('gets the correct string', () => {
+    expect(trimString('abcdefgfijklmnopq').length).toBe(7);
   });
 });

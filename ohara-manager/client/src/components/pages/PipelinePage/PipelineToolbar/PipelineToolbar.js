@@ -26,6 +26,7 @@ import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'common/Modal';
 import { fetchInfo } from 'api/infoApi';
+import { isEmptyStr } from 'utils/commonUtils';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
@@ -108,6 +109,7 @@ class PipelineToolbar extends React.Component {
     activeConnector: null,
     connectorType: '',
     isAddBtnDisabled: false,
+    isFetchInfoWorking: true,
   };
 
   componentDidMount() {
@@ -117,20 +119,28 @@ class PipelineToolbar extends React.Component {
 
   fetchInfo = async () => {
     const res = await fetchInfo();
-
+    this.setState({ isFetchInfoWorking: false });
     const result = get(res, 'data.result', null);
 
-    if (!result) return;
+    if (result) {
+      const sources = result.sources.filter(
+        source => !PIPELINES.CONNECTOR_FILTERS.includes(source.className),
+      );
 
-    const sources = result.sources.filter(
-      source => !PIPELINES.CONNECTOR_FILTERS.includes(source.className),
-    );
+      const sinks = result.sinks.filter(
+        sink => !PIPELINES.CONNECTOR_FILTERS.includes(sink.className),
+      );
 
-    const sinks = result.sinks.filter(
-      sink => !PIPELINES.CONNECTOR_FILTERS.includes(sink.className),
-    );
-
-    this.setState({ sources, sinks });
+      this.setState({ sources, sinks }, () => {
+        // If we have the supported connectors data at hand, let's set the
+        // default connector so they can be rendered in connector modal
+        // without trouble
+        const { activeConnector, connectorType } = this.state;
+        if (!activeConnector && !isEmptyStr(connectorType)) {
+          this.setDefaultConnector(connectorType);
+        }
+      });
+    }
   };
 
   setDefaultConnector = connectorType => {
@@ -139,7 +149,7 @@ class PipelineToolbar extends React.Component {
       const activeConnector =
         connectorType === 'stream' ? connector : this.state[connector][0];
 
-      this.setState({ activeConnector });
+      this.setState({ activeConnector, isAddBtnDisabled: false });
     }
   };
 
@@ -195,6 +205,7 @@ class PipelineToolbar extends React.Component {
       connectorType,
       activeConnector,
       isAddBtnDisabled,
+      isFetchInfoWorking,
     } = this.state;
 
     const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
@@ -262,6 +273,7 @@ class PipelineToolbar extends React.Component {
               updateGraph={updateGraph}
               graph={graph}
               updateAddBtnStatus={this.updateAddBtnStatus}
+              isLoading={isFetchInfoWorking}
             />
           )}
         </Modal>
