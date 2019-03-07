@@ -537,7 +537,7 @@ class FtpConfiguration extends React.Component {
                 id="user"
                 name="user"
                 width="250px"
-                placeholder="System admin"
+                placeholder="admin"
                 value={user}
                 data-testid="user-input"
                 handleChange={this.handleChange}
