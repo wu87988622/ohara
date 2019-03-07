@@ -19,8 +19,12 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import * as PIPELINES from 'constants/pipelines';
+import { ListLoader } from 'common/Loader';
 import { DataTable } from 'common/Table';
-import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
+import {
+  createConnector,
+  trimString,
+} from '../pipelineUtils/pipelineToolbarUtils';
 
 const TableWrapper = styled.div`
   margin: 30px 30px 40px;
@@ -52,6 +56,7 @@ class PipelineNewConnector extends React.Component {
     updateGraph: PropTypes.func.isRequired,
     activeConnector: PropTypes.object,
     updateAddBtnStatus: PropTypes.func.isRequired,
+    isLoading: PropTypes.bool.isRequired,
   };
 
   componentDidMount() {
@@ -63,37 +68,32 @@ class PipelineNewConnector extends React.Component {
     createConnector({ updateGraph, connector });
   };
 
-  trimString = string => {
-    // https://stackoverflow.com/a/18134919/1727948
-    // Only displays the first 8 digits of the git sha instead of the full number so
-    // it won't break our layout
-    return string.substring(0, 7);
-  };
-
   render() {
-    const { connectors, activeConnector, onSelect } = this.props;
-
-    if (!activeConnector) return null;
+    const { connectors, activeConnector, onSelect, isLoading } = this.props;
 
     return (
       <TableWrapper>
-        <Table headers={PIPELINES.TABLE_HEADERS}>
-          {connectors.map(({ className: name, version, revision }) => {
-            const isActive =
-              name === activeConnector.className ? 'is-active' : '';
-            return (
-              <tr
-                className={isActive}
-                key={name}
-                onClick={() => onSelect(name)}
-              >
-                <td>{name}</td>
-                <td>{version}</td>
-                <td>{this.trimString(revision)}</td>
-              </tr>
-            );
-          })}
-        </Table>
+        {isLoading || !activeConnector ? (
+          <ListLoader />
+        ) : (
+          <Table headers={PIPELINES.TABLE_HEADERS}>
+            {connectors.map(({ className: name, version, revision }) => {
+              const isActive =
+                name === activeConnector.className ? 'is-active' : '';
+              return (
+                <tr
+                  className={isActive}
+                  key={name}
+                  onClick={() => onSelect(name)}
+                >
+                  <td>{name}</td>
+                  <td>{version}</td>
+                  <td>{trimString(revision)}</td>
+                </tr>
+              );
+            })}
+          </Table>
+        )}
       </TableWrapper>
     );
   }
