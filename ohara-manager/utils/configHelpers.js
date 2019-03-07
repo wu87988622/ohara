@@ -17,8 +17,8 @@
 const yargs = require('yargs');
 const chalk = require('chalk');
 const axios = require('axios');
+const { isNumber } = require('lodash');
 
-const _ = require('./helpers');
 const getProjectVersion = require('./getProjectVersion');
 
 /* eslint-disable no-process-exit, no-console */
@@ -60,7 +60,7 @@ const validateUrl = async url => {
 const validatePort = port => {
   const isValidPort = port >= 1 && port <= 65535;
 
-  if (!_.isNumber(port)) {
+  if (!isNumber(port)) {
     throw Error('--port: can only accept number');
   }
 
