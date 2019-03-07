@@ -24,8 +24,7 @@ import * as _ from 'utils/commonUtils';
 import * as MESSAGES from 'constants/messages';
 import * as configurationApi from 'api/configurationApi';
 import * as validateApi from 'api/validateApi';
-import { fetchInfo } from 'api/infoApi';
-import { Input, Select, FormGroup, Label, Button } from 'common/Form';
+import { Input, FormGroup, Label, Button } from 'common/Form';
 import { cancelBtn, primaryBtn, defaultBtn } from 'theme/btnTheme';
 
 const modalStyles = {
@@ -133,8 +132,6 @@ class DbConfiguration extends React.Component {
     handleClose: PropTypes.func.isRequired,
   };
   state = {
-    databases: [],
-    currDatabase: {},
     user: '',
     password: '',
     connections: [],
@@ -151,22 +148,12 @@ class DbConfiguration extends React.Component {
 
   componentDidMount() {
     this._isMounted = true;
-    this.fetchInfo();
     this.fetchJdbc();
   }
 
   componentWillUnmount() {
     this._isMounted = false;
   }
-
-  fetchInfo = async () => {
-    const res = await fetchInfo();
-    const databases = get(res, 'data.result.supportedDatabases', null);
-
-    if (databases && this._isMounted) {
-      this.setState({ databases, currDatabase: databases[0] });
-    }
-  };
 
   fetchJdbc = async () => {
     const res = await configurationApi.fetchJdbc();
@@ -431,8 +418,6 @@ class DbConfiguration extends React.Component {
 
   render() {
     const {
-      databases,
-      currDatabase,
       user,
       password,
       connections,
@@ -483,17 +468,6 @@ class DbConfiguration extends React.Component {
                 width="250px"
                 placeholder="JDBC source name"
                 data-testid="connection-name-input"
-                handleChange={this.handleChange}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Database</Label>
-              <Select
-                name="databases"
-                list={databases}
-                selected={currDatabase}
-                width="100%"
-                data-testid="dataset-select"
                 handleChange={this.handleChange}
               />
             </FormGroup>
