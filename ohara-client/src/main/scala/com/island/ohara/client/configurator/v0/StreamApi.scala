@@ -23,7 +23,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.util.ByteString
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.{CommonUtil, VersionUtil}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -95,7 +95,7 @@ object StreamApi {
     * @param fileInfo the request file
     * @return the tmp file
     */
-  def saveTmpFile(fileInfo: FileInfo): File = File.createTempFile(fileInfo.fileName, ".tmp")
+  def saveTmpFile(fileInfo: FileInfo): File = CommonUtil.createTempFile(fileInfo.fileName)
 
   val STREAM_PREFIX_PATH: String = "stream"
   val STREAM_LIST_PREFIX_PATH: String = "jars"

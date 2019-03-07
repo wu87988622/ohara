@@ -361,6 +361,12 @@ private[configurator] object StreamRoute {
                                               StreamApi.TO_TOPIC_KEY -> data.toTopics.head
                                             )
                                           )
+                                          // Mapping the broker list hostname -> ip to this container
+                                          // note : we use default network=bridge to separate
+                                          // the host & container network driver
+                                          .route(
+                                            brokerInfo.nodeNames.map(n => n -> CommonUtil.address(n)).toMap
+                                          )
                                           .imageName(StreamApi.STREAMAPP_IMAGE)
                                           .command(StreamApi.MAIN_ENTRY)
                                           .run()
