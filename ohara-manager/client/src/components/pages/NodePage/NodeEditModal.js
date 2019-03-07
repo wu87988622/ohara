@@ -160,6 +160,7 @@ class NodeEditModal extends React.Component {
                     <s.TestConnectionBtn
                       text="Test connection"
                       isWorking={isTestBtnWorking}
+                      disabled={isTestBtnWorking}
                       data-testid="test-connection-button"
                       handleClick={e => {
                         e.preventDefault();
