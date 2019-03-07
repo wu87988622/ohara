@@ -111,7 +111,7 @@ The backend image is not included in production release. Hence, there is no guar
 docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} --env POSTGRES_USER=${USER_NAME} --env POSTGRES_PASSWORD=${PASSWORD} -it islandsystems/postgresql:9.2.24
 ```
 * POSTGRES_DB: PostgreSQL DataBase name
-* POSTGRES_USER: PostgreSQL login user name
+* POSTGRES_USER: PostgreSQL login user name. **Note: POSTGRES_USER="user" is illegal to postgresql**
 * POSTGRES_PASSWORD: PostgreSQL login password
 
 #### FTP
