@@ -16,16 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
-import { find, join } from 'lodash';
 
+import List from './List';
 import { Box } from 'common/Layout';
-import { FormGroup, Label } from 'common/Form';
 import { H2 } from 'common/Headings';
-
-const Text = styled(Label)`
-  margin-left: 0.5rem;
-`;
+import { Item } from './Styles.js';
 
 class WorkerDetailPage extends React.Component {
   static propTypes = {
@@ -42,27 +37,43 @@ class WorkerDetailPage extends React.Component {
 
   render() {
     const { workers, name } = this.props;
-    const worker = find(workers, { name });
+    const worker = workers.find(worker => worker.name === name);
+
     if (!worker) return null;
+
+    const {
+      name: workerName,
+      clientPort,
+      nodeNames,
+      sources,
+      sinks,
+      jarNames,
+    } = worker;
+
+    // we just need the jar name not the full path
+    const jarList = jarNames.map(name => name.split('/').pop());
+    const pluginList = [...sources, ...sinks].map(({ className }) => className);
 
     return (
       <React.Fragment>
         <Box shadow={false}>
-          <FormGroup>
-            <H2>Services > {worker.name}</H2>
-          </FormGroup>
-          <FormGroup isInline>
-            <Label>Port:</Label>
-            <Text>{worker.clientPort}</Text>
-          </FormGroup>
-          <FormGroup isInline>
-            <Label>Node List:</Label>
-            <Text>{join(worker.nodeNames, ', ')}</Text>
-          </FormGroup>
-          <FormGroup isInline>
-            <Label>Plugin List:</Label>
-            <Text>{join(worker.jarNames, ', ')}</Text>
-          </FormGroup>
+          <H2>Services > {workerName}</H2>
+          <Item>
+            <h5>Port:</h5>
+            <span className="content">{clientPort}</span>
+          </Item>
+          <Item>
+            <h5>Node List:</h5>
+            <List list={nodeNames} />
+          </Item>
+          <Item>
+            <h5>Jar List:</h5>
+            <List list={jarList} />
+          </Item>
+          <Item>
+            <h5>Plugin List:</h5>
+            <List list={pluginList} />
+          </Item>
         </Box>
       </React.Fragment>
     );

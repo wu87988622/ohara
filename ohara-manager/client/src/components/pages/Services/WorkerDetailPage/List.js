@@ -14,26 +14,35 @@
  * limitations under the License.
  */
 
+import React from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-const Item = styled.div`
-  display: flex;
-  margin-bottom: 25px;
+const Ul = styled.ul`
+  align-self: center;
 
-  h5 {
-    white-space: nowrap;
-    margin: 0 10px 0 0;
-    padding: 13px 15px;
-    color: ${props => props.theme.darkerBlue};
-    background-color: ${props => props.theme.whiteSmoke};
-    align-self: start;
-  }
-
-  .content {
+  li {
     font-size: 13px;
+    margin: 5px 0;
     color: ${props => props.theme.lightBlue};
     align-self: center;
   }
 `;
 
-export { Item };
+const List = ({ list }) => {
+  return (
+    <Ul>
+      {list.map(item => (
+        <li className="item" key={item}>
+          {item}
+        </li>
+      ))}
+    </Ul>
+  );
+};
+
+List.propTypes = {
+  list: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
+};
+
+export default List;
