@@ -31,7 +31,6 @@ dependencies {
   testImplementation project(path: ':ohara-client', configuration: 'tests')
   testImplementation project(path: ':ohara-common', configuration: 'tests')
   testImplementation project(path: ':ohara-configurator', configuration: 'tests')
-  testImplementation project(path: ':ohara-demo', configuration: 'tests')
   testImplementation project(path: ':ohara-connector', configuration: 'tests')
   testImplementation project(path: ':ohara-shabondi', configuration: 'tests')
   testImplementation project(path: ':ohara-it', configuration: 'tests')

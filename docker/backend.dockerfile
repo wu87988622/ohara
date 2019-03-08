@@ -24,7 +24,7 @@ RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
 RUN gradle clean build -x test -PskipManager
 RUN mkdir /opt/ohara
-RUN tar -xvf $(find "/testpatch/ohara/ohara-demo/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
+RUN tar -xvf $(find "/testpatch/ohara/ohara-testing-util/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
 # Add Tini
 ARG TINI_VERSION=v0.18.0

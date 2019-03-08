@@ -45,8 +45,6 @@ else
     CLASS="com.island.ohara.configurator.Configurator"
   elif [ "$service" == "shabondi" ]; then
     CLASS="com.island.ohara.shabondi.WebServer"
-  elif [ "$service" == "backend" ]; then
-    CLASS="com.island.ohara.demo.Backend"
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
     CLASS="com.island.ohara.common.util.VersionUtil"
   elif [ "$service" == "help" ]; then
@@ -59,8 +57,6 @@ else
     echo "shabondi                                 Ohara Shabondi provides the service "
     echo "                                         for user sending data through http request."
     echo ""
-    echo "backend                                  Used for a testing purpose. It doesn't work in production."
-    echo ""
     echo "manager                                  Running Ohara Manager. After run this command, you can "
     echo "                                         connect to http://\${HostName or IP}:5050 url by browser."
     echo ""
@@ -68,7 +64,7 @@ else
     echo ""
     exit 1
   elif [ "$service" == "" ]; then
-    echo "Usage: (configurator|shabondi|backend|manager|help) [<args>]"
+    echo "Usage: (configurator|shabondi|manager|help) [<args>]"
     exit 1
   else
     CLASS=$service

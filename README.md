@@ -85,26 +85,6 @@ gradle licenseApply
 
 ### Running all backend-services by docker
 
-Note that `com.island.ohara.demo.Backend` is deprecated and will be removed in v0.3
-
-#### Backend image
-
-(with 3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
-
-```sh
-docker run --rm -p 12345:12345 oharastream/backend:0.3-SNAPSHOT com.island.ohara.demo.Backend --configuratorPort 12345
-```
-
-- configuratorPort: bound by Configurator (default is random)
-- zkPort: bound by zookeeper (default is random)
-- brokersPort: bound by brokers (default is random). form: port_0,port_1
-- workersPort: bound by workers (default is random). form: port_0,port_1
-- dbPort: bound by mysql (default is random)
-- ftpPort: bound by ftp server (default is random)
-- ttl: time to terminate backend-service (default is 365 days)
-
-The backend image is not included in production release. Hence, there is no guarantee to backend image.
-
 #### PostgreSQL
 
 ```

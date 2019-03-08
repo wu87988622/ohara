@@ -15,6 +15,7 @@
  */
 
 apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'java-library-distribution'
 
 dependencies {
   implementation project(':ohara-common')
@@ -51,6 +52,26 @@ dependencies {
   testImplementation libs.scalatest
   testImplementation libs.mockito
   testImplementation libs.junit
+}
+
+distributions {
+  main {
+    baseName = "ohara"
+    contents {
+      into("conf") {
+        // ref to root module
+        from { "$projectDir/../conf" }
+      }
+      into("bin") {
+        // ref to root module
+        from { "$projectDir/../bin" }
+        fileMode 0755
+      }
+      into("lib") {
+        from { "$projectDir/build/libs/ohara-testing-util-${version}.jar" }
+      }
+    }
+  }
 }
 
 /**

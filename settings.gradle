@@ -24,6 +24,5 @@ include 'ohara-testing-util',
         'ohara-agent',
         'ohara-configurator',
         'ohara-assembly',
-        'ohara-demo',
         'ohara-it',
         'ohara-streams'
