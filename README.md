@@ -71,12 +71,12 @@ gradle licenseApply
 
 - Ensure your nodes (actual machines or VMs) have installed Docker 18.09+
 - Download required images via `docker pull` command:
-  - oharastream/broker:0.3-SNAPSHOT
-  - oharastream/zookeeper:0.3-SNAPSHOT
-  - oharastream/connect-worker:0.3-SNAPSHOT
-  - oharastream/configurator:0.3-SNAPSHOT
-  - oharastream/manager:0.3-SNAPSHOT
-  - oharastream/streamapp:0.3-SNAPSHOT
+  - oharastream/broker:0.2.0
+  - oharastream/zookeeper:0.2.0
+  - oharastream/connect-worker:0.2.0
+  - oharastream/configurator:0.2.0
+  - oharastream/manager:0.2.0
+  - oharastream/streamapp:0.2.0
 - [Running configurator by docker](#running-configurator-by-docker)
 
 **Running Ohara From Build**
@@ -92,7 +92,7 @@ Note that `com.island.ohara.demo.Backend` is deprecated and will be removed in v
 (with 3 brokers, 3 workers, 1 mysql, 1 ftp server and 1 configurator)
 
 ```sh
-docker run --rm -p 12345:12345 oharastream/backend:0.3-SNAPSHOT com.island.ohara.demo.Backend --configuratorPort 12345
+docker run --rm -p 12345:12345 oharastream/backend:0.2.0 com.island.ohara.demo.Backend --configuratorPort 12345
 ```
 
 - configuratorPort: bound by Configurator (default is random)
@@ -117,7 +117,7 @@ docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} -
 #### FTP
 
 ```h
-docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.3-SNAPSHOT com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
+docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.2.0 com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 ```
 
 - controlPort: bound by FTP Server
@@ -126,7 +126,7 @@ docker run --rm -p 10000-10011:10000-10011 oharastream/backend:0.3-SNAPSHOT com.
 ### Running configurator by docker
 
 ```sh
-docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.3-SNAPSHOT --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
+docker run --rm -p ${port}:${port} --add-host ${nodeHostName}:${nodeHostIP} oharastream/configurator:0.2.0 --port ${port} --hostname ${host} --node ${SshUserName}:${SshPassword}@${NodeHostName}:${SshPort}
 ```
 
 - port: bound by Configurator (default is random)
@@ -142,7 +142,7 @@ through configruator's RESTful APIs.
 ### Running manager by docker
 
 ```sh
-docker run --rm -p 5050:5050 oharastream/manager:0.3-SNAPSHOT --port 5050 --configurator http://localhost:12345/v0
+docker run --rm -p 5050:5050 oharastream/manager:0.2.0 --port 5050 --configurator http://localhost:12345/v0
 ```
 
 - port: bound by manager (default is 5050)

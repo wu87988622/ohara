@@ -18,7 +18,7 @@ openapi: "3.0.0"
 info:
   title: "OHARA Configurator"
   description: "OHARA Configurator API - Swagger version"
-  version: "0.3-SNAPSHOT"
+  version: "0.2.0"
   contact:
     name: "The God - Chia7712"
     email: "chia7712@is-land.com.tw"
