@@ -27,7 +27,7 @@ services:
       context: .
       dockerfile: configurator.dockerfile
       args:
-        BRANCH: master
+        BRANCH: 0.2
         REPO: https://github.com/oharastream/ohara.git
 
   manager:
@@ -36,7 +36,7 @@ services:
       context: .
       dockerfile: manager.dockerfile
       args:
-        BRANCH: master
+        BRANCH: 0.2
         REPO: https://github.com/oharastream/ohara.git
 
   streamapp:
@@ -50,7 +50,7 @@ services:
         GRADLE_VERSION: 5.1.1
         COMMON_LANG_VERSION: 3.7
         ROCKDB_VERSION: 5.7.3
-        BRANCH: master
+        BRANCH: 0.2
         REPO: https://github.com/oharastream/ohara.git
 
   shabondi:
@@ -59,7 +59,7 @@ services:
       context: .
       dockerfile: shabondi.dockerfile
       args:
-        BRANCH: master
+        BRANCH: 0.2
         REPO: https://github.com/oharastream/ohara.git
 
   backend:
@@ -68,7 +68,7 @@ services:
       context: .
       dockerfile: backend.dockerfile
       args:
-        BRANCH: master
+        BRANCH: 0.2
         REPO: https://github.com/oharastream/ohara.git
 
   zookeeper:
@@ -94,7 +94,7 @@ services:
       dockerfile: worker.dockerfile
       args:
         KAFKA_VERSION: 1.0.2
-        BRANCH: master
+        BRANCH: 0.2
         REPO: https://github.com/oharastream/ohara.git
 
   swagger:
