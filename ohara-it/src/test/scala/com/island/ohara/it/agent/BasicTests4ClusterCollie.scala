@@ -53,9 +53,6 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .nodeNames(nodeNames)
       .create()
 
-  override protected def zk_cluster(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkCollie.cluster(clusterName).map(_._1)
-
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
     zkCollie.clusters().map(_.keys.toSeq)
 
@@ -85,9 +82,6 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .zookeeperClusterName(zkClusterName)
       .nodeNames(nodeNames)
       .create()
-
-  override protected def bk_cluster(clusterName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkCollie.cluster(clusterName).map(_._1)
 
   override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters().map(_.keys.toSeq)
 
@@ -146,9 +140,6 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .offsetTopicName(offsetTopicName)
       .nodeNames(nodeNames)
       .create()
-
-  override protected def wk_cluster(clusterName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie.cluster(clusterName).map(_._1)
 
   override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters().map(_.keys.toSeq)
 

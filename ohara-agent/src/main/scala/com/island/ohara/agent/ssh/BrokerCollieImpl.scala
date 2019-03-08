@@ -18,6 +18,7 @@ package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtil
@@ -25,8 +26,10 @@ import com.island.ohara.common.util.CommonUtil
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-private abstract class BrokerCollieImpl(implicit nodeCollie: NodeCollie, clientCache: DockerClientCache)
-    extends BasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator]
+private class BrokerCollieImpl(nodeCollie: NodeCollie,
+                               dockerCache: DockerClientCache,
+                               clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
+    extends BasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
     with BrokerCollie {
 
   /**
@@ -42,7 +45,7 @@ private abstract class BrokerCollieImpl(implicit nodeCollie: NodeCollie, clientC
     */
   override def creator(): BrokerCollie.ClusterCreator =
     (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
-      allClusters(name => !name.contains(s"$DIVIDER$WK_SERVICE_NAME$DIVIDER")).flatMap { clusters =>
+      clusterCache.get().flatMap { clusters =>
         clusters
           .filter(_._1.isInstanceOf[BrokerClusterInfo])
           .map {
@@ -107,7 +110,7 @@ private abstract class BrokerCollieImpl(implicit nodeCollie: NodeCollie, clientC
               // update the route since we are adding new node to a running broker cluster
               // we don't need to update startup broker list since kafka do the update for us.
               existNodes.foreach {
-                case (node, container) => updateRoute(clientCache.get(node), container.name, route)
+                case (node, container) => updateRoute(node, container.name, route)
               }
 
               // the new broker node can't take used id so we find out the max id which is used by current cluster
@@ -119,33 +122,34 @@ private abstract class BrokerCollieImpl(implicit nodeCollie: NodeCollie, clientC
               Future
                 .sequence(newNodes.zipWithIndex.map {
                   case ((node, containerName), index) =>
-                    val client = clientCache.get(node)
                     Future {
                       try {
-                        client
-                          .containerCreator()
-                          .imageName(imageName)
-                          .portMappings(Map(
-                            clientPort -> clientPort,
-                            exporterPort -> exporterPort
-                          ))
-                          .hostname(containerName)
-                          .envs(Map(
-                            BrokerCollie.ID_KEY -> (maxId + index).toString,
-                            BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                            BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
-                            BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                            BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
-                            BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                            ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
-                          ))
-                          .name(containerName)
-                          .route(route ++ existRoute)
-                          .execute()
+                        dockerCache.exec(
+                          node,
+                          _.containerCreator()
+                            .imageName(imageName)
+                            .portMappings(Map(
+                              clientPort -> clientPort,
+                              exporterPort -> exporterPort
+                            ))
+                            .hostname(containerName)
+                            .envs(Map(
+                              BrokerCollie.ID_KEY -> (maxId + index).toString,
+                              BrokerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                              BrokerCollie.ZOOKEEPERS_KEY -> zookeepers,
+                              BrokerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                              BrokerCollie.EXPORTER_PORT_KEY -> exporterPort.toString,
+                              BrokerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                              ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
+                            ))
+                            .name(containerName)
+                            .route(route ++ existRoute)
+                            .execute()
+                        )
                         Some(node.name)
                       } catch {
                         case e: Throwable =>
-                          try client.forceRemove(containerName)
+                          try dockerCache.exec(node, _.forceRemove(containerName))
                           catch {
                             case _: Throwable =>
                             // do nothing

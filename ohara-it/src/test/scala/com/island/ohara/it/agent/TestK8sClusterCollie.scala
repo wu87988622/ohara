@@ -20,8 +20,6 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtil
 import org.junit.Before
 
-import scala.concurrent.Future
-
 class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
@@ -35,11 +33,7 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   implicit var k8sClient: K8SClient = _
 
   override protected val clusterCollie: ClusterCollie = ClusterCollie.k8s(
-    new NodeCollie {
-      override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
-      override def node(name: String): Future[Node] = Future.successful(
-        nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
-    },
+    NodeCollie(nodeCache),
     // It is ok to pass null since we will skip test if no k8s env exists
     if (API_SERVER_URL.isEmpty) null else K8SClient(API_SERVER_URL.get)
   )

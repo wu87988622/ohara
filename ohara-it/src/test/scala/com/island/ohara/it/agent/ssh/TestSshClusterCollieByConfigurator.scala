@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder, CollieTestUtil}
 import org.junit.{After, Before}
 class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()

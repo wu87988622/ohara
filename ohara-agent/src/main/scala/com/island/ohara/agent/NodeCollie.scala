@@ -39,7 +39,12 @@ trait NodeCollie {
 
 object NodeCollie {
 
-  def inMemory(_nodes: Seq[Node]): NodeCollie = new NodeCollie {
+  /**
+    * create a node collie based on fixed nodes
+    * @param _nodes input nodes
+    * @return node collie implementation
+    */
+  def apply(_nodes: Seq[Node]): NodeCollie = new NodeCollie {
     override def node(name: String): Future[Node] =
       nodes().map(_.find(_.name == name).getOrElse(throw new NoSuchElementException(s"$name doesn't exist")))
     override def nodes(): Future[Seq[Node]] = Future.successful(_nodes)

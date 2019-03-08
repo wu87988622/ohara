@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtil}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
-import scala.concurrent.Future
 class TestListCluster extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestListCluster])
   private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
-  private[this] implicit val nodeCollie: NodeCollie = new NodeCollie {
-    override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
-    override def node(name: String): Future[Node] = Future.successful(
-      nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
-  }
+  private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 
-  private[this] val clusterCollie: ClusterCollie = ClusterCollie.ssh
+  private[this] val clusterCollie: ClusterCollie =
+    ClusterCollie.ssh(nodeCollie)
 
   private[this] val cleanup: Boolean = true
 
@@ -111,6 +107,7 @@ class TestListCluster extends IntegrationTest with Matchers {
 
     log.info("[TestListCluster] before create bk cluster")
     try {
+      assertCluster(() => result(clusterCollie.zookeeperCollie().clusters()).keys.toSeq, zkCluster.name)
       val name = nameHolder.generateClusterName()
       try result(
         clusterCollie

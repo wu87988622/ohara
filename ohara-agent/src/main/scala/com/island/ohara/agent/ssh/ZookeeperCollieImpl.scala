@@ -17,6 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtil
@@ -24,8 +25,11 @@ import com.island.ohara.common.util.CommonUtil
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-private abstract class ZookeeperCollieImpl(implicit nodeCollie: NodeCollie, clientCache: DockerClientCache)
-    extends BasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator]
+import scala.concurrent.ExecutionContext.Implicits.global
+private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
+                                  dockerCache: DockerClientCache,
+                                  clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
+    extends BasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
     with ZookeeperCollie {
 
   /**
@@ -39,7 +43,7 @@ private abstract class ZookeeperCollieImpl(implicit nodeCollie: NodeCollie, clie
     */
   override def creator(): ZookeeperCollie.ClusterCreator =
     (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-      allClusters(_.contains(s"$DIVIDER$serviceName$DIVIDER")).flatMap { clusters =>
+      clusterCache.get().flatMap { clusters =>
         if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
           Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
         else
@@ -54,33 +58,35 @@ private abstract class ZookeeperCollieImpl(implicit nodeCollie: NodeCollie, clie
             Future
               .sequence(nodes.zipWithIndex.map {
                 case ((node, containerName), index) =>
-                  val client = clientCache.get(node)
                   Future {
                     try {
-                      client
-                        .containerCreator()
-                        .imageName(imageName)
-                        .portMappings(Map(
-                          clientPort -> clientPort,
-                          peerPort -> peerPort,
-                          electionPort -> electionPort
-                        ))
-                        // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
-                        .hostname(node.name)
-                        .envs(Map(
-                          ZookeeperCollie.ID_KEY -> index.toString,
-                          ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
-                          ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
-                          ZookeeperCollie.SERVERS_KEY -> zkServers
-                        ))
-                        .name(containerName)
-                        .route(route)
-                        .execute()
+                      dockerCache.exec(
+                        node,
+                        _.containerCreator()
+                          .imageName(imageName)
+                          .portMappings(Map(
+                            clientPort -> clientPort,
+                            peerPort -> peerPort,
+                            electionPort -> electionPort
+                          ))
+                          // zookeeper doesn't have advertised hostname/port so we assign the "docker host" directly
+                          .hostname(node.name)
+                          .envs(Map(
+                            ZookeeperCollie.ID_KEY -> index.toString,
+                            ZookeeperCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                            ZookeeperCollie.PEER_PORT_KEY -> peerPort.toString,
+                            ZookeeperCollie.ELECTION_PORT_KEY -> electionPort.toString,
+                            ZookeeperCollie.SERVERS_KEY -> zkServers
+                          ))
+                          .name(containerName)
+                          .route(route)
+                          .execute()
+                      )
+
                       Some(node.name)
                     } catch {
                       case e: Throwable =>
-                        try client.forceRemove(containerName)
+                        try dockerCache.exec(node, _.forceRemove(containerName))
                         catch {
                           case _: Throwable =>
                           // do nothing

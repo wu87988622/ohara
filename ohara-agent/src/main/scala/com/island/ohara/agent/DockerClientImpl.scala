@@ -16,7 +16,6 @@
 
 package com.island.ohara.agent
 import java.util.Objects
-import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DockerClient._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
@@ -277,19 +276,12 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
         }
         Future { Some(toContainerInfo) }.recover {
           case e: Throwable =>
-            val errorMessage = s"failed to get container description from $hostname." +
-              "This error may be caused by operator conflict since we can't get container information by single command." +
-              "will retry it after 1 second"
-            LOG.error(errorMessage, e)
-            // TODO: ssh is fucking easy to shutdown if we "touch" it violently... by chia
-            try {
-              TimeUnit.SECONDS.sleep(3)
-              Some(toContainerInfo)
-            } catch {
-              case e: Throwable =>
-                LOG.error(s"still fail to fetch containers from $hostname", e)
-                None
-            }
+            LOG.error(
+              s"failed to get container description from $hostname." +
+                "This error may be caused by operator conflict since we can't get container information by single command.",
+              e
+            )
+            None
         }
       }
       .map(_.flatten),

@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
+import com.island.ohara.it.agent.{BasicTests4ClusterCollie, ClusterNameHolder, CollieTestUtil}
 import org.junit.{After, Before, Test}
-
-import scala.concurrent.Future
 class TestSshClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
-  override protected val clusterCollie: ClusterCollie = ClusterCollie.ssh(new NodeCollie {
-    override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
-    override def node(name: String): Future[Node] = Future.successful(
-      nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
-  })
+  override protected val clusterCollie: ClusterCollie =
+    ClusterCollie.ssh(NodeCollie(nodeCache))
 
+//  override protected val clusterCollie: ClusterCollie = ClusterCollie.ssh(NodeCollie(nodeCache))
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
 

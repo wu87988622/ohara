@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.ssh
+
 import java.io.File
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
@@ -27,6 +28,7 @@ import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtil}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -106,6 +108,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           nodeNames = nodeCache.map(_.name)
         )
       ))
+    assertCluster(() => result(zkApi.list()), zkCluster.name)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
       bkApi.add(
@@ -118,6 +121,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           nodeNames = nodeCache.map(_.name)
         )
       ))
+    assertCluster(() => result(bkApi.list()), bkCluster.name)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
       wkApi.add(
@@ -139,6 +143,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           nodeNames = Seq(nodeCache.head.name)
         )
       ))
+    assertCluster(() => result(wkApi.list()), wkCluster.name)
     // add all remaining node to the running worker cluster
     nodeCache.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
       result(wkApi.addNode(wkCluster.name, n.name))

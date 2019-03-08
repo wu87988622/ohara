@@ -29,24 +29,32 @@ import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 
-private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends ReleaseOnce with ClusterCollie {
-  private[this] implicit val clientCache: DockerClientCache = new DockerClientCache
+private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCollie)
+    extends ReleaseOnce
+    with ClusterCollie {
 
-  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl {
-    override def allClusters(containerNameFilter: String => Boolean): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
-      ClusterCollieImpl.this.allClusters(containerNameFilter)
+  def this(nodeCollie: NodeCollie) {
+    this(null, nodeCollie)
   }
 
-  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl {
-    override def allClusters(containerNameFilter: String => Boolean): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
-      ClusterCollieImpl.this.allClusters(containerNameFilter)
-  }
+  private[this] val dockerCache = DockerClientCache()
+  private[this] val clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]] =
+    if (expiredTime == null) Cache.empty(() => doClusters())
+    else
+      Cache
+        .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
+        .expiredTime(expiredTime)
+        .default(Map.empty)
+        .updater(() => doClusters())
+        .build()
 
-  private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl {
-    override def allClusters(containerNameFilter: String => Boolean): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
-      ClusterCollieImpl.this.allClusters(containerNameFilter)
-  }
+  private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)
+
+  private[this] val bkCollie: BrokerCollieImpl = new BrokerCollieImpl(nodeCollie, dockerCache, clusterCache)
+
+  private[this] val wkCollie: WorkerCollieImpl = new WorkerCollieImpl(nodeCollie, dockerCache, clusterCache)
 
   override def zookeeperCollie(): ZookeeperCollie = zkCollie
   override def brokerCollie(): BrokerCollie = bkCollie
@@ -108,23 +116,14 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       ))
   }
 
-  /**
-    * list all clusters passed by name filter.
-    * NOTED: The filter introduced here is used to reduce ssh communication overhead of remote node. Each container detail
-    * spends a ssh connection, hence the cost is proportional to number of containers.
-    * @param containerNameFilter name filter
-    * @return matched clusters
-    */
-  def allClusters(containerNameFilter: String => Boolean): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
+  override def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = clusterCache.get()
+  private[this] def doClusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(Future
       .traverse(_) { node =>
         // multi-thread to seek all containers from multi-nodes
         Future {
-          clientCache
-            .get(node)
-            .activeContainers(containerName =>
-              containerName.startsWith(PREFIX_KEY) && containerNameFilter(containerName))
+          dockerCache.exec(node, _.activeContainers(containerName => containerName.startsWith(PREFIX_KEY)))
         }.recover {
           case e: Throwable =>
             LOG.error(s"failed to get active containers from $node", e)
@@ -159,23 +158,11 @@ private[agent] class ClusterCollieImpl(implicit nodeCollie: NodeCollie) extends 
       }
     }
 
-  override def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = allClusters(_ => true)
-
   override protected def doClose(): Unit = {
-    Releasable.close(clientCache)
-//    Releasable.close(clustersCache)
+    Releasable.close(dockerCache)
+    Releasable.close(clusterCache)
   }
 
   override def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]] =
-    Future
-      .traverse(nodes) { node =>
-        Future {
-          val dockerClient =
-            DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-          try node -> dockerClient.imageNames()
-          finally dockerClient.close()
-        }
-      }
-      .map(_.toMap)
-
+    Future.traverse(nodes)(node => Future(dockerCache.exec(node, node -> _.imageNames()))).map(_.toMap)
 }

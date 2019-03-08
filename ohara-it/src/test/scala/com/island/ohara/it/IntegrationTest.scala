@@ -19,6 +19,7 @@ package com.island.ohara.it
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.util.CommonUtil
 import org.junit.Rule
@@ -33,6 +34,23 @@ class IntegrationTest extends OharaTest {
   protected def result[T](f: Future[T]): T = IntegrationTest.result(f)
 
   protected def await(f: () => Boolean): Unit = IntegrationTest.await(f)
+
+  /**
+    * the creation of cluster is async so you need to wait the cluster to build.
+    * @param f clusters
+    * @param name cluster name
+    */
+  protected def assertCluster(f: () => Seq[ClusterInfo], name: String): Unit = assertClusters(f, Seq(name))
+  protected def assertClusters(f: () => Seq[ClusterInfo], names: Seq[String]): Unit = await { () =>
+    val clusters = f()
+    names.forall(name => clusters.map(_.name).contains(name))
+  }
+  protected def assertNoCluster(f: () => Seq[ClusterInfo], name: String): Unit = assertNoClusters(f, Seq(name))
+
+  protected def assertNoClusters(f: () => Seq[ClusterInfo], names: Seq[String]): Unit = await { () =>
+    val clusters = f()
+    names.forall(name => !clusters.map(_.name).contains(name))
+  }
 }
 
 object IntegrationTest {

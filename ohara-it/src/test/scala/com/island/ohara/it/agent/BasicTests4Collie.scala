@@ -35,6 +35,7 @@ import org.apache.kafka.common.errors.{InvalidReplicationFactorException, Unknow
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -56,7 +57,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           electionPort: Int,
                           peerPort: Int,
                           nodeNames: Seq[String]): Future[ZookeeperClusterInfo]
-  protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo]
+  protected def zk_cluster(clusterName: String): Future[ZookeeperClusterInfo] =
+    zk_clusters().map(_.find(_.name == clusterName).get)
   protected def zk_clusters(): Future[Seq[ZookeeperClusterInfo]]
   protected def zk_logs(clusterName: String): Future[Seq[String]]
   protected def zk_containers(clusterName: String): Future[Seq[ContainerInfo]]
@@ -69,7 +71,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           exporterPort: Int,
                           zkClusterName: String,
                           nodeNames: Seq[String]): Future[BrokerClusterInfo]
-  protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo]
+  protected def bk_cluster(clusterName: String): Future[BrokerClusterInfo] =
+    bk_clusters().map(_.find(_.name == clusterName).get)
   protected def bk_clusters(): Future[Seq[BrokerClusterInfo]]
   protected def bk_logs(clusterName: String): Future[Seq[String]]
   protected def bk_containers(clusterName: String): Future[Seq[ContainerInfo]]
@@ -91,7 +94,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
                           offsetTopicName: String,
                           bkClusterName: String,
                           nodeNames: Seq[String]): Future[WorkerClusterInfo]
-  protected def wk_cluster(clusterName: String): Future[WorkerClusterInfo]
+  protected def wk_cluster(clusterName: String): Future[WorkerClusterInfo] =
+    wk_clusters().map(_.find(_.name == clusterName).get)
   protected def wk_clusters(): Future[Seq[WorkerClusterInfo]]
   protected def wk_logs(clusterName: String): Future[Seq[String]]
   protected def wk_containers(clusterName: String): Future[Seq[ContainerInfo]]
@@ -134,6 +138,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Seq(nodeName)
         )))
     try {
+      assertCluster(() => result(zk_clusters()), zkCluster.name)
       assert(result(zk_cluster(zkCluster.name)))
       log.info("start to run zookeeper cluster ... done")
       result(zk_exist(zkCluster.name)) shouldBe true
@@ -141,6 +146,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       result(zk_clusters()).isEmpty shouldBe false
       log.info(s"verify number of zk clusters... done")
       result(zk_logs(clusterName)).size shouldBe 1
+      log.info(s"verify number of log... done")
       result(zk_logs(clusterName)).foreach(log =>
         withClue(log) {
           log.contains("exception") shouldBe false
@@ -172,6 +178,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         peerPort = CommonUtil.availablePort(),
         nodeNames = Seq(nodeCache.head.name)
       ))
+    assertCluster(() => result(zk_clusters()), zkCluster.name)
     try {
       log.info("[BROKER] start to run broker cluster")
       val clusterName = generateClusterName()
@@ -199,6 +206,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = Seq(nodeName)
           )))
       log.info("[BROKER] start to run broker cluster...done")
+      assertCluster(() => result(bk_clusters()), bkCluster.name)
       assert(result(bk_cluster(bkCluster.name)))
       log.info("[BROKER] verify cluster api...done")
       try {
@@ -220,7 +228,10 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
         testTopic(
           testRemoveNodeToRunningBrokerCluster(testTopic(testAddNodeToRunningBrokerCluster(testTopic(bkCluster)))))
-      } finally if (cleanup) result(bk_delete(bkCluster.name))
+      } finally if (cleanup) {
+        result(bk_delete(bkCluster.name))
+        assertNoCluster(() => result(bk_clusters()), bkCluster.name)
+      }
     } finally if (cleanup) result(zk_delete(zkCluster.name))
   }
 
@@ -349,7 +360,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         nodeNames = Seq(nodeCache.head.name)
       ))
     try {
-
+      assertCluster(() => result(zk_clusters()), zkCluster.name)
       val bkCluster = result(
         bk_create(
           clusterName = generateClusterName(),
@@ -359,6 +370,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Seq(nodeCache.head.name)
         ))
       try {
+        assertCluster(() => result(bk_clusters()), bkCluster.name)
         log.info("[WORKER] start to test worker")
         val nodeName = nodeCache.head.name
         val clusterName = generateClusterName()
@@ -387,6 +399,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               bkClusterName = bkCluster.name,
               nodeNames = Seq(nodeName)
             )))
+        assertCluster(() => result(wk_clusters()), wkCluster.name)
         log.info("[WORKER] create done")
         assert(result(wk_cluster(wkCluster.name)))
         log.info("[WORKER] verify:create done")
@@ -415,8 +428,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           testPlugins(
             testRemoveNodeToRunningWorkerCluster(
               testPlugins(testAddNodeToRunningWorkerCluster(testPlugins(wkCluster)))))
-        } finally if (cleanup) result(wk_delete(wkCluster.name))
-      } finally if (cleanup) result(bk_delete(bkCluster.name))
+        } finally if (cleanup) {
+          result(wk_delete(wkCluster.name))
+          assertNoCluster(() => result(wk_clusters()), wkCluster.name)
+        }
+      } finally if (cleanup) {
+        result(bk_delete(bkCluster.name))
+        assertNoCluster(() => result(bk_clusters()), bkCluster.name)
+      }
     } finally if (cleanup) result(zk_delete(zkCluster.name))
 
   }
@@ -506,6 +525,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = nodeCache.map(_.name)
           ))
       }
+      assertClusters(() => result(zk_clusters()), clusters.map(_.name))
       val clusters2 = result(zk_clusters())
       clusters.foreach { c =>
         val another = clusters2.find(_.name == c.name).get
@@ -545,7 +565,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             nodeNames = Seq(nodeCache.head.name)
           ))
       }
-      val clusters = zks.zipWithIndex.map {
+      assertClusters(() => result(zk_clusters()), zks.map(_.name))
+      val bks = zks.zipWithIndex.map {
         case (zk, index) =>
           result(
             bk_create(
@@ -556,9 +577,14 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               nodeNames = Seq(nodeCache.head.name)
             ))
       }
+      assertClusters(() => result(bk_clusters()), bks.map(_.name))
       val clusters2 = result(bk_clusters())
-      clusters.foreach { c =>
-        clusters2.find(_.name == c.name).get shouldBe c
+      bks.foreach { c =>
+        val another = clusters2.find(_.name == c.name).get
+        another.clientPort shouldBe c.clientPort
+        another.exporterPort shouldBe c.exporterPort
+        another.zookeeperClusterName shouldBe c.zookeeperClusterName
+        another.connectionProps shouldBe c.connectionProps
         testTopic(c)
       }
     } finally if (cleanup) {
@@ -569,6 +595,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           // do nothing
         }
       }
+      assertNoClusters(() => result(bk_clusters()), bkNames)
       zkNames.foreach { name =>
         try result(zk_delete(name))
         catch {
@@ -599,6 +626,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           nodeNames = Seq(nodeCache.head.name)
         )
       )
+      assertCluster(() => result(zk_clusters()), zk.name)
 
       log.info(s"start to run bk cluster:$bkName")
       val bk = result(
@@ -609,6 +637,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           zkClusterName = zk.name,
           nodeNames = Seq(nodeCache.head.name)
         ))
+      assertCluster(() => result(bk_clusters()), bk.name)
 
       log.info(s"start to run multi wk clusters:$wkNames")
       val clusters = wkNames.zipWithIndex.map {
@@ -627,6 +656,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       }
 
       log.info(s"check multi wk clusters:$wkNames")
+      assertClusters(() => result(wk_clusters()), clusters.map(_.name))
       wkNames.zipWithIndex.map {
         case (wkName, index) =>
           clusters.find(_.name == wkName).get.groupId shouldBe groupIds(index)
@@ -665,11 +695,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           // do nothing
         }
       }
+      assertNoClusters(() => result(wk_clusters()), wkNames)
       try result(bk_delete(bkName))
       catch {
         case _: Throwable =>
         // do nothing
       }
+      assertNoCluster(() => result(bk_clusters()), bkName)
       try result(zk_delete(zkName))
       catch {
         case _: Throwable =>

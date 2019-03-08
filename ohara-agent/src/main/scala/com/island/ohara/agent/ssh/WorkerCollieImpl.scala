@@ -20,16 +20,18 @@ import java.net.URL
 
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException, NodeCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.client.configurator.v0.InfoApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.util.CommonUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-private abstract class WorkerCollieImpl(implicit nodeCollie: NodeCollie, clientCache: DockerClientCache)
-    extends BasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator]
+private class WorkerCollieImpl(nodeCollie: NodeCollie,
+                               dockerCache: DockerClientCache,
+                               clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
+    extends BasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator](nodeCollie, dockerCache, clusterCache)
     with WorkerCollie {
 
   /**
@@ -58,7 +60,7 @@ private abstract class WorkerCollieImpl(implicit nodeCollie: NodeCollie, clientC
                                                          configTopicReplications,
                                                          jarUrls,
                                                          nodeNames) =>
-    allClusters(name => !name.contains(s"$DIVIDER$ZK_SERVICE_NAME$DIVIDER")).flatMap { clusters =>
+    clusterCache.get().flatMap { clusters =>
       clusters
         .filter(_._1.isInstanceOf[WorkerClusterInfo])
         .map {
@@ -107,53 +109,53 @@ private abstract class WorkerCollieImpl(implicit nodeCollie: NodeCollie, clientC
             // update the route since we are adding new node to a running worker cluster
             // we don't need to update startup broker list (WorkerCollie.BROKERS_KEY) since kafka do the update for us.
             existNodes.foreach {
-              case (node, container) => updateRoute(clientCache.get(node), container.name, route)
+              case (node, container) => updateRoute(node, container.name, route)
             }
 
             // ssh connection is slow so we submit request by multi-thread
             Future
               .sequence(newNodes.map {
                 case (node, containerName) =>
-                  val client = clientCache.get(node)
                   Future {
                     try {
-                      client
-                        .containerCreator()
-                        .imageName(imageName)
-                        // In --network=host mode, we don't need to export port for containers.
-                        // However, this op doesn't hurt us so we don't remove it.
-                        .portMappings(Map(clientPort -> clientPort))
-                        .hostname(containerName)
-                        .envs(Map(
-                          WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
-                          WorkerCollie.BROKERS_KEY -> brokers,
-                          WorkerCollie.GROUP_ID_KEY -> groupId,
-                          WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
-                          WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
-                          WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
-                          WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
-                          WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
-                          WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
-                          WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
-                          WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
-                          WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
-                          WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
-                          WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
-                          BROKER_CLUSTER_NAME -> brokerClusterName
-                        ))
-                        .name(containerName)
-                        .route(route ++ existRoute)
-                        // we use --network=host for worker cluster since the connectors run on worker cluster may need to
-                        // access external system to request data. In ssh mode, dns service "may" be not deployed.
-                        // In order to simplify their effort, we directly mount host's route on the container.
-                        // This is not a normal case I'd say. However, we always meet special case which must be addressed
-                        // by this "special" solution...
-                        .networkDriver(NETWORK_DRIVER)
-                        .execute()
+                      dockerCache.exec(
+                        node,
+                        _.containerCreator()
+                          .imageName(imageName)
+                          // In --network=host mode, we don't need to export port for containers.
+//                          .portMappings(Map(clientPort -> clientPort))
+                          .hostname(containerName)
+                          .envs(Map(
+                            WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
+                            WorkerCollie.BROKERS_KEY -> brokers,
+                            WorkerCollie.GROUP_ID_KEY -> groupId,
+                            WorkerCollie.OFFSET_TOPIC_KEY -> offsetTopicName,
+                            WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY -> offsetTopicPartitions.toString,
+                            WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY -> offsetTopicReplications.toString,
+                            WorkerCollie.CONFIG_TOPIC_KEY -> configTopicName,
+                            WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY -> configTopicReplications.toString,
+                            WorkerCollie.STATUS_TOPIC_KEY -> statusTopicName,
+                            WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY -> statusTopicPartitions.toString,
+                            WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY -> statusTopicReplications.toString,
+                            WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
+                            WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
+                            WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
+                            BROKER_CLUSTER_NAME -> brokerClusterName
+                          ))
+                          .name(containerName)
+                          .route(route ++ existRoute)
+                          // we use --network=host for worker cluster since the connectors run on worker cluster may need to
+                          // access external system to request data. In ssh mode, dns service "may" be not deployed.
+                          // In order to simplify their effort, we directly mount host's route on the container.
+                          // This is not a normal case I'd say. However, we always meet special case which must be addressed
+                          // by this "special" solution...
+                          .networkDriver(NETWORK_DRIVER)
+                          .execute()
+                      )
                       Some(node.name)
                     } catch {
                       case e: Throwable =>
-                        try client.forceRemove(containerName)
+                        try dockerCache.exec(node, _.forceRemove(containerName))
                         catch {
                           case _: Throwable =>
                           // do nothing
@@ -164,32 +166,30 @@ private abstract class WorkerCollieImpl(implicit nodeCollie: NodeCollie, clientC
                   }
               })
               .map(_.flatten.toSeq)
-              .flatMap { successfulNodeNames =>
+              .map { successfulNodeNames =>
                 if (successfulNodeNames.isEmpty)
                   throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
                 val nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
-                plugins(nodeNames.map(n => s"$n:$clientPort").mkString(",")).map { plugins =>
-                  WorkerClusterInfo(
-                    name = clusterName,
-                    imageName = imageName,
-                    brokerClusterName = brokerClusterName,
-                    clientPort = clientPort,
-                    groupId = groupId,
-                    offsetTopicName = offsetTopicName,
-                    offsetTopicPartitions = offsetTopicPartitions,
-                    offsetTopicReplications = offsetTopicReplications,
-                    configTopicName = configTopicName,
-                    configTopicPartitions = 1,
-                    configTopicReplications = configTopicReplications,
-                    statusTopicName = statusTopicName,
-                    statusTopicPartitions = statusTopicPartitions,
-                    statusTopicReplications = statusTopicReplications,
-                    jarNames = jarUrls.map(_.getFile),
-                    sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-                    sinks = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-                    nodeNames = nodeNames
-                  )
-                }
+                WorkerClusterInfo(
+                  name = clusterName,
+                  imageName = imageName,
+                  brokerClusterName = brokerClusterName,
+                  clientPort = clientPort,
+                  groupId = groupId,
+                  offsetTopicName = offsetTopicName,
+                  offsetTopicPartitions = offsetTopicPartitions,
+                  offsetTopicReplications = offsetTopicReplications,
+                  configTopicName = configTopicName,
+                  configTopicPartitions = 1,
+                  configTopicReplications = configTopicReplications,
+                  statusTopicName = statusTopicName,
+                  statusTopicPartitions = statusTopicPartitions,
+                  statusTopicReplications = statusTopicReplications,
+                  jarNames = jarUrls.map(_.getFile),
+                  sources = Seq.empty,
+                  sinks = Seq.empty,
+                  nodeNames = nodeNames
+                )
               }
         }
   }

@@ -20,8 +20,8 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 package object ssh {
   private[ssh] val LOG = Logger("SshClusterCollie")
 

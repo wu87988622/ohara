@@ -15,12 +15,16 @@
  */
 
 package com.island.ohara.agent
+import java.util.Objects
+
+import com.island.ohara.agent.ssh.ClusterCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -138,8 +142,45 @@ object ClusterCollie {
     * node-1 => workercluster-worker-1
     * node-2 => workercluster-worker-2
     */
-  def ssh(implicit nodeCollie: NodeCollie): ClusterCollie =
-    new com.island.ohara.agent.ssh.ClusterCollieImpl()
+  def ssh(nodeCollie: NodeCollie): ClusterCollie = builderOfSsh().nodeCollie(nodeCollie).build()
+
+  def builderOfSsh(): SshBuilder = new SshBuilder
+
+  import scala.concurrent.duration._
+
+  class SshBuilder private[agent] {
+    private[this] var nodeCollie: NodeCollie = _
+    private[this] var expiredTime: Duration = 7 seconds
+    private[this] var _disableCache: Boolean = false
+
+    def nodeCollie(nodeCollie: NodeCollie): SshBuilder = {
+      this.nodeCollie = Objects.requireNonNull(nodeCollie)
+      this
+    }
+
+    @Optional("default is 7 seconds")
+    def expiredTime(expiredTime: Duration): SshBuilder = {
+      this.expiredTime = Objects.requireNonNull(expiredTime)
+      this
+    }
+
+    @Optional("default value is false")
+    def disableCache(): SshBuilder = {
+      this._disableCache = true
+      this
+    }
+
+    /**
+      * We don't return ClusterCollieImpl since it is a private implementation
+      * @return
+      */
+    def build(): ClusterCollie = if (_disableCache) new ClusterCollieImpl(Objects.requireNonNull(nodeCollie))
+    else
+      new ClusterCollieImpl(
+        expiredTime = Objects.requireNonNull(expiredTime),
+        nodeCollie = Objects.requireNonNull(nodeCollie)
+      )
+  }
 
   /**
     * create kubernetes implements

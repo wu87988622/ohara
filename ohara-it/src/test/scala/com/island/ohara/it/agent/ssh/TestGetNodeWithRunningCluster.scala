@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.ssh
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
@@ -23,6 +23,7 @@ import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
 import com.island.ohara.common.util.{CommonUtil, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
+import com.island.ohara.it.agent.CollieTestUtil
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
@@ -69,6 +70,8 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         )))
 
     try {
+      assertCluster(() => result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list()),
+                    cluster.name)
       val nodes = result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list())
       nodes.isEmpty shouldBe false
       nodes.foreach { node =>

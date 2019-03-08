@@ -16,37 +16,36 @@
 
 package com.island.ohara.agent.ssh
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
-
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.Releasable
+import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
-/**
-  * This interface enable us to reuse the docker client object.
-  */
-private class DockerClientCache extends Releasable {
-  private[this] val cache: ConcurrentMap[Node, DockerClient] = new ConcurrentHashMap[Node, DockerClient]()
+import scala.collection.mutable
 
-  /**
-    * get cached client instance related to input node
-    * @param node remote node
-    * @return cached client
-    */
-  def get(node: Node): DockerClient = cache.computeIfAbsent(
-    node,
-    node => DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build())
+trait DockerClientCache extends Releasable {
+  def exec[T](node: Node, f: DockerClient => T): T
+}
 
-  /**
-    * get cached client instances related to input nodes
-    * @param nodes remote nodes
-    * @return cached client
-    */
-  def get(nodes: Seq[Node]): Seq[DockerClient] = nodes.map(get)
+object DockerClientCache {
+  def apply(): DockerClientCache = new DockerClientCacheImpl()
 
-  override def close(): Unit = {
-    // if we are in closing service, closing the cached client can produce error when other threads keep using the client.
-    cache.values().forEach(client => Releasable.close(client))
-    cache.clear()
+  private[this] class DockerClientCacheImpl extends ReleaseOnce with DockerClientCache {
+    private[this] val lock = new Object()
+    private[this] val cache: mutable.HashMap[Node, DockerClient] = new mutable.HashMap[Node, DockerClient]()
+
+    override protected def doClose(): Unit = lock.synchronized {
+      cache.values.foreach(Releasable.close)
+      cache.clear()
+    }
+
+    override def exec[T](node: Node, f: DockerClient => T): T = if (isClosed) throw new IllegalStateException()
+    else {
+      val client = lock.synchronized {
+        cache.getOrElseUpdate(
+          node,
+          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build())
+      }
+      f(client)
+    }
   }
 }

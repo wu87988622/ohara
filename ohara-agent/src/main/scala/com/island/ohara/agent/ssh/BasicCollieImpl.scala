@@ -17,10 +17,11 @@
 package com.island.ohara.agent.ssh
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.{Collie, DockerClient, NoSuchClusterException, NodeCollie}
+import com.island.ohara.agent.{Collie, NoSuchClusterException, NodeCollie}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtil
@@ -28,23 +29,21 @@ import com.island.ohara.common.util.CommonUtil
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.reflect.{ClassTag, classTag}
-
 private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
-  implicit clientCache: DockerClientCache,
-  nodeCollie: NodeCollie)
+  nodeCollie: NodeCollie,
+  dockerCache: DockerClientCache,
+  clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
     extends Collie[T, Creator] {
 
-  def allClusters(containerNameFilter: String => Boolean): Future[Map[ClusterInfo, Seq[ContainerInfo]]]
-
   final override def clusters(): Future[Map[T, Seq[ContainerInfo]]] =
-    allClusters(_.contains(s"$DIVIDER$serviceName$DIVIDER")).map {
+    clusterCache.get().map {
       _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
         case (cluster, containers) => cluster.asInstanceOf[T] -> containers
       }
     }
 
   final override def cluster(name: String): Future[(T, Seq[ContainerInfo])] =
-    allClusters(_.contains(s"$DIVIDER$name$DIVIDER")).map {
+    clusterCache.get().map {
       _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1))
         .map {
           case (cluster, containers) => cluster.asInstanceOf[T] -> containers
@@ -59,13 +58,13 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
     else if (classTag[T].runtimeClass.isAssignableFrom(classOf[WorkerClusterInfo])) WK_SERVICE_NAME
     else throw new IllegalArgumentException(s"Who are you, ${classTag[T].runtimeClass} ???")
 
-  def updateRoute(client: DockerClient, containerName: String, route: Map[String, String]): Unit =
-    client
-      .containerInspector(containerName)
-      .asRoot()
-      .append("/etc/hosts", route.map {
-        case (hostname, ip) => s"$ip $hostname"
-      }.toSeq)
+  def updateRoute(node: Node, containerName: String, route: Map[String, String]): Unit =
+    dockerCache.exec(node,
+                     _.containerInspector(containerName)
+                       .asRoot()
+                       .append("/etc/hosts", route.map {
+                         case (hostname, ip) => s"$ip $hostname"
+                       }.toSeq))
 
   /**
     * generate unique name for the container.
@@ -85,7 +84,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
     case (cluster, containerInfos) =>
       Future
         .traverse(containerInfos) { containerInfo =>
-          nodeCollie.node(containerInfo.nodeName).map(node => clientCache.get(node).forceRemove(containerInfo.name))
+          nodeCollie.node(containerInfo.nodeName).map(node => dockerCache.exec(node, _.forceRemove(containerInfo.name)))
         }
         .map(_ => cluster)
   }
@@ -94,19 +93,16 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
     .nodes()
     .map(
       _.flatMap(
-        clientCache
-          .get(_)
-          // we allow user to get logs from "exited" containers!
-          .containers(_.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName"))))
+        dockerCache.exec(_, _.containers(_.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName")))
+      ))
     .flatMap { containers =>
-      nodeCollie
-        .nodes(containers.map(_.nodeName))
-        .map(n => clientCache.get(n))
-        .map(_.zipWithIndex.map {
-          case (client, index) =>
-            val container = containers(index)
-            container -> client.log(container.name)
-        }.toMap)
+      Future
+        .sequence(containers.map { container =>
+          nodeCollie.node(container.nodeName).map { node =>
+            container -> dockerCache.exec(node, _.log(container.name))
+          }
+        })
+        .map(_.toMap)
     }
 
   override def removeNode(clusterName: String, nodeName: String): Future[T] = cluster(clusterName)
@@ -120,13 +116,14 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
           case _ =>
             cluster -> runningContainers
               .find(_.nodeName == nodeName)
-              .getOrElse(throw new IllegalArgumentException(s"$nodeName doesn't execute cluster:$clusterName"))
+              .getOrElse(
+                throw new IllegalArgumentException(s"$nodeName doesn't dockerCache.execute cluster:$clusterName"))
         }
     }
     .flatMap {
       case (cluster, container) =>
         nodeCollie.node(container.nodeName).map { node =>
-          clientCache.get(node).stop(container.name)
+          dockerCache.exec(node, _.stop(container.name))
           // TODO: why we need to use match pattern? please refactor it...by chia
           (cluster match {
             case c: ZookeeperClusterInfo =>

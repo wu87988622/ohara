@@ -30,7 +30,6 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Future
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestK8SSimpleCollie])
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
@@ -40,12 +39,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
 
   private[this] val nodeCache = new ArrayBuffer[Node]()
-  private[this] val nodeCollie: NodeCollie = new NodeCollie {
-    override def nodes(): Future[Seq[Node]] = Future.successful(nodeCache)
-
-    override def node(name: String): Future[Node] = Future.successful(
-      nodeCache.find(_.name == name).getOrElse(throw new NoSuchElementException(s"expected:$name actual:$nodeCache")))
-  }
+  private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
 
   private[this] var clusterCollie: ClusterCollie = _
   private[this] var nodeNames: Seq[String] = _

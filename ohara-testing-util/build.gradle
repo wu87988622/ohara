@@ -20,7 +20,10 @@ apply plugin: 'java-library-distribution'
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-client')
-  implementation libs.sshd
+  implementation (libs.sshd) {
+    exclude group: 'org.apache.sshd', module: 'sshd-mina'
+    exclude group: 'org.apache.sshd', module: 'sshd-netty'
+  }
   implementation libs.scala
   implementation libs.kafkaCore
   implementation libs.kafkaConnectJson

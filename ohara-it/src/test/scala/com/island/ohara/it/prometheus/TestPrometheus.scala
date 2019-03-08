@@ -71,7 +71,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
     } finally client.close()
   }
 
-  protected val nodeCollie: NodeCollie = NodeCollie.inMemory(Seq(node))
+  protected val nodeCollie: NodeCollie = NodeCollie(Seq(node))
   protected val clusterCollie: ClusterCollie = ClusterCollie.ssh(nodeCollie)
 
   /**
@@ -80,9 +80,11 @@ class TestPrometheus extends IntegrationTest with Matchers {
   @Test
   def testExporter(): Unit = {
     startZK(zkDesc => {
+      assertCluster(() => result(clusterCollie.zookeeperCollie().clusters()).keys.toSeq, zkDesc.name)
       startBroker(
         zkDesc.name,
-        (exporterPort, _) => {
+        (exporterPort, bkCluster) => {
+          assertCluster(() => result(clusterCollie.brokerCollie().clusters()).keys.toSeq, bkCluster.name)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
           val url = "http://" + node.name + ":" + exporterPort + "/metrics"
