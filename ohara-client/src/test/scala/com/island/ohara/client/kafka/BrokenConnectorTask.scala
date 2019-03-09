@@ -14,10 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector;
+package com.island.ohara.client.kafka
 
-public class Constants {
-  public static final String OUTPUT = "simple.row.connector.output";
-  public static final String BROKER = "simple.row.connector.broker";
-  public static final String INPUT = "simple.row.connector.input";
+import java.util
+
+import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
+
+class BrokenConnectorTask extends RowSourceTask {
+  override protected def _start(config: TaskConfig): Unit = {
+    // do nothing
+  }
+
+  override protected def _stop(): Unit = {
+    // do nothing
+  }
+
+  override protected def _poll(): util.List[RowSourceRecord] = java.util.Collections.emptyList()
 }

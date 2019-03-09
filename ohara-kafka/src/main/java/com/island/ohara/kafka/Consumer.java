@@ -150,7 +150,7 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder topicName(String topicName) {
-      this.topicNames = Collections.singletonList(topicName);
+      this.topicNames = Collections.singletonList(Objects.requireNonNull(topicName));
       return this;
     }
 
@@ -159,17 +159,17 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder topicNames(List<String> topicNames) {
-      this.topicNames = topicNames;
+      this.topicNames = CommonUtil.requireNonEmpty(topicNames);
       return this;
     }
 
     public Builder groupId(String groupId) {
-      this.groupId = groupId;
+      this.groupId = Objects.requireNonNull(groupId);
       return this;
     }
 
     public Builder connectionProps(String connectionProps) {
-      this.connectionProps = connectionProps;
+      this.connectionProps = Objects.requireNonNull(connectionProps);
       return this;
     }
 

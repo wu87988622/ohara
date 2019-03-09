@@ -18,6 +18,7 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 
 dependencies {
   implementation project(':ohara-common')
+  implementation project(':ohara-kafka')
   implementation libs.commonsNet
   implementation libs.commonsLang
   implementation libs.scala
@@ -27,6 +28,8 @@ dependencies {
   implementation libs.akkaStream
   implementation libs.sprayJson
   implementation libs.kafkaClient
+  implementation libs.kafkaConnectFile
+  implementation libs.kafkaConnectRuntime
   testImplementation project(":ohara-testing-util")
   testImplementation project(":ohara-common").sourceSets.test.output
   testImplementation project(":ohara-testing-util").sourceSets.test.output
