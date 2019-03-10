@@ -163,6 +163,7 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                 .map { successfulNodeNames =>
                   if (successfulNodeNames.isEmpty)
                     throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                  clusterCache.requestUpdate()
                   BrokerClusterInfo(
                     name = clusterName,
                     imageName = imageName,

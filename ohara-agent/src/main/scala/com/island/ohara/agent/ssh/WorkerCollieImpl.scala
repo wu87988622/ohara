@@ -169,7 +169,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
               .map { successfulNodeNames =>
                 if (successfulNodeNames.isEmpty)
                   throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
-                val nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
+                clusterCache.requestUpdate()
                 WorkerClusterInfo(
                   name = clusterName,
                   imageName = imageName,
@@ -188,7 +188,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                   jarNames = jarUrls.map(_.getFile),
                   sources = Seq.empty,
                   sinks = Seq.empty,
-                  nodeNames = nodeNames
+                  nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
                 )
               }
         }

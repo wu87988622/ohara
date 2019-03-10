@@ -100,6 +100,7 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
               .map { successfulNodeNames =>
                 if (successfulNodeNames.isEmpty)
                   throw new IllegalArgumentException(s"failed to create $clusterName on $serviceName")
+                clusterCache.requestUpdate()
                 ZookeeperClusterInfo(
                   name = clusterName,
                   imageName = imageName,

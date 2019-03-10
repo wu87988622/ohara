@@ -249,15 +249,17 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
       an[Throwable] should be thrownBy result(bk_addNode(previousCluster.name, CommonUtil.randomString()))
-      log.info(s"[BROKER] add new node:${freeNodes.head.name} to cluster:${previousCluster.name}")
-      val newCluster = result(bk_addNode(previousCluster.name, freeNodes.head.name))
-      log.info(s"[BROKER] add new node:${freeNodes.head.name} to cluster:${previousCluster.name}...done")
+      val newNode = freeNodes.head.name
+      log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}")
+      val newCluster = result(bk_addNode(previousCluster.name, newNode))
+      log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}...done")
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
       newCluster.exporterPort shouldBe previousCluster.exporterPort
       newCluster.clientPort shouldBe previousCluster.clientPort
       newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
+      await(() => result(bk_cluster(newCluster.name)).nodeNames.contains(newNode))
       newCluster
     } else previousCluster
   }
@@ -335,16 +337,16 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
     result(bk_exist(previousCluster.name)) shouldBe true
     if (previousCluster.nodeNames.size > 1) {
-      log.info(
-        s"[BROKER] start to remove node:${previousCluster.nodeNames.head} from bk cluster:${previousCluster.name}")
-      val newCluster = result(bk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
-      log.info(
-        s"[BROKER] start to remove node:${previousCluster.nodeNames.head} from bk cluster:${previousCluster.name} ... done")
+      val beRemovedNode = previousCluster.nodeNames.head
+      log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name}")
+      val newCluster = result(bk_removeNode(previousCluster.name, beRemovedNode))
+      log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.name} ... done")
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.zookeeperClusterName shouldBe previousCluster.zookeeperClusterName
       newCluster.clientPort shouldBe previousCluster.clientPort
       previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
+      await(() => !result(bk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode))
       newCluster
     } else previousCluster
   }
@@ -459,6 +461,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       wk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
     val freeNodes = nodeCache.filterNot(node => previousCluster.nodeNames.contains(node.name))
     if (freeNodes.nonEmpty) {
+      val newNode = freeNodes.head.name
       // we can't add duplicate node
       an[IllegalArgumentException] should be thrownBy result(
         wk_addNode(previousCluster.name, previousCluster.nodeNames.head))
@@ -466,8 +469,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
       an[Throwable] should be thrownBy result(wk_addNode(previousCluster.name, CommonUtil.randomString()))
-      log.info(s"[WORKER] start to add node:${freeNodes.head.name} to a running worker cluster")
-      val newCluster = result(wk_addNode(previousCluster.name, freeNodes.head.name))
+      log.info(s"[WORKER] start to add node:$newNode to a running worker cluster")
+      val newCluster = result(wk_addNode(previousCluster.name, newNode))
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.configTopicName shouldBe previousCluster.configTopicName
@@ -477,18 +480,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       newCluster.brokerClusterName shouldBe previousCluster.brokerClusterName
       newCluster.clientPort shouldBe previousCluster.clientPort
       newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
-      log.info(s"[WORKER] start to verify the added node:${freeNodes.head.name}")
-      // worker is starting...
-      await(
-        () =>
-          try {
-            val workersProps = s"${freeNodes.head.name}:${newCluster.clientPort}"
-            val workerClient = WorkerClient(workersProps)
-            result(workerClient.plugins()).nonEmpty
-          } catch {
-            case _: Throwable => false
-        }
-      )
+      await(() => result(wk_cluster(newCluster.name)).nodeNames.contains(newNode))
       newCluster
     } else previousCluster
   }
@@ -496,8 +488,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   private[this] def testRemoveNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
     result(wk_exist(previousCluster.name)) shouldBe true
     if (previousCluster.nodeNames.size > 1) {
-      log.info(s"[WORKER] start to remove node:${previousCluster.nodeNames.head} from ${previousCluster.name}")
-      val newCluster = result(wk_removeNode(previousCluster.name, previousCluster.nodeNames.head))
+      val beRemovedNode = previousCluster.nodeNames.head
+      log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.name}")
+      val newCluster = result(wk_removeNode(previousCluster.name, beRemovedNode))
       newCluster.name shouldBe previousCluster.name
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.configTopicName shouldBe previousCluster.configTopicName
@@ -507,6 +500,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       newCluster.brokerClusterName shouldBe previousCluster.brokerClusterName
       newCluster.clientPort shouldBe previousCluster.clientPort
       previousCluster.nodeNames.size - newCluster.nodeNames.size shouldBe 1
+      await(() => !result(wk_cluster(newCluster.name)).nodeNames.contains(beRemovedNode))
       newCluster
     } else previousCluster
   }

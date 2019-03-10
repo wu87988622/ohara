@@ -116,14 +116,14 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
           case _ =>
             cluster -> runningContainers
               .find(_.nodeName == nodeName)
-              .getOrElse(
-                throw new IllegalArgumentException(s"$nodeName doesn't dockerCache.execute cluster:$clusterName"))
+              .getOrElse(throw new IllegalArgumentException(s"$nodeName doesn't exist on cluster:$clusterName"))
         }
     }
     .flatMap {
       case (cluster, container) =>
         nodeCollie.node(container.nodeName).map { node =>
           dockerCache.exec(node, _.stop(container.name))
+          clusterCache.requestUpdate()
           // TODO: why we need to use match pattern? please refactor it...by chia
           (cluster match {
             case c: ZookeeperClusterInfo =>
