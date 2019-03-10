@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.common.data.{ConnectorState, Serializer}
+import com.island.ohara.common.data.{ConnectorState, Row, Serializer}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
@@ -83,11 +83,13 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       assertExist(workerClient, connectorName)
       val consumer =
         Consumer
-          .builder()
+          .builder[Row, Array[Byte]]()
           .topicName(topicName)
           .offsetFromBegin()
           .connectionProps(testUtil.brokersConnProps)
-          .build(Serializer.ROW, Serializer.BYTES)
+          .keySerializer(Serializer.ROW)
+          .valueSerializer(Serializer.BYTES)
+          .build()
       try {
         // try to receive some data from topic
         var rows = consumer.poll(java.time.Duration.ofSeconds(10), 1)

@@ -113,11 +113,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
                              timeout: scala.concurrent.duration.Duration = 100 seconds,
                              size: Int = data.length): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
-      .builder()
+      .builder[Row, Array[Byte]]()
       .topicName(methodName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .build(Serializer.ROW, Serializer.BYTES)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), size).asScala
     finally consumer.close()
   }

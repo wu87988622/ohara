@@ -37,12 +37,14 @@ class SimpleRowSourceTask extends RowSourceTask {
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
     this.consumer = Consumer
-      .builder()
+      .builder[Row, Array[Byte]]()
       .connectionProps(config.options.get(BROKER))
       .groupId(config.name)
       .topicName(config.options.get(INPUT))
       .offsetFromBegin()
-      .build(Serializer.ROW, Serializer.BYTES)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     Future {
       try while (!closed.get) {
         consumer

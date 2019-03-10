@@ -317,11 +317,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       log.info(s"[BROKER] start to send data ... done")
       log.info(s"[BROKER] start to receive data")
       val consumer = Consumer
-        .builder()
+        .builder[String, String]()
         .connectionProps(brokers)
         .offsetFromBegin()
         .topicName(topicName)
-        .build(Serializer.STRING, Serializer.STRING)
+        .keySerializer(Serializer.STRING)
+        .valueSerializer(Serializer.STRING)
+        .build()
       try {
         val records = consumer.poll(Duration.ofSeconds(30), 1)
         records.size() shouldBe 1

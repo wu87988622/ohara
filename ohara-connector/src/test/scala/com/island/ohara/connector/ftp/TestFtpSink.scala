@@ -53,11 +53,13 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
     finally producer.close()
 
     val consumer = Consumer
-      .builder()
+      .builder[Row, Array[Byte]]()
       .topicName(topicName)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .build(Serializer.ROW, Serializer.BYTES)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
       val records = consumer.poll(java.time.Duration.ofSeconds(60), 1)
       val row = records.get(0).key().get

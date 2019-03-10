@@ -177,11 +177,13 @@ object Validator {
         .map { _ =>
           // TODO: receiving all messages may be expensive...by chia
           val client = Consumer
-            .builder()
+            .builder[String, Object]()
             .connectionProps(topicAdmin.connectionProps)
             .offsetFromBegin()
             .topicName(INTERNAL_TOPIC)
-            .build(Serializer.STRING, Serializer.OBJECT)
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.OBJECT)
+            .build()
           try client
             .poll(
               java.time.Duration.ofNanos(TIMEOUT.toNanos),

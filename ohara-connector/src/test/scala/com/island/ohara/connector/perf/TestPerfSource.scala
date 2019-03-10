@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.perf
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.data.{Cell, Column, DataType, Serializer}
+import com.island.ohara.common.data._
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
@@ -67,11 +67,13 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
       PerfUtil.checkConnector(testUtil, connectorName)
       val consumer =
         Consumer
-          .builder()
+          .builder[Row, Array[Byte]]()
           .connectionProps(testUtil.brokersConnProps)
           .offsetFromBegin()
           .topicName(topicName)
-          .build(Serializer.ROW, Serializer.BYTES)
+          .keySerializer(Serializer.ROW)
+          .valueSerializer(Serializer.BYTES)
+          .build()
       try {
         def matchType(lhs: Class[_], dataType: DataType): Unit = {
           dataType match {

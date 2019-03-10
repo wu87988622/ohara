@@ -51,11 +51,13 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] def checkData(topicName: String): Unit = {
     val consumer = Consumer
-      .builder()
+      .builder[Row, Array[Byte]]()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .topicName(topicName)
-      .build(Serializer.ROW, Serializer.BYTES)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     val data = consumer.poll(java.time.Duration.ofSeconds(30), numberOfRows)
     data.size shouldBe numberOfRows
     data.asScala.foreach(_.key.get shouldBe row)
@@ -91,11 +93,13 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   private[this] def testRowProducer2RowConsumer(topicName: String): Unit = {
     setupData(topicName)
     val consumer = Consumer
-      .builder()
+      .builder[Row, Array[Byte]]()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .topicName(topicName)
-      .build(Serializer.ROW, Serializer.BYTES)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
       val data = consumer.poll(java.time.Duration.ofSeconds(30), numberOfRows)
       data.size shouldBe numberOfRows
@@ -204,11 +208,13 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
     val consumer =
       Consumer
-        .builder()
+        .builder[Row, Array[Byte]]()
         .connectionProps(testUtil.brokersConnProps)
         .offsetFromBegin()
         .topicName(topicName)
-        .build(Serializer.ROW, Serializer.BYTES)
+        .keySerializer(Serializer.ROW)
+        .valueSerializer(Serializer.BYTES)
+        .build()
 
     try {
       val fromKafka = consumer.poll(java.time.Duration.ofSeconds(5), 1).asScala
@@ -226,7 +232,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     * @see ConnectorClient
     */
   @Test
-  def connectorClientTest(): Unit = {
+  def testWorkerClient(): Unit = {
     val connectorName = CommonUtil.randomString(10)
     val topics = Seq(CommonUtil.randomString(10), CommonUtil.randomString(10))
     val outputTopic = CommonUtil.randomString(10)
@@ -248,7 +254,12 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     val config = result(workerClient.config(connectorName))
     config.topics shouldBe topics
 
-    await(() => result(workerClient.status(connectorName)).tasks.nonEmpty)
+    await(
+      () =>
+        try result(workerClient.status(connectorName)).tasks.nonEmpty
+        catch {
+          case _: Throwable => false
+      })
     val status = result(workerClient.status(connectorName))
     status.tasks.head should not be null
 

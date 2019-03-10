@@ -84,11 +84,13 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
 
     val consumer =
       Consumer
-        .builder()
+        .builder[Row, Array[Byte]]()
         .topicName(topicName)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
-        .build(Serializer.ROW, Serializer.BYTES)
+        .keySerializer(Serializer.ROW)
+        .valueSerializer(Serializer.BYTES)
+        .build()
     try {
       val record = consumer.poll(java.time.Duration.ofSeconds(30), 3).asScala
       val row0: Row = record.head.key.get

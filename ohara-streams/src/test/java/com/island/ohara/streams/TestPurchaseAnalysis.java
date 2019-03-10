@@ -106,12 +106,14 @@ public class TestPurchaseAnalysis extends WithBroker {
     StreamApp.runStreamApp(app.getClass(), client.connectionProps());
 
     Consumer<String, Double> consumer =
-        Consumer.builder()
+        Consumer.<String, Double>builder()
             .topicName(resultTopic)
             .connectionProps(client.connectionProps())
             .groupId("group-" + resultTopic)
             .offsetFromBegin()
-            .build(Serializer.STRING, Serializer.DOUBLE);
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.DOUBLE)
+            .build();
 
     List<Record<String, Double>> records = consumer.poll(Duration.ofSeconds(10), 2);
     // the result will get "accumulation" ; hence we will get 2 -> 4 records

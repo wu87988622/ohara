@@ -110,16 +110,18 @@ public interface Consumer<K, V> extends Releasable {
   /** break the poll right now. */
   void wakeup();
 
-  static Builder builder() {
-    return new Builder();
+  static <Key, Value> Builder<Key, Value> builder() {
+    return new Builder<>();
   }
 
-  class Builder {
+  class Builder<Key, Value> {
 
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private List<String> topicNames;
     private String groupId = String.format("ohara-consumer-%s", CommonUtil.uuid());
     private String connectionProps;
+    private Serializer<Key> keySerializer = null;
+    private Serializer<Value> valueSerializer = null;
 
     private Builder() {
       // do nothing
@@ -130,7 +132,8 @@ public interface Consumer<K, V> extends Releasable {
      *
      * @return this builder
      */
-    public Builder offsetFromBegin() {
+    @com.island.ohara.common.annotations.Optional("default is OffsetResetStrategy.LATEST")
+    public Builder<Key, Value> offsetFromBegin() {
       this.fromBegin = OffsetResetStrategy.EARLIEST;
       return this;
     }
@@ -140,7 +143,8 @@ public interface Consumer<K, V> extends Releasable {
      *
      * @return this builder
      */
-    public Builder offsetAfterLatest() {
+    @com.island.ohara.common.annotations.Optional("default is OffsetResetStrategy.LATEST")
+    public Builder<Key, Value> offsetAfterLatest() {
       this.fromBegin = OffsetResetStrategy.LATEST;
       return this;
     }
@@ -149,7 +153,7 @@ public interface Consumer<K, V> extends Releasable {
      * @param topicName the topic you want to subscribe
      * @return this builder
      */
-    public Builder topicName(String topicName) {
+    public Builder<Key, Value> topicName(String topicName) {
       this.topicNames = Collections.singletonList(Objects.requireNonNull(topicName));
       return this;
     }
@@ -158,18 +162,29 @@ public interface Consumer<K, V> extends Releasable {
      * @param topicNames the topics you want to subscribe
      * @return this builder
      */
-    public Builder topicNames(List<String> topicNames) {
+    public Builder<Key, Value> topicNames(List<String> topicNames) {
       this.topicNames = CommonUtil.requireNonEmpty(topicNames);
       return this;
     }
 
-    public Builder groupId(String groupId) {
+    @com.island.ohara.common.annotations.Optional("default is random string")
+    public Builder<Key, Value> groupId(String groupId) {
       this.groupId = Objects.requireNonNull(groupId);
       return this;
     }
 
-    public Builder connectionProps(String connectionProps) {
-      this.connectionProps = Objects.requireNonNull(connectionProps);
+    public Builder<Key, Value> connectionProps(String connectionProps) {
+      this.connectionProps = CommonUtil.requireNonEmpty(connectionProps);
+      return this;
+    }
+
+    public Builder<Key, Value> keySerializer(Serializer<Key> keySerializer) {
+      this.keySerializer = Objects.requireNonNull(keySerializer);
+      return this;
+    }
+
+    public Builder<Key, Value> valueSerializer(Serializer<Value> valueSerializer) {
+      this.valueSerializer = Objects.requireNonNull(valueSerializer);
       return this;
     }
 
@@ -201,11 +216,17 @@ public interface Consumer<K, V> extends Releasable {
       };
     }
 
-    public <K, V> Consumer<K, V> build(Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-      Objects.requireNonNull(topicNames);
-      if (topicNames.isEmpty()) throw new IllegalArgumentException("Topics list is empty");
-      Objects.requireNonNull(groupId);
-      Objects.requireNonNull(connectionProps);
+    private void checkArguments() {
+      CommonUtil.requireNonEmpty(topicNames);
+      CommonUtil.requireNonEmpty(connectionProps);
+      CommonUtil.requireNonEmpty(groupId);
+      Objects.requireNonNull(fromBegin);
+      Objects.requireNonNull(keySerializer);
+      Objects.requireNonNull(valueSerializer);
+    }
+
+    public Consumer<Key, Value> build() {
+      checkArguments();
 
       Properties consumerConfig = new Properties();
 
@@ -215,13 +236,13 @@ public interface Consumer<K, V> extends Releasable {
       consumerConfig.setProperty(
           ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
 
-      KafkaConsumer<K, V> kafkaConsumer =
+      KafkaConsumer<Key, Value> kafkaConsumer =
           new KafkaConsumer<>(consumerConfig, wrap(keySerializer), wrap(valueSerializer));
 
       kafkaConsumer.subscribe(topicNames);
 
-      return new Consumer<K, V>() {
-        private ConsumerRecords<K, V> firstPoll = kafkaConsumer.poll(0);
+      return new Consumer<Key, Value>() {
+        private ConsumerRecords<Key, Value> firstPoll = kafkaConsumer.poll(0);
 
         @Override
         public void close() {
@@ -229,9 +250,9 @@ public interface Consumer<K, V> extends Releasable {
         }
 
         @Override
-        public List<Record<K, V>> poll(Duration timeout) {
+        public List<Record<Key, Value>> poll(Duration timeout) {
 
-          ConsumerRecords<K, V> r;
+          ConsumerRecords<Key, Value> r;
           if (firstPoll == null || firstPoll.isEmpty()) r = kafkaConsumer.poll(timeout.toMillis());
           else {
             r = firstPoll;
