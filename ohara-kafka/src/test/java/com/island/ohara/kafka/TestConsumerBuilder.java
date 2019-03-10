@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+package com.island.ohara.kafka;
+
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.kafka.Consumer;
 import java.util.Collections;
 import org.junit.Test;
 

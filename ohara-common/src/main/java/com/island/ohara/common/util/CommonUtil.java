@@ -427,6 +427,25 @@ public final class CommonUtil {
     return s;
   }
 
+  public static <T extends Map<?, ?>> T requireNonEmpty(T s) {
+    return requireNonEmpty(s, () -> "");
+  }
+
+  /**
+   * throw exception if the input map is either null or empty.
+   *
+   * @param s input map
+   * @param msg error message
+   * @param <T> collection type
+   * @throws NullPointerException if {@code s} is {@code null}
+   * @throws IllegalArgumentException if {@code s} is empty
+   * @return input map
+   */
+  public static <T extends Map<?, ?>> T requireNonEmpty(T s, Supplier<String> msg) {
+    if (Objects.requireNonNull(s).isEmpty()) throw new IllegalArgumentException(msg.get());
+    return s;
+  }
+
   public static int requirePositiveInt(int value) {
     return (int) requirePositiveLong(value);
   }

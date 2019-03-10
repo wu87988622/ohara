@@ -16,10 +16,13 @@
 
 package com.island.ohara.kafka;
 
+import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.util.CommonUtil;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.kafka.common.config.TopicConfig;
 
 /**
@@ -29,19 +32,22 @@ import org.apache.kafka.common.config.TopicConfig;
 public abstract class TopicCreator {
   protected int numberOfPartitions = 1;
   protected short numberOfReplications = 1;
-  protected Map<String, String> options = new HashMap<>();
+  protected Map<String, String> options = Collections.emptyMap();
   protected Duration timeout = Duration.ofSeconds(10);
 
+  @Optional("default value is 1")
   public TopicCreator numberOfPartitions(int numberOfPartitions) {
-    this.numberOfPartitions = numberOfPartitions;
+    this.numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions);
     return this;
   }
 
+  @Optional("default value is 1")
   public TopicCreator numberOfReplications(short numberOfReplications) {
-    this.numberOfReplications = numberOfReplications;
+    this.numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications);
     return this;
   }
 
+  @Optional("default is empty")
   public TopicCreator options(Map<String, String> options) {
     doOptions(options, true);
     return this;
@@ -53,6 +59,7 @@ public abstract class TopicCreator {
    *
    * @return this builder
    */
+  @Optional("default is deleted")
   public TopicCreator compacted() {
     doOptions(
         Collections.singletonMap(
@@ -66,6 +73,7 @@ public abstract class TopicCreator {
    *
    * @return this builder
    */
+  @Optional("default is deleted")
   public TopicCreator deleted() {
     doOptions(
         Collections.singletonMap(
@@ -75,7 +83,8 @@ public abstract class TopicCreator {
   }
 
   private TopicCreator doOptions(Map<String, String> options, boolean overwrite) {
-    if (this.options == null || overwrite) {
+    CommonUtil.requireNonEmpty(options);
+    if (this.options == null || this.options.isEmpty() || overwrite) {
       this.options = new HashMap<>(options);
     } else {
       this.options
@@ -96,8 +105,9 @@ public abstract class TopicCreator {
     return this;
   }
 
+  @Optional("default value is 10 seconds")
   public TopicCreator timeout(Duration timeout) {
-    this.timeout = timeout;
+    this.timeout = Objects.requireNonNull(timeout);
     return this;
   }
 

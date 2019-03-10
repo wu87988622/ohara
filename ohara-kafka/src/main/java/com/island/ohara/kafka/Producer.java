@@ -17,17 +17,13 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -68,7 +64,7 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     public Builder<Key, Value> connectionProps(String connectionProps) {
-      this.connectionProps = connectionProps;
+      this.connectionProps = CommonUtil.requireNonEmpty(connectionProps);
       return this;
     }
 
@@ -148,7 +144,8 @@ public interface Producer<Key, Value> extends Releasable {
         public final Sender<Key, Value> sender() {
           return new Sender<Key, Value>() {
             @Override
-            public void send(Handler handler) {
+            public Future<RecordMetadata> doSend() {
+              CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
               ProducerRecord<Key, Value> record =
                   new ProducerRecord<>(
                       topicName,
@@ -165,15 +162,15 @@ public interface Producer<Key, Value> extends Releasable {
                   record,
                   (metadata, exception) -> {
                     if (metadata == null && exception == null)
-                      handler.onFailure(
+                      completableFuture.completeExceptionally(
                           new IllegalStateException(
                               "no meta and exception from kafka producer...It should be impossible"));
                     if (metadata != null && exception != null)
-                      handler.onFailure(
+                      completableFuture.completeExceptionally(
                           new IllegalStateException(
                               "Both meta and exception from kafka producer...It should be impossible"));
                     if (metadata != null)
-                      handler.onSuccess(
+                      completableFuture.complete(
                           new RecordMetadata(
                               metadata.topic(),
                               metadata.partition(),
@@ -181,8 +178,9 @@ public interface Producer<Key, Value> extends Releasable {
                               metadata.timestamp(),
                               metadata.serializedKeySize(),
                               metadata.serializedValueSize()));
-                    if (exception != null) handler.onFailure(exception);
+                    if (exception != null) completableFuture.completeExceptionally(exception);
                   });
+              return completableFuture;
             }
           };
         }
@@ -227,7 +225,8 @@ public interface Producer<Key, Value> extends Releasable {
     protected Long timestamp = null;
     protected String topicName = null;
 
-    private Sender() {
+    @VisibleForTesting
+    Sender() {
       // do nothing
     }
 
@@ -239,7 +238,7 @@ public interface Producer<Key, Value> extends Releasable {
 
     @Optional("default is empty")
     public Sender<Key, Value> header(Header header) {
-      return headers(Collections.singletonList(header));
+      return headers(Collections.singletonList(Objects.requireNonNull(header)));
     }
 
     @Optional("default is empty")
@@ -267,7 +266,12 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     public Sender<Key, Value> topicName(String topicName) {
-      this.topicName = Objects.requireNonNull(topicName);
+      this.topicName = CommonUtil.requireNonEmpty(topicName);
+      return this;
+    }
+
+    public Sender<Key, Value> handler(String topicName) {
+      this.topicName = CommonUtil.requireNonEmpty(topicName);
       return this;
     }
 
@@ -279,76 +283,10 @@ public interface Producer<Key, Value> extends Releasable {
     /** send the record to brokers with async future */
     public Future<RecordMetadata> send() {
       checkArguments();
-      CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
-      send(
-          new Handler() {
-
-            @Override
-            public void onFailure(Exception e) {
-              completableFuture.completeExceptionally(e);
-            }
-
-            @Override
-            public void onSuccess(RecordMetadata o) {
-              completableFuture.complete(o);
-            }
-          });
-
-      return completableFuture;
+      return doSend();
     }
 
-    /**
-     * send the record to brokers with callback
-     *
-     * @param handler invoked after the record is completed or failed
-     */
-    public abstract void send(Handler handler);
-
-    /**
-     * handle the response returned by broker.
-     *
-     * @param handler response handler
-     */
-    public void sendOnSuccess(Consumer<RecordMetadata> handler) {
-      send(
-          new Handler() {
-            @Override
-            public void onFailure(Exception e) {
-              // do nothing
-            }
-
-            @Override
-            public void onSuccess(RecordMetadata recordMetadata) {
-              handler.accept(recordMetadata);
-            }
-          });
-    }
-
-    /**
-     * handle the exception happens on sending data to brokers.
-     *
-     * @param handler exception handler
-     */
-    public void sendOnFailure(Consumer<Exception> handler) {
-      send(
-          new Handler() {
-            @Override
-            public void onFailure(Exception e) {
-              handler.accept(e);
-            }
-
-            @Override
-            public void onSuccess(RecordMetadata recordMetadata) {
-              // do nothing
-            }
-          });
-    }
-  }
-
-  interface Handler {
-    void onFailure(Exception e);
-
-    void onSuccess(RecordMetadata t);
+    protected abstract Future<RecordMetadata> doSend();
   }
 
   /**
