@@ -48,8 +48,13 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
       client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
     } finally client.close()
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
-    try producer.sender().key(data).send(topicName)
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
+    try producer.sender().key(data).topicName(topicName).send()
     finally producer.close()
 
     val consumer = Consumer

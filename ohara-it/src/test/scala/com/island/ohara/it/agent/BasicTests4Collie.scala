@@ -298,12 +298,25 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         }
       )
       log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers ... done")
-      val producer = Producer.builder().connectionProps(brokers).allAcks().build(Serializer.STRING, Serializer.STRING)
+      val producer = Producer
+        .builder[String, String]()
+        .connectionProps(brokers)
+        .allAcks()
+        .keySerializer(Serializer.STRING)
+        .valueSerializer(Serializer.STRING)
+        .build()
       log.info(s"[BROKER] start to send data")
       try {
         await(
           () => {
-            try producer.sender().key("abc").value("abc_value").send(topicName).get().topic() == topicName
+            try producer
+              .sender()
+              .key("abc")
+              .value("abc_value")
+              .topicName(topicName)
+              .send()
+              .get()
+              .topicName() == topicName
             catch {
               case e: ExecutionException =>
                 e.getCause match {

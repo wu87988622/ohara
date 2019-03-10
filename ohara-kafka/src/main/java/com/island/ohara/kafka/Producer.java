@@ -16,16 +16,18 @@
 
 package com.island.ohara.kafka;
 
+import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.util.CommonUtil;
 import com.island.ohara.common.util.Releasable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -35,46 +37,60 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 /**
  * a simple wrap from kafka producer.
  *
- * @param <K> key type
- * @param <V> value type
+ * @param <Key> key type
+ * @param <Value> value type
  */
-public interface Producer<K, V> extends Releasable {
+public interface Producer<Key, Value> extends Releasable {
 
   /**
    * create a sender used to send a record to brokers
    *
    * @return a sender
    */
-  Sender<K, V> sender();
+  Sender<Key, Value> sender();
 
   /** flush all on-the-flight data. */
   void flush();
 
-  static Builder builder() {
-    return new Builder();
+  static <Key, Value> Builder<Key, Value> builder() {
+    return new Builder<>();
   }
 
-  class Builder {
+  class Builder<Key, Value> {
     private String connectionProps;
     // default noAcks
     private short numberOfAcks = 0;
+    private Serializer<Key> keySerializer = null;
+    private Serializer<Value> valueSerializer = null;
 
     private Builder() {
       // no nothing
     }
 
-    public Builder connectionProps(String connectionProps) {
+    public Builder<Key, Value> connectionProps(String connectionProps) {
       this.connectionProps = connectionProps;
       return this;
     }
 
-    public Builder noAcks() {
+    @com.island.ohara.common.annotations.Optional("default is no ack")
+    public Builder<Key, Value> noAcks() {
       this.numberOfAcks = 0;
       return this;
     }
 
-    public Builder allAcks() {
+    @com.island.ohara.common.annotations.Optional("default is no ack")
+    public Builder<Key, Value> allAcks() {
       this.numberOfAcks = -1;
+      return this;
+    }
+
+    public Builder<Key, Value> keySerializer(Serializer<Key> keySerializer) {
+      this.keySerializer = Objects.requireNonNull(keySerializer);
+      return this;
+    }
+
+    public Builder<Key, Value> valueSerializer(Serializer<Value> valueSerializer) {
+      this.valueSerializer = Objects.requireNonNull(valueSerializer);
       return this;
     }
 
@@ -107,13 +123,16 @@ public interface Producer<K, V> extends Releasable {
         }
       };
     }
-    /**
-     * @param <K> key type
-     * @param <V> value type
-     */
-    public <K, V> Producer<K, V> build(Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-      Objects.requireNonNull(connectionProps);
-      return new Producer<K, V>() {
+
+    private void checkArguments() {
+      CommonUtil.requireNonEmpty(connectionProps);
+      Objects.requireNonNull(keySerializer);
+      Objects.requireNonNull(valueSerializer);
+    }
+
+    public Producer<Key, Value> build() {
+      checkArguments();
+      return new Producer<Key, Value>() {
 
         private Properties getProducerConfig() {
           Properties props = new Properties();
@@ -122,23 +141,22 @@ public interface Producer<K, V> extends Releasable {
           return props;
         }
 
-        private final KafkaProducer<K, V> producer =
+        private final KafkaProducer<Key, Value> producer =
             new KafkaProducer<>(getProducerConfig(), wrap(keySerializer), wrap(valueSerializer));
 
         @Override
-        public final Sender<K, V> sender() {
-          return new Sender<K, V>() {
-
+        public final Sender<Key, Value> sender() {
+          return new Sender<Key, Value>() {
             @Override
-            protected void doSend(String topic, Handler<RecordMetadata> handler) {
-              ProducerRecord<K, V> record =
+            public void send(Handler handler) {
+              ProducerRecord<Key, Value> record =
                   new ProducerRecord<>(
-                      topic,
-                      partition().map(Integer::new).orElse(null),
-                      timestamp().map(Long::new).orElse(null),
-                      key().orElse(null),
-                      value().orElse(null),
-                      headers()
+                      topicName,
+                      partition,
+                      timestamp,
+                      key,
+                      value,
+                      headers
                           .stream()
                           .map(Builder.this::toKafkaHeader)
                           .collect(Collectors.toList()));
@@ -201,74 +219,69 @@ public interface Producer<K, V> extends Releasable {
    * makes kafak.ProducerRecord's constructor complicated. This class has fluent-style methods
    * helping user to fill the fields they have.
    */
-  abstract class Sender<K, V> {
-    private Integer partition = null;
-    private List<Header> headers = Collections.emptyList();
-    private K key = null;
-    private V value = null;
-    private Long timestamp = null;
+  abstract class Sender<Key, Value> {
+    protected Integer partition = null;
+    protected List<Header> headers = Collections.emptyList();
+    protected Key key = null;
+    protected Value value = null;
+    protected Long timestamp = null;
+    protected String topicName = null;
 
     private Sender() {
       // do nothing
     }
 
-    Optional<Integer> partition() {
-      return Optional.ofNullable(partition);
-    }
-
-    List<Header> headers() {
-      return headers;
-    }
-
-    Optional<K> key() {
-      return Optional.ofNullable(key);
-    }
-
-    Optional<V> value() {
-      return Optional.ofNullable(value);
-    }
-
-    Optional<Long> timestamp() {
-      return Optional.ofNullable(timestamp);
-    }
-
-    public Sender<K, V> partition(int partition) {
+    @Optional("default is hash of key")
+    public Sender<Key, Value> partition(int partition) {
       this.partition = partition;
       return this;
     }
 
-    public Sender<K, V> header(Header header) {
-      this.headers = Collections.singletonList(header);
+    @Optional("default is empty")
+    public Sender<Key, Value> header(Header header) {
+      return headers(Collections.singletonList(header));
+    }
+
+    @Optional("default is empty")
+    public Sender<Key, Value> headers(List<Header> headers) {
+      this.headers = CommonUtil.requireNonEmpty(headers);
       return this;
     }
 
-    public Sender<K, V> headers(List<Header> headers) {
-      this.headers = headers;
+    @Optional("default is null")
+    public Sender<Key, Value> key(Key key) {
+      this.key = Objects.requireNonNull(key);
       return this;
     }
 
-    public Sender<K, V> key(K key) {
-      this.key = key;
+    @Optional("default is null")
+    public Sender<Key, Value> value(Value value) {
+      this.value = Objects.requireNonNull(value);
       return this;
     }
 
-    public Sender<K, V> value(V value) {
-      this.value = value;
-      return this;
-    }
-
-    public Sender<K, V> timestamp(long timestamp) {
+    @Optional("default is null")
+    public Sender<Key, Value> timestamp(long timestamp) {
       this.timestamp = timestamp;
       return this;
     }
 
-    /** send the record to brokers with async future */
-    public Future<RecordMetadata> send(String topic) {
+    public Sender<Key, Value> topicName(String topicName) {
+      this.topicName = Objects.requireNonNull(topicName);
+      return this;
+    }
 
+    private void checkArguments() {
+      Objects.requireNonNull(headers);
+      Objects.requireNonNull(topicName);
+    }
+
+    /** send the record to brokers with async future */
+    public Future<RecordMetadata> send() {
+      checkArguments();
       CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
       send(
-          topic,
-          new Handler<RecordMetadata>() {
+          new Handler() {
 
             @Override
             public void onFailure(Exception e) {
@@ -289,17 +302,53 @@ public interface Producer<K, V> extends Releasable {
      *
      * @param handler invoked after the record is completed or failed
      */
-    public void send(String topic, Handler<RecordMetadata> handler) {
-      doSend(topic, handler);
+    public abstract void send(Handler handler);
+
+    /**
+     * handle the response returned by broker.
+     *
+     * @param handler response handler
+     */
+    public void sendOnSuccess(Consumer<RecordMetadata> handler) {
+      send(
+          new Handler() {
+            @Override
+            public void onFailure(Exception e) {
+              // do nothing
+            }
+
+            @Override
+            public void onSuccess(RecordMetadata recordMetadata) {
+              handler.accept(recordMetadata);
+            }
+          });
     }
 
-    protected abstract void doSend(String topic, Handler<RecordMetadata> handler);
+    /**
+     * handle the exception happens on sending data to brokers.
+     *
+     * @param handler exception handler
+     */
+    public void sendOnFailure(Consumer<Exception> handler) {
+      send(
+          new Handler() {
+            @Override
+            public void onFailure(Exception e) {
+              handler.accept(e);
+            }
+
+            @Override
+            public void onSuccess(RecordMetadata recordMetadata) {
+              // do nothing
+            }
+          });
+    }
   }
 
-  interface Handler<T> {
+  interface Handler {
     void onFailure(Exception e);
 
-    void onSuccess(T t);
+    void onSuccess(RecordMetadata t);
   }
 
   /**
@@ -308,7 +357,7 @@ public interface Producer<K, V> extends Releasable {
    * @see org.apache.kafka.clients.producer.RecordMetadata;
    */
   class RecordMetadata {
-    private final String topic;
+    private final String topicName;
     private final int partition;
     private final long offset;
     private final long timestamp;
@@ -316,13 +365,13 @@ public interface Producer<K, V> extends Releasable {
     private final int serializedValueSize;
 
     private RecordMetadata(
-        String topic,
+        String topicName,
         int partition,
         long offset,
         long timestamp,
         int serializedKeySize,
         int serializedValueSize) {
-      this.topic = topic;
+      this.topicName = topicName;
       this.partition = partition;
       this.offset = offset;
       this.timestamp = timestamp;
@@ -330,8 +379,8 @@ public interface Producer<K, V> extends Releasable {
       this.serializedValueSize = serializedValueSize;
     }
 
-    public String topic() {
-      return topic;
+    public String topicName() {
+      return topicName;
     }
 
     public int partition() {

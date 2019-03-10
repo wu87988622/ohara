@@ -43,8 +43,13 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def setupData(topicName: String): Unit = {
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
-    try 0 until numberOfRows foreach (_ => producer.sender().key(row).send(topicName))
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
+    try 0 until numberOfRows foreach (_ => producer.sender().key(row).topicName(topicName).send())
     finally producer.close()
     checkData(topicName)
   }
@@ -200,9 +205,14 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     finally topicAdmin.close()
 
     val row = Row.of(Cell.of("c", 3), Cell.of("b", 2), Cell.of("a", 1))
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
-      producer.sender().key(row).send(topicName)
+      producer.sender().key(row).topicName(topicName).send()
       producer.flush()
     } finally producer.close()
 

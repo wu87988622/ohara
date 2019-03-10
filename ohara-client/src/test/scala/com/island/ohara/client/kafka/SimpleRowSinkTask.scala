@@ -31,11 +31,16 @@ class SimpleRowSinkTask extends RowSinkTask {
   override protected def _start(props: TaskConfig): Unit = {
     this.config = props
     outputTopic = config.options.get(OUTPUT)
-    producer = Producer.builder().connectionProps(config.options.get(BROKER)).build(Serializer.ROW, Serializer.BYTES)
+    producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(config.options.get(BROKER))
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
   }
 
   override protected def _stop(): Unit = Releasable.close(producer)
 
   override protected def _put(records: util.List[RowSinkRecord]): Unit =
-    records.asScala.foreach(r => producer.sender().key(r.row()).send(outputTopic))
+    records.asScala.foreach(r => producer.sender().key(r.row()).topicName(outputTopic).send())
 }

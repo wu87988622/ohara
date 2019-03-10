@@ -51,9 +51,11 @@ public class TestPurchaseAnalysis extends WithBroker {
   private static final String orderuser_repartition = "orderuser-repartition-by-item";
   private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
   private final Producer<String, Row> producer =
-      Producer.builder()
+      Producer.<String, Row>builder()
           .connectionProps(client.connectionProps())
-          .build(Serializer.STRING, Serializer.ROW);
+          .keySerializer(Serializer.STRING)
+          .valueSerializer(Serializer.ROW)
+          .build();
 
   @Before
   public void prepareData() {
@@ -293,7 +295,8 @@ public class TestPurchaseAnalysis extends WithBroker {
                     .sender()
                     .key(entry.getKey().toString())
                     .value(entry.getValue())
-                    .send(topicName);
+                    .topicName(topicName)
+                    .send();
               });
     } catch (Exception e) {
       LOG.debug(e.getMessage());

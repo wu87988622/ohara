@@ -119,9 +119,14 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
       producer.flush()
     } finally producer.close()
 
@@ -195,9 +200,14 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val storage = new HDFSStorage(fileSystem)
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/tmp"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/data"
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
       producer.flush()
     } finally producer.close()
 
@@ -284,9 +294,14 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
       producer.flush()
     } finally producer.close()
 
@@ -361,9 +376,14 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
     val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
 
-    val producer = Producer.builder().connectionProps(testUtil.brokersConnProps).build(Serializer.ROW, Serializer.BYTES)
+    val producer = Producer
+      .builder[Row, Array[Byte]]()
+      .connectionProps(testUtil.brokersConnProps)
+      .keySerializer(Serializer.ROW)
+      .valueSerializer(Serializer.BYTES)
+      .build()
     try {
-      0 until rowCount foreach (_ => producer.sender().key(row).send(topicName))
+      0 until rowCount foreach (_ => producer.sender().key(row).topicName(topicName).send())
       producer.flush()
     } finally producer.close()
 
