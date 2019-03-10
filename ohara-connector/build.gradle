@@ -15,6 +15,7 @@
  */
 
 apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'java-library-distribution'
 
 // TODO: Why we set the time zone in testing??? We can get the system timezone through Calendar.getInstance().getTimeZone... by chia
 test.systemProperty("user.timezone", "Asia/Taipei")
@@ -52,4 +53,24 @@ dependencies {
   testImplementation libs.scalatest
   testImplementation libs.mockito
   testImplementation libs.junit
+}
+
+distributions {
+  main {
+    baseName = "ohara"
+    contents {
+      into("conf") {
+        // ref to root module
+        from { "$projectDir/../conf" }
+      }
+      into("bin") {
+        // ref to root module
+        from { "$projectDir/../bin" }
+        fileMode 0755
+      }
+      into("lib") {
+        from { "$projectDir/build/libs/ohara-connector-${version}.jar" }
+      }
+    }
+  }
 }
