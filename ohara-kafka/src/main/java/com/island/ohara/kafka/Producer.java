@@ -280,7 +280,12 @@ public interface Producer<Key, Value> extends Releasable {
       Objects.requireNonNull(topicName);
     }
 
-    /** send the record to brokers with async future */
+    /**
+     * start to send the data in background. Noted: you should check the returned future to handle
+     * the exception or result
+     *
+     * @return an async thread processing the request
+     */
     public Future<RecordMetadata> send() {
       checkArguments();
       return doSend();
@@ -289,11 +294,7 @@ public interface Producer<Key, Value> extends Releasable {
     protected abstract Future<RecordMetadata> doSend();
   }
 
-  /**
-   * wrap from kafka RecordMetadata;
-   *
-   * @see org.apache.kafka.clients.producer.RecordMetadata;
-   */
+  /** wrap from kafka RecordMetadata; */
   class RecordMetadata {
     private final String topicName;
     private final int partition;

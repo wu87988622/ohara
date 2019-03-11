@@ -35,6 +35,10 @@ public abstract class TopicCreator {
   protected Map<String, String> options = Collections.emptyMap();
   protected Duration timeout = Duration.ofSeconds(10);
 
+  TopicCreator() {
+    // do nothing
+  }
+
   @Optional("default value is 1")
   public TopicCreator numberOfPartitions(int numberOfPartitions) {
     this.numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions);
