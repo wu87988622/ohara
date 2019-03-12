@@ -151,6 +151,12 @@ gradle clean uberJar -PskipManager
 
 the uber jar is under ohara-assembly/build/libs/
 
+### build and then publish artifacts to jfrog
+
+```sh
+gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false
+```
+
 ### Built With
 
 - [Kafka](https://github.com/apache/kafka) - streaming tool
