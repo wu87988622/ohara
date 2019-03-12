@@ -70,6 +70,7 @@ gradle licenseApply
 **Running Ohara In Docker**
 
 - Ensure your nodes (actual machines or VMs) have installed Docker 18.09+
+  - You con see the main [README.md](https://github.com/oharastream/ohara/blob/master/docker/README.md) on how to spin up a Docker
 - Download required images via `docker pull` command:
   - oharastream/broker:0.3-SNAPSHOT
   - oharastream/zookeeper:0.3-SNAPSHOT

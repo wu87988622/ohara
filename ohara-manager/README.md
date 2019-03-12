@@ -42,7 +42,7 @@ Make sure you're at the Ohara manager root, then start it with:
 yarn start --configurator http://host:port/v0
 ```
 
-> Note that the configurator option is required, and you should have [configurator](https://github.com/oharastream/ohara/blob/master/README.md) running before starting Ohara manager.
+> Note that the configurator option is required, and you should have configurator running before starting Ohara manager. You can see the main [README.md](https://github.com/oharastream/ohara/blob/master/README.md) on how to spin up a configurator
 
 Open another terminal tab, and start the **Client**:
 
