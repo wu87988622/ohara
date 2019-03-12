@@ -18,9 +18,8 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.common.data.ConnectorState
-import spray.json.DefaultJsonProtocol._
-import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4}
-import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, _}
+import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection from marshalling/unmarshalling connector data to/from json.
@@ -49,43 +48,10 @@ object WorkerJson {
   implicit val CREATE_CONNECTOR_REQUEST_JSON_FORMAT: RootJsonFormat[CreateConnectorRequest] = jsonFormat2(
     CreateConnectorRequest)
 
-  final case class CreateConnectorResponse(name: String,
-                                           config: Map[String, String],
-                                           tasks: Seq[String],
-                                           typeName: String)
+  final case class CreateConnectorResponse(name: String, config: Map[String, String], tasks: Seq[String])
 
-  /**
-    * this custom format is necessary since some keys in json are keywords in scala also...
-    */
-  implicit val CREATE_CONNECTOR_RESPONSE_JSON_FORMAT: RootJsonFormat[CreateConnectorResponse] =
-    new RootJsonFormat[CreateConnectorResponse] {
-      override def read(json: JsValue): CreateConnectorResponse =
-        json.asJsObject.getFields("name", "config", "tasks", "type") match {
-          case Seq(JsString(className), JsObject(config), JsArray(tasks), JsString(typeName)) =>
-            CreateConnectorResponse(className,
-                                    config.map { case (k, v) => (k, v.toString) },
-                                    tasks.map(_.toString),
-                                    typeName)
-          // TODO: this is a kafka bug which always returns null in type name. see KAFKA-7253  by chia
-          case Seq(JsString(className), JsObject(config), JsArray(tasks), JsNull) =>
-            CreateConnectorResponse(
-              className,
-              // it is ok to cast JsValue to JsString since we serialize the config to (JsString, JsString)
-              config.map { case (k, v) => (k, v.asInstanceOf[JsString].value) },
-              tasks.map(_.toString),
-              "null"
-            )
-          case other: Any =>
-            throw DeserializationException(s"${classOf[CreateConnectorResponse].getSimpleName} expected but $other")
-        }
-
-      override def write(obj: CreateConnectorResponse) = JsObject(
-        "class" -> JsString(obj.name),
-        "config" -> JsObject(obj.config.map { case (k, v) => (k, JsString(v)) }),
-        "tasks" -> JsArray(obj.tasks.map(JsString(_)): _*),
-        "type" -> JsString(obj.typeName)
-      )
-    }
+  implicit val CREATE_CONNECTOR_RESPONSE_JSON_FORMAT: RootJsonFormat[CreateConnectorResponse] = jsonFormat3(
+    CreateConnectorResponse)
   final case class ConnectorStatus(state: ConnectorState, worker_id: String, trace: Option[String])
   import com.island.ohara.client.configurator.v0.ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)

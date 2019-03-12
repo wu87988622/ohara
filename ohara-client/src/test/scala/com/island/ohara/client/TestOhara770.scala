@@ -21,9 +21,9 @@ import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara770 extends SmallTest with Matchers {
 
   @Test
@@ -35,8 +35,7 @@ class TestOhara770 extends SmallTest with Matchers {
         CreateConnectorResponse(
           name = "adas",
           config = Map.empty,
-          tasks = Seq.empty,
-          typeName = "Adasd"
+          tasks = Seq.empty
         )
       }
     }

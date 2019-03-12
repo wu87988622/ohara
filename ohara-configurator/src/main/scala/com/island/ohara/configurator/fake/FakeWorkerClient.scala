@@ -43,7 +43,7 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     else {
       cachedConnectors.put(request.name, request.config)
       cachedConnectorsState.put(request.name, ConnectorState.RUNNING)
-      Future.successful(CreateConnectorResponse(request.name, request.config, Seq.empty, "source"))
+      Future.successful(CreateConnectorResponse(request.name, request.config, Seq.empty))
     }
   }
 
