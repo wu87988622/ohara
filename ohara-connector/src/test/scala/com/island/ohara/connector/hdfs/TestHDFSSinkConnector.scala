@@ -83,7 +83,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleHDFSSinkConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(sinkTasks)
         .disableConverter()
         .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
@@ -136,7 +136,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(sinkTasks)
         .disableConverter()
         .configs(Map(
@@ -217,7 +217,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(sinkTasks)
         .disableConverter()
         .configs(Map(
@@ -311,7 +311,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(sinkTasks)
         .disableConverter()
         .configs(Map(
@@ -393,7 +393,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[HDFSSinkConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(sinkTasks)
         .disableConverter()
         .configs(Map(

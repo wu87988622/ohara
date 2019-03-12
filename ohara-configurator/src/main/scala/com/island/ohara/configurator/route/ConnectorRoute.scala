@@ -160,7 +160,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                           .connectorClass(connectorConfig.className)
                           .schema(connectorConfig.schema)
                           .configs(connectorConfig.configs)
-                          .topics(connectorConfig.topics)
+                          .topicNames(connectorConfig.topics)
                           .numberOfTasks(connectorConfig.numberOfTasks)
                           .create()
                           .flatMap(_ => Future.successful(connectorConfig.copy(state = Some(ConnectorState.RUNNING))))

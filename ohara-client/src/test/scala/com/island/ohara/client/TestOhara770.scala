@@ -29,7 +29,7 @@ class TestOhara770 extends SmallTest with Matchers {
   @Test
   def configsNameShouldBeRemoved(): Unit = {
     class DumbConnectorCreator extends WorkerClient.Creator {
-      override protected def send(
+      override protected def doCreate(
         request: WorkerJson.CreateConnectorRequest): Future[WorkerJson.CreateConnectorResponse] = Future {
         request.config.get("name") shouldBe None
         CreateConnectorResponse(
@@ -42,7 +42,7 @@ class TestOhara770 extends SmallTest with Matchers {
 
     val creator = new DumbConnectorCreator()
     // this should pass
-    Await.result(creator.name("abc").connectorClass("asdasd").topic("aaa").configs(Map("name" -> "aa")).create(),
+    Await.result(creator.name("abc").connectorClass("asdasd").topicName("aaa").configs(Map("name" -> "aa")).create(),
                  10 seconds)
   }
 

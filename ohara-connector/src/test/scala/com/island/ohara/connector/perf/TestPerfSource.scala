@@ -52,7 +52,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
     Await.result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
         .disableConverter()

@@ -138,7 +138,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -169,7 +169,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -201,7 +201,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -237,7 +237,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -269,7 +269,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -300,7 +300,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -330,7 +330,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -362,7 +362,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -394,7 +394,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -425,7 +425,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()

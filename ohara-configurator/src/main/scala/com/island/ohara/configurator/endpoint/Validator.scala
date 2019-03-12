@@ -167,7 +167,7 @@ object Validator {
         .disableConverter()
         .connectorClass(classOf[Validator].getName)
         .numberOfTasks(taskCount)
-        .topic(INTERNAL_TOPIC)
+        .topicName(INTERNAL_TOPIC)
         .configs(
           configs ++ Map(
             REQUEST_ID -> requestId,

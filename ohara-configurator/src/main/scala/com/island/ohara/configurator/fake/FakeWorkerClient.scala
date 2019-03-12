@@ -19,7 +19,9 @@ package com.island.ohara.configurator.fake
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.WorkerClient.Validator
 import com.island.ohara.client.kafka.WorkerJson.{
+  ConfigValidation,
   ConnectorConfig,
   ConnectorInfo,
   ConnectorStatus,
@@ -80,4 +82,13 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
   override def resume(name: String): Future[Unit] =
     if (!cachedConnectors.containsKey(name)) Future.failed(new IllegalArgumentException(s"$name doesn't exist"))
     else Future.successful(cachedConnectorsState.put(name, ConnectorState.RUNNING))
+
+  override def connectorValidator(): Validator = (className, _) =>
+    Future.successful(
+      ConfigValidation(
+        className = className,
+        definitions = Seq.empty,
+        validatedValues = Seq.empty
+      )
+  )
 }

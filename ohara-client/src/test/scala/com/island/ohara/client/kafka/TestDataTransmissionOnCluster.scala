@@ -70,7 +70,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] def checkConnector(name: String): Unit = {
     await(() => result(workerClient.activeConnectors()).contains(name))
-    await(() => result(workerClient.config(name)).topics.nonEmpty)
+    await(() => result(workerClient.config(name)).topicNames.nonEmpty)
     await(
       () =>
         try result(workerClient.status(name)).connector.state == ConnectorState.RUNNING
@@ -139,7 +139,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(2)
         .disableConverter()
         .schema(schema)
@@ -180,7 +180,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleRowSourceConnector])
-        .topic(topicName2)
+        .topicName(topicName2)
         .numberOfTasks(2)
         .disableConverter()
         .schema(schema)
@@ -251,7 +251,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[SimpleRowSinkConnector])
-        .topics(topics)
+        .topicNames(topics)
         .numberOfTasks(2)
         .disableConverter()
         .schema(schema)
@@ -262,7 +262,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     activeConnectors.contains(connectorName) shouldBe true
 
     val config = result(workerClient.config(connectorName))
-    config.topics shouldBe topics
+    config.topicNames shouldBe topics
 
     await(
       () =>

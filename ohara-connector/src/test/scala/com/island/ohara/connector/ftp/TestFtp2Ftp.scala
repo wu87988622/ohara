@@ -97,7 +97,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
     Await.result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
         .disableConverter()
@@ -113,7 +113,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         Await.result(
           workerClient
             .connectorCreator()
-            .topic(topicName)
+            .topicName(topicName)
             .connectorClass(classOf[FtpSource])
             .numberOfTasks(1)
             .disableConverter()

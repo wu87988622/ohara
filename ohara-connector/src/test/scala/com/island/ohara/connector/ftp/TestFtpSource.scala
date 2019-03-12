@@ -142,7 +142,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -183,7 +183,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -229,7 +229,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -269,7 +269,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -305,7 +305,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -340,7 +340,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -376,7 +376,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -412,7 +412,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -445,7 +445,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -474,7 +474,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -492,7 +492,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()
@@ -516,7 +516,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
         .disableConverter()

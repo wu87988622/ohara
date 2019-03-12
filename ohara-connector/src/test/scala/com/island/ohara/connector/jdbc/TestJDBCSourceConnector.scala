@@ -74,7 +74,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers with Matchers {
         .connectorCreator()
         .name(connectorName)
         .connectorClass(classOf[JDBCSourceConnector])
-        .topic(topicName)
+        .topicName(topicName)
         .numberOfTasks(1)
         .configs(props.toMap)
         .disableConverter()

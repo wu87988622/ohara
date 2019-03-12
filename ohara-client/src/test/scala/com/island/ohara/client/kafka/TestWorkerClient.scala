@@ -17,25 +17,27 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.common.data.{ConnectorState, Row, Serializer}
+import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+
 class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   @Test
   def testExist(): Unit = {
-    val topicName = methodName
-    val connectorName = methodName
+    val topicName = CommonUtil.randomString(10)
+    val connectorName = CommonUtil.randomString(10)
     result(workerClient.exist(connectorName)) shouldBe false
 
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[MyConnector])
         .name(connectorName)
         .numberOfTasks(1)
@@ -48,14 +50,14 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
-    val topicName = methodName
-    val connectorName = methodName
+    val topicName = CommonUtil.randomString(10)
+    val connectorName = CommonUtil.randomString(10)
     result(workerClient.exist(connectorName)) shouldBe false
 
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[BrokenConnector])
         .name(connectorName)
         .numberOfTasks(1)
@@ -68,12 +70,12 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testPauseAndResumeSource(): Unit = {
-    val topicName = methodName
-    val connectorName = methodName
+    val topicName = CommonUtil.randomString(10)
+    val connectorName = CommonUtil.randomString(10)
     result(
       workerClient
         .connectorCreator()
-        .topic(topicName)
+        .topicName(topicName)
         .connectorClass(classOf[MyConnector])
         .name(connectorName)
         .numberOfTasks(1)
@@ -118,5 +120,32 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         rows.size should not be 0
       } finally consumer.close()
     } finally result(workerClient.delete(connectorName))
+  }
+
+  @Test
+  def testValidate(): Unit = {
+    val name = CommonUtil.randomString(10)
+    val topicName = CommonUtil.randomString(10)
+    val numberOfTasks = 1
+    val configValidation = result(
+      workerClient
+        .connectorValidator()
+        .topicName(topicName)
+        .connectorClass(classOf[MyConnector])
+        .name(name)
+        .numberOfTasks(numberOfTasks)
+        .run())
+    configValidation.className shouldBe classOf[MyConnector].getName
+    configValidation.definitions.size should not be 0
+    configValidation.validatedValues.size should not be
+      // the value "name" should exit
+      configValidation.validatedValues.filter(_.value.nonEmpty).find(_.value.get == name) should not be None
+    // source connector doesn't remand the topic so we can't assume the topic
+//    configValidation.validatedValues.filter(_.value.nonEmpty)
+//      .find(_.value.get == topicName) should not be None
+    // the value "numberOfTasks" should exit
+    configValidation.validatedValues
+      .filter(_.value.nonEmpty)
+      .find(_.value.get == numberOfTasks.toString) should not be None
   }
 }
