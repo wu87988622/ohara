@@ -66,7 +66,7 @@ public final class Column extends Data implements Serializable {
   // kafka connector accept only Map[String, String] as input arguments so we have to serialize the
   // column to a string
   // TODO: Personally, I hate this ugly workaround...by chia
-  public static final String COLUMN_KEY = "__row_connector_schema";
+  public static final String COLUMN_KEY = "columns";
 
   /**
    * Column object serializes to String It uses "," to join all fields and concat Columns.

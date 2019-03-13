@@ -176,7 +176,7 @@ class TestWorkerJson extends SmallTest with Matchers {
   @Test
   def testConfigValidation(): Unit = {
     val configNames = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
-    val configValidation = ConfigValidation(
+    val configValidation = ConfigValidationResponse(
       className = CommonUtil.randomString(5),
       definitions = configNames.map(
         name =>
@@ -194,7 +194,7 @@ class TestWorkerJson extends SmallTest with Matchers {
             errors = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
         ))
     )
-    val another = CONFIG_VALIDATED_FORMAT.read(CONFIG_VALIDATED_FORMAT.write(configValidation))
+    val another = CONFIG_VALIDATED_RESPONSE_FORMAT.read(CONFIG_VALIDATED_RESPONSE_FORMAT.write(configValidation))
     another.className shouldBe configValidation.className
     another.definitions.size shouldBe configValidation.definitions.size
     another.definitions.foreach(d => d shouldBe configValidation.definitions.find(_.name == d.name).get)
@@ -205,7 +205,7 @@ class TestWorkerJson extends SmallTest with Matchers {
   @Test
   def testConfigValidationWithUnmatchedSetting(): Unit = {
     val configNames = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
-    val configValidation = ConfigValidation(
+    val configValidation = ConfigValidationResponse(
       className = CommonUtil.randomString(5),
       definitions = configNames.map(
         name =>
@@ -223,6 +223,6 @@ class TestWorkerJson extends SmallTest with Matchers {
         ))
     )
 
-    an[NoSuchElementException] should be thrownBy CONFIG_VALIDATED_FORMAT.write(configValidation)
+    an[NoSuchElementException] should be thrownBy CONFIG_VALIDATED_RESPONSE_FORMAT.write(configValidation)
   }
 }

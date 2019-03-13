@@ -165,7 +165,7 @@ object Validator {
         .connectorCreator()
         .name(validationName)
         .disableConverter()
-        .connectorClass(classOf[Validator].getName)
+        .className(classOf[Validator].getName)
         .numberOfTasks(taskCount)
         .topicName(INTERNAL_TOPIC)
         .configs(

@@ -39,8 +39,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       id = id,
       name = name,
       className = request.className,
-      schema = request.schema,
-      topics = request.topics,
+      schema = request.columns,
+      topics = request.topicNames,
       numberOfTasks = request.numberOfTasks,
       workerClusterName = wkClusterName,
       state = None,
@@ -157,7 +157,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                           .connectorCreator()
                           .name(connectorConfig.id)
                           .disableConverter()
-                          .connectorClass(connectorConfig.className)
+                          .className(connectorConfig.className)
                           .schema(connectorConfig.schema)
                           .configs(connectorConfig.configs)
                           .topicNames(connectorConfig.topics)

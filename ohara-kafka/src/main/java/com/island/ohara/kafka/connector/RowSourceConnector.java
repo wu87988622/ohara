@@ -62,9 +62,8 @@ public abstract class RowSourceConnector extends SourceConnector {
    * @return The ConfigDef for this connector.
    */
   protected ConfigDef _config() {
-    return new ConfigDef();
-  };
-
+    return ConnectorUtil.defaultConfigDef();
+  }
   /**
    * Get the version from this connector.
    *

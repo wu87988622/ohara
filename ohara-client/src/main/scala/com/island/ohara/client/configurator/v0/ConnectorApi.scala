@@ -42,13 +42,25 @@ object ConnectorApi {
       "order" -> JsNumber(obj.order)
     )
   }
+
+  // the following key should be matched to the member name of ConnectorCreationRequest
+  val NAME_KEY: String = "name"
+  val CLASS_NAME_KEY: String = "className"
+  // TODO: replace this by topicNames (https://github.com/oharastream/ohara/issues/444)
+  val TOPIC_NAME_KEY: String = "topics"
+  val NUMBER_OF_TASKS_KEY: String = "numberOfTasks"
   final case class ConnectorCreationRequest(name: Option[String],
                                             workerClusterName: Option[String],
                                             className: String,
+                                            // TODO: replace this by columns (https://github.com/oharastream/ohara/issues/444)
                                             schema: Seq[Column],
+                                            // TODO: replace this by topicNames (https://github.com/oharastream/ohara/issues/444)
                                             topics: Seq[String],
                                             numberOfTasks: Int,
-                                            configs: Map[String, String])
+                                            configs: Map[String, String]) {
+    def columns: Seq[Column] = schema
+    def topicNames: Seq[String] = topics
+  }
   implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] = jsonFormat7(
     ConnectorCreationRequest)
 

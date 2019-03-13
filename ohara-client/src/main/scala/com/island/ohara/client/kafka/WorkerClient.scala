@@ -123,6 +123,9 @@ trait WorkerClient {
 
 object WorkerClient {
   private[this] val LOG = Logger(WorkerClient.getClass)
+  val CONNECTOR_CLASS_KEY_OF_KAFKA: String = "connector.class"
+  val TOPICS_KEY_OF_KAFKA: String = "topics"
+  val NUMBER_OF_TASKS_KEY_OF_KAFKA: String = "tasks.max"
 
   /**
     * Create a default implementation of worker client.
@@ -158,7 +161,7 @@ object WorkerClient {
       override def connectorCreator(): Creator = request =>
         retry(
           () =>
-            HttpExecutor.SINGLETON.post[CreateConnectorRequest, CreateConnectorResponse, Error](
+            HttpExecutor.SINGLETON.post[ConnectorCreationRequest, ConnectorCreationResponse, Error](
               s"http://$workerAddress/connectors",
               request),
           "connectorCreator"
@@ -197,7 +200,7 @@ object WorkerClient {
       override def connectorValidator(): Validator = (className, configs) =>
         retry(
           () =>
-            HttpExecutor.SINGLETON.put[Map[String, String], ConfigValidation, Error](
+            HttpExecutor.SINGLETON.put[Map[String, String], ConfigValidationResponse, Error](
               s"http://$workerAddress/connector-plugins/$className/config/validate",
               configs),
           "connectorValidator"
@@ -230,7 +233,7 @@ object WorkerClient {
       * @param className connector class
       * @return this one
       */
-    def connectorClass(className: String): this.type = {
+    def className(className: String): this.type = {
       this.className = CommonUtil.requireNonEmpty(className)
       this
     }
@@ -241,10 +244,7 @@ object WorkerClient {
       * @param clz connector class
       * @return this one
       */
-    def connectorClass[T](clz: Class[T]): this.type = {
-      this.className = Objects.requireNonNull(clz).getName
-      this
-    }
+    def connectorClass[T](clz: Class[T]): this.type = className(Objects.requireNonNull(clz).getName)
 
     /**
       * set the topic in which you have interest.
@@ -306,7 +306,7 @@ object WorkerClient {
       this
     }
 
-    protected def toCreateConnectorResponse(otherConfigs: Map[String, String]): CreateConnectorRequest = {
+    protected def toCreateConnectorResponse(otherConfigs: Map[String, String]): ConnectorCreationRequest = {
       import scala.collection.JavaConverters._
       CommonUtil.requireNonEmpty(name)
       CommonUtil.requireNonEmpty(className)
@@ -315,9 +315,9 @@ object WorkerClient {
       CommonUtil.requirePositiveInt(numberOfTasks)
       val kafkaConfig = new mutable.HashMap[String, String]()
       kafkaConfig ++= configs
-      kafkaConfig += ("connector.class" -> className)
-      kafkaConfig += ("topics" -> topicNames.mkString(","))
-      kafkaConfig += ("tasks.max" -> numberOfTasks.toString)
+      kafkaConfig += (CONNECTOR_CLASS_KEY_OF_KAFKA -> className)
+      kafkaConfig += (TOPICS_KEY_OF_KAFKA -> topicNames.mkString(","))
+      kafkaConfig += (NUMBER_OF_TASKS_KEY_OF_KAFKA -> numberOfTasks.toString)
       import scala.collection.JavaConverters._
       if (schema != null && schema.nonEmpty) kafkaConfig += (Column.COLUMN_KEY -> Column.fromColumns(schema.asJava))
       // NOTED: If configs.name exists, kafka will use it to replace the outside name.
@@ -326,7 +326,7 @@ object WorkerClient {
       // TODO: this issue is fixed by https://github.com/apache/kafka/commit/5a2960f811c27f59d78dfdb99c7c3c6eeed16c4b
       // TODO: we should remove this workaround after we update kafka to 1.1.x
       kafkaConfig.remove("name").foreach(v => LOG.error(s"(name, $v) is removed from configs"))
-      CreateConnectorRequest(name, kafkaConfig.toMap ++ otherConfigs)
+      ConnectorCreationRequest(name, kafkaConfig.toMap ++ otherConfigs)
     }
   }
 
@@ -382,7 +382,7 @@ object WorkerClient {
       *
       * @return this one
       */
-    def create(): Future[CreateConnectorResponse] = doCreate(
+    def create(): Future[ConnectorCreationResponse] = doCreate(
       toCreateConnectorResponse(
         (if (_disableKeyConverter)
            Map("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
@@ -397,15 +397,15 @@ object WorkerClient {
       *
       * @return response
       */
-    protected def doCreate(request: CreateConnectorRequest): Future[CreateConnectorResponse]
+    protected def doCreate(request: ConnectorCreationRequest): Future[ConnectorCreationResponse]
   }
 
   trait Validator extends ConnectorProperties {
 
-    def run(): Future[ConfigValidation] = doValidate(
+    def run(): Future[ConfigValidationResponse] = doValidate(
       className,
-      toCreateConnectorResponse(Map.empty).config
-      // By contrast creating connector, we have to add name back to configs since worker verify the name from configs...
+      toCreateConnectorResponse(Map.empty).configs
+      // In contrast to create connector, we have to add name back to configs since worker verify the name from configs...
       // TODO: it is indeed a ugly APIs... should we file a PR for kafka ??? by chia
         ++ Map("name" -> name)
     )
@@ -415,7 +415,7 @@ object WorkerClient {
       *
       * @return response
       */
-    protected def doValidate(className: String, configs: Map[String, String]): Future[ConfigValidation]
+    protected def doValidate(className: String, configs: Map[String, String]): Future[ConfigValidationResponse]
 
   }
 }

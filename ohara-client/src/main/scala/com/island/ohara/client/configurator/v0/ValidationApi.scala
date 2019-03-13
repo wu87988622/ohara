@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.client.kafka.WorkerJson.ConfigValidationResponse
 import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -81,7 +82,24 @@ object ValidationApi {
   final case class ValidationReport(hostname: String, message: String, pass: Boolean)
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 
+  val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"
+  final case class ConnectorValidationRequest(name: String,
+                                              className: String,
+                                              topicNames: Seq[String],
+                                              numberOfTasks: Int,
+                                              workerClusterName: String,
+                                              configs: Map[String, String])
+  implicit val CONNECTOR_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorValidationRequest] = jsonFormat6(
+    ConnectorValidationRequest)
+
   sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
+
+    /**
+      * used to verify the hdfs information on "default" worker cluster
+      * @param request hdfs info
+      * @return validation reports
+      */
+    def verify(request: ConnectorValidationRequest): Future[ConfigValidationResponse]
 
     /**
       * used to verify the hdfs information on "default" worker cluster
@@ -165,5 +183,10 @@ object ValidationApi {
     override def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
 
     override def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
+
+    override def verify(request: ConnectorValidationRequest): Future[ConfigValidationResponse] =
+      exec.put[ConnectorValidationRequest, ConfigValidationResponse, ErrorApi.Error](
+        url(VALIDATION_CONNECTOR_PREFIX_PATH, null),
+        request)
   }
 }

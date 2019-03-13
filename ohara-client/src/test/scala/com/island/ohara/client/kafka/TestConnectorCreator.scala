@@ -47,13 +47,12 @@ class TestConnectorCreator extends SmallTest with Matchers {
     .connectorClass(null.asInstanceOf[Class[_]])
 
   @Test
-  def nullClassName(): Unit = an[NullPointerException] should be thrownBy notWorkingClient
-    .connectorCreator()
-    .connectorClass(null.asInstanceOf[String])
+  def nullClassName(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().className(null.asInstanceOf[String])
 
   @Test
   def emptyClassName(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().connectorClass("")
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorCreator().className("")
 
   @Test
   def nullTopicName(): Unit =

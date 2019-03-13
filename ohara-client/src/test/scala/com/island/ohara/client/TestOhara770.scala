@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client
-import com.island.ohara.client.kafka.WorkerJson.CreateConnectorResponse
+import com.island.ohara.client.kafka.WorkerJson.ConnectorCreationResponse
 import com.island.ohara.client.kafka.{WorkerClient, WorkerJson}
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
@@ -30,9 +30,9 @@ class TestOhara770 extends SmallTest with Matchers {
   def configsNameShouldBeRemoved(): Unit = {
     class DumbConnectorCreator extends WorkerClient.Creator {
       override protected def doCreate(
-        request: WorkerJson.CreateConnectorRequest): Future[WorkerJson.CreateConnectorResponse] = Future {
-        request.config.get("name") shouldBe None
-        CreateConnectorResponse(
+        request: WorkerJson.ConnectorCreationRequest): Future[WorkerJson.ConnectorCreationResponse] = Future {
+        request.configs.get("name") shouldBe None
+        ConnectorCreationResponse(
           name = "adas",
           config = Map.empty,
           tasks = Seq.empty
@@ -42,7 +42,7 @@ class TestOhara770 extends SmallTest with Matchers {
 
     val creator = new DumbConnectorCreator()
     // this should pass
-    Await.result(creator.name("abc").connectorClass("asdasd").topicName("aaa").configs(Map("name" -> "aa")).create(),
+    Await.result(creator.name("abc").className("asdasd").topicName("aaa").configs(Map("name" -> "aa")).create(),
                  10 seconds)
   }
 

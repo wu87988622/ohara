@@ -16,8 +16,9 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ValidationApi
+import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.ValidationApi.{
+  ConnectorValidationRequest,
   FtpValidationRequest,
   HdfsValidationRequest,
   NodeValidationRequest,
@@ -36,6 +37,28 @@ class TestValidationRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  private[this] val wkCluster = result(
+    WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list()).head
+
+  @Test
+  def validateConnector(): Unit = {
+    val className = CommonUtil.randomString(10)
+    val response = result(
+      ValidationApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .verify(ConnectorValidationRequest(
+          name = CommonUtil.randomString(10),
+          className = className,
+          topicNames = Seq(CommonUtil.randomString(10)),
+          numberOfTasks = 1,
+          workerClusterName = wkCluster.name,
+          configs = Map.empty
+        )))
+    response.className shouldBe className
+  }
 
   @Test
   def validateHdfs(): Unit = {

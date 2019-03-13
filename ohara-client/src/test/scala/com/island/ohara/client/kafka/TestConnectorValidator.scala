@@ -50,11 +50,11 @@ class TestConnectorValidator extends SmallTest with Matchers {
   @Test
   def nullClassName(): Unit = an[NullPointerException] should be thrownBy notWorkingClient
     .connectorValidator()
-    .connectorClass(null.asInstanceOf[String])
+    .className(null.asInstanceOf[String])
 
   @Test
   def emptyClassName(): Unit =
-    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().connectorClass("")
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().className("")
 
   @Test
   def nullTopicName(): Unit =

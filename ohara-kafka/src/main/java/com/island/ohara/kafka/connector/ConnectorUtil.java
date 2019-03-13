@@ -19,6 +19,8 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.VersionUtil;
 import java.util.*;
+import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.connect.sink.SinkConnector;
 
 public class ConnectorUtil {
 
@@ -75,5 +77,16 @@ public class ConnectorUtil {
 
   public static String VERSION() {
     return VERSION;
+  }
+
+  /** @return the default configuration of row source/sink */
+  public static ConfigDef defaultConfigDef() {
+    return new ConfigDef()
+        .define(
+            SinkConnector.TOPICS_CONFIG,
+            ConfigDef.Type.STRING,
+            null,
+            ConfigDef.Importance.HIGH,
+            "the data target of row source. or the data source of row sink");
   }
 }

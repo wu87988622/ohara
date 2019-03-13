@@ -63,7 +63,7 @@ public abstract class RowSinkConnector extends SinkConnector {
    * @return The ConfigDef for this connector.
    */
   protected ConfigDef _config() {
-    return new ConfigDef();
+    return ConnectorUtil.defaultConfigDef();
   }
 
   /**

@@ -21,8 +21,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie}
-import com.island.ohara.client.configurator.v0.Parameters
+import com.island.ohara.client.configurator.v0.{ConnectorApi, Parameters}
 import com.island.ohara.client.configurator.v0.ValidationApi._
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
@@ -152,6 +153,53 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
               )
             }
         }
-      )
+      ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
+        put {
+          entity(as[ConnectorValidationRequest])(req =>
+            onSuccess(CollieUtils.workerClient(Some(req.workerClusterName)).flatMap {
+              case (_, workerClient) =>
+                workerClient
+                  .connectorValidator()
+                  .name(req.name)
+                  .className(req.className)
+                  .numberOfTasks(req.numberOfTasks)
+                  .topicNames(req.topicNames)
+                  .configs(req.configs)
+                  .run()
+                  .map {
+                    validationResponse =>
+                      // we have to replace worker's keyword by ohara's keyword
+                      validationResponse.copy(
+                        definitions = validationResponse.definitions.map {
+                          definition =>
+                            // TODO: Could we avoid hard code?? by chia
+                            definition.name match {
+                              case WorkerClient.CONNECTOR_CLASS_KEY_OF_KAFKA =>
+                                definition.copy(name = ConnectorApi.CLASS_NAME_KEY)
+                              case WorkerClient.TOPICS_KEY_OF_KAFKA =>
+                                definition.copy(name = ConnectorApi.TOPIC_NAME_KEY)
+                              case WorkerClient.NUMBER_OF_TASKS_KEY_OF_KAFKA =>
+                                definition.copy(name = ConnectorApi.NUMBER_OF_TASKS_KEY)
+                              case _ => definition
+                            }
+                        },
+                        validatedValues = validationResponse.validatedValues.map {
+                          validatedValue =>
+                            // TODO: Could we avoid hard code?? by chia
+                            validatedValue.name match {
+                              case WorkerClient.CONNECTOR_CLASS_KEY_OF_KAFKA =>
+                                validatedValue.copy(name = ConnectorApi.CLASS_NAME_KEY)
+                              case WorkerClient.TOPICS_KEY_OF_KAFKA =>
+                                validatedValue.copy(name = ConnectorApi.TOPIC_NAME_KEY)
+                              case WorkerClient.NUMBER_OF_TASKS_KEY_OF_KAFKA =>
+                                validatedValue.copy(name = ConnectorApi.NUMBER_OF_TASKS_KEY)
+                              case _ => validatedValue
+                            }
+                        }
+                      )
+                  }
+            })(complete(_)))
+        }
+      }
     }
 }
