@@ -264,7 +264,7 @@ object Configurator {
       LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
       import scala.concurrent.duration._
       val node =
-        Await.result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).add(req), 30 seconds)
+        Await.result(NodeApi.access().hostname(CommonUtil.hostname()).port(configurator.port).add(req), 30 seconds)
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
@@ -277,7 +277,7 @@ object Configurator {
       val zkCluster = Await.result(
         ZookeeperApi
           .access()
-          .hostname(configurator.hostname)
+          .hostname(CommonUtil.hostname())
           .port(configurator.port)
           .add(
             ZookeeperClusterCreationRequest(name = "preCreatedZkCluster",
@@ -292,7 +292,7 @@ object Configurator {
       val bkCluster = Await.result(
         BrokerApi
           .access()
-          .hostname(configurator.hostname)
+          .hostname(CommonUtil.hostname())
           .port(configurator.port)
           .add(
             BrokerClusterCreationRequest(name = "preCreatedBkCluster",
