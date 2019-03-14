@@ -24,7 +24,6 @@ import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
-// TODO: check all setter .. by chia
 class TestContainerCreator extends SmallTest with Matchers {
 
   private[this] def fake(): ContainerCreator = (hostname: String,
@@ -38,7 +37,9 @@ class TestContainerCreator extends SmallTest with Matchers {
                                                 volumeMapping: Map[String, String],
                                                 networkDriver: NetworkDriver) => {
     // we check only the required arguments
+    CommonUtils.requireNonEmpty(hostname)
     CommonUtils.requireNonEmpty(imageName)
+    CommonUtils.requireNonEmpty(name)
     Objects.requireNonNull(ports)
     Objects.requireNonNull(envs)
     Objects.requireNonNull(route)
@@ -47,8 +48,72 @@ class TestContainerCreator extends SmallTest with Matchers {
   }
 
   @Test
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy fake().hostname(null)
+
+  @Test
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy fake().hostname("")
+
+  @Test
+  def nullImageName(): Unit = an[NullPointerException] should be thrownBy fake().imageName(null)
+
+  @Test
+  def emptyImageName(): Unit = an[IllegalArgumentException] should be thrownBy fake().imageName("")
+
+  @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy fake().name(null)
 
   @Test
-  def testExecute(): Unit = fake().name(CommonUtils.randomString()).imageName(CommonUtils.randomString(5)).execute()
+  def emptyName(): Unit = an[IllegalArgumentException] should be thrownBy fake().name("")
+
+  @Test
+  def nullCommand(): Unit = an[NullPointerException] should be thrownBy fake().command(null)
+
+  @Test
+  def emptyCommand(): Unit = an[IllegalArgumentException] should be thrownBy fake().command("")
+
+  @Test
+  def nullPorts(): Unit = an[NullPointerException] should be thrownBy fake().portMappings(null)
+
+  @Test
+  def emptyPorts(): Unit = an[IllegalArgumentException] should be thrownBy fake().portMappings(Map.empty)
+
+  @Test
+  def nullEnvs(): Unit = an[NullPointerException] should be thrownBy fake().envs(null)
+
+  @Test
+  def emptyEnvs(): Unit = an[IllegalArgumentException] should be thrownBy fake().envs(Map.empty)
+
+  @Test
+  def nullRoute(): Unit = an[NullPointerException] should be thrownBy fake().route(null)
+
+  @Test
+  def emptyRoute(): Unit = an[IllegalArgumentException] should be thrownBy fake().route(Map.empty)
+
+  @Test
+  def nullVolumeMapping(): Unit = an[NullPointerException] should be thrownBy fake().volumeMapping(null)
+
+  @Test
+  def emptyVolumeMapping(): Unit = an[IllegalArgumentException] should be thrownBy fake().volumeMapping(Map.empty)
+
+  @Test
+  def nullNetworkDriver(): Unit = an[NullPointerException] should be thrownBy fake().command(null)
+
+  @Test
+  def testExecuteNormalCases(): Unit = {
+
+    fake().imageName(CommonUtils.randomString(5)).execute()
+    fake().name(CommonUtils.randomString()).imageName(CommonUtils.randomString(5)).execute()
+    fake()
+      .name(CommonUtils.randomString())
+      .hostname(CommonUtils.randomString(5))
+      .imageName(CommonUtils.randomString(5))
+      .execute()
+  }
+
+  @Test
+  def testExecuteWithoutRequireArguments(): Unit = {
+
+    // At least assign imageName
+    an[NullPointerException] should be thrownBy fake().execute()
+  }
 }
