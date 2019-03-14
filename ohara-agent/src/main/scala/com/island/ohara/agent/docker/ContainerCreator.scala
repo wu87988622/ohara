@@ -18,21 +18,50 @@ package com.island.ohara.agent.docker
 
 import java.util.Objects
 
-import com.island.ohara.agent.{Agent, NetworkDriver}
+import com.island.ohara.agent.NetworkDriver
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
-import com.typesafe.scalalogging.Logger
 
 /**
   * A interface used to run a docker container on remote node
   */
 trait ContainerCreator {
+  private[this] var hostname: String = CommonUtils.randomString()
+  private[this] var imageName: String = _
+  private[this] var name: String = CommonUtils.randomString()
+  private[this] var command: String = ""
+  private[this] var _removeContainerOnExit: Boolean = false
+  private[this] var ports: Map[Int, Int] = Map.empty
+  private[this] var envs: Map[String, String] = Map.empty
+  private[this] var route: Map[String, String] = Map.empty
+  private[this] var volumeMapping: Map[String, String] = Map.empty
+  private[this] var networkDriver: NetworkDriver = NetworkDriver.BRIDGE
 
   /**
-    *
-    * @return this container name
+    * execute the docker container on background.
     */
-  def getContainerName: String
+  def execute(): Unit = doExecute(
+    hostname = CommonUtils.requireNonEmpty(hostname),
+    imageName = CommonUtils.requireNonEmpty(imageName),
+    name = CommonUtils.requireNonEmpty(name),
+    command = command,
+    removeContainerOnExit = _removeContainerOnExit,
+    ports = ports,
+    envs = envs,
+    route = route,
+    volumeMapping = volumeMapping,
+    networkDriver = networkDriver
+  )
+  protected def doExecute(hostname: String,
+                          imageName: String,
+                          name: String,
+                          command: String,
+                          removeContainerOnExit: Boolean,
+                          ports: Map[Int, Int],
+                          envs: Map[String, String],
+                          route: Map[String, String],
+                          volumeMapping: Map[String, String],
+                          networkDriver: NetworkDriver): Unit
 
   /**
     * set container's name. default is a random string
@@ -40,8 +69,11 @@ trait ContainerCreator {
     * @param name container name
     * @return this builder
     */
-  @Optional("default is CommonUtils.randomString()")
-  def name(name: String): ContainerCreator
+  @Optional("default is random string")
+  def name(name: String): ContainerCreator = {
+    this.name = CommonUtils.requireNonEmpty(name)
+    this
+  }
 
   /**
     * set target image
@@ -49,25 +81,40 @@ trait ContainerCreator {
     * @param imageName docker image
     * @return this builder
     */
-  def imageName(imageName: String): ContainerCreator
+  def imageName(imageName: String): ContainerCreator = {
+    this.imageName = CommonUtils.requireNonEmpty(imageName)
+    this
+  }
 
   /**
     * @param hostname the hostname of container
     * @return this builder
     */
-  def hostname(hostname: String): ContainerCreator
+  @Optional("default is random string")
+  def hostname(hostname: String): ContainerCreator = {
+    this.hostname = CommonUtils.requireNonEmpty(hostname)
+    this
+  }
 
   /**
     * @param envs the env variables exposed to container
     * @return this builder
     */
-  def envs(envs: Map[String, String]): ContainerCreator
+  @Optional("default is empty")
+  def envs(envs: Map[String, String]): ContainerCreator = {
+    this.envs = assertNonEmpty(envs)
+    this
+  }
 
   /**
     * @param route the pre-defined route to container. hostname -> ip
     * @return this builder
     */
-  def route(route: Map[String, String]): ContainerCreator
+  @Optional("default is empty")
+  def route(route: Map[String, String]): ContainerCreator = {
+    this.route = assertNonEmpty(route)
+    this
+  }
 
   /**
     * forward the port from host to container.
@@ -76,14 +123,22 @@ trait ContainerCreator {
     * @param ports port mapping (host's port -> container's port)
     * @return this builder
     */
-  def portMappings(ports: Map[Int, Int]): ContainerCreator
+  @Optional("default is empty")
+  def portMappings(ports: Map[Int, Int]): ContainerCreator = {
+    this.ports = assertNonEmpty(ports)
+    this
+  }
 
   /**
     * docker -v
     *
     * @return process information
     */
-  def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator
+  @Optional("default is empty")
+  def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator = {
+    this.volumeMapping = assertNonEmpty(volumeMapping)
+    this
+  }
 
   /**
     * set docker container's network driver. implement by --network=$value
@@ -92,14 +147,21 @@ trait ContainerCreator {
     * @return this builder
     */
   @Optional("default is NetworkDriver.BRIDGE")
-  def networkDriver(driver: NetworkDriver): ContainerCreator
+  def networkDriver(networkDriver: NetworkDriver): ContainerCreator = {
+    this.networkDriver = Objects.requireNonNull(networkDriver)
+    this
+  }
 
   /**
     * set true if you want to clean up the dead container automatically
     *
     * @return executor
     */
-  def cleanup(): ContainerCreator
+  @Optional("default is false")
+  def removeContainerOnExit(): ContainerCreator = {
+    this._removeContainerOnExit = true
+    this
+  }
 
   /**
     * the command passed to docker container
@@ -107,128 +169,13 @@ trait ContainerCreator {
     * @param command command
     * @return this builder
     */
-  def command(command: String): ContainerCreator
-
-  /**
-    * execute the docker container on background.
-    */
-  def execute(): Unit
-
-  /**
-    * this is used in testing. Developers can check the generated command by this method.
-    *
-    * @return the command used to start docker container
-    */
-  protected[agent] def dockerCommand(): String
-}
-
-private[agent] object ContainerCreator {
-
-  def apply(agent: Agent): ContainerCreator = new ContainerCreator {
-    private val LOG = Logger(classOf[ContainerCreator])
-
-    private[this] var hostname: String = _
-    private[this] var imageName: String = _
-    private[this] var name: String = CommonUtils.randomString()
-    private[this] var command: String = _
-    private[this] var disableCleanup: Boolean = true
-    private[this] var ports: Map[Int, Int] = Map.empty
-    private[this] var envs: Map[String, String] = Map.empty
-    private[this] var route: Map[String, String] = Map.empty
-    private[this] var volumeMapping: Map[String, String] = Map.empty
-    private[this] var networkDriver: NetworkDriver = NetworkDriver.BRIDGE
-
-    override def getContainerName: String = this.name
-
-    override def name(name: String): ContainerCreator = {
-      this.name = CommonUtils.requireNonEmpty(name)
-      this
-    }
-
-    override def imageName(imageName: String): ContainerCreator = {
-      this.imageName = CommonUtils.requireNonEmpty(imageName)
-      this
-    }
-
-    override def hostname(hostname: String): ContainerCreator = {
-      this.hostname = hostname
-      this
-    }
-
-    override def envs(envs: Map[String, String]): ContainerCreator = {
-      this.envs = envs
-      this
-    }
-
-    override def route(route: Map[String, String]): ContainerCreator = {
-      this.route = route
-      this
-    }
-
-    override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-      this.ports = ports
-      this
-    }
-
-    override def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator = {
-      this.volumeMapping = volumeMapping
-      this
-    }
-
-    override def networkDriver(driver: NetworkDriver): ContainerCreator = {
-      this.networkDriver = driver
-      this
-    }
-
-    override def cleanup(): ContainerCreator = {
-      this.disableCleanup = false
-      this
-    }
-
-    override def command(command: String): ContainerCreator = {
-      this.command = command
-      this
-    }
-
-    override def execute(): Unit = {
-      val cmd = dockerCommand()
-      LOG.info(s"docker command:$cmd")
-      agent.execute(cmd)
-    }
-
-    override protected[agent] def dockerCommand(): String = {
-      Seq(
-        "docker run -d ",
-        if (hostname == null) "" else s"-h $hostname",
-        route
-          .map {
-            case (host, ip) => s"--add-host $host:$ip"
-          }
-          .mkString(" "),
-        if (disableCleanup) "" else "--rm",
-        s"--name ${Objects.requireNonNull(name)}",
-        ports
-          .map {
-            case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
-          }
-          .mkString(" "),
-        envs
-          .map {
-            case (key, value) => s"""-e \"$key=$value\""""
-          }
-          .mkString(" "),
-        volumeMapping
-          .map {
-            case (key, value) => s"""-v \"$key:$value\""""
-          }
-          .mkString(" "),
-        networkDriver match {
-          case NetworkDriver.HOST   => "--network=host"
-          case NetworkDriver.BRIDGE => "--network=bridge"
-        },
-        Objects.requireNonNull(imageName),
-        if (command == null) "" else command
-      ).filter(_.nonEmpty).mkString(" ")
-    }
+  @Optional("default is empty")
+  def command(command: String): ContainerCreator = {
+    this.command = CommonUtils.requireNonEmpty(command)
+    this
   }
+
+  private[this] def assertNonEmpty[K, V](map: Map[K, V]): Map[K, V] = if (Objects.requireNonNull(map).isEmpty)
+    throw new IllegalArgumentException("empty input!")
+  else map
 }

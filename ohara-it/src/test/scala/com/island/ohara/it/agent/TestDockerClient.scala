@@ -67,40 +67,44 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testLog(): Unit = runTest { client =>
-    val containerCreator =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
-    try client.log(container.name).contains(webHost) shouldBe true
-    finally client.stop(container.name)
-
+    val name = CommonUtils.randomString(10)
+    client
+      .containerCreator()
+      .name(name)
+      .imageName(imageName)
+      .removeContainerOnExit()
+      .command(s"""/bin/bash -c \"ping $webHost\"""")
+      .execute()
+    try client.log(name).contains(webHost) shouldBe true
+    finally client.forceRemove(name)
   }
 
   @Test
   def testList(): Unit = runTest { client =>
-    val before = client.containerNames()
-    val containerCreator =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
-    try {
-      container.state shouldBe ContainerState.RUNNING
-      val after = client.containerNames()
-      before.contains(container.name) shouldBe false
-      after.contains(container.name) shouldBe true
-    } finally client.stop(container.name)
+    val name = CommonUtils.randomString(10)
+    client.containerNames().contains(name) shouldBe false
+    client
+      .containerCreator()
+      .name(name)
+      .imageName(imageName)
+      .removeContainerOnExit()
+      .command(s"""/bin/bash -c \"ping $webHost\"""")
+      .execute()
+    val container = client.container(name)
+    try client.containerNames().contains(container.name) shouldBe true
+    finally client.forceRemove(container.name)
     client.containerNames().contains(container.name) shouldBe false
   }
 
   @Test
   def testCleanup(): Unit = runTest { client =>
-    // ping google 3 times
     val name = CommonUtils.randomString(5)
+    // ping google 3 times
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
-      .cleanup()
+      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
       .execute()
     TimeUnit.SECONDS.sleep(2)
@@ -109,110 +113,127 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testNonCleanup(): Unit = runTest { client =>
+    val name = CommonUtils.randomString(5)
     // ping google 3 times
-    val containerCreator =
-      client.containerCreator().imageName(imageName).command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
+    client
+      .containerCreator()
+      .name(name)
+      .imageName(imageName)
+      .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
+      .execute()
     try {
+      client.containerNames().contains(name) shouldBe true
       TimeUnit.SECONDS.sleep(3)
-      client.container(container.name).get.state shouldBe ContainerState.EXITED
-    } finally client.remove(container.name)
+      client.container(name).state shouldBe ContainerState.EXITED
+    } finally client.forceRemove(name)
   }
 
   @Test
-  def testVerify(): Unit = runTest { client =>
-    client.verify() shouldBe true
-  }
+  def testVerify(): Unit = runTest(_.verify() shouldBe true)
 
   @Test
   def testRoute(): Unit = runTest { client =>
-    val containerCreator = client
+    val name = CommonUtils.randomString(5)
+    client
       .containerCreator()
+      .name(name)
       .route(Map("ABC" -> "192.168.123.123"))
       .imageName(imageName)
-      .cleanup()
+      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
+      .execute()
     try {
-      val hostFile = client.containerInspector(container.name).cat("/etc/hosts").get
+      val hostFile = client.containerInspector(name).cat("/etc/hosts").get
       hostFile.contains("192.168.123.123") shouldBe true
       hostFile.contains("ABC") shouldBe true
-    } finally client.stop(container.name)
+    } finally client.forceRemove(name)
   }
 
   @Test
   def testPortMapping(): Unit = runTest { client =>
-    val containerCreator = client
+    val name = CommonUtils.randomString(5)
+    client
       .containerCreator()
+      .name(name)
       .imageName(imageName)
       .portMappings(Map(12345 -> 12345))
-      .cleanup()
+      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
+      .execute()
     try {
+      val container = client.container(name)
       container.portMappings.size shouldBe 1
       container.portMappings.head.portPairs.size shouldBe 1
       container.portMappings.head.portPairs.head shouldBe PortPair(12345, 12345)
-    } finally client.stop(container.name)
+    } finally client.forceRemove(name)
   }
 
   @Test
   def testSetEnv(): Unit = runTest { client =>
-    val containerCreator = client
+    val name = CommonUtils.randomString(5)
+    client
       .containerCreator()
+      .name(name)
       .imageName(imageName)
       .envs(Map("abc" -> "123", "ccc" -> "ttt"))
-      .cleanup()
+      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
+      .execute()
     try {
+      val container = client.container(name)
       container.environments("abc") shouldBe "123"
       container.environments("ccc") shouldBe "ttt"
-    } finally client.stop(container.name)
+    } finally client.forceRemove(name)
   }
 
   @Test
   def testHostname(): Unit = runTest { client =>
-    val containerCreator = client
+    val name = CommonUtils.randomString(5)
+    val hostname = CommonUtils.randomString(5)
+    client
       .containerCreator()
+      .name(name)
       .imageName(imageName)
-      .hostname("abcdef")
-      .cleanup()
+      .hostname(hostname)
+      .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
-    try container.hostname shouldBe "abcdef"
-    finally client.stop(container.name)
+      .execute()
+    try client.container(name).hostname shouldBe hostname
+    finally client.forceRemove(name)
   }
 
   @Test
   def testNodeName(): Unit = runTest { client =>
-    val containerCreator =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
-    try container.nodeName shouldBe remoteHostname
-    finally client.stop(container.name)
+    val name = CommonUtils.randomString(5)
+    client
+      .containerCreator()
+      .name(name)
+      .imageName(imageName)
+      .removeContainerOnExit()
+      .command(s"""/bin/bash -c \"ping $webHost\"""")
+      .execute()
+    try client.container(name).nodeName shouldBe remoteHostname
+    finally client.forceRemove(name)
   }
 
   @Test
   def testAppend(): Unit = runTest { client =>
-    val containerCreator =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
-    containerCreator.execute()
-    val container = client.container(containerCreator.getContainerName).get
+    val name = CommonUtils.randomString(5)
+    client
+      .containerCreator()
+      .name(name)
+      .imageName(imageName)
+      .removeContainerOnExit()
+      .command(s"""/bin/bash -c \"ping $webHost\"""")
+      .execute()
     try {
+      val container = client.container(name)
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"
       client.containerInspector(container.name).append("/tmp/ttt", Seq("t", "z")) shouldBe "abc\nabc\nt\nz\n"
-    } finally client.stop(container.name)
+    } finally client.forceRemove(name)
   }
 
   @After
   def tearDown(): Unit = Releasable.close(client)
-
 }

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
-import com.island.ohara.agent.TestDockerClientWithoutDockerServer._
-import com.island.ohara.agent.docker.{DockerClient, DockerClientImpl}
+package com.island.ohara.agent.docker
+
+import com.island.ohara.agent.NetworkDriver
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortPair}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -26,23 +26,40 @@ import org.junit.{AfterClass, Test}
 import org.scalatest.Matchers
 
 import scala.util.Random
+import TestDockerClientWithoutDockerServer._
 class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
+
   @Test
-  def checkCleanupOption(): Unit = {
-    CLIENT
-      .containerCreator()
-      .command("/bin/bash -c \"ls\"")
-      .imageName("centos:latest")
-      .dockerCommand()
-      .contains("--rm") shouldBe false
-    CLIENT
-      .containerCreator()
-      .command("/bin/bash -c \"ls\"")
-      .imageName("centos:latest")
-      .cleanup()
-      .dockerCommand()
-      .contains("--rm") shouldBe true
-  }
+  def withoutCleanup(): Unit = DockerClientImpl
+    .toSshCommand(
+      hostname = CommonUtils.randomString(5),
+      imageName = CommonUtils.randomString(5),
+      name = CommonUtils.randomString(5),
+      command = CommonUtils.randomString(5),
+      removeContainerOnExit = false,
+      ports = Map.empty,
+      envs = Map.empty,
+      route = Map.empty,
+      volumeMapping = Map.empty,
+      networkDriver = NetworkDriver.BRIDGE
+    )
+    .contains("--rm") shouldBe false
+
+  @Test
+  def withCleanup(): Unit = DockerClientImpl
+    .toSshCommand(
+      hostname = CommonUtils.randomString(5),
+      imageName = CommonUtils.randomString(5),
+      name = CommonUtils.randomString(5),
+      command = CommonUtils.randomString(5),
+      removeContainerOnExit = true,
+      ports = Map.empty,
+      envs = Map.empty,
+      route = Map.empty,
+      volumeMapping = Map.empty,
+      networkDriver = NetworkDriver.BRIDGE
+    )
+    .contains("--rm") shouldBe true
 
   private[this] def testSpecifiedContainer(expectedState: ContainerState): Unit = {
     val rContainers = CLIENT.containers().filter(_.state == expectedState)
@@ -86,11 +103,19 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   @Test
   def testSetHostname(): Unit = {
     val hostname = methodName()
-    CLIENT
-      .containerCreator()
-      .imageName("aaa")
-      .hostname(hostname)
-      .dockerCommand()
+    DockerClientImpl
+      .toSshCommand(
+        hostname = hostname,
+        imageName = CommonUtils.randomString(5),
+        name = CommonUtils.randomString(5),
+        command = CommonUtils.randomString(5),
+        removeContainerOnExit = true,
+        ports = Map.empty,
+        envs = Map.empty,
+        route = Map.empty,
+        volumeMapping = Map.empty,
+        networkDriver = NetworkDriver.BRIDGE
+      )
       .contains(s"-h $hostname") shouldBe true
   }
 
@@ -98,23 +123,39 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   def testSetEnvs(): Unit = {
     val key = s"key-${methodName()}"
     val value = s"value-${methodName()}"
-    CLIENT
-      .containerCreator()
-      .imageName("aaa")
-      .envs(Map(key -> value))
-      .dockerCommand()
+    DockerClientImpl
+      .toSshCommand(
+        hostname = CommonUtils.randomString(5),
+        imageName = CommonUtils.randomString(5),
+        name = CommonUtils.randomString(5),
+        command = CommonUtils.randomString(5),
+        removeContainerOnExit = true,
+        ports = Map.empty,
+        envs = Map(key -> value),
+        route = Map.empty,
+        volumeMapping = Map.empty,
+        networkDriver = NetworkDriver.BRIDGE
+      )
       .contains(s"""-e \"$key=$value\"""") shouldBe true
   }
 
   @Test
   def testSetRoute(): Unit = {
-    val hostname = methodName()
+    val hostname = CommonUtils.randomString(5)
     val ip = "192.168.103.1"
-    CLIENT
-      .containerCreator()
-      .imageName("aaa")
-      .route(Map(hostname -> ip))
-      .dockerCommand()
+    DockerClientImpl
+      .toSshCommand(
+        hostname = hostname,
+        imageName = CommonUtils.randomString(5),
+        name = CommonUtils.randomString(5),
+        command = CommonUtils.randomString(5),
+        removeContainerOnExit = true,
+        ports = Map.empty,
+        envs = Map.empty,
+        route = Map(hostname -> ip),
+        volumeMapping = Map.empty,
+        networkDriver = NetworkDriver.BRIDGE
+      )
       .contains(s"--add-host $hostname:$ip") shouldBe true
   }
 
@@ -122,11 +163,19 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   def testSetForwardPorts(): Unit = {
     val port0 = 12345
     val port1 = 12346
-    CLIENT
-      .containerCreator()
-      .imageName("aaa")
-      .portMappings(Map(port0 -> port0, port1 -> port1))
-      .dockerCommand()
+    DockerClientImpl
+      .toSshCommand(
+        hostname = CommonUtils.randomString(5),
+        imageName = CommonUtils.randomString(5),
+        name = CommonUtils.randomString(5),
+        command = CommonUtils.randomString(5),
+        removeContainerOnExit = true,
+        ports = Map(port0 -> port0, port1 -> port1),
+        envs = Map.empty,
+        route = Map.empty,
+        volumeMapping = Map.empty,
+        networkDriver = NetworkDriver.BRIDGE
+      )
       .contains(s"-p $port0:$port0 -p $port1:$port1") shouldBe true
   }
 

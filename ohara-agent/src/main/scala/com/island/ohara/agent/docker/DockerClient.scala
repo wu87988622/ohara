@@ -73,7 +73,7 @@ trait DockerClient extends Releasable {
     * @param name container's name
     * @return container description or None if container doesn't exist
     */
-  def container(name: String): Option[ContainerInfo] = containers(_ == name).headOption
+  def container(name: String): ContainerInfo = containers(_ == name).head
 
   /**
     * build a docker container.

@@ -347,32 +347,29 @@ private[configurator] object StreamRoute {
                                 .map {
                                   val appId = StreamApi.formatAppId(data.id)
                                   url =>
-                                    client
-                                      .container(appId)
-                                      .getOrElse(
-                                        client
-                                          .containerCreator()
-                                          .name(appId)
-                                          .envs(
-                                            Map(
-                                              StreamApi.JARURL_KEY -> url.toString,
-                                              StreamApi.APPID_KEY -> appId,
-                                              StreamApi.SERVERS_KEY -> brokerList,
-                                              StreamApi.FROM_TOPIC_KEY -> data.fromTopics.head,
-                                              StreamApi.TO_TOPIC_KEY -> data.toTopics.head
-                                            )
+                                    if (!client.exist(appId))
+                                      client
+                                        .containerCreator()
+                                        .name(appId)
+                                        .envs(
+                                          Map(
+                                            StreamApi.JARURL_KEY -> url.toString,
+                                            StreamApi.APPID_KEY -> appId,
+                                            StreamApi.SERVERS_KEY -> brokerList,
+                                            StreamApi.FROM_TOPIC_KEY -> data.fromTopics.head,
+                                            StreamApi.TO_TOPIC_KEY -> data.toTopics.head
                                           )
-                                          // Mapping the broker list hostname -> ip to this container
-                                          // note : we use default network=bridge to separate
-                                          // the host & container network driver
-                                          .route(
-                                            brokerInfo.nodeNames.map(n => n -> CommonUtils.address(n)).toMap
-                                          )
-                                          .imageName(StreamApi.STREAMAPP_IMAGE)
-                                          .command(StreamApi.MAIN_ENTRY)
-                                          .execute()
-                                      )
-                                    client.container(appId).get
+                                        )
+                                        // Mapping the broker list hostname -> ip to this container
+                                        // note : we use default network=bridge to separate
+                                        // the host & container network driver
+                                        .route(
+                                          brokerInfo.nodeNames.map(n => n -> CommonUtils.address(n)).toMap
+                                        )
+                                        .imageName(StreamApi.STREAMAPP_IMAGE)
+                                        .command(StreamApi.MAIN_ENTRY)
+                                        .execute()
+                                    client.container(appId)
                                 }
                                 .map { container =>
                                   log.info(

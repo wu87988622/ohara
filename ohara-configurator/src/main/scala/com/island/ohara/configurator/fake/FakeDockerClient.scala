@@ -42,72 +42,19 @@ private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClie
   //there is no meaning of "active" in fake mode
   override def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] = listContainers(nameFilter)
 
-  override def containerCreator(): ContainerCreator = new ContainerCreator {
-    private[this] var hostname: String = _
-    private[this] var imageName: String = _
-    private[this] var name: String = CommonUtils.randomString()
-    private[this] var command: String = _
-    private[this] var disableCleanup: Boolean = true
-    private[this] var ports: Map[Int, Int] = Map.empty
-    private[this] var envs: Map[String, String] = Map.empty
-    private[this] var route: Map[String, String] = Map.empty
-    private[this] var volumeMapping: Map[String, String] = Map.empty
-    private[this] var networkDriver: NetworkDriver = NetworkDriver.BRIDGE
-
-    override def getContainerName: String = this.name
-
-    override def name(name: String): ContainerCreator = {
-      this.name = CommonUtils.requireNonEmpty(name)
-      this
-    }
-
-    override def imageName(imageName: String): ContainerCreator = {
-      this.imageName = CommonUtils.requireNonEmpty(imageName)
-      this
-    }
-
-    override def hostname(hostname: String): ContainerCreator = {
-      this.hostname = hostname
-      this
-    }
-
-    override def envs(envs: Map[String, String]): ContainerCreator = {
-      this.envs = envs
-      this
-    }
-
-    override def route(route: Map[String, String]): ContainerCreator = {
-      this.route = route
-      this
-    }
-
-    override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-      this.ports = ports
-      this
-    }
-
-    override def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator = {
-      this.volumeMapping = volumeMapping
-      this
-    }
-
-    override def networkDriver(driver: NetworkDriver): ContainerCreator = {
-      this.networkDriver = driver
-      this
-    }
-
-    override def cleanup(): ContainerCreator = {
-      this.disableCleanup = false
-      this
-    }
-
-    override def command(command: String): ContainerCreator = {
-      this.command = command
-      this
-    }
-
-    override def execute(): Unit = {
-      val info = ContainerInfo(
+  override def containerCreator(): ContainerCreator = (hostname: String,
+                                                       imageName: String,
+                                                       name: String,
+                                                       _: String,
+                                                       _: Boolean,
+                                                       ports: Map[Int, Int],
+                                                       envs: Map[String, String],
+                                                       _: Map[String, String],
+                                                       _: Map[String, String],
+                                                       _: NetworkDriver) =>
+    cachedContainers.put(
+      name,
+      ContainerInfo(
         nodeName = hostname,
         id = name,
         imageName = imageName,
@@ -125,11 +72,7 @@ private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClie
         environments = envs,
         hostname = hostname
       )
-      cachedContainers.put(name, info)
-    }
-
-    override def dockerCommand(): String = "fake docker client"
-  }
+  )
 
   override def stop(name: String): Unit =
     cachedContainers.update(name, cachedContainers(name).copy(state = ContainerState.EXITED))

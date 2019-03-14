@@ -18,16 +18,17 @@ package com.island.ohara.agent.docker
 
 import java.util.Objects
 
-import com.island.ohara.agent.Agent
+import com.island.ohara.agent.{Agent, NetworkDriver}
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.DockerClientImpl._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{Await, Future}
 
-private[agent] object DockerClientImpl {
+private[docker] object DockerClientImpl {
   private val LOG = Logger(classOf[DockerClientImpl])
 
   /**
@@ -81,8 +82,51 @@ private[agent] object DockerClientImpl {
     "{{.Size}}",
     "{{.Ports}}"
   ).mkString(DIVIDER)
+
+  @VisibleForTesting
+  private[docker] def toSshCommand(hostname: String,
+                                   imageName: String,
+                                   name: String,
+                                   command: String,
+                                   removeContainerOnExit: Boolean,
+                                   ports: Map[Int, Int],
+                                   envs: Map[String, String],
+                                   route: Map[String, String],
+                                   volumeMapping: Map[String, String],
+                                   networkDriver: NetworkDriver): String = Seq(
+    "docker run -d ",
+    if (hostname == null) "" else s"-h $hostname",
+    route
+      .map {
+        case (host, ip) => s"--add-host $host:$ip"
+      }
+      .mkString(" "),
+    if (removeContainerOnExit) "--rm" else "",
+    s"--name ${Objects.requireNonNull(name)}",
+    ports
+      .map {
+        case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
+      }
+      .mkString(" "),
+    envs
+      .map {
+        case (key, value) => s"""-e \"$key=$value\""""
+      }
+      .mkString(" "),
+    volumeMapping
+      .map {
+        case (key, value) => s"""-v \"$key:$value\""""
+      }
+      .mkString(" "),
+    networkDriver match {
+      case NetworkDriver.HOST   => "--network=host"
+      case NetworkDriver.BRIDGE => "--network=bridge"
+    },
+    Objects.requireNonNull(imageName),
+    if (command == null) "" else command
+  ).filter(_.nonEmpty).mkString(" ")
 }
-private[agent] class DockerClientImpl(hostname: String, port: Int, user: String, password: String)
+private[docker] class DockerClientImpl(hostname: String, port: Int, user: String, password: String)
     extends ReleaseOnce
     with DockerClient {
   private[this] val agent = Agent
@@ -95,7 +139,29 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
 
   override protected def doClose(): Unit = Releasable.close(agent)
 
-  override def containerCreator(): ContainerCreator = ContainerCreator(agent)
+  override def containerCreator(): ContainerCreator = (hostname: String,
+                                                       imageName: String,
+                                                       name: String,
+                                                       command: String,
+                                                       removeContainerOnExit: Boolean,
+                                                       ports: Map[Int, Int],
+                                                       envs: Map[String, String],
+                                                       route: Map[String, String],
+                                                       volumeMapping: Map[String, String],
+                                                       networkDriver: NetworkDriver) =>
+    agent.execute(
+      DockerClientImpl.toSshCommand(
+        hostname = hostname,
+        imageName = imageName,
+        name = name,
+        command = command,
+        removeContainerOnExit = removeContainerOnExit,
+        ports = ports,
+        envs = envs,
+        route = route,
+        volumeMapping = volumeMapping,
+        networkDriver = networkDriver
+      ))
 
   override def containerNames(): Seq[String] =
     agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
@@ -227,5 +293,4 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
     .getOrElse(Seq.empty)
 
   override def toString: String = s"$user@$hostname:$port"
-
 }
