@@ -18,12 +18,12 @@ package com.island.ohara.connector.hdfs
 
 import com.island.ohara.common.data.Column
 import com.island.ohara.kafka.connector.{RowSinkContext, TopicPartition}
-import com.island.ohara.testing.WithTestUtil
+import com.island.ohara.testing.WithTestUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-class TestDataWriter extends WithTestUtil with Matchers with MockitoSugar {
+class TestDataWriter extends WithTestUtils with Matchers with MockitoSugar {
 
   @Test
   def testCreatePartitionDataWriters(): Unit = {

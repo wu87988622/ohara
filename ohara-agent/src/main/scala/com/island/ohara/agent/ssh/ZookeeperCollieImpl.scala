@@ -20,11 +20,10 @@ import com.island.ohara.agent.{NodeCollie, ZookeeperCollie}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
                                   dockerCache: DockerClientCache,
@@ -51,7 +50,7 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
             // add route in order to make zk node can connect to each other.
             val route: Map[String, String] = nodes.map {
               case (node, _) =>
-                node.name -> CommonUtil.address(node.name)
+                node.name -> CommonUtils.address(node.name)
             }
             val zkServers: String = nodes.keys.map(_.name).mkString(" ")
             // ssh connection is slow so we submit request by multi-thread

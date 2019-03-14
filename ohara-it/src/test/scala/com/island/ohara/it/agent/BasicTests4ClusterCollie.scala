@@ -18,7 +18,7 @@ package com.island.ohara.it.agent
 
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.{BrokerApi, ContainerApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.After
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -113,10 +113,10 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .clusterName(clusterName)
       .clientPort(clientPort)
       .brokerClusterName(bkClusterName)
-      .groupId(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
+      .groupId(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
+      .statusTopicName(CommonUtils.randomString(10))
+      .offsetTopicName(CommonUtils.randomString(10))
       .nodeNames(nodeNames)
       .create()
 

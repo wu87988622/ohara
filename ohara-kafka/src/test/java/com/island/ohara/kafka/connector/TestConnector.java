@@ -20,7 +20,7 @@ import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
 import static org.junit.Assert.assertEquals;
 
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.VersionUtil;
+import com.island.ohara.common.util.VersionUtils;
 import org.junit.Test;
 
 public class TestConnector extends SmallTest {
@@ -31,6 +31,6 @@ public class TestConnector extends SmallTest {
    */
   @Test
   public void testVersion() {
-    assertEquals(VERSION, VersionUtil.VERSION + "_" + VersionUtil.REVISION);
+    assertEquals(VERSION, VersionUtils.VERSION + "_" + VersionUtils.REVISION);
   }
 }

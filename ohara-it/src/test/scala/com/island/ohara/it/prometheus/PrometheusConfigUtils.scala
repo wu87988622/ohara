@@ -27,8 +27,8 @@ import spray.json._
   *
   * This config will be drop after k8s merge in OHARA .
   */
-class PrometheusConfigUtil(inspectort: ContainerInspector,
-                           fileName: String = PrometheusServer.PROMETHEUS_TARGETS_FILE) {
+class PrometheusConfigUtils(inspectort: ContainerInspector,
+                            fileName: String = PrometheusServer.PROMETHEUS_TARGETS_FILE) {
   implicit val Labels_JSON_FORMAT: RootJsonFormat[Labels] = jsonFormat2(Labels)
   implicit val TargetsJson_JSON_FORMAT: RootJsonFormat[TargetsJson] = jsonFormat2(TargetsJson)
 
@@ -48,12 +48,12 @@ class PrometheusConfigUtil(inspectort: ContainerInspector,
   }
 }
 
-object PrometheusConfigUtil {
+object PrometheusConfigUtils {
 
   /**
     * change remote docker file
     */
-  def apply(inspectort: ContainerInspector): PrometheusConfigUtil = new PrometheusConfigUtil(inspectort)
+  def apply(inspectort: ContainerInspector): PrometheusConfigUtils = new PrometheusConfigUtils(inspectort)
 }
 
 case class TargetsJson(targets: Seq[String], labels: Labels) {

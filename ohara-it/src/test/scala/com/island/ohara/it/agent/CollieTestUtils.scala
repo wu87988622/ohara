@@ -19,7 +19,7 @@ package com.island.ohara.it.agent
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
-private[agent] object CollieTestUtil {
+private[agent] object CollieTestUtils {
 
   /**
     * form: user:password@hostname:port.

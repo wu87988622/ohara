@@ -20,14 +20,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Test;
 
 public class TestBrokers extends MediumTest {
 
   @Test
   public void testSpecificPort() {
-    int port = CommonUtil.availablePort();
+    int port = CommonUtils.availablePort();
     try (Zookeepers zk = Zookeepers.local(0);
         Brokers brokers = Brokers.local(zk, new int[] {port})) {
       assertEquals(port, Integer.parseInt(brokers.connectionProps().split(",")[0].split(":")[1]));

@@ -52,8 +52,8 @@ task licenseTest(type: com.hierynomus.gradle.license.tasks.LicenseCheck) {
 license {
   header = file("$rootDir/checkstyle/apacheV2.header")
   strictCheck true
-  // VersionUtil.java is generated at runtime and its source code isn't public. Hence, we don't add header to it.
-  excludes(["**/VersionUtil.java",
+  // VersionUtils.java is generated at runtime and its source code isn't public. Hence, we don't add header to it.
+  excludes(["**/VersionUtils.java",
             ".gradle",
             ".git",
             ".idea",

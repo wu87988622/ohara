@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.VersionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -25,7 +25,7 @@ object ZookeeperApi {
   /**
     * the default docker image used to run containers of worker cluster
     */
-  val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtil.VERSION}"
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtils.VERSION}"
 
   /**
     * used to access zookeeper cluster's data

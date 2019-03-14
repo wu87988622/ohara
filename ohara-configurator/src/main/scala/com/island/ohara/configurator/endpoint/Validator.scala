@@ -30,7 +30,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.kafka.Consumer
@@ -157,10 +157,10 @@ object Validator {
                         taskCount: Int): Future[Seq[ValidationReport]] = workerClient match {
     // we expose the fake component...ugly way (TODO) by chia
     case _: FakeWorkerClient =>
-      Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtil.hostname, "a fake report", true)))
+      Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtils.hostname, "a fake report", true)))
     case _ =>
-      val requestId: String = CommonUtil.uuid()
-      val validationName = s"Validator-${CommonUtil.randomString()}"
+      val requestId: String = CommonUtils.uuid()
+      val validationName = s"Validator-${CommonUtils.randomString()}"
       workerClient
         .connectorCreator()
         .name(validationName)
@@ -278,7 +278,7 @@ class ValidatorTask extends SourceTask {
   private[this] def require(key: String): String =
     props.getOrElse(key, throw new IllegalArgumentException(s"the $key is required"))
 
-  private[this] def hostname: String = try CommonUtil.hostname
+  private[this] def hostname: String = try CommonUtils.hostname
   catch {
     case _: Throwable => "unknown"
   }

@@ -19,14 +19,14 @@ import java.time.Duration
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.testing.OharaTestUtil
+import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.testing.OharaTestUtils
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-object FtpUtil {
+object FtpUtils {
   private[this] val TIMEOUT = Duration.ofSeconds(60)
-  def assertFailedConnector(testUtil: OharaTestUtil, name: String): Unit = CommonUtil.await(
+  def assertFailedConnector(testUtil: OharaTestUtils, name: String): Unit = CommonUtils.await(
     () => {
       val workerClient = WorkerClient(testUtil.workersConnProps)
       try Await.result(workerClient.status(name), 10 seconds).connector.state == ConnectorState.FAILED
@@ -37,15 +37,15 @@ object FtpUtil {
     TIMEOUT
   )
 
-  def checkConnector(testUtil: OharaTestUtil, name: String): Unit = {
-    CommonUtil.await(
+  def checkConnector(testUtil: OharaTestUtils, name: String): Unit = {
+    CommonUtils.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
         Await.result(workerClient.activeConnectors(), 10 seconds).contains(name)
       },
       TIMEOUT
     )
-    CommonUtil.await(
+    CommonUtils.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
         try Await.result(workerClient.status(name), 10 seconds).connector.state == ConnectorState.RUNNING

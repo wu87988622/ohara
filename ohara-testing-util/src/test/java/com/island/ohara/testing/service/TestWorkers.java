@@ -17,7 +17,7 @@
 package com.island.ohara.testing.service;
 
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,7 +26,7 @@ public class TestWorkers extends MediumTest {
   @Test
   public void testSpecificPort() {
     int[] brokerPorts = {0};
-    int workerPort = CommonUtil.availablePort();
+    int workerPort = CommonUtils.availablePort();
 
     try (Zookeepers zk = Zookeepers.local(0);
         Brokers brokers = Brokers.local(zk, brokerPorts);

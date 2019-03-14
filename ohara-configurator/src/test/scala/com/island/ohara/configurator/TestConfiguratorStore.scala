@@ -19,7 +19,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -45,7 +45,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       state = None,
       error = None,
       workerClusterName = methodName(),
-      lastModified = CommonUtil.current()
+      lastModified = CommonUtils.current()
     )
     Await.result(store.add(s), timeout)
 
@@ -66,7 +66,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       state = None,
       error = None,
       workerClusterName = methodName(),
-      lastModified = CommonUtil.current()
+      lastModified = CommonUtils.current()
     )
     store.add(s)
 
@@ -91,7 +91,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       state = None,
       error = None,
       workerClusterName = methodName(),
-      lastModified = CommonUtil.current()
+      lastModified = CommonUtils.current()
     )
     store.add(s)
 
@@ -115,7 +115,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       state = None,
       error = None,
       workerClusterName = methodName(),
-      lastModified = CommonUtil.current()
+      lastModified = CommonUtils.current()
     )
     store.add(s)
 

@@ -18,7 +18,7 @@ package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -45,33 +45,33 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 
 object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
-    private[this] var clientPort: Int = CommonUtil.availablePort()
+    private[this] var clientPort: Int = CommonUtils.availablePort()
     private[this] var zookeeperClusterName: String = _
-    private[this] var exporterPort: Int = CommonUtil.availablePort()
+    private[this] var exporterPort: Int = CommonUtils.availablePort()
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
-      this.zookeeperClusterName = CommonUtil.requireNonEmpty(zookeeperClusterName)
+      this.zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName)
       this
     }
 
     @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtil.requirePositiveInt(clientPort)
+      this.clientPort = CommonUtils.requirePositiveInt(clientPort)
       this
     }
 
     @Optional("default is random port")
     def exporterPort(exporterPort: Int): ClusterCreator = {
-      this.exporterPort = CommonUtil.requirePositiveInt(exporterPort)
+      this.exporterPort = CommonUtils.requirePositiveInt(exporterPort)
       this
     }
 
     override def create(): Future[BrokerClusterInfo] = doCreate(
-      clusterName = CommonUtil.requireNonEmpty(clusterName),
-      imageName = CommonUtil.requireNonEmpty(imageName),
-      zookeeperClusterName = CommonUtil.requireNonEmpty(zookeeperClusterName),
-      clientPort = CommonUtil.requirePositiveInt(clientPort),
-      exporterPort = CommonUtil.requirePositiveInt(exporterPort),
+      clusterName = CommonUtils.requireNonEmpty(clusterName),
+      imageName = CommonUtils.requireNonEmpty(imageName),
+      zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName),
+      clientPort = CommonUtils.requirePositiveInt(clientPort),
+      exporterPort = CommonUtils.requirePositiveInt(exporterPort),
       nodeNames = requireNonEmpty(nodeNames)
     )
 

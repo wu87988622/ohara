@@ -16,7 +16,7 @@
 
 package com.island.ohara.common.data;
 
-import com.island.ohara.common.util.ByteUtil;
+import com.island.ohara.common.util.ByteUtils;
 import java.io.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,12 +65,12 @@ public interface Serializer<T> {
       new Serializer<Boolean>() {
         @Override
         public byte[] to(Boolean obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public Boolean from(byte[] bytes) {
-          return ByteUtil.toBoolean(bytes);
+          return ByteUtils.toBoolean(bytes);
         }
       };
 
@@ -91,12 +91,12 @@ public interface Serializer<T> {
       new Serializer<Short>() {
         @Override
         public byte[] to(Short obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public Short from(byte[] bytes) {
-          return ByteUtil.toShort(bytes);
+          return ByteUtils.toShort(bytes);
         }
       };
 
@@ -104,12 +104,12 @@ public interface Serializer<T> {
       new Serializer<Integer>() {
         @Override
         public byte[] to(Integer obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public Integer from(byte[] bytes) {
-          return ByteUtil.toInt(bytes);
+          return ByteUtils.toInt(bytes);
         }
       };
 
@@ -117,12 +117,12 @@ public interface Serializer<T> {
       new Serializer<Long>() {
         @Override
         public byte[] to(Long obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public Long from(byte[] bytes) {
-          return ByteUtil.toLong(bytes);
+          return ByteUtils.toLong(bytes);
         }
       };
 
@@ -130,12 +130,12 @@ public interface Serializer<T> {
       new Serializer<Float>() {
         @Override
         public byte[] to(Float obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public Float from(byte[] bytes) {
-          return ByteUtil.toFloat(bytes);
+          return ByteUtils.toFloat(bytes);
         }
       };
 
@@ -143,12 +143,12 @@ public interface Serializer<T> {
       new Serializer<Double>() {
         @Override
         public byte[] to(Double obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public Double from(byte[] bytes) {
-          return ByteUtil.toDouble(bytes);
+          return ByteUtils.toDouble(bytes);
         }
       };
 
@@ -156,12 +156,12 @@ public interface Serializer<T> {
       new Serializer<String>() {
         @Override
         public byte[] to(String obj) {
-          return ByteUtil.toBytes(obj);
+          return ByteUtils.toBytes(obj);
         }
 
         @Override
         public String from(byte[] bytes) {
-          return ByteUtil.toString(bytes);
+          return ByteUtils.toString(bytes);
         }
       };
 
@@ -325,19 +325,19 @@ public interface Serializer<T> {
         }
 
         private Row fromV0(InputStream input) {
-          int cellCount = INT.from(forceRead(input, ByteUtil.SIZE_OF_INT));
+          int cellCount = INT.from(forceRead(input, ByteUtils.SIZE_OF_INT));
           if (cellCount < 0)
             throw new IllegalStateException("the number from cell should be bigger than zero");
           Cell<?>[] cells =
               IntStream.range(0, cellCount)
                   .mapToObj(
                       i -> {
-                        int nameSize = SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT));
+                        int nameSize = SHORT.from(forceRead(input, ByteUtils.SIZE_OF_SHORT));
                         String name = STRING.from(forceRead(input, nameSize));
                         DataType type =
-                            DataType.of(SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT)));
+                            DataType.of(SHORT.from(forceRead(input, ByteUtils.SIZE_OF_SHORT)));
                         final Cell<?> cell;
-                        short valueSize = SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT));
+                        short valueSize = SHORT.from(forceRead(input, ByteUtils.SIZE_OF_SHORT));
                         switch (type) {
                           case BYTES:
                             cell = Cell.of(name, BYTES.from(forceRead(input, valueSize)));
@@ -378,7 +378,7 @@ public interface Serializer<T> {
                         return cell;
                       })
                   .toArray(Cell[]::new);
-          int tagCount = SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT));
+          int tagCount = SHORT.from(forceRead(input, ByteUtils.SIZE_OF_SHORT));
           if (tagCount < 0)
             throw new IllegalStateException("the number from tag should be bigger than zero");
           List<String> tag =
@@ -387,7 +387,7 @@ public interface Serializer<T> {
                       i ->
                           STRING.from(
                               forceRead(
-                                  input, SHORT.from(forceRead(input, ByteUtil.SIZE_OF_SHORT)))))
+                                  input, SHORT.from(forceRead(input, ByteUtils.SIZE_OF_SHORT)))))
                   .collect(Collectors.toList());
           return Row.of(tag, cells);
         }

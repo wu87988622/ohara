@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -37,7 +37,7 @@ class TestOhara764 extends SmallTest with Matchers {
     val source = Await.result(
       access.add(
         ConnectorCreationRequest(
-          name = Some(CommonUtil.randomString(10)),
+          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = "aaa.class",
           topics = Seq("abc"),
@@ -56,7 +56,7 @@ class TestOhara764 extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(
-          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
@@ -65,7 +65,7 @@ class TestOhara764 extends SmallTest with Matchers {
     val source2 = Await.result(
       access.add(
         ConnectorCreationRequest(
-          name = Some(CommonUtil.randomString(10)),
+          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = "aaa.class",
           topics = Seq(topic.id),

@@ -17,7 +17,7 @@
 package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.Future
 
@@ -29,34 +29,34 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {
-    private[this] var clientPort: Int = CommonUtil.availablePort()
-    private[this] var peerPort: Int = CommonUtil.availablePort()
-    private[this] var electionPort: Int = CommonUtil.availablePort()
+    private[this] var clientPort: Int = CommonUtils.availablePort()
+    private[this] var peerPort: Int = CommonUtils.availablePort()
+    private[this] var electionPort: Int = CommonUtils.availablePort()
 
     @Optional("default is random port")
     def clientPort(clientPort: Int): ClusterCreator = {
-      this.clientPort = CommonUtil.requirePositiveInt(clientPort)
+      this.clientPort = CommonUtils.requirePositiveInt(clientPort)
       this
     }
 
     @Optional("default is random port")
     def peerPort(peerPort: Int): ClusterCreator = {
-      this.peerPort = CommonUtil.requirePositiveInt(peerPort)
+      this.peerPort = CommonUtils.requirePositiveInt(peerPort)
       this
     }
 
     @Optional("default is random port")
     def electionPort(electionPort: Int): ClusterCreator = {
-      this.electionPort = CommonUtil.requirePositiveInt(electionPort)
+      this.electionPort = CommonUtils.requirePositiveInt(electionPort)
       this
     }
 
     override def create(): Future[ZookeeperClusterInfo] = doCreate(
-      clusterName = CommonUtil.requireNonEmpty(clusterName),
-      imageName = CommonUtil.requireNonEmpty(imageName),
-      clientPort = CommonUtil.requirePositiveInt(clientPort),
-      peerPort = CommonUtil.requirePositiveInt(peerPort),
-      electionPort = CommonUtil.requirePositiveInt(electionPort),
+      clusterName = CommonUtils.requireNonEmpty(clusterName),
+      imageName = CommonUtils.requireNonEmpty(imageName),
+      clientPort = CommonUtils.requirePositiveInt(clientPort),
+      peerPort = CommonUtils.requirePositiveInt(peerPort),
+      electionPort = CommonUtils.requirePositiveInt(electionPort),
       nodeNames = requireNonEmpty(nodeNames)
     )
 

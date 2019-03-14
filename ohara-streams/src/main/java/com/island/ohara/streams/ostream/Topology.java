@@ -16,7 +16,7 @@
 
 package com.island.ohara.streams.ostream;
 
-import com.island.ohara.kafka.exception.CheckedExceptionUtil;
+import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.data.Poneglyph;
 import com.island.ohara.streams.data.Stele;
 import java.io.File;
@@ -118,7 +118,7 @@ public class Topology implements AutoCloseable {
   }
 
   void start() {
-    CheckedExceptionUtil.wrap(() -> streams.start());
+    CheckedExceptionUtils.wrap(() -> streams.start());
   }
 
   @Override

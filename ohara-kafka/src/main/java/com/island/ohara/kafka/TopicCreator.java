@@ -17,7 +17,7 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.annotations.Optional;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,13 +41,13 @@ public abstract class TopicCreator {
 
   @Optional("default value is 1")
   public TopicCreator numberOfPartitions(int numberOfPartitions) {
-    this.numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions);
+    this.numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions);
     return this;
   }
 
   @Optional("default value is 1")
   public TopicCreator numberOfReplications(short numberOfReplications) {
-    this.numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications);
+    this.numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications);
     return this;
   }
 
@@ -87,7 +87,7 @@ public abstract class TopicCreator {
   }
 
   private TopicCreator doOptions(Map<String, String> options, boolean overwrite) {
-    CommonUtil.requireNonEmpty(options);
+    CommonUtils.requireNonEmpty(options);
     if (this.options == null || this.options.isEmpty() || overwrite) {
       this.options = new HashMap<>(options);
     } else {

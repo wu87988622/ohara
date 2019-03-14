@@ -24,7 +24,7 @@ import java.util.{Calendar, TimeZone}
 import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.hdfs.creator.StorageCreator
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.{HDFSSinkConnector, HDFSSinkConnectorConfig, _}
@@ -40,7 +40,7 @@ import scala.concurrent.duration._
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val db = testUtil().dataBase()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
-  private[this] val tableName = CommonUtil.randomString(10)
+  private[this] val tableName = CommonUtils.randomString(10)
   private[this] val timestampColumnName = "CREATE_DATE"
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
@@ -129,7 +129,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
       val storage = new HDFSStorage(testUtil.hdfs.fileSystem)
       val hdfsResultFolder = s"${testUtil.hdfs.tmpDirectory}/data/$topicName/partition0"
 
-      CommonUtil.await(() => storage.list(hdfsResultFolder).size == 2, java.time.Duration.ofSeconds(20))
+      CommonUtils.await(() => storage.list(hdfsResultFolder).size == 2, java.time.Duration.ofSeconds(20))
 
       val fileSystem: FileSystem = testUtil.hdfs.fileSystem
       val resultPath1: String = s"$hdfsResultFolder/part-000000050-000000100.csv"

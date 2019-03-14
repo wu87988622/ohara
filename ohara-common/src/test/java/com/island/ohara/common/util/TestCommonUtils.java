@@ -22,48 +22,48 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCommonUtil extends SmallTest {
+public class TestCommonUtils extends SmallTest {
 
   @Test
   public void testTimer() throws InterruptedException {
-    Assert.assertTrue(CommonUtil.current() != 0);
-    CommonUtil.inject(() -> 0);
-    Assert.assertEquals(0, CommonUtil.current());
+    Assert.assertTrue(CommonUtils.current() != 0);
+    CommonUtils.inject(() -> 0);
+    Assert.assertEquals(0, CommonUtils.current());
     TimeUnit.SECONDS.sleep(2);
-    Assert.assertEquals(0, CommonUtil.current());
-    CommonUtil.reset();
-    Assert.assertTrue(CommonUtil.current() != 0);
+    Assert.assertEquals(0, CommonUtils.current());
+    CommonUtils.reset();
+    Assert.assertTrue(CommonUtils.current() != 0);
   }
 
   @Test
   public void testPath() {
-    Assert.assertEquals("/ccc/abc", CommonUtil.path("/ccc", "abc"));
-    Assert.assertEquals("/ccc/abc", CommonUtil.path("/ccc/", "abc"));
+    Assert.assertEquals("/ccc/abc", CommonUtils.path("/ccc", "abc"));
+    Assert.assertEquals("/ccc/abc", CommonUtils.path("/ccc/", "abc"));
   }
 
   @Test
   public void testName() {
-    Assert.assertEquals("ddd", CommonUtil.name("/abc/ddd"));
-    Assert.assertEquals("aaa", CommonUtil.name("/abc/ddd/aaa"));
+    Assert.assertEquals("ddd", CommonUtils.name("/abc/ddd"));
+    Assert.assertEquals("aaa", CommonUtils.name("/abc/ddd/aaa"));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void failedToExtractNameFromRootPath() {
-    CommonUtil.name("/");
+    CommonUtils.name("/");
   }
 
   @Test
   public void testReplaceParentFolder() {
-    Assert.assertEquals("ccc/ddd", CommonUtil.replaceParent("ccc", "/abc/ddd"));
-    Assert.assertEquals("/a/ddd", CommonUtil.replaceParent("/a", "/abc/ddd"));
-    Assert.assertEquals("/a/ddd", CommonUtil.replaceParent("/a", "/abc/ttt/ddd"));
-    Assert.assertEquals("/a/ddd", CommonUtil.replaceParent("/a", "/abc/tt/t/ddd"));
+    Assert.assertEquals("ccc/ddd", CommonUtils.replaceParent("ccc", "/abc/ddd"));
+    Assert.assertEquals("/a/ddd", CommonUtils.replaceParent("/a", "/abc/ddd"));
+    Assert.assertEquals("/a/ddd", CommonUtils.replaceParent("/a", "/abc/ttt/ddd"));
+    Assert.assertEquals("/a/ddd", CommonUtils.replaceParent("/a", "/abc/tt/t/ddd"));
   }
 
   @Test
   public void testGetAddress() {
-    Assert.assertEquals(CommonUtil.address("localhost"), "127.0.0.1");
-    Assert.assertEquals(CommonUtil.address("127.0.0.1"), "127.0.0.1");
+    Assert.assertEquals(CommonUtils.address("localhost"), "127.0.0.1");
+    Assert.assertEquals(CommonUtils.address("127.0.0.1"), "127.0.0.1");
   }
 
   @Test
@@ -77,8 +77,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(list, list2);
     Assert.assertNotEquals(list, list3);
-    Assert.assertTrue(CommonUtil.equals(list, list2));
-    Assert.assertFalse(CommonUtil.equals(list, list3));
+    Assert.assertTrue(CommonUtils.equals(list, list2));
+    Assert.assertFalse(CommonUtils.equals(list, list3));
   }
 
   @Test
@@ -92,8 +92,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(map, map2);
     Assert.assertNotEquals(map, map3);
-    Assert.assertTrue(CommonUtil.equals(map, map2));
-    Assert.assertFalse(CommonUtil.equals(map, map3));
+    Assert.assertTrue(CommonUtils.equals(map, map2));
+    Assert.assertFalse(CommonUtils.equals(map, map3));
   }
 
   @Test
@@ -107,8 +107,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(set, set2);
     Assert.assertNotEquals(set, set3);
-    Assert.assertTrue(CommonUtil.equals(set, set2));
-    Assert.assertFalse(CommonUtil.equals(set, set3));
+    Assert.assertTrue(CommonUtils.equals(set, set2));
+    Assert.assertFalse(CommonUtils.equals(set, set3));
   }
 
   @Test
@@ -133,8 +133,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(nestedMap, nestedMap2);
     Assert.assertNotEquals(nestedMap, nestedMap3);
-    Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
-    Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
+    Assert.assertTrue(CommonUtils.equals(nestedMap, nestedMap2));
+    Assert.assertFalse(CommonUtils.equals(nestedMap, nestedMap3));
   }
 
   @Test
@@ -160,8 +160,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(nestedList, nestedList2);
     Assert.assertNotEquals(nestedList, nestedList3);
-    Assert.assertTrue(CommonUtil.equals(nestedList, nestedList2));
-    Assert.assertFalse(CommonUtil.equals(nestedList, nestedList3));
+    Assert.assertTrue(CommonUtils.equals(nestedList, nestedList2));
+    Assert.assertFalse(CommonUtils.equals(nestedList, nestedList3));
   }
 
   @Test
@@ -187,8 +187,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(nestedList, nestedList2);
     Assert.assertNotEquals(nestedList, nestedList3);
-    Assert.assertTrue(CommonUtil.equals(nestedList, nestedList2));
-    Assert.assertFalse(CommonUtil.equals(nestedList, nestedList3));
+    Assert.assertTrue(CommonUtils.equals(nestedList, nestedList2));
+    Assert.assertFalse(CommonUtils.equals(nestedList, nestedList3));
   }
 
   @Test
@@ -213,8 +213,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(nestedMap, nestedMap2);
     Assert.assertNotEquals(nestedMap, nestedMap3);
-    Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
-    Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
+    Assert.assertTrue(CommonUtils.equals(nestedMap, nestedMap2));
+    Assert.assertFalse(CommonUtils.equals(nestedMap, nestedMap3));
   }
 
   @Test
@@ -239,8 +239,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(nestedMap, nestedMap2);
     Assert.assertNotEquals(nestedMap, nestedMap3);
-    Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
-    Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
+    Assert.assertTrue(CommonUtils.equals(nestedMap, nestedMap2));
+    Assert.assertFalse(CommonUtils.equals(nestedMap, nestedMap3));
   }
 
   @Test
@@ -265,8 +265,8 @@ public class TestCommonUtil extends SmallTest {
 
     Assert.assertNotEquals(nestedMap, nestedMap2);
     Assert.assertNotEquals(nestedMap, nestedMap3);
-    Assert.assertTrue(CommonUtil.equals(nestedMap, nestedMap2));
-    Assert.assertFalse(CommonUtil.equals(nestedMap, nestedMap3));
+    Assert.assertTrue(CommonUtils.equals(nestedMap, nestedMap2));
+    Assert.assertFalse(CommonUtils.equals(nestedMap, nestedMap3));
   }
 
   private static class MyList<T> extends ArrayList<T> {
@@ -325,18 +325,18 @@ public class TestCommonUtil extends SmallTest {
 
   @Test
   public void testOnlyNumberAndChar() {
-    Assert.assertTrue(CommonUtil.onlyNumberAndChar("1"));
-    Assert.assertTrue(CommonUtil.onlyNumberAndChar("1a"));
-    Assert.assertTrue(CommonUtil.onlyNumberAndChar("1cD"));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1-"));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1a."));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD!"));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD~"));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD "));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD+ "));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD-"));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("1cD("));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("@"));
-    Assert.assertFalse(CommonUtil.onlyNumberAndChar("12313_"));
+    Assert.assertTrue(CommonUtils.onlyNumberAndChar("1"));
+    Assert.assertTrue(CommonUtils.onlyNumberAndChar("1a"));
+    Assert.assertTrue(CommonUtils.onlyNumberAndChar("1cD"));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1-"));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1a."));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD!"));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD~"));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD "));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD+ "));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD-"));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("1cD("));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("@"));
+    Assert.assertFalse(CommonUtils.onlyNumberAndChar("12313_"));
   }
 }

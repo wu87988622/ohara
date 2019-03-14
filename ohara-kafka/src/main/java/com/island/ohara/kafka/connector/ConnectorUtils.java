@@ -19,8 +19,8 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
-import com.island.ohara.common.util.CommonUtil;
-import com.island.ohara.common.util.VersionUtil;
+import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.common.util.VersionUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -95,7 +95,7 @@ public class ConnectorUtils {
   @VisibleForTesting
   static Map<String, String> toMap(TaskConfig taskConfig) {
     // NOTED: the passed props is not a "copy" so any changes to props will impact props itself.
-    CommonUtil.requireNonEmpty(taskConfig.topics());
+    CommonUtils.requireNonEmpty(taskConfig.topics());
     Map<String, String> map = new HashMap<>(taskConfig.options());
     map.put(COLUMNS_KEY, fromColumns(taskConfig.columns()));
     map.put(TOPIC_NAMES_KEY, String.join(",", taskConfig.topics()));
@@ -108,7 +108,7 @@ public class ConnectorUtils {
    * information - ex. revision. Hence, we do a magic way to combine the revision with version and
    * then parse it manually in order to provide more powerful CLUSTER APIs (see ClusterRoute)
    */
-  public static final String VERSION = VersionUtil.VERSION + "_" + VersionUtil.REVISION;
+  public static final String VERSION = VersionUtils.VERSION + "_" + VersionUtils.REVISION;
 
   private static ConfigDef.Type toType(Definition.Type type) {
     switch (type) {

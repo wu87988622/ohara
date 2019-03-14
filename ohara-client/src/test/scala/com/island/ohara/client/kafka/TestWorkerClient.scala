@@ -17,7 +17,7 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.common.data.{ConnectorState, Row, Serializer}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
@@ -30,8 +30,8 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   @Test
   def testExist(): Unit = {
-    val topicName = CommonUtil.randomString(10)
-    val connectorName = CommonUtil.randomString(10)
+    val topicName = CommonUtils.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
     result(workerClient.exist(connectorName)) shouldBe false
 
     result(
@@ -50,8 +50,8 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
-    val topicName = CommonUtil.randomString(10)
-    val connectorName = CommonUtil.randomString(10)
+    val topicName = CommonUtils.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
     result(workerClient.exist(connectorName)) shouldBe false
 
     result(
@@ -70,8 +70,8 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testPauseAndResumeSource(): Unit = {
-    val topicName = CommonUtil.randomString(10)
-    val connectorName = CommonUtil.randomString(10)
+    val topicName = CommonUtils.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
@@ -124,8 +124,8 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidate(): Unit = {
-    val name = CommonUtil.randomString(10)
-    val topicName = CommonUtil.randomString(10)
+    val name = CommonUtils.randomString(10)
+    val topicName = CommonUtils.randomString(10)
     val numberOfTasks = 1
     val configValidation = result(
       workerClient

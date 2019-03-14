@@ -17,7 +17,7 @@
 package com.island.ohara.streams.ostream;
 
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.OStream;
 import java.util.Map;
 import java.util.Objects;
@@ -159,7 +159,7 @@ public final class OStreamBuilder<K, V> {
 
     // Default
     if (this.appId == null) {
-      this.appId = CommonUtil.uuid() + "-streamApp";
+      this.appId = CommonUtils.uuid() + "-streamApp";
     }
 
     return new OStreamImpl<>(this);

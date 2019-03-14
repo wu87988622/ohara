@@ -19,7 +19,7 @@ package com.island.ohara.configurator.route
 import com.island.ohara.client.configurator.v0.InfoApi
 import com.island.ohara.common.data.DataType
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{Releasable, VersionUtil}
+import com.island.ohara.common.util.{Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -42,10 +42,10 @@ class TestInfoRoute extends SmallTest with Matchers {
     clusterInformation.supportedDataTypes shouldBe DataType.all.asScala
     clusterInformation.sources.size shouldBe 0
     clusterInformation.sinks.size shouldBe 0
-    clusterInformation.versionInfo.version shouldBe VersionUtil.VERSION
-    clusterInformation.versionInfo.user shouldBe VersionUtil.USER
-    clusterInformation.versionInfo.revision shouldBe VersionUtil.REVISION
-    clusterInformation.versionInfo.date shouldBe VersionUtil.DATE
+    clusterInformation.versionInfo.version shouldBe VersionUtils.VERSION
+    clusterInformation.versionInfo.user shouldBe VersionUtils.USER
+    clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION
+    clusterInformation.versionInfo.date shouldBe VersionUtils.DATE
   }
 
   @After

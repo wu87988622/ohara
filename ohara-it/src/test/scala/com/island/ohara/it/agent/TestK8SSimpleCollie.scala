@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.IntegrationTest
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
@@ -68,16 +68,16 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   @Test
   def testZookeeperCollie(): Unit = {
-    val clusterName: String = s"cluster${CommonUtil.randomString(10)}"
+    val clusterName: String = s"cluster${CommonUtils.randomString(10)}"
     val firstNode: String = nodeNames.head
     nodeCache.clear()
     nodeCache.append(Node(firstNode, 22, "", ""))
 
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
 
-    val clientPort: Int = CommonUtil.availablePort()
-    val peerPort: Int = CommonUtil.availablePort()
-    val electionPort: Int = CommonUtil.availablePort()
+    val clientPort: Int = CommonUtils.availablePort()
+    val peerPort: Int = CommonUtils.availablePort()
+    val electionPort: Int = CommonUtils.availablePort()
 
     val zookeeperClusterInfo =
       createZookeeperCollie(zookeeperCollie, clusterName, firstNode, clientPort, peerPort, electionPort)
@@ -106,19 +106,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     try {
       //Create broker cluster service
-      val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
       val brokerClusterInfo: BrokerClusterInfo =
@@ -146,19 +146,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     try {
       //Create broker cluster service
-      val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
@@ -172,9 +172,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       try {
         waitBrokerCluster(brokerClusterName)
         //Create worker cluster service
-        val workerClusterName: String = s"workercluster${CommonUtil.randomString(10)}"
+        val workerClusterName: String = s"workercluster${CommonUtils.randomString(10)}"
         val workerCollie: WorkerCollie = clusterCollie.workerCollie()
-        val workerClientPort: Int = CommonUtil.availablePort()
+        val workerClientPort: Int = CommonUtils.availablePort()
         val workerClusterInfo: WorkerClusterInfo =
           createWorkerCollie(workerCollie, workerClusterName, firstNode, workerClientPort, brokerClusterName)
         try {
@@ -198,19 +198,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     try {
       //Create broker cluster service
-      val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
@@ -249,19 +249,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     try {
       //Create broker cluster service
-      val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
@@ -276,9 +276,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       try {
         waitBrokerCluster(brokerClusterName)
         //Create worker cluster service
-        val workerClusterName: String = s"workercluster${CommonUtil.randomString(10)}"
+        val workerClusterName: String = s"workercluster${CommonUtils.randomString(10)}"
         val workerCollie: WorkerCollie = clusterCollie.workerCollie()
-        val workerClientPort: Int = CommonUtil.availablePort()
+        val workerClientPort: Int = CommonUtils.availablePort()
         val workerClusterInfo1: WorkerClusterInfo =
           createWorkerCollie(workerCollie, workerClusterName, firstNode, workerClientPort, brokerClusterName)
         try {
@@ -304,18 +304,18 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
-    val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
     try {
       //Create broker cluster service
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
@@ -348,20 +348,20 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(secondNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
     val workerCollie: WorkerCollie = clusterCollie.workerCollie()
-    val workerClusterName: String = s"workercluster${CommonUtil.randomString(10)}"
-    val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val workerClusterName: String = s"workercluster${CommonUtils.randomString(10)}"
+    val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
     try {
       //Create broker cluster service
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       createBrokerCollie(brokerCollie,
                          brokerClusterName,
@@ -372,7 +372,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       try {
         waitBrokerCluster(brokerClusterName)
         //Create worker cluster service
-        val workerClientPort: Int = CommonUtil.availablePort()
+        val workerClientPort: Int = CommonUtils.availablePort()
 
         createWorkerCollie(workerCollie, workerClusterName, firstNode, workerClientPort, brokerClusterName)
         try {
@@ -398,14 +398,14 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName1: String = s"zk${CommonUtil.randomString(10)}"
+    val zkClusterName1: String = s"zk${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
     result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 0
 
     try {
-      val zkClientPort1: Int = CommonUtil.availablePort()
-      val zkPeerPort1: Int = CommonUtil.availablePort()
-      val zkElectionPort1: Int = CommonUtil.availablePort()
+      val zkClientPort1: Int = CommonUtils.availablePort()
+      val zkPeerPort1: Int = CommonUtils.availablePort()
+      val zkElectionPort1: Int = CommonUtils.availablePort()
 
       createZookeeperCollie(zookeeperCollie, zkClusterName1, firstNode, zkClientPort1, zkPeerPort1, zkElectionPort1)
       result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 1
@@ -419,19 +419,19 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     nodeCache.append(Node(firstNode, 22, "", ""))
 
     //Create zookeeper cluster for start broker service
-    val zkClusterName: String = s"zkcluster${CommonUtil.randomString(10)}"
+    val zkClusterName: String = s"zkcluster${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-    val zkClientPort: Int = CommonUtil.availablePort()
-    val zkPeerPort: Int = CommonUtil.availablePort()
-    val zkElectionPort: Int = CommonUtil.availablePort()
+    val zkClientPort: Int = CommonUtils.availablePort()
+    val zkPeerPort: Int = CommonUtils.availablePort()
+    val zkElectionPort: Int = CommonUtils.availablePort()
 
     createZookeeperCollie(zookeeperCollie, zkClusterName, firstNode, zkClientPort, zkPeerPort, zkElectionPort)
 
     try {
       //Create broker cluster service
-      val brokerClusterName: String = s"brokercluster${CommonUtil.randomString(10)}"
-      val brokerClientPort = CommonUtil.availablePort()
-      val brokerExporterPort = CommonUtil.availablePort()
+      val brokerClusterName: String = s"brokercluster${CommonUtils.randomString(10)}"
+      val brokerClientPort = CommonUtils.availablePort()
+      val brokerExporterPort = CommonUtils.availablePort()
 
       val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
 
@@ -445,9 +445,9 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       try {
         waitBrokerCluster(brokerClusterName)
         //Create worker cluster service
-        val workerClusterName: String = s"workercluster${CommonUtil.randomString(10)}"
+        val workerClusterName: String = s"workercluster${CommonUtils.randomString(10)}"
         val workerCollie: WorkerCollie = clusterCollie.workerCollie()
-        val workerClientPort: Int = CommonUtil.availablePort()
+        val workerClientPort: Int = CommonUtils.availablePort()
         createWorkerCollie(workerCollie, workerClusterName, firstNode, workerClientPort, brokerClusterName)
 
         try {
@@ -523,10 +523,10 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .clusterName(clusterName)
         .clientPort(clientPort)
         .brokerClusterName(brokerClusterName)
-        .groupId(CommonUtil.randomString(10))
-        .configTopicName(CommonUtil.randomString(10))
-        .statusTopicName(CommonUtil.randomString(10))
-        .offsetTopicName(CommonUtil.randomString(10))
+        .groupId(CommonUtils.randomString(10))
+        .configTopicName(CommonUtils.randomString(10))
+        .statusTopicName(CommonUtils.randomString(10))
+        .offsetTopicName(CommonUtils.randomString(10))
         .nodeName(nodeName)
         .create()
     )

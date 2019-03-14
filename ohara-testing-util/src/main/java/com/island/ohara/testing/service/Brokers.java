@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public interface Brokers extends Releasable {
   static Brokers local(Zookeepers zk, int[] ports) {
     List<File> tempFolders =
         IntStream.range(0, ports.length)
-            .mapToObj(i -> CommonUtil.createTempDir("local_kafka"))
+            .mapToObj(i -> CommonUtils.createTempDir("local_kafka"))
             .collect(Collectors.toList());
     List<KafkaServer> brokers =
         IntStream.range(0, ports.length)
@@ -81,7 +81,7 @@ public interface Brokers extends Releasable {
             .stream()
             .map(
                 broker ->
-                    CommonUtil.hostname() + ":" + broker.boundPort(new ListenerName("PLAINTEXT")))
+                    CommonUtils.hostname() + ":" + broker.boundPort(new ListenerName("PLAINTEXT")))
             .collect(Collectors.joining(","));
     return new Brokers() {
 
@@ -92,7 +92,7 @@ public interface Brokers extends Releasable {
               broker.shutdown();
               broker.awaitShutdown();
             });
-        tempFolders.forEach(CommonUtil::deleteFiles);
+        tempFolders.forEach(CommonUtils::deleteFiles);
       }
 
       @Override

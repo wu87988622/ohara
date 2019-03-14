@@ -17,7 +17,7 @@
 package com.island.ohara.common.data;
 
 import com.island.ohara.common.annotations.Optional;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -32,10 +32,10 @@ public final class Column extends Data implements Serializable {
   private final int order;
 
   private Column(String name, String newName, DataType dataType, int order) {
-    this.name = CommonUtil.requireNonEmpty(name);
-    this.newName = CommonUtil.requireNonEmpty(newName);
+    this.name = CommonUtils.requireNonEmpty(name);
+    this.newName = CommonUtils.requireNonEmpty(newName);
     this.dataType = Objects.requireNonNull(dataType);
-    this.order = CommonUtil.requirePositiveInt(order);
+    this.order = CommonUtils.requirePositiveInt(order);
   }
 
   public String name() {
@@ -67,7 +67,7 @@ public final class Column extends Data implements Serializable {
     private Builder() {}
 
     public Builder name(String name) {
-      this.name = CommonUtil.requireNonEmpty(name);
+      this.name = CommonUtils.requireNonEmpty(name);
       // default the new name is equal to name
       this.newName = name;
       return this;
@@ -75,7 +75,7 @@ public final class Column extends Data implements Serializable {
 
     @Optional("default is same to $name")
     public Builder newName(String newName) {
-      this.newName = CommonUtil.requireNonEmpty(newName);
+      this.newName = CommonUtils.requireNonEmpty(newName);
       return this;
     }
 
@@ -85,7 +85,7 @@ public final class Column extends Data implements Serializable {
     }
 
     public Builder order(int order) {
-      this.order = CommonUtil.requirePositiveInt(order);
+      this.order = CommonUtils.requirePositiveInt(order);
       return this;
     }
 

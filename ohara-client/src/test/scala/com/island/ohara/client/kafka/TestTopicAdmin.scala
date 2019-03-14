@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.kafka
 
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.With3Brokers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -28,7 +28,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
   def createTopic(): Unit = {
-    val name = CommonUtil.randomString(10)
+    val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 1
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
@@ -63,7 +63,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
           .creator()
           .numberOfPartitions(numberOfPartitions)
           .numberOfReplications(numberOfReplications)
-          .name(CommonUtil.randomString(10))
+          .name(CommonUtils.randomString(10))
           .create(),
         30 seconds
       )
@@ -74,7 +74,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
   def reducePartitions(): Unit = {
-    val name = CommonUtil.randomString(10)
+    val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
@@ -93,7 +93,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
   def negativePartitions(): Unit = {
-    val name = CommonUtil.randomString(10)
+    val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
@@ -112,7 +112,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
   def keepPartitions(): Unit = {
-    val name = CommonUtil.randomString(10)
+    val name = CommonUtils.randomString(10)
     val numberOfPartitions: Int = 2
     val numberOfReplications: Short = 1
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())

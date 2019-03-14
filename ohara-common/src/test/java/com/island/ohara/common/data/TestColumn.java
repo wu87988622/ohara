@@ -17,7 +17,7 @@
 package com.island.ohara.common.data;
 
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,7 +50,7 @@ public class TestColumn extends SmallTest {
 
   @Test
   public void testEqual() {
-    String name = CommonUtil.randomString(10);
+    String name = CommonUtils.randomString(10);
     DataType type = DataType.BOOLEAN;
     int order = 100;
     Column column = Column.newBuilder().name(name).dataType(type).order(order).build();
@@ -61,8 +61,8 @@ public class TestColumn extends SmallTest {
 
   @Test
   public void testEqualWithNewName() {
-    String name = CommonUtil.randomString(10);
-    String newName = CommonUtil.randomString(10);
+    String name = CommonUtils.randomString(10);
+    String newName = CommonUtils.randomString(10);
     DataType type = DataType.BOOLEAN;
     int order = 100;
     Column column =

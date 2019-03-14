@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.perf
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{ByteUtil, CommonUtil}
+import com.island.ohara.common.util.{ByteUtils, CommonUtils}
 import com.island.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskConfig}
 
 import scala.collection.JavaConverters._
@@ -35,7 +35,7 @@ class PerfSourceTask extends RowSourceTask {
   override protected def _stop(): Unit = {}
 
   override protected def _poll(): java.util.List[RowSourceRecord] = {
-    val current = CommonUtil.current()
+    val current = CommonUtils.current()
     if (current - lastPoll > props.freq.toMillis) {
       val row: Row = Row.of(
         schema.sortBy(_.order).map { c =>
@@ -43,8 +43,8 @@ class PerfSourceTask extends RowSourceTask {
             c.name,
             c.dataType match {
               case DataType.BOOLEAN => false
-              case DataType.BYTE    => ByteUtil.toBytes(current).head
-              case DataType.BYTES   => ByteUtil.toBytes(current)
+              case DataType.BYTE    => ByteUtils.toBytes(current).head
+              case DataType.BYTES   => ByteUtils.toBytes(current)
               case DataType.SHORT   => current.toShort
               case DataType.INT     => current.toInt
               case DataType.LONG    => current

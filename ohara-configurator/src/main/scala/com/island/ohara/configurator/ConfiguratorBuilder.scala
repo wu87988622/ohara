@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.{InfoApi, NodeApi}
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.fake._
 
@@ -115,7 +115,7 @@ class ConfiguratorBuilder {
           port = -1,
           user = "fake user",
           password = "fake password",
-          lastModified = CommonUtil.current()
+          lastModified = CommonUtils.current()
         )
       }
       .foreach(store.add)
@@ -190,7 +190,7 @@ class ConfiguratorBuilder {
           clientPort = -1,
           electionPort = -1,
           peerPort = -1,
-          nodeNames = (0 to 2).map(_ => CommonUtil.randomString(5))
+          nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5))
         ))
     }
 
@@ -250,7 +250,7 @@ class ConfiguratorBuilder {
                    user = "fake user",
                    password = "fake password",
                    services = Seq.empty,
-                   lastModified = CommonUtil.current()))
+                   lastModified = CommonUtils.current()))
       .foreach(store.add)
     clusterCollie(collie)
   }

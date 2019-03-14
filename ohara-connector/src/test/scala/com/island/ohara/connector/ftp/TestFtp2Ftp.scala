@@ -22,7 +22,7 @@ import java.time.Duration
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -123,13 +123,13 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .create(),
           10 seconds
         )
-        CommonUtil.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
-        CommonUtil
+        CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))
+        CommonUtils
           .await(() => ftpClient.listFileNames(sourceProps.completedFolder.get).size == 1, Duration.ofSeconds(30))
-        CommonUtil.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, Duration.ofSeconds(30))
+        CommonUtils.await(() => ftpClient.listFileNames(sinkProps.output).size == 1, Duration.ofSeconds(30))
         val lines =
           ftpClient.readLines(
-            com.island.ohara.common.util.CommonUtil
+            com.island.ohara.common.util.CommonUtils
               .path(sinkProps.output, ftpClient.listFileNames(sinkProps.output).head))
         lines.length shouldBe rows.length + 1 // header
         lines(0) shouldBe header
@@ -154,7 +154,10 @@ object TestFtp2Ftp extends Matchers {
     */
   def rebuild(ftpClient: FtpClient, path: String): Unit = {
     if (ftpClient.exist(path)) {
-      ftpClient.listFileNames(path).map(com.island.ohara.common.util.CommonUtil.path(path, _)).foreach(ftpClient.delete)
+      ftpClient
+        .listFileNames(path)
+        .map(com.island.ohara.common.util.CommonUtils.path(path, _))
+        .foreach(ftpClient.delete)
       ftpClient.listFileNames(path).size shouldBe 0
       ftpClient.delete(path)
     }
@@ -163,7 +166,7 @@ object TestFtp2Ftp extends Matchers {
 
   def setupInput(ftpClient: FtpClient, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
     val writer = new BufferedWriter(
-      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtil.path(props.inputFolder, "abc"))))
+      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()

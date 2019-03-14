@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -40,7 +40,7 @@ class TestOhara1403 extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(
-          TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
@@ -53,7 +53,7 @@ class TestOhara1403 extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = Some(CommonUtil.randomString(10)),
+          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = classOf[DumbSink].getName,
           schema = Seq.empty,

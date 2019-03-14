@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.Map;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class TestRowSourceRecord extends SmallTest {
   public void testBuilder() {
     Row row = Row.of(Cell.of(methodName(), 123));
     String topic = methodName();
-    long ts = CommonUtil.current();
+    long ts = CommonUtils.current();
     int partition = 123;
     Map<String, String> sourceOffset = Collections.singletonMap("abc", "ddd");
     Map<String, String> sourcePartition = Collections.singletonMap("abc", "ddd");

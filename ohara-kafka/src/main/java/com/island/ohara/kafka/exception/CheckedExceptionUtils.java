@@ -17,7 +17,7 @@
 package com.island.ohara.kafka.exception;
 
 /** CheckedException util */
-public class CheckedExceptionUtil {
+public class CheckedExceptionUtils {
 
   /**
    * This method will wrap CheckedException to RuntimeException with lambda

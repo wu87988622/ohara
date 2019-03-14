@@ -17,7 +17,7 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.common.data._
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
@@ -114,15 +114,15 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   @Test
   def testProducer2SinkConnector(): Unit = {
-    val topicName = CommonUtil.randomString(10)
-    val topicName2 = CommonUtil.randomString(10)
+    val topicName = CommonUtils.randomString(10)
+    val topicName2 = CommonUtils.randomString(10)
     //test deleted topic
     createTopic(topicName, false)
     createTopic(topicName2, false)
     testProducer2SinkConnector(topicName, topicName2)
 
-    val topicName3 = CommonUtil.randomString(10)
-    val topicName4 = CommonUtil.randomString(10)
+    val topicName3 = CommonUtils.randomString(10)
+    val topicName4 = CommonUtils.randomString(10)
     //test compacted topic
     createTopic(topicName3, true)
     createTopic(topicName4, true)
@@ -133,7 +133,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     * producer -> topic_1(topicName) -> sink connector -> topic_2(topicName2)
     */
   private[this] def testProducer2SinkConnector(topicName: String, topicName2: String): Unit = {
-    val connectorName = CommonUtil.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
@@ -174,7 +174,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     * producer -> topic_1(topicName) -> row source -> topic_2 -> consumer
     */
   private[this] def testSourceConnector2Consumer(topicName: String, topicName2: String): Unit = {
-    val connectorName = CommonUtil.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()
@@ -199,7 +199,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     */
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
-    val topicName = CommonUtil.randomString(10)
+    val topicName = CommonUtils.randomString(10)
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
     try topicAdmin.creator().name(topicName).numberOfPartitions(1).numberOfReplications(1).create()
     finally topicAdmin.close()
@@ -243,9 +243,9 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     */
   @Test
   def testWorkerClient(): Unit = {
-    val connectorName = CommonUtil.randomString(10)
-    val topics = Seq(CommonUtil.randomString(10), CommonUtil.randomString(10))
-    val outputTopic = CommonUtil.randomString(10)
+    val connectorName = CommonUtils.randomString(10)
+    val topics = Seq(CommonUtils.randomString(10), CommonUtils.randomString(10))
+    val outputTopic = CommonUtils.randomString(10)
     result(
       workerClient
         .connectorCreator()

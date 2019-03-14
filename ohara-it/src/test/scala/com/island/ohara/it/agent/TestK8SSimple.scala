@@ -28,7 +28,7 @@ import com.island.ohara.agent.K8SClient
 import com.island.ohara.agent.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.client.configurator.v0.ZookeeperApi
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
 import com.typesafe.scalalogging.Logger
 import org.junit._
@@ -111,7 +111,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   def testK8SClientlog(): Unit = {
     //Must confirm to microk8s is running
     val k8sClient = K8SClient(k8sApiServerURL)
-    val podName: String = s"zookeeper-${CommonUtil.randomString(10)}"
+    val podName: String = s"zookeeper-${CommonUtils.randomString(10)}"
     try {
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
 
@@ -137,7 +137,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
   @Test
   def testK8SClientCreator(): Unit = {
-    val containerName: String = s"zookeeper-container-${CommonUtil.randomString(10)}"
+    val containerName: String = s"zookeeper-container-${CommonUtils.randomString(10)}"
     val k8sClient = K8SClient(k8sApiServerURL)
     try {
       val result: Option[ContainerInfo] = k8sClient

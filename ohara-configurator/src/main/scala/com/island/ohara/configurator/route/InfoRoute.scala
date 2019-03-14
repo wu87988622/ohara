@@ -22,7 +22,7 @@ import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.InfoApi
 import com.island.ohara.client.configurator.v0.InfoApi._
 import com.island.ohara.common.data.DataType
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.VersionUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -47,10 +47,10 @@ object InfoRoute extends SprayJsonSupport {
               supportedDatabases = SUPPORTED_DATABASES,
               supportedDataTypes = DataType.all.asScala,
               versionInfo = ConfiguratorVersion(
-                version = VersionUtil.VERSION,
-                user = VersionUtil.USER,
-                revision = VersionUtil.REVISION,
-                date = VersionUtil.DATE
+                version = VersionUtils.VERSION,
+                user = VersionUtils.USER,
+                revision = VersionUtils.REVISION,
+                date = VersionUtils.DATE
               )
             ))
         }

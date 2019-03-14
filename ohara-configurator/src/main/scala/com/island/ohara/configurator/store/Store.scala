@@ -20,7 +20,7 @@ import java.util.Objects
 import java.util.concurrent.ConcurrentSkipListMap
 
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{ByteUtil, ReleaseOnce}
+import com.island.ohara.common.util.{ByteUtils, ReleaseOnce}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -93,7 +93,7 @@ object Store {
     */
   def inMemory[K, V](implicit keySerializer: Serializer[K], valueSerializer: Serializer[V]): Store[K, V] =
     new Store[K, V] {
-      private[this] val store = new ConcurrentSkipListMap[Array[Byte], Array[Byte]](ByteUtil.BYTES_COMPARATOR)
+      private[this] val store = new ConcurrentSkipListMap[Array[Byte], Array[Byte]](ByteUtils.BYTES_COMPARATOR)
 
       private[this] def toKey(key: K) = keySerializer.to(Objects.requireNonNull(key))
       private[this] def fromKey(key: Array[Byte]) = keySerializer.from(Objects.requireNonNull(key))

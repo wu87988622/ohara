@@ -24,11 +24,11 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRe
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtil}
+import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -49,7 +49,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     */
   private[this] val hostnameKey: String = "ohara.it.hostname"
 
-  private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
+  private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
 
   private[this] val invalidHostname = "unknown"
 
@@ -73,7 +73,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   @Before
   def setup(): Unit = if (nodeCache.isEmpty || publicPort == invalidPort || publicHostname == invalidHostname)
     skipTest(
-      s"${CollieTestUtil.key}, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
+      s"${CollieTestUtils.key}, $portKey and $hostnameKey don't exist so all tests in TestLoadCustomJarToWorkerCluster are ignored")
   else {
 
     val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -102,9 +102,9 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         ZookeeperClusterCreationRequest(
           name = nameHolder.generateClusterName(),
           imageName = None,
-          clientPort = Some(CommonUtil.availablePort()),
-          electionPort = Some(CommonUtil.availablePort()),
-          peerPort = Some(CommonUtil.availablePort()),
+          clientPort = Some(CommonUtils.availablePort()),
+          electionPort = Some(CommonUtils.availablePort()),
+          peerPort = Some(CommonUtils.availablePort()),
           nodeNames = nodeCache.map(_.name)
         )
       ))
@@ -115,8 +115,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         BrokerClusterCreationRequest(
           name = nameHolder.generateClusterName(),
           imageName = None,
-          clientPort = Some(CommonUtil.availablePort()),
-          exporterPort = Some(CommonUtil.availablePort()),
+          clientPort = Some(CommonUtils.availablePort()),
+          exporterPort = Some(CommonUtils.availablePort()),
           zookeeperClusterName = Some(zkCluster.name),
           nodeNames = nodeCache.map(_.name)
         )
@@ -128,7 +128,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
         WorkerClusterCreationRequest(
           name = nameHolder.generateClusterName(),
           imageName = None,
-          clientPort = Some(CommonUtil.availablePort()),
+          clientPort = Some(CommonUtils.availablePort()),
           brokerClusterName = Some(bkCluster.name),
           groupId = None,
           configTopicName = None,

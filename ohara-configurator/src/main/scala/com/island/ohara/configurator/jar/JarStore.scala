@@ -20,7 +20,7 @@ import java.io.File
 import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -66,7 +66,7 @@ trait JarStore extends Releasable {
     * @param id jar's id
     * @return jar description
     */
-  def jarInfo(id: String): Future[JarInfo] = if (CommonUtil.isEmpty(id))
+  def jarInfo(id: String): Future[JarInfo] = if (CommonUtils.isEmpty(id))
     Future.failed(new IllegalArgumentException(s"$id can't be empty"))
   else jarInfos().map(_.find(_.id == id).head)
 

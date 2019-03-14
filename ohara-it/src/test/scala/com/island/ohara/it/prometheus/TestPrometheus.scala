@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ZookeeperApi}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.prometheus.PrometheusJson.{Health, Targets}
 import org.junit.Assume._
@@ -103,12 +103,12 @@ class TestPrometheus extends IntegrationTest with Matchers {
     })
   }
 
-//  val clientPort = CommonUtil.availablePort()
+//  val clientPort = CommonUtils.availablePort()
   def startZK(f: ZookeeperClusterInfo => Unit): Unit = {
-    val clusterName = CommonUtil.randomString(10)
-    val electionPort = CommonUtil.availablePort()
-    val peerPort = CommonUtil.availablePort()
-    val clientPort = CommonUtil.availablePort()
+    val clusterName = CommonUtils.randomString(10)
+    val electionPort = CommonUtils.availablePort()
+    val peerPort = CommonUtils.availablePort()
+    val clientPort = CommonUtils.availablePort()
     val zookeeperCollie = clusterCollie.zookeeperCollie()
 
     try f(
@@ -127,9 +127,9 @@ class TestPrometheus extends IntegrationTest with Matchers {
   }
 
   def startBroker(zkClusterName: String, f: (Int, BrokerClusterInfo) => Unit): Unit = {
-    val clusterName = CommonUtil.randomString(10)
-    val clientPort = CommonUtil.availablePort()
-    val exporterPort = CommonUtil.availablePort()
+    val clusterName = CommonUtils.randomString(10)
+    val clientPort = CommonUtils.availablePort()
+    val exporterPort = CommonUtils.availablePort()
     val brokerCollie = clusterCollie.brokerCollie()
 
     try f(
@@ -166,7 +166,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           val client =
             DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
           try {
-            val util = PrometheusConfigUtil(client.containerInspector(desc.name))
+            val util = PrometheusConfigUtils(client.containerInspector(desc.name))
             val pclient = PrometheusClient(node.name + ":" + desc.clientPort)
 
             //check not in  target
@@ -197,7 +197,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
   }
 
   def prometheus(node: Node, f: PrometheusDescription => Unit): Unit = {
-    val clientPort = CommonUtil.availablePort()
+    val clientPort = CommonUtils.availablePort()
     val server = PrometheusServer.creater().clientPort(clientPort).targets(Seq(fakeUrl + ":" + clientPort)).create(node)
 
     try f(server.start())

@@ -18,11 +18,12 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 /**
   * all accesses in v0 APIs need the hostname and port of remote node. This class implements the basic methods used to store the required
   * information to create the subclass access.
+  *
   * @param prefixPath path to remote resource
   */
 abstract class BasicAccess private[v0] (prefixPath: String) {
@@ -41,8 +42,8 @@ abstract class BasicAccess private[v0] (prefixPath: String) {
     this
   }
 
-  protected def _hostname: String = CommonUtil.requireNonEmpty(hostname, () => "hostname can't be empty")
-  protected def _port: Int = CommonUtil.requirePositiveInt(port, () => "port can't be empty")
-  protected def _version: String = CommonUtil.requireNonEmpty(version, () => "version can't be empty")
-  protected def _prefixPath: String = CommonUtil.requireNonEmpty(prefixPath, () => "prefixPath can't be empty")
+  protected def _hostname: String = CommonUtils.requireNonEmpty(hostname, () => "hostname can't be empty")
+  protected def _port: Int = CommonUtils.requirePositiveInt(port, () => "port can't be empty")
+  protected def _version: String = CommonUtils.requireNonEmpty(version, () => "version can't be empty")
+  protected def _prefixPath: String = CommonUtils.requireNonEmpty(prefixPath, () => "prefixPath can't be empty")
 }

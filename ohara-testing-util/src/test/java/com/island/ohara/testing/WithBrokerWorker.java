@@ -33,17 +33,17 @@ import org.junit.BeforeClass;
  * However, you should move the static "util" into your test if you don't depend on junit...by chia
  */
 public abstract class WithBrokerWorker extends LargeTest {
-  protected static OharaTestUtil util;
+  protected static OharaTestUtils util;
 
   @BeforeClass
   public static void beforeAll() {
     if (util != null)
       throw new NoSuchElementException(
           "The test util had been initialized!!! This happens on your tests don't run on different jvm");
-    util = OharaTestUtil.worker();
+    util = OharaTestUtils.worker();
   }
 
-  protected OharaTestUtil testUtil() {
+  protected OharaTestUtils testUtil() {
     return util;
   }
 

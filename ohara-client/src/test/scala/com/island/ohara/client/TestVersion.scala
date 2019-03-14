@@ -18,7 +18,7 @@ package com.island.ohara.client
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.VersionUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -26,16 +26,16 @@ class TestVersion extends SmallTest with Matchers {
 
   @Test
   def testZookeeper(): Unit = {
-    ZookeeperApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/zookeeper:${VersionUtil.VERSION}"
+    ZookeeperApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/zookeeper:${VersionUtils.VERSION}"
   }
 
   @Test
   def testBroker(): Unit = {
-    BrokerApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/broker:${VersionUtil.VERSION}"
+    BrokerApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/broker:${VersionUtils.VERSION}"
   }
 
   @Test
   def testWorker(): Unit = {
-    WorkerApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/connect-worker:${VersionUtil.VERSION}"
+    WorkerApi.IMAGE_NAME_DEFAULT shouldBe s"oharastream/connect-worker:${VersionUtils.VERSION}"
   }
 }

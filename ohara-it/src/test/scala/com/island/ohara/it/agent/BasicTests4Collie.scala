@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.exception.OharaExecutionException
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
@@ -116,9 +116,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val nodeName: String = nodeCache.head.name
     val clusterName = generateClusterName()
     result(zk_exist(clusterName)) shouldBe false
-    val clientPort = CommonUtil.availablePort()
-    val electionPort = CommonUtil.availablePort()
-    val peerPort = CommonUtil.availablePort()
+    val clientPort = CommonUtils.availablePort()
+    val electionPort = CommonUtils.availablePort()
+    val peerPort = CommonUtils.availablePort()
     def assert(zkCluster: ZookeeperClusterInfo): ZookeeperClusterInfo = {
       zkCluster.name shouldBe clusterName
       zkCluster.nodeNames.head shouldBe nodeName
@@ -173,9 +173,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkCluster = result(
       zk_create(
         clusterName = generateClusterName(),
-        clientPort = CommonUtil.availablePort(),
-        electionPort = CommonUtil.availablePort(),
-        peerPort = CommonUtil.availablePort(),
+        clientPort = CommonUtils.availablePort(),
+        electionPort = CommonUtils.availablePort(),
+        peerPort = CommonUtils.availablePort(),
         nodeNames = Seq(nodeCache.head.name)
       ))
     assertCluster(() => result(zk_clusters()), zkCluster.name)
@@ -185,8 +185,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       result(bk_exist(clusterName)) shouldBe false
       log.info(s"[BROKER] verify existence of broker cluster:$clusterName...done")
       val nodeName: String = nodeCache.head.name
-      val clientPort = CommonUtil.availablePort()
-      val exporterPort = CommonUtil.availablePort()
+      val clientPort = CommonUtils.availablePort()
+      val exporterPort = CommonUtils.availablePort()
       def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
         brokerCluster.zookeeperClusterName shouldBe zkCluster.name
         brokerCluster.name shouldBe clusterName
@@ -248,7 +248,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       // we can't add a nonexistent node
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
-      an[Throwable] should be thrownBy result(bk_addNode(previousCluster.name, CommonUtil.randomString()))
+      an[Throwable] should be thrownBy result(bk_addNode(previousCluster.name, CommonUtils.randomString()))
       val newNode = freeNodes.head.name
       log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.name}")
       val newCluster = result(bk_addNode(previousCluster.name, newNode))
@@ -265,7 +265,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   }
 
   private[this] def testTopic(cluster: BrokerClusterInfo): BrokerClusterInfo = {
-    val topicName = CommonUtil.randomString()
+    val topicName = CommonUtils.randomString()
     val brokers = cluster.nodeNames.map(_ + s":${cluster.clientPort}").mkString(",")
     log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers")
     val brokerClient = BrokerClient.of(brokers)
@@ -371,9 +371,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkCluster = result(
       zk_create(
         clusterName = generateClusterName(),
-        clientPort = CommonUtil.availablePort(),
-        electionPort = CommonUtil.availablePort(),
-        peerPort = CommonUtil.availablePort(),
+        clientPort = CommonUtils.availablePort(),
+        electionPort = CommonUtils.availablePort(),
+        peerPort = CommonUtils.availablePort(),
         nodeNames = Seq(nodeCache.head.name)
       ))
     try {
@@ -381,8 +381,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       val bkCluster = result(
         bk_create(
           clusterName = generateClusterName(),
-          clientPort = CommonUtil.availablePort(),
-          exporterPort = CommonUtil.availablePort(),
+          clientPort = CommonUtils.availablePort(),
+          exporterPort = CommonUtils.availablePort(),
           zkClusterName = zkCluster.name,
           nodeNames = Seq(nodeCache.head.name)
         ))
@@ -393,7 +393,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         val clusterName = generateClusterName()
         result(wk_exist(clusterName)) shouldBe false
         log.info("[WORKER] verify:nonExists done")
-        val clientPort = CommonUtil.availablePort()
+        val clientPort = CommonUtils.availablePort()
         def assert(workerCluster: WorkerClusterInfo): WorkerClusterInfo = {
           workerCluster.brokerClusterName shouldBe bkCluster.name
           workerCluster.name shouldBe clusterName
@@ -483,7 +483,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       // we can't add a nonexistent node
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
-      an[Throwable] should be thrownBy result(wk_addNode(previousCluster.name, CommonUtil.randomString()))
+      an[Throwable] should be thrownBy result(wk_addNode(previousCluster.name, CommonUtils.randomString()))
       log.info(s"[WORKER] start to add node:$newNode to a running worker cluster")
       val newCluster = result(wk_addNode(previousCluster.name, newNode))
       newCluster.name shouldBe previousCluster.name
@@ -528,9 +528,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(
           zk_create(
             clusterName = name,
-            clientPort = CommonUtil.availablePort(),
-            electionPort = CommonUtil.availablePort(),
-            peerPort = CommonUtil.availablePort(),
+            clientPort = CommonUtils.availablePort(),
+            electionPort = CommonUtils.availablePort(),
+            peerPort = CommonUtils.availablePort(),
             nodeNames = nodeCache.map(_.name)
           ))
       }
@@ -568,9 +568,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(
           zk_create(
             clusterName = name,
-            clientPort = CommonUtil.availablePort(),
-            electionPort = CommonUtil.availablePort(),
-            peerPort = CommonUtil.availablePort(),
+            clientPort = CommonUtils.availablePort(),
+            electionPort = CommonUtils.availablePort(),
+            peerPort = CommonUtils.availablePort(),
             nodeNames = Seq(nodeCache.head.name)
           ))
       }
@@ -580,8 +580,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           result(
             bk_create(
               clusterName = bkNames(index),
-              clientPort = CommonUtil.availablePort(),
-              exporterPort = CommonUtil.availablePort(),
+              clientPort = CommonUtils.availablePort(),
+              exporterPort = CommonUtils.availablePort(),
               zkClusterName = zk.name,
               nodeNames = Seq(nodeCache.head.name)
             ))
@@ -620,18 +620,18 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val zkName = generateClusterName()
     val bkName = generateClusterName()
     val wkNames = (0 until numberOfClusters).map(_ => generateClusterName())
-    val groupIds = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
-    val configTopicNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
-    val offsetTopicNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
-    val statusTopicNames = (0 until numberOfClusters).map(_ => CommonUtil.randomString(10))
+    val groupIds = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
+    val configTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
+    val offsetTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
+    val statusTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
     try {
       log.info(s"start to run zk cluster:$zkName")
       val zk = result(
         zk_create(
           clusterName = zkName,
-          clientPort = CommonUtil.availablePort(),
-          electionPort = CommonUtil.availablePort(),
-          peerPort = CommonUtil.availablePort(),
+          clientPort = CommonUtils.availablePort(),
+          electionPort = CommonUtils.availablePort(),
+          peerPort = CommonUtils.availablePort(),
           nodeNames = Seq(nodeCache.head.name)
         )
       )
@@ -641,8 +641,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       val bk = result(
         bk_create(
           clusterName = bkName,
-          clientPort = CommonUtil.availablePort(),
-          exporterPort = CommonUtil.availablePort(),
+          clientPort = CommonUtils.availablePort(),
+          exporterPort = CommonUtils.availablePort(),
           zkClusterName = zk.name,
           nodeNames = Seq(nodeCache.head.name)
         ))
@@ -654,7 +654,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           result(
             wk_create(
               clusterName = wkName,
-              clientPort = CommonUtil.availablePort(),
+              clientPort = CommonUtils.availablePort(),
               bkClusterName = bk.name,
               groupId = groupIds(index),
               configTopicName = configTopicNames(index),

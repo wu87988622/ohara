@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import org.apache.hadoop.conf.Configuration;
@@ -35,11 +35,11 @@ public interface Hdfs extends Releasable {
 
   static Hdfs local() {
     return new Hdfs() {
-      private final File tempDir = CommonUtil.createTempDir("local_hdfs");
+      private final File tempDir = CommonUtils.createTempDir("local_hdfs");
 
       @Override
       public void close() {
-        CommonUtil.deleteFiles(tempDir);
+        CommonUtils.deleteFiles(tempDir);
       }
 
       @Override

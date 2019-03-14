@@ -20,7 +20,7 @@ import java.nio.file.Files
 
 import com.island.ohara.client.configurator.v0.JarApi
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
@@ -35,7 +35,7 @@ class TestJarStore extends SmallTest with Matchers {
     JarApi.access().hostname(configurator.hostname).port(configurator.port)
 
   private[this] def generateFile(bytes: Array[Byte]): File = {
-    val tempFile = CommonUtil.createTempFile(methodName())
+    val tempFile = CommonUtils.createTempFile(methodName())
     val output = new FileOutputStream(tempFile)
     try output.write(bytes)
     finally output.close()
@@ -54,7 +54,7 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def listNonexistentIdWithExistOne(): Unit = {
-    val f = generateFile(CommonUtil.randomString().getBytes)
+    val f = generateFile(CommonUtils.randomString().getBytes)
     val plugin = result(access.upload(f))
     val jars = result(configurator.jarStore.jarInfos(Seq(plugin.id)))
     jars.size shouldBe 1
@@ -68,7 +68,7 @@ class TestJarStore extends SmallTest with Matchers {
 
   @Test
   def testDownload(): Unit = {
-    val content = CommonUtil.randomString()
+    val content = CommonUtils.randomString()
     val f = generateFile(content.getBytes)
 
     val plugin = result(access.upload(f))
@@ -79,7 +79,7 @@ class TestJarStore extends SmallTest with Matchers {
     val url = result(configurator.jarStore.url(plugin.id))
     url.getProtocol shouldBe "http"
     val input = url.openStream()
-    val tempFile = CommonUtil.createTempFile(methodName())
+    val tempFile = CommonUtils.createTempFile(methodName())
     if (tempFile.exists()) tempFile.delete() shouldBe true
     try {
       Files.copy(input, tempFile.toPath)

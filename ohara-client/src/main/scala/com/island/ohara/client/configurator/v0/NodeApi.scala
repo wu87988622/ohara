@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -46,7 +46,7 @@ object NodeApi {
       user = user,
       password = password,
       services = Seq.empty,
-      lastModified = CommonUtil.current()
+      lastModified = CommonUtils.current()
     )
   }
 

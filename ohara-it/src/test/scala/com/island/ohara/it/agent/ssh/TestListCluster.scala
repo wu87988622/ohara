@@ -19,15 +19,15 @@ package com.island.ohara.it.agent.ssh
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtil}
+import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 class TestListCluster extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestListCluster])
-  private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
+  private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
 
   private[this] val nodeCollie: NodeCollie = NodeCollie(nodeCache)
@@ -39,7 +39,8 @@ class TestListCluster extends IntegrationTest with Matchers {
 
   @Before
   def setup(): Unit = if (nodeCache.isEmpty)
-    skipTest(s"${CollieTestUtil.key} don't exist so all tests in ${classOf[TestListCluster].getSimpleName} are ignored")
+    skipTest(
+      s"${CollieTestUtils.key} don't exist so all tests in ${classOf[TestListCluster].getSimpleName} are ignored")
   else
     nodeCache.foreach { node =>
       val dockerClient =
@@ -66,8 +67,8 @@ class TestListCluster extends IntegrationTest with Matchers {
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         // the port:1000 is not illegal so we can't create zookeeper cluster
         .clientPort(1000)
-        .peerPort(CommonUtil.availablePort())
-        .electionPort(CommonUtil.availablePort())
+        .peerPort(CommonUtils.availablePort())
+        .electionPort(CommonUtils.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(name)
         .create()
@@ -97,9 +98,9 @@ class TestListCluster extends IntegrationTest with Matchers {
         .zookeeperCollie()
         .creator()
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
-        .clientPort(CommonUtil.availablePort())
-        .peerPort(CommonUtil.availablePort())
-        .electionPort(CommonUtil.availablePort())
+        .clientPort(CommonUtils.availablePort())
+        .peerPort(CommonUtils.availablePort())
+        .electionPort(CommonUtils.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(nameHolder.generateClusterName())
         .create()
@@ -116,7 +117,7 @@ class TestListCluster extends IntegrationTest with Matchers {
           .imageName(BrokerApi.IMAGE_NAME_DEFAULT)
           // the port:1000 is not illegal so we can't create broker cluster
           .clientPort(1000)
-          .exporterPort(CommonUtil.availablePort())
+          .exporterPort(CommonUtils.availablePort())
           .nodeNames(nodeCache.map(_.name))
           .clusterName(name)
           .zookeeperClusterName(zkCluster.name)

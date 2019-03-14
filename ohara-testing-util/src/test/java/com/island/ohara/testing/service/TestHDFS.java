@@ -19,14 +19,14 @@ package com.island.ohara.testing.service;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.island.ohara.testing.WithTestUtil;
+import com.island.ohara.testing.WithTestUtils;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
-public class TestHDFS extends WithTestUtil {
+public class TestHDFS extends WithTestUtils {
 
   @Test
   public void testHDFSLocal() throws IOException {

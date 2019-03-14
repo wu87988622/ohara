@@ -25,9 +25,9 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
+import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -70,7 +70,7 @@ private[configurator] object PipelineRoute {
               rules = request.rules,
               objects = Seq.empty,
               workerClusterName = wkName,
-              lastModified = CommonUtil.current()
+              lastModified = CommonUtils.current()
             ) -> wkCluster
         }
       }
@@ -280,7 +280,7 @@ private[configurator] object PipelineRoute {
     if (request.workerClusterName.isEmpty) request.copy(workerClusterName = t) else request
 
   def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
-    RouteUtil.basicRoute[PipelineCreationRequest, Pipeline](
+    RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfAdd =
         (t: TargetCluster, id: Id, request: PipelineCreationRequest) => toRes(id, updateWorkerClusterName(request, t)),

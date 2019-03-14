@@ -27,7 +27,7 @@ import scala.concurrent.Future
 object ZookeeperRoute {
 
   def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
-    RouteUtil.basicRouteOfCluster(
+    RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.zookeeperCollie(),
       root = ZOOKEEPER_PREFIX_PATH,
       defaultImage = ZookeeperApi.IMAGE_NAME_DEFAULT,

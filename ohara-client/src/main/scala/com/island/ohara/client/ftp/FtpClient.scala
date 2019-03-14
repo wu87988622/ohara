@@ -23,7 +23,7 @@ import java.util.Objects
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
 import scala.concurrent.duration._
@@ -186,7 +186,7 @@ object FtpClient {
       * @return this builder
       */
     def hostname(hostname: String): Builder = {
-      this.hostname = CommonUtil.requireNonEmpty(hostname)
+      this.hostname = CommonUtils.requireNonEmpty(hostname)
       this
     }
 
@@ -196,7 +196,7 @@ object FtpClient {
       */
     @Optional("default value is 21")
     def port(port: Int): Builder = {
-      this.port = CommonUtil.requirePositiveInt(port)
+      this.port = CommonUtils.requirePositiveInt(port)
       this
     }
 
@@ -205,7 +205,7 @@ object FtpClient {
       * @return this builder
       */
     def user(user: String): Builder = {
-      this.user = CommonUtil.requireNonEmpty(user)
+      this.user = CommonUtils.requireNonEmpty(user)
       this
     }
 
@@ -214,7 +214,7 @@ object FtpClient {
       * @return this builder
       */
     def password(password: String): Builder = {
-      this.password = CommonUtil.requireNonEmpty(password)
+      this.password = CommonUtils.requireNonEmpty(password)
       this
     }
 
@@ -252,7 +252,7 @@ object FtpClient {
 
       def retry[T](function: () => T): T = {
         var lastException: Throwable = null
-        val endTime = CommonUtil.current() + retryTimeout.toMillis
+        val endTime = CommonUtils.current() + retryTimeout.toMillis
         do {
           try return function()
           catch {
@@ -260,16 +260,16 @@ object FtpClient {
               lastException = e
               TimeUnit.MILLISECONDS.sleep(retryBackoff.toMillis)
           }
-        } while (endTime >= CommonUtil.current())
+        } while (endTime >= CommonUtils.current())
         throw new IllegalArgumentException("still fail...", lastException)
       }
 
       new FtpClient {
         private[this] val client = new FtpClientImpl(
-          hostname = CommonUtil.requireNonEmpty(hostname, () => "hostname can't be null or empty"),
-          port = CommonUtil.requirePositiveInt(port),
-          user = CommonUtil.requireNonEmpty(user, () => "user can't be null or empty"),
-          password = CommonUtil.requireNonEmpty(password, () => "password can't be null or empty")
+          hostname = CommonUtils.requireNonEmpty(hostname, () => "hostname can't be null or empty"),
+          port = CommonUtils.requirePositiveInt(port),
+          user = CommonUtils.requireNonEmpty(user, () => "user can't be null or empty"),
+          password = CommonUtils.requireNonEmpty(password, () => "password can't be null or empty")
         )
         override def listFileNames(dir: String): Seq[String] = retry(() => client.listFileNames(dir))
         override def open(path: String): InputStream = retry(() => client.open(path))
@@ -441,8 +441,8 @@ object FtpClient {
           // if path references to folder, some ftp servers return "212-"
           if (result.startsWith("212-")) true
           else
-            result.contains(CommonUtil.name(path)) || // if path references to file, result will show the meta from files
-            result.contains(CommonUtil.name("..")) // if path references to folder, result will show meta from all files with "." and "..
+            result.contains(CommonUtils.name(path)) || // if path references to file, result will show the meta from files
+            result.contains(CommonUtils.name("..")) // if path references to folder, result will show meta from all files with "." and "..
         }
       }
 

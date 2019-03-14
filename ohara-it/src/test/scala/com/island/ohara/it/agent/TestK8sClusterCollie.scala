@@ -17,7 +17,7 @@
 package com.island.ohara.it.agent
 import com.island.ohara.agent.{ClusterCollie, K8SClient, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.{Before, Ignore}
 
 @Ignore("This will be re-enabled by https://github.com/oharastream/ohara/issues/393")
@@ -43,5 +43,5 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   final def setup(): Unit = if (nodeCache.isEmpty)
     skipTest(s"The k8s is skip test, Please setting $K8S_API_SERVER_URL_KEY and $K8S_API_NODE_NAME_KEY properties")
 
-  override protected def generateClusterName(): String = CommonUtil.randomString(10)
+  override protected def generateClusterName(): String = CommonUtils.randomString(10)
 }

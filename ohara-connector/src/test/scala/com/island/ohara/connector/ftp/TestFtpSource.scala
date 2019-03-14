@@ -21,7 +21,7 @@ import java.time.Duration
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.Consumer.Record
 import com.island.ohara.kafka.{BrokerClient, Consumer}
 import com.island.ohara.testing.With3Brokers3Workers
@@ -71,7 +71,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] def setupInput(): Unit = {
     val writer = new BufferedWriter(
-      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtil.path(props.inputFolder, "abc"))))
+      new OutputStreamWriter(ftpClient.create(com.island.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))))
     try {
       writer.append(header)
       writer.newLine()
@@ -90,7 +90,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       if (ftpClient.exist(path)) {
         ftpClient
           .listFileNames(path)
-          .map(com.island.ohara.common.util.CommonUtil.path(path, _))
+          .map(com.island.ohara.common.util.CommonUtils.path(path, _))
           .foreach(ftpClient.delete)
         ftpClient.listFileNames(path).size shouldBe 0
         ftpClient.delete(path)
@@ -125,7 +125,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
-    CommonUtil.await(
+    CommonUtils.await(
       () => {
         ftpClient.listFileNames(props.inputFolder).size == inputCount &&
         ftpClient.listFileNames(props.completedFolder.get).size == outputCount &&
@@ -151,7 +151,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
 
       checkFileCount(0, 1, 0)
       var records = pollData(topicName)
@@ -196,7 +196,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -241,7 +241,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -276,7 +276,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -311,7 +311,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -348,7 +348,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.copy(encode = None).toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -384,7 +384,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.copy(encode = Some("")).toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -420,7 +420,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
 
       val records = pollData(topicName)
@@ -453,7 +453,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 1)
 
       val records = pollData(topicName, 10 second)
@@ -480,7 +480,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .columns(schema)
         .configs(props.copy(inputFolder = "/abc").toMap)
         .create())
-    FtpUtil.assertFailedConnector(testUtil, connectorName)
+    FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
@@ -503,7 +503,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         ))
         .configs(props.toMap)
         .create())
-    FtpUtil.assertFailedConnector(testUtil, connectorName)
+    FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
 
   @Test
@@ -522,7 +522,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .configs(props.copy(completedFolder = None).toMap)
         .create())
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 0)
 
       val records = pollData(topicName)

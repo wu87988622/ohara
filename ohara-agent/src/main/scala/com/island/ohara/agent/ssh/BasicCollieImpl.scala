@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -77,7 +77,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
       PREFIX_KEY,
       clusterName,
       serviceName,
-      CommonUtil.randomString(LENGTH_OF_CONTAINER_NAME_ID)
+      CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(DIVIDER)
 
   override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {

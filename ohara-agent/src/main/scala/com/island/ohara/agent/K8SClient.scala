@@ -40,7 +40,7 @@ import com.island.ohara.agent.K8SJson.{
   K8SPodInfo
 }
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
 
@@ -170,7 +170,7 @@ object K8SClient {
       }
 
       override def containerCreator(): ContainerCreator = new ContainerCreator() {
-        private[this] var name: String = CommonUtil.randomString()
+        private[this] var name: String = CommonUtils.randomString()
         private[this] var imageName: String = _
         private[this] var hostname: String = _
         private[this] var nodename: String = _

@@ -18,7 +18,7 @@ package com.island.ohara.it.prometheus
 
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.typesafe.scalalogging.Logger
 
 /**
@@ -40,7 +40,7 @@ trait PrometheusCreator {
 
 object PrometheusCreator {
 
-  def name(service: String): String = s"$service-${CommonUtil.randomString(10)}"
+  def name(service: String): String = s"$service-${CommonUtils.randomString(10)}"
 
   private[this] val logger = Logger(classOf[PrometheusCreator])
   def apply(): PrometheusCreator = new PrometheusCreator() {

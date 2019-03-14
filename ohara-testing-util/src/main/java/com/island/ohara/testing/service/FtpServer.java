@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.util.*;
@@ -71,8 +71,8 @@ public interface FtpServer extends Releasable {
   class Builder {
     private Builder() {}
 
-    private String advertisedHostname = CommonUtil.hostname();
-    private File homeFolder = CommonUtil.createTempDir("local_ftp");
+    private String advertisedHostname = CommonUtils.hostname();
+    private File homeFolder = CommonUtils.createTempDir("local_ftp");
     private String user = "user";
     private String password = "password";
     private int controlPort = 0;
@@ -86,25 +86,25 @@ public interface FtpServer extends Releasable {
 
     @com.island.ohara.common.annotations.Optional("default is local hostname")
     public Builder advertisedHostname(String advertisedHostname) {
-      this.advertisedHostname = CommonUtil.requireNonEmpty(advertisedHostname);
+      this.advertisedHostname = CommonUtils.requireNonEmpty(advertisedHostname);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is user")
     public Builder user(String user) {
-      this.user = CommonUtil.requireNonEmpty(user);
+      this.user = CommonUtils.requireNonEmpty(user);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is password")
     public Builder password(String password) {
-      this.password = CommonUtil.requireNonEmpty(password);
+      this.password = CommonUtils.requireNonEmpty(password);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is random port")
     public Builder controlPort(int controlPort) {
-      this.controlPort = CommonUtil.requirePositiveInt(controlPort);
+      this.controlPort = CommonUtils.requirePositiveInt(controlPort);
       return this;
     }
 
@@ -117,9 +117,9 @@ public interface FtpServer extends Releasable {
      */
     @com.island.ohara.common.annotations.Optional("default is three random ports")
     public Builder dataPorts(List<Integer> dataPorts) {
-      CommonUtil.requireNonEmpty(
+      CommonUtils.requireNonEmpty(
               Objects.requireNonNull(dataPorts), () -> "dataPorts can't be empty")
-          .forEach(CommonUtil::requirePositiveInt);
+          .forEach(CommonUtils::requirePositiveInt);
       this.dataPorts = dataPorts;
       return this;
     }
@@ -152,7 +152,7 @@ public interface FtpServer extends Releasable {
           new DataConnectionConfigurationFactory();
 
       List<Integer> availableDataPorts =
-          dataPorts.stream().map(CommonUtil::resolvePort).collect(Collectors.toList());
+          dataPorts.stream().map(CommonUtils::resolvePort).collect(Collectors.toList());
 
       connectionConfig.setActiveEnabled(false);
       connectionConfig.setPassiveExternalAddress(advertisedHostname);
@@ -179,12 +179,12 @@ public interface FtpServer extends Releasable {
         @Override
         public void close() {
           server.stop();
-          CommonUtil.deleteFiles(homeFolder);
+          CommonUtils.deleteFiles(homeFolder);
         }
 
         @Override
         public String hostname() {
-          return CommonUtil.hostname();
+          return CommonUtils.hostname();
         }
 
         @Override
@@ -257,8 +257,8 @@ public interface FtpServer extends Releasable {
               TTL));
 
   static void start(String[] args, Consumer<FtpServer> consumer) throws InterruptedException {
-    File homeFolder = CommonUtil.createTempDir(CommonUtil.randomString(5));
-    String advertisedHostname = CommonUtil.hostname();
+    File homeFolder = CommonUtils.createTempDir(CommonUtils.randomString(5));
+    String advertisedHostname = CommonUtils.hostname();
     String user = "user";
     String password = "password";
     int controlPort = 0;

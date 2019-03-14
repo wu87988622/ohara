@@ -65,7 +65,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
     )
 
     try {
-      PerfUtil.checkConnector(testUtil, connectorName)
+      PerfUtils.checkConnector(testUtil, connectorName)
       val consumer =
         Consumer
           .builder[Row, Array[Byte]]()

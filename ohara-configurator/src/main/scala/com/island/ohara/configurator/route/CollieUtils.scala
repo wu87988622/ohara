@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,7 +48,7 @@ object CollieUtils {
         val buf = new util.LinkedList[(Long, TopicAdmin)]()
         try while (!queue.isEmpty) {
           val obj = queue.take()
-          if (timeout > 0 && CommonUtil.current() - obj._1 <= timeout) buf.add(obj)
+          if (timeout > 0 && CommonUtils.current() - obj._1 <= timeout) buf.add(obj)
           else if (!obj._2.closed()) Releasable.close(obj._2)
         } finally queue.addAll(buf)
       }
@@ -64,7 +64,7 @@ object CollieUtils {
     def add(topicAdmin: TopicAdmin): TopicAdmin = if (closed.get())
       throw new IllegalArgumentException("cleaner is closed")
     else {
-      queue.put((CommonUtil.current(), topicAdmin))
+      queue.put((CommonUtils.current(), topicAdmin))
       topicAdmin
     }
     override def close(): Unit = {

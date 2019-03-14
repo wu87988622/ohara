@@ -30,10 +30,10 @@ import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
-import com.island.ohara.configurator.route.RouteUtil._
+import com.island.ohara.configurator.route.RouteUtils._
 import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
 
@@ -135,8 +135,8 @@ private[configurator] object StreamRoute {
                     })
                   ) { jarInfos =>
                     val jars = Future.sequence(jarInfos.map { jarInfo =>
-                      val time = CommonUtil.current()
-                      val streamId = CommonUtil.uuid()
+                      val time = CommonUtils.current()
+                      val streamId = CommonUtils.uuid()
                       store
                         .add(toStore(pipelineId = id, streamId = streamId, jarInfo = jarInfo, lastModified = time))
                         .map { data =>
@@ -175,7 +175,7 @@ private[configurator] object StreamRoute {
                   entity(as[StreamListRequest]) { req =>
                     if (req.jarName == null || req.jarName.isEmpty)
                       throw new IllegalArgumentException(s"Require jarName")
-                    val f = new File(StreamApi.TMP_ROOT, CommonUtil.randomString(5))
+                    val f = new File(StreamApi.TMP_ROOT, CommonUtils.randomString(5))
                     val result = for {
                       f1 <- store.value[StreamApp](id)
                       f2 <- jarStore.url(f1.jarInfo.id)
@@ -196,7 +196,7 @@ private[configurator] object StreamRoute {
                                     f3,
                                     previous.fromTopics,
                                     previous.toTopics,
-                                    CommonUtil.current()))
+                                    CommonUtils.current()))
                       )
                     } yield f5
                     onSuccess(result) { newData =>
@@ -247,7 +247,7 @@ private[configurator] object StreamRoute {
                         jarInfo = data.jarInfo,
                         fromTopics = req.fromTopics,
                         toTopics = req.toTopics,
-                        lastModified = CommonUtil.current()
+                        lastModified = CommonUtils.current()
                       )
                       store.update[StreamApp](
                         id,
@@ -365,7 +365,7 @@ private[configurator] object StreamRoute {
                                           // note : we use default network=bridge to separate
                                           // the host & container network driver
                                           .route(
-                                            brokerInfo.nodeNames.map(n => n -> CommonUtil.address(n)).toMap
+                                            brokerInfo.nodeNames.map(n => n -> CommonUtils.address(n)).toMap
                                           )
                                           .imageName(StreamApi.STREAMAPP_IMAGE)
                                           .command(StreamApi.MAIN_ENTRY)

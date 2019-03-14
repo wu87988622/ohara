@@ -15,7 +15,8 @@
  */
 
 package com.island.ohara.connector.ftp
-import com.island.ohara.common.util.CommonUtil
+
+import com.island.ohara.common.util.CommonUtils
 
 case class FtpSinkProps(output: String,
                         needHeader: Boolean,
@@ -39,7 +40,7 @@ object FtpSinkProps {
   def apply(props: Map[String, String]): FtpSinkProps = FtpSinkProps(
     output = props(FTP_OUTPUT),
     needHeader = props(FTP_NEEDHEADER).toBoolean,
-    encode = props.get(FTP_ENCODE).filterNot(CommonUtil.isEmpty),
+    encode = props.get(FTP_ENCODE).filterNot(CommonUtils.isEmpty),
     hostname = props(FTP_HOSTNAME),
     port = props(FTP_PORT).toInt,
     user = props(FTP_USER_NAME),

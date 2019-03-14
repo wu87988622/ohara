@@ -17,7 +17,7 @@
 package com.island.ohara.testing.service;
 
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,7 +25,7 @@ public class TestSshdServer extends SmallTest {
 
   @Test
   public void testSpecificPort() {
-    int port = CommonUtil.availablePort();
+    int port = CommonUtils.availablePort();
     try (SshdServer server = SshdServer.local(port)) {
       Assert.assertEquals(server.port(), port);
     }

@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Test;
 
 public class TestRowSinkRecord extends SmallTest {
@@ -30,7 +30,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireTopic() {
     RowSinkRecord.builder()
         .row(Row.of(Cell.of(methodName(), 123)))
-        .timestamp(CommonUtil.current())
+        .timestamp(CommonUtils.current())
         .partition(123)
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
@@ -41,7 +41,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void requireRow() {
     RowSinkRecord.builder()
         .topic("asdasd")
-        .timestamp(CommonUtil.current())
+        .timestamp(CommonUtils.current())
         .partition(123)
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
@@ -64,7 +64,7 @@ public class TestRowSinkRecord extends SmallTest {
     RowSinkRecord.builder()
         .topic("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
-        .timestamp(CommonUtil.current())
+        .timestamp(CommonUtils.current())
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
         .offset(123)
         .build();
@@ -75,7 +75,7 @@ public class TestRowSinkRecord extends SmallTest {
     RowSinkRecord.builder()
         .topic("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
-        .timestamp(CommonUtil.current())
+        .timestamp(CommonUtils.current())
         .partition(123)
         .offset(123)
         .build();
@@ -86,7 +86,7 @@ public class TestRowSinkRecord extends SmallTest {
     RowSinkRecord.builder()
         .topic("asdasd")
         .row(Row.of(Cell.of(methodName(), 123)))
-        .timestamp(CommonUtil.current())
+        .timestamp(CommonUtils.current())
         .partition(123)
         .timestampType(RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE)
         .build();
@@ -96,7 +96,7 @@ public class TestRowSinkRecord extends SmallTest {
   public void testBuilder() {
     Row row = Row.of(Cell.of(methodName(), 123));
     String topic = methodName();
-    long ts = CommonUtil.current();
+    long ts = CommonUtils.current();
     int partition = 123;
     long offset = 12345;
     RowSinkRecord.TimestampType tsType = RowSinkRecord.TimestampType.NO_TIMESTAMP_TYPE;

@@ -18,7 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import java.util.Objects;
 import org.apache.kafka.connect.sink.SinkRecord;
 
@@ -142,17 +142,17 @@ public class RowSinkRecord {
     }
 
     public Builder partition(int partition) {
-      this.partition = CommonUtil.requirePositiveInt(partition);
+      this.partition = CommonUtils.requirePositiveInt(partition);
       return this;
     }
 
     public Builder offset(long offset) {
-      this.offset = CommonUtil.requirePositiveLong(offset);
+      this.offset = CommonUtils.requirePositiveLong(offset);
       return this;
     }
 
     public Builder timestamp(long timestamp) {
-      this.timestamp = CommonUtil.requirePositiveLong(timestamp);
+      this.timestamp = CommonUtils.requirePositiveLong(timestamp);
       return this;
     }
 

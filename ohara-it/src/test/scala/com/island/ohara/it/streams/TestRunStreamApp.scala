@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{StreamApi, TopicApi}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
@@ -30,7 +30,7 @@ import org.scalatest.Matchers
 
 class TestRunStreamApp extends IntegrationTest with Matchers {
   private[this] val configurator =
-    Configurator.builder().advertisedHostname(CommonUtil.hostname()).advertisedPort(0).fake().build()
+    Configurator.builder().advertisedHostname(CommonUtils.hostname()).advertisedPort(0).fake().build()
 
   private[this] val pipeline_id = "pipeline-id"
   private[this] val instances = 1
@@ -109,7 +109,7 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
 
     // Update StreamApp Properties
     val req = StreamPropertyRequest(
-      CommonUtil.randomString(10),
+      CommonUtils.randomString(10),
       Seq(fromTopic),
       Seq(toTopic),
       instances

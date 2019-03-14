@@ -19,7 +19,7 @@ package com.island.ohara.connector.ftp
 import java.util
 
 import com.island.ohara.client.ftp.FtpClient
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector._
 
 import scala.collection.JavaConverters._
@@ -56,7 +56,7 @@ class FtpSink extends RowSinkConnector {
             .topics(config.topics)
             .columns(config.columns)
             .options(FtpSinkTaskProps(
-              output = CommonUtil.path(props.output, s"${config.name}_$index"),
+              output = CommonUtils.path(props.output, s"${config.name}_$index"),
               needHeader = props.needHeader,
               encode = props.encode,
               hostname = props.hostname,

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.agent.DockerClient
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortPair}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -91,7 +91,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
   @Test
   def testCleanup(): Unit = runTest { client =>
     // ping google 3 times
-    val name = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)

@@ -20,7 +20,7 @@ import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.{Collie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -33,15 +33,15 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: Clu
     def genContainers(cluster: T): Seq[ContainerInfo] = cluster.nodeNames.map { nodeName =>
       ContainerInfo(
         nodeName = nodeName,
-        id = CommonUtil.randomString(10),
+        id = CommonUtils.randomString(10),
         imageName = cluster.imageName,
         created = "unknown",
         state = ContainerState.RUNNING,
-        name = CommonUtil.randomString(10),
+        name = CommonUtils.randomString(10),
         size = "unknown",
         portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)))),
         environments = Map.empty,
-        hostname = CommonUtil.randomString(10)
+        hostname = CommonUtils.randomString(10)
       )
     }
     clusterCache.put(cluster, genContainers(cluster))

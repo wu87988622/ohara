@@ -17,7 +17,7 @@
 package com.island.ohara.testing.service;
 
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,7 +25,7 @@ public class TestZookeepers extends MediumTest {
 
   @Test
   public void testSpecificPort() {
-    int port = CommonUtil.availablePort();
+    int port = CommonUtils.availablePort();
     try (Zookeepers zk = Zookeepers.local(port)) {
       Assert.assertEquals(port, Integer.parseInt(zk.connectionProps().split(":")[1]));
     }

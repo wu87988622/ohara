@@ -20,7 +20,7 @@ import java.util.Objects
 import java.util.concurrent.{ArrayBlockingQueue, Executors, TimeUnit}
 
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
@@ -131,7 +131,7 @@ object Cache {
     private[this] val requests = new ArrayBlockingQueue[Long](1)
     private[this] val lock = new Object()
     @volatile private[this] var obj: T = defaultValue
-    @volatile private[this] var lastUpdate: Long = CommonUtil.current()
+    @volatile private[this] var lastUpdate: Long = CommonUtils.current()
     private[this] val executor = {
       val exec = Executors.newSingleThreadExecutor()
       exec.execute(() =>
@@ -143,7 +143,7 @@ object Cache {
             lastUpdate = -1
             // TODO: 30 seconds should be enough to fetch result ?
             obj = Await.result(updater(), 30 seconds)
-            lastUpdate = CommonUtil.current()
+            lastUpdate = CommonUtils.current()
           } catch {
             case e: InterruptedException =>
               LOG.info("we are closing this thread")
@@ -162,7 +162,7 @@ object Cache {
     import scala.concurrent.ExecutionContext.Implicits.global
     override def get(): Future[T] = Future {
       var local = obj
-      while (CommonUtil.current() > lastUpdate + expiredTime.toMillis) {
+      while (CommonUtils.current() > lastUpdate + expiredTime.toMillis) {
         // we may be stuck with this loop if thread is gone. Hence, we need this check!
         if (isClosed) throw new IllegalStateException("cache is closed!!!")
         lock.synchronized {
@@ -176,7 +176,7 @@ object Cache {
     }
 
     override def requestUpdate(): Boolean =
-      if (isClosed) throw new IllegalStateException("cache is closed!!!") else requests.offer(CommonUtil.current())
+      if (isClosed) throw new IllegalStateException("cache is closed!!!") else requests.offer(CommonUtils.current())
 
     override protected def doClose(): Unit = {
       executor.shutdownNow()

@@ -21,7 +21,7 @@ import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi._
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,7 +29,7 @@ import scala.concurrent.Future
 object WorkerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie, jarStore: JarStore): server.Route =
-    RouteUtil.basicRouteOfCluster(
+    RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
       root = WORKER_PREFIX_PATH,
       defaultImage = WorkerApi.IMAGE_NAME_DEFAULT,
@@ -99,15 +99,15 @@ object WorkerRoute {
                 .clusterName(req.name)
                 .clientPort(req.clientPort.getOrElse(WorkerApi.CLIENT_PORT_DEFAULT))
                 .brokerClusterName(bkName)
-                .groupId(req.groupId.getOrElse(CommonUtil.randomString(10)))
-                .configTopicName(req.configTopicName.getOrElse(s"config-${CommonUtil.randomString(10)}"))
+                .groupId(req.groupId.getOrElse(CommonUtils.randomString(10)))
+                .configTopicName(req.configTopicName.getOrElse(s"config-${CommonUtils.randomString(10)}"))
                 .configTopicReplications(req.configTopicReplications.getOrElse(
                   WorkerApi.CONFIG_TOPIC_REPLICATIONS_DEFAULT))
-                .offsetTopicName(req.offsetTopicName.getOrElse(s"offset-${CommonUtil.randomString(10)}"))
+                .offsetTopicName(req.offsetTopicName.getOrElse(s"offset-${CommonUtils.randomString(10)}"))
                 .offsetTopicPartitions(req.offsetTopicPartitions.getOrElse(WorkerApi.OFFSET_TOPIC_PARTITIONS_DEFAULT))
                 .offsetTopicReplications(req.offsetTopicReplications.getOrElse(
                   WorkerApi.OFFSET_TOPIC_REPLICATIONS_DEFAULT))
-                .statusTopicName(req.statusTopicName.getOrElse(s"status-${CommonUtil.randomString(10)}"))
+                .statusTopicName(req.statusTopicName.getOrElse(s"status-${CommonUtils.randomString(10)}"))
                 .statusTopicPartitions(req.statusTopicPartitions.getOrElse(WorkerApi.STATUS_TOPIC_PARTITIONS_DEFAULT))
                 .statusTopicReplications(req.statusTopicReplications.getOrElse(
                   WorkerApi.STATUS_TOPIC_REPLICATIONS_DEFAULT))

@@ -27,7 +27,7 @@ import scala.concurrent.Future
 object BrokerRoute {
 
   def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
-    RouteUtil.basicRouteOfCluster(
+    RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.brokerCollie(),
       root = BROKER_PREFIX_PATH,
       defaultImage = BrokerApi.IMAGE_NAME_DEFAULT,

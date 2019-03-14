@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -88,13 +88,13 @@ public class TestFtpServer extends MediumTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void setFileToHomeFolder() {
-    File f = CommonUtil.createTempFile(CommonUtil.randomString(5));
+    File f = CommonUtils.createTempFile(CommonUtils.randomString(5));
     FtpServer.builder().homeFolder(f).build();
   }
 
   @Test
   public void testSpecificDataPort() {
-    int port = CommonUtil.availablePort();
+    int port = CommonUtils.availablePort();
     try (FtpServer ftpServer =
         FtpServer.builder().dataPorts(Collections.singletonList(port)).build()) {
       assertEquals(port, (int) ftpServer.dataPorts().get(0));
@@ -111,7 +111,7 @@ public class TestFtpServer extends MediumTest {
 
   @Test
   public void testSpecificControlPort() {
-    int port = CommonUtil.availablePort();
+    int port = CommonUtils.availablePort();
     try (FtpServer ftpServer = FtpServer.builder().controlPort(port).build()) {
       assertEquals(port, ftpServer.port());
     }
@@ -135,8 +135,8 @@ public class TestFtpServer extends MediumTest {
             try {
               FtpServer.start(
                   new String[] {
-                    FtpServer.CONTROL_PORT, String.valueOf(CommonUtil.availablePort()),
-                    FtpServer.DATA_PORTS, String.valueOf(CommonUtil.availablePort()),
+                    FtpServer.CONTROL_PORT, String.valueOf(CommonUtils.availablePort()),
+                    FtpServer.DATA_PORTS, String.valueOf(CommonUtils.availablePort()),
                     FtpServer.TTL, String.valueOf(ttl)
                   },
                   ftp -> {});
@@ -175,12 +175,12 @@ public class TestFtpServer extends MediumTest {
 
   @Test
   public void testInputs() throws InterruptedException {
-    String user = CommonUtil.randomString(5);
-    String password = CommonUtil.randomString(5);
-    int controlPort = CommonUtil.availablePort();
+    String user = CommonUtils.randomString(5);
+    String password = CommonUtils.randomString(5);
+    int controlPort = CommonUtils.availablePort();
     List<Integer> dataPorts =
         IntStream.range(0, 3)
-            .map(i -> CommonUtil.availablePort())
+            .map(i -> CommonUtils.availablePort())
             .boxed()
             .collect(Collectors.toList());
     int ttl = 3;
@@ -216,11 +216,11 @@ public class TestFtpServer extends MediumTest {
 
   @Test
   public void testInputs2() throws InterruptedException {
-    String user = CommonUtil.randomString(5);
-    String password = CommonUtil.randomString(5);
-    int controlPort = CommonUtil.availablePort();
+    String user = CommonUtils.randomString(5);
+    String password = CommonUtils.randomString(5);
+    int controlPort = CommonUtils.availablePort();
     int portRange = 2;
-    int p = CommonUtil.availablePort();
+    int p = CommonUtils.availablePort();
     List<Integer> dataPorts =
         IntStream.range(p, p + portRange).boxed().collect(Collectors.toList());
     int ttl = 3;
@@ -260,8 +260,8 @@ public class TestFtpServer extends MediumTest {
 
   @Test
   public void testHomeFolder() {
-    String prefix = CommonUtil.randomString(5);
-    File f = CommonUtil.createTempDir(prefix);
+    String prefix = CommonUtils.randomString(5);
+    File f = CommonUtils.createTempDir(prefix);
     assertTrue(f.delete());
     assertFalse(f.exists());
     try (FtpServer ftpServer = FtpServer.builder().homeFolder(f).build()) {

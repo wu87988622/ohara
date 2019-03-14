@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{Before, BeforeClass, Test}
@@ -116,7 +116,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     if (ftpClient.exist(props.output)) {
       ftpClient
         .listFileNames(props.output)
-        .map(com.island.ohara.common.util.CommonUtil.path(props.output, _))
+        .map(com.island.ohara.common.util.CommonUtils.path(props.output, _))
         .foreach(ftpClient.delete)
       ftpClient.listFileNames(props.output).size shouldBe 0
       ftpClient.delete(props.output)
@@ -148,10 +148,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
@@ -179,10 +179,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 2
       lines.head shouldBe schema.sortBy(_.order).map(_.name).mkString(",")
@@ -210,10 +210,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 2
       lines.head shouldBe data.cells().asScala.map(_.name).mkString(",")
@@ -247,10 +247,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 2
       lines.head shouldBe schema.sortBy(_.order).map(_.newName).mkString(",")
@@ -279,10 +279,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
@@ -309,10 +309,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
@@ -341,10 +341,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
@@ -373,10 +373,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
@@ -405,10 +405,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
-      CommonUtil.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
+      FtpUtils.checkConnector(testUtil, connectorName)
+      CommonUtils.await(() => ftpClient.listFileNames(props.output).size == 1, Duration.ofSeconds(20))
       val lines = ftpClient.readLines(
-        com.island.ohara.common.util.CommonUtil.path(props.output, ftpClient.listFileNames(props.output).head))
+        com.island.ohara.common.util.CommonUtils.path(props.output, ftpClient.listFileNames(props.output).head))
       ftpClient.close()
       lines.length shouldBe 1
       val items = lines.head.split(",")
@@ -436,7 +436,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .create())
 
     try {
-      FtpUtil.checkConnector(testUtil, connectorName)
+      FtpUtils.checkConnector(testUtil, connectorName)
       TimeUnit.SECONDS.sleep(5)
       ftpClient.listFileNames(props.output).size shouldBe 0
       ftpClient.close()

@@ -19,7 +19,7 @@ package com.island.ohara.agent.ssh
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -44,7 +44,7 @@ class TestCache extends SmallTest with Matchers {
   @Test
   def testUpdate(): Unit = {
     val cache =
-      Cache.builder[String]().expiredTime(2 seconds).fetcher(() => CommonUtil.randomString()).default("abc").build()
+      Cache.builder[String]().expiredTime(2 seconds).fetcher(() => CommonUtils.randomString()).default("abc").build()
     try {
       val data = result(cache.get())
       data shouldBe result(cache.get())
@@ -56,20 +56,20 @@ class TestCache extends SmallTest with Matchers {
   @Test
   def testRequestToUpdate(): Unit = {
     val cache =
-      Cache.builder[String]().expiredTime(1000 seconds).fetcher(() => CommonUtil.randomString()).default("abc").build()
+      Cache.builder[String]().expiredTime(1000 seconds).fetcher(() => CommonUtils.randomString()).default("abc").build()
     try {
       val data = result(cache.get())
       TimeUnit.SECONDS.sleep(3)
       data shouldBe result(cache.get())
       cache.requestUpdate() shouldBe true
-      CommonUtil.await(() => result(cache.get()) != data, java.time.Duration.ofSeconds(10))
+      CommonUtils.await(() => result(cache.get()) != data, java.time.Duration.ofSeconds(10))
     } finally cache.close()
   }
 
   @Test
   def testLatest(): Unit = {
-    val initialValue = CommonUtil.randomString()
-    val latest = CommonUtil.randomString()
+    val initialValue = CommonUtils.randomString()
+    val latest = CommonUtils.randomString()
     val cache = Cache.builder[String]().expiredTime(1000 seconds).fetcher(() => latest).default(initialValue).build()
     try {
       result(cache.get()) shouldBe initialValue
@@ -79,18 +79,18 @@ class TestCache extends SmallTest with Matchers {
 
   @Test
   def testAutoRefresh(): Unit = {
-    val initialValue = CommonUtil.randomString()
-    val latest = CommonUtil.randomString()
+    val initialValue = CommonUtils.randomString()
+    val latest = CommonUtils.randomString()
     val cache = Cache.builder[String]().expiredTime(1000 seconds).fetcher(() => latest).default(initialValue).build()
     try {
       result(cache.get()) shouldBe initialValue
-      CommonUtil.await(() => result(cache.latest()) == latest, java.time.Duration.ofSeconds(10))
+      CommonUtils.await(() => result(cache.latest()) == latest, java.time.Duration.ofSeconds(10))
     } finally cache.close()
   }
 
   @Test
   def testEmptyCache(): Unit = {
-    val value = CommonUtil.randomString()
+    val value = CommonUtils.randomString()
     val cache = Cache.empty(() => Future.successful(value))
     try {
       value shouldBe result(cache.get())

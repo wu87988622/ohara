@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -33,13 +33,13 @@ public interface Zookeepers extends Releasable {
 
   static Zookeepers local(int port) {
     final NIOServerCnxnFactory factory;
-    File snapshotDir = CommonUtil.createTempDir("local_zk_snapshot");
-    File logDir = CommonUtil.createTempDir("local_zk_log");
+    File snapshotDir = CommonUtils.createTempDir("local_zk_snapshot");
+    File logDir = CommonUtils.createTempDir("local_zk_log");
 
     try {
       factory = new NIOServerCnxnFactory();
       factory.configure(
-          new InetSocketAddress(CommonUtil.anyLocalAddress(), Math.max(0, port)), 1024);
+          new InetSocketAddress(CommonUtils.anyLocalAddress(), Math.max(0, port)), 1024);
       factory.startup(new ZooKeeperServer(snapshotDir, logDir, 500));
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -49,13 +49,13 @@ public interface Zookeepers extends Releasable {
       @Override
       public void close() {
         factory.shutdown();
-        CommonUtil.deleteFiles(snapshotDir);
-        CommonUtil.deleteFiles(logDir);
+        CommonUtils.deleteFiles(snapshotDir);
+        CommonUtils.deleteFiles(logDir);
       }
 
       @Override
       public String connectionProps() {
-        return CommonUtil.hostname() + ":" + factory.getLocalPort();
+        return CommonUtils.hostname() + ":" + factory.getLocalPort();
       }
 
       @Override

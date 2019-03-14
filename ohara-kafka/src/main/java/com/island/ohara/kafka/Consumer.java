@@ -17,7 +17,7 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -98,12 +98,12 @@ public interface Consumer<K, V> extends Releasable {
     if (expectedSize == Integer.MAX_VALUE) list = new ArrayList<>();
     else list = new ArrayList<>(expectedSize);
 
-    long endtime = CommonUtil.current() + timeout.toMillis();
-    long ramaining = endtime - CommonUtil.current();
+    long endtime = CommonUtils.current() + timeout.toMillis();
+    long ramaining = endtime - CommonUtils.current();
 
     while (!stop.get() && list.size() < expectedSize && ramaining > 0) {
       list.addAll(filter.apply(poll(Duration.ofMillis(ramaining))));
-      ramaining = endtime - CommonUtil.current();
+      ramaining = endtime - CommonUtils.current();
     }
     return list;
   }
@@ -122,7 +122,7 @@ public interface Consumer<K, V> extends Releasable {
 
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private List<String> topicNames;
-    private String groupId = String.format("ohara-consumer-%s", CommonUtil.uuid());
+    private String groupId = String.format("ohara-consumer-%s", CommonUtils.uuid());
     private String connectionProps;
     private Serializer<Key> keySerializer = null;
     private Serializer<Value> valueSerializer = null;
@@ -167,7 +167,7 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder<Key, Value> topicNames(List<String> topicNames) {
-      this.topicNames = CommonUtil.requireNonEmpty(topicNames);
+      this.topicNames = CommonUtils.requireNonEmpty(topicNames);
       return this;
     }
 
@@ -178,7 +178,7 @@ public interface Consumer<K, V> extends Releasable {
     }
 
     public Builder<Key, Value> connectionProps(String connectionProps) {
-      this.connectionProps = CommonUtil.requireNonEmpty(connectionProps);
+      this.connectionProps = CommonUtils.requireNonEmpty(connectionProps);
       return this;
     }
 
@@ -221,9 +221,9 @@ public interface Consumer<K, V> extends Releasable {
     }
 
     private void checkArguments() {
-      CommonUtil.requireNonEmpty(topicNames);
-      CommonUtil.requireNonEmpty(connectionProps);
-      CommonUtil.requireNonEmpty(groupId);
+      CommonUtils.requireNonEmpty(topicNames);
+      CommonUtils.requireNonEmpty(connectionProps);
+      CommonUtils.requireNonEmpty(groupId);
       Objects.requireNonNull(fromBegin);
       Objects.requireNonNull(keySerializer);
       Objects.requireNonNull(valueSerializer);
@@ -342,7 +342,7 @@ public interface Consumer<K, V> extends Releasable {
       if (o == null || getClass() != o.getClass()) return false;
       Record<?, ?> that = (Record<?, ?>) o;
       return Objects.equals(topic, that.topic)
-          && CommonUtil.equals(headers, that.headers)
+          && CommonUtils.equals(headers, that.headers)
           && Objects.equals(key, that.key)
           && Objects.equals(value, that.value);
     }

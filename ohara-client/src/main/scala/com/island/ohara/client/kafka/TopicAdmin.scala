@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{Collections, Objects, Properties}
 
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
 import org.apache.kafka.common.config.TopicConfig
@@ -191,13 +191,13 @@ object TopicAdmin {
 
     @Optional("default is 1")
     def numberOfPartitions(numberOfPartitions: Int): Creator = {
-      this.numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions)
+      this.numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions)
       this
     }
 
     @Optional("default is 1")
     def numberOfReplications(numberOfReplications: Short): Creator = {
-      this.numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications)
+      this.numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications)
       this
     }
 
@@ -209,8 +209,8 @@ object TopicAdmin {
 
     def create(): Future[TopicAdmin.TopicInfo] = doCreate(
       name = Objects.requireNonNull(name),
-      numberOfPartitions = CommonUtil.requirePositiveInt(numberOfPartitions),
-      numberOfReplications = CommonUtil.requirePositiveShort(numberOfReplications),
+      numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),
+      numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications),
       cleanupPolicy
     )
 

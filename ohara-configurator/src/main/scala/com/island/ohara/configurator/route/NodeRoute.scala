@@ -20,7 +20,7 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi._
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.route.RouteUtil.{Id, TargetCluster}
+import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,7 +39,7 @@ object NodeRoute {
     }
 
   def apply(implicit store: Store, clusterCollie: ClusterCollie): server.Route =
-    RouteUtil.basicRoute[NodeCreationRequest, Node](
+    RouteUtils.basicRoute[NodeCreationRequest, Node](
       root = NODES_PREFIX_PATH,
       hookOfAdd = (_: TargetCluster, _: Id, request: NodeCreationRequest) => {
         if (request.name.isEmpty) Future.failed(new IllegalArgumentException(s"name is required"))

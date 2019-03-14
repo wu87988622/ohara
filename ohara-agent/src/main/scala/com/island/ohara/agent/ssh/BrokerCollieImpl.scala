@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -97,14 +97,14 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                 .mkString(",")
 
               val existRoute: Map[String, String] = existNodes.map {
-                case (node, container) => container.nodeName -> CommonUtil.address(node.name)
+                case (node, container) => container.nodeName -> CommonUtils.address(node.name)
               }
               // add route in order to make broker node can connect to each other (and zk node).
               val route: Map[String, String] = newNodes.map {
                 case (node, _) =>
-                  node.name -> CommonUtil.address(node.name)
+                  node.name -> CommonUtils.address(node.name)
               } ++ zkContainers
-                .map(zkContainer => zkContainer.nodeName -> CommonUtil.address(zkContainer.nodeName))
+                .map(zkContainer => zkContainer.nodeName -> CommonUtils.address(zkContainer.nodeName))
                 .toMap
 
               // update the route since we are adding new node to a running broker cluster

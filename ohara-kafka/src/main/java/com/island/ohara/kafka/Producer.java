@@ -19,7 +19,7 @@ package com.island.ohara.kafka;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Serializer;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -64,7 +64,7 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     public Builder<Key, Value> connectionProps(String connectionProps) {
-      this.connectionProps = CommonUtil.requireNonEmpty(connectionProps);
+      this.connectionProps = CommonUtils.requireNonEmpty(connectionProps);
       return this;
     }
 
@@ -121,7 +121,7 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     private void checkArguments() {
-      CommonUtil.requireNonEmpty(connectionProps);
+      CommonUtils.requireNonEmpty(connectionProps);
       Objects.requireNonNull(keySerializer);
       Objects.requireNonNull(valueSerializer);
     }
@@ -243,7 +243,7 @@ public interface Producer<Key, Value> extends Releasable {
 
     @Optional("default is empty")
     public Sender<Key, Value> headers(List<Header> headers) {
-      this.headers = CommonUtil.requireNonEmpty(headers);
+      this.headers = CommonUtils.requireNonEmpty(headers);
       return this;
     }
 
@@ -266,12 +266,12 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     public Sender<Key, Value> topicName(String topicName) {
-      this.topicName = CommonUtil.requireNonEmpty(topicName);
+      this.topicName = CommonUtils.requireNonEmpty(topicName);
       return this;
     }
 
     public Sender<Key, Value> handler(String topicName) {
-      this.topicName = CommonUtil.requireNonEmpty(topicName);
+      this.topicName = CommonUtils.requireNonEmpty(topicName);
       return this;
     }
 

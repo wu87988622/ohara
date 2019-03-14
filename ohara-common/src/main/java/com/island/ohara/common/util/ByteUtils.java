@@ -19,8 +19,8 @@ package com.island.ohara.common.util;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 
-public final class ByteUtil {
-  public static final Comparator<byte[]> BYTES_COMPARATOR = ByteUtil::compare;
+public final class ByteUtils {
+  public static final Comparator<byte[]> BYTES_COMPARATOR = ByteUtils::compare;
   public static final int SIZE_OF_BYTE = 1;
   public static final int SIZE_OF_BOOLEAN = 1;
   public static final int SIZE_OF_SHORT = java.lang.Short.SIZE / java.lang.Byte.SIZE;
@@ -204,5 +204,5 @@ public final class ByteUtil {
               + expectedSize);
   }
 
-  private ByteUtil() {}
+  private ByteUtils() {}
 }

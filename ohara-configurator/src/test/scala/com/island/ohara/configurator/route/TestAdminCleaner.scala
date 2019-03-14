@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.mockito.Mockito._
 import org.scalatest.Matchers
@@ -37,7 +37,7 @@ class TestAdminCleaner extends SmallTest with Matchers {
     when(fakeAdmin2.close()).thenAnswer(_ => _closed.set(true))
     try {
       cleaner.add(fakeAdmin2)
-      CommonUtil.await(() => _closed.get(), java.time.Duration.ofMillis(timeout * 5))
+      CommonUtils.await(() => _closed.get(), java.time.Duration.ofMillis(timeout * 5))
     } finally {
       cleaner.close()
       cleaner.executor.isTerminated shouldBe true

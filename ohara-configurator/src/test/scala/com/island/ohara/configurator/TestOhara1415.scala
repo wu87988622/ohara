@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationReque
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -57,7 +57,7 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = Some(CommonUtil.randomString(10)),
+          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = "asdasdasd",
           schema = Seq.empty,
@@ -90,7 +90,7 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = Some(CommonUtil.randomString(10)),
+          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = classOf[DumbSink].getName,
           schema = Seq.empty,
@@ -101,7 +101,7 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
 
     result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).start(connector.id))
 
-    CommonUtil.await(
+    CommonUtils.await(
       () => {
         try {
           val c =

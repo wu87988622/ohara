@@ -17,7 +17,7 @@
 package com.island.ohara.client.ftp
 
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -30,7 +30,7 @@ class TestIllegalFtpClient extends MediumTest with Matchers {
     FtpClient
       .builder()
       // login ftp server with an invalid account and then see what happens :)
-      .user(CommonUtil.randomString(10))
+      .user(CommonUtils.randomString(10))
       .password(server.password)
       .hostname(server.hostname)
       .port(server.port)
@@ -46,7 +46,7 @@ class TestIllegalFtpClient extends MediumTest with Matchers {
   def testNonExist(): Unit = an[Throwable] should be thrownBy client.nonExist("/")
 
   @Test
-  def testMkDir(): Unit = an[Throwable] should be thrownBy client.mkdir(s"/${CommonUtil.randomString(10)}")
+  def testMkDir(): Unit = an[Throwable] should be thrownBy client.mkdir(s"/${CommonUtils.randomString(10)}")
 
   @Test
   def testWorkingFolder(): Unit = an[Throwable] should be thrownBy client.workingFolder()
@@ -61,19 +61,19 @@ class TestIllegalFtpClient extends MediumTest with Matchers {
   def testTmpFolder(): Unit = an[Throwable] should be thrownBy client.tmpFolder()
 
   @Test
-  def testOpen(): Unit = an[Throwable] should be thrownBy client.open(s"/${CommonUtil.randomString(10)}")
+  def testOpen(): Unit = an[Throwable] should be thrownBy client.open(s"/${CommonUtils.randomString(10)}")
 
   @Test
-  def testWrite(): Unit = an[Throwable] should be thrownBy client.append(s"/${CommonUtil.randomString(10)}")
+  def testWrite(): Unit = an[Throwable] should be thrownBy client.append(s"/${CommonUtils.randomString(10)}")
 
   @Test
-  def testReMkdir(): Unit = an[Throwable] should be thrownBy client.reMkdir(s"/${CommonUtil.randomString(10)}")
+  def testReMkdir(): Unit = an[Throwable] should be thrownBy client.reMkdir(s"/${CommonUtils.randomString(10)}")
 
   @Test
-  def testDelete(): Unit = an[Throwable] should be thrownBy client.delete(s"/${CommonUtil.randomString(10)}")
+  def testDelete(): Unit = an[Throwable] should be thrownBy client.delete(s"/${CommonUtils.randomString(10)}")
 
   @Test
-  def testAttach(): Unit = an[Throwable] should be thrownBy client.attach(s"/${CommonUtil.randomString(10)}", "abc")
+  def testAttach(): Unit = an[Throwable] should be thrownBy client.attach(s"/${CommonUtils.randomString(10)}", "abc")
 
   @After
   def tearDown(): Unit = {

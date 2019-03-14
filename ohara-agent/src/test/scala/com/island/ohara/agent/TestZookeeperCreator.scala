@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -99,20 +99,20 @@ class TestZookeeperCreator extends SmallTest with Matchers {
   def testNameLength(): Unit = {
     // pass
     zkCreator()
-      .clusterName(CommonUtil.randomString(10))
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
+      .clusterName(CommonUtils.randomString(10))
+      .imageName(CommonUtils.randomString(10))
+      .peerPort(CommonUtils.availablePort())
+      .clientPort(CommonUtils.availablePort())
+      .electionPort(CommonUtils.availablePort())
       .nodeNames(Seq("asdasd"))
       .create()
 
     an[IllegalArgumentException] should be thrownBy zkCreator()
-      .clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
-      .imageName(CommonUtil.randomString(10))
-      .peerPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
-      .electionPort(CommonUtil.availablePort())
+      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+      .imageName(CommonUtils.randomString(10))
+      .peerPort(CommonUtils.availablePort())
+      .clientPort(CommonUtils.availablePort())
+      .electionPort(CommonUtils.availablePort())
       .nodeNames(Seq("asdasd"))
       .create()
   }

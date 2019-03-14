@@ -18,7 +18,7 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
@@ -147,7 +147,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     try {
       val data = (0 to 100).map(_.toString)
       (0 until numberOfInputs).foreach(index =>
-        ftpClient.attach(CommonUtil.path(props.inputFolder, index.toString), data))
+        ftpClient.attach(CommonUtils.path(props.inputFolder, index.toString), data))
     } finally ftpClient.close()
 
     val task = createTask()
@@ -156,7 +156,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testToRow(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val task = createTask()
     task.cache = new FakeOffsetCache
@@ -166,7 +166,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testToRowIfAllCached(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     setupInputData(path)
     val task = createTask()
     task.cache = new OffsetCache {
@@ -182,7 +182,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testHandleCompletedFile(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     setupInputData(path)
     val task = createTask()
     task.handleCompletedFile(path)
@@ -191,7 +191,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testHandleErrorFile(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     setupInputData(path)
     val task = createTask()
     task.handleErrorFile(path)
@@ -200,7 +200,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testTransform(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val task = createTask()
     task.transform(data) shouldBe data.map {
@@ -210,7 +210,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testTransformWithFullSchema(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val schema = data.head._2.map(_.name).zipWithIndex.map {
       case (name: String, index: Int) => Column.newBuilder().name(name).dataType(DataType.STRING).order(index).build()
@@ -232,7 +232,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   @Test
   def testTransformWithSingleColumn(): Unit = {
-    val path = CommonUtil.path(props.inputFolder, methodName)
+    val path = CommonUtils.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val column = data.head._2
       .map(_.name)

@@ -17,7 +17,7 @@
 package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.VersionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -27,7 +27,7 @@ object WorkerApi {
   /**
     * the default docker image used to run containers of worker cluster
     */
-  val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtil.VERSION}"
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
   /**
     * bound by worker. It supplies the restful APIs of worker.

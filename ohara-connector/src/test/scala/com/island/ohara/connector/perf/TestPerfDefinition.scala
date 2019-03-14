@@ -17,7 +17,7 @@
 package com.island.ohara.connector.perf
 
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.ConnectorUtils
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
@@ -37,9 +37,9 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
     val response = result(
       workerClient
         .connectorValidator()
-        .name(CommonUtil.randomString(5))
+        .name(CommonUtils.randomString(5))
         .numberOfTasks(1)
-        .topicName(CommonUtil.randomString(5))
+        .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[PerfSource])
         .run())
 

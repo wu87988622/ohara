@@ -20,7 +20,7 @@ import java.util.Objects
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -123,7 +123,7 @@ object Collie {
       * @return this creator
       */
     def imageName(imageName: String): ClusterCreator.this.type = {
-      this.imageName = CommonUtil.requireNonEmpty(imageName)
+      this.imageName = CommonUtils.requireNonEmpty(imageName)
       this
     }
 
@@ -133,7 +133,7 @@ object Collie {
       * @return this creator
       */
     def clusterName(clusterName: String): ClusterCreator.this.type = {
-      this.clusterName = assertLength(CommonUtil.assertOnlyNumberAndChar(CommonUtil.requireNonEmpty(clusterName)))
+      this.clusterName = assertLength(CommonUtils.assertOnlyNumberAndChar(CommonUtils.requireNonEmpty(clusterName)))
       this
     }
 
@@ -157,7 +157,7 @@ object Collie {
     }
 
     /**
-      * CommonUtil.requireNonEmpty can't serve for scala so we write this method...by chia
+      * CommonUtils.requireNonEmpty can't serve for scala so we write this method...by chia
       * @param s input seq
       * @tparam E element type
       * @tparam T seq type

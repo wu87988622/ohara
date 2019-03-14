@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Rule
 import org.junit.rules.Timeout
 
@@ -56,5 +56,5 @@ class IntegrationTest extends OharaTest {
 object IntegrationTest {
   def result[T](f: Future[T]): T = Await.result(f, 300 seconds)
 
-  def await(f: () => Boolean): Unit = CommonUtil.await(() => f(), Duration.ofSeconds(300))
+  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(300))
 }

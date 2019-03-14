@@ -18,7 +18,7 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
@@ -27,20 +27,20 @@ class TestWorkerJson extends SmallTest with Matchers {
   @Test
   def testDefinition(): Unit = {
     val definition = Definition(
-      name = CommonUtil.randomString(5),
+      name = CommonUtils.randomString(5),
       valueType = "String",
       required = true,
       valueDefault = None,
-      documentation = CommonUtil.randomString(10)
+      documentation = CommonUtils.randomString(10)
     )
     DEFINITION_FORMAT.read(DEFINITION_FORMAT.write(definition)) shouldBe definition
 
     val definition2 = Definition(
-      name = CommonUtil.randomString(5),
+      name = CommonUtils.randomString(5),
       valueType = "String",
       required = false,
-      valueDefault = Some(CommonUtil.randomString(5)),
-      documentation = CommonUtil.randomString(10)
+      valueDefault = Some(CommonUtils.randomString(5)),
+      documentation = CommonUtils.randomString(10)
     )
     DEFINITION_FORMAT.read(DEFINITION_FORMAT.write(definition2)) shouldBe definition2
 
@@ -48,9 +48,9 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testDefinitionFromString(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val valueType = CommonUtil.randomString(5)
-    val documentation = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val valueType = CommonUtils.randomString(5)
+    val documentation = CommonUtils.randomString(5)
     val definition = DEFINITION_FORMAT.read(s"""
                                               |{
                                               |  "name":"$name",
@@ -68,9 +68,9 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testDefinitionFromStringWithNullDefaultValue(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val valueType = CommonUtil.randomString(5)
-    val documentation = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val valueType = CommonUtils.randomString(5)
+    val documentation = CommonUtils.randomString(5)
     val definition = DEFINITION_FORMAT.read(s"""
                                                |{
                                                |  "name":"$name",
@@ -88,9 +88,9 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testDefinitionFromStringWithoutDefaultValue(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val valueType = CommonUtil.randomString(5)
-    val documentation = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val valueType = CommonUtils.randomString(5)
+    val documentation = CommonUtils.randomString(5)
     val definition = DEFINITION_FORMAT.read(s"""
                                                |{
                                                |  "name":"$name",
@@ -108,18 +108,18 @@ class TestWorkerJson extends SmallTest with Matchers {
   @Test
   def testValidatedValue(): Unit = {
     val validatedValue = ValidatedValue(
-      name = CommonUtil.randomString(5),
+      name = CommonUtils.randomString(5),
       value = Some("String"),
-      errors = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
+      errors = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
     )
     VALIDATED_VALUE_FORMAT.read(VALIDATED_VALUE_FORMAT.write(validatedValue)) shouldBe validatedValue
   }
 
   @Test
   def testValidatedValueFromString(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val value = CommonUtil.randomString(5)
-    val error = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val value = CommonUtils.randomString(5)
+    val error = CommonUtils.randomString(5)
     val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
                                                |{
                                                |  "name":"$name",
@@ -134,8 +134,8 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testValidatedValueFromStringWithoutValue(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val error = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val error = CommonUtils.randomString(5)
     val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
@@ -149,8 +149,8 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testValidatedValueFromStringWithEmptyValue(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val error = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val error = CommonUtils.randomString(5)
     val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
@@ -165,8 +165,8 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testValidatedValueFromStringWithNullValue(): Unit = {
-    val name = CommonUtil.randomString(5)
-    val error = CommonUtil.randomString(5)
+    val name = CommonUtils.randomString(5)
+    val error = CommonUtils.randomString(5)
     val validatedValue = VALIDATED_VALUE_FORMAT.read(s"""
                                                         |{
                                                         |  "name":"$name",
@@ -180,9 +180,9 @@ class TestWorkerJson extends SmallTest with Matchers {
   }
   @Test
   def testConfigValidation(): Unit = {
-    val configNames = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
+    val configNames = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val configValidation = ConfigValidationResponse(
-      className = CommonUtil.randomString(5),
+      className = CommonUtils.randomString(5),
       definitions = configNames.map(
         name =>
           Definition(
@@ -190,14 +190,14 @@ class TestWorkerJson extends SmallTest with Matchers {
             valueType = "String",
             required = true,
             valueDefault = None,
-            documentation = CommonUtil.randomString(10)
+            documentation = CommonUtils.randomString(10)
         )),
       validatedValues = configNames.map(
         name =>
           ValidatedValue(
             name = name,
             value = Some("String"),
-            errors = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
+            errors = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
         ))
     )
     val another = CONFIG_VALIDATED_RESPONSE_FORMAT.read(CONFIG_VALIDATED_RESPONSE_FORMAT.write(configValidation))
@@ -210,9 +210,9 @@ class TestWorkerJson extends SmallTest with Matchers {
 
   @Test
   def testConfigValidationWithUnmatchedSetting(): Unit = {
-    val configNames = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
+    val configNames = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val configValidation = ConfigValidationResponse(
-      className = CommonUtil.randomString(5),
+      className = CommonUtils.randomString(5),
       definitions = configNames.map(
         name =>
           Definition(
@@ -220,13 +220,13 @@ class TestWorkerJson extends SmallTest with Matchers {
             valueType = "String",
             required = true,
             valueDefault = None,
-            documentation = CommonUtil.randomString(10)
+            documentation = CommonUtils.randomString(10)
         )),
       validatedValues = Seq(
         ValidatedValue(
           name = configNames.head,
           value = Some("String"),
-          errors = Seq(CommonUtil.randomString(5), CommonUtil.randomString(5))
+          errors = Seq(CommonUtils.randomString(5), CommonUtils.randomString(5))
         ))
     )
 

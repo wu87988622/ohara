@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, Str
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -104,7 +104,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     res1.instances shouldBe 1
 
     // Test PUT method
-    val appId = CommonUtil.randomString(5)
+    val appId = CommonUtils.randomString(5)
     val req =
       StreamPropertyRequest(appId, Seq("from-topic"), Seq("to-topic"), 1)
     val res2 = awaitResult(accessStreamProperty.update(id, req))
@@ -122,7 +122,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
     val jarData = awaitResult(accessStreamList.upload(pipeline_id, filePath))
 
-    val appId = CommonUtil.randomString(5)
+    val appId = CommonUtils.randomString(5)
 
     var req = StreamPropertyRequest(appId, Seq("foo"), Seq("bar"), 0)
     accessStreamProperty.update(jarData.head.id, req)
@@ -182,7 +182,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val req2 = TopicCreationRequest.apply(Some(toTopic), Some(bkCluster), None, None)
     val to = awaitResult(accessTopic.add(req2)).id
 
-    val appId = CommonUtil.randomString(5)
+    val appId = CommonUtils.randomString(5)
     val req = StreamPropertyRequest(appId, Seq(from), Seq(to), 1)
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
     val res = awaitResult(accessStreamAction.start(jarData.head.id))

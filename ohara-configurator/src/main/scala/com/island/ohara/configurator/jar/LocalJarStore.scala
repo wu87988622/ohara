@@ -20,7 +20,7 @@ import java.io.File
 import java.net.URL
 
 import com.island.ohara.client.configurator.v0.JarApi.JarInfo
-import com.island.ohara.common.util.{CommonUtil, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.io.FileUtils
 
@@ -33,7 +33,7 @@ private[configurator] abstract class LocalJarStore(val homeFolder: String) exten
     def generateFolder(): File = {
       var rval: File = null
       while (rval == null) {
-        val id = CommonUtil.randomString(ID_LENGTH)
+        val id = CommonUtils.randomString(ID_LENGTH)
         val f = new File(homeFolder, id)
         if (!f.exists()) {
           if (!f.mkdir()) throw new IllegalArgumentException(s"fail to create folder on ${f.getAbsolutePath}")
@@ -102,7 +102,7 @@ private[configurator] abstract class LocalJarStore(val homeFolder: String) exten
 
   protected def doUrls(): Future[Map[String, URL]]
 
-  override def exist(id: String): Future[Boolean] = if (CommonUtil.isEmpty(id))
+  override def exist(id: String): Future[Boolean] = if (CommonUtils.isEmpty(id))
     Future.failed(new IllegalArgumentException("id can't by empty"))
   else Future.successful(new File(homeFolder, id).exists())
 
@@ -111,7 +111,7 @@ private[configurator] abstract class LocalJarStore(val homeFolder: String) exten
   else
     exist(id).flatMap(
       if (_) try {
-        CommonUtil.deleteFiles(new File(homeFolder, id))
+        CommonUtils.deleteFiles(new File(homeFolder, id))
         val folder = new File(homeFolder, id)
         if (!folder.mkdir()) throw new IllegalArgumentException(s"fail to create folder on $folder")
         val newFile = new File(folder, file.getName)
@@ -122,7 +122,7 @@ private[configurator] abstract class LocalJarStore(val homeFolder: String) exten
           id = id,
           name = newFile.getName,
           size = newFile.length(),
-          lastModified = CommonUtil.current()
+          lastModified = CommonUtils.current()
         )
         LOG.info(s"update $id by $plugin")
         Future.successful(plugin)

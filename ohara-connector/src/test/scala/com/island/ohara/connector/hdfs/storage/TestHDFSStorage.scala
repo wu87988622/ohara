@@ -18,17 +18,17 @@ package com.island.ohara.connector.hdfs.storage
 
 import java.io.{InputStream, OutputStream}
 
-import com.island.ohara.common.util.CommonUtil
-import com.island.ohara.testing.WithTestUtil
+import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.testing.WithTestUtils
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestHDFSStorage extends WithTestUtil with Matchers {
+class TestHDFSStorage extends WithTestUtils with Matchers {
   @Test
   def testHdfsStorage(): Unit = {
     val fileSystem: FileSystem = testUtil.hdfs.fileSystem
-    val hdfsTempDir: String = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val hdfsTempDir: String = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
     val hdfsStorage: Storage = new HDFSStorage(fileSystem)
     hdfsStorage.list(hdfsTempDir).size shouldBe 0
 

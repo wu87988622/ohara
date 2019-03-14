@@ -21,7 +21,7 @@ import static com.wix.mysql.config.Charset.UTF8;
 import static com.wix.mysql.config.MysqldConfig.aMysqldConfig;
 import static com.wix.mysql.distribution.Version.v5_7_latest;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import com.wix.mysql.EmbeddedMysql;
 import com.wix.mysql.config.MysqldConfig;
@@ -62,25 +62,25 @@ public interface Database extends Releasable {
 
     @com.island.ohara.common.annotations.Optional("default is user")
     public Builder databaseName(String databaseName) {
-      this.databaseName = CommonUtil.requireNonEmpty(databaseName);
+      this.databaseName = CommonUtils.requireNonEmpty(databaseName);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is user")
     public Builder user(String user) {
-      this.user = CommonUtil.requireNonEmpty(user);
+      this.user = CommonUtils.requireNonEmpty(user);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is password")
     public Builder password(String password) {
-      this.password = CommonUtil.requireNonEmpty(password);
+      this.password = CommonUtils.requireNonEmpty(password);
       return this;
     }
 
     @com.island.ohara.common.annotations.Optional("default is random port")
     public Builder port(int port) {
-      this.port = CommonUtil.requirePositiveInt(port);
+      this.port = CommonUtils.requirePositiveInt(port);
       return this;
     }
 
@@ -89,11 +89,11 @@ public interface Database extends Releasable {
           aMysqldConfig(v5_7_latest)
               .withCharset(UTF8)
               .withUser(user, password)
-              .withTimeZone(CommonUtil.timezone())
+              .withTimeZone(CommonUtils.timezone())
               .withTimeout(2, TimeUnit.MINUTES)
               .withServerVariable("max_connect_errors", 666)
-              .withTempDir(CommonUtil.createTempDir("local_mysql").getAbsolutePath())
-              .withPort(CommonUtil.resolvePort(port))
+              .withTempDir(CommonUtils.createTempDir("local_mysql").getAbsolutePath())
+              .withPort(CommonUtils.resolvePort(port))
               // make mysql use " replace '
               // see https://stackoverflow.com/questions/13884854/mysql-double-quoted-table-names
               .withServerVariable("sql-mode", "ANSI_QUOTES")
@@ -110,7 +110,7 @@ public interface Database extends Releasable {
 
         @Override
         public String hostname() {
-          return CommonUtil.hostname();
+          return CommonUtils.hostname();
         }
 
         @Override

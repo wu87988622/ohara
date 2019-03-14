@@ -17,7 +17,7 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.annotations.Nullable;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -31,11 +31,11 @@ public class Definition {
 
   private Definition(
       String name, Type valueType, boolean required, Object valueDefault, String documentation) {
-    this.name = CommonUtil.requireNonEmpty(name);
+    this.name = CommonUtils.requireNonEmpty(name);
     this.valueType = Objects.requireNonNull(valueType);
     this.required = required;
     this.valueDefault = valueDefault;
-    this.documentation = CommonUtil.requireNonEmpty(documentation);
+    this.documentation = CommonUtils.requireNonEmpty(documentation);
   }
 
   public String name() {
@@ -99,7 +99,7 @@ public class Definition {
     private Builder() {}
 
     public Builder name(String name) {
-      this.name = CommonUtil.requireNonEmpty(name);
+      this.name = CommonUtils.requireNonEmpty(name);
       return this;
     }
 
@@ -130,7 +130,7 @@ public class Definition {
     }
 
     public Builder documentation(String documentation) {
-      this.documentation = CommonUtil.requireNonEmpty(documentation);
+      this.documentation = CommonUtils.requireNonEmpty(documentation);
       return this;
     }
 

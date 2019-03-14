@@ -23,7 +23,7 @@ import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, pa
 import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0.{ConnectorApi, Parameters}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
 import com.island.ohara.kafka.connector.ConnectorUtils
@@ -93,7 +93,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
             Future {
               Seq(
                 try {
-                  val name = CommonUtil.randomString(10)
+                  val name = CommonUtils.randomString(10)
                   val dockerClient = DockerClient
                     .builder()
                     .hostname(req.hostname)
@@ -107,8 +107,8 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
 
                     // TODO: should we directly reject the node which doesn't have hello-world image??? by chia
                     def checkImage(): Boolean = {
-                      val endTime = CommonUtil.current() + 3 * 1000 // 3 seconds to timeout
-                      while (endTime >= CommonUtil.current()) {
+                      val endTime = CommonUtils.current() + 3 * 1000 // 3 seconds to timeout
+                      while (endTime >= CommonUtils.current()) {
                         if (dockerClient.imageNames().contains(s"$helloWorldImage:latest")) return true
                         else TimeUnit.SECONDS.sleep(1)
                       }

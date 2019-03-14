@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.client.configurator.v0.ContainerApi._
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
 
@@ -31,8 +31,9 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
     extends BasicAccess(prefixPath) {
 
   private[this] def _clusterName(name: String): String =
-    CommonUtil.requireNonEmpty(name, () => "cluster name can't be empty")
-  private[this] def _nodeName(name: String): String = CommonUtil.requireNonEmpty(name, () => "node name can't be empty")
+    CommonUtils.requireNonEmpty(name, () => "cluster name can't be empty")
+  private[this] def _nodeName(name: String): String =
+    CommonUtils.requireNonEmpty(name, () => "node name can't be empty")
 
   def get(clusterName: String): Future[Seq[ContainerInfo]] =
     exec.get[Seq[ContainerInfo], ErrorApi.Error](

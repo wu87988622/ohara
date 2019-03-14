@@ -16,7 +16,7 @@
 
 package com.island.ohara.common.data;
 
-import com.island.ohara.common.util.ByteUtil;
+import com.island.ohara.common.util.ByteUtils;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
@@ -76,7 +76,7 @@ public interface Cell<T> {
           // java can't do deep comparison for byte array...
           if (value() instanceof byte[] && that.value() instanceof byte[])
             return name().equals(that.name())
-                && ByteUtil.equals((byte[]) value(), (byte[]) that.value());
+                && ByteUtils.equals((byte[]) value(), (byte[]) that.value());
           return name().equals(that.name()) && value().equals(that.value());
         }
         return false;

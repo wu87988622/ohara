@@ -17,7 +17,7 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,8 +55,8 @@ public class TestDefinition extends SmallTest {
 
   @Test
   public void testEqualWithValueDefault() {
-    String name = CommonUtil.randomString(5);
-    String documentation = CommonUtil.randomString(5);
+    String name = CommonUtils.randomString(5);
+    String documentation = CommonUtils.randomString(5);
     Definition def =
         Definition.newBuilder()
             .name(name)
@@ -72,9 +72,9 @@ public class TestDefinition extends SmallTest {
 
   @Test
   public void testEqualWithoutValueDefault() {
-    String name = CommonUtil.randomString(5);
-    String documentation = CommonUtil.randomString(5);
-    String valueDefault = CommonUtil.randomString(5);
+    String name = CommonUtils.randomString(5);
+    String documentation = CommonUtils.randomString(5);
+    String valueDefault = CommonUtils.randomString(5);
     Definition def =
         Definition.newBuilder()
             .name(name)

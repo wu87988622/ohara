@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator.Store
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
@@ -35,8 +35,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.reflect.{ClassTag, classTag}
-private[route] object RouteUtil {
-  val LOG = Logger(RouteUtil.getClass)
+private[route] object RouteUtils {
+  val LOG = Logger(RouteUtils.getClass)
   // This is a query parameter.
   type TargetCluster = Option[String]
   type Id = String
@@ -57,7 +57,7 @@ private[route] object RouteUtil {
     rm2: RootJsonFormat[Res]) = post {
     entity(as[Req]) { req =>
       parameter(Parameters.CLUSTER_NAME.?)(name =>
-        onSuccess(hook(name, CommonUtil.uuid(), req).flatMap(store.add))(value => complete(value)))
+        onSuccess(hook(name, CommonUtils.uuid(), req).flatMap(store.add))(value => complete(value)))
     }
   }
 

@@ -26,7 +26,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
-import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -87,7 +87,8 @@ private object K8SClusterCollieImpl {
       * @param clusterName cluster name
       * @return a formatted string. form: ${clusterName}-${service}-${index}
       */
-    def format(clusterName: String): String = s"$clusterName-${service.name}-${CommonUtil.randomString(LENGTH_OF_UUID)}"
+    def format(clusterName: String): String =
+      s"$clusterName-${service.name}-${CommonUtils.randomString(LENGTH_OF_UUID)}"
 
     protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): T
 

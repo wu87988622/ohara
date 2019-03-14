@@ -19,7 +19,7 @@ package com.island.ohara.client
 import java.time.Duration
 
 import com.island.ohara.common.data.{Cell, Row}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -28,10 +28,10 @@ package object kafka {
 
   def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
-  def await(f: () => Boolean): Unit = CommonUtil.await(() => f(), Duration.ofSeconds(300))
+  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(300))
 
   def assertExist(workerClient: WorkerClient, name: String): Boolean =
-    CommonUtil.await(() => result(workerClient.exist(name)) == true, java.time.Duration.ofSeconds(30))
+    CommonUtils.await(() => result(workerClient.exist(name)) == true, java.time.Duration.ofSeconds(30))
 
   val OUTPUT = "simple.row.connector.output"
   val BROKER = "simple.row.connector.broker"

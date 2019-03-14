@@ -19,7 +19,7 @@ package com.island.ohara.client.ftp
 import java.nio.charset.Charset
 
 import com.island.ohara.common.rule.MediumTest
-import com.island.ohara.common.util.{ByteUtil, Releasable}
+import com.island.ohara.common.util.{ByteUtils, Releasable}
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -128,7 +128,7 @@ class TestFtpClient extends MediumTest with Matchers {
 
   @Test
   def testDeleteFolder(): Unit = {
-    val data = ByteUtil.toBytes(methodName)
+    val data = ByteUtils.toBytes(methodName)
     val folder = s"/$methodName"
     client.mkdir(folder)
     client.upload(s"$folder/file", data)

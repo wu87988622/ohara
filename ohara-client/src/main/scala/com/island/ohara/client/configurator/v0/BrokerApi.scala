@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.VersionUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
 
@@ -26,7 +26,7 @@ object BrokerApi {
   /**
     * the default docker image used to run containers of broker cluster
     */
-  val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtil.VERSION}"
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtils.VERSION}"
 
   /**
     * client port bound by broker is used to communicate to client's producer/consumer

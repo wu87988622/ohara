@@ -24,46 +24,46 @@ import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestByteUtil extends SmallTest {
+public class TestByteUtils extends SmallTest {
 
   @Test
   public void testBoolean() {
-    Assert.assertTrue(ByteUtil.toBoolean(ByteUtil.toBytes(true)));
-    Assert.assertFalse(ByteUtil.toBoolean(ByteUtil.toBytes(false)));
+    Assert.assertTrue(ByteUtils.toBoolean(ByteUtils.toBytes(true)));
+    Assert.assertFalse(ByteUtils.toBoolean(ByteUtils.toBytes(false)));
   }
 
   @Test
   public void testShort() {
     List<Short> data =
         Arrays.asList(Short.MIN_VALUE, (short) -10, (short) 0, (short) 10, Short.MAX_VALUE);
-    data.forEach(v -> Assert.assertEquals((short) v, ByteUtil.toShort(ByteUtil.toBytes(v))));
+    data.forEach(v -> Assert.assertEquals((short) v, ByteUtils.toShort(ByteUtils.toBytes(v))));
   }
 
   @Test
   public void testInt() {
     List<Integer> data = Arrays.asList(Integer.MIN_VALUE, -10, 0, 10, Integer.MAX_VALUE);
-    data.forEach(v -> Assert.assertEquals((int) v, ByteUtil.toInt(ByteUtil.toBytes(v))));
+    data.forEach(v -> Assert.assertEquals((int) v, ByteUtils.toInt(ByteUtils.toBytes(v))));
   }
 
   @Test
   public void testLong() {
     List<Long> data =
         Arrays.asList(Long.MIN_VALUE, (long) -10, (long) 0, (long) 10, Long.MAX_VALUE);
-    data.forEach(v -> Assert.assertEquals((long) v, ByteUtil.toLong(ByteUtil.toBytes(v))));
+    data.forEach(v -> Assert.assertEquals((long) v, ByteUtils.toLong(ByteUtils.toBytes(v))));
   }
 
   @Test
   public void testFloat() {
     List<Float> data =
         Arrays.asList(Float.MIN_VALUE, (float) -10, (float) 0, (float) 10, Float.MAX_VALUE);
-    data.forEach(v -> Assert.assertEquals(v, ByteUtil.toFloat(ByteUtil.toBytes(v)), 0.0));
+    data.forEach(v -> Assert.assertEquals(v, ByteUtils.toFloat(ByteUtils.toBytes(v)), 0.0));
   }
 
   @Test
   public void testDouble() {
     List<Double> data =
         Arrays.asList(Double.MIN_VALUE, (double) -10, (double) 0, (double) 10, Double.MAX_VALUE);
-    data.forEach(v -> Assert.assertEquals(v, ByteUtil.toDouble(ByteUtil.toBytes(v)), 0.0));
+    data.forEach(v -> Assert.assertEquals(v, ByteUtils.toDouble(ByteUtils.toBytes(v)), 0.0));
   }
 
   @Test
@@ -75,27 +75,27 @@ public class TestByteUtil extends SmallTest {
             "aaaaa",
             "Ccccc",
             String.valueOf(Double.MAX_VALUE));
-    data.forEach(v -> Assert.assertEquals(v, ByteUtil.toString(ByteUtil.toBytes(v))));
+    data.forEach(v -> Assert.assertEquals(v, ByteUtils.toString(ByteUtils.toBytes(v))));
   }
 
   @Test
   public void testBooleanComparator() {
-    List<byte[]> data = Arrays.asList(ByteUtil.toBytes(true), ByteUtil.toBytes(false));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    List<byte[]> data = Arrays.asList(ByteUtils.toBytes(true), ByteUtils.toBytes(false));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
   }
 
   @Test
   public void testShortComparator() {
     List<byte[]> data =
         Stream.of(Short.MIN_VALUE, (short) -10, (short) 0, (short) 10, Short.MAX_VALUE)
-            .map(ByteUtil::toBytes)
+            .map(ByteUtils::toBytes)
             .collect(Collectors.toList());
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
-    short lhs = ByteUtil.toShort(ByteUtil.toBytes((short) -10));
-    short rhs = ByteUtil.toShort(ByteUtil.toBytes((short) 20));
+    short lhs = ByteUtils.toShort(ByteUtils.toBytes((short) -10));
+    short rhs = ByteUtils.toShort(ByteUtils.toBytes((short) 20));
     Assert.assertTrue(lhs < rhs);
   }
 
@@ -103,13 +103,13 @@ public class TestByteUtil extends SmallTest {
   public void testIntComparator() {
     List<byte[]> data =
         Stream.of(Integer.MIN_VALUE, -10, 0, 10, Integer.MAX_VALUE)
-            .map(ByteUtil::toBytes)
+            .map(ByteUtils::toBytes)
             .collect(Collectors.toList());
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
-    int lhs = ByteUtil.toInt(ByteUtil.toBytes(-10));
-    int rhs = ByteUtil.toInt(ByteUtil.toBytes(20));
+    int lhs = ByteUtils.toInt(ByteUtils.toBytes(-10));
+    int rhs = ByteUtils.toInt(ByteUtils.toBytes(20));
     Assert.assertTrue(lhs < rhs);
   }
 
@@ -117,13 +117,13 @@ public class TestByteUtil extends SmallTest {
   public void testLongComparator() {
     List<byte[]> data =
         Stream.of(Long.MIN_VALUE, (long) -10, (long) 0, (long) 10, Long.MAX_VALUE)
-            .map(ByteUtil::toBytes)
+            .map(ByteUtils::toBytes)
             .collect(Collectors.toList());
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
-    long lhs = ByteUtil.toLong(ByteUtil.toBytes((long) -10));
-    long rhs = ByteUtil.toLong(ByteUtil.toBytes((long) 20));
+    long lhs = ByteUtils.toLong(ByteUtils.toBytes((long) -10));
+    long rhs = ByteUtils.toLong(ByteUtils.toBytes((long) 20));
     Assert.assertTrue(lhs < rhs);
   }
 
@@ -131,13 +131,13 @@ public class TestByteUtil extends SmallTest {
   public void testFloatComparator() {
     List<byte[]> data =
         Stream.of(Float.MIN_VALUE, (float) -10, (float) 0, (float) 10, Float.MAX_VALUE)
-            .map(ByteUtil::toBytes)
+            .map(ByteUtils::toBytes)
             .collect(Collectors.toList());
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
-    float lhs = ByteUtil.toFloat(ByteUtil.toBytes((float) -10));
-    float rhs = ByteUtil.toFloat(ByteUtil.toBytes((float) 20));
+    float lhs = ByteUtils.toFloat(ByteUtils.toBytes((float) -10));
+    float rhs = ByteUtils.toFloat(ByteUtils.toBytes((float) 20));
     Assert.assertTrue(lhs < rhs);
   }
 
@@ -145,13 +145,13 @@ public class TestByteUtil extends SmallTest {
   public void testDoubleComparator() {
     List<byte[]> data =
         Stream.of(Double.MIN_VALUE, (double) -10, (double) 0, (double) 10, Double.MAX_VALUE)
-            .map(ByteUtil::toBytes)
+            .map(ByteUtils::toBytes)
             .collect(Collectors.toList());
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
-    double lhs = ByteUtil.toDouble(ByteUtil.toBytes((double) -10));
-    double rhs = ByteUtil.toDouble(ByteUtil.toBytes((double) 20));
+    double lhs = ByteUtils.toDouble(ByteUtils.toBytes((double) -10));
+    double rhs = ByteUtils.toDouble(ByteUtils.toBytes((double) 20));
     Assert.assertTrue(lhs < rhs);
   }
 
@@ -164,14 +164,14 @@ public class TestByteUtil extends SmallTest {
                 "aaaaa",
                 "Ccccc",
                 String.valueOf(Double.MAX_VALUE))
-            .map(ByteUtil::toBytes)
+            .map(ByteUtils::toBytes)
             .collect(Collectors.toList());
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.BYTES_COMPARATOR.compare(v, v)));
-    data.forEach(v -> Assert.assertEquals(0, ByteUtil.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
+    data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
-    byte[] lhs = ByteUtil.toBytes("abc");
-    byte[] rhs = ByteUtil.toBytes("bc");
-    Assert.assertTrue(ByteUtil.compare(lhs, rhs) < 0);
-    Assert.assertTrue(ByteUtil.BYTES_COMPARATOR.compare(lhs, rhs) < 0);
+    byte[] lhs = ByteUtils.toBytes("abc");
+    byte[] rhs = ByteUtils.toBytes("bc");
+    Assert.assertTrue(ByteUtils.compare(lhs, rhs) < 0);
+    Assert.assertTrue(ByteUtils.BYTES_COMPARATOR.compare(lhs, rhs) < 0);
   }
 }

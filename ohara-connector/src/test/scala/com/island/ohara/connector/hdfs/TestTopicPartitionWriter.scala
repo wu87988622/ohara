@@ -19,18 +19,18 @@ package com.island.ohara.connector.hdfs
 import java.io.OutputStream
 
 import com.island.ohara.common.data.{Cell, Column, Row}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.storage.{HDFSStorage, Storage}
 import com.island.ohara.connector.hdfs.text.RecordWriterOutput
 import com.island.ohara.kafka.connector.{RowSinkContext, RowSinkRecord, TopicPartition}
-import com.island.ohara.testing.WithTestUtil
+import com.island.ohara.testing.WithTestUtils
 import org.junit.Test
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.Matchers
 import org.scalatest.mockito.MockitoSugar
 
-class TestTopicPartitionWriter extends WithTestUtil with Matchers with MockitoSugar {
+class TestTopicPartitionWriter extends WithTestUtils with Matchers with MockitoSugar {
 
   @Test
   def testOpenTempFile(): Unit = {
@@ -131,7 +131,7 @@ class TestTopicPartitionWriter extends WithTestUtil with Matchers with MockitoSu
     val topicPartitionWriter =
       new TopicPartitionWriter(hdfsSinkConnectorConfig, sinkTaskContext, topicPartition, storage)
 
-    val startTime: Long = CommonUtil.current() - 1000
+    val startTime: Long = CommonUtils.current() - 1000
     topicPartitionWriter.isTimeCommit(startTime, 2000) shouldBe false //Not commit
     topicPartitionWriter.isTimeCommit(startTime, 1000) shouldBe true
   }

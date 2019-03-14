@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,8 +70,8 @@ public interface SshdServer extends Releasable {
   }
 
   static SshdServer local(int port, List<CommandHandler> handlers) {
-    String _user = CommonUtil.randomString();
-    String _password = CommonUtil.randomString();
+    String _user = CommonUtils.randomString();
+    String _password = CommonUtils.randomString();
     SshServer sshd = SshServer.setUpDefaultServer();
     sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
     sshd.setPasswordAuthenticator(
@@ -139,7 +139,7 @@ public interface SshdServer extends Releasable {
                               }
                             })
                 .orElseGet(() -> ProcessShellCommandFactory.INSTANCE.createCommand(command)));
-    sshd.setHost(CommonUtil.hostname());
+    sshd.setHost(CommonUtils.hostname());
     sshd.setPort(Math.max(port, 0));
     try {
       sshd.start();

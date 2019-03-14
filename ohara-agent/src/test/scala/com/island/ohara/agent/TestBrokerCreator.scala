@@ -18,7 +18,7 @@ package com.island.ohara.agent
 
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -104,20 +104,20 @@ class TestBrokerCreator extends SmallTest with Matchers {
   def testNameLength(): Unit = {
     // pass
     bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
+      .imageName(CommonUtils.randomString(10))
+      .clusterName(CommonUtils.randomString(10))
       .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
+      .exporterPort(CommonUtils.availablePort())
+      .clientPort(CommonUtils.availablePort())
       .nodeNames(Seq("abc"))
       .create()
 
     an[IllegalArgumentException] should be thrownBy bkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+      .imageName(CommonUtils.randomString(10))
+      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
       .zookeeperClusterName("zk")
-      .exporterPort(CommonUtil.availablePort())
-      .clientPort(CommonUtil.availablePort())
+      .exporterPort(CommonUtils.availablePort())
+      .clientPort(CommonUtils.availablePort())
       .nodeNames(Seq("abc"))
       .create()
   }

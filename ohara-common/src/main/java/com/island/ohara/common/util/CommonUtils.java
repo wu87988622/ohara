@@ -32,8 +32,8 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class CommonUtil {
-  private static final Logger logger = LoggerFactory.getLogger(CommonUtil.class);
+public final class CommonUtils {
+  private static final Logger logger = LoggerFactory.getLogger(CommonUtils.class);
 
   /** An interface used to represent current time. */
   @FunctionalInterface
@@ -480,6 +480,6 @@ public final class CommonUtil {
     else throw new IllegalArgumentException("Only number and char are accepted!!! actual:" + s);
   }
 
-  /** disable to instantiate CommonUtil. */
-  private CommonUtil() {}
+  /** disable to instantiate CommonUtils. */
+  private CommonUtils() {}
 }

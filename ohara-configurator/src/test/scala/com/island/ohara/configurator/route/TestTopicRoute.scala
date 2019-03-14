@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -56,7 +56,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     // test add
     result(topicApi.list()).size shouldBe 0
-    val request = TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+    val request = TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                                        brokerClusterName = None,
                                        numberOfPartitions = None,
                                        numberOfReplications = None)
@@ -66,7 +66,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     compare2Response(response, result(topicApi.get(response.id)))
 
     // test update
-    val anotherRequest = TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+    val anotherRequest = TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                                               brokerClusterName = None,
                                               numberOfPartitions = None,
                                               numberOfReplications = None)
@@ -126,8 +126,8 @@ class TestTopicRoute extends SmallTest with Matchers {
   def createTopicOnNonexistentCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
       topicApi.add(
-        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
-                             brokerClusterName = Some(CommonUtil.randomString(10)),
+        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
+                             brokerClusterName = Some(CommonUtils.randomString(10)),
                              numberOfPartitions = None,
                              numberOfReplications = None)))
   }
@@ -152,11 +152,11 @@ class TestTopicRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ZookeeperClusterCreationRequest(
-          name = CommonUtil.randomString(10),
+          name = CommonUtils.randomString(10),
           imageName = None,
-          clientPort = Some(CommonUtil.availablePort()),
-          electionPort = Some(CommonUtil.availablePort()),
-          peerPort = Some(CommonUtil.availablePort()),
+          clientPort = Some(CommonUtils.availablePort()),
+          electionPort = Some(CommonUtils.availablePort()),
+          peerPort = Some(CommonUtils.availablePort()),
           nodeNames = zk.nodeNames
         )))
 
@@ -167,7 +167,7 @@ class TestTopicRoute extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           BrokerClusterCreationRequest(
-            name = CommonUtil.randomString(10),
+            name = CommonUtils.randomString(10),
             imageName = None,
             zookeeperClusterName = Some(zk2.name),
             exporterPort = None,
@@ -177,13 +177,13 @@ class TestTopicRoute extends SmallTest with Matchers {
 
     an[IllegalArgumentException] should be thrownBy result(
       topicApi.add(
-        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                              brokerClusterName = None,
                              numberOfPartitions = None,
                              numberOfReplications = None)))
 
     topicApi.add(
-      TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+      TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                            brokerClusterName = Some(bk2.name),
                            numberOfPartitions = None,
                            numberOfReplications = None))
@@ -193,7 +193,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   def testPartitions(): Unit = {
     val topic0 = result(
       topicApi.add(
-        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                              brokerClusterName = None,
                              numberOfPartitions = None,
                              numberOfReplications = None)))
@@ -223,7 +223,7 @@ class TestTopicRoute extends SmallTest with Matchers {
   def testReplications(): Unit = {
     val topic0 = result(
       topicApi.add(
-        TopicCreationRequest(name = Some(CommonUtil.randomString(10)),
+        TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                              brokerClusterName = None,
                              numberOfPartitions = None,
                              numberOfReplications = None)))

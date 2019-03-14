@@ -18,9 +18,9 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.TopicApi._
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.route.RouteUtil._
+import com.island.ohara.configurator.route.RouteUtils._
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,7 +55,7 @@ private[configurator] object TopicRoute {
                               info.numberOfPartitions,
                               info.numberOfReplications,
                               cluster.name,
-                              CommonUtil.current())
+                              CommonUtils.current())
                 finally client.close()
               }
         }
@@ -63,7 +63,7 @@ private[configurator] object TopicRoute {
       .getOrElse(Future.failed(new NoSuchElementException(s"name is required")))
 
   def apply(implicit store: Store, brokerCollie: BrokerCollie): server.Route =
-    RouteUtil.basicRoute[TopicCreationRequest, TopicInfo](
+    RouteUtils.basicRoute[TopicCreationRequest, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       hookOfAdd = (targetCluster: TargetCluster, id: Id, request: TopicCreationRequest) =>
         hookOfAdd(id, updateBrokerClusterName(request, targetCluster)),
@@ -83,7 +83,7 @@ private[configurator] object TopicRoute {
                               info.numberOfPartitions,
                               info.numberOfReplications,
                               cluster.name,
-                              CommonUtil.current())
+                              CommonUtils.current())
                 finally client.close()
               } else if (requestNumberOfPartitions < previous.numberOfPartitions) {
               Releasable.close(client)

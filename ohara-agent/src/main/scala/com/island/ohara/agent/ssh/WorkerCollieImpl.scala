@@ -23,7 +23,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -96,14 +96,14 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
               .mkString(",")
 
             val existRoute: Map[String, String] = existNodes.map {
-              case (node, container) => container.hostname -> CommonUtil.address(node.name)
+              case (node, container) => container.hostname -> CommonUtils.address(node.name)
             }
             // add route in order to make broker node can connect to each other (and broker node).
             val route: Map[String, String] = newNodes.map {
               case (node, _) =>
-                node.name -> CommonUtil.address(node.name)
+                node.name -> CommonUtils.address(node.name)
             } ++ brokerContainers
-              .map(brokerContainer => brokerContainer.nodeName -> CommonUtil.address(brokerContainer.nodeName))
+              .map(brokerContainer => brokerContainer.nodeName -> CommonUtils.address(brokerContainer.nodeName))
               .toMap
 
             // update the route since we are adding new node to a running worker cluster

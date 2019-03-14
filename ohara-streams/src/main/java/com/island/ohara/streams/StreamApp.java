@@ -16,7 +16,7 @@
 
 package com.island.ohara.streams;
 
-import com.island.ohara.kafka.exception.CheckedExceptionUtil;
+import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.streams.ostream.LaunchImpl;
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public abstract class StreamApp {
    */
   public static void runStreamApp(Class<? extends StreamApp> theClass, Object... params) {
     if (StreamApp.class.isAssignableFrom(theClass)) {
-      CheckedExceptionUtil.wrap(() -> LaunchImpl.launchApplication(theClass, params));
+      CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(theClass, params));
     } else {
       throw new RuntimeException(
           "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
@@ -91,7 +91,7 @@ public abstract class StreamApp {
           Class.forName(entryClassName, false, Thread.currentThread().getContextClassLoader());
       if (StreamApp.class.isAssignableFrom(theClass)) {
         Class<? extends StreamApp> streamAppClass = theClass;
-        CheckedExceptionUtil.wrap(() -> LaunchImpl.launchApplication(streamAppClass));
+        CheckedExceptionUtils.wrap(() -> LaunchImpl.launchApplication(streamAppClass));
       } else {
         throw new RuntimeException(
             "Error: " + theClass + " is not a subclass of " + StreamApp.class.getName());
@@ -134,7 +134,7 @@ public abstract class StreamApp {
    * @param args arguments
    */
   public static void main(String[] args) {
-    CheckedExceptionUtil.wrap(
+    CheckedExceptionUtils.wrap(
         () -> {
           if (System.getenv(JAR_URL) == null) {
             throw new RuntimeException("It seems you are not running in Ohara Environment?");

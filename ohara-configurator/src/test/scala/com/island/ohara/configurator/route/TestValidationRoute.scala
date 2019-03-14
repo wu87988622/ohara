@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
   RdbValidationRequest
 }
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -43,16 +43,16 @@ class TestValidationRoute extends SmallTest with Matchers {
 
   @Test
   def validateConnector(): Unit = {
-    val className = CommonUtil.randomString(10)
+    val className = CommonUtils.randomString(10)
     val response = result(
       ValidationApi
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
         .verify(ConnectorValidationRequest(
-          name = CommonUtil.randomString(10),
+          name = CommonUtils.randomString(10),
           className = className,
-          topicNames = Seq(CommonUtil.randomString(10)),
+          topicNames = Seq(CommonUtils.randomString(10)),
           numberOfTasks = 1,
           workerClusterName = wkCluster.name,
           configs = Map.empty
@@ -79,7 +79,7 @@ class TestValidationRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(HdfsValidationRequest(uri = "file:///tmp", workerClusterName = Some(CommonUtil.randomString(10)))))
+        .verify(HdfsValidationRequest(uri = "file:///tmp", workerClusterName = Some(CommonUtils.randomString(10)))))
   }
 
   @Test
@@ -109,7 +109,7 @@ class TestValidationRoute extends SmallTest with Matchers {
           RdbValidationRequest(url = "fake_url",
                                user = "fake_user",
                                password = "fake_password",
-                               workerClusterName = Some(CommonUtil.randomString(10)))))
+                               workerClusterName = Some(CommonUtils.randomString(10)))))
   }
 
   @Test
@@ -141,7 +141,7 @@ class TestValidationRoute extends SmallTest with Matchers {
                                port = 22,
                                user = "fake_user",
                                password = "fake_password",
-                               workerClusterName = Some(CommonUtil.randomString(10)))))
+                               workerClusterName = Some(CommonUtils.randomString(10)))))
   }
 
   @Test

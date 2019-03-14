@@ -17,7 +17,7 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.util.Releasable;
-import com.island.ohara.kafka.exception.CheckedExceptionUtil;
+import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.kafka.exception.ExceptionHandler;
 import com.island.ohara.kafka.exception.OharaException;
 import com.island.ohara.kafka.exception.OharaExecutionException;
@@ -136,7 +136,7 @@ public interface BrokerClient extends Releasable {
 
           @Override
           public void create(String name) {
-            CheckedExceptionUtil.wrap(
+            CheckedExceptionUtils.wrap(
                 () ->
                     admin
                         .createTopics(
@@ -154,7 +154,7 @@ public interface BrokerClient extends Releasable {
       @Override
       public boolean exist(String topicName) {
 
-        return CheckedExceptionUtil.wrap(
+        return CheckedExceptionUtils.wrap(
             () ->
                 admin
                     .listTopics()
@@ -177,7 +177,7 @@ public interface BrokerClient extends Releasable {
 
       @Override
       public List<TopicDescription> topicDescriptions(List<String> names) {
-        return CheckedExceptionUtil.wrap(
+        return CheckedExceptionUtils.wrap(
             () -> {
               try {
                 return admin
@@ -240,7 +240,7 @@ public interface BrokerClient extends Releasable {
           Map<String, NewPartitions> map = new HashMap<>();
           map.put(topicName, NewPartitions.increaseTo(numberOfPartitions));
 
-          CheckedExceptionUtil.wrap(
+          CheckedExceptionUtils.wrap(
               () ->
                   admin.createPartitions(map).all().get(timeout.toMillis(), TimeUnit.MILLISECONDS),
               handler);
@@ -249,7 +249,7 @@ public interface BrokerClient extends Releasable {
 
       @Override
       public void deleteTopic(String topicName) {
-        CheckedExceptionUtil.wrap(
+        CheckedExceptionUtils.wrap(
             () ->
                 admin
                     .deleteTopics(Collections.singletonList(topicName))
@@ -259,7 +259,7 @@ public interface BrokerClient extends Releasable {
       }
 
       List<String> topicNames() {
-        return CheckedExceptionUtil.wrap(
+        return CheckedExceptionUtils.wrap(
             () ->
                 new ArrayList<>(
                     admin.listTopics().names().get(timeout.toMillis(), TimeUnit.MILLISECONDS)),
@@ -273,7 +273,7 @@ public interface BrokerClient extends Releasable {
 
       @Override
       public Map<String, Integer> brokerPorts() {
-        return CheckedExceptionUtil.wrap(
+        return CheckedExceptionUtils.wrap(
             () ->
                 admin
                     .describeCluster()

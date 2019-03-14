@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -65,9 +65,9 @@ class TestLogRoute extends SmallTest with Matchers {
 
   @Test
   def fetchLogFromUnknown(): Unit = {
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4ZookeeperCluster(CommonUtil.randomString(10)))
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4BrokerCluster(CommonUtil.randomString(10)))
-    an[IllegalArgumentException] should be thrownBy result(logApi.log4WorkerCluster(CommonUtil.randomString(10)))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4ZookeeperCluster(CommonUtils.randomString(10)))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4BrokerCluster(CommonUtils.randomString(10)))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4WorkerCluster(CommonUtils.randomString(10)))
   }
 
   @After

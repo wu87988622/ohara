@@ -20,7 +20,7 @@ import java.net.URL
 
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -193,26 +193,26 @@ class TestWorkerCreator extends SmallTest with Matchers {
   def testNameLength(): Unit = {
     // pass
     wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(10))
+      .imageName(CommonUtils.randomString(10))
+      .clusterName(CommonUtils.randomString(10))
       .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
+      .clientPort(CommonUtils.availablePort())
+      .groupId(CommonUtils.randomString(10))
+      .offsetTopicName(CommonUtils.randomString(10))
+      .statusTopicName(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
       .nodeNames(Seq("abc"))
       .create()
 
     an[IllegalArgumentException] should be thrownBy wkCreator()
-      .imageName(CommonUtil.randomString(10))
-      .clusterName(CommonUtil.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+      .imageName(CommonUtils.randomString(10))
+      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
       .brokerClusterName("bk")
-      .clientPort(CommonUtil.availablePort())
-      .groupId(CommonUtil.randomString(10))
-      .offsetTopicName(CommonUtil.randomString(10))
-      .statusTopicName(CommonUtil.randomString(10))
-      .configTopicName(CommonUtil.randomString(10))
+      .clientPort(CommonUtils.availablePort())
+      .groupId(CommonUtils.randomString(10))
+      .offsetTopicName(CommonUtils.randomString(10))
+      .statusTopicName(CommonUtils.randomString(10))
+      .configTopicName(CommonUtils.randomString(10))
       .nodeNames(Seq("abc"))
       .create()
   }

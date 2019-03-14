@@ -31,17 +31,17 @@ import java.util.stream.IntStream;
  * This class create a kafka services having 1 zk instance and 1 broker default. Also, this class
  * have many helper methods to make test more friendly.
  *
- * <p>{@code How to use this class: 1) create the OharaTestUtil with 1 broker (you can assign
- * arbitrary number from brokers) val testUtil = OharaTestUtil.localBrokers(1) 2) get the
+ * <p>{@code How to use this class: 1) create the OharaTestUtils with 1 broker (you can assign
+ * arbitrary number from brokers) val testUtil = OharaTestUtils.localBrokers(1) 2) get the
  * basic|producer|consumer OharaConfiguration val config = testUtil.producerConfig 3) instantiate
  * your producer or consumer val producer = new KafkaProducer<Array<Byte>, Array<Byte>>(config, new
  * ByteArraySerializer, new ByteArraySerializer) 4) do what you want for your producer and consumer
- * 5) close OharaTestUtil testUtil.close() }
+ * 5) close OharaTestUtils testUtil.close() }
  *
  * <p>see TestOharaTestUtil for more examples NOTED: the close() will shutdown all services
  * including the passed consumers (see run())
  */
-public class OharaTestUtil extends ReleaseOnce {
+public class OharaTestUtils extends ReleaseOnce {
   private Database database;
   private FtpServer ftpServer;
   private Hdfs hdfs;
@@ -49,7 +49,7 @@ public class OharaTestUtil extends ReleaseOnce {
   private Brokers brokers;
   private Workers workers;
 
-  private OharaTestUtil() {}
+  private OharaTestUtils() {}
 
   /**
    * Exposing the brokers connection. This list should be in the form <code>
@@ -129,7 +129,7 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  static OharaTestUtil broker() {
+  static OharaTestUtils broker() {
     return brokers(1);
   }
 
@@ -139,8 +139,8 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  static OharaTestUtil brokers(int numberOfBrokers) {
-    OharaTestUtil util = new OharaTestUtil();
+  static OharaTestUtils brokers(int numberOfBrokers) {
+    OharaTestUtils util = new OharaTestUtils();
     util.try2CreateBrokers(numberOfBrokers);
     return util;
   }
@@ -151,7 +151,7 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  static OharaTestUtil worker() {
+  static OharaTestUtils worker() {
     return workers(1, 1);
   }
 
@@ -163,8 +163,8 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  static OharaTestUtil workers(int numberOfBrokers, int numberOfWorkers) {
-    OharaTestUtil util = new OharaTestUtil();
+  static OharaTestUtils workers(int numberOfBrokers, int numberOfWorkers) {
+    OharaTestUtils util = new OharaTestUtils();
     util.try2CreateBrokers(numberOfBrokers);
     util.try2CreateWorkers(numberOfWorkers);
     return util;
@@ -175,7 +175,7 @@ public class OharaTestUtil extends ReleaseOnce {
    *
    * @return a test util
    */
-  static OharaTestUtil of() {
-    return new OharaTestUtil();
+  static OharaTestUtils of() {
+    return new OharaTestUtils();
   }
 }

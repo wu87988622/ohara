@@ -35,7 +35,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.{CommonUtil, Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
@@ -68,7 +68,7 @@ class Configurator private[configurator] (
 
   private[this] val log = Logger(classOf[Configurator])
 
-  private[this] val jarLocalHome = CommonUtil.createTempDir("Configurator").getAbsolutePath
+  private[this] val jarLocalHome = CommonUtils.createTempDir("Configurator").getAbsolutePath
 
   /**
     * the route is exposed to worker cluster. They will download all assigned jars to start worker process.
@@ -159,7 +159,7 @@ class Configurator private[configurator] (
         handler = handleExceptions(exceptionHandler())(
           handleRejections(rejectionHandler())(basicRoute() ~ privateRoute() ~ jarDownloadRoute()) ~ finalRoute()),
         // we bind the service on all network adapter.
-        interface = CommonUtil.anyLocalAddress(),
+        interface = CommonUtils.anyLocalAddress(),
         port = advertisedPort.getOrElse(0)
       ),
       initializationTimeout.toMillis milliseconds
@@ -174,7 +174,7 @@ class Configurator private[configurator] (
     * If you don't assign a advertised hostname explicitly, local hostname will be chosen.
     * @return advertised hostname of configurator.
     */
-  def hostname: String = advertisedHostname.getOrElse(CommonUtil.hostname())
+  def hostname: String = advertisedHostname.getOrElse(CommonUtils.hostname())
 
   /**
     * If you don't assign a port explicitly, a random port will be chosen.
@@ -188,7 +188,7 @@ class Configurator private[configurator] (
   implicit val jarStore: JarStore = new LocalJarStore(jarLocalHome) {
     log.info(s"path of jar:$jarLocalHome")
     override protected def doUrls(): Future[Map[String, URL]] = jarInfos().map(_.map { plugin =>
-      plugin.id -> new URL(s"http://${CommonUtil.address(hostname)}:$port/${JarApi.JAR_PREFIX_PATH}/${plugin.id}.jar")
+      plugin.id -> new URL(s"http://${CommonUtils.address(hostname)}:$port/${JarApi.JAR_PREFIX_PATH}/${plugin.id}.jar")
     }.toMap)
 
     override protected def doClose(): Unit = {
@@ -200,13 +200,13 @@ class Configurator private[configurator] (
     * Do what you want to do when calling closing.
     */
   override protected def doClose(): Unit = {
-    val start = CommonUtil.current()
+    val start = CommonUtils.current()
     if (httpServer != null) Await.result(httpServer.unbind(), terminationTimeout.toMillis milliseconds)
     if (actorSystem != null) Await.result(actorSystem.terminate(), terminationTimeout.toMillis milliseconds)
     Releasable.close(clusterCollie)
     Releasable.close(jarStore)
     Releasable.close(store)
-    log.info(s"succeed to close configurator. elapsed:${CommonUtil.current() - start} ms")
+    log.info(s"succeed to close configurator. elapsed:${CommonUtils.current() - start} ms")
   }
 }
 
@@ -264,7 +264,7 @@ object Configurator {
       LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
       import scala.concurrent.duration._
       val node =
-        Await.result(NodeApi.access().hostname(CommonUtil.hostname()).port(configurator.port).add(req), 30 seconds)
+        Await.result(NodeApi.access().hostname(CommonUtils.hostname()).port(configurator.port).add(req), 30 seconds)
       val dockerClient =
         DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
       try {
@@ -277,7 +277,7 @@ object Configurator {
       val zkCluster = Await.result(
         ZookeeperApi
           .access()
-          .hostname(CommonUtil.hostname())
+          .hostname(CommonUtils.hostname())
           .port(configurator.port)
           .add(
             ZookeeperClusterCreationRequest(name = "preCreatedZkCluster",
@@ -292,7 +292,7 @@ object Configurator {
       val bkCluster = Await.result(
         BrokerApi
           .access()
-          .hostname(CommonUtil.hostname())
+          .hostname(CommonUtils.hostname())
           .port(configurator.port)
           .add(
             BrokerClusterCreationRequest(name = "preCreatedBkCluster",

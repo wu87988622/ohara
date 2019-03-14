@@ -17,7 +17,7 @@
 package com.island.ohara.client
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.VersionUtil
+import com.island.ohara.common.util.VersionUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -27,7 +27,7 @@ class TestStreamApi extends SmallTest with Matchers {
 
   @Test
   def checkVersion(): Unit = {
-    StreamApi.STREAMAPP_IMAGE shouldBe s"oharastream/streamapp:${VersionUtil.VERSION}"
+    StreamApi.STREAMAPP_IMAGE shouldBe s"oharastream/streamapp:${VersionUtils.VERSION}"
   }
 
   @Test

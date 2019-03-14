@@ -20,7 +20,7 @@ import java.util
 
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
 import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
@@ -47,7 +47,7 @@ class FtpSourceTask extends RowSourceTask {
     */
   private[ftp] def listInputFiles(): Seq[String] = try ftpClient
     .listFileNames(props.inputFolder)
-    .map(CommonUtil.path(props.inputFolder, _))
+    .map(CommonUtils.path(props.inputFolder, _))
     .filter(_.hashCode % props.total == props.hash)
   catch {
     case e: Throwable =>
@@ -60,9 +60,9 @@ class FtpSourceTask extends RowSourceTask {
     * @param path file under input folder
     */
   private[ftp] def handleErrorFile(path: String): Unit = try {
-    val outputPath = CommonUtil.replaceParent(props.errorFolder, path)
+    val outputPath = CommonUtils.replaceParent(props.errorFolder, path)
     if (ftpClient.exist(outputPath)) {
-      val newPath = outputPath + s".${CommonUtil.uuid()}"
+      val newPath = outputPath + s".${CommonUtils.uuid()}"
       if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
       else ftpClient.moveFile(path, newPath)
     } else ftpClient.moveFile(path, outputPath)
@@ -78,9 +78,9 @@ class FtpSourceTask extends RowSourceTask {
     props.completedFolder
       .map(folder =>
         () => {
-          val outputPath = CommonUtil.replaceParent(folder, path)
+          val outputPath = CommonUtils.replaceParent(folder, path)
           if (ftpClient.exist(outputPath)) {
-            val newPath = outputPath + s".${CommonUtil.uuid()}"
+            val newPath = outputPath + s".${CommonUtils.uuid()}"
             if (ftpClient.exist(newPath)) throw new IllegalStateException(s"duplicate file $path??")
             else ftpClient.moveFile(path, newPath)
           } else ftpClient.moveFile(path, outputPath)

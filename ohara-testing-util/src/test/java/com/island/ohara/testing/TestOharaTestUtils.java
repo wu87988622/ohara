@@ -24,11 +24,11 @@ import com.island.ohara.testing.service.FtpServer;
 import com.island.ohara.testing.service.Hdfs;
 import org.junit.Test;
 
-public class TestOharaTestUtil extends MediumTest {
+public class TestOharaTestUtils extends MediumTest {
 
   @Test
   public void getBrokerFromEmptyOharaTestUtil() {
-    try (OharaTestUtil util = OharaTestUtil.of()) {
+    try (OharaTestUtils util = OharaTestUtils.of()) {
       String connectionProps = null;
       for (int i = 0; i != 10; ++i) {
         if (connectionProps == null) connectionProps = util.brokersConnProps();
@@ -39,7 +39,7 @@ public class TestOharaTestUtil extends MediumTest {
 
   @Test
   public void getWorkerFromEmptyOharaTestUtil() {
-    try (OharaTestUtil util = OharaTestUtil.of()) {
+    try (OharaTestUtils util = OharaTestUtils.of()) {
       String connectionProps = null;
       for (int i = 0; i != 10; ++i) {
         if (connectionProps == null) connectionProps = util.workersConnProps();
@@ -50,7 +50,7 @@ public class TestOharaTestUtil extends MediumTest {
 
   @Test
   public void testFtpServer() {
-    try (OharaTestUtil util = OharaTestUtil.of()) {
+    try (OharaTestUtils util = OharaTestUtils.of()) {
       FtpServer fs = null;
       for (int i = 0; i != 10; ++i) {
         if (fs == null) fs = util.ftpServer();
@@ -61,7 +61,7 @@ public class TestOharaTestUtil extends MediumTest {
 
   @Test
   public void testDatabase() {
-    try (OharaTestUtil util = OharaTestUtil.of()) {
+    try (OharaTestUtils util = OharaTestUtils.of()) {
       Database db = null;
       for (int i = 0; i != 10; ++i) {
         if (db == null) db = util.dataBase();
@@ -72,7 +72,7 @@ public class TestOharaTestUtil extends MediumTest {
 
   @Test
   public void testHdfs() {
-    try (OharaTestUtil util = OharaTestUtil.of()) {
+    try (OharaTestUtils util = OharaTestUtils.of()) {
       Hdfs hdfs = null;
       for (int i = 0; i != 10; ++i) {
         if (hdfs == null) hdfs = util.hdfs();

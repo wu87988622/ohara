@@ -22,7 +22,7 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.common.data.{Column, ConnectorState, DataType}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -41,7 +41,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
   def runConnectorWithoutTopic(): Unit = {
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,
@@ -75,7 +75,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     // test add
     result(connectorApi.list()).size shouldBe 0
     val request = ConnectorCreationRequest(
-      name = Some(CommonUtil.randomString(10)),
+      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = "jdbc",
       schema = schema,
@@ -91,7 +91,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     // test update
     val anotherRequest = ConnectorCreationRequest(
-      name = Some(CommonUtil.randomString(10)),
+      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = "jdbc",
       schema = schema,
@@ -123,7 +123,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                            Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = illegalOrder,
@@ -137,7 +137,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                              Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = duplicateOrder,
@@ -170,7 +170,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     // test add
     result(connectorApi.list()).size shouldBe 0
     val request = ConnectorCreationRequest(
-      name = Some(CommonUtil.randomString(10)),
+      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = "jdbc",
       schema = schema,
@@ -186,7 +186,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     // test update
     val anotherRequest = ConnectorCreationRequest(
-      name = Some(CommonUtil.randomString(10)),
+      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = "jdbc",
       schema = schema,
@@ -219,7 +219,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                            Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = illegalOrder,
@@ -233,7 +233,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                              Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = duplicateOrder,
@@ -248,7 +248,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
   def removeConnectorFromDeletedCluster(): Unit = {
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,
@@ -269,8 +269,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
   def runConnectorOnNonexistentCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
-        workerClusterName = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
+        workerClusterName = Some(CommonUtils.randomString(10)),
         className = "jdbc",
         schema = Seq.empty,
         configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
@@ -289,17 +289,17 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(WorkerClusterCreationRequest(
-          name = CommonUtil.randomString(10),
+          name = CommonUtils.randomString(10),
           imageName = None,
           brokerClusterName = Some(bk.name),
-          clientPort = Some(CommonUtil.availablePort()),
-          groupId = Some(CommonUtil.randomString(10)),
-          statusTopicName = Some(CommonUtil.randomString(10)),
+          clientPort = Some(CommonUtils.availablePort()),
+          groupId = Some(CommonUtils.randomString(10)),
+          statusTopicName = Some(CommonUtils.randomString(10)),
           statusTopicPartitions = None,
           statusTopicReplications = None,
-          configTopicName = Some(CommonUtil.randomString(10)),
+          configTopicName = Some(CommonUtils.randomString(10)),
           configTopicReplications = None,
-          offsetTopicName = Some(CommonUtil.randomString(10)),
+          offsetTopicName = Some(CommonUtils.randomString(10)),
           offsetTopicPartitions = None,
           offsetTopicReplications = None,
           jars = Seq.empty,
@@ -309,7 +309,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     // there are two worker cluster so it fails to match worker cluster
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,
@@ -320,7 +320,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = Some(wk.name),
         className = "jdbc",
         schema = Seq.empty,
@@ -340,7 +340,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           TopicCreationRequest(
-            name = Some(CommonUtil.randomString(10)),
+            name = Some(CommonUtils.randomString(10)),
             brokerClusterName = None,
             numberOfPartitions = None,
             numberOfReplications = None
@@ -348,7 +348,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,
@@ -371,7 +371,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           TopicCreationRequest(
-            name = Some(CommonUtil.randomString(10)),
+            name = Some(CommonUtils.randomString(10)),
             brokerClusterName = None,
             numberOfPartitions = None,
             numberOfReplications = None
@@ -379,7 +379,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,
@@ -402,7 +402,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           TopicCreationRequest(
-            name = Some(CommonUtil.randomString(10)),
+            name = Some(CommonUtils.randomString(10)),
             brokerClusterName = None,
             numberOfPartitions = None,
             numberOfReplications = None
@@ -410,7 +410,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,
@@ -433,7 +433,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           TopicCreationRequest(
-            name = Some(CommonUtil.randomString(10)),
+            name = Some(CommonUtils.randomString(10)),
             brokerClusterName = None,
             numberOfPartitions = None,
             numberOfReplications = None
@@ -441,7 +441,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     val connector = result(
       connectorApi.add(ConnectorCreationRequest(
-        name = Some(CommonUtil.randomString(10)),
+        name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
         className = "jdbc",
         schema = Seq.empty,

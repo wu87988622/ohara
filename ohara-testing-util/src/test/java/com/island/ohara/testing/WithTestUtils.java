@@ -26,18 +26,18 @@ import org.junit.BeforeClass;
  * Creating a test util without embedded services. If you want to use "micro" services only, you can
  * apply this class and then instantiate service manually.
  */
-public abstract class WithTestUtil extends MediumTest {
-  protected static OharaTestUtil util;
+public abstract class WithTestUtils extends MediumTest {
+  protected static OharaTestUtils util;
 
   @BeforeClass
   public static void beforeAll() {
     if (util != null)
       throw new NoSuchElementException(
           "The test util had been initialized!!! This happens on your tests don't run on different jvm");
-    util = OharaTestUtil.of();
+    util = OharaTestUtils.of();
   }
 
-  protected OharaTestUtil testUtil() {
+  protected OharaTestUtils testUtil() {
     return util;
   }
 

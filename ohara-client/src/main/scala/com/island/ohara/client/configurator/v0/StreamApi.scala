@@ -23,7 +23,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.util.ByteString
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.{CommonUtil, VersionUtil}
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -87,7 +87,7 @@ object StreamApi {
   /**
     * StreamApp Docker Image name
     */
-  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtil.VERSION}"
+  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
 
   /**
     * create temp file(with suffix .tmp) inside temp folder
@@ -95,7 +95,7 @@ object StreamApi {
     * @param fileInfo the request file
     * @return the tmp file
     */
-  def saveTmpFile(fileInfo: FileInfo): File = CommonUtil.createTempFile(fileInfo.fileName)
+  def saveTmpFile(fileInfo: FileInfo): File = CommonUtils.createTempFile(fileInfo.fileName)
 
   val STREAM_PREFIX_PATH: String = "stream"
   val STREAM_LIST_PREFIX_PATH: String = "jars"

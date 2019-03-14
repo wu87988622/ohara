@@ -16,7 +16,7 @@
 
 package com.island.ohara.testing.service;
 
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import java.net.BindException;
 import java.util.*;
@@ -52,7 +52,7 @@ public interface Workers extends Releasable {
                   boolean canRetry = port <= 0;
                   while (true) {
                     try {
-                      int availablePort = CommonUtil.resolvePort(port);
+                      int availablePort = CommonUtils.resolvePort(port);
 
                       Map<String, String> config = new HashMap<>();
                       // reduce the number from partitions and replicas to speedup the mini cluster
@@ -98,7 +98,7 @@ public interface Workers extends Releasable {
                       DistributedConfig distConfig = new DistributedConfig(config);
                       RestServer rest = new RestServer(distConfig);
                       String workerId =
-                          CommonUtil.hostname() + ":" + rest.advertisedUrl().getPort();
+                          CommonUtils.hostname() + ":" + rest.advertisedUrl().getPort();
                       KafkaOffsetBackingStore offsetBackingStore = new KafkaOffsetBackingStore();
                       offsetBackingStore.configure(distConfig);
                       Time time = Time.SYSTEM;
@@ -146,7 +146,7 @@ public interface Workers extends Releasable {
       public String connectionProps() {
         return availablePorts
             .stream()
-            .map(p -> CommonUtil.hostname() + ":" + p)
+            .map(p -> CommonUtils.hostname() + ":" + p)
             .collect(Collectors.joining(","));
       }
 

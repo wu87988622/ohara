@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.exception.OharaExecutionException;
-import com.island.ohara.testing.OharaTestUtil;
+import com.island.ohara.testing.OharaTestUtils;
 import com.island.ohara.testing.With3Brokers;
 import java.util.Collections;
 import java.util.Map;
@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.Test;
 
 public class TestBrokerClient extends With3Brokers {
-  private final OharaTestUtil testUtil = testUtil();
+  private final OharaTestUtils testUtil = testUtil();
 
   private final BrokerClient client = BrokerClient.of(testUtil.brokersConnProps());
 

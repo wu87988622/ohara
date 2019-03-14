@@ -26,7 +26,7 @@ import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.ConnectorUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
@@ -221,7 +221,7 @@ object WorkerClient {
       * @return this one
       */
     def name(name: String): this.type = {
-      this.name = CommonUtil.requireNonEmpty(name)
+      this.name = CommonUtils.requireNonEmpty(name)
       this
     }
 
@@ -232,7 +232,7 @@ object WorkerClient {
       * @return this one
       */
     def className(className: String): this.type = {
-      this.className = CommonUtil.requireNonEmpty(className)
+      this.className = CommonUtils.requireNonEmpty(className)
       this
     }
 
@@ -251,7 +251,7 @@ object WorkerClient {
       * @return this one
       */
     def topicName(topicName: String): this.type = {
-      this.topicNames = Seq(CommonUtil.requireNonEmpty(topicName))
+      this.topicNames = Seq(CommonUtils.requireNonEmpty(topicName))
       this
     }
 
@@ -263,7 +263,7 @@ object WorkerClient {
       */
     @Optional("default is 1")
     def numberOfTasks(numberOfTasks: Int): this.type = {
-      this.numberOfTasks = CommonUtil.requirePositiveInt(numberOfTasks)
+      this.numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks)
       this
     }
 
@@ -298,19 +298,19 @@ object WorkerClient {
       */
     def topicNames(topicNames: Seq[String]): this.type = {
       import scala.collection.JavaConverters._
-      CommonUtil.requireNonEmpty(topicNames.asJavaCollection)
-      topicNames.foreach(CommonUtil.requireNonEmpty)
+      CommonUtils.requireNonEmpty(topicNames.asJavaCollection)
+      topicNames.foreach(CommonUtils.requireNonEmpty)
       this.topicNames = topicNames
       this
     }
 
     protected def toCreateConnectorResponse(otherConfigs: Map[String, String]): ConnectorCreationRequest = {
       import scala.collection.JavaConverters._
-      CommonUtil.requireNonEmpty(name)
-      CommonUtil.requireNonEmpty(className)
-      CommonUtil.requireNonEmpty(topicNames.asJavaCollection)
-      topicNames.foreach(CommonUtil.requireNonEmpty)
-      CommonUtil.requirePositiveInt(numberOfTasks)
+      CommonUtils.requireNonEmpty(name)
+      CommonUtils.requireNonEmpty(className)
+      CommonUtils.requireNonEmpty(topicNames.asJavaCollection)
+      topicNames.foreach(CommonUtils.requireNonEmpty)
+      CommonUtils.requirePositiveInt(numberOfTasks)
       val kafkaConfig = new mutable.HashMap[String, String]()
       kafkaConfig ++= configs
       kafkaConfig += (ConnectorUtils.CONNECTOR_CLASS_KEY -> className)

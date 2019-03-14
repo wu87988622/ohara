@@ -46,7 +46,7 @@ else
   elif [ "$service" == "shabondi" ]; then
     CLASS="com.island.ohara.shabondi.WebServer"
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
-    CLASS="com.island.ohara.common.util.VersionUtil"
+    CLASS="com.island.ohara.common.util.VersionUtils"
   elif [ "$service" == "help" ]; then
     echo "Usage:"
     echo "Option                                   Description"

@@ -24,9 +24,9 @@ import com.island.ohara.client.configurator.v0.ConnectorApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator.Store
-import com.island.ohara.configurator.route.RouteUtil._
+import com.island.ohara.configurator.route.RouteUtils._
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,7 +46,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       state = None,
       error = None,
       configs = request.configs,
-      lastModified = CommonUtil.current()
+      lastModified = CommonUtils.current()
     )
 
   private[this] def verify(request: ConnectorCreationRequest): ConnectorCreationRequest = {
@@ -74,7 +74,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
 
   def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
-    RouteUtil.basicRoute[ConnectorCreationRequest, ConnectorInfo](
+    RouteUtils.basicRoute[ConnectorCreationRequest, ConnectorInfo](
       root = CONNECTORS_PREFIX_PATH,
       hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorCreationRequest) =>
         /**

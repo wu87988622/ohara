@@ -84,13 +84,13 @@ def date() {
 
 task initializer {
   doLast {
-    def file = new File("$projectDir" + "/src/main/java/com/island/ohara/common/util/VersionUtil.java")
+    def file = new File("$projectDir" + "/src/main/java/com/island/ohara/common/util/VersionUtils.java")
     if (file.exists()) file.delete()
     def writer = new FileWriter(file)
     try {
       def code = """package com.island.ohara.common.util;
 // DON'T touch this file!!! It is generated dynamically. see ohara-common/build.gradle
-public final class VersionUtil {
+public final class VersionUtils {
   public static final String VERSION = \"${project.version}\";
   public static final String USER = \"${user()}\";
   public static final String REVISION = \"${revision()}\";
@@ -102,7 +102,7 @@ public final class VersionUtil {
     System.out.println(\"Compiled by \" + USER + \" on \" + DATE);
   }
 
-  private VersionUtil() {}
+  private VersionUtils() {}
 }
 """
       writer.write(code.replaceAll("\n", System.lineSeparator()))
@@ -113,7 +113,7 @@ public final class VersionUtil {
 }
 
 /**
- * Generating VersionUtil must run before compileJava.
+ * Generating VersionUtils must run before compileJava.
  */
 tasks.matching { it.name != 'initializer' && it.name == "compileJava"}.all { Task task ->
   task.dependsOn initializer

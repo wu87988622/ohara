@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
 import com.island.ohara.common.rule.SmallTest;
 import org.junit.Test;
 
-public class TestCheckedExceptionUtil extends SmallTest {
+public class TestCheckedExceptionUtils extends SmallTest {
 
   // checked exception
   private final Exception checkedException = new ClassNotFoundException();
@@ -50,7 +50,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
         assertException(
             RuntimeException.class,
             () ->
-                CheckedExceptionUtil.wrap(
+                CheckedExceptionUtils.wrap(
                     () -> {
                       throw checkedException;
                     }));
@@ -60,17 +60,17 @@ public class TestCheckedExceptionUtil extends SmallTest {
     assertException(
         uncheckedException.getClass(),
         () ->
-            CheckedExceptionUtil.wrap(
+            CheckedExceptionUtils.wrap(
                 () -> {
                   throw uncheckedException;
                 }));
 
-    CheckedExceptionUtil.wrap(
+    CheckedExceptionUtils.wrap(
         () -> {
           // no return  , no exception throws
         });
 
-    String value = CheckedExceptionUtil.wrap(() -> "test");
+    String value = CheckedExceptionUtils.wrap(() -> "test");
 
     assertEquals(value, "test");
   }
@@ -81,7 +81,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
         assertException(
             RuntimeException.class,
             () ->
-                CheckedExceptionUtil.wrapRuntime(
+                CheckedExceptionUtils.wrapRuntime(
                     () -> {
                       throw checkedException;
                     }));
@@ -92,19 +92,19 @@ public class TestCheckedExceptionUtil extends SmallTest {
         assertException(
             RuntimeException.class,
             () ->
-                CheckedExceptionUtil.wrapRuntime(
+                CheckedExceptionUtils.wrapRuntime(
                     () -> {
                       throw uncheckedException;
                     }));
 
     assertEquals(e2.getCause().getClass(), uncheckedException.getClass());
 
-    CheckedExceptionUtil.wrapRuntime(
+    CheckedExceptionUtils.wrapRuntime(
         () -> {
           // no return  , no exception throws
         });
 
-    String value = CheckedExceptionUtil.wrapRuntime(() -> "test");
+    String value = CheckedExceptionUtils.wrapRuntime(() -> "test");
 
     assertEquals(value, "test");
   }
@@ -116,7 +116,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
         assertException(
             OharaTest0000Exception.class,
             () ->
-                CheckedExceptionUtil.wrap(
+                CheckedExceptionUtils.wrap(
                     () -> {
                       throw checkedException;
                     },
@@ -126,7 +126,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
 
     // user will catch like this
     try {
-      CheckedExceptionUtil.wrap(
+      CheckedExceptionUtils.wrap(
           () -> {
             throw checkedException;
           },
@@ -140,18 +140,18 @@ public class TestCheckedExceptionUtil extends SmallTest {
     assertException(
         uncheckedException.getClass(),
         () ->
-            CheckedExceptionUtil.wrap(
+            CheckedExceptionUtils.wrap(
                 () -> {
                   throw uncheckedException;
                 }));
 
-    CheckedExceptionUtil.wrap(
+    CheckedExceptionUtils.wrap(
         () -> {
           // no return  , no exception throws
         },
         handler);
 
-    String value = CheckedExceptionUtil.wrap(() -> "test", handler);
+    String value = CheckedExceptionUtils.wrap(() -> "test", handler);
 
     assertEquals(value, "test");
   }
@@ -163,7 +163,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
         assertException(
             OharaTest0000Exception.class,
             () ->
-                CheckedExceptionUtil.wrapRuntime(
+                CheckedExceptionUtils.wrapRuntime(
                     () -> {
                       throw checkedException;
                     },
@@ -172,7 +172,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
 
     // user will catch like this
     try {
-      CheckedExceptionUtil.wrapRuntime(
+      CheckedExceptionUtils.wrapRuntime(
           () -> {
             throw checkedException;
           },
@@ -187,20 +187,20 @@ public class TestCheckedExceptionUtil extends SmallTest {
         assertException(
             OharaException.class,
             () ->
-                CheckedExceptionUtil.wrapRuntime(
+                CheckedExceptionUtils.wrapRuntime(
                     () -> {
                       throw uncheckedException;
                     },
                     handler));
     assertEquals(e2.getCause().getClass(), uncheckedException.getClass());
 
-    CheckedExceptionUtil.wrapRuntime(
+    CheckedExceptionUtils.wrapRuntime(
         () -> {
           // no return  , no exception throws
         },
         handler);
 
-    String value = CheckedExceptionUtil.wrapRuntime(() -> "test", handler);
+    String value = CheckedExceptionUtils.wrapRuntime(() -> "test", handler);
 
     assertEquals(value, "test");
   }
@@ -208,7 +208,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
   @Test(expected = ClassNotFoundException.class)
   public void TestRethrowException() {
     // This method throw checked exception without check
-    CheckedExceptionUtil.rethrow(
+    CheckedExceptionUtils.rethrow(
         () -> {
           throw new ClassNotFoundException();
         });
@@ -217,7 +217,7 @@ public class TestCheckedExceptionUtil extends SmallTest {
   @Test(expected = ClassCastException.class)
   public void TestRethrowRuntimeException() {
     // This method throw checked exception without check
-    CheckedExceptionUtil.rethrow(
+    CheckedExceptionUtils.rethrow(
         () -> {
           throw new ClassCastException();
         });
@@ -226,12 +226,12 @@ public class TestCheckedExceptionUtil extends SmallTest {
   @Test
   public void TestRethrow() {
     // This method throw checked exception without check
-    CheckedExceptionUtil.rethrow(
+    CheckedExceptionUtils.rethrow(
         () -> {
           // do nothing  , no exception throw
         });
 
-    String value = CheckedExceptionUtil.rethrow(() -> "test");
+    String value = CheckedExceptionUtils.rethrow(() -> "test");
 
     assertEquals(value, "test");
   }

@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import com.island.ohara.common.rule.MediumTest;
-import com.island.ohara.common.util.CommonUtil;
+import com.island.ohara.common.util.CommonUtils;
 import org.junit.Test;
 
 public class TestDatabase extends MediumTest {
@@ -62,7 +62,7 @@ public class TestDatabase extends MediumTest {
 
   @Test
   public void testSpecificPort() {
-    int port = CommonUtil.availablePort();
+    int port = CommonUtils.availablePort();
     try (Database db = Database.builder().port(port).build()) {
       assertEquals(port, db.port());
     }

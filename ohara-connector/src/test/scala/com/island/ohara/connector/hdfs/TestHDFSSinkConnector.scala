@@ -22,7 +22,7 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, DataType, Row, Serializer, _}
-import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.kafka.Producer
@@ -90,13 +90,13 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .columns(schema)
         .create())
 
-    CommonUtil
+    CommonUtils
       .await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
-    CommonUtil.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, Duration.ofSeconds(20))
-    CommonUtil.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, Duration.ofSeconds(10))
-    CommonUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == HDFSSinkConnectorConfig.DATA_DIR_DEFAULT,
-                     Duration.ofSeconds(20))
-    CommonUtil.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount == 2000, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(rotateIntervalMSName) == null, Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.taskProps.get(tmpDirName) == tmpDirPath, Duration.ofSeconds(10))
+    CommonUtils.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.dataDir == HDFSSinkConnectorConfig.DATA_DIR_DEFAULT,
+                      Duration.ofSeconds(20))
+    CommonUtils.await(() => SimpleHDFSSinkTask.sinkConnectorConfig.flushLineCount == 2000, Duration.ofSeconds(20))
   }
 
   @Test
@@ -117,8 +117,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     val fileSystem = testUtil.hdfs.fileSystem()
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
-    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
     val producer = Producer
       .builder[Row, Array[Byte]]()
       .connectionProps(testUtil.brokersConnProps)
@@ -152,19 +152,19 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(20))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(20))
 
-    CommonUtil.await(
+    CommonUtils.await(
       () =>
         FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 100,
       Duration.ofSeconds(20))
 
-    CommonUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName)
-                         .contains("part-000000090-000000100.csv"),
-                     Duration.ofSeconds(20))
+    CommonUtils.await(() =>
+                        storage
+                          .list(s"$dataDirPath/$topicName/$partitionID")
+                          .map(FileUtils.fileName)
+                          .contains("part-000000090-000000100.csv"),
+                      Duration.ofSeconds(20))
 
     val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000090-000000100.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
@@ -233,28 +233,28 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(30))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 10, Duration.ofSeconds(30))
 
-    CommonUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName)
-                         .contains("part-000000000-000000001.csv"),
-                     Duration.ofSeconds(20))
+    CommonUtils.await(() =>
+                        storage
+                          .list(s"$dataDirPath/$topicName/$partitionID")
+                          .map(FileUtils.fileName)
+                          .contains("part-000000000-000000001.csv"),
+                      Duration.ofSeconds(20))
 
-    CommonUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName)
-                         .contains("part-000000001-000000002.csv"),
-                     Duration.ofSeconds(20))
+    CommonUtils.await(() =>
+                        storage
+                          .list(s"$dataDirPath/$topicName/$partitionID")
+                          .map(FileUtils.fileName)
+                          .contains("part-000000001-000000002.csv"),
+                      Duration.ofSeconds(20))
 
-    CommonUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName)
-                         .contains("part-000000008-000000009.csv"),
-                     Duration.ofSeconds(20))
+    CommonUtils.await(() =>
+                        storage
+                          .list(s"$dataDirPath/$topicName/$partitionID")
+                          .map(FileUtils.fileName)
+                          .contains("part-000000008-000000009.csv"),
+                      Duration.ofSeconds(20))
 
     val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000005-000000006.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
@@ -288,8 +288,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     val fileSystem = testUtil.hdfs.fileSystem()
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
-    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
     //Before running the Kafka Connector, create the file to local hdfs for test recover offset
     val partitionID: String = "partition0"
     fileSystem.createNewFile(new Path(s"$dataDirPath/$topicName/$partitionID/part-000000000-000000099.csv"))
@@ -326,19 +326,19 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .create())
 
     TimeUnit.SECONDS.sleep(5)
-    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, Duration.ofSeconds(20))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, Duration.ofSeconds(20))
 
-    CommonUtil.await(
+    CommonUtils.await(
       () =>
         FileUtils.getStopOffset(storage.list(s"$dataDirPath/$topicName/$partitionID").map(FileUtils.fileName)) == 199,
       Duration.ofSeconds(20))
 
-    CommonUtil.await(() =>
-                       storage
-                         .list(s"$dataDirPath/$topicName/$partitionID")
-                         .map(FileUtils.fileName)
-                         .contains("part-000000099-000000199.csv"),
-                     Duration.ofSeconds(20))
+    CommonUtils.await(() =>
+                        storage
+                          .list(s"$dataDirPath/$topicName/$partitionID")
+                          .map(FileUtils.fileName)
+                          .contains("part-000000099-000000199.csv"),
+                      Duration.ofSeconds(20))
 
     val path: Path = new Path(s"$dataDirPath/$topicName/$partitionID/part-000000099-000000199.csv")
     val file: InputStream = testUtil.hdfs.fileSystem.open(path)
@@ -373,8 +373,8 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     val fileSystem = testUtil.hdfs.fileSystem
     val storage = new HDFSStorage(fileSystem)
-    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
-    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(10)}"
+    val tmpDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
+    val dataDirPath = s"${testUtil.hdfs.tmpDirectory}/${CommonUtils.randomString(10)}"
 
     val producer = Producer
       .builder[Row, Array[Byte]]()
@@ -409,7 +409,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
-    CommonUtil.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").isEmpty, Duration.ofSeconds(20))
+    CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").isEmpty, Duration.ofSeconds(20))
   }
 
   @Test

@@ -20,20 +20,20 @@ import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
-import com.island.ohara.common.util.{CommonUtil, Releasable}
+import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
-import com.island.ohara.it.agent.CollieTestUtil
+import com.island.ohara.it.agent.CollieTestUtils
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
 
-  private[this] val nodeCache: Seq[Node] = CollieTestUtil.nodeCache()
+  private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
 
   private[this] val configurator: Configurator = Configurator.builder().build()
 
   @Before
-  def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtil.key} is required")
+  def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"${CollieTestUtils.key} is required")
   else {
     nodeCache.foreach { node =>
       val dockerClient =
@@ -61,11 +61,11 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ZookeeperClusterCreationRequest(
-          name = CommonUtil.randomString(10),
+          name = CommonUtils.randomString(10),
           imageName = None,
-          clientPort = Some(CommonUtil.availablePort()),
-          electionPort = Some(CommonUtil.availablePort()),
-          peerPort = Some(CommonUtil.availablePort()),
+          clientPort = Some(CommonUtils.availablePort()),
+          electionPort = Some(CommonUtils.availablePort()),
+          peerPort = Some(CommonUtils.availablePort()),
           nodeNames = nodeCache.map(_.name)
         )))
 
