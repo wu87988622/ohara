@@ -20,7 +20,8 @@ import java.util.concurrent.TimeUnit
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
-import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie}
+import com.island.ohara.agent.docker.DockerClient
+import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.client.configurator.v0.{ConnectorApi, Parameters}
 import com.island.ohara.common.util.CommonUtils

@@ -20,6 +20,7 @@ import java.net.URL
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.K8SClusterCollieImpl.{K8SBrokerCollieImpl, K8SWorkerCollieImpl, K8SZookeeperCollieImpl}
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node

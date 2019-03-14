@@ -15,8 +15,7 @@
  */
 
 package com.island.ohara.agent.ssh
-
-import com.island.ohara.agent.DockerClient
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 

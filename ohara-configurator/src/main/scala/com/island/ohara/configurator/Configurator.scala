@@ -28,6 +28,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejec
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest

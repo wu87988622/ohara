@@ -18,7 +18,7 @@ package com.island.ohara.it.agent
 
 import java.util.concurrent.TimeUnit
 
-import com.island.ohara.agent.DockerClient
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortPair}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.it.IntegrationTest
@@ -67,8 +67,10 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testLog(): Unit = runTest { client =>
-    val container =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+    val containerCreator =
+      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try client.log(container.name).contains(webHost) shouldBe true
     finally client.stop(container.name)
 
@@ -77,8 +79,10 @@ class TestDockerClient extends IntegrationTest with Matchers {
   @Test
   def testList(): Unit = runTest { client =>
     val before = client.containerNames()
-    val container =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+    val containerCreator =
+      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try {
       container.state shouldBe ContainerState.RUNNING
       val after = client.containerNames()
@@ -98,7 +102,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       .imageName(imageName)
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
-      .run()
+      .execute()
     TimeUnit.SECONDS.sleep(2)
     await(() => client.nonExist(name))
   }
@@ -106,8 +110,10 @@ class TestDockerClient extends IntegrationTest with Matchers {
   @Test
   def testNonCleanup(): Unit = runTest { client =>
     // ping google 3 times
-    val container =
-      client.containerCreator().imageName(imageName).command(s"""/bin/bash -c \"ping $webHost -c 3\"""").run().get
+    val containerCreator =
+      client.containerCreator().imageName(imageName).command(s"""/bin/bash -c \"ping $webHost -c 3\"""")
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try {
       TimeUnit.SECONDS.sleep(3)
       client.container(container.name).get.state shouldBe ContainerState.EXITED
@@ -121,14 +127,14 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testRoute(): Unit = runTest { client =>
-    val container = client
+    val containerCreator = client
       .containerCreator()
       .route(Map("ABC" -> "192.168.123.123"))
       .imageName(imageName)
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .run()
-      .get
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try {
       val hostFile = client.containerInspector(container.name).cat("/etc/hosts").get
       hostFile.contains("192.168.123.123") shouldBe true
@@ -138,14 +144,14 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testPortMapping(): Unit = runTest { client =>
-    val container = client
+    val containerCreator = client
       .containerCreator()
       .imageName(imageName)
       .portMappings(Map(12345 -> 12345))
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .run()
-      .get
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try {
       container.portMappings.size shouldBe 1
       container.portMappings.head.portPairs.size shouldBe 1
@@ -155,14 +161,14 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testSetEnv(): Unit = runTest { client =>
-    val container = client
+    val containerCreator = client
       .containerCreator()
       .imageName(imageName)
       .envs(Map("abc" -> "123", "ccc" -> "ttt"))
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .run()
-      .get
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try {
       container.environments("abc") shouldBe "123"
       container.environments("ccc") shouldBe "ttt"
@@ -171,30 +177,34 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testHostname(): Unit = runTest { client =>
-    val container = client
+    val containerCreator = client
       .containerCreator()
       .imageName(imageName)
       .hostname("abcdef")
       .cleanup()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
-      .run()
-      .get
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try container.hostname shouldBe "abcdef"
     finally client.stop(container.name)
   }
 
   @Test
   def testNodeName(): Unit = runTest { client =>
-    val container =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+    val containerCreator =
+      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try container.nodeName shouldBe remoteHostname
     finally client.stop(container.name)
   }
 
   @Test
   def testAppend(): Unit = runTest { client =>
-    val container =
-      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""").run().get
+    val containerCreator =
+      client.containerCreator().imageName(imageName).cleanup().command(s"""/bin/bash -c \"ping $webHost\"""")
+    containerCreator.execute()
+    val container = client.container(containerCreator.getContainerName).get
     try {
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\n"
       client.containerInspector(container.name).append("/tmp/ttt", "abc") shouldBe "abc\nabc\n"

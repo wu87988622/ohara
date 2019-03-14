@@ -16,7 +16,7 @@
 
 package com.island.ohara.it.prometheus
 
-import com.island.ohara.agent.DockerClient.ContainerInspector
+import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 

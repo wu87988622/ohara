@@ -16,7 +16,7 @@
 
 package com.island.ohara.it.agent.ssh
 
-import com.island.ohara.agent._
+import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}

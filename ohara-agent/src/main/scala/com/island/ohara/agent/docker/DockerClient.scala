@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.docker
 
 import java.util.Objects
 
-import com.island.ohara.agent.DockerClient.{ContainerCreator, ContainerInspector}
+import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
@@ -76,8 +76,8 @@ trait DockerClient extends Releasable {
   def container(name: String): Option[ContainerInfo] = containers(_ == name).headOption
 
   /**
-    * start a docker container.
-    * @return a executor
+    * build a docker container.
+    * @return a container builder
     */
   def containerCreator(): ContainerCreator
 
@@ -167,97 +167,6 @@ object DockerClient {
       * @param path file path
       */
     def write(path: String, content: Seq[String]): String
-  }
-
-  /**
-    * An interface used to run a docker container on remote node
-    */
-  trait ContainerCreator {
-
-    /**
-      * set true if you want to clean up the dead container automatically
-      * @return executor
-      */
-    def cleanup(): ContainerCreator
-
-    /**
-      * set container's name. default is a random string
-      * @param name container name
-      * @return this executor
-      */
-    def name(name: String): ContainerCreator
-
-    /**
-      * set target image
-      * @param imageName docker image
-      * @return this executor
-      */
-    def imageName(imageName: String): ContainerCreator
-
-    /**
-      * the command passed to docker container
-      * @param command command
-      * @return this executor
-      */
-    def command(command: String): ContainerCreator
-
-    /**
-      * @param hostname the hostname of container
-      * @return this executor
-      */
-    def hostname(hostname: String): ContainerCreator
-
-    /**
-      * @param envs the env variables exposed to container
-      * @return this executor
-      */
-    def envs(envs: Map[String, String]): ContainerCreator
-
-    /**
-      * @param route the pre-defined route to container. hostname -> ip
-      * @return this executor
-      */
-    def route(route: Map[String, String]): ContainerCreator
-
-    /**
-      * forward the port from host to container.
-      * NOTED: currently we don't support to specify the network interface so the forwarded port is bound on all networkd adapters.
-      * @param ports port mapping (host's port -> container's port)
-      * @return this executor
-      */
-    def portMappings(ports: Map[Int, Int]): ContainerCreator
-
-    /**
-      * docker -v
-      * @return process information
-      */
-    def volumeMapping(ports: Map[String, String]): ContainerCreator
-
-    /**
-      * set docker container's network driver. implement by --network=$value
-      * @param driver network driver
-      * @return this creator
-      */
-    def networkDriver(driver: NetworkDriver): ContainerCreator
-
-    /**
-      * execute the docker container on background.
-      * NOTED: If you don't care the result of execution, you should use this method to replace run() since it doesn't
-      * invoke one more ssh connection to fetch container information.
-      */
-    def execute(): Unit
-
-    /**
-      * execute the docker container on background
-      * @return process information
-      */
-    def run(): Option[ContainerInfo]
-
-    /**
-      * this is used in testing. Devlopers can check the generated command by this method.
-      * @return the command used to start docker container
-      */
-    protected[agent] def dockerCommand(): String
   }
 
   class Builder private[agent] {

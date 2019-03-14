@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.docker
+
 import java.util.Objects
 
-import com.island.ohara.agent.DockerClient._
+import com.island.ohara.agent.Agent
+import com.island.ohara.agent.docker.DockerClient.ContainerInspector
+import com.island.ohara.agent.docker.DockerClientImpl._
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
-import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
+import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{Await, Future}
@@ -79,8 +82,6 @@ private[agent] object DockerClientImpl {
     "{{.Ports}}"
   ).mkString(DIVIDER)
 }
-
-import com.island.ohara.agent.DockerClientImpl._
 private[agent] class DockerClientImpl(hostname: String, port: Int, user: String, password: String)
     extends ReleaseOnce
     with DockerClient {
@@ -94,113 +95,7 @@ private[agent] class DockerClientImpl(hostname: String, port: Int, user: String,
 
   override protected def doClose(): Unit = Releasable.close(agent)
 
-  override def containerCreator(): ContainerCreator = new ContainerCreator {
-    private[this] var imageName: String = _
-    private[this] var name: String = CommonUtils.randomString()
-    private[this] var command: String = _
-    private[this] var disableCleanup: Boolean = true
-    private[this] var ports: Map[Int, Int] = Map.empty
-    private[this] var envs: Map[String, String] = Map.empty
-    private[this] var route: Map[String, String] = Map.empty
-    private[this] var volumeMapping: Map[String, String] = Map.empty
-    private[this] var networkDriver: NetworkDriver = NetworkDriver.BRIDGE
-    private[this] var hostname: String = _
-
-    override def name(name: String): ContainerCreator = {
-      this.name = name
-      this
-    }
-
-    override def imageName(imageName: String): ContainerCreator = {
-      this.imageName = imageName
-      this
-    }
-
-    override def execute(): Unit = {
-      val cmd = dockerCommand()
-      LOG.info(s"docker command:$cmd")
-      agent.execute(cmd)
-    }
-
-    override def run(): Option[ContainerInfo] = {
-      val cmd = dockerCommand()
-      LOG.info(s"docker command:$cmd")
-      agent.execute(cmd)
-      activeContainers(_ == name).headOption
-    }
-
-    override def command(command: String): ContainerCreator = {
-      this.command = command
-      this
-    }
-
-    override protected[agent] def dockerCommand(): String = Seq(
-      "docker run -d ",
-      if (hostname == null) "" else s"-h $hostname",
-      route
-        .map {
-          case (hostname, ip) => s"--add-host $hostname:$ip"
-        }
-        .mkString(" "),
-      if (disableCleanup) "" else "--rm",
-      s"--name ${Objects.requireNonNull(name)}",
-      ports
-        .map {
-          case (hostPort, containerPort) => s"-p $hostPort:$containerPort"
-        }
-        .mkString(" "),
-      envs
-        .map {
-          case (key, value) => s"""-e \"$key=$value\""""
-        }
-        .mkString(" "),
-      volumeMapping
-        .map {
-          case (key, value) => s"""-v \"$key:$value\""""
-        }
-        .mkString(" "),
-      networkDriver match {
-        case NetworkDriver.HOST   => "--network=host"
-        case NetworkDriver.BRIDGE => "--network=bridge"
-      },
-      Objects.requireNonNull(imageName),
-      if (command == null) "" else command
-    ).filter(_.nonEmpty).mkString(" ")
-
-    override def portMappings(ports: Map[Int, Int]): ContainerCreator = {
-      this.ports = ports
-      this
-    }
-
-    override def volumeMapping(volumeMapping: Map[String, String]): ContainerCreator = {
-      this.volumeMapping = volumeMapping
-      this
-    }
-
-    override def networkDriver(driver: NetworkDriver): ContainerCreator = {
-      this.networkDriver = driver
-      this
-    }
-
-    override def hostname(hostname: String): ContainerCreator = {
-      this.hostname = hostname
-      this
-    }
-
-    override def envs(envs: Map[String, String]): ContainerCreator = {
-      this.envs = envs
-      this
-    }
-    override def route(route: Map[String, String]): ContainerCreator = {
-      this.route = route
-      this
-    }
-
-    override def cleanup(): ContainerCreator = {
-      this.disableCleanup = false
-      this
-    }
-  }
+  override def containerCreator(): ContainerCreator = ContainerCreator(agent)
 
   override def containerNames(): Seq[String] =
     agent.execute("docker ps -a --format {{.Names}}").map(_.split("\n").toSeq).getOrElse(Seq.empty)
