@@ -397,6 +397,9 @@ public final class CommonUtil {
     return requireNonEmpty(s, () -> "");
   }
 
+  public static <T extends Collection<?>> boolean isEmpty(T s) {
+    return s == null || s.isEmpty();
+  }
   /**
    * throw exception if the input collection is either null or empty.
    *

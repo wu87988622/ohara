@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 class TestPerfSourceProps extends SmallTest with Matchers {
   private[this] val props = PerfSourceProps(10, 10 seconds)
   private[this] val topics = Seq("TestPerfSourceProps")
-  private[this] val schema = Seq(Column.of("name", DataType.SHORT, 1))
+  private[this] val schema = Seq(Column.newBuilder().name("name").dataType(DataType.SHORT).order(1).build())
 
   @Test
   def testPlainMap(): Unit = {
@@ -41,7 +41,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig.builder().name(methodName()).schema(schema.asJava).options(props.toMap.asJava).build())
+      TaskConfig.builder().name(methodName()).columns(schema.asJava).options(props.toMap.asJava).build())
   }
 
   @Test
@@ -57,7 +57,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
       .builder()
       .name(methodName())
       .topics(topics.asJava)
-      .schema(schema.asJava)
+      .columns(schema.asJava)
       .options(props.copy(batch = -1).toMap.asJava)
       .build()
     val source = new PerfSource
@@ -66,7 +66,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
         .builder()
         .name(methodName())
         .topics(topics.asJava)
-        .schema(schema.asJava)
+        .columns(schema.asJava)
         .options(props.copy(batch = -1).toMap.asJava)
         .build())
   }

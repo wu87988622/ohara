@@ -89,12 +89,18 @@ class TestOhara734 extends SmallTest with Matchers {
                                                           """.stripMargin.parseJson)
     request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
-    request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
+    request.topics.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks shouldBe 1
     request.configs("perf.batch") shouldBe "1"
     request.schema.size shouldBe 2
-    request.schema.head shouldBe Column.of("cf0", "cf0", DataType.INT, 1)
-    request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
+    request.schema.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.schema.last shouldBe Column
+      .newBuilder()
+      .name("cf1")
+      .newName("cf1")
+      .dataType(DataType.BYTES)
+      .order(2)
+      .build()
 
     val request2 =
       ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
@@ -154,12 +160,18 @@ class TestOhara734 extends SmallTest with Matchers {
                                                              """.stripMargin.parseJson)
     request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
-    request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
+    request.topics.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks shouldBe 1
     request.configs("perf.batch") shouldBe "1"
     request.schema.size shouldBe 2
-    request.schema.head shouldBe Column.of("cf0", "cf0", DataType.INT, 1)
-    request.schema.last shouldBe Column.of("cf1", "cf1", DataType.BYTES, 2)
+    request.schema.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.schema.last shouldBe Column
+      .newBuilder()
+      .name("cf1")
+      .newName("cf1")
+      .dataType(DataType.BYTES)
+      .order(2)
+      .build()
 
     val request2 =
       ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(

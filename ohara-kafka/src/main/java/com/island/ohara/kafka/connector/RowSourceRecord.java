@@ -26,7 +26,7 @@ import java.util.Optional;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 
-/** A wrap to SourceRecord. Currently, only value schema and value are changed. */
+/** A wrap to SourceRecord. Currently, only value columns and value are changed. */
 public class RowSourceRecord {
   private final Map<String, ?> sourcePartition;
   private final Map<String, ?> sourceOffset;

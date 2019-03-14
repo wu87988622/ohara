@@ -38,9 +38,9 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   private[this] val schema: Seq[Column] = Seq(
-    Column.of("name", DataType.STRING, 1),
-    Column.of("ranking", DataType.INT, 2),
-    Column.of("single", DataType.BOOLEAN, 3)
+    Column.newBuilder().name("name").dataType(DataType.STRING).order(1).build(),
+    Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
+    Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
   )
   private[this] val rows: Seq[Row] = Seq(
     Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
@@ -102,7 +102,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(sinkName)
-        .schema(schema)
+        .columns(schema)
         .configs(sinkProps.toMap)
         .create(),
       10 seconds
@@ -118,7 +118,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .numberOfTasks(1)
             .disableConverter()
             .name(sourceName)
-            .schema(schema)
+            .columns(schema)
             .configs(sourceProps.toMap)
             .create(),
           10 seconds

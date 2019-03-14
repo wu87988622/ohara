@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.data.{Column, ConnectorState, DataType}
+import com.island.ohara.kafka.connector.ConnectorUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -30,10 +31,13 @@ object ConnectorApi {
 
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
     override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
-      case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) => Column.of(n, nn, DataType.of(t), o.toInt)
-      case Seq(JsString(n), JsNull, JsString(t), JsNumber(o))       => Column.of(n, n, DataType.of(t), o.toInt)
-      case Seq(JsString(n), JsString(t), JsNumber(o))               => Column.of(n, n, DataType.of(t), o.toInt)
-      case _                                                        => throw new UnsupportedOperationException(s"invalid format from ${classOf[Column].getSimpleName}")
+      case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) =>
+        Column.newBuilder().name(n).newName(nn).dataType(DataType.of(t)).order(o.toInt).build()
+      case Seq(JsString(n), JsNull, JsString(t), JsNumber(o)) =>
+        Column.newBuilder().name(n).newName(n).dataType(DataType.of(t)).order(o.toInt).build()
+      case Seq(JsString(n), JsString(t), JsNumber(o)) =>
+        Column.newBuilder().name(n).newName(n).dataType(DataType.of(t)).order(o.toInt).build()
+      case _ => throw new UnsupportedOperationException(s"invalid format from ${classOf[Column].getSimpleName}")
     }
     override def write(obj: Column): JsValue = JsObject(
       "name" -> JsString(obj.name),
@@ -43,12 +47,14 @@ object ConnectorApi {
     )
   }
 
-  // the following key should be matched to the member name of ConnectorCreationRequest
+  // the following keys should be matched to the member name of ConnectorCreationRequest
   val NAME_KEY: String = "name"
   val CLASS_NAME_KEY: String = "className"
   // TODO: replace this by topicNames (https://github.com/oharastream/ohara/issues/444)
   val TOPIC_NAME_KEY: String = "topics"
   val NUMBER_OF_TASKS_KEY: String = "numberOfTasks"
+  // TODO: replace this by columns (https://github.com/oharastream/ohara/issues/444)
+  val COLUMNS_KEY: String = ConnectorUtils.COLUMNS_KEY
   final case class ConnectorCreationRequest(name: Option[String],
                                             workerClusterName: Option[String],
                                             className: String,
@@ -57,17 +63,17 @@ object ConnectorApi {
                                             // TODO: replace this by topicNames (https://github.com/oharastream/ohara/issues/444)
                                             topics: Seq[String],
                                             numberOfTasks: Int,
-                                            configs: Map[String, String]) {
-    def columns: Seq[Column] = schema
-    def topicNames: Seq[String] = topics
-  }
+                                            configs: Map[String, String])
+
   implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] = jsonFormat7(
     ConnectorCreationRequest)
 
   final case class ConnectorInfo(id: String,
                                  name: String,
                                  className: String,
+                                 // TODO: replace this by columns (https://github.com/oharastream/ohara/issues/444)
                                  schema: Seq[Column],
+                                 // TODO: replace this by topicNames (https://github.com/oharastream/ohara/issues/444)
                                  topics: Seq[String],
                                  numberOfTasks: Int,
                                  configs: Map[String, String],

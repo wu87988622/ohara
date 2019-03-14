@@ -27,6 +27,7 @@ import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.CommonUtil
+import com.island.ohara.kafka.connector.ConnectorUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 
@@ -123,9 +124,6 @@ trait WorkerClient {
 
 object WorkerClient {
   private[this] val LOG = Logger(WorkerClient.getClass)
-  val CONNECTOR_CLASS_KEY_OF_KAFKA: String = "connector.class"
-  val TOPICS_KEY_OF_KAFKA: String = "topics"
-  val NUMBER_OF_TASKS_KEY_OF_KAFKA: String = "tasks.max"
 
   /**
     * Create a default implementation of worker client.
@@ -214,7 +212,7 @@ object WorkerClient {
     protected var topicNames: Seq[String] = _
     protected var numberOfTasks: Int = 1
     protected var configs: Map[String, String] = Map.empty
-    protected var schema: Seq[Column] = Seq.empty
+    protected var columns: Seq[Column] = Seq.empty
 
     /**
       * set the connector name. It should be a unique name.
@@ -282,13 +280,13 @@ object WorkerClient {
     }
 
     /**
-      * set the schema
-      * @param schema schema
+      * set the columns
+      * @param columns columns
       * @return this builder
       */
-    @Optional("default is empty")
-    def schema(schema: Seq[Column]): this.type = {
-      this.schema = Objects.requireNonNull(schema)
+    @Optional("default is all columns")
+    def columns(columns: Seq[Column]): this.type = {
+      this.columns = Objects.requireNonNull(columns)
       this
     }
 
@@ -315,11 +313,12 @@ object WorkerClient {
       CommonUtil.requirePositiveInt(numberOfTasks)
       val kafkaConfig = new mutable.HashMap[String, String]()
       kafkaConfig ++= configs
-      kafkaConfig += (CONNECTOR_CLASS_KEY_OF_KAFKA -> className)
-      kafkaConfig += (TOPICS_KEY_OF_KAFKA -> topicNames.mkString(","))
-      kafkaConfig += (NUMBER_OF_TASKS_KEY_OF_KAFKA -> numberOfTasks.toString)
+      kafkaConfig += (ConnectorUtils.CONNECTOR_CLASS_KEY -> className)
+      kafkaConfig += (ConnectorUtils.TOPIC_NAMES_KEY -> topicNames.mkString(","))
+      kafkaConfig += (ConnectorUtils.NUMBER_OF_TASKS_KEY -> numberOfTasks.toString)
       import scala.collection.JavaConverters._
-      if (schema != null && schema.nonEmpty) kafkaConfig += (Column.COLUMN_KEY -> Column.fromColumns(schema.asJava))
+      if (columns != null && columns.nonEmpty)
+        kafkaConfig += (ConnectorUtils.COLUMNS_KEY -> ConnectorUtils.fromColumns(columns.asJava))
       // NOTED: If configs.name exists, kafka will use it to replace the outside name.
       // for example: {"name":"abc", "configs":{"name":"c"}} is converted to map("name", "c")...
       // Hence, we have to filter out the name here...
@@ -407,7 +406,7 @@ object WorkerClient {
       toCreateConnectorResponse(Map.empty).configs
       // In contrast to create connector, we have to add name back to configs since worker verify the name from configs...
       // TODO: it is indeed a ugly APIs... should we file a PR for kafka ??? by chia
-        ++ Map("name" -> name)
+        ++ Map(ConnectorUtils.NAME_KEY -> name)
     )
 
     /**

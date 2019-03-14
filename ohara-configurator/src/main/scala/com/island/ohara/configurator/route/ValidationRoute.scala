@@ -21,12 +21,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, DockerClient, WorkerCollie}
-import com.island.ohara.client.configurator.v0.{ConnectorApi, Parameters}
 import com.island.ohara.client.configurator.v0.ValidationApi._
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.configurator.v0.{ConnectorApi, Parameters}
 import com.island.ohara.common.util.CommonUtil
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
+import com.island.ohara.kafka.connector.ConnectorUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -174,11 +174,11 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                           definition =>
                             // TODO: Could we avoid hard code?? by chia
                             definition.name match {
-                              case WorkerClient.CONNECTOR_CLASS_KEY_OF_KAFKA =>
+                              case ConnectorUtils.CONNECTOR_CLASS_KEY =>
                                 definition.copy(name = ConnectorApi.CLASS_NAME_KEY)
-                              case WorkerClient.TOPICS_KEY_OF_KAFKA =>
+                              case ConnectorUtils.TOPIC_NAMES_KEY =>
                                 definition.copy(name = ConnectorApi.TOPIC_NAME_KEY)
-                              case WorkerClient.NUMBER_OF_TASKS_KEY_OF_KAFKA =>
+                              case ConnectorUtils.NUMBER_OF_TASKS_KEY =>
                                 definition.copy(name = ConnectorApi.NUMBER_OF_TASKS_KEY)
                               case _ => definition
                             }
@@ -187,11 +187,11 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                           validatedValue =>
                             // TODO: Could we avoid hard code?? by chia
                             validatedValue.name match {
-                              case WorkerClient.CONNECTOR_CLASS_KEY_OF_KAFKA =>
+                              case ConnectorUtils.CONNECTOR_CLASS_KEY =>
                                 validatedValue.copy(name = ConnectorApi.CLASS_NAME_KEY)
-                              case WorkerClient.TOPICS_KEY_OF_KAFKA =>
+                              case ConnectorUtils.TOPIC_NAMES_KEY =>
                                 validatedValue.copy(name = ConnectorApi.TOPIC_NAME_KEY)
-                              case WorkerClient.NUMBER_OF_TASKS_KEY_OF_KAFKA =>
+                              case ConnectorUtils.NUMBER_OF_TASKS_KEY =>
                                 validatedValue.copy(name = ConnectorApi.NUMBER_OF_TASKS_KEY)
                               case _ => validatedValue
                             }

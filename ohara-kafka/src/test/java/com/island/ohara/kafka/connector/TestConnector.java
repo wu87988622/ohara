@@ -16,7 +16,7 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtil.VERSION;
+import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
 import static org.junit.Assert.assertEquals;
 
 import com.island.ohara.common.rule.SmallTest;

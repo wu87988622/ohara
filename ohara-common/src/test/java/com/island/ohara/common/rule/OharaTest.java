@@ -38,7 +38,8 @@ public abstract class OharaTest {
         throw new AssertionError(
             String.format(
                 "Assert ERROR: The %s throws ,but the expected exception is  %s ",
-                c.getName(), e.getClass().getName()));
+                e.getClass().getName(), c.getName()),
+            e);
     }
     throw new AssertionError("Assert ERROR: No exception throws");
   }

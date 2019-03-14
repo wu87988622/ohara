@@ -36,7 +36,7 @@ class FtpSinkTask extends RowSinkTask {
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
     this.props = FtpSinkTaskProps(config.options.asScala.toMap)
-    this.schema = config.schema.asScala
+    this.schema = config.columns.asScala
     this.ftpClient =
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
@@ -55,7 +55,7 @@ class FtpSinkTask extends RowSinkTask {
          record.row
            .cells()
            .asScala
-           // pass if there is no schema
+           // pass if there is no columns
            .filter(c => schema.isEmpty || schema.exists(_.name == c.name))
            //
            .zipWithIndex

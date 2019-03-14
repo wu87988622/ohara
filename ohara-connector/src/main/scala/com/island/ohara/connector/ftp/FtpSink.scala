@@ -31,7 +31,7 @@ class FtpSink extends RowSinkConnector {
   override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.config = config
     this.props = FtpSinkProps(config.options.asScala.toMap)
-    if (config.schema.asScala.exists(_.order == 0))
+    if (config.columns.asScala.exists(_.order == 0))
       throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =
@@ -54,7 +54,7 @@ class FtpSink extends RowSinkConnector {
             .builder()
             .name(config.name)
             .topics(config.topics)
-            .schema(config.schema)
+            .columns(config.columns)
             .options(FtpSinkTaskProps(
               output = CommonUtil.path(props.output, s"${config.name}_$index"),
               needHeader = props.needHeader,

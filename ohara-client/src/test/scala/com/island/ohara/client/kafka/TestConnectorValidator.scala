@@ -30,7 +30,7 @@ class TestConnectorValidator extends SmallTest with Matchers {
 
   @Test
   def nullSchema(): Unit =
-    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().schema(null)
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().columns(null)
 
   @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().name(null)

@@ -40,7 +40,7 @@ class FtpSource extends RowSourceConnector {
             .builder()
             .name(config.name)
             .topics(config.topics)
-            .schema(schema.asJava)
+            .columns(schema.asJava)
             .options(FtpSourceTaskProps(
               total = maxTasks,
               hash = index,
@@ -61,7 +61,7 @@ class FtpSource extends RowSourceConnector {
   override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.config = config
     this.props = FtpSourceProps(config.options.asScala.toMap)
-    this.schema = config.schema.asScala
+    this.schema = config.columns.asScala
     if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
 
     val ftpClient =

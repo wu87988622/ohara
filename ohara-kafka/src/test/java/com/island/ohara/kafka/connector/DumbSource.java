@@ -24,7 +24,9 @@ import java.util.List;
 
 public class DumbSource extends RowSourceConnector {
   private final List<Column> columns =
-      Arrays.asList(Column.of("cf0", DataType.BOOLEAN, 0), Column.of("cf1", DataType.BOOLEAN, 1));
+      Arrays.asList(
+          Column.newBuilder().name("cf0").dataType(DataType.BOOLEAN).order(0).build(),
+          Column.newBuilder().name("cf1").dataType(DataType.BOOLEAN).order(1).build());
 
   @Override
   protected Class<? extends RowSourceTask> _taskClass() {
@@ -34,12 +36,7 @@ public class DumbSource extends RowSourceConnector {
   @Override
   protected List<TaskConfig> _taskConfigs(int maxTasks) {
     return Collections.singletonList(
-        TaskConfig.builder()
-            .name("test")
-            .topic("topic")
-            .schema(columns)
-            .option(Column.COLUMN_KEY, Column.fromColumns(columns))
-            .build());
+        TaskConfig.builder().name("test").topic("topic").columns(columns).build());
   }
 
   @Override

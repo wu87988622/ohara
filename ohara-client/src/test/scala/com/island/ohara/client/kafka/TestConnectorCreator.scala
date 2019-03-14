@@ -29,7 +29,7 @@ class TestConnectorCreator extends SmallTest with Matchers {
     an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().configs(null)
 
   @Test
-  def nullSchema(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().schema(null)
+  def nullSchema(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().columns(null)
 
   @Test
   def nullName(): Unit = an[NullPointerException] should be thrownBy notWorkingClient.connectorCreator().name(null)

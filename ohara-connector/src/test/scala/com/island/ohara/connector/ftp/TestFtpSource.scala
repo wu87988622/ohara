@@ -34,9 +34,9 @@ import scala.concurrent.duration._
 class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] val schema: Seq[Column] = Seq(
-    Column.of("name", DataType.STRING, 1),
-    Column.of("ranking", DataType.INT, 2),
-    Column.of("single", DataType.BOOLEAN, 3)
+    Column.newBuilder().name("name").dataType(DataType.STRING).order(1).build(),
+    Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
+    Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
   )
   private[this] val rows: Seq[Row] = Seq(
     Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
@@ -147,7 +147,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.toMap)
         .create())
     try {
@@ -188,12 +188,11 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(
-          Seq(
-            Column.of("name", "newName", DataType.STRING, 1),
-            Column.of("ranking", "newRanking", DataType.INT, 2),
-            Column.of("single", "newSingle", DataType.BOOLEAN, 3)
-          ))
+        .columns(Seq(
+          Column.newBuilder().name("name").newName("newName").dataType(DataType.STRING).order(1).build(),
+          Column.newBuilder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
+          Column.newBuilder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
+        ))
         .configs(props.toMap)
         .create())
     try {
@@ -234,12 +233,11 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(
-          Seq(
-            Column.of("name", DataType.OBJECT, 1),
-            Column.of("ranking", DataType.INT, 2),
-            Column.of("single", DataType.BOOLEAN, 3)
-          ))
+        .columns(Seq(
+          Column.newBuilder().name("name").dataType(DataType.OBJECT).order(1).build(),
+          Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
+          Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
+        ))
         .configs(props.toMap)
         .create())
     try {
@@ -274,7 +272,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.toMap)
         .create())
     try {
@@ -320,7 +318,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
       records.size shouldBe data.length
       val row0 = records.head.key.get
       row0.size shouldBe 3
-      // NOTED: without schema all value are converted to string
+      // NOTED: without columns all value are converted to string
       row0.cell(0) shouldBe Cell.of(rows.head.cell(0).name, rows.head.cell(0).value.toString)
       row0.cell(1) shouldBe Cell.of(rows.head.cell(1).name, rows.head.cell(1).value.toString)
       row0.cell(2) shouldBe Cell.of(rows.head.cell(2).name, rows.head.cell(2).value.toString)
@@ -345,7 +343,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         // will use default UTF-8
         .configs(props.copy(encode = None).toMap)
         .create())
@@ -381,7 +379,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         // will use default UTF-8
         .configs(props.copy(encode = Some("")).toMap)
         .create())
@@ -418,7 +416,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         // skip last column
-        .schema(schema.slice(0, schema.length - 1))
+        .columns(schema.slice(0, schema.length - 1))
         .configs(props.toMap)
         .create())
     try {
@@ -451,7 +449,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         // the name can't be casted to int
-        .schema(Seq(Column.of("name", DataType.INT, 1)))
+        .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
         .configs(props.toMap)
         .create())
     try {
@@ -479,7 +477,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.copy(inputFolder = "/abc").toMap)
         .create())
     FtpUtil.assertFailedConnector(testUtil, connectorName)
@@ -497,13 +495,12 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(
-          Seq(
-            // 0 is invalid
-            Column.of("name", DataType.STRING, 0),
-            Column.of("ranking", DataType.INT, 2),
-            Column.of("single", DataType.BOOLEAN, 3)
-          ))
+        .columns(Seq(
+          // 0 is invalid
+          Column.newBuilder().name("name").dataType(DataType.STRING).order(0).build(),
+          Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
+          Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
+        ))
         .configs(props.toMap)
         .create())
     FtpUtil.assertFailedConnector(testUtil, connectorName)
@@ -521,7 +518,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.copy(completedFolder = None).toMap)
         .create())
     try {

@@ -47,6 +47,4 @@ public class TestConnectorProps extends SmallTest {
     DumbSinkTask task = new DumbSinkTask();
     assertException(IllegalArgumentException.class, () -> task.start(Collections.emptyMap()));
   }
-
-  // TODO: add tests against adding interval key manually...see OHARA-588
 }

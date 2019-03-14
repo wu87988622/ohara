@@ -52,7 +52,7 @@ class JDBCSourceTask extends RowSourceTask {
     val tableName = jdbcSourceConnectorConfig.dbTableName
     dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
 
-    schema = config.schema.asScala
+    schema = config.columns.asScala
     topics = config.topics.asScala
     offsets = new Offsets(rowContext, tableName)
   }
@@ -71,8 +71,12 @@ class JDBCSourceTask extends RowSourceTask {
 
     try resultSet
     //Create Ohara Schema
-      .map(columns =>
-        (if (schema.isEmpty) columns.map(c => Column.of(c.columnName, DataType.OBJECT, 0)) else schema, columns))
+      .map(
+        columns =>
+          (if (schema.isEmpty)
+             columns.map(c => Column.newBuilder().name(c.columnName).dataType(DataType.OBJECT).order(0).build())
+           else schema,
+           columns))
       .flatMap {
         case (newSchema, columns) =>
           val offsetTimestampValue = dbTimestampColumnValue(columns, timestampColumnName)

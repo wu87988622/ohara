@@ -130,7 +130,7 @@ class FtpSourceTask extends RowSourceTask {
   }
 
   /**
-    * transform the input cells to rows as stated by the schema. This method does the following works.
+    * transform the input cells to rows as stated by the columns. This method does the following works.
     * 1) filter out the unused cell
     * 2) replace the name by new one
     * 3) convert the string to specified type
@@ -203,7 +203,7 @@ class FtpSourceTask extends RowSourceTask {
 
   override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.props = FtpSourceTaskProps(config.options.asScala.toMap)
-    this.schema = config.schema.asScala
+    this.schema = config.columns.asScala
     if (props.inputFolder.isEmpty)
       throw new IllegalArgumentException(s"invalid input:${props.inputFolder.mkString(",")}")
     topics = config.topics.asScala

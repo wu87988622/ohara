@@ -29,6 +29,7 @@ class TestWorkerJson extends SmallTest with Matchers {
     val definition = Definition(
       name = CommonUtil.randomString(5),
       valueType = "String",
+      required = true,
       valueDefault = None,
       documentation = CommonUtil.randomString(10)
     )
@@ -37,6 +38,7 @@ class TestWorkerJson extends SmallTest with Matchers {
     val definition2 = Definition(
       name = CommonUtil.randomString(5),
       valueType = "String",
+      required = false,
       valueDefault = Some(CommonUtil.randomString(5)),
       documentation = CommonUtil.randomString(10)
     )
@@ -53,6 +55,7 @@ class TestWorkerJson extends SmallTest with Matchers {
                                               |{
                                               |  "name":"$name",
                                               |  "type":"$valueType",
+                                              |  "required": true,
                                               |  "default_value":"",
                                               |  "documentation":"$documentation"
                                               |}
@@ -72,6 +75,7 @@ class TestWorkerJson extends SmallTest with Matchers {
                                                |{
                                                |  "name":"$name",
                                                |  "type":"$valueType",
+                                               |  "required": true,
                                                |  "default_value":null,
                                                |  "documentation":"$documentation"
                                                |}
@@ -91,6 +95,7 @@ class TestWorkerJson extends SmallTest with Matchers {
                                                |{
                                                |  "name":"$name",
                                                |  "type":"$valueType",
+                                               |  "required": true,
                                                |  "documentation":"$documentation"
                                                |}
                                             """.stripMargin.parseJson)
@@ -183,6 +188,7 @@ class TestWorkerJson extends SmallTest with Matchers {
           Definition(
             name = name,
             valueType = "String",
+            required = true,
             valueDefault = None,
             documentation = CommonUtil.randomString(10)
         )),
@@ -212,6 +218,7 @@ class TestWorkerJson extends SmallTest with Matchers {
           Definition(
             name = name,
             valueType = "String",
+            required = true,
             valueDefault = None,
             documentation = CommonUtil.randomString(10)
         )),

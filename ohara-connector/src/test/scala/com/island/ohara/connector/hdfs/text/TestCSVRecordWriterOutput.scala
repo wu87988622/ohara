@@ -37,7 +37,10 @@ class TestCSVRecordWriterOutput extends WithTestUtil with Matchers {
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
-    val schema = Seq(Column.of("column1", DataType.STRING, 0), Column.of("column2", DataType.STRING, 1))
+    val schema = Seq(
+      Column.newBuilder().name("column1").dataType(DataType.STRING).order(0).build(),
+      Column.newBuilder().name("column2").dataType(DataType.STRING).order(1).build()
+    )
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(false, schema, row)
     csvRecordWriter.close()
@@ -63,7 +66,10 @@ class TestCSVRecordWriterOutput extends WithTestUtil with Matchers {
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
-    val schema = Seq(Column.of("column1", DataType.STRING, 0), Column.of("column2", DataType.STRING, 1))
+    val schema = Seq(
+      Column.newBuilder().name("column1").dataType(DataType.STRING).order(0).build(),
+      Column.newBuilder().name("column2").dataType(DataType.STRING).order(1).build()
+    )
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
@@ -90,7 +96,10 @@ class TestCSVRecordWriterOutput extends WithTestUtil with Matchers {
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
 
     val schema =
-      Seq(Column.of("column1", "COLUMN100", DataType.STRING, 0), Column.of("column2", "COLUMN200", DataType.STRING, 1))
+      Seq(
+        Column.newBuilder().name("column1").newName("COLUMN100").dataType(DataType.STRING).order(0).build(),
+        Column.newBuilder().name("column2").newName("COLUMN200").dataType(DataType.STRING).order(1).build()
+      )
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
@@ -141,10 +150,11 @@ class TestCSVRecordWriterOutput extends WithTestUtil with Matchers {
     val tempFilePath: String = s"${testUtil.hdfs.tmpDirectory}/${CommonUtil.randomString(5)}"
     val csvRecordWriter: RecordWriterOutput =
       new CSVRecordWriterOutput(hdfsSinkConnectorConfig, storage, tempFilePath)
-
-    val schema = Seq(Column.of("column1", "COL1", DataType.STRING, 0),
-                     Column.of("column2", "COL2", DataType.STRING, 2),
-                     Column.of("column3", "COL3", DataType.STRING, 1))
+    val schema = Seq(
+      Column.newBuilder().name("column1").newName("COL1").dataType(DataType.STRING).order(0).build(),
+      Column.newBuilder().name("column2").newName("COL2").dataType(DataType.STRING).order(2).build(),
+      Column.newBuilder().name("column3").newName("COL3").dataType(DataType.STRING).order(1).build()
+    )
     val row = Row.of(Cell.of("column1", "value1"), Cell.of("column2", "value2"), Cell.of("column3", "value3"))
     csvRecordWriter.write(true, schema, row)
     csvRecordWriter.close()
@@ -181,7 +191,8 @@ class TestCSVRecordWriterOutput extends WithTestUtil with Matchers {
 
     try {
       val row = Row.of(Cell.of("cf0", 123), Cell.of("cf1", false))
-      csvRecordWriter.write(needHeader, Seq(Column.of("c", "c", DataType.DOUBLE, 0)), row)
+      csvRecordWriter
+        .write(needHeader, Seq(Column.newBuilder().name("c").dataType(DataType.DOUBLE).order(0).build()), row)
     } finally csvRecordWriter.close()
     println("tempfilepath:" + tempFilePath)
     storage.exist(tempFilePath) shouldBe false

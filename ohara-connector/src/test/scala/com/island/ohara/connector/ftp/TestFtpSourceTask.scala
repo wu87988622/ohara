@@ -213,7 +213,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val schema = data.head._2.map(_.name).zipWithIndex.map {
-      case (name: String, index: Int) => Column.of(name, DataType.STRING, index)
+      case (name: String, index: Int) => Column.newBuilder().name(name).dataType(DataType.STRING).order(index).build()
     }
     val task = new FtpSourceTask()
 
@@ -222,7 +222,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
         .builder()
         .name(methodName())
         .topic(methodName())
-        .schema(schema.asJava)
+        .columns(schema.asJava)
         .options(props.toMap.asJava)
         .build())
     task.transform(data) shouldBe data.map {
@@ -234,24 +234,24 @@ class TestFtpSourceTask extends SmallTest with Matchers {
   def testTransformWithSingleColumn(): Unit = {
     val path = CommonUtil.path(props.inputFolder, methodName)
     val data = setupInputData(path)
-    val schema = data.head._2
+    val column = data.head._2
       .map(_.name)
       .zipWithIndex
       .map {
-        case (name, index) => Column.of(name, DataType.STRING, index)
+        case (name, index) => Column.newBuilder().name(name).dataType(DataType.STRING).order(index).build()
       }
       .head
 
     val task = new FtpSourceTask()
 
     task._start(
-      TaskConfig.builder().name(methodName()).topic(methodName()).schema(schema).options(props.toMap.asJava).build())
+      TaskConfig.builder().name(methodName()).topic(methodName()).column(column).options(props.toMap.asJava).build())
     val transformedData = task.transform(data)
     transformedData.size shouldBe data.size
     transformedData.values.foreach(row => {
       row.size shouldBe 1
       // it should pass
-      val cell = row.cell(schema.newName)
+      val cell = row.cell(column.newName)
       cell.value.getClass shouldBe classOf[String]
     })
   }

@@ -39,8 +39,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       id = id,
       name = name,
       className = request.className,
-      schema = request.columns,
-      topics = request.topicNames,
+      schema = request.schema,
+      topics = request.topics,
       numberOfTasks = request.numberOfTasks,
       workerClusterName = wkClusterName,
       state = None,
@@ -131,7 +131,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
             case _: NoSuchClusterException => response
         }
     ) ~
-      pathPrefix((CONNECTORS_PREFIX_PATH) / Segment) { id =>
+      pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { id =>
         path(START_COMMAND) {
           put {
             onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
@@ -158,7 +158,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                           .name(connectorConfig.id)
                           .disableConverter()
                           .className(connectorConfig.className)
-                          .schema(connectorConfig.schema)
+                          .columns(connectorConfig.schema)
                           .configs(connectorConfig.configs)
                           .topicNames(connectorConfig.topics)
                           .numberOfTasks(connectorConfig.numberOfTasks)

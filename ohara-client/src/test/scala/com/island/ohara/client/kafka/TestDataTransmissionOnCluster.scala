@@ -29,7 +29,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
-  private[this] val schema = Seq(Column.of("cf", DataType.BOOLEAN, 1))
+  private[this] val schema = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
   private[this] val numberOfRows = 20
 
   @After
@@ -142,7 +142,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .numberOfTasks(2)
         .disableConverter()
-        .schema(schema)
+        .columns(schema)
         .configs(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> topicName2))
         .create())
 
@@ -183,7 +183,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .topicName(topicName2)
         .numberOfTasks(2)
         .disableConverter()
-        .schema(schema)
+        .columns(schema)
         .configs(Map(BROKER -> testUtil.brokersConnProps, INPUT -> topicName))
         .create())
 
@@ -254,7 +254,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .topicNames(topics)
         .numberOfTasks(2)
         .disableConverter()
-        .schema(schema)
+        .columns(schema)
         .configs(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
         .create())
 

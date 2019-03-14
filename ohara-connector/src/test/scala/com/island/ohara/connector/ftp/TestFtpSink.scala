@@ -84,9 +84,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   private[this] val TOPIC = TestFtpSink.TOPIC
 
   private[this] val schema: Seq[Column] = Seq(
-    Column.of("a", DataType.STRING, 1),
-    Column.of("b", DataType.INT, 2),
-    Column.of("c", DataType.BOOLEAN, 3)
+    Column.newBuilder().name("a").dataType(DataType.STRING).order(1).build(),
+    Column.newBuilder().name("b").dataType(DataType.INT).order(2).build(),
+    Column.newBuilder().name("c").dataType(DataType.BOOLEAN).order(3).build()
   )
 
   private[this] val data = TestFtpSink.data
@@ -131,9 +131,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val topicName = TOPIC
     val connectorName = methodName
     val newSchema: Seq[Column] = Seq(
-      Column.of("a", DataType.STRING, 3),
-      Column.of("b", DataType.INT, 2),
-      Column.of("c", DataType.BOOLEAN, 1)
+      Column.newBuilder().name("a").dataType(DataType.STRING).order(3).build(),
+      Column.newBuilder().name("b").dataType(DataType.INT).order(2).build(),
+      Column.newBuilder().name("c").dataType(DataType.BOOLEAN).order(1).build()
     )
     result(
       workerClient
@@ -143,7 +143,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(newSchema)
+        .columns(newSchema)
         .configs(props.toMap)
         .create())
 
@@ -174,7 +174,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.copy(needHeader = true).toMap)
         .create())
 
@@ -230,9 +230,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val topicName = TOPIC
     val connectorName = methodName
     val schema = Seq(
-      Column.of("a", "aa", DataType.STRING, 1),
-      Column.of("b", "bb", DataType.INT, 2),
-      Column.of("c", "cc", DataType.BOOLEAN, 3)
+      Column.newBuilder().name("a").newName("aa").dataType(DataType.STRING).order(1).build(),
+      Column.newBuilder().name("b").newName("bb").dataType(DataType.INT).order(2).build(),
+      Column.newBuilder().name("c").newName("cc").dataType(DataType.BOOLEAN).order(3).build()
     )
     result(
       workerClient
@@ -242,7 +242,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.copy(needHeader = true).toMap)
         .create())
 
@@ -274,7 +274,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.toMap)
         .create())
 
@@ -335,7 +335,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         //will use default UTF-8
         .configs(props.copy(encode = None).toMap)
         .create())
@@ -367,7 +367,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         //will use default UTF-8
         .configs(props.copy(encode = Some("")).toMap)
         .create())
@@ -400,7 +400,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         // skip last column
-        .schema(schema.slice(0, schema.length - 1))
+        .columns(schema.slice(0, schema.length - 1))
         .configs(props.toMap)
         .create())
 
@@ -431,7 +431,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         // the name can't be casted to int
-        .schema(Seq(Column.of("name", DataType.INT, 1)))
+        .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
         .configs(props.toMap)
         .create())
 

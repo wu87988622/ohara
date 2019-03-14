@@ -33,17 +33,18 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
     freq = 5 seconds
   )
 
-  private[this] val schema: Seq[Column] = Seq(
-    Column.of("a", DataType.STRING, 1),
-    Column.of("b", DataType.SHORT, 2),
-    Column.of("c", DataType.INT, 3),
-    Column.of("d", DataType.LONG, 4),
-    Column.of("e", DataType.FLOAT, 5),
-    Column.of("f", DataType.DOUBLE, 6),
-    Column.of("g", DataType.BOOLEAN, 7),
-    Column.of("h", DataType.BYTE, 8),
-    Column.of("i", DataType.BYTES, 9)
-  )
+  private[this] val schema: Seq[Column] =
+    Seq(
+      Column.newBuilder().name("a").dataType(DataType.STRING).order(1).build(),
+      Column.newBuilder().name("b").dataType(DataType.SHORT).order(2).build(),
+      Column.newBuilder().name("c").dataType(DataType.INT).order(3).build(),
+      Column.newBuilder().name("d").dataType(DataType.LONG).order(4).build(),
+      Column.newBuilder().name("e").dataType(DataType.FLOAT).order(5).build(),
+      Column.newBuilder().name("f").dataType(DataType.DOUBLE).order(6).build(),
+      Column.newBuilder().name("g").dataType(DataType.BOOLEAN).order(7).build(),
+      Column.newBuilder().name("h").dataType(DataType.BYTE).order(8).build(),
+      Column.newBuilder().name("i").dataType(DataType.BYTES).order(9).build()
+    )
 
   @Test
   def testNormalCase(): Unit = {
@@ -57,7 +58,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .disableConverter()
         .name(connectorName)
-        .schema(schema)
+        .columns(schema)
         .configs(props.toMap)
         .create(),
       10 seconds

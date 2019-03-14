@@ -16,7 +16,7 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtil.VERSION;
+import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -122,7 +122,7 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(ConnectorUtil.toTaskConfig(props));
+    _start(ConnectorUtils.toTaskConfig(props));
   }
 
   @Override

@@ -19,7 +19,7 @@ package com.island.ohara.client.kafka
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.common.data.ConnectorState
 import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, _}
-import spray.json.{DeserializationException, JsArray, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsBoolean, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
 /**
   * a collection from marshalling/unmarshalling connector data to/from json.
@@ -132,6 +132,7 @@ object WorkerJson {
   case class Definition(
     name: String,
     valueType: String,
+    required: Boolean,
     valueDefault: Option[String],
     documentation: String,
   )
@@ -139,14 +140,16 @@ object WorkerJson {
   implicit val DEFINITION_FORMAT: RootJsonFormat[Definition] = new RootJsonFormat[Definition] {
     private[this] val nameKey: String = "name"
     private[this] val valueTypeKey: String = "type"
+    private[this] val requiredKey: String = "required"
     private[this] val defaultKey: String = "default_value"
     private[this] val documentationKey: String = "documentation"
     override def read(json: JsValue): Definition =
-      json.asJsObject.getFields(nameKey, valueTypeKey, documentationKey) match {
-        case Seq(JsString(name), JsString(valueType), JsString(documentation)) =>
+      json.asJsObject.getFields(nameKey, valueTypeKey, requiredKey, documentationKey) match {
+        case Seq(JsString(name), JsString(valueType), JsBoolean(required), JsString(documentation)) =>
           Definition(
             name = name,
             valueType = valueType,
+            required = required,
             valueDefault = json.asJsObject.fields
               .get(defaultKey)
               .flatMap {
@@ -164,6 +167,7 @@ object WorkerJson {
       Map(
         nameKey -> JsString(obj.name),
         valueTypeKey -> JsString(obj.valueType),
+        requiredKey -> JsBoolean(obj.required),
         defaultKey -> JsString(obj.valueDefault.getOrElse("")),
         documentationKey -> JsString(obj.documentation)
       ))

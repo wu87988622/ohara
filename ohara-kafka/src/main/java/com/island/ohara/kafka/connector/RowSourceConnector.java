@@ -16,8 +16,9 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtil.VERSION;
+import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,12 +58,12 @@ public abstract class RowSourceConnector extends SourceConnector {
   protected abstract void _stop();
 
   /**
-   * Define the configuration for the connector. TODO: wrap ConfigDef ... by chia
+   * Define the configuration for the connector.
    *
    * @return The ConfigDef for this connector.
    */
-  protected ConfigDef _config() {
-    return ConnectorUtil.defaultConfigDef();
+  protected List<Definition> definitions() {
+    return Collections.emptyList();
   }
   /**
    * Get the version from this connector.
@@ -77,7 +78,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return _taskConfigs(maxTasks).stream().map(ConnectorUtil::toMap).collect(Collectors.toList());
+    return _taskConfigs(maxTasks).stream().map(ConnectorUtils::toMap).collect(Collectors.toList());
   }
 
   @Override
@@ -87,7 +88,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(ConnectorUtil.toTaskConfig(props));
+    _start(ConnectorUtils.toTaskConfig(props));
   }
 
   @Override
@@ -97,7 +98,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final ConfigDef config() {
-    return _config();
+    return ConnectorUtils.toConfigDefWithDefault(definitions());
   }
 
   @Override

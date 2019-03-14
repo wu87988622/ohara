@@ -29,7 +29,7 @@ class PerfSourceTask extends RowSourceTask {
   override protected def _start(config: TaskConfig): Unit = {
     this.props = PerfSourceProps(config.options.asScala.toMap)
     this.topics = config.topics.asScala
-    this.schema = config.schema.asScala
+    this.schema = config.columns.asScala
   }
 
   override protected def _stop(): Unit = {}

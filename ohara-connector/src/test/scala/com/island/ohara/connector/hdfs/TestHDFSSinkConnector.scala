@@ -40,7 +40,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
-  private[this] val schema = Seq(Column.of("cf0", DataType.BOOLEAN, 1))
+  private[this] val schema = Seq(Column.newBuilder().name("cf0").dataType(DataType.BOOLEAN).order(1).build())
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -87,7 +87,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .numberOfTasks(sinkTasks)
         .disableConverter()
         .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
-        .schema(schema)
+        .columns(schema)
         .create())
 
     CommonUtil
@@ -147,7 +147,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           dataDirName -> dataDirPath,
           isHeader -> "false"
         ))
-        .schema(schema)
+        .columns(schema)
         .create())
 
     TimeUnit.SECONDS.sleep(5)
@@ -228,7 +228,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           dataDirName -> dataDirPath,
           isHeader -> "false"
         ))
-        .schema(schema)
+        .columns(schema)
         .create())
 
     TimeUnit.SECONDS.sleep(5)
@@ -322,7 +322,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           needHeader -> "true",
           dataDirName -> dataDirPath
         ))
-        .schema(schema)
+        .columns(schema)
         .create())
 
     TimeUnit.SECONDS.sleep(5)
@@ -404,7 +404,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           dataDirName -> dataDirPath,
           isHeader -> "false"
         ))
-        .schema(Seq(Column.of("cccc", DataType.BOOLEAN, 1)))
+        .columns(Seq(Column.newBuilder().name("cccc").dataType(DataType.BOOLEAN).order(1).build()))
         .create())
 
     TimeUnit.SECONDS.sleep(5)

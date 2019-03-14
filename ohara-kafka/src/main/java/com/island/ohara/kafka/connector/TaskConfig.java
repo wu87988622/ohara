@@ -32,20 +32,20 @@ public class TaskConfig {
 
   private final String name;
   private final List<String> topics;
-  private final List<Column> schema;
+  private final List<Column> columns;
   private final Map<String, String> options;
 
   /**
    * @param name connector name
    * @param topics target topics which row source task should sent data
-   * @param schema row schema
+   * @param columns row columns
    * @param options other configs
    */
   private TaskConfig(
-      String name, List<String> topics, List<Column> schema, Map<String, String> options) {
+      String name, List<String> topics, List<Column> columns, Map<String, String> options) {
     this.name = name;
     this.topics = topics;
-    this.schema = schema;
+    this.columns = columns;
     this.options = options;
   }
 
@@ -57,8 +57,8 @@ public class TaskConfig {
     return topics;
   }
 
-  public List<Column> schema() {
-    return schema;
+  public List<Column> columns() {
+    return columns;
   }
 
   public Map<String, String> options() {
@@ -68,7 +68,7 @@ public class TaskConfig {
   public static class Builder {
     private String name = null;
     private List<String> topics = Collections.emptyList();
-    private List<Column> schema = Collections.emptyList();
+    private List<Column> columns = Collections.emptyList();
     private Map<String, String> options = Collections.emptyMap();
 
     public Builder name(String name) {
@@ -86,13 +86,13 @@ public class TaskConfig {
     }
 
     @Optional("default is empty")
-    public Builder schema(Column column) {
-      return schema(Collections.singletonList(Objects.requireNonNull(column)));
+    public Builder column(Column column) {
+      return columns(Collections.singletonList(Objects.requireNonNull(column)));
     }
 
     @Optional("default is empty")
-    public Builder schema(List<Column> schema) {
-      this.schema = Objects.requireNonNull(schema);
+    public Builder columns(List<Column> columns) {
+      this.columns = Objects.requireNonNull(columns);
       return this;
     }
 
@@ -111,7 +111,7 @@ public class TaskConfig {
       return new TaskConfig(
           Objects.requireNonNull(name),
           Objects.requireNonNull(topics),
-          Objects.requireNonNull(schema),
+          Objects.requireNonNull(columns),
           Objects.requireNonNull(options));
     }
   }

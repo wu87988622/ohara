@@ -16,8 +16,9 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtil.VERSION;
+import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,12 +59,12 @@ public abstract class RowSinkConnector extends SinkConnector {
   protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
 
   /**
-   * Define the configuration for the connector. TODO: wrap ConfigDef ... by chia
+   * Define the configuration for the connector.
    *
    * @return The ConfigDef for this connector.
    */
-  protected ConfigDef _config() {
-    return ConnectorUtil.defaultConfigDef();
+  protected List<Definition> definitions() {
+    return Collections.emptyList();
   }
 
   /**
@@ -91,7 +92,7 @@ public abstract class RowSinkConnector extends SinkConnector {
                     "topics in task (%s can't be different to topics in connector (%s",
                     String.join(",", x.topics()), String.join(",", internalConfig.topics())));
         });
-    return _taskConfigs(maxTasks).stream().map(ConnectorUtil::toMap).collect(Collectors.toList());
+    return _taskConfigs(maxTasks).stream().map(ConnectorUtils::toMap).collect(Collectors.toList());
   }
 
   @Override
@@ -101,8 +102,8 @@ public abstract class RowSinkConnector extends SinkConnector {
 
   @Override
   public final void start(Map<String, String> props) {
-    this.internalConfig = ConnectorUtil.toTaskConfig(props);
-    _start(ConnectorUtil.toTaskConfig(props));
+    this.internalConfig = ConnectorUtils.toTaskConfig(props);
+    _start(ConnectorUtils.toTaskConfig(props));
   }
 
   @Override
@@ -112,7 +113,7 @@ public abstract class RowSinkConnector extends SinkConnector {
 
   @Override
   public final ConfigDef config() {
-    return _config();
+    return ConnectorUtils.toConfigDefWithDefault(definitions());
   }
 
   @Override
