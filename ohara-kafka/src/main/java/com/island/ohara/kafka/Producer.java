@@ -107,9 +107,13 @@ public interface Producer<K, V> extends Releasable {
         }
       };
     }
+
     /**
+     * @param keySerializer key serializer
+     * @param valueSerializer value serializer
      * @param <K> key type
      * @param <V> value type
+     * @return the producer
      */
     public <K, V> Producer<K, V> build(Serializer<K> keySerializer, Serializer<V> valueSerializer) {
       Objects.requireNonNull(connectionProps);
@@ -262,7 +266,13 @@ public interface Producer<K, V> extends Releasable {
       return this;
     }
 
-    /** send the record to brokers with async future */
+    /**
+     * start to send the data in background. Noted: you should check the returned future to handle
+     * the exception or result
+     *
+     * @param topic sending topic
+     * @return an async thread processing the request
+     */
     public Future<RecordMetadata> send(String topic) {
 
       CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
@@ -287,6 +297,7 @@ public interface Producer<K, V> extends Releasable {
     /**
      * send the record to brokers with callback
      *
+     * @param topic sending topic
      * @param handler invoked after the record is completed or failed
      */
     public void send(String topic, Handler<RecordMetadata> handler) {
@@ -302,11 +313,7 @@ public interface Producer<K, V> extends Releasable {
     void onSuccess(T t);
   }
 
-  /**
-   * wrap from kafka RecordMetadata;
-   *
-   * @see org.apache.kafka.clients.producer.RecordMetadata;
-   */
+  /** wrap from kafka RecordMetadata; */
   class RecordMetadata {
     private final String topic;
     private final int partition;
