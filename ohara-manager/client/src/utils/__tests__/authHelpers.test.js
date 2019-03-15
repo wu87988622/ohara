@@ -27,11 +27,6 @@ window.localStorage = localStorageMock;
 const userKey = '123456abc';
 
 describe('setUserKey()', () => {
-  it('does not set userKey when invoking with undefined', () => {
-    setUserKey(undefined);
-    expect(localStorage.userKey).toBe(undefined);
-  });
-
   it('sets userKey to localstorage', () => {
     setUserKey(userKey);
     expect(localStorage.userKey).toBe(userKey);

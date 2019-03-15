@@ -96,10 +96,20 @@ class JdbcSource extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    graph: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        id: PropTypes.string,
+        isActive: PropTypes.bool,
+        isExact: PropTypes.bool,
+        icon: PropTypes.string,
+      }),
+    ).isRequired,
     history: PropTypes.shape({
-      push: PropTypes.func,
+      push: PropTypes.func.isRequired,
     }).isRequired,
     topics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
   };
 
   selectMaps = {

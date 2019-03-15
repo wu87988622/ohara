@@ -86,9 +86,10 @@ class FtpSource extends React.Component {
       }),
     ).isRequired,
     history: PropTypes.shape({
-      push: PropTypes.func,
+      push: PropTypes.func.isRequired,
     }).isRequired,
     topics: PropTypes.array.isRequired,
+    isPipelineRunning: PropTypes.bool.isRequired,
   };
 
   selectMaps = {

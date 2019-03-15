@@ -39,6 +39,7 @@ const props = {
   history: {
     push: jest.fn(),
   },
+  isPipelineRunning: false,
 };
 
 describe('<HdfsSink />', () => {

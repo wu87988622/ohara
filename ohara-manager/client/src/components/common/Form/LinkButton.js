@@ -14,11 +14,26 @@
  * limitations under the License.
  */
 
-import Input from './Input';
-import Button from './Button';
-import FormGroup from './FormGroup';
-import Label from './Label';
-import Select from './Select';
-import LinkButton from './LinkButton';
+import React from 'react';
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
 
-export { Input, Button, FormGroup, Label, Select, LinkButton };
+const ButtonWrapper = styled.button`
+  border: none;
+  color: ${props => props.theme.blue};
+
+  &:hover {
+    color: ${props => props.theme.blueHover};
+  }
+`;
+
+const LinkButton = ({ handleClick, children }) => {
+  return <ButtonWrapper onClick={handleClick}>{children}</ButtonWrapper>;
+};
+
+LinkButton.propTypes = {
+  children: PropTypes.any,
+  handleClick: PropTypes.func,
+};
+
+export default LinkButton;

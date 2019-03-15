@@ -112,6 +112,9 @@ class PipelineListPage extends React.Component {
       path: PropTypes.string,
       url: PropTypes.string,
     }).isRequired,
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired,
+    }).isRequired,
   };
 
   headers = ['name', 'cluster', 'status', 'edit', 'delete'];

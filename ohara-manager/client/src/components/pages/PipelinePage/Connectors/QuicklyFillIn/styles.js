@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-import Input from './Input';
-import Button from './Button';
-import FormGroup from './FormGroup';
-import Label from './Label';
-import Select from './Select';
-import LinkButton from './LinkButton';
+import styled from 'styled-components';
+import { Label } from 'common/Form';
 
-export { Input, Button, FormGroup, Label, Select, LinkButton };
+const PreviewWrapper = styled.div`
+  margin-top: 16px;
+  padding: 16px;
+  background-color: ${props => props.theme.whiteSmoke};
+`;
+
+const Text = styled(Label)`
+  margin-left: 0.5rem;
+`;
+
+export { PreviewWrapper, Text };

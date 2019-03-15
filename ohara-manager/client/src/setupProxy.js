@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import Input from './Input';
-import Button from './Button';
-import FormGroup from './FormGroup';
-import Label from './Label';
-import Select from './Select';
-import LinkButton from './LinkButton';
+// https://facebook.github.io/create-react-app/docs/proxying-api-requests-in-development#configuring-the-proxy-manually
+const proxy = require('http-proxy-middleware');
 
-export { Input, Button, FormGroup, Label, Select, LinkButton };
+module.exports = function(app) {
+  app.use(proxy('/api', { target: 'http://localhost:5050' }));
+};

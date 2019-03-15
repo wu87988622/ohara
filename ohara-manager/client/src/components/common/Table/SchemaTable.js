@@ -18,6 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
+import { LinkButton } from 'common/Form';
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -87,19 +89,19 @@ class SchemaTable extends React.Component {
                   </select>
                 </td>
                 <td>
-                  <a href="" onClick={e => handleUp(e, order)}>
+                  <LinkButton handleClick={e => handleUp(e, order)}>
                     <i className="fas fa-arrow-up" />
-                  </a>
+                  </LinkButton>
                 </td>
                 <td>
-                  <a href="" onClick={e => handleDown(e, order)}>
+                  <LinkButton handleClick={e => handleDown(e, order)}>
                     <i className="fas fa-arrow-down" />
-                  </a>
+                  </LinkButton>
                 </td>
                 <td>
-                  <a href="" onClick={e => handleModalOpen(e, order)}>
+                  <LinkButton handleClick={e => handleModalOpen(e, order)}>
                     <i className="far fa-trash-alt" />
-                  </a>
+                  </LinkButton>
                 </td>
               </tr>
             );

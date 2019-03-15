@@ -24,6 +24,7 @@ class AutoSave extends React.Component {
   static propTypes = {
     values: PropTypes.object.isRequired,
     updateHasChanges: PropTypes.func.isRequired,
+    save: PropTypes.func.isRequired,
   };
 
   state = {

@@ -16,27 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import { noop, get, isEmpty, sortBy, map, find } from 'lodash';
 
 import * as configurationApi from 'api/configurationApi';
 import { Modal } from 'common/Modal';
 import { FormGroup, Label, Select } from 'common/Form';
 import { Box } from 'common/Layout';
-
-const LinkWrapper = styled.div`
-  cursor: pointer;
-`;
-
-const PreviewWrapper = styled.div`
-  margin-top: 16px;
-  padding: 16px;
-  background-color: ${props => props.theme.whiteSmoke};
-`;
-
-const Text = styled(Label)`
-  margin-left: 0.5rem;
-`;
+import { LinkButton } from 'common/Form';
+import { PreviewWrapper, Text } from './styles';
 
 class FtpQuicklyFillIn extends React.Component {
   static propTypes = {
@@ -111,10 +98,10 @@ class FtpQuicklyFillIn extends React.Component {
     const ftpNames = map(ftpConfigurations, 'name');
 
     return (
-      <div>
-        <LinkWrapper>
-          <a onClick={this.handleModalOpen}>Quickly fill in</a>
-        </LinkWrapper>
+      <>
+        <LinkButton handleClick={this.handleModalOpen}>
+          Quickly fill in
+        </LinkButton>
         <Modal
           title="Quickly fill in"
           isActive={isModalActive}
@@ -157,7 +144,7 @@ class FtpQuicklyFillIn extends React.Component {
             )}
           </Box>
         </Modal>
-      </div>
+      </>
     );
   }
 }
