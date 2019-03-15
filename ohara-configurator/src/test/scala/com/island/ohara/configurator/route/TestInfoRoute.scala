@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
@@ -35,7 +36,7 @@ class TestInfoRoute extends SmallTest with Matchers {
   @Test
   def test(): Unit = {
     // only test the configurator based on mini cluster
-    val clusterInformation = result(InfoApi.access().hostname(configurator.hostname).port(configurator.port).get())
+    val clusterInformation = result(InfoApi.access().hostname(configurator.hostname).port(configurator.port).get)
     clusterInformation.brokers shouldBe "this field is deprecated. Use Brokers APIs instead"
     clusterInformation.workers shouldBe "this field is deprecated. Use Workers APIs instead"
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true

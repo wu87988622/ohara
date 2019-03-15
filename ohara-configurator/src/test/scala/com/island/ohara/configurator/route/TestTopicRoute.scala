@@ -55,7 +55,7 @@ class TestTopicRoute extends SmallTest with Matchers {
     }
 
     // test add
-    result(topicApi.list()).size shouldBe 0
+    result(topicApi.list).size shouldBe 0
     val request = TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
                                        brokerClusterName = None,
                                        numberOfPartitions = None,
@@ -77,9 +77,9 @@ class TestTopicRoute extends SmallTest with Matchers {
     compare2Response(newResponse, result(topicApi.get(newResponse.id)))
 
     // test delete
-    result(topicApi.list()).size shouldBe 1
+    result(topicApi.list).size shouldBe 1
     result(topicApi.delete(response.id)) shouldBe newResponse
-    result(topicApi.list()).size shouldBe 0
+    result(topicApi.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(topicApi.get("123"))
@@ -118,7 +118,7 @@ class TestTopicRoute extends SmallTest with Matchers {
             .delete(topicInfo.brokerClusterName)
             .flatMap(_ => topicApi.delete(topicInfo.id))
         }
-        .flatMap(_ => topicApi.list())
+        .flatMap(_ => topicApi.list)
         .map(topics => topics.exists(_.name == name))) shouldBe false
   }
 
@@ -144,7 +144,7 @@ class TestTopicRoute extends SmallTest with Matchers {
 
   @Test
   def createTopicWithoutBrokerClusterName(): Unit = {
-    val zk = result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list()).head
+    val zk = result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list).head
 
     val zk2 = result(
       ZookeeperApi

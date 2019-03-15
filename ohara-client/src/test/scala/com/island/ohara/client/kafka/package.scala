@@ -23,6 +23,7 @@ import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 package object kafka {
   val ROW: Row = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 

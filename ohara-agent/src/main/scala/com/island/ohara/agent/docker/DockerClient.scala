@@ -23,6 +23,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
   * An interface used to control remote node's docker service.
   * the default implementation is based on ssh client.
@@ -34,7 +36,7 @@ trait DockerClient extends Releasable {
     * @param name container's name
     * @return true if container exists. otherwise, false
     */
-  def exist(name: String): Boolean = containers(_ == name).nonEmpty
+  def exist(name: String): Boolean = containerNames().contains(name)
 
   /**
     * @param name container's name
@@ -45,13 +47,15 @@ trait DockerClient extends Releasable {
   /**
     * @return a collection of running docker containers
     */
-  def activeContainers(): Seq[ContainerInfo] = containers().filter(_.state == ContainerState.RUNNING)
+  def activeContainers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    containers.map(_.filter(_.state == ContainerState.RUNNING))
 
   /**
     * the filter is used to reduce the possible communication across ssh.
     * @return a collection of running docker containers
     */
-  def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo]
+  def activeContainers(nameFilter: String => Boolean)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 
   /**
     * @return all containers' name
@@ -61,19 +65,19 @@ trait DockerClient extends Releasable {
   /**
     * @return a collection of docker containers
     */
-  def containers(): Seq[ContainerInfo] = containers(_ => true)
+  def containers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = containers(_ => true)
 
   /**
     * the filter is used to reduce the possible communication across ssh.
     * @return a collection of docker containers
     */
-  def containers(nameFilter: String => Boolean): Seq[ContainerInfo]
+  def containers(nameFilter: String => Boolean)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 
   /**
     * @param name container's name
     * @return container description or None if container doesn't exist
     */
-  def container(name: String): ContainerInfo = containers(_ == name).head
+  def container(name: String): ContainerInfo
 
   /**
     * build a docker container.

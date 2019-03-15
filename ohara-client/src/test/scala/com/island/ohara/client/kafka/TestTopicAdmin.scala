@@ -23,7 +23,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestTopicAdmin extends With3Brokers with Matchers {
 
   @Test
@@ -38,17 +38,17 @@ class TestTopicAdmin extends With3Brokers with Matchers {
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
-                                 .create(),
+                                 .create,
                                30 seconds)
       topic.name shouldBe name
       topic.numberOfPartitions shouldBe numberOfPartitions
       topic.numberOfReplications shouldBe numberOfReplications
 
-      Await.result(topicAdmin.list(), 30 seconds).find(_.name == name).get shouldBe topic
+      Await.result(topicAdmin.list, 30 seconds).find(_.name == name).get shouldBe topic
 
       Await.result(topicAdmin.delete(name), 30 seconds) shouldBe topic
 
-      Await.result(topicAdmin.list(), 30 seconds).find(_.name == name) shouldBe None
+      Await.result(topicAdmin.list, 30 seconds).find(_.name == name) shouldBe None
     } finally topicAdmin.close()
   }
 
@@ -64,7 +64,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
           .numberOfPartitions(numberOfPartitions)
           .numberOfReplications(numberOfReplications)
           .name(CommonUtils.randomString(10))
-          .create(),
+          .create,
         30 seconds
       )
       val topic2 = Await.result(topicAdmin.changePartitions(topic.name, numberOfPartitions + 1), 30 seconds)
@@ -84,7 +84,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
-                                 .create(),
+                                 .create,
                                30 seconds)
       an[IllegalArgumentException] should be thrownBy Await
         .result(topicAdmin.changePartitions(topic.name, numberOfPartitions - 1), 30 seconds)
@@ -103,7 +103,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
-                                 .create(),
+                                 .create,
                                30 seconds)
       an[IllegalArgumentException] should be thrownBy Await.result(topicAdmin.changePartitions(topic.name, -10),
                                                                    30 seconds)
@@ -122,7 +122,7 @@ class TestTopicAdmin extends With3Brokers with Matchers {
                                  .numberOfPartitions(numberOfPartitions)
                                  .numberOfReplications(numberOfReplications)
                                  .name(name)
-                                 .create(),
+                                 .create,
                                30 seconds)
 
       topic shouldBe Await.result(topicAdmin.changePartitions(topic.name, numberOfPartitions), 30 seconds)

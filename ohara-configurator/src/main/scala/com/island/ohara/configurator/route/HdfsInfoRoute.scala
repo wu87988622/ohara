@@ -18,15 +18,16 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.client.configurator.v0.HadoopApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
+import com.island.ohara.configurator.store.DataStore
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object HdfsInfoRoute {
-  def apply(implicit store: Store): server.Route = RouteUtils.basicRoute[HdfsInfoRequest, HdfsInfo](
-    root = HDFS_PREFIX_PATH,
-    reqToRes = (_: TargetCluster, id: Id, request: HdfsInfoRequest) =>
-      Future.successful(HdfsInfo(id, request.name, request.uri, CommonUtils.current()))
-  )
+  def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
+    RouteUtils.basicRoute[HdfsInfoRequest, HdfsInfo](
+      root = HDFS_PREFIX_PATH,
+      reqToRes = (_: TargetCluster, id: Id, request: HdfsInfoRequest) =>
+        Future.successful(HdfsInfo(id, request.name, request.uri, CommonUtils.current()))
+    )
 }

@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object LogApi {
   val LOG_PREFIX_PATH: String = "logs"
@@ -35,13 +35,13 @@ object LogApi {
     private[this] def url(service: String, clusterName: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$service/$clusterName"
 
-    def log4ZookeeperCluster(clusterName: String): Future[ClusterLog] =
+    def log4ZookeeperCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](url(ZookeeperApi.ZOOKEEPER_PREFIX_PATH, clusterName))
 
-    def log4BrokerCluster(clusterName: String): Future[ClusterLog] =
+    def log4BrokerCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](url(BrokerApi.BROKER_PREFIX_PATH, clusterName))
 
-    def log4WorkerCluster(clusterName: String): Future[ClusterLog] =
+    def log4WorkerCluster(clusterName: String)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](url(WorkerApi.WORKER_PREFIX_PATH, clusterName))
   }
 

@@ -22,9 +22,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
                                   dockerCache: DockerClientCache,
                                   clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
@@ -41,8 +39,9 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
     * @return creator of broker cluster
     */
   override def creator(): ZookeeperCollie.ClusterCreator =
-    (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
-      clusterCache.get().flatMap { clusters =>
+    (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
+      implicit val exec: ExecutionContext = executionContext
+      clusterCache.get.flatMap { clusters =>
         if (clusters.keys.filter(_.isInstanceOf[ZookeeperClusterInfo]).exists(_.name == clusterName))
           Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
         else
@@ -110,15 +109,18 @@ private class ZookeeperCollieImpl(nodeCollie: NodeCollie,
                 )
               }
           }
+      }
     }
 
-  override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterInfo] =
+  override def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
-  override protected def doAddNode(previousCluster: ZookeeperClusterInfo,
-                                   previousContainers: Seq[ContainerInfo],
-                                   newNodeName: String): Future[ZookeeperClusterInfo] =
+  override protected def doAddNode(
+    previousCluster: ZookeeperClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     Future.failed(
       new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 }

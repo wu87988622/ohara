@@ -19,26 +19,27 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi._
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
+import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 object NodeRoute {
   private[this] lazy val LOG = Logger(NodeRoute.getClass)
 
-  private[this] def update(node: Node)(implicit clusterCollie: ClusterCollie): Future[Node] =
+  private[this] def update(node: Node)(implicit clusterCollie: ClusterCollie,
+                                       executionContext: ExecutionContext): Future[Node] =
     update(Seq(node)).map(_.head)
 
-  private[this] def update(nodes: Seq[Node])(implicit clusterCollie: ClusterCollie): Future[Seq[Node]] =
+  private[this] def update(nodes: Seq[Node])(implicit clusterCollie: ClusterCollie,
+                                             executionContext: ExecutionContext): Future[Seq[Node]] =
     clusterCollie.fetchServices(nodes).recover {
       case e: Throwable =>
         LOG.error("failed to seek cluster information", e)
         nodes
     }
 
-  def apply(implicit store: Store, clusterCollie: ClusterCollie): server.Route =
+  def apply(implicit store: DataStore, clusterCollie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[NodeCreationRequest, Node](
       root = NODES_PREFIX_PATH,
       hookOfAdd = (_: TargetCluster, _: Id, request: NodeCreationRequest) => {

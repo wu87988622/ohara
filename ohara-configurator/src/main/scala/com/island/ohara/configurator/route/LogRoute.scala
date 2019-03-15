@@ -27,6 +27,8 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WORKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZOOKEEPER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.LogApi._
 
+import scala.concurrent.ExecutionContext
+
 /**
   * Used to take log from specified cluster. We haven't log infra to provide UI to get log from specified "connector".
   * However, users need to "see" what happen on failed connectors. We don't implement the LogApi (client library) since
@@ -53,7 +55,7 @@ object LogRoute {
           }.toSeq
         ))
 
-  def apply(implicit collie: ClusterCollie): server.Route =
+  def apply(implicit collie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LogApi.LOG_PREFIX_PATH) {
       pathPrefix(ZOOKEEPER_PREFIX_PATH) {
         path(Segment) { zkClusterName =>

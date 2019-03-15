@@ -26,6 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestHdfsInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
@@ -49,7 +50,7 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
 
     // test add
     val hdfsAccess = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    result(hdfsAccess.list()).size shouldBe 0
+    result(hdfsAccess.list).size shouldBe 0
     val request = HdfsInfoRequest(methodName, "file:///")
     val response = result(hdfsAccess.add(request))
 
@@ -65,9 +66,9 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
     compare2Response(newResponse, result(hdfsAccess.get(newResponse.id)))
 
     // test delete
-    result(hdfsAccess.list()).size shouldBe 1
+    result(hdfsAccess.list).size shouldBe 1
     result(hdfsAccess.delete(response.id)) shouldBe newResponse
-    result(hdfsAccess.list()).size shouldBe 0
+    result(hdfsAccess.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(hdfsAccess.get("123"))
@@ -77,7 +78,7 @@ class TestHdfsInfoRoute extends SmallTest with Matchers {
   @Test
   def testGet2UnmatchedType(): Unit = {
     val access = HadoopApi.access().hostname(configurator.hostname).port(configurator.port)
-    result(access.list()).size shouldBe 0
+    result(access.list).size shouldBe 0
     val request = HdfsInfoRequest(methodName, "file:///")
     var response: HdfsInfo = result(access.add(request))
     request.name shouldBe response.name

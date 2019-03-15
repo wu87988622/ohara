@@ -27,8 +27,7 @@ import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.{Codec, Source}
 
 object StreamApi {
@@ -163,33 +162,33 @@ object StreamApi {
   )
 
   sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
-    def start(id: String): Future[StreamActionResponse]
-    def stop(id: String): Future[StreamActionResponse]
+    def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse]
+    def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse]
   }
   def accessOfAction(): ActionAccess = new ActionAccess {
     private[this] def url(id: String, action: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
-    override def start(id: String): Future[StreamActionResponse] =
+    override def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse] =
       exec.put[StreamActionResponse, ErrorApi.Error](url(id, START_COMMAND))
-    override def stop(id: String): Future[StreamActionResponse] =
+    override def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse] =
       exec.put[StreamActionResponse, ErrorApi.Error](url(id, STOP_COMMAND))
   }
 
   sealed abstract class ListAccess extends BasicAccess(s"$STREAM_PREFIX_PATH/$STREAM_LIST_PREFIX_PATH") {
-    def list(pipeline_id: String): Future[Seq[StreamListResponse]]
-    def upload(pipeline_id: String, filePaths: Seq[String]): Future[Seq[StreamListResponse]] =
+    def list(pipeline_id: String)(implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
+    def upload(pipeline_id: String, filePaths: Seq[String])(
+      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] =
       upload(
         pipeline_id: String,
         filePaths: Seq[String],
         INPUT_KEY,
         CONTENT_TYPE
       )
-    def upload(pipeline_id: String,
-               filePaths: Seq[String],
-               inputKey: String,
-               contentType: ContentType): Future[Seq[StreamListResponse]]
-    def delete(jar_id: String): Future[StreamListResponse]
-    def update(jar_id: String, request: StreamListRequest): Future[StreamListResponse]
+    def upload(pipeline_id: String, filePaths: Seq[String], inputKey: String, contentType: ContentType)(
+      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
+    def delete(jar_id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse]
+    def update(jar_id: String, request: StreamListRequest)(
+      implicit executionContext: ExecutionContext): Future[StreamListResponse]
   }
 
   // To avoid different charset handle, replace the malformedInput and unMappable char
@@ -197,10 +196,8 @@ object StreamApi {
   codec.onMalformedInput(CodingErrorAction.REPLACE)
   codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
   def accessOfList(): ListAccess = new ListAccess {
-    private[this] def request(target: String,
-                              inputKey: String,
-                              contentType: ContentType,
-                              filePaths: Seq[String]): Future[HttpRequest] =
+    private[this] def request(target: String, inputKey: String, contentType: ContentType, filePaths: Seq[String])(
+      implicit executionContext: ExecutionContext): Future[HttpRequest] =
       Marshal(Multipart.FormData(filePaths.map(filePath => {
         Multipart.FormData.BodyPart.Strict(
           inputKey,
@@ -216,21 +213,21 @@ object StreamApi {
           entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity)
         )
 
-    override def list(pipeline_id: String): Future[Seq[StreamListResponse]] =
+    override def list(pipeline_id: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] =
       exec.get[Seq[StreamListResponse], ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id")
 
-    override def upload(pipeline_id: String,
-                        filePaths: Seq[String],
-                        inputKey: String,
-                        contentType: ContentType): Future[Seq[StreamListResponse]] = {
+    override def upload(pipeline_id: String, filePaths: Seq[String], inputKey: String, contentType: ContentType)(
+      implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] = {
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id", inputKey, contentType, filePaths)
         .flatMap(exec.request[Seq[StreamListResponse], ErrorApi.Error])
     }
-    override def delete(jar_id: String): Future[StreamListResponse] =
+    override def delete(jar_id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse] =
       exec.delete[StreamListResponse, ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id")
-    override def update(jar_id: String, request: StreamListRequest): Future[StreamListResponse] =
+    override def update(jar_id: String, request: StreamListRequest)(
+      implicit executionContext: ExecutionContext): Future[StreamListResponse] =
       exec.put[StreamListRequest, StreamListResponse, ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id",
         request
@@ -238,10 +235,11 @@ object StreamApi {
   }
 
   sealed trait PropertyAccess {
-    def hostname(hostname: String): PropertyAccess
-    def port(port: Int): PropertyAccess
-    def get(id: String): Future[StreamPropertyResponse]
-    def update(id: String, request: StreamPropertyRequest): Future[StreamPropertyResponse]
+    def hostname(hostname: String)(implicit executionContext: ExecutionContext): PropertyAccess
+    def port(port: Int)(implicit executionContext: ExecutionContext): PropertyAccess
+    def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse]
+    def update(id: String, request: StreamPropertyRequest)(
+      implicit executionContext: ExecutionContext): Future[StreamPropertyResponse]
   }
 
   def accessOfProperty(): PropertyAccess = new PropertyAccess {
@@ -250,21 +248,21 @@ object StreamApi {
         s"$STREAM_PREFIX_PATH/$STREAM_PROPERTY_PREFIX_PATH"
       )
 
-    override def hostname(hostname: String): PropertyAccess = {
+    override def hostname(hostname: String)(implicit executionContext: ExecutionContext): PropertyAccess = {
       access.hostname(hostname)
       this
     }
-    override def port(port: Int): PropertyAccess = {
+    override def port(port: Int)(implicit executionContext: ExecutionContext): PropertyAccess = {
       access.port(port)
       this
     }
 
-    override def get(id: String): Future[StreamPropertyResponse] =
+    override def get(id: String)(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse] =
       access.get(id)
     override def update(
       id: String,
       request: StreamPropertyRequest
-    ): Future[StreamPropertyResponse] =
+    )(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse] =
       access.update(id, request)
   }
 }

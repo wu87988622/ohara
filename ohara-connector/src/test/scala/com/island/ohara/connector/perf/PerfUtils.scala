@@ -25,6 +25,7 @@ import com.island.ohara.testing.OharaTestUtils
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 object PerfUtils {
   private[this] val TIMEOUT = Duration.ofSeconds(60)
   def assertFailedConnector(testUtil: OharaTestUtils, name: String): Unit = CommonUtils.await(
@@ -42,7 +43,7 @@ object PerfUtils {
     CommonUtils.await(
       () => {
         val workerClient = WorkerClient(testUtil.workersConnProps)
-        Await.result(workerClient.activeConnectors(), 10 seconds).contains(name)
+        Await.result(workerClient.activeConnectors, 10 seconds).contains(name)
       },
       TIMEOUT
     )

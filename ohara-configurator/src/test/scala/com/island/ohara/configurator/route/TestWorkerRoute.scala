@@ -29,6 +29,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
@@ -45,10 +46,8 @@ class TestWorkerRoute extends MediumTest with Matchers {
     request.nodeNames shouldBe cluster.nodeNames
   }
 
-  private[this] val bkClusterName = Await
-    .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
-    .head
-    .name
+  private[this] val bkClusterName =
+    Await.result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds).head.name
 
   private[this] val nodeNames: Seq[String] = Seq("n0", "n1")
 
@@ -70,7 +69,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
           )))
     }
 
-    result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)
+    result(nodeAccess.list).size shouldBe (nodeNames.size + numberOfDefaultNodes)
   }
 
   @Test
@@ -200,7 +199,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
           nodeNames = nodeNames
         ))).name shouldBe anotherBk
     try {
-      result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
+      result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
 
       // there are two bk cluster so we have to assign the bk cluster...
       an[IllegalArgumentException] should be thrownBy result(
@@ -352,7 +351,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     )
     assert(request1, result(workerApi.add(request1)))
 
-    val clusters = result(workerApi.list())
+    val clusters = result(workerApi.list)
     clusters.size shouldBe 2
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
@@ -409,7 +408,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     containers.size shouldBe request.nodeNames.size
 
     result(workerApi.delete(request.name)) shouldBe cluster
-    result(workerApi.list()).size shouldBe 0
+    result(workerApi.list).size shouldBe 0
   }
 
   @Test

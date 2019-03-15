@@ -35,6 +35,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
   private[this] val hdfsURL: String = "hdfs://host1:9000"
@@ -88,7 +89,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
         .columns(schema)
-        .create())
+        .create)
 
     CommonUtils
       .await(() => SimpleHDFSSinkTask.taskProps.get(flushLineCountName) == flushLineCount, Duration.ofSeconds(20))
@@ -148,7 +149,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           isHeader -> "false"
         ))
         .columns(schema)
-        .create())
+        .create)
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
@@ -229,7 +230,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           isHeader -> "false"
         ))
         .columns(schema)
-        .create())
+        .create)
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"
@@ -323,7 +324,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           dataDirName -> dataDirPath
         ))
         .columns(schema)
-        .create())
+        .create)
 
     TimeUnit.SECONDS.sleep(5)
     CommonUtils.await(() => storage.list(s"$dataDirPath/$topicName/$partitionID").size == 2, Duration.ofSeconds(20))
@@ -405,7 +406,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           isHeader -> "false"
         ))
         .columns(Seq(Column.newBuilder().name("cccc").dataType(DataType.BOOLEAN).order(1).build()))
-        .create())
+        .create)
 
     TimeUnit.SECONDS.sleep(5)
     val partitionID: String = "partition0"

@@ -35,8 +35,8 @@ import org.junit.{Before, Ignore, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContextExecutor
-
 class TestPrometheus extends IntegrationTest with Matchers {
 
   private val nodes_key = "ohara.it.docker"
@@ -73,7 +73,8 @@ class TestPrometheus extends IntegrationTest with Matchers {
   }
 
   protected val nodeCollie: NodeCollie = NodeCollie(Seq(node))
-  protected val clusterCollie: ClusterCollie = ClusterCollie.ssh(nodeCollie)
+  protected val clusterCollie: ClusterCollie =
+    ClusterCollie.builderOfSsh().nodeCollie(nodeCollie).executorDefault().build()
 
   /**
     * test kafka can export metric
@@ -81,11 +82,11 @@ class TestPrometheus extends IntegrationTest with Matchers {
   @Test
   def testExporter(): Unit = {
     startZK(zkDesc => {
-      assertCluster(() => result(clusterCollie.zookeeperCollie().clusters()).keys.toSeq, zkDesc.name)
+      assertCluster(() => result(clusterCollie.zookeeperCollie().clusters).keys.toSeq, zkDesc.name)
       startBroker(
         zkDesc.name,
         (exporterPort, bkCluster) => {
-          assertCluster(() => result(clusterCollie.brokerCollie().clusters()).keys.toSeq, bkCluster.name)
+          assertCluster(() => result(clusterCollie.brokerCollie().clusters).keys.toSeq, bkCluster.name)
           implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[PrometheusClient].getSimpleName}--system")
           implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
           val url = "http://" + node.name + ":" + exporterPort + "/metrics"
@@ -122,7 +123,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .peerPort(peerPort)
           .clusterName(clusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
-          .create()
+          .create
       ))
     finally result(zookeeperCollie.remove(clusterName))
   }
@@ -144,7 +145,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .exporterPort(exporterPort)
           .zookeeperClusterName(zkClusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
-          .create()
+          .create
       )
     )
     finally result(brokerCollie.remove(clusterName))

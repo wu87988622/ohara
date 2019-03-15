@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
@@ -130,7 +131,7 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
 
     val access = FtpApi.access().hostname(configurator.hostname).port(configurator.port)
     // test add
-    result(access.list()).size shouldBe 0
+    result(access.list).size shouldBe 0
 
     val request = FtpInfoRequest("test", "152.22.23.12", 5, "test", "test")
     val response = compareRequestAndResponse(request, result(access.add(request)))
@@ -147,9 +148,9 @@ class TestFtpInfoRoute extends SmallTest with Matchers {
     compare2Response(newResponse, result(access.get(newResponse.id)))
 
     // test delete
-    result(access.list()).size shouldBe 1
+    result(access.list).size shouldBe 1
     result(access.delete(response.id)) shouldBe newResponse
-    result(access.list()).size shouldBe 0
+    result(access.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(access.get("asdadas"))

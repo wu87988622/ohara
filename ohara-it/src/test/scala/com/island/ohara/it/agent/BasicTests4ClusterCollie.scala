@@ -51,10 +51,10 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .peerPort(peerPort)
       .electionPort(electionPort)
       .nodeNames(nodeNames)
-      .create()
+      .create
 
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
-    zkCollie.clusters().map(_.keys.toSeq)
+    zkCollie.clusters.map(_.keys.toSeq)
 
   override protected def zk_logs(clusterName: String): Future[Seq[String]] =
     zkCollie.logs(clusterName).map(_.values.toSeq)
@@ -81,9 +81,9 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .exporterPort(exporterPort)
       .zookeeperClusterName(zkClusterName)
       .nodeNames(nodeNames)
-      .create()
+      .create
 
-  override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters().map(_.keys.toSeq)
+  override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters.map(_.keys.toSeq)
 
   override protected def bk_logs(clusterName: String): Future[Seq[String]] =
     bkCollie.logs(clusterName).map(_.values.toSeq)
@@ -118,7 +118,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .statusTopicName(CommonUtils.randomString(10))
       .offsetTopicName(CommonUtils.randomString(10))
       .nodeNames(nodeNames)
-      .create()
+      .create
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
@@ -139,9 +139,9 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .statusTopicName(statusTopicName)
       .offsetTopicName(offsetTopicName)
       .nodeNames(nodeNames)
-      .create()
+      .create
 
-  override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters().map(_.keys.toSeq)
+  override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters.map(_.keys.toSeq)
 
   override protected def wk_logs(clusterName: String): Future[Seq[String]] =
     wkCollie.logs(clusterName).map(_.values.toSeq)

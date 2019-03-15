@@ -24,19 +24,18 @@ import com.island.ohara.client.configurator.v0.InfoApi._
 import com.island.ohara.common.data.DataType
 import com.island.ohara.common.util.VersionUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 object InfoRoute extends SprayJsonSupport {
 
   private[this] val SUPPORTED_DATABASES = Seq("mysql")
 
-  def apply(implicit workerCollie: WorkerCollie): server.Route =
+  def apply(implicit workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
     path(INFO_PREFIX_PATH) {
       get {
         import scala.collection.JavaConverters._
-        onSuccess(workerCollie.clusters().flatMap { clusters =>
+        onSuccess(workerCollie.clusters.flatMap { clusters =>
           clusters.size match {
-            case 1 => workerCollie.workerClient(clusters.head._1.name).flatMap(_._2.plugins())
+            case 1 => workerCollie.workerClient(clusters.head._1.name).flatMap(_._2.plugins)
             case _ => Future.successful(Seq.empty)
           }
         }) { plugins =>

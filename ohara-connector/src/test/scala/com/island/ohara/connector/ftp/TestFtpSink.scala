@@ -30,6 +30,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 object TestFtpSink extends With3Brokers3Workers with Matchers {
 
   private val TOPIC = "TestFtpSink"
@@ -145,7 +146,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(newSchema)
         .configs(props.toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -176,7 +177,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.copy(needHeader = true).toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -207,7 +208,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         .configs(props.copy(needHeader = true).toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -244,7 +245,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.copy(needHeader = true).toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -276,7 +277,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -306,7 +307,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         .configs(props.toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -338,7 +339,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .columns(schema)
         //will use default UTF-8
         .configs(props.copy(encode = None).toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -370,7 +371,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .columns(schema)
         //will use default UTF-8
         .configs(props.copy(encode = Some("")).toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -402,7 +403,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .configs(props.toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -433,7 +434,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         // the name can't be casted to int
         .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
         .configs(props.toMap)
-        .create())
+        .create)
 
     try {
       FtpUtils.checkConnector(testUtil, connectorName)

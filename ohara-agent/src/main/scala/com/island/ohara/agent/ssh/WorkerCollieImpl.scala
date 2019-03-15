@@ -25,8 +25,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private class WorkerCollieImpl(nodeCollie: NodeCollie,
                                dockerCache: DockerClientCache,
@@ -45,7 +44,8 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
     * 7) update existed containers (if we are adding new node into a running cluster)
     * @return description of worker cluster
     */
-  override def creator(): WorkerCollie.ClusterCreator = (clusterName,
+  override def creator(): WorkerCollie.ClusterCreator = (executionContext,
+                                                         clusterName,
                                                          imageName,
                                                          brokerClusterName,
                                                          clientPort,
@@ -59,8 +59,9 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                                                          configTopicName,
                                                          configTopicReplications,
                                                          jarUrls,
-                                                         nodeNames) =>
-    clusterCache.get().flatMap { clusters =>
+                                                         nodeNames) => {
+    implicit val exec: ExecutionContext = executionContext
+    clusterCache.get.flatMap { clusters =>
       clusters
         .filter(_._1.isInstanceOf[WorkerClusterInfo])
         .map {
@@ -123,7 +124,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                         _.containerCreator()
                           .imageName(imageName)
                           // In --network=host mode, we don't need to export port for containers.
-//                          .portMappings(Map(clientPort -> clientPort))
+                          //                          .portMappings(Map(clientPort -> clientPort))
                           .hostname(containerName)
                           .envs(Map(
                             WorkerCollie.CLIENT_PORT_KEY -> clientPort.toString,
@@ -192,11 +193,13 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                 )
               }
         }
+    }
   }
 
-  override protected def doAddNode(previousCluster: WorkerClusterInfo,
-                                   previousContainers: Seq[ContainerInfo],
-                                   newNodeName: String): Future[WorkerClusterInfo] = {
+  override protected def doAddNode(
+    previousCluster: WorkerClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
     creator()
       .clusterName(previousCluster.name)
       .brokerClusterName(previousCluster.brokerClusterName)
@@ -213,6 +216,6 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
           .filter(_.nonEmpty)
           .map(s => new URL(s)))
       .nodeName(newNodeName)
-      .create()
+      .create
   }
 }

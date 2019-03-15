@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestZookeeperRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
@@ -64,12 +65,12 @@ class TestZookeeperRoute extends MediumTest with Matchers {
           )))
     }
 
-    result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)
+    result(nodeAccess.list).size shouldBe (nodeNames.size + numberOfDefaultNodes)
   }
 
   @Test
   def removeZookeeperClusterUsedByBrokerCluster(): Unit = {
-    val zks = result(zookeeperApi.list())
+    val zks = result(zookeeperApi.list)
 
     // we have a default zk cluster
     zks.isEmpty shouldBe false
@@ -80,7 +81,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     an[IllegalArgumentException] should be thrownBy result(zookeeperApi.delete(zk.name))
 
     // remove all broker clusters
-    result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list())
+    result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list)
       .map(_.name)
       .foreach(name => result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).delete(name)))
 
@@ -174,7 +175,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     )
     assert(request1, result(zookeeperApi.add(request1)))
 
-    val clusters = result(zookeeperApi.list())
+    val clusters = result(zookeeperApi.list)
     clusters.size shouldBe 3
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
@@ -213,7 +214,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     containers.size shouldBe request.nodeNames.size
 
     result(zookeeperApi.delete(request.name)) shouldBe cluster
-    result(zookeeperApi.list()).size shouldBe 1
+    result(zookeeperApi.list).size shouldBe 1
   }
 
   @Test

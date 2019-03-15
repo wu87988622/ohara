@@ -20,7 +20,7 @@ import com.island.ohara.common.data.DataType
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object InfoApi {
 
@@ -71,12 +71,12 @@ object InfoApi {
                                     supportedDataTypes: Seq[DataType],
                                     versionInfo: ConfiguratorVersion)
   sealed abstract class InfoAccess extends BasicAccess(INFO_PREFIX_PATH) {
-    def get(): Future[ConfiguratorInfo]
+    def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo]
   }
   implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat7(ConfiguratorInfo)
 
   def access(): InfoAccess = new InfoAccess {
-    override def get(): Future[ConfiguratorInfo] =
+    override def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =
       exec.get[ConfiguratorInfo, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }
 }

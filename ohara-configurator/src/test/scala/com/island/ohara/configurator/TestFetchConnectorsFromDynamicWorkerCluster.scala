@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestFetchConnectorsFromDynamicWorkerCluster extends WithBrokerWorker with Matchers {
 
   @Test
@@ -31,7 +32,7 @@ class TestFetchConnectorsFromDynamicWorkerCluster extends WithBrokerWorker with 
 
     try {
       val clusters =
-        Await.result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        Await.result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
       clusters.isEmpty shouldBe false
 
       clusters.foreach { cluster =>

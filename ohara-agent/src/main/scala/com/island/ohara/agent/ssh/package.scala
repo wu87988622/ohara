@@ -20,8 +20,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 package object ssh {
   private[ssh] val LOG = Logger("SshClusterCollie")
 
@@ -32,8 +31,8 @@ package object ssh {
     * @param connectionProps worker connection props
     * @return plugin description or nothing
     */
-  private[ssh] def plugins(connectionProps: String): Future[Seq[Plugin]] =
-    WorkerClient(connectionProps, maxRetry = 0).plugins().recover {
+  private[ssh] def plugins(connectionProps: String)(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] =
+    WorkerClient(connectionProps, maxRetry = 0).plugins.recover {
       case e: Throwable =>
         LOG.error(s"Failed to fetch connectors information of cluster:$connectionProps. Use empty list instead", e)
         Seq.empty

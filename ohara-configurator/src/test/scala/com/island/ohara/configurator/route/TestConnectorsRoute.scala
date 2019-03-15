@@ -29,7 +29,8 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorsRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
@@ -73,7 +74,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     val schema = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
                      Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     // test add
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
@@ -106,9 +107,9 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     compare2Response(newResponse, result(connectorApi.get(newResponse.id)))
 
     // test delete
-    result(connectorApi.list()).size shouldBe 1
+    result(connectorApi.list).size shouldBe 1
     result(connectorApi.delete(response.id)) shouldBe newResponse
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(connectorApi.get("asdasdasd"))
@@ -117,7 +118,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
   @Test
   def testInvalidSource(): Unit = {
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
 
     val illegalOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
                            Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
@@ -131,7 +132,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         topics = Seq.empty,
         numberOfTasks = 1
       )))
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
 
     val duplicateOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
                              Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
@@ -145,7 +146,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         topics = Seq.empty,
         numberOfTasks = 1
       )))
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
   }
 
   @Test
@@ -168,7 +169,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
                      Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
 
     // test add
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
@@ -201,9 +202,9 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     compare2Response(newResponse, result(connectorApi.get(newResponse.id)))
 
     // test delete
-    result(connectorApi.list()).size shouldBe 1
+    result(connectorApi.list).size shouldBe 1
     result(connectorApi.delete(response.id)) shouldBe newResponse
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(connectorApi.get("asdasdasd"))
@@ -213,7 +214,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
   @Test
   def testInvalidSink(): Unit = {
 
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
 
     val illegalOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
                            Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
@@ -227,7 +228,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         topics = Seq.empty,
         numberOfTasks = 1
       )))
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
 
     val duplicateOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
                              Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
@@ -241,7 +242,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         topics = Seq.empty,
         numberOfTasks = 1
       )))
-    result(connectorApi.list()).size shouldBe 0
+    result(connectorApi.list).size shouldBe 0
   }
 
   @Test
@@ -262,7 +263,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     result(connectorApi.delete(connector.id))
 
-    result(connectorApi.list()).exists(_.id == connector.id) shouldBe false
+    result(connectorApi.list).exists(_.id == connector.id) shouldBe false
   }
 
   @Test
@@ -281,7 +282,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
   @Test
   def runConnectorWithoutSpecificCluster(): Unit = {
-    val bk = result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list()).head
+    val bk = result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list).head
 
     val wk = result(
       WorkerApi

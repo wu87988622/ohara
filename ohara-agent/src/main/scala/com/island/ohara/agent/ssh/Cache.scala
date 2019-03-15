@@ -17,14 +17,14 @@
 package com.island.ohara.agent.ssh
 
 import java.util.Objects
-import java.util.concurrent.{ArrayBlockingQueue, Executors, TimeUnit}
+import java.util.concurrent.{ArrayBlockingQueue, ExecutorService, Executors, TimeUnit}
 
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
   * a similar helper used to cache all cluster information for ssh collie.
@@ -37,13 +37,13 @@ trait Cache[T] extends Releasable {
     * get the cached value if it is not expired. Otherwise, it return the updated value
     * @return cached value or updated value
     */
-  def get(): Future[T]
+  def get(implicit executionContext: ExecutionContext): Future[T]
 
   /**
     * Overlook the cached value. Just return the latest value from updater.
     * @return latest value
     */
-  def latest(): Future[T]
+  def latest(implicit executionContext: ExecutionContext): Future[T]
 
   /**
     * request to update cache.
@@ -54,6 +54,11 @@ trait Cache[T] extends Releasable {
 
 object Cache {
   private[this] val LOG = Logger(Cache.getClass)
+
+  trait Updater[T] {
+    def fetch(implicit executionContext: ExecutionContext): Future[T]
+  }
+
   def builder[T](): Builder[T] = new Builder[T]
 
   /**
@@ -62,10 +67,10 @@ object Cache {
     * @tparam T type of cached data
     * @return a fake and cheap cache.
     */
-  def empty[T](updater: () => Future[T]): Cache[T] = new Cache[T] {
-    override def get(): Future[T] = updater()
+  def empty[T](updater: Updater[T]): Cache[T] = new Cache[T] {
+    override def get(implicit executionContext: ExecutionContext): Future[T] = updater.fetch
 
-    override def latest(): Future[T] = updater()
+    override def latest(implicit executionContext: ExecutionContext): Future[T] = updater.fetch
 
     override def requestUpdate(): Boolean = true
 
@@ -76,8 +81,9 @@ object Cache {
 
   class Builder[T] private[ssh] {
     private[this] var expiredTime: Duration = 3 seconds
-    private[this] var updater: () => Future[T] = _
+    private[this] var _updater: Updater[T] = _
     private[this] var obj: Option[T] = None
+    private[this] var executor: ExecutorService = _
 
     /**
       * the expired time of cached data.
@@ -95,15 +101,18 @@ object Cache {
       * @param f fetcher
       * @return this builder
       */
-    def fetcher(f: () => T): Builder[T] = updater(() => Future.successful(f()))
+    def fetcher(f: () => T): Builder[T] = {
+      Objects.requireNonNull(f)
+      updater((_: ExecutionContext) => Future.successful(f()))
+    }
 
     /**
       * the function to update cache.
-      * @param updater updater
+      * @param _updater updater
       * @return this builder
       */
-    def updater(updater: () => Future[T]): Builder[T] = {
-      this.updater = Objects.requireNonNull(updater)
+    def updater(_updater: Updater[T]): Builder[T] = {
+      this._updater = Objects.requireNonNull(_updater)
       this
     }
 
@@ -117,14 +126,27 @@ object Cache {
       this
     }
 
+    /**
+      * @param executor thread pool used to execute the update process
+      * @return this builder
+      */
+    def executor(executor: ExecutorService): Builder[T] = {
+      this.executor = Objects.requireNonNull(executor)
+      this
+    }
+
     def build(): Cache[T] = new CacheImpl[T](
       defaultValue = obj.getOrElse(throw new NullPointerException("default value is required")),
       expiredTime = expiredTime,
-      updater = updater
+      updater = _updater,
+      executor = Objects.requireNonNull(executor)
     )
   }
 
-  private[this] class CacheImpl[T](defaultValue: T, expiredTime: Duration, updater: () => Future[T])
+  private[this] class CacheImpl[T](defaultValue: T,
+                                   expiredTime: Duration,
+                                   updater: Updater[T],
+                                   executor: ExecutorService)
       extends ReleaseOnce
       with Cache[T] {
     // small queue prevent us from destroying remote nodes
@@ -132,20 +154,21 @@ object Cache {
     private[this] val lock = new Object()
     @volatile private[this] var obj: T = defaultValue
     @volatile private[this] var lastUpdate: Long = CommonUtils.current()
-    private[this] val executor = {
+    private[this] val loopUpdater = {
       val exec = Executors.newSingleThreadExecutor()
       exec.execute(() =>
         try {
+          implicit val updaterThreads: ExecutionContext = ExecutionContext.fromExecutor(executor)
           while (!isClosed) try {
             // we ignore the returned value
             requests.poll(expiredTime.toMillis, TimeUnit.MILLISECONDS)
             // make all thread to wait updating of cache
             lastUpdate = -1
             // TODO: 30 seconds should be enough to fetch result ?
-            obj = Await.result(updater(), 30 seconds)
+            obj = Await.result(updater.fetch, 30 seconds)
             lastUpdate = CommonUtils.current()
           } catch {
-            case e: InterruptedException =>
+            case _: InterruptedException =>
               LOG.info("we are closing this thread")
             case e: Throwable =>
               LOG.error("failed to update cache", e)
@@ -159,8 +182,7 @@ object Cache {
       exec
     }
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-    override def get(): Future[T] = Future {
+    override def get(implicit executionContext: ExecutionContext): Future[T] = Future {
       var local = obj
       while (CommonUtils.current() > lastUpdate + expiredTime.toMillis) {
         // we may be stuck with this loop if thread is gone. Hence, we need this check!
@@ -179,11 +201,16 @@ object Cache {
       if (isClosed) throw new IllegalStateException("cache is closed!!!") else requests.offer(CommonUtils.current())
 
     override protected def doClose(): Unit = {
+      loopUpdater.shutdownNow()
       executor.shutdownNow()
-      if (!executor.awaitTermination(30, TimeUnit.SECONDS)) throw new RuntimeException("failed to close clusters cache")
+      try {
+        if (!executor.awaitTermination(30, TimeUnit.SECONDS))
+          throw new RuntimeException("failed to close clusters cache")
+      } finally if (!loopUpdater.awaitTermination(30, TimeUnit.SECONDS))
+        throw new RuntimeException("failed to close clusters cache")
     }
 
-    override def latest(): Future[T] =
-      if (isClosed) throw new IllegalStateException("cache is closed!!!") else updater()
+    override def latest(implicit executionContext: ExecutionContext): Future[T] =
+      if (isClosed) throw new IllegalStateException("cache is closed!!!") else updater.fetch
   }
 }

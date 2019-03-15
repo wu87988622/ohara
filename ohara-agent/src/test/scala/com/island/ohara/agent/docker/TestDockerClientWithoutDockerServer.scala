@@ -27,7 +27,13 @@ import org.scalatest.Matchers
 
 import scala.util.Random
 import TestDockerClientWithoutDockerServer._
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
   def withoutCleanup(): Unit = DockerClientImpl
@@ -62,7 +68,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     .contains("--rm") shouldBe true
 
   private[this] def testSpecifiedContainer(expectedState: ContainerState): Unit = {
-    val rContainers = CLIENT.containers().filter(_.state == expectedState)
+    val rContainers = result(CLIENT.containers).filter(_.state == expectedState)
     rContainers.size shouldBe 1
     rContainers.head shouldBe CONTAINERS.find(_.state == expectedState).get
   }
@@ -89,14 +95,14 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
 
   @Test
   def testActiveContainers(): Unit = {
-    val rContainers = CLIENT.activeContainers()
+    val rContainers = result(CLIENT.activeContainers)
     rContainers.size shouldBe 1
     rContainers.head shouldBe CONTAINERS.find(_.state == ContainerState.RUNNING).get
   }
 
   @Test
   def testAllContainers(): Unit = {
-    val rContainers = CLIENT.containers()
+    val rContainers = result(CLIENT.containers)
     rContainers shouldBe CONTAINERS
   }
 

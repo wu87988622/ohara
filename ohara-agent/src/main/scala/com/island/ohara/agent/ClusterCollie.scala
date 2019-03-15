@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent
 import java.util.Objects
+import java.util.concurrent.{ExecutorService, Executors}
 
 import com.island.ohara.agent.ssh.ClusterCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -27,8 +28,7 @@ import com.island.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * This is the top-of-the-range "collie". It maintains and organizes all collies.
@@ -61,26 +61,27 @@ trait ClusterCollie extends Releasable {
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of zk, bk and wk clusters
     */
-  def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = zookeeperCollie().clusters().flatMap { zkMap =>
-    brokerCollie().clusters().flatMap { bkMap =>
-      workerCollie().clusters().map { wkMap =>
-        wkMap.map {
-          case (wk, wkContainers) => (wk.asInstanceOf[ClusterInfo], wkContainers)
-        } ++ bkMap.map {
-          case (bk, bkContainers) => (bk.asInstanceOf[ClusterInfo], bkContainers)
-        } ++ zkMap.map {
-          case (zk, zkContainers) => (zk.asInstanceOf[ClusterInfo], zkContainers)
+  def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+    zookeeperCollie().clusters.flatMap { zkMap =>
+      brokerCollie().clusters.flatMap { bkMap =>
+        workerCollie().clusters.map { wkMap =>
+          wkMap.map {
+            case (wk, wkContainers) => (wk.asInstanceOf[ClusterInfo], wkContainers)
+          } ++ bkMap.map {
+            case (bk, bkContainers) => (bk.asInstanceOf[ClusterInfo], bkContainers)
+          } ++ zkMap.map {
+            case (zk, zkContainers) => (zk.asInstanceOf[ClusterInfo], zkContainers)
+          }
         }
       }
     }
-  }
 
   /**
     * list the docker images hosted by input nodes
     * @param nodes remote nodes
     * @return the images stored by each node
     */
-  def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]]
+  def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]]
 
   /**
     * fetch all clusters and then update the services of input nodes.
@@ -88,39 +89,40 @@ trait ClusterCollie extends Releasable {
     * @param nodes nodes
     * @return updated nodes
     */
-  def fetchServices(nodes: Seq[Node]): Future[Seq[Node]] = clusters().map(_.keys.toSeq).map { clusters =>
-    nodes.map { node =>
-      update(
-        node = node,
-        services = Seq(
-          NodeService(
-            name = NodeApi.ZOOKEEPER_SERVICE_NAME,
-            clusterNames = clusters
-              .filter(_.isInstanceOf[ZookeeperClusterInfo])
-              .map(_.asInstanceOf[ZookeeperClusterInfo])
-              .filter(_.nodeNames.contains(node.name))
-              .map(_.name)
-          ),
-          NodeService(
-            name = NodeApi.BROKER_SERVICE_NAME,
-            clusterNames = clusters
-              .filter(_.isInstanceOf[BrokerClusterInfo])
-              .map(_.asInstanceOf[BrokerClusterInfo])
-              .filter(_.nodeNames.contains(node.name))
-              .map(_.name)
-          ),
-          NodeService(
-            name = NodeApi.WORKER_SERVICE_NAME,
-            clusterNames = clusters
-              .filter(_.isInstanceOf[WorkerClusterInfo])
-              .map(_.asInstanceOf[WorkerClusterInfo])
-              .filter(_.nodeNames.contains(node.name))
-              .map(_.name)
+  def fetchServices(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
+    clusters.map(_.keys.toSeq).map { clusters =>
+      nodes.map { node =>
+        update(
+          node = node,
+          services = Seq(
+            NodeService(
+              name = NodeApi.ZOOKEEPER_SERVICE_NAME,
+              clusterNames = clusters
+                .filter(_.isInstanceOf[ZookeeperClusterInfo])
+                .map(_.asInstanceOf[ZookeeperClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.name)
+            ),
+            NodeService(
+              name = NodeApi.BROKER_SERVICE_NAME,
+              clusterNames = clusters
+                .filter(_.isInstanceOf[BrokerClusterInfo])
+                .map(_.asInstanceOf[BrokerClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.name)
+            ),
+            NodeService(
+              name = NodeApi.WORKER_SERVICE_NAME,
+              clusterNames = clusters
+                .filter(_.isInstanceOf[WorkerClusterInfo])
+                .map(_.asInstanceOf[WorkerClusterInfo])
+                .filter(_.nodeNames.contains(node.name))
+                .map(_.name)
+            )
           )
         )
-      )
+      }
     }
-  }
 
   /**
     * In fake mode we use FakeNode instead of NodeImpl. Hence, we open a door to let fake CC override this method to
@@ -142,8 +144,6 @@ object ClusterCollie {
     * node-1 => workercluster-worker-1
     * node-2 => workercluster-worker-2
     */
-  def ssh(nodeCollie: NodeCollie): ClusterCollie = builderOfSsh().nodeCollie(nodeCollie).build()
-
   def builderOfSsh(): SshBuilder = new SshBuilder
 
   import scala.concurrent.duration._
@@ -151,7 +151,7 @@ object ClusterCollie {
   class SshBuilder private[agent] {
     private[this] var nodeCollie: NodeCollie = _
     private[this] var expiredTime: Duration = 7 seconds
-    private[this] var _disableCache: Boolean = false
+    private[this] var executor: ExecutorService = _
 
     def nodeCollie(nodeCollie: NodeCollie): SshBuilder = {
       this.nodeCollie = Objects.requireNonNull(nodeCollie)
@@ -164,9 +164,14 @@ object ClusterCollie {
       this
     }
 
-    @Optional("default value is false")
-    def disableCache(): SshBuilder = {
-      this._disableCache = true
+    /**
+      * set a thread pool that initial size is equal with number of cores
+      * @return this builder
+      */
+    def executorDefault(): SshBuilder = executor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
+
+    def executor(executor: ExecutorService): SshBuilder = {
+      this.executor = Objects.requireNonNull(executor)
       this
     }
 
@@ -174,12 +179,12 @@ object ClusterCollie {
       * We don't return ClusterCollieImpl since it is a private implementation
       * @return
       */
-    def build(): ClusterCollie = if (_disableCache) new ClusterCollieImpl(Objects.requireNonNull(nodeCollie))
-    else
-      new ClusterCollieImpl(
-        expiredTime = Objects.requireNonNull(expiredTime),
-        nodeCollie = Objects.requireNonNull(nodeCollie)
-      )
+    def build(): ClusterCollie = new ClusterCollieImpl(
+      expiredTime = Objects.requireNonNull(expiredTime),
+      nodeCollie = Objects.requireNonNull(nodeCollie),
+      executor = Objects.requireNonNull(executor)
+    )
+
   }
 
   /**

@@ -23,13 +23,14 @@ import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 class TestOhara770 extends SmallTest with Matchers {
 
   @Test
   def configsNameShouldBeRemoved(): Unit = {
     class DumbConnectorCreator extends WorkerClient.Creator {
       override protected def doCreate(
+        executionContext: ExecutionContext,
         request: WorkerJson.ConnectorCreationRequest): Future[WorkerJson.ConnectorCreationResponse] = Future {
         request.configs.get("name") shouldBe None
         ConnectorCreationResponse(
@@ -42,8 +43,8 @@ class TestOhara770 extends SmallTest with Matchers {
 
     val creator = new DumbConnectorCreator()
     // this should pass
-    Await.result(creator.name("abc").className("asdasd").topicName("aaa").configs(Map("name" -> "aa")).create(),
-                 10 seconds)
+    Await
+      .result(creator.name("abc").className("asdasd").topicName("aaa").configs(Map("name" -> "aa")).create, 10 seconds)
   }
 
 }

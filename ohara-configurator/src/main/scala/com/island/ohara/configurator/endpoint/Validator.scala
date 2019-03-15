@@ -45,8 +45,7 @@ import org.apache.kafka.connect.source.{SourceConnector, SourceRecord, SourceTas
 import spray.json.{JsNull, JsNumber, JsObject, JsString}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -88,10 +87,8 @@ object Validator {
   private[endpoint] val TARGET_RDB = "rdb"
   private[endpoint] val TARGET_FTP = "ftp"
 
-  def run(workerClient: WorkerClient,
-          topicAdmin: TopicAdmin,
-          request: RdbValidationRequest,
-          taskCount: Int): Future[Seq[ValidationReport]] = run(
+  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbValidationRequest, taskCount: Int)(
+    implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
     workerClient,
     topicAdmin,
     TARGET_RDB,
@@ -101,10 +98,8 @@ object Validator {
     taskCount
   )
 
-  def run(workerClient: WorkerClient,
-          topicAdmin: TopicAdmin,
-          request: HdfsValidationRequest,
-          taskCount: Int): Future[Seq[ValidationReport]] = run(
+  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: HdfsValidationRequest, taskCount: Int)(
+    implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
     workerClient,
     topicAdmin,
     TARGET_HDFS,
@@ -114,10 +109,8 @@ object Validator {
     taskCount
   )
 
-  def run(workerClient: WorkerClient,
-          topicAdmin: TopicAdmin,
-          request: FtpValidationRequest,
-          taskCount: Int): Future[Seq[ValidationReport]] = run(
+  def run(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: FtpValidationRequest, taskCount: Int)(
+    implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = run(
     workerClient,
     topicAdmin,
     TARGET_FTP,
@@ -154,54 +147,55 @@ object Validator {
                         topicAdmin: TopicAdmin,
                         target: String,
                         configs: Map[String, String],
-                        taskCount: Int): Future[Seq[ValidationReport]] = workerClient match {
-    // we expose the fake component...ugly way (TODO) by chia
-    case _: FakeWorkerClient =>
-      Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtils.hostname, "a fake report", true)))
-    case _ =>
-      val requestId: String = CommonUtils.uuid()
-      val validationName = s"Validator-${CommonUtils.randomString()}"
-      workerClient
-        .connectorCreator()
-        .name(validationName)
-        .disableConverter()
-        .className(classOf[Validator].getName)
-        .numberOfTasks(taskCount)
-        .topicName(INTERNAL_TOPIC)
-        .configs(
-          configs ++ Map(
-            REQUEST_ID -> requestId,
-            TARGET -> target
-          ))
-        .create()
-        .map { _ =>
-          // TODO: receiving all messages may be expensive...by chia
-          val client = Consumer
-            .builder[String, Object]()
-            .connectionProps(topicAdmin.connectionProps)
-            .offsetFromBegin()
-            .topicName(INTERNAL_TOPIC)
-            .keySerializer(Serializer.STRING)
-            .valueSerializer(Serializer.OBJECT)
-            .build()
-          try client
-            .poll(
-              java.time.Duration.ofNanos(TIMEOUT.toNanos),
-              taskCount,
-              new java.util.function.Function[util.List[Record[String, Object]], util.List[Record[String, Object]]] {
-                override def apply(records: util.List[Record[String, Object]]): util.List[Record[String, Object]] = {
-                  records.asScala.filter(requestId == _.key.orElse(null)).asJava
+                        taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
+    workerClient match {
+      // we expose the fake component...ugly way (TODO) by chia
+      case _: FakeWorkerClient =>
+        Future.successful((0 until taskCount).map(_ => ValidationReport(CommonUtils.hostname, "a fake report", true)))
+      case _ =>
+        val requestId: String = CommonUtils.uuid()
+        val validationName = s"Validator-${CommonUtils.randomString()}"
+        workerClient
+          .connectorCreator()
+          .name(validationName)
+          .disableConverter()
+          .className(classOf[Validator].getName)
+          .numberOfTasks(taskCount)
+          .topicName(INTERNAL_TOPIC)
+          .configs(
+            configs ++ Map(
+              REQUEST_ID -> requestId,
+              TARGET -> target
+            ))
+          .create
+          .map { _ =>
+            // TODO: receiving all messages may be expensive...by chia
+            val client = Consumer
+              .builder[String, Object]()
+              .connectionProps(topicAdmin.connectionProps)
+              .offsetFromBegin()
+              .topicName(INTERNAL_TOPIC)
+              .keySerializer(Serializer.STRING)
+              .valueSerializer(Serializer.OBJECT)
+              .build()
+            try client
+              .poll(
+                java.time.Duration.ofNanos(TIMEOUT.toNanos),
+                taskCount,
+                new java.util.function.Function[util.List[Record[String, Object]], util.List[Record[String, Object]]] {
+                  override def apply(records: util.List[Record[String, Object]]): util.List[Record[String, Object]] = {
+                    records.asScala.filter(requestId == _.key.orElse(null)).asJava
+                  }
                 }
-              }
-            )
-            .asScala
-            .map(_.value.get match {
-              case report: ValidationReport => report
-              case _                        => throw new IllegalStateException(s"Unknown report")
-            })
-          finally workerClient.delete(validationName)
-        }
-  }
+              )
+              .asScala
+              .map(_.value.get match {
+                case report: ValidationReport => report
+                case _                        => throw new IllegalStateException(s"Unknown report")
+              })
+            finally workerClient.delete(validationName)
+          }
+    }
 
   val CONFIG_DEF: ConfigDef = new ConfigDef().define(TARGET, Type.STRING, null, Importance.HIGH, "target type")
 }

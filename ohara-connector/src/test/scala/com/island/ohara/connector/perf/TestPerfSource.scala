@@ -25,6 +25,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestPerfSource extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
@@ -60,7 +61,7 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.toMap)
-        .create(),
+        .create,
       10 seconds
     )
 

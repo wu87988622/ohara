@@ -22,8 +22,7 @@ import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
@@ -36,7 +35,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * NOTED: Graceful downing whole cluster may take some time...
     * @param clusterName cluster name
     */
-  def remove(clusterName: String): Future[T]
+  def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T]
 
   /**
     * get logs from all containers.
@@ -44,7 +43,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param clusterName cluster name
     * @return all log content from cluster. Each container has a log.
     */
-  def logs(clusterName: String): Future[Map[ContainerInfo, String]]
+  def logs(clusterName: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]]
 
   /**
     * create a cluster creator
@@ -57,29 +56,32 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param clusterName cluster name
     * @return containers information
     */
-  def containers(clusterName: String): Future[Seq[ContainerInfo]] = cluster(clusterName).map(_._2)
+  def containers(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    cluster(clusterName).map(_._2)
 
-  def clusters(): Future[Map[T, Seq[ContainerInfo]]]
+  def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]]
 
   /**
     * get the cluster information from a broker cluster
     * @param name cluster name
     * @return cluster information
     */
-  def cluster(name: String): Future[(T, Seq[ContainerInfo])] =
-    clusters().map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
+  def cluster(name: String)(implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
+    clusters.map(_.find(_._1.name == name).getOrElse(throw new NoSuchClusterException(s"$name doesn't exist")))
 
   /**
     * @param clusterName cluster name
     * @return true if the broker cluster exists
     */
-  def exist(clusterName: String): Future[Boolean] = clusters().map(_.exists(_._1.name == clusterName))
+  def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    clusters.map(_.exists(_._1.name == clusterName))
 
   /**
     * @param clusterName cluster name
     * @return true if the broker cluster doesn't exist
     */
-  def nonExist(clusterName: String): Future[Boolean] = exist(clusterName).map(!_)
+  def nonExist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    exist(clusterName).map(!_)
 
   /**
     * add a node to a running broker cluster
@@ -88,7 +90,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param nodeName node name
     * @return updated broker cluster
     */
-  def addNode(clusterName: String, nodeName: String): Future[T]
+  def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T]
 
   /**
     * remove a node from a running broker cluster.
@@ -97,7 +99,7 @@ trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
     * @param nodeName node name
     * @return updated broker cluster
     */
-  def removeNode(clusterName: String, nodeName: String): Future[T]
+  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T]
 }
 
 object Collie {
@@ -166,6 +168,7 @@ object Collie {
     protected def requireNonEmpty[C <: Seq[_]](s: C): C = if (Objects.requireNonNull(s).isEmpty)
       throw new IllegalArgumentException("empty seq is illegal!!!")
     else s
-    def create(): Future[T]
+
+    def create(implicit executionContext: ExecutionContext): Future[T]
   }
 }

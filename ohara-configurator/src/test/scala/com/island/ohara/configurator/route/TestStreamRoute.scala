@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestStreamRoute extends SmallTest with Matchers {
 
   // create all fake cluster
@@ -172,7 +172,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val jarData = awaitResult(accessStreamList.upload(pipeline_id, filePath))
 
     //Get Worker Cluster
-    val clusters = awaitResult(accessWorker.list())
+    val clusters = awaitResult(accessWorker.list)
     clusters.size shouldBe 1
     val bkCluster = clusters.head.brokerClusterName
 

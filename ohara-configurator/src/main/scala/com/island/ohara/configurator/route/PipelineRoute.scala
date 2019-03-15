@@ -26,18 +26,18 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
+import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
   private[this] val LOG = Logger(ConnectorRoute.getClass)
 
   private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
     implicit workerCollie: WorkerCollie,
-    store: Store): Future[Pipeline] =
+    store: DataStore,
+    executionContext: ExecutionContext): Future[Pipeline] =
     toRes(Map(id -> request), swallow).map(_.head)
 
   /**
@@ -46,10 +46,11 @@ private[configurator] object PipelineRoute {
     * @param swallow true if you don't want to see the exception in checking.
     * @return response
     */
-  private[this] def toRes(reqs: Map[String, PipelineCreationRequest],
-                          swallow: Boolean)(implicit workerCollie: WorkerCollie, store: Store): Future[Seq[Pipeline]] =
-    workerCollie
-      .clusters()
+  private[this] def toRes(reqs: Map[String, PipelineCreationRequest], swallow: Boolean)(
+    implicit workerCollie: WorkerCollie,
+    store: DataStore,
+    executionContext: ExecutionContext): Future[Seq[Pipeline]] =
+    workerCollie.clusters
       .map { clusters =>
         reqs.map {
           case (id, request) =>
@@ -106,7 +107,8 @@ private[configurator] object PipelineRoute {
     * @return description of objects
     */
   private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient)(
-    implicit store: Store): Future[List[ObjectAbstract]] =
+    implicit store: DataStore,
+    executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
     Future
       .sequence(
         rules
@@ -183,7 +185,8 @@ private[configurator] object PipelineRoute {
     * [ConnectorConfiguration, TopicInfo, StreamApp]
     */
   private[this] def verifyRules(name: String, rules: Map[String, Seq[String]], cluster: WorkerClusterInfo)(
-    implicit store: Store): Future[Map[String, Seq[String]]] = {
+    implicit store: DataStore,
+    executionContext: ExecutionContext): Future[Map[String, Seq[String]]] = {
 
     // pipeline is bound on specific worker cluster. And all objects in this pipeline should be bound on same cluster.
     // for example:
@@ -252,15 +255,18 @@ private[configurator] object PipelineRoute {
         })
   }
 
-  private[this] def update(pipeline: Pipeline)(implicit store: Store, workerCollie: WorkerCollie): Future[Pipeline] =
+  private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
+                                               workerCollie: WorkerCollie,
+                                               executionContext: ExecutionContext): Future[Pipeline] =
     update(Seq(pipeline)).map(_.head)
 
   /**
     * update the response.
     * Noted: it swallows the exception since it is possible that the backed worker cluster is gone.
     */
-  private[this] def update(pipelines: Seq[Pipeline])(implicit store: Store,
-                                                     workerCollie: WorkerCollie): Future[Seq[Pipeline]] =
+  private[this] def update(pipelines: Seq[Pipeline])(implicit store: DataStore,
+                                                     workerCollie: WorkerCollie,
+                                                     executionContext: ExecutionContext): Future[Seq[Pipeline]] =
     toRes(
       pipelines.map { pipeline =>
         pipeline.id -> PipelineCreationRequest(
@@ -279,7 +285,7 @@ private[configurator] object PipelineRoute {
                                             t: TargetCluster): PipelineCreationRequest =
     if (request.workerClusterName.isEmpty) request.copy(workerClusterName = t) else request
 
-  def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
+  def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
       hookOfAdd =

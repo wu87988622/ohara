@@ -24,8 +24,7 @@ import akka.stream.scaladsl.{FileIO, Source}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 object JarApi {
   val JAR_PREFIX_PATH: String = "jars"
   final case class JarInfo(id: String, name: String, size: Long, lastModified: Long) extends Data {
@@ -34,30 +33,32 @@ object JarApi {
   implicit val JAR_JSON_FORMAT: RootJsonFormat[JarInfo] = jsonFormat4(JarInfo)
 
   sealed abstract class Access extends BasicAccess(JAR_PREFIX_PATH) {
-    def upload(f: File): Future[JarInfo] = upload(f, f.getName)
-    def upload(f: File, newName: String): Future[JarInfo]
-    def delete(id: String): Future[JarInfo]
-    def list(): Future[Seq[JarInfo]]
+    def upload(f: File)(implicit executionContext: ExecutionContext): Future[JarInfo] = upload(f, f.getName)
+    def upload(f: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo]
+    def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]]
   }
 
   def access(): Access = new Access {
-    private[this] def request(target: String, file: File, newName: String): Future[HttpRequest] =
-      Marshal(
-        Multipart.FormData(
-          Source.single(
-            Multipart.FormData.BodyPart(
-              "jar",
-              HttpEntity(MediaTypes.`application/octet-stream`, file.length(), FileIO.fromPath(file.toPath)),
-              Map("filename" -> newName)))))
+    private[this] def formData(file: File, newName: String) = Multipart.FormData(
+      Source.single(
+        Multipart.FormData.BodyPart(
+          "jar",
+          HttpEntity(MediaTypes.`application/octet-stream`, file.length(), FileIO.fromPath(file.toPath)),
+          Map("filename" -> newName))))
+
+    private[this] def request(target: String, file: File, newName: String)(
+      implicit executionContext: ExecutionContext): Future[HttpRequest] =
+      Marshal(formData(file, newName))
         .to[RequestEntity]
         .map(e => HttpRequest(HttpMethods.POST, uri = target, entity = e))
 
-    override def upload(f: File, newName: String): Future[JarInfo] =
+    override def upload(f: File, newName: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
       request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", f, newName)
         .flatMap(exec.request[JarInfo, ErrorApi.Error])
-    override def delete(id: String): Future[JarInfo] =
+    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[JarInfo] =
       exec.delete[JarInfo, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
-    override def list(): Future[Seq[JarInfo]] =
+    override def list(implicit executionContext: ExecutionContext): Future[Seq[JarInfo]] =
       exec.get[Seq[JarInfo], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }
 }

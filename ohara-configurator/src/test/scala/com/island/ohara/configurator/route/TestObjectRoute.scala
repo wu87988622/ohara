@@ -27,7 +27,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestObjectRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
@@ -36,7 +36,7 @@ class TestObjectRoute extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] val initialSize = result(objectApi.list()).size
+  private[this] val initialSize = result(objectApi.list).size
 
   @Test
   def testTopic(): Unit = {
@@ -51,7 +51,7 @@ class TestObjectRoute extends SmallTest with Matchers {
                                numberOfPartitions = None,
                                numberOfReplications = None)))
 
-    var objs = result(objectApi.list())
+    var objs = result(objectApi.list)
     objs.size shouldBe (1 + initialSize)
 
     objs.find(_.id == topic0.id).get.name shouldBe topic0.name
@@ -69,7 +69,7 @@ class TestObjectRoute extends SmallTest with Matchers {
                                numberOfPartitions = None,
                                numberOfReplications = None)))
 
-    objs = result(objectApi.list())
+    objs = result(objectApi.list)
 
     objs.size shouldBe (2 + initialSize)
 
@@ -95,7 +95,7 @@ class TestObjectRoute extends SmallTest with Matchers {
           configs = Map.empty
         )))
 
-    var objs = result(objectApi.list())
+    var objs = result(objectApi.list)
     objs.size shouldBe (1 + initialSize)
 
     objs.find(_.id == connector0.id).get.name shouldBe connector0.name
@@ -117,7 +117,7 @@ class TestObjectRoute extends SmallTest with Matchers {
           configs = Map.empty
         )))
 
-    objs = result(objectApi.list())
+    objs = result(objectApi.list)
 
     objs.size shouldBe (2 + initialSize)
 
@@ -154,7 +154,7 @@ class TestObjectRoute extends SmallTest with Matchers {
                                numberOfPartitions = None,
                                numberOfReplications = None)))
 
-    val objs = result(objectApi.list())
+    val objs = result(objectApi.list)
 
     objs.size shouldBe (2 + initialSize)
 

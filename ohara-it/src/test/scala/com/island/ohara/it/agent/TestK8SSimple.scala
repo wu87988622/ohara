@@ -78,7 +78,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   def testK8SClientContainer(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
 
-    val containers: Seq[ContainerInfo] = k8sClient.containers().filter(_.name.equals(TestK8SSimple.uuid))
+    val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.name.equals(TestK8SSimple.uuid))
     val containerSize: Int = containers.size
     containerSize shouldBe 1
     val container: ContainerInfo = containers.head
@@ -99,7 +99,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     try {
       //Create Pod for test delete
       TestK8SSimple.createZookeeperPod(k8sApiServerURL, podName)
-      val containers: Seq[ContainerInfo] = k8sClient.containers().filter(_.hostname.equals(podName))
+      val containers: Seq[ContainerInfo] = k8sClient.containers.filter(_.hostname.equals(podName))
       containers.size shouldBe 1
     } finally {
       //Remove a container
@@ -117,7 +117,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
       var isContainerRunning: Boolean = false
       while (!isContainerRunning) {
-        if (k8sClient.containers().count(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING) == 1) {
+        if (k8sClient.containers.count(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING) == 1) {
           isContainerRunning = true
         }
       }
@@ -132,7 +132,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   @Test
   def testErrorResponse(): Unit = {
     val k8sClient = K8SClient(s"$k8sApiServerURL/error_test")
-    an[RuntimeException] should be thrownBy k8sClient.containers()
+    an[RuntimeException] should be thrownBy k8sClient.containers
   }
 
   @Test
@@ -150,7 +150,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .envs(Map())
         .portMappings(Map())
-        .run()
+        .run
       result.get.name shouldBe containerName
     } finally {
       // Remove a container
@@ -161,7 +161,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   @Test
   def testK8SNodeInfo(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val nodes = k8sClient.nodeNameIPInfo()
+    val nodes = k8sClient.nodeNameIPInfo
     nodes.size shouldBe 3
 
     nodes.map(x => x.hostnames.head).mkString(",").contains(TestK8SSimple.NODE_SERVER_NAME.get) shouldBe true

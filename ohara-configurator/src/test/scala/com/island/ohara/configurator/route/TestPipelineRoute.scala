@@ -30,7 +30,8 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestPipelineRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
@@ -85,7 +86,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     pipeline1.workerClusterName shouldBe wkCluster.name
 
-    val pipelines = result(pipelineApi.list())
+    val pipelines = result(pipelineApi.list)
     pipelines.size shouldBe 2
     pipelines.find(_.id == pipeline0.id).get.workerClusterName shouldBe pipeline0.workerClusterName
     pipelines.find(_.id == pipeline1.id).get.workerClusterName shouldBe pipeline1.workerClusterName
@@ -153,7 +154,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     pipeline2.rules.size shouldBe 0
 
-    val pipelines = Await.result(pipelineApi.list(), 10 seconds)
+    val pipelines = Await.result(pipelineApi.list, 10 seconds)
 
     pipelines.size shouldBe 1
     pipelines.head.rules.size shouldBe 0
@@ -195,7 +196,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                              numberOfPartitions = None,
                              numberOfReplications = None))).id
 
-    result(pipelineApi.list()).size shouldBe 0
+    result(pipelineApi.list).size shouldBe 0
 
     val request =
       PipelineCreationRequest(name = methodName, workerClusterName = None, rules = Map(uuid_0 -> Seq(uuid_1)))
@@ -217,9 +218,9 @@ class TestPipelineRoute extends SmallTest with Matchers {
     compare2Response(newResponse, result(pipelineApi.get(newResponse.id)))
 
     // test delete
-    result(pipelineApi.list()).size shouldBe 1
+    result(pipelineApi.list).size shouldBe 1
     result(pipelineApi.delete(response.id)) shouldBe newResponse
-    result(pipelineApi.list()).size shouldBe 0
+    result(pipelineApi.list).size shouldBe 0
 
     // test nonexistent data
     an[IllegalArgumentException] should be thrownBy result(pipelineApi.get("asdasdsad"))
@@ -244,8 +245,8 @@ class TestPipelineRoute extends SmallTest with Matchers {
                              brokerClusterName = None,
                              numberOfPartitions = None,
                              numberOfReplications = None))).id
-    result(topicAccess.list()).size shouldBe 2
-    result(hdfsAccess.list()).size shouldBe 2
+    result(topicAccess.list).size shouldBe 2
+    result(hdfsAccess.list).size shouldBe 2
 
     // uuid_0 -> uuid_0: self-bound
     an[IllegalArgumentException] should be thrownBy result(
@@ -359,7 +360,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     result(pipelineApi.delete(pipeline.id))
 
-    result(pipelineApi.list()).exists(_.id == pipeline.id) shouldBe false
+    result(pipelineApi.list).exists(_.id == pipeline.id) shouldBe false
   }
 
   @Test
@@ -390,7 +391,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
     wk.name shouldBe pipeline.workerClusterName
 
-    val anotherPipeline = result(pipelineApi.list()).find(_.id == pipeline.id).get
+    val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
 
     anotherPipeline.id shouldBe pipeline.id
     anotherPipeline.rules shouldBe pipeline.rules
@@ -440,7 +441,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
     val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
     wk.name shouldBe pipeline.workerClusterName
 
-    val anotherPipeline = result(pipelineApi.list()).find(_.id == pipeline.id).get
+    val anotherPipeline = result(pipelineApi.list).find(_.id == pipeline.id).get
 
     anotherPipeline.id shouldBe pipeline.id
     anotherPipeline.rules shouldBe pipeline.rules
@@ -502,7 +503,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
           rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
         )))
 
-    val pipelines = result(pipelineApi.list())
+    val pipelines = result(pipelineApi.list)
     pipelines.size shouldBe 2
     pipelines.exists(_.id == pipeline0.id) shouldBe true
     pipelines.exists(_.id == pipeline1.id) shouldBe true

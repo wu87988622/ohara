@@ -37,16 +37,15 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCrea
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.{JarStore, LocalJarStore}
 import com.island.ohara.configurator.route._
+import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, Future}
-import scala.reflect.{ClassTag, classTag}
 
 /**
   * A simple impl from Configurator. This impl maintains all subclass from ohara data in a single ohara store.
@@ -56,12 +55,13 @@ import scala.reflect.{ClassTag, classTag}
   * @param advertisedPort    port from rest server
   * @param store    store
   */
-class Configurator private[configurator] (
-  advertisedHostname: Option[String],
-  advertisedPort: Option[Int],
-  initializationTimeout: Duration,
-  terminationTimeout: Duration,
-  extraRoute: Option[server.Route])(implicit val store: Store, nodeCollie: NodeCollie, val clusterCollie: ClusterCollie)
+class Configurator private[configurator] (advertisedHostname: Option[String],
+                                          advertisedPort: Option[Int],
+                                          initializationTimeout: Duration,
+                                          terminationTimeout: Duration,
+                                          extraRoute: Option[server.Route])(implicit val store: DataStore,
+                                                                            nodeCollie: NodeCollie,
+                                                                            val clusterCollie: ClusterCollie)
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -188,7 +188,7 @@ class Configurator private[configurator] (
     */
   implicit val jarStore: JarStore = new LocalJarStore(jarLocalHome) {
     log.info(s"path of jar:$jarLocalHome")
-    override protected def doUrls(): Future[Map[String, URL]] = jarInfos().map(_.map { plugin =>
+    override protected def doUrls(): Future[Map[String, URL]] = jarInfos.map(_.map { plugin =>
       plugin.id -> new URL(s"http://${CommonUtils.address(hostname)}:$port/${JarApi.JAR_PREFIX_PATH}/${plugin.id}.jar")
     }.toMap)
 
@@ -340,50 +340,4 @@ object Configurator {
     * visible for testing.
     */
   @volatile private[configurator] var closeRunningConfigurator = false
-
-  private[configurator] class Store(store: com.island.ohara.configurator.store.Store[String, Data])
-      extends ReleaseOnce {
-
-    def value[T <: Data: ClassTag](id: String): Future[T] =
-      store.value(id).filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T])
-
-    def values[T <: Data: ClassTag]: Future[Seq[T]] =
-      store.values().map(_.values.filter(classTag[T].runtimeClass.isInstance).map(_.asInstanceOf[T]).toSeq)
-
-    def raw(): Future[Seq[Data]] = store.values().map(_.values.toSeq)
-
-    def raw(id: String): Future[Data] = store.value(id)
-
-    /**
-      * Remove a "specified" sublcass from ohara data mapping the id. If the data mapping to the id is not the specified
-      * type, an exception will be thrown.
-      *
-      * @param id from ohara data
-      * @tparam T subclass type
-      * @return the removed data
-      */
-    def remove[T <: Data: ClassTag](id: String): Future[T] =
-      value[T](id).flatMap(_ => store.remove(id)).map(_.asInstanceOf[T])
-
-    /**
-      * update an existed object in the store. If the id doesn't  exists, an exception will be thrown.
-      *
-      * @param data data
-      * @tparam T type from data
-      * @return the removed data
-      */
-    def update[T <: Data: ClassTag](id: String, data: T => Future[T]): Future[T] =
-      value[T](id).flatMap(_ => store.update(id, v => data(v.asInstanceOf[T]))).map(_.asInstanceOf[T])
-
-    def add[T <: Data](data: T): Future[T] = store.add(data.id, data).map(_.asInstanceOf[T])
-
-    def exist[T <: Data: ClassTag](id: String): Future[Boolean] =
-      store.value(id).map(classTag[T].runtimeClass.isInstance)
-
-    def nonExist[T <: Data: ClassTag](id: String): Future[Boolean] = exist[T](id).map(!_)
-
-    def size: Int = store.size
-
-    override protected def doClose(): Unit = store.close()
-  }
 }

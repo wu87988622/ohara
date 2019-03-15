@@ -25,6 +25,7 @@ import org.scalatest.mockito.MockitoSugar
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestFakeConfigurator extends SmallTest with Matchers {
 
   @Test
@@ -38,16 +39,16 @@ class TestFakeConfigurator extends SmallTest with Matchers {
       case (numberOfBrokers, numberOfWorkers) =>
         val configurator = Configurator.builder().fake(numberOfBrokers, numberOfWorkers).build()
         try {
-          Await.result(configurator.clusterCollie.brokerCollie().clusters(), 10 seconds).size shouldBe numberOfBrokers
-          Await.result(configurator.clusterCollie.workerCollie().clusters(), 10 seconds).size shouldBe numberOfWorkers
+          Await.result(configurator.clusterCollie.brokerCollie().clusters, 10 seconds).size shouldBe numberOfBrokers
+          Await.result(configurator.clusterCollie.workerCollie().clusters, 10 seconds).size shouldBe numberOfWorkers
           Await
-            .result(configurator.clusterCollie.clusters(), 10 seconds)
+            .result(configurator.clusterCollie.clusters, 10 seconds)
             // one broker generates one zk cluster
             .size shouldBe (numberOfBrokers + numberOfBrokers + numberOfWorkers)
           val nodes = Await.result(configurator.store.values[Node], 10 seconds)
           nodes.isEmpty shouldBe false
           Await
-            .result(configurator.clusterCollie.clusters(), 10 seconds)
+            .result(configurator.clusterCollie.clusters, 10 seconds)
             .flatMap(_._1.nodeNames)
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
         } finally configurator.close()
@@ -55,14 +56,14 @@ class TestFakeConfigurator extends SmallTest with Matchers {
   }
 
   @Test
-  def createWorkerClusterWihtoutBrokerCluster(): Unit = {
+  def createWorkerClusterWithoutBrokerCluster(): Unit = {
     an[IllegalArgumentException] should be thrownBy Configurator.builder().fake(0, 1).build()
   }
 
   @Test
   def createFakeConfiguratorWithoutClusters(): Unit = {
     val configurator = Configurator.builder().fake(0, 0).build()
-    try Await.result(configurator.clusterCollie.clusters(), 10 seconds).size shouldBe 0
+    try Await.result(configurator.clusterCollie.clusters, 10 seconds).size shouldBe 0
     finally configurator.close()
   }
 

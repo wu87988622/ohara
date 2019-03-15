@@ -22,7 +22,7 @@ import com.island.ohara.agent.BrokerCollie
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
     extends FakeCollie[BrokerClusterInfo, BrokerCollie.ClusterCreator]
@@ -33,7 +33,7 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
     */
   private[this] val fakeAdminCache = new ConcurrentHashMap[BrokerClusterInfo, FakeTopicAdmin]
   override def creator(): BrokerCollie.ClusterCreator =
-    (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
       Future.successful(
         addCluster(
           FakeBrokerClusterInfo(
@@ -45,7 +45,8 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
             nodeNames = nodeNames
           )))
 
-  override def removeNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo] = {
+  override def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
     val previous = clusterCache.find(_._1.name == clusterName).get._1
     if (!previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
@@ -62,7 +63,8 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
           )))
   }
 
-  override def addNode(clusterName: String, nodeName: String): Future[BrokerClusterInfo] = {
+  override def addNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = {
     val previous = clusterCache.find(_._1.name == clusterName).get._1
     if (previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))

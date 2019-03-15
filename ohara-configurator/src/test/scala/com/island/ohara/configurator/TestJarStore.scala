@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarStore extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
@@ -74,7 +74,7 @@ class TestJarStore extends SmallTest with Matchers {
     val plugin = result(access.upload(f))
     plugin.name shouldBe f.getName
     plugin.size shouldBe content.length
-    result(access.list()).size shouldBe 1
+    result(access.list).size shouldBe 1
 
     val url = result(configurator.jarStore.url(plugin.id))
     url.getProtocol shouldBe "http"

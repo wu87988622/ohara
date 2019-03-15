@@ -20,7 +20,7 @@ import com.island.ohara.kafka.connector.ConnectorUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object ConnectorApi {
   val CONNECTORS_PREFIX_PATH: String = "connectors"
@@ -106,7 +106,7 @@ object ConnectorApi {
       * @param id connector's id
       * @return the configuration of connector
       */
-    def start(id: String): Future[ConnectorInfo] =
+    def start(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
       exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, START_COMMAND))
 
     /**
@@ -114,7 +114,7 @@ object ConnectorApi {
       * @param id connector's id
       * @return the configuration of connector
       */
-    def stop(id: String): Future[ConnectorInfo] =
+    def stop(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
       exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, STOP_COMMAND))
 
     /**
@@ -122,7 +122,7 @@ object ConnectorApi {
       * @param id connector's id
       * @return the configuration of connector
       */
-    def pause(id: String): Future[ConnectorInfo] =
+    def pause(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
       exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, PAUSE_COMMAND))
 
     /**
@@ -130,7 +130,7 @@ object ConnectorApi {
       * @param id connector's id
       * @return the configuration of connector
       */
-    def resume(id: String): Future[ConnectorInfo] =
+    def resume(id: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
       exec.put[ConnectorInfo, ErrorApi.Error](actionUrl(id, RESUME_COMMAND))
   }
 

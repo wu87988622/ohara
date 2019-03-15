@@ -24,11 +24,13 @@ import com.island.ohara.client.configurator.v0.WorkerApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
 
-  def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie, jarStore: JarStore): server.Route =
+  def apply(implicit clusterCollie: ClusterCollie,
+            nodeCollie: NodeCollie,
+            jarStore: JarStore,
+            executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.workerCollie(),
       root = WORKER_PREFIX_PATH,
@@ -114,7 +116,7 @@ object WorkerRoute {
                 .imageName(req.imageName.getOrElse(WorkerApi.IMAGE_NAME_DEFAULT))
                 .jarUrls(urls)
                 .nodeNames(req.nodeNames)
-                .create()
+                .create
         }
     )
 }

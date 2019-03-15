@@ -25,17 +25,20 @@ import akka.http.scaladsl.server.directives.FileInfo
 import com.island.ohara.client.configurator.v0.JarApi._
 import com.island.ohara.configurator.jar.JarStore
 import spray.json.DefaultJsonProtocol._
+
+import scala.concurrent.ExecutionContext
 private[configurator] object JarsRoute {
 
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile(fileInfo.fileName, ".tmp")
 
-  def apply(implicit jarStore: JarStore): server.Route = pathPrefix(JAR_PREFIX_PATH) {
-    storeUploadedFile("jar", tempDestination) {
-      case (metadata, file) =>
-        onSuccess(jarStore.add(file, metadata.fileName))(complete(_))
-    } ~ get(onSuccess(jarStore.jarInfos())(complete(_))) ~ path(Segment) { id =>
-      delete(onSuccess(jarStore.remove(id))(complete(_))) ~ get(onSuccess(jarStore.jarInfo(id))(complete(_)))
+  def apply(implicit jarStore: JarStore, executionContext: ExecutionContext): server.Route =
+    pathPrefix(JAR_PREFIX_PATH) {
+      storeUploadedFile("jar", tempDestination) {
+        case (metadata, file) =>
+          onSuccess(jarStore.add(file, metadata.fileName))(complete(_))
+      } ~ get(onSuccess(jarStore.jarInfos)(complete(_))) ~ path(Segment) { id =>
+        delete(onSuccess(jarStore.remove(id))(complete(_))) ~ get(onSuccess(jarStore.jarInfo(id))(complete(_)))
+      }
     }
-  }
 }

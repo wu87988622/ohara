@@ -15,13 +15,14 @@
  */
 
 package com.island.ohara.agent
+import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
@@ -31,7 +32,8 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
     * @param clusterName target cluster
     * @return cluster info and topic admin
     */
-  def topicAdmin(clusterName: String): Future[(BrokerClusterInfo, TopicAdmin)] = cluster(clusterName).map {
+  def topicAdmin(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] = cluster(clusterName).map {
     case (c, _) => (c, topicAdmin(c))
   }
 
@@ -66,7 +68,8 @@ object BrokerCollie {
       this
     }
 
-    override def create(): Future[BrokerClusterInfo] = doCreate(
+    override def create(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = doCreate(
+      executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
       zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName),
@@ -75,7 +78,8 @@ object BrokerCollie {
       nodeNames = requireNonEmpty(nodeNames)
     )
 
-    protected def doCreate(clusterName: String,
+    protected def doCreate(executionContext: ExecutionContext,
+                           clusterName: String,
                            imageName: String,
                            zookeeperClusterName: String,
                            clientPort: Int,

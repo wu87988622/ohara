@@ -26,14 +26,13 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private[route] object RouteUtils {
   val LOG = Logger(RouteUtils.getClass)
@@ -41,7 +40,7 @@ private[route] object RouteUtils {
   type TargetCluster = Option[String]
   type Id = String
 
-  def assertNotRelated2Pipeline(id: String)(implicit store: Store): Unit =
+  def assertNotRelated2Pipeline(id: String)(implicit store: DataStore, executionContext: ExecutionContext): Unit =
     if (Await.result(
           store
             .values[Pipeline]
@@ -52,33 +51,41 @@ private[route] object RouteUtils {
       throw new IllegalArgumentException(s"The id:$id is used by pipeline")
 
   private[this] def routeOfAdd[Req, Res <: Data](hook: (TargetCluster, Id, Req) => Future[Res])(
-    implicit store: Store,
+    implicit store: DataStore,
     rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res]) = post {
+    rm2: RootJsonFormat[Res],
+    executionContext: ExecutionContext) = post {
     entity(as[Req]) { req =>
       parameter(Parameters.CLUSTER_NAME.?)(name =>
         onSuccess(hook(name, CommonUtils.uuid(), req).flatMap(store.add))(value => complete(value)))
     }
   }
 
-  private[this] def routeOfList[Res <: Data: ClassTag](
-    hook: Seq[Res] => Future[Seq[Res]])(implicit store: Store, rm: RootJsonFormat[Res]) = get(
+  private[this] def routeOfList[Res <: Data: ClassTag](hook: Seq[Res] => Future[Seq[Res]])(
+    implicit store: DataStore,
+    rm: RootJsonFormat[Res],
+    executionContext: ExecutionContext) = get(
     onSuccess(store.values[Res].flatMap(values => hook(values)))(values => complete(values)))
 
-  private[this] def routeOfGet[Res <: Data: ClassTag](id: Id, hook: Res => Future[Res])(implicit store: Store,
-                                                                                        rm: RootJsonFormat[Res]) = get(
-    onSuccess(store.value[Res](id).flatMap(value => hook(value)))(value => complete(value)))
-
-  private[this] def routeOfDelete[Res <: Data: ClassTag](
+  private[this] def routeOfGet[Res <: Data: ClassTag](
     id: Id,
-    hook: Res => Future[Res],
-    hookBeforeDelete: String => Future[String])(implicit store: Store, rm: RootJsonFormat[Res]) =
+    hook: Res => Future[Res])(implicit store: DataStore, rm: RootJsonFormat[Res], executionContext: ExecutionContext) =
+    get(onSuccess(store.value[Res](id).flatMap(value => hook(value)))(value => complete(value)))
+
+  private[this] def routeOfDelete[Res <: Data: ClassTag](id: Id,
+                                                         hook: Res => Future[Res],
+                                                         hookBeforeDelete: String => Future[String])(
+    implicit store: DataStore,
+    rm: RootJsonFormat[Res],
+    executionContext: ExecutionContext) =
     delete(onSuccess(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).flatMap(value => hook(value))))(value =>
       complete(value)))
 
-  private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](
-    id: Id,
-    hook: (Id, Req, Res) => Future[Res])(implicit store: Store, rm: RootJsonFormat[Req], rm2: RootJsonFormat[Res]) =
+  private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](id: Id, hook: (Id, Req, Res) => Future[Res])(
+    implicit store: DataStore,
+    rm: RootJsonFormat[Req],
+    rm2: RootJsonFormat[Res],
+    executionContext: ExecutionContext) =
     put {
       entity(as[Req])(req =>
         onSuccess(store.update(id, (previous: Res) => hook(id, req, previous)))(value => complete(value)))
@@ -97,9 +104,10 @@ private[route] object RouteUtils {
   def basicRoute[Req, Res <: Data: ClassTag](root: String,
                                              reqToRes: (TargetCluster, Id, Req) => Future[Res],
                                              resToRes: Res => Future[Res] = (r: Res) => Future.successful(r))(
-    implicit store: Store,
+    implicit store: DataStore,
     rm: RootJsonFormat[Req],
-    rm2: RootJsonFormat[Res]): server.Route = basicRoute(
+    rm2: RootJsonFormat[Res],
+    executionContext: ExecutionContext): server.Route = basicRoute(
     root = root,
     hookOfAdd = reqToRes,
     hookOfUpdate = (id: Id, req: Req, _: Res) => reqToRes(None, id, req),
@@ -113,9 +121,11 @@ private[route] object RouteUtils {
                                              hookOfUpdate: (Id, Req, Res) => Future[Res],
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
                                              hookOfGet: Res => Future[Res],
-                                             hookOfDelete: Res => Future[Res])(implicit store: Store,
-                                                                               rm: RootJsonFormat[Req],
-                                                                               rm2: RootJsonFormat[Res]): server.Route =
+                                             hookOfDelete: Res => Future[Res])(
+    implicit store: DataStore,
+    rm: RootJsonFormat[Req],
+    rm2: RootJsonFormat[Res],
+    executionContext: ExecutionContext): server.Route =
     basicRoute(
       root = root,
       hookOfAdd = hookOfAdd,
@@ -146,9 +156,11 @@ private[route] object RouteUtils {
                                              hookOfList: Seq[Res] => Future[Seq[Res]],
                                              hookOfGet: Res => Future[Res],
                                              hookBeforeDelete: String => Future[String],
-                                             hookOfDelete: Res => Future[Res])(implicit store: Store,
-                                                                               rm: RootJsonFormat[Req],
-                                                                               rm2: RootJsonFormat[Res]): server.Route =
+                                             hookOfDelete: Res => Future[Res])(
+    implicit store: DataStore,
+    rm: RootJsonFormat[Req],
+    rm2: RootJsonFormat[Res],
+    executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       pathEnd {
         routeOfAdd[Req, Res](hookOfAdd) ~ routeOfList[Res](hookOfList)
@@ -166,7 +178,8 @@ private[route] object RouteUtils {
     hookOfCreation: (Seq[ClusterInfo], Req) => Future[Res])(implicit clusterCollie: ClusterCollie,
                                                             nodeCollie: NodeCollie,
                                                             rm: RootJsonFormat[Req],
-                                                            rm1: RootJsonFormat[Res]): server.Route =
+                                                            rm1: RootJsonFormat[Res],
+                                                            executionContext: ExecutionContext): server.Route =
     pathPrefix(root) {
       pathEnd {
         // create cluster
@@ -188,7 +201,7 @@ private[route] object RouteUtils {
                     .foreach(n => throw new IllegalArgumentException(s"$n doesn't have docker image:$image"))
                   nodesImages
                 }
-                .flatMap(_ => clusterCollie.clusters().map(_.keys.toSeq))
+                .flatMap(_ => clusterCollie.clusters.map(_.keys.toSeq))
                 .flatMap { clusters =>
                   def serviceName(cluster: ClusterInfo): String = cluster match {
                     case _: ZookeeperClusterInfo => s"zookeeper cluster:${cluster.name}"
@@ -220,7 +233,7 @@ private[route] object RouteUtils {
                   hookOfCreation(clusters, req)
                 })(complete(_))
           }
-        } ~ get(onSuccess(collie.clusters()) { clusters =>
+        } ~ get(onSuccess(collie.clusters) { clusters =>
           complete(clusters.keys)
         })
       } ~ pathPrefix(Segment) { clusterName =>
@@ -233,8 +246,7 @@ private[route] object RouteUtils {
         } ~ pathEnd {
           delete {
             onSuccess(
-              clusterCollie
-                .clusters()
+              clusterCollie.clusters
                 .map(_.keys.toSeq)
                 // if cluster doesn't exist, we throw exception directly.
                 .map(clusters =>

@@ -30,6 +30,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * ftp csv -> topic -> ftp csv
@@ -104,7 +105,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         .name(sinkName)
         .columns(schema)
         .configs(sinkProps.toMap)
-        .create(),
+        .create,
       10 seconds
     )
 
@@ -120,7 +121,7 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .name(sourceName)
             .columns(schema)
             .configs(sourceProps.toMap)
-            .create(),
+            .create,
           10 seconds
         )
         CommonUtils.await(() => ftpClient.listFileNames(sourceProps.inputFolder).isEmpty, Duration.ofSeconds(30))

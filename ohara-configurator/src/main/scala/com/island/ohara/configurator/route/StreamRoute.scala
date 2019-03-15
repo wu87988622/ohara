@@ -32,14 +32,13 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.store.DataStore
 import org.slf4j.LoggerFactory
 import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
 import scala.util.Random
 
@@ -109,10 +108,11 @@ private[configurator] object StreamRoute {
   }
 
   //TODO : Remove brokerCollie and nodeCollie with workerCollie after issue #321...by Sam
-  def apply(implicit store: Store,
+  def apply(implicit store: DataStore,
             brokerCollie: BrokerCollie,
             nodeCollie: NodeCollie,
-            jarStore: JarStore): server.Route =
+            jarStore: JarStore,
+            executionContext: ExecutionContext): server.Route =
     pathPrefix(STREAM_PREFIX_PATH) {
       pathEnd {
         complete(StatusCodes.BadRequest -> "wrong uri")

@@ -32,14 +32,13 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestValidationRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] val wkCluster = result(
-    WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list()).head
+  private[this] val wkCluster = result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list).head
 
   @Test
   def validateConnector(): Unit = {

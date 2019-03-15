@@ -25,7 +25,7 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.Await
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara764 extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()

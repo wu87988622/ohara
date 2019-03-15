@@ -23,10 +23,12 @@ import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationR
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {
 
-  def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
+  def apply(implicit clusterCollie: ClusterCollie,
+            nodeCollie: NodeCollie,
+            executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.brokerCollie(),
       root = BROKER_PREFIX_PATH,
@@ -77,7 +79,7 @@ object BrokerRoute {
           .zookeeperClusterName(zkName)
           .imageName(req.imageName.getOrElse(BrokerApi.IMAGE_NAME_DEFAULT))
           .nodeNames(req.nodeNames)
-          .create()
+          .create
       }
     )
 }

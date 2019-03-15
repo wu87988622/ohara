@@ -26,6 +26,7 @@ import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
@@ -34,13 +35,15 @@ private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClie
 
   override def containerNames(): Seq[String] = cachedContainers.keys.toSeq
 
-  private[this] def listContainers(nameFilter: String => Boolean): Seq[ContainerInfo] =
-    cachedContainers.filter { case (name, _) => nameFilter(name) }.values.toSeq
+  private[this] def listContainers(nameFilter: String => Boolean): Future[Seq[ContainerInfo]] =
+    Future.successful(cachedContainers.filter { case (name, _) => nameFilter(name) }.values.toSeq)
 
-  override def containers(nameFilter: String => Boolean): Seq[ContainerInfo] = listContainers(nameFilter)
+  override def containers(nameFilter: String => Boolean)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = listContainers(nameFilter)
 
   //there is no meaning of "active" in fake mode
-  override def activeContainers(nameFilter: String => Boolean): Seq[ContainerInfo] = listContainers(nameFilter)
+  override def activeContainers(nameFilter: String => Boolean)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = listContainers(nameFilter)
 
   override def containerCreator(): ContainerCreator = (hostname: String,
                                                        imageName: String,
@@ -114,4 +117,5 @@ private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClie
 
   override protected def doClose(): Unit = LOG.info("close client")
 
+  override def container(name: String): ContainerInfo = cachedContainers(name)
 }

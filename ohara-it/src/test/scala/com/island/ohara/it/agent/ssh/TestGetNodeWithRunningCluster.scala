@@ -26,6 +26,7 @@ import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.CollieTestUtils
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
 
   private[this] val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
@@ -70,9 +71,9 @@ class TestGetNodeWithRunningCluster extends IntegrationTest with Matchers {
         )))
 
     try {
-      assertCluster(() => result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list()),
+      assertCluster(() => result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list),
                     cluster.name)
-      val nodes = result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list())
+      val nodes = result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list)
       nodes.isEmpty shouldBe false
       nodes.foreach { node =>
         node.services.isEmpty shouldBe false

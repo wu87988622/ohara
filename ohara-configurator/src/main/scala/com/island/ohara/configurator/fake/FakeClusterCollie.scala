@@ -20,17 +20,17 @@ import com.island.ohara.agent.ClusterCollie
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
 import com.island.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.store.DataStore
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * It doesn't involve any running cluster but save all description in memory
   */
-private[configurator] class FakeClusterCollie(store: Store, bkConnectionProps: String, wkConnectionProps: String)
+private[configurator] class FakeClusterCollie(store: DataStore, bkConnectionProps: String, wkConnectionProps: String)
     extends ClusterCollie {
 
-  def this(store: Store) {
+  def this(store: DataStore) {
     this(store, null, null)
   }
   private[this] val zkCollie: FakeZookeeperCollie = new FakeZookeeperCollie
@@ -56,8 +56,9 @@ private[configurator] class FakeClusterCollie(store: Store, bkConnectionProps: S
     lastModified = CommonUtils.current()
   )
 
-  override def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]] = Future.successful(
-    nodes
-      .map(_ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT))
-      .toMap)
+  override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
+    Future.successful(
+      nodes
+        .map(_ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT))
+        .toMap)
 }

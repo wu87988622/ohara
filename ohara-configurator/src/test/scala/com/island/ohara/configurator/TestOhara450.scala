@@ -26,6 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara450 extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
@@ -48,7 +49,7 @@ class TestOhara450 extends SmallTest with Matchers {
         )),
       10 seconds
     )
-    Await.result(access.list(), 10 seconds).size shouldBe 1
+    Await.result(access.list, 10 seconds).size shouldBe 1
     import scala.concurrent.duration._
     val topic = Await.result(
       TopicApi
@@ -75,9 +76,9 @@ class TestOhara450 extends SmallTest with Matchers {
         )),
       10 seconds
     )
-    Await.result(access.list(), 10 seconds).size shouldBe 2
+    Await.result(access.list, 10 seconds).size shouldBe 2
     Await
-      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
       .size shouldBe 1
 
     Await.result(
@@ -94,7 +95,7 @@ class TestOhara450 extends SmallTest with Matchers {
       10 seconds
     )
     Await
-      .result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+      .result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
       .size shouldBe 1
   }
 

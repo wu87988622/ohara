@@ -22,7 +22,7 @@ import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
     extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator]
@@ -33,7 +33,8 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
     */
   private[this] val fakeClientCache = new ConcurrentHashMap[WorkerClusterInfo, FakeWorkerClient]
   override def creator(): WorkerCollie.ClusterCreator =
-    (clusterName,
+    (_,
+     clusterName,
      imageName,
      brokerClusterName,
      clientPort,
@@ -71,7 +72,8 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
             nodeNames = nodeNames
           )))
 
-  override def removeNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo] = {
+  override def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
     val previous = clusterCache.find(_._1.name == clusterName).get._1
     if (!previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName doesn't run on $clusterName!!!"))
@@ -100,7 +102,8 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
           )))
   }
 
-  override def addNode(clusterName: String, nodeName: String): Future[WorkerClusterInfo] = {
+  override def addNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
     val previous = clusterCache.find(_._1.name == clusterName).get._1
     if (previous.nodeNames.contains(nodeName))
       Future.failed(new IllegalArgumentException(s"$nodeName already run on $clusterName!!!"))

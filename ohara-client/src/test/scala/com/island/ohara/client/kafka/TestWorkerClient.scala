@@ -24,7 +24,7 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
@@ -42,7 +42,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .numberOfTasks(1)
         .disableConverter()
-        .create())
+        .create)
 
     try assertExist(workerClient, connectorName)
     finally result(workerClient.delete(connectorName))
@@ -62,7 +62,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .numberOfTasks(1)
         .disableConverter()
-        .create())
+        .create)
 
     try assertExist(workerClient, connectorName)
     finally result(workerClient.delete(connectorName))
@@ -80,7 +80,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .numberOfTasks(1)
         .disableConverter()
-        .create())
+        .create)
     try {
       assertExist(workerClient, connectorName)
       val consumer =
@@ -134,7 +134,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[MyConnector])
         .name(name)
         .numberOfTasks(numberOfTasks)
-        .run())
+        .run)
     configValidation.className shouldBe classOf[MyConnector].getName
     configValidation.definitions.size should not be 0
     configValidation.validatedValues.size should not be

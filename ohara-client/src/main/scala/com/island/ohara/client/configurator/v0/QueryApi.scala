@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object QueryApi {
   val QUERY_PREFIX_PATH: String = "query"
@@ -44,11 +44,11 @@ object QueryApi {
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
 
   sealed abstract class Access extends BasicAccess(QUERY_PREFIX_PATH) {
-    def query(q: RdbQuery): Future[RdbInfo]
+    def query(q: RdbQuery)(implicit executionContext: ExecutionContext): Future[RdbInfo]
   }
 
   def access(): Access = new Access {
-    override def query(q: RdbQuery): Future[RdbInfo] =
+    override def query(q: RdbQuery)(implicit executionContext: ExecutionContext): Future[RdbInfo] =
       exec.post[RdbQuery, RdbInfo, ErrorApi.Error](
         s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$RDB_PREFIX_PATH",
         q)

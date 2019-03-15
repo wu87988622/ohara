@@ -20,17 +20,17 @@ import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.store.{DataStore, Store}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestConfiguratorStore extends MediumTest with Matchers {
 
   private[this] val timeout = 10 seconds
-  private[this] val store =
-    new Configurator.Store(
-      com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
+  private[this] val store = DataStore(Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
 
   @Test
   def testAdd(): Unit = {

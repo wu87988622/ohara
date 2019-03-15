@@ -25,7 +25,7 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestNodeRoute extends SmallTest with Matchers {
   private[this] val numberOfCluster = 1
   private[this] val configurator = Configurator.builder().fake(numberOfCluster, numberOfCluster).build()
@@ -59,7 +59,7 @@ class TestNodeRoute extends SmallTest with Matchers {
 
   @Test
   def testServices(): Unit = {
-    val nodes = result(nodeApi.list())
+    val nodes = result(nodeApi.list)
     nodes.isEmpty shouldBe false
     nodes.foreach(_.services.isEmpty shouldBe false)
   }
@@ -70,8 +70,8 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
-    compare(result(nodeApi.list()).find(_.name == req.name.get).get, res)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
+    compare(result(nodeApi.list).find(_.name == req.name.get).get, res)
   }
 
   @Test
@@ -80,15 +80,15 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
     compare(result(nodeApi.delete(res.name)), res)
-    result(nodeApi.list()).size shouldBe numberOfDefaultNodes
+    result(nodeApi.list).size shouldBe numberOfDefaultNodes
   }
 
   @Test
   def disableToDeleteNodeRunningService(): Unit = {
-    val nodes = result(nodeApi.list())
+    val nodes = result(nodeApi.list)
     val runningNode = nodes.filter(_.services.exists(_.clusterNames.nonEmpty)).head
 
     an[IllegalArgumentException] should be thrownBy result(nodeApi.delete(runningNode.id))
@@ -100,13 +100,13 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
     val req2 = NodeCreationRequest(Some("a"), 22, "b", "d")
     val res2 = result(nodeApi.update(res.name, req2))
     compare(req2, res2)
 
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
     an[IllegalArgumentException] should be thrownBy result(
       nodeApi.update(res.id, NodeCreationRequest(Some("a2"), 22, "b", "d")))
@@ -118,7 +118,7 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res = result(nodeApi.add(req))
     compare(req, res)
 
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
     // we can't update an non-existent node
     an[IllegalArgumentException] should be thrownBy result(
@@ -131,12 +131,12 @@ class TestNodeRoute extends SmallTest with Matchers {
     val res2 = result(nodeApi.update(res.id, req2))
     compare(req2, res2)
 
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
 
     val req3 = NodeCreationRequest(None, 22, "b", "zz")
     val res3 = result(nodeApi.update(res.id, req3))
     compare(req3, res3)
-    result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
+    result(nodeApi.list).size shouldBe (1 + numberOfDefaultNodes)
   }
 
   @After

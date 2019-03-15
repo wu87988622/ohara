@@ -25,7 +25,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestPerfDefinition extends WithBrokerWorker with Matchers {
 
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
@@ -41,7 +41,7 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[PerfSource])
-        .run())
+        .run)
 
     response.definitions.size should not be 0
     response.definitions.find(_.name == ConnectorUtils.TOPIC_NAMES_KEY).get.required shouldBe true

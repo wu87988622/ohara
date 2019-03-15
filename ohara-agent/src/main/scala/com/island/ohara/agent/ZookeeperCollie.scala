@@ -15,11 +15,13 @@
  */
 
 package com.island.ohara.agent
+import java.util.Objects
+
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * An interface of controlling zookeeper cluster.
@@ -51,7 +53,8 @@ object ZookeeperCollie {
       this
     }
 
-    override def create(): Future[ZookeeperClusterInfo] = doCreate(
+    override def create(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = doCreate(
+      executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
       clientPort = CommonUtils.requirePositiveInt(clientPort),
@@ -60,7 +63,8 @@ object ZookeeperCollie {
       nodeNames = requireNonEmpty(nodeNames)
     )
 
-    protected def doCreate(clusterName: String,
+    protected def doCreate(executionContext: ExecutionContext,
+                           clusterName: String,
                            imageName: String,
                            clientPort: Int,
                            peerPort: Int,

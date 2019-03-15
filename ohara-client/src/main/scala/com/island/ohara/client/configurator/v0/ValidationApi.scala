@@ -19,7 +19,7 @@ import com.island.ohara.client.kafka.WorkerJson.ConfigValidationResponse
 import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
   val VALIDATION_PREFIX_PATH: String = "validate"
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
@@ -99,14 +99,16 @@ object ValidationApi {
       * @param request hdfs info
       * @return validation reports
       */
-    def verify(request: ConnectorValidationRequest): Future[ConfigValidationResponse]
+    def verify(request: ConnectorValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[ConfigValidationResponse]
 
     /**
       * used to verify the hdfs information on "default" worker cluster
       * @param request hdfs info
       * @return validation reports
       */
-    def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]]
+    def verify(request: HdfsValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
       * used to verify the hdfs information on specified worker cluster
@@ -114,14 +116,16 @@ object ValidationApi {
       * @param target worker cluster used to verify the request
       * @return validation reports
       */
-    def verify(request: HdfsValidationRequest, target: String): Future[Seq[ValidationReport]]
+    def verify(request: HdfsValidationRequest, target: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
       * used to verify the rdb information on "default" worker cluster
       * @param request rdb info
       * @return validation reports
       */
-    def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]]
+    def verify(request: RdbValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
       * used to verify the rdb information on specified worker cluster
@@ -129,14 +133,16 @@ object ValidationApi {
       * @param target worker cluster used to verify the request
       * @return validation reports
       */
-    def verify(request: RdbValidationRequest, target: String): Future[Seq[ValidationReport]]
+    def verify(request: RdbValidationRequest, target: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
       * used to verify the ftp information on "default" worker cluster
       * @param request ftp info
       * @return validation reports
       */
-    def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]]
+    def verify(request: FtpValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
       * used to verify the ftp information on specified worker cluster
@@ -144,14 +150,16 @@ object ValidationApi {
       * @param target worker cluster used to verify the request
       * @return validation reports
       */
-    def verify(request: FtpValidationRequest, target: String): Future[Seq[ValidationReport]]
+    def verify(request: FtpValidationRequest, target: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
 
     /**
       * used to verify the node information on configurator
       * @param request node info
       * @return validation reports
       */
-    def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]]
+    def verify(request: NodeValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]]
   }
 
   def access(): Access = new Access(VALIDATION_PREFIX_PATH) {
@@ -162,29 +170,37 @@ object ValidationApi {
       else Parameters.appendTargetCluster(url, target)
     }
 
-    override def verify(request: HdfsValidationRequest, target: String): Future[Seq[ValidationReport]] =
+    override def verify(request: HdfsValidationRequest, target: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
       exec.put[HdfsValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_HDFS_PREFIX_PATH, target),
                                                                              request)
 
-    override def verify(request: RdbValidationRequest, target: String): Future[Seq[ValidationReport]] =
+    override def verify(request: RdbValidationRequest, target: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
       exec.put[RdbValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_RDB_PREFIX_PATH, target),
                                                                             request)
 
-    override def verify(request: FtpValidationRequest, target: String): Future[Seq[ValidationReport]] =
+    override def verify(request: FtpValidationRequest, target: String)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
       exec.put[FtpValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_FTP_PREFIX_PATH, target),
                                                                             request)
 
-    override def verify(request: NodeValidationRequest): Future[Seq[ValidationReport]] =
+    override def verify(request: NodeValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
       exec.put[NodeValidationRequest, Seq[ValidationReport], ErrorApi.Error](url(VALIDATION_NODE_PREFIX_PATH, null),
                                                                              request)
 
-    override def verify(request: HdfsValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
+    override def verify(request: HdfsValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
 
-    override def verify(request: RdbValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
+    override def verify(request: RdbValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
 
-    override def verify(request: FtpValidationRequest): Future[Seq[ValidationReport]] = verify(request, null)
+    override def verify(request: FtpValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
 
-    override def verify(request: ConnectorValidationRequest): Future[ConfigValidationResponse] =
+    override def verify(request: ConnectorValidationRequest)(
+      implicit executionContext: ExecutionContext): Future[ConfigValidationResponse] =
       exec.put[ConnectorValidationRequest, ConfigValidationResponse, ErrorApi.Error](
         url(VALIDATION_CONNECTOR_PREFIX_PATH, null),
         request)

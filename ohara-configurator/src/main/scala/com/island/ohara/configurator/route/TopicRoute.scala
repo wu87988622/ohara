@@ -19,12 +19,11 @@ import akka.http.scaladsl.server
 import com.island.ohara.agent.{BrokerCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object TopicRoute {
   private[this] val DEFAULT_NUMBER_OF_PARTITIONS: Int = 1
   private[this] val DEFAULT_NUMBER_OF_REPLICATIONS: Short = 1
@@ -37,7 +36,8 @@ private[configurator] object TopicRoute {
     if (request.brokerClusterName.isEmpty) request.copy(brokerClusterName = t) else request
 
   private[this] def hookOfAdd(id: Id, request: TopicCreationRequest)(
-    implicit brokerCollie: BrokerCollie): Future[TopicInfo] =
+    implicit brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext): Future[TopicInfo] =
     request.name
       .map { name =>
         CollieUtils.topicAdmin(request.brokerClusterName).flatMap {
@@ -48,7 +48,7 @@ private[configurator] object TopicRoute {
               .name(id)
               .numberOfPartitions(request.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS))
               .numberOfReplications(request.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS))
-              .create()
+              .create
               .map { info =>
                 try TopicInfo(id,
                               name,
@@ -62,7 +62,7 @@ private[configurator] object TopicRoute {
       }
       .getOrElse(Future.failed(new NoSuchElementException(s"name is required")))
 
-  def apply(implicit store: Store, brokerCollie: BrokerCollie): server.Route =
+  def apply(implicit store: DataStore, brokerCollie: BrokerCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[TopicCreationRequest, TopicInfo](
       root = TOPICS_PREFIX_PATH,
       hookOfAdd = (targetCluster: TargetCluster, id: Id, request: TopicCreationRequest) =>

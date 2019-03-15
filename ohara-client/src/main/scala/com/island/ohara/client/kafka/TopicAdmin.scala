@@ -28,8 +28,7 @@ import org.apache.kafka.clients.admin.{AdminClient, NewPartitions, NewTopic}
 import org.apache.kafka.common.config.TopicConfig
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * this is a wrap of kafka's AdminClient. However, we only wrap the functions about "topic" since the others are useless
@@ -44,13 +43,14 @@ trait TopicAdmin extends Releasable {
     * @param numberOfPartitions the partitions that given topic should have
     * @return topic information
     */
-  def changePartitions(name: String, numberOfPartitions: Int): Future[TopicAdmin.TopicInfo]
+  def changePartitions(name: String, numberOfPartitions: Int)(
+    implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo]
 
   /**
     * list all topics
     * @return topics information
     */
-  def list(): Future[Seq[TopicAdmin.TopicInfo]]
+  def list(implicit executionContext: ExecutionContext): Future[Seq[TopicAdmin.TopicInfo]]
 
   /**
     * start a process to create topic
@@ -63,7 +63,7 @@ trait TopicAdmin extends Releasable {
     * @param name topic name
     * @return topic information
     */
-  def delete(name: String): Future[TopicAdmin.TopicInfo]
+  def delete(name: String)(implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo]
 
   /**
     * the connection information to kafka's broker
@@ -104,7 +104,11 @@ object TopicAdmin {
     override def close(): Unit = if (_closed.compareAndSet(false, true)) Releasable.close(admin)
 
     override def creator(): Creator =
-      (name: String, numberOfPartitions: Int, numberOfReplications: Short, cleanupPolicy: CleanupPolicy) =>
+      (executionContext,
+       name: String,
+       numberOfPartitions: Int,
+       numberOfReplications: Short,
+       cleanupPolicy: CleanupPolicy) =>
         Future {
           unwrap(
             () =>
@@ -124,33 +128,35 @@ object TopicAdmin {
             numberOfPartitions = numberOfPartitions,
             numberOfReplications = numberOfReplications
           )
-      }
+        }(executionContext)
 
     /**
       * list name of topics
       * @return a list of topic's names
       */
-    private[this] def listNames(): Future[Seq[String]] = Future {
+    private[this] def listNames(implicit executionContext: ExecutionContext): Future[Seq[String]] = Future {
       unwrap(() => admin.listTopics().names().get().asScala.toSeq)
     }
 
-    private[this] def list(names: Seq[String]): Future[Seq[TopicInfo]] = Future {
-      unwrap(
-        () =>
-          admin
-            .describeTopics(names.asJava)
-            .all()
-            .get()
-            .values()
-            .asScala
-            .map(t =>
-              TopicInfo(t.name(), t.partitions().size(), t.partitions().get(0).replicas().size().asInstanceOf[Short]))
-            .toSeq)
-    }
+    private[this] def list(names: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] =
+      Future {
+        unwrap(
+          () =>
+            admin
+              .describeTopics(names.asJava)
+              .all()
+              .get()
+              .values()
+              .asScala
+              .map(t =>
+                TopicInfo(t.name(), t.partitions().size(), t.partitions().get(0).replicas().size().asInstanceOf[Short]))
+              .toSeq)
+      }
 
-    override def list(): Future[Seq[TopicInfo]] = listNames().flatMap(list)
+    override def list(implicit executionContext: ExecutionContext): Future[Seq[TopicInfo]] = listNames.flatMap(list)
 
-    override def changePartitions(name: String, numberOfPartitions: Int): Future[TopicInfo] = list().flatMap(
+    override def changePartitions(name: String, numberOfPartitions: Int)(
+      implicit executionContext: ExecutionContext): Future[TopicInfo] = list.flatMap(
       _.find(_.name == name)
         .map { topicInfo =>
           if (topicInfo.numberOfPartitions > numberOfPartitions)
@@ -168,11 +174,12 @@ object TopicAdmin {
         }
         .getOrElse(Future.failed(new NoSuchElementException(s"$name doesn't exist"))))
 
-    override def delete(name: String): Future[TopicInfo] = list().flatMap { topics =>
-      val topic = topics.find(_.name == name).get
-      Future {
-        unwrap(() => admin.deleteTopics(util.Arrays.asList(name)).all().get)
-      }.map(_ => topic)
+    override def delete(name: String)(implicit executionContext: ExecutionContext): Future[TopicInfo] = list.flatMap {
+      topics =>
+        val topic = topics.find(_.name == name).get
+        Future {
+          unwrap(() => admin.deleteTopics(util.Arrays.asList(name)).all().get)
+        }.map(_ => topic)
     }
   }
 
@@ -207,14 +214,16 @@ object TopicAdmin {
       this
     }
 
-    def create(): Future[TopicAdmin.TopicInfo] = doCreate(
+    def create(implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo] = doCreate(
+      executionContext = Objects.requireNonNull(executionContext),
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),
       numberOfReplications = CommonUtils.requirePositiveShort(numberOfReplications),
       cleanupPolicy
     )
 
-    protected def doCreate(name: String,
+    protected def doCreate(executionContext: ExecutionContext,
+                           name: String,
                            numberOfPartitions: Int,
                            numberOfReplications: Short,
                            cleanupPolicy: CleanupPolicy): Future[TopicAdmin.TopicInfo]

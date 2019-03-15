@@ -20,7 +20,7 @@ import com.island.ohara.common.util.CommonUtils
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * the cluster-related data is different from normal data so we need another type of access.
@@ -35,19 +35,19 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
   private[this] def _nodeName(name: String): String =
     CommonUtils.requireNonEmpty(name, () => "node name can't be empty")
 
-  def get(clusterName: String): Future[Seq[ContainerInfo]] =
+  def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     exec.get[Seq[ContainerInfo], ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}")
-  def delete(clusterName: String): Future[Res] =
+  def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.delete[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")
-  def list(): Future[Seq[Res]] =
+  def list(implicit executionContext: ExecutionContext): Future[Seq[Res]] =
     exec.get[Seq[Res], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
-  def add(request: Req): Future[Res] =
+  def add(request: Req)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.post[Req, Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", request)
-  def addNode(clusterName: String, nodeName: String): Future[Res] =
+  def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.post[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
-  def removeNode(clusterName: String, nodeName: String): Future[Res] =
+  def removeNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.delete[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}/${_nodeName(nodeName)}")
 }

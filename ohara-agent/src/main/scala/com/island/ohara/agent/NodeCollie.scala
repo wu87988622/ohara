@@ -17,8 +17,7 @@
 package com.island.ohara.agent
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * manager of nodes. All nodes are managed by ssh. It means the communication between nodes are through ssh.
@@ -26,15 +25,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * in the future...
   */
 trait NodeCollie {
-  def nodes(): Future[Seq[Node]]
-  def node(name: String): Future[Node]
-  def nodes(names: Seq[String]): Future[Seq[Node]] = Future.traverse(names)(node)
-  def exist(name: String): Future[Boolean] = node(name).map(_ => true).recover {
-    case _: Throwable => false
-  }
-  def exist(names: Seq[String]): Future[Boolean] = nodes(names).map(_ => true).recover {
-    case _: Throwable => false
-  }
+  def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]]
+  def node(name: String)(implicit executionContext: ExecutionContext): Future[Node]
+  def nodes(names: Seq[String])(implicit executionContext: ExecutionContext): Future[Seq[Node]] =
+    Future.traverse(names)(node)
+  def exist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    node(name).map(_ => true).recover {
+      case _: Throwable => false
+    }
+  def exist(names: Seq[String])(implicit executionContext: ExecutionContext): Future[Boolean] =
+    nodes(names).map(_ => true).recover {
+      case _: Throwable => false
+    }
 }
 
 object NodeCollie {
@@ -45,8 +47,8 @@ object NodeCollie {
     * @return node collie implementation
     */
   def apply(_nodes: Seq[Node]): NodeCollie = new NodeCollie {
-    override def node(name: String): Future[Node] =
+    override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] =
       nodes().map(_.find(_.name == name).getOrElse(throw new NoSuchElementException(s"$name doesn't exist")))
-    override def nodes(): Future[Seq[Node]] = Future.successful(_nodes)
+    override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = Future.successful(_nodes)
   }
 }

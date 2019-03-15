@@ -461,7 +461,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     val workerClient = WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}")
     await(
       () =>
-        try result(workerClient.plugins()).nonEmpty
+        try result(workerClient.plugins).nonEmpty
         catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)

@@ -32,8 +32,7 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val LOG = Logger(ValidationRoute.getClass)
@@ -55,7 +54,9 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     }
   }
 
-  def apply(implicit brokerCollie: BrokerCollie, workerCollie: WorkerCollie): server.Route =
+  def apply(implicit brokerCollie: BrokerCollie,
+            workerCollie: WorkerCollie,
+            executionContext: ExecutionContext): server.Route =
     pathPrefix(VALIDATION_PREFIX_PATH) {
       verifyRoute(
         root = VALIDATION_HDFS_PREFIX_PATH,
@@ -166,7 +167,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                   .numberOfTasks(req.numberOfTasks)
                   .topicNames(req.topicNames)
                   .configs(req.configs)
-                  .run()
+                  .run
                   .map {
                     validationResponse =>
                       // we have to replace worker's keyword by ohara's keyword

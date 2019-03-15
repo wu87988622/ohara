@@ -37,6 +37,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
   private[this] val db = testUtil().dataBase()
   private[this] val client = DatabaseClient(db.url, db.user, db.password)
@@ -108,7 +109,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .configs(jdbcProps.toMap)
         .disableConverter()
-        .create(),
+        .create,
       10 seconds
     )
 
@@ -121,7 +122,7 @@ class TestJDBC2HDFS extends With3Brokers3Workers with Matchers {
         .configs(hdfsProps.toMap)
         .numberOfTasks(1)
         .disableConverter()
-        .create(),
+        .create,
       10 seconds
     )
 

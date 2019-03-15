@@ -32,8 +32,7 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 /**
@@ -58,33 +57,33 @@ trait WorkerClient {
     * @param name connector's name
     * @return async future containing nothing
     */
-  def delete(name: String): Future[Unit]
+  def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * pause a running connector
     * @param name connector's name
     * @return async future containing nothing
     */
-  def pause(name: String): Future[Unit]
+  def pause(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * resume a paused connector
     * @param name connector's name
     * @return async future containing nothing
     */
-  def resume(name: String): Future[Unit]
+  def resume(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * list available plugins
     * @return async future containing connector details
     */
-  def plugins(): Future[Seq[Plugin]]
+  def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]]
 
   /**
     * list available plugin's names
     * @return async future containing connector's names
     */
-  def activeConnectors(): Future[Seq[String]]
+  def activeConnectors(implicit executionContext: ExecutionContext): Future[Seq[String]]
 
   /**
     * @return worker's connection props
@@ -95,20 +94,20 @@ trait WorkerClient {
     * @param name connector's name
     * @return status of connector
     */
-  def status(name: String): Future[ConnectorInfo]
+  def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo]
 
   /**
     * @param name connector's name
     * @return configuration of connector
     */
-  def config(name: String): Future[ConnectorConfig]
+  def config(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorConfig]
 
   /**
     * @param name connector's name
     * @param id task's id
     * @return task status
     */
-  def taskStatus(name: String, id: Int): Future[TaskStatus]
+  def taskStatus(name: String, id: Int)(implicit executionContext: ExecutionContext): Future[TaskStatus]
 
   /**
     * Check whether a connector name is used in creating connector (even if the connector fails to start, this method
@@ -116,9 +115,10 @@ trait WorkerClient {
     * @param name connector name
     * @return true if connector exists
     */
-  def exist(name: String): Future[Boolean] = activeConnectors().map(_.contains(name))
+  def exist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
+    activeConnectors.map(_.contains(name))
 
-  def nonExist(name: String): Future[Boolean] = exist(name).map(!_)
+  def nonExist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] = exist(name).map(!_)
 
 }
 
@@ -146,7 +146,8 @@ object WorkerClient {
         * @tparam T response type
         * @return response
         */
-      private[this] def retry[T](exec: () => Future[T], msg: String, retryCount: Int = 0): Future[T] =
+      private[this] def retry[T](exec: () => Future[T], msg: String, retryCount: Int = 0)(
+        implicit executionContext: ExecutionContext): Future[T] =
         exec().recoverWith {
           case e @ (_: HttpRetryException | _: StreamTcpException) =>
             LOG.info(s"$msg $retryCount/$maxRetry", e)
@@ -156,53 +157,59 @@ object WorkerClient {
             } else throw e
         }
 
-      override def connectorCreator(): Creator = request =>
+      override def connectorCreator(): Creator = (executionContext, request) => {
+        implicit val exec: ExecutionContext = executionContext
         retry(
           () =>
             HttpExecutor.SINGLETON.post[ConnectorCreationRequest, ConnectorCreationResponse, Error](
               s"http://$workerAddress/connectors",
               request),
           "connectorCreator"
-      )
+        )
+      }
 
-      override def delete(name: String): Future[Unit] =
+      override def delete(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
         retry(() => HttpExecutor.SINGLETON.delete[Error](s"http://$workerAddress/connectors/$name"), s"delete $name")
 
-      override def plugins(): Future[Seq[Plugin]] = retry(
+      override def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
         s"fetch plugins $workerAddress")
-      override def activeConnectors(): Future[Seq[String]] = retry(
+      override def activeConnectors(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[String], Error](s"http://$workerAddress/connectors"),
         "fetch active connectors")
 
       override def connectionProps: String = _connectionProps
 
-      override def status(name: String): Future[ConnectorInfo] = retry(
+      override def status(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = retry(
         () => HttpExecutor.SINGLETON.get[ConnectorInfo, Error](s"http://$workerAddress/connectors/$name/status"),
         s"status of $name")
 
-      override def config(name: String): Future[ConnectorConfig] = retry(
+      override def config(name: String)(implicit executionContext: ExecutionContext): Future[ConnectorConfig] = retry(
         () => HttpExecutor.SINGLETON.get[ConnectorConfig, Error](s"http://$workerAddress/connectors/$name/config"),
         s"config of $name")
 
-      override def taskStatus(name: String, id: Int): Future[TaskStatus] = retry(
-        () => HttpExecutor.SINGLETON.get[TaskStatus, Error](s"http://$workerAddress/connectors/$name/tasks/$id/status"),
-        s"status of $name/$id")
-      override def pause(name: String): Future[Unit] =
+      override def taskStatus(name: String, id: Int)(implicit executionContext: ExecutionContext): Future[TaskStatus] =
+        retry(
+          () =>
+            HttpExecutor.SINGLETON.get[TaskStatus, Error](s"http://$workerAddress/connectors/$name/tasks/$id/status"),
+          s"status of $name/$id")
+      override def pause(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
         retry(() => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/pause"), s"pause $name")
 
-      override def resume(name: String): Future[Unit] = retry(
+      override def resume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = retry(
         () => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/resume"),
         s"resume $name")
 
-      override def connectorValidator(): Validator = (className, configs) =>
+      override def connectorValidator(): Validator = (executionContext, className, configs) => {
+        implicit val exec: ExecutionContext = executionContext
         retry(
           () =>
             HttpExecutor.SINGLETON.put[Map[String, String], ConfigValidationResponse, Error](
               s"http://$workerAddress/connector-plugins/$className/config/validate",
               configs),
           "connectorValidator"
-      )
+        )
+      }
     }
   }
 
@@ -381,29 +388,33 @@ object WorkerClient {
       *
       * @return this one
       */
-    def create(): Future[ConnectorCreationResponse] = doCreate(
-      toCreateConnectorResponse(
+    def create(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] = doCreate(
+      executionContext = Objects.requireNonNull(executionContext),
+      request = toCreateConnectorResponse(
         (if (_disableKeyConverter)
            Map("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
          else Map.empty) ++
           (if (_disableValueConverter)
              Map("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
            else Map.empty)
-      ))
+      )
+    )
 
     /**
       * send the request to kafka worker
       *
       * @return response
       */
-    protected def doCreate(request: ConnectorCreationRequest): Future[ConnectorCreationResponse]
+    protected def doCreate(executionContext: ExecutionContext,
+                           request: ConnectorCreationRequest): Future[ConnectorCreationResponse]
   }
 
   trait Validator extends ConnectorProperties {
 
-    def run(): Future[ConfigValidationResponse] = doValidate(
-      className,
-      toCreateConnectorResponse(Map.empty).configs
+    def run(implicit executionContext: ExecutionContext): Future[ConfigValidationResponse] = doValidate(
+      executionContext = Objects.requireNonNull(executionContext),
+      className = CommonUtils.requireNonEmpty(className),
+      configs = toCreateConnectorResponse(Map.empty).configs
       // In contrast to create connector, we have to add name back to configs since worker verify the name from configs...
       // TODO: it is indeed a ugly APIs... should we file a PR for kafka ??? by chia
         ++ Map(ConnectorUtils.NAME_KEY -> name)
@@ -414,7 +425,9 @@ object WorkerClient {
       *
       * @return response
       */
-    protected def doValidate(className: String, configs: Map[String, String]): Future[ConfigValidationResponse]
+    protected def doValidate(executionContext: ExecutionContext,
+                             className: String,
+                             configs: Map[String, String]): Future[ConfigValidationResponse]
 
   }
 }

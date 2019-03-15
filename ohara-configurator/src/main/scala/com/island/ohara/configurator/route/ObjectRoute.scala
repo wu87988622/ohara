@@ -21,8 +21,10 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.ObjectApi._
-import com.island.ohara.configurator.Configurator.Store
+import com.island.ohara.configurator.store.DataStore
 import spray.json.DefaultJsonProtocol._
+
+import scala.concurrent.ExecutionContext
 private[configurator] object ObjectRoute {
   private[this] def toObject(data: Data): Object = Object(
     name = data.name,
@@ -30,8 +32,9 @@ private[configurator] object ObjectRoute {
     lastModified = data.lastModified,
     kind = data.kind
   )
-  def apply(implicit store: Store): server.Route = pathPrefix(OBJECT_PREFIX_PATH) {
-    pathEnd(get(onSuccess(store.values[Data])(ds => complete(ds.map(toObject))))) ~ path(Segment)(id =>
-      get(onSuccess(store.value[Data](id))(d => complete(toObject(d)))))
-  }
+  def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
+    pathPrefix(OBJECT_PREFIX_PATH) {
+      pathEnd(get(onSuccess(store.values[Data])(ds => complete(ds.map(toObject))))) ~ path(Segment)(id =>
+        get(onSuccess(store.value[Data](id))(d => complete(toObject(d)))))
+    }
 }

@@ -31,6 +31,7 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] val schema: Seq[Column] = Seq(
@@ -149,7 +150,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
 
@@ -194,7 +195,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.newBuilder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -239,7 +240,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -274,7 +275,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -309,7 +310,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .name(connectorName)
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -346,7 +347,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .columns(schema)
         // will use default UTF-8
         .configs(props.copy(encode = None).toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -382,7 +383,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .columns(schema)
         // will use default UTF-8
         .configs(props.copy(encode = Some("")).toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -418,7 +419,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 1, 0)
@@ -451,7 +452,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         // the name can't be casted to int
         .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
         .configs(props.toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 1)
@@ -479,7 +480,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.copy(inputFolder = "/abc").toMap)
-        .create())
+        .create)
     FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
 
@@ -502,7 +503,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .configs(props.toMap)
-        .create())
+        .create)
     FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
 
@@ -520,7 +521,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(schema)
         .configs(props.copy(completedFolder = None).toMap)
-        .create())
+        .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
       checkFileCount(0, 0, 0)

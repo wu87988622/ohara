@@ -25,6 +25,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara1255 extends SmallTest with Matchers {
 
   private[this] val numberOfCluster = 1
@@ -49,7 +50,7 @@ class TestOhara1255 extends SmallTest with Matchers {
         ))
       .foreach(r => Await.result(access.add(r), 10 seconds))
 
-    Await.result(access.list(), 10 seconds).size shouldBe (numberOfRequest + numberOfDefaultNodes)
+    Await.result(access.list, 10 seconds).size shouldBe (numberOfRequest + numberOfDefaultNodes)
   }
 
   @After

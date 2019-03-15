@@ -28,7 +28,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestQueryRoute extends SmallTest with Matchers {
   private[this] val db = Database.local()
   private[this] val configurator = Configurator.builder().fake().build()

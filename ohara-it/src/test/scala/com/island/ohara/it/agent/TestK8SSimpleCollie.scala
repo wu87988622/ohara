@@ -30,6 +30,7 @@ import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestK8SSimpleCollie])
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
@@ -59,11 +60,11 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
   }
 
   private[this] def waitBrokerCluster(clusterName: String): Unit = {
-    await(() => result(clusterCollie.brokerCollie().clusters()).exists(_._1.name == clusterName))
+    await(() => result(clusterCollie.brokerCollie().clusters).exists(_._1.name == clusterName))
   }
 
   private[this] def waitWorkerCluster(clusterName: String): Unit = {
-    await(() => result(clusterCollie.workerCollie().clusters()).exists(_._1.name == clusterName))
+    await(() => result(clusterCollie.workerCollie().clusters).exists(_._1.name == clusterName))
   }
 
   @Test
@@ -332,7 +333,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         result(brokerCollie.removeNode(brokerClusterName, firstNode))
 
         val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-        await(() => !k8sClient.containers().exists(c => c.hostname.contains(firstContainerName)))
+        await(() => !k8sClient.containers.exists(c => c.hostname.contains(firstContainerName)))
         result(brokerCollie.cluster(brokerClusterName))._2.size shouldBe 1
       } finally result(brokerCollie.remove(brokerClusterName))
     } finally result(zookeeperCollie.remove(zkClusterName))
@@ -384,7 +385,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           result(workerCollie.removeNode(workerClusterName, firstNode))
 
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-          await(() => !k8sClient.containers().exists(c => c.hostname.contains(firstContainerName)))
+          await(() => !k8sClient.containers.exists(c => c.hostname.contains(firstContainerName)))
           result(workerCollie.cluster(workerClusterName))._2.size shouldBe 1
         } finally result(workerCollie.remove(workerClusterName))
       } finally result(brokerCollie.remove(brokerClusterName))
@@ -400,7 +401,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     //Create zookeeper cluster for start broker service
     val zkClusterName1: String = s"zk${CommonUtils.randomString(10)}"
     val zookeeperCollie: ZookeeperCollie = clusterCollie.zookeeperCollie()
-    result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 0
+    result(zookeeperCollie.clusters).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 0
 
     try {
       val zkClientPort1: Int = CommonUtils.availablePort()
@@ -408,7 +409,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
       val zkElectionPort1: Int = CommonUtils.availablePort()
 
       createZookeeperCollie(zookeeperCollie, zkClusterName1, firstNode, zkClientPort1, zkPeerPort1, zkElectionPort1)
-      result(zookeeperCollie.clusters()).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 1
+      result(zookeeperCollie.clusters).flatMap(x => x._2).count(x => x.hostname.contains(zkClusterName1)) shouldBe 1
     } finally result(zookeeperCollie.remove(zkClusterName1))
   }
 
@@ -457,9 +458,8 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
           await(
             () =>
-              k8sClient
-                .containers()
-                .count(c => c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING) == 1
+              k8sClient.containers.count(c =>
+                c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING) == 1
           )
 
           val logMessage: String = "Kafka Connect distributed worker initializing ..."
@@ -490,7 +490,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .peerPort(peerPort)
         .electionPort(electionPort)
         .nodeName(nodeName)
-        .create())
+        .create)
   }
 
   private[this] def createBrokerCollie(brokerCollie: BrokerCollie,
@@ -508,7 +508,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)
         .nodeNames(nodeName)
-        .create())
+        .create)
   }
 
   private[this] def createWorkerCollie(workerCollie: WorkerCollie,
@@ -528,7 +528,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .statusTopicName(CommonUtils.randomString(10))
         .offsetTopicName(CommonUtils.randomString(10))
         .nodeName(nodeName)
-        .create()
+        .create
     )
   }
 

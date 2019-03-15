@@ -23,8 +23,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Cont
 import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.mutable
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: ClusterCreator[T]]
     extends Collie[T, Creator] {
   protected val clusterCache = new mutable.HashMap[T, Seq[ContainerInfo]]()
@@ -47,23 +46,27 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: Clu
     clusterCache.put(cluster, genContainers(cluster))
     cluster
   }
-  override def exist(clusterName: String): Future[Boolean] =
+  override def exist(clusterName: String)(implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.successful(clusterCache.keys.exists(_.name == clusterName))
 
-  override def remove(clusterName: String): Future[T] = exist(clusterName).flatMap(if (_) Future.successful {
-    val cluster = clusterCache.keys.find(_.name == clusterName).get
-    clusterCache.remove(cluster)
-    cluster
-  } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
+  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    exist(clusterName).flatMap(if (_) Future.successful {
+      val cluster = clusterCache.keys.find(_.name == clusterName).get
+      clusterCache.remove(cluster)
+      cluster
+    } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
 
-  override def logs(clusterName: String): Future[Map[ContainerInfo, String]] =
+  override def logs(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] =
     exist(clusterName).flatMap(if (_) Future.successful {
       val containers = clusterCache.find(_._1.name == clusterName).get._2
       containers.map(_ -> "fake log").toMap
     } else Future.failed(new NoSuchClusterException(s"$clusterName doesn't exist")))
 
-  override def containers(clusterName: String): Future[Seq[ContainerInfo]] =
+  override def containers(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
     exist(clusterName).map(if (_) clusterCache.find(_._1.name == clusterName).get._2 else Seq.empty)
 
-  override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = Future.successful(clusterCache.toMap)
+  override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
+    Future.successful(clusterCache.toMap)
 }

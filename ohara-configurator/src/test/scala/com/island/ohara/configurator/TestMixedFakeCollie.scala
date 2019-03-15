@@ -26,6 +26,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Embedded mode with fake cluster.
@@ -38,15 +39,15 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
 
     try {
       Await
-        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
         .size shouldBe 1
 
       Await
-        .result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        .result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
         .size shouldBe 1
 
       val nodes =
-        Await.result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        Await.result(NodeApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
 
       // embedded mode always add single node since embedded mode assign different client port to each thread and
       // our collie demands that all "processes" should use same port.
@@ -105,7 +106,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       )
 
       Await
-        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        .result(BrokerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
         .size shouldBe 2
 
       Await.result(
@@ -134,7 +135,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
       )
 
       Await
-        .result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        .result(WorkerApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
         .size shouldBe 2
 
     } finally configurator.close()

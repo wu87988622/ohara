@@ -44,15 +44,15 @@ import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait K8SClient extends ReleaseOnce {
-  def containers(): Seq[ContainerInfo]
-  def remove(name: String): ContainerInfo
-  def removeNode(clusterName: String, nodeName: String, serviceName: String): Seq[ContainerInfo]
+  def containers(implicit executionContext: ExecutionContext): Seq[ContainerInfo]
+  def remove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo
+  def removeNode(clusterName: String, nodeName: String, serviceName: String)(
+    implicit executionContext: ExecutionContext): Seq[ContainerInfo]
   def log(name: String): String
-  def nodeNameIPInfo(): Seq[HostAliases]
+  def nodeNameIPInfo(implicit executionContext: ExecutionContext): Seq[HostAliases]
   def containerCreator(): ContainerCreator
 }
 
@@ -69,7 +69,7 @@ object K8SClient {
       private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[K8SClient].getSimpleName}")
       private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
 
-      override def containers(): Seq[ContainerInfo] = {
+      override def containers(implicit executionContext: ExecutionContext): Seq[ContainerInfo] = {
         val k8sPodInfo: K8SPodInfo = Await.result(
           Http()
             .singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/pods"))
@@ -102,8 +102,8 @@ object K8SClient {
         })
       }
 
-      override def remove(name: String): ContainerInfo = {
-        containers()
+      override def remove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo = {
+        containers
           .find(_.name == name)
           .map(container => {
             LOG.info(s"Container ${container.name} is removing")
@@ -118,9 +118,10 @@ object K8SClient {
           .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
       }
 
-      override def removeNode(clusterName: String, nodeName: String, serviceName: String): Seq[ContainerInfo] = {
+      override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
+        implicit executionContext: ExecutionContext): Seq[ContainerInfo] = {
         val key = s"$clusterName${K8SClusterCollieImpl.DIVIDER}${serviceName}"
-        val removeContainer: Seq[ContainerInfo] = containers()
+        val removeContainer: Seq[ContainerInfo] = containers
           .filter(c => c.name.startsWith(key) && c.nodeName.equals(nodeName))
           .map(container => {
             Await.result(
@@ -133,7 +134,7 @@ object K8SClient {
 
         var isRemovedContainer: Boolean = false
         while (!isRemovedContainer) {
-          if (containers().filter(c => c.name.startsWith(key) && c.nodeName.equals(nodeName)).size == 0) {
+          if (containers.filter(c => c.name.startsWith(key) && c.nodeName.equals(nodeName)).size == 0) {
             isRemovedContainer = true
           }
         }
@@ -152,7 +153,7 @@ object K8SClient {
           .getOrElse(throw new IllegalArgumentException(s"no response from $name contains"))
       }
 
-      override def nodeNameIPInfo(): Seq[HostAliases] = {
+      override def nodeNameIPInfo(implicit executionContext: ExecutionContext): Seq[HostAliases] = {
         val k8sNodeInfo: K8SNodeInfo = Await.result(
           Http()
             .singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes"))
@@ -219,12 +220,12 @@ object K8SClient {
           this
         }
 
-        override def run(): Option[ContainerInfo] = {
+        override def run(implicit executionContext: ExecutionContext): Option[ContainerInfo] = {
           val podSpec = CreatePodSpec(
             CreatePodNodeSelector(nodename),
             hostname,
             domainName,
-            nodeNameIPInfo(),
+            nodeNameIPInfo,
             Seq(
               CreatePodContainer(labelName,
                                  imageName,
@@ -268,7 +269,8 @@ object K8SClient {
         Await.result(actorSystem.terminate(), 60 seconds)
       }
 
-      private[this] def unmarshal[T](response: HttpResponse)(implicit um: RootJsonFormat[T]): Future[T] =
+      private[this] def unmarshal[T](response: HttpResponse)(implicit um: RootJsonFormat[T],
+                                                             executionContext: ExecutionContext): Future[T] =
         if (response.status.isSuccess()) Unmarshal(response).to[T]
         else
           Unmarshal(response)
@@ -292,7 +294,7 @@ object K8SClient {
 
     def nodename(nodename: String): ContainerCreator
 
-    def run(): Option[ContainerInfo]
+    def run(implicit executionContext: ExecutionContext): Option[ContainerInfo]
 
     def domainName(domainName: String): ContainerCreator
 

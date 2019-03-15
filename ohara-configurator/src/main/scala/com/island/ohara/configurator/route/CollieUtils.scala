@@ -26,7 +26,6 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 import scala.reflect.{ClassTag, classTag}
@@ -82,10 +81,10 @@ object CollieUtils {
   private[this] lazy val cleaner: AdminCleaner = new AdminCleaner(30 * 1000)
 
   private[route] def topicAdmin[T](clusterName: Option[String])(
-    implicit brokerCollie: BrokerCollie): Future[(BrokerClusterInfo, TopicAdmin)] = clusterName
+    implicit brokerCollie: BrokerCollie,
+    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin)] = clusterName
     .map(brokerCollie.topicAdmin)
-    .getOrElse(brokerCollie
-      .clusters()
+    .getOrElse(brokerCollie.clusters
       .map { clusters =>
         clusters.size match {
           case 0 =>
@@ -100,10 +99,10 @@ object CollieUtils {
       .map(c => (c, cleaner.add(brokerCollie.topicAdmin(c)))))
 
   private[route] def workerClient[T](clusterName: Option[String])(
-    implicit workerCollie: WorkerCollie): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
+    implicit workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = clusterName
     .map(workerCollie.workerClient)
-    .getOrElse(workerCollie
-      .clusters()
+    .getOrElse(workerCollie.clusters
       .map { clusters =>
         clusters.size match {
           case 0 =>
@@ -119,7 +118,8 @@ object CollieUtils {
 
   private[route] def both[T](wkClusterName: Option[String])(
     implicit brokerCollie: BrokerCollie,
-    workerCollie: WorkerCollie): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
+    workerCollie: WorkerCollie,
+    executionContext: ExecutionContext): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
     workerClient(wkClusterName).flatMap {
       case (wkInfo, wkClient) =>
         brokerCollie.topicAdmin(wkInfo.brokerClusterName).map {

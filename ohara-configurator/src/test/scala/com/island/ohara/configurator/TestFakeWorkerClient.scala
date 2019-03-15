@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestFakeWorkerClient extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
@@ -33,7 +34,7 @@ class TestFakeWorkerClient extends SmallTest with Matchers {
     val className = methodName
     val fake = new FakeWorkerClient()
     result(
-      fake.connectorCreator().name(connectorName).topicName(topicName).numberOfTasks(1).className(className).create())
+      fake.connectorCreator().name(connectorName).topicName(topicName).numberOfTasks(1).className(className).create)
 
     result(fake.exist(connectorName)) shouldBe true
 

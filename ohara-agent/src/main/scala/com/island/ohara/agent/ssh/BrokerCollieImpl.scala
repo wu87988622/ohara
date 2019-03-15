@@ -23,8 +23,7 @@ import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private class BrokerCollieImpl(nodeCollie: NodeCollie,
                                dockerCache: DockerClientCache,
@@ -44,8 +43,9 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
     * @return creator of broker cluster
     */
   override def creator(): BrokerCollie.ClusterCreator =
-    (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
-      clusterCache.get().flatMap { clusters =>
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) => {
+      implicit val exec: ExecutionContext = executionContext
+      clusterCache.get.flatMap { clusters =>
         clusters
           .filter(_._1.isInstanceOf[BrokerClusterInfo])
           .map {
@@ -174,16 +174,18 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
                   )
                 }
           }
+      }
     }
 
-  override protected def doAddNode(previousCluster: BrokerClusterInfo,
-                                   previousContainers: Seq[ContainerInfo],
-                                   newNodeName: String): Future[BrokerClusterInfo] = creator()
+  override protected def doAddNode(
+    previousCluster: BrokerClusterInfo,
+    previousContainers: Seq[ContainerInfo],
+    newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = creator()
     .clusterName(previousCluster.name)
     .zookeeperClusterName(previousCluster.zookeeperClusterName)
     .exporterPort(previousCluster.exporterPort)
     .clientPort(previousCluster.clientPort)
     .imageName(previousCluster.imageName)
     .nodeName(newNodeName)
-    .create()
+    .create
 }

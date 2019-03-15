@@ -19,7 +19,7 @@ package com.island.ohara.client.configurator.v0
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
   val OBJECT_PREFIX_PATH: String = "objects"
@@ -28,9 +28,9 @@ object ObjectApi {
   implicit val OBJECT_JSON_FORMAT: RootJsonFormat[Object] = jsonFormat4(Object)
 
   class Access private[v0] extends BasicAccess(OBJECT_PREFIX_PATH) {
-    def get(id: String): Future[Object] =
+    def get(id: String)(implicit executionContext: ExecutionContext): Future[Object] =
       exec.get[Object, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
-    def list(): Future[Seq[Object]] =
+    def list(implicit executionContext: ExecutionContext): Future[Seq[Object]] =
       exec.get[Seq[Object], ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}")
   }
 

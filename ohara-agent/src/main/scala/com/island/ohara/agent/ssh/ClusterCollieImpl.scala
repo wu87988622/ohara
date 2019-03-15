@@ -17,6 +17,7 @@
 package com.island.ohara.agent.ssh
 
 import java.net.URL
+import java.util.concurrent.ExecutorService
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -27,28 +28,21 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
-private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCollie)
+private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCollie, executor: ExecutorService)
     extends ReleaseOnce
     with ClusterCollie {
 
-  def this(nodeCollie: NodeCollie) {
-    this(null, nodeCollie)
-  }
-
   private[this] val dockerCache = DockerClientCache()
-  private[this] val clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]] =
-    if (expiredTime == null) Cache.empty(() => doClusters())
-    else
-      Cache
-        .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
-        .expiredTime(expiredTime)
-        .default(Map.empty)
-        .updater(() => doClusters())
-        .build()
+  private[this] val clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]] = Cache
+    .builder[Map[ClusterInfo, Seq[ContainerInfo]]]()
+    .expiredTime(expiredTime)
+    .default(Map.empty)
+    .updater((executionContext: ExecutionContext) => doClusters(executionContext))
+    .executor(executor)
+    .build()
 
   private[this] val zkCollie: ZookeeperCollieImpl = new ZookeeperCollieImpl(nodeCollie, dockerCache, clusterCache)
 
@@ -73,7 +67,8 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
       ))
   }
 
-  private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo]): Future[ClusterInfo] = {
+  private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo])(
+    implicit executionContext: ExecutionContext): Future[ClusterInfo] = {
     val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
     plugins(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { plugins =>
       WorkerClusterInfo(
@@ -116,15 +111,15 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
       ))
   }
 
-  override def clusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = clusterCache.get()
-  private[this] def doClusters(): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
+  override def clusters(implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] =
+    clusterCache.get
+  private[this] def doClusters(
+    implicit executionContext: ExecutionContext): Future[Map[ClusterInfo, Seq[ContainerInfo]]] = nodeCollie
     .nodes()
     .flatMap(Future
       .traverse(_) { node =>
         // multi-thread to seek all containers from multi-nodes
-        Future {
-          dockerCache.exec(node, _.activeContainers(containerName => containerName.startsWith(PREFIX_KEY)))
-        }.recover {
+        dockerCache.exec(node, _.activeContainers(containerName => containerName.startsWith(PREFIX_KEY))).recover {
           case e: Throwable =>
             LOG.error(s"failed to get active containers from $node", e)
             Seq.empty
@@ -163,6 +158,6 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
     Releasable.close(clusterCache)
   }
 
-  override def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]] =
+  override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future.traverse(nodes)(node => Future(dockerCache.exec(node, node -> _.imageNames()))).map(_.toMap)
 }

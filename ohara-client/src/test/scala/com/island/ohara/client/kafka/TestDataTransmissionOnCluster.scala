@@ -24,6 +24,7 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
@@ -69,7 +70,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   }
 
   private[this] def checkConnector(name: String): Unit = {
-    await(() => result(workerClient.activeConnectors()).contains(name))
+    await(() => result(workerClient.activeConnectors).contains(name))
     await(() => result(workerClient.config(name)).topicNames.nonEmpty)
     await(
       () =>
@@ -144,7 +145,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .columns(schema)
         .configs(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> topicName2))
-        .create())
+        .create)
 
     try {
       checkConnector(connectorName)
@@ -185,7 +186,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .columns(schema)
         .configs(Map(BROKER -> testUtil.brokersConnProps, INPUT -> topicName))
-        .create())
+        .create)
 
     try {
       checkConnector(connectorName)
@@ -201,7 +202,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
     val topicName = CommonUtils.randomString(10)
     val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try topicAdmin.creator().name(topicName).numberOfPartitions(1).numberOfReplications(1).create()
+    try topicAdmin.creator().name(topicName).numberOfPartitions(1).numberOfReplications(1).create
     finally topicAdmin.close()
 
     val row = Row.of(Cell.of("c", 3), Cell.of("b", 2), Cell.of("a", 1))
@@ -256,9 +257,9 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .disableConverter()
         .columns(schema)
         .configs(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
-        .create())
+        .create)
 
-    val activeConnectors = result(workerClient.activeConnectors())
+    val activeConnectors = result(workerClient.activeConnectors)
     activeConnectors.contains(connectorName) shouldBe true
 
     val config = result(workerClient.config(connectorName))
@@ -279,6 +280,6 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
     task.worker_id.isEmpty shouldBe false
 
     result(workerClient.delete(connectorName))
-    result(workerClient.activeConnectors()).contains(connectorName) shouldBe false
+    result(workerClient.activeConnectors).contains(connectorName) shouldBe false
   }
 }

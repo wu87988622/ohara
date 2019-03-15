@@ -27,7 +27,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestRunStreamApp extends IntegrationTest with Matchers {
   private[this] val configurator =
     Configurator.builder().advertisedHostname(CommonUtils.hostname()).advertisedPort(0).fake().build()
@@ -92,7 +92,7 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
 
     //Get topic information
     val topicInfos = result(
-      TopicApi.access().hostname(configurator.hostname).port(configurator.port).list()
+      TopicApi.access().hostname(configurator.hostname).port(configurator.port).list
     )
     val fromTopic = topicInfos
       .filter { info =>

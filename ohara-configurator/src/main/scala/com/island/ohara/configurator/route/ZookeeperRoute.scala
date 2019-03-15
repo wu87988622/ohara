@@ -22,11 +22,13 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperRoute {
 
-  def apply(implicit clusterCollie: ClusterCollie, nodeCollie: NodeCollie): server.Route =
+  def apply(implicit clusterCollie: ClusterCollie,
+            nodeCollie: NodeCollie,
+            executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRouteOfCluster(
       collie = clusterCollie.zookeeperCollie(),
       root = ZOOKEEPER_PREFIX_PATH,
@@ -49,6 +51,6 @@ object ZookeeperRoute {
           .peerPort(req.peerPort.getOrElse(ZookeeperApi.PEER_PORT_DEFAULT))
           .imageName(req.imageName.getOrElse(ZookeeperApi.IMAGE_NAME_DEFAULT))
           .nodeNames(req.nodeNames)
-          .create()
+          .create
     )
 }

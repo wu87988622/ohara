@@ -25,12 +25,11 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.route.RouteUtils._
+import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
@@ -60,7 +59,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[route] def errorMessage(state: Option[ConnectorState]): Option[String] = state
     .filter(_ == ConnectorState.FAILED)
     .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
-  private[this] def update(connectorConfig: ConnectorInfo, workerClient: WorkerClient): Future[ConnectorInfo] =
+  private[this] def update(connectorConfig: ConnectorInfo, workerClient: WorkerClient)(
+    implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
     workerClient
       .status(connectorConfig.id)
       .map(s => Some(s.connector.state))
@@ -73,7 +73,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         connectorConfig.copy(state = state, error = errorMessage(state))
       }
 
-  def apply(implicit store: Store, workerCollie: WorkerCollie): server.Route =
+  def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[ConnectorCreationRequest, ConnectorInfo](
       root = CONNECTORS_PREFIX_PATH,
       hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorCreationRequest) =>
@@ -162,7 +162,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                           .configs(connectorConfig.configs)
                           .topicNames(connectorConfig.topics)
                           .numberOfTasks(connectorConfig.numberOfTasks)
-                          .create()
+                          .create
                           .flatMap(_ => Future.successful(connectorConfig.copy(state = Some(ConnectorState.RUNNING))))
                     }
                 }

@@ -16,34 +16,34 @@
 
 package com.island.ohara.agent
 
-import java.net.URL
-
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 class TestWorkerCreator extends SmallTest with Matchers {
 
-  private[this] def wkCreator(): WorkerCollie.ClusterCreator = (clusterName: String,
-                                                                imageName: String,
-                                                                brokerClusterName: String,
-                                                                clientPort: Int,
+  private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext,
+                                                                clusterName,
+                                                                imageName,
+                                                                brokerClusterName,
+                                                                clientPort,
                                                                 groupId: String,
                                                                 offsetTopicName: String,
-                                                                offsetTopicReplications: Short,
-                                                                offsetTopicPartitions: Int,
-                                                                statusTopicName: String,
-                                                                statusTopicReplications: Short,
-                                                                statusTopicPartitions: Int,
-                                                                configTopicName: String,
-                                                                configTopicReplications: Short,
-                                                                jarUrls: Seq[URL],
-                                                                nodeNames: Seq[String]) => {
+                                                                offsetTopicReplications,
+                                                                offsetTopicPartitions,
+                                                                statusTopicName,
+                                                                statusTopicReplications,
+                                                                statusTopicPartitions,
+                                                                configTopicName,
+                                                                configTopicReplications,
+                                                                jarUrls,
+                                                                nodeNames) => {
     // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
+    if (executionContext == null) throw new AssertionError()
     if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
     if (imageName == null || imageName.isEmpty) throw new AssertionError()
     if (brokerClusterName == null || brokerClusterName.isEmpty) throw new AssertionError()
@@ -190,30 +190,28 @@ class TestWorkerCreator extends SmallTest with Matchers {
   }
 
   @Test
-  def testNameLength(): Unit = {
-    // pass
-    wkCreator()
-      .imageName(CommonUtils.randomString(10))
-      .clusterName(CommonUtils.randomString(10))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtils.availablePort())
-      .groupId(CommonUtils.randomString(10))
-      .offsetTopicName(CommonUtils.randomString(10))
-      .statusTopicName(CommonUtils.randomString(10))
-      .configTopicName(CommonUtils.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
+  def testNameLength(): Unit = wkCreator()
+    .imageName(CommonUtils.randomString(10))
+    .clusterName(CommonUtils.randomString(10))
+    .brokerClusterName("bk")
+    .clientPort(CommonUtils.availablePort())
+    .groupId(CommonUtils.randomString(10))
+    .offsetTopicName(CommonUtils.randomString(10))
+    .statusTopicName(CommonUtils.randomString(10))
+    .configTopicName(CommonUtils.randomString(10))
+    .nodeNames(Seq("abc"))
+    .create
 
-    an[IllegalArgumentException] should be thrownBy wkCreator()
-      .imageName(CommonUtils.randomString(10))
-      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
-      .brokerClusterName("bk")
-      .clientPort(CommonUtils.availablePort())
-      .groupId(CommonUtils.randomString(10))
-      .offsetTopicName(CommonUtils.randomString(10))
-      .statusTopicName(CommonUtils.randomString(10))
-      .configTopicName(CommonUtils.randomString(10))
-      .nodeNames(Seq("abc"))
-      .create()
-  }
+  @Test
+  def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy wkCreator()
+    .imageName(CommonUtils.randomString(10))
+    .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+    .brokerClusterName("bk")
+    .clientPort(CommonUtils.availablePort())
+    .groupId(CommonUtils.randomString(10))
+    .offsetTopicName(CommonUtils.randomString(10))
+    .statusTopicName(CommonUtils.randomString(10))
+    .configTopicName(CommonUtils.randomString(10))
+    .nodeNames(Seq("abc"))
+    .create
 }

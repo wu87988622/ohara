@@ -26,8 +26,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: ClusterCreator[T]](
   nodeCollie: NodeCollie,
@@ -35,15 +34,16 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
   clusterCache: Cache[Map[ClusterInfo, Seq[ContainerInfo]]])
     extends Collie[T, Creator] {
 
-  final override def clusters(): Future[Map[T, Seq[ContainerInfo]]] =
-    clusterCache.get().map {
+  final override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
+    clusterCache.get.map {
       _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1)).map {
         case (cluster, containers) => cluster.asInstanceOf[T] -> containers
       }
     }
 
-  final override def cluster(name: String): Future[(T, Seq[ContainerInfo])] =
-    clusterCache.get().map {
+  final override def cluster(name: String)(
+    implicit executionContext: ExecutionContext): Future[(T, Seq[ContainerInfo])] =
+    clusterCache.get.map {
       _.filter(entry => classTag[T].runtimeClass.isInstance(entry._1))
         .map {
           case (cluster, containers) => cluster.asInstanceOf[T] -> containers
@@ -80,21 +80,24 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(DIVIDER)
 
-  override def remove(clusterName: String): Future[T] = cluster(clusterName).flatMap {
-    case (cluster, containerInfos) =>
-      Future
-        .traverse(containerInfos) { containerInfo =>
-          nodeCollie.node(containerInfo.nodeName).map(node => dockerCache.exec(node, _.forceRemove(containerInfo.name)))
-        }
-        .map(_ => cluster)
-  }
+  override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    cluster(clusterName).flatMap {
+      case (cluster, containerInfos) =>
+        Future
+          .traverse(containerInfos) { containerInfo =>
+            nodeCollie
+              .node(containerInfo.nodeName)
+              .map(node => dockerCache.exec(node, _.forceRemove(containerInfo.name)))
+          }
+          .map(_ => cluster)
+    }
 
-  override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = nodeCollie
+  override def logs(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = nodeCollie
     .nodes()
-    .map(
-      _.flatMap(
-        dockerCache.exec(_, _.containers(_.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName")))
-      ))
+    .flatMap(Future.traverse(_)(
+      dockerCache.exec(_, _.containers(_.startsWith(s"$PREFIX_KEY$DIVIDER$clusterName$DIVIDER$serviceName")))))
+    .map(_.flatten)
     .flatMap { containers =>
       Future
         .sequence(containers.map { container =>
@@ -105,7 +108,8 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
         .map(_.toMap)
     }
 
-  override def removeNode(clusterName: String, nodeName: String): Future[T] = cluster(clusterName)
+  override def removeNode(clusterName: String, nodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T] = cluster(clusterName)
     .map {
       case (cluster, runningContainers) =>
         runningContainers.size match {
@@ -168,9 +172,10 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
           }).asInstanceOf[T]
         }
     }
-  protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String): Future[T]
+  protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
+    implicit executionContext: ExecutionContext): Future[T]
 
-  override def addNode(clusterName: String, nodeName: String): Future[T] =
+  override def addNode(clusterName: String, nodeName: String)(implicit executionContext: ExecutionContext): Future[T] =
     nodeCollie
       .node(nodeName) // make sure there is a exist node.
       .flatMap(_ => cluster(clusterName))

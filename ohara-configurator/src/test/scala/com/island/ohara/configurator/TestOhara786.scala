@@ -25,6 +25,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara786 extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =

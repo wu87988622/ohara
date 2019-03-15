@@ -26,16 +26,16 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.Configurator.Store
 import com.island.ohara.configurator.fake._
+import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class ConfiguratorBuilder {
   private[this] var advertisedHostname: Option[String] = None
   private[this] var advertisedPort: Option[Int] = None
-  private[this] val store: Store = new Store(
+  private[this] val store: DataStore = DataStore(
     com.island.ohara.configurator.store.Store.inMemory(Serializer.STRING, Configurator.DATA_SERIALIZER))
   private[this] var initializationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
@@ -101,6 +101,7 @@ class ConfiguratorBuilder {
     val embeddedWkName = "embedded_worker_cluster"
     // we fake nodes for embedded bk and wk
     def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
+    import scala.concurrent.ExecutionContext.Implicits.global
     (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
     // DON'T add duplicate nodes!!!
       .toSet[String]
@@ -134,7 +135,7 @@ class ConfiguratorBuilder {
       )
     }
     val connectorVersions =
-      Await.result(WorkerClient(wkConnectionProps).plugins(), 10 seconds).map(InfoApi.toConnectorVersion)
+      Await.result(WorkerClient(wkConnectionProps).plugins, 10 seconds).map(InfoApi.toConnectorVersion)
     val wkCluster = {
       val pair = wkConnectionProps.split(",")
       val host = pair.map(_.split(":").head).head
@@ -238,6 +239,7 @@ class ConfiguratorBuilder {
         ))
 
     }
+    import scala.concurrent.ExecutionContext.Implicits.global
     // fake nodes
     zkClusters
       .flatMap(_.nodeNames)
@@ -263,15 +265,16 @@ class ConfiguratorBuilder {
   }
 
   private[this] def nodeCollie(): NodeCollie = new NodeCollie {
-    override def node(name: String): Future[Node] = store.value[Node](name)
-    override def nodes(): Future[Seq[Node]] = store.values[Node]
+    override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] = store.value[Node](name)
+    override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]
   }
 
   def build(): Configurator = {
     new Configurator(advertisedHostname, advertisedPort, initializationTimeout.get, terminationTimeout.get, extraRoute)(
       store = store,
       nodeCollie = nodeCollie(),
-      clusterCollie = clusterCollie.getOrElse(ClusterCollie.ssh(nodeCollie()))
+      clusterCollie =
+        clusterCollie.getOrElse(ClusterCollie.builderOfSsh().nodeCollie(nodeCollie()).executorDefault().build())
     )
   }
 }

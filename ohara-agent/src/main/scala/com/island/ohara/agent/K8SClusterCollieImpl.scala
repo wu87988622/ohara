@@ -30,8 +30,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
@@ -48,7 +47,7 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
   /**
     * TODO: Does k8s have better way to list images from all nodes? by chia
     */
-  override def images(nodes: Seq[Node]): Future[Map[Node, Seq[String]]] =
+  override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future
       .traverse(nodes) { node =>
         Future {
@@ -71,9 +70,11 @@ private object K8SClusterCollieImpl {
     val k8sClient: K8SClient
     val service: Service
 
-    protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String): Future[T]
+    protected def doAddNode(previousCluster: T, previousContainers: Seq[ContainerInfo], newNodeName: String)(
+      implicit executionContext: ExecutionContext): Future[T]
 
-    override def addNode(clusterName: String, nodeName: String): Future[T] = {
+    override def addNode(clusterName: String, nodeName: String)(
+      implicit executionContext: ExecutionContext): Future[T] = {
       nodeCollie
         .node(nodeName) // make sure there is a exist node.
         .flatMap(_ => cluster(clusterName))
@@ -93,7 +94,7 @@ private object K8SClusterCollieImpl {
 
     protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): T
 
-    override def remove(clusterName: String): Future[T] = {
+    override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = {
       cluster(clusterName).flatMap {
         case (cluster, container) =>
           container.map(c => k8sClient.remove(c.name))
@@ -103,7 +104,8 @@ private object K8SClusterCollieImpl {
       }
     }
 
-    override def removeNode(clusterName: String, nodeName: String): Future[T] = containers(clusterName)
+    override def removeNode(clusterName: String, nodeName: String)(
+      implicit executionContext: ExecutionContext): Future[T] = containers(clusterName)
       .flatMap { runningContainers =>
         runningContainers.size match {
           case 0 => Future.failed(new IllegalArgumentException(s"$clusterName doesn't exist"))
@@ -118,10 +120,10 @@ private object K8SClusterCollieImpl {
         cluster(clusterName).map(_._1)
       }
 
-    override def logs(clusterName: String): Future[Map[ContainerInfo, String]] = {
+    override def logs(clusterName: String)(
+      implicit executionContext: ExecutionContext): Future[Map[ContainerInfo, String]] = {
       Future {
-        k8sClient
-          .containers()
+        k8sClient.containers
           .filter(_.name.startsWith(clusterName))
           .map(container => {
             container -> k8sClient.log(container.hostname)
@@ -130,19 +132,19 @@ private object K8SClusterCollieImpl {
       }
     }
 
-    def query(clusterName: String, service: Service): Future[Seq[ContainerInfo]] = nodeCollie
+    def query(clusterName: String, service: Service)(
+      implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] = nodeCollie
       .nodes()
       .map(_.flatMap(_ => {
-        k8sClient.containers().filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))
+        k8sClient.containers.filter(_.name.startsWith(s"$clusterName$DIVIDER${service.name}"))
       }))
 
-    override def clusters(): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
+    override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] = nodeCollie
       .nodes()
       .map(
         _.flatMap(node =>
-          k8sClient
-            .containers()
-            .filter(x => x.nodeName.equals(node.name) && x.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
+          k8sClient.containers.filter(x =>
+            x.nodeName.equals(node.name) && x.name.contains(s"$DIVIDER${service.name}$DIVIDER")))
           .map(container => container.name.split(DIVIDER).head -> container)
           .groupBy(_._1)
           .map {
@@ -164,7 +166,8 @@ private object K8SClusterCollieImpl {
       with K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
 
     override def creator(): ZookeeperCollie.ClusterCreator =
-      (clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) =>
+      (executionContext, clusterName, imageName, clientPort, peerPort, electionPort, nodeNames) => {
+        implicit val exec: ExecutionContext = executionContext
         exist(clusterName)
           .flatMap(if (_) Future.failed(new IllegalArgumentException(s"zookeeper cluster:$clusterName exists!"))
           else nodeCollie.nodes(nodeNames))
@@ -195,7 +198,7 @@ private object K8SClusterCollieImpl {
                       ZookeeperCollie.SERVERS_KEY -> zkServers
                     ))
                     .name(hostname)
-                    .run()
+                    .run
                   catch {
                     case e: Throwable =>
                       LOG.error(s"failed to start $clusterName", e)
@@ -214,17 +217,20 @@ private object K8SClusterCollieImpl {
               electionPort = electionPort,
               nodeNames = successfulNodeNames
             )
-        }
+          }
+      }
 
-    override protected def doAddNode(previousCluster: ZookeeperClusterInfo,
-                                     previousContainers: Seq[ContainerInfo],
-                                     newNodeName: String): Future[ZookeeperClusterInfo] =
+    override protected def doAddNode(
+      previousCluster: ZookeeperClusterInfo,
+      previousContainers: Seq[ContainerInfo],
+      newNodeName: String)(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
       Future.failed(
         new UnsupportedOperationException("zookeeper collie doesn't support to add node from a running cluster"))
 
     override val service: Service = ZOOKEEPER
 
-    override def removeNode(clusterName: String, nodeName: String): Future[ZookeeperClusterInfo] =
+    override def removeNode(clusterName: String, nodeName: String)(
+      implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
       Future.failed(
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
@@ -247,7 +253,8 @@ private object K8SClusterCollieImpl {
       with K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
     override def creator(): BrokerCollie.ClusterCreator =
-      (clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) =>
+      (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) => {
+        implicit val exec: ExecutionContext = executionContext
         exist(clusterName)
           .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
           .flatMap(existContainers =>
@@ -318,7 +325,7 @@ private object K8SClusterCollieImpl {
                         ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
                       ))
                       .name(hostname)
-                      .run()
+                      .run
                     catch {
                       case e: Throwable =>
                         LOG.error(s"failed to start $imageName on ${node.name}", e)
@@ -337,18 +344,20 @@ private object K8SClusterCollieImpl {
                 clientPort = clientPort,
                 nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
               )
-        }
+          }
+      }
 
-    override protected def doAddNode(previousCluster: BrokerClusterInfo,
-                                     previousContainers: Seq[ContainerInfo],
-                                     newNodeName: String): Future[BrokerClusterInfo] = creator()
+    override protected def doAddNode(
+      previousCluster: BrokerClusterInfo,
+      previousContainers: Seq[ContainerInfo],
+      newNodeName: String)(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = creator()
       .clusterName(previousCluster.name)
       .zookeeperClusterName(previousCluster.zookeeperClusterName)
       .clientPort(previousCluster.clientPort)
       .exporterPort(previousCluster.exporterPort)
       .imageName(previousCluster.imageName)
       .nodeName(newNodeName)
-      .create()
+      .create
 
     override val service: Service = BROKER
 
@@ -370,7 +379,8 @@ private object K8SClusterCollieImpl {
       extends WorkerCollie
       with K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
-    override def creator(): WorkerCollie.ClusterCreator = (clusterName,
+    override def creator(): WorkerCollie.ClusterCreator = (executionContext,
+                                                           clusterName,
                                                            imageName,
                                                            brokerClusterName,
                                                            clientPort,
@@ -384,7 +394,8 @@ private object K8SClusterCollieImpl {
                                                            configTopicName,
                                                            configTopicReplications,
                                                            jarUrls,
-                                                           nodeNames) =>
+                                                           nodeNames) => {
+      implicit val exec: ExecutionContext = executionContext
       exist(clusterName)
         .flatMap(if (_) containers(clusterName) else Future.successful(Seq.empty))
         .flatMap(
@@ -467,7 +478,7 @@ private object K8SClusterCollieImpl {
                     .labelName(OHARA_LABEL)
                     .domainName(K8S_DOMAIN_NAME)
                     .name(hostname)
-                    .run()
+                    .run
                   catch {
                     case e: Throwable =>
                       LOG.error(s"failed to start $imageName", e)
@@ -498,11 +509,13 @@ private object K8SClusterCollieImpl {
               sinks = Seq.empty,
               nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
             )
-      }
+        }
+    }
 
-    override protected def doAddNode(previousCluster: WorkerClusterInfo,
-                                     previousContainers: Seq[ContainerInfo],
-                                     newNodeName: String): Future[WorkerClusterInfo] = creator()
+    override protected def doAddNode(
+      previousCluster: WorkerClusterInfo,
+      previousContainers: Seq[ContainerInfo],
+      newNodeName: String)(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = creator()
       .clusterName(previousCluster.name)
       .brokerClusterName(previousCluster.brokerClusterName)
       .clientPort(previousCluster.clientPort)
@@ -518,7 +531,7 @@ private object K8SClusterCollieImpl {
           .filter(_.nonEmpty)
           .map(s => new URL(s)))
       .nodeName(newNodeName)
-      .create()
+      .create
 
     override val service: Service = WORKER
 

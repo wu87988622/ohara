@@ -30,7 +30,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestControlConnector extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =

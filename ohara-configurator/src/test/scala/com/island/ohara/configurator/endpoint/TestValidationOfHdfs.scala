@@ -25,6 +25,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
@@ -32,7 +33,7 @@ class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
 
   @Before
   def setup(): Unit =
-    Await.result(workerClient.plugins(), 10 seconds).exists(_.className == classOf[Validator].getName) shouldBe true
+    Await.result(workerClient.plugins, 10 seconds).exists(_.className == classOf[Validator].getName) shouldBe true
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 

@@ -21,10 +21,14 @@ import com.island.ohara.configurator.fake.FakeDockerClient
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 class TestFakeDockerClient extends SmallTest with Matchers {
 
   val fake = new FakeDockerClient
 
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Before
   def setup(): Unit = {
     // create a fake container
@@ -39,22 +43,22 @@ class TestFakeDockerClient extends SmallTest with Matchers {
   }
   @Test
   def testFakeClient(): Unit = {
-    fake.containers().size shouldBe 1
+    result(fake.containers).size shouldBe 1
 
     fake.imageNames().head shouldBe "fake_image"
 
-    fake.containers(_ == methodName()).size shouldBe 1
-    fake.containers(_ == methodName()).head.state shouldBe ContainerState.RUNNING
-    fake.containers(_ == methodName()).head.id shouldBe methodName()
-    fake.containers(_ == methodName()).head.environments shouldBe Map("bar" -> "foo")
-    fake.containers(_ == methodName()).head.portMappings.head shouldBe PortMapping("localhost",
-                                                                                   Seq(PortPair(1234, 5678)))
+    result(fake.containers(_ == methodName())).size shouldBe 1
+    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.RUNNING
+    result(fake.containers(_ == methodName())).head.id shouldBe methodName()
+    result(fake.containers(_ == methodName())).head.environments shouldBe Map("bar" -> "foo")
+    result(fake.containers(_ == methodName())).head.portMappings.head shouldBe PortMapping("localhost",
+                                                                                           Seq(PortPair(1234, 5678)))
 
     fake.stop(methodName())
-    fake.containers(_ == methodName()).head.state shouldBe ContainerState.EXITED
+    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.EXITED
 
     fake.remove(methodName())
 
-    fake.containers().size shouldBe 0
+    result(fake.containers).size shouldBe 0
   }
 }

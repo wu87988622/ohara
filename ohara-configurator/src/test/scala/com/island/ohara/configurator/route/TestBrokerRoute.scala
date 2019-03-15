@@ -29,7 +29,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestBrokerRoute extends MediumTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(0, 0).build()
   private[this] val brokerApi = BrokerApi.access().hostname(configurator.hostname).port(configurator.port)
@@ -65,7 +65,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           )))
     }
 
-    result(nodeAccess.list()).size shouldBe nodeNames.size
+    result(nodeAccess.list).size shouldBe nodeNames.size
 
     result(
       ZookeeperApi
@@ -118,7 +118,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
           nodeNames = nodeNames
         )))
 
-    val bks = result(brokerApi.list())
+    val bks = result(brokerApi.list)
 
     bks.isEmpty shouldBe false
 
@@ -148,7 +148,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
                                           peerPort = None,
                                           nodeNames = nodeNames))).name shouldBe anotherZk
     try {
-      result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list()).size shouldBe 2
+      result(ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port).list).size shouldBe 2
 
       // there are two zk cluster so we have to assign the zk cluster...
       an[IllegalArgumentException] should be thrownBy result(
@@ -285,7 +285,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     )
     assert(request1, result(brokerApi.add(request1)))
 
-    val clusters = result(brokerApi.list())
+    val clusters = result(brokerApi.list)
     clusters.size shouldBe 2
     assert(request0, clusters.find(_.name == request0.name).get)
     assert(request1, clusters.find(_.name == request1.name).get)
@@ -324,7 +324,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     containers.size shouldBe request.nodeNames.size
 
     result(brokerApi.delete(request.name)) shouldBe cluster
-    result(brokerApi.list()).size shouldBe 0
+    result(brokerApi.list).size shouldBe 0
   }
 
   @Test

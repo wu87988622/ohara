@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestJarsRoute extends SmallTest with Matchers {
 
   private[this] val configurator = Configurator.builder().fake().build()
@@ -46,7 +47,7 @@ class TestJarsRoute extends SmallTest with Matchers {
     val jar = Await.result(access.upload(f), 30 seconds)
     jar.size shouldBe f.length()
     jar.name shouldBe f.getName
-    Await.result(access.list(), 30 seconds).size shouldBe 1
+    Await.result(access.list, 30 seconds).size shouldBe 1
   }
 
   @Test
@@ -56,7 +57,7 @@ class TestJarsRoute extends SmallTest with Matchers {
     val jar = Await.result(access.upload(f, "xxxx"), 30 seconds)
     jar.size shouldBe f.length()
     jar.name shouldBe "xxxx"
-    Await.result(access.list(), 30 seconds).size shouldBe 1
+    Await.result(access.list, 30 seconds).size shouldBe 1
   }
 
   @Test
@@ -66,10 +67,10 @@ class TestJarsRoute extends SmallTest with Matchers {
     val jar = Await.result(access.upload(f), 30 seconds)
     jar.size shouldBe f.length()
     jar.name shouldBe f.getName
-    Await.result(access.list(), 30 seconds).size shouldBe 1
+    Await.result(access.list, 30 seconds).size shouldBe 1
 
     Await.result(access.delete(jar.id), 30 seconds) shouldBe jar
-    Await.result(access.list(), 30 seconds).size shouldBe 0
+    Await.result(access.list, 30 seconds).size shouldBe 0
   }
 
   @After

@@ -28,6 +28,7 @@ import org.scalatest.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara1403 extends SmallTest with Matchers {
 
   private[this] val configurator =
@@ -100,12 +101,12 @@ class TestOhara1403 extends SmallTest with Matchers {
 
     // let check the existence of topic
     Await
-      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
       .size shouldBe 1
 
     // let check the existence of connector
     Await
-      .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+      .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
       .size shouldBe 0
   }
 

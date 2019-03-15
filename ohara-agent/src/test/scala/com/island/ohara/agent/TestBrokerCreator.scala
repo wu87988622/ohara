@@ -23,32 +23,29 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.Future
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestBrokerCreator extends SmallTest with Matchers {
 
-  private[this] def bkCreator(): BrokerCollie.ClusterCreator = (clusterName: String,
-                                                                imageName: String,
-                                                                zookeeperClusterName: String,
-                                                                clientPort: Int,
-                                                                exporterPort: Int,
-                                                                nodeNames: Seq[String]) => {
-    // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
-    if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
-    if (imageName == null || imageName.isEmpty) throw new AssertionError()
-    if (clientPort <= 0) throw new AssertionError()
-    if (exporterPort <= 0) throw new AssertionError()
-    if (zookeeperClusterName == null || zookeeperClusterName.isEmpty) throw new AssertionError()
-    if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
-    Future.successful(
-      BrokerClusterInfo(
-        name = clusterName,
-        imageName = imageName,
-        zookeeperClusterName = zookeeperClusterName,
-        clientPort = clientPort,
-        exporterPort = exporterPort,
-        nodeNames = nodeNames
-      ))
-  }
+  private[this] def bkCreator(): BrokerCollie.ClusterCreator =
+    (executionContext, clusterName, imageName, zookeeperClusterName, clientPort, exporterPort, nodeNames) => {
+      // the inputs have been checked (NullPointerException). Hence, we throw another exception here.
+      if (executionContext == null) throw new AssertionError()
+      if (clusterName == null || clusterName.isEmpty) throw new AssertionError()
+      if (imageName == null || imageName.isEmpty) throw new AssertionError()
+      if (clientPort <= 0) throw new AssertionError()
+      if (exporterPort <= 0) throw new AssertionError()
+      if (zookeeperClusterName == null || zookeeperClusterName.isEmpty) throw new AssertionError()
+      if (nodeNames == null || nodeNames.isEmpty) throw new AssertionError()
+      Future.successful(
+        BrokerClusterInfo(
+          name = clusterName,
+          imageName = imageName,
+          zookeeperClusterName = zookeeperClusterName,
+          clientPort = clientPort,
+          exporterPort = exporterPort,
+          nodeNames = nodeNames
+        ))
+    }
 
   @Test
   def nullImage(): Unit = {
@@ -101,24 +98,22 @@ class TestBrokerCreator extends SmallTest with Matchers {
   }
 
   @Test
-  def testNameLength(): Unit = {
-    // pass
-    bkCreator()
-      .imageName(CommonUtils.randomString(10))
-      .clusterName(CommonUtils.randomString(10))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtils.availablePort())
-      .clientPort(CommonUtils.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
+  def testNameLength(): Unit = bkCreator()
+    .imageName(CommonUtils.randomString(10))
+    .clusterName(CommonUtils.randomString(10))
+    .zookeeperClusterName("zk")
+    .exporterPort(CommonUtils.availablePort())
+    .clientPort(CommonUtils.availablePort())
+    .nodeNames(Seq("abc"))
+    .create
 
-    an[IllegalArgumentException] should be thrownBy bkCreator()
-      .imageName(CommonUtils.randomString(10))
-      .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
-      .zookeeperClusterName("zk")
-      .exporterPort(CommonUtils.availablePort())
-      .clientPort(CommonUtils.availablePort())
-      .nodeNames(Seq("abc"))
-      .create()
-  }
+  @Test
+  def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy bkCreator()
+    .imageName(CommonUtils.randomString(10))
+    .clusterName(CommonUtils.randomString(Collie.LIMIT_OF_NAME_LENGTH + 1))
+    .zookeeperClusterName("zk")
+    .exporterPort(CommonUtils.availablePort())
+    .clientPort(CommonUtils.availablePort())
+    .nodeNames(Seq("abc"))
+    .create
 }

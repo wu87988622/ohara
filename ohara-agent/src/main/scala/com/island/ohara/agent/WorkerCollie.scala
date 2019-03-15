@@ -23,8 +23,7 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
   /**
@@ -33,7 +32,8 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
     * @param clusterName target cluster
     * @return cluster info and client
     */
-  def workerClient(clusterName: String): Future[(WorkerClusterInfo, WorkerClient)] = cluster(clusterName).map {
+  def workerClient(clusterName: String)(
+    implicit executionContext: ExecutionContext): Future[(WorkerClusterInfo, WorkerClient)] = cluster(clusterName).map {
     case (c, _) => (c, workerClient(c))
   }
 
@@ -132,7 +132,8 @@ object WorkerCollie {
       this
     }
 
-    override def create(): Future[WorkerClusterInfo] = doCreate(
+    override def create(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = doCreate(
+      executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
       brokerClusterName = CommonUtils.requireNonEmpty(brokerClusterName),
@@ -150,7 +151,8 @@ object WorkerCollie {
       nodeNames = requireNonEmpty(nodeNames)
     )
 
-    protected def doCreate(clusterName: String,
+    protected def doCreate(executionContext: ExecutionContext,
+                           clusterName: String,
                            imageName: String,
                            brokerClusterName: String,
                            clientPort: Int,
