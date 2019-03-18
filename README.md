@@ -174,8 +174,22 @@ the uber jar is under ohara-assembly/build/libs/
 ### build and then publish artifacts to jfrog
 
 ```sh
-gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false
+gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
 ```
+
+```
+- bintrayUser: the account that has write permission to the repository
+- bintrayKey: the account API Key
+- dryRun: whether to publish artifacts (default is true)
+- override: whether to override version artifacts already published
+
+To resolve artifacts from the ohara repository use the following configuration :
+```groovy
+repositories {
+     maven {
+         url "https://dl.bintray.com/oharastream/ohara"
+     }
+ }
 
 ### Built With
 
