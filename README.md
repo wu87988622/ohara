@@ -42,8 +42,8 @@ For compilation
 - Scala 2.12.8
 - gradle 5.1+
 - Node.js 8.12.0
-- Yarn 1.7.0. (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)
-- Docker 18.09+ (Official QA is on docker 18.09. Also, docker multi-stage, which is supported by Docker 17.05 or higher, is required in building ohara images. see https://docs.docker.com/develop/develop-images/multistage-build/ for more details)
+- Yarn 1.13.0 or greater
+- Docker 18.09 or greater (Official QA is on docker 18.09. Also, docker multi-stage, which is supported by Docker 17.05 or higher, is required in building ohara images. see https://docs.docker.com/develop/develop-images/multistage-build/ for more details)
 
 ### Code style check
 
@@ -90,9 +90,10 @@ gradle licenseApply
 ```
 docker run -d --rm --name postgresql -p 5432:5432 --env POSTGRES_DB=${DB_NAME} --env POSTGRES_USER=${USER_NAME} --env POSTGRES_PASSWORD=${PASSWORD} -it islandsystems/postgresql:9.2.24
 ```
-* POSTGRES_DB: PostgreSQL DataBase name
-* POSTGRES_USER: PostgreSQL login user name. **Note: POSTGRES_USER="user" is illegal to postgresql**
-* POSTGRES_PASSWORD: PostgreSQL login password
+
+- POSTGRES_DB: PostgreSQL DataBase name
+- POSTGRES_USER: PostgreSQL login user name. **Note: POSTGRES_USER="user" is illegal to postgresql**
+- POSTGRES_PASSWORD: PostgreSQL login password
 
 #### FTP
 

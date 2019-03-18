@@ -6,9 +6,9 @@ This module contains Ohara manager (an HTTP server powered by [Node.js](https://
 
 1.  Install [Node.js](https://nodejs.org/en/) 8.12.0 (we're using ^8.12.0 in the engines field of package.json. This means you can install node.js >=8.12.0 and < 9.0.0 see the [npm docs](https://docs.npmjs.com/misc/semver#caret-ranges-123-025-004) for more info.)
 
-2.  Install [Yarn](https://yarnpkg.com/lang/en/) 1.7.0 (Note that you must install the exact version of yarn **1.7.0** as listed here or the **yarn.lock** file in Ohara manager could change when building on different machines)
+2.  Install [Yarn](https://yarnpkg.com/en/docs/install#mac-stable) 1.13.0 or greater
 
-3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and the **Client** as well as creating a production build for the client.
+3.  Make sure you're in the ohara-manager root and use this command to setup the app: `yarn setup`. This will install all the dependencies for both the **Server** and **Client** as well as creating a production build for the client.
 
 4.  **Optional**: If you're using Visual Studio Code as your editor, have a look at our [Editors](#editor) section.
 

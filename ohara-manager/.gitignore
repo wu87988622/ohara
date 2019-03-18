@@ -2,6 +2,7 @@
 node_modules
 test-reports
 coverage
+yarn-error.log
 
 # Client
 /client/cypress/videos

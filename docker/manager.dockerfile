@@ -38,7 +38,7 @@ RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash -
 RUN yum install -y nodejs
 
 # install yarn
-RUN npm install -g yarn@1.7.0
+RUN npm install -g yarn@1.15.0
 
 # add user
 ARG USER=ohara

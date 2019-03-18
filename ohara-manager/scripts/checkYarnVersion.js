@@ -21,13 +21,17 @@ exec('yarn -v', (err, stdout) => {
   if (err) throw err;
 
   const yarnVersion = stdout.trim();
+  const minor = parseFloat(yarnVersion.slice(2));
 
-  if (yarnVersion !== '1.7.0') {
+  // Since we're using yarn audit in one of our npm scripts. We need to
+  // use yarn 1.13.x or greater as yarn audit was added in yarn 1.12.3
+  // https://github.com/yarnpkg/yarn/issues/5808
+  if (minor < 13) {
     throw new Error(
-      `Ohara Manger requires yarn 1.7.0, but you're using ${yarnVersion}`,
+      `Ohara Manger requires yarn 1.13.0 or greater, but you're using ${yarnVersion}`,
     );
   }
 
-  console.log(`👌 Yarn version check passed! You're using ${yarnVersion}`);
+  console.log(`👌 Yarn version check passed! You're using yarn ${yarnVersion}`);
   console.log('📦 Installing Ohara Manager dependencies');
 });
