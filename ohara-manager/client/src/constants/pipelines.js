@@ -35,7 +35,7 @@ export const ICON_MAPS = {
 export const TABLE_HEADERS = ['connector name', 'version', 'revision'];
 
 export const CONNECTOR_FILTERS = [
-  'com.island.ohara.configurator.endpoint.Validator',
+  'com.island.ohara.connector.validation.Validator',
   'com.island.ohara.connector.perf.PerfSource',
   'org.apache.kafka.connect.file.FileStreamSourceConnector',
   'org.apache.kafka.connect.file.FileStreamSinkConnector',

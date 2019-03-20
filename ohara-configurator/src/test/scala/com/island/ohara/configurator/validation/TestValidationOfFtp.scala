@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.endpoint
+package com.island.ohara.configurator.validation
 
 import com.island.ohara.client.configurator.v0.ValidationApi.{FtpValidationRequest, ValidationReport}
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.configurator.route.ValidationUtils
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+
 class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
@@ -33,8 +35,9 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   @Before
-  def setup(): Unit =
-    Await.result(workerClient.plugins, 10 seconds).exists(_.className == classOf[Validator].getName) shouldBe true
+  def setup(): Unit = Await
+    .result(workerClient.plugins, 10 seconds)
+    .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
@@ -55,7 +58,7 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
   @Test
   def goodCase(): Unit = {
     assertSuccess(
-      Validator.run(
+      ValidationUtils.run(
         workerClient,
         topicAdmin,
         FtpValidationRequest(hostname = ftpServer.hostname,
@@ -70,7 +73,7 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
   @Test
   def basCase(): Unit = {
     assertFailure(
-      Validator.run(
+      ValidationUtils.run(
         workerClient,
         topicAdmin,
         FtpValidationRequest(hostname = ftpServer.hostname,

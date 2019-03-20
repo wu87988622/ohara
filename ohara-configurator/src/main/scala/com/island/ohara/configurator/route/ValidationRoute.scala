@@ -27,8 +27,8 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationReq
 import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.endpoint.Validator
-import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
+import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerClient, FakeWorkerCollie}
+//import com.island.ohara.connector.validation.ValidatorUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -55,6 +55,8 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
     }
   }
 
+  private[this] def fakeReport(): Future[Seq[ValidationReport]] = Future.successful(
+    (0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ => ValidationReport(CommonUtils.hostname, "a fake report", true)))
   def apply(implicit brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext): server.Route =
@@ -64,21 +66,30 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         verify = (clusterName, req: HdfsValidationRequest) =>
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
-              Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              workerClient match {
+                case _: FakeWorkerClient => fakeReport()
+                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              }
         }
       ) ~ verifyRoute(
         root = VALIDATION_RDB_PREFIX_PATH,
         verify = (clusterName, req: RdbValidationRequest) =>
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
-              Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              workerClient match {
+                case _: FakeWorkerClient => fakeReport()
+                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              }
         }
       ) ~ verifyRoute(
         root = VALIDATION_FTP_PREFIX_PATH,
         verify = (clusterName, req: FtpValidationRequest) =>
           CollieUtils.both(if (req.workerClusterName.isEmpty) clusterName else req.workerClusterName).flatMap {
             case (_, topicAdmin, _, workerClient) =>
-              Validator.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              workerClient match {
+                case _: FakeWorkerClient => fakeReport()
+                case _                   => ValidationUtils.run(workerClient, topicAdmin, req, DEFAULT_NUMBER_OF_VALIDATION)
+              }
         }
       ) ~ verifyRoute(
         root = VALIDATION_NODE_PREFIX_PATH,

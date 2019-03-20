@@ -22,13 +22,17 @@ import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
+  val TARGET = "target"
   val VALIDATION_PREFIX_PATH: String = "validate"
+  // TODO: We should use a temporary topic instead of fixed topic...by chia
+  val INTERNAL_TOPIC = "_Validator_topic"
+
+  /**
+    * add this to setting and then the key pushed to topic will be same with the value
+    */
+  val REQUEST_ID = "requestId"
+
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
-  val WORKER_CLUSTER_NAME_KEY: String = ConnectorFormatter.WORKER_CLUSTER_NAME_KEY
-  val CLASS_NAME_KEY: String = ConnectorFormatter.CLASS_NAME_KEY
-  val TOPIC_NAMES_KEY: String = ConnectorFormatter.TOPIC_NAMES_KEY
-  val NUMBER_OF_TASKS_KEY: String = ConnectorFormatter.NUMBER_OF_TASKS_KEY
-  val COLUMNS_KEY: String = ConnectorFormatter.COLUMNS_KEY
   final case class HdfsValidationRequest(uri: String, workerClusterName: Option[String])
   implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidationRequest] = jsonFormat2(
     HdfsValidationRequest)

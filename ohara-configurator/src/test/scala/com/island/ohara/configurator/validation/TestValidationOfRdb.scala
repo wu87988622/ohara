@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.endpoint
+package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{HdfsValidationRequest, ValidationReport}
+import com.island.ohara.client.configurator.v0.ValidationApi.{RdbValidationRequest, ValidationReport}
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-
+import com.island.ohara.configurator.route.ValidationUtils
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
+
+class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
   private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
+  private[this] val rdb = testUtil.dataBase
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit =
-    Await.result(workerClient.plugins, 10 seconds).exists(_.className == classOf[Validator].getName) shouldBe true
+    Await
+      .result(workerClient.plugins, 10 seconds)
+      .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
 
@@ -47,8 +51,12 @@ class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
   @Test
   def goodCase(): Unit = {
     assertSuccess(
-      Validator
-        .run(workerClient, topicAdmin, HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None), taskCount))
+      ValidationUtils.run(
+        workerClient,
+        topicAdmin,
+        RdbValidationRequest(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
+        taskCount
+      ))
   }
 
   @After

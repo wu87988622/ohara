@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.endpoint
+package com.island.ohara.configurator.validation
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
