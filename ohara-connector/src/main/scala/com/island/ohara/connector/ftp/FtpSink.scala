@@ -30,7 +30,7 @@ class FtpSink extends RowSinkConnector {
 
   override protected[ftp] def _start(config: TaskConfig): Unit = {
     this.config = config
-    this.props = FtpSinkProps(config.options.asScala.toMap)
+    this.props = FtpSinkProps(config.raw().asScala.toMap)
     if (config.columns.asScala.exists(_.order == 0))
       throw new IllegalArgumentException("column order must be bigger than zero")
 
@@ -50,21 +50,15 @@ class FtpSink extends RowSinkConnector {
     (0 until maxTasks)
       .map(
         index =>
-          TaskConfig
-            .builder()
-            .name(config.name)
-            .topics(config.topics)
-            .columns(config.columns)
-            .options(FtpSinkTaskProps(
-              output = CommonUtils.path(props.output, s"${config.name}_$index"),
-              needHeader = props.needHeader,
-              encode = props.encode,
-              hostname = props.hostname,
-              port = props.port,
-              user = props.user,
-              password = props.password
-            ).toMap.asJava)
-            .build())
+          config.append(FtpSinkTaskProps(
+            output = CommonUtils.path(props.output, s"${config.name}_$index"),
+            needHeader = props.needHeader,
+            encode = props.encode,
+            hostname = props.hostname,
+            port = props.port,
+            user = props.user,
+            password = props.password
+          ).toMap.asJava))
       .asJava
   }
 }

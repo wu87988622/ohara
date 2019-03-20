@@ -16,103 +16,91 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.connector.json.ConnectorFormatter;
+import com.island.ohara.kafka.connector.json.PropGroup;
+import com.island.ohara.kafka.connector.json.PropGroups;
+import com.island.ohara.kafka.connector.json.StringList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
-/** this class carries all required configs for row connectors. */
+/** this class carries all required settings for row connectors. */
 public class TaskConfig {
-
-  public static Builder builder() {
-    return new Builder();
+  public static TaskConfig of(Map<String, String> options) {
+    return new TaskConfig(options);
   }
 
-  private final String name;
-  private final List<String> topics;
-  private final List<Column> columns;
-  private final Map<String, String> options;
+  private final Map<String, String> raw;
 
-  /**
-   * @param name connector name
-   * @param topics target topics which row source task should sent data
-   * @param columns row columns
-   * @param options other configs
-   */
-  private TaskConfig(
-      String name, List<String> topics, List<Column> columns, Map<String, String> options) {
-    this.name = name;
-    this.topics = topics;
-    this.columns = columns;
-    this.options = options;
+  private TaskConfig(Map<String, String> raw) {
+    this.raw = CommonUtils.requireNonEmpty(raw);
+    raw.keySet().forEach(CommonUtils::requireNonEmpty);
+  }
+
+  public String stringValue(String key) {
+    if (raw.containsKey(key)) return raw.get(key);
+    else throw new NoSuchElementException(key + " doesn't exist");
+  }
+
+  public long longValue(String key) {
+    return Long.valueOf(stringValue(key));
+  }
+
+  public int intValue(String key) {
+    return Integer.valueOf(stringValue(key));
+  }
+
+  public double doubleValue(String key) {
+    return Double.valueOf(stringValue(key));
+  }
+
+  public boolean booleanValue(String key) {
+    return Boolean.valueOf(stringValue(key));
+  }
+
+  public List<String> stringList(String key) {
+    return Optional.ofNullable(raw.get(key))
+        .map(StringList::ofKafkaList)
+        .orElse(Collections.emptyList());
   }
 
   public String name() {
-    return name;
+    return stringValue(ConnectorFormatter.NAME_KEY);
   }
 
-  public List<String> topics() {
-    return topics;
+  public List<String> topicNames() {
+    return stringList(ConnectorFormatter.TOPIC_NAMES_KEY);
+  }
+
+  public List<PropGroup> propGroups(String key) {
+    return Optional.ofNullable(raw.get(key))
+        .map(PropGroups::ofJson)
+        .orElse(Collections.emptyList());
   }
 
   public List<Column> columns() {
-    return columns;
+    return PropGroups.toColumns(propGroups(ConnectorFormatter.COLUMNS_KEY));
   }
 
-  public Map<String, String> options() {
-    return options;
+  public Map<String, String> raw() {
+    return Collections.unmodifiableMap(raw);
   }
 
-  public static class Builder {
-    private String name = null;
-    private List<String> topics = Collections.emptyList();
-    private List<Column> columns = Collections.emptyList();
-    private Map<String, String> options = Collections.emptyMap();
-
-    public Builder name(String name) {
-      this.name = Objects.requireNonNull(name);
-      return this;
-    }
-
-    public Builder topic(String topic) {
-      return topics(Collections.singletonList(Objects.requireNonNull(topic)));
-    }
-
-    public Builder topics(List<String> topics) {
-      this.topics = Objects.requireNonNull(topics);
-      return this;
-    }
-
-    @Optional("default is empty")
-    public Builder column(Column column) {
-      return columns(Collections.singletonList(Objects.requireNonNull(column)));
-    }
-
-    @Optional("default is empty")
-    public Builder columns(List<Column> columns) {
-      this.columns = Objects.requireNonNull(columns);
-      return this;
-    }
-
-    @Optional("default is empty")
-    public Builder option(String key, String value) {
-      return options(Collections.singletonMap(key, value));
-    }
-
-    @Optional("default is empty")
-    public Builder options(Map<String, String> options) {
-      this.options = Objects.requireNonNull(options);
-      return this;
-    }
-
-    public TaskConfig build() {
-      return new TaskConfig(
-          Objects.requireNonNull(name),
-          Objects.requireNonNull(topics),
-          Objects.requireNonNull(columns),
-          Objects.requireNonNull(options));
-    }
+  /**
+   * Clone this TaskConfig with new setting. The new setting overwrite the old value if the key
+   * exists.
+   *
+   * @param newConfig new setting
+   * @return new TaskConfig
+   */
+  public TaskConfig append(Map<String, String> newConfig) {
+    Map<String, String> raw = new HashMap<>(this.raw);
+    raw.putAll(newConfig);
+    return TaskConfig.of(raw);
   }
 }

@@ -111,11 +111,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = CommonUtils.randomString(10),
-          topics = Seq.empty,
-          numberOfTasks = 1,
-          schema = Seq.empty,
-          configs = Map.empty
+          className = Some(CommonUtils.randomString(10)),
+          topicNames = Seq.empty,
+          numberOfTasks = Some(1),
+          columns = Seq.empty,
+          settings = Map.empty
         )),
       10 seconds
     )
@@ -532,11 +532,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = CommonUtils.randomString(10),
-          topics = Seq.empty,
-          numberOfTasks = 1,
-          schema = Seq.empty,
-          configs = Map.empty
+          className = Some(CommonUtils.randomString(10)),
+          topicNames = Seq.empty,
+          numberOfTasks = Some(1),
+          columns = Seq.empty,
+          settings = Map.empty
         )),
       10 seconds
     )

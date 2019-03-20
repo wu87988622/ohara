@@ -57,10 +57,9 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[PerfSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create,
       10 seconds
     )

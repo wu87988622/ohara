@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
@@ -23,10 +23,11 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.store.{DataStore, Store}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.JsString
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestConfiguratorStore extends MediumTest with Matchers {
 
   private[this] val timeout = 10 seconds
@@ -34,17 +35,11 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
   @Test
   def testAdd(): Unit = {
-    val s = ConnectorInfo(
+    val s = ConnectorDescription(
       id = "asdad",
-      name = "abc",
-      className = "aaa.class",
-      schema = Seq.empty,
-      topics = Seq("abc"),
-      numberOfTasks = 1,
-      configs = Map.empty,
+      settings = Map.empty,
       state = None,
       error = None,
-      workerClusterName = methodName(),
       lastModified = CommonUtils.current()
     )
     Await.result(store.add(s), timeout)
@@ -55,24 +50,19 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
   @Test
   def testUpdate(): Unit = {
-    val s = ConnectorInfo(
+    val s = ConnectorDescription(
       id = "asdad",
-      name = "abc",
-      className = "aaa.class",
-      schema = Seq.empty,
-      topics = Seq("abc"),
-      numberOfTasks = 1,
-      configs = Map.empty,
+      settings = Map.empty,
       state = None,
       error = None,
-      workerClusterName = methodName(),
       lastModified = CommonUtils.current()
     )
     store.add(s)
 
     Await
-      .result(store.update(s.id, (_: Data) => Future.successful(s.copy(name = "123"))), 10 seconds)
-      .name shouldBe "123"
+      .result(store.update(s.id, (_: Data) => Future.successful(s.copy(settings = Map("a" -> JsString("b"))))),
+              10 seconds)
+      .settings shouldBe Map("a" -> JsString("b"))
 
     an[NoSuchElementException] should be thrownBy Await
       .result(store.update("asdasdasd", (_: Data) => Future.successful(s.copy(id = "123"))), 10 seconds)
@@ -80,41 +70,29 @@ class TestConfiguratorStore extends MediumTest with Matchers {
 
   @Test
   def testList(): Unit = {
-    val s = ConnectorInfo(
+    val s = ConnectorDescription(
       id = "asdad",
-      name = "abc",
-      className = "aaa.class",
-      schema = Seq.empty,
-      topics = Seq("abc"),
-      numberOfTasks = 1,
-      configs = Map.empty,
+      settings = Map.empty,
       state = None,
       error = None,
-      workerClusterName = methodName(),
       lastModified = CommonUtils.current()
     )
     store.add(s)
 
     store.size shouldBe 1
 
-    Await.result(store.raw(), 10 seconds).head.asInstanceOf[ConnectorInfo] shouldBe s
+    Await.result(store.raw(), 10 seconds).head.asInstanceOf[ConnectorDescription] shouldBe s
 
-    Await.result(store.raw(s.id), 10 seconds).asInstanceOf[ConnectorInfo] shouldBe s
+    Await.result(store.raw(s.id), 10 seconds).asInstanceOf[ConnectorDescription] shouldBe s
   }
 
   @Test
   def testRemove(): Unit = {
-    val s = ConnectorInfo(
+    val s = ConnectorDescription(
       id = "asdad",
-      name = "abc",
-      className = "aaa.class",
-      schema = Seq.empty,
-      topics = Seq("abc"),
-      numberOfTasks = 1,
-      configs = Map.empty,
+      settings = Map.empty,
       state = None,
       error = None,
-      workerClusterName = methodName(),
       lastModified = CommonUtils.current()
     )
     store.add(s)
@@ -122,9 +100,9 @@ class TestConfiguratorStore extends MediumTest with Matchers {
     store.size shouldBe 1
 
     an[NoSuchElementException] should be thrownBy Await.result(store.remove("asdasd"), 50 seconds)
-    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorInfo]("asdasd"), 50 seconds)
+    an[NoSuchElementException] should be thrownBy Await.result(store.remove[ConnectorDescription]("asdasd"), 50 seconds)
 
-    Await.result(store.remove[ConnectorInfo](s.id), 50 seconds) shouldBe s
+    Await.result(store.remove[ConnectorDescription](s.id), 50 seconds) shouldBe s
 
     store.size shouldBe 0
   }

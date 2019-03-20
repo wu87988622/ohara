@@ -16,6 +16,6 @@
 
 package com.island.ohara.streams.ostream;
 
-// Since kafka stream use "class name" as the config
+// Since kafka stream use "class name" as the setting
 // we could not wrap the TimestampExtractor
 public interface TimestampExtractor extends org.apache.kafka.streams.processor.TimestampExtractor {}

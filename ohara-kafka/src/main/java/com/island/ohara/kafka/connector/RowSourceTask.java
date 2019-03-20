@@ -16,8 +16,8 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
-
+import com.island.ohara.common.util.VersionUtils;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,7 +81,7 @@ public abstract class RowSourceTask extends SourceTask {
    * @return the version, formatted as a String
    */
   protected String _version() {
-    return VERSION;
+    return VersionUtils.VERSION;
   }
 
   /**
@@ -101,7 +101,7 @@ public abstract class RowSourceTask extends SourceTask {
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(ConnectorUtils.toTaskConfig(props));
+    _start(TaskConfig.of(new HashMap<>(props)));
   }
 
   @Override

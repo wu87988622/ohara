@@ -16,12 +16,15 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
-
+import com.island.ohara.common.util.VersionUtils;
+import com.island.ohara.kafka.connector.json.ConnectorFormatter;
+import com.island.ohara.kafka.connector.json.SettingDefinition;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectorContext;
@@ -50,11 +53,11 @@ public abstract class RowSinkConnector extends SinkConnector {
   protected abstract Class<? extends RowSinkTask> _taskClass();
 
   /**
-   * Return the configs for source task. NOTED: It is illegal to assign different topics to
+   * Return the settings for source task. NOTED: It is illegal to assign different topics to
    * RowSinkTask
    *
    * @param maxTasks number of tasks for this connector
-   * @return the configs for each tasks
+   * @return the settings for each tasks
    */
   protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
 
@@ -63,7 +66,7 @@ public abstract class RowSinkConnector extends SinkConnector {
    *
    * @return The ConfigDef for this connector.
    */
-  protected List<Definition> definitions() {
+  protected List<SettingDefinition> definitions() {
     return Collections.emptyList();
   }
 
@@ -73,26 +76,24 @@ public abstract class RowSinkConnector extends SinkConnector {
    * @return the version, formatted as a String
    */
   protected String _version() {
-    return VERSION;
+    return VersionUtils.VERSION;
+  }
+
+  /** @return revision of git commit */
+  protected String revision() {
+    return VersionUtils.REVISION;
+  }
+
+  /** @return author or your boss */
+  protected String author() {
+    return "you";
   }
 
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
-  private TaskConfig internalConfig = null;
-
   /** We take over this method to disable user to use java collection. */
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-
-    List<TaskConfig> configs = _taskConfigs(maxTasks);
-    configs.forEach(
-        x -> {
-          if (!x.topics().equals(internalConfig.topics()))
-            throw new IllegalArgumentException(
-                String.format(
-                    "topics in task (%s can't be different to topics in connector (%s",
-                    String.join(",", x.topics()), String.join(",", internalConfig.topics())));
-        });
-    return _taskConfigs(maxTasks).stream().map(ConnectorUtils::toMap).collect(Collectors.toList());
+    return _taskConfigs(maxTasks).stream().map(TaskConfig::raw).collect(Collectors.toList());
   }
 
   @Override
@@ -102,8 +103,7 @@ public abstract class RowSinkConnector extends SinkConnector {
 
   @Override
   public final void start(Map<String, String> props) {
-    this.internalConfig = ConnectorUtils.toTaskConfig(props);
-    _start(ConnectorUtils.toTaskConfig(props));
+    _start(TaskConfig.of(new HashMap<>(props)));
   }
 
   @Override
@@ -113,7 +113,13 @@ public abstract class RowSinkConnector extends SinkConnector {
 
   @Override
   public final ConfigDef config() {
-    return ConnectorUtils.toConfigDefWithDefault(definitions());
+    return ConnectorFormatter.toConfigDef(
+        Stream.of(definitions(), SettingDefinition.DEFINITIONS_DEFAULT)
+            .flatMap(List::stream)
+            .collect(Collectors.toList()),
+        _version(),
+        revision(),
+        author());
   }
 
   @Override

@@ -88,11 +88,11 @@ class TestObjectRoute extends SmallTest with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = "com.island.ohara.connector.ftp.FtpSink",
-          schema = Seq.empty,
-          topics = Seq.empty,
-          numberOfTasks = 1,
-          configs = Map.empty
+          className = Some("com.island.ohara.connector.ftp.FtpSink"),
+          columns = Seq.empty,
+          topicNames = Seq.empty,
+          numberOfTasks = Some(1),
+          settings = Map.empty
         )))
 
     var objs = result(objectApi.list)
@@ -110,11 +110,11 @@ class TestObjectRoute extends SmallTest with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = "com.island.ohara.connector.ftp.FtpSink",
-          schema = Seq.empty,
-          topics = Seq.empty,
-          numberOfTasks = 1,
-          configs = Map.empty
+          className = Some("com.island.ohara.connector.ftp.FtpSink"),
+          columns = Seq.empty,
+          topicNames = Seq.empty,
+          numberOfTasks = Some(1),
+          settings = Map.empty
         )))
 
     objs = result(objectApi.list)
@@ -136,11 +136,11 @@ class TestObjectRoute extends SmallTest with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = "com.island.ohara.connector.ftp.FtpSink",
-          schema = Seq.empty,
-          topics = Seq.empty,
-          numberOfTasks = 1,
-          configs = Map.empty
+          className = Some("com.island.ohara.connector.ftp.FtpSink"),
+          columns = Seq.empty,
+          topicNames = Seq.empty,
+          numberOfTasks = Some(1),
+          settings = Map.empty
         )))
 
     val topic = result(

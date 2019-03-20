@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
+import com.island.ohara.kafka.connector.json.ConnectorFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +37,7 @@ public class DumbSource extends RowSourceConnector {
   @Override
   protected List<TaskConfig> _taskConfigs(int maxTasks) {
     return Collections.singletonList(
-        TaskConfig.builder().name("test").topic("topic").columns(columns).build());
+        ConnectorFormatter.of().name("test").topicsName("topic").columns(columns).taskConfig());
   }
 
   @Override

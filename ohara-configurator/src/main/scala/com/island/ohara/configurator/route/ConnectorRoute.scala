@@ -27,40 +27,40 @@ import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.typesafe.scalalogging.Logger
+import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
 
-  private[this] def toRes(wkClusterName: String, id: Id, name: String, request: ConnectorCreationRequest) =
-    ConnectorInfo(
+  private[this] def toRes(wkClusterName: String, id: Id, request: ConnectorCreationRequest) = {
+    if (request.workerClusterName.exists(_ != wkClusterName))
+      throw new IllegalArgumentException(
+        s"It is illegal to change worker cluster for connector. previous:$wkClusterName new:${request.workerClusterName.get}")
+    ConnectorDescription(
       id = id,
-      name = name,
-      className = request.className,
-      schema = request.schema,
-      topics = request.topics,
-      numberOfTasks = request.numberOfTasks,
-      workerClusterName = wkClusterName,
+      settings = request.settings ++ Map(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY -> JsString(wkClusterName)),
       state = None,
       error = None,
-      configs = request.configs,
       lastModified = CommonUtils.current()
     )
+  }
 
   private[this] def verify(request: ConnectorCreationRequest): ConnectorCreationRequest = {
-    if (request.schema.exists(_.order < 1))
-      throw new IllegalArgumentException(s"invalid order from column:${request.schema.map(_.order)}")
-    if (request.schema.map(_.order).toSet.size != request.schema.size)
-      throw new IllegalArgumentException(s"duplicate order:${request.schema.map(_.order)}")
+    if (request.columns.exists(_.order < 1))
+      throw new IllegalArgumentException(s"invalid order from column:${request.columns.map(_.order)}")
+    if (request.columns.map(_.order).toSet.size != request.columns.size)
+      throw new IllegalArgumentException(s"duplicate order:${request.columns.map(_.order)}")
     request
   }
 
   private[route] def errorMessage(state: Option[ConnectorState]): Option[String] = state
     .filter(_ == ConnectorState.FAILED)
     .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
-  private[this] def update(connectorConfig: ConnectorInfo, workerClient: WorkerClient)(
-    implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
+  private[this] def update(connectorConfig: ConnectorDescription, workerClient: WorkerClient)(
+    implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
     workerClient
       .status(connectorConfig.id)
       .map(s => Some(s.connector.state))
@@ -74,43 +74,38 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       }
 
   def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
-    RouteUtils.basicRoute[ConnectorCreationRequest, ConnectorInfo](
+    RouteUtils.basicRoute[ConnectorCreationRequest, ConnectorDescription](
       root = CONNECTORS_PREFIX_PATH,
       hookOfAdd = (targetCluster: TargetCluster, id: Id, request: ConnectorCreationRequest) =>
-        /**
-          * TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
-          */
+        // TODO: remove TargetCluster. see https://github.com/oharastream/ohara/issues/206
         CollieUtils
           .workerClient(if (request.workerClusterName.isEmpty) targetCluster else request.workerClusterName)
           .map {
             case (cluster, _) =>
-              toRes(cluster.name,
-                    id,
-                    request.name.getOrElse(throw new NoSuchElementException("name is required")),
-                    verify(request))
+              toRes(cluster.name, id, verify(request))
 
         },
-      hookOfUpdate = (id: Id, request: ConnectorCreationRequest, previous: ConnectorInfo) =>
+      hookOfUpdate = (id: Id, request: ConnectorCreationRequest, previous: ConnectorDescription) =>
         CollieUtils.workerClient(Some(previous.workerClusterName)).flatMap {
           case (_, wkClient) =>
             wkClient.exist(id).map {
               if (_) throw new IllegalArgumentException(s"$id is not stopped")
-              else toRes(previous.workerClusterName, id, request.name.getOrElse(previous.name), verify(request))
+              else toRes(previous.workerClusterName, id, verify(request))
             }
       },
-      hookOfGet = (response: ConnectorInfo) =>
+      hookOfGet = (response: ConnectorDescription) =>
         CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
           case (_, wkClient) =>
             update(response, wkClient)
       },
-      hookOfList = (responses: Seq[ConnectorInfo]) =>
+      hookOfList = (responses: Seq[ConnectorDescription]) =>
         Future.sequence(responses.map { response =>
           CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
             case (_, wkClient) =>
               update(response, wkClient)
           }
         }),
-      hookOfDelete = (response: ConnectorInfo) =>
+      hookOfDelete = (response: ConnectorDescription) =>
         CollieUtils
           .workerClient(Some(response.workerClusterName))
           .flatMap {
@@ -134,9 +129,9 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       pathPrefix(CONNECTORS_PREFIX_PATH / Segment) { id =>
         path(START_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorDescription](id).flatMap { connectorDesc =>
               CollieUtils
-                .workerClient(Some(connectorConfig.workerClusterName))
+                .workerClient(Some(connectorDesc.workerClusterName))
                 .flatMap {
                   case (cluster, wkClient) =>
                     store
@@ -145,32 +140,31 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                 }
                 .flatMap {
                   case (wkClient, topicInfos) =>
-                    connectorConfig.topics.foreach(t =>
+                    connectorDesc.topicNames.foreach(t =>
                       if (!topicInfos.exists(_.id == t))
                         throw new NoSuchElementException(
                           s"$t doesn't exist. actual:${topicInfos.map(_.id).mkString(",")}"))
-                    if (connectorConfig.topics.isEmpty) throw new IllegalArgumentException("topics are required")
-                    wkClient.exist(connectorConfig.id).flatMap {
-                      if (_) update(connectorConfig, wkClient)
+                    if (connectorDesc.topicNames.isEmpty) throw new IllegalArgumentException("topics are required")
+                    wkClient.exist(connectorDesc.id).flatMap {
+                      if (_) update(connectorDesc, wkClient)
                       else
                         wkClient
                           .connectorCreator()
-                          .name(connectorConfig.id)
-                          .disableConverter()
-                          .className(connectorConfig.className)
-                          .columns(connectorConfig.schema)
-                          .configs(connectorConfig.configs)
-                          .topicNames(connectorConfig.topics)
-                          .numberOfTasks(connectorConfig.numberOfTasks)
+                          .name(connectorDesc.id)
+                          .className(connectorDesc.className)
+                          .columns(connectorDesc.columns)
+                          .settings(connectorDesc.plain)
+                          .topicNames(connectorDesc.topicNames)
+                          .numberOfTasks(connectorDesc.numberOfTasks)
                           .create
-                          .flatMap(_ => Future.successful(connectorConfig.copy(state = Some(ConnectorState.RUNNING))))
+                          .flatMap(_ => Future.successful(connectorDesc.copy(state = Some(ConnectorState.RUNNING))))
                     }
                 }
             })(complete(_))
           }
         } ~ path(STOP_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
                 case (_, wkClient) =>
                   wkClient.exist(id).flatMap {
@@ -182,7 +176,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(PAUSE_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
                 case (_, wkClient) =>
                   wkClient.status(id).map(_.connector.state).flatMap {
@@ -195,7 +189,7 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           }
         } ~ path(RESUME_COMMAND) {
           put {
-            onSuccess(store.value[ConnectorInfo](id).flatMap { connectorConfig =>
+            onSuccess(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).map {
                 case (_, wkClient) =>
                   wkClient.status(id).map(_.connector.state).flatMap {

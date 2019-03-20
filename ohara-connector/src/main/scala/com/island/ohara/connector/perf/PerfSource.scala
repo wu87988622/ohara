@@ -31,8 +31,8 @@ class PerfSource extends RowSourceConnector {
     */
   override protected[perf] def _start(config: TaskConfig): Unit = {
     if (config.columns.isEmpty) throw new IllegalArgumentException("columns can't be empty")
-    if (config.topics.isEmpty) throw new IllegalArgumentException("topics can't be empty")
-    val props = PerfSourceProps(config.options().asScala.toMap)
+    if (config.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
+    val props = PerfSourceProps(config.raw().asScala.toMap)
     if (props.batch < 0) throw new IllegalArgumentException(s"batch:${props.batch} can't be negative")
     this.config = config
   }

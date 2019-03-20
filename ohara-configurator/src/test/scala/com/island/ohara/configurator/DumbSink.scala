@@ -24,7 +24,7 @@ class DumbSink extends RowSinkConnector {
   override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = Seq.fill(maxTasks)(config).asJava
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
-    if (config.options().containsKey("you_should_fail")) throw new IllegalArgumentException
+    if (config.raw().containsKey("you_should_fail")) throw new IllegalArgumentException
   }
   override protected def _stop(): Unit = {}
 }

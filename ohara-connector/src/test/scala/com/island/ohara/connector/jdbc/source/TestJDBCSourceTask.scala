@@ -77,7 +77,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
                                         DB_TABLENAME -> tableName,
                                         DB_SCHEMA_PATTERN -> "",
                                         TIMESTAMP_COLUMN_NAME -> timestampColumnName)
-    when(taskConfig.options).thenReturn(maps.asJava)
+    when(taskConfig.raw()).thenReturn(maps.asJava)
 
     val columns: Seq[Column] = Seq(
       Column.newBuilder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
@@ -86,7 +86,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     )
 
     when(taskConfig.columns).thenReturn(columns.asJava)
-    when(taskConfig.topics).thenReturn(Seq("topic1").asJava)
+    when(taskConfig.topicNames()).thenReturn(Seq("topic1").asJava)
     jdbcSourceTask._start(taskConfig)
 
     val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
@@ -167,7 +167,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
                                         DB_TABLENAME -> tableName,
                                         DB_SCHEMA_PATTERN -> "",
                                         TIMESTAMP_COLUMN_NAME -> timestampColumnName)
-    when(taskConfig.options).thenReturn(maps.asJava)
+    when(taskConfig.raw()).thenReturn(maps.asJava)
     val columns: Seq[Column] = Seq(
       Column.newBuilder().name("COLUMN1").newName("COLUMN100").dataType(DataType.OBJECT).order(0).build(),
       Column.newBuilder().name("COLUMN2").newName("COLUMN200").dataType(DataType.STRING).order(1).build(),
@@ -175,7 +175,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     )
 
     when(taskConfig.columns).thenReturn(columns.asJava)
-    when(taskConfig.topics).thenReturn(Seq("topic1").asJava)
+    when(taskConfig.topicNames()).thenReturn(Seq("topic1").asJava)
 
     jdbcSourceTask._start(taskConfig)
 

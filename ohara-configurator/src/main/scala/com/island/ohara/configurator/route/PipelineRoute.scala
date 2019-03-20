@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
@@ -120,7 +120,7 @@ private[configurator] object PipelineRoute {
           .map(id => store.value[Data](id)))
       .flatMap { objs =>
         Future.traverse(objs) {
-          case data: ConnectorInfo =>
+          case data: ConnectorDescription =>
             workerClient
               .exist(data.id)
               .flatMap {
@@ -198,7 +198,7 @@ private[configurator] object PipelineRoute {
       store
         .raw(id)
         .map {
-          case d: ConnectorInfo =>
+          case d: ConnectorDescription =>
             if (d.workerClusterName != cluster.name)
               throw new IllegalArgumentException(
                 s"connector:${d.name} is run by ${d.workerClusterName} so it can't be placed at pipeline:$name which is placed at worker cluster:${cluster.name}")
@@ -313,9 +313,9 @@ private[configurator] object PipelineRoute {
                   .sequence(
                     objs
                     // we only remove connectors. The streamapps and topics are still stored!
-                      .filter(_.isInstanceOf[ConnectorInfo])
+                      .filter(_.isInstanceOf[ConnectorDescription])
                       .map(_.id)
-                      .map(store.remove[ConnectorInfo]))
+                      .map(store.remove[ConnectorDescription]))
                   .map(_ => pipeline.id)
               }
         },

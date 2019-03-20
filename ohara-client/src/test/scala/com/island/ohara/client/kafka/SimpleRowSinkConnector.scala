@@ -25,8 +25,8 @@ class SimpleRowSinkConnector extends RowSinkConnector {
   override protected def _start(props: TaskConfig): Unit = {
     this.config = props
     // check the option
-    this.config.options.get(OUTPUT)
-    this.config.options.get(BROKER)
+    this.config.raw().get(OUTPUT)
+    this.config.raw().get(BROKER)
   }
 
   override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[SimpleRowSinkTask]

@@ -142,10 +142,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(newSchema)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
 
     try {
@@ -173,10 +172,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.copy(needHeader = true).toMap)
+        .settings(props.copy(needHeader = true).toMap)
         .create)
 
     try {
@@ -205,9 +203,8 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
-        .configs(props.copy(needHeader = true).toMap)
+        .settings(props.copy(needHeader = true).toMap)
         .create)
 
     try {
@@ -241,10 +238,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.copy(needHeader = true).toMap)
+        .settings(props.copy(needHeader = true).toMap)
         .create)
 
     try {
@@ -273,10 +269,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
 
     try {
@@ -304,9 +299,8 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
 
     try {
@@ -334,11 +328,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
         //will use default UTF-8
-        .configs(props.copy(encode = None).toMap)
+        .settings(props.copy(encode = None).toMap)
         .create)
 
     try {
@@ -366,11 +359,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
         //will use default UTF-8
-        .configs(props.copy(encode = Some("")).toMap)
+        .settings(props.copy(encode = Some("")).toMap)
         .create)
 
     try {
@@ -398,11 +390,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
 
     try {
@@ -429,11 +420,10 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
 
     try {

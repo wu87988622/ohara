@@ -21,7 +21,7 @@ import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{Releasable, VersionUtils}
 import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
-import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
@@ -43,7 +43,7 @@ class JDBCSourceTask extends RowSourceTask {
     */
   override protected[source] def _start(config: TaskConfig): Unit = {
     logger.info("starting JDBC Source Connector")
-    val props = config.options.asScala.toMap
+    val props = config.raw().asScala.toMap
     jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(props)
 
     val dbURL = jdbcSourceConnectorConfig.dbURL
@@ -53,7 +53,7 @@ class JDBCSourceTask extends RowSourceTask {
     dbTableDataProvider = new DBTableDataProvider(dbURL, dbUserName, dbPassword)
 
     schema = config.columns.asScala
-    topics = config.topics.asScala
+    topics = config.topicNames().asScala
     offsets = new Offsets(rowContext, tableName)
   }
 

@@ -70,31 +70,31 @@ class TestOhara734 extends SmallTest with Matchers {
                                                             |  "className":"com.island.ohara.connector.perf.PerfSource",
                                                             |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
                                                             |  "numberOfTasks":1,
-                                                            |  "configs":{
+                                                            |  "settings":{
                                                             |    "perf.batch":"1",
                                                             |    "perf.frequence":"2 seconds"
                                                             |  },
                                                             |  "schema":[{
                                                             |    "name": "cf0",
                                                             |    "newName": "cf0",
-                                                            |    "dataType": "integer",
+                                                            |    "dataType": "int",
                                                             |    "order": 1
                                                             |  },{
                                                             |    "name": "cf1",
                                                             |    "newName": "cf1",
-                                                            |    "dataType": "byte array",
+                                                            |    "dataType": "bytes",
                                                             |    "order": 2
                                                             |  }]
                                                             |}
                                                           """.stripMargin.parseJson)
     request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
-    request.topics.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
+    request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks shouldBe 1
-    request.configs("perf.batch") shouldBe "1"
-    request.schema.size shouldBe 2
-    request.schema.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
-    request.schema.last shouldBe Column
+    request.plain("perf.batch") shouldBe "1"
+    request.columns.size shouldBe 2
+    request.columns.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.columns.last shouldBe Column
       .newBuilder()
       .name("cf1")
       .newName("cf1")
@@ -110,7 +110,7 @@ class TestOhara734 extends SmallTest with Matchers {
                                                          |  "className":"com.island.ohara.connector.perf.PerfSource",
                                                          |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
                                                          |  "numberOfTasks":1,
-                                                         |  "configs":{
+                                                         |  "settings":{
                                                          |    "perf.batch":"1",
                                                          |    "perf.frequence":"2 seconds"
                                                          |  },
@@ -141,31 +141,31 @@ class TestOhara734 extends SmallTest with Matchers {
                                                                |  "className":"com.island.ohara.connector.perf.PerfSource",
                                                                |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
                                                                |  "numberOfTasks":1,
-                                                               |  "configs":{
+                                                               |  "settings":{
                                                                |    "perf.batch":"1",
                                                                |    "perf.frequence":"2 seconds"
                                                                |  },
                                                                |  "schema":[{
                                                                |    "name": "cf0",
                                                                |    "newName": "cf0",
-                                                               |    "dataType": "integer",
+                                                               |    "dataType": "INT",
                                                                |    "order": 1
                                                                |  },{
                                                                |    "name": "cf1",
                                                                |    "newName": "cf1",
-                                                               |    "dataType": "byte array",
+                                                               |    "dataType": "bytes",
                                                                |    "order": 2
                                                                |  }]
                                                                |}
                                                              """.stripMargin.parseJson)
     request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
-    request.topics.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
+    request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks shouldBe 1
-    request.configs("perf.batch") shouldBe "1"
-    request.schema.size shouldBe 2
-    request.schema.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
-    request.schema.last shouldBe Column
+    request.plain("perf.batch") shouldBe "1"
+    request.columns.size shouldBe 2
+    request.columns.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.columns.last shouldBe Column
       .newBuilder()
       .name("cf1")
       .newName("cf1")
@@ -181,14 +181,14 @@ class TestOhara734 extends SmallTest with Matchers {
                                                        |  "className":"com.island.ohara.connector.perf.PerfSource",
                                                        |  "topics":["59e9010c-fd9c-4a41-918a-dacc9b84aa2b"],
                                                        |  "numberOfTasks":1,
-                                                       |  "configs":{
+                                                       |  "settings":{
                                                        |    "perf.batch":"1",
                                                        |    "perf.frequence":"2 seconds"
                                                        |  },
                                                        |  "schema":[{
                                                        |    "name": "cf0",
                                                        |    "newName": "cf0",
-                                                       |    "dataType": "int",
+                                                       |    "dataType": "INT",
                                                        |    "order": 1
                                                        |  },{
                                                        |    "name": "cf1",

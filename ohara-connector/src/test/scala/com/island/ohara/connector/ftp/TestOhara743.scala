@@ -19,7 +19,7 @@ package com.island.ohara.connector.ftp
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.kafka.connector.TaskConfig
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Test}
 import org.scalatest.Matchers
@@ -43,7 +43,7 @@ class TestOhara743 extends SmallTest with Matchers {
       encode = Some("UTF-8")
     )
 
-    val taskConfig = TaskConfig.builder().name("aa").options(props.toMap.asJava).build()
+    val taskConfig = ConnectorFormatter.of().name("aa").settings(props.toMap.asJava).taskConfig()
 
     val ftpClient = FtpClient
       .builder()

@@ -35,7 +35,7 @@ class FtpSinkTask extends RowSinkTask {
 
   override protected def _start(config: TaskConfig): Unit = {
     this.config = config
-    this.props = FtpSinkTaskProps(config.options.asScala.toMap)
+    this.props = FtpSinkTaskProps(config.raw().asScala.toMap)
     this.schema = config.columns.asScala
     this.ftpClient =
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()

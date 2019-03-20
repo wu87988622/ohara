@@ -33,8 +33,8 @@ import java.util.stream.IntStream;
  *
  * <p>{@code How to use this class: 1) create the OharaTestUtils with 1 broker (you can assign
  * arbitrary number from brokers) val testUtil = OharaTestUtils.localBrokers(1) 2) get the
- * basic|producer|consumer OharaConfiguration val config = testUtil.producerConfig 3) instantiate
- * your producer or consumer val producer = new KafkaProducer<Array<Byte>, Array<Byte>>(config, new
+ * basic|producer|consumer OharaConfiguration val setting = testUtil.producerConfig 3) instantiate
+ * your producer or consumer val producer = new KafkaProducer<Array<Byte>, Array<Byte>>(setting, new
  * ByteArraySerializer, new ByteArraySerializer) 4) do what you want for your producer and consumer
  * 5) close OharaTestUtils testUtil.close() }
  *

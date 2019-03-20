@@ -21,11 +21,11 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 /**
-  * Prometheus reload config  using  file or third party framwork like  marathon and k8s etc..
+  * Prometheus reload setting  using  file or third party framwork like  marathon and k8s etc..
   *
   * This util can change file JSON
   *
-  * This config will be drop after k8s merge in OHARA .
+  * This setting will be drop after k8s merge in OHARA .
   */
 class PrometheusConfigUtils(inspectort: ContainerInspector,
                             fileName: String = PrometheusServer.PROMETHEUS_TARGETS_FILE) {

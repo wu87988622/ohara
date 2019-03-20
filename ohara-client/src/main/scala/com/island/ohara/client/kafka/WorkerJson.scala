@@ -18,6 +18,7 @@ package com.island.ohara.client.kafka
 
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.common.data.ConnectorState
+import com.island.ohara.kafka.connector.json.Creation
 import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, _}
 import spray.json.{DeserializationException, JsArray, JsBoolean, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -47,41 +48,6 @@ object WorkerJson {
       versionKey -> JsString(obj.version)
     )
   }
-
-  final case class ConnectorCreationRequest(name: String, configs: Map[String, String])
-  implicit val CONNECTOR_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorCreationRequest] =
-    new RootJsonFormat[ConnectorCreationRequest] {
-      private[this] val NAME_KEY = "name"
-      // KAFKA use "config" rather than "configs"...
-      private[this] val CONFIGS_KEY = "config"
-      override def read(json: JsValue): ConnectorCreationRequest =
-        json.asJsObject.getFields(NAME_KEY, CONFIGS_KEY) match {
-          case Seq(JsString(name), JsObject(configs)) =>
-            ConnectorCreationRequest(
-              name = name,
-              configs = configs
-                .map {
-                  case (key, value) =>
-                    key -> (value match {
-                      case v: JsString => v.value
-                      // we will get rid of empty string later...
-                      case JsNull     => ""
-                      case other: Any => throw DeserializationException(s"JsString or JsNull expected but $other")
-                    })
-                }
-                .filter(_._2.nonEmpty)
-            )
-          case other: Any =>
-            throw DeserializationException(s"${classOf[ConnectorCreationRequest].getSimpleName} expected but $other")
-        }
-
-      override def write(obj: ConnectorCreationRequest): JsValue = JsObject(
-        NAME_KEY -> JsString(obj.name),
-        CONFIGS_KEY -> JsObject(obj.configs.map {
-          case (key, value) => key -> JsString(value)
-        })
-      )
-    }
 
   final case class ConnectorCreationResponse(name: String, config: Map[String, String], tasks: Seq[String])
 
@@ -206,55 +172,9 @@ object WorkerJson {
     )
   }
 
-  case class ConfigValidationResponse(className: String,
-                                      definitions: Seq[Definition],
-                                      validatedValues: Seq[ValidatedValue])
-  implicit val CONFIG_VALIDATED_RESPONSE_FORMAT: RootJsonFormat[ConfigValidationResponse] =
-    new RootJsonFormat[ConfigValidationResponse] {
-      private[this] val classNameKey: String = "name"
-      private[this] val configsKey: String = "configs"
-      private[this] val definitionKey: String = "definition"
-      private[this] val valueKey: String = "value"
-      override def read(json: JsValue): ConfigValidationResponse =
-        json.asJsObject.getFields(classNameKey, configsKey) match {
-          case Seq(JsString(className), JsArray(configs)) =>
-            val result = configs
-              .flatMap(_.asJsObject.fields.filter(entry => entry._1 == definitionKey || entry._1 == valueKey).map {
-                case (key, value) =>
-                  key match {
-                    case `definitionKey` => DEFINITION_FORMAT.read(value)
-                    case `valueKey`      => VALIDATED_VALUE_FORMAT.read(value)
-                  }
-              })
-              .groupBy {
-                case v: Definition     => v.name
-                case v: ValidatedValue => v.name
-                case v: Any            => throw new IllegalStateException(s"unsupported type:$v")
-              }
-              .map { entry =>
-                if (entry._2.size != 2)
-                  throw new IllegalStateException(s"${entry._1} should have both definition and value")
-                entry._2.find(_.isInstanceOf[Definition]).map(_.asInstanceOf[Definition]).head -> entry._2
-                  .find(_.isInstanceOf[ValidatedValue])
-                  .map(_.asInstanceOf[ValidatedValue])
-                  .head
-              }
-            ConfigValidationResponse(
-              className = className,
-              definitions = result.keys.toList,
-              validatedValues = result.values.toList,
-            )
-          case other: Any =>
-            throw DeserializationException(s"${classOf[ConfigValidationResponse].getSimpleName} expected but $other")
-        }
-      override def write(obj: ConfigValidationResponse) = JsObject(
-        classNameKey -> JsString(obj.className),
-        configsKey -> JsArray(obj.definitions.flatMap { definition =>
-          Seq(
-            JsObject(definitionKey -> DEFINITION_FORMAT.write(definition)),
-            JsObject(valueKey -> VALIDATED_VALUE_FORMAT.write(obj.validatedValues.find(_.name == definition.name).get))
-          )
-        }.toVector)
-      )
-    }
+  implicit val CREATION_JSON_FORMAT: RootJsonFormat[Creation] = new RootJsonFormat[Creation] {
+    import spray.json._
+    override def write(obj: Creation): JsValue = obj.toJsonString.parseJson
+    override def read(json: JsValue): Creation = Creation.ofJson(json.toString())
+  }
 }

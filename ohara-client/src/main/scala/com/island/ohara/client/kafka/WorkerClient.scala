@@ -17,6 +17,7 @@
 package com.island.ohara.client.kafka
 
 import java.net.HttpRetryException
+import java.util
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
@@ -27,11 +28,13 @@ import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.ConnectorUtils
+import com.island.ohara.kafka.connector.json.{ConverterType, _}
 import com.typesafe.scalalogging.Logger
+import org.apache.kafka.connect.runtime.rest.entities.ConfigInfos
 import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
-import scala.collection.mutable
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
@@ -126,6 +129,34 @@ object WorkerClient {
   private[this] val LOG = Logger(WorkerClient.getClass)
 
   /**
+    * This is a bridge between java and scala.
+    * ConfigInfos is serialized to json by jackson so we can implement the RootJsonFormat easily.
+    */
+  private[this] implicit val CONFIG_INFOS_JSON_FORMAT: RootJsonFormat[ConfigInfos] = new RootJsonFormat[ConfigInfos] {
+    import spray.json._
+    override def write(obj: ConfigInfos): JsValue = KafkaJsonUtils.toString(obj).parseJson
+
+    override def read(json: JsValue): ConfigInfos = KafkaJsonUtils.toConfigInfos(json.toString())
+  }
+
+  /**
+    * This is a bridge between java and scala.
+    * ConfigInfos is serialized to json by jackson so we can implement the RootJsonFormat easily.
+    */
+  private[this] implicit val MAP_JSON_FORMAT: RootJsonFormat[java.util.Map[String, String]] =
+    new RootJsonFormat[java.util.Map[String, String]] {
+      import spray.json._
+
+      override def read(json: JsValue): util.Map[String, String] = json.asJsObject.fields.map {
+        case (k, v) => k -> v.asInstanceOf[JsString].value
+      }.asJava
+
+      override def write(obj: util.Map[String, String]): JsValue = JsObject(obj.asScala.map {
+        case (k, v) => k -> JsString(v)
+      }.toMap)
+    }
+
+  /**
     * Create a default implementation of worker client.
     * NOTED: default implementation use a global akka system to handle http request/response. It means the connection
     * sent by this worker client may be influenced by other instances.
@@ -157,13 +188,35 @@ object WorkerClient {
             } else throw e
         }
 
-      override def connectorCreator(): Creator = (executionContext, request) => {
+      override def connectorCreator(): Creator = (executionContext,
+                                                  name,
+                                                  className,
+                                                  topicNames,
+                                                  numberOfTasks,
+                                                  columns,
+                                                  converterTypeOfKey,
+                                                  converterTypeOfValue,
+                                                  configs) => {
         implicit val exec: ExecutionContext = executionContext
         retry(
           () =>
-            HttpExecutor.SINGLETON.post[ConnectorCreationRequest, ConnectorCreationResponse, Error](
+            HttpExecutor.SINGLETON.post[Creation, ConnectorCreationResponse, Error](
               s"http://$workerAddress/connectors",
-              request),
+              ConnectorFormatter
+                .of()
+                .className(className)
+                .topicsNames(topicNames.asJava)
+                .numberOfTasks(numberOfTasks)
+                .columns(columns.asJava)
+                .converterTypeOfKey(converterTypeOfKey)
+                .converterTypeOfValue(converterTypeOfValue)
+                .settings(configs.asJava)
+                // it must be called at the latest since the configs passed by user contain "name" also.
+                // if we don't put this setter at the least, the name we configured will be replaced by user-defined name.
+                // Normally, we set a random id to be the name.
+                .name(name)
+                .requestOfCreation()
+          ),
           "connectorCreator"
         )
       }
@@ -200,16 +253,29 @@ object WorkerClient {
         () => HttpExecutor.SINGLETON.put[Error](s"http://$workerAddress/connectors/$name/resume"),
         s"resume $name")
 
-      override def connectorValidator(): Validator = (executionContext, className, configs) => {
-        implicit val exec: ExecutionContext = executionContext
-        retry(
-          () =>
-            HttpExecutor.SINGLETON.put[Map[String, String], ConfigValidationResponse, Error](
-              s"http://$workerAddress/connector-plugins/$className/config/validate",
-              configs),
-          "connectorValidator"
-        )
-      }
+      import scala.collection.JavaConverters._
+      override def connectorValidator(): Validator =
+        (executionContext, name, className, topicNames, numberOfTasks, columns, configs) => {
+          implicit val exec: ExecutionContext = executionContext
+          retry(
+            () =>
+              HttpExecutor.SINGLETON
+                .put[java.util.Map[String, String], ConfigInfos, Error](
+                  s"http://$workerAddress/connector-plugins/$className/config/validate",
+                  ConnectorFormatter
+                    .of()
+                    .name(name)
+                    .className(className)
+                    .topicsNames(topicNames.asJava)
+                    .numberOfTasks(numberOfTasks)
+                    .columns(columns.asJava)
+                    .settings(configs.asJava)
+                    .requestOfValidation()
+                )
+                .map(SettingInfo.of),
+            "connectorValidator"
+          )
+        }
     }
   }
 
@@ -218,7 +284,7 @@ object WorkerClient {
     protected var className: String = _
     protected var topicNames: Seq[String] = _
     protected var numberOfTasks: Int = 1
-    protected var configs: Map[String, String] = Map.empty
+    protected var settings: Map[String, String] = Map.empty
     protected var columns: Seq[Column] = Seq.empty
 
     /**
@@ -275,14 +341,14 @@ object WorkerClient {
     }
 
     /**
-      * extra config passed to sink connector. This config is optional.
+      * extra setting passed to sink connector. This setting is optional.
       *
-      * @param configs config
+      * @param configs setting
       * @return this one
       */
     @Optional("default is empty")
-    def configs(configs: Map[String, String]): this.type = {
-      this.configs = Objects.requireNonNull(configs)
+    def settings(settings: Map[String, String]): this.type = {
+      this.settings = Objects.requireNonNull(settings)
       this
     }
 
@@ -310,95 +376,60 @@ object WorkerClient {
       this.topicNames = topicNames
       this
     }
-
-    protected def toCreateConnectorResponse(otherConfigs: Map[String, String]): ConnectorCreationRequest = {
-      import scala.collection.JavaConverters._
-      CommonUtils.requireNonEmpty(name)
-      CommonUtils.requireNonEmpty(className)
-      CommonUtils.requireNonEmpty(topicNames.asJavaCollection)
-      topicNames.foreach(CommonUtils.requireNonEmpty)
-      CommonUtils.requirePositiveInt(numberOfTasks)
-      val kafkaConfig = new mutable.HashMap[String, String]()
-      kafkaConfig ++= configs
-      kafkaConfig += (ConnectorUtils.CONNECTOR_CLASS_KEY -> className)
-      kafkaConfig += (ConnectorUtils.TOPIC_NAMES_KEY -> topicNames.mkString(","))
-      kafkaConfig += (ConnectorUtils.NUMBER_OF_TASKS_KEY -> numberOfTasks.toString)
-      import scala.collection.JavaConverters._
-      if (columns != null && columns.nonEmpty)
-        kafkaConfig += (ConnectorUtils.COLUMNS_KEY -> ConnectorUtils.fromColumns(columns.asJava))
-      // NOTED: If configs.name exists, kafka will use it to replace the outside name.
-      // for example: {"name":"abc", "configs":{"name":"c"}} is converted to map("name", "c")...
-      // Hence, we have to filter out the name here...
-      // TODO: this issue is fixed by https://github.com/apache/kafka/commit/5a2960f811c27f59d78dfdb99c7c3c6eeed16c4b
-      // TODO: we should remove this workaround after we update kafka to 1.1.x
-      kafkaConfig.remove("name").foreach(v => LOG.error(s"(name, $v) is removed from configs"))
-      ConnectorCreationRequest(name, kafkaConfig.toMap ++ otherConfigs)
-    }
   }
 
   /**
-    * a base class used to collect the config from source/sink connector when creating
+    * a base class used to collect the setting from source/sink connector when creating
     */
   trait Creator extends ConnectorProperties {
-    private[this] var _disableKeyConverter: Boolean = false
-    private[this] var _disableValueConverter: Boolean = false
+    private[this] var converterTypeOfKey: ConverterType = ConverterType.NONE
+    private[this] var converterTypeOfValue: ConverterType = ConverterType.NONE
 
     /**
-      * config the key converter be org.apache.kafka.connect.converters.ByteArrayConverter. It is useful if the data in topic
-      * your connector want to take is byte array and is generated by kafka producer. For example, the source is RowProducer,
-      * and the target is RowSinkConnector.
+      * setting the key converter. By default there is no converter in ohara connector since it enable us to retrieve/send
+      * data to connector through topic. If you wrap the data by connector, your producer/consumer have to unwrap
+      * data in order to access data correctly.
       *
       * @return this one
       */
-    @Optional("default key converter is org.apache.kafka.connect.json.JsonConverter")
-    def disableKeyConverter(): Creator = {
-      this._disableKeyConverter = true
+    @Optional("default key converter is ConverterType.NONE")
+    def converterTypeOfKey(converterTypeOfKey: ConverterType): Creator = {
+      this.converterTypeOfKey = Objects.requireNonNull(converterTypeOfKey)
       this
     }
 
     /**
-      * config the value converter be org.apache.kafka.connect.converters.ByteArrayConverter. It is useful if the data in topic
-      * your connector want to take is byte array and is generated by kafka producer. For example, the source is RowProducer,
-      * and the target is RowSinkConnector.
+      * setting the value converter. By default there is no converter in ohara connector since it enable us to retrieve/send
+      * data to connector through topic. If you wrap the data by connector, your producer/consumer have to unwrap
+      * data in order to access data correctly.
       *
       * @return this one
       */
-    @Optional("default value converter is org.apache.kafka.connect.json.JsonConverter")
-    def disableValueConverter(): Creator = {
-      this._disableValueConverter = true
+    @Optional("default key converter is ConverterType.NONE")
+    def converterTypeOfValue(converterTypeOfValue: ConverterType): Creator = {
+      this.converterTypeOfValue = Objects.requireNonNull(converterTypeOfValue)
       this
     }
 
-    /**
-      * config the converter be org.apache.kafka.connect.converters.ByteArrayConverter. It is useful if the data in topic
-      * your connector want to take is byte array and is generated by kafka producer. For example, the source is RowProducer,
-      * and the target is RowSinkConnector.
-      *
-      * @return this one
-      */
-    @Optional("default key/value converter is org.apache.kafka.connect.json.JsonConverter")
-    def disableConverter(): Creator = {
-      this._disableKeyConverter = true
-      this._disableValueConverter = true
-      this
-    }
+    import scala.collection.JavaConverters._
 
     /**
       * send the request to create the sink connector.
       *
       * @return this one
       */
-    def create(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] = doCreate(
-      executionContext = Objects.requireNonNull(executionContext),
-      request = toCreateConnectorResponse(
-        (if (_disableKeyConverter)
-           Map("key.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
-         else Map.empty) ++
-          (if (_disableValueConverter)
-             Map("value.converter" -> "org.apache.kafka.connect.converters.ByteArrayConverter")
-           else Map.empty)
+    def create(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] =
+      doCreate(
+        executionContext = Objects.requireNonNull(executionContext),
+        name = CommonUtils.requireNonEmpty(name),
+        className = CommonUtils.requireNonEmpty(className),
+        topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala,
+        numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks),
+        columns = Objects.requireNonNull(columns),
+        converterTypeOfKey = Objects.requireNonNull(converterTypeOfKey),
+        converterTypeOfValue = Objects.requireNonNull(converterTypeOfValue),
+        settings = Objects.requireNonNull(settings)
       )
-    )
 
     /**
       * send the request to kafka worker
@@ -406,18 +437,26 @@ object WorkerClient {
       * @return response
       */
     protected def doCreate(executionContext: ExecutionContext,
-                           request: ConnectorCreationRequest): Future[ConnectorCreationResponse]
+                           name: String,
+                           className: String,
+                           topicNames: Seq[String],
+                           numberOfTasks: Int,
+                           columns: Seq[Column],
+                           converterTypeOfKey: ConverterType,
+                           converterTypeOfValue: ConverterType,
+                           settings: Map[String, String]): Future[ConnectorCreationResponse]
   }
 
   trait Validator extends ConnectorProperties {
 
-    def run(implicit executionContext: ExecutionContext): Future[ConfigValidationResponse] = doValidate(
+    def run(implicit executionContext: ExecutionContext): Future[SettingInfo] = doValidate(
       executionContext = Objects.requireNonNull(executionContext),
+      name = CommonUtils.requireNonEmpty(name),
       className = CommonUtils.requireNonEmpty(className),
-      configs = toCreateConnectorResponse(Map.empty).configs
-      // In contrast to create connector, we have to add name back to configs since worker verify the name from configs...
-      // TODO: it is indeed a ugly APIs... should we file a PR for kafka ??? by chia
-        ++ Map(ConnectorUtils.NAME_KEY -> name)
+      topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala,
+      numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks),
+      columns = Objects.requireNonNull(columns),
+      settings = Objects.requireNonNull(settings)
     )
 
     /**
@@ -426,8 +465,12 @@ object WorkerClient {
       * @return response
       */
     protected def doValidate(executionContext: ExecutionContext,
+                             name: String,
                              className: String,
-                             configs: Map[String, String]): Future[ConfigValidationResponse]
+                             topicNames: Seq[String],
+                             numberOfTasks: Int,
+                             columns: Seq[Column],
+                             settings: Map[String, String]): Future[SettingInfo]
 
   }
 }

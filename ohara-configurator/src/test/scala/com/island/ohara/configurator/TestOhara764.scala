@@ -39,11 +39,11 @@ class TestOhara764 extends SmallTest with Matchers {
         ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = "aaa.class",
-          topics = Seq("abc"),
-          numberOfTasks = 1,
-          schema = Seq.empty,
-          configs = Map.empty
+          className = Some("aaa.class"),
+          topicNames = Seq("abc"),
+          numberOfTasks = Some(1),
+          columns = Seq.empty,
+          settings = Map.empty
         )),
       10 seconds
     )
@@ -67,11 +67,11 @@ class TestOhara764 extends SmallTest with Matchers {
         ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = "aaa.class",
-          topics = Seq(topic.id),
-          numberOfTasks = 1,
-          schema = Seq.empty,
-          configs = Map.empty
+          className = Some("aaa.class"),
+          topicNames = Seq(topic.id),
+          numberOfTasks = Some(1),
+          columns = Seq.empty,
+          settings = Map.empty
         )),
       10 seconds
     )

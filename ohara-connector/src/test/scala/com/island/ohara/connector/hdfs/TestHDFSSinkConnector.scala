@@ -26,6 +26,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.hdfs.creator.LocalHDFSStorageCreator
 import com.island.ohara.connector.hdfs.storage.HDFSStorage
 import com.island.ohara.kafka.Producer
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.kafka.connector.{RowSinkTask, TaskConfig}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.apache.hadoop.fs.Path
@@ -51,18 +52,19 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
     val hdfsSinkConnector = new HDFSSinkConnector()
 
     hdfsSinkConnector._start(
-      TaskConfig
-        .builder()
+      ConnectorFormatter
+        .of()
         .name("test")
-        .topic("topic")
-        .options(Map(HDFS_URL -> hdfsURL, TMP_DIR -> tmpDir).asJava)
-        .build())
+        .topicsName("topic")
+        .setting(HDFS_URL, hdfsURL)
+        .setting(TMP_DIR, tmpDir)
+        .taskConfig())
     val result = hdfsSinkConnector._taskConfigs(maxTasks)
 
     result.size shouldBe maxTasks
     result.asScala.foreach(r => {
-      r.options.get(HDFS_URL) shouldBe hdfsURL
-      r.options.get(TMP_DIR) shouldBe tmpDir
+      r.raw().get(HDFS_URL) shouldBe hdfsURL
+      r.raw().get(TMP_DIR) shouldBe tmpDir
     })
   }
 
@@ -86,8 +88,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[SimpleHDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(sinkTasks)
-        .disableConverter()
-        .configs(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
+        .settings(Map(flushLineCountName -> flushLineCount, tmpDirName -> tmpDirPath, hdfsURLName -> localURL))
         .columns(schema)
         .create)
 
@@ -139,8 +140,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(sinkTasks)
-        .disableConverter()
-        .configs(Map(
+        .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
           hdfsURLName -> localURL,
@@ -220,8 +220,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(sinkTasks)
-        .disableConverter()
-        .configs(Map(
+        .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
           hdfsURLName -> localURL,
@@ -314,8 +313,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(sinkTasks)
-        .disableConverter()
-        .configs(Map(
+        .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
           hdfsURLName -> localURL,
@@ -396,8 +394,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[HDFSSinkConnector])
         .topicName(topicName)
         .numberOfTasks(sinkTasks)
-        .disableConverter()
-        .configs(Map(
+        .settings(Map(
           flushLineCountName -> flushLineCount,
           tmpDirName -> tmpDirPath,
           hdfsURLName -> localURL,
@@ -441,7 +438,7 @@ class SimpleHDFSSinkConnector extends HDFSSinkConnector {
 class SimpleHDFSSinkTask extends HDFSSinkTask {
   override def _start(props: TaskConfig): Unit = {
     super._start(props)
-    props.options.asScala.foreach {
+    props.raw().asScala.foreach {
       case (k, v) => SimpleHDFSSinkTask.taskProps.put(k, v)
     }
     SimpleHDFSSinkTask.sinkConnectorConfig = hdfsSinkConnectorConfig

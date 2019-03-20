@@ -56,9 +56,9 @@ public interface Workers extends Releasable {
 
                       Map<String, String> config = new HashMap<>();
                       // reduce the number from partitions and replicas to speedup the mini cluster
-                      // for config storage. the partition from config topic is always 1 so we
+                      // for setting storage. the partition from setting topic is always 1 so we
                       // needn't to set it to 1 here.
-                      config.put(DistributedConfig.CONFIG_TOPIC_CONFIG, "connect-configs");
+                      config.put(DistributedConfig.CONFIG_TOPIC_CONFIG, "connect-settings");
                       config.put(DistributedConfig.CONFIG_STORAGE_REPLICATION_FACTOR_CONFIG, "1");
                       // for offset storage
                       config.put(DistributedConfig.OFFSET_STORAGE_TOPIC_CONFIG, "connect-offsets");

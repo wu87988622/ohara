@@ -48,12 +48,14 @@ object WorkerRoute {
                 .find(_.groupId == groupId)
                 .foreach(c => throw new IllegalArgumentException(s"group id:$groupId is used by wk cluster:${c.name}")))
 
-            // check config topic
-            req.configTopicName.foreach(configTopicName =>
-              wkClusters
-                .find(_.configTopicName == configTopicName)
-                .foreach(c =>
-                  throw new IllegalArgumentException(s"config topic:$configTopicName is used by wk cluster:${c.name}")))
+            // check setting topic
+            req.configTopicName.foreach(
+              configTopicName =>
+                wkClusters
+                  .find(_.configTopicName == configTopicName)
+                  .foreach(c =>
+                    throw new IllegalArgumentException(
+                      s"setting topic:$configTopicName is used by wk cluster:${c.name}")))
 
             // check offset topic
             req.offsetTopicName.foreach(offsetTopicName =>
@@ -102,7 +104,7 @@ object WorkerRoute {
                 .clientPort(req.clientPort.getOrElse(WorkerApi.CLIENT_PORT_DEFAULT))
                 .brokerClusterName(bkName)
                 .groupId(req.groupId.getOrElse(CommonUtils.randomString(10)))
-                .configTopicName(req.configTopicName.getOrElse(s"config-${CommonUtils.randomString(10)}"))
+                .configTopicName(req.configTopicName.getOrElse(s"setting-${CommonUtils.randomString(10)}"))
                 .configTopicReplications(req.configTopicReplications.getOrElse(
                   WorkerApi.CONFIG_TOPIC_REPLICATIONS_DEFAULT))
                 .offsetTopicName(req.offsetTopicName.getOrElse(s"offset-${CommonUtils.randomString(10)}"))

@@ -37,7 +37,7 @@ class JDBCSourceConnector extends RowSourceConnector {
   override protected def _start(taskConfig: TaskConfig): Unit = {
     this.taskConfig = taskConfig
 
-    val props = taskConfig.options.asScala.toMap
+    val props = taskConfig.raw().asScala.toMap
     val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(props)
 
     val dbURL = jdbcSourceConnectorConfig.dbURL
@@ -66,9 +66,9 @@ class JDBCSourceConnector extends RowSourceConnector {
   }
 
   /**
-    * Return the configs for source task.
+    * Return the settings for source task.
     *
-    * @return a seq from configs
+    * @return a seq from settings
     */
   override protected def _taskConfigs(maxTasks: Int): java.util.List[TaskConfig] = {
     //TODO

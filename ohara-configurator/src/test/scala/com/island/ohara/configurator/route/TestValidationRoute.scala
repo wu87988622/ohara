@@ -16,9 +16,9 @@
 
 package com.island.ohara.configurator.route
 
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.ValidationApi.{
-  ConnectorValidationRequest,
   FtpValidationRequest,
   HdfsValidationRequest,
   NodeValidationRequest,
@@ -48,15 +48,16 @@ class TestValidationRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(ConnectorValidationRequest(
-          name = CommonUtils.randomString(10),
-          className = className,
+        .verify(ConnectorCreationRequest(
+          name = Some(CommonUtils.randomString(10)),
+          className = Some(className),
           topicNames = Seq(CommonUtils.randomString(10)),
-          numberOfTasks = 1,
-          workerClusterName = wkCluster.name,
-          configs = Map.empty
+          numberOfTasks = Some(1),
+          workerClusterName = Some(wkCluster.name),
+          settings = Map.empty,
+          columns = Seq.empty
         )))
-    response.className shouldBe className
+    response.className.get() shouldBe className
   }
 
   @Test

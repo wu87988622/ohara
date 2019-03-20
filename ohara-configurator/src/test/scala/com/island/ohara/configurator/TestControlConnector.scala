@@ -27,6 +27,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
+import spray.json.JsString
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -58,11 +59,11 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = classOf[DumbSink].getName,
-      schema = Seq.empty,
-      topics = Seq(topic.id),
-      numberOfTasks = 1,
-      configs = Map.empty
+      className = Some(classOf[DumbSink].getName),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      numberOfTasks = Some(1),
+      settings = Map.empty
     )
 
     val sink = result(access.add(request))
@@ -121,11 +122,11 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = classOf[DumbSink].getName,
-      schema = Seq.empty,
-      topics = Seq(topic.id),
-      numberOfTasks = 1,
-      configs = Map.empty
+      className = Some(classOf[DumbSink].getName),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      numberOfTasks = Some(1),
+      settings = Map.empty
     )
 
     val sink = result(access.add(request))
@@ -142,7 +143,8 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       CommonUtils.await(() => result(workerClient.status(sink.id)).connector.state == ConnectorState.RUNNING,
                         Duration.ofSeconds(20))
 
-      an[IllegalArgumentException] should be thrownBy result(access.update(sink.id, request.copy(numberOfTasks = 2)))
+      an[IllegalArgumentException] should be thrownBy result(
+        access.update(sink.id, request.copy(settings = Map("a" -> JsString("b")))))
 
       // test stop. the connector should be removed
       Await.result(access.stop(sink.id), 10 seconds)
@@ -169,11 +171,11 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = classOf[DumbSink].getName,
-      schema = Seq.empty,
-      topics = Seq(topic.id),
-      numberOfTasks = 1,
-      configs = Map.empty
+      className = Some(classOf[DumbSink].getName),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      numberOfTasks = Some(1),
+      settings = Map.empty
     )
 
     val sink = result(access.add(request))

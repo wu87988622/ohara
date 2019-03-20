@@ -41,7 +41,6 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[MyConnector])
         .name(connectorName)
         .numberOfTasks(1)
-        .disableConverter()
         .create)
 
     try assertExist(workerClient, connectorName)
@@ -61,7 +60,6 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[BrokenConnector])
         .name(connectorName)
         .numberOfTasks(1)
-        .disableConverter()
         .create)
 
     try assertExist(workerClient, connectorName)
@@ -79,7 +77,6 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[MyConnector])
         .name(connectorName)
         .numberOfTasks(1)
-        .disableConverter()
         .create)
     try {
       assertExist(workerClient, connectorName)
@@ -104,7 +101,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
         // try to receive all data from topic...10 seconds should be enough in this case
         rows = consumer.poll(java.time.Duration.ofSeconds(10), Int.MaxValue)
-        rows.asScala.foreach(_.value.get shouldBe ROW)
+        rows.asScala.foreach(_.key.get shouldBe ROW)
 
         // connector is paused so there is no data
         rows = consumer.poll(java.time.Duration.ofSeconds(20), 1)
@@ -127,7 +124,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     val name = CommonUtils.randomString(10)
     val topicName = CommonUtils.randomString(10)
     val numberOfTasks = 1
-    val configValidation = result(
+    val settingInfo = result(
       workerClient
         .connectorValidator()
         .topicName(topicName)
@@ -135,17 +132,10 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
         .name(name)
         .numberOfTasks(numberOfTasks)
         .run)
-    configValidation.className shouldBe classOf[MyConnector].getName
-    configValidation.definitions.size should not be 0
-    configValidation.validatedValues.size should not be
-      // the value "name" should exit
-      configValidation.validatedValues.filter(_.value.nonEmpty).find(_.value.get == name) should not be None
-    // source connector doesn't remand the topic so we can't assume the topic
-//    configValidation.validatedValues.filter(_.value.nonEmpty)
-//      .find(_.value.get == topicName) should not be None
-    // the value "numberOfTasks" should exit
-    configValidation.validatedValues
-      .filter(_.value.nonEmpty)
-      .find(_.value.get == numberOfTasks.toString) should not be None
+    settingInfo.className.get shouldBe classOf[MyConnector].getName
+    settingInfo.settings.size should not be 0
+    settingInfo.name.get shouldBe name
+    settingInfo.topicNames.asScala shouldBe Seq(topicName)
+    settingInfo.numberOfTasks.get shouldBe numberOfTasks
   }
 }

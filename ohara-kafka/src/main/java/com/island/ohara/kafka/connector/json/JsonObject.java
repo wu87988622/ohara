@@ -14,23 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka;
+package com.island.ohara.kafka.connector.json;
 
-import com.island.ohara.kafka.connector.RowSourceRecord;
-import com.island.ohara.kafka.connector.RowSourceTask;
-import com.island.ohara.kafka.connector.TaskConfig;
-import java.util.Collections;
-import java.util.List;
+public interface JsonObject {
 
-public class UnrunnableConnectorTask extends RowSourceTask {
-  @Override
-  protected void _start(TaskConfig config) {}
-
-  @Override
-  protected void _stop() {}
-
-  @Override
-  protected List<RowSourceRecord> _poll() {
-    return Collections.emptyList();
+  default String toJsonString() {
+    return JsonUtils.toString(this);
   }
 }

@@ -18,16 +18,17 @@ package com.island.ohara.configurator.route
 import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.{BrokerCollie, WorkerCollie}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.ValidationApi._
-import com.island.ohara.client.configurator.v0.{ConnectorApi, Parameters}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.endpoint.Validator
 import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerCollie}
-import com.island.ohara.kafka.connector.ConnectorUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -157,50 +158,19 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         }
       ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
         put {
-          entity(as[ConnectorValidationRequest])(req =>
-            onSuccess(CollieUtils.workerClient(Some(req.workerClusterName)).flatMap {
+          entity(as[ConnectorCreationRequest])(req =>
+            onSuccess(CollieUtils.workerClient(req.workerClusterName).flatMap {
               case (_, workerClient) =>
                 workerClient
                   .connectorValidator()
-                  .name(req.name)
                   .className(req.className)
-                  .numberOfTasks(req.numberOfTasks)
+                  .columns(req.columns)
+                  .settings(req.plain)
                   .topicNames(req.topicNames)
-                  .configs(req.configs)
+                  .numberOfTasks(req.numberOfTasks)
+                  .name(req.name.getOrElse(CommonUtils.randomString()))
                   .run
-                  .map {
-                    validationResponse =>
-                      // we have to replace worker's keyword by ohara's keyword
-                      validationResponse.copy(
-                        definitions = validationResponse.definitions.map {
-                          definition =>
-                            // TODO: Could we avoid hard code?? by chia
-                            definition.name match {
-                              case ConnectorUtils.CONNECTOR_CLASS_KEY =>
-                                definition.copy(name = ConnectorApi.CLASS_NAME_KEY)
-                              case ConnectorUtils.TOPIC_NAMES_KEY =>
-                                definition.copy(name = ConnectorApi.TOPIC_NAME_KEY)
-                              case ConnectorUtils.NUMBER_OF_TASKS_KEY =>
-                                definition.copy(name = ConnectorApi.NUMBER_OF_TASKS_KEY)
-                              case _ => definition
-                            }
-                        },
-                        validatedValues = validationResponse.validatedValues.map {
-                          validatedValue =>
-                            // TODO: Could we avoid hard code?? by chia
-                            validatedValue.name match {
-                              case ConnectorUtils.CONNECTOR_CLASS_KEY =>
-                                validatedValue.copy(name = ConnectorApi.CLASS_NAME_KEY)
-                              case ConnectorUtils.TOPIC_NAMES_KEY =>
-                                validatedValue.copy(name = ConnectorApi.TOPIC_NAME_KEY)
-                              case ConnectorUtils.NUMBER_OF_TASKS_KEY =>
-                                validatedValue.copy(name = ConnectorApi.NUMBER_OF_TASKS_KEY)
-                              case _ => validatedValue
-                            }
-                        }
-                      )
-                  }
-            })(complete(_)))
+            })(settingInfo => complete(HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
         }
       }
     }

@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector;
+package com.island.ohara.kafka.connector.json;
 
-import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
-import static org.junit.Assert.assertEquals;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.kafka.connect.runtime.rest.entities.ConfigInfos;
 
-import com.island.ohara.common.rule.SmallTest;
-import com.island.ohara.common.util.VersionUtils;
-import org.junit.Test;
+public final class KafkaJsonUtils {
+  public static ConfigInfos toConfigInfos(String json) {
+    return JsonUtils.toObject(json, new TypeReference<ConfigInfos>() {});
+  }
 
-public class TestConnector extends SmallTest {
-
-  /**
-   * this test is used to prevent us from breaking the format from version exposed to kafka
-   * connector
-   */
-  @Test
-  public void testVersion() {
-    assertEquals(VERSION, VersionUtils.VERSION + "_" + VersionUtils.REVISION);
+  public static String toString(ConfigInfos configInfos) {
+    return JsonUtils.toString(configInfos);
   }
 }

@@ -60,11 +60,11 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = "asdasdasd",
-          schema = Seq.empty,
-          topics = Seq(topic.id),
-          numberOfTasks = 1,
-          configs = Map.empty
+          className = Some("asdasdasd"),
+          columns = Seq.empty,
+          topicNames = Seq(topic.id),
+          numberOfTasks = Some(1),
+          settings = Map.empty
         )))
     an[IllegalArgumentException] should be thrownBy result(
       ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).start(connector.id))
@@ -93,11 +93,11 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = classOf[DumbSink].getName,
-          schema = Seq.empty,
-          topics = Seq(topic.id),
-          numberOfTasks = 1,
-          configs = Map("you_should_fail" -> "asdasd")
+          className = Some(classOf[DumbSink].getName),
+          columns = Seq.empty,
+          topicNames = Seq(topic.id),
+          numberOfTasks = Some(1),
+          settings = Map("you_should_fail" -> "asdasd")
         )))
 
     result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).start(connector.id))

@@ -38,9 +38,9 @@ class SimpleRowSourceTask extends RowSourceTask {
     this.config = config
     this.consumer = Consumer
       .builder[Row, Array[Byte]]()
-      .connectionProps(config.options.get(BROKER))
+      .connectionProps(config.stringValue(BROKER))
       .groupId(config.name)
-      .topicName(config.options.get(INPUT))
+      .topicName(config.stringValue(INPUT))
       .offsetFromBegin()
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
@@ -52,7 +52,8 @@ class SimpleRowSourceTask extends RowSourceTask {
           .asScala
           .filter(_.key.isPresent)
           .map(_.key.get)
-          .flatMap(row => config.topics.asScala.map(topic => RowSourceRecord.builder().row(row).topic(topic).build()))
+          .flatMap(row =>
+            config.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topic(topic).build()))
           .foreach(r => queue.put(r))
       } finally Releasable.close(consumer)
     }

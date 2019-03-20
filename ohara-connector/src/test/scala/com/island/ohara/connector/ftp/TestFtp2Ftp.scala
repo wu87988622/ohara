@@ -101,10 +101,9 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSink])
         .numberOfTasks(1)
-        .disableConverter()
         .name(sinkName)
         .columns(schema)
-        .configs(sinkProps.toMap)
+        .settings(sinkProps.toMap)
         .create,
       10 seconds
     )
@@ -117,10 +116,9 @@ class TestFtp2Ftp extends With3Brokers3Workers with Matchers {
             .topicName(topicName)
             .connectorClass(classOf[FtpSource])
             .numberOfTasks(1)
-            .disableConverter()
             .name(sourceName)
             .columns(schema)
-            .configs(sourceProps.toMap)
+            .settings(sourceProps.toMap)
             .create,
           10 seconds
         )

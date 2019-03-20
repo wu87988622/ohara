@@ -142,9 +142,8 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicName(topicName)
         .numberOfTasks(2)
-        .disableConverter()
         .columns(schema)
-        .configs(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> topicName2))
+        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> topicName2))
         .create)
 
     try {
@@ -183,9 +182,8 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[SimpleRowSourceConnector])
         .topicName(topicName2)
         .numberOfTasks(2)
-        .disableConverter()
         .columns(schema)
-        .configs(Map(BROKER -> testUtil.brokersConnProps, INPUT -> topicName))
+        .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> topicName))
         .create)
 
     try {
@@ -254,9 +252,8 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
         .connectorClass(classOf[SimpleRowSinkConnector])
         .topicNames(topics)
         .numberOfTasks(2)
-        .disableConverter()
         .columns(schema)
-        .configs(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
+        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
         .create)
 
     val activeConnectors = result(workerClient.activeConnectors)

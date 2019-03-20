@@ -23,7 +23,7 @@ import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.ftp.FtpSource.LOG
 import com.island.ohara.connector.ftp.FtpSourceTask._
-import com.island.ohara.kafka.connector.{RowSourceContext, RowSourceRecord, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -202,11 +202,11 @@ class FtpSourceTask extends RowSourceTask {
     .asJava
 
   override protected[ftp] def _start(config: TaskConfig): Unit = {
-    this.props = FtpSourceTaskProps(config.options.asScala.toMap)
+    this.props = FtpSourceTaskProps(config.raw().asScala.toMap)
     this.schema = config.columns.asScala
     if (props.inputFolder.isEmpty)
       throw new IllegalArgumentException(s"invalid input:${props.inputFolder.mkString(",")}")
-    topics = config.topics.asScala
+    topics = config.topicNames().asScala
     ftpClient =
       FtpClient.builder().hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
     cache = OffsetCache()

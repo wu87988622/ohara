@@ -22,21 +22,19 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public enum DataType {
-  BYTES((short) 0, "bytes", "byte array"),
-  BOOLEAN((short) 1, "boolean"),
-  BYTE((short) 2, "byte"),
-  SHORT((short) 3, "short"),
-  INT((short) 4, "int", "integer"),
-  LONG((short) 5, "long"),
-  FLOAT((short) 6, "float"),
-  DOUBLE((short) 7, "double"),
-  STRING((short) 8, "string"),
-  OBJECT((short) 9, "object"),
-  ROW((short) 10, "row");
+  BYTES((short) 0),
+  BOOLEAN((short) 1),
+  BYTE((short) 2),
+  SHORT((short) 3),
+  INT((short) 4),
+  LONG((short) 5),
+  FLOAT((short) 6),
+  DOUBLE((short) 7),
+  STRING((short) 8),
+  OBJECT((short) 9),
+  ROW((short) 10);
 
   public final short order;
-  public final String name;
-  public final String alias;
 
   /**
    * seek the data type by the index
@@ -49,19 +47,6 @@ public enum DataType {
         .filter(t -> t.order == order)
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("unknown order:" + order));
-  }
-
-  /**
-   * seek the data type by the type name
-   *
-   * @param name index from data type
-   * @return Data type
-   */
-  public static DataType of(String name) {
-    return Stream.of(DataType.values())
-        .filter(t -> t.name.equalsIgnoreCase(name) || t.alias.equalsIgnoreCase(name))
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("unknown name:" + name));
   }
 
   /**
@@ -87,13 +72,7 @@ public enum DataType {
 
   public static final List<DataType> all = Arrays.asList(DataType.values());
 
-  DataType(short order, String name) {
-    this(order, name, name);
-  }
-
-  DataType(short order, String name, String alias) {
+  DataType(short order) {
     this.order = order;
-    this.name = name;
-    this.alias = alias;
   }
 }

@@ -19,7 +19,8 @@ import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.connector.{RowSourceContext, TaskConfig}
+import com.island.ohara.kafka.connector.RowSourceContext
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -62,8 +63,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
 
   private[this] def createTask() = {
     val task = new FtpSourceTask()
-
-    task._start(TaskConfig.builder().name(methodName()).options(props.toMap.asJava).build())
+    task._start(ConnectorFormatter.of().name(methodName()).settings(props.toMap.asJava).taskConfig())
     task
   }
 
@@ -218,13 +218,13 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val task = new FtpSourceTask()
 
     task._start(
-      TaskConfig
-        .builder()
+      ConnectorFormatter
+        .of()
         .name(methodName())
-        .topic(methodName())
+        .topicsName(methodName())
         .columns(schema.asJava)
-        .options(props.toMap.asJava)
-        .build())
+        .settings(props.toMap.asJava)
+        .taskConfig())
     task.transform(data) shouldBe data.map {
       case (index, cells) => (index, Row.of(cells: _*))
     }
@@ -245,7 +245,13 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val task = new FtpSourceTask()
 
     task._start(
-      TaskConfig.builder().name(methodName()).topic(methodName()).column(column).options(props.toMap.asJava).build())
+      ConnectorFormatter
+        .of()
+        .name(methodName())
+        .topicsName(methodName())
+        .column(column)
+        .settings(props.toMap.asJava)
+        .taskConfig())
     val transformedData = task.transform(data)
     transformedData.size shouldBe data.size
     transformedData.values.foreach(row => {

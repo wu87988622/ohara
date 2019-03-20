@@ -56,11 +56,11 @@ class TestOhara1403 extends SmallTest with Matchers {
         .add(ConnectorCreationRequest(
           name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
-          className = classOf[DumbSink].getName,
-          schema = Seq.empty,
-          topics = Seq(topic.id),
-          numberOfTasks = 1,
-          configs = Map.empty
+          className = Some(classOf[DumbSink].getName),
+          columns = Seq.empty,
+          topicNames = Seq(topic.id),
+          numberOfTasks = Some(1),
+          settings = Map.empty
         )),
       10 seconds
     )

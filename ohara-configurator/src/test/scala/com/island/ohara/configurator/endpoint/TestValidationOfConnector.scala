@@ -16,18 +16,17 @@
 
 package com.island.ohara.configurator.endpoint
 
-import com.island.ohara.client.configurator.v0.ValidationApi.ConnectorValidationRequest
-import com.island.ohara.client.configurator.v0.{ConnectorApi, ValidationApi, WorkerApi}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.{Configurator, DumbSink}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
@@ -45,25 +44,20 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(
-          ConnectorValidationRequest(
-            name = name,
-            className = classOf[DumbSink].getName,
-            topicNames = topicNames,
-            numberOfTasks = 1,
-            workerClusterName = wkCluster.name,
-            configs = Map.empty
-          )))
-    response.className shouldBe classOf[DumbSink].getName
-    response.definitions.size should not be 0
-    response.validatedValues.size should not be 0
-    response.validatedValues
-      .find(_.name == ConnectorApi.CLASS_NAME_KEY)
-      .get
-      .value
-      .get shouldBe classOf[DumbSink].getName
-    response.validatedValues.find(_.name == ConnectorApi.NUMBER_OF_TASKS_KEY).get.value.get shouldBe "1"
-    response.validatedValues.find(_.name == ConnectorApi.TOPIC_NAME_KEY).get.value.get shouldBe topicNames.mkString(",")
+        .verify(ConnectorCreationRequest(
+          name = Some(name),
+          className = Some(classOf[DumbSink].getName),
+          topicNames = topicNames,
+          numberOfTasks = Some(1),
+          workerClusterName = Some(wkCluster.name),
+          columns = Seq.empty,
+          settings = Map.empty
+        )))
+    response.className.get() shouldBe classOf[DumbSink].getName
+    response.settings().size() should not be 0
+    response.numberOfTasks().get() shouldBe 1
+    import scala.collection.JavaConverters._
+    response.topicNames().asScala shouldBe topicNames
   }
   @After
   def tearDown(): Unit = Releasable.close(configurator)

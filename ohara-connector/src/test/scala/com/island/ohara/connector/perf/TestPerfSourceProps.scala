@@ -17,7 +17,7 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.kafka.connector.TaskConfig
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -41,33 +41,28 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig.builder().name(methodName()).columns(schema.asJava).options(props.toMap.asJava).build())
+      ConnectorFormatter.of().name(methodName()).columns(schema.asJava).settings(props.toMap.asJava).taskConfig())
   }
 
   @Test
   def testEmptySchema(): Unit = {
     val source = new PerfSource
+
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig.builder().name(methodName()).topics(topics.asJava).options(props.toMap.asJava).build())
+      ConnectorFormatter.of().name(methodName()).topicsNames(topics.asJava).settings(props.toMap.asJava).taskConfig())
   }
 
   @Test
   def testInvalidProps(): Unit = {
-    TaskConfig
-      .builder()
-      .name(methodName())
-      .topics(topics.asJava)
-      .columns(schema.asJava)
-      .options(props.copy(batch = -1).toMap.asJava)
-      .build()
     val source = new PerfSource
+
     an[IllegalArgumentException] should be thrownBy source._start(
-      TaskConfig
-        .builder()
+      ConnectorFormatter
+        .of()
         .name(methodName())
-        .topics(topics.asJava)
+        .topicsNames(topics.asJava)
         .columns(schema.asJava)
-        .options(props.copy(batch = -1).toMap.asJava)
-        .build())
+        .settings(props.copy(batch = -1).toMap.asJava)
+        .taskConfig())
   }
 }

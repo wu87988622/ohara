@@ -16,21 +16,21 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorInfo}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorDescription}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
+import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
 import com.island.ohara.common.data.{Column, ConnectorState, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorsRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
@@ -44,11 +44,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
 
     an[IllegalArgumentException] should be thrownBy result(connectorApi.start(connector.id))
@@ -56,33 +56,34 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
   @Test
   def testSource(): Unit = {
-    def compareRequestAndResponse(request: ConnectorCreationRequest, response: ConnectorInfo): ConnectorInfo = {
+    def compareRequestAndResponse(request: ConnectorCreationRequest,
+                                  response: ConnectorDescription): ConnectorDescription = {
       request.name.foreach(_ shouldBe response.name)
-      request.schema shouldBe response.schema
-      request.configs shouldBe response.configs
+      request.columns shouldBe response.columns
+      request.settings shouldBe response.settings.filter(_._1 != ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
       response
     }
 
-    def compare2Response(lhs: ConnectorInfo, rhs: ConnectorInfo): Unit = {
+    def compare2Response(lhs: ConnectorDescription, rhs: ConnectorDescription): Unit = {
       lhs.id shouldBe rhs.id
       lhs.name shouldBe rhs.name
-      lhs.schema shouldBe rhs.schema
-      lhs.configs shouldBe rhs.configs
+      lhs.columns shouldBe rhs.columns
+      lhs.settings shouldBe rhs.settings
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val schema = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                     Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+    val columns = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
+                      Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     // test add
     result(connectorApi.list).size shouldBe 0
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = schema,
-      configs = Map("c0" -> "v0", "c1" -> "v1"),
-      topics = Seq.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = columns,
+      settings = Map("c0" -> "v0", "c1" -> "v1"),
+      topicNames = Seq.empty,
+      numberOfTasks = Some(1)
     )
     val response =
       compareRequestAndResponse(request, result(connectorApi.add(request)))
@@ -94,11 +95,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     val anotherRequest = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = schema,
-      configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-      topics = Seq.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = columns,
+      settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+      topicNames = Seq.empty,
+      numberOfTasks = Some(1)
     )
     val newResponse =
       compareRequestAndResponse(anotherRequest, result(connectorApi.update(response.id, anotherRequest)))
@@ -126,11 +127,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = illegalOrder,
-        configs = Map("c0" -> "v0", "c1" -> "v1"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = illegalOrder,
+        settings = Map("c0" -> "v0", "c1" -> "v1"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
     result(connectorApi.list).size shouldBe 0
 
@@ -140,44 +141,45 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = duplicateOrder,
-        configs = Map("c0" -> "v0", "c1" -> "v1"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = duplicateOrder,
+        settings = Map("c0" -> "v0", "c1" -> "v1"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
     result(connectorApi.list).size shouldBe 0
   }
 
   @Test
   def testSink(): Unit = {
-    def compareRequestAndResponse(request: ConnectorCreationRequest, response: ConnectorInfo): ConnectorInfo = {
+    def compareRequestAndResponse(request: ConnectorCreationRequest,
+                                  response: ConnectorDescription): ConnectorDescription = {
       request.name.foreach(_ shouldBe response.name)
-      request.configs shouldBe response.configs
+      request.settings shouldBe response.settings.filter(_._1 != ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
       response
     }
 
-    def compare2Response(lhs: ConnectorInfo, rhs: ConnectorInfo): Unit = {
+    def compare2Response(lhs: ConnectorDescription, rhs: ConnectorDescription): Unit = {
       lhs.id shouldBe rhs.id
       lhs.name shouldBe rhs.name
-      lhs.schema shouldBe rhs.schema
-      lhs.configs shouldBe rhs.configs
+      lhs.columns shouldBe rhs.columns
+      lhs.settings shouldBe rhs.settings
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val schema = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                     Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+    val columns = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
+                      Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
 
     // test add
     result(connectorApi.list).size shouldBe 0
     val request = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = schema,
-      configs = Map("c0" -> "v0", "c1" -> "v1"),
-      topics = Seq.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = columns,
+      settings = Map("c0" -> "v0", "c1" -> "v1"),
+      topicNames = Seq.empty,
+      numberOfTasks = Some(3)
     )
     val response =
       compareRequestAndResponse(request, result(connectorApi.add(request)))
@@ -189,11 +191,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
     val anotherRequest = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = schema,
-      configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-      topics = Seq.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = columns,
+      settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+      topicNames = Seq.empty,
+      numberOfTasks = Some(1)
     )
     val newResponse =
       compareRequestAndResponse(anotherRequest, result(connectorApi.update(response.id, anotherRequest)))
@@ -222,11 +224,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = illegalOrder,
-        configs = Map("c0" -> "v0", "c1" -> "v1"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = illegalOrder,
+        settings = Map("c0" -> "v0", "c1" -> "v1"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
     result(connectorApi.list).size shouldBe 0
 
@@ -236,11 +238,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = duplicateOrder,
-        configs = Map("c0" -> "v0", "c1" -> "v1"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = duplicateOrder,
+        settings = Map("c0" -> "v0", "c1" -> "v1"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
     result(connectorApi.list).size shouldBe 0
   }
@@ -251,11 +253,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
 
     val wk = result(configurator.clusterCollie.workerCollie().remove(connector.workerClusterName))
@@ -272,11 +274,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = Some(CommonUtils.randomString(10)),
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
   }
 
@@ -312,22 +314,22 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       )))
 
     result(
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = Some(wk.name),
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq.empty,
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq.empty,
+        numberOfTasks = Some(1)
       ))).workerClusterName shouldBe wk.name
 
   }
@@ -351,11 +353,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq(topic.id),
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq(topic.id),
+        numberOfTasks = Some(1)
       )))
 
     result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
@@ -382,11 +384,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq(topic.id),
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq(topic.id),
+        numberOfTasks = Some(1)
       )))
 
     result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
@@ -413,11 +415,11 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq(topic.id),
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq(topic.id),
+        numberOfTasks = Some(1)
       )))
 
     result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
@@ -444,16 +446,57 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       connectorApi.add(ConnectorCreationRequest(
         name = Some(CommonUtils.randomString(10)),
         workerClusterName = None,
-        className = "jdbc",
-        schema = Seq.empty,
-        configs = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
-        topics = Seq(topic.id),
-        numberOfTasks = 1
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq(topic.id),
+        numberOfTasks = Some(1)
       )))
 
     result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING)
 
     (0 to 10).foreach(_ => result(connectorApi.start(connector.id)).state shouldBe Some(ConnectorState.RUNNING))
+  }
+
+  @Test
+  def failToChangeWorkerCluster(): Unit = {
+    val topic = result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(
+            name = Some(CommonUtils.randomString(10)),
+            brokerClusterName = None,
+            numberOfPartitions = None,
+            numberOfReplications = None
+          )))
+
+    val connector = result(
+      connectorApi.add(ConnectorCreationRequest(
+        name = Some(CommonUtils.randomString(10)),
+        workerClusterName = None,
+        className = Some("jdbc"),
+        columns = Seq.empty,
+        settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+        topicNames = Seq(topic.id),
+        numberOfTasks = Some(1)
+      )))
+
+    an[IllegalArgumentException] should be thrownBy result(
+      connectorApi.update(
+        connector.id,
+        ConnectorCreationRequest(
+          name = None,
+          workerClusterName = Some("adadasd"),
+          className = Some("jdbc"),
+          columns = Seq.empty,
+          settings = Map("c0" -> "v0", "c1" -> "v1", "c2" -> "v2"),
+          topicNames = Seq(topic.id),
+          numberOfTasks = Some(1)
+        )
+      ))
   }
 
   @After

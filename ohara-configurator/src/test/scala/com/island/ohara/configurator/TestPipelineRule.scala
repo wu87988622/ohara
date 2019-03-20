@@ -54,11 +54,11 @@ class TestPipelineRule extends SmallTest with Matchers {
     val sourceRequest = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = Seq.empty,
-      topics = Seq(topic.id),
-      configs = Map.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      settings = Map.empty,
+      numberOfTasks = Some(1)
     )
 
     val source = Await.result(access.add(sourceRequest), 10 seconds)
@@ -123,11 +123,11 @@ class TestPipelineRule extends SmallTest with Matchers {
     val sourceRequest = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = Seq.empty,
-      topics = Seq(topic.id),
-      configs = Map.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      settings = Map.empty,
+      numberOfTasks = Some(1)
     )
     val source = Await.result(access.add(sourceRequest), 10 seconds)
 
@@ -184,11 +184,11 @@ class TestPipelineRule extends SmallTest with Matchers {
     val sourceRequest = ConnectorCreationRequest(
       name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
-      className = "jdbc",
-      schema = Seq.empty,
-      topics = Seq.empty,
-      configs = Map.empty,
-      numberOfTasks = 1
+      className = Some("jdbc"),
+      columns = Seq.empty,
+      topicNames = Seq.empty,
+      settings = Map.empty,
+      numberOfTasks = Some(1)
     )
 
     val source = Await.result(access.add(sourceRequest), 10 seconds)
@@ -208,13 +208,15 @@ class TestPipelineRule extends SmallTest with Matchers {
       10 seconds
     )
 
-    val sinkRequest = ConnectorCreationRequest(name = Some(CommonUtils.randomString(10)),
-                                               workerClusterName = None,
-                                               className = "jdbc",
-                                               schema = Seq.empty,
-                                               topics = Seq.empty,
-                                               configs = Map.empty,
-                                               numberOfTasks = 1)
+    val sinkRequest = ConnectorCreationRequest(
+      name = Some(CommonUtils.randomString(10)),
+      workerClusterName = None,
+      className = Some("jdbc"),
+      columns = Seq.empty,
+      topicNames = Seq.empty,
+      settings = Map.empty,
+      numberOfTasks = Some(1)
+    )
 
     val sink = Await.result(access.add(sinkRequest), 10 seconds)
 

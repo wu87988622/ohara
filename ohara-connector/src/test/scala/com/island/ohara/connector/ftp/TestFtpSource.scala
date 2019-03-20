@@ -146,10 +146,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -187,14 +186,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(Seq(
           Column.newBuilder().name("name").newName("newName").dataType(DataType.STRING).order(1).build(),
           Column.newBuilder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
           Column.newBuilder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
         ))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -232,14 +230,13 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(Seq(
           Column.newBuilder().name("name").dataType(DataType.OBJECT).order(1).build(),
           Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
           Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -271,10 +268,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -307,9 +303,8 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -342,11 +337,10 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
         // will use default UTF-8
-        .configs(props.copy(encode = None).toMap)
+        .settings(props.copy(encode = None).toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -378,11 +372,10 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
         // will use default UTF-8
-        .configs(props.copy(encode = Some("")).toMap)
+        .settings(props.copy(encode = Some("")).toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -414,11 +407,10 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         // skip last column
         .columns(schema.slice(0, schema.length - 1))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -447,11 +439,10 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         // the name can't be casted to int
         .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)
@@ -476,10 +467,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.copy(inputFolder = "/abc").toMap)
+        .settings(props.copy(inputFolder = "/abc").toMap)
         .create)
     FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
@@ -494,7 +484,6 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(Seq(
           // 0 is invalid
@@ -502,7 +491,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
           Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
           Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
-        .configs(props.toMap)
+        .settings(props.toMap)
         .create)
     FtpUtils.assertFailedConnector(testUtil, connectorName)
   }
@@ -517,10 +506,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .topicName(topicName)
         .connectorClass(classOf[FtpSource])
         .numberOfTasks(1)
-        .disableConverter()
         .name(connectorName)
         .columns(schema)
-        .configs(props.copy(completedFolder = None).toMap)
+        .settings(props.copy(completedFolder = None).toMap)
         .create)
     try {
       FtpUtils.checkConnector(testUtil, connectorName)

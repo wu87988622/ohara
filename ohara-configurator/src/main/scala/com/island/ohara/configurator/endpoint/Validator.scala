@@ -30,7 +30,7 @@ import com.island.ohara.client.configurator.v0.ValidationApi.{
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.configurator.endpoint.Validator._
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.kafka.Consumer
@@ -56,7 +56,7 @@ import scala.concurrent.duration._
   */
 class Validator extends SourceConnector {
   private[this] var props: util.Map[String, String] = _
-  override def version(): String = com.island.ohara.kafka.connector.ConnectorUtils.VERSION
+  override def version(): String = VersionUtils.VERSION
   override def start(props: util.Map[String, String]): Unit = {
     this.props = new util.HashMap[String, String](props)
     // we don't want to make any exception here
@@ -79,7 +79,7 @@ object Validator {
   private[endpoint] val INTERNAL_TOPIC = "_Validator_topic"
 
   /**
-    * add this to config and then the key pushed to topic will be same with the value
+    * add this to setting and then the key pushed to topic will be same with the value
     */
   private[endpoint] val REQUEST_ID = "requestId"
   private[endpoint] val TARGET = "target"
@@ -139,14 +139,14 @@ object Validator {
     *
     * @param workerClient connector client
     * @param topicAdmin topic admin
-    * @param configs config used to test
+    * @param settings setting used to test
     * @param taskCount the number from task. It implies how many worker nodes should be verified
     * @return reports
     */
   private[this] def run(workerClient: WorkerClient,
                         topicAdmin: TopicAdmin,
                         target: String,
-                        configs: Map[String, String],
+                        settings: Map[String, String],
                         taskCount: Int)(implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] =
     workerClient match {
       // we expose the fake component...ugly way (TODO) by chia
@@ -158,12 +158,11 @@ object Validator {
         workerClient
           .connectorCreator()
           .name(validationName)
-          .disableConverter()
           .className(classOf[Validator].getName)
           .numberOfTasks(taskCount)
           .topicName(INTERNAL_TOPIC)
-          .configs(
-            configs ++ Map(
+          .settings(
+            settings ++ Map(
               REQUEST_ID -> requestId,
               TARGET -> target
             ))
@@ -227,7 +226,7 @@ class ValidatorTask extends SourceTask {
     // do nothing
   }
 
-  override def version(): String = com.island.ohara.kafka.connector.ConnectorUtils.VERSION
+  override def version(): String = VersionUtils.VERSION
 
   private[this] def validate(info: HdfsValidationRequest): String = {
     val config = new Configuration()

@@ -40,14 +40,7 @@ public class TestDataType extends SmallTest {
   public void noDuplicateName() {
     Assert.assertEquals(
         DataType.all.size(),
-        DataType.all.stream().map(t -> t.name).collect(Collectors.toSet()).size());
-  }
-
-  @Test
-  public void noDuplicateAlias() {
-    Assert.assertEquals(
-        DataType.all.size(),
-        DataType.all.stream().map(t -> t.alias).collect(Collectors.toSet()).size());
+        DataType.all.stream().map(Enum<DataType>::name).collect(Collectors.toSet()).size());
   }
 
   @Test
@@ -57,12 +50,7 @@ public class TestDataType extends SmallTest {
 
   @Test
   public void testName() {
-    DataType.all.forEach(t -> Assert.assertEquals(t, DataType.of(t.name)));
-  }
-
-  @Test
-  public void testAlias() {
-    DataType.all.forEach(t -> Assert.assertEquals(t, DataType.of(t.alias)));
+    DataType.all.forEach(t -> Assert.assertEquals(t, DataType.valueOf(t.name())));
   }
 
   @Test

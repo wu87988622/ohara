@@ -18,14 +18,15 @@ package com.island.ohara.connector.jdbc
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.ConnectorUtils
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
 
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestJdbcDefinition extends WithBrokerWorker with Matchers {
 
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
@@ -43,12 +44,49 @@ class TestJdbcDefinition extends WithBrokerWorker with Matchers {
         .connectorClass(classOf[JDBCSourceConnector])
         .run)
 
-    response.definitions.size should not be 0
-    response.definitions.find(_.name == ConnectorUtils.TOPIC_NAMES_KEY).get.required shouldBe true
-    response.definitions.find(_.name == ConnectorUtils.CONNECTOR_CLASS_KEY).get.required shouldBe true
-    response.definitions.find(_.name == ConnectorUtils.NUMBER_OF_TASKS_KEY).get.required shouldBe false
-    response.definitions.find(_.name == ConnectorUtils.COLUMNS_KEY).get.required shouldBe false
-    response.validatedValues.size should not be 0
-    response.validatedValues.foreach(_.errors.size shouldBe 0)
+    response.settings().size should not be 0
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == ConnectorFormatter.TOPIC_NAMES_KEY)
+      .head
+      .definition()
+      .required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == ConnectorFormatter.CLASS_NAME_KEY)
+      .head
+      .definition()
+      .required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == ConnectorFormatter.NUMBER_OF_TASKS_KEY)
+      .head
+      .definition()
+      .required() shouldBe true
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == ConnectorFormatter.COLUMNS_KEY)
+      .head
+      .definition()
+      .required() shouldBe false
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
+      .head
+      .definition()
+      .required() shouldBe false
+    response
+      .settings()
+      .asScala
+      .filter(_.definition().key() == ConnectorFormatter.NAME_KEY)
+      .head
+      .definition()
+      .required() shouldBe true
+    response.errorCount() shouldBe 0
   }
 }

@@ -27,8 +27,8 @@ class PerfSourceTask extends RowSourceTask {
   private[this] var schema: Seq[Column] = _
   private[this] var lastPoll: Long = -1
   override protected def _start(config: TaskConfig): Unit = {
-    this.props = PerfSourceProps(config.options.asScala.toMap)
-    this.topics = config.topics.asScala
+    this.props = PerfSourceProps(config.raw().asScala.toMap)
+    this.topics = config.topicNames().asScala
     this.schema = config.columns.asScala
   }
 

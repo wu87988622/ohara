@@ -16,12 +16,15 @@
 
 package com.island.ohara.kafka.connector;
 
-import static com.island.ohara.kafka.connector.ConnectorUtils.VERSION;
-
+import com.island.ohara.common.util.VersionUtils;
+import com.island.ohara.kafka.connector.json.ConnectorFormatter;
+import com.island.ohara.kafka.connector.json.SettingDefinition;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectorContext;
@@ -39,10 +42,10 @@ public abstract class RowSourceConnector extends SourceConnector {
   protected abstract Class<? extends RowSourceTask> _taskClass();
 
   /**
-   * Return the configs for source task.
+   * Return the settings for source task.
    *
    * @param maxTasks number of tasks for this connector
-   * @return a seq from configs
+   * @return a seq from settings
    */
   protected abstract List<TaskConfig> _taskConfigs(int maxTasks);
 
@@ -62,7 +65,7 @@ public abstract class RowSourceConnector extends SourceConnector {
    *
    * @return The ConfigDef for this connector.
    */
-  protected List<Definition> definitions() {
+  protected List<SettingDefinition> definitions() {
     return Collections.emptyList();
   }
   /**
@@ -71,14 +74,21 @@ public abstract class RowSourceConnector extends SourceConnector {
    * @return the version, formatted as a String
    */
   protected String _version() {
-    return VERSION;
-  };
+    return VersionUtils.VERSION;
+  }
 
+  protected String revision() {
+    return VersionUtils.REVISION;
+  }
+
+  protected String author() {
+    return "you";
+  }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return _taskConfigs(maxTasks).stream().map(ConnectorUtils::toMap).collect(Collectors.toList());
+    return _taskConfigs(maxTasks).stream().map(TaskConfig::raw).collect(Collectors.toList());
   }
 
   @Override
@@ -88,7 +98,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(ConnectorUtils.toTaskConfig(props));
+    _start(TaskConfig.of(new HashMap<>(props)));
   }
 
   @Override
@@ -98,7 +108,13 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final ConfigDef config() {
-    return ConnectorUtils.toConfigDefWithDefault(definitions());
+    return ConnectorFormatter.toConfigDef(
+        Stream.of(definitions(), SettingDefinition.DEFINITIONS_DEFAULT)
+            .flatMap(List::stream)
+            .collect(Collectors.toList()),
+        _version(),
+        revision(),
+        author());
   }
 
   @Override

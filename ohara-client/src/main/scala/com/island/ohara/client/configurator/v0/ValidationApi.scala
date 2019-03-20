@@ -15,7 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.kafka.WorkerJson.ConfigValidationResponse
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol.{jsonFormat3, _}
 import spray.json.{JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -23,6 +24,11 @@ import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
   val VALIDATION_PREFIX_PATH: String = "validate"
   val VALIDATION_HDFS_PREFIX_PATH: String = "hdfs"
+  val WORKER_CLUSTER_NAME_KEY: String = ConnectorFormatter.WORKER_CLUSTER_NAME_KEY
+  val CLASS_NAME_KEY: String = ConnectorFormatter.CLASS_NAME_KEY
+  val TOPIC_NAMES_KEY: String = ConnectorFormatter.TOPIC_NAMES_KEY
+  val NUMBER_OF_TASKS_KEY: String = ConnectorFormatter.NUMBER_OF_TASKS_KEY
+  val COLUMNS_KEY: String = ConnectorFormatter.COLUMNS_KEY
   final case class HdfsValidationRequest(uri: String, workerClusterName: Option[String])
   implicit val HDFS_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[HdfsValidationRequest] = jsonFormat2(
     HdfsValidationRequest)
@@ -83,24 +89,22 @@ object ValidationApi {
   implicit val VALIDATION_REPORT_JSON_FORMAT: RootJsonFormat[ValidationReport] = jsonFormat3(ValidationReport)
 
   val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"
-  final case class ConnectorValidationRequest(name: String,
-                                              className: String,
-                                              topicNames: Seq[String],
-                                              numberOfTasks: Int,
-                                              workerClusterName: String,
-                                              configs: Map[String, String])
-  implicit val CONNECTOR_VALIDATION_REQUEST_JSON_FORMAT: RootJsonFormat[ConnectorValidationRequest] = jsonFormat6(
-    ConnectorValidationRequest)
+
+  implicit val SETTING_INFO_JSON_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
+    import spray.json._
+    override def write(obj: SettingInfo): JsValue = obj.toJsonString.parseJson
+
+    override def read(json: JsValue): SettingInfo = SettingInfo.ofJson(json.toString())
+  }
 
   sealed abstract class Access(prefix: String) extends BasicAccess(prefix) {
 
     /**
-      * used to verify the hdfs information on "default" worker cluster
+      * used to verify the setting of connector on specific worker cluster
       * @param request hdfs info
       * @return validation reports
       */
-    def verify(request: ConnectorValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[ConfigValidationResponse]
+    def verify(request: ConnectorCreationRequest)(implicit executionContext: ExecutionContext): Future[SettingInfo]
 
     /**
       * used to verify the hdfs information on "default" worker cluster
@@ -199,10 +203,9 @@ object ValidationApi {
     override def verify(request: FtpValidationRequest)(
       implicit executionContext: ExecutionContext): Future[Seq[ValidationReport]] = verify(request, null)
 
-    override def verify(request: ConnectorValidationRequest)(
-      implicit executionContext: ExecutionContext): Future[ConfigValidationResponse] =
-      exec.put[ConnectorValidationRequest, ConfigValidationResponse, ErrorApi.Error](
-        url(VALIDATION_CONNECTOR_PREFIX_PATH, null),
-        request)
+    override def verify(request: ConnectorCreationRequest)(
+      implicit executionContext: ExecutionContext): Future[SettingInfo] =
+      exec.put[ConnectorCreationRequest, SettingInfo, ErrorApi.Error](url(VALIDATION_CONNECTOR_PREFIX_PATH, null),
+                                                                      request)
   }
 }
