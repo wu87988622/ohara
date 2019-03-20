@@ -42,6 +42,7 @@ dependencies {
   testImplementation libs.scalatest
   testImplementation libs.junit
   testImplementation libs.kafkaStream
+  testImplementation libs.mockito
 }
 
 task uberJar(type: Jar) {

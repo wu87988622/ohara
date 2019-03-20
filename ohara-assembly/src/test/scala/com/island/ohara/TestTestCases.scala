@@ -16,28 +16,91 @@
 
 package com.island.ohara
 
-import java.net.URL
+import java.io.FileInputStream
+import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 
 import com.island.ohara.common.rule.{LargeTest, MediumTest, SmallTest}
 import com.island.ohara.it.IntegrationTest
-import com.typesafe.scalalogging.Logger
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.collection.mutable.ArrayBuffer
-
 class TestTestCases extends MediumTest with Matchers {
-  private[this] val log = Logger(classOf[TestTestCases])
-  //Currently, We should implement following abstract class in all test cases
-  private[this] val validTestCatalog: Array[Class[_]] =
-    Array(
-      classOf[SmallTest],
-      classOf[MediumTest],
-      classOf[LargeTest],
-      classOf[IntegrationTest]
-    )
-  private[this] val validTestName: Array[String] = validTestCatalog.map(_.getName)
+  private[this] val validTestNames: Seq[String] = Seq(
+    classOf[SmallTest],
+    classOf[MediumTest],
+    classOf[LargeTest],
+    classOf[IntegrationTest]
+  ).map(_.getName)
+
+  private[this] def allSuperClasses(clz: Class[_]): Set[String] = new Iterator[Class[_]] {
+    private[this] var current = clz.getSuperclass
+    def hasNext: Boolean = current != null
+    def next(): Class[_] = try current
+    finally current = current.getSuperclass
+  }.map(_.getName).toSet
+
+  private[this] def testCases(clz: Class[_]): Set[String] = clz.getMethods
+    .filter { m =>
+      val annotations = m.getAnnotations
+      if (annotations == null || annotations.isEmpty) false
+      else annotations.exists(_.annotationType() == classOf[Test])
+    }
+    .map(_.getName)
+    .toSet
+
+  private[this] def testClasses(): Seq[Class[_]] = {
+    val classLoader = ClassLoader.getSystemClassLoader
+    val path = getClass.getPackage.getName.replace('.', '/') + "/"
+    val pattern = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
+    val urls = classLoader.getResources(path)
+    Iterator
+      .continually(urls.nextElement())
+      .takeWhile(_ => urls.hasMoreElements)
+      .map(url => pattern.matcher(url.getFile))
+      .filter(_.find())
+      .map(_.group(1))
+      // hard code but it is ok since it is convention to name the tests jar as "tests.jar"
+      .filter(_.contains("tests.jar"))
+      .flatMap { f =>
+        val jarInput = new JarInputStream(new FileInputStream(f))
+        try Iterator
+          .continually(jarInput.getNextJarEntry)
+          .takeWhile(_ != null)
+          .map(_.getName)
+          .toArray
+          .filter(_.endsWith(".class"))
+          // scala may generate some extra classes
+          .filterNot(_.contains('$'))
+          .map(_.replace('/', '.'))
+          .map(className => className.substring(0, className.length - ".class".length))
+          .map(Class.forName)
+          .filter(_.getSimpleName.startsWith("Test"))
+        finally jarInput.close()
+      }
+      .toSeq
+  }
+
+  @Test
+  def countTestCases(): Unit = println(s"count of test cases:${testClasses().map(testCases).map(_.size).sum}")
+
+  @Test
+  def displayAllCases(): Unit = testClasses().map(clz => clz.getName -> testCases(clz)).toMap.foreach {
+    case (className, cases) =>
+      cases.foreach { c =>
+        println(s"ohara test case:$className.$c")
+      }
+  }
+
+  @Test
+  def failIfTestHasNoTestCase(): Unit = {
+    val classAndCases: Map[Class[_], Set[String]] = testClasses().map(clz => clz -> testCases(clz)).toMap
+    classAndCases.size should not be 0
+    val invalidTests: Map[Class[_], Set[String]] = classAndCases.filter(_._2.isEmpty)
+
+    if (invalidTests.nonEmpty)
+      throw new IllegalArgumentException(s"${invalidTests.keys.map(_.getName).mkString(",")} have no test cases")
+  }
 
   /**
     * fail if any test case have not extended the test catalog.
@@ -45,58 +108,16 @@ class TestTestCases extends MediumTest with Matchers {
     */
   @Test
   def testSupperClassOfTestCases(): Unit = {
-    val classLoader = ClassLoader.getSystemClassLoader
-    val packageName = getClass.getPackage.getName
-    val path = packageName.replace('.', '/') + "/"
-    val pattern = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
+    val classAndSuperClasses = testClasses().map(c => c -> allSuperClasses(c))
+    classAndSuperClasses.size should not be 0
+    val invalidClasses = classAndSuperClasses.filterNot {
+      case (_, superClasses) =>
+        superClasses.exists(n => validTestNames.contains(n))
+    }
 
-    val urls = classLoader.getResources(path)
-    new Iterator[URL] {
-      def hasNext: Boolean = urls.hasMoreElements
-
-      def next(): URL = urls.nextElement()
-    }.map(url => pattern.matcher(url.getFile))
-      .filter(_.find())
-      .map(_.group(1))
-      // hard code but it is ok since it is convention to name the tests jar as "tests.jar"
-      .filter(_.contains("tests.jar"))
-      .foreach(f => {
-        import java.io.FileInputStream
-        import java.util.jar.JarInputStream
-        val jarInput = new JarInputStream(new FileInputStream(f))
-        try {
-          Iterator
-            .continually(jarInput.getNextJarEntry)
-            .takeWhile(_ != null)
-            .map(_.getName)
-            .filter(_.endsWith(".class"))
-            // scala may generate some extra classes
-            .filterNot(_.contains('$'))
-            .map(_.replace('/', '.'))
-            .map(clzName => clzName.substring(0, clzName.length - ".class".length))
-            .foreach(clzName => {
-              def listSuperClassName = (clz: Class[_]) => {
-                def getValidSupperClass(cl: Class[_]): Class[_] = {
-                  if (cl.getSuperclass == null || validTestName.contains(cl.getName)) cl
-                  else getValidSupperClass(cl.getSuperclass)
-                }
-                val buf = new ArrayBuffer[String]
-                val superClz = getValidSupperClass(clz)
-                if (superClz != null) buf += superClz.getName
-                clz.getAnnotatedInterfaces.foreach(interfaceClz => buf += interfaceClz.getType.getTypeName)
-                log.info(s"${clz.getName} have ${buf.mkString(", ")}")
-                buf.toArray
-              }
-              val clz = Class.forName(clzName)
-              if (clz.getSimpleName.startsWith("Test")) {
-                val validClzs = listSuperClassName(clz).filter(c => validTestName.contains(c))
-                withClue(s"$clzName should extend one from ${validTestName.mkString(", ")}") {
-                  validClzs.length shouldBe 1
-                }
-                log.info(s"$clzName matches ${validClzs.head}")
-              } else log.info(s"${clz.getName} doesn't belong to test case. Skip")
-            })
-        } finally if (jarInput != null) jarInput.close()
-      })
+    if (invalidClasses.nonEmpty)
+      throw new IllegalArgumentException(
+        s"${invalidClasses.mkString(",")}" +
+          s"don't inherit test interfaces:${validTestNames.mkString(",")}")
   }
 }
