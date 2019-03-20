@@ -350,7 +350,7 @@ public class SettingDefinition implements JsonObject {
 
     private Builder() {}
 
-    public Builder internal() {
+    Builder internal() {
       this.internal = true;
       return this;
     }
