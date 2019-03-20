@@ -47,12 +47,12 @@ class WorkerListPage extends React.Component {
 
   state = {
     isModalOpen: false,
-    isNewClusterBtnDisabled: false,
+    isBtnDisabled: false,
   };
 
   componentDidMount() {
     if (this.props.workers.length >= 1) {
-      this.setState({ isNewClusterBtnDisabled: true });
+      this.setState({ isBtnDisabled: true });
     }
   }
 
@@ -62,36 +62,32 @@ class WorkerListPage extends React.Component {
 
     const isUpdate = prevWorkerLen !== nextWorkerLen;
     if (isUpdate && nextWorkerLen >= 1) {
-      this.setState({
-        isNewClusterBtnDisabled: true,
-      });
+      this.setState({ isBtnDisabled: true });
     }
   }
 
+  handleModalOpen = () => {
+    this.setState({ isModalOpen: true });
+  };
+
+  handleModalClose = () => {
+    this.setState({ isModalOpen: false });
+  };
+
   render() {
     const { workers, newWorkerSuccess, isLoading } = this.props;
-    const { isModalOpen, isNewClusterBtnDisabled } = this.state;
+    const { isModalOpen, isBtnDisabled } = this.state;
     return (
       <React.Fragment>
         <Box>
           <FormGroup isInline>
             <H2>Services > Connect</H2>
-            <s.TooltipWrapper
-              data-tip={
-                isNewClusterBtnDisabled
-                  ? 'You cannot create more than one cluster'
-                  : undefined
-              }
-            >
-              <s.NewClusterBtn
-                theme={primaryBtn}
-                text="New cluster"
-                disabled={isNewClusterBtnDisabled}
-                handleClick={() => {
-                  this.setState({ isModalOpen: true });
-                }}
-              />
-            </s.TooltipWrapper>
+            <s.NewClusterBtn
+              theme={primaryBtn}
+              text="New cluster"
+              disabled={isBtnDisabled || isLoading}
+              handleClick={this.handleModalOpen}
+            />
 
             <ReactTooltip />
           </FormGroup>
@@ -99,36 +95,42 @@ class WorkerListPage extends React.Component {
             <TableLoader />
           ) : (
             <s.Table headers={this.headers}>
-              {workers.map(worker => (
-                <tr key={worker.name}>
-                  <td>
-                    <s.Link to={`/services/workers/${worker.name}`}>
-                      {worker.name || ''}
-                    </s.Link>
-                  </td>
-                  <td>{join(worker.nodeNames, ', ')}</td>
-                  <td>
-                    {worker.statusTopicName && (
-                      <div>status-topic: {worker.statusTopicName}</div>
-                    )}
-                    {worker.configTopicName && (
-                      <div>config-topic: {worker.configTopicName}</div>
-                    )}
-                    {worker.offsetTopicName && (
-                      <div>offset-topic: {worker.offsetTopicName}</div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {workers.map(
+                ({
+                  name,
+                  nodeNames,
+                  statusTopicName,
+                  configTopicName,
+                  offsetTopicName,
+                }) => (
+                  <tr key={name}>
+                    <td>
+                      <s.Link to={`/services/workers/${name}`}>
+                        {name || ''}
+                      </s.Link>
+                    </td>
+                    <td>{join(nodeNames, ', ')}</td>
+                    <td>
+                      {statusTopicName && (
+                        <div>status-topic: {statusTopicName}</div>
+                      )}
+                      {configTopicName && (
+                        <div>config-topic: {configTopicName}</div>
+                      )}
+                      {offsetTopicName && (
+                        <div>offset-topic: {offsetTopicName}</div>
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
             </s.Table>
           )}
         </Box>
         <WorkerNewModal
           isActive={isModalOpen}
-          onClose={() => {
-            this.setState({ isModalOpen: false });
-          }}
           onConfirm={newWorkerSuccess}
+          onClose={this.handleModalClose}
         />
       </React.Fragment>
     );

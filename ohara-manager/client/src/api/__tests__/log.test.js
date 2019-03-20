@@ -37,9 +37,8 @@ describe('fetchLogs()', () => {
 
     const result = await fetchLogs(serviceName, clusterName);
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    // TODO: cluster=xx is deprecated. Use ${url}/${serviceName}/clusterName replace ... by chia
     expect(axiosInstance.get).toHaveBeenCalledWith(
-      `${url}/${serviceName}?cluster=${clusterName}`,
+      `${url}/${serviceName}/${clusterName}`,
     );
     expect(result).toBe(res);
   });
@@ -55,9 +54,8 @@ describe('fetchLogs()', () => {
     const result = await fetchLogs(serviceName, clusterName);
 
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    // TODO: cluster=xx is deprecated. Use ${url}/${serviceName}/clusterName replace ... by chia
     expect(axiosInstance.get).toHaveBeenCalledWith(
-      `${url}/${serviceName}?cluster=${clusterName}`,
+      `${url}/${serviceName}/${clusterName}`,
     );
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);

@@ -189,7 +189,7 @@ class PipelineListPage extends React.Component {
     const params = {
       name: 'Untitled pipeline',
       rules: {},
-      cluster: currWorker.name,
+      workerClusterName: currWorker.name,
     };
 
     this.setState({ isNewPipelineWorking: true });

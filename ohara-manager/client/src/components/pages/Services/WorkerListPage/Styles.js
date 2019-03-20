@@ -49,10 +49,6 @@ const Link = styled(NavLink)`
   }
 `;
 
-const TooltipWrapper = styled.div`
-  margin-left: auto;
-`;
-
 const Icon = styled.i`
   color: ${props => props.theme.lighterBlue};
   font-size: 20px;
@@ -72,4 +68,4 @@ const Icon = styled.i`
   }
 `;
 
-export { Wrapper, NewClusterBtn, Table, Link, Icon, TooltipWrapper };
+export { Wrapper, NewClusterBtn, Table, Link, Icon };

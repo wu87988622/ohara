@@ -142,16 +142,12 @@ describe('createPipeline()', () => {
         isSuccess: true,
       },
     };
-    const { cluster, ...rest } = params;
 
     axiosInstance.post.mockImplementation(() => Promise.resolve(res));
 
     const result = await pipelineApi.createPipeline(params);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(
-      `${url}?cluster=${cluster}`,
-      rest,
-    );
+    expect(axiosInstance.post).toHaveBeenCalledWith(url, params);
     expect(result).toBe(res);
   });
 
@@ -161,17 +157,13 @@ describe('createPipeline()', () => {
         isSuccess: false,
       },
     };
-    const { cluster, ...rest } = params;
 
     axiosInstance.post.mockImplementation(() => Promise.resolve(res));
 
     const result = await pipelineApi.createPipeline(params);
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
-    expect(axiosInstance.post).toHaveBeenCalledWith(
-      `${url}?cluster=${cluster}`,
-      rest,
-    );
+    expect(axiosInstance.post).toHaveBeenCalledWith(url, params);
     expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(result);
   });

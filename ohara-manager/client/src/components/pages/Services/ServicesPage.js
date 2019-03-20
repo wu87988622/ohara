@@ -21,12 +21,12 @@ import { Redirect } from 'react-router-dom';
 import { isEmpty, sortBy, get } from 'lodash';
 
 import * as workerApi from 'api/workerApi';
-import * as s from './Styles';
-import { SERVICES } from 'constants/documentTitles';
 import BrokerListPage from './BrokerListPage';
 import ZookeeperListPage from './ZookeeperListPage';
 import WorkerListPage from './WorkerListPage';
 import WorkerDetailPage from './WorkerDetailPage';
+import { SERVICES } from 'constants/documentTitles';
+import { Layout, Link, SubLink } from './Styles';
 
 const BROKERS = 'brokers';
 const ZOOKEEPERS = 'zookeepers';
@@ -95,37 +95,29 @@ class ServicesPage extends React.Component {
 
   render() {
     const { match } = this.props;
-    if (match.url === '/services') {
-      return <Redirect to={`/services/${WORKERS}`} />;
-    }
-
     const { workers } = this.state;
+    const baseUrl = '/services';
+
+    if (match.url === baseUrl) {
+      return <Redirect to={`${baseUrl}/${WORKERS}`} />;
+    }
 
     return (
       <DocumentTitle title={SERVICES}>
-        <React.Fragment>
-          <s.Layout>
-            <div>
-              <div>
-                <s.Link to={`/services/${BROKERS}`}>Broker</s.Link>
-                <s.Divider />
-                <s.Link to={`/services/${ZOOKEEPERS}`}>Zookeeper</s.Link>
-                <s.Divider />
-                <s.Link to={`/services/${WORKERS}`}>Connect</s.Link>
-                {workers &&
-                  workers.map(worker => (
-                    <s.SubLink
-                      key={worker.name}
-                      to={`/services/${WORKERS}/${worker.name}`}
-                    >
-                      {worker.name}
-                    </s.SubLink>
-                  ))}
-              </div>
-              <div>{this.switchComponent()}</div>
-            </div>
-          </s.Layout>
-        </React.Fragment>
+        <Layout>
+          <div className="sidebar">
+            <Link to={`${baseUrl}/${BROKERS}`}>Broker</Link>
+            <Link to={`${baseUrl}/${ZOOKEEPERS}`}>Zookeeper</Link>
+            <Link to={`${baseUrl}/${WORKERS}`}>Connect</Link>
+            {workers &&
+              workers.map(({ name }) => (
+                <SubLink key={name} to={`${baseUrl}/${WORKERS}/${name}`}>
+                  {name}
+                </SubLink>
+              ))}
+          </div>
+          <div className="main">{this.switchComponent()}</div>
+        </Layout>
       </DocumentTitle>
     );
   }

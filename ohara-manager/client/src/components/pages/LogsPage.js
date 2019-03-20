@@ -40,6 +40,12 @@ export const TopWrapper = styled.div`
   align-items: center;
 `;
 
+const Line = styled.div`
+  color: ${props => props.theme.lightBlue};
+  line-height: 1.6;
+  font-size: 13px;
+`;
+
 const ZOOKEEPERS = 'zookeepers';
 const BROKERS = 'brokers';
 const WORKERS = 'workers';
@@ -47,13 +53,7 @@ const WORKERS = 'workers';
 class LogsPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
-    }).isRequired,
-    history: PropTypes.shape({
-      push: PropTypes.func,
+      params: PropTypes.object.isRequired,
     }).isRequired,
   };
 
@@ -96,7 +96,7 @@ class LogsPage extends React.Component {
     const logLines = split(logContext, `\n`);
     return (
       <DocumentTitle title={SERVICES}>
-        <React.Fragment>
+        <>
           <Wrapper>
             <TopWrapper>
               <H2>Error log of cluster {clusterName}</H2>
@@ -105,18 +105,15 @@ class LogsPage extends React.Component {
               {isLoading ? (
                 <TableLoader />
               ) : (
-                <div>
+                <>
                   {map(logLines, (logLine, i) => (
-                    <span key={i}>
-                      {logLine}
-                      <br />
-                    </span>
+                    <Line key={i}>{logLine}</Line>
                   ))}
-                </div>
+                </>
               )}
             </Box>
           </Wrapper>
-        </React.Fragment>
+        </>
       </DocumentTitle>
     );
   }

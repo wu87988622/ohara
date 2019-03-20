@@ -48,12 +48,9 @@ export const fetchPipelines = async () => {
   }
 };
 
-export const createPipeline = async ({ cluster, ...restParams }) => {
-  // TODO: cluster=xx is deprecated. the parameter "cluster name" is carried by request body now ... by chia
-  const url = `/api/pipelines?cluster=${cluster}`;
-
+export const createPipeline = async params => {
   try {
-    const res = await axiosInstance.post(url, restParams);
+    const res = await axiosInstance.post('/api/pipelines', params);
     const isSuccess = get(res, 'data.isSuccess', false);
 
     if (!isSuccess) {

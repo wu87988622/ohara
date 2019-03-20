@@ -96,11 +96,10 @@ Cypress.Commands.add('insertPipeline', (cluster, pipeline) => {
     name: 'INSERT_PIPELINE',
   });
 
-  // TODO: cluster=xx is deprecated. the parameter "cluster name" is carried by request body now ... by chia
-  cy.request('POST', `/api/pipelines?cluster=${cluster}`, {
+  cy.request('POST', `/api/pipelines`, {
     name: pipeline.name || 'Untitled pipeline',
     rules: pipeline.rules || {},
-    cluster,
+    workerClusterName: cluster,
   });
 });
 

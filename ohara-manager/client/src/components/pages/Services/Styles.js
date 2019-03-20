@@ -18,27 +18,16 @@ import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
 const Layout = styled.div`
+  display: flex;
   padding-top: 75px;
   max-width: 1200px;
   width: calc(100% - 100px);
   margin: auto;
 
-  & > div {
-    display: flex;
-    flex: 1;
-    position: absolute;
-    outline: none;
-    overflow: hidden;
-    flex-direction: row;
-    max-width: 1200px;
+  .main {
+    margin: 20px 0;
+    padding-left: 30px;
     width: 100%;
-    min-height: calc(100% - 100px);
-
-    & > div:not(:first-child) {
-      margin: 1rem 0;
-      padding: 0 2rem;
-      width: 100%;
-    }
   }
 `;
 
@@ -49,6 +38,7 @@ const Link = styled(NavLink)`
   margin: 0.5rem 1rem 0.5rem 0;
   position: relative;
   transition: 0.3s all;
+  margin: 1.5rem 0;
 
   &:hover,
   &.active {
@@ -64,8 +54,4 @@ const SubLink = styled(Link)`
   font-weight: 400;
 `;
 
-const Divider = styled.div`
-  margin: 1.5rem 0;
-`;
-
-export { Layout, Link, SubLink, Divider };
+export { Layout, Link, SubLink };

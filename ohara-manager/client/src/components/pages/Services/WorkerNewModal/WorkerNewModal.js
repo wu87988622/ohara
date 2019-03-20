@@ -21,15 +21,14 @@ import { map, truncate, get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import * as workerApi from 'api/workerApi';
+import * as MESSAGES from 'constants/messages';
+import * as s from './Styles';
+import NodeSelectModal from '../NodeSelectModal';
+import PluginSelectModal from '../PluginSelectModal';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
-import * as MESSAGES from 'constants/messages';
 import { InputField } from 'common/FormFields';
-
-import NodeSelectModal from '../NodeSelectModal';
-import PluginSelectModal from '../PluginSelectModal';
-import * as s from './Styles';
 
 const SELECT_NODE_MODAL = 'selectNodeModal';
 const SELECT_PLUGIN_MODAL = 'selectPluginModal';
@@ -62,6 +61,7 @@ class WorkerNewModal extends React.Component {
       name: this.formatName(values.name),
       plugins: map(values.plugins, 'id'),
     });
+
     const isSuccess = get(res, 'data.isSuccess', false);
     if (isSuccess) {
       form.reset();
@@ -77,6 +77,7 @@ class WorkerNewModal extends React.Component {
    * @param value
    * @returns {string}
    */
+
   formatName = value => {
     if (!value) return '';
     return truncate(value.replace(/[^0-9a-zA-Z]/g, ''), {

@@ -20,9 +20,8 @@ import { handleError, axiosInstance } from 'utils/apiUtils';
 
 export const fetchLogs = async (serviceName, clusterName) => {
   try {
-    // TODO: cluster=xx is deprecated. Use ${url}/${serviceName}/clusterName replace ... by chia
     const res = await axiosInstance.get(
-      `/api/logs/${serviceName}?cluster=${clusterName}`,
+      `/api/logs/${serviceName}/${clusterName}`,
     );
     const isSuccess = get(res, 'data.isSuccess', false);
 
