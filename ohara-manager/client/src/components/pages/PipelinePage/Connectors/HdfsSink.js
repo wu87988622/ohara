@@ -411,7 +411,7 @@ class HdfsSink extends React.Component {
             />
           </FormGroup>
           <FormGroup data-testid="read-from-topic">
-            <Label>Read from topic</Label>
+            <Label>Read topic</Label>
             <Select
               isObject
               name="topics"
@@ -437,9 +437,13 @@ class HdfsSink extends React.Component {
               handleChange={this.handleInputChange}
               disabled={isRunning}
             />
-            <QuicklyFillInWrapper>
-              <HdfsQuicklyFillIn onFillIn={this.quicklyFillIn} />
-            </QuicklyFillInWrapper>
+
+            {/* Incomplete feature, don't display this for now */}
+            {false && (
+              <QuicklyFillInWrapper>
+                <HdfsQuicklyFillIn onFillIn={this.quicklyFillIn} />
+              </QuicklyFillInWrapper>
+            )}
           </FormGroup>
 
           <FormGroup data-testid="write-path">

@@ -266,22 +266,25 @@ class Header extends React.Component {
             >
               <i className="fas fa-info-circle" />
             </Btn>
-            <Btn
-              data-tip="Add a new configuration"
-              data-testid="config-btn"
-              onClick={this.handleConfigModalOpen}
-            >
-              <i className="fas fa-cog" />
-            </Btn>
-            <ReactTooltip />
-            {/* v0.2 先不要顯示 Login */}
+
+            {/* Features not yet finished, don't display them in the UI */}
             {false && (
-              <Login
-                data-testid="login-state"
-                to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
-              >
-                {isLogin ? 'Log out' : 'Log in'}
-              </Login>
+              <>
+                <Btn
+                  data-tip="Add a new configuration"
+                  data-testid="config-btn"
+                  onClick={this.handleConfigModalOpen}
+                >
+                  <i className="fas fa-cog" />
+                </Btn>
+                <ReactTooltip />
+                <Login
+                  data-testid="login-state"
+                  to={isLogin ? URLS.LOGOUT : URLS.LOGIN}
+                >
+                  {isLogin ? 'Log out' : 'Log in'}
+                </Login>
+              </>
             )}
           </RightCol>
         </HeaderWrapper>

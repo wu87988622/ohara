@@ -701,9 +701,13 @@ class FtpSource extends React.Component {
                     handleChange={this.handleInputChange}
                     disabled={isRunning}
                   />
-                  <QuicklyFillInWrapper>
-                    <FtpQuicklyFillIn onFillIn={this.quicklyFillIn} />
-                  </QuicklyFillInWrapper>
+
+                  {/* Incomplete feature, don't display this for now */}
+                  {false && (
+                    <QuicklyFillInWrapper>
+                      <FtpQuicklyFillIn onFillIn={this.quicklyFillIn} />
+                    </QuicklyFillInWrapper>
+                  )}
                 </FormGroup>
 
                 <FormGroup>

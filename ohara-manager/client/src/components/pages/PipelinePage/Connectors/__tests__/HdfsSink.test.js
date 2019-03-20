@@ -65,7 +65,7 @@ describe('<HdfsSink />', () => {
     const select = fromGroup.find('Select');
     const _props = select.props();
 
-    expect(label.children().text()).toBe('Read from topic');
+    expect(label.children().text()).toBe('Read topic');
     expect(select.length).toBe(1);
     expect(select.name()).toBe('Select');
     expect(_props).toHaveProperty('isObject');
