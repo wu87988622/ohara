@@ -80,8 +80,7 @@ public interface SshdServer extends Releasable {
     sshd.setShellFactory(new ProcessShellFactory(Arrays.asList("/bin/sh", "-i", "-l")));
     sshd.setCommandFactory(
         (String command) ->
-            handlers
-                .stream()
+            handlers.stream()
                 .filter(h -> h.belong(command))
                 .findFirst()
                 .map(

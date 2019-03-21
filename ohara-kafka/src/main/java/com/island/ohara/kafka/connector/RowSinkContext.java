@@ -55,9 +55,7 @@ public interface RowSinkContext {
   static RowSinkContext toRowSinkContext(SinkTaskContext context) {
     return offsets ->
         context.offset(
-            offsets
-                .entrySet()
-                .stream()
+            offsets.entrySet().stream()
                 .collect(
                     Collectors.toMap(
                         entry ->

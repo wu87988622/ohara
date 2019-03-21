@@ -55,9 +55,7 @@ public class Creation implements JsonObject {
             // key can't be empty or null
             (k, v) -> CommonUtils.requireNonEmpty(k));
     this.configs =
-        configs
-            .entrySet()
-            .stream()
+        configs.entrySet().stream()
             // the empty or null value should be removed directly...We all hate the unknown value
             // linger in our project.
             .filter(entry -> !CommonUtils.isEmpty(entry.getValue()))

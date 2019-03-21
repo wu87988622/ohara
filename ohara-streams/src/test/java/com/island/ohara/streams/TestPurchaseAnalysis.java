@@ -135,9 +135,7 @@ public class TestPurchaseAnalysis extends WithBroker {
             Assert.assertTrue(
                 "the result should be contain in actualResultMap",
                 actualResultMap.containsKey(record.key().get())
-                    && actualResultMap
-                        .values()
-                        .stream()
+                    && actualResultMap.values().stream()
                         .flatMap(doubles -> Arrays.stream(doubles))
                         .anyMatch((d) -> Math.abs(d - record.value().get()) < THRESHOLD));
           }
@@ -268,8 +266,7 @@ public class TestPurchaseAnalysis extends WithBroker {
   private void produceData(String filename, String topicName, String topicKey) {
     try {
       List<?> dataList = DataImporter.readData(filename);
-      dataList
-          .stream()
+      dataList.stream()
           .map(
               object -> {
                 try {

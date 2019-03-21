@@ -77,8 +77,7 @@ public interface Brokers extends Releasable {
                 })
             .collect(Collectors.toList());
     String connectionProps =
-        brokers
-            .stream()
+        brokers.stream()
             .map(
                 broker ->
                     CommonUtils.hostname() + ":" + broker.boundPort(new ListenerName("PLAINTEXT")))

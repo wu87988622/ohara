@@ -37,9 +37,7 @@ public final class SettingInfo implements JsonObject {
 
   public static SettingInfo of(ConfigInfos configInfos) {
     List<Setting> settings =
-        configInfos
-            .values()
-            .stream()
+        configInfos.values().stream()
             .map(
                 configInfo -> {
                   try {
@@ -92,8 +90,7 @@ public final class SettingInfo implements JsonObject {
   // ------------------------[helper method]------------------------//
   public Optional<String> value(String key) {
     List<String> values =
-        settings
-            .stream()
+        settings.stream()
             .map(Setting::value)
             .filter(v -> v.value() != null && v.key().equals(key))
             .map(SettingValue::value)

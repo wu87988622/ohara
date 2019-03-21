@@ -70,9 +70,7 @@ public class TestBrokerClient extends With3Brokers {
     assertEquals(topicInfo.numberOfReplications(), numberOfReplications);
 
     assertEquals(
-        client
-            .topicDescriptions()
-            .stream()
+        client.topicDescriptions().stream()
             .filter(t -> t.name().equals(topicName))
             .findFirst()
             .get(),
@@ -104,9 +102,7 @@ public class TestBrokerClient extends With3Brokers {
     assertEquals(topicInfo.numberOfReplications(), numberOfReplications);
 
     assertEquals(
-        topicInfo
-            .options()
-            .stream()
+        topicInfo.options().stream()
             .filter(x -> Objects.equals(x.key(), TopicConfig.CLEANUP_POLICY_CONFIG))
             .collect(Collectors.toList())
             .get(0)

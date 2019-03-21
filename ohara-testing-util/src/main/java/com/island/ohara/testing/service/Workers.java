@@ -144,8 +144,7 @@ public interface Workers extends Releasable {
 
       @Override
       public String connectionProps() {
-        return availablePorts
-            .stream()
+        return availablePorts.stream()
             .map(p -> CommonUtils.hostname() + ":" + p)
             .collect(Collectors.joining(","));
       }

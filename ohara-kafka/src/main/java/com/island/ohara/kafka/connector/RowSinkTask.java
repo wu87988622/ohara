@@ -139,8 +139,7 @@ public abstract class RowSinkTask extends SinkTask {
   public final void open(Collection<org.apache.kafka.common.TopicPartition> partitions) {
 
     _open(
-        partitions
-            .stream()
+        partitions.stream()
             .map(p -> new TopicPartition(p.topic(), (p.partition())))
             .collect(Collectors.toList()));
   }
@@ -148,8 +147,7 @@ public abstract class RowSinkTask extends SinkTask {
   @Override
   public final void close(Collection<org.apache.kafka.common.TopicPartition> partitions) {
     _close(
-        partitions
-            .stream()
+        partitions.stream()
             .map(p -> new TopicPartition(p.topic(), (p.partition())))
             .collect(Collectors.toList()));
   }
@@ -159,15 +157,12 @@ public abstract class RowSinkTask extends SinkTask {
       Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> currentOffsets) {
 
     return _preCommit(
-            currentOffsets
-                .entrySet()
-                .stream()
+            currentOffsets.entrySet().stream()
                 .collect(
                     Collectors.toMap(
                         x -> new TopicPartition(x.getKey().topic(), x.getKey().partition()),
                         x -> new TopicOffset(x.getValue().metadata(), x.getValue().offset()))))
-        .entrySet()
-        .stream()
+        .entrySet().stream()
         .collect(
             Collectors.toMap(
                 x ->

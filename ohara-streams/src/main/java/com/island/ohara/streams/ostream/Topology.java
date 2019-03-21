@@ -78,17 +78,12 @@ public class Topology implements AutoCloseable {
   }
 
   List<Poneglyph> getPoneglyphs() {
-    return topology
-        .describe()
-        .subtopologies()
-        .stream()
+    return topology.describe().subtopologies().stream()
         .map(
             subtopology -> {
               Poneglyph pg = new Poneglyph();
               List<Stele> steles =
-                  subtopology
-                      .nodes()
-                      .stream()
+                  subtopology.nodes().stream()
                       .map(
                           node -> {
                             String name =
@@ -101,12 +96,10 @@ public class Topology implements AutoCloseable {
                                 node.getClass().getSimpleName(),
                                 node.name(),
                                 name,
-                                node.predecessors()
-                                    .stream()
+                                node.predecessors().stream()
                                     .map(TopologyDescription.Node::name)
                                     .collect(Collectors.toList()),
-                                node.successors()
-                                    .stream()
+                                node.successors().stream()
                                     .map(TopologyDescription.Node::name)
                                     .collect(Collectors.toList()));
                           })

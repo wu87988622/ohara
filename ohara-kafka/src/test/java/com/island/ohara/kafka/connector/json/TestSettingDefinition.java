@@ -251,8 +251,7 @@ public class TestSettingDefinition extends SmallTest {
   public void testDefaultKeyConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        SettingDefinition.DEFINITIONS_DEFAULT
-            .stream()
+        SettingDefinition.DEFINITIONS_DEFAULT.stream()
             .filter(d -> d.key().equals(ConnectorFormatter.KEY_CONVERTER_KEY))
             .findAny()
             .get()
@@ -263,8 +262,7 @@ public class TestSettingDefinition extends SmallTest {
   public void testDefaultValueConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        SettingDefinition.DEFINITIONS_DEFAULT
-            .stream()
+        SettingDefinition.DEFINITIONS_DEFAULT.stream()
             .filter(d -> d.key().equals(ConnectorFormatter.VALUE_CONVERTER_KEY))
             .findAny()
             .get()

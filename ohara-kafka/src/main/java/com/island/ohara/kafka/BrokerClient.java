@@ -77,8 +77,7 @@ public interface BrokerClient extends Releasable {
   }
 
   default List<TopicDescription> topicDescriptions(List<String> topicNames) {
-    return topicDescriptions()
-        .stream()
+    return topicDescriptions().stream()
         .filter(t -> topicNames.stream().anyMatch(n -> n.equals(t.name())))
         .collect(Collectors.toList());
   }
@@ -180,25 +179,16 @@ public interface BrokerClient extends Releasable {
         return CheckedExceptionUtils.wrap(
             () -> {
               try {
-                return admin
-                    .describeTopics(names)
-                    .all()
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-                    .entrySet()
-                    .stream()
+                return admin.describeTopics(names).all()
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS).entrySet().stream()
                     .map(
                         entry -> {
                           ConfigResource configKey =
                               new ConfigResource(ConfigResource.Type.TOPIC, entry.getKey());
                           try {
                             List<TopicOption> options =
-                                admin
-                                    .describeConfigs(Collections.singletonList(configKey))
-                                    .values()
-                                    .get(configKey)
-                                    .get()
-                                    .entries()
-                                    .stream()
+                                admin.describeConfigs(Collections.singletonList(configKey)).values()
+                                    .get(configKey).get().entries().stream()
                                     .map(
                                         o ->
                                             new TopicOption(
@@ -275,10 +265,7 @@ public interface BrokerClient extends Releasable {
       public Map<String, Integer> brokerPorts() {
         return CheckedExceptionUtils.wrap(
             () ->
-                admin
-                    .describeCluster()
-                    .nodes()
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+                admin.describeCluster().nodes().get(timeout.toMillis(), TimeUnit.MILLISECONDS)
                     .stream()
                     .collect(Collectors.toMap(Node::host, Node::port)),
             handler);

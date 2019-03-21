@@ -153,8 +153,7 @@ public interface Producer<Key, Value> extends Releasable {
                       timestamp,
                       key,
                       value,
-                      headers
-                          .stream()
+                      headers.stream()
                           .map(Builder.this::toKafkaHeader)
                           .collect(Collectors.toList()));
 

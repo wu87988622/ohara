@@ -91,9 +91,7 @@ public abstract class TopicCreator {
     if (this.options == null || this.options.isEmpty() || overwrite) {
       this.options = new HashMap<>(options);
     } else {
-      this.options
-          .entrySet()
-          .stream()
+      this.options.entrySet().stream()
           .filter(x -> options.containsKey(x.getKey()))
           .forEach(
               x -> {

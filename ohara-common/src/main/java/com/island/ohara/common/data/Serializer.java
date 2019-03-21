@@ -191,8 +191,7 @@ public interface Serializer<T> {
         @SuppressWarnings("unchecked")
         private void toV0(ByteArrayOutputStream output, Row row) throws IOException {
           output.write(INT.to(row.cells().size()));
-          row.cells()
-              .stream()
+          row.cells().stream()
               .forEach(
                   c -> {
                     // we have got to cast Cell<?> to Cell<object>. Otherwise, we can't obey CAP#1

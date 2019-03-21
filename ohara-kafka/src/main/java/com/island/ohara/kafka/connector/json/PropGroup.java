@@ -70,9 +70,7 @@ public class PropGroup implements JsonObject {
     this.props =
         new HashMap<>(
             Objects.requireNonNull(
-                props
-                    .entrySet()
-                    .stream()
+                props.entrySet().stream()
                     .filter(entry -> !CommonUtils.isEmpty(entry.getValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
   }

@@ -118,8 +118,7 @@ public interface Row extends Iterable<Cell<?>> {
 
       @Override
       public Cell<?> cell(String name) {
-        return cellsCopy
-            .stream()
+        return cellsCopy.stream()
             .filter(c -> c.name().equals(name))
             .findFirst()
             .orElseThrow(() -> new NoSuchElementException("no cell exists with name:" + name));
