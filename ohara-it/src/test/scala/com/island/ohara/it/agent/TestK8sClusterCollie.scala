@@ -18,9 +18,8 @@ package com.island.ohara.it.agent
 import com.island.ohara.agent.{ClusterCollie, K8SClient, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.CommonUtils
-import org.junit.{Before, Ignore}
+import org.junit.Before
 
-@Ignore("This will be re-enabled by https://github.com/oharastream/ohara/issues/393")
 class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   private[this] val K8S_API_SERVER_URL_KEY: String = "ohara.it.k8s"
   private[this] val K8S_API_NODE_NAME_KEY: String = "ohara.it.k8s.nodename"
