@@ -83,10 +83,7 @@ class FtpSink extends React.Component {
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
+      params: PropTypes.object.isRequired,
     }).isRequired,
     graph: PropTypes.arrayOf(
       PropTypes.shape({

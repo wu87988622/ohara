@@ -27,4 +27,11 @@ const Text = styled(Label)`
   margin-left: 0.5rem;
 `;
 
-export { PreviewWrapper, Text };
+const QuicklyFillInWrapper = styled.div`
+  width: 100%;
+  text-align: right;
+  margin-top: 4px;
+  font-size: 11px;
+`;
+
+export { PreviewWrapper, Text, QuicklyFillInWrapper };

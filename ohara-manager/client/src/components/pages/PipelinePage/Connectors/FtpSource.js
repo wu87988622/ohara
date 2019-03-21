@@ -52,17 +52,6 @@ const FormInner = styled.div`
   padding: 20px;
 `;
 
-const QuicklyFillInWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  margin-top: 4px;
-  & > :first-child {
-    position: absolute;
-    right: 0;
-    font-size: 11px;
-  }
-`;
-
 class FtpSource extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
@@ -703,11 +692,7 @@ class FtpSource extends React.Component {
                   />
 
                   {/* Incomplete feature, don't display this for now */}
-                  {false && (
-                    <QuicklyFillInWrapper>
-                      <FtpQuicklyFillIn onFillIn={this.quicklyFillIn} />
-                    </QuicklyFillInWrapper>
-                  )}
+                  {false && <FtpQuicklyFillIn onFillIn={this.quicklyFillIn} />}
                 </FormGroup>
 
                 <FormGroup>

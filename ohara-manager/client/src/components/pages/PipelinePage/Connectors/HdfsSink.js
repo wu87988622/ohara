@@ -23,9 +23,11 @@ import { get, isEmpty, debounce, includes } from 'lodash';
 
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
+import * as validateApi from 'api/validateApi';
 import * as s from './Styles';
 import { Box } from 'common/Layout';
-import { Input, Select, FormGroup, Label } from 'common/Form';
+import { primaryBtn } from 'theme/btnTheme';
+import { Input, Select, FormGroup, Label, Button } from 'common/Form';
 import { CONFIGURATION } from 'constants/urls';
 import { updateTopic, findByGraphId } from '../pipelineUtils/commonUtils';
 import { handleInputChange } from '../pipelineUtils/hdfsSinkUtils';
@@ -55,17 +57,6 @@ const Checkbox = styled(Input)`
 
 Checkbox.displayName = 'Checkbox';
 
-const QuicklyFillInWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  margin-top: 4px;
-  & > :first-child {
-    position: absolute;
-    right: 0;
-    font-size: 11px;
-  }
-`;
-
 class HdfsSink extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
@@ -74,10 +65,7 @@ class HdfsSink extends React.Component {
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
+      params: PropTypes.object.isRequired,
     }).isRequired,
     graph: PropTypes.arrayOf(
       PropTypes.shape({
@@ -114,6 +102,7 @@ class HdfsSink extends React.Component {
     tempDirectory: '',
     needHeader: true,
     isRedirect: false,
+    IsTestConnectionBtnWorking: false,
   };
 
   componentDidMount() {
@@ -324,6 +313,25 @@ class HdfsSink extends React.Component {
     this.handleTriggerConnectorResponse(action, res);
   };
 
+  handleTestConnection = async e => {
+    e.preventDefault();
+    const { hdfsConnectionUrl: uri } = this.state;
+
+    this.updateIsTestConnectionBtnWorking(true);
+    const res = await validateApi.validateHdfs({ uri });
+    this.updateIsTestConnectionBtnWorking(false);
+
+    const _res = get(res, 'data.isSuccess', false);
+
+    if (_res) {
+      toastr.success(MESSAGES.TEST_SUCCESS);
+    }
+  };
+
+  updateIsTestConnectionBtnWorking = update => {
+    this.setState({ IsTestConnectionBtnWorking: update });
+  };
+
   handleTriggerConnectorResponse = (action, res) => {
     const isSuccess = get(res, 'data.isSuccess', false);
     if (!isSuccess) return;
@@ -371,6 +379,7 @@ class HdfsSink extends React.Component {
       tempDirectory,
       rotateInterval,
       flushLineCount,
+      IsTestConnectionBtnWorking,
     } = this.state;
 
     if (isRedirect) {
@@ -439,11 +448,7 @@ class HdfsSink extends React.Component {
             />
 
             {/* Incomplete feature, don't display this for now */}
-            {false && (
-              <QuicklyFillInWrapper>
-                <HdfsQuicklyFillIn onFillIn={this.quicklyFillIn} />
-              </QuicklyFillInWrapper>
-            )}
+            {false && <HdfsQuicklyFillIn onFillIn={this.quicklyFillIn} />}
           </FormGroup>
 
           <FormGroup data-testid="write-path">
@@ -524,6 +529,17 @@ class HdfsSink extends React.Component {
             />
             <CheckBoxLabel>Include header</CheckBoxLabel>
           </FormGroupCheckbox>
+
+          <FormGroup>
+            <Button
+              theme={primaryBtn}
+              text="Test connection"
+              isWorking={IsTestConnectionBtnWorking}
+              disabled={IsTestConnectionBtnWorking || isRunning}
+              data-testid="test-connection-btn"
+              handleClick={this.handleTestConnection}
+            />
+          </FormGroup>
         </form>
       </Box>
     );

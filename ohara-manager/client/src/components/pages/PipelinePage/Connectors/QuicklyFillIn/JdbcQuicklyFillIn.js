@@ -23,7 +23,7 @@ import { Modal } from 'common/Modal';
 import { FormGroup, Label, Select } from 'common/Form';
 import { Box } from 'common/Layout';
 import { LinkButton } from 'common/Form';
-import { PreviewWrapper, Text } from './styles';
+import { PreviewWrapper, QuicklyFillInWrapper, Text } from './styles';
 
 class JdbcQuicklyFillIn extends React.Component {
   static propTypes = {
@@ -99,7 +99,7 @@ class JdbcQuicklyFillIn extends React.Component {
     const jdbcNames = map(jdbcConfigurations, 'name');
 
     return (
-      <>
+      <QuicklyFillInWrapper>
         <LinkButton handleClick={this.handleModalOpen}>
           Quickly fill in
         </LinkButton>
@@ -143,7 +143,7 @@ class JdbcQuicklyFillIn extends React.Component {
             )}
           </Box>
         </Modal>
-      </>
+      </QuicklyFillInWrapper>
     );
   }
 }

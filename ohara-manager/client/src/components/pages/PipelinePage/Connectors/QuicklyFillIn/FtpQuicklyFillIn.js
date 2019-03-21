@@ -23,7 +23,7 @@ import { Modal } from 'common/Modal';
 import { FormGroup, Label, Select } from 'common/Form';
 import { Box } from 'common/Layout';
 import { LinkButton } from 'common/Form';
-import { PreviewWrapper, Text } from './styles';
+import { PreviewWrapper, QuicklyFillInWrapper, Text } from './styles';
 
 class FtpQuicklyFillIn extends React.Component {
   static propTypes = {
@@ -98,7 +98,7 @@ class FtpQuicklyFillIn extends React.Component {
     const ftpNames = map(ftpConfigurations, 'name');
 
     return (
-      <>
+      <QuicklyFillInWrapper>
         <LinkButton handleClick={this.handleModalOpen}>
           Quickly fill in
         </LinkButton>
@@ -144,7 +144,7 @@ class FtpQuicklyFillIn extends React.Component {
             )}
           </Box>
         </Modal>
-      </>
+      </QuicklyFillInWrapper>
     );
   }
 }

@@ -23,7 +23,7 @@ import { Modal } from 'common/Modal';
 import { FormGroup, Label, Select } from 'common/Form';
 import { Box } from 'common/Layout';
 import { LinkButton } from 'common/Form';
-import { PreviewWrapper, Text } from './styles';
+import { PreviewWrapper, QuicklyFillInWrapper, Text } from './styles';
 
 class HdfsQuicklyFillIn extends React.Component {
   static propTypes = {
@@ -97,7 +97,7 @@ class HdfsQuicklyFillIn extends React.Component {
     const hdfsNames = map(hdfsConfigurations, 'name');
 
     return (
-      <>
+      <QuicklyFillInWrapper>
         <LinkButton handleClick={this.handleModalOpen}>
           Quickly fill in
         </LinkButton>
@@ -131,7 +131,7 @@ class HdfsQuicklyFillIn extends React.Component {
             )}
           </Box>
         </Modal>
-      </>
+      </QuicklyFillInWrapper>
     );
   }
 }

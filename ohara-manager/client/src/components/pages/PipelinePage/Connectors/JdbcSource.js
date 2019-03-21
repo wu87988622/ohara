@@ -72,17 +72,6 @@ const GetTablesBtn = styled(Button)`
   white-space: nowrap;
 `;
 
-const QuicklyFillInWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  margin-top: 4px;
-  & > :first-child {
-    position: absolute;
-    right: 0;
-    font-size: 11px;
-  }
-`;
-
 class JdbcSource extends React.Component {
   static propTypes = {
     hasChanges: PropTypes.bool.isRequired,
@@ -447,11 +436,8 @@ class JdbcSource extends React.Component {
                 disabled={isRunning}
               />
               {/* Incomplete feature, don't display this for now */}
-              {false && (
-                <QuicklyFillInWrapper>
-                  <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />
-                </QuicklyFillInWrapper>
-              )}
+              {false && <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />}
+              <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />
             </FormGroup>
 
             <FormGroup>
