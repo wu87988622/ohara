@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
 import com.island.ohara.kafka.connector.json.SettingDefinition;
 import java.util.Collections;
@@ -76,17 +75,19 @@ public abstract class RowSinkConnector extends SinkConnector {
    * @return the version, formatted as a String
    */
   protected String _version() {
-    return VersionUtils.VERSION;
+    return "unknown";
   }
 
-  /** @return revision of git commit */
   protected String revision() {
-    return VersionUtils.REVISION;
+    return "unknown";
   }
 
-  /** @return author or your boss */
   protected String author() {
-    return "you";
+    return "unknown";
+  }
+
+  protected String typeName() {
+    return "source";
   }
 
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
@@ -119,7 +120,8 @@ public abstract class RowSinkConnector extends SinkConnector {
             .collect(Collectors.toList()),
         _version(),
         revision(),
-        author());
+        author(),
+        typeName());
   }
 
   @Override

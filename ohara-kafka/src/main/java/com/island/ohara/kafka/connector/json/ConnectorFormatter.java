@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.kafka.common.config.ConfigDef;
 
 /**
@@ -59,6 +60,8 @@ public final class ConnectorFormatter {
   static final int REVISION_KEY_ORDER = 9;
   static final String AUTHOR_KEY = "author";
   static final int AUTHOR_KEY_ORDER = 10;
+  static final String CONNECTOR_TYPE_KEY = "connectorType";
+  static final int CONNECTOR_TYPE_KEY_ORDER = 11;
 
   private static ConfigDef.ConfigKey toConfigKey(String key, String value, int order) {
     return SettingDefinition.newBuilder()
@@ -73,12 +76,19 @@ public final class ConnectorFormatter {
   }
 
   public static ConfigDef toConfigDef(
-      List<SettingDefinition> settingDefinitions, String version, String revision, String author) {
+      List<SettingDefinition> settingDefinitions,
+      String version,
+      String revision,
+      String author,
+      String connectorType) {
     ConfigDef def = new ConfigDef();
     settingDefinitions.stream().map(SettingDefinition::toConfigKey).forEach(def::define);
-    def.define(toConfigKey(VERSION_KEY, version, VERSION_KEY_ORDER));
-    def.define(toConfigKey(REVISION_KEY, revision, REVISION_KEY_ORDER));
-    def.define(toConfigKey(AUTHOR_KEY, author, AUTHOR_KEY_ORDER));
+    def.define(toConfigKey(VERSION_KEY, Objects.requireNonNull(version), VERSION_KEY_ORDER));
+    def.define(toConfigKey(REVISION_KEY, Objects.requireNonNull(revision), REVISION_KEY_ORDER));
+    def.define(toConfigKey(AUTHOR_KEY, Objects.requireNonNull(author), AUTHOR_KEY_ORDER));
+    def.define(
+        toConfigKey(
+            CONNECTOR_TYPE_KEY, Objects.requireNonNull(connectorType), CONNECTOR_TYPE_KEY_ORDER));
     return def;
   }
 

@@ -17,7 +17,14 @@
 package com.island.ohara.kafka.connector.json;
 
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.DumbSink;
+import com.island.ohara.kafka.connector.RowSinkConnector;
+import com.island.ohara.kafka.connector.RowSinkTask;
+import com.island.ohara.kafka.connector.RowSourceConnector;
+import com.island.ohara.kafka.connector.RowSourceTask;
+import com.island.ohara.kafka.connector.TaskConfig;
+import java.util.List;
 import org.apache.kafka.common.config.ConfigDef;
 import org.junit.Assert;
 import org.junit.Test;
@@ -115,5 +122,196 @@ public class TestCoreDefinitions extends SmallTest {
     Assert.assertEquals(ConnectorFormatter.AUTHOR_KEY_ORDER, key.orderInGroup);
     Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
     Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+  }
+
+  @Test
+  public void testConnectorType() {
+    DumbSink sink = new DumbSink();
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.CONNECTOR_TYPE_KEY);
+    Assert.assertEquals(ConnectorFormatter.CONNECTOR_TYPE_KEY, key.name);
+    Assert.assertEquals(ConnectorFormatter.CONNECTOR_TYPE_KEY_ORDER, key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
+    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullVersionInSource() {
+    new SourceWithNullableSetting(
+            null,
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString())
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullRevisionInSource() {
+    new SourceWithNullableSetting(
+            CommonUtils.randomString(),
+            null,
+            CommonUtils.randomString(),
+            CommonUtils.randomString())
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullAuthorInSource() {
+    new SourceWithNullableSetting(
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            null,
+            CommonUtils.randomString())
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullConnectorTypeInSource() {
+    new SourceWithNullableSetting(
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            null)
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullVersionInSink() {
+    new SourceWithNullableSetting(
+            null,
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString())
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullRevisionInSink() {
+    new SinkWithNullableSetting(
+            CommonUtils.randomString(),
+            null,
+            CommonUtils.randomString(),
+            CommonUtils.randomString())
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullAuthorInSink() {
+    new SinkWithNullableSetting(
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            null,
+            CommonUtils.randomString())
+        .config();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullConnectorTypeInSink() {
+    new SinkWithNullableSetting(
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            CommonUtils.randomString(),
+            null)
+        .config();
+  }
+
+  private static class SourceWithNullableSetting extends RowSourceConnector {
+    private final String version;
+    private final String revision;
+    private final String author;
+    private final String connectorType;
+
+    SourceWithNullableSetting(
+        String version, String revision, String author, String connectorType) {
+      this.version = version;
+      this.revision = revision;
+      this.author = author;
+      this.connectorType = connectorType;
+    }
+
+    @Override
+    protected Class<? extends RowSourceTask> _taskClass() {
+      return null;
+    }
+
+    @Override
+    protected List<TaskConfig> _taskConfigs(int maxTasks) {
+      return null;
+    }
+
+    @Override
+    protected void _start(TaskConfig config) {}
+
+    @Override
+    protected void _stop() {}
+
+    @Override
+    protected String _version() {
+      return version;
+    }
+
+    @Override
+    protected String author() {
+      return author;
+    }
+
+    @Override
+    protected String revision() {
+      return revision;
+    }
+
+    @Override
+    protected String typeName() {
+      return connectorType;
+    }
+  }
+
+  private static class SinkWithNullableSetting extends RowSinkConnector {
+    private final String version;
+    private final String revision;
+    private final String author;
+    private final String connectorType;
+
+    SinkWithNullableSetting(String version, String revision, String author, String connectorType) {
+      this.version = version;
+      this.revision = revision;
+      this.author = author;
+      this.connectorType = connectorType;
+    }
+
+    @Override
+    protected Class<? extends RowSinkTask> _taskClass() {
+      return null;
+    }
+
+    @Override
+    protected List<TaskConfig> _taskConfigs(int maxTasks) {
+      return null;
+    }
+
+    @Override
+    protected void _start(TaskConfig config) {}
+
+    @Override
+    protected void _stop() {}
+
+    @Override
+    protected String _version() {
+      return version;
+    }
+
+    @Override
+    protected String author() {
+      return author;
+    }
+
+    @Override
+    protected String revision() {
+      return revision;
+    }
+
+    @Override
+    protected String typeName() {
+      return connectorType;
+    }
   }
 }

@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
 import com.island.ohara.kafka.connector.json.SettingDefinition;
 import java.util.Collections;
@@ -74,15 +73,19 @@ public abstract class RowSourceConnector extends SourceConnector {
    * @return the version, formatted as a String
    */
   protected String _version() {
-    return VersionUtils.VERSION;
+    return "unknown";
   }
 
   protected String revision() {
-    return VersionUtils.REVISION;
+    return "unknown";
   }
 
   protected String author() {
-    return "you";
+    return "unknown";
+  }
+
+  protected String typeName() {
+    return "source";
   }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
@@ -114,7 +117,8 @@ public abstract class RowSourceConnector extends SourceConnector {
             .collect(Collectors.toList()),
         _version(),
         revision(),
-        author());
+        author(),
+        typeName());
   }
 
   @Override

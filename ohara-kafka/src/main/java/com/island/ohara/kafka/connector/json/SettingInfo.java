@@ -137,6 +137,10 @@ public final class SettingInfo implements JsonObject {
     return value(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY);
   }
 
+  public Optional<String> connectorType() {
+    return value(ConnectorFormatter.CONNECTOR_TYPE_KEY);
+  }
+
   // ------------------------[json]------------------------//
   @JsonProperty(ERROR_COUNT_KEY)
   public int errorCount() {

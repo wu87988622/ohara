@@ -63,6 +63,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
     response.workerClusterName().isPresent shouldBe true
+    response.connectorType().isPresent shouldBe true
     response.errorCount() shouldBe 0
   }
 
@@ -107,6 +108,7 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.version().isPresent shouldBe true
     response.revision().isPresent shouldBe true
     response.workerClusterName().isPresent shouldBe true
+    response.connectorType().isPresent shouldBe true
     response.errorCount() should not be 0
   }
 
