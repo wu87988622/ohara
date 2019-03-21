@@ -43,7 +43,7 @@ const validateUrl = async url => {
 
   // Ensure the API URL can be reach
   try {
-    await axios.get(`${url}/info`, { timeout: 3000 });
+    await axios.get(`${url}/info`, { timeout: 10000 });
   } catch (err) {
     console.log(
       `

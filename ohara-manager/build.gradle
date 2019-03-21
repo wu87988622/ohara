@@ -54,6 +54,24 @@ task test {
   dependsOn setup
 }
 
+task it {
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        if(!project.hasProperty('port')) throw new IllegalArgumentException("port is required")
+        String port = project.getProperty('port')
+
+        if(!project.hasProperty('configurator')) throw new IllegalArgumentException("configurator is required")
+        String configurator = project.getProperty('configurator')
+
+        commandLine 'yarn', 'test:e2e:ci', '--port', port, "--configurator", configurator
+      }
+    }
+  }
+  dependsOn setup
+}
+
+
 task build {
   dependsOn setup
   dependsOn test

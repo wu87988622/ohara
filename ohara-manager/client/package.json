@@ -8,7 +8,6 @@
   "scripts": {
     "setup": "yarn && yarn build",
     "start": "react-scripts start",
-    "start:ci": "forever start node_modules/react-scripts/scripts/start.js",
     "build": "react-scripts build",
     "lint": "$(npm bin)/eslint src cypress",
     "vet": "yarn audit",
@@ -17,7 +16,7 @@
     "test:report": "CI=true yarn test --reporters=default --reporters=jest-junit",
     "test:coverage": "yarn test --coverage",
     "e2e": "cypress open",
-    "e2e:ci": "cypress run"
+    "e2e:run": "cypress run"
   },
   "dependencies": {
     "classnames": "2.2.6",
