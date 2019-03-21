@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{FtpValidationRequest, ValidationReport}
+import com.island.ohara.client.configurator.v0.ValidationApi.FtpValidationRequest
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.route.ValidationUtils
@@ -24,12 +24,11 @@ import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
-  private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
   private[this] val ftpServer = testUtil.ftpServer
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
@@ -39,24 +38,8 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
     .result(workerClient.plugins, 10 seconds)
     .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
-
-  private[this] def assertFailure(f: Future[Seq[ValidationReport]]): Unit = {
-    val reports = result(f)
-    reports.size shouldBe taskCount
-    reports.isEmpty shouldBe false
-    reports.foreach(report => withClue(report.message)(report.pass shouldBe false))
-  }
-
-  private[this] def assertSuccess(f: Future[Seq[ValidationReport]]): Unit = {
-    val reports = result(f)
-    reports.size shouldBe taskCount
-    reports.isEmpty shouldBe false
-    reports.foreach(report => withClue(report.message)(report.pass shouldBe true))
-  }
-
   @Test
-  def goodCase(): Unit = {
+  def goodCase(): Unit =
     assertSuccess(
       ValidationUtils.run(
         workerClient,
@@ -66,12 +49,10 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
                              user = ftpServer.user,
                              password = ftpServer.password,
                              workerClusterName = None),
-        taskCount
+        NUMBER_OF_TASKS
       ))
-  }
-
   @Test
-  def basCase(): Unit = {
+  def basCase(): Unit =
     assertFailure(
       ValidationUtils.run(
         workerClient,
@@ -81,10 +62,8 @@ class TestValidationOfFtp extends With3Brokers3Workers with Matchers {
                              user = CommonUtils.randomString(10),
                              password = ftpServer.password,
                              workerClusterName = None),
-        taskCount
+        NUMBER_OF_TASKS
       ))
-  }
-
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{HdfsValidationRequest, ValidationReport}
+import com.island.ohara.client.configurator.v0.ValidationApi.HdfsValidationRequest
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.route.ValidationUtils
@@ -24,12 +24,11 @@ import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
-  private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
 
@@ -39,22 +38,32 @@ class TestValidationOfHdfs extends With3Brokers3Workers with Matchers {
       .result(workerClient.plugins, 10 seconds)
       .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
-
-  private[this] def assertSuccess(f: Future[Seq[ValidationReport]]): Unit = {
-    val reports = result(f)
-    reports.size shouldBe taskCount
-    reports.isEmpty shouldBe false
-    reports.foreach(_.pass shouldBe true)
-  }
+  @Test
+  def goodCase(): Unit =
+    assertSuccess(
+      ValidationUtils.run(workerClient,
+                          topicAdmin,
+                          HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None),
+                          NUMBER_OF_TASKS))
+  @Test
+  def badCase(): Unit = assertFailure(
+    ValidationUtils.run(workerClient,
+                        topicAdmin,
+                        HdfsValidationRequest(uri = "hdfs:///tmp", workerClusterName = None),
+                        NUMBER_OF_TASKS))
 
   @Test
-  def goodCase(): Unit = {
-    assertSuccess(
-      ValidationUtils
-        .run(workerClient, topicAdmin, HdfsValidationRequest(uri = "file:///tmp", workerClusterName = None), taskCount))
-  }
+  def emptyUri(): Unit = an[IllegalArgumentException] should be thrownBy
+    ValidationUtils
+      .run(workerClient, topicAdmin, HdfsValidationRequest(uri = "", workerClusterName = None), NUMBER_OF_TASKS)
 
+  /**
+    * the failure is produced by spray json rather than our check. It chooses IllegalArgumentException.
+    */
+  @Test
+  def nullUri(): Unit = an[IllegalArgumentException] should be thrownBy
+    ValidationUtils
+      .run(workerClient, topicAdmin, HdfsValidationRequest(uri = null, workerClusterName = None), NUMBER_OF_TASKS)
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

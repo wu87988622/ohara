@@ -16,19 +16,19 @@
 
 package com.island.ohara.configurator.validation
 
-import com.island.ohara.client.configurator.v0.ValidationApi.{RdbValidationRequest, ValidationReport}
+import com.island.ohara.client.configurator.v0.ValidationApi.RdbValidationRequest
 import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
 import com.island.ohara.common.util.Releasable
+import com.island.ohara.configurator.route.ValidationUtils
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
-import com.island.ohara.configurator.route.ValidationUtils
+
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
-  private[this] val taskCount = 3
   private[this] val topicAdmin = TopicAdmin(testUtil.brokersConnProps)
   private[this] val rdb = testUtil.dataBase
   private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
@@ -39,26 +39,15 @@ class TestValidationOfRdb extends With3Brokers3Workers with Matchers {
       .result(workerClient.plugins, 10 seconds)
       .exists(_.className == "com.island.ohara.connector.validation.Validator") shouldBe true
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
-
-  private[this] def assertSuccess(f: Future[Seq[ValidationReport]]): Unit = {
-    val reports = result(f)
-    reports.size shouldBe taskCount
-    reports.isEmpty shouldBe false
-    reports.foreach(_.pass shouldBe true)
-  }
-
   @Test
-  def goodCase(): Unit = {
+  def goodCase(): Unit =
     assertSuccess(
       ValidationUtils.run(
         workerClient,
         topicAdmin,
         RdbValidationRequest(url = rdb.url, user = rdb.user, password = rdb.password, workerClusterName = None),
-        taskCount
+        NUMBER_OF_TASKS
       ))
-  }
-
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
 }

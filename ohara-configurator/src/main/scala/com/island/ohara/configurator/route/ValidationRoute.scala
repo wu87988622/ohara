@@ -58,6 +58,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
 
   private[this] def fakeReport(): Future[Seq[ValidationReport]] = Future.successful(
     (0 until DEFAULT_NUMBER_OF_VALIDATION).map(_ => ValidationReport(CommonUtils.hostname, "a fake report", true)))
+
   def apply(implicit brokerCollie: BrokerCollie,
             workerCollie: WorkerCollie,
             executionContext: ExecutionContext): server.Route =
