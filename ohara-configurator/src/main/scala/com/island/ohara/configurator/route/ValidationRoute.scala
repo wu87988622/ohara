@@ -28,6 +28,7 @@ import com.island.ohara.client.configurator.v0.Parameters
 import com.island.ohara.client.configurator.v0.ValidationApi._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.fake.{FakeBrokerCollie, FakeWorkerClient, FakeWorkerCollie}
+import com.island.ohara.kafka.connector.json.ConnectorFormatter
 //import com.island.ohara.connector.validation.ValidatorUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
@@ -171,15 +172,14 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
         put {
           entity(as[ConnectorCreationRequest])(req =>
             onSuccess(CollieUtils.workerClient(req.workerClusterName).flatMap {
-              case (_, workerClient) =>
+              case (cluster, workerClient) =>
                 workerClient
                   .connectorValidator()
                   .className(req.className)
-                  .columns(req.columns)
                   .settings(req.plain)
-                  .topicNames(req.topicNames)
-                  .numberOfTasks(req.numberOfTasks)
-                  .name(req.name.getOrElse(CommonUtils.randomString()))
+                  // we define the cluster name again since user may ignore the worker cluster in request
+                  // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
+                  .setting(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY, cluster.name)
                   .run
             })(settingInfo => complete(HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
         }

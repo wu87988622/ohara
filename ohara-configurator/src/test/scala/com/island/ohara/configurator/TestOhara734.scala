@@ -90,7 +90,7 @@ class TestOhara734 extends SmallTest with Matchers {
     request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
     request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
-    request.numberOfTasks shouldBe 1
+    request.numberOfTasks.get shouldBe 1
     request.plain("perf.batch") shouldBe "1"
     request.columns.size shouldBe 2
     request.columns.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
@@ -161,7 +161,7 @@ class TestOhara734 extends SmallTest with Matchers {
     request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
     request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
-    request.numberOfTasks shouldBe 1
+    request.numberOfTasks.get shouldBe 1
     request.plain("perf.batch") shouldBe "1"
     request.columns.size shouldBe 2
     request.columns.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()

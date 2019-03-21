@@ -29,7 +29,10 @@ import java.util.Objects;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
 
-/** This class is used to define the configuration of ohara connector. */
+/**
+ * This class is used to define the configuration of ohara connector. this class is related to
+ * org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo
+ */
 public class SettingDefinition implements JsonObject {
   // -------------------------------[reference]-------------------------------//
   enum Reference {

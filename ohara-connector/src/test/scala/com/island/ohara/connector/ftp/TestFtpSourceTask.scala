@@ -221,7 +221,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
       ConnectorFormatter
         .of()
         .name(methodName())
-        .topicsName(methodName())
+        .topicName(methodName())
         .columns(schema.asJava)
         .settings(props.toMap.asJava)
         .taskConfig())
@@ -248,7 +248,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
       ConnectorFormatter
         .of()
         .name(methodName())
-        .topicsName(methodName())
+        .topicName(methodName())
         .column(column)
         .settings(props.toMap.asJava)
         .taskConfig())

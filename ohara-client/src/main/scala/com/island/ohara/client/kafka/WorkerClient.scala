@@ -205,7 +205,7 @@ object WorkerClient {
               ConnectorFormatter
                 .of()
                 .className(className)
-                .topicsNames(topicNames.asJava)
+                .topicNames(topicNames.asJava)
                 .numberOfTasks(numberOfTasks)
                 .columns(columns.asJava)
                 .converterTypeOfKey(converterTypeOfKey)
@@ -255,22 +255,14 @@ object WorkerClient {
 
       import scala.collection.JavaConverters._
       override def connectorValidator(): Validator =
-        (executionContext, name, className, topicNames, numberOfTasks, columns, configs) => {
+        (executionContext, className, settings) => {
           implicit val exec: ExecutionContext = executionContext
           retry(
             () =>
               HttpExecutor.SINGLETON
                 .put[java.util.Map[String, String], ConfigInfos, Error](
                   s"http://$workerAddress/connector-plugins/$className/config/validate",
-                  ConnectorFormatter
-                    .of()
-                    .name(name)
-                    .className(className)
-                    .topicsNames(topicNames.asJava)
-                    .numberOfTasks(numberOfTasks)
-                    .columns(columns.asJava)
-                    .settings(configs.asJava)
-                    .requestOfValidation()
+                  ConnectorFormatter.of().className(className).settings(settings.asJava).requestOfValidation()
                 )
                 .map(SettingInfo.of),
             "connectorValidator"
@@ -279,13 +271,18 @@ object WorkerClient {
     }
   }
 
-  trait ConnectorProperties {
-    protected var name: String = _
-    protected var className: String = _
-    protected var topicNames: Seq[String] = _
-    protected var numberOfTasks: Int = 1
-    protected var settings: Map[String, String] = Map.empty
-    protected var columns: Seq[Column] = Seq.empty
+  /**
+    * a base class used to collect the setting from source/sink connector when creating
+    */
+  trait Creator {
+    private[this] var converterTypeOfKey: ConverterType = ConverterType.NONE
+    private[this] var converterTypeOfValue: ConverterType = ConverterType.NONE
+    private[this] var name: String = _
+    private[this] var className: String = _
+    private[this] var topicNames: Seq[String] = Seq.empty
+    private[this] var numberOfTasks: Int = 1
+    private[this] var settings: Map[String, String] = Map.empty
+    private[this] var columns: Seq[Column] = Seq.empty
 
     /**
       * set the connector name. It should be a unique name.
@@ -293,7 +290,7 @@ object WorkerClient {
       * @param name connector name
       * @return this one
       */
-    def name(name: String): this.type = {
+    def name(name: String): Creator = {
       this.name = CommonUtils.requireNonEmpty(name)
       this
     }
@@ -304,7 +301,7 @@ object WorkerClient {
       * @param className connector class
       * @return this one
       */
-    def className(className: String): this.type = {
+    def className(className: String): Creator = {
       this.className = CommonUtils.requireNonEmpty(className)
       this
     }
@@ -315,7 +312,7 @@ object WorkerClient {
       * @param clz connector class
       * @return this one
       */
-    def connectorClass[T](clz: Class[T]): this.type = className(Objects.requireNonNull(clz).getName)
+    def connectorClass[T](clz: Class[T]): Creator = className(Objects.requireNonNull(clz).getName)
 
     /**
       * set the topic in which you have interest.
@@ -323,7 +320,7 @@ object WorkerClient {
       * @param topicName topic
       * @return this one
       */
-    def topicName(topicName: String): this.type = {
+    def topicName(topicName: String): Creator = {
       this.topicNames = Seq(CommonUtils.requireNonEmpty(topicName))
       this
     }
@@ -335,7 +332,7 @@ object WorkerClient {
       * @return this one
       */
     @Optional("default is 1")
-    def numberOfTasks(numberOfTasks: Int): this.type = {
+    def numberOfTasks(numberOfTasks: Int): Creator = {
       this.numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks)
       this
     }
@@ -343,11 +340,11 @@ object WorkerClient {
     /**
       * extra setting passed to sink connector. This setting is optional.
       *
-      * @param configs setting
+      * @param settings setting
       * @return this one
       */
     @Optional("default is empty")
-    def settings(settings: Map[String, String]): this.type = {
+    def settings(settings: Map[String, String]): Creator = {
       this.settings = Objects.requireNonNull(settings)
       this
     }
@@ -358,7 +355,7 @@ object WorkerClient {
       * @return this builder
       */
     @Optional("default is all columns")
-    def columns(columns: Seq[Column]): this.type = {
+    def columns(columns: Seq[Column]): Creator = {
       this.columns = Objects.requireNonNull(columns)
       this
     }
@@ -369,21 +366,13 @@ object WorkerClient {
       * @param topicNames topics
       * @return this one
       */
-    def topicNames(topicNames: Seq[String]): this.type = {
+    def topicNames(topicNames: Seq[String]): Creator = {
       import scala.collection.JavaConverters._
       CommonUtils.requireNonEmpty(topicNames.asJavaCollection)
       topicNames.foreach(CommonUtils.requireNonEmpty)
       this.topicNames = topicNames
       this
     }
-  }
-
-  /**
-    * a base class used to collect the setting from source/sink connector when creating
-    */
-  trait Creator extends ConnectorProperties {
-    private[this] var converterTypeOfKey: ConverterType = ConverterType.NONE
-    private[this] var converterTypeOfValue: ConverterType = ConverterType.NONE
 
     /**
       * setting the key converter. By default there is no converter in ohara connector since it enable us to retrieve/send
@@ -447,16 +436,92 @@ object WorkerClient {
                            settings: Map[String, String]): Future[ConnectorCreationResponse]
   }
 
-  trait Validator extends ConnectorProperties {
+  trait Validator {
+
+    /**
+      * we store classname as a member since this member will bed used in url
+      */
+    private[this] var className: String = _
+    private[this] val formatter: ConnectorFormatter = ConnectorFormatter.of()
+
+    /**
+      * set the connector name. It should be a unique name.
+      *
+      * @param name connector name
+      * @return this one
+      */
+    @Optional("Default is none")
+    def name(name: String): Validator = {
+      this.formatter.name(CommonUtils.requireNonEmpty(name))
+      this
+    }
+
+    def className(className: String): Validator = {
+      this.className = className
+      this.formatter.className(CommonUtils.requireNonEmpty(className))
+      this
+    }
+
+    def connectorClass(clz: Class[_]): Validator = className(clz.getName)
+
+    @Optional("Default is none")
+    def setting(key: String, value: String): Validator = settings(
+      Map(CommonUtils.requireNonEmpty(key) -> CommonUtils.requireNonEmpty(value)))
+
+    @Optional("Default is none")
+    def settings(settings: Map[String, String]): Validator = {
+      this.formatter.settings(CommonUtils.requireNonEmpty(settings.asJava))
+      this
+    }
+
+    /**
+      * set the topic in which you have interest.
+      *
+      * @param topicName topic
+      * @return this one
+      */
+    @Optional("Default is none")
+    def topicName(topicName: String): Validator = topicNames(Seq(CommonUtils.requireNonEmpty(topicName)))
+
+    /**
+      * set the topic in which you have interest.
+      *
+      * @param topicNames topic
+      * @return this one
+      */
+    @Optional("Default is none")
+    def topicNames(topicNames: Seq[String]): Validator = {
+      this.formatter.topicNames(CommonUtils.requireNonEmpty(topicNames.asJava))
+      this
+    }
+
+    /**
+      * the max number from sink task you want to create
+      *
+      * @param numberOfTasks max number from sink task
+      * @return this one
+      */
+    @Optional("default is 1")
+    def numberOfTasks(numberOfTasks: Int): Validator = {
+      this.formatter.numberOfTasks(CommonUtils.requirePositiveInt(numberOfTasks))
+      this
+    }
+
+    /**
+      * set the columns
+      * @param columns columns
+      * @return this builder
+      */
+    @Optional("default is all columns")
+    def columns(columns: Seq[Column]): Validator = {
+      this.formatter.columns(CommonUtils.requireNonEmpty(columns.asJava))
+      this
+    }
 
     def run(implicit executionContext: ExecutionContext): Future[SettingInfo] = doValidate(
       executionContext = Objects.requireNonNull(executionContext),
-      name = CommonUtils.requireNonEmpty(name),
       className = CommonUtils.requireNonEmpty(className),
-      topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala,
-      numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks),
-      columns = Objects.requireNonNull(columns),
-      settings = Objects.requireNonNull(settings)
+      settings = formatter.requestOfValidation().asScala.toMap
     )
 
     /**
@@ -465,11 +530,7 @@ object WorkerClient {
       * @return response
       */
     protected def doValidate(executionContext: ExecutionContext,
-                             name: String,
                              className: String,
-                             topicNames: Seq[String],
-                             numberOfTasks: Int,
-                             columns: Seq[Column],
                              settings: Map[String, String]): Future[SettingInfo]
 
   }

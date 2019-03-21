@@ -38,11 +38,22 @@ public final class StringList {
     return JsonUtils.toString(ss);
   }
 
-  /** Kafka prefers to use dot format... */
+  /**
+   * Kafka prefers to use dot format.
+   *
+   * @param value kafka's string list
+   * @return string list
+   */
   public static List<String> ofKafkaList(String value) {
     return CommonUtils.isEmpty(value) ? Collections.emptyList() : Arrays.asList(value.split(","));
   }
 
+  /**
+   * Kafka prefers to use dot format.
+   *
+   * @param stringList string list
+   * @return string list
+   */
   public static String toKafkaString(List<String> stringList) {
     return String.join(",", stringList);
   }

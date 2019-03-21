@@ -85,7 +85,7 @@ object ConnectorApi {
       .get(ConnectorFormatter.COLUMNS_KEY)
       .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)
       .getOrElse(Seq.empty)
-    def numberOfTasks: Int = plain(ConnectorFormatter.NUMBER_OF_TASKS_KEY).toInt
+    def numberOfTasks: Option[Int] = plain.get(ConnectorFormatter.NUMBER_OF_TASKS_KEY).map(_.toInt)
     def workerClusterName: Option[String] = plain.get(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
     def topicNames: Seq[String] =
       plain.get(ConnectorFormatter.TOPIC_NAMES_KEY).map(s => StringList.ofJson(s).asScala).getOrElse(Seq.empty)

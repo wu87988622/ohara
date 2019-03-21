@@ -49,7 +49,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
     val source = new PerfSource
 
     an[IllegalArgumentException] should be thrownBy source._start(
-      ConnectorFormatter.of().name(methodName()).topicsNames(topics.asJava).settings(props.toMap.asJava).taskConfig())
+      ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).taskConfig())
   }
 
   @Test
@@ -60,7 +60,7 @@ class TestPerfSourceProps extends SmallTest with Matchers {
       ConnectorFormatter
         .of()
         .name(methodName())
-        .topicsNames(topics.asJava)
+        .topicNames(topics.asJava)
         .columns(schema.asJava)
         .settings(props.copy(batch = -1).toMap.asJava)
         .taskConfig())

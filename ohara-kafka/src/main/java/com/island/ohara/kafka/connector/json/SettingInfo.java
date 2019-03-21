@@ -36,7 +36,7 @@ public final class SettingInfo implements JsonObject {
   private static final String SETTINGS_KEY = "settings";
 
   public static SettingInfo of(ConfigInfos configInfos) {
-    return of(
+    List<Setting> settings =
         configInfos
             .values()
             .stream()
@@ -61,7 +61,11 @@ public final class SettingInfo implements JsonObject {
             .filter(Optional::isPresent)
             .map(Optional::get)
             .map(s -> (Setting) s)
-            .collect(Collectors.toList()));
+            .collect(Collectors.toList());
+    if (settings.isEmpty())
+      throw new IllegalArgumentException(
+          "failed to parse ohara data stored in kafka. Are you using stale worker image?");
+    return of(settings);
   }
 
   public static SettingInfo ofJson(String json) {
@@ -85,27 +89,20 @@ public final class SettingInfo implements JsonObject {
     this.settings = new ArrayList<>(CommonUtils.requireNonEmpty(settings));
   }
 
-  /**
-   * find the non-null value mapped to input key from all settings.
-   *
-   * @param key key
-   * @return values
-   */
-  public List<String> values(String key) {
-    return settings
-        .stream()
-        .map(Setting::value)
-        .filter(v -> v.value() != null && v.key().equals(key))
-        .map(SettingValue::value)
-        .collect(Collectors.toList());
-  }
-
+  // ------------------------[helper method]------------------------//
   public Optional<String> value(String key) {
-    List<String> values = values(key);
+    List<String> values =
+        settings
+            .stream()
+            .map(Setting::value)
+            .filter(v -> v.value() != null && v.key().equals(key))
+            .map(SettingValue::value)
+            .collect(Collectors.toList());
     if (values.isEmpty()) return Optional.empty();
     else return Optional.of(values.get(0));
   }
 
+  // ------------------------[common]------------------------//
   public Optional<String> className() {
     return value(ConnectorFormatter.CLASS_NAME_KEY);
   }
@@ -124,10 +121,23 @@ public final class SettingInfo implements JsonObject {
     return value(ConnectorFormatter.NUMBER_OF_TASKS_KEY).map(Integer::valueOf);
   }
 
+  public Optional<String> author() {
+    return value(ConnectorFormatter.AUTHOR_KEY);
+  }
+
+  public Optional<String> version() {
+    return value(ConnectorFormatter.VERSION_KEY);
+  }
+
+  public Optional<String> revision() {
+    return value(ConnectorFormatter.REVISION_KEY);
+  }
+
   public Optional<String> workerClusterName() {
     return value(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY);
   }
 
+  // ------------------------[json]------------------------//
   @JsonProperty(ERROR_COUNT_KEY)
   public int errorCount() {
     return errorCount;
@@ -138,6 +148,7 @@ public final class SettingInfo implements JsonObject {
     return Collections.unmodifiableList(settings);
   }
 
+  // ------------------------[object]------------------------//
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof SettingInfo)

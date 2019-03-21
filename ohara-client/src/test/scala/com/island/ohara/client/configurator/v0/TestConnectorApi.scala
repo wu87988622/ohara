@@ -49,7 +49,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     request.workerClusterName.get shouldBe workerClusterName
     request.topicNames.size shouldBe 1
     request.topicNames.head shouldBe topicName
-    request.numberOfTasks shouldBe numberOfTasks
+    request.numberOfTasks.get shouldBe numberOfTasks
     request.columns.size shouldBe 1
     request.columns.head shouldBe column
     request.plain(key) shouldBe value
@@ -92,7 +92,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     request.className shouldBe className
     request.columns.head shouldBe column
     request.topicNames shouldBe topicNames
-    request.numberOfTasks shouldBe numberOfTasks
+    request.numberOfTasks.get shouldBe numberOfTasks
     request.settings("aaa").asInstanceOf[JsString].value shouldBe "cccc"
     request.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
     CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(CONNECTOR_CREATION_REQUEST_JSON_FORMAT.write(request)) shouldBe request

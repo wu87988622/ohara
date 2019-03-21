@@ -23,6 +23,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestSettingDefinition extends SmallTest {
 
@@ -268,5 +269,19 @@ public class TestSettingDefinition extends SmallTest {
             .findAny()
             .get()
             .defaultValue());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseStaleConfigKeyInfo() {
+    ConfigKeyInfo fake = Mockito.mock(ConfigKeyInfo.class);
+    Mockito.when(fake.displayName()).thenReturn(CommonUtils.randomString());
+    SettingDefinition.of(fake);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void parseStaleConfigKeyInfo2() {
+    ConfigKeyInfo fake = Mockito.mock(ConfigKeyInfo.class);
+    Mockito.when(fake.displayName()).thenReturn(null);
+    SettingDefinition.of(fake);
   }
 }

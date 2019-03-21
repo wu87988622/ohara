@@ -95,19 +95,24 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     else Future.successful(cachedConnectorsState.put(name, ConnectorState.RUNNING))
 
   override def connectorValidator(): Validator =
-    (executionContext, name, className, topicNames, numberOfTasks, columns, configs) =>
+    (executionContext, className, settings) =>
       Future.successful(SettingInfo.of(SettingDefinition.DEFINITIONS_DEFAULT.asScala.map { definition =>
         Setting.of(
           definition,
           SettingValue.of(
             definition.key(),
             definition.key() match {
-              case ConnectorFormatter.NAME_KEY            => name
-              case ConnectorFormatter.CLASS_NAME_KEY      => className
-              case ConnectorFormatter.TOPIC_NAMES_KEY     => StringList.toKafkaString(topicNames.asJava)
-              case ConnectorFormatter.NUMBER_OF_TASKS_KEY => numberOfTasks.toString
-              case ConnectorFormatter.COLUMNS_KEY         => PropGroups.toString(PropGroups.of(columns.asJava))
-              case _                                      => null
+              case ConnectorFormatter.NAME_KEY if settings.contains(ConnectorFormatter.NAME_KEY) =>
+                settings(ConnectorFormatter.NAME_KEY)
+              case ConnectorFormatter.CLASS_NAME_KEY => className
+              case ConnectorFormatter.TOPIC_NAMES_KEY if settings.contains(ConnectorFormatter.TOPIC_NAMES_KEY) =>
+                settings(ConnectorFormatter.NAME_KEY)
+              case ConnectorFormatter.NUMBER_OF_TASKS_KEY
+                  if settings.contains(ConnectorFormatter.NUMBER_OF_TASKS_KEY) =>
+                settings(ConnectorFormatter.NUMBER_OF_TASKS_KEY)
+              case ConnectorFormatter.COLUMNS_KEY if settings.contains(ConnectorFormatter.COLUMNS_KEY) =>
+                settings(ConnectorFormatter.COLUMNS_KEY)
+              case _ => null
             },
             Collections.emptyList()
           )

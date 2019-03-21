@@ -55,7 +55,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
       ConnectorFormatter
         .of()
         .name("test")
-        .topicsName("topic")
+        .topicName("topic")
         .setting(HDFS_URL, hdfsURL)
         .setting(TMP_DIR, tmpDir)
         .taskConfig())

@@ -27,6 +27,10 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigValueInfo;
 
+/**
+ * This class stores the value passed by user. this class is related to
+ * org.apache.kafka.connect.runtime.rest.entities.ConfigValueInfo
+ */
 public class SettingValue implements JsonObject {
   public static SettingValue of(ConfigValueInfo configValueInfo) {
     return new SettingValue(

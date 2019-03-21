@@ -25,6 +25,8 @@ import org.apache.kafka.connect.runtime.rest.entities.ConfigInfo;
 /**
  * Response of Kafka Connector APIs matched to response of PUT /connector-plugins/(string:
  * name)/setting/validate
+ *
+ * <p>this class is related to org.apache.kafka.connect.runtime.rest.entities.ConfigInfo
  */
 public final class Setting implements JsonObject {
   public static final String DEFINITION_KEY = "definition";

@@ -27,6 +27,7 @@ import org.scalatest.Matchers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
 class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
   private[this] val configurator =
     Configurator.builder().fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()
@@ -58,7 +59,57 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
     response.numberOfTasks().get() shouldBe 1
     import scala.collection.JavaConverters._
     response.topicNames().asScala shouldBe topicNames
+    response.author().isPresent shouldBe true
+    response.version().isPresent shouldBe true
+    response.revision().isPresent shouldBe true
+    response.workerClusterName().isPresent shouldBe true
+    response.errorCount() shouldBe 0
   }
+
+  @Test
+  def ignoreClassName(): Unit = an[IllegalArgumentException] should be thrownBy result(
+    ValidationApi
+      .access()
+      .hostname(configurator.hostname)
+      .port(configurator.port)
+      .verify(
+        ConnectorCreationRequest(
+          name = None,
+          className = None,
+          topicNames = Seq.empty,
+          numberOfTasks = None,
+          workerClusterName = None,
+          columns = Seq.empty,
+          settings = Map.empty
+        )))
+
+  @Test
+  def ignoreWorkerCluster(): Unit = {
+    val response = result(
+      ValidationApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .verify(ConnectorCreationRequest(
+          name = None,
+          className = Some(classOf[DumbSink].getName),
+          topicNames = Seq.empty,
+          numberOfTasks = None,
+          workerClusterName = None,
+          columns = Seq.empty,
+          settings = Map.empty
+        )))
+    response.className.get() shouldBe classOf[DumbSink].getName
+    response.settings().size() should not be 0
+    response.numberOfTasks().isPresent shouldBe false
+    response.topicNames().size() shouldBe 0
+    response.author().isPresent shouldBe true
+    response.version().isPresent shouldBe true
+    response.revision().isPresent shouldBe true
+    response.workerClusterName().isPresent shouldBe true
+    response.errorCount() should not be 0
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

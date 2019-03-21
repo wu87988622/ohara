@@ -19,14 +19,41 @@ package com.island.ohara.client.kafka
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
-
+import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorValidator extends SmallTest with Matchers {
 
+  /**
+    * we won't make connection in this test
+    */
   private[this] val notWorkingClient = WorkerClient("localhost:2222")
 
   @Test
-  def nullConfigs(): Unit =
+  def ignoreClassName(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().run
+
+  @Test
+  def nullSettingKey(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().setting(null, "asdsad")
+
+  @Test
+  def emptySettingKey(): Unit =
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().setting("", "asdsad")
+
+  @Test
+  def nullSettingValue(): Unit =
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().setting("asdsad", null)
+
+  @Test
+  def emptySettingValue(): Unit =
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().setting("asdsad", "")
+
+  @Test
+  def nullSettings(): Unit =
     an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().settings(null)
+
+  @Test
+  def emptySettings(): Unit =
+    an[IllegalArgumentException] should be thrownBy notWorkingClient.connectorValidator().settings(Map.empty)
 
   @Test
   def nullSchema(): Unit =

@@ -32,7 +32,7 @@ public class TestConnectorFormatter extends SmallTest {
     Creation creation =
         ConnectorFormatter.of()
             .name(CommonUtils.randomString())
-            .topicsNames(topicNames)
+            .topicNames(topicNames)
             .requestOfCreation();
     Assert.assertNotNull(creation.configs().get(ConnectorFormatter.TOPIC_NAMES_KEY));
     Assert.assertEquals(
@@ -46,7 +46,7 @@ public class TestConnectorFormatter extends SmallTest {
     Creation creation =
         ConnectorFormatter.of()
             .name(CommonUtils.randomString())
-            .topicsNames(topicNames)
+            .topicNames(topicNames)
             .requestOfCreation();
     Assert.assertNotNull(creation.configs().get(ConnectorFormatter.TOPIC_NAMES_KEY));
     Assert.assertEquals(
@@ -59,7 +59,7 @@ public class TestConnectorFormatter extends SmallTest {
     Creation creation =
         ConnectorFormatter.of()
             .name(CommonUtils.randomString())
-            .topicsName(CommonUtils.randomString())
+            .topicName(CommonUtils.randomString())
             .requestOfCreation();
     Assert.assertNull(creation.configs().get(ConnectorFormatter.NAME_KEY));
   }
@@ -82,7 +82,7 @@ public class TestConnectorFormatter extends SmallTest {
     Creation creation =
         ConnectorFormatter.of()
             .name(CommonUtils.randomString())
-            .topicsNames(topicNames)
+            .topicNames(topicNames)
             .requestOfCreation();
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),

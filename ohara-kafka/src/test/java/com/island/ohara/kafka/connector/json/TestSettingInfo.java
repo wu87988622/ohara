@@ -23,8 +23,10 @@ import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import org.apache.kafka.connect.runtime.rest.entities.ConfigInfos;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestSettingInfo extends SmallTest {
   @Test
@@ -60,13 +62,25 @@ public class TestSettingInfo extends SmallTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullConfig() {
+  public void nullSettings() {
     SettingInfo.of((List<Setting>) null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void emptyConfig() {
+  public void emptySettings() {
     SettingInfo.of(Collections.emptyList());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullConfigInfos() {
+    SettingInfo.of((ConfigInfos) null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyConfigInfos() {
+    ConfigInfos infos = Mockito.mock(ConfigInfos.class);
+    Mockito.when(infos.values()).thenReturn(Collections.emptyList());
+    SettingInfo.of(infos);
   }
 
   @Test

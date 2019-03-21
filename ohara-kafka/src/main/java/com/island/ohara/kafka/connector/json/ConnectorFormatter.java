@@ -67,6 +67,7 @@ public final class ConnectorFormatter {
         .optional(value)
         .group(SettingDefinition.CORE_GROUP)
         .orderInGroup(order)
+        .valueType(SettingDefinition.Type.STRING)
         .build()
         .toConfigKey();
   }
@@ -120,11 +121,11 @@ public final class ConnectorFormatter {
     return setting(CLASS_NAME_KEY, className);
   }
 
-  public ConnectorFormatter topicsName(String topicName) {
-    return topicsNames(Collections.singletonList(topicName));
+  public ConnectorFormatter topicName(String topicName) {
+    return topicNames(Collections.singletonList(topicName));
   }
 
-  public ConnectorFormatter topicsNames(List<String> topicNames) {
+  public ConnectorFormatter topicNames(List<String> topicNames) {
     return setting(TOPIC_NAMES_KEY, StringList.toKafkaString(topicNames));
   }
 
