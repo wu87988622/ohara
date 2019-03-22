@@ -37,7 +37,6 @@ class TestOhara764 extends SmallTest with Matchers {
     val source = Await.result(
       access.add(
         ConnectorCreationRequest(
-          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = Some("aaa.class"),
           topicNames = Seq("abc"),
@@ -65,7 +64,6 @@ class TestOhara764 extends SmallTest with Matchers {
     val source2 = Await.result(
       access.add(
         ConnectorCreationRequest(
-          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = Some("aaa.class"),
           topicNames = Seq(topic.id),

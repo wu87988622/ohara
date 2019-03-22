@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRe
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{JsArray, JsString, _}
@@ -28,7 +28,6 @@ class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testPlain(): Unit = {
-    val name = CommonUtils.randomString()
     val className = CommonUtils.randomString()
     val workerClusterName = CommonUtils.randomString()
     val topicName = CommonUtils.randomString()
@@ -36,7 +35,6 @@ class TestConnectorApi extends SmallTest with Matchers {
     val (key, value) = ("aaa", "ccc")
     val column = Column.newBuilder().name("aa").newName("cc").dataType(DataType.FLOAT).order(10).build()
     val request = ConnectorCreationRequest(
-      name = Some(name),
       className = Some(className),
       columns = Seq(column),
       topicNames = Seq(topicName),
@@ -44,7 +42,6 @@ class TestConnectorApi extends SmallTest with Matchers {
       settings = Map(key -> value),
       workerClusterName = Some(workerClusterName)
     )
-    request.name.get shouldBe name
     request.className shouldBe className
     request.workerClusterName.get shouldBe workerClusterName
     request.topicNames.size shouldBe 1
@@ -87,7 +84,6 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                   "$anotherKey": "$anotherValue"
                                                |}
                                             """.stripMargin.parseJson)
-    request.name.get shouldBe name
     request.workerClusterName.get shouldBe workerClusterName
     request.className shouldBe className
     request.columns.head shouldBe column
@@ -116,12 +112,11 @@ class TestConnectorApi extends SmallTest with Matchers {
     val desc = ConnectorDescription(
       id = CommonUtils.randomString(),
       settings = Map(
-        ConnectorFormatter.NAME_KEY -> JsString(CommonUtils.randomString()),
-        ConnectorFormatter.CLASS_NAME_KEY -> JsString(CommonUtils.randomString()),
-        ConnectorFormatter.COLUMNS_KEY -> JsNull,
-        ConnectorFormatter.TOPIC_NAMES_KEY -> JsArray(JsString(CommonUtils.randomString())),
-        ConnectorFormatter.NUMBER_OF_TASKS_KEY -> JsNumber(1231),
-        ConnectorFormatter.WORKER_CLUSTER_NAME_KEY -> JsString(CommonUtils.randomString()),
+        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(CommonUtils.randomString()),
+        SettingDefinition.COLUMNS_DEFINITION.key() -> JsNull,
+        SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> JsArray(JsString(CommonUtils.randomString())),
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> JsNumber(1231),
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(CommonUtils.randomString()),
       ),
       state = None,
       error = None,

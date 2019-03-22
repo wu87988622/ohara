@@ -49,7 +49,6 @@ class TestValidationRoute extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .verify(ConnectorCreationRequest(
-          name = Some(CommonUtils.randomString(10)),
           className = Some(className),
           topicNames = Seq(CommonUtils.randomString(10)),
           numberOfTasks = Some(1),

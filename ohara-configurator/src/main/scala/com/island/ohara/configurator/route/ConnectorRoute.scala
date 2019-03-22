@@ -27,7 +27,7 @@ import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
@@ -41,7 +41,8 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
         s"It is illegal to change worker cluster for connector. previous:$wkClusterName new:${request.workerClusterName.get}")
     ConnectorDescription(
       id = id,
-      settings = request.settings ++ Map(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY -> JsString(wkClusterName)),
+      settings = request.settings ++ Map(
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(wkClusterName)),
       state = None,
       error = None,
       lastModified = CommonUtils.current()

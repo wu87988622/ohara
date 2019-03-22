@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.connector.jdbc
+import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.connector.jdbc.source.{DBTableDataProvider, JDBCSourceConnectorConfig, JDBCSourceTask}
 import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
 import org.slf4j.{Logger, LoggerFactory}
@@ -92,6 +93,12 @@ class JDBCSourceConnector extends RowSourceConnector {
     if (!timestampColumnName.matches("^[a-zA-Z]{1}.*"))
       throw new IllegalArgumentException("Your column name input error, Please checkout your column name.")
   }
+
+  override protected def _version: String = VersionUtils.VERSION
+
+  override protected def revision: String = VersionUtils.REVISION
+
+  override protected def author: String = "ohara"
 }
 
 object JDBCSourceConnector {

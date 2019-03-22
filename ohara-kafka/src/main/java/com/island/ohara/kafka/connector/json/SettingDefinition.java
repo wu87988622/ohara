@@ -22,9 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
@@ -34,6 +32,141 @@ import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
  * org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo
  */
 public class SettingDefinition implements JsonObject {
+  // -------------------------------[groups]-------------------------------//
+  public static final String CORE_GROUP = "core";
+  private static final String COMMON_GROUP = "common";
+  // -------------------------------[default setting]-------------------------------//
+  public static final SettingDefinition CONNECTOR_CLASS_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("Connector class")
+          .key("connector.class")
+          .valueType(Type.CLASS)
+          .documentation("the class name of connector")
+          .group(CORE_GROUP)
+          .orderInGroup(0)
+          .build();
+  public static final SettingDefinition TOPIC_NAMES_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("Topics")
+          .key("topics")
+          .valueType(Type.LIST)
+          .documentation("the topics used by connector")
+          .reference(Reference.TOPIC)
+          .group(CORE_GROUP)
+          .orderInGroup(2)
+          .build();
+  public static final SettingDefinition NUMBER_OF_TASKS_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("Number of tasks")
+          .key("tasks.max")
+          .valueType(Type.INT)
+          .documentation("the number of tasks invoked by connector")
+          .group(CORE_GROUP)
+          .orderInGroup(3)
+          .build();
+  public static final SettingDefinition COLUMNS_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("Schema")
+          .key("columns")
+          .valueType(Type.TABLE)
+          .documentation("output schema")
+          .optional()
+          .group(CORE_GROUP)
+          .orderInGroup(6)
+          .build();
+
+  public static final SettingDefinition WORKER_CLUSTER_NAME_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("worker cluster")
+          .key("workerClusterName")
+          .valueType(Type.STRING)
+          .documentation(
+              "the cluster name of running this connector."
+                  + "If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you")
+          .reference(Reference.WORKER_CLUSTER)
+          .group(CORE_GROUP)
+          .optional()
+          .orderInGroup(7)
+          .build();
+  public static final SettingDefinition KEY_CONVERTER_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("key converter")
+          .key("key.converter")
+          .valueType(Type.CLASS)
+          .documentation("key converter")
+          .group(CORE_GROUP)
+          .optional(ConverterType.NONE.className())
+          .orderInGroup(4)
+          .internal()
+          .build();
+
+  public static final SettingDefinition VALUE_CONVERTER_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("value converter")
+          .key("value.converter")
+          .valueType(Type.STRING)
+          .documentation("value converter")
+          .group(CORE_GROUP)
+          .optional(ConverterType.NONE.className())
+          .orderInGroup(5)
+          .internal()
+          .build();
+
+  public static final SettingDefinition VERSION_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("version")
+          .key("version")
+          .valueType(Type.STRING)
+          .documentation("version of connector")
+          .group(CORE_GROUP)
+          .optional("unknown")
+          .orderInGroup(8)
+          .readonly()
+          .build();
+
+  public static final SettingDefinition REVISION_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("revision")
+          .key("revision")
+          .valueType(Type.STRING)
+          .documentation("revision of connector")
+          .group(CORE_GROUP)
+          .optional("unknown")
+          .orderInGroup(9)
+          .readonly()
+          .build();
+
+  public static final SettingDefinition AUTHOR_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("author")
+          .key("author")
+          .valueType(Type.STRING)
+          .documentation("author of connector")
+          .group(CORE_GROUP)
+          .optional("unknown")
+          .orderInGroup(10)
+          .readonly()
+          .build();
+
+  /** this is the base of source/sink definition. */
+  public static final SettingDefinition KIND_DEFINITION =
+      SettingDefinition.newBuilder()
+          .displayName("kind")
+          .key("kind")
+          .valueType(Type.STRING)
+          .documentation("kind of connector")
+          .group(CORE_GROUP)
+          .optional("connector")
+          .orderInGroup(11)
+          .readonly()
+          .build();
+
+  public static final SettingDefinition SOURCE_KIND_DEFINITION =
+      SettingDefinition.newBuilder(KIND_DEFINITION).optional("source").build();
+
+  public static final SettingDefinition SINK_KIND_DEFINITION =
+      SettingDefinition.newBuilder(KIND_DEFINITION).optional("sink").build();
+
   // -------------------------------[reference]-------------------------------//
   enum Reference {
     NONE,
@@ -41,7 +174,7 @@ public class SettingDefinition implements JsonObject {
     WORKER_CLUSTER
   }
   // -------------------------------[type]-------------------------------//
-  enum Type {
+  public enum Type {
     BOOLEAN,
     STRING,
     SHORT,
@@ -65,94 +198,12 @@ public class SettingDefinition implements JsonObject {
   private static final String DEFAULT_VALUE_KEY = "defaultValue";
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
-  // -------------------------------[default]-------------------------------//
-  static final String CORE_GROUP = "core";
-  static final String COMMON_GROUP = "common";
 
   public static SettingDefinition ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<SettingDefinition>() {});
   }
 
-  /** the default definitions for all ohara connector. */
-  public static final List<SettingDefinition> DEFINITIONS_DEFAULT =
-      Arrays.asList(
-          SettingDefinition.newBuilder()
-              .displayName("Connector name")
-              .key(ConnectorFormatter.NAME_KEY)
-              .valueType(Type.STRING)
-              .documentation("the name used to run connector")
-              .group(CORE_GROUP)
-              .orderInGroup(ConnectorFormatter.NAME_KEY_ORDER)
-              .internal()
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("Connector class")
-              .key(ConnectorFormatter.CLASS_NAME_KEY)
-              .valueType(Type.CLASS)
-              .documentation("the class name of connector")
-              .group(CORE_GROUP)
-              .orderInGroup(ConnectorFormatter.CLASS_NAME_KEY_ORDER)
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("Topics")
-              .key(ConnectorFormatter.TOPIC_NAMES_KEY)
-              .valueType(Type.LIST)
-              .documentation("the topics used by connector")
-              .reference(Reference.TOPIC)
-              .group(CORE_GROUP)
-              .orderInGroup(ConnectorFormatter.TOPIC_NAMES_KEY_ORDER)
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("Number of tasks")
-              .key(ConnectorFormatter.NUMBER_OF_TASKS_KEY)
-              .valueType(Type.INT)
-              .documentation("the number of tasks invoked by connector")
-              .group(CORE_GROUP)
-              .orderInGroup(ConnectorFormatter.NUMBER_OF_TASKS_KEY_ORDER)
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("Schema")
-              .key(ConnectorFormatter.COLUMNS_KEY)
-              .valueType(Type.STRING)
-              .documentation("output schema")
-              .optional()
-              .group(CORE_GROUP)
-              .orderInGroup(ConnectorFormatter.COLUMNS_KEY_ORDER)
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("worker cluster")
-              .key(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
-              .valueType(Type.STRING)
-              .documentation(
-                  "the cluster name of running this connector."
-                      + "If there is only one worker cluster, you can skip this setting since configurator will pick up a worker cluster for you")
-              .reference(Reference.WORKER_CLUSTER)
-              .group(CORE_GROUP)
-              .optional()
-              .orderInGroup(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY_ORDER)
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("key converter")
-              .key(ConnectorFormatter.KEY_CONVERTER_KEY)
-              .valueType(Type.CLASS)
-              .documentation("key converter")
-              .group(CORE_GROUP)
-              .optional(ConverterType.NONE.className())
-              .orderInGroup(ConnectorFormatter.KEY_CONVERTER_KEY_ORDER)
-              .internal()
-              .build(),
-          SettingDefinition.newBuilder()
-              .displayName("value converter")
-              .key(ConnectorFormatter.VALUE_CONVERTER_KEY)
-              .valueType(Type.STRING)
-              .documentation("value converter")
-              .group(CORE_GROUP)
-              .optional(ConverterType.NONE.className())
-              .orderInGroup(ConnectorFormatter.VALUE_CONVERTER_KEY_ORDER)
-              .internal()
-              .build());
-
-  private static ConfigDef.Type toType(SettingDefinition.Type type) {
+  private static ConfigDef.Type toType(Type type) {
     switch (type) {
       case BOOLEAN:
         return ConfigDef.Type.BOOLEAN;
@@ -189,7 +240,7 @@ public class SettingDefinition implements JsonObject {
   private final boolean editable;
   private final String key;
   private final Type valueType;
-  @Nullable private final Object defaultValue;
+  @Nullable private final String defaultValue;
   private final boolean required;
   private final String documentation;
   private final Reference reference;
@@ -204,7 +255,7 @@ public class SettingDefinition implements JsonObject {
       @JsonProperty(KEY_KEY) String key,
       @JsonProperty(VALUE_TYPE_KEY) String valueType,
       @JsonProperty(REQUIRED_KEY) boolean required,
-      @Nullable @JsonProperty(DEFAULT_VALUE_KEY) Object defaultValue,
+      @Nullable @JsonProperty(DEFAULT_VALUE_KEY) String defaultValue,
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) String reference,
       @JsonProperty(INTERNAL_KEY) boolean internal) {
@@ -264,7 +315,7 @@ public class SettingDefinition implements JsonObject {
 
   @Nullable
   @JsonProperty(DEFAULT_VALUE_KEY)
-  public Object defaultValue() {
+  public String defaultValue() {
     return defaultValue;
   }
 
@@ -338,6 +389,10 @@ public class SettingDefinition implements JsonObject {
     return new Builder();
   }
 
+  public static Builder newBuilder(SettingDefinition definition) {
+    return new Builder(definition);
+  }
+
   public static class Builder {
     private String displayName;
     private String group = COMMON_GROUP;
@@ -346,12 +401,26 @@ public class SettingDefinition implements JsonObject {
     private String key;
     private Type valueType = Type.STRING;
     private boolean required = true;
-    @Nullable private Object valueDefault = null;
+    @Nullable private String defaultValue = null;
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
 
     private Builder() {}
+
+    private Builder(SettingDefinition definition) {
+      this.displayName = definition.displayName;
+      this.group = definition.group;
+      this.orderInGroup = definition.orderInGroup;
+      this.editable = definition.editable;
+      this.key = definition.key;
+      this.valueType = definition.valueType;
+      this.required = definition.required;
+      this.defaultValue = definition.defaultValue;
+      this.documentation = definition.documentation;
+      this.reference = definition.reference;
+      this.internal = definition.internal;
+    }
 
     Builder internal() {
       this.internal = true;
@@ -371,16 +440,16 @@ public class SettingDefinition implements JsonObject {
     }
 
     @Optional("default is \"required!\" value")
-    public Builder optional(Object valueDefault) {
+    public Builder optional(String defaultValue) {
       this.required = false;
-      this.valueDefault = Objects.requireNonNull(valueDefault);
+      this.defaultValue = Objects.requireNonNull(defaultValue);
       return this;
     }
 
     @Optional("default is \"required!\" value")
     public Builder optional() {
       this.required = false;
-      this.valueDefault = null;
+      this.defaultValue = null;
       return this;
     }
 
@@ -436,7 +505,7 @@ public class SettingDefinition implements JsonObject {
           key,
           valueType.name(),
           required,
-          valueDefault,
+          defaultValue,
           documentation,
           reference.name(),
           internal);

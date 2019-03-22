@@ -18,7 +18,7 @@ package com.island.ohara.connector.perf
 
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ConnectorFormatter
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.Test
 import org.scalatest.Matchers
@@ -38,7 +38,6 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
     val response = result(
       workerClient
         .connectorValidator()
-        .name(CommonUtils.randomString(5))
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[PerfSource])
@@ -48,45 +47,38 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorFormatter.TOPIC_NAMES_KEY)
+      .filter(_.definition().key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorFormatter.CLASS_NAME_KEY)
+      .filter(_.definition().key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorFormatter.NUMBER_OF_TASKS_KEY)
+      .filter(_.definition().key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe true
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorFormatter.COLUMNS_KEY)
+      .filter(_.definition().key() == SettingDefinition.COLUMNS_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
     response
       .settings()
       .asScala
-      .filter(_.definition().key() == ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
+      .filter(_.definition().key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
       .head
       .definition()
       .required() shouldBe false
-    response
-      .settings()
-      .asScala
-      .filter(_.definition().key() == ConnectorFormatter.NAME_KEY)
-      .head
-      .definition()
-      .required() shouldBe true
     response.errorCount() shouldBe 0
   }
 }

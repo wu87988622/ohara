@@ -38,7 +38,6 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
 
   @Test
   def goodCase(): Unit = {
-    val name = CommonUtils.randomString(10)
     val topicNames = Seq(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val response = result(
       ValidationApi
@@ -46,7 +45,6 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .verify(ConnectorCreationRequest(
-          name = Some(name),
           className = Some(classOf[DumbSink].getName),
           topicNames = topicNames,
           numberOfTasks = Some(1),
@@ -75,7 +73,6 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
       .port(configurator.port)
       .verify(
         ConnectorCreationRequest(
-          name = None,
           className = None,
           topicNames = Seq.empty,
           numberOfTasks = None,
@@ -91,15 +88,15 @@ class TestValidationOfConnector extends With3Brokers3Workers with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .verify(ConnectorCreationRequest(
-          name = None,
-          className = Some(classOf[DumbSink].getName),
-          topicNames = Seq.empty,
-          numberOfTasks = None,
-          workerClusterName = None,
-          columns = Seq.empty,
-          settings = Map.empty
-        )))
+        .verify(
+          ConnectorCreationRequest(
+            className = Some(classOf[DumbSink].getName),
+            topicNames = Seq.empty,
+            numberOfTasks = None,
+            workerClusterName = None,
+            columns = Seq.empty,
+            settings = Map.empty
+          )))
     response.className.get() shouldBe classOf[DumbSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().isPresent shouldBe false

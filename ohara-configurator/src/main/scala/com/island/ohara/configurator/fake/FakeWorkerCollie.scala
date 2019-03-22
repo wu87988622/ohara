@@ -67,6 +67,7 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
             statusTopicPartitions = statusTopicPartitions,
             statusTopicReplications = statusTopicReplications,
             jarNames = Seq.empty,
+            connectors = Seq.empty,
             sources = Seq.empty,
             sinks = Seq.empty,
             nodeNames = nodeNames
@@ -96,6 +97,7 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
             offsetTopicPartitions = previous.offsetTopicPartitions,
             offsetTopicReplications = previous.offsetTopicReplications,
             jarNames = previous.jarNames,
+            connectors = Seq.empty,
             sources = Seq.empty,
             sinks = Seq.empty,
             nodeNames = previous.nodeNames.filterNot(_ == nodeName)
@@ -126,6 +128,7 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
             offsetTopicPartitions = previous.offsetTopicPartitions,
             offsetTopicReplications = previous.offsetTopicReplications,
             jarNames = previous.jarNames,
+            connectors = Seq.empty,
             sources = Seq.empty,
             sinks = Seq.empty,
             nodeNames = previous.nodeNames :+ nodeName

@@ -57,15 +57,15 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ConnectorCreationRequest(
-          name = Some(CommonUtils.randomString(10)),
-          workerClusterName = None,
-          className = Some("asdasdasd"),
-          columns = Seq.empty,
-          topicNames = Seq(topic.id),
-          numberOfTasks = Some(1),
-          settings = Map.empty
-        )))
+        .add(
+          ConnectorCreationRequest(
+            workerClusterName = None,
+            className = Some("asdasdasd"),
+            columns = Seq.empty,
+            topicNames = Seq(topic.id),
+            numberOfTasks = Some(1),
+            settings = Map.empty
+          )))
     an[IllegalArgumentException] should be thrownBy result(
       ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).start(connector.id))
   }
@@ -73,7 +73,6 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
   @Test
   def startConnectorWhichShouldFail(): Unit = {
     val topicName = methodName
-
     val topic = result(
       TopicApi
         .access()
@@ -91,7 +90,6 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .add(ConnectorCreationRequest(
-          name = Some(CommonUtils.randomString(10)),
           workerClusterName = None,
           className = Some(classOf[DumbSink].getName),
           columns = Seq.empty,

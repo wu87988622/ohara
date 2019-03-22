@@ -16,7 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 import com.island.ohara.common.data.{Column, ConnectorState, DataType}
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, PropGroups, StringList}
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, PropGroups, SettingDefinition, StringList}
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.JavaConverters._
@@ -59,14 +59,6 @@ object ConnectorApi {
     )
   }
 
-  // the following keys should be matched to the member name of ConnectorCreationRequest
-  val NAME_KEY: String = "name"
-  val CLASS_NAME_KEY: String = "className"
-  // TODO: replace this by topicNames (https://github.com/oharastream/ohara/issues/444)
-  val TOPIC_NAME_KEY: String = "topics"
-  val NUMBER_OF_TASKS_KEY: String = "numberOfTasks"
-  // TODO: replace this by columns (https://github.com/oharastream/ohara/issues/444)
-  val COLUMNS_KEY: String = ConnectorFormatter.COLUMNS_KEY
   final case class ConnectorCreationRequest(settings: Map[String, JsValue]) {
 
     /**
@@ -79,16 +71,18 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    def name: Option[String] = plain.get(ConnectorFormatter.NAME_KEY)
-    def className: String = plain(ConnectorFormatter.CLASS_NAME_KEY)
+    def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
     def columns: Seq[Column] = plain
-      .get(ConnectorFormatter.COLUMNS_KEY)
+      .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)
       .getOrElse(Seq.empty)
-    def numberOfTasks: Option[Int] = plain.get(ConnectorFormatter.NUMBER_OF_TASKS_KEY).map(_.toInt)
-    def workerClusterName: Option[String] = plain.get(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
+    def numberOfTasks: Option[Int] = plain.get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(_.toInt)
+    def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
     def topicNames: Seq[String] =
-      plain.get(ConnectorFormatter.TOPIC_NAMES_KEY).map(s => StringList.ofJson(s).asScala).getOrElse(Seq.empty)
+      plain
+        .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+        .map(s => StringList.ofJson(s).asScala)
+        .getOrElse(Seq.empty)
   }
 
   object ConnectorCreationRequest {
@@ -97,8 +91,7 @@ object ConnectorApi {
     /**
       * this is a helper method to initialize ConnectorCreationRequest with common settings.
       */
-    def apply(name: Option[String],
-              className: Option[String],
+    def apply(className: Option[String],
               columns: Seq[Column],
               topicNames: Seq[String],
               numberOfTasks: Option[Int],
@@ -107,14 +100,16 @@ object ConnectorApi {
       settings = settings.map {
         case (k, v) => k -> JsString(v)
       } ++ Map(
-        ConnectorFormatter.NAME_KEY -> name.map(JsString(_)),
-        ConnectorFormatter.CLASS_NAME_KEY -> className.map(JsString(_)),
-        ConnectorFormatter.COLUMNS_KEY -> (if (columns.isEmpty) None
-                                           else Some(PropGroups.toString(PropGroups.of(columns.asJava)).parseJson)),
-        ConnectorFormatter.TOPIC_NAMES_KEY -> (if (topicNames.isEmpty) None
-                                               else Some(StringList.toJsonString(topicNames.asJava).parseJson)),
-        ConnectorFormatter.NUMBER_OF_TASKS_KEY -> numberOfTasks.map(JsNumber(_)),
-        ConnectorFormatter.WORKER_CLUSTER_NAME_KEY -> workerClusterName.map(JsString(_))
+        SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> className.map(JsString(_)),
+        SettingDefinition.COLUMNS_DEFINITION
+          .key() -> (if (columns.isEmpty) None
+                     else Some(PropGroups.toString(PropGroups.of(columns.asJava)).parseJson)),
+        SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> (if (topicNames.isEmpty) None
+                                                           else
+                                                             Some(
+                                                               StringList.toJsonString(topicNames.asJava).parseJson)),
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.map(JsNumber(_)),
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> workerClusterName.map(JsString(_))
       ).filter(_._2.nonEmpty).map(e => e._1 -> e._2.get)
     )
   }
@@ -137,7 +132,6 @@ object ConnectorApi {
       override def read(json: JsValue): ConnectorCreationRequest = {
         val fields: Map[String, JsValue] = noJsNull(json.asJsObject.fields)
         val setting = collection.mutable.Map(fields.toSeq: _*)
-        setting.remove("name")
         setting.remove("className")
         setting.remove("schema")
         setting.remove("topics")
@@ -145,7 +139,6 @@ object ConnectorApi {
         setting.remove("workerClusterName")
         setting.remove("settings")
         val request = ConnectorCreationRequest(
-          name = fields.get("name").map(_.asInstanceOf[JsString].value),
           className = fields.get("className").map(_.asInstanceOf[JsString].value),
           columns = fields
             .get("schema")
@@ -188,17 +181,27 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    override def name: String = plain(ConnectorFormatter.NAME_KEY)
+
+    /**
+      * In starting connector, the name of connector is replaced by connector id.
+      * That is to say, the name should be same with id. However, user may "set" their custom name and we should
+      * display the custom name by default.
+      * @return name
+      */
+    override def name: String = plain.getOrElse(ConnectorFormatter.NAME_KEY, id)
     override def kind: String = className
-    def className: String = plain(ConnectorFormatter.CLASS_NAME_KEY)
+    def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
     def columns: Seq[Column] = plain
-      .get(ConnectorFormatter.COLUMNS_KEY)
+      .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)
       .getOrElse(Seq.empty)
-    def numberOfTasks: Int = plain(ConnectorFormatter.NUMBER_OF_TASKS_KEY).toInt
-    def workerClusterName: String = plain(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY)
+    def numberOfTasks: Int = plain(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).toInt
+    def workerClusterName: String = plain(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
     def topicNames: Seq[String] =
-      plain.get(ConnectorFormatter.TOPIC_NAMES_KEY).map(s => StringList.ofJson(s).asScala).getOrElse(Seq.empty)
+      plain
+        .get(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+        .map(s => StringList.ofJson(s).asScala)
+        .getOrElse(Seq.empty)
   }
 
   implicit val CONNECTOR_STATE_JSON_FORMAT: RootJsonFormat[com.island.ohara.common.data.ConnectorState] =
@@ -233,7 +236,7 @@ object ConnectorApi {
         "state" -> obj.state.map(CONNECTOR_STATE_JSON_FORMAT.write).getOrElse(JsNull),
         "error" -> obj.error.map(JsString(_)).getOrElse(JsNull),
         "lastModified" -> JsNumber(obj.lastModified),
-        // [TODO] the following key-values are stale and we must remove them after ohara-manager starts to use our NEW APIs!!! by chia
+        // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
         "name" -> JsString(obj.name),
         "schema" -> JsArray(obj.columns.map(COLUMN_JSON_FORMAT.write).toVector),
         "className" -> JsString(obj.className),

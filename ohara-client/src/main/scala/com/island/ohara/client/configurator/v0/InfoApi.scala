@@ -15,8 +15,10 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
 import com.island.ohara.client.kafka.WorkerJson.Plugin
 import com.island.ohara.common.data.DataType
+import com.island.ohara.kafka.connector.json.SettingDefinitions
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
@@ -38,6 +40,20 @@ object InfoApi {
 
   final case class ConnectorVersion(className: String, typeName: String, version: String, revision: String)
   implicit val CONNECTOR_VERSION_JSON_FORMAT: RootJsonFormat[ConnectorVersion] = jsonFormat4(ConnectorVersion)
+
+  def toConnectorVersion(pluginDescription: ConnectorDefinitions): ConnectorVersion = {
+    def orUnknown(f: => String): String = try f
+    catch {
+      case _: Throwable => "unknown"
+    }
+    import scala.collection.JavaConverters._
+    ConnectorVersion(
+      className = pluginDescription.className,
+      version = orUnknown(SettingDefinitions.version(pluginDescription.definitions.asJava)),
+      revision = orUnknown(SettingDefinitions.revision(pluginDescription.definitions.asJava)),
+      typeName = orUnknown(SettingDefinitions.kind(pluginDescription.definitions.asJava))
+    )
+  }
 
   /**
     * ohara's official connectors have "specific" version information so we provide a way to convert it to
@@ -61,10 +77,10 @@ object InfoApi {
       revision = revision
     )
   }
-
   // TODO: remove the variables having default value since they all are deprecated!!! by chia
   final case class ConfiguratorInfo(brokers: String = "this field is deprecated. Use Brokers APIs instead",
                                     workers: String = "this field is deprecated. Use Workers APIs instead",
+                                    connectors: Seq[ConnectorDefinitions],
                                     sources: Seq[ConnectorVersion] = Seq.empty,
                                     sinks: Seq[ConnectorVersion] = Seq.empty,
                                     supportedDatabases: Seq[String],
@@ -73,7 +89,7 @@ object InfoApi {
   sealed abstract class InfoAccess extends BasicAccess(INFO_PREFIX_PATH) {
     def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo]
   }
-  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat7(ConfiguratorInfo)
+  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat8(ConfiguratorInfo)
 
   def access(): InfoAccess = new InfoAccess {
     override def get(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =

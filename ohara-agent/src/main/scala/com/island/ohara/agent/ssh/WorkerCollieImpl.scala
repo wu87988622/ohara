@@ -187,8 +187,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                   statusTopicPartitions = statusTopicPartitions,
                   statusTopicReplications = statusTopicReplications,
                   jarNames = jarUrls.map(_.getFile),
-                  sources = Seq.empty,
-                  sinks = Seq.empty,
+                  connectors = Seq.empty,
                   nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
                 )
               }

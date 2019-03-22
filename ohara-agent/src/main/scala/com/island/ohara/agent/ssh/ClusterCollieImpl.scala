@@ -21,15 +21,15 @@ import java.util.concurrent.ExecutorService
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, InfoApi}
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, Future}
 
 private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCollie, executor: ExecutorService)
     extends ReleaseOnce
@@ -91,8 +91,7 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
           .split(",")
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),
-        sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-        sinks = plugins.filter(_.typeName.toLowerCase == "sink").map(InfoApi.toConnectorVersion),
+        connectors = plugins,
         nodeNames = containers.map(_.nodeName)
       )
     }

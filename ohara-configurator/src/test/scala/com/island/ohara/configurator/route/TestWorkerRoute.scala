@@ -450,8 +450,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         offsetTopicPartitions = cluster.offsetTopicPartitions,
         offsetTopicReplications = cluster.offsetTopicReplications,
         jarNames = cluster.jarNames,
-        sources = Seq.empty,
-        sinks = Seq.empty,
+        connectors = Seq.empty,
         nodeNames = cluster.nodeNames :+ nodeNames.last
       )
   }
@@ -493,8 +492,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       offsetTopicPartitions = cluster.offsetTopicPartitions,
       offsetTopicReplications = cluster.offsetTopicReplications,
       jarNames = cluster.jarNames,
-      sources = Seq.empty,
-      sinks = Seq.empty,
+      connectors = Seq.empty,
       nodeNames = cluster.nodeNames.filter(_ != nodeNames.last)
     )
   }

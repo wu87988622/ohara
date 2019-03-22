@@ -32,64 +32,61 @@ import org.junit.Test;
 public class TestCoreDefinitions extends SmallTest {
 
   @Test
-  public void testNameDefinition() {
-    DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.NAME_KEY);
-    Assert.assertEquals(ConnectorFormatter.NAME_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.NAME_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
-  }
-
-  @Test
   public void testClassNameDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.CLASS_NAME_KEY);
-    Assert.assertEquals(ConnectorFormatter.CLASS_NAME_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.CLASS_NAME_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.CLASS.name(), key.type.name());
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(), key.name);
+    Assert.assertEquals(
+        SettingDefinition.CONNECTOR_CLASS_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.CONNECTOR_CLASS_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.CONNECTOR_CLASS_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
   public void testTopicNamesDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.TOPIC_NAMES_KEY);
-    Assert.assertEquals(ConnectorFormatter.TOPIC_NAMES_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.TOPIC_NAMES_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.LIST.name(), key.type.name());
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.key(), key.name);
+    Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.TOPIC_NAMES_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
   public void testNumberOfTasksDefinition() {
     DumbSink sink = new DumbSink();
     ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorFormatter.NUMBER_OF_TASKS_KEY);
-    Assert.assertEquals(ConnectorFormatter.NUMBER_OF_TASKS_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.NUMBER_OF_TASKS_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.INT.name(), key.type.name());
+        sink.config().configKeys().get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), key.name);
+    Assert.assertEquals(
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
   public void testWorkerClusterNameDefinition() {
     DumbSink sink = new DumbSink();
     ConfigDef.ConfigKey key =
-        sink.config().configKeys().get(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY);
-    Assert.assertEquals(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+        sink.config().configKeys().get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key(), key.name);
+    Assert.assertEquals(
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.group(), key.group);
+    Assert.assertEquals(
+        SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
-  public void testColumnDefinition() {
+  public void testColumnsDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.COLUMNS_KEY);
-    Assert.assertEquals(ConnectorFormatter.COLUMNS_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.COLUMNS_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.COLUMNS_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.COLUMNS_DEFINITION.key(), key.name);
+    Assert.assertEquals(SettingDefinition.COLUMNS_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.COLUMNS_DEFINITION.group(), key.group);
     // the TABLE is mapped to STRING
     Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
   }
@@ -97,120 +94,80 @@ public class TestCoreDefinitions extends SmallTest {
   @Test
   public void testVersionDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.VERSION_KEY);
-    Assert.assertEquals(ConnectorFormatter.VERSION_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.VERSION_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.VERSION_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.VERSION_DEFINITION.key(), key.name);
+    Assert.assertEquals(SettingDefinition.VERSION_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.VERSION_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.VERSION_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
   public void testRevisionDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.REVISION_KEY);
-    Assert.assertEquals(ConnectorFormatter.REVISION_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.REVISION_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.REVISION_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.REVISION_DEFINITION.key(), key.name);
+    Assert.assertEquals(SettingDefinition.REVISION_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.REVISION_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.REVISION_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
   public void testAuthorDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.AUTHOR_KEY);
-    Assert.assertEquals(ConnectorFormatter.AUTHOR_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.AUTHOR_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.AUTHOR_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.AUTHOR_DEFINITION.key(), key.name);
+    Assert.assertEquals(SettingDefinition.AUTHOR_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.AUTHOR_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.AUTHOR_DEFINITION.valueType(), key.type.name());
   }
 
   @Test
   public void testConnectorType() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorFormatter.CONNECTOR_TYPE_KEY);
-    Assert.assertEquals(ConnectorFormatter.CONNECTOR_TYPE_KEY, key.name);
-    Assert.assertEquals(ConnectorFormatter.CONNECTOR_TYPE_KEY_ORDER, key.orderInGroup);
-    Assert.assertEquals(SettingDefinition.CORE_GROUP, key.group);
-    Assert.assertEquals(SettingDefinition.Type.STRING.name(), key.type.name());
+    ConfigDef.ConfigKey key =
+        sink.config().configKeys().get(SettingDefinition.KIND_DEFINITION.key());
+    Assert.assertEquals(SettingDefinition.KIND_DEFINITION.key(), key.name);
+    Assert.assertEquals(SettingDefinition.KIND_DEFINITION.orderInGroup(), key.orderInGroup);
+    Assert.assertEquals(SettingDefinition.KIND_DEFINITION.group(), key.group);
+    Assert.assertEquals(SettingDefinition.KIND_DEFINITION.valueType(), key.type.name());
   }
 
   @Test(expected = NullPointerException.class)
   public void nullVersionInSource() {
-    new SourceWithNullableSetting(
-            null,
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            CommonUtils.randomString())
+    new SourceWithNullableSetting(null, CommonUtils.randomString(), CommonUtils.randomString())
         .config();
   }
 
   @Test(expected = NullPointerException.class)
   public void nullRevisionInSource() {
-    new SourceWithNullableSetting(
-            CommonUtils.randomString(),
-            null,
-            CommonUtils.randomString(),
-            CommonUtils.randomString())
+    new SourceWithNullableSetting(CommonUtils.randomString(), null, CommonUtils.randomString())
         .config();
   }
 
   @Test(expected = NullPointerException.class)
   public void nullAuthorInSource() {
-    new SourceWithNullableSetting(
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            null,
-            CommonUtils.randomString())
-        .config();
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void nullConnectorTypeInSource() {
-    new SourceWithNullableSetting(
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            null)
+    new SourceWithNullableSetting(CommonUtils.randomString(), CommonUtils.randomString(), null)
         .config();
   }
 
   @Test(expected = NullPointerException.class)
   public void nullVersionInSink() {
-    new SourceWithNullableSetting(
-            null,
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            CommonUtils.randomString())
+    new SourceWithNullableSetting(null, CommonUtils.randomString(), CommonUtils.randomString())
         .config();
   }
 
   @Test(expected = NullPointerException.class)
   public void nullRevisionInSink() {
-    new SinkWithNullableSetting(
-            CommonUtils.randomString(),
-            null,
-            CommonUtils.randomString(),
-            CommonUtils.randomString())
+    new SinkWithNullableSetting(CommonUtils.randomString(), null, CommonUtils.randomString())
         .config();
   }
 
   @Test(expected = NullPointerException.class)
   public void nullAuthorInSink() {
-    new SinkWithNullableSetting(
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            null,
-            CommonUtils.randomString())
-        .config();
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void nullConnectorTypeInSink() {
-    new SinkWithNullableSetting(
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            CommonUtils.randomString(),
-            null)
+    new SinkWithNullableSetting(CommonUtils.randomString(), CommonUtils.randomString(), null)
         .config();
   }
 
@@ -218,14 +175,11 @@ public class TestCoreDefinitions extends SmallTest {
     private final String version;
     private final String revision;
     private final String author;
-    private final String connectorType;
 
-    SourceWithNullableSetting(
-        String version, String revision, String author, String connectorType) {
+    SourceWithNullableSetting(String version, String revision, String author) {
       this.version = version;
       this.revision = revision;
       this.author = author;
-      this.connectorType = connectorType;
     }
 
     @Override
@@ -258,24 +212,17 @@ public class TestCoreDefinitions extends SmallTest {
     protected String revision() {
       return revision;
     }
-
-    @Override
-    protected String typeName() {
-      return connectorType;
-    }
   }
 
   private static class SinkWithNullableSetting extends RowSinkConnector {
     private final String version;
     private final String revision;
     private final String author;
-    private final String connectorType;
 
-    SinkWithNullableSetting(String version, String revision, String author, String connectorType) {
+    SinkWithNullableSetting(String version, String revision, String author) {
       this.version = version;
       this.revision = revision;
       this.author = author;
-      this.connectorType = connectorType;
     }
 
     @Override
@@ -307,11 +254,6 @@ public class TestCoreDefinitions extends SmallTest {
     @Override
     protected String revision() {
       return revision;
-    }
-
-    @Override
-    protected String typeName() {
-      return connectorType;
     }
   }
 }

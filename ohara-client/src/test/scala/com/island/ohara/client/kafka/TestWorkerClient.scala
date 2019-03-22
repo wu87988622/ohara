@@ -21,7 +21,7 @@ import java.util.Collections
 import com.island.ohara.common.data.{ConnectorState, Row, Serializer}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.connector.json.{ConnectorFormatter, StringList}
+import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConverterType, SettingDefinition, StringList}
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.Matchers
@@ -130,27 +130,177 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
     val settingInfo = result(
       workerClient
         .connectorValidator()
-        .className(classOf[MyConnector].getName)
+        .connectorClassName(classOf[MyConnector].getName)
         .settings(Map(
           ConnectorFormatter.NAME_KEY -> name,
-          ConnectorFormatter.TOPIC_NAMES_KEY -> StringList.toJsonString(Collections.singletonList(topicName)),
-          ConnectorFormatter.NUMBER_OF_TASKS_KEY -> numberOfTasks.toString
+          SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> StringList.toJsonString(
+            Collections.singletonList(topicName)),
+          SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
         ))
         .run)
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
-    settingInfo.name.get shouldBe name
     settingInfo.topicNames.asScala shouldBe Seq(topicName)
     settingInfo.numberOfTasks.get shouldBe numberOfTasks
   }
 
   @Test
   def testValidateWithoutValue(): Unit = {
-    val settingInfo = result(workerClient.connectorValidator().className(classOf[MyConnector].getName).run)
+    val settingInfo = result(workerClient.connectorValidator().connectorClassName(classOf[MyConnector].getName).run)
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
-    settingInfo.name.isPresent shouldBe false
     settingInfo.topicNames.isEmpty shouldBe true
     settingInfo.numberOfTasks.isPresent shouldBe false
+  }
+
+  @Test
+  def testAllPluginDefinitions(): Unit = {
+    val plugins = result(workerClient.connectors)
+    plugins.size should not be 0
+    plugins.foreach(plugin => check(plugin.definitions))
+  }
+  @Test
+  def testListDefinitions(): Unit = {
+    check(result(workerClient.definitions(classOf[MyConnector].getName)))
+  }
+
+  private[this] def check(settingDefinitionS: Seq[SettingDefinition]): Unit = {
+    settingDefinitionS.size should not be 0
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .head
+      .internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.COLUMNS_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.COLUMNS_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.COLUMNS_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.COLUMNS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS.find(_.key() == SettingDefinition.COLUMNS_DEFINITION.key()).head.defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS.find(_.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key()).head.defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .head
+      .internal() shouldBe false
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .head
+      .editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe null
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.AUTHOR_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.AUTHOR_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.AUTHOR_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.AUTHOR_DEFINITION.key()).head.editable() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.AUTHOR_DEFINITION.key()).head.defaultValue() shouldBe "unknown"
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.VERSION_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.VERSION_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.VERSION_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.VERSION_DEFINITION.key()).head.editable() shouldBe false
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.VERSION_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe "unknown"
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.REVISION_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.REVISION_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.REVISION_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.REVISION_DEFINITION.key()).head.editable() shouldBe false
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.REVISION_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe "unknown"
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.KIND_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.KIND_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.KIND_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.KIND_DEFINITION.key()).head.editable() shouldBe false
+    (settingDefinitionS.find(_.key() == SettingDefinition.KIND_DEFINITION.key()).head.defaultValue() == "source"
+    || settingDefinitionS
+      .find(_.key() == SettingDefinition.KIND_DEFINITION.key())
+      .head
+      .defaultValue() == "sink") shouldBe true
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key()).head.internal() shouldBe true
+    settingDefinitionS.find(_.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe ConverterType.NONE.className()
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key()).head.internal() shouldBe true
+    settingDefinitionS.find(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe ConverterType.NONE.className()
   }
 }

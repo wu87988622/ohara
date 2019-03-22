@@ -18,9 +18,9 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.InfoApi.ConnectorVersion
 import com.island.ohara.common.util.VersionUtils
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
-
 object WorkerApi {
   val WORKER_PREFIX_PATH: String = "workers"
 
@@ -92,6 +92,18 @@ object WorkerApi {
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
     jsonFormat15(WorkerClusterCreationRequest)
 
+  implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDefinition] =
+    new RootJsonFormat[SettingDefinition] {
+      import spray.json._
+      override def read(json: JsValue): SettingDefinition = SettingDefinition.ofJson(json.toString())
+
+      override def write(obj: SettingDefinition): JsValue = obj.toJsonString.parseJson
+    }
+
+  case class ConnectorDefinitions(className: String, definitions: Seq[SettingDefinition])
+  implicit val CONNECTION_DEFINITIONS_JSON_FORMAT: RootJsonFormat[ConnectorDefinitions] = jsonFormat2(
+    ConnectorDefinitions)
+
   /**
     * We need to fake cluster info in fake mode so we extract a layer to open the door to fake worker cluster.
     */
@@ -109,6 +121,7 @@ object WorkerApi {
     def offsetTopicPartitions: Int
     def offsetTopicReplications: Short
     def jarNames: Seq[String]
+    def connectors: Seq[ConnectorDefinitions]
     def sources: Seq[ConnectorVersion]
     def sinks: Seq[ConnectorVersion]
 
@@ -138,6 +151,7 @@ object WorkerApi {
         offsetTopicPartitions = obj.offsetTopicPartitions,
         offsetTopicReplications = obj.offsetTopicReplications,
         jarNames = obj.jarNames,
+        connectors = obj.connectors,
         sources = obj.sources,
         sinks = obj.sinks,
         nodeNames = obj.nodeNames
@@ -159,9 +173,8 @@ object WorkerApi {
               offsetTopicName: String,
               offsetTopicPartitions: Int,
               offsetTopicReplications: Short,
-              sources: Seq[ConnectorVersion],
-              sinks: Seq[ConnectorVersion],
               jarNames: Seq[String],
+              connectors: Seq[ConnectorDefinitions],
               nodeNames: Seq[String]): WorkerClusterInfo = WorkerClusterInfoImpl(
       name = name,
       imageName = imageName,
@@ -178,8 +191,9 @@ object WorkerApi {
       offsetTopicPartitions = offsetTopicPartitions,
       offsetTopicReplications = offsetTopicReplications,
       jarNames = jarNames,
-      sources = sources,
-      sinks = sinks,
+      connectors = connectors,
+      sources = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "source"),
+      sinks = connectors.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink"),
       nodeNames = nodeNames
     )
   }
@@ -208,11 +222,12 @@ object WorkerApi {
                                                  offsetTopicPartitions: Int,
                                                  offsetTopicReplications: Short,
                                                  jarNames: Seq[String],
+                                                 connectors: Seq[ConnectorDefinitions],
                                                  sources: Seq[ConnectorVersion],
                                                  sinks: Seq[ConnectorVersion],
                                                  nodeNames: Seq[String])
       extends WorkerClusterInfo
-  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat18(
+  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat19(
     WorkerClusterInfoImpl)
 
   def access(): ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] =

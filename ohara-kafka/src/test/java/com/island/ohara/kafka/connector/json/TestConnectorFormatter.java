@@ -34,7 +34,7 @@ public class TestConnectorFormatter extends SmallTest {
             .name(CommonUtils.randomString())
             .topicNames(topicNames)
             .requestOfCreation();
-    Assert.assertNotNull(creation.configs().get(ConnectorFormatter.TOPIC_NAMES_KEY));
+    Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),
         creation.configs().entrySet().iterator().next().getValue());
@@ -48,7 +48,7 @@ public class TestConnectorFormatter extends SmallTest {
             .name(CommonUtils.randomString())
             .topicNames(topicNames)
             .requestOfCreation();
-    Assert.assertNotNull(creation.configs().get(ConnectorFormatter.TOPIC_NAMES_KEY));
+    Assert.assertNotNull(creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),
         creation.configs().entrySet().iterator().next().getValue());
@@ -86,7 +86,7 @@ public class TestConnectorFormatter extends SmallTest {
             .requestOfCreation();
     Assert.assertEquals(
         StringList.toKafkaString(topicNames),
-        creation.configs().get(ConnectorFormatter.TOPIC_NAMES_KEY));
+        creation.configs().get(SettingDefinition.TOPIC_NAMES_DEFINITION.key()));
   }
 
   @Test(expected = NullPointerException.class)

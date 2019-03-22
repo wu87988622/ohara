@@ -35,14 +35,17 @@ object InfoRoute extends SprayJsonSupport {
         import scala.collection.JavaConverters._
         onSuccess(workerCollie.clusters.flatMap { clusters =>
           clusters.size match {
-            case 1 => workerCollie.workerClient(clusters.head._1.name).flatMap(_._2.plugins)
+            case 1 => workerCollie.workerClient(clusters.head._1.name).flatMap(_._2.connectors)
             case _ => Future.successful(Seq.empty)
           }
         }) { plugins =>
           complete(
             ConfiguratorInfo(
-              sources = plugins.filter(_.typeName.toLowerCase == "source").map(InfoApi.toConnectorVersion),
-              sinks = plugins.filter(_.typeName.toLowerCase == "sink").map(InfoApi.toConnectorVersion),
+              connectors = plugins,
+              // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
+              sources = plugins.map(InfoApi.toConnectorVersion).filter(_.typeName == "source"),
+              // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
+              sinks = plugins.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink"),
               supportedDatabases = SUPPORTED_DATABASES,
               supportedDataTypes = DataType.all.asScala,
               versionInfo = ConfiguratorVersion(

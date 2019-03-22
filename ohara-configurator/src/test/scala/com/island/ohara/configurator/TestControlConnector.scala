@@ -57,7 +57,6 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       10 seconds
     )
     val request = ConnectorCreationRequest(
-      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
       columns = Seq.empty,
@@ -120,7 +119,6 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       10 seconds
     )
     val request = ConnectorCreationRequest(
-      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
       columns = Seq.empty,
@@ -169,7 +167,6 @@ class TestControlConnector extends WithBrokerWorker with Matchers {
       10 seconds
     )
     val request = ConnectorCreationRequest(
-      name = Some(CommonUtils.randomString(10)),
       workerClusterName = None,
       className = Some(classOf[DumbSink].getName),
       columns = Seq.empty,

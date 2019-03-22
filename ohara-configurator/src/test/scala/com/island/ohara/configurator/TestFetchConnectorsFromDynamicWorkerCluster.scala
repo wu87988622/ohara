@@ -36,8 +36,9 @@ class TestFetchConnectorsFromDynamicWorkerCluster extends WithBrokerWorker with 
       clusters.isEmpty shouldBe false
 
       clusters.foreach { cluster =>
-        cluster.sinks.isEmpty shouldBe false
-        cluster.sources.isEmpty shouldBe false
+        cluster.connectors.size should not be 0
+        cluster.sinks.size should not be 0
+        cluster.sources.size should not be 0
       }
     } finally configurator.close()
   }

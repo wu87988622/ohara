@@ -101,41 +101,37 @@ public final class SettingInfo implements JsonObject {
 
   // ------------------------[common]------------------------//
   public Optional<String> className() {
-    return value(ConnectorFormatter.CLASS_NAME_KEY);
-  }
-
-  public Optional<String> name() {
-    return value(ConnectorFormatter.NAME_KEY);
+    return value(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key());
   }
 
   public List<String> topicNames() {
-    return value(ConnectorFormatter.TOPIC_NAMES_KEY)
+    return value(SettingDefinition.TOPIC_NAMES_DEFINITION.key())
         .map(StringList::ofKafkaList)
         .orElse(Collections.emptyList());
   }
 
   public Optional<Integer> numberOfTasks() {
-    return value(ConnectorFormatter.NUMBER_OF_TASKS_KEY).map(Integer::valueOf);
+    return value(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(Integer::valueOf);
   }
 
   public Optional<String> author() {
-    return value(ConnectorFormatter.AUTHOR_KEY);
+    return value(SettingDefinition.AUTHOR_DEFINITION.key());
   }
 
   public Optional<String> version() {
-    return value(ConnectorFormatter.VERSION_KEY);
+    return value(SettingDefinition.VERSION_DEFINITION.key());
   }
 
   public Optional<String> revision() {
-    return value(ConnectorFormatter.REVISION_KEY);
+    return value(SettingDefinition.REVISION_DEFINITION.key());
   }
 
   public Optional<String> workerClusterName() {
-    return value(ConnectorFormatter.WORKER_CLUSTER_NAME_KEY);
+    return value(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key());
   }
 
   public Optional<String> connectorType() {
-    return value(ConnectorFormatter.CONNECTOR_TYPE_KEY);
+    return value(SettingDefinition.KIND_DEFINITION.key());
   }
 
   // ------------------------[json]------------------------//

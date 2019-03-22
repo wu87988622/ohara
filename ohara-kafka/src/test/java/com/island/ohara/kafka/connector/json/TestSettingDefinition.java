@@ -251,8 +251,8 @@ public class TestSettingDefinition extends SmallTest {
   public void testDefaultKeyConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        SettingDefinition.DEFINITIONS_DEFAULT.stream()
-            .filter(d -> d.key().equals(ConnectorFormatter.KEY_CONVERTER_KEY))
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(d -> d.key().equals(SettingDefinition.KEY_CONVERTER_DEFINITION.key()))
             .findAny()
             .get()
             .defaultValue());
@@ -262,8 +262,8 @@ public class TestSettingDefinition extends SmallTest {
   public void testDefaultValueConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        SettingDefinition.DEFINITIONS_DEFAULT.stream()
-            .filter(d -> d.key().equals(ConnectorFormatter.VALUE_CONVERTER_KEY))
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(d -> d.key().equals(SettingDefinition.VALUE_CONVERTER_DEFINITION.key()))
             .findAny()
             .get()
             .defaultValue());
@@ -281,5 +281,13 @@ public class TestSettingDefinition extends SmallTest {
     ConfigKeyInfo fake = Mockito.mock(ConfigKeyInfo.class);
     Mockito.when(fake.displayName()).thenReturn(null);
     SettingDefinition.of(fake);
+  }
+
+  @Test
+  public void testCopy() {
+    SettingDefinitions.DEFINITIONS_DEFAULT.forEach(
+        d ->
+            Assert.assertEquals(
+                d.toJsonString(), SettingDefinition.newBuilder(d).build().toJsonString()));
   }
 }

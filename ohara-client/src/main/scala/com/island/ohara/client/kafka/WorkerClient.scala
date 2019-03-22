@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.StreamTcpException
 import com.island.ohara.client.HttpExecutor
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
@@ -77,10 +78,20 @@ trait WorkerClient {
   def resume(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
-    * list available plugins
+    * list available plugins.
+    * This main difference between plugins() and connectors() is that plugins() spend only one request
+    * to remote server. In contrast, connectors() needs multi-requests to fetch all details from
+    * remote server. Furthermore, connectors list only sub class from ohara's connectors
     * @return async future containing connector details
     */
   def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]]
+
+  /**
+    * list ohara's connector.
+    * NOTED: the plugins which are not sub class of ohara connector are not included.
+    * @return async future containing connector details
+    */
+  def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]]
 
   /**
     * list available plugin's names
@@ -122,6 +133,17 @@ trait WorkerClient {
     activeConnectors.map(_.contains(name))
 
   def nonExist(name: String)(implicit executionContext: ExecutionContext): Future[Boolean] = exist(name).map(!_)
+
+  /**
+    * list all definitions for connector.
+    * This is a helper method which passing "nothing" to validate the connector and then fetch only the definitions from report
+    * @param connectorClassName class name
+    * @param executionContext thread pool
+    * @return definition list
+    */
+  def definitions(connectorClassName: String)(
+    implicit executionContext: ExecutionContext): Future[Seq[SettingDefinition]] =
+    connectorValidator().connectorClassName(connectorClassName).run.map(_.settings().asScala.map(_.definition()))
 
 }
 
@@ -204,16 +226,15 @@ object WorkerClient {
               s"http://$workerAddress/connectors",
               ConnectorFormatter
                 .of()
+                .settings(configs.asJava)
+                // We put all specific setting after assign the "plain" settings
+                // since the later caller will override the former.
                 .className(className)
                 .topicNames(topicNames.asJava)
                 .numberOfTasks(numberOfTasks)
                 .columns(columns.asJava)
                 .converterTypeOfKey(converterTypeOfKey)
                 .converterTypeOfValue(converterTypeOfValue)
-                .settings(configs.asJava)
-                // it must be called at the latest since the configs passed by user contain "name" also.
-                // if we don't put this setter at the least, the name we configured will be replaced by user-defined name.
-                // Normally, we set a random id to be the name.
                 .name(name)
                 .requestOfCreation()
           ),
@@ -227,6 +248,24 @@ object WorkerClient {
       override def plugins(implicit executionContext: ExecutionContext): Future[Seq[Plugin]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[Plugin], Error](s"http://$workerAddress/connector-plugins"),
         s"fetch plugins $workerAddress")
+
+      override def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
+        plugins
+          .flatMap(Future.traverse(_) { p =>
+            definitions(p.className)
+              .map(
+                definitions =>
+                  ConnectorDefinitions(
+                    className = p.className,
+                    definitions = definitions
+                ))
+              .recover {
+                // It should fail if we try to parse non-ohara connectors
+                case _: IllegalArgumentException => ConnectorDefinitions(p.className, Seq.empty)
+              }
+          })
+          .map(_.filter(_.definitions.nonEmpty))
+
       override def activeConnectors(implicit executionContext: ExecutionContext): Future[Seq[String]] = retry(
         () => HttpExecutor.SINGLETON.get[Seq[String], Error](s"http://$workerAddress/connectors"),
         "fetch active connectors")
@@ -262,7 +301,7 @@ object WorkerClient {
               HttpExecutor.SINGLETON
                 .put[java.util.Map[String, String], ConfigInfos, Error](
                   s"http://$workerAddress/connector-plugins/$className/config/validate",
-                  ConnectorFormatter.of().className(className).settings(settings.asJava).requestOfValidation()
+                  ConnectorFormatter.of().settings(settings.asJava).className(className).requestOfValidation()
                 )
                 .map(SettingInfo.of),
             "connectorValidator"
@@ -278,7 +317,7 @@ object WorkerClient {
     private[this] var converterTypeOfKey: ConverterType = ConverterType.NONE
     private[this] var converterTypeOfValue: ConverterType = ConverterType.NONE
     private[this] var name: String = _
-    private[this] var className: String = _
+    private[this] var connectorClassName: String = _
     private[this] var topicNames: Seq[String] = Seq.empty
     private[this] var numberOfTasks: Int = 1
     private[this] var settings: Map[String, String] = Map.empty
@@ -298,11 +337,11 @@ object WorkerClient {
     /**
       * set the connector class. The class must be loaded in class loader otherwise it will fail to create the connector.
       *
-      * @param className connector class
+      * @param connectorClassName connector class
       * @return this one
       */
-    def className(className: String): Creator = {
-      this.className = CommonUtils.requireNonEmpty(className)
+    def className(connectorClassName: String): Creator = {
+      this.connectorClassName = CommonUtils.requireNonEmpty(connectorClassName)
       this
     }
 
@@ -411,7 +450,7 @@ object WorkerClient {
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         name = CommonUtils.requireNonEmpty(name),
-        className = CommonUtils.requireNonEmpty(className),
+        connectorClassName = CommonUtils.requireNonEmpty(connectorClassName),
         topicNames = CommonUtils.requireNonEmpty(topicNames.asJava).asScala,
         numberOfTasks = CommonUtils.requirePositiveInt(numberOfTasks),
         columns = Objects.requireNonNull(columns),
@@ -427,7 +466,7 @@ object WorkerClient {
       */
     protected def doCreate(executionContext: ExecutionContext,
                            name: String,
-                           className: String,
+                           connectorClassName: String,
                            topicNames: Seq[String],
                            numberOfTasks: Int,
                            columns: Seq[Column],
@@ -441,28 +480,16 @@ object WorkerClient {
     /**
       * we store classname as a member since this member will bed used in url
       */
-    private[this] var className: String = _
+    private[this] var connectorClassName: String = _
     private[this] val formatter: ConnectorFormatter = ConnectorFormatter.of()
 
-    /**
-      * set the connector name. It should be a unique name.
-      *
-      * @param name connector name
-      * @return this one
-      */
-    @Optional("Default is none")
-    def name(name: String): Validator = {
-      this.formatter.name(CommonUtils.requireNonEmpty(name))
+    def connectorClassName(connectorClassName: String): Validator = {
+      this.connectorClassName = connectorClassName
+      this.formatter.className(CommonUtils.requireNonEmpty(connectorClassName))
       this
     }
 
-    def className(className: String): Validator = {
-      this.className = className
-      this.formatter.className(CommonUtils.requireNonEmpty(className))
-      this
-    }
-
-    def connectorClass(clz: Class[_]): Validator = className(clz.getName)
+    def connectorClass(clz: Class[_]): Validator = connectorClassName(clz.getName)
 
     @Optional("Default is none")
     def setting(key: String, value: String): Validator = settings(
@@ -520,7 +547,7 @@ object WorkerClient {
 
     def run(implicit executionContext: ExecutionContext): Future[SettingInfo] = doValidate(
       executionContext = Objects.requireNonNull(executionContext),
-      className = CommonUtils.requireNonEmpty(className),
+      connectorClassName = CommonUtils.requireNonEmpty(connectorClassName),
       settings = formatter.requestOfValidation().asScala.toMap
     )
 
@@ -530,7 +557,7 @@ object WorkerClient {
       * @return response
       */
     protected def doValidate(executionContext: ExecutionContext,
-                             className: String,
+                             connectorClassName: String,
                              settings: Map[String, String]): Future[SettingInfo]
 
   }

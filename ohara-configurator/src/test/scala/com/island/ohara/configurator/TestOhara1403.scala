@@ -53,15 +53,15 @@ class TestOhara1403 extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(ConnectorCreationRequest(
-          name = Some(CommonUtils.randomString(10)),
-          workerClusterName = None,
-          className = Some(classOf[DumbSink].getName),
-          columns = Seq.empty,
-          topicNames = Seq(topic.id),
-          numberOfTasks = Some(1),
-          settings = Map.empty
-        )),
+        .add(
+          ConnectorCreationRequest(
+            workerClusterName = None,
+            className = Some(classOf[DumbSink].getName),
+            columns = Seq.empty,
+            topicNames = Seq(topic.id),
+            numberOfTasks = Some(1),
+            settings = Map.empty
+          )),
       10 seconds
     )
 

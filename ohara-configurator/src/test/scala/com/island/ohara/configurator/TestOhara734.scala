@@ -87,7 +87,6 @@ class TestOhara734 extends SmallTest with Matchers {
                                                             |  }]
                                                             |}
                                                           """.stripMargin.parseJson)
-    request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
     request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks.get shouldBe 1
@@ -158,7 +157,6 @@ class TestOhara734 extends SmallTest with Matchers {
                                                                |  }]
                                                                |}
                                                              """.stripMargin.parseJson)
-    request.name.foreach(_ shouldBe "perf")
     request.className shouldBe "com.island.ohara.connector.perf.PerfSource"
     request.topicNames.head shouldBe "59e9010c-fd9c-4a41-918a-dacc9b84aa2b"
     request.numberOfTasks.get shouldBe 1

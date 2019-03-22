@@ -17,6 +17,7 @@
 package com.island.ohara.connector.hdfs
 import java.util
 
+import com.island.ohara.common.util.VersionUtils
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskConfig}
 
 import scala.collection.JavaConverters._
@@ -41,4 +42,10 @@ class HDFSSinkConnector extends RowSinkConnector {
   override protected[hdfs] def _taskConfigs(maxTasks: Int): util.List[TaskConfig] = {
     Seq.fill(maxTasks) { props }.asJava
   }
+
+  override protected def _version: String = VersionUtils.VERSION
+
+  override protected def revision: String = VersionUtils.REVISION
+
+  override protected def author: String = "ohara"
 }

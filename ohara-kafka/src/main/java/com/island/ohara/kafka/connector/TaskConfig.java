@@ -21,6 +21,7 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
 import com.island.ohara.kafka.connector.json.PropGroup;
 import com.island.ohara.kafka.connector.json.PropGroups;
+import com.island.ohara.kafka.connector.json.SettingDefinition;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,7 +75,7 @@ public class TaskConfig {
   }
 
   public List<String> topicNames() {
-    return stringList(ConnectorFormatter.TOPIC_NAMES_KEY);
+    return stringList(SettingDefinition.TOPIC_NAMES_DEFINITION.key());
   }
 
   public List<PropGroup> propGroups(String key) {
@@ -84,7 +85,7 @@ public class TaskConfig {
   }
 
   public List<Column> columns() {
-    return PropGroups.toColumns(propGroups(ConnectorFormatter.COLUMNS_KEY));
+    return PropGroups.toColumns(propGroups(SettingDefinition.COLUMNS_DEFINITION.key()));
   }
 
   public Map<String, String> raw() {

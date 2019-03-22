@@ -16,8 +16,8 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.kafka.connector.json.ConnectorFormatter;
 import com.island.ohara.kafka.connector.json.SettingDefinition;
+import com.island.ohara.kafka.connector.json.SettingDefinitions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -83,10 +83,6 @@ public abstract class RowSourceConnector extends SourceConnector {
   protected String author() {
     return "unknown";
   }
-
-  protected String typeName() {
-    return "source";
-  }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
   @Override
@@ -111,14 +107,16 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final ConfigDef config() {
-    return ConnectorFormatter.toConfigDef(
-        Stream.of(definitions(), SettingDefinition.DEFINITIONS_DEFAULT)
+    return ConnectorUtils.toConfigDef(
+        Stream.of(
+                Collections.singletonList(SettingDefinition.SOURCE_KIND_DEFINITION),
+                definitions(),
+                SettingDefinitions.DEFINITIONS_DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
         _version(),
         revision(),
-        author(),
-        typeName());
+        author());
   }
 
   @Override

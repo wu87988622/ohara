@@ -56,7 +56,6 @@ public class TestSettingInfo extends SmallTest {
                 CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
     String name = CommonUtils.randomString();
     SettingInfo settingInfo = SettingInfo.of(Collections.singletonList(setting));
-    settingInfo.name().ifPresent(n -> Assert.assertEquals(name, n));
     Assert.assertEquals(1, settingInfo.settings().size());
     Assert.assertEquals(setting, settingInfo.settings().get(0));
   }

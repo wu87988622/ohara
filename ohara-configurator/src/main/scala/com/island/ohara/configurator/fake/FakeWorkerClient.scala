@@ -19,6 +19,7 @@ package com.island.ohara.configurator.fake
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
+import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.Validator
 import com.island.ohara.client.kafka.WorkerJson.{
@@ -96,26 +97,30 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
 
   override def connectorValidator(): Validator =
     (executionContext, className, settings) =>
-      Future.successful(SettingInfo.of(SettingDefinition.DEFINITIONS_DEFAULT.asScala.map { definition =>
+      Future.successful(SettingInfo.of(SettingDefinitions.DEFINITIONS_DEFAULT.asScala.map { definition =>
         Setting.of(
           definition,
           SettingValue.of(
             definition.key(),
-            definition.key() match {
-              case ConnectorFormatter.NAME_KEY if settings.contains(ConnectorFormatter.NAME_KEY) =>
-                settings(ConnectorFormatter.NAME_KEY)
-              case ConnectorFormatter.CLASS_NAME_KEY => className
-              case ConnectorFormatter.TOPIC_NAMES_KEY if settings.contains(ConnectorFormatter.TOPIC_NAMES_KEY) =>
-                settings(ConnectorFormatter.NAME_KEY)
-              case ConnectorFormatter.NUMBER_OF_TASKS_KEY
-                  if settings.contains(ConnectorFormatter.NUMBER_OF_TASKS_KEY) =>
-                settings(ConnectorFormatter.NUMBER_OF_TASKS_KEY)
-              case ConnectorFormatter.COLUMNS_KEY if settings.contains(ConnectorFormatter.COLUMNS_KEY) =>
-                settings(ConnectorFormatter.COLUMNS_KEY)
-              case _ => null
-            },
+            if (definition.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) className
+            else if (definition.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
+              settings.getOrElse(SettingDefinition.TOPIC_NAMES_DEFINITION.key(), null)
+            else if (definition.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+              settings.getOrElse(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), null)
+            else if (definition.key() == SettingDefinition.COLUMNS_DEFINITION.key())
+              settings.getOrElse(SettingDefinition.COLUMNS_DEFINITION.key(), null)
+            else if (definition.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key())
+              settings.getOrElse(SettingDefinition.KEY_CONVERTER_DEFINITION.key(), null)
+            else if (definition.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key())
+              settings.getOrElse(SettingDefinition.VALUE_CONVERTER_DEFINITION.key(), null)
+            else if (definition.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+              settings.getOrElse(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key(), null)
+            else null,
             Collections.emptyList()
           )
         )
       }.asJava))
+
+  override def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
+    Future.successful(cachedConnectors.keys.asScala.map(c => ConnectorDefinitions(c, Seq.empty)).toSeq)
 }

@@ -24,8 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import org.apache.kafka.common.config.ConfigDef;
 
 /**
  * Kafka worker accept json and then unmarshal it to Map[String, String]. In most cases we can't
@@ -38,59 +36,6 @@ import org.apache.kafka.common.config.ConfigDef;
 public final class ConnectorFormatter {
   // --------------------[KAFKA KEYs]--------------------//
   public static final String NAME_KEY = "name";
-  static final int NAME_KEY_ORDER = 0;
-  public static final String CLASS_NAME_KEY = "connector.class";
-  static final int CLASS_NAME_KEY_ORDER = 1;
-  public static final String TOPIC_NAMES_KEY = "topics";
-  static final int TOPIC_NAMES_KEY_ORDER = 2;
-  public static final String NUMBER_OF_TASKS_KEY = "tasks.max";
-  static final int NUMBER_OF_TASKS_KEY_ORDER = 3;
-  static final String KEY_CONVERTER_KEY = "key.converter";
-  static final int KEY_CONVERTER_KEY_ORDER = 4;
-  static final String VALUE_CONVERTER_KEY = "value.converter";
-  static final int VALUE_CONVERTER_KEY_ORDER = 5;
-  // --------------------[OHARA KEYs]--------------------//
-  public static final String COLUMNS_KEY = "columns";
-  static final int COLUMNS_KEY_ORDER = 6;
-  public static final String WORKER_CLUSTER_NAME_KEY = "workerClusterName";
-  static final int WORKER_CLUSTER_NAME_KEY_ORDER = 7;
-  static final String VERSION_KEY = "version";
-  static final int VERSION_KEY_ORDER = 8;
-  static final String REVISION_KEY = "revision";
-  static final int REVISION_KEY_ORDER = 9;
-  static final String AUTHOR_KEY = "author";
-  static final int AUTHOR_KEY_ORDER = 10;
-  static final String CONNECTOR_TYPE_KEY = "connectorType";
-  static final int CONNECTOR_TYPE_KEY_ORDER = 11;
-
-  private static ConfigDef.ConfigKey toConfigKey(String key, String value, int order) {
-    return SettingDefinition.newBuilder()
-        .key(key)
-        .readonly()
-        .optional(value)
-        .group(SettingDefinition.CORE_GROUP)
-        .orderInGroup(order)
-        .valueType(SettingDefinition.Type.STRING)
-        .build()
-        .toConfigKey();
-  }
-
-  public static ConfigDef toConfigDef(
-      List<SettingDefinition> settingDefinitions,
-      String version,
-      String revision,
-      String author,
-      String connectorType) {
-    ConfigDef def = new ConfigDef();
-    settingDefinitions.stream().map(SettingDefinition::toConfigKey).forEach(def::define);
-    def.define(toConfigKey(VERSION_KEY, Objects.requireNonNull(version), VERSION_KEY_ORDER));
-    def.define(toConfigKey(REVISION_KEY, Objects.requireNonNull(revision), REVISION_KEY_ORDER));
-    def.define(toConfigKey(AUTHOR_KEY, Objects.requireNonNull(author), AUTHOR_KEY_ORDER));
-    def.define(
-        toConfigKey(
-            CONNECTOR_TYPE_KEY, Objects.requireNonNull(connectorType), CONNECTOR_TYPE_KEY_ORDER));
-    return def;
-  }
 
   public static ConnectorFormatter of() {
     return new ConnectorFormatter();
@@ -109,7 +54,6 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter setting(String key, String value) {
-    System.out.println("[CHIA] key:" + key + " value:" + value);
     CommonUtils.requireNonEmpty(key, () -> "key can't be either empty or null");
     CommonUtils.requireNonEmpty(
         value, () -> "it is illegal to assign empty/null value to key:" + key);
@@ -130,7 +74,7 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter className(String className) {
-    return setting(CLASS_NAME_KEY, className);
+    return setting(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(), className);
   }
 
   public ConnectorFormatter topicName(String topicName) {
@@ -138,21 +82,23 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter topicNames(List<String> topicNames) {
-    return setting(TOPIC_NAMES_KEY, StringList.toKafkaString(topicNames));
+    return setting(
+        SettingDefinition.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicNames));
   }
 
   public ConnectorFormatter numberOfTasks(int numberOfTasks) {
-    return setting(NUMBER_OF_TASKS_KEY, String.valueOf(numberOfTasks));
+    return setting(
+        SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), String.valueOf(numberOfTasks));
   }
 
   @Optional("default is ConverterType.NONE")
   public ConnectorFormatter converterTypeOfKey(ConverterType type) {
-    return setting(KEY_CONVERTER_KEY, type.className());
+    return setting(SettingDefinition.KEY_CONVERTER_DEFINITION.key(), type.className());
   }
 
   @Optional("default is ConverterType.NONE")
   public ConnectorFormatter converterTypeOfValue(ConverterType type) {
-    return setting(VALUE_CONVERTER_KEY, type.className());
+    return setting(SettingDefinition.VALUE_CONVERTER_DEFINITION.key(), type.className());
   }
 
   public ConnectorFormatter propGroups(String key, List<PropGroup> propGroups) {
@@ -164,7 +110,7 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter columns(List<Column> columns) {
-    return propGroups(COLUMNS_KEY, PropGroups.of(columns));
+    return propGroups(SettingDefinition.COLUMNS_DEFINITION.key(), PropGroups.of(columns));
   }
 
   public Creation requestOfCreation() {

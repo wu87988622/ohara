@@ -505,8 +505,7 @@ private object K8SClusterCollieImpl {
               statusTopicPartitions = statusTopicPartitions,
               statusTopicReplications = statusTopicReplications,
               jarNames = jarUrls.map(_.getFile),
-              sources = Seq.empty,
-              sinks = Seq.empty,
+              connectors = Seq.empty,
               nodeNames = successfulNodeNames ++ existNodes.map(_._1.name)
             )
         }
@@ -557,8 +556,9 @@ private object K8SClusterCollieImpl {
           .split(",")
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),
-        sources = Seq.empty,
-        sinks = Seq.empty,
+        // TODO: fetch all connectors... by chia
+        // Perhaps we can just copy the implementation from ClusterCollieImpl
+        connectors = Seq.empty,
         nodeNames = containers.map(_.nodeName)
       )
     }
