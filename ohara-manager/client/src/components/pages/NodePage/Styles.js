@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 
 import { Button } from 'common/Form';
 import { DataTable } from 'common/Table';
+import MuiButton from '@material-ui/core/Button';
 
 export const Wrapper = styled.div`
   padding-top: 75px;
@@ -34,6 +35,10 @@ export const TopWrapper = styled.div`
 `;
 
 export const NewNodeBtn = styled(Button)`
+  margin-left: auto;
+`;
+
+export const MuiBtn = styled(MuiButton)`
   margin-left: auto;
 `;
 

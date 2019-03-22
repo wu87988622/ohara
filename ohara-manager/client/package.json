@@ -19,6 +19,7 @@
     "e2e:run": "cypress run"
   },
   "dependencies": {
+    "@material-ui/core": "4.0.0-alpha.4",
     "classnames": "2.2.6",
     "d3v4": "4.2.2",
     "dagre-d3": "0.6.1",
@@ -29,6 +30,7 @@
     "react-document-title": "2.0.3",
     "react-dom": "16.8.4",
     "react-final-form": "4.0.2",
+    "react-jss": "8.6.1",
     "react-modal": "3.5.1",
     "react-router-dom": "4.3.1",
     "react-scripts": "2.1.8",

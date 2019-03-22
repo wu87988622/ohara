@@ -19,13 +19,26 @@ import ReactDOM from 'react-dom';
 import App from 'App';
 import { ThemeProvider } from 'styled-components';
 
+import { create } from 'jss';
+import JssProvider from 'react-jss/lib/JssProvider';
+
+import { createGenerateClassName, jssPreset } from '@material-ui/styles';
+
 import * as CSS_VARS from './theme/variables';
 import 'theme/globalStyle';
 import 'toastrConfigs';
 
+const generateClassName = createGenerateClassName();
+const jss = create({
+  ...jssPreset(),
+  insertionPoint: 'insertion-point-jss',
+});
+
 ReactDOM.render(
-  <ThemeProvider theme={CSS_VARS}>
-    <App />
-  </ThemeProvider>,
+  <JssProvider jss={jss} generateClassName={generateClassName}>
+    <ThemeProvider theme={CSS_VARS}>
+      <App />
+    </ThemeProvider>
+  </JssProvider>,
   document.getElementById('root'),
 );

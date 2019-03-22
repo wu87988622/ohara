@@ -97,14 +97,17 @@ class NodeListPage extends React.Component {
           <s.Wrapper>
             <s.TopWrapper>
               <H2>Nodes</H2>
-              <s.NewNodeBtn
-                theme={primaryBtn}
-                text="New node"
+              <s.MuiBtn
+                className={s.MuiBtn}
+                color="primary"
+                variant="contained"
                 data-testid="new-node"
-                handleClick={() => {
+                onClick={() => {
                   this.setState({ activeModal: NODE_NEW_MODAL });
                 }}
-              />
+              >
+                New Node
+              </s.MuiBtn>
             </s.TopWrapper>
             <Box>
               <s.Table
