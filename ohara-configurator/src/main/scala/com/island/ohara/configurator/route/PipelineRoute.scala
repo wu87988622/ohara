@@ -28,7 +28,9 @@ import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
 import com.island.ohara.configurator.store.DataStore
+import com.island.ohara.kafka.connector.json.SettingDefinitions
 import com.typesafe.scalalogging.Logger
+import scala.collection.JavaConverters._
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
@@ -118,72 +120,71 @@ private[configurator] object PipelineRoute {
           .filterNot(_ == UNKNOWN)
           .toSet
           .map(id => store.value[Data](id)))
-      .flatMap { objs =>
-        Future.traverse(objs) {
-          case data: ConnectorDescription =>
-            workerClient
-              .exist(data.id)
-              .flatMap {
-                if (_)
-                  workerClient
-                    .status(data.id)
-                    .map(c => Some(c.connector.state))
-                    .map { state =>
-                      ObjectAbstract(
-                        id = data.id,
-                        name = data.name,
-                        kind = data.kind,
-                        state = state.map(v => ObjectState.forName(v.name)),
-                        error = ConnectorRoute.errorMessage(state),
-                        lastModified = data.lastModified
-                      )
-                    }
-                    .recover {
-                      case e: Throwable =>
-                        LOG.error(s"Failed to get status of connector:${data.id}", e)
-                        ObjectAbstract(
-                          id = data.id,
-                          name = data.name,
-                          kind = data.kind,
-                          state = None,
-                          error = Some(s"Failed to get status of connector:${data.id}." +
-                            s"This may be temporary since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
-                          lastModified = data.lastModified
-                        )
-                    } else
-                  Future.successful(
-                    ObjectAbstract(id = data.id,
-                                   name = data.name,
-                                   kind = data.kind,
-                                   state = None,
-                                   error = None,
-                                   lastModified = data.lastModified))
-              }
-              .recover {
-                // if the target worker cluster is gone, we will fail to check existence of connector.
-                case e: Throwable =>
-                  ObjectAbstract(
-                    id = data.id,
-                    name = data.name,
-                    kind = data.kind,
-                    state = None,
-                    error =
-                      Some(s"failed to connect to worker cluster:${workerClient.connectionProps}. ${e.getMessage}"),
-                    lastModified = data.lastModified
-                  )
-              }
+      .flatMap(objs => workerClient.connectors.map(_ -> objs))
+      .flatMap {
+        case (connectors, objs) =>
+          Future.traverse(objs) {
+            case data: ConnectorDescription =>
+              workerClient
+                .exist(data.id)
+                .flatMap(
+                  if (_) workerClient.status(data.id).map(c => Some(c.connector.state)) else Future.successful(None))
+                .map { state =>
+                  state -> SettingDefinitions.kind(
+                    connectors
+                      .find(_.className == data.className)
+                      .getOrElse(throw new NoSuchElementException(s"${data.className} doesn't exist"))
+                      .definitions
+                      .asJava)
+                }
+                .map {
+                  case (state, kind) =>
+                    ObjectAbstract(
+                      id = data.id,
+                      name = data.name,
+                      kind = kind,
+                      className = Some(data.className),
+                      state = state.map(_.name).map(ObjectState.forName),
+                      error = ConnectorRoute.errorMessage(state),
+                      lastModified = data.lastModified
+                    )
+                }
+                .recover {
+                  case e: Throwable =>
+                    LOG.error(s"Failed to get status of connector:${data.id}", e)
+                    ObjectAbstract(
+                      id = data.id,
+                      name = data.name,
+                      kind = data.kind,
+                      className = None,
+                      state = None,
+                      error = Some(s"Failed to get status and type of connector:${data.id}." +
+                        s"This may be temporary since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
+                      lastModified = data.lastModified
+                    )
+                }
 
-          case data: StreamApp =>
-            Future.successful(
-              ObjectAbstract(data.id,
-                             data.name,
-                             data.kind,
-                             data.state.map(v => ObjectState.forName(v.name)),
-                             None,
-                             data.lastModified))
+            case data: StreamApp =>
+              Future.successful(ObjectAbstract(
+                id = data.id,
+                name = data.name,
+                kind = data.kind,
+                className = None,
+                state = data.state.map(_.name).map(ObjectState.forName),
+                error = None,
+                lastModified = data.lastModified
+              ))
 
-          case data => Future.successful(ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified))
-        }
+            case data =>
+              Future.successful(
+                ObjectAbstract(id = data.id,
+                               name = data.name,
+                               kind = data.kind,
+                               className = None,
+                               state = None,
+                               error = None,
+                               lastModified = data.lastModified))
+          }
       }
       // NOTED: we have to return a "serializable" list!!!
       .map(_.toList)

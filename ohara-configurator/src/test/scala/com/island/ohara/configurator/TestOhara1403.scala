@@ -44,7 +44,7 @@ class TestOhara1403 extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val connector = Await.result(
@@ -61,7 +61,7 @@ class TestOhara1403 extends SmallTest with Matchers {
             numberOfTasks = Some(1),
             settings = Map.empty
           )),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = Await.result(
@@ -73,39 +73,39 @@ class TestOhara1403 extends SmallTest with Matchers {
           PipelineCreationRequest(name = methodName(),
                                   workerClusterName = None,
                                   rules = Map(topic.id -> Seq(connector.id)))),
-      10 seconds
+      30 seconds
     )
 
     // start the connector
     Await
       .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).start(connector.id),
-              10 seconds)
+              30 seconds)
       .state shouldBe Some(ConnectorState.RUNNING)
 
     // we can't delete a pipeline having a running connector
 
     an[IllegalArgumentException] should be thrownBy Await.result(
       PipelineApi.access().hostname(configurator.hostname).port(configurator.port).delete(pipeline.id),
-      10 seconds)
+      30 seconds)
 
     // now we stop the connector
     Await
       .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).stop(connector.id),
-              10 seconds)
+              30 seconds)
       .state shouldBe None
 
     // and then it is ok to delete pipeline
     Await.result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).delete(pipeline.id),
-                 10 seconds)
+                 30 seconds)
 
     // let check the existence of topic
     Await
-      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list, 30 seconds)
       .size shouldBe 1
 
     // let check the existence of connector
     Await
-      .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+      .result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).list, 30 seconds)
       .size shouldBe 0
   }
 

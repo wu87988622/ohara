@@ -32,6 +32,11 @@ import com.island.ohara.client.kafka.WorkerJson.{
   TaskStatus
 }
 import com.island.ohara.kafka.connector.json._
+import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
+import org.apache.kafka.connect.runtime.AbstractHerder
+import org.apache.kafka.connect.sink.SinkConnector
+import org.apache.kafka.connect.source.SourceConnector
+import org.reflections.Reflections
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -96,31 +101,32 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     else Future.successful(cachedConnectorsState.put(name, ConnectorState.RUNNING))
 
   override def connectorValidator(): Validator =
+    // TODO: this implementation use kafka private APIs ... by chia
     (executionContext, className, settings) =>
-      Future.successful(SettingInfo.of(SettingDefinitions.DEFINITIONS_DEFAULT.asScala.map { definition =>
-        Setting.of(
-          definition,
-          SettingValue.of(
-            definition.key(),
-            if (definition.key() == SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()) className
-            else if (definition.key() == SettingDefinition.TOPIC_NAMES_DEFINITION.key())
-              settings.getOrElse(SettingDefinition.TOPIC_NAMES_DEFINITION.key(), null)
-            else if (definition.key() == SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
-              settings.getOrElse(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key(), null)
-            else if (definition.key() == SettingDefinition.COLUMNS_DEFINITION.key())
-              settings.getOrElse(SettingDefinition.COLUMNS_DEFINITION.key(), null)
-            else if (definition.key() == SettingDefinition.KEY_CONVERTER_DEFINITION.key())
-              settings.getOrElse(SettingDefinition.KEY_CONVERTER_DEFINITION.key(), null)
-            else if (definition.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key())
-              settings.getOrElse(SettingDefinition.VALUE_CONVERTER_DEFINITION.key(), null)
-            else if (definition.key() == SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
-              settings.getOrElse(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key(), null)
-            else null,
-            Collections.emptyList()
-          )
-        )
-      }.asJava))
+      Future {
+        val instance = Class.forName(className).newInstance()
+        val (connectorType, configDef, values) = instance match {
+          case c: SourceConnector => ("source", c.config(), c.config().validate(settings.asJava))
+          case c: SinkConnector   => ("sink", c.config(), c.config().validate(settings.asJava))
+          case _                  => throw new IllegalArgumentException(s"who are you $className ???")
+        }
+        SettingInfo.of(
+          AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList()))
+      }(executionContext)
 
   override def connectors(implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
-    Future.successful(cachedConnectors.keys.asScala.map(c => ConnectorDefinitions(c, Seq.empty)).toSeq)
+    Future.successful {
+      val reflections = new Reflections()
+      (reflections.getSubTypesOf(classOf[RowSourceConnector]).asScala.map { clz =>
+        ConnectorDefinitions(
+          className = clz.getName,
+          definitions = clz.newInstance().definitions().asScala
+        )
+      } ++ reflections.getSubTypesOf(classOf[RowSinkConnector]).asScala.map { clz =>
+        ConnectorDefinitions(
+          className = clz.getName,
+          definitions = clz.newInstance().definitions().asScala
+        )
+      }).toSeq
+    }
 }

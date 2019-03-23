@@ -80,8 +80,16 @@ class ValidatorTask extends SourceTask {
     finally conn.close()
   }
   private[this] def validate(info: FtpValidationRequest): String = {
+    import scala.concurrent.duration._
     val client =
-      FtpClient.builder().hostname(info.hostname).port(info.port).user(info.user).password(info.password).build()
+      FtpClient
+        .builder()
+        .hostname(info.hostname)
+        .port(info.port)
+        .user(info.user)
+        .password(info.password)
+        .retryTimeout(5 seconds)
+        .build()
     try s"succeed to establish the connection:${info.hostname}:${info.port}. test account:${info.user}" +
       s"by getting working folder:${client.workingFolder()}"
     finally client.close()

@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestInfoRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   @Test
   def test(): Unit = {
@@ -41,8 +41,8 @@ class TestInfoRoute extends SmallTest with Matchers {
     clusterInformation.workers shouldBe "this field is deprecated. Use Workers APIs instead"
     clusterInformation.supportedDatabases.contains("mysql") shouldBe true
     clusterInformation.supportedDataTypes shouldBe DataType.all.asScala
-    clusterInformation.sources.size shouldBe 0
-    clusterInformation.sinks.size shouldBe 0
+    clusterInformation.sources.size should not be 0
+    clusterInformation.sinks.size should not be 0
     clusterInformation.versionInfo.version shouldBe VersionUtils.VERSION
     clusterInformation.versionInfo.user shouldBe VersionUtils.USER
     clusterInformation.versionInfo.revision shouldBe VersionUtils.REVISION

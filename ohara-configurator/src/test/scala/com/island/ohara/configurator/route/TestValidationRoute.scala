@@ -17,22 +17,22 @@
 package com.island.ohara.configurator.route
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.client.configurator.v0.ValidationApi.{
   FtpValidationRequest,
   HdfsValidationRequest,
   NodeValidationRequest,
   RdbValidationRequest
 }
+import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestValidationRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake().build()
 
@@ -42,7 +42,7 @@ class TestValidationRoute extends SmallTest with Matchers {
 
   @Test
   def validateConnector(): Unit = {
-    val className = CommonUtils.randomString(10)
+    val className = classOf[DumbSink].getName
     val response = result(
       ValidationApi
         .access()

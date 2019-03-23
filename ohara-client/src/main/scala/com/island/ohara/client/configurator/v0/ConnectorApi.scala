@@ -211,7 +211,7 @@ object ConnectorApi {
       * @return name
       */
     override def name: String = plain.getOrElse(ConnectorFormatter.NAME_KEY, id)
-    override def kind: String = className
+    override def kind: String = "connector"
     def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())

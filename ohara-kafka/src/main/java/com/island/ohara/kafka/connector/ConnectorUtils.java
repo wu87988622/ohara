@@ -17,7 +17,11 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.kafka.connector.json.SettingDefinition;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.kafka.common.config.ConfigDef;
 
 final class ConnectorUtils {
@@ -25,13 +29,21 @@ final class ConnectorUtils {
     return SettingDefinition.newBuilder(definition).optional(value).build();
   }
 
-  static ConfigDef toConfigDef(
+  static List<SettingDefinition> toSettingDefinitions(
       List<SettingDefinition> settingDefinitions, String version, String revision, String author) {
+    return Stream.of(
+            settingDefinitions,
+            Arrays.asList(
+                copy(version, SettingDefinition.VERSION_DEFINITION),
+                copy(revision, SettingDefinition.REVISION_DEFINITION),
+                copy(author, SettingDefinition.AUTHOR_DEFINITION)))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  static ConfigDef toConfigDef(List<SettingDefinition> settingDefinitions) {
     ConfigDef def = new ConfigDef();
     settingDefinitions.stream().map(SettingDefinition::toConfigKey).forEach(def::define);
-    def.define(copy(version, SettingDefinition.VERSION_DEFINITION).toConfigKey());
-    def.define(copy(revision, SettingDefinition.REVISION_DEFINITION).toConfigKey());
-    def.define(copy(author, SettingDefinition.AUTHOR_DEFINITION).toConfigKey());
     return def;
   }
 

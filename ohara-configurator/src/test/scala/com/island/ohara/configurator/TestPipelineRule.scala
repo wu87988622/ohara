@@ -48,18 +48,18 @@ class TestPipelineRule extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
     val sourceRequest = ConnectorCreationRequest(
       workerClusterName = None,
-      className = Some("jdbc"),
+      className = Some(classOf[DumbSink].getName),
       columns = Seq.empty,
       topicNames = Seq(topic.id),
       settings = Map.empty,
       numberOfTasks = Some(1)
     )
 
-    val source = Await.result(access.add(sourceRequest), 10 seconds)
+    val source = Await.result(access.add(sourceRequest), 30 seconds)
     val pipeline = Await.result(
       PipelineApi
         .access()
@@ -72,16 +72,16 @@ class TestPipelineRule extends SmallTest with Matchers {
             rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
           )
         ),
-      10 seconds
+      30 seconds
     )
     pipeline.objects.foreach(obj => obj.state shouldBe None)
 
     // start source and pipeline should "see" what happen in source
     // we don't want to compare state since the state may be changed
-    Await.result(access.start(source.id), 10 seconds).copy(state = None) shouldBe source.copy(state = None)
+    Await.result(access.start(source.id), 30 seconds).copy(state = None) shouldBe source.copy(state = None)
     val pipeline2 = Await.result(
       PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id),
-      10 seconds
+      30 seconds
     )
     pipeline2.objects.foreach(
       obj => obj.state.get shouldBe ObjectState.RUNNING
@@ -102,7 +102,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             rules = Map.empty
           )
         ),
-      10 seconds
+      30 seconds
     )
 
     val topic = Await.result(
@@ -115,7 +115,7 @@ class TestPipelineRule extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val sourceRequest = ConnectorCreationRequest(
@@ -126,7 +126,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       settings = Map.empty,
       numberOfTasks = Some(1)
     )
-    val source = Await.result(access.add(sourceRequest), 10 seconds)
+    val source = Await.result(access.add(sourceRequest), 30 seconds)
 
     val filePath = File.createTempFile("empty_", ".jar").getPath
     val streamapp = Await.result(
@@ -135,7 +135,7 @@ class TestPipelineRule extends SmallTest with Matchers {
         .hostname(configurator.hostname)
         .port(configurator.port)
         .upload(pipeline.id, Seq(filePath)),
-      10 seconds
+      30 seconds
     )
 
     Await
@@ -152,7 +152,7 @@ class TestPipelineRule extends SmallTest with Matchers {
               rules = Map(source.id -> Seq(topic.id))
             )
           ),
-        10 seconds
+        30 seconds
       )
       .objects
       .size shouldBe 2
@@ -170,7 +170,7 @@ class TestPipelineRule extends SmallTest with Matchers {
               rules = Map(topic.id -> Seq(streamapp.head.id))
             )
           ),
-        10 seconds
+        30 seconds
       )
       .objects
       .size shouldBe 2
@@ -187,7 +187,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       numberOfTasks = Some(1)
     )
 
-    val source = Await.result(access.add(sourceRequest), 10 seconds)
+    val source = Await.result(access.add(sourceRequest), 30 seconds)
 
     Await.result(
       PipelineApi
@@ -201,7 +201,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
           )
         ),
-      10 seconds
+      30 seconds
     )
 
     val sinkRequest = ConnectorCreationRequest(
@@ -213,7 +213,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       numberOfTasks = Some(1)
     )
 
-    val sink = Await.result(access.add(sinkRequest), 10 seconds)
+    val sink = Await.result(access.add(sinkRequest), 30 seconds)
 
     Await.result(
       PipelineApi
@@ -227,7 +227,7 @@ class TestPipelineRule extends SmallTest with Matchers {
             rules = Map(PipelineApi.UNKNOWN -> Seq(sink.id))
           )
         ),
-      10 seconds
+      30 seconds
     )
   }
 

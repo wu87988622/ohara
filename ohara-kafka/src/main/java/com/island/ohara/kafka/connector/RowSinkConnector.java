@@ -65,7 +65,7 @@ public abstract class RowSinkConnector extends SinkConnector {
    *
    * @return The ConfigDef for this connector.
    */
-  protected List<SettingDefinition> definitions() {
+  protected List<SettingDefinition> _definitions() {
     return Collections.emptyList();
   }
 
@@ -108,18 +108,23 @@ public abstract class RowSinkConnector extends SinkConnector {
     _stop();
   }
 
-  @Override
-  public final ConfigDef config() {
-    return ConnectorUtils.toConfigDef(
+  /** @return custom definitions + core definitions */
+  public final List<SettingDefinition> definitions() {
+    return ConnectorUtils.toSettingDefinitions(
         Stream.of(
                 Collections.singletonList(SettingDefinition.SINK_KIND_DEFINITION),
-                definitions(),
+                _definitions(),
                 SettingDefinitions.DEFINITIONS_DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
         _version(),
         revision(),
         author());
+  }
+
+  @Override
+  public final ConfigDef config() {
+    return ConnectorUtils.toConfigDef(definitions());
   }
 
   @Override

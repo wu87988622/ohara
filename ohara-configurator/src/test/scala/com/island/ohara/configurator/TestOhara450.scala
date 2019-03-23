@@ -46,9 +46,9 @@ class TestOhara450 extends SmallTest with Matchers {
           columns = Seq.empty,
           settings = Map.empty
         )),
-      10 seconds
+      30 seconds
     )
-    Await.result(access.list, 10 seconds).size shouldBe 1
+    Await.result(access.list, 30 seconds).size shouldBe 1
     import scala.concurrent.duration._
     val topic = Await.result(
       TopicApi
@@ -60,7 +60,7 @@ class TestOhara450 extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
     val sink = Await.result(
       access.add(
@@ -72,11 +72,11 @@ class TestOhara450 extends SmallTest with Matchers {
           topicNames = Seq.empty,
           numberOfTasks = Some(1)
         )),
-      10 seconds
+      30 seconds
     )
-    Await.result(access.list, 10 seconds).size shouldBe 2
+    Await.result(access.list, 30 seconds).size shouldBe 2
     Await
-      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+      .result(TopicApi.access().hostname(configurator.hostname).port(configurator.port).list, 30 seconds)
       .size shouldBe 1
 
     Await.result(
@@ -90,10 +90,10 @@ class TestOhara450 extends SmallTest with Matchers {
             workerClusterName = None,
             rules = Map(source.id -> Seq(topic.id), topic.id -> Seq(sink.id))
           )),
-      10 seconds
+      30 seconds
     )
     Await
-      .result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).list, 10 seconds)
+      .result(PipelineApi.access().hostname(configurator.hostname).port(configurator.port).list, 30 seconds)
       .size shouldBe 1
   }
 

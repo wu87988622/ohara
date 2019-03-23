@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit
 
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.typesafe.scalalogging.Logger
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
 import scala.concurrent.duration._
@@ -167,6 +168,7 @@ trait FtpClient extends Releasable {
 }
 
 object FtpClient {
+  private[this] val LOG = Logger(classOf[FtpClient])
   def builder(): Builder = new Builder
 
   class Builder private[ftp] {
@@ -257,6 +259,7 @@ object FtpClient {
           try return function()
           catch {
             case e: Throwable =>
+              LOG.info(s"failed to execute ftp command. timeout of retry: $retryTimeout. backoff:$retryBackoff", e)
               lastException = e
               TimeUnit.MILLISECONDS.sleep(retryBackoff.toMillis)
           }

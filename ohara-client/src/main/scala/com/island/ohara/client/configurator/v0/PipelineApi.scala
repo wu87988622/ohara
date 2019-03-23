@@ -20,6 +20,10 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
 object PipelineApi {
+
+  /**
+    * this constant represents the "unknown" from or "unknown" to.
+    */
   val UNKNOWN: String = "?"
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
@@ -63,11 +67,12 @@ object PipelineApi {
   final case class ObjectAbstract(id: String,
                                   name: String,
                                   kind: String,
+                                  className: Option[String],
                                   state: Option[ObjectState],
                                   error: Option[String],
                                   lastModified: Long)
       extends Data
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat6(ObjectAbstract)
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat7(ObjectAbstract)
 
   final case class Pipeline(id: String,
                             name: String,

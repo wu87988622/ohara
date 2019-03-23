@@ -24,18 +24,17 @@ import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.{Configurator, DumbSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestPipelineRoute extends SmallTest with Matchers {
   private[this] val configurator = Configurator.builder().fake(1, 1).build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
   private[this] val pipelineApi = PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
@@ -111,13 +110,13 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .add(
           ConnectorCreationRequest(
             workerClusterName = None,
-            className = Some(CommonUtils.randomString(10)),
+            className = Some(classOf[DumbSink].getName),
             topicNames = Seq.empty,
             numberOfTasks = Some(1),
             columns = Seq.empty,
             settings = Map.empty
           )),
-      10 seconds
+      30 seconds
     )
 
     val topic = Await.result(
@@ -130,7 +129,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = Await.result(
@@ -140,21 +139,22 @@ class TestPipelineRoute extends SmallTest with Matchers {
           workerClusterName = None,
           rules = Map(connector.id -> Seq(topic.id))
         )),
-      10 seconds
+      30 seconds
     )
 
     pipeline.rules.size shouldBe 1
     pipeline.rules(connector.id) shouldBe Seq(topic.id)
+    pipeline.objects.size should not be 0
 
     // remove connector
     Await.result(ConnectorApi.access().hostname(configurator.hostname).port(configurator.port).delete(connector.id),
-                 10 seconds)
+                 30 seconds)
 
-    val pipeline2 = Await.result(pipelineApi.get(pipeline.id), 10 seconds)
+    val pipeline2 = Await.result(pipelineApi.get(pipeline.id), 30 seconds)
 
     pipeline2.rules.size shouldBe 0
 
-    val pipelines = Await.result(pipelineApi.list, 10 seconds)
+    val pipelines = Await.result(pipelineApi.list, 30 seconds)
 
     pipelines.size shouldBe 1
     pipelines.head.rules.size shouldBe 0
@@ -297,7 +297,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
           workerClusterName = None,
           rules = Map(PipelineApi.UNKNOWN -> Seq("Adasd", "asdasd"))
         )),
-      10 seconds
+      30 seconds
     )
 
     pipeline.rules.size shouldBe 0
@@ -315,7 +315,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = Await.result(
@@ -325,7 +325,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
           workerClusterName = None,
           rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
         )),
-      10 seconds
+      30 seconds
     )
 
     pipeline.rules.size shouldBe 1
@@ -344,7 +344,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = result(
@@ -375,7 +375,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = result(
@@ -411,7 +411,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val topic1 = Await.result(
@@ -424,7 +424,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = result(
@@ -471,7 +471,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val topic1 = Await.result(
@@ -484,7 +484,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val pipeline0 = result(
@@ -521,7 +521,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
                                brokerClusterName = None,
                                numberOfPartitions = None,
                                numberOfReplications = None)),
-      10 seconds
+      30 seconds
     )
 
     val connector = Await.result(
@@ -532,13 +532,13 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .add(
           ConnectorCreationRequest(
             workerClusterName = None,
-            className = Some(CommonUtils.randomString(10)),
+            className = Some(classOf[DumbSink].getName),
             topicNames = Seq.empty,
             numberOfTasks = Some(1),
             columns = Seq.empty,
             settings = Map.empty
           )),
-      10 seconds
+      30 seconds
     )
 
     val pipeline = result(
@@ -551,6 +551,52 @@ class TestPipelineRoute extends SmallTest with Matchers {
     pipeline.objects.size shouldBe 2
     pipeline.objects.foreach { obj =>
       obj.error shouldBe None
+      obj.state shouldBe None
+    }
+  }
+
+  @Test
+  def useWrongConnector(): Unit = {
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(CommonUtils.randomString(10)),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      30 seconds
+    )
+
+    val connector = Await.result(
+      ConnectorApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          ConnectorCreationRequest(
+            workerClusterName = None,
+            className = Some(CommonUtils.randomString()),
+            topicNames = Seq.empty,
+            numberOfTasks = Some(1),
+            columns = Seq.empty,
+            settings = Map.empty
+          )),
+      30 seconds
+    )
+
+    val pipeline = result(
+      pipelineApi.add(
+        PipelineCreationRequest(
+          name = CommonUtils.randomString(10),
+          workerClusterName = None,
+          rules = Map(topic.id -> Seq(connector.id))
+        )))
+    pipeline.objects.size shouldBe 2
+    pipeline.objects.filter(_.id == connector.id).foreach { obj =>
+      obj.error.isEmpty shouldBe false
       obj.state shouldBe None
     }
   }
