@@ -15,7 +15,9 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.data.{Column, ConnectorState, DataType}
+import com.island.ohara.client.configurator.v0.PipelineApi.ObjectState
+import com.island.ohara.common.data.{Column, DataType}
+import com.island.ohara.client.kafka.Enum
 import com.island.ohara.kafka.connector.json.{ConnectorFormatter, PropGroups, SettingDefinition, StringList}
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -38,6 +40,26 @@ object ConnectorApi {
     _._2 match {
       case JsNull => false
       case _      => true
+    }
+  }
+
+  abstract sealed class ConnectorState { val name: String }
+  object ConnectorState extends Enum[ConnectorState] {
+    //TODO : Is there a way to remove this redundant code?...by Sam
+    case object UNASSIGNED extends ConnectorState {
+      val name = ObjectState.UNASSIGNED.name
+    }
+    case object RUNNING extends ConnectorState {
+      val name = ObjectState.RUNNING.name
+    }
+    case object PAUSED extends ConnectorState {
+      val name = ObjectState.PAUSED.name
+    }
+    case object FAILED extends ConnectorState {
+      val name = ObjectState.FAILED.name
+    }
+    case object DESTROYED extends ConnectorState {
+      val name = ObjectState.DESTROYED.name
     }
   }
   // TODO: remove this format after ohara manager starts to use new APIs
@@ -204,13 +226,11 @@ object ConnectorApi {
         .getOrElse(Seq.empty)
   }
 
-  implicit val CONNECTOR_STATE_JSON_FORMAT: RootJsonFormat[com.island.ohara.common.data.ConnectorState] =
-    new RootJsonFormat[com.island.ohara.common.data.ConnectorState] {
-      override def write(obj: com.island.ohara.common.data.ConnectorState): JsValue = JsString(obj.name)
-      override def read(json: JsValue): com.island.ohara.common.data.ConnectorState =
-        com.island.ohara.common.data.ConnectorState.values
-          .find(_.name == json.asInstanceOf[JsString].value)
-          .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
+  implicit val CONNECTOR_STATE_JSON_FORMAT: RootJsonFormat[ConnectorState] =
+    new RootJsonFormat[ConnectorState] {
+      override def write(obj: ConnectorState): JsValue = JsString(obj.name)
+      override def read(json: JsValue): ConnectorState =
+        ConnectorState.forName(json.asInstanceOf[JsString].value)
     }
 
   /**
@@ -255,6 +275,7 @@ object ConnectorApi {
 
     /**
       * start to run a connector on worker cluster.
+      *
       * @param id connector's id
       * @return the configuration of connector
       */
@@ -263,6 +284,7 @@ object ConnectorApi {
 
     /**
       * stop and remove a running connector.
+      *
       * @param id connector's id
       * @return the configuration of connector
       */
@@ -271,6 +293,7 @@ object ConnectorApi {
 
     /**
       * pause a running connector
+      *
       * @param id connector's id
       * @return the configuration of connector
       */
@@ -279,6 +302,7 @@ object ConnectorApi {
 
     /**
       * resume a paused connector
+      *
       * @param id connector's id
       * @return the configuration of connector
       */

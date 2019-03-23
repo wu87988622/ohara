@@ -18,7 +18,8 @@ package com.island.ohara.client.kafka
 
 import java.util.Collections
 
-import com.island.ohara.common.data.{ConnectorState, Row, Serializer}
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.json.{ConnectorFormatter, ConverterType, SettingDefinition, StringList}

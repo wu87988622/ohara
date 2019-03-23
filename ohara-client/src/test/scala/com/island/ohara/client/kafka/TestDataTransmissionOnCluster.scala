@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.kafka
 
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.data._
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}

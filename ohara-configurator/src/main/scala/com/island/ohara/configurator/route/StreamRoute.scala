@@ -30,7 +30,6 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
-import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtils._
@@ -78,12 +77,12 @@ private[configurator] object StreamRoute {
 
   // TODO this is a workaround for 0.2 to solve not-compatible state between pipeline and streamApp
   // Maybe we need refactor the "state" to be more general...by sam
-  private[this] def toConnectorState(state: Option[ContainerState]): Option[ConnectorState] = {
-    ConnectorState.values.find { value =>
+  private[this] def toConnectorState(state: Option[ContainerState]): Option[ContainerState] = {
+    ContainerState.all.find { value =>
       state.nonEmpty &&
       (value.toString match {
         case ContainerState.EXITED.name =>
-          ConnectorState.FAILED.toString
+          ContainerState.EXITED.toString
         case _ =>
           value.toString
       }).equalsIgnoreCase(state.get.name)

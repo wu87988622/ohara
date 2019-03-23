@@ -16,11 +16,15 @@
 
 package com.island.ohara.configurator.route
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorDescription}
+import com.island.ohara.client.configurator.v0.ConnectorApi.{
+  ConnectorCreationRequest,
+  ConnectorDescription,
+  ConnectorState
+}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
-import com.island.ohara.common.data.{Column, ConnectorState, DataType}
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator

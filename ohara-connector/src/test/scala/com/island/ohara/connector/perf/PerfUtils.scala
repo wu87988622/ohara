@@ -18,8 +18,8 @@ package com.island.ohara.connector.perf
 
 import java.time.Duration
 
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.OharaTestUtils
 

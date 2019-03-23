@@ -14,36 +14,33 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.client.configurator
 
-import com.island.ohara.client.configurator.v0.ContainerApi
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState._
+import com.island.ohara.client.configurator.v0.ConnectorApi
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
 import org.scalatest.Matchers
 
-class TestDockerJson extends SmallTest with Matchers {
+class TestConnectorApi extends SmallTest with Matchers {
 
   @Test
   def testState(): Unit = {
-    ContainerState.all shouldBe Seq(
-      CREATED,
-      RESTARTING,
+    ConnectorState.all shouldBe Seq(
+      UNASSIGNED,
       RUNNING,
-      REMOVING,
       PAUSED,
-      EXITED,
-      DEAD
-    )
+      FAILED,
+      DESTROYED
+    ).sortBy(_.name)
   }
 
   @Test
   def testStateJson(): Unit = {
-    ContainerState.all.foreach(
+    ConnectorState.all.foreach(
       state =>
-        ContainerApi.CONTAINER_STATE_JSON_FORMAT
-          .read(ContainerApi.CONTAINER_STATE_JSON_FORMAT.write(state)) shouldBe state)
+        ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
+          .read(ConnectorApi.CONNECTOR_STATE_JSON_FORMAT.write(state)) shouldBe state)
   }
-
 }

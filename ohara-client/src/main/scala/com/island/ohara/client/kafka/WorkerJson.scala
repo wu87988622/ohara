@@ -17,7 +17,7 @@
 package com.island.ohara.client.kafka
 
 import com.island.ohara.client.HttpExecutor
-import com.island.ohara.common.data.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.kafka.connector.json.Creation
 import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, _}
 import spray.json.{DeserializationException, JsArray, JsBoolean, JsNull, JsObject, JsString, JsValue, RootJsonFormat}
@@ -54,7 +54,6 @@ object WorkerJson {
   implicit val CONNECTOR_CREATION_RESPONSE_JSON_FORMAT: RootJsonFormat[ConnectorCreationResponse] = jsonFormat3(
     ConnectorCreationResponse)
   final case class ConnectorStatus(state: ConnectorState, worker_id: String, trace: Option[String])
-  import com.island.ohara.client.configurator.v0.ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
   implicit val CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[ConnectorStatus] = jsonFormat3(ConnectorStatus)
   final case class TaskStatus(id: Int, state: ConnectorState, worker_id: String, trace: Option[String])
   implicit val TASK_STATUS_JSON_FORMAT: RootJsonFormat[TaskStatus] = jsonFormat4(TaskStatus)

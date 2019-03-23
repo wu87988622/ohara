@@ -129,12 +129,14 @@ private[configurator] object PipelineRoute {
                     .status(data.id)
                     .map(c => Some(c.connector.state))
                     .map { state =>
-                      ObjectAbstract(id = data.id,
-                                     name = data.name,
-                                     kind = data.kind,
-                                     state = state,
-                                     error = ConnectorRoute.errorMessage(state),
-                                     lastModified = data.lastModified)
+                      ObjectAbstract(
+                        id = data.id,
+                        name = data.name,
+                        kind = data.kind,
+                        state = state.map(v => ObjectState.forName(v.name)),
+                        error = ConnectorRoute.errorMessage(state),
+                        lastModified = data.lastModified
+                      )
                     }
                     .recover {
                       case e: Throwable =>
@@ -172,7 +174,13 @@ private[configurator] object PipelineRoute {
               }
 
           case data: StreamApp =>
-            Future.successful(ObjectAbstract(data.id, data.name, data.kind, data.state, None, data.lastModified))
+            Future.successful(
+              ObjectAbstract(data.id,
+                             data.name,
+                             data.kind,
+                             data.state.map(v => ObjectState.forName(v.name)),
+                             None,
+                             data.lastModified))
 
           case data => Future.successful(ObjectAbstract(data.id, data.name, data.kind, None, None, data.lastModified))
         }

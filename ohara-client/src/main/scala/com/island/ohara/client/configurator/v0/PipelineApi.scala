@@ -15,13 +15,45 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.common.data.ConnectorState
+import com.island.ohara.client.kafka.Enum
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsString, JsValue, RootJsonFormat}
 
 object PipelineApi {
   val UNKNOWN: String = "?"
   val PIPELINES_PREFIX_PATH: String = "pipelines"
+
+  /**
+    * Represent an "interface" for all kinds of state.
+    * This is the top level class if there was any other kinds of state that are used in the pipeline.
+    * TODO : "Pipeline API" should only see the base states (ex: RUNNING, STOP, FAILED), we could abstract these states
+    * and move to pipeline level "pipelineState"...by Sam
+    *
+    * @param name the actual name of the sate
+    */
+  abstract sealed class ObjectState { val name: String }
+  object ObjectState extends Enum[ObjectState] {
+    case object UNKNOWN extends ObjectState { val name: String = "UNKNOWN" }
+    case object SUCCEEDED extends ObjectState { val name: String = "SUCCEEDED" }
+    case object UNASSIGNED extends ObjectState { val name: String = "UNASSIGNED" }
+    case object RUNNING extends ObjectState { val name: String = "RUNNING" }
+    case object PAUSED extends ObjectState { val name: String = "PAUSED" }
+    case object PENDING extends ObjectState { val name: String = "PENDING" }
+    case object FAILED extends ObjectState { val name: String = "FAILED" }
+    case object DESTROYED extends ObjectState { val name: String = "DESTROYED" }
+    case object CREATED extends ObjectState { val name: String = "CREATED" }
+    case object RESTARTING extends ObjectState { val name: String = "RESTARTING" }
+    case object REMOVING extends ObjectState { val name: String = "REMOVING" }
+    case object EXITED extends ObjectState { val name: String = "EXITED" }
+    case object DEAD extends ObjectState { val name: String = "DEAD" }
+  }
+
+  implicit val OBJECT_STATE_JSON_FORMAT: RootJsonFormat[ObjectState] =
+    new RootJsonFormat[ObjectState] {
+      override def write(obj: ObjectState): JsValue = JsString(obj.name)
+      override def read(json: JsValue): ObjectState = ObjectState.forName(json.asInstanceOf[JsString].value)
+    }
+
   final case class PipelineCreationRequest(name: String,
                                            workerClusterName: Option[String],
                                            rules: Map[String, Seq[String]])
@@ -31,11 +63,10 @@ object PipelineApi {
   final case class ObjectAbstract(id: String,
                                   name: String,
                                   kind: String,
-                                  state: Option[ConnectorState],
+                                  state: Option[ObjectState],
                                   error: Option[String],
                                   lastModified: Long)
       extends Data
-  import com.island.ohara.client.configurator.v0.ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat6(ObjectAbstract)
 
   final case class Pipeline(id: String,

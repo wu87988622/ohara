@@ -39,7 +39,7 @@ import com.island.ohara.agent.K8SJson.{
   K8SNodeInfo,
   K8SPodInfo
 }
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, K8sContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
@@ -87,9 +87,9 @@ object K8SClient {
             item.metadata.uid,
             containerInfo.image,
             item.metadata.creationTimestamp,
-            ContainerState.k8sAll
+            K8sContainerState.k8sAll
               .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
-              .getOrElse(ContainerState.UNKNOWN),
+              .getOrElse(K8sContainerState.UNKNOWN),
             item.spec.hostname.getOrElse(""),
             "Unknown",
             Seq(
@@ -253,9 +253,9 @@ object K8SClient {
               createPodInfo.metadata.uid,
               imageName,
               createPodInfo.metadata.creationTimestamp,
-              ContainerState.k8sAll
+              K8sContainerState.k8sAll
                 .find(s => createPodInfo.status.phase.toLowerCase.contains(s.name.toLowerCase))
-                .getOrElse(ContainerState.UNKNOWN),
+                .getOrElse(K8sContainerState.UNKNOWN),
               createPodInfo.metadata.name,
               "Unknown",
               ports.map(x => PortMapping(hostname, Seq(PortPair(x._1, x._2)))).toSeq,

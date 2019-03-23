@@ -19,10 +19,9 @@ package com.island.ohara.configurator
 import java.io.File
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
-import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
+import com.island.ohara.client.configurator.v0.PipelineApi.{ObjectState, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, StreamApi, TopicApi}
-import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
@@ -85,7 +84,7 @@ class TestPipelineRule extends SmallTest with Matchers {
       10 seconds
     )
     pipeline2.objects.foreach(
-      obj => obj.state.get shouldBe ConnectorState.RUNNING
+      obj => obj.state.get shouldBe ObjectState.RUNNING
     )
   }
 

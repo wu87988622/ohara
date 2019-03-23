@@ -20,6 +20,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.client.kafka.WorkerClient.Validator
 import com.island.ohara.client.kafka.WorkerJson.{
@@ -30,7 +31,6 @@ import com.island.ohara.client.kafka.WorkerJson.{
   Plugin,
   TaskStatus
 }
-import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json._

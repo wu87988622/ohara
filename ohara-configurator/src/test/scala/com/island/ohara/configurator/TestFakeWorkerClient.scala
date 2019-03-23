@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.configurator
-import com.island.ohara.common.data.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.configurator.fake.FakeWorkerClient
 import org.junit.Test

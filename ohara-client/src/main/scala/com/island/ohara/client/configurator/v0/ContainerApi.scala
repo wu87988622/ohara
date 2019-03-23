@@ -15,6 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.client.configurator.v0.PipelineApi.ObjectState
+import com.island.ohara.client.kafka.Enum
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
@@ -25,64 +27,57 @@ object ContainerApi {
     * see https://docs.docker.com/engine/reference/commandline/ps/#filtering for more information
     *
     */
-  abstract sealed class ContainerState extends Serializable {
-    // adding a field to display the name from enumeration avoid we break the compatibility when moving code...
-    val name: String
-  }
-
-  object ContainerState {
+  abstract sealed class ContainerState { val name: String }
+  object ContainerState extends Enum[ContainerState] {
+    //TODO : Is there a way to remove this redundant code?...by Sam
     case object CREATED extends ContainerState {
-      val name = "CREATED"
+      val name = ObjectState.CREATED.name
     }
 
     case object RESTARTING extends ContainerState {
-      val name = "RESTARTING"
+      val name = ObjectState.RESTARTING.name
     }
 
     case object RUNNING extends ContainerState {
-      val name = "RUNNING"
+      val name = ObjectState.RUNNING.name
     }
 
     case object REMOVING extends ContainerState {
-      val name = "REMOVING"
+      val name = ObjectState.REMOVING.name
     }
 
     case object PAUSED extends ContainerState {
-      val name = "PAUSED"
+      val name = ObjectState.PAUSED.name
     }
 
     case object EXITED extends ContainerState {
-      val name = "EXITED"
+      val name = ObjectState.EXITED.name
     }
 
     case object DEAD extends ContainerState {
-      val name = "DEAD"
+      val name = ObjectState.DEAD.name
+    }
+  }
+
+  object K8sContainerState extends Enum[ContainerState] {
+    case object PENDING extends ContainerState {
+      val name = ObjectState.PENDING.name
     }
 
-    val all: Seq[ContainerState] = Seq(
-      CREATED,
-      RESTARTING,
-      RUNNING,
-      REMOVING,
-      PAUSED,
-      EXITED,
-      DEAD
-    )
-
-    case object PENDING extends ContainerState {
-      val name = "PENDING"
+    case object RUNNING extends ContainerState {
+      val name = ObjectState.RUNNING.name
     }
 
     case object SUCCEEDED extends ContainerState {
-      val name = "SUCCEEDED"
+      val name = ObjectState.SUCCEEDED.name
     }
 
     case object FAILED extends ContainerState {
-      val name = "FAILED"
+      val name = ObjectState.FAILED.name
     }
 
     case object UNKNOWN extends ContainerState {
-      val name = "UNKNOWN"
+      val name = ObjectState.UNKNOWN.name
     }
 
     val k8sAll: Seq[ContainerState] = Seq(
@@ -95,9 +90,7 @@ object ContainerApi {
   }
   implicit val CONTAINER_STATE_JSON_FORMAT: RootJsonFormat[ContainerState] = new RootJsonFormat[ContainerState] {
     override def write(obj: ContainerState): JsValue = JsString(obj.name)
-    override def read(json: JsValue): ContainerState = ContainerState.all
-      .find(_.name == json.asInstanceOf[JsString].value)
-      .getOrElse(throw new IllegalArgumentException(s"Unknown state name:${json.asInstanceOf[JsString].value}"))
+    override def read(json: JsValue): ContainerState = ContainerState.forName(json.asInstanceOf[JsString].value)
   }
 
   final case class PortPair(hostPort: Int, containerPort: Int)

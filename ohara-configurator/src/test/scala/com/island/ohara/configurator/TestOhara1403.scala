@@ -16,11 +16,10 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
 import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
-import com.island.ohara.common.data.ConnectorState
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
