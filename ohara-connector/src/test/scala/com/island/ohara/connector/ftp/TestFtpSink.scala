@@ -85,9 +85,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
   private[this] val TOPIC = TestFtpSink.TOPIC
 
   private[this] val schema: Seq[Column] = Seq(
-    Column.newBuilder().name("a").dataType(DataType.STRING).order(1).build(),
-    Column.newBuilder().name("b").dataType(DataType.INT).order(2).build(),
-    Column.newBuilder().name("c").dataType(DataType.BOOLEAN).order(3).build()
+    Column.builder().name("a").dataType(DataType.STRING).order(1).build(),
+    Column.builder().name("b").dataType(DataType.INT).order(2).build(),
+    Column.builder().name("c").dataType(DataType.BOOLEAN).order(3).build()
   )
 
   private[this] val data = TestFtpSink.data
@@ -132,9 +132,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val topicName = TOPIC
     val connectorName = methodName
     val newSchema: Seq[Column] = Seq(
-      Column.newBuilder().name("a").dataType(DataType.STRING).order(3).build(),
-      Column.newBuilder().name("b").dataType(DataType.INT).order(2).build(),
-      Column.newBuilder().name("c").dataType(DataType.BOOLEAN).order(1).build()
+      Column.builder().name("a").dataType(DataType.STRING).order(3).build(),
+      Column.builder().name("b").dataType(DataType.INT).order(2).build(),
+      Column.builder().name("c").dataType(DataType.BOOLEAN).order(1).build()
     )
     result(
       workerClient
@@ -228,9 +228,9 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
     val topicName = TOPIC
     val connectorName = methodName
     val schema = Seq(
-      Column.newBuilder().name("a").newName("aa").dataType(DataType.STRING).order(1).build(),
-      Column.newBuilder().name("b").newName("bb").dataType(DataType.INT).order(2).build(),
-      Column.newBuilder().name("c").newName("cc").dataType(DataType.BOOLEAN).order(3).build()
+      Column.builder().name("a").newName("aa").dataType(DataType.STRING).order(1).build(),
+      Column.builder().name("b").newName("bb").dataType(DataType.INT).order(2).build(),
+      Column.builder().name("c").newName("cc").dataType(DataType.BOOLEAN).order(3).build()
     )
     result(
       workerClient
@@ -422,7 +422,7 @@ class TestFtpSink extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .name(connectorName)
         // the name can't be casted to int
-        .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
+        .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
         .create)
 

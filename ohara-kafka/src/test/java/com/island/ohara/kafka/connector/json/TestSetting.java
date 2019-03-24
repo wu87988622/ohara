@@ -30,7 +30,7 @@ public class TestSetting extends SmallTest {
   public void testEqual() throws IOException {
     Setting config =
         Setting.of(
-            SettingDefinition.newBuilder().key(CommonUtils.randomString()).build(),
+            SettingDefinition.builder().key(CommonUtils.randomString()).build(),
             SettingValue.of(
                 CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
     ObjectMapper mapper = new ObjectMapper();
@@ -41,7 +41,7 @@ public class TestSetting extends SmallTest {
 
   @Test
   public void testGetter() {
-    SettingDefinition def = SettingDefinition.newBuilder().key(CommonUtils.randomString()).build();
+    SettingDefinition def = SettingDefinition.builder().key(CommonUtils.randomString()).build();
     SettingValue value =
         SettingValue.of(
             CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList());
@@ -60,6 +60,6 @@ public class TestSetting extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void nullValue() {
-    Setting.of(SettingDefinition.newBuilder().key(CommonUtils.randomString()).build(), null);
+    Setting.of(SettingDefinition.builder().key(CommonUtils.randomString()).build(), null);
   }
 }

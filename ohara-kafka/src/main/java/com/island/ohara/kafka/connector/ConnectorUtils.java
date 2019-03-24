@@ -26,7 +26,7 @@ import org.apache.kafka.common.config.ConfigDef;
 
 final class ConnectorUtils {
   private static SettingDefinition copy(String value, SettingDefinition definition) {
-    return SettingDefinition.newBuilder(definition).optional(value).build();
+    return SettingDefinition.builder(definition).optional(value).build();
   }
 
   static List<SettingDefinition> toSettingDefinitions(

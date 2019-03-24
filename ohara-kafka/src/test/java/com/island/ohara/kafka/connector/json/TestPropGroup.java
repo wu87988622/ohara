@@ -125,7 +125,7 @@ public class TestPropGroup extends SmallTest {
   @Test
   public void testToColumn() {
     Column column =
-        Column.newBuilder()
+        Column.builder()
             .order(10)
             .name(CommonUtils.randomString())
             .newName(CommonUtils.randomString())

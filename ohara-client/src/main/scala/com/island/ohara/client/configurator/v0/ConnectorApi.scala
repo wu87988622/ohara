@@ -66,11 +66,11 @@ object ConnectorApi {
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {
     override def read(json: JsValue): Column = json.asJsObject.getFields("name", "newName", "dataType", "order") match {
       case Seq(JsString(n), JsString(nn), JsString(t), JsNumber(o)) =>
-        Column.newBuilder().name(n).newName(nn).dataType(DataType.valueOf(t.toUpperCase())).order(o.toInt).build()
+        Column.builder().name(n).newName(nn).dataType(DataType.valueOf(t.toUpperCase())).order(o.toInt).build()
       case Seq(JsString(n), JsNull, JsString(t), JsNumber(o)) =>
-        Column.newBuilder().name(n).newName(n).dataType(DataType.valueOf(t.toUpperCase())).order(o.toInt).build()
+        Column.builder().name(n).newName(n).dataType(DataType.valueOf(t.toUpperCase())).order(o.toInt).build()
       case Seq(JsString(n), JsString(t), JsNumber(o)) =>
-        Column.newBuilder().name(n).newName(n).dataType(DataType.valueOf(t.toUpperCase)).order(o.toInt).build()
+        Column.builder().name(n).newName(n).dataType(DataType.valueOf(t.toUpperCase)).order(o.toInt).build()
       case _ => throw new UnsupportedOperationException(s"invalid format from ${classOf[Column].getSimpleName}")
     }
     override def write(obj: Column): JsValue = JsObject(

@@ -98,7 +98,7 @@ public class PropGroup implements JsonObject {
   }
 
   public Column toColumn() {
-    return Column.newBuilder()
+    return Column.builder()
         .name(require(COLUMN_NAME_KEY))
         .newName(require(COLUMN_NEW_NAME_KEY))
         .dataType(DataType.valueOf(require(COLUMN_DATA_TYPE_KEY)))

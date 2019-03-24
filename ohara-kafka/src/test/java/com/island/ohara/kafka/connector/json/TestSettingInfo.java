@@ -35,7 +35,7 @@ public class TestSettingInfo extends SmallTest {
         SettingInfo.of(
             Collections.singletonList(
                 Setting.of(
-                    SettingDefinition.newBuilder().key(CommonUtils.randomString()).build(),
+                    SettingDefinition.builder().key(CommonUtils.randomString()).build(),
                     SettingValue.of(
                         CommonUtils.randomString(),
                         CommonUtils.randomString(),
@@ -51,7 +51,7 @@ public class TestSettingInfo extends SmallTest {
   public void testGetter() {
     Setting setting =
         Setting.of(
-            SettingDefinition.newBuilder().key(CommonUtils.randomString()).build(),
+            SettingDefinition.builder().key(CommonUtils.randomString()).build(),
             SettingValue.of(
                 CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
     String name = CommonUtils.randomString();
@@ -86,7 +86,7 @@ public class TestSettingInfo extends SmallTest {
   public void testOfSettings() {
     Setting setting =
         Setting.of(
-            SettingDefinition.newBuilder().key(CommonUtils.randomString()).build(),
+            SettingDefinition.builder().key(CommonUtils.randomString()).build(),
             SettingValue.of(
                 CommonUtils.randomString(),
                 CommonUtils.randomString(),

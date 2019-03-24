@@ -74,7 +74,7 @@ class JDBCSourceTask extends RowSourceTask {
       .map(
         columns =>
           (if (schema.isEmpty)
-             columns.map(c => Column.newBuilder().name(c.columnName).dataType(DataType.OBJECT).order(0).build())
+             columns.map(c => Column.builder().name(c.columnName).dataType(DataType.OBJECT).order(0).build())
            else schema,
            columns))
       .flatMap {

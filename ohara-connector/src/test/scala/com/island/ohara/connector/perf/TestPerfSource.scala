@@ -36,15 +36,15 @@ class TestPerfSource extends With3Brokers3Workers with Matchers {
 
   private[this] val schema: Seq[Column] =
     Seq(
-      Column.newBuilder().name("a").dataType(DataType.STRING).order(1).build(),
-      Column.newBuilder().name("b").dataType(DataType.SHORT).order(2).build(),
-      Column.newBuilder().name("c").dataType(DataType.INT).order(3).build(),
-      Column.newBuilder().name("d").dataType(DataType.LONG).order(4).build(),
-      Column.newBuilder().name("e").dataType(DataType.FLOAT).order(5).build(),
-      Column.newBuilder().name("f").dataType(DataType.DOUBLE).order(6).build(),
-      Column.newBuilder().name("g").dataType(DataType.BOOLEAN).order(7).build(),
-      Column.newBuilder().name("h").dataType(DataType.BYTE).order(8).build(),
-      Column.newBuilder().name("i").dataType(DataType.BYTES).order(9).build()
+      Column.builder().name("a").dataType(DataType.STRING).order(1).build(),
+      Column.builder().name("b").dataType(DataType.SHORT).order(2).build(),
+      Column.builder().name("c").dataType(DataType.INT).order(3).build(),
+      Column.builder().name("d").dataType(DataType.LONG).order(4).build(),
+      Column.builder().name("e").dataType(DataType.FLOAT).order(5).build(),
+      Column.builder().name("f").dataType(DataType.DOUBLE).order(6).build(),
+      Column.builder().name("g").dataType(DataType.BOOLEAN).order(7).build(),
+      Column.builder().name("h").dataType(DataType.BYTE).order(8).build(),
+      Column.builder().name("i").dataType(DataType.BYTES).order(9).build()
     )
 
   @Test

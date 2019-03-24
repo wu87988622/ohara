@@ -37,7 +37,7 @@ public class SettingDefinition implements JsonObject {
   private static final String COMMON_GROUP = "common";
   // -------------------------------[default setting]-------------------------------//
   public static final SettingDefinition CONNECTOR_CLASS_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("Connector class")
           .key("connector.class")
           .valueType(Type.CLASS)
@@ -46,7 +46,7 @@ public class SettingDefinition implements JsonObject {
           .orderInGroup(0)
           .build();
   public static final SettingDefinition TOPIC_NAMES_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("Topics")
           .key("topics")
           .valueType(Type.LIST)
@@ -56,7 +56,7 @@ public class SettingDefinition implements JsonObject {
           .orderInGroup(2)
           .build();
   public static final SettingDefinition NUMBER_OF_TASKS_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("Number of tasks")
           .key("tasks.max")
           .valueType(Type.INT)
@@ -65,7 +65,7 @@ public class SettingDefinition implements JsonObject {
           .orderInGroup(3)
           .build();
   public static final SettingDefinition COLUMNS_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("Schema")
           .key("columns")
           .valueType(Type.TABLE)
@@ -76,7 +76,7 @@ public class SettingDefinition implements JsonObject {
           .build();
 
   public static final SettingDefinition WORKER_CLUSTER_NAME_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("worker cluster")
           .key("workerClusterName")
           .valueType(Type.STRING)
@@ -89,7 +89,7 @@ public class SettingDefinition implements JsonObject {
           .orderInGroup(7)
           .build();
   public static final SettingDefinition KEY_CONVERTER_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("key converter")
           .key("key.converter")
           .valueType(Type.CLASS)
@@ -101,7 +101,7 @@ public class SettingDefinition implements JsonObject {
           .build();
 
   public static final SettingDefinition VALUE_CONVERTER_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("value converter")
           .key("value.converter")
           .valueType(Type.STRING)
@@ -113,7 +113,7 @@ public class SettingDefinition implements JsonObject {
           .build();
 
   public static final SettingDefinition VERSION_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("version")
           .key("version")
           .valueType(Type.STRING)
@@ -125,7 +125,7 @@ public class SettingDefinition implements JsonObject {
           .build();
 
   public static final SettingDefinition REVISION_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("revision")
           .key("revision")
           .valueType(Type.STRING)
@@ -137,7 +137,7 @@ public class SettingDefinition implements JsonObject {
           .build();
 
   public static final SettingDefinition AUTHOR_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("author")
           .key("author")
           .valueType(Type.STRING)
@@ -150,7 +150,7 @@ public class SettingDefinition implements JsonObject {
 
   /** this is the base of source/sink definition. */
   public static final SettingDefinition KIND_DEFINITION =
-      SettingDefinition.newBuilder()
+      SettingDefinition.builder()
           .displayName("kind")
           .key("kind")
           .valueType(Type.STRING)
@@ -162,10 +162,10 @@ public class SettingDefinition implements JsonObject {
           .build();
 
   public static final SettingDefinition SOURCE_KIND_DEFINITION =
-      SettingDefinition.newBuilder(KIND_DEFINITION).optional("source").build();
+      SettingDefinition.builder(KIND_DEFINITION).optional("source").build();
 
   public static final SettingDefinition SINK_KIND_DEFINITION =
-      SettingDefinition.newBuilder(KIND_DEFINITION).optional("sink").build();
+      SettingDefinition.builder(KIND_DEFINITION).optional("sink").build();
 
   // -------------------------------[reference]-------------------------------//
   enum Reference {
@@ -385,11 +385,11 @@ public class SettingDefinition implements JsonObject {
     return toJsonString();
   }
 
-  public static Builder newBuilder() {
+  public static Builder builder() {
     return new Builder();
   }
 
-  public static Builder newBuilder(SettingDefinition definition) {
+  public static Builder builder(SettingDefinition definition) {
     return new Builder(definition);
   }
 

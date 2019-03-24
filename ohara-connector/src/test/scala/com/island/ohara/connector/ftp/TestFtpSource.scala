@@ -35,9 +35,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestFtpSource extends With3Brokers3Workers with Matchers {
 
   private[this] val schema: Seq[Column] = Seq(
-    Column.newBuilder().name("name").dataType(DataType.STRING).order(1).build(),
-    Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
-    Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
+    Column.builder().name("name").dataType(DataType.STRING).order(1).build(),
+    Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
+    Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
   )
   private[this] val rows: Seq[Row] = Seq(
     Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
@@ -188,9 +188,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .name(connectorName)
         .columns(Seq(
-          Column.newBuilder().name("name").newName("newName").dataType(DataType.STRING).order(1).build(),
-          Column.newBuilder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
-          Column.newBuilder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
+          Column.builder().name("name").newName("newName").dataType(DataType.STRING).order(1).build(),
+          Column.builder().name("ranking").newName("newRanking").dataType(DataType.INT).order(2).build(),
+          Column.builder().name("single").newName("newSingle").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .settings(props.toMap)
         .create)
@@ -232,9 +232,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .name(connectorName)
         .columns(Seq(
-          Column.newBuilder().name("name").dataType(DataType.OBJECT).order(1).build(),
-          Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
-          Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
+          Column.builder().name("name").dataType(DataType.OBJECT).order(1).build(),
+          Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
+          Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .settings(props.toMap)
         .create)
@@ -441,7 +441,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .numberOfTasks(1)
         .name(connectorName)
         // the name can't be casted to int
-        .columns(Seq(Column.newBuilder().name("name").dataType(DataType.INT).order(1).build()))
+        .columns(Seq(Column.builder().name("name").dataType(DataType.INT).order(1).build()))
         .settings(props.toMap)
         .create)
     try {
@@ -487,9 +487,9 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
         .name(connectorName)
         .columns(Seq(
           // 0 is invalid
-          Column.newBuilder().name("name").dataType(DataType.STRING).order(0).build(),
-          Column.newBuilder().name("ranking").dataType(DataType.INT).order(2).build(),
-          Column.newBuilder().name("single").dataType(DataType.BOOLEAN).order(3).build()
+          Column.builder().name("name").dataType(DataType.STRING).order(0).build(),
+          Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
+          Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
         ))
         .settings(props.toMap)
         .create)

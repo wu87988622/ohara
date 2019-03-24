@@ -25,27 +25,27 @@ public class TestColumn extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullName() {
-    Column.newBuilder().name(null);
+    Column.builder().name(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyName() {
-    Column.newBuilder().name("");
+    Column.builder().name("");
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullNewName() {
-    Column.newBuilder().newName(null);
+    Column.builder().newName(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyNewName() {
-    Column.newBuilder().newName("");
+    Column.builder().newName("");
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullDataType() {
-    Column.newBuilder().dataType(null);
+    Column.builder().dataType(null);
   }
 
   @Test
@@ -53,7 +53,7 @@ public class TestColumn extends SmallTest {
     String name = CommonUtils.randomString(10);
     DataType type = DataType.BOOLEAN;
     int order = 100;
-    Column column = Column.newBuilder().name(name).dataType(type).order(order).build();
+    Column column = Column.builder().name(name).dataType(type).order(order).build();
     Assert.assertEquals(name, column.name());
     Assert.assertEquals(type, column.dataType());
     Assert.assertEquals(order, column.order());
@@ -66,7 +66,7 @@ public class TestColumn extends SmallTest {
     DataType type = DataType.BOOLEAN;
     int order = 100;
     Column column =
-        Column.newBuilder().name(name).newName(newName).dataType(type).order(order).build();
+        Column.builder().name(name).newName(newName).dataType(type).order(order).build();
     Assert.assertEquals(name, column.name());
     Assert.assertEquals(newName, column.newName());
     Assert.assertEquals(type, column.dataType());

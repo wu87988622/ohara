@@ -29,63 +29,63 @@ public class TestSettingDefinition extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void nullKey() {
-    SettingDefinition.newBuilder().key(null);
+    SettingDefinition.builder().key(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyKey() {
-    SettingDefinition.newBuilder().key("");
+    SettingDefinition.builder().key("");
   }
 
   @Test(expected = NullPointerException.class)
   public void nullType() {
-    SettingDefinition.newBuilder().valueType(null);
+    SettingDefinition.builder().valueType(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void nullValueDefault() {
-    SettingDefinition.newBuilder().optional(null);
+    SettingDefinition.builder().optional(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void nullDocumentation() {
-    SettingDefinition.newBuilder().documentation(null);
+    SettingDefinition.builder().documentation(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyDocumentation() {
-    SettingDefinition.newBuilder().documentation("");
+    SettingDefinition.builder().documentation("");
   }
 
   @Test(expected = NullPointerException.class)
   public void nullReference() {
-    SettingDefinition.newBuilder().reference(null);
+    SettingDefinition.builder().reference(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void nullGroup() {
-    SettingDefinition.newBuilder().group(null);
+    SettingDefinition.builder().group(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyGroup() {
-    SettingDefinition.newBuilder().group("");
+    SettingDefinition.builder().group("");
   }
 
   @Test(expected = NullPointerException.class)
   public void nullDisplay() {
-    SettingDefinition.newBuilder().displayName(null);
+    SettingDefinition.builder().displayName(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyDisplay() {
-    SettingDefinition.newBuilder().displayName("");
+    SettingDefinition.builder().displayName("");
   }
 
   @Test
   public void testOnlyKey() {
     String key = CommonUtils.randomString(5);
-    SettingDefinition def = SettingDefinition.newBuilder().key(key).build();
+    SettingDefinition def = SettingDefinition.builder().key(key).build();
     Assert.assertEquals(key, def.key());
     Assert.assertNotNull(def.displayName());
     Assert.assertNotNull(def.documentation());
@@ -107,7 +107,7 @@ public class TestSettingDefinition extends SmallTest {
     String valueDefault = CommonUtils.randomString(5);
     String documentation = CommonUtils.randomString(5);
     SettingDefinition def =
-        SettingDefinition.newBuilder()
+        SettingDefinition.builder()
             .key(key)
             .valueType(type)
             .displayName(displayName)
@@ -141,7 +141,7 @@ public class TestSettingDefinition extends SmallTest {
     int orderInGroup = 100;
     String documentation = CommonUtils.randomString(5);
     SettingDefinition def =
-        SettingDefinition.newBuilder()
+        SettingDefinition.builder()
             .key(key)
             .valueType(type)
             .displayName(displayName)
@@ -170,7 +170,7 @@ public class TestSettingDefinition extends SmallTest {
   @Test
   public void testToConfigDefKey() {
     SettingDefinition settingDefinition =
-        SettingDefinition.newBuilder()
+        SettingDefinition.builder()
             .key(CommonUtils.randomString())
             .valueType(SettingDefinition.Type.STRING)
             .displayName(CommonUtils.randomString())
@@ -194,7 +194,7 @@ public class TestSettingDefinition extends SmallTest {
   @Test
   public void testToConfigDefKey2() {
     SettingDefinition settingDefinition =
-        SettingDefinition.newBuilder()
+        SettingDefinition.builder()
             .key(CommonUtils.randomString())
             .valueType(SettingDefinition.Type.STRING)
             .displayName(CommonUtils.randomString())
@@ -288,6 +288,6 @@ public class TestSettingDefinition extends SmallTest {
     SettingDefinitions.DEFINITIONS_DEFAULT.forEach(
         d ->
             Assert.assertEquals(
-                d.toJsonString(), SettingDefinition.newBuilder(d).build().toJsonString()));
+                d.toJsonString(), SettingDefinition.builder(d).build().toJsonString()));
   }
 }

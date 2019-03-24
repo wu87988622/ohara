@@ -75,8 +75,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val columns = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                      Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+    val columns = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
+                      Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     // test add
     result(connectorApi.list).size shouldBe 0
     val request = ConnectorCreationRequest(
@@ -122,8 +122,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
   def testInvalidSource(): Unit = {
     result(connectorApi.list).size shouldBe 0
 
-    val illegalOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
-                           Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+    val illegalOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
+                           Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(
         ConnectorCreationRequest(
@@ -136,8 +136,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         )))
     result(connectorApi.list).size shouldBe 0
 
-    val duplicateOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                             Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
+    val duplicateOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
+                             Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(
         ConnectorCreationRequest(
@@ -167,8 +167,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
       lhs.lastModified shouldBe rhs.lastModified
     }
 
-    val columns = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                      Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+    val columns = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
+                      Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
 
     // test add
     result(connectorApi.list).size shouldBe 0
@@ -216,8 +216,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
 
     result(connectorApi.list).size shouldBe 0
 
-    val illegalOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
-                           Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
+    val illegalOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(0).build(),
+                           Column.builder().name("cf").dataType(DataType.BOOLEAN).order(2).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(
         ConnectorCreationRequest(
@@ -230,8 +230,8 @@ class TestConnectorsRoute extends SmallTest with Matchers {
         )))
     result(connectorApi.list).size shouldBe 0
 
-    val duplicateOrder = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
-                             Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
+    val duplicateOrder = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build(),
+                             Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
     an[IllegalArgumentException] should be thrownBy result(
       connectorApi.add(
         ConnectorCreationRequest(

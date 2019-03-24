@@ -42,7 +42,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
   private[this] val hdfsURL: String = "hdfs://host1:9000"
   private[this] val tmpDir: String = "/tmp"
 
-  private[this] val schema = Seq(Column.newBuilder().name("cf0").dataType(DataType.BOOLEAN).order(1).build())
+  private[this] val schema = Seq(Column.builder().name("cf0").dataType(DataType.BOOLEAN).order(1).build())
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -402,7 +402,7 @@ class TestHDFSSinkConnector extends With3Brokers3Workers with Matchers {
           dataDirName -> dataDirPath,
           isHeader -> "false"
         ))
-        .columns(Seq(Column.newBuilder().name("cccc").dataType(DataType.BOOLEAN).order(1).build()))
+        .columns(Seq(Column.builder().name("cccc").dataType(DataType.BOOLEAN).order(1).build()))
         .create)
 
     TimeUnit.SECONDS.sleep(5)

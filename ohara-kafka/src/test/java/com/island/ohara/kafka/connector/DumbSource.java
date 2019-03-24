@@ -26,8 +26,8 @@ import java.util.List;
 public class DumbSource extends RowSourceConnector {
   private final List<Column> columns =
       Arrays.asList(
-          Column.newBuilder().name("cf0").dataType(DataType.BOOLEAN).order(0).build(),
-          Column.newBuilder().name("cf1").dataType(DataType.BOOLEAN).order(1).build());
+          Column.builder().name("cf0").dataType(DataType.BOOLEAN).order(0).build(),
+          Column.builder().name("cf1").dataType(DataType.BOOLEAN).order(1).build());
 
   @Override
   protected Class<? extends RowSourceTask> _taskClass() {

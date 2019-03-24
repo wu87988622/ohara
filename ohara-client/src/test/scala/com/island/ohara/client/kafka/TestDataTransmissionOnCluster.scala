@@ -31,7 +31,7 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
   private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   private[this] val row = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
-  private[this] val schema = Seq(Column.newBuilder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
+  private[this] val schema = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
   private[this] val numberOfRows = 20
 
   @After

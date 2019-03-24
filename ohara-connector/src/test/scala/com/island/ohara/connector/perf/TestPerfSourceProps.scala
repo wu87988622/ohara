@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 class TestPerfSourceProps extends SmallTest with Matchers {
   private[this] val props = PerfSourceProps(10, 10 seconds)
   private[this] val topics = Seq("TestPerfSourceProps")
-  private[this] val schema = Seq(Column.newBuilder().name("name").dataType(DataType.SHORT).order(1).build())
+  private[this] val schema = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())
 
   @Test
   def testPlainMap(): Unit = {

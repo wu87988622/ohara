@@ -33,7 +33,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val topicName = CommonUtils.randomString()
     val numberOfTasks = 10
     val (key, value) = ("aaa", "ccc")
-    val column = Column.newBuilder().name("aa").newName("cc").dataType(DataType.FLOAT).order(10).build()
+    val column = Column.builder().name("aa").newName("cc").dataType(DataType.FLOAT).order(10).build()
     val request = ConnectorCreationRequest(
       className = Some(className),
       columns = Seq(column),
@@ -59,7 +59,7 @@ class TestConnectorApi extends SmallTest with Matchers {
     val workerClusterName = CommonUtils.randomString()
     val className = CommonUtils.randomString()
     val column = Column
-      .newBuilder()
+      .builder()
       .name(CommonUtils.randomString())
       .newName(CommonUtils.randomString())
       .dataType(DataType.DOUBLE)

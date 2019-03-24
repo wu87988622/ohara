@@ -92,14 +92,8 @@ class TestOhara734 extends SmallTest with Matchers {
     request.numberOfTasks.get shouldBe 1
     request.plain("perf.batch") shouldBe "1"
     request.columns.size shouldBe 2
-    request.columns.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
-    request.columns.last shouldBe Column
-      .newBuilder()
-      .name("cf1")
-      .newName("cf1")
-      .dataType(DataType.BYTES)
-      .order(2)
-      .build()
+    request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
 
     val request2 =
       ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(
@@ -162,14 +156,8 @@ class TestOhara734 extends SmallTest with Matchers {
     request.numberOfTasks.get shouldBe 1
     request.plain("perf.batch") shouldBe "1"
     request.columns.size shouldBe 2
-    request.columns.head shouldBe Column.newBuilder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
-    request.columns.last shouldBe Column
-      .newBuilder()
-      .name("cf1")
-      .newName("cf1")
-      .dataType(DataType.BYTES)
-      .order(2)
-      .build()
+    request.columns.head shouldBe Column.builder().name("cf0").newName("cf0").dataType(DataType.INT).order(1).build()
+    request.columns.last shouldBe Column.builder().name("cf1").newName("cf1").dataType(DataType.BYTES).order(2).build()
 
     val request2 =
       ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(

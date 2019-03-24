@@ -54,7 +54,7 @@ public final class Column extends Data implements Serializable {
     return order;
   }
 
-  public static Builder newBuilder() {
+  public static Builder builder() {
     return new Builder();
   }
 

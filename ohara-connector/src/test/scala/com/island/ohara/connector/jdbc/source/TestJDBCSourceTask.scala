@@ -80,9 +80,9 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
     when(taskConfig.raw()).thenReturn(maps.asJava)
 
     val columns: Seq[Column] = Seq(
-      Column.newBuilder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
-      Column.newBuilder().name("COLUMN2").dataType(DataType.STRING).order(1).build(),
-      Column.newBuilder().name("COLUMN4").dataType(DataType.INT).order(3).build()
+      Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build(),
+      Column.builder().name("COLUMN2").dataType(DataType.STRING).order(1).build(),
+      Column.builder().name("COLUMN4").dataType(DataType.INT).order(3).build()
     )
 
     when(taskConfig.columns).thenReturn(columns.asJava)
@@ -113,7 +113,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testRowTimestamp(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val schema: Seq[Column] = Seq(Column.newBuilder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build())
+    val schema: Seq[Column] = Seq(Column.builder().name("COLUMN1").dataType(DataType.OBJECT).order(0).build())
     val columnInfo: Seq[ColumnInfo[Timestamp]] = Seq(ColumnInfo("COLUMN1", "timestamp", new Timestamp(0)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value.toString shouldBe "1970-01-01 08:00:00.0"
@@ -122,7 +122,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testRowInt(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val schema: Seq[Column] = Seq(Column.newBuilder().name("COLUMN1").dataType(DataType.INT).order(0).build())
+    val schema: Seq[Column] = Seq(Column.builder().name("COLUMN1").dataType(DataType.INT).order(0).build())
     val columnInfo: Seq[ColumnInfo[Int]] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN1").value shouldBe 100
@@ -131,8 +131,8 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   @Test
   def testCellOrder(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
-    val schema: Seq[Column] = Seq(Column.newBuilder().name("c1").dataType(DataType.INT).order(1).build(),
-                                  Column.newBuilder().name("c0").dataType(DataType.INT).order(0).build())
+    val schema: Seq[Column] = Seq(Column.builder().name("c1").dataType(DataType.INT).order(1).build(),
+                                  Column.builder().name("c0").dataType(DataType.INT).order(0).build())
     val columnInfo: Seq[ColumnInfo[Int]] =
       Seq(ColumnInfo("c1", "int", new Integer(100)), ColumnInfo("c0", "int", new Integer(50)))
     val cells = jdbcSourceTask.row(schema, columnInfo).cells().asScala
@@ -146,7 +146,7 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
   def testRowNewName(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val schema: Seq[Column] = Seq(
-      Column.newBuilder().name("COLUMN1").newName("COLUMN100").dataType(DataType.INT).order(0).build())
+      Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.INT).order(0).build())
     val columnInfo: Seq[ColumnInfo[Int]] = Seq(ColumnInfo("COLUMN1", "int", new Integer(100)))
     val row0: Row = jdbcSourceTask.row(schema, columnInfo)
     row0.cell("COLUMN100").value shouldBe 100
@@ -169,9 +169,9 @@ class TestJDBCSourceTask extends MediumTest with Matchers with MockitoSugar {
                                         TIMESTAMP_COLUMN_NAME -> timestampColumnName)
     when(taskConfig.raw()).thenReturn(maps.asJava)
     val columns: Seq[Column] = Seq(
-      Column.newBuilder().name("COLUMN1").newName("COLUMN100").dataType(DataType.OBJECT).order(0).build(),
-      Column.newBuilder().name("COLUMN2").newName("COLUMN200").dataType(DataType.STRING).order(1).build(),
-      Column.newBuilder().name("COLUMN4").newName("COLUMN400").dataType(DataType.INT).order(3).build()
+      Column.builder().name("COLUMN1").newName("COLUMN100").dataType(DataType.OBJECT).order(0).build(),
+      Column.builder().name("COLUMN2").newName("COLUMN200").dataType(DataType.STRING).order(1).build(),
+      Column.builder().name("COLUMN4").newName("COLUMN400").dataType(DataType.INT).order(3).build()
     )
 
     when(taskConfig.columns).thenReturn(columns.asJava)

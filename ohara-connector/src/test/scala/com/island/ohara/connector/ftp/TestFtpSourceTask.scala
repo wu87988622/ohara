@@ -213,7 +213,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
     val path = CommonUtils.path(props.inputFolder, methodName)
     val data = setupInputData(path)
     val schema = data.head._2.map(_.name).zipWithIndex.map {
-      case (name: String, index: Int) => Column.newBuilder().name(name).dataType(DataType.STRING).order(index).build()
+      case (name: String, index: Int) => Column.builder().name(name).dataType(DataType.STRING).order(index).build()
     }
     val task = new FtpSourceTask()
 
@@ -238,7 +238,7 @@ class TestFtpSourceTask extends SmallTest with Matchers {
       .map(_.name)
       .zipWithIndex
       .map {
-        case (name, index) => Column.newBuilder().name(name).dataType(DataType.STRING).order(index).build()
+        case (name, index) => Column.builder().name(name).dataType(DataType.STRING).order(index).build()
       }
       .head
 
