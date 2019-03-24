@@ -41,11 +41,6 @@ RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-connector/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 RUN cp $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/lib/* $(find "/opt/kafka/" -maxdepth 1 -type d -name "kafka_*")/libs/
 
-# download Tini
-# we download the Tini in multi-stage so as to save the space to install the wget
-ARG TINI_VERSION=v0.18.0
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
-
 FROM centos:7.6.1810
 
 # install openjdk-1.8

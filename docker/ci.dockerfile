@@ -15,20 +15,7 @@
 #
 
 FROM oharastream/ohara:deps
-
-# add user
-ARG USER=ohara
-RUN groupadd $USER
-RUN useradd -ms /bin/bash -g $USER $USER
-
-# copy gradle dependencies
-RUN cp -r /root/.gradle /home/$USER/
-RUN chown -R $USER:$USER /home/$USER/.gradle
-
-# clone database instance
-RUN cp -r /root/.embedmysql /home/$USER/
-RUN chown -R $USER:$USER /home/$USER/.embedmysql
-
-# change to user
-USER $USER
-WORKDIR /home/$USER
+# The root is used in ci image since dependencies from parent image (owned by root) are required in running QA.
+# Coping dependencies from parent image is not solution as the chmod in docker is vary slow (see https://github.com/docker/for-linux/issues/388).
+# Also, We are too poor to buy the super network which can download everything in running QA
+WORKDIR /ohara

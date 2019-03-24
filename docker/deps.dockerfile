@@ -63,13 +63,21 @@ ENV PATH=$PATH:$GRADLE_HOME/bin
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
-WORKDIR /testpatch/ohara
-RUN git clone $REPO /testpatch/ohara
+WORKDIR /ohara
+RUN git clone $REPO /ohara
 RUN git checkout $COMMIT
-# Running this test case make gradle download mysql binary code
-RUN gradle clean build -x test -PskipManager
-RUN gradle clean ohara-client:test --tests TestDatabaseClient -PskipManager
-RUN rm -rf /testpatch/ohara
+# download dependencies
+RUN gradle clean build -x test -PskipManager \
+    && gradle clean ohara-client:test --tests TestDatabaseClient -PskipManager \
+    && gradle clean \
+    && cd ohara-manager \
+    && gradle setup \
+    && gradle --stop
+
+# Add Tini
+ARG TINI_VERSION=v0.18.0
+RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
+RUN chmod +x /tini
 
 # change to root
 WORKDIR /root
