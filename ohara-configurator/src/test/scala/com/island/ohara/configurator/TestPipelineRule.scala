@@ -69,7 +69,7 @@ class TestPipelineRule extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             workerClusterName = None,
-            rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
+            rules = Map(source.id -> Seq(PipelineApi.UNKNOWN_ID))
           )
         ),
       30 seconds
@@ -198,7 +198,7 @@ class TestPipelineRule extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             workerClusterName = None,
-            rules = Map(source.id -> Seq(PipelineApi.UNKNOWN))
+            rules = Map(source.id -> Seq(PipelineApi.UNKNOWN_ID))
           )
         ),
       30 seconds
@@ -224,7 +224,7 @@ class TestPipelineRule extends SmallTest with Matchers {
           PipelineCreationRequest(
             name = "abc",
             workerClusterName = None,
-            rules = Map(PipelineApi.UNKNOWN -> Seq(sink.id))
+            rules = Map(PipelineApi.UNKNOWN_ID -> Seq(sink.id))
           )
         ),
       30 seconds

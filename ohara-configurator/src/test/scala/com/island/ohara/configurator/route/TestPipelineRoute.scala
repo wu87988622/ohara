@@ -295,7 +295,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         PipelineCreationRequest(
           name = CommonUtils.randomString(10),
           workerClusterName = None,
-          rules = Map(PipelineApi.UNKNOWN -> Seq("Adasd", "asdasd"))
+          rules = Map(PipelineApi.UNKNOWN_ID -> Seq("Adasd", "asdasd"))
         )),
       30 seconds
     )
@@ -323,7 +323,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         PipelineCreationRequest(
           name = CommonUtils.randomString(10),
           workerClusterName = None,
-          rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
+          rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID))
         )),
       30 seconds
     )
@@ -348,12 +348,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
-        )))
+      pipelineApi.add(PipelineCreationRequest(
+        name = CommonUtils.randomString(10),
+        workerClusterName = None,
+        rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID))
+      )))
 
     val wk = result(configurator.clusterCollie.workerCollie().remove(pipeline.workerClusterName))
     wk.name shouldBe pipeline.workerClusterName
@@ -379,12 +378,11 @@ class TestPipelineRoute extends SmallTest with Matchers {
     )
 
     val pipeline = result(
-      pipelineApi.add(
-        PipelineCreationRequest(
-          name = CommonUtils.randomString(10),
-          workerClusterName = None,
-          rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
-        )))
+      pipelineApi.add(PipelineCreationRequest(
+        name = CommonUtils.randomString(10),
+        workerClusterName = None,
+        rules = Map(topic.id -> Seq(PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID))
+      )))
     pipeline.rules.isEmpty shouldBe false
     pipeline.rules(topic.id).size shouldBe 0
 
@@ -432,7 +430,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         PipelineCreationRequest(
           name = CommonUtils.randomString(10),
           workerClusterName = None,
-          rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
+          rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID))
         )))
     pipeline.rules.isEmpty shouldBe false
     pipeline.rules(topic0.id).size shouldBe 1
@@ -492,7 +490,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         PipelineCreationRequest(
           name = CommonUtils.randomString(10),
           workerClusterName = None,
-          rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
+          rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID))
         )))
 
     val pipeline1 = result(
@@ -500,7 +498,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         PipelineCreationRequest(
           name = CommonUtils.randomString(10),
           workerClusterName = None,
-          rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN, PipelineApi.UNKNOWN))
+          rules = Map(topic0.id -> Seq(topic1.id, PipelineApi.UNKNOWN_ID, PipelineApi.UNKNOWN_ID))
         )))
 
     val pipelines = result(pipelineApi.list)

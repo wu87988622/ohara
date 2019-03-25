@@ -70,7 +70,7 @@ private[configurator] object PipelineRoute {
             Pipeline(
               id = id,
               name = request.name,
-              rules = request.rules,
+              flows = request.flows,
               objects = Seq.empty,
               workerClusterName = wkName,
               lastModified = CommonUtils.current()
@@ -84,8 +84,8 @@ private[configurator] object PipelineRoute {
           case (pipeline, clusterOption) =>
             clusterOption
               .map(cluster =>
-                verifyRules(pipeline.id, pipeline.rules, cluster).map { rules =>
-                  pipeline.copy(rules = rules) -> Some(cluster)
+                verifyFlows(pipeline.id, pipeline.flows, cluster).map { flows =>
+                  pipeline.copy(flows = flows) -> Some(cluster)
               })
               .getOrElse(Future.successful(pipeline -> None))
         }))
@@ -117,7 +117,7 @@ private[configurator] object PipelineRoute {
           .flatMap {
             case (k, v) => Seq(k) ++ v
           }
-          .filterNot(_ == UNKNOWN)
+          .filterNot(_ == UNKNOWN_ID)
           .toSet
           .map(id => store.value[Data](id)))
       .flatMap(objs => workerClient.connectors.map(_ -> objs))
@@ -193,9 +193,9 @@ private[configurator] object PipelineRoute {
     * we should accept following data type only
     * [ConnectorConfiguration, TopicInfo, StreamApp]
     */
-  private[this] def verifyRules(name: String, rules: Map[String, Seq[String]], cluster: WorkerClusterInfo)(
+  private[this] def verifyFlows(name: String, flows: Seq[Flow], cluster: WorkerClusterInfo)(
     implicit store: DataStore,
-    executionContext: ExecutionContext): Future[Map[String, Seq[String]]] = {
+    executionContext: ExecutionContext): Future[Seq[Flow]] = {
 
     // pipeline is bound on specific worker cluster. And all objects in this pipeline should be bound on same cluster.
     // for example:
@@ -203,7 +203,7 @@ private[configurator] object PipelineRoute {
     // connector -> it's worker cluster must be same to pipeline's worker cluster
     // streamapp -> TODO: it should be bound by worker cluster after issue #321 ...by Sam
     // others -> unsupported
-    def verify(id: String): Future[String] = if (id != UNKNOWN) {
+    def verify(id: String): Future[String] = if (id != UNKNOWN_ID) {
       store
         .raw(id)
         .map {
@@ -224,7 +224,7 @@ private[configurator] object PipelineRoute {
           // the component has been removed!
           case e: NoSuchElementException =>
             LOG.error(s"$id had been removed", e)
-            UNKNOWN
+            UNKNOWN_ID
         }
     } else Future.successful(id)
 
@@ -235,33 +235,32 @@ private[configurator] object PipelineRoute {
     def verify2(ids: Seq[String]): Future[Seq[String]] = Future.traverse(ids)(verify)
     Future
       .sequence(
-        rules
+        flows
         // pre-filter the unknown key
-          .filter {
-            case (k, _) => k != UNKNOWN
-          }
-          .map {
-            case (k, v) =>
-              verify(k).flatMap { k =>
-                // we will remove unknown key later so it is unnecessary to fetch object for values.
-                if (k == UNKNOWN) Future.successful(k -> Seq.empty)
-                else
-                  verify2(v).map { v =>
-                    if (v.size == 1 && v.head == k)
-                      throw new IllegalArgumentException(s"the from:$k can't be equals to to:${v.head}")
-                    k -> v
-                  }
-              }
+          .filter(_.from != UNKNOWN_ID)
+          .map { flow =>
+            verify(flow.from).flatMap { from =>
+              // we will remove unknown key later so it is unnecessary to fetch object for values.
+              if (from == UNKNOWN_ID)
+                Future.successful(
+                  Flow(
+                    from = from,
+                    to = Seq.empty
+                  ))
+              else
+                verify2(flow.to).map { to =>
+                  if (to.size == 1 && to.head == from)
+                    throw new IllegalArgumentException(s"the from:$from can't be equals to to:${to.head}")
+                  Flow(from = from, to = to)
+                }
+            }
           })
-      .map(_.toMap
-        .filter {
-          // if key is unknown, we remove it
-          case (k, _) => k != UNKNOWN
-        }
-        .map {
-          // remove unknown from value
-          case (k, ids) => k -> ids.filter(_ != UNKNOWN)
-        })
+      .map(_.filter(_.from != UNKNOWN_ID).map(
+        flow =>
+          Flow(
+            from = flow.from,
+            to = flow.to.filter(_ != UNKNOWN_ID),
+        )))
   }
 
   private[this] def update(pipeline: Pipeline)(implicit store: DataStore,
