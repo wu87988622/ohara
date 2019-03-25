@@ -29,6 +29,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.it.agent.{ClusterNameHolder, CollieTestUtils}
+import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
@@ -94,8 +95,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
     val currentPath = new File(".").getCanonicalPath
     // Both jars are pre-generated. see readme in test/resources
     val jars = result(
-      Future.traverse(Seq(new File(currentPath, s"src/test/resources/ItConnector.jar"),
-                          new File(currentPath, s"src/test/resources/ItConnector2.jar")))(jarStore.add))
+      Future.traverse(Seq(new File(currentPath, "build/libs/ohara-it-source.jar"),
+                          new File(currentPath, "build/libs/ohara-it-sink.jar")))(jarStore.add))
 
     val zkCluster = result(
       zkApi.add(
@@ -153,8 +154,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
       val workerClient = WorkerClient(s"$name:${wkCluster.clientPort}")
       await(
         () =>
-          try result(workerClient.plugins).exists(_.className == "com.island.ohara.it.ItConnector")
-            && result(workerClient.plugins).exists(_.className == "com.island.ohara.it.ItConnector2")
+          try result(workerClient.plugins).exists(_.className == classOf[DumbSinkConnector].getName)
+            && result(workerClient.plugins).exists(_.className == classOf[DumbSourceConnector].getName)
           catch {
             case _: Throwable => false
         }
@@ -165,6 +166,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   @After
   final def tearDown(): Unit = {
     Releasable.close(configurator)
-    Releasable.close(nameHolder)
+//    Releasable.close(nameHolder)
   }
 }

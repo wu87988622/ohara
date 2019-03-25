@@ -24,18 +24,18 @@ dependencies {
    * scala plugin complains that we don't put scala library in production scope... by chia
    */
   implementation libs.scala
+  implementation project(':ohara-common')
+  implementation project(':ohara-client')
+  implementation project(':ohara-kafka')
+  implementation project(':ohara-configurator')
+  implementation project(':ohara-connector')
+  implementation project(':ohara-agent')
+  implementation project(':ohara-testing-util')
+  implementation libs.kafkaConnectRuntime
   testImplementation libs.scalaLogging
   testImplementation libs.sprayJson
-  testImplementation libs.kafkaConnectRuntime
   // our it env use postgresql
   testImplementation libs.postgresql
-  testImplementation project(':ohara-common')
-  testImplementation project(':ohara-client')
-  testImplementation project(':ohara-kafka')
-  testImplementation project(':ohara-configurator')
-  testImplementation project(':ohara-connector')
-  testImplementation project(':ohara-agent')
-  testImplementation project(':ohara-testing-util')
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *
@@ -66,6 +66,24 @@ task includeStreamAppJar(dependsOn: ':ohara-streams:testJar', type: Copy){
   into "$buildDir/resources/test"
 }
 
+/**
+ * package only source connector.
+ */
+task sourceJar(type: Jar, dependsOn: compileJava) {
+  from sourceSets.main.output
+  include '**/DumbSource**.class'
+  archiveName "ohara-it-source.jar"
+}
+
+/**
+ * package only sink connector.
+ */
+task sinkJar(type: Jar, dependsOn: compileJava) {
+  from sourceSets.main.output
+  include '**/DumbSink**.class'
+  archiveName "ohara-it-sink.jar"
+}
+
 test {
   String DOCKER = "ohara.it.docker"
   if(project.hasProperty(DOCKER)) environment DOCKER, project.getProperty(DOCKER)
@@ -86,3 +104,10 @@ test {
 }
 
 test.dependsOn includeStreamAppJar
+/**
+ * TestLoadCustomJarToWorkerCluster needs sourceJar and sinkJar to test the upload of custom connectors.
+ */
+test.dependsOn sourceJar
+test.dependsOn sinkJar
+jar.dependsOn sourceJar
+jar.dependsOn sinkJar
