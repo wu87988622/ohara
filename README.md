@@ -2,6 +2,8 @@
 
 An easy-to-use visual stream processing tool based on Apache Kafka.
 
+[![Build Status](https://builds.is-land.com.tw/buildStatus/icon?job=PostCommit-OHARA)](https://builds.is-land.com.tw/job/PostCommit-OHARA/)
+
 ### Getting Started
 
 **Start Your Own Ohara StreamApp**
