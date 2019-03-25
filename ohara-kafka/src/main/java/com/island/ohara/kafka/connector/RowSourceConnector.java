@@ -72,16 +72,8 @@ public abstract class RowSourceConnector extends SourceConnector {
    *
    * @return the version, formatted as a String
    */
-  protected String _version() {
-    return "unknown";
-  }
-
-  protected String revision() {
-    return "unknown";
-  }
-
-  protected String author() {
-    return "unknown";
+  protected ConnectorVersion _version() {
+    return ConnectorVersion.builder().build();
   }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
@@ -114,9 +106,7 @@ public abstract class RowSourceConnector extends SourceConnector {
                 SettingDefinitions.DEFINITIONS_DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
-        _version(),
-        revision(),
-        author());
+        _version());
   }
 
   @Override
@@ -126,7 +116,7 @@ public abstract class RowSourceConnector extends SourceConnector {
 
   @Override
   public final String version() {
-    return _version();
+    return _version().version();
   }
   // -------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//
   @Override

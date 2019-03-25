@@ -30,13 +30,13 @@ final class ConnectorUtils {
   }
 
   static List<SettingDefinition> toSettingDefinitions(
-      List<SettingDefinition> settingDefinitions, String version, String revision, String author) {
+      List<SettingDefinition> settingDefinitions, ConnectorVersion version) {
     return Stream.of(
             settingDefinitions,
             Arrays.asList(
-                copy(version, SettingDefinition.VERSION_DEFINITION),
-                copy(revision, SettingDefinition.REVISION_DEFINITION),
-                copy(author, SettingDefinition.AUTHOR_DEFINITION)))
+                copy(version.version(), SettingDefinition.VERSION_DEFINITION),
+                copy(version.revision(), SettingDefinition.REVISION_DEFINITION),
+                copy(version.author(), SettingDefinition.AUTHOR_DEFINITION)))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
   }

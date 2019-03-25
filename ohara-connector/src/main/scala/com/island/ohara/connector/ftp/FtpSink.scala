@@ -19,7 +19,7 @@ package com.island.ohara.connector.ftp
 import java.util
 
 import com.island.ohara.client.ftp.FtpClient
-import com.island.ohara.common.util.{CommonUtils, VersionUtils}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector._
 
 import scala.collection.JavaConverters._
@@ -62,9 +62,5 @@ class FtpSink extends RowSinkConnector {
       .asJava
   }
 
-  override protected def _version: String = VersionUtils.VERSION
-
-  override protected def revision: String = VersionUtils.REVISION
-
-  override protected def author: String = "ohara"
+  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }

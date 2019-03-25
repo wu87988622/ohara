@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.connector.ConnectorVersion;
 import com.island.ohara.kafka.connector.DumbSink;
 import com.island.ohara.kafka.connector.RowSinkConnector;
 import com.island.ohara.kafka.connector.RowSinkTask;
@@ -199,18 +200,8 @@ public class TestCoreDefinitions extends SmallTest {
     protected void _stop() {}
 
     @Override
-    protected String _version() {
-      return version;
-    }
-
-    @Override
-    protected String author() {
-      return author;
-    }
-
-    @Override
-    protected String revision() {
-      return revision;
+    protected ConnectorVersion _version() {
+      return ConnectorVersion.builder().version(version).revision(revision).author(author).build();
     }
   }
 
@@ -242,18 +233,8 @@ public class TestCoreDefinitions extends SmallTest {
     protected void _stop() {}
 
     @Override
-    protected String _version() {
-      return version;
-    }
-
-    @Override
-    protected String author() {
-      return author;
-    }
-
-    @Override
-    protected String revision() {
-      return revision;
+    protected ConnectorVersion _version() {
+      return ConnectorVersion.builder().version(version).revision(revision).author(author).build();
     }
   }
 }

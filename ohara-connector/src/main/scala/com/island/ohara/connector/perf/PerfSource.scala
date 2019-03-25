@@ -15,8 +15,7 @@
  */
 
 package com.island.ohara.connector.perf
-import com.island.ohara.common.util.VersionUtils
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskConfig}
 
 import scala.collection.JavaConverters._
 
@@ -40,9 +39,5 @@ class PerfSource extends RowSourceConnector {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _version: String = VersionUtils.VERSION
-
-  override protected def revision: String = VersionUtils.REVISION
-
-  override protected def author: String = "ohara"
+  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }

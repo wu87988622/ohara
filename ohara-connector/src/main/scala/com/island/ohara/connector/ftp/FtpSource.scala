@@ -20,8 +20,7 @@ import java.util
 
 import com.island.ohara.client.ftp.FtpClient
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.util.VersionUtils
-import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskConfig}
+import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskConfig}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -74,11 +73,7 @@ class FtpSource extends RowSourceConnector {
     //    do nothing
   }
 
-  override protected def _version: String = VersionUtils.VERSION
-
-  override protected def revision: String = VersionUtils.REVISION
-
-  override protected def author: String = "ohara"
+  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }
 
 object FtpSource {
