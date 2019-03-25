@@ -106,7 +106,7 @@ class TestPipelineApi extends SmallTest with Matchers {
       lastModified = CommonUtils.current()
     )
     val json = PIPELINE_JSON_FORMAT.write(pipeline).toString
-    withClue(json)(json.contains("\"rules\":{") shouldBe false)
+    withClue(json)(json.contains("\"rules\":{") shouldBe true)
   }
 
   @Test

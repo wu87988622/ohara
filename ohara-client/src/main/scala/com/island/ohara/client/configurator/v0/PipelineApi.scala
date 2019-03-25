@@ -114,11 +114,9 @@ object PipelineApi {
         nameKey -> JsString(obj.name),
         workerClusterNameKey -> obj.workerClusterName.map(JsString(_)).getOrElse(JsNull),
         flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
-        rulesKey -> (if (obj.rules.isEmpty) JsNull
-                     else
-                       JsObject(obj.rules.map { e =>
-                         e._1 -> JsArray(e._2.map(JsString(_)).toVector)
-                       }))
+        rulesKey -> JsObject(obj.rules.map { e =>
+          e._1 -> JsArray(e._2.map(JsString(_)).toVector)
+        })
       )
     }
 
@@ -168,11 +166,9 @@ object PipelineApi {
       nameKey -> JsString(obj.name),
       workerClusterNameKey -> JsString(obj.workerClusterName),
       flowsKey -> JsArray(obj.flows.map(FLOW_JSON_FORMAT.write).toVector),
-      rulesKey -> (if (obj.rules.isEmpty) JsNull
-                   else
-                     JsObject(obj.rules.map { e =>
-                       e._1 -> JsArray(e._2.map(JsString(_)).toVector)
-                     })),
+      rulesKey -> JsObject(obj.rules.map { e =>
+        e._1 -> JsArray(e._2.map(JsString(_)).toVector)
+      }),
       objectsKey -> JsArray(obj.objects.map(OBJECT_ABSTRACT_JSON_FORMAT.write).toVector),
       lastModifiedKey -> JsNumber(obj.lastModified)
     )
