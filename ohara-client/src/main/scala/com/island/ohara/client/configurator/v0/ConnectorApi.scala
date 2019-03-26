@@ -93,7 +93,12 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+    def className: String = plain.getOrElse(
+      SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
+      plain.getOrElse("className",
+                      throw new NoSuchElementException(
+                        s"Can't find either ${SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()} or className"))
+    )
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)
@@ -212,7 +217,12 @@ object ConnectorApi {
       */
     override def name: String = plain.getOrElse(ConnectorFormatter.NAME_KEY, id)
     override def kind: String = "connector"
-    def className: String = plain(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+    def className: String = plain.getOrElse(
+      SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
+      plain.getOrElse("className",
+                      throw new NoSuchElementException(
+                        s"Can't find either ${SettingDefinition.CONNECTOR_CLASS_DEFINITION.key()} or className"))
+    )
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
       .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)

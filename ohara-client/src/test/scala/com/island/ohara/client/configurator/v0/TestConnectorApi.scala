@@ -16,6 +16,7 @@
 
 package com.island.ohara.client.configurator.v0
 
+import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, _}
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
@@ -89,6 +90,8 @@ class TestConnectorApi extends SmallTest with Matchers {
     request.columns.head shouldBe column
     request.topicNames shouldBe topicNames
     request.numberOfTasks.get shouldBe numberOfTasks
+    // this key is deprecated so json converter will replace it by new one
+    request.settings.contains("className") shouldBe false
     request.settings("aaa").asInstanceOf[JsString].value shouldBe "cccc"
     request.settings(anotherKey).asInstanceOf[JsString].value shouldBe anotherValue
     CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(CONNECTOR_CREATION_REQUEST_JSON_FORMAT.write(request)) shouldBe request
@@ -135,5 +138,83 @@ class TestConnectorApi extends SmallTest with Matchers {
     jsonString.contains("error") shouldBe true
     jsonString.contains("lastModified") shouldBe true
     jsonString.contains("configs") shouldBe true
+  }
+  @Test
+  def testState(): Unit = {
+    ConnectorState.all shouldBe Seq(
+      UNASSIGNED,
+      RUNNING,
+      PAUSED,
+      FAILED,
+      DESTROYED
+    ).sortBy(_.name)
+  }
+
+  @Test
+  def testStateJson(): Unit = {
+    ConnectorState.all.foreach(
+      state =>
+        ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
+          .read(ConnectorApi.CONNECTOR_STATE_JSON_FORMAT.write(state)) shouldBe state)
+  }
+
+  @Test
+  def renderJsonWithoutAnyRequiredFields(): Unit = {
+    val response = ConnectorDescription(
+      id = CommonUtils.randomString(),
+      settings = Map(CommonUtils.randomString() -> JsString(CommonUtils.randomString())),
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    // pass
+    ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT.write(response)
+  }
+
+  @Test
+  def renderJsonWithConnectorClass(): Unit = {
+    val className = CommonUtils.randomString()
+    val response = ConnectorDescription(
+      id = CommonUtils.randomString(),
+      settings = Map(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(className)),
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT
+      .write(response)
+      .asInstanceOf[JsObject]
+      // previous name
+      .fields("className")
+      .asInstanceOf[JsString]
+      .value shouldBe className
+  }
+
+  @Test
+  def parsePreviousKeyOfClassNameFromConnectorCreationRequest(): Unit = {
+    import spray.json._
+    val className = CommonUtils.randomString()
+    val connectorCreationRequest = ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                               | {
+                                                                                               | \"className\": \"$className\"
+                                                                                               | }
+     """.stripMargin.parseJson)
+    connectorCreationRequest.className shouldBe className
+  }
+
+  @Test
+  def parsePreviousKeyOfClassNameFromConnectorDescription(): Unit = {
+    import spray.json._
+    val className = CommonUtils.randomString()
+    val connectorDescription = ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT.read(s"""
+                                                                                      | {
+                                                                                      | \"id\": \"asdasdsad\",
+                                                                                      | \"lastModified\": 123,
+                                                                                      | \"settings\": {
+                                                                                      | \"className\": \"$className\"
+                                                                                      | }
+                                                                                      | }
+     """.stripMargin.parseJson)
+    connectorDescription.className shouldBe className
   }
 }

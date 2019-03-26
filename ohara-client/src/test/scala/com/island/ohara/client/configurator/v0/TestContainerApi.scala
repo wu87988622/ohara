@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client.configurator
+package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.ContainerApi
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState._
 import com.island.ohara.common.rule.SmallTest
