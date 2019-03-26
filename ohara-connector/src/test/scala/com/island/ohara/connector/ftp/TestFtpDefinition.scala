@@ -79,7 +79,8 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
       .head
       .definition()
       .required() shouldBe false
-    response.errorCount() shouldBe 0
+    // we don't pass all arguments so it should contain error.
+    response.errorCount() should not be 0
   }
 
   @Test
