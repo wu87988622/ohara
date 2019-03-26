@@ -129,6 +129,6 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
       .head
       .definition()
       .required() shouldBe false
-    response.errorCount() shouldBe 0
+    response.errorCount() should not be 0
   }
 }
