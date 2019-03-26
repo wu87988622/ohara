@@ -17,11 +17,14 @@
 package com.island.ohara.client.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
+import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorDescription, ConnectorState}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka.connector.json.SettingDefinition
 import org.junit.Test
 import org.scalatest.Matchers
+import spray.json.{JsObject, JsString}
 
 class TestConnectorApi extends SmallTest with Matchers {
 
@@ -42,5 +45,37 @@ class TestConnectorApi extends SmallTest with Matchers {
       state =>
         ConnectorApi.CONNECTOR_STATE_JSON_FORMAT
           .read(ConnectorApi.CONNECTOR_STATE_JSON_FORMAT.write(state)) shouldBe state)
+  }
+
+  @Test
+  def renderJsonWithoutAnyRequiredFields(): Unit = {
+    val response = ConnectorDescription(
+      id = CommonUtils.randomString(),
+      settings = Map(CommonUtils.randomString() -> JsString(CommonUtils.randomString())),
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    // pass
+    ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT.write(response)
+  }
+
+  @Test
+  def renderJsonWithConnectorClass(): Unit = {
+    val className = CommonUtils.randomString()
+    val response = ConnectorDescription(
+      id = CommonUtils.randomString(),
+      settings = Map(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(className)),
+      state = None,
+      error = None,
+      lastModified = CommonUtils.current()
+    )
+    ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT
+      .write(response)
+      .asInstanceOf[JsObject]
+      // previous name
+      .fields("className")
+      .asInstanceOf[JsString]
+      .value shouldBe className
   }
 }

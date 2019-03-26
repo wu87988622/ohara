@@ -257,12 +257,21 @@ object ConnectorApi {
         "error" -> obj.error.map(JsString(_)).getOrElse(JsNull),
         "lastModified" -> JsNumber(obj.lastModified),
         // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
-        "name" -> JsString(obj.name),
+        "name" -> obj.plain.get(ConnectorFormatter.NAME_KEY).map(JsString(_)).getOrElse(JsNull),
         "schema" -> JsArray(obj.columns.map(COLUMN_JSON_FORMAT.write).toVector),
-        "className" -> JsString(obj.className),
+        "className" -> obj.plain
+          .get(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key())
+          .map(JsString(_))
+          .getOrElse(JsNull),
         "topics" -> JsArray(obj.topicNames.map(JsString(_)).toVector),
-        "numberOfTasks" -> JsNumber(obj.numberOfTasks),
-        "workerClusterName" -> JsString(obj.workerClusterName),
+        "numberOfTasks" -> obj.plain
+          .get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key())
+          .map(JsNumber(_))
+          .getOrElse(JsNull),
+        "workerClusterName" -> obj.plain
+          .get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
+          .map(JsString(_))
+          .getOrElse(JsNull),
         "configs" -> JsObject(obj.settings.filter(_._2.isInstanceOf[JsString]))
       )
     }
