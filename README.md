@@ -40,7 +40,7 @@ For compilation
 
 ### Prerequisites
 
-- JDK 1.8+
+- OpenJDK 1.8
 - Scala 2.12.8
 - gradle 5.1+
 - Node.js 8.12.0
