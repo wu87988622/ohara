@@ -384,6 +384,11 @@ object WorkerClient {
       */
     @Optional("default is empty")
     def settings(settings: Map[String, String]): Creator = {
+      Objects.requireNonNull(settings).foreach {
+        case (k, v) =>
+          CommonUtils.requireNonEmpty(k, () => s"k:$k v:$v")
+          CommonUtils.requireNonEmpty(v, () => s"k:$k v:$v")
+      }
       this.settings = Objects.requireNonNull(settings)
       this
     }

@@ -33,7 +33,7 @@ case class FtpSinkTaskProps(output: String,
     FTP_PORT -> port.toString,
     FTP_USER_NAME -> user,
     FTP_PASSWORD -> password
-  )
+  ).filter(_._2.nonEmpty)
 }
 
 object FtpSinkTaskProps {

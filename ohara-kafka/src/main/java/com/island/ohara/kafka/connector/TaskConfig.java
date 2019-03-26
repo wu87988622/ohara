@@ -40,48 +40,122 @@ public class TaskConfig {
 
   private TaskConfig(Map<String, String> raw) {
     this.raw = CommonUtils.requireNonEmpty(raw);
-    raw.keySet().forEach(CommonUtils::requireNonEmpty);
+    raw.forEach(
+        (k, v) -> {
+          CommonUtils.requireNonEmpty(k, () -> "k:" + k + ", v:" + v);
+          CommonUtils.requireNonEmpty(v, () -> "k:" + k + ", v:" + v);
+        });
   }
 
+  /**
+   * take string value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @return value
+   */
   public String stringValue(String key) {
     if (raw.containsKey(key)) return raw.get(key);
     else throw new NoSuchElementException(key + " doesn't exist");
   }
 
+  /**
+   * take long value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @throws NumberFormatException If the string cannot be parsed as a {@code long}.
+   * @return value
+   */
   public long longValue(String key) {
     return Long.valueOf(stringValue(key));
   }
 
+  /**
+   * take int value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @throws NumberFormatException If the string cannot be parsed as a {@code int}.
+   * @return value
+   */
   public int intValue(String key) {
     return Integer.valueOf(stringValue(key));
   }
 
+  /**
+   * take short value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @throws NumberFormatException If the string cannot be parsed as a {@code short}.
+   * @return value
+   */
+  public short shortValue(String key) {
+    return Short.valueOf(stringValue(key));
+  }
+
+  /**
+   * take double value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @throws NumberFormatException If the string cannot be parsed as a {@code double}.
+   * @return value
+   */
   public double doubleValue(String key) {
     return Double.valueOf(stringValue(key));
   }
 
+  /**
+   * take boolean value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @throws IllegalArgumentException If the string cannot be parsed as a {@code boolean}.
+   * @return value
+   */
   public boolean booleanValue(String key) {
-    return Boolean.valueOf(stringValue(key));
+    String value = stringValue(key);
+    // NOTED: Boolean.valueOF doesn't handle the non-boolean string, so we do it manually.
+    if (value.equalsIgnoreCase("true")) return true;
+    else if (value.equalsIgnoreCase("false")) return false;
+    else throw new IllegalArgumentException("\"" + value + "\" is not boolean type");
   }
 
+  /**
+   * take strings value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @return value
+   */
   public List<String> stringList(String key) {
     return Optional.ofNullable(raw.get(key))
         .map(StringList::ofKafkaList)
         .orElse(Collections.emptyList());
   }
 
+  /**
+   * take table value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @return value
+   */
+  public List<PropGroup> propGroups(String key) {
+    return Optional.ofNullable(raw.get(key))
+        .map(PropGroups::ofJson)
+        .orElse(Collections.emptyList());
+  }
+
+  // ----------------------------------[helper methods]----------------------------------//
   public String name() {
     return stringValue(ConnectorFormatter.NAME_KEY);
   }
 
   public List<String> topicNames() {
     return stringList(SettingDefinition.TOPIC_NAMES_DEFINITION.key());
-  }
-
-  public List<PropGroup> propGroups(String key) {
-    return Optional.ofNullable(raw.get(key))
-        .map(PropGroups::ofJson)
-        .orElse(Collections.emptyList());
   }
 
   public List<Column> columns() {
