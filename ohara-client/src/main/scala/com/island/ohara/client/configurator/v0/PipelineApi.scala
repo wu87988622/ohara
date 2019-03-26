@@ -20,11 +20,6 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 object PipelineApi {
-
-  /**
-    * this constant represents the "unknown" from or "unknown" to.
-    */
-  val UNKNOWN_ID: String = "?"
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   /**

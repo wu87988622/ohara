@@ -34,6 +34,11 @@ import scala.collection.JavaConverters._
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
+
+  /**
+    * this constant represents the "unknown" from or "unknown" to.
+    */
+  private[this] val UNKNOWN_ID: String = "?"
   private[this] val LOG = Logger(ConnectorRoute.getClass)
 
   private[this] def toRes(id: String, request: PipelineCreationRequest, swallow: Boolean = false)(
@@ -293,13 +298,30 @@ private[configurator] object PipelineRoute {
                                             t: TargetCluster): PipelineCreationRequest =
     if (request.workerClusterName.isEmpty) request.copy(workerClusterName = t) else request
 
+  /**
+    * throw exception if request has invalid ids
+    */
+  private[this] def assertNoUnknown(req: PipelineCreationRequest)(
+    implicit store: DataStore,
+    executionContext: ExecutionContext): Future[PipelineCreationRequest] =
+    Future
+      .traverse(req.flows.flatMap(f => Seq(f.from) ++ f.to).toSet) { id =>
+        store.exist[Data](id).map(if (_) None else Some(id))
+      }
+      .map(_.flatten.toSeq)
+      .map { invalidIds =>
+        if (invalidIds.isEmpty) req
+        else throw new IllegalArgumentException(s"$invalidIds don't exist!!!")
+      }
+
   def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
     RouteUtils.basicRoute[PipelineCreationRequest, Pipeline](
       root = PIPELINES_PREFIX_PATH,
-      hookOfAdd =
-        (t: TargetCluster, id: Id, request: PipelineCreationRequest) => toRes(id, updateWorkerClusterName(request, t)),
+      hookOfAdd = (t: TargetCluster, id: Id, request: PipelineCreationRequest) =>
+        assertNoUnknown(request).flatMap(checkedRequest => toRes(id, updateWorkerClusterName(checkedRequest, t))),
       hookOfUpdate = (id: Id, request: PipelineCreationRequest, previous: Pipeline) =>
-        toRes(id, request.copy(workerClusterName = Some(previous.workerClusterName))),
+        assertNoUnknown(request).flatMap(checkedRequest =>
+          toRes(id, checkedRequest.copy(workerClusterName = Some(previous.workerClusterName)))),
       hookOfGet = (response: Pipeline) => update(response),
       hookOfList = (responses: Seq[Pipeline]) => update(responses),
       hookBeforeDelete = (id: String) =>
