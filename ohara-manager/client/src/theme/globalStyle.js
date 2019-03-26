@@ -54,6 +54,11 @@ export default injectGlobal`
     margin: 0;
     font-family: Roboto, sans-serif;
     background-color: ${whiteSmoke};
+
+    /* Disable vertical scroll bar when there's an active modal */
+    &.ReactModal__Body--open {
+      overflow-y: hidden;
+    }
   }
 
   a {

@@ -85,6 +85,7 @@ class Controller extends React.Component {
             onClick={onStop}
             data-testid="stop-button"
             disabled={includes(disable, STOP)}
+            isDanger
           >
             <i className={`far fa-stop-circle`} />
           </s.ControlButton>
@@ -97,6 +98,7 @@ class Controller extends React.Component {
             }}
             data-testid="delete-button"
             disabled={includes(disable, DELETE)}
+            isDanger
           >
             <i className={`far fa-trash-alt`} />
           </s.ControlButton>

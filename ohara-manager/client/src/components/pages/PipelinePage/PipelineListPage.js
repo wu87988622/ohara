@@ -107,10 +107,7 @@ const LoaderWrapper = styled.div`
 class PipelineListPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
+      url: PropTypes.string.isRequired,
     }).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,

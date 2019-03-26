@@ -25,7 +25,10 @@ describe('createConnector()', () => {
   it('should call updateGraph function if the given type is not exist in the current graph', async () => {
     const graph = [{ name: 'a', type: CONNECTOR_TYPES.topic }];
     const updateGraph = jest.fn();
-    const connector = { className: CONNECTOR_TYPES.ftpSource };
+    const connector = {
+      className: CONNECTOR_TYPES.ftpSource,
+      typeName: 'source',
+    };
     const res = { data: { result: { id: '1234' } } };
 
     connectorApi.createConnector.mockImplementation(() => Promise.resolve(res));
@@ -35,11 +38,10 @@ describe('createConnector()', () => {
     expect(updateGraph).toHaveBeenCalledTimes(1);
     expect(updateGraph).toHaveBeenCalledWith({
       update: {
-        icon: 'fa-file-import',
-        isActive: false,
         name: expect.any(String),
+        kind: 'source',
         to: [],
-        kind: CONNECTOR_TYPES.ftpSource,
+        className: CONNECTOR_TYPES.ftpSource,
         id: res.data.result.id,
       },
     });

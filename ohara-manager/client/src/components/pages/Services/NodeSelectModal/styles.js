@@ -16,22 +16,27 @@
 
 import styled from 'styled-components';
 
-const Controller = styled.div`
-  position: absolute;
-  right: 0;
-`;
+import { DataTable } from 'common/Table';
+import { Input } from 'common/Form';
 
-const ControlButton = styled.button`
-  color: ${props => props.theme.dimBlue};
-  border: 0;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: transparent;
-  transition: ${props => props.theme.durationNormal} all;
+const Table = styled(DataTable)`
+  text-align: left;
 
-  &:hover {
-    color: ${props => (props.isDanger ? props.theme.red : props.theme.blue)};
+  tbody {
+    tr {
+      cursor: pointer;
+    }
+  }
+
+  .is-running {
+    background: ${props => props.theme.trBgColor};
   }
 `;
 
-export { Controller, ControlButton };
+const Checkbox = styled(Input).attrs({
+  type: 'checkbox',
+})`
+  width: auto;
+`;
+
+export { Table, Checkbox };

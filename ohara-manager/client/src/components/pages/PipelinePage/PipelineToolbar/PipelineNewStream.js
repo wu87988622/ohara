@@ -24,72 +24,26 @@ import * as streamApi from 'api/streamApi';
 import * as MESSAGES from 'constants/messages';
 import Editable from '../Editable';
 import { ListLoader } from 'common/Loader';
-import { DataTable } from 'common/Table';
 import { ConfirmModal } from 'common/Modal';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
-
-const JAR_EXTENSION = '.jar';
+import { Icon, TableWrapper, Table } from './styles';
 
 const FileUploadWrapper = styled.div`
   margin: 20px 30px;
 `;
 
-const TableWrapper = styled.div`
-  margin: 20px 30px 40px;
-`;
-
-const Table = styled(DataTable)`
-  thead th {
-    color: ${props => props.theme.lightBlue};
-    font-weight: normal;
-  }
-
-  td {
-    color: ${props => props.theme.lighterBlue};
-    padding: 20px 10px;
-  }
-
-  tbody tr {
-    cursor: pointer;
-  }
-
-  .is-active {
-    background-color: ${props => props.theme.trBgColor};
-  }
-`;
-
-const Icon = styled.i`
-  color: ${props => props.theme.lighterBlue};
-  font-size: 20px;
-  margin-right: 20px;
-  transition: ${props => props.theme.durationNormal} all;
-  cursor: pointer;
-
-  &:hover,
-  &.is-active {
-    transition: ${props => props.theme.durationNormal} all;
-    color: ${props => props.theme.blue};
-  }
-
-  &:last-child {
-    border-right: none;
-    margin-right: 0;
-  }
-`;
-
-Icon.displayName = 'Icon';
-
-const LoaderWapper = styled.div`
+const LoaderWrapper = styled.div`
   margin: 20px 40px;
+`;
+
+const StyledIcon = styled(Icon)`
+  font-size: 20px;
 `;
 
 class PipelineNewStream extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
+      params: PropTypes.object.isRequired,
     }).isRequired,
     activeConnector: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
     updateGraph: PropTypes.func.isRequired,
@@ -171,7 +125,7 @@ class PipelineNewStream extends React.Component {
     return some(jars, jar => title === jar.jarName);
   };
 
-  validateJarExtension = jarName => endsWith(jarName, JAR_EXTENSION);
+  validateJarExtension = jarName => endsWith(jarName, '.jar');
 
   handleTitleChange = ({ target: { value: title } }) => {
     if (this.isDuplicateTitle(title, true)) {
@@ -184,9 +138,7 @@ class PipelineNewStream extends React.Component {
     const newJarName = title;
 
     if (!this.validateJarExtension(newJarName)) {
-      toastr.error(
-        `This file type is not supported.\n The file type must be 'jar'.`,
-      );
+      toastr.error(`Unsupported file.\n The accept file is "jar".`);
       return;
     }
 
@@ -259,7 +211,11 @@ class PipelineNewStream extends React.Component {
   update = () => {
     const { activeId, jars } = this.state;
     const activeJar = jars.find(jar => jar.id === activeId);
-    const connector = { ...activeJar, className: 'streamApp' };
+    const connector = {
+      ...activeJar,
+      className: 'streamApp',
+      typeName: 'streamApp',
+    };
 
     const { updateGraph } = this.props;
     createConnector({ updateGraph, connector });
@@ -271,9 +227,9 @@ class PipelineNewStream extends React.Component {
     return (
       <div>
         {isLoading ? (
-          <LoaderWapper>
+          <LoaderWrapper>
             <ListLoader />
-          </LoaderWapper>
+          </LoaderWrapper>
         ) : (
           <React.Fragment>
             <FileUploadWrapper>
@@ -303,20 +259,16 @@ class PipelineNewStream extends React.Component {
                         />
                       </td>
                       <td>
-                        <Icon
+                        <StyledIcon
                           className="far fa-edit"
-                          onClick={() => {
-                            this.handleEditIconClick(id);
-                          }}
+                          onClick={() => this.handleEditIconClick(id)}
                         />
                       </td>
                       <td>
-                        <Icon
+                        <StyledIcon
                           className="far fa-trash-alt"
                           data-testid="delete-stream-app"
-                          onClick={e => {
-                            this.handleDeleteRowModalOpen(e, id);
-                          }}
+                          onClick={e => this.handleDeleteRowModalOpen(e, id)}
                         />
                       </td>
                     </tr>

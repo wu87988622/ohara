@@ -16,8 +16,7 @@
 
 import { isNull, isEmpty } from 'lodash';
 
-import { isStream } from './commonUtils';
-import { isEmptyStr } from 'utils/commonUtils';
+import { isTopic, isStream } from './commonUtils';
 
 export const addPipelineStatus = pipeline => {
   const status = pipeline.objects.filter(p => p.state === 'RUNNING');
@@ -68,6 +67,12 @@ export const updatePipelineParams = ({
     rules = removePrevConnector(rules, connectorId);
   }
 
+  // Extract necessary props for later update
+  // This is due to we currently have both new and old API in the pipelines
+  // When they're putting together, it would reset pipeline graph on each update...
+  const { id, name, status, workerClusterName } = pipelines;
+  const pipelineProps = { id, name, status, workerClusterName };
+
   // If update is not specify, just pass down the entire pipeline
   if (isNull(update)) {
     params = pipelines;
@@ -76,7 +81,7 @@ export const updatePipelineParams = ({
     const updatedRule = { [id]: to };
 
     params = {
-      ...pipelines,
+      ...pipelineProps,
       rules: { ...rules, ...updatedRule },
     };
   }
@@ -154,23 +159,26 @@ export const updateGraph = ({
 
 export const loadGraph = pipelines => {
   const { objects, rules } = pipelines;
+
   const updatedGraph = Object.keys(rules).map(x => {
     const target = objects.find(object => object.id === x);
 
-    // Stream doesn't have a default name, we should provide one
-    if (isStream(target.kind) && isEmptyStr(target.name)) {
-      return {
-        ...target,
-        to: rules[x],
-        name: 'Untitled stream app',
-      };
-    }
-
     // Add a to prop in local state so we can create graph with this prop
-    return {
+    const { kind } = target;
+
+    const props = {
       ...target,
       to: rules[x],
     };
+
+    if (isTopic(kind) || isStream(kind)) {
+      return {
+        ...props,
+        className: kind,
+      };
+    }
+
+    return { ...props };
   });
 
   return updatedGraph;

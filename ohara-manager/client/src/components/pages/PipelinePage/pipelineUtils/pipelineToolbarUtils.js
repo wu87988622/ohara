@@ -18,19 +18,6 @@ import { get, isObject } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
-import { ICON_MAPS } from 'constants/pipelines';
-
-const getNameByKind = kind => {
-  if (isSource(kind)) {
-    return 'Source';
-  } else if (isSink(kind)) {
-    return 'Sink';
-  } else if (isTopic(kind) || isStream(kind)) {
-    return kind;
-  }
-
-  return null;
-};
 
 const getClassName = connector => {
   let className = '';
@@ -46,9 +33,10 @@ const getClassName = connector => {
 };
 
 export const createConnector = async ({ updateGraph, connector }) => {
+  const { typeName } = connector;
+
   const className = getClassName(connector);
-  const connectorKind = getNameByKind(className);
-  let connectorName = `Untitled ${connectorKind}`;
+  let connectorName = `Untitled ${typeName}`;
 
   // Default params for creating connectors
   const params = {
@@ -62,26 +50,25 @@ export const createConnector = async ({ updateGraph, connector }) => {
 
   let id;
 
-  if (isTopic(className)) {
+  if (isTopic(typeName)) {
     // Topic was created beforehand, it already has an ID.
     id = connector.id;
     connectorName = connector.name;
-  } else if (isStream(className)) {
+  } else if (isStream(typeName)) {
     id = connector.id;
-  } else if (isSource(className)) {
+  } else if (isSource(typeName)) {
     const res = await connectorApi.createConnector(params);
     id = get(res, 'data.result.id', null);
-  } else if (isSink(className)) {
+  } else if (isSink(typeName)) {
     const res = await connectorApi.createConnector(params);
     id = get(res, 'data.result.id', null);
   }
 
   const update = {
-    icon: ICON_MAPS[className],
-    isActive: false,
     name: connectorName,
-    kind: className,
+    kind: typeName,
     to: [],
+    className,
     id,
   };
 

@@ -25,8 +25,9 @@ import PipelineNewStream from './PipelineNewStream';
 import PipelineNewConnector from './PipelineNewConnector';
 import PipelineNewTopic from './PipelineNewTopic';
 import { Modal } from 'common/Modal';
-import { fetchInfo } from 'api/infoApi';
+import { fetchWorkers } from 'api/workerApi';
 import { isEmptyStr } from 'utils/commonUtils';
+import { Icon } from './styles.js';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
@@ -38,27 +39,6 @@ const ToolbarWrapper = styled.div`
 `;
 
 ToolbarWrapper.displayName = 'ToolbarWrapper';
-
-const Icon = styled.i`
-  color: ${props => props.theme.lighterBlue};
-  font-size: 25px;
-  margin-right: 20px;
-  transition: ${props => props.theme.durationNormal} all;
-  cursor: pointer;
-
-  &:hover,
-  &.is-active {
-    transition: ${props => props.theme.durationNormal} all;
-    color: ${props => props.theme.blue};
-  }
-
-  &:last-child {
-    border-right: none;
-    margin-right: 0;
-  }
-`;
-
-Icon.displayName = 'Icon';
 
 const FileSavingStatus = styled.div`
   margin-left: auto;
@@ -79,18 +59,15 @@ const modalNames = {
 class PipelineToolbar extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
       params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
     }).isRequired,
     graph: PropTypes.arrayOf(
       PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
+        className: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        id: PropTypes.string.isRequired,
+        kind: PropTypes.string.isRequired,
+        to: PropTypes.arrayOf(PropTypes.string).isRequired,
       }),
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
@@ -100,6 +77,7 @@ class PipelineToolbar extends React.Component {
     updateCurrentTopic: PropTypes.func.isRequired,
     resetCurrentTopic: PropTypes.func.isRequired,
     currentTopic: PropTypes.object,
+    currWorkerClusterName: PropTypes.string.isRequired,
   };
 
   state = {
@@ -109,37 +87,78 @@ class PipelineToolbar extends React.Component {
     activeConnector: null,
     connectorType: '',
     isAddBtnDisabled: false,
-    isFetchInfoWorking: true,
+    isFetchWorkerWorking: true,
+    currWorker: null,
   };
 
   componentDidMount() {
-    this.fetchInfo();
+    this.fetchWorker();
     this.modalChild = React.createRef();
   }
 
-  fetchInfo = async () => {
-    const res = await fetchInfo();
-    this.setState({ isFetchInfoWorking: false });
-    const result = get(res, 'data.result', null);
+  fetchWorker = async () => {
+    const { currWorkerClusterName } = this.props;
+    const res = await fetchWorkers();
+    this.setState({ isFetchWorkerWorking: false });
+    const workers = get(res, 'data.result', null);
 
-    if (result) {
-      const sources = result.sources.filter(
-        source => !PIPELINES.CONNECTOR_FILTERS.includes(source.className),
+    if (workers) {
+      const currWorker = workers.find(
+        ({ name }) => name === currWorkerClusterName,
       );
 
-      const sinks = result.sinks.filter(
-        sink => !PIPELINES.CONNECTOR_FILTERS.includes(sink.className),
-      );
+      if (currWorker) {
+        const result = currWorker.connectors.map(connector => {
+          const { className, definitions } = connector;
+          let targetMeta = {};
 
-      this.setState({ sources, sinks }, () => {
-        // If we have the supported connectors data at hand, let's set the
-        // default connector so they can be rendered in connector modal
-        // without trouble
-        const { activeConnector, connectorType } = this.state;
-        if (!activeConnector && !isEmptyStr(connectorType)) {
-          this.setDefaultConnector(connectorType);
-        }
-      });
+          definitions.forEach(meta => {
+            const { displayName, defaultValue } = meta;
+
+            if (
+              displayName === 'version' ||
+              displayName === 'revision' ||
+              displayName === 'kind'
+            ) {
+              targetMeta = {
+                ...targetMeta,
+                [displayName]: defaultValue,
+              };
+            }
+          });
+
+          const { kind, version, revision } = targetMeta;
+
+          return {
+            typeName: kind,
+            className,
+            version,
+            revision,
+          };
+        });
+
+        const sources = result.filter(
+          ({ typeName, className }) =>
+            typeName === 'source' &&
+            !PIPELINES.CONNECTOR_FILTERS.includes(className),
+        );
+
+        const sinks = result.filter(
+          ({ typeName, className }) =>
+            typeName === 'sink' &&
+            !PIPELINES.CONNECTOR_FILTERS.includes(className),
+        );
+
+        this.setState({ sources, sinks }, () => {
+          // If we have the supported connectors data at hand, let's set the
+          // default connector so they can be rendered in connector modal
+
+          const { activeConnector, connectorType } = this.state;
+          if (!activeConnector && !isEmptyStr(connectorType)) {
+            this.setDefaultConnector(connectorType);
+          }
+        });
+      }
     }
   };
 
@@ -205,7 +224,7 @@ class PipelineToolbar extends React.Component {
       connectorType,
       activeConnector,
       isAddBtnDisabled,
-      isFetchInfoWorking,
+      isFetchWorkerWorking,
     } = this.state;
 
     const { ftpSource } = PIPELINES.CONNECTOR_TYPES;
@@ -273,7 +292,7 @@ class PipelineToolbar extends React.Component {
               updateGraph={updateGraph}
               graph={graph}
               updateAddBtnStatus={this.updateAddBtnStatus}
-              isLoading={isFetchInfoWorking}
+              isLoading={isFetchWorkerWorking}
             />
           )}
         </Modal>

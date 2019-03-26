@@ -21,12 +21,12 @@ import { includes, map, some, sortBy, get, isNull } from 'lodash';
 
 import * as jarApi from 'api/jarApi';
 import * as MESSAGES from 'constants/messages';
-import * as s from './Styles';
+import { Table, Checkbox, FileUploadInput } from './styles';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 
 class PluginSelectModal extends React.Component {
-  headers = ['#', 'PLUGIN', ''];
+  headers = ['#', 'PLUGIN'];
 
   static propTypes = {
     isActive: PropTypes.bool.isRequired,
@@ -177,26 +177,22 @@ class PluginSelectModal extends React.Component {
         showActions={false}
       >
         <Box shadow={false}>
-          <s.FileUploadInput onChange={this.handleFileSelect} />
-          <s.Table headers={this.headers}>
-            {jars.map(jar => (
-              <tr
-                key={jar.id}
-                onClick={() => {
-                  this.handleRowClick(jar.id);
-                }}
-              >
+          <FileUploadInput onChange={this.handleFileSelect} />
+          <Table headers={this.headers}>
+            {jars.map(({ id, checked, name }) => (
+              <tr key={id} onClick={() => this.handleRowClick(id)}>
                 <td>
-                  <s.Checkbox
-                    value={jar.id}
+                  <Checkbox
+                    value={id}
                     onChange={this.handleChecked}
-                    checked={jar.checked || false}
+                    checked={checked || false}
+                    height="auto"
                   />
                 </td>
-                <td>{jar.name}</td>
+                <td>{name}</td>
               </tr>
             ))}
-          </s.Table>
+          </Table>
         </Box>
       </Modal>
     );

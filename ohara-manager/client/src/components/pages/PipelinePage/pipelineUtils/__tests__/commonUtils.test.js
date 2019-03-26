@@ -26,21 +26,21 @@ import {
 
 describe('isSource()', () => {
   it(`returns true if it's a source connector`, () => {
-    expect(isSource('ftpSource')).toBe(true);
+    expect(isSource('source')).toBe(true);
   });
 
   it(`returns false if it's not a source connector`, () => {
-    expect(isSource('ftpSink')).toBe(false);
+    expect(isSource('sink')).toBe(false);
   });
 });
 
 describe('isSink()', () => {
   it(`returns true if it's a sink connector`, () => {
-    expect(isSink('ftpSink')).toBe(true);
+    expect(isSink('sink')).toBe(true);
   });
 
   it(`returns false if it's not a sink connector`, () => {
-    expect(isSink('ftpSource')).toBe(false);
+    expect(isSink('source')).toBe(false);
   });
 });
 
@@ -50,7 +50,7 @@ describe('isTopic()', () => {
   });
 
   it(`returns false if it's not a topic`, () => {
-    expect(isTopic('ftpSource')).toBe(false);
+    expect(isTopic('source')).toBe(false);
   });
 });
 
@@ -90,23 +90,23 @@ describe('getConnectors()', () => {
     const connectors = [
       {
         id: '1',
-        kind: 'aSourceConnector',
+        typeName: 'source',
       },
       {
         id: '2',
-        kind: 'anotherSource',
+        typeName: 'source',
       },
       {
         id: '3',
-        kind: 'Sink',
+        typeName: 'sink',
       },
       {
         id: '4',
-        kind: 'topic',
+        typeName: 'topic',
       },
       {
         id: '5',
-        kind: 'streamApp',
+        typeName: 'streamApp',
       },
     ];
 

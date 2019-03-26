@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { map, includes, get, isNull } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
-import * as s from './Styles';
+import { Table, Checkbox } from './styles';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 
@@ -141,26 +141,22 @@ class NodeSelectModal extends React.Component {
         showActions={false}
       >
         <Box shadow={false}>
-          <s.Table headers={this.headers}>
-            {nodes.map(node => (
-              <tr
-                key={node.name}
-                onClick={() => {
-                  this.handleRowClick(node.name);
-                }}
-              >
+          <Table headers={this.headers}>
+            {nodes.map(({ name, checked, port }) => (
+              <tr key={name} onClick={() => this.handleRowClick(name)}>
                 <td>
-                  <s.Checkbox
-                    value={node.name}
+                  <Checkbox
+                    value={name}
                     onChange={this.handleChecked}
-                    checked={node.checked || false}
+                    checked={checked || false}
+                    height="auto"
                   />
                 </td>
-                <td>{node.name}</td>
-                <td>{node.port}</td>
+                <td>{name}</td>
+                <td>{port}</td>
               </tr>
             ))}
-          </s.Table>
+          </Table>
         </Box>
       </Modal>
     );

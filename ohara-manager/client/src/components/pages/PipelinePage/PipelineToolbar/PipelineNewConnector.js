@@ -16,38 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 
 import * as PIPELINES from 'constants/pipelines';
 import { ListLoader } from 'common/Loader';
-import { DataTable } from 'common/Table';
 import {
   createConnector,
   trimString,
 } from '../pipelineUtils/pipelineToolbarUtils';
-
-const TableWrapper = styled.div`
-  margin: 30px 30px 40px;
-`;
-
-const Table = styled(DataTable)`
-  thead th {
-    color: ${props => props.theme.lightBlue};
-    font-weight: normal;
-  }
-
-  td {
-    color: ${props => props.theme.lighterBlue};
-  }
-
-  tbody tr {
-    cursor: pointer;
-  }
-
-  .is-active {
-    background-color: ${props => props.theme.trBgColor};
-  }
-`;
+import { TableWrapper, Table } from './styles';
 
 class PipelineNewConnector extends React.Component {
   static propTypes = {

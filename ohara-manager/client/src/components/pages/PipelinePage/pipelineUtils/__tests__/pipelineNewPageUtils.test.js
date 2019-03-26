@@ -46,16 +46,25 @@ describe('updatePipelineparams()', () => {
 
   it('updates params correctly', () => {
     const pipelines = {
+      id: '123',
       name: 'abc',
       objects: {},
       rules: {
         a: ['c'],
         b: ['d'],
       },
+      status: 'failed',
+      workerClusterName: 'e',
     };
     const update = { id: 'a', to: ['g'] };
     const sinkId = 'c';
-    const expected = { ...pipelines, rules: { a: ['g'], b: ['d'] } };
+    const expected = {
+      id: pipelines.id,
+      name: pipelines.name,
+      status: pipelines.status,
+      workerClusterName: pipelines.workerClusterName,
+      rules: { a: ['g'], b: ['d'] },
+    };
 
     expect(updatePipelineParams({ pipelines, update, sinkId })).toEqual(
       expected,
@@ -64,16 +73,22 @@ describe('updatePipelineparams()', () => {
 
   it('updates the rules when the update includes rules update', () => {
     const pipelines = {
+      id: '123',
       name: 'abc',
       objects: {},
       rules: {},
+      status: 'success',
+      workerClusterName: 'e',
     };
     const update = { id: 'a', to: ['b', 'c'] };
     const updateRule = {
       [update.id]: update.to,
     };
     const expected = {
-      ...pipelines,
+      id: pipelines.id,
+      name: pipelines.name,
+      status: pipelines.status,
+      workerClusterName: pipelines.workerClusterName,
       rules: { ...pipelines.rules, ...updateRule },
     };
 
@@ -208,31 +223,27 @@ describe('loadGraph()', () => {
         { id: '1', name: 'a', kind: 'Source' },
         { id: '2', name: 'b', kind: 'Sink' },
         { id: '3', name: 'c', kind: 'topic' },
+        {
+          id: '4',
+          name: 'd',
+          kind: 'streamApp',
+          to: [],
+        },
       ],
-      rules: { '1': ['3'], '3': ['2'], '2': [] },
+      rules: { '1': ['3'], '3': ['2'], '2': [], 4: [] },
     };
 
     const expected = [
       { id: '1', name: 'a', kind: 'Source', to: ['3'] },
       { id: '2', name: 'b', kind: 'Sink', to: [] },
-      { id: '3', name: 'c', kind: 'topic', to: ['2'] },
-    ];
-
-    expect(loadGraph(pipelines)).toEqual(expected);
-  });
-
-  it('adds a default name for stream app', () => {
-    const pipelines = {
-      objects: [
-        { id: '1', name: 'a', kind: 'topic' },
-        { id: '2', name: '', kind: 'streamApp' },
-      ],
-      rules: { '1': ['2'], '2': [] },
-    };
-
-    const expected = [
-      { id: '1', name: 'a', kind: 'topic', to: ['2'] },
-      { id: '2', name: 'Untitled stream app', kind: 'streamApp', to: [] },
+      { id: '3', name: 'c', kind: 'topic', className: 'topic', to: ['2'] },
+      {
+        id: '4',
+        name: 'd',
+        kind: 'streamApp',
+        className: 'streamApp',
+        to: [],
+      },
     ];
 
     expect(loadGraph(pipelines)).toEqual(expected);

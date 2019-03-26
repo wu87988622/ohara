@@ -21,6 +21,7 @@ import PipelineToolbar from '../PipelineToolbar';
 import { ICON_KEYS } from 'constants/pipelines';
 import { getTestById } from 'utils/testUtils';
 import { fetchInfo } from 'api/infoApi';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 
 jest.mock('api/infoApi');
 
@@ -33,11 +34,11 @@ const props = {
   },
   graph: [
     {
-      type: 'source',
-      id: '1',
-      isActive: false,
-      isExact: false,
-      icon: 'fa-test',
+      kind: 'source',
+      id: 'id1234',
+      className: CONNECTOR_TYPES.jdbcSource,
+      name: 'a',
+      to: [],
     },
   ],
   updateGraph: jest.fn(),
@@ -49,6 +50,7 @@ const props = {
   isLoading: false,
   updateCurrentTopic: jest.fn(),
   resetCurrentTopic: jest.fn(),
+  currWorkerClusterName: 'abc',
 };
 
 describe('<PipelineToolbar />', () => {

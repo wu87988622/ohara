@@ -15,7 +15,6 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import toastr from 'toastr';
 
@@ -25,36 +24,15 @@ import { Select } from 'common/Form';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
 
-const Icon = styled.i`
-  color: ${props => props.theme.lighterBlue};
-  font-size: 25px;
-  margin-right: 20px;
-  transition: ${props => props.theme.durationNormal} all;
-  cursor: pointer;
-
-  &:hover,
-  &.is-active {
-    transition: ${props => props.theme.durationNormal} all;
-    color: ${props => props.theme.blue};
-  }
-
-  &:last-child {
-    border-right: none;
-    margin-right: 0;
-  }
-`;
-
-Icon.displayName = 'Icon';
-
 class PipelineNewTopic extends React.Component {
   static propTypes = {
     graph: PropTypes.arrayOf(
       PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
+        className: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        id: PropTypes.string.isRequired,
+        kind: PropTypes.string.isRequired,
+        to: PropTypes.arrayOf(PropTypes.string).isRequired,
       }),
     ).isRequired,
     updateGraph: PropTypes.func.isRequired,
@@ -87,7 +65,11 @@ class PipelineNewTopic extends React.Component {
     const isTopicExist = findByGraphId(graph, currentTopic.id);
 
     if (!isTopicExist) {
-      const connector = { ...currentTopic, className: 'topic' };
+      const connector = {
+        ...currentTopic,
+        className: 'topic',
+        typeName: 'topic',
+      };
       createConnector({ updateGraph, connector });
     }
   };

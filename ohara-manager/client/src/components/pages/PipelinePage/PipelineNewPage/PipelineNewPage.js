@@ -15,7 +15,6 @@
  */
 
 import React from 'react';
-import styled from 'styled-components';
 import DocumentTitle from 'react-document-title';
 import toastr from 'toastr';
 import PropTypes from 'prop-types';
@@ -29,12 +28,11 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as connectorApi from 'api/connectorApi';
 import * as streamApi from 'api/streamApi';
 import * as topicApi from 'api/topicApi';
-import PipelineToolbar from './PipelineToolbar';
-import PipelineGraph from './PipelineGraph';
-import Editable from './Editable';
-import { H2, H3 } from 'common/Headings';
+import PipelineToolbar from '../PipelineToolbar';
+import PipelineGraph from '../PipelineGraph';
+import Editable from '../Editable';
 import { Box } from 'common/Layout';
-import { getConnectors } from './pipelineUtils/commonUtils';
+import { getConnectors } from '../pipelineUtils/commonUtils';
 import { PIPELINE_NEW, PIPELINE_EDIT } from 'constants/documentTitles';
 import {
   JdbcSource,
@@ -43,87 +41,20 @@ import {
   HdfsSink,
   FtpSink,
   StreamApp,
-} from './Connectors';
+} from '../Connectors';
 import {
   addPipelineStatus,
   updatePipelineParams,
   updateGraph,
   loadGraph,
-} from './pipelineUtils/pipelineNewPageUtils';
+} from '../pipelineUtils/pipelineNewPageUtils';
 
-const Wrapper = styled.div`
-  padding-top: 75px;
-  max-width: 1200px;
-  width: calc(100% - 100px);
-  margin: auto;
-`;
-
-Wrapper.displayName = 'Wrapper';
-
-const Main = styled.div`
-  display: flex;
-`;
-
-const Sidebar = styled.div`
-  width: 35%;
-`;
-
-const Heading2 = styled(H2)`
-  font-size: 16px;
-  color: ${props => props.theme.lightBlue};
-`;
-
-Heading2.displayName = 'H2';
-
-const Heading3 = styled(H3)`
-  font-size: 15px;
-  font-weight: normal;
-  margin: 0;
-  color: ${props => props.theme.lightBlue};
-`;
-
-Heading3.displayName = 'H3';
-
-const Operate = styled.div`
-  .actions {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .action-btns {
-    margin-left: 10px;
-
-    button {
-      color: ${props => props.theme.dimBlue};
-      padding: 0 4px;
-      border: 0;
-      font-size: 20px;
-      cursor: pointer;
-      background-color: transparent;
-      transition: ${props => props.theme.durationNormal} all;
-
-      &:hover {
-        color: ${props => props.theme.blue};
-        transition: ${props => props.theme.durationNormal} all;
-      }
-    }
-  }
-
-  .cluster-name {
-    display: block;
-    font-size: 12px;
-    color: ${props => props.theme.lighterBlue};
-  }
-`;
+import { Wrapper, Main, Sidebar, Heading2, Heading3, Operate } from './styles';
 
 class PipelineNewPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
+      params: PropTypes.object.isRequired,
     }).isRequired,
   };
 
@@ -144,13 +75,8 @@ class PipelineNewPage extends React.Component {
   }
 
   fetchData = async () => {
-    const { match } = this.props;
-    const pipelineId = get(match, 'params.pipelineId', null);
-
-    const fetchTopicsPromise = this.fetchTopics();
-    const fetchPipelinePromise = this.fetchPipeline(pipelineId);
-
-    Promise.all([fetchTopicsPromise, fetchPipelinePromise]);
+    this.fetchTopics();
+    this.fetchPipeline();
   };
 
   fetchTopics = async () => {
@@ -163,21 +89,24 @@ class PipelineNewPage extends React.Component {
     }
   };
 
-  fetchPipeline = async pipelineId => {
-    if (!pipelineId) return;
+  fetchPipeline = async () => {
+    const { match } = this.props;
+    const pipelineId = get(match, 'params.pipelineId', null);
 
-    const res = await pipelineApi.fetchPipeline(pipelineId);
-    const pipeline = get(res, 'data.result', null);
+    if (pipelineId) {
+      const res = await pipelineApi.fetchPipeline(pipelineId);
+      const pipeline = get(res, 'data.result', null);
 
-    if (pipeline) {
-      const updatedPipeline = addPipelineStatus(pipeline);
-      const { topics: pipelineTopics = [] } = getConnectors(
-        updatedPipeline.objects,
-      );
+      if (pipeline) {
+        const updatedPipeline = addPipelineStatus(pipeline);
+        const { topics: pipelineTopics = [] } = getConnectors(
+          updatedPipeline.objects,
+        );
 
-      this.setState({ pipelines: updatedPipeline, pipelineTopics }, () => {
-        this.loadGraph(this.state.pipelines);
-      });
+        this.setState({ pipelines: updatedPipeline, pipelineTopics }, () => {
+          this.loadGraph(this.state.pipelines);
+        });
+      }
     }
   };
 
@@ -415,6 +344,7 @@ class PipelineNewPage extends React.Component {
               isLoading={isLoading}
               resetCurrentTopic={this.resetCurrentTopic}
               updateCurrentTopic={this.updateCurrentTopic}
+              currWorkerClusterName={workerClusterName}
             />
 
             <Main>
@@ -443,6 +373,7 @@ class PipelineNewPage extends React.Component {
 
                       <div className="action-btns">
                         <button
+                          className="start-btn"
                           data-tip="Start pipeline"
                           onClick={this.handlePipelineStartClick}
                           data-testid="start-btn"
@@ -450,6 +381,7 @@ class PipelineNewPage extends React.Component {
                           <i className="far fa-play-circle" />
                         </button>
                         <button
+                          className="stop-btn"
                           data-tip="Stop pipeline"
                           onClick={this.handlePipelineStopClick}
                           data-testid="stop-btn"

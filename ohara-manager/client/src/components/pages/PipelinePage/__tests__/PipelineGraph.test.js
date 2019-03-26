@@ -18,6 +18,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 
 import PipelineGraph from '../PipelineGraph';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 
 const props = {
   iconMaps: {},
@@ -25,23 +26,23 @@ const props = {
     {
       kind: 'source',
       id: 'id1234',
-      isActive: false,
-      isExist: false,
-      icon: 'fa-database',
+      className: CONNECTOR_TYPES.jdbcSource,
+      name: 'a',
+      to: [],
     },
     {
       kind: 'topic',
       id: 'id5678',
-      isActive: false,
-      isExist: false,
-      icon: '',
+      className: CONNECTOR_TYPES.topic,
+      name: 'b',
+      to: ['id9112'],
     },
     {
       kind: 'sink',
       id: 'id9112',
-      isActive: false,
-      isExist: false,
-      icon: '',
+      className: CONNECTOR_TYPES.ftpSink,
+      name: 'c',
+      to: [],
     },
   ],
   pipeline: {
@@ -49,7 +50,9 @@ const props = {
   },
   resetGraph: jest.fn(),
   updateGraph: jest.fn(),
-  match: {},
+  match: {
+    params: {},
+  },
 };
 
 describe('<PipelineGraph />', () => {

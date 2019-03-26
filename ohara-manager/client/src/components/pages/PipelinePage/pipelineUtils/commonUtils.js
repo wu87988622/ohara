@@ -16,9 +16,13 @@
 
 import { isEmpty } from 'lodash';
 
-export const isSource = kind => kind.includes('Source');
+export const isSource = type => {
+  return type === 'source';
+};
 
-export const isSink = kind => kind.includes('Sink');
+export const isSink = type => {
+  return type === 'sink';
+};
 
 export const isTopic = kind => kind === 'topic';
 
@@ -35,15 +39,15 @@ export const getConnectors = connectors => {
   };
 
   const result = connectors.reduce((acc, connector) => {
-    const { kind, id } = connector;
+    const { typeName, id } = connector;
 
-    if (isSource(kind)) {
+    if (isSource(typeName)) {
       acc.sources.push(id);
-    } else if (isSink(kind)) {
+    } else if (isSink(typeName)) {
       acc.sinks.push(id);
-    } else if (isStream(kind)) {
+    } else if (isStream(typeName)) {
       acc.streams.push(id);
-    } else if (isTopic(kind)) {
+    } else if (isTopic(typeName)) {
       // TODO: this should behave the same way as the rest of connectors
       acc.topics.push(connector);
     }
