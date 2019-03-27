@@ -90,23 +90,23 @@ describe('getConnectors()', () => {
     const connectors = [
       {
         id: '1',
-        typeName: 'source',
+        kind: 'source',
       },
       {
         id: '2',
-        typeName: 'source',
+        kind: 'source',
       },
       {
         id: '3',
-        typeName: 'sink',
+        kind: 'sink',
       },
       {
         id: '4',
-        typeName: 'topic',
+        kind: 'topic',
       },
       {
         id: '5',
-        typeName: 'streamApp',
+        kind: 'streamApp',
       },
     ];
 
@@ -118,7 +118,7 @@ describe('getConnectors()', () => {
     expect(streams.length).toBe(1);
   });
 
-  it('returns empty array if there is no matched', () => {
+  it('returns an empty array if there is no matched', () => {
     const connectors = [{ id: '1', kind: 'Nah' }];
     const { sources, sinks, topics, streams } = getConnectors(connectors);
 
