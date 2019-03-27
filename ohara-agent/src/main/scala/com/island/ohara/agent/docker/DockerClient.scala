@@ -48,7 +48,7 @@ trait DockerClient extends Releasable {
     * @return a collection of running docker containers
     */
   def activeContainers(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    containers.map(_.filter(_.state == ContainerState.RUNNING))
+    containers.map(_.filter(_.state == ContainerState.RUNNING.name))
 
   /**
     * the filter is used to reduce the possible communication across ssh.

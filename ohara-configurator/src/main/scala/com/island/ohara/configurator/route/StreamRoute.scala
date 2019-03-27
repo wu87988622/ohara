@@ -77,14 +77,14 @@ private[configurator] object StreamRoute {
 
   // TODO this is a workaround for 0.2 to solve not-compatible state between pipeline and streamApp
   // Maybe we need refactor the "state" to be more general...by sam
-  private[this] def toConnectorState(state: Option[ContainerState]): Option[ContainerState] = {
+  private[this] def toConnectorState(state: Option[String]): Option[ContainerState] = {
     ContainerState.all.find { value =>
       state.nonEmpty &&
-      (value.toString match {
+      (value.name match {
         case ContainerState.EXITED.name =>
-          ContainerState.EXITED.toString
+          ContainerState.EXITED.name
         case _ =>
-          value.toString
+          value.name
       }).equalsIgnoreCase(state.get.name)
     }
   }
@@ -379,7 +379,7 @@ private[configurator] object StreamRoute {
                                 .recover {
                                   case ex: Throwable =>
                                     log.error(ex.getMessage)
-                                    StreamActionResponse(id, Some(ContainerState.EXITED))
+                                    StreamActionResponse(id, Some(ContainerState.EXITED.name))
                                 }
                                 .map { res =>
                                   store.update[StreamApp](
@@ -419,7 +419,7 @@ private[configurator] object StreamRoute {
                     case _: Throwable =>
                       StreamActionResponse(
                         id,
-                        Some(ContainerState.EXITED)
+                        Some(ContainerState.EXITED.name)
                       )
                   }
                   .map { res =>

@@ -30,7 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
-
+  private[this] val FAKE_KIND_NAME: String = "FAKE"
   private[this] val cachedContainers = new mutable.HashMap[String, ContainerInfo]()
 
   override def containerNames(): Seq[String] = cachedContainers.keys.toSeq
@@ -62,7 +62,8 @@ private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClie
         id = name,
         imageName = imageName,
         created = new Date(CommonUtils.current()).toString,
-        state = ContainerState.RUNNING,
+        state = ContainerState.RUNNING.name,
+        kind = FAKE_KIND_NAME,
         name = name,
         size = "-999 MB",
         portMappings =
@@ -78,7 +79,7 @@ private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClie
   )
 
   override def stop(name: String): Unit =
-    cachedContainers.update(name, cachedContainers(name).copy(state = ContainerState.EXITED))
+    cachedContainers.update(name, cachedContainers(name).copy(state = ContainerState.EXITED.name))
 
   override def remove(name: String): Unit = cachedContainers.remove(name)
 

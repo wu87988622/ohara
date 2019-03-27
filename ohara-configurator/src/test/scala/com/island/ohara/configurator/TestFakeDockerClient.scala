@@ -48,14 +48,14 @@ class TestFakeDockerClient extends SmallTest with Matchers {
     fake.imageNames().head shouldBe "fake_image"
 
     result(fake.containers(_ == methodName())).size shouldBe 1
-    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.RUNNING
+    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.RUNNING.name
     result(fake.containers(_ == methodName())).head.id shouldBe methodName()
     result(fake.containers(_ == methodName())).head.environments shouldBe Map("bar" -> "foo")
     result(fake.containers(_ == methodName())).head.portMappings.head shouldBe PortMapping("localhost",
                                                                                            Seq(PortPair(1234, 5678)))
 
     fake.stop(methodName())
-    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.EXITED
+    result(fake.containers(_ == methodName())).head.state shouldBe ContainerState.EXITED.name
 
     fake.remove(methodName())
 

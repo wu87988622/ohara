@@ -29,13 +29,15 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: Clu
   protected val clusterCache = new mutable.HashMap[T, Seq[ContainerInfo]]()
 
   def addCluster(cluster: T): T = {
+    val FAKE_KIND_NAME = "FAKE"
     def genContainers(cluster: T): Seq[ContainerInfo] = cluster.nodeNames.map { nodeName =>
       ContainerInfo(
         nodeName = nodeName,
         id = CommonUtils.randomString(10),
         imageName = cluster.imageName,
         created = "unknown",
-        state = ContainerState.RUNNING,
+        state = ContainerState.RUNNING.name,
+        FAKE_KIND_NAME,
         name = CommonUtils.randomString(10),
         size = "unknown",
         portMappings = Seq(PortMapping("fake host", cluster.ports.map(p => PortPair(p, p)))),

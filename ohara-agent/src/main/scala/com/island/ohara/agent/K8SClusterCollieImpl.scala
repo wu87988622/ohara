@@ -20,7 +20,6 @@ import java.net.URL
 
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.K8SClusterCollieImpl.{K8SBrokerCollieImpl, K8SWorkerCollieImpl, K8SZookeeperCollieImpl}
-import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -29,7 +28,6 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
-
 import scala.concurrent.{ExecutionContext, Future}
 
 private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sClient: K8SClient)
@@ -44,18 +42,10 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
 
   override protected def doClose(): Unit = Releasable.close(k8sClient)
 
-  /**
-    * TODO: Does k8s have better way to list images from all nodes? by chia
-    */
   override def images(nodes: Seq[Node])(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     Future
       .traverse(nodes) { node =>
-        Future {
-          val dockerClient =
-            DockerClient.builder().user(node.user).password(node.password).hostname(node.name).port(node.port).build()
-          try node -> dockerClient.imageNames()
-          finally dockerClient.close()
-        }
+        k8sClient.images(node.name).map(images => node -> images)
       }
       .map(_.toMap)
 }

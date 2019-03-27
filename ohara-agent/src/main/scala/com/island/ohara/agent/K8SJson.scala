@@ -63,8 +63,11 @@ object K8SJson {
         }
     }
 
-  final case class NodeStatus(addresses: Seq[NodeAddresses])
-  implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat1(NodeStatus)
+  final case class ImageNames(names: Seq[String])
+  implicit val NODE_IMAGENAMES_FORMAT: RootJsonFormat[ImageNames] = jsonFormat1(ImageNames)
+
+  final case class NodeStatus(addresses: Seq[NodeAddresses], images: Seq[ImageNames])
+  implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat2(NodeStatus)
 
   final case class NodeItems(status: NodeStatus)
   implicit val NODEITEMS_JSON_FORMAT: RootJsonFormat[NodeItems] = jsonFormat1(NodeItems)

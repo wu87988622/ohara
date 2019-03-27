@@ -103,11 +103,12 @@ object ContainerApi {
                                  id: String,
                                  imageName: String,
                                  created: String,
-                                 state: ContainerState,
+                                 state: String,
+                                 kind: String,
                                  name: String,
                                  size: String,
                                  portMappings: Seq[PortMapping],
                                  environments: Map[String, String],
                                  hostname: String)
-  implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat10(ContainerInfo)
+  implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat11(ContainerInfo)
 }

@@ -33,7 +33,7 @@ class ClusterNameHolder(nodes: Seq[Node]) extends Releasable {
   /**
     * store the name used to create cluster. We can remove all created cluster in the "after" phase.
     */
-  private[this] val usedClusterNames: mutable.HashSet[String] = new mutable.HashSet[String]()
+  protected val usedClusterNames: mutable.HashSet[String] = new mutable.HashSet[String]()
 
   def generateClusterName(): String = {
     val name = CommonUtils.randomString(10)

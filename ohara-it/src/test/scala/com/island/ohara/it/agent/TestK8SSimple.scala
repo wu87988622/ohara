@@ -37,10 +37,12 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 class TestK8SSimple extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestK8SSimple])
+  private[this] val TIMEOUT: FiniteDuration = 30 seconds
   private[this] var k8sApiServerURL: String = _
   private[this] var nodeServerNames: Seq[String] = _
 
@@ -117,7 +119,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
       var isContainerRunning: Boolean = false
       while (!isContainerRunning) {
-        if (k8sClient.containers.count(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING) == 1) {
+        if (k8sClient.containers.count(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING.name) == 1) {
           isContainerRunning = true
         }
       }
@@ -165,6 +167,15 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     nodes.size shouldBe 3
 
     nodes.map(x => x.hostnames.head).mkString(",").contains(TestK8SSimple.NODE_SERVER_NAME.get) shouldBe true
+  }
+
+  @Test
+  def testK8SImages(): Unit = {
+    val k8sClient = K8SClient(k8sApiServerURL)
+    val images: Seq[String] = Await.result(k8sClient.images(nodeServerNames.last), TIMEOUT).map(x => x.split(":").head)
+    //After installed K8S, created k8s.gcr.io/kube-proxy and k8s.gcr.io/pause two docker image.
+    images.size >= 2 shouldBe true
+    images.contains("k8s.gcr.io/kube-proxy") shouldBe true
   }
 }
 

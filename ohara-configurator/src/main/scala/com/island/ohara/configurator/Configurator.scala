@@ -224,9 +224,10 @@ object Configurator {
   private[this] lazy val LOG = Logger(Configurator.getClass)
   private[configurator] val HELP_KEY = "--help"
   private[configurator] val HOSTNAME_KEY = "--hostname"
+  private[configurator] val K8S_KEY = "--k8s"
   private[configurator] val PORT_KEY = "--port"
   private[configurator] val NODE_KEY = "--node"
-  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $NODE_KEY(form: user:password@hostname:port)"
+  private val USAGE = s"[Usage] $HOSTNAME_KEY $PORT_KEY $K8S_KEY $NODE_KEY(form: user:password@hostname:port)"
 
   /**
     * Running a standalone configurator.
@@ -243,9 +244,14 @@ object Configurator {
 
     val configuratorBuilder = Configurator.builder()
     var nodeRequest: Option[NodeCreationRequest] = None
+    var k8sValue = ""
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value) => configuratorBuilder.advertisedHostname(value)
       case Array(PORT_KEY, value)     => configuratorBuilder.advertisedPort(value.toInt)
+      case Array(K8S_KEY, value) =>
+        val k8sCollie: ClusterCollie = ClusterCollie.k8s(configuratorBuilder.nodeCollie(), K8SClient(value))
+        configuratorBuilder.clusterCollie(k8sCollie)
+        k8sValue = value
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head
         val password = value.split("@").head.split(":").last
@@ -260,6 +266,9 @@ object Configurator {
           ))
       case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
+    if (k8sValue.nonEmpty && nodeRequest.nonEmpty)
+      throw new IllegalArgumentException(s"${K8S_KEY} and ${NODE_KEY} cannot exist at the same time.")
+
     val configurator = configuratorBuilder.build()
     try nodeRequest.foreach { req =>
       LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")

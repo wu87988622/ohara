@@ -262,7 +262,7 @@ class ConfiguratorBuilder {
     this
   }
 
-  private[this] def nodeCollie(): NodeCollie = new NodeCollie {
+  private[configurator] def nodeCollie(): NodeCollie = new NodeCollie {
     override def node(name: String)(implicit executionContext: ExecutionContext): Future[Node] = store.value[Node](name)
     override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[Node]] = store.values[Node]
   }

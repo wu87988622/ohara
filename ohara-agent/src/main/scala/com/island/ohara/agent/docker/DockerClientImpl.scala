@@ -199,6 +199,7 @@ private[docker] class DockerClientImpl(hostname: String, port: Int, user: String
       .map(_.flatten)
 
   private[this] def toContainerInfo(line: String): ContainerInfo = {
+    val SSH_KIND_NAME = "SSH"
     // filter out all empty string
     val items = line.split(DIVIDER).filter(_.nonEmpty).toSeq
     // not all containers have forward ports so length - 1
@@ -215,7 +216,9 @@ private[docker] class DockerClientImpl(hostname: String, port: Int, user: String
       state = ContainerState.all
         .find(s => items(3).toLowerCase.contains(s.name.toLowerCase))
         // the running container show "up to xxx"
-        .getOrElse(ContainerState.RUNNING),
+        .getOrElse(ContainerState.RUNNING)
+        .name,
+      kind = SSH_KIND_NAME,
       name = items(4),
       size = items(5),
       portMappings = if (items.size < 7) Seq.empty else parsePortMapping(items(6)),

@@ -131,7 +131,7 @@ object StreamApi {
   }
 
   // StreamApp Action Response Body
-  final case class StreamActionResponse(id: String, state: Option[ContainerState])
+  final case class StreamActionResponse(id: String, state: Option[String])
   implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamActionResponse] = jsonFormat2(
     StreamActionResponse)
 

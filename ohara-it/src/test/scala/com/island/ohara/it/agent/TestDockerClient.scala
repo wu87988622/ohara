@@ -124,7 +124,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
     try {
       client.containerNames().contains(name) shouldBe true
       TimeUnit.SECONDS.sleep(3)
-      client.container(name).state shouldBe ContainerState.EXITED
+      client.container(name).state shouldBe ContainerState.EXITED.name
     } finally client.forceRemove(name)
   }
 

@@ -459,7 +459,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           await(
             () =>
               k8sClient.containers.count(c =>
-                c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING) == 1
+                c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING.name) == 1
           )
 
           val logMessage: String = "Kafka Connect distributed worker initializing ..."

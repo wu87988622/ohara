@@ -37,7 +37,8 @@ import com.island.ohara.agent.K8SJson.{
   HostAliases,
   K8SErrorResponse,
   K8SNodeInfo,
-  K8SPodInfo
+  K8SPodInfo,
+  NodeItems
 }
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, K8sContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
@@ -54,6 +55,7 @@ trait K8SClient extends ReleaseOnce {
   def log(name: String): String
   def nodeNameIPInfo(implicit executionContext: ExecutionContext): Seq[HostAliases]
   def containerCreator(): ContainerCreator
+  def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
 }
 
 object K8SClient {
@@ -61,6 +63,8 @@ object K8SClient {
 
   import scala.concurrent.duration._
   val TIMEOUT: FiniteDuration = 30 seconds
+
+  private[agent] val K8S_KIND_NAME = "K8S"
 
   def apply(k8sApiServerURL: String): K8SClient = {
     if (k8sApiServerURL.isEmpty) throw new IllegalArgumentException(s"invalid kubernetes api:${k8sApiServerURL}")
@@ -89,8 +93,10 @@ object K8SClient {
             item.metadata.creationTimestamp,
             K8sContainerState.k8sAll
               .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
-              .getOrElse(K8sContainerState.UNKNOWN),
-            item.spec.hostname.getOrElse(""),
+              .getOrElse(K8sContainerState.UNKNOWN)
+              .name,
+            K8S_KIND_NAME,
+            item.spec.hostname.getOrElse("Unknown"),
             "Unknown",
             Seq(
               PortMapping(
@@ -101,6 +107,14 @@ object K8SClient {
           )
         })
       }
+
+      override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
+        Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes/${nodeName}")).flatMap {
+          response =>
+            Unmarshal(response.entity).to[NodeItems] map { r =>
+              r.status.images.filter(x => x.names.size >= 2).map(x => x.names.last)
+            }
+        }
 
       override def remove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo = {
         containers
@@ -255,7 +269,9 @@ object K8SClient {
               createPodInfo.metadata.creationTimestamp,
               K8sContainerState.k8sAll
                 .find(s => createPodInfo.status.phase.toLowerCase.contains(s.name.toLowerCase))
-                .getOrElse(K8sContainerState.UNKNOWN),
+                .getOrElse(K8sContainerState.UNKNOWN)
+                .name,
+              K8S_KIND_NAME,
               createPodInfo.metadata.name,
               "Unknown",
               ports.map(x => PortMapping(hostname, Seq(PortPair(x._1, x._2)))).toSeq,
@@ -278,6 +294,7 @@ object K8SClient {
             .flatMap(error => {
               Future.failed(new RuntimeException(error.message))
             })
+
     }
   }
 

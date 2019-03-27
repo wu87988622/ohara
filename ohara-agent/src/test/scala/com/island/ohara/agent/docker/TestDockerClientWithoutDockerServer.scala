@@ -68,9 +68,9 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
     .contains("--rm") shouldBe true
 
   private[this] def testSpecifiedContainer(expectedState: ContainerState): Unit = {
-    val rContainers = result(CLIENT.containers).filter(_.state == expectedState)
+    val rContainers = result(CLIENT.containers).filter(_.state == expectedState.name)
     rContainers.size shouldBe 1
-    rContainers.head shouldBe CONTAINERS.find(_.state == expectedState).get
+    rContainers.head shouldBe CONTAINERS.find(_.state == expectedState.name).get
   }
   @Test
   def testCreatedContainers(): Unit = testSpecifiedContainer(ContainerState.CREATED)
@@ -97,7 +97,7 @@ class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
   def testActiveContainers(): Unit = {
     val rContainers = result(CLIENT.activeContainers)
     rContainers.size shouldBe 1
-    rContainers.head shouldBe CONTAINERS.find(_.state == ContainerState.RUNNING).get
+    rContainers.head shouldBe CONTAINERS.find(_.state == ContainerState.RUNNING.name).get
   }
 
   @Test
@@ -228,7 +228,8 @@ object TestDockerClientWithoutDockerServer {
         id = s"id-${s.name}",
         imageName = s"image-${s.name}",
         created = s"created-${s.name}",
-        state = s,
+        state = s.name,
+        kind = "SSH",
         name = s"name-${s.name}",
         size = s"size-${s.name}",
         portMappings = Seq.empty,
