@@ -64,7 +64,7 @@ describe('<Header />', () => {
 
     expect(brand.length).toBe(1);
     expect(_props.to).toBe(URLS.HOME);
-    expect(brand.children().text()).toBe('Ohara');
+    expect(brand.children().text()).toBe('Ohara Stream');
   });
 
   it('renders <Nav />', () => {

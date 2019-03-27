@@ -285,7 +285,7 @@ class PipelineNewStream extends React.Component {
           cancelBtnText="No, Keep it"
           handleCancel={this.handleDeleteRowModalClose}
           handleConfirm={this.handleDeleteClick}
-          message="Are you sure you want to delete this row? This action cannot be redo!"
+          message="Are you sure you want to delete this row? This action cannot be undo!"
           isDelete
         />
       </div>

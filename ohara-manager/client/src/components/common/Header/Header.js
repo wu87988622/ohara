@@ -240,7 +240,7 @@ class Header extends React.Component {
           )}
         </InfoModal>
         <HeaderWrapper>
-          <Brand to={URLS.HOME}>Ohara</Brand>
+          <Brand to={URLS.HOME}>Ohara Stream</Brand>
           <Nav>
             {NAVS.map(({ testId, to, iconCls, text }) => {
               return (

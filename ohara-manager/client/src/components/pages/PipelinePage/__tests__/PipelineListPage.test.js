@@ -156,7 +156,7 @@ describe('<PipelineListPage />', () => {
     expect(_props.handleCancel).toBeDefined();
     expect(_props.handleConfirm).toBeDefined();
     expect(_props.message).toBe(
-      'Are you sure you want to delete this pipeline? This action cannot be redo!',
+      'Are you sure you want to delete this pipeline? This action cannot be undo!',
     );
   });
 

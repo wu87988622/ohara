@@ -1,4 +1,4 @@
-# Ohara
+# Ohara Stream
 
 An easy-to-use visual stream processing tool based on Apache Kafka.
 

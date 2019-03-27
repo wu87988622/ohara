@@ -645,7 +645,7 @@ class FtpSink extends React.Component {
               cancelBtnText="No, Keep it"
               handleCancel={this.handleDeleteRowModalClose}
               handleConfirm={this.handleRowDelete}
-              message="Are you sure you want to delete this row? This action cannot be redo!"
+              message="Are you sure you want to delete this row? This action cannot be undo!"
               isDelete
             />
 

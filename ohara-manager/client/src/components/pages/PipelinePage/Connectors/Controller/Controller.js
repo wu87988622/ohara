@@ -106,12 +106,12 @@ class Controller extends React.Component {
         <ReactTooltip />
         <ConfirmModal
           isActive={isDeleteModalActive}
-          title={`Delete ${kind}?`}
-          confirmBtnText={`Yes, Delete this ${kind}`}
+          title={`Remove ${kind}?`}
+          confirmBtnText={`Yes, Remove this ${kind}`}
           cancelBtnText="No, Keep it"
           handleCancel={this.handleDeleteModalClose}
           handleConfirm={this.handleDeleteClick}
-          message={`Are you sure you want to delete this ${kind}? This action cannot be redo!`}
+          message={`Are you sure you want to remove this ${kind} from the pipeline graph? This action cannot be undo!`}
           isDelete
         />
       </s.Controller>
