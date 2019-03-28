@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator
+package com.island.ohara.agent.fake
+
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortMapping, PortPair}
 import com.island.ohara.common.rule.SmallTest
-import com.island.ohara.configurator.fake.FakeDockerClient
 import org.junit.{Before, Test}
 import org.scalatest.Matchers
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 class TestFakeDockerClient extends SmallTest with Matchers {
 
   val fake = new FakeDockerClient

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.island.ohara.configurator.fake
+package com.island.ohara.agent.fake
 
 import java.util.Date
 
-import com.island.ohara.agent.NetworkDriver
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
-import com.island.ohara.agent.docker.{ContainerCreator, DockerClient}
+import com.island.ohara.agent.docker.{ContainerCreator, DockerClient, NetworkDriver}
 import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
@@ -28,7 +27,7 @@ import com.typesafe.scalalogging.Logger
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeDockerClient extends ReleaseOnce with DockerClient {
+private[agent] class FakeDockerClient extends ReleaseOnce with DockerClient {
   private val LOG = Logger(classOf[FakeDockerClient])
   private[this] val FAKE_KIND_NAME: String = "FAKE"
   private[this] val cachedContainers = new mutable.HashMap[String, ContainerInfo]()

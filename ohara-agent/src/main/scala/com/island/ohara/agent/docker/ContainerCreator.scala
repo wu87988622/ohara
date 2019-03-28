@@ -18,7 +18,6 @@ package com.island.ohara.agent.docker
 
 import java.util.Objects
 
-import com.island.ohara.agent.NetworkDriver
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
 

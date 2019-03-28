@@ -16,6 +16,7 @@
 
 package com.island.ohara.agent.ssh
 import com.island.ohara.agent.docker.DockerClient
+import com.island.ohara.agent.fake.FakeDockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 
@@ -27,6 +28,13 @@ trait DockerClientCache extends Releasable {
 
 object DockerClientCache {
   def apply(): DockerClientCache = new DockerClientCacheImpl()
+
+  // this is only for testing usage
+  private[agent] def fake(): DockerClientCache = new DockerClientCacheImpl() {
+    override def exec[T](node: Node, f: DockerClient => T): T = {
+      f(new FakeDockerClient())
+    }
+  }
 
   private[this] class DockerClientCacheImpl extends ReleaseOnce with DockerClientCache {
     private[this] val lock = new Object()

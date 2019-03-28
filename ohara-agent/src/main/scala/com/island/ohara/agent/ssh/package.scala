@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 
 import com.island.ohara.client.configurator.v0.WorkerApi.ConnectorDefinitions
+import com.island.ohara.agent.docker.NetworkDriver
 import com.island.ohara.client.kafka.WorkerClient
 import com.typesafe.scalalogging.Logger
 
