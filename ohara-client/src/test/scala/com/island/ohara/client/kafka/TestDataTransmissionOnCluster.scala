@@ -39,9 +39,15 @@ class TestDataTransmissionOnCluster extends With3Brokers3Workers with Matchers {
 
   private[this] def createTopic(topicName: String, compacted: Boolean): Unit = {
     if (compacted)
-      brokerClient.topicCreator().compacted().numberOfPartitions(1).numberOfReplications(1).create(topicName)
+      brokerClient
+        .topicCreator()
+        .compacted()
+        .numberOfPartitions(1)
+        .numberOfReplications(1)
+        .topicName(topicName)
+        .create()
     else
-      brokerClient.topicCreator().deleted().numberOfPartitions(1).numberOfReplications(1).create(topicName)
+      brokerClient.topicCreator().deleted().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
   }
 
   private[this] def setupData(topicName: String): Unit = {

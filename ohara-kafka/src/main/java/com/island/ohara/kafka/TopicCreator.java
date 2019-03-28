@@ -34,6 +34,7 @@ public abstract class TopicCreator {
   protected short numberOfReplications = 1;
   protected Map<String, String> options = Collections.emptyMap();
   protected Duration timeout = Duration.ofSeconds(10);
+  protected String name = null;
 
   TopicCreator() {
     // do nothing
@@ -113,5 +114,10 @@ public abstract class TopicCreator {
     return this;
   }
 
-  public abstract void create(String name);
+  public TopicCreator topicName(String name) {
+    this.name = CommonUtils.requireNonEmpty(name);
+    return this;
+  }
+
+  public abstract void create();
 }

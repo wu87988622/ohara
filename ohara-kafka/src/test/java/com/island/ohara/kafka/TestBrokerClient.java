@@ -41,7 +41,12 @@ public class TestBrokerClient extends With3Brokers {
   @Test
   public void testAddPartitions() {
     String topicName = methodName();
-    client.topicCreator().numberOfPartitions(1).numberOfReplications((short) 1).create(topicName);
+    client
+        .topicCreator()
+        .numberOfPartitions(1)
+        .numberOfReplications((short) 1)
+        .topicName(topicName)
+        .create();
     assertEquals(client.topicDescription(topicName).numberOfPartitions(), 1);
 
     client.createPartitions(topicName, 2);
@@ -61,7 +66,8 @@ public class TestBrokerClient extends With3Brokers {
         .topicCreator()
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .create(topicName);
+        .topicName(topicName)
+        .create();
 
     TopicDescription topicInfo = client.topicDescription(topicName);
 
@@ -93,7 +99,8 @@ public class TestBrokerClient extends With3Brokers {
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .options(options)
-        .create(topicName);
+        .topicName(topicName)
+        .create();
 
     TopicDescription topicInfo = client.topicDescription(topicName);
 
@@ -121,7 +128,8 @@ public class TestBrokerClient extends With3Brokers {
           // enable kafka save the latest message for each key
           .deleted()
           .timeout(java.time.Duration.ofSeconds(30))
-          .create(methodName());
+          .topicName(methodName())
+          .create();
 
       client
           .topicCreator()
@@ -130,7 +138,8 @@ public class TestBrokerClient extends With3Brokers {
           // enable kafka save the latest message for each key
           .deleted()
           .timeout(java.time.Duration.ofSeconds(30))
-          .create(methodName());
+          .topicName(methodName())
+          .create();
     } catch (OharaExecutionException e) {
       assertTrue(e.getCause() instanceof TopicExistsException);
     }

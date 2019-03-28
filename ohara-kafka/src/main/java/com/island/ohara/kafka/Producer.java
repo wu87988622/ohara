@@ -53,6 +53,7 @@ public interface Producer<Key, Value> extends Releasable {
   }
 
   class Builder<Key, Value> {
+    private Map<String, String> options = Collections.emptyMap();
     private String connectionProps;
     // default noAcks
     private short numberOfAcks = 0;
@@ -61,6 +62,12 @@ public interface Producer<Key, Value> extends Releasable {
 
     private Builder() {
       // no nothing
+    }
+
+    @Optional("default is empty")
+    public Builder<Key, Value> options(Map<String, String> options) {
+      this.options = CommonUtils.requireNonEmpty(options);
+      return this;
     }
 
     public Builder<Key, Value> connectionProps(String connectionProps) {
@@ -132,6 +139,7 @@ public interface Producer<Key, Value> extends Releasable {
 
         private Properties getProducerConfig() {
           Properties props = new Properties();
+          options.forEach(props::setProperty);
           props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
           props.setProperty(ProducerConfig.ACKS_CONFIG, String.valueOf(numberOfAcks));
           return props;

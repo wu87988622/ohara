@@ -119,7 +119,7 @@ public interface Consumer<K, V> extends Releasable {
   }
 
   class Builder<Key, Value> {
-
+    private Map<String, String> options = Collections.emptyMap();
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private List<String> topicNames;
     private String groupId = String.format("ohara-consumer-%s", CommonUtils.uuid());
@@ -131,6 +131,11 @@ public interface Consumer<K, V> extends Releasable {
       // do nothing
     }
 
+    @com.island.ohara.common.annotations.Optional("default is empty")
+    public Consumer.Builder<Key, Value> options(Map<String, String> options) {
+      this.options = CommonUtils.requireNonEmpty(options);
+      return this;
+    }
     /**
      * receive all un-deleted message from subscribed topics
      *
@@ -232,16 +237,15 @@ public interface Consumer<K, V> extends Releasable {
     public Consumer<Key, Value> build() {
       checkArguments();
 
-      Properties consumerConfig = new Properties();
-
-      consumerConfig.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
-      consumerConfig.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+      Properties props = new Properties();
+      options.forEach(props::setProperty);
+      props.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
+      props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
       // kafka demand us to pass lowe case words...
-      consumerConfig.setProperty(
-          ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
+      props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, fromBegin.name().toLowerCase());
 
       KafkaConsumer<Key, Value> kafkaConsumer =
-          new KafkaConsumer<>(consumerConfig, wrap(keySerializer), wrap(valueSerializer));
+          new KafkaConsumer<>(props, wrap(keySerializer), wrap(valueSerializer));
 
       kafkaConsumer.subscribe(topicNames);
 

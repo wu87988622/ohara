@@ -134,7 +134,7 @@ public interface BrokerClient extends Releasable {
         return new TopicCreator() {
 
           @Override
-          public void create(String name) {
+          public void create() {
             CheckedExceptionUtils.wrap(
                 () ->
                     admin

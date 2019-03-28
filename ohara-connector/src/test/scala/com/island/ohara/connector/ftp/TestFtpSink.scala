@@ -46,7 +46,7 @@ object TestFtpSink extends With3Brokers3Workers with Matchers {
     val client = BrokerClient.of(testUtil.brokersConnProps)
     try {
       if (client.exist(topicName)) client.deleteTopic(topicName)
-      client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().create(topicName)
+      client.topicCreator().numberOfPartitions(1).numberOfReplications(1).compacted().topicName(topicName).create()
     } finally client.close()
 
     val producer = Producer

@@ -44,7 +44,8 @@ public class TestDataImporter extends With3Brokers {
               .topicCreator()
               .numberOfPartitions(partitions)
               .numberOfReplications(replications)
-              .create(topic);
+              .topicName(topic)
+              .create();
         });
 
     TOPICS.forEach(

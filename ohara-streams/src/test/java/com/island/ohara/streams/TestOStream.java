@@ -62,12 +62,14 @@ public class TestOStream extends With3Brokers {
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(fromTopic);
+          .topicName(fromTopic)
+          .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(toTopic);
+          .topicName(toTopic)
+          .create();
     } catch (Exception e) {
       LOG.error(e.getMessage());
     }

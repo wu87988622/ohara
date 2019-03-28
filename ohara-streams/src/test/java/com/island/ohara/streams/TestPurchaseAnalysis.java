@@ -67,27 +67,32 @@ public class TestPurchaseAnalysis extends WithBroker {
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(orderTopic);
+          .topicName(orderTopic)
+          .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(itemTopic);
+          .topicName(itemTopic)
+          .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(userTopic);
+          .topicName(userTopic)
+          .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(resultTopic);
+          .topicName(resultTopic)
+          .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .create(orderuser_repartition);
+          .topicName(orderuser_repartition)
+          .create();
     } catch (Exception e) {
       LOG.error(e.getMessage());
     }

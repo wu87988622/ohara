@@ -285,7 +285,8 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
               .topicCreator()
               .numberOfPartitions(1)
               .numberOfReplications(cluster.nodeNames.size.asInstanceOf[Short])
-              .create(topicName)
+              .topicName(topicName)
+              .create()
             true
           } catch {
             case e: OharaExecutionException =>

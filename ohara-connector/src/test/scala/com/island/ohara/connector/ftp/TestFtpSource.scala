@@ -104,7 +104,7 @@ class TestFtpSource extends With3Brokers3Workers with Matchers {
     rebuild(props.completedFolder.get)
     setupInput()
     ftpClient.listFileNames(props.inputFolder).isEmpty shouldBe false
-    brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).create(methodName())
+    brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(methodName()).create()
     val topicInfo = brokerClient.topicDescription(methodName())
     topicInfo.numberOfPartitions() shouldBe 1
     topicInfo.numberOfReplications() shouldBe 1
