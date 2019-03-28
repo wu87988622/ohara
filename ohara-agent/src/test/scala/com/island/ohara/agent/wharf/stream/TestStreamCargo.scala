@@ -16,8 +16,8 @@
 
 package com.island.ohara.agent.wharf.stream
 
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.fake.FakeDockerClient
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi
 import com.island.ohara.common.rule.SmallTest
 import org.junit.{Before, Test}
@@ -61,7 +61,7 @@ class TestStreamCargo extends SmallTest with Matchers {
         StreamApi.TO_TOPIC_KEY).foreach { key =>
       info.environments.keys.toSeq.contains(key) shouldBe true
     }
-    info.state shouldBe ContainerState.RUNNING.toString
+    info.state shouldBe ContainerState.RUNNING.name
 
     //another cargo creator
     val another = StreamCargo(new FakeDockerClient).createContainer()

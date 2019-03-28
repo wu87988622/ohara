@@ -18,7 +18,7 @@ package com.island.ohara.it.agent
 
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -459,7 +459,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
           await(
             () =>
               k8sClient.containers.count(c =>
-                c.hostname.contains(workerContainerHostName) && c.state == ContainerState.RUNNING.name) == 1
+                c.hostname.contains(workerContainerHostName) && c.state == K8sContainerState.RUNNING.name) == 1
           )
 
           val logMessage: String = "Kafka Connect distributed worker initializing ..."

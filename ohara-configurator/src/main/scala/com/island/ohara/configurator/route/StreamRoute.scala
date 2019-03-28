@@ -23,9 +23,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.docker.DockerClient
+import com.island.ohara.agent.docker.{ContainerState, DockerClient}
 import com.island.ohara.agent.{BrokerCollie, NodeCollie}
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.StreamApi._
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
@@ -73,20 +72,6 @@ private[configurator] object StreamRoute {
     data.fromTopics.forall(isNotNullOrEmpty) &&
     data.toTopics.nonEmpty &&
     data.toTopics.forall(isNotNullOrEmpty)
-  }
-
-  // TODO this is a workaround for 0.2 to solve not-compatible state between pipeline and streamApp
-  // Maybe we need refactor the "state" to be more general...by sam
-  private[this] def toConnectorState(state: Option[String]): Option[ContainerState] = {
-    ContainerState.all.find { value =>
-      state.nonEmpty &&
-      (value.name match {
-        case ContainerState.EXITED.name =>
-          ContainerState.EXITED.name
-        case _ =>
-          value.name
-      }).equalsIgnoreCase(state.get.name)
-    }
   }
 
   private[this] val clientCache: DockerClientCache = new DockerClientCache {
@@ -387,7 +372,7 @@ private[configurator] object StreamRoute {
                                     d =>
                                       Future.successful(
                                         d.copy(
-                                          state = toConnectorState(res.state),
+                                          state = res.state,
                                           nodes = Seq(node)
                                         )
                                     )
@@ -428,7 +413,7 @@ private[configurator] object StreamRoute {
                       d =>
                         Future.successful(
                           d.copy(
-                            state = toConnectorState(res.state)
+                            state = res.state
                           )
                       )
                     )

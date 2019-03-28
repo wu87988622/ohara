@@ -18,10 +18,10 @@ package com.island.ohara.agent.docker
 
 import java.util.Objects
 
+import com.island.ohara.agent.Agent
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
 import com.island.ohara.agent.docker.DockerClientImpl._
-import com.island.ohara.agent.Agent
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger

@@ -24,9 +24,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.K8SClient
+import com.island.ohara.agent.{K8SClient, K8sContainerState}
 import com.island.ohara.agent.K8SJson.K8SErrorResponse
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
@@ -37,8 +37,8 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class TestK8SSimple extends IntegrationTest with Matchers {
   private[this] val log = Logger(classOf[TestK8SSimple])
@@ -119,7 +119,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
 
       var isContainerRunning: Boolean = false
       while (!isContainerRunning) {
-        if (k8sClient.containers.count(c => c.hostname.contains(podName) && c.state == ContainerState.RUNNING.name) == 1) {
+        if (k8sClient.containers.count(c => c.hostname.contains(podName) && c.state == K8sContainerState.RUNNING.name) == 1) {
           isContainerRunning = true
         }
       }

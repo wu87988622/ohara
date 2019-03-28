@@ -15,7 +15,8 @@
  */
 
 package com.island.ohara.agent.docker
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortPair}
+import com.island.ohara.agent.docker.TestDockerClientWithoutDockerServer._
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortPair}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.service.SshdServer
@@ -23,12 +24,10 @@ import com.island.ohara.testing.service.SshdServer.CommandHandler
 import org.junit.{AfterClass, Test}
 import org.scalatest.Matchers
 
-import scala.util.Random
-import TestDockerClientWithoutDockerServer._
-
-import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.Random
 class TestDockerClientWithoutDockerServer extends SmallTest with Matchers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)

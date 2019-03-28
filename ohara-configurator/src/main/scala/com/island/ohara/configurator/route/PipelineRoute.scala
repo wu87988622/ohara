@@ -149,7 +149,7 @@ private[configurator] object PipelineRoute {
                       name = data.name,
                       kind = kind,
                       className = Some(data.className),
-                      state = state.map(_.name).map(ObjectState.forName),
+                      state = state.map(_.name),
                       error = ConnectorRoute.errorMessage(state),
                       lastModified = data.lastModified
                     )
@@ -170,15 +170,16 @@ private[configurator] object PipelineRoute {
                 }
 
             case data: StreamApp =>
-              Future.successful(ObjectAbstract(
-                id = data.id,
-                name = data.name,
-                kind = data.kind,
-                className = None,
-                state = data.state.map(_.name).map(ObjectState.forName),
-                error = None,
-                lastModified = data.lastModified
-              ))
+              Future.successful(
+                ObjectAbstract(
+                  id = data.id,
+                  name = data.name,
+                  kind = data.kind,
+                  className = None,
+                  state = data.state,
+                  error = None,
+                  lastModified = data.lastModified
+                ))
 
             case data =>
               Future.successful(

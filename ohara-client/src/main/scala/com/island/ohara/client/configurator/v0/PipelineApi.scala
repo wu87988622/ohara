@@ -15,43 +15,11 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.kafka.Enum
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 object PipelineApi {
   val PIPELINES_PREFIX_PATH: String = "pipelines"
-
-  /**
-    * Represent an "interface" for all kinds of state.
-    * This is the top level class if there was any other kinds of state that are used in the pipeline.
-    * TODO : "Pipeline API" should only see the base states (ex: RUNNING, STOP, FAILED), we could abstract these states
-    * and move to pipeline level "pipelineState"...by Sam
-    *
-    * @param name the actual name of the sate
-    */
-  abstract sealed class ObjectState { val name: String }
-  object ObjectState extends Enum[ObjectState] {
-    case object UNKNOWN extends ObjectState { val name: String = "UNKNOWN" }
-    case object SUCCEEDED extends ObjectState { val name: String = "SUCCEEDED" }
-    case object UNASSIGNED extends ObjectState { val name: String = "UNASSIGNED" }
-    case object RUNNING extends ObjectState { val name: String = "RUNNING" }
-    case object PAUSED extends ObjectState { val name: String = "PAUSED" }
-    case object PENDING extends ObjectState { val name: String = "PENDING" }
-    case object FAILED extends ObjectState { val name: String = "FAILED" }
-    case object DESTROYED extends ObjectState { val name: String = "DESTROYED" }
-    case object CREATED extends ObjectState { val name: String = "CREATED" }
-    case object RESTARTING extends ObjectState { val name: String = "RESTARTING" }
-    case object REMOVING extends ObjectState { val name: String = "REMOVING" }
-    case object EXITED extends ObjectState { val name: String = "EXITED" }
-    case object DEAD extends ObjectState { val name: String = "DEAD" }
-  }
-
-  implicit val OBJECT_STATE_JSON_FORMAT: RootJsonFormat[ObjectState] =
-    new RootJsonFormat[ObjectState] {
-      override def write(obj: ObjectState): JsValue = JsString(obj.name)
-      override def read(json: JsValue): ObjectState = ObjectState.forName(json.asInstanceOf[JsString].value)
-    }
 
   final case class Flow(from: String, to: Seq[String])
   implicit val FLOW_JSON_FORMAT: RootJsonFormat[Flow] = jsonFormat2(Flow)
@@ -119,7 +87,7 @@ object PipelineApi {
                                   name: String,
                                   kind: String,
                                   className: Option[String],
-                                  state: Option[ObjectState],
+                                  state: Option[String],
                                   error: Option[String],
                                   lastModified: Long)
       extends Data

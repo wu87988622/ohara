@@ -40,7 +40,7 @@ import com.island.ohara.agent.K8SJson.{
   K8SPodInfo,
   NodeItems
 }
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, K8sContainerState, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 import spray.json.{RootJsonFormat, _}
@@ -91,7 +91,7 @@ object K8SClient {
             item.metadata.uid,
             containerInfo.image,
             item.metadata.creationTimestamp,
-            K8sContainerState.k8sAll
+            K8sContainerState.all
               .find(s => phase.toLowerCase().contains(s.name.toLowerCase))
               .getOrElse(K8sContainerState.UNKNOWN)
               .name,
@@ -267,7 +267,7 @@ object K8SClient {
               createPodInfo.metadata.uid,
               imageName,
               createPodInfo.metadata.creationTimestamp,
-              K8sContainerState.k8sAll
+              K8sContainerState.all
                 .find(s => createPodInfo.status.phase.toLowerCase.contains(s.name.toLowerCase))
                 .getOrElse(K8sContainerState.UNKNOWN)
                 .name,

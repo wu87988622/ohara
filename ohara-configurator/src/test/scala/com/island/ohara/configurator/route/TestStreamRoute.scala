@@ -187,12 +187,12 @@ class TestStreamRoute extends SmallTest with Matchers {
     awaitResult(accessStreamProperty.update(jarData.head.id, req))
     val res = awaitResult(accessStreamAction.start(jarData.head.id))
     res.state.nonEmpty shouldBe true
-    res.state.get shouldBe ContainerApi.ContainerState.EXITED.name
+    res.state.get shouldBe "EXITED"
 
     // idempotent
     val res2 = awaitResult(accessStreamAction.start(jarData.head.id))
     res2.state.nonEmpty shouldBe true
-    res2.state.get shouldBe ContainerApi.ContainerState.EXITED.name
+    res2.state.get shouldBe "EXITED"
 
     filePath.foreach(new File(_).deleteOnExit())
   }

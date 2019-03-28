@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, ConnectorState}
-import com.island.ohara.client.configurator.v0.PipelineApi.{ObjectState, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.PipelineApi.PipelineCreationRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{ConnectorApi, PipelineApi, TopicApi}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -25,10 +25,9 @@ import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestOhara1415 extends WithBrokerWorker with Matchers {
 
   private[this] val configurator =
@@ -120,7 +119,7 @@ class TestOhara1415 extends WithBrokerWorker with Matchers {
         .add(PipelineCreationRequest(name = methodName(),
                                      workerClusterName = None,
                                      rules = Map(topic.id -> Seq(connector.id)))))
-    pipeline.objects.find(_.id == connector.id).get.state shouldBe Some(ObjectState.FAILED)
+    pipeline.objects.find(_.id == connector.id).get.state shouldBe Some("FAILED")
   }
 
   @After

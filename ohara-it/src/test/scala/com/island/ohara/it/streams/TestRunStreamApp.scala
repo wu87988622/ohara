@@ -18,7 +18,6 @@ package com.island.ohara.it.streams
 
 import java.io.File
 
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.client.configurator.v0.StreamApi.StreamPropertyRequest
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0.{StreamApi, TopicApi}
@@ -27,6 +26,7 @@ import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
+
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestRunStreamApp extends IntegrationTest with Matchers {
   private[this] val configurator =
@@ -125,7 +125,7 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
     val res1 =
       result(streamAppActionAccess.start(jarData.head.id))
     res1.id shouldBe jarData.head.id
-    res1.state.getOrElse("") shouldBe ContainerState.RUNNING
+    res1.state.get shouldBe "RUNNING"
 
     //Stop StreamApp
     val res2 =

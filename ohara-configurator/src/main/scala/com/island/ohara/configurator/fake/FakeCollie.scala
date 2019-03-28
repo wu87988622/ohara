@@ -17,9 +17,10 @@
 package com.island.ohara.configurator.fake
 
 import com.island.ohara.agent.Collie.ClusterCreator
+import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{Collie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.ClusterInfo
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.util.CommonUtils
 
 import scala.collection.mutable

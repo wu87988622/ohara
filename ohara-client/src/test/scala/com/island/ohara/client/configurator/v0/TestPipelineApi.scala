@@ -16,9 +16,6 @@
 
 package com.island.ohara.client.configurator.v0
 
-import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
-import com.island.ohara.client.configurator.v0.PipelineApi.ObjectState._
 import com.island.ohara.client.configurator.v0.PipelineApi._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -26,38 +23,6 @@ import org.junit.Test
 import org.scalatest.Matchers
 
 class TestPipelineApi extends SmallTest with Matchers {
-
-  @Test
-  def testState(): Unit = {
-    ObjectState.all shouldBe Seq(
-      UNKNOWN,
-      SUCCEEDED,
-      UNASSIGNED,
-      RUNNING,
-      PAUSED,
-      PENDING,
-      FAILED,
-      CREATED,
-      RESTARTING,
-      REMOVING,
-      EXITED,
-      DEAD,
-      DESTROYED
-    ).sortBy(_.name)
-  }
-
-  @Test
-  def testStateJson(): Unit = {
-    ObjectState.all.foreach(
-      state => OBJECT_STATE_JSON_FORMAT.read(OBJECT_STATE_JSON_FORMAT.write(state)) shouldBe state
-    )
-  }
-
-  @Test
-  def testConvertState(): Unit = {
-    ConnectorState.all.foreach(state => ObjectState.forName(state.name))
-    ContainerState.all.foreach(state => ObjectState.forName(state.name))
-  }
 
   @Test
   def testDeprecatedRules(): Unit = {

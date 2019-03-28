@@ -19,8 +19,8 @@ package com.island.ohara.agent.fake
 import java.util.Date
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
-import com.island.ohara.agent.docker.{ContainerCreator, DockerClient, NetworkDriver}
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState, PortMapping, PortPair}
+import com.island.ohara.agent.docker.{ContainerCreator, ContainerState, DockerClient, NetworkDriver}
+import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping, PortPair}
 import com.island.ohara.common.util.{CommonUtils, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 

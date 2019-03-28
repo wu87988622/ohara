@@ -22,7 +22,6 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.util.ByteString
-import com.island.ohara.client.configurator.v0.ContainerApi.ContainerState
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
@@ -124,7 +123,7 @@ object StreamApi {
                              fromTopics: Seq[String],
                              toTopics: Seq[String],
                              lastModified: Long,
-                             state: Option[ContainerState] = None,
+                             state: Option[String] = None,
                              nodes: Seq[NodeApi.Node] = Seq.empty)
       extends Data {
     override def kind: String = "streamApp"

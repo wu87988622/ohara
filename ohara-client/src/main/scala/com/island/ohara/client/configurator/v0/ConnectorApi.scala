@@ -15,9 +15,8 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.configurator.v0.PipelineApi.ObjectState
-import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.client.kafka.Enum
+import com.island.ohara.common.data.{Column, DataType}
 import com.island.ohara.kafka.connector.json.{ConnectorFormatter, PropGroups, SettingDefinition, StringList}
 import spray.json.{JsArray, JsNull, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -43,24 +42,16 @@ object ConnectorApi {
     }
   }
 
-  abstract sealed class ConnectorState { val name: String }
+  /**
+    * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
+    */
+  abstract sealed class ConnectorState(val name: String)
   object ConnectorState extends Enum[ConnectorState] {
-    //TODO : Is there a way to remove this redundant code?...by Sam
-    case object UNASSIGNED extends ConnectorState {
-      val name = ObjectState.UNASSIGNED.name
-    }
-    case object RUNNING extends ConnectorState {
-      val name = ObjectState.RUNNING.name
-    }
-    case object PAUSED extends ConnectorState {
-      val name = ObjectState.PAUSED.name
-    }
-    case object FAILED extends ConnectorState {
-      val name = ObjectState.FAILED.name
-    }
-    case object DESTROYED extends ConnectorState {
-      val name = ObjectState.DESTROYED.name
-    }
+    case object UNASSIGNED extends ConnectorState("UNASSIGNED")
+    case object RUNNING extends ConnectorState("RUNNING")
+    case object PAUSED extends ConnectorState("PAUSED")
+    case object FAILED extends ConnectorState("FAILED")
+    case object DESTROYED extends ConnectorState("DESTROYED")
   }
   // TODO: remove this format after ohara manager starts to use new APIs
   implicit val COLUMN_JSON_FORMAT: RootJsonFormat[Column] = new RootJsonFormat[Column] {

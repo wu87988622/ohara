@@ -19,7 +19,7 @@ package com.island.ohara.agent.docker
 import java.util.Objects
 
 import com.island.ohara.agent.docker.DockerClient.ContainerInspector
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, ContainerState}
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.Releasable
 

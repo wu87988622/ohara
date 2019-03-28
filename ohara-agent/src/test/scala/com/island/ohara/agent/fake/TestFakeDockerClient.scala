@@ -16,7 +16,8 @@
 
 package com.island.ohara.agent.fake
 
-import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerState, PortMapping, PortPair}
+import com.island.ohara.agent.docker.ContainerState
+import com.island.ohara.client.configurator.v0.ContainerApi.{PortMapping, PortPair}
 import com.island.ohara.common.rule.SmallTest
 import org.junit.{Before, Test}
 import org.scalatest.Matchers

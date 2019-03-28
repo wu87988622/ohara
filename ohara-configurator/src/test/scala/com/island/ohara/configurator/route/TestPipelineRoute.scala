@@ -21,7 +21,7 @@ import java.io.File
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.HadoopApi.HdfsInfoRequest
 import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
-import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, ObjectState, Pipeline, PipelineCreationRequest}
+import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, Pipeline, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
@@ -632,7 +632,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
       PipelineApi.access().hostname(configurator.hostname).port(configurator.port).get(pipeline.id)
     )
     pipeline2.objects.foreach(
-      obj => obj.state.get shouldBe ObjectState.RUNNING
+      obj => obj.state.get shouldBe "RUNNING"
     )
   }
 
