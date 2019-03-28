@@ -1,6 +1,6 @@
 # Ohara Stream
 
-An easy-to-use visual stream processing tool based on Apache Kafka.
+Easy to deploy the streaming application
 
 [![Build Status](https://builds.is-land.com.tw/buildStatus/icon?job=PostCommit-OHARA)](https://builds.is-land.com.tw/job/PostCommit-OHARA/)
 
