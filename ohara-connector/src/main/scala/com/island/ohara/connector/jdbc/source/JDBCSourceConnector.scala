@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.jdbc
-import com.island.ohara.connector.jdbc.source.{DBTableDataProvider, JDBCSourceConnectorConfig, JDBCSourceTask}
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskConfig}
+package com.island.ohara.connector.jdbc.source
+
+import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -92,6 +93,68 @@ class JDBCSourceConnector extends RowSourceConnector {
     if (!timestampColumnName.matches("^[a-zA-Z]{1}.*"))
       throw new IllegalArgumentException("Your column name input error, Please checkout your column name.")
   }
+
+  override protected def _definitions(): java.util.List[SettingDefinition] = Seq(
+    SettingDefinition
+      .builder()
+      .displayName("jdbc url")
+      .documentation("Connection database url")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(DB_URL)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("user name")
+      .documentation("Connection database user name")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(DB_USERNAME)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("password")
+      .documentation("Connection database user password")
+      .valueType(SettingDefinition.Type.PASSWORD)
+      .key(DB_PASSWORD)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("table name")
+      .documentation("write to topic from database table name")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(DB_TABLENAME)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("catalog pattern")
+      .documentation("database metadata catalog")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(DB_CATALOG_PATTERN)
+      .optional()
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("schema pattern")
+      .documentation("database metadata schema pattern")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(DB_SCHEMA_PATTERN)
+      .optional()
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("mode")
+      .documentation("Only support timestamp column")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(MODE)
+      .optional(MODE_DEFAULT)
+      .build(),
+    SettingDefinition
+      .builder()
+      .displayName("timestamp column name")
+      .documentation("Use a timestamp column to detect new and modified rows")
+      .valueType(SettingDefinition.Type.STRING)
+      .key(TIMESTAMP_COLUMN_NAME)
+      .build()
+  ).asJava
 
   override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }

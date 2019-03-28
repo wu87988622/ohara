@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.connector.jdbc
+package com.island.ohara.connector.jdbc.source
 
 import java.sql.Statement
 
@@ -22,7 +22,6 @@ import com.island.ohara.client.DatabaseClient
 import com.island.ohara.client.configurator.v0.QueryApi.RdbColumn
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Cell, Row, Serializer}
-import com.island.ohara.connector.jdbc.source._
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.testing.With3Brokers3Workers
 import com.island.ohara.testing.service.Database
@@ -31,8 +30,8 @@ import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 /**
   * Test the JDBC Source Connector

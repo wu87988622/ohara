@@ -19,7 +19,6 @@ import java.sql.Timestamp
 
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.util.{Releasable, VersionUtils}
-import com.island.ohara.connector.jdbc.JDBCSourceConnector._
 import com.island.ohara.connector.jdbc.util.ColumnInfo
 import com.island.ohara.kafka.connector._
 import com.typesafe.scalalogging.Logger
@@ -97,7 +96,7 @@ class JDBCSourceTask extends RowSourceTask {
     finally resultSet.close()
   } catch {
     case e: Throwable =>
-      LOG.error(e.getMessage, e)
+      logger.error(e.getMessage, e)
       Seq.empty.asJava
   }
 

@@ -49,15 +49,15 @@ case class HDFSSinkConnectorConfig(hdfsURL: String,
 }
 
 object HDFSSinkConnectorConfig {
-  private[this] val FLUSH_LINE_COUNT_DEFAULT: Int = 1000
-  private[this] val ROTATE_INTERVAL_MS_DEFAULT: Long = 60000
-  private[this] val TMP_DIR_DEFAULT: String = "/tmp"
+  private[hdfs] val FLUSH_LINE_COUNT_DEFAULT: Int = 1000
+  private[hdfs] val ROTATE_INTERVAL_MS_DEFAULT: Long = 60000
+  private[hdfs] val TMP_DIR_DEFAULT: String = "/tmp"
   private[connector] val DATA_DIR_DEFAULT = "/data"
-  private[this] val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
-  private[this] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
-  private[this] val DATA_BUFFER_COUNT_DEFAULT: Long = 100
-  private[this] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName
-  private[this] val DATAFILE_ENCODE_DEFAULT = "UTF-8"
+  private[hdfs] val DATAFILE_NEEDHEADER_DEFAULT: Boolean = true
+  private[hdfs] val DATAFILE_PREFIX_NAME_DEFAULT: String = "part"
+  private[hdfs] val DATA_BUFFER_COUNT_DEFAULT: Long = 100
+  private[hdfs] val HDFS_STORAGE_CREATOR_CLASS_DEFAULT: String = classOf[HDFSStorageCreator].getName
+  private[hdfs] val DATAFILE_ENCODE_DEFAULT = "UTF-8"
 
   def apply(props: Map[String, String]): HDFSSinkConnectorConfig = {
     val prefixFileName: String = props.getOrElse(DATAFILE_PREFIX_NAME, DATAFILE_PREFIX_NAME_DEFAULT)
