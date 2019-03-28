@@ -31,11 +31,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PropGroup implements JsonObject {
-  private static final String ORDER_KEY = "order";
+  static final String ORDER_KEY = "order";
   private static final String PROPS_KEY = "props";
-  private static final String COLUMN_NAME_KEY = "name";
-  private static final String COLUMN_NEW_NAME_KEY = "newName";
-  private static final String COLUMN_DATA_TYPE_KEY = "dataType";
+  static final String COLUMN_NAME_KEY = "name";
+  static final String COLUMN_NEW_NAME_KEY = "newName";
+  static final String COLUMN_DATA_TYPE_KEY = "dataType";
 
   public static PropGroup of(Column column) {
     Map<String, String> map = new HashMap<>();

@@ -22,8 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.util.CommonUtils;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.runtime.rest.entities.ConfigKeyInfo;
 
@@ -73,6 +72,12 @@ public class SettingDefinition implements JsonObject {
           .optional()
           .group(CORE_GROUP)
           .orderInGroup(6)
+          .propKeys(
+              Arrays.asList(
+                  PropGroup.ORDER_KEY,
+                  PropGroup.COLUMN_DATA_TYPE_KEY,
+                  PropGroup.COLUMN_NAME_KEY,
+                  PropGroup.COLUMN_NEW_NAME_KEY))
           .build();
 
   public static final SettingDefinition WORKER_CLUSTER_NAME_DEFINITION =
@@ -198,6 +203,7 @@ public class SettingDefinition implements JsonObject {
   private static final String DEFAULT_VALUE_KEY = "defaultValue";
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
+  private static final String PROP_KEYS_KEY = "propKeys";
 
   public static SettingDefinition ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<SettingDefinition>() {});
@@ -208,6 +214,7 @@ public class SettingDefinition implements JsonObject {
       case BOOLEAN:
         return ConfigDef.Type.BOOLEAN;
       case STRING:
+      case TABLE:
         return ConfigDef.Type.STRING;
       case SHORT:
         return ConfigDef.Type.SHORT;
@@ -223,8 +230,6 @@ public class SettingDefinition implements JsonObject {
         return ConfigDef.Type.CLASS;
       case PASSWORD:
         return ConfigDef.Type.PASSWORD;
-      case TABLE:
-        return ConfigDef.Type.STRING;
       default:
         throw new UnsupportedOperationException("what is " + type);
     }
@@ -245,6 +250,7 @@ public class SettingDefinition implements JsonObject {
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
+  private final List<String> propKeys;
 
   @JsonCreator
   private SettingDefinition(
@@ -258,7 +264,8 @@ public class SettingDefinition implements JsonObject {
       @Nullable @JsonProperty(DEFAULT_VALUE_KEY) String defaultValue,
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) String reference,
-      @JsonProperty(INTERNAL_KEY) boolean internal) {
+      @JsonProperty(INTERNAL_KEY) boolean internal,
+      @JsonProperty(PROP_KEYS_KEY) List<String> propKeys) {
     this.displayName = CommonUtils.requireNonEmpty(displayName);
     this.group = group;
     this.orderInGroup = orderInGroup;
@@ -270,6 +277,7 @@ public class SettingDefinition implements JsonObject {
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Reference.valueOf(CommonUtils.requireNonEmpty(reference));
     this.internal = internal;
+    this.propKeys = Objects.requireNonNull(propKeys);
   }
 
   @JsonProperty(INTERNAL_KEY)
@@ -328,6 +336,11 @@ public class SettingDefinition implements JsonObject {
   @JsonProperty(REFERENCE_KEY)
   public String reference() {
     return reference.name();
+  }
+
+  @JsonProperty(PROP_KEYS_KEY)
+  public List<String> propKeys() {
+    return new ArrayList<>(propKeys);
   }
 
   public ConfigDef.ConfigKey toConfigKey() {
@@ -405,6 +418,7 @@ public class SettingDefinition implements JsonObject {
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
+    private List<String> propKeys = Collections.emptyList();
 
     private Builder() {}
 
@@ -420,10 +434,22 @@ public class SettingDefinition implements JsonObject {
       this.documentation = definition.documentation;
       this.reference = definition.reference;
       this.internal = definition.internal;
+      this.propKeys = definition.propKeys;
     }
 
     Builder internal() {
       this.internal = true;
+      return this;
+    }
+
+    /**
+     * this is a specific field fot Type.TABLE. It defines the keys' name for table.
+     *
+     * @param propKeys key name of properties
+     * @return this builder
+     */
+    Builder propKeys(List<String> propKeys) {
+      this.propKeys = new ArrayList<>(CommonUtils.requireNonEmpty(propKeys));
       return this;
     }
 
@@ -508,7 +534,8 @@ public class SettingDefinition implements JsonObject {
           defaultValue,
           documentation,
           reference.name(),
-          internal);
+          internal,
+          propKeys);
     }
   }
 }

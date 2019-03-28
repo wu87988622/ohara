@@ -21,7 +21,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRe
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.kafka.connector.json.{PropGroups, SettingDefinition}
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json.{JsArray, JsString, _}
@@ -216,5 +216,28 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                       | }
      """.stripMargin.parseJson)
     connectorDescription.className shouldBe className
+  }
+
+  @Test
+  def parsePropGroups(): Unit = {
+    val creationRequest = ConnectorApi.CONNECTOR_CREATION_REQUEST_JSON_FORMAT.read(s"""
+                                                                                      | {
+                                                                                      | \"columns\": [
+                                                                                      |   {
+                                                                                      |     "order": 1,
+                                                                                      |     "props": {
+                                                                                      |       "name": "abc",
+                                                                                      |       "newName": "ccc",
+                                                                                      |       "dataType": "STRING"
+                                                                                      |     }
+                                                                                      |   }
+                                                                                      | ]
+                                                                                      | }
+     """.stripMargin.parseJson)
+    val column = PropGroups.ofJson(creationRequest.settings("columns").toString()).get(0).toColumn
+    column.order() shouldBe 1
+    column.name() shouldBe "abc"
+    column.newName() shouldBe "ccc"
+    column.dataType().name() shouldBe "STRING"
   }
 }

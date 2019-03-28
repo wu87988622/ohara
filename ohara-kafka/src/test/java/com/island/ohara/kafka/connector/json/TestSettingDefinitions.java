@@ -100,4 +100,27 @@ public class TestSettingDefinitions extends SmallTest {
             .filter(d -> d.equals(SettingDefinition.NUMBER_OF_TASKS_DEFINITION))
             .count());
   }
+
+  @Test
+  public void mustHaveTable() {
+    Assert.assertEquals(
+        1,
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(
+                definition -> definition.valueType().equals(SettingDefinition.Type.TABLE.name()))
+            .count());
+  }
+
+  @Test
+  public void testPropKeys() {
+    SettingDefinitions.DEFINITIONS_DEFAULT.forEach(
+        definition -> {
+          if (definition.valueType().equals(SettingDefinition.Type.TABLE.name())) {
+            Assert.assertTrue(definition.propKeys().contains(PropGroup.ORDER_KEY));
+            Assert.assertTrue(definition.propKeys().contains(PropGroup.COLUMN_DATA_TYPE_KEY));
+            Assert.assertTrue(definition.propKeys().contains(PropGroup.COLUMN_NAME_KEY));
+            Assert.assertTrue(definition.propKeys().contains(PropGroup.COLUMN_NEW_NAME_KEY));
+          } else Assert.assertTrue(definition.propKeys().isEmpty());
+        });
+  }
 }
