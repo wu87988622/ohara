@@ -151,12 +151,13 @@ class TestDockerClient extends IntegrationTest with Matchers {
 
   @Test
   def testPortMapping(): Unit = runTest { client =>
+    val availablePort = CommonUtils.availablePort()
     val name = CommonUtils.randomString(5)
     client
       .containerCreator()
       .name(name)
       .imageName(imageName)
-      .portMappings(Map(12345 -> 12345))
+      .portMappings(Map(availablePort -> availablePort))
       .removeContainerOnExit()
       .command(s"""/bin/bash -c \"ping $webHost\"""")
       .execute()
@@ -164,7 +165,7 @@ class TestDockerClient extends IntegrationTest with Matchers {
       val container = client.container(name)
       container.portMappings.size shouldBe 1
       container.portMappings.head.portPairs.size shouldBe 1
-      container.portMappings.head.portPairs.head shouldBe PortPair(12345, 12345)
+      container.portMappings.head.portPairs.head shouldBe PortPair(availablePort, availablePort)
     } finally client.forceRemove(name)
   }
 
