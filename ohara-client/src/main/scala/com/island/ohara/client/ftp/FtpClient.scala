@@ -249,32 +249,44 @@ object FtpClient {
     }
 
     def build(): FtpClient = {
-      val retryTimeout = Objects.requireNonNull(Builder.this.retryTimeout)
-      val retryBackoff = Objects.requireNonNull(Builder.this.retryBackoff)
-
-      def retry[T](function: () => T): T = {
-        var lastException: Throwable = null
-        val endTime = CommonUtils.current() + retryTimeout.toMillis
-        do {
-          try return function()
-          catch {
-            case e: Throwable =>
-              LOG.info(s"failed to execute ftp command. timeout of retry: $retryTimeout. backoff:$retryBackoff", e)
-              lastException = e
-              TimeUnit.MILLISECONDS.sleep(retryBackoff.toMillis)
-          }
-        } while (endTime >= CommonUtils.current())
-        throw new IllegalArgumentException("still fail...", lastException)
-      }
 
       new FtpClient {
-        private[this] val client = new FtpClientImpl(
-          hostname = CommonUtils.requireNonEmpty(hostname, () => "hostname can't be null or empty"),
-          port = CommonUtils.requirePositiveInt(port),
-          user = CommonUtils.requireNonEmpty(user, () => "user can't be null or empty"),
-          password = CommonUtils.requireNonEmpty(password, () => "password can't be null or empty")
-        )
-        override def listFileNames(dir: String): Seq[String] = retry(() => client.listFileNames(dir))
+        private[this] val hostname =
+          CommonUtils.requireNonEmpty(Builder.this.hostname, () => "hostname can't be null or empty")
+        private[this] val port = CommonUtils.requirePositiveInt(Builder.this.port)
+        private[this] val user = CommonUtils.requireNonEmpty(Builder.this.user, () => "user can't be null or empty")
+        private[this] val password =
+          CommonUtils.requireNonEmpty(Builder.this.password, () => "password can't be null or empty")
+        private[this] val retryTimeout = Objects.requireNonNull(Builder.this.retryTimeout)
+        private[this] val retryBackoff = Objects.requireNonNull(Builder.this.retryBackoff)
+        private[this] var _client: FtpClient = _
+        private[this] def client(): FtpClient = {
+          if (_client == null)
+            _client = new FtpClientImpl(
+              hostname = hostname,
+              port = port,
+              user = user,
+              password = password
+            )
+          _client
+        }
+        private[this] def retry[T](function: () => T): T = {
+          var lastException: Throwable = null
+          val endTime = CommonUtils.current() + retryTimeout.toMillis
+          do {
+            try return function()
+            catch {
+              case e: Throwable =>
+                LOG.info(s"failed to execute ftp command. timeout of retry: $retryTimeout. backoff:$retryBackoff", e)
+                lastException = e
+                TimeUnit.MILLISECONDS.sleep(retryBackoff.toMillis)
+            }
+          } while (endTime >= CommonUtils.current())
+          Releasable.close(_client)
+          _client = null
+          throw new IllegalArgumentException("still fail...", lastException)
+        }
+        override def listFileNames(dir: String): Seq[String] = retry(() => client().listFileNames(dir))
         override def open(path: String): InputStream = retry(() => client.open(path))
         override def create(path: String): OutputStream = retry(() => client.create(path))
         override def append(path: String): OutputStream = retry(() => client.append(path))
