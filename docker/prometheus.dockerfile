@@ -37,11 +37,6 @@ ADD prometheus/targets.json $PROMETHEUS_CONFIG
 ADD prometheus/target.sh $PROMETHEUS_CONFIG
 RUN mkdir $PROMETHEUS_CONFIG/targets
 
-# download Tini
-# we download the Tini in multi-stage so as to save the space to install the wget
-ARG TINI_VERSION=v0.18.0
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
-
 FROM centos:7.6.1810
 # install jq (json framework)
 RUN yum install epel-release -y
@@ -59,7 +54,7 @@ RUN chmod +x /home/$USER/config/target.sh
 RUN chown $USER /home/$USER/config/targets
 
 # copy Tini
-COPY --from=base /tini /tini
+COPY --from=oharastream/ohara:deps /tini /tini
 RUN chmod +x /tini
 
 # change to user

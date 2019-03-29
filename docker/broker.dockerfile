@@ -25,7 +25,7 @@ RUN yum install -y \
 ARG KAFKA_DIR=/opt/kafka
 ARG KAFKA_VERSION=1.0.2
 ARG SCALA_VERSION=2.12
-RUN wget http://ftp.twaren.net/Unix/Web/apache/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN mkdir ${KAFKA_DIR}
 RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
 RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
@@ -36,11 +36,6 @@ ARG EXPORTER_VERSION=0.3.1
 RUN mkdir /prometheus
 RUN wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/${EXPORTER_VERSION}/jmx_prometheus_javaagent-${EXPORTER_VERSION}.jar -O /prometheus/jmx_prometheus_javaagent.jar
 ADD ./prometheus/exporter.config.yml /prometheus/config.yml
-
-# download Tini
-# we download the Tini in multi-stage so as to save the space to install the wget
-ARG TINI_VERSION=v0.18.0
-RUN wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -O /tini
 
 FROM centos:7.6.1810
 
@@ -71,7 +66,7 @@ ENV PROMETHEUS_EXPORTER=/prometheus/jmx_prometheus_javaagent.jar
 ENV PROMETHEUS_EXPORTER_CONFIG=/prometheus/config.yml
 
 # copy Tini
-COPY --from=deps /tini /tini
+COPY --from=oharastream/ohara:deps /tini /tini
 RUN chmod +x /tini
 
 USER $USER
