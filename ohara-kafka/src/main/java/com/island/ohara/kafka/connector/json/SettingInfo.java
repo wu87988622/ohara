@@ -46,9 +46,11 @@ public final class SettingInfo implements JsonObject {
                     // if configInfo is not serialized by ohara, we will get JsonParseException in
                     // parsing json.
                     if (e.getCause() instanceof JsonParseException) {
-                      LOG.info(
+                      LOG.debug(
                           "fails to serializer "
                               + configInfo
+                              + " from "
+                              + configInfos.name()
                               + ". [TODO] we should replace it by ohara definition",
                           e);
                       return Optional.empty();
