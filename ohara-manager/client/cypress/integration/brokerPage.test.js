@@ -60,7 +60,7 @@ describe('BrokerPage', () => {
       .getByText('Save')
       .click()
       .getByText('Topic successfully created!')
-      .should('have.length', 1)
+      .should('have.length', 2)
       .wait('@getTopics')
       .getByText(topicName)
       .should('have.length', 1)
