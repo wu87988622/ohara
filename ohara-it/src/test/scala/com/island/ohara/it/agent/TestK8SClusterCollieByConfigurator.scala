@@ -33,12 +33,15 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
   private[this] val API_SERVER_URL: Option[String] = sys.env.get(K8S_API_SERVER_URL_KEY)
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
 
-  private[this] val k8sClient = K8SClient(API_SERVER_URL.get)
-
   override protected val nodeCache: Seq[Node] =
-    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
-    else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
+    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) {
+      //After getting K8S client URL, set the k8sCollie to Configurator object.
+      //if API_SERVER_URL variable is null will skip the test.
+      skipTest(s"You must assign nodes for collie tests")
+      Seq.empty
+    } else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
 
+  private[this] val k8sClient = K8SClient(API_SERVER_URL.get)
   val k8sCollie: ClusterCollie = ClusterCollie.k8s(
     NodeCollie(nodeCache),
     // It is ok to pass null since we will skip test if no k8s env exists
