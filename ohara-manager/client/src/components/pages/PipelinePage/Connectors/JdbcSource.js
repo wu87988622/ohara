@@ -153,14 +153,14 @@ class JdbcSource extends React.Component {
     const result = get(res, 'data.result', null);
 
     if (result) {
-      const { name, state, configs, topics: prevTopics } = result;
+      const { name, state, topics: prevTopics } = result;
       const {
         'source.timestamp.column.name': timestamp = '',
         'source.db.username': username = '',
         'source.db.password': password = '',
         'source.db.url': url = '',
         table = '{}',
-      } = configs;
+      } = result.settings.configs;
 
       const { topics: writeTopics } = this.props;
 
