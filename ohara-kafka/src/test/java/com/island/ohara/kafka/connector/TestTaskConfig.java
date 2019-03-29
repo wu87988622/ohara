@@ -16,8 +16,10 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.kafka.connector.json.PropGroups;
 import com.island.ohara.kafka.connector.json.StringList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,5 +117,23 @@ public class TestTaskConfig extends SmallTest {
     List<String> ss2 = config.stringList(key);
     Assert.assertEquals(ss.size(), ss2.size());
     ss.forEach(s -> Assert.assertEquals(1, ss2.stream().filter(s::equals).count()));
+  }
+
+  @Test
+  public void testToPropGroups() {
+    PropGroups propGroups =
+        PropGroups.of(
+            Arrays.asList(
+                ImmutableMap.of("k0", "v0", "k1", "v1", "k2", "v2"),
+                ImmutableMap.of("k0", "v0", "k1", "v1")));
+    TaskConfig config = TaskConfig.of(ImmutableMap.of("pgs", propGroups.toJsonString()));
+    PropGroups another = config.propGroups("pgs");
+    Assert.assertEquals(propGroups, another);
+  }
+
+  @Test
+  public void getEmptyColumn() {
+    TaskConfig config = TaskConfig.of(ImmutableMap.of("pgs", "asdasd"));
+    Assert.assertTrue(config.columns().isEmpty());
   }
 }

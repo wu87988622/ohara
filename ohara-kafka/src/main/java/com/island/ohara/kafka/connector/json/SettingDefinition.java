@@ -34,6 +34,10 @@ public class SettingDefinition implements JsonObject {
   // -------------------------------[groups]-------------------------------//
   public static final String CORE_GROUP = "core";
   private static final String COMMON_GROUP = "common";
+  static final String ORDER_KEY = "order";
+  static final String COLUMN_NAME_KEY = "name";
+  static final String COLUMN_NEW_NAME_KEY = "newName";
+  static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[default setting]-------------------------------//
   public static final SettingDefinition CONNECTOR_CLASS_DEFINITION =
       SettingDefinition.builder()
@@ -73,11 +77,7 @@ public class SettingDefinition implements JsonObject {
           .group(CORE_GROUP)
           .orderInGroup(6)
           .propKeys(
-              Arrays.asList(
-                  PropGroup.ORDER_KEY,
-                  PropGroup.COLUMN_DATA_TYPE_KEY,
-                  PropGroup.COLUMN_NAME_KEY,
-                  PropGroup.COLUMN_NEW_NAME_KEY))
+              Arrays.asList(ORDER_KEY, COLUMN_DATA_TYPE_KEY, COLUMN_NAME_KEY, COLUMN_NEW_NAME_KEY))
           .build();
 
   public static final SettingDefinition WORKER_CLUSTER_NAME_DEFINITION =

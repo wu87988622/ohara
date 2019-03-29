@@ -225,16 +225,14 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                       | \"columns\": [
                                                                                       |   {
                                                                                       |     "order": 1,
-                                                                                      |     "props": {
-                                                                                      |       "name": "abc",
-                                                                                      |       "newName": "ccc",
-                                                                                      |       "dataType": "STRING"
-                                                                                      |     }
+                                                                                      |     "name": "abc",
+                                                                                      |     "newName": "ccc",
+                                                                                      |     "dataType": "STRING"
                                                                                       |   }
                                                                                       | ]
                                                                                       | }
      """.stripMargin.parseJson)
-    val column = PropGroups.ofJson(creationRequest.settings("columns").toString()).get(0).toColumn
+    val column = PropGroups.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
     column.order() shouldBe 1
     column.name() shouldBe "abc"
     column.newName() shouldBe "ccc"

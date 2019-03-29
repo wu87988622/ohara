@@ -92,7 +92,7 @@ object ConnectorApi {
     )
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
-      .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)
+      .map(s => PropGroups.ofJson(s).toColumns.asScala)
       .getOrElse(Seq.empty)
     def numberOfTasks: Option[Int] = plain.get(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).map(_.toInt)
     def workerClusterName: Option[String] = plain.get(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())
@@ -121,7 +121,7 @@ object ConnectorApi {
         SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> className.map(JsString(_)),
         SettingDefinition.COLUMNS_DEFINITION
           .key() -> (if (columns.isEmpty) None
-                     else Some(PropGroups.toString(PropGroups.of(columns.asJava)).parseJson)),
+                     else Some(PropGroups.ofColumns(columns.asJava).toJsonString.parseJson)),
         SettingDefinition.TOPIC_NAMES_DEFINITION.key() -> (if (topicNames.isEmpty) None
                                                            else
                                                              Some(
@@ -216,7 +216,7 @@ object ConnectorApi {
     )
     def columns: Seq[Column] = plain
       .get(SettingDefinition.COLUMNS_DEFINITION.key())
-      .map(s => PropGroups.toColumns(PropGroups.ofJson(s)).asScala)
+      .map(s => PropGroups.ofJson(s).toColumns.asScala)
       .getOrElse(Seq.empty)
     def numberOfTasks: Int = plain(SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key()).toInt
     def workerClusterName: String = plain(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key())

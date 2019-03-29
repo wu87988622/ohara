@@ -116,10 +116,12 @@ public class TestSettingDefinitions extends SmallTest {
     SettingDefinitions.DEFINITIONS_DEFAULT.forEach(
         definition -> {
           if (definition.valueType().equals(SettingDefinition.Type.TABLE.name())) {
-            Assert.assertTrue(definition.propKeys().contains(PropGroup.ORDER_KEY));
-            Assert.assertTrue(definition.propKeys().contains(PropGroup.COLUMN_DATA_TYPE_KEY));
-            Assert.assertTrue(definition.propKeys().contains(PropGroup.COLUMN_NAME_KEY));
-            Assert.assertTrue(definition.propKeys().contains(PropGroup.COLUMN_NEW_NAME_KEY));
+            Assert.assertTrue(definition.propKeys().contains(SettingDefinition.ORDER_KEY));
+            Assert.assertTrue(
+                definition.propKeys().contains(SettingDefinition.COLUMN_DATA_TYPE_KEY));
+            Assert.assertTrue(definition.propKeys().contains(SettingDefinition.COLUMN_NAME_KEY));
+            Assert.assertTrue(
+                definition.propKeys().contains(SettingDefinition.COLUMN_NEW_NAME_KEY));
           } else Assert.assertTrue(definition.propKeys().isEmpty());
         });
   }

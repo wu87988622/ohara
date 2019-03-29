@@ -19,7 +19,6 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
-import com.island.ohara.kafka.connector.json.PropGroup;
 import com.island.ohara.kafka.connector.json.PropGroups;
 import com.island.ohara.kafka.connector.json.SettingDefinition;
 import com.island.ohara.kafka.connector.json.StringList;
@@ -143,10 +142,8 @@ public class TaskConfig {
    * @throws NoSuchElementException if no existent value for input key
    * @return value
    */
-  public List<PropGroup> propGroups(String key) {
-    return Optional.ofNullable(raw.get(key))
-        .map(PropGroups::ofJson)
-        .orElse(Collections.emptyList());
+  public PropGroups propGroups(String key) {
+    return PropGroups.ofJson(stringValue(key));
   }
 
   // ----------------------------------[helper methods]----------------------------------//
@@ -159,7 +156,9 @@ public class TaskConfig {
   }
 
   public List<Column> columns() {
-    return PropGroups.toColumns(propGroups(SettingDefinition.COLUMNS_DEFINITION.key()));
+    String value = raw.get(SettingDefinition.COLUMNS_DEFINITION.key());
+    if (CommonUtils.isEmpty(value)) return Collections.emptyList();
+    return propGroups(SettingDefinition.COLUMNS_DEFINITION.key()).toColumns();
   }
 
   public Map<String, String> raw() {

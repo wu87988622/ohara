@@ -101,8 +101,8 @@ public final class ConnectorFormatter {
     return setting(SettingDefinition.VALUE_CONVERTER_DEFINITION.key(), type.className());
   }
 
-  public ConnectorFormatter propGroups(String key, List<PropGroup> propGroups) {
-    return setting(key, PropGroups.toString(propGroups));
+  public ConnectorFormatter propGroups(String key, PropGroups propGroups) {
+    return setting(key, propGroups.toJsonString());
   }
 
   public ConnectorFormatter column(Column column) {
@@ -110,7 +110,7 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter columns(List<Column> columns) {
-    return propGroups(SettingDefinition.COLUMNS_DEFINITION.key(), PropGroups.of(columns));
+    return propGroups(SettingDefinition.COLUMNS_DEFINITION.key(), PropGroups.ofColumns(columns));
   }
 
   public Creation requestOfCreation() {
