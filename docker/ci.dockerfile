@@ -19,3 +19,5 @@ FROM oharastream/ohara:deps
 # Coping dependencies from parent image is not solution as the chmod in docker is vary slow (see https://github.com/docker/for-linux/issues/388).
 # Also, We are too poor to buy the super network which can download everything in running QA
 WORKDIR /ohara
+
+RUN git pull
