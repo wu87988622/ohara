@@ -76,7 +76,7 @@ public class SettingDefinition implements JsonObject {
           .optional()
           .group(CORE_GROUP)
           .orderInGroup(6)
-          .propKeys(
+          .tableKeys(
               Arrays.asList(ORDER_KEY, COLUMN_DATA_TYPE_KEY, COLUMN_NAME_KEY, COLUMN_NEW_NAME_KEY))
           .build();
 
@@ -203,7 +203,7 @@ public class SettingDefinition implements JsonObject {
   private static final String DEFAULT_VALUE_KEY = "defaultValue";
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
-  private static final String PROP_KEYS_KEY = "propKeys";
+  private static final String TABLE_KEYS_KEY = "tableKeys";
 
   public static SettingDefinition ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<SettingDefinition>() {});
@@ -250,7 +250,7 @@ public class SettingDefinition implements JsonObject {
   private final String documentation;
   private final Reference reference;
   private final boolean internal;
-  private final List<String> propKeys;
+  private final List<String> tableKeys;
 
   @JsonCreator
   private SettingDefinition(
@@ -265,7 +265,7 @@ public class SettingDefinition implements JsonObject {
       @JsonProperty(DOCUMENTATION_KEY) String documentation,
       @Nullable @JsonProperty(REFERENCE_KEY) String reference,
       @JsonProperty(INTERNAL_KEY) boolean internal,
-      @JsonProperty(PROP_KEYS_KEY) List<String> propKeys) {
+      @JsonProperty(TABLE_KEYS_KEY) List<String> tableKeys) {
     this.displayName = CommonUtils.requireNonEmpty(displayName);
     this.group = group;
     this.orderInGroup = orderInGroup;
@@ -277,7 +277,7 @@ public class SettingDefinition implements JsonObject {
     this.documentation = CommonUtils.requireNonEmpty(documentation);
     this.reference = Reference.valueOf(CommonUtils.requireNonEmpty(reference));
     this.internal = internal;
-    this.propKeys = Objects.requireNonNull(propKeys);
+    this.tableKeys = Objects.requireNonNull(tableKeys);
   }
 
   @JsonProperty(INTERNAL_KEY)
@@ -338,9 +338,9 @@ public class SettingDefinition implements JsonObject {
     return reference.name();
   }
 
-  @JsonProperty(PROP_KEYS_KEY)
-  public List<String> propKeys() {
-    return new ArrayList<>(propKeys);
+  @JsonProperty(TABLE_KEYS_KEY)
+  public List<String> tableKeys() {
+    return new ArrayList<>(tableKeys);
   }
 
   public ConfigDef.ConfigKey toConfigKey() {
@@ -418,7 +418,7 @@ public class SettingDefinition implements JsonObject {
     private String documentation = "this is no documentation for this setting";
     private Reference reference = Reference.NONE;
     private boolean internal = false;
-    private List<String> propKeys = Collections.emptyList();
+    private List<String> tableKeys = Collections.emptyList();
 
     private Builder() {}
 
@@ -434,7 +434,7 @@ public class SettingDefinition implements JsonObject {
       this.documentation = definition.documentation;
       this.reference = definition.reference;
       this.internal = definition.internal;
-      this.propKeys = definition.propKeys;
+      this.tableKeys = definition.tableKeys;
     }
 
     Builder internal() {
@@ -445,11 +445,11 @@ public class SettingDefinition implements JsonObject {
     /**
      * this is a specific field fot Type.TABLE. It defines the keys' name for table.
      *
-     * @param propKeys key name of properties
+     * @param tableKeys key name of table
      * @return this builder
      */
-    Builder propKeys(List<String> propKeys) {
-      this.propKeys = new ArrayList<>(CommonUtils.requireNonEmpty(propKeys));
+    Builder tableKeys(List<String> tableKeys) {
+      this.tableKeys = new ArrayList<>(CommonUtils.requireNonEmpty(tableKeys));
       return this;
     }
 
@@ -488,9 +488,6 @@ public class SettingDefinition implements JsonObject {
     /**
      * This property is required by ohara manager. There are some official setting having particular
      * control on UI.
-     *
-     * @param reference
-     * @return
      */
     @Optional("default is no reference")
     Builder reference(Reference reference) {
@@ -535,7 +532,7 @@ public class SettingDefinition implements JsonObject {
           documentation,
           reference.name(),
           internal,
-          propKeys);
+          tableKeys);
     }
   }
 }
