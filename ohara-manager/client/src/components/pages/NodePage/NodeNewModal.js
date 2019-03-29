@@ -29,6 +29,7 @@ import validate from './validate';
 import { Modal } from 'common/Modal';
 import { Box } from 'common/Layout';
 import { FormGroup, Label } from 'common/Form';
+import DialogContent from '@material-ui/core/DialogContent';
 
 class NodeNewModal extends React.Component {
   static propTypes = {
@@ -114,14 +115,16 @@ class NodeNewModal extends React.Component {
               <form onSubmit={handleSubmit}>
                 <Box shadow={false}>
                   <FormGroup data-testid="name">
-                    <Label>Host name</Label>
-                    <Field
-                      name="name"
-                      component={InputField}
-                      width="100%"
-                      placeholder="node-00"
-                      data-testid="name-input"
-                    />
+                    <DialogContent>
+                      <Field
+                        name="name"
+                        label="Host name"
+                        component={InputField}
+                        width="100%"
+                        placeholder="node-00"
+                        data-testid="name-input"
+                      />
+                    </DialogContent>
                   </FormGroup>
                   <FormGroup data-testid="port">
                     <Label>Port</Label>

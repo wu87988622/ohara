@@ -18,29 +18,25 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
-const InputField = ({
+const MuiInputField = ({
   input: { name, onChange, value, ...restInput },
   meta,
   ...rest
 }) => {
-  const showError =
-    ((meta.submitError && !meta.dirtySinceLastSubmit) || meta.error) &&
-    meta.touched;
-
   return (
     <TextField
       {...rest}
       name={name}
       helperText={meta.touched ? meta.error : undefined}
       error={meta.error && meta.touched}
-      onChange={onChange}
-      InputProps={restInput}
+      inputProps={restInput}
+      handleChange={onChange}
       value={value}
     />
   );
 };
 
-InputField.propTypes = {
+MuiInputField.propTypes = {
   input: PropTypes.shape({
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
@@ -52,4 +48,4 @@ InputField.propTypes = {
   }).isRequired,
 };
 
-export default InputField;
+export default MuiInputField;

@@ -18,8 +18,8 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 
 import { Button } from 'common/Form';
-import { DataTable } from 'common/Table';
 import MuiButton from '@material-ui/core/Button';
+import MuiTable from '@material-ui/core/Table';
 
 export const Wrapper = styled.div`
   padding-top: 75px;
@@ -34,10 +34,6 @@ export const TopWrapper = styled.div`
   align-items: center;
 `;
 
-export const NewNodeBtn = styled(Button)`
-  margin-left: auto;
-`;
-
 export const MuiBtn = styled(MuiButton)`
   margin-left: auto;
 `;
@@ -46,9 +42,8 @@ export const TestConnectionBtn = styled(Button)`
   margin-right: auto;
 `;
 
-export const Table = styled(DataTable)`
+export const Table = styled(MuiTable)`
   text-align: left;
-
   .is-running {
     background: ${props => props.theme.trBgColor};
   }

@@ -16,15 +16,16 @@
 
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import { reduce, map, join, sortBy, get, isNull } from 'lodash';
+import { reduce, map, sortBy, get, isNull } from 'lodash';
 
 import * as nodeApi from 'api/nodeApi';
 import { NODES } from 'constants/documentTitles';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
-import { primaryBtn } from 'theme/btnTheme';
 import NodeNewModal from './NodeNewModal';
 import NodeEditModal from './NodeEditModal';
+import MuiTable from './NodeListTable';
+import MuiNewModal from './MuiNewModal';
 
 import * as s from './Styles';
 
@@ -32,13 +33,13 @@ const NODE_NEW_MODAL = 'nodeNewModal';
 const NODE_EDIT_MODAL = 'nodeEditModal';
 
 class NodeListPage extends React.Component {
-  headers = ['HOST NAME', 'SERVICES', 'SSH', 'EDIT'];
-
   state = {
     isLoading: true,
     nodes: [],
     activeModal: null,
     activeNode: null,
+    newOpen: false,
+    editOpen: false,
   };
 
   componentDidMount() {
@@ -52,6 +53,18 @@ class NodeListPage extends React.Component {
     if (!isNull(nodes)) {
       this.setState({ nodes: sortBy(nodes, 'name') });
     }
+  };
+
+  handleNewClickOpen = () => {
+    this.setState({ newOpen: true });
+  };
+
+  handleEditClickOpen = () => {
+    this.setState({ editOpen: true });
+  };
+
+  handleClose = () => {
+    this.setState({ newOpen: false, editOpen: false });
   };
 
   handleEditClick = node => {
@@ -90,7 +103,6 @@ class NodeListPage extends React.Component {
 
   render() {
     const { nodes, isLoading, activeModal, activeNode } = this.state;
-
     return (
       <DocumentTitle title={NODES}>
         <React.Fragment>
@@ -98,7 +110,14 @@ class NodeListPage extends React.Component {
             <s.TopWrapper>
               <H2>Nodes</H2>
               <s.MuiBtn
-                className={s.MuiBtn}
+                color="primary"
+                variant="contained"
+                data-testid="new-node"
+                onClick={this.handleNewClickOpen}
+              >
+                New Node
+              </s.MuiBtn>
+              <s.MuiBtn
                 color="primary"
                 variant="contained"
                 data-testid="new-node"
@@ -106,32 +125,24 @@ class NodeListPage extends React.Component {
                   this.setState({ activeModal: NODE_NEW_MODAL });
                 }}
               >
-                New Node
+                New Node2
               </s.MuiBtn>
             </s.TopWrapper>
             <Box>
-              <s.Table
-                headers={this.headers}
+              <MuiTable
+                getAllClusterNames={this.getAllClusterNames}
+                getSSHLabel={this.getSSHLabel}
+                handleEditClick={this.handleEditClick}
+                nodes={nodes}
                 isLoading={isLoading}
-                data-testid="node-list"
-              >
-                {nodes.map(node => (
-                  <tr key={node.name}>
-                    <td>{node.name || ''}</td>
-                    <td>{join(this.getAllClusterNames(node), ', ')}</td>
-                    <td>{this.getSSHLabel(node.user, node.port)}</td>
-                    <td className="has-icon">
-                      <s.Icon
-                        className="far fa-edit"
-                        data-testid="edit-node-icon"
-                        onClick={() => this.handleEditClick(node)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </s.Table>
+              />
             </Box>
           </s.Wrapper>
+          <MuiNewModal
+            newOpen={this.state.newOpen}
+            handleClose={this.handleClose}
+            handleConfirm={this.fetchData}
+          />
           <NodeNewModal
             isActive={activeModal === NODE_NEW_MODAL}
             handleClose={() => {
