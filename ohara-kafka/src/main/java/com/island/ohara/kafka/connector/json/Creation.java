@@ -19,9 +19,9 @@ package com.island.ohara.kafka.connector.json;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -37,13 +37,13 @@ public class Creation implements JsonObject {
   }
 
   public static Creation of(String name, String key, String value) {
-    Map<String, String> map = new HashMap<>();
-    map.put(CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value));
-    return new Creation(name, map);
+    return new Creation(
+        name,
+        ImmutableMap.of(CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
   }
 
   public static Creation of(Map<String, String> configs) {
-    return new Creation(CommonUtils.requireNonEmpty(configs.remove(NAME_KEY)), configs);
+    return new Creation(CommonUtils.requireNonEmpty(configs.get(NAME_KEY)), configs);
   }
 
   @JsonCreator
@@ -66,7 +66,7 @@ public class Creation implements JsonObject {
             // TODO: this issue is fixed by
             // https://github.com/apache/kafka/commit/5a2960f811c27f59d78dfdb99c7c3c6eeed16c4b
             // TODO: we should remove this workaround after we update kafka to 1.1.x
-            .filter(entry -> !entry.getKey().equals(NAME_KEY))
+            .filter(entry -> !entry.getKey().equalsIgnoreCase(NAME_KEY))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 

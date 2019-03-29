@@ -16,10 +16,10 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.util.VersionUtils;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -122,7 +122,7 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(TaskConfig.of(new HashMap<>(props)));
+    _start(TaskConfig.of(ImmutableMap.copyOf(props)));
   }
 
   @Override

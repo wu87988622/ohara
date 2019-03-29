@@ -17,11 +17,11 @@
 package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +47,7 @@ public final class PropGroups implements Iterable<Map<String, String>> {
         Collections.unmodifiableList(
             values.stream()
                 .filter(s -> !s.isEmpty())
-                .map(v -> Collections.unmodifiableMap(new HashMap<>(v)))
+                .map(v -> Collections.unmodifiableMap(ImmutableMap.copyOf(v)))
                 .collect(Collectors.toList()));
     this.values.forEach(
         props ->
@@ -63,7 +63,7 @@ public final class PropGroups implements Iterable<Map<String, String>> {
   }
 
   public Map<String, String> propGroup(int index) {
-    return new HashMap<>(values.get(index));
+    return ImmutableMap.copyOf(values.get(index));
   }
 
   public boolean isEmpty() {
@@ -114,12 +114,11 @@ public final class PropGroups implements Iterable<Map<String, String>> {
   }
 
   private static Map<String, String> toPropGroup(Column column) {
-    Map<String, String> propGroup = new HashMap<>();
-    propGroup.put(SettingDefinition.ORDER_KEY, String.valueOf(column.order()));
-    propGroup.put(SettingDefinition.COLUMN_NAME_KEY, column.name());
-    propGroup.put(SettingDefinition.COLUMN_NEW_NAME_KEY, column.newName());
-    propGroup.put(SettingDefinition.COLUMN_DATA_TYPE_KEY, column.dataType().name());
-    return propGroup;
+    return ImmutableMap.of(
+        SettingDefinition.ORDER_KEY, String.valueOf(column.order()),
+        SettingDefinition.COLUMN_NAME_KEY, column.name(),
+        SettingDefinition.COLUMN_NEW_NAME_KEY, column.newName(),
+        SettingDefinition.COLUMN_DATA_TYPE_KEY, column.dataType().name());
   }
 
   @Override

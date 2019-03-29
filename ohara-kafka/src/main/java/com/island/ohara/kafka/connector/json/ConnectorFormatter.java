@@ -16,6 +16,7 @@
 
 package com.island.ohara.kafka.connector.json;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.Optional;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.CommonUtils;
@@ -114,14 +115,14 @@ public final class ConnectorFormatter {
   }
 
   public Creation requestOfCreation() {
-    return Creation.of(new HashMap<>(settings));
+    return Creation.of(ImmutableMap.copyOf(settings));
   }
 
   public Map<String, String> requestOfValidation() {
-    return new HashMap<>(settings);
+    return ImmutableMap.copyOf(settings);
   }
 
   public TaskConfig taskConfig() {
-    return TaskConfig.of(new HashMap<>(settings));
+    return TaskConfig.of(ImmutableMap.copyOf(settings));
   }
 }

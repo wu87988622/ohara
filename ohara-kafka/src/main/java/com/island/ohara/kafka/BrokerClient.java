@@ -16,6 +16,7 @@
 
 package com.island.ohara.kafka;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.kafka.exception.CheckedExceptionUtils;
 import com.island.ohara.kafka.exception.ExceptionHandler;
@@ -26,7 +27,6 @@ import com.island.ohara.kafka.exception.OharaTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -227,12 +227,13 @@ public interface BrokerClient extends Releasable {
         if (current.numberOfPartitions() > numberOfPartitions)
           throw new IllegalArgumentException("Reducing the number from partitions is disallowed");
         if (current.numberOfPartitions() < numberOfPartitions) {
-          Map<String, NewPartitions> map = new HashMap<>();
-          map.put(topicName, NewPartitions.increaseTo(numberOfPartitions));
-
           CheckedExceptionUtils.wrap(
               () ->
-                  admin.createPartitions(map).all().get(timeout.toMillis(), TimeUnit.MILLISECONDS),
+                  admin
+                      .createPartitions(
+                          ImmutableMap.of(topicName, NewPartitions.increaseTo(numberOfPartitions)))
+                      .all()
+                      .get(timeout.toMillis(), TimeUnit.MILLISECONDS),
               handler);
         }
       }

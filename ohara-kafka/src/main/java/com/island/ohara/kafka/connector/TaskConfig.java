@@ -16,6 +16,7 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorFormatter;
@@ -38,7 +39,7 @@ public class TaskConfig {
   private final Map<String, String> raw;
 
   private TaskConfig(Map<String, String> raw) {
-    this.raw = CommonUtils.requireNonEmpty(raw);
+    this.raw = ImmutableMap.copyOf(CommonUtils.requireNonEmpty(raw));
     raw.forEach(
         (k, v) -> {
           CommonUtils.requireNonEmpty(k, () -> "k:" + k + ", v:" + v);
