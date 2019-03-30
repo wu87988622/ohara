@@ -17,11 +17,15 @@
 
 
 if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
-  if [[ -f "$KAFKA_HOME/bin/true_version" ]]; then
-    VERSION=$(cat "$KAFKA_HOME/bin/true_version")
-    echo "connect-worker $VERSION"
+  if [[ -f "$KAFKA_HOME/bin/worker_version" ]]; then
+    echo "connect-worker $(cat "$KAFKA_HOME/bin/worker_version")"
   else
     echo "connect-worker: unknown"
+  fi
+    if [[ -f "$KAFKA_HOME/bin/ohara_version" ]]; then
+    echo "ohara connectors $(cat "$KAFKA_HOME/bin/ohara_version")"
+  else
+    echo "ohara connectors: unknown"
   fi
   exit
 fi
