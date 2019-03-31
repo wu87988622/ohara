@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
-import com.island.ohara.agent.{ClusterCollie, K8SClient, NodeCollie}
+package com.island.ohara.it.agent.k8s
+
+import com.island.ohara.agent.k8s.K8SClient
+import com.island.ohara.agent.{ClusterCollie, NodeCollie}
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.it.agent.{BasicTests4ClusterCollieByConfigurator, ClusterNameHolder}
 import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before}
 

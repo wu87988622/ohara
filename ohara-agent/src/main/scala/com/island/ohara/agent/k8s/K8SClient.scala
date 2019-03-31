@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.k8s
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -22,8 +22,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.K8SClient.ContainerCreator
-import com.island.ohara.agent.K8SJson.{
+import com.island.ohara.agent.k8s.K8SClient.ContainerCreator
+import com.island.ohara.agent.k8s.K8SJson.{
   Container,
   CreatePod,
   CreatePodContainer,

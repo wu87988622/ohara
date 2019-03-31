@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.k8s
 
 import java.net.URL
 
 import com.island.ohara.agent.Collie.ClusterCreator
-import com.island.ohara.agent.K8SClusterCollieImpl.{K8SBrokerCollieImpl, K8SWorkerCollieImpl, K8SZookeeperCollieImpl}
+import com.island.ohara.agent._
+import com.island.ohara.agent.k8s.K8SClusterCollieImpl.{
+  K8SBrokerCollieImpl,
+  K8SWorkerCollieImpl,
+  K8SZookeeperCollieImpl
+}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -28,6 +33,7 @@ import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo}
 import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
+
 import scala.concurrent.{ExecutionContext, Future}
 
 private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sClient: K8SClient)

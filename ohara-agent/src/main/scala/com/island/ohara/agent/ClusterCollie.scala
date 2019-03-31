@@ -18,6 +18,7 @@ package com.island.ohara.agent
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
+import com.island.ohara.agent.k8s.{K8SClient, K8SClusterCollieImpl}
 import com.island.ohara.agent.ssh.ClusterCollieImpl
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo

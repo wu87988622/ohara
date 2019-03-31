@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.k8s
 
 import com.island.ohara.agent._
+import com.island.ohara.agent.k8s.{K8SClient, K8sContainerState}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node

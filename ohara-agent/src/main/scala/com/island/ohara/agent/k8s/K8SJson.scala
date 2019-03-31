@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.k8s
 
-import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsObject, JsString, JsValue, RootJsonFormat}
+import spray.json.DefaultJsonProtocol._
+
 object K8SJson {
   //for show container information
   final case class EnvInfo(name: String, value: Option[String])

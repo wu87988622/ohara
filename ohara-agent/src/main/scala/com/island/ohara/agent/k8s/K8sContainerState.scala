@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.agent.k8s
 
 import com.island.ohara.client.kafka.Enum
 

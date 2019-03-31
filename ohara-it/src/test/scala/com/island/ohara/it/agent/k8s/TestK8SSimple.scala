@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.agent
+package com.island.ohara.it.agent.k8s
 
 import java.util.UUID
 
@@ -24,8 +24,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.{K8SClient, K8sContainerState}
-import com.island.ohara.agent.K8SJson.K8SErrorResponse
+import com.island.ohara.agent.k8s.{K8SClient, K8sContainerState}
+import com.island.ohara.agent.k8s.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.common.util.CommonUtils
