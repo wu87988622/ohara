@@ -35,6 +35,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
@@ -54,6 +55,10 @@ private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sCl
         k8sClient.images(node.name).map(images => node -> images)
       }
       .map(_.toMap)
+
+  // TODO: fixed by https://github.com/oharastream/ohara/issues/585
+  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] = Future(
+    Try(throw new UnsupportedOperationException("validation of k8s node is not supported yet")))
 }
 
 private object K8SClusterCollieImpl {

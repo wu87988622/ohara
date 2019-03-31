@@ -23,6 +23,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /**
   * It doesn't involve any running cluster but save all description in memory
@@ -61,4 +62,7 @@ private[configurator] class FakeClusterCollie(store: DataStore, bkConnectionProp
       nodes
         .map(_ -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT))
         .toMap)
+
+  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
+    Future.successful(Try(s"This is fake mode so we didn't test connection actually..."))
 }
