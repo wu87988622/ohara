@@ -70,7 +70,7 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
   private[this] def toWkCluster(clusterName: String, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext): Future[ClusterInfo] = {
     val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
-    plugins(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { plugins =>
+    connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
       WorkerClusterInfo(
         name = clusterName,
         imageName = containers.head.imageName,
@@ -91,7 +91,7 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
           .split(",")
           .filter(_.nonEmpty)
           .map(u => new URL(u).getFile),
-        connectors = plugins,
+        connectors = connectors,
         nodeNames = containers.map(_.nodeName)
       )
     }

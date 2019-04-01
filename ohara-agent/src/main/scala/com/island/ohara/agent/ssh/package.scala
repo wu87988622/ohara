@@ -32,7 +32,7 @@ package object ssh {
     * @param connectionProps worker connection props
     * @return plugin description or nothing
     */
-  private[ssh] def plugins(connectionProps: String)(
+  private[agent] def connectors(connectionProps: String)(
     implicit executionContext: ExecutionContext): Future[Seq[ConnectorDefinitions]] =
     WorkerClient(connectionProps, maxRetry = 0).connectors.recover {
       case e: Throwable =>

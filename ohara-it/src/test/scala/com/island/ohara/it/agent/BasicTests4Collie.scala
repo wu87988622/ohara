@@ -443,9 +443,9 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           // container.portMappings.head.portPairs.size shouldBe 1
           // container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
           container.environments.exists(_._2 == clientPort.toString) shouldBe true
-          testPlugins(
+          testConnectors(
             testRemoveNodeToRunningWorkerCluster(
-              testPlugins(testAddNodeToRunningWorkerCluster(testPlugins(wkCluster)))))
+              testConnectors(testAddNodeToRunningWorkerCluster(testConnectors(wkCluster)))))
         } finally if (cleanup) {
           result(wk_delete(wkCluster.name))
           assertNoCluster(() => result(wk_clusters()), wkCluster.name)
@@ -458,11 +458,11 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   }
 
-  private[this] def testPlugins(cluster: WorkerClusterInfo): WorkerClusterInfo = {
+  private[this] def testConnectors(cluster: WorkerClusterInfo): WorkerClusterInfo = {
     val workerClient = WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}")
     await(
       () =>
-        try result(workerClient.plugins).nonEmpty
+        try result(workerClient.connectors).nonEmpty
         catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)
@@ -695,7 +695,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         another.offsetTopicReplications shouldBe c.offsetTopicReplications
         another.jarNames shouldBe c.jarNames
         another.imageName shouldBe c.imageName
-        testPlugins(c)
+        testConnectors(c)
       }
     } finally if (cleanup) {
       wkNames.foreach { name =>
