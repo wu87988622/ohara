@@ -37,44 +37,46 @@ class TestK8SClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfi
   private[this] val NODE_SERVER_NAME: Option[String] = sys.env.get(K8S_API_NODE_NAME_KEY)
 
   override protected val nodeCache: Seq[Node] =
-    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) {
-      //After getting K8S client URL, set the k8sCollie to Configurator object.
-      //if API_SERVER_URL variable is null will skip the test.
-      skipTest(s"You must assign nodes for collie tests")
-      Seq.empty
-    } else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
+    if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
+    else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
 
-  private[this] val k8sClient = K8SClient(API_SERVER_URL.get)
-  val k8sCollie: ClusterCollie = ClusterCollie.k8s(
-    NodeCollie(nodeCache),
-    // It is ok to pass null since we will skip test if no k8s env exists
-    if (API_SERVER_URL.isEmpty) null else k8sClient
-  )
-
-  val configurator: Configurator = Configurator.builder().clusterCollie(k8sCollie).build()
-
-  private[this] val nameHolder = new ClusterNameHolder(nodeCache) {
-    override def close(): Unit = {
-      nodeCache.foreach { node =>
-        try k8sClient.containers
-          .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
-          .foreach { container =>
-            try {
-              k8sClient.remove(container.name)
-              log.info(s"succeed to remove container ${container.name}")
-            } catch {
-              case e: Throwable =>
-                log.error(s"failed to remove container ${container.name}", e)
-            }
-          } finally k8sClient.close()
-      }
-    }
-  }
+  override def configurator: Configurator = _configurator
+  private[this] var _configurator: Configurator = _
+  private[this] var nameHolder: ClusterNameHolder = _
 
   @Before
   final def setup(): Unit = {
     if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
     else {
+      _configurator = Configurator
+        .builder()
+        .clusterCollie(
+          ClusterCollie
+            .builderOfK8s()
+            .nodeCollie(NodeCollie(nodeCache))
+            .k8sClient(K8SClient(API_SERVER_URL.get))
+            .build())
+        .build()
+      nameHolder = new ClusterNameHolder(nodeCache) {
+        override def close(): Unit = {
+          val k8sClient = K8SClient(API_SERVER_URL.get)
+          try {
+            nodeCache.foreach { node =>
+              k8sClient.containers
+                .filter(container => usedClusterNames.exists(clusterName => container.name.contains(clusterName)))
+                .foreach { container =>
+                  try {
+                    k8sClient.remove(container.name)
+                    log.info(s"succeed to remove container ${container.name}")
+                  } catch {
+                    case e: Throwable =>
+                      log.error(s"failed to remove container ${container.name}", e)
+                  }
+                }
+            }
+          } finally k8sClient.close()
+        }
+      }
       val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
       nodeCache.foreach { node =>
         result(

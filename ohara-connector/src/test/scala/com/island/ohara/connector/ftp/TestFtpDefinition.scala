@@ -41,7 +41,7 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[FtpSource])
-        .run)
+        .run())
 
     response.settings().size should not be 0
     response
@@ -91,7 +91,7 @@ class TestFtpDefinition extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[FtpSink])
-        .run)
+        .run())
 
     response.settings().size should not be 0
     response

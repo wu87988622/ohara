@@ -143,7 +143,7 @@ trait WorkerClient {
     */
   def definitions(connectorClassName: String)(
     implicit executionContext: ExecutionContext): Future[Seq[SettingDefinition]] =
-    connectorValidator().connectorClassName(connectorClassName).run.map(_.settings().asScala.map(_.definition()))
+    connectorValidator().connectorClassName(connectorClassName).run().map(_.settings().asScala.map(_.definition()))
 
 }
 
@@ -451,7 +451,7 @@ object WorkerClient {
       *
       * @return this one
       */
-    def create(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] =
+    def create()(implicit executionContext: ExecutionContext): Future[ConnectorCreationResponse] =
       doCreate(
         executionContext = Objects.requireNonNull(executionContext),
         name = CommonUtils.requireNonEmpty(name),
@@ -550,7 +550,7 @@ object WorkerClient {
       this
     }
 
-    def run(implicit executionContext: ExecutionContext): Future[SettingInfo] = doValidate(
+    def run()(implicit executionContext: ExecutionContext): Future[SettingInfo] = doValidate(
       executionContext = Objects.requireNonNull(executionContext),
       connectorClassName = CommonUtils.requireNonEmpty(connectorClassName),
       settings = formatter.requestOfValidation().asScala.toMap

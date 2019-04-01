@@ -29,7 +29,7 @@ import scala.concurrent.Future
   * in test. If you want to test collie on e2e mode. Please extend TestSshClusterCollieByConfigurator.
   */
 abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
-  protected val clusterCollie: ClusterCollie
+  protected def clusterCollie: ClusterCollie
 
   private[this] def zkCollie = clusterCollie.zookeeperCollie()
   private[this] def bkCollie = clusterCollie.brokerCollie()
@@ -51,7 +51,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .peerPort(peerPort)
       .electionPort(electionPort)
       .nodeNames(nodeNames)
-      .create
+      .create()
 
   override protected def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] =
     zkCollie.clusters.map(_.keys.toSeq)
@@ -81,7 +81,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .exporterPort(exporterPort)
       .zookeeperClusterName(zkClusterName)
       .nodeNames(nodeNames)
-      .create
+      .create()
 
   override protected def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkCollie.clusters.map(_.keys.toSeq)
 
@@ -118,7 +118,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .statusTopicName(CommonUtils.randomString(10))
       .offsetTopicName(CommonUtils.randomString(10))
       .nodeNames(nodeNames)
-      .create
+      .create()
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
@@ -139,7 +139,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .statusTopicName(statusTopicName)
       .offsetTopicName(offsetTopicName)
       .nodeNames(nodeNames)
-      .create
+      .create()
 
   override protected def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkCollie.clusters.map(_.keys.toSeq)
 

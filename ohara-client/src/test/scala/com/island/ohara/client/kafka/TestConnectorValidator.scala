@@ -29,7 +29,7 @@ class TestConnectorValidator extends SmallTest with Matchers {
 
   @Test
   def ignoreClassName(): Unit =
-    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().run
+    an[NullPointerException] should be thrownBy notWorkingClient.connectorValidator().run()
 
   @Test
   def nullSettingKey(): Unit =

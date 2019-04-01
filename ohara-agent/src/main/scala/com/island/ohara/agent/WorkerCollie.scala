@@ -132,7 +132,7 @@ object WorkerCollie {
       this
     }
 
-    override def create(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = doCreate(
+    override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),

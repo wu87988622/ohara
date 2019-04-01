@@ -79,7 +79,7 @@ object BrokerRoute {
           .zookeeperClusterName(zkName)
           .imageName(req.imageName.getOrElse(BrokerApi.IMAGE_NAME_DEFAULT))
           .nodeNames(req.nodeNames)
-          .create
+          .create()
       }
     )
 }

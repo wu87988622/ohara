@@ -51,6 +51,6 @@ object ZookeeperRoute {
           .peerPort(req.peerPort.getOrElse(ZookeeperApi.PEER_PORT_DEFAULT))
           .imageName(req.imageName.getOrElse(ZookeeperApi.IMAGE_NAME_DEFAULT))
           .nodeNames(req.nodeNames)
-          .create
+          .create()
     )
 }

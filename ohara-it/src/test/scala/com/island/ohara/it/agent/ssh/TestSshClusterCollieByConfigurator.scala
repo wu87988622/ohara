@@ -26,11 +26,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestSshClusterCollieByConfigurator extends BasicTests4ClusterCollieByConfigurator {
   override protected val nodeCache: Seq[Node] = CollieTestUtils.nodeCache()
   private[this] val nameHolder = new ClusterNameHolder(nodeCache)
-  override protected val configurator: Configurator = Configurator.builder().build()
+  override protected def configurator: Configurator = _configurator
 
+  private[this] var _configurator: Configurator = _
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty) skipTest(s"You must assign nodes for collie tests")
   else {
+    _configurator = Configurator.builder().build()
     val nodeApi = NodeApi.access().hostname(configurator.hostname).port(configurator.port)
     nodeCache.foreach { node =>
       result(

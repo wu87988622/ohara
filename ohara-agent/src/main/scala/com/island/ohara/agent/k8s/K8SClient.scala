@@ -234,7 +234,7 @@ object K8SClient {
           this
         }
 
-        override def run(implicit executionContext: ExecutionContext): Option[ContainerInfo] = {
+        override def run()(implicit executionContext: ExecutionContext): Option[ContainerInfo] = {
           val podSpec = CreatePodSpec(
             CreatePodNodeSelector(nodename),
             hostname,
@@ -311,7 +311,7 @@ object K8SClient {
 
     def nodename(nodename: String): ContainerCreator
 
-    def run(implicit executionContext: ExecutionContext): Option[ContainerInfo]
+    def run()(implicit executionContext: ExecutionContext): Option[ContainerInfo]
 
     def domainName(domainName: String): ContainerCreator
 

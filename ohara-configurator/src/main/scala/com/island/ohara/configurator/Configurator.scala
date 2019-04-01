@@ -250,8 +250,8 @@ object Configurator {
       case Array(HOSTNAME_KEY, value) => configuratorBuilder.advertisedHostname(value)
       case Array(PORT_KEY, value)     => configuratorBuilder.advertisedPort(value.toInt)
       case Array(K8S_KEY, value) =>
-        val k8sCollie: ClusterCollie = ClusterCollie.k8s(configuratorBuilder.nodeCollie(), K8SClient(value))
-        configuratorBuilder.clusterCollie(k8sCollie)
+        configuratorBuilder.clusterCollie(
+          ClusterCollie.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(K8SClient(value)).build())
         k8sValue = value
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head

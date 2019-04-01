@@ -37,15 +37,15 @@ import com.typesafe.scalalogging.Logger
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-private[agent] class K8SClusterCollieImpl(implicit nodeCollie: NodeCollie, k8sClient: K8SClient)
+private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
     with ClusterCollie {
 
-  override def zookeeperCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl
+  override def zookeeperCollie(): ZookeeperCollie = new K8SZookeeperCollieImpl(nodeCollie, k8sClient)
 
-  override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl
+  override def brokerCollie(): BrokerCollie = new K8SBrokerCollieImpl(nodeCollie, k8sClient)
 
-  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl
+  override def workerCollie(): WorkerCollie = new K8SWorkerCollieImpl(nodeCollie, k8sClient)
 
   override protected def doClose(): Unit = Releasable.close(k8sClient)
 
@@ -162,7 +162,7 @@ private object K8SClusterCollieImpl {
     }
   }
 
-  private class K8SZookeeperCollieImpl(implicit val nodeCollie: NodeCollie, val k8sClient: K8SClient)
+  private class K8SZookeeperCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
       extends ZookeeperCollie
       with K8SBasicCollieImpl[ZookeeperClusterInfo, ZookeeperCollie.ClusterCreator] {
 
@@ -199,7 +199,7 @@ private object K8SClusterCollieImpl {
                       ZookeeperCollie.SERVERS_KEY -> zkServers
                     ))
                     .name(hostname)
-                    .run
+                    .run()
                   catch {
                     case e: Throwable =>
                       LOG.error(s"failed to start $clusterName", e)
@@ -249,7 +249,7 @@ private object K8SClusterCollieImpl {
     }
   }
 
-  private class K8SBrokerCollieImpl(implicit val nodeCollie: NodeCollie, val k8sClient: K8SClient)
+  private class K8SBrokerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
       extends BrokerCollie
       with K8SBasicCollieImpl[BrokerClusterInfo, BrokerCollie.ClusterCreator] {
 
@@ -326,7 +326,7 @@ private object K8SClusterCollieImpl {
                         ZOOKEEPER_CLUSTER_NAME -> zookeeperClusterName
                       ))
                       .name(hostname)
-                      .run
+                      .run()
                     catch {
                       case e: Throwable =>
                         LOG.error(s"failed to start $imageName on ${node.name}", e)
@@ -358,7 +358,7 @@ private object K8SClusterCollieImpl {
       .exporterPort(previousCluster.exporterPort)
       .imageName(previousCluster.imageName)
       .nodeName(newNodeName)
-      .create
+      .create()
 
     override val service: Service = BROKER
 
@@ -376,7 +376,7 @@ private object K8SClusterCollieImpl {
     }
   }
 
-  private class K8SWorkerCollieImpl(implicit val nodeCollie: NodeCollie, val k8sClient: K8SClient)
+  private class K8SWorkerCollieImpl(val nodeCollie: NodeCollie, val k8sClient: K8SClient)
       extends WorkerCollie
       with K8SBasicCollieImpl[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
@@ -479,7 +479,7 @@ private object K8SClusterCollieImpl {
                     .labelName(OHARA_LABEL)
                     .domainName(K8S_DOMAIN_NAME)
                     .name(hostname)
-                    .run
+                    .run()
                   catch {
                     case e: Throwable =>
                       LOG.error(s"failed to start $imageName", e)
@@ -531,7 +531,7 @@ private object K8SClusterCollieImpl {
           .filter(_.nonEmpty)
           .map(s => new URL(s)))
       .nodeName(newNodeName)
-      .create
+      .create()
 
     override val service: Service = WORKER
 

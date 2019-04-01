@@ -41,7 +41,7 @@ class TestPerfDefinition extends WithBrokerWorker with Matchers {
         .numberOfTasks(1)
         .topicName(CommonUtils.randomString(5))
         .connectorClass(classOf[PerfSource])
-        .run)
+        .run())
 
     response.settings().size should not be 0
     response

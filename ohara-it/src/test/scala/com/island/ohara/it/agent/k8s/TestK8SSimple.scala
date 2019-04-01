@@ -152,7 +152,7 @@ class TestK8SSimple extends IntegrationTest with Matchers {
         .imageName(ZookeeperApi.IMAGE_NAME_DEFAULT)
         .envs(Map())
         .portMappings(Map())
-        .run
+        .run()
       result.get.name shouldBe containerName
     } finally {
       // Remove a container

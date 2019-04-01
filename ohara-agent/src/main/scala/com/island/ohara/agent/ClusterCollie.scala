@@ -226,13 +226,36 @@ object ClusterCollie {
       nodeCollie = Objects.requireNonNull(nodeCollie),
       executor = Objects.requireNonNull(executor)
     )
-
   }
 
   /**
-    * create kubernetes implements
-    * @param nodeCollie
-    * @return
+    * Create a builder for instantiating k8s collie.
+    * Currently, the nodes in node collie must be equal to nodes which is controllable to k8s client.
+    * @return builder for k8s implementation
     */
-  def k8s(implicit nodeCollie: NodeCollie, k8sClient: K8SClient): ClusterCollie = new K8SClusterCollieImpl
+  def builderOfK8s(): K8shBuilder = new K8shBuilder
+
+  class K8shBuilder private[agent] {
+    private[this] var nodeCollie: NodeCollie = _
+    private[this] var k8sClient: K8SClient = _
+
+    def nodeCollie(nodeCollie: NodeCollie): K8shBuilder = {
+      this.nodeCollie = Objects.requireNonNull(nodeCollie)
+      this
+    }
+
+    def k8sClient(k8sClient: K8SClient): K8shBuilder = {
+      this.k8sClient = Objects.requireNonNull(k8sClient)
+      this
+    }
+
+    /**
+      * We don't return ClusterCollieImpl since it is a private implementation
+      * @return
+      */
+    def build(): ClusterCollie = new K8SClusterCollieImpl(
+      nodeCollie = Objects.requireNonNull(nodeCollie),
+      k8sClient = Objects.requireNonNull(k8sClient)
+    )
+  }
 }

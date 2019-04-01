@@ -101,7 +101,7 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .clientPort(CommonUtils.availablePort())
     .electionPort(CommonUtils.availablePort())
     .nodeNames(Seq("asdasd"))
-    .create
+    .create()
 
   @Test
   def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy zkCreator()
@@ -111,5 +111,5 @@ class TestZookeeperCreator extends SmallTest with Matchers {
     .clientPort(CommonUtils.availablePort())
     .electionPort(CommonUtils.availablePort())
     .nodeNames(Seq("asdasd"))
-    .create
+    .create()
 }

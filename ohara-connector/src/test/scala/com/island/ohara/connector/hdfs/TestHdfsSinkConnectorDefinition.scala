@@ -118,7 +118,7 @@ class TestHdfsSinkConnectorDefinition extends WithBrokerWorker with Matchers {
         .topicName(CommonUtils.randomString(5))
         .settings(Map(HDFS_URL -> s"file://${testUtil.hdfs.tmpDirectory}"))
         .connectorClass(classOf[HDFSSinkConnector])
-        .run)
+        .run())
 
     response.settings().size should not be 0
     response
@@ -168,7 +168,7 @@ class TestHdfsSinkConnectorDefinition extends WithBrokerWorker with Matchers {
         .topicName(CommonUtils.randomString(5))
         .settings(Map(FLUSH_LINE_COUNT -> "1000", TMP_DIR -> "/tmp", HDFS_URL -> "file://"))
         .connectorClass(classOf[HDFSSinkConnector])
-        .run)
+        .run())
 
     response.settings().size should not be 0
     response

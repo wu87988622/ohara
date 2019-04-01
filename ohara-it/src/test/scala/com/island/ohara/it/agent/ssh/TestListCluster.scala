@@ -73,7 +73,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .electionPort(CommonUtils.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(name)
-        .create
+        .create()
     )
     catch {
       case _: Throwable =>
@@ -105,7 +105,7 @@ class TestListCluster extends IntegrationTest with Matchers {
         .electionPort(CommonUtils.availablePort())
         .nodeNames(nodeCache.map(_.name))
         .clusterName(nameHolder.generateClusterName())
-        .create
+        .create()
     )
 
     log.info("[TestListCluster] before create bk cluster")
@@ -123,7 +123,7 @@ class TestListCluster extends IntegrationTest with Matchers {
           .nodeNames(nodeCache.map(_.name))
           .clusterName(name)
           .zookeeperClusterName(zkCluster.name)
-          .create
+          .create()
       )
       catch {
         case _: Throwable =>

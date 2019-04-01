@@ -48,7 +48,7 @@ private[configurator] object TopicRoute {
               .name(id)
               .numberOfPartitions(request.numberOfPartitions.getOrElse(DEFAULT_NUMBER_OF_PARTITIONS))
               .numberOfReplications(request.numberOfReplications.getOrElse(DEFAULT_NUMBER_OF_REPLICATIONS))
-              .create
+              .create()
               .map { info =>
                 try TopicInfo(id,
                               name,

@@ -55,8 +55,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
     }
     log.info(s"Test K8S API Server is: ${API_SERVER_URL.get}, NodeName is: ${NODE_SERVER_NAME.get}")
 
-    implicit val k8sClient: K8SClient = K8SClient(API_SERVER_URL.get)
-    clusterCollie = ClusterCollie.k8s(nodeCollie, k8sClient)
+    clusterCollie = ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(K8SClient(API_SERVER_URL.get)).build()
     nodeNames = NODE_SERVER_NAME.get.split(",").toSeq
   }
 
@@ -491,7 +490,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .peerPort(peerPort)
         .electionPort(electionPort)
         .nodeName(nodeName)
-        .create)
+        .create())
   }
 
   private[this] def createBrokerCollie(brokerCollie: BrokerCollie,
@@ -509,7 +508,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .exporterPort(exporterPort)
         .zookeeperClusterName(zookeeperClusterName)
         .nodeNames(nodeName)
-        .create)
+        .create())
   }
 
   private[this] def createWorkerCollie(workerCollie: WorkerCollie,
@@ -529,7 +528,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
         .statusTopicName(CommonUtils.randomString(10))
         .offsetTopicName(CommonUtils.randomString(10))
         .nodeName(nodeName)
-        .create
+        .create()
     )
   }
 

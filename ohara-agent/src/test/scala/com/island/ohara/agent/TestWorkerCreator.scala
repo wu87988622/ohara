@@ -199,7 +199,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     .statusTopicName(CommonUtils.randomString(10))
     .configTopicName(CommonUtils.randomString(10))
     .nodeNames(Seq("abc"))
-    .create
+    .create()
 
   @Test
   def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy wkCreator()
@@ -212,5 +212,5 @@ class TestWorkerCreator extends SmallTest with Matchers {
     .statusTopicName(CommonUtils.randomString(10))
     .configTopicName(CommonUtils.randomString(10))
     .nodeNames(Seq("abc"))
-    .create
+    .create()
 }

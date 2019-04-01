@@ -33,17 +33,17 @@ class TestK8sClusterCollie extends BasicTests4ClusterCollie {
   override protected val nodeCache: Seq[Node] =
     if (API_SERVER_URL.isEmpty || NODE_SERVER_NAME.isEmpty) Seq.empty
     else NODE_SERVER_NAME.get.split(",").map(node => Node(node, 0, "", ""))
-  implicit var k8sClient: K8SClient = _
 
-  override protected val clusterCollie: ClusterCollie = ClusterCollie.k8s(
-    NodeCollie(nodeCache),
-    // It is ok to pass null since we will skip test if no k8s env exists
-    if (API_SERVER_URL.isEmpty) null else K8SClient(API_SERVER_URL.get)
-  )
+  override protected def clusterCollie: ClusterCollie = _clusterCollie
+  private[this] var _clusterCollie: ClusterCollie = _
 
   @Before
   final def setup(): Unit = if (nodeCache.isEmpty)
     skipTest(s"The k8s is skip test, Please setting $K8S_API_SERVER_URL_KEY and $K8S_API_NODE_NAME_KEY properties")
+  else {
+    _clusterCollie =
+      ClusterCollie.builderOfK8s().nodeCollie(NodeCollie(nodeCache)).k8sClient(K8SClient(API_SERVER_URL.get)).build()
+  }
 
   override protected def generateClusterName(): String = CommonUtils.randomString(10)
 }

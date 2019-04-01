@@ -123,7 +123,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .peerPort(peerPort)
           .clusterName(clusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
-          .create
+          .create()
       ))
     finally result(zookeeperCollie.remove(clusterName))
   }
@@ -145,7 +145,7 @@ class TestPrometheus extends IntegrationTest with Matchers {
           .exporterPort(exporterPort)
           .zookeeperClusterName(zkClusterName)
           .nodeName(result(nodeCollie.nodes()).head.name)
-          .create
+          .create()
       )
     )
     finally result(brokerCollie.remove(clusterName))

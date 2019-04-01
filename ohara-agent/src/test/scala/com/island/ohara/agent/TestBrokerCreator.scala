@@ -105,7 +105,7 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
     .nodeNames(Seq("abc"))
-    .create
+    .create()
 
   @Test
   def testInvalidName(): Unit = an[IllegalArgumentException] should be thrownBy bkCreator()
@@ -115,5 +115,5 @@ class TestBrokerCreator extends SmallTest with Matchers {
     .exporterPort(CommonUtils.availablePort())
     .clientPort(CommonUtils.availablePort())
     .nodeNames(Seq("abc"))
-    .create
+    .create()
 }

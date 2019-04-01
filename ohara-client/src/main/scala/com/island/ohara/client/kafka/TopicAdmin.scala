@@ -214,7 +214,7 @@ object TopicAdmin {
       this
     }
 
-    def create(implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo] = doCreate(
+    def create()(implicit executionContext: ExecutionContext): Future[TopicAdmin.TopicInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       name = Objects.requireNonNull(name),
       numberOfPartitions = CommonUtils.requirePositiveInt(numberOfPartitions),

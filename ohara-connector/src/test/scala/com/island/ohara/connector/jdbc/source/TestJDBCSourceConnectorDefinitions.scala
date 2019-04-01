@@ -141,7 +141,7 @@ class TestJDBCSourceConnectorDefinitions extends WithBrokerWorker with Matchers 
               DB_TABLENAME -> tableName,
               TIMESTAMP_COLUMN_NAME -> timeStampColumnName))
         .connectorClass(classOf[JDBCSourceConnector])
-        .run)
+        .run())
     response.settings().size should not be 0
 
     response

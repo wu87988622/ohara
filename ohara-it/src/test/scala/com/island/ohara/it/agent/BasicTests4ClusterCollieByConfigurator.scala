@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * It means all ops are sent to configurator and then configurator will execute them.
   */
 abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie {
-  protected val configurator: Configurator
+  protected def configurator: Configurator
 
   private[this] def zkApi = ZookeeperApi.access().hostname(configurator.hostname).port(configurator.port)
 

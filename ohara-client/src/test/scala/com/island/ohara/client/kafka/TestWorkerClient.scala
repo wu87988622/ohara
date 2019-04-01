@@ -138,7 +138,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
             Collections.singletonList(topicName)),
           SettingDefinition.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
         ))
-        .run)
+        .run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
     settingInfo.topicNames.asScala shouldBe Seq(topicName)
@@ -147,7 +147,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidateWithoutValue(): Unit = {
-    val settingInfo = result(workerClient.connectorValidator().connectorClassName(classOf[MyConnector].getName).run)
+    val settingInfo = result(workerClient.connectorValidator().connectorClassName(classOf[MyConnector].getName).run())
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
     settingInfo.topicNames.isEmpty shouldBe true

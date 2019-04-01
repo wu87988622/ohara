@@ -187,5 +187,5 @@ private class BrokerCollieImpl(nodeCollie: NodeCollie,
     .clientPort(previousCluster.clientPort)
     .imageName(previousCluster.imageName)
     .nodeName(newNodeName)
-    .create
+    .create()
 }

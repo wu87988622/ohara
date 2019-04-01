@@ -215,6 +215,6 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
           .filter(_.nonEmpty)
           .map(s => new URL(s)))
       .nodeName(newNodeName)
-      .create
+      .create()
   }
 }

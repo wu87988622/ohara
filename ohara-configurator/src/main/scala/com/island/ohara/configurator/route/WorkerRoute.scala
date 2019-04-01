@@ -118,7 +118,7 @@ object WorkerRoute {
                 .imageName(req.imageName.getOrElse(WorkerApi.IMAGE_NAME_DEFAULT))
                 .jarUrls(urls)
                 .nodeNames(req.nodeNames)
-                .create
+                .create()
         }
     )
 }

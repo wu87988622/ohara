@@ -169,6 +169,6 @@ object Collie {
       throw new IllegalArgumentException("empty seq is illegal!!!")
     else s
 
-    def create(implicit executionContext: ExecutionContext): Future[T]
+    def create()(implicit executionContext: ExecutionContext): Future[T]
   }
 }

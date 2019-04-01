@@ -128,7 +128,7 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
                   // we define the cluster name again since user may ignore the worker cluster in request
                   // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
                   .setting(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)
-                  .run
+                  .run()
             })(settingInfo => complete(HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
         }
       }
