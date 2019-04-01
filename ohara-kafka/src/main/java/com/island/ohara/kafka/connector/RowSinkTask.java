@@ -66,7 +66,7 @@ public abstract class RowSinkTask extends SinkTask {
    */
   protected String _version() {
     return VersionUtils.VERSION;
-  };
+  }
 
   /**
    * The SinkTask use this method to create writers for newly assigned partitions in case from
@@ -79,7 +79,7 @@ public abstract class RowSinkTask extends SinkTask {
    */
   protected void _open(List<TopicPartition> partitions) {
     // do nothing
-  };
+  }
 
   /**
    * The SinkTask use this method to close writers for partitions that are no longer assigned to the
@@ -92,7 +92,7 @@ public abstract class RowSinkTask extends SinkTask {
    */
   protected void _close(List<TopicPartition> partitions) {
     // do nothing
-  };
+  }
 
   /**
    * Pre-commit hook invoked prior to an offset commit.
@@ -108,7 +108,7 @@ public abstract class RowSinkTask extends SinkTask {
    */
   protected Map<TopicPartition, TopicOffset> _preCommit(Map<TopicPartition, TopicOffset> offsets) {
     return offsets;
-  };
+  }
 
   protected RowSinkContext rowContext;
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//

@@ -50,7 +50,7 @@ public interface RowSinkContext {
    */
   default void offset(TopicPartition partition, Long offset) {
     this.offset(Collections.singletonMap(partition, offset));
-  };
+  }
 
   static RowSinkContext toRowSinkContext(SinkTaskContext context) {
     return offsets ->
