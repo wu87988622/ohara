@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
 /**
-  * TODO: this is just a workaround in ohara 0.2. It handles the following trouble:
+  * TODO: this is just a workaround in ohara 0.3. It handles the following trouble:
   * 1) UI doesn't support user to host zk and bk cluster so most request won't carry the information of broker. Hence
   *    we need to handle the request with "default" broker cluster
   * 2) make ops to cluster be "blocking"

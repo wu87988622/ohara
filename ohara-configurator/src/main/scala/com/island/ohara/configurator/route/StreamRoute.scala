@@ -66,7 +66,7 @@ private[configurator] object StreamRoute {
     data.pipelineId.nonEmpty &&
     data.id.nonEmpty &&
     data.name.nonEmpty &&
-    // TODO : we only support 1 instance for v0.2...by Sam
+    // TODO : we only support 1 instance for v0.3...by Sam
     data.instances == 1 &&
     data.fromTopics.nonEmpty &&
     data.fromTopics.forall(isNotNullOrEmpty) &&
@@ -264,7 +264,7 @@ private[configurator] object StreamRoute {
                     throw new IllegalArgumentException(
                       s"StreamApp with id : ${data.id} not match the parameter requirement."
                     )
-                  // for v0.2, we only run streamApp with the following conditions:
+                  // for v0.3, we only run streamApp with the following conditions:
                   // 1) use any available node to run streamApp
                   // 2) only support one from/to topic
                   // 3) choose any existing broker cluster to run
@@ -304,7 +304,7 @@ private[configurator] object StreamRoute {
                                  Random
                                    .shuffle(info.nodeNames)
                                    .take(data.instances)
-                                   //we only accept 1 instance for 0.2...by Sam
+                                   //we only accept 1 instance for 0.3...by Sam
                                    .headOption
                                    .getOrElse(
                                      throw new IllegalArgumentException(
@@ -389,7 +389,7 @@ private[configurator] object StreamRoute {
           path(STOP_COMMAND) {
             put {
               onSuccess(store.value[StreamApp](id).flatMap { data =>
-                // support 1 instance for 0.2...by Sam
+                // support 1 instance for 0.3...by Sam
                 val node = data.nodes.headOption.getOrElse(
                   throw new RuntimeException(s"the streamApp [$id] is not running at any node. we cannot stop it."))
                 Future
