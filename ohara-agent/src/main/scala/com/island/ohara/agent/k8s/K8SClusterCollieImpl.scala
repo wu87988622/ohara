@@ -25,6 +25,7 @@ import com.island.ohara.agent.k8s.K8SClusterCollieImpl.{
   K8SWorkerCollieImpl,
   K8SZookeeperCollieImpl
 }
+import com.island.ohara.agent.ssh.connectors
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -93,7 +94,8 @@ private object K8SClusterCollieImpl {
     def format(clusterName: String): String =
       s"$clusterName-${service.name}-${CommonUtils.randomString(LENGTH_OF_UUID)}"
 
-    protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo]): T
+    protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+      implicit executionContext: ExecutionContext): Future[T]
 
     override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = {
       cluster(clusterName).flatMap {
@@ -153,9 +155,11 @@ private object K8SClusterCollieImpl {
           }
           .map {
             case (clusterName, containers) =>
-              toClusterDescription(clusterName, containers) -> containers
+              toClusterDescription(clusterName, containers).map(_ -> containers)
           }
-          .toMap)
+          .toSeq)
+      .flatMap(Future.sequence(_))
+      .map(_.toMap)
 
     override def close(): Unit = {
       Releasable.close(k8sClient)
@@ -235,8 +239,8 @@ private object K8SClusterCollieImpl {
       Future.failed(
         new UnsupportedOperationException("zookeeper collie doesn't support to remove node from a running cluster"))
 
-    override protected def toClusterDescription(clusterName: String,
-                                                containers: Seq[ContainerInfo]): ZookeeperClusterInfo = {
+    override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+      implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo] = Future.successful {
       val first = containers.head
       ZookeeperClusterInfo(
         name = clusterName,
@@ -362,8 +366,8 @@ private object K8SClusterCollieImpl {
 
     override val service: Service = BROKER
 
-    override protected def toClusterDescription(clusterName: String,
-                                                containers: Seq[ContainerInfo]): BrokerClusterInfo = {
+    override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+      implicit executionContext: ExecutionContext): Future[BrokerClusterInfo] = Future.successful {
       val first = containers.head
       BrokerClusterInfo(
         name = clusterName,
@@ -535,33 +539,35 @@ private object K8SClusterCollieImpl {
 
     override val service: Service = WORKER
 
-    override protected def toClusterDescription(clusterName: String,
-                                                containers: Seq[ContainerInfo]): WorkerClusterInfo = {
-      WorkerClusterInfo(
-        name = clusterName,
-        imageName = containers.head.imageName,
-        brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
-        clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
-        groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
-        offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
-        offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
-        offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
-        configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
-        configTopicPartitions = 1,
-        configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
-        statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
-        statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
-        statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
-        jarNames = containers.head
-          .environments(WorkerCollie.PLUGINS_KEY)
-          .split(",")
-          .filter(_.nonEmpty)
-          .map(u => new URL(u).getFile),
-        // TODO: fetch all connectors... by chia
-        // Perhaps we can just copy the implementation from ClusterCollieImpl
-        connectors = Seq.empty,
-        nodeNames = containers.map(_.nodeName)
-      )
+    override protected def toClusterDescription(clusterName: String, containers: Seq[ContainerInfo])(
+      implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = {
+      // TODO: the following code is duplicate to ssh collie. We should refactor them ... by chia
+      val port = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt
+      connectors(containers.map(c => s"${c.nodeName}:$port").mkString(",")).map { connectors =>
+        WorkerClusterInfo(
+          name = clusterName,
+          imageName = containers.head.imageName,
+          brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
+          clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
+          groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
+          offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
+          offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,
+          offsetTopicReplications = containers.head.environments(WorkerCollie.OFFSET_TOPIC_REPLICATIONS_KEY).toShort,
+          configTopicName = containers.head.environments(WorkerCollie.CONFIG_TOPIC_KEY),
+          configTopicPartitions = 1,
+          configTopicReplications = containers.head.environments(WorkerCollie.CONFIG_TOPIC_REPLICATIONS_KEY).toShort,
+          statusTopicName = containers.head.environments(WorkerCollie.STATUS_TOPIC_KEY),
+          statusTopicPartitions = containers.head.environments(WorkerCollie.STATUS_TOPIC_PARTITIONS_KEY).toInt,
+          statusTopicReplications = containers.head.environments(WorkerCollie.STATUS_TOPIC_REPLICATIONS_KEY).toShort,
+          jarNames = containers.head
+            .environments(WorkerCollie.PLUGINS_KEY)
+            .split(",")
+            .filter(_.nonEmpty)
+            .map(u => new URL(u).getFile),
+          connectors = connectors,
+          nodeNames = containers.map(_.nodeName)
+        )
+      }
     }
   }
 
