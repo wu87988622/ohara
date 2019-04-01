@@ -18,10 +18,10 @@ package com.island.ohara.agent
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.{Charset, StandardCharsets}
+import java.rmi.RemoteException
 import java.util.Objects
 
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
-import com.typesafe.scalalogging.Logger
 import org.apache.sshd.client.SshClient
 
 /**
@@ -125,8 +125,7 @@ object Agent {
                 response()
               } catch {
                 case e: Throwable =>
-                  LOG.error(response().getOrElse("no response"), e)
-                  throw e
+                  throw new RemoteException(s"receive error message:${response().getOrElse("")} when ${e.getMessage}")
               }
             } finally stdError.close()
           } finally stdOut.close()
@@ -137,5 +136,4 @@ object Agent {
       override def toString: String = s"$user@$hostname:$port"
     }
   }
-  private[this] val LOG = Logger(Agent.getClass)
 }

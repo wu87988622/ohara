@@ -21,6 +21,7 @@ import com.island.ohara.common.util.Releasable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -107,7 +108,18 @@ public interface SshdServer extends Releasable {
                                           });
                                   callback.onExit(0);
                                 } catch (Throwable e) {
-                                  callback.onExit(2, e.getMessage());
+                                  if (err != null)
+                                    try {
+                                      try {
+                                        err.write(e.getMessage().getBytes(StandardCharsets.UTF_8));
+                                        err.write('\n');
+                                      } finally {
+                                        err.flush();
+                                      }
+                                    } catch (IOException ee) {
+                                      // ignored
+                                    }
+                                  callback.onExit(1, e.getMessage());
                                 }
                               }
 
