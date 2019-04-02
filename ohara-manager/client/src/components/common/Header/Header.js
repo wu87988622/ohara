@@ -245,7 +245,6 @@ class Header extends React.Component {
             {NAVS.map(({ testId, to, iconCls, text }) => {
               return (
                 <Link
-                  exact
                   activeClassName="active"
                   key={testId}
                   data-testid={testId}
