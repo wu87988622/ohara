@@ -10,11 +10,13 @@ Easy to deploy the streaming application
 
 For development
 
-- you need to include the following jars in your project
+- [add oharastream maven repo](#Resolving-artifacts)
+- include the following jars in build.gradle
 
-```sh
-gradle clean jar -PskipManager
-cp ohara-common/build/libs/*.jar ohara-kafka/build/libs/*.jar ohara-streams/build/libs/*.jar  your_project
+```groovy
+implementation "com.island.ohara:ohara-streams:0.3-SNAPSHOT"
+implementation "com.island.ohara:ohara-common:0.3-SNAPSHOT"
+implementation "com.island.ohara:ohara-kafka:0.3-SNAPSHOT"
 ```
 
 - sample ohara code can be found in
@@ -34,7 +36,7 @@ For compilation
 <dependency>
     <groupId>org.apache.kafka</groupId>
     <artifactId>kafka-streams</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -146,7 +148,7 @@ see the source code of ohara-it for more details.
 gradle clean build -PskipManager
 ```
 
-### build uber jar
+### Build uber jar
 
 ```sh
 gradle clean uberJar -PskipManager
@@ -154,7 +156,7 @@ gradle clean uberJar -PskipManager
 
 the uber jar is under ohara-assembly/build/libs/
 
-### build and then publish artifacts to JFrog Bintray
+### Build and then publish artifacts to JFrog Bintray
 
 ```sh
 gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
@@ -163,6 +165,8 @@ gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -Pbin
 - bintrayKey: the account API Key
 - dryRun: whether to publish artifacts (default is true)
 - override: whether to override version artifacts already published
+
+### Resolving artifacts
 
 To resolve artifacts from the ohara repository use the following configuration :
 ```groovy
