@@ -25,6 +25,7 @@
     "test:client:unit": "yarn --cwd client test:report",
     "test:client:coverage": "yarn --cwd client test:coverage",
     "test:e2e": "node ./scripts/startAndTest.js",
+    "test:e2e:open": "yarn --cwd client e2e",
     "test:e2e:ci": "node ./scripts/startAndTest.js --prod",
     "clean": "run-s clean:*",
     "clean:process": "node ./scripts/cleanAllProcesses.js",

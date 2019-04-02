@@ -56,7 +56,7 @@ describe('PipelinePage', () => {
 
     cy.getByText('Add').click();
 
-    cy.getByText('Untitled Source')
+    cy.getByText('Untitled source')
       .should('have.length', '1')
       .get('.node-type')
       .should('contain', 'FtpSource');

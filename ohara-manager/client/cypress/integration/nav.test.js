@@ -34,7 +34,8 @@ describe('Header', () => {
     });
   });
 
-  it('toggles configuration modal', () => {
+  // ignore this for now. The config modal is not currently visible in the UI
+  it.skip('toggles configuration modal', () => {
     cy.getByTestId('config-btn').click();
     cy.get('.ReactModal__Content')
       .contains('Configuration')
