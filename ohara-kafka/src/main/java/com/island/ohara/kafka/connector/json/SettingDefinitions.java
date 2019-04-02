@@ -28,6 +28,7 @@ public final class SettingDefinitions {
   public static final List<SettingDefinition> DEFINITIONS_DEFAULT =
       Arrays.asList(
           SettingDefinition.CONNECTOR_CLASS_DEFINITION,
+          SettingDefinition.CONNECTOR_NAME_DEFINITION,
           SettingDefinition.COLUMNS_DEFINITION,
           SettingDefinition.KEY_CONVERTER_DEFINITION,
           SettingDefinition.VALUE_CONVERTER_DEFINITION,

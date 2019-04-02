@@ -125,6 +125,7 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
 
   @Test
   def testValidate(): Unit = {
+    Map.empty
     val name = CommonUtils.randomString(10)
     val topicName = CommonUtils.randomString(10)
     val numberOfTasks = 1
@@ -311,5 +312,17 @@ class TestWorkerClient extends With3Brokers3Workers with Matchers {
       .find(_.key() == SettingDefinition.VALUE_CONVERTER_DEFINITION.key())
       .head
       .defaultValue() shouldBe ConverterType.NONE.className()
+
+    settingDefinitionS.exists(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key()) shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
+      .head
+      .group() shouldBe SettingDefinition.CORE_GROUP
+    settingDefinitionS.find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key()).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key()).head.editable() shouldBe true
+    settingDefinitionS
+      .find(_.key() == SettingDefinition.CONNECTOR_NAME_DEFINITION.key())
+      .head
+      .defaultValue() shouldBe null
   }
 }
