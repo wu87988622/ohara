@@ -17,6 +17,19 @@
 
 
 # JVM options. Below is the default setting.
-if [ -z "$OHARA_OPTS" ]; then
+if [[ -z "$OHARA_OPTS" ]]; then
   export OHARA_OPTS="-Xmx4000m -XX:+UseConcMarkSweepGC"
+fi
+
+#----------[JMX]----------#
+if [[ -z "$OHARA_JMX_OPTS" ]]; then
+  export OHARA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false "
+fi
+
+if [[ ! -z $JMX_PORT ]]; then
+  export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT "
+fi
+
+if [[ ! -z $JMX_HOSTNAME ]]; then
+  export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Djava.rmi.server.hostname=$JMX_HOSTNAME "
 fi
