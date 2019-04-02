@@ -48,6 +48,16 @@ public class SettingDefinition implements JsonObject {
           .group(CORE_GROUP)
           .orderInGroup(0)
           .build();
+  public static final SettingDefinition CONNECTOR_NAME_DEFINITION =
+      SettingDefinition.builder()
+          .displayName("Connector name")
+          .key("connector.name")
+          .valueType(Type.STRING)
+          .documentation("the name of connector")
+          .group(CORE_GROUP)
+          .orderInGroup(1)
+          .optional()
+          .build();
   public static final SettingDefinition TOPIC_NAMES_DEFINITION =
       SettingDefinition.builder()
           .displayName("Topics")

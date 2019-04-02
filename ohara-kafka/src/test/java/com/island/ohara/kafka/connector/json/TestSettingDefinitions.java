@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.island.ohara.common.rule.SmallTest;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -124,5 +125,36 @@ public class TestSettingDefinitions extends SmallTest {
                 definition.tableKeys().contains(SettingDefinition.COLUMN_NEW_NAME_KEY));
           } else Assert.assertTrue(definition.tableKeys().isEmpty());
         });
+  }
+
+  @Test
+  public void mustHaveConnectorName() {
+    Assert.assertEquals(
+        1,
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(
+                definition ->
+                    definition.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
+            .count());
+
+    SettingDefinition nameDefinition =
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .filter(
+                definition ->
+                    definition.key().equals(SettingDefinition.CONNECTOR_NAME_DEFINITION.key()))
+            .findFirst()
+            .get();
+    Assert.assertNull(nameDefinition.defaultValue());
+    Assert.assertFalse(nameDefinition.required());
+  }
+
+  @Test
+  public void checkDuplicate() {
+    Assert.assertEquals(
+        SettingDefinitions.DEFINITIONS_DEFAULT.size(),
+        SettingDefinitions.DEFINITIONS_DEFAULT.stream()
+            .map(SettingDefinition::key)
+            .collect(Collectors.toSet())
+            .size());
   }
 }
