@@ -97,7 +97,6 @@ describe('<Header />', () => {
       const iconProps = icon.props();
 
       expect(span.children().text()).toBe(NAVS[idx].text);
-      expect(linkProps.exact).toBe(true);
       expect(linkProps.activeClassName).toBe('active');
       expect(linkProps.to).toBe(NAVS[idx].to);
 
