@@ -56,6 +56,8 @@ trait K8SClient extends ReleaseOnce {
   def nodeNameIPInfo(implicit executionContext: ExecutionContext): Seq[HostAliases]
   def containerCreator(): ContainerCreator
   def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
+  def isK8SNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def isNodeHealth(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 }
 
 object K8SClient {
@@ -115,6 +117,28 @@ object K8SClient {
               r.status.images.filter(x => x.names.size >= 2).map(x => x.names.last)
             }
         }
+
+      override def isK8SNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = {
+        Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes")).flatMap { response =>
+          Unmarshal(response.entity).to[K8SNodeInfo] map { r =>
+            r.items.filter(x => x.metadata.name.equals(nodeName)).size == 1
+          }
+        }
+      }
+
+      override def isNodeHealth(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = {
+        Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes")).flatMap { response =>
+          Unmarshal(response.entity).to[K8SNodeInfo] map { r =>
+            r.items
+              .filter(x => x.metadata.name.equals(nodeName))
+              .map(x =>
+                x.status.conditions.filter(y => {
+                  y.conditionType.equals("Ready") && y.status.equals("True")
+                }))
+              .size == 1
+          }
+        }
+      }
 
       override def remove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo = {
         containers
