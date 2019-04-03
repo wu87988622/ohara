@@ -67,11 +67,32 @@ object K8SJson {
   final case class ImageNames(names: Seq[String])
   implicit val NODE_IMAGENAMES_FORMAT: RootJsonFormat[ImageNames] = jsonFormat1(ImageNames)
 
-  final case class NodeStatus(addresses: Seq[NodeAddresses], images: Seq[ImageNames])
-  implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat2(NodeStatus)
+  final case class Condition(conditionType: String, status: String, message: String)
+  implicit val CONDITION_JSON_FORMAT: RootJsonFormat[Condition] =
+    new RootJsonFormat[Condition] {
+      override def read(json: JsValue): Condition =
+        json.asJsObject.getFields("type", "status", "message") match {
+          case Seq(JsString(conditionType), JsString(status), JsString(message)) =>
+            Condition(conditionType, status, message)
+          case other: Any =>
+            throw DeserializationException(s"${classOf[Condition].getSimpleName} expected but $other")
+        }
 
-  final case class NodeItems(status: NodeStatus)
-  implicit val NODEITEMS_JSON_FORMAT: RootJsonFormat[NodeItems] = jsonFormat1(NodeItems)
+      override def write(obj: Condition): JsValue = JsObject(
+        "type" -> JsString(obj.conditionType),
+        "status" -> JsString(obj.status),
+        "message" -> JsString(obj.message)
+      )
+    }
+
+  final case class NodeStatus(addresses: Seq[NodeAddresses], images: Seq[ImageNames], conditions: Seq[Condition])
+  implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat3(NodeStatus)
+
+  final case class NodeMetaData(name: String)
+  implicit val NODEMETADATA_JSON_FORMAT: RootJsonFormat[NodeMetaData] = jsonFormat1(NodeMetaData)
+
+  final case class NodeItems(status: NodeStatus, metadata: NodeMetaData)
+  implicit val NODEITEMS_JSON_FORMAT: RootJsonFormat[NodeItems] = jsonFormat2(NodeItems)
 
   final case class K8SNodeInfo(items: Seq[NodeItems])
   implicit val K8SNODEINFO_JSON_FORMAT: RootJsonFormat[K8SNodeInfo] = jsonFormat1(K8SNodeInfo)

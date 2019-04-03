@@ -177,6 +177,29 @@ class TestK8SSimple extends IntegrationTest with Matchers {
     images.size >= 2 shouldBe true
     images.contains("k8s.gcr.io/kube-proxy") shouldBe true
   }
+
+  @Test
+  def testSlaveNode(): Unit = {
+    val k8sClient = K8SClient(k8sApiServerURL)
+    val k8sNode: Boolean = Await.result(k8sClient.isK8SNode(nodeServerNames.last), TIMEOUT)
+    k8sNode shouldBe true
+
+    val unknownNode: Boolean = Await.result(k8sClient.isK8SNode("ohara-it-08"), TIMEOUT)
+    unknownNode shouldBe false
+  }
+
+  @Test
+  def testNodeHealth(): Unit = {
+    val k8sClient = K8SClient(k8sApiServerURL)
+    val oharaIt03: Boolean = Await.result(k8sClient.isNodeHealth(nodeServerNames.head), TIMEOUT)
+    oharaIt03 shouldBe true
+
+    val oharaIt04: Boolean = Await.result(k8sClient.isNodeHealth(nodeServerNames.last), TIMEOUT)
+    oharaIt04 shouldBe true
+
+    val oharaIt08: Boolean = Await.result(k8sClient.isNodeHealth("ohara-it-08"), TIMEOUT)
+    oharaIt08 shouldBe false
+  }
 }
 
 object TestK8SSimple {

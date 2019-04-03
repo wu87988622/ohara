@@ -36,7 +36,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8SClient)
     extends ReleaseOnce
@@ -57,9 +57,19 @@ private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
       }
       .map(_.toMap)
 
-  // TODO: fixed by https://github.com/oharastream/ohara/issues/585
-  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] = Future(
-    Try(throw new UnsupportedOperationException("validation of k8s node is not supported yet")))
+  override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
+    k8sClient
+      .isK8SNode(node.name)
+      .flatMap(
+        isK8SNode =>
+          k8sClient
+            .isNodeHealth(node.name)
+            .map(
+              isNodeHealth =>
+                if (isK8SNode && isNodeHealth)
+                  Try(s"${node.name} node is running.")
+                else if (!isK8SNode) Failure(new IllegalStateException(s"${node.name} node doesn't exists."))
+                else Failure(new IllegalStateException(s"${node.name} node doesn't running container"))))
 }
 
 private object K8SClusterCollieImpl {
