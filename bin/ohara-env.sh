@@ -27,7 +27,7 @@ if [[ -z "$OHARA_JMX_OPTS" ]]; then
 fi
 
 if [[ ! -z $JMX_PORT ]]; then
-  export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT "
+  export OHARA_JMX_OPTS="$OHARA_JMX_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT -Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT "
 fi
 
 if [[ ! -z $JMX_HOSTNAME ]]; then
