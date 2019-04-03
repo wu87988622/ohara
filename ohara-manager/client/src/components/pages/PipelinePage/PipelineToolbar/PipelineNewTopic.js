@@ -23,18 +23,11 @@ import { Box } from 'common/Layout';
 import { Select } from 'common/Form';
 import { createConnector } from '../pipelineUtils/pipelineToolbarUtils';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
+import { graphPropType } from 'propTypes/pipeline';
 
 class PipelineNewTopic extends React.Component {
   static propTypes = {
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        className: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        id: PropTypes.string.isRequired,
-        kind: PropTypes.string.isRequired,
-        to: PropTypes.arrayOf(PropTypes.string).isRequired,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     updateGraph: PropTypes.func.isRequired,
     topics: PropTypes.array.isRequired,
     currentTopic: PropTypes.object.isRequired,

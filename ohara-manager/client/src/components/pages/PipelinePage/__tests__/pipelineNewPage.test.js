@@ -83,8 +83,8 @@ describe('<PipelineNewPage />', () => {
     expect(wrapper.find('PipelineGraph').length).toBe(1);
   });
 
-  it('renders 6 <Route />', () => {
-    expect(wrapper.find('Route').length).toBe(6);
+  it('renders 7 <Route />', () => {
+    expect(wrapper.find('Route').length).toBe(7);
   });
 
   it('renders <StartBtn />', () => {

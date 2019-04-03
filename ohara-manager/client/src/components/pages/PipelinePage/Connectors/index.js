@@ -20,5 +20,14 @@ import JdbcSource from './JdbcSource';
 import HdfsSink from './HdfsSink';
 import Topic from './Topic';
 import StreamApp from './StreamApp';
+import CustomConnector from './CustomConnector/CustomConnector';
 
-export { FtpSink, FtpSource, JdbcSource, HdfsSink, Topic, StreamApp };
+export {
+  FtpSink,
+  FtpSource,
+  JdbcSource,
+  HdfsSink,
+  Topic,
+  StreamApp,
+  CustomConnector,
+};

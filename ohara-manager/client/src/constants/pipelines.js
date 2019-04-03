@@ -23,15 +23,6 @@ export const CONNECTOR_TYPES = {
   topic: 'topic',
 };
 
-export const ICON_MAPS = {
-  [CONNECTOR_TYPES.jdbcSource]: 'fa-file-import',
-  [CONNECTOR_TYPES.ftpSource]: 'fa-file-import',
-  [CONNECTOR_TYPES.topic]: 'fa-list-ul',
-  [CONNECTOR_TYPES.hdfsSink]: 'fa-file-export',
-  [CONNECTOR_TYPES.ftpSink]: 'fa-file-export',
-  [CONNECTOR_TYPES.streamApp]: 'fa-wind',
-};
-
 export const TABLE_HEADERS = ['connector name', 'version', 'revision'];
 
 export const CONNECTOR_FILTERS = [

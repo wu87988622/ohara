@@ -22,18 +22,11 @@ import * as d3 from 'd3v4';
 import * as _ from 'utils/commonUtils';
 import { Wrapper, H5Wrapper, Svg } from './styles';
 import { getIcon, getStatusIcon } from '../pipelineUtils/pipelineGraphUtils';
+import { graphPropType } from 'propTypes/pipeline';
 
 class PipelineGraph extends React.Component {
   static propTypes = {
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        className: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        id: PropTypes.string.isRequired,
-        kind: PropTypes.string.isRequired,
-        to: PropTypes.arrayOf(PropTypes.string).isRequired,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     pipeline: PropTypes.shape({
       workerClusterName: PropTypes.string,
     }).isRequired,

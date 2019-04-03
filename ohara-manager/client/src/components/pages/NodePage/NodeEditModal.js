@@ -23,7 +23,7 @@ import { get } from 'lodash';
 import * as nodeApi from 'api/nodeApi';
 import * as validateApi from 'api/validateApi';
 import * as MESSAGES from 'constants/messages';
-import * as s from './Styles';
+import * as s from './styles';
 import { InputField } from 'common/FormFields';
 import validate from './validate';
 import { Modal } from 'common/Modal';

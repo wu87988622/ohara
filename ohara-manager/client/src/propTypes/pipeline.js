@@ -14,27 +14,12 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import { string, arrayOf, shape } from 'prop-types';
 
-const ButtonWrapper = styled.button`
-  border: none;
-  color: ${props => props.theme.blue};
-  background-color: transparent;
-
-  &:hover {
-    color: ${props => props.theme.blueHover};
-  }
-`;
-
-const LinkButton = ({ handleClick, children }) => {
-  return <ButtonWrapper onClick={handleClick}>{children}</ButtonWrapper>;
-};
-
-LinkButton.propTypes = {
-  children: PropTypes.any,
-  handleClick: PropTypes.func,
-};
-
-export default LinkButton;
+export const graphPropType = shape({
+  id: string.isRequired,
+  className: string.isRequired,
+  name: string.isRequired,
+  kind: string.isRequired,
+  to: arrayOf(string).isRequired,
+});

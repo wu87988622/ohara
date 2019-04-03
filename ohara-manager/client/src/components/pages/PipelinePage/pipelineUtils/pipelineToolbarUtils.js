@@ -17,6 +17,7 @@
 import { get, isObject } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
+import { CONNECTOR_TYPES } from 'constants/pipelines';
 import { isSource, isSink, isTopic, isStream } from './commonUtils';
 
 const getClassName = connector => {
@@ -38,16 +39,6 @@ export const createConnector = async ({ updateGraph, connector }) => {
   const className = getClassName(connector);
   let connectorName = `Untitled ${typeName}`;
 
-  // Default params for creating connectors
-  const params = {
-    name: connectorName,
-    className: className,
-    schema: [],
-    topics: [],
-    numberOfTasks: 1,
-    configs: {},
-  };
-
   let id;
 
   if (isTopic(typeName)) {
@@ -56,12 +47,30 @@ export const createConnector = async ({ updateGraph, connector }) => {
     connectorName = connector.name;
   } else if (isStream(typeName)) {
     id = connector.id;
-  } else if (isSource(typeName)) {
-    const res = await connectorApi.createConnector(params);
-    id = get(res, 'data.result.id', null);
-  } else if (isSink(typeName)) {
-    const res = await connectorApi.createConnector(params);
-    id = get(res, 'data.result.id', null);
+  } else if (isSource(typeName) || isSink(typeName)) {
+    if (Object.values(CONNECTOR_TYPES).includes(className)) {
+      // Use the old API
+      const params = {
+        name: connectorName,
+        className: className,
+        schema: [],
+        topics: [],
+        numberOfTasks: 1,
+        configs: {},
+      };
+
+      const res = await connectorApi.createConnector(params);
+      id = get(res, 'data.result.id', null);
+    } else {
+      // Use new API
+      const params = {
+        name: connectorName,
+        'connector.class': className,
+      };
+
+      const res = await connectorApi.createConnector(params);
+      id = get(res, 'data.result.id', null);
+    }
   }
 
   const update = {

@@ -26,7 +26,7 @@ import ZookeeperListPage from './ZookeeperListPage';
 import WorkerListPage from './WorkerListPage';
 import WorkerDetailPage from './WorkerDetailPage';
 import { SERVICES } from 'constants/documentTitles';
-import { Layout, Link, SubLink } from './Styles';
+import { Layout, Link, SubLink } from './styles';
 
 const BROKERS = 'brokers';
 const ZOOKEEPERS = 'zookeepers';
@@ -35,10 +35,8 @@ const WORKERS = 'workers';
 class ServicesPage extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
-      params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
+      params: PropTypes.object.isRequired,
+      url: PropTypes.string.isRequired,
     }).isRequired,
   };
 

@@ -41,6 +41,7 @@ import {
   HdfsSink,
   FtpSink,
   StreamApp,
+  CustomConnector,
 } from '../Connectors';
 import {
   addPipelineStatus,
@@ -321,9 +322,22 @@ class PipelineNewPage extends React.Component {
       ftpSink,
     } = PIPELINES.CONNECTOR_TYPES;
 
+    const connectorProps = {
+      topics: pipelineTopics,
+      loadGraph: this.loadGraph,
+      updateGraph: this.updateGraph,
+      refreshGraph: this.refreshGraph,
+      updateHasChanges: this.updateHasChanges,
+      isPipelineRunning,
+      hasChanges,
+      graph,
+    };
+
+    const routeBaseUrl = `/pipelines/(new|edit)`;
+
     return (
       <DocumentTitle title={pipelineId ? PIPELINE_EDIT : PIPELINE_NEW}>
-        <React.Fragment>
+        <>
           <Prompt
             message={location =>
               location.pathname.startsWith('/pipelines/new') ||
@@ -397,102 +411,57 @@ class PipelineNewPage extends React.Component {
                 </Box>
 
                 <Route
-                  path={`/pipelines/(new|edit)/${jdbcSource}`}
+                  path={`${routeBaseUrl}/${jdbcSource}`}
                   render={() => (
-                    <JdbcSource
-                      {...this.props}
-                      graph={graph}
-                      topics={pipelineTopics}
-                      loadGraph={this.loadGraph}
-                      updateGraph={this.updateGraph}
-                      refreshGraph={this.refreshGraph}
-                      hasChanges={hasChanges}
-                      isPipelineRunning={isPipelineRunning}
-                      updateHasChanges={this.updateHasChanges}
-                    />
+                    <JdbcSource {...this.props} {...connectorProps} />
                   )}
                 />
 
                 <Route
-                  path={`/pipelines/(new|edit)/${ftpSource}`}
+                  path={`${routeBaseUrl}/${ftpSource}`}
                   render={() => (
-                    <FtpSource
-                      {...this.props}
-                      graph={graph}
-                      topics={pipelineTopics}
-                      loadGraph={this.loadGraph}
-                      updateGraph={this.updateGraph}
-                      refreshGraph={this.refreshGraph}
-                      hasChanges={hasChanges}
-                      isPipelineRunning={isPipelineRunning}
-                      updateHasChanges={this.updateHasChanges}
-                    />
+                    <FtpSource {...this.props} {...connectorProps} />
                   )}
                 />
 
                 <Route
-                  path={`/pipelines/(new|edit)/${ftpSink}`}
+                  path={`${routeBaseUrl}/${ftpSink}`}
+                  render={() => <FtpSink {...this.props} {...connectorProps} />}
+                />
+
+                <Route
+                  path={`${routeBaseUrl}/topic`}
+                  render={() => <Topic {...this.props} {...connectorProps} />}
+                />
+
+                <Route
+                  path={`${routeBaseUrl}/${hdfsSink}`}
                   render={() => (
-                    <FtpSink
-                      {...this.props}
-                      graph={graph}
-                      topics={pipelineTopics}
-                      loadGraph={this.loadGraph}
-                      updateGraph={this.updateGraph}
-                      refreshGraph={this.refreshGraph}
-                      hasChanges={hasChanges}
-                      isPipelineRunning={isPipelineRunning}
-                      updateHasChanges={this.updateHasChanges}
-                    />
+                    <HdfsSink {...this.props} {...connectorProps} />
                   )}
                 />
 
                 <Route
-                  path="/pipelines/(new|edit)/topic"
+                  path={`${routeBaseUrl}/streamApp`}
                   render={() => (
-                    <Topic
-                      {...this.props}
-                      pipeline={pipelines}
-                      graph={graph}
-                      refreshGraph={this.refreshGraph}
-                    />
+                    <StreamApp {...this.props} {...connectorProps} />
                   )}
                 />
 
                 <Route
-                  path={`/pipelines/(new|edit)/${hdfsSink}`}
+                  path={`${routeBaseUrl}/com.island.ohara.it.connector.(DumbSourceConnector|DumbSinkConnector)`}
                   render={() => (
-                    <HdfsSink
+                    <CustomConnector
                       {...this.props}
-                      graph={graph}
-                      topics={pipelineTopics}
-                      loadGraph={this.loadGraph}
-                      updateGraph={this.updateGraph}
-                      refreshGraph={this.refreshGraph}
-                      hasChanges={hasChanges}
-                      isPipelineRunning={isPipelineRunning}
-                      updateHasChanges={this.updateHasChanges}
-                    />
-                  )}
-                />
-
-                <Route
-                  path={`/pipelines/(new|edit)/streamApp`}
-                  render={() => (
-                    <StreamApp
-                      {...this.props}
-                      graph={graph}
-                      topics={pipelineTopics}
-                      updateGraph={this.updateGraph}
-                      refreshGraph={this.refreshGraph}
-                      updateHasChanges={this.updateHasChanges}
+                      {...connectorProps}
+                      workerClusterName={workerClusterName}
                     />
                   )}
                 />
               </Sidebar>
             </Main>
           </Wrapper>
-        </React.Fragment>
+        </>
       </DocumentTitle>
     );
   }

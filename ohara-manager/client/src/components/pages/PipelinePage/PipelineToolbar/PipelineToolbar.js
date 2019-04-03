@@ -28,6 +28,7 @@ import { Modal } from 'common/Modal';
 import { fetchWorkers } from 'api/workerApi';
 import { isEmptyStr } from 'utils/commonUtils';
 import { Icon } from './styles.js';
+import { graphPropType } from 'propTypes/pipeline';
 
 const ToolbarWrapper = styled.div`
   margin-bottom: 15px;
@@ -61,15 +62,7 @@ class PipelineToolbar extends React.Component {
     match: PropTypes.shape({
       params: PropTypes.object,
     }).isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        className: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        id: PropTypes.string.isRequired,
-        kind: PropTypes.string.isRequired,
-        to: PropTypes.arrayOf(PropTypes.string).isRequired,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     updateGraph: PropTypes.func.isRequired,
     hasChanges: PropTypes.bool.isRequired,
     topics: PropTypes.array.isRequired,

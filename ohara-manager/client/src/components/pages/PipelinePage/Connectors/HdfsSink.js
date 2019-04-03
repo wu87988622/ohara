@@ -24,7 +24,7 @@ import { get, isEmpty, debounce, includes } from 'lodash';
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
 import * as validateApi from 'api/validateApi';
-import * as s from './Styles';
+import * as s from './styles';
 import { Box } from 'common/Layout';
 import { primaryBtn } from 'theme/btnTheme';
 import { Input, Select, FormGroup, Label, Button } from 'common/Form';
@@ -38,6 +38,7 @@ import {
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
+import { graphPropType } from 'propTypes/pipeline';
 
 const FormGroupCheckbox = styled(FormGroup)`
   flex-direction: row;
@@ -67,15 +68,7 @@ class HdfsSink extends React.Component {
     match: PropTypes.shape({
       params: PropTypes.object.isRequired,
     }).isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,

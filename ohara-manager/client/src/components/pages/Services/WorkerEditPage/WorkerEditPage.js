@@ -21,19 +21,12 @@ import { find } from 'lodash';
 import { Box } from 'common/Layout';
 import { FormGroup, Label } from 'common/Form';
 import { H2 } from 'common/Headings';
-
-import * as s from './Styles';
+import { workersPropType } from 'propTypes/services';
+import * as s from './styles';
 
 class WorkerEditPage extends React.Component {
   static propTypes = {
-    workers: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        clientPort: PropTypes.number.isRequired,
-        nodeNames: PropTypes.arrayOf(PropTypes.string).isRequired,
-        jarNames: PropTypes.arrayOf(PropTypes.string),
-      }),
-    ).isRequired,
+    workers: PropTypes.arrayOf(workersPropType).isRequired,
     name: PropTypes.string.isRequired,
   };
 
