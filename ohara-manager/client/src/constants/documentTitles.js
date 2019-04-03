@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-export const HOME = 'Ohara - Home';
-export const LOGIN = 'Ohara - Login';
-export const PIPELINE = 'Ohara - Pipelines';
-export const PIPELINE_NEW = 'Ohara - New Pipeline';
-export const PIPELINE_EDIT = 'Ohara - Edit Pipeline';
-export const KAFKA = 'Ohara - Kafka';
-export const NODES = 'Ohara - Nodes';
-export const SERVICES = 'Ohara - Services';
-export const MONITORING = 'Ohara - Monitoring';
-export const LOGS = 'Ohara - Logs';
-export const CONFIGURATION = 'Ohara - Configuration';
+const brandName = 'Ohara Stream';
 
-export const NOT_FOUND_PAGE = 'Ohara - 404 page not found';
+export const HOME = `${brandName} - home`;
+export const LOGIN = `${brandName} - Login`;
+export const PIPELINE = `${brandName} - Pipelines`;
+export const PIPELINE_NEW = `${brandName} - New Pipeline`;
+export const PIPELINE_EDIT = `${brandName} - Edit Pipeline`;
+export const NODES = `${brandName} - Nodes`;
+export const SERVICES = `${brandName} - Services`;
+export const MONITORING = `${brandName} - Monitoring`;
+export const LOGS = `${brandName} - Logs`;
+export const CONFIGURATION = `${brandName} - Configuration`;
+
+export const NOT_FOUND_PAGE = `${brandName} - 404 page not found`;
