@@ -31,7 +31,7 @@ const Main = styled.div`
 `;
 
 const Sidebar = styled.div`
-  width: 35%;
+  width: 37%;
 `;
 
 const Heading2 = styled(H2)`

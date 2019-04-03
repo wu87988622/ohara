@@ -23,7 +23,7 @@ import { includes, get, isEmpty, isNull, debounce } from 'lodash';
 import * as MESSAGES from 'constants/messages';
 import * as connectorApi from 'api/connectorApi';
 import * as validateApi from 'api/validateApi';
-import * as s from './Styles';
+import * as s from './styles';
 import Controller from './Controller';
 import { SchemaTable } from 'common/Table';
 import { ConfirmModal, Modal } from 'common/Modal';
@@ -37,6 +37,7 @@ import {
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
+import { graphPropType } from 'propTypes/pipeline';
 
 const FormGroupWrapper = styled.div`
   display: flex;
@@ -60,20 +61,9 @@ class FtpSource extends React.Component {
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
       params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
     }).isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,

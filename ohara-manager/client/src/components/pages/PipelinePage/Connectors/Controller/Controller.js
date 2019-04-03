@@ -20,7 +20,7 @@ import ReactTooltip from 'react-tooltip';
 import { noop, includes } from 'lodash';
 
 import { ConfirmModal } from 'common/Modal';
-import * as s from './Styles';
+import * as s from './styles';
 
 const START = 'start';
 const STOP = 'stop';

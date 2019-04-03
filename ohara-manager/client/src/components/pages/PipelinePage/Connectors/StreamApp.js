@@ -29,26 +29,15 @@ import { Box } from 'common/Layout';
 import { Label } from 'common/Form';
 import { InputField, SelectField, AutoSave } from 'common/FormFields';
 import { findByGraphId } from '../pipelineUtils/commonUtils';
-
-import * as s from './Styles';
+import { graphPropType } from 'propTypes/pipeline';
+import * as s from './styles';
 
 class StreamApp extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
       params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
     }).isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     updateGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     updateHasChanges: PropTypes.func.isRequired,

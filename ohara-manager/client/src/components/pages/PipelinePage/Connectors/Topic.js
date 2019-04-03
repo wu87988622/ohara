@@ -21,20 +21,18 @@ import toastr from 'toastr';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as MESSAGES from 'constants/messages';
-import * as s from './Styles';
+import * as s from './styles';
 import Controller from './Controller';
 import { ListLoader } from 'common/Loader';
 import { Box } from 'common/Layout';
 import { FormGroup, Label, Input } from 'common/Form';
 import { fetchTopic } from 'api/topicApi';
+import { graphPropType } from 'propTypes/pipeline';
 
 class Topic extends React.Component {
   static propTypes = {
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
       params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
     }).isRequired,
     history: PropTypes.object,
     pipeline: PropTypes.shape({
@@ -42,15 +40,7 @@ class Topic extends React.Component {
       name: PropTypes.string,
       rules: PropTypes.object,
     }).isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        name: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     refreshGraph: PropTypes.func.isRequired,
   };
 

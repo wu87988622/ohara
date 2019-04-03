@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import List from './List';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
-import { Item } from './Styles.js';
+import { Item } from './styles.js';
 
 class WorkerDetailPage extends React.Component {
   static propTypes = {

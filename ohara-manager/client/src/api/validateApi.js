@@ -85,3 +85,19 @@ export const validateFtp = async params => {
     handleError(err);
   }
 };
+
+export const validateConnector = async params => {
+  try {
+    const res = await axiosInstance.put('/api/validate/connector', params);
+
+    const isSuccess = get(res, 'data.isSuccess', false);
+
+    if (!isSuccess) {
+      handleError(res);
+    }
+
+    return res;
+  } catch (err) {
+    handleError(err);
+  }
+};

@@ -26,7 +26,7 @@ import { FormGroup, Input, Label } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 
 import TopicNewModal from '../TopicNewModal';
-import * as s from './Styles';
+import * as s from './styles';
 
 class BrokerListPage extends React.Component {
   headers = ['TOPIC NAME', 'PARTITIONS', 'REPLICATION FACTOR'];

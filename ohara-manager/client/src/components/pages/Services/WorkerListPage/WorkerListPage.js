@@ -19,26 +19,18 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import { join } from 'lodash';
 
+import WorkerNewModal from '../WorkerNewModal';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { FormGroup } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 import { TableLoader } from 'common/Loader';
-
-import WorkerNewModal from '../WorkerNewModal';
-import * as s from './Styles';
+import { workersPropType } from 'propTypes/services';
+import * as s from './styles';
 
 class WorkerListPage extends React.Component {
   static propTypes = {
-    workers: PropTypes.arrayOf(
-      PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        nodeNames: PropTypes.arrayOf(PropTypes.string).isRequired,
-        statusTopicName: PropTypes.string.isRequired,
-        configTopicName: PropTypes.string.isRequired,
-        offsetTopicName: PropTypes.string.isRequired,
-      }),
-    ).isRequired,
+    workers: PropTypes.arrayOf(workersPropType).isRequired,
     newWorkerSuccess: PropTypes.func.isRequired,
     isLoading: PropTypes.bool,
   };

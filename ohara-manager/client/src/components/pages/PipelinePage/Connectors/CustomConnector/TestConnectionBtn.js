@@ -16,25 +16,30 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 
-const ButtonWrapper = styled.button`
-  border: none;
-  color: ${props => props.theme.blue};
-  background-color: transparent;
+import { FormGroup, Button } from 'common/Form';
+import { primaryBtn } from 'theme/btnTheme';
 
-  &:hover {
-    color: ${props => props.theme.blueHover};
-  }
-`;
+const TestConnectionBtn = props => {
+  const { handleClick, isWorking } = props;
 
-const LinkButton = ({ handleClick, children }) => {
-  return <ButtonWrapper onClick={handleClick}>{children}</ButtonWrapper>;
+  return (
+    <FormGroup>
+      <Button
+        theme={primaryBtn}
+        text="Test connection"
+        isWorking={isWorking}
+        disabled={isWorking}
+        data-testid="test-connection-btn"
+        handleClick={handleClick}
+      />
+    </FormGroup>
+  );
 };
 
-LinkButton.propTypes = {
-  children: PropTypes.any,
-  handleClick: PropTypes.func,
+TestConnectionBtn.propTypes = {
+  handleClick: PropTypes.func.isRequired,
+  isWorking: PropTypes.bool.isRequired,
 };
 
-export default LinkButton;
+export default TestConnectionBtn;

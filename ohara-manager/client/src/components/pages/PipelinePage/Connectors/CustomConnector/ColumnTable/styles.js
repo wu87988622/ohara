@@ -14,27 +14,40 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
-const ButtonWrapper = styled.button`
-  border: none;
-  color: ${props => props.theme.blue};
-  background-color: transparent;
+import { Button } from 'common/Form';
 
-  &:hover {
-    color: ${props => props.theme.blueHover};
+export const FormInner = styled.div`
+  padding: 20px;
+`;
+
+export const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: center;
+    font-size: 13px;
+    padding: 20px 10px;
+    border-bottom: 1px solid ${props => props.theme.lighterGray};
   }
 `;
 
-const LinkButton = ({ handleClick, children }) => {
-  return <ButtonWrapper onClick={handleClick}>{children}</ButtonWrapper>;
-};
+export const NewRowBtn = styled(Button)`
+  margin-left: auto;
+`;
 
-LinkButton.propTypes = {
-  children: PropTypes.any,
-  handleClick: PropTypes.func,
-};
+export const StyledTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
 
-export default LinkButton;
+  th,
+  td {
+    text-align: center;
+    font-size: 13px;
+    padding: 20px 10px;
+    border-bottom: 1px solid ${props => props.theme.lighterGray};
+  }
+`;

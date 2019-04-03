@@ -21,19 +21,18 @@ import ReactTooltip from 'react-tooltip';
 import uuid from 'uuid/v4';
 
 const LabelWrapper = styled.label`
-  position: relative;
   color: ${props => props.theme.lightBlue};
-  width: ${({ width }) => width};
+  width: ${props => props.width};
   font-size: 13px;
-  margin: ${({ margin }) => margin};
+  margin: ${props => props.margin};
+  display: block;
+  width: 100%;
 `;
 
 LabelWrapper.displayName = 'Label';
 
 const TooltipIcon = styled.span`
-  position: absolute;
-  right: -18px;
-  top: -2px;
+  float: ${props => props.alignment};
 `;
 
 const Label = ({
@@ -42,13 +41,15 @@ const Label = ({
   tooltipId = uuid(),
   tooltipString,
   tooltipRender,
+  tooltipAlignment = 'left',
+  required = false,
   ...rest
 }) => {
   return (
     <LabelWrapper {...css} {...rest}>
-      {children}
+      {children} {required && <span>*</span>}
       {tooltipString && (
-        <TooltipIcon data-tip={tooltipString}>
+        <TooltipIcon alignment={tooltipAlignment} data-tip={tooltipString}>
           <i className="fas fa-info-circle" />
         </TooltipIcon>
       )}
@@ -71,6 +72,8 @@ Label.propTypes = {
   tooltipId: PropTypes.string,
   tooltipString: PropTypes.string,
   tooltipRender: PropTypes.any,
+  required: PropTypes.bool,
+  tooltipAlignment: PropTypes.string,
 };
 
 export default Label;

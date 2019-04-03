@@ -39,8 +39,9 @@ import {
   CONNECTOR_STATES,
   CONNECTOR_ACTIONS,
 } from 'constants/pipelines';
+import { graphPropType } from 'propTypes/pipeline';
 
-import * as s from './Styles';
+import * as s from './styles';
 
 const Fieldset = styled.fieldset`
   border: none;
@@ -80,20 +81,9 @@ class JdbcSource extends React.Component {
     loadGraph: PropTypes.func.isRequired,
     refreshGraph: PropTypes.func.isRequired,
     match: PropTypes.shape({
-      isExact: PropTypes.bool,
       params: PropTypes.object,
-      path: PropTypes.string,
-      url: PropTypes.string,
     }).isRequired,
-    graph: PropTypes.arrayOf(
-      PropTypes.shape({
-        type: PropTypes.string,
-        id: PropTypes.string,
-        isActive: PropTypes.bool,
-        isExact: PropTypes.bool,
-        icon: PropTypes.string,
-      }),
-    ).isRequired,
+    graph: PropTypes.arrayOf(graphPropType).isRequired,
     history: PropTypes.shape({
       push: PropTypes.func.isRequired,
     }).isRequired,

@@ -22,7 +22,7 @@ import { Form, Field } from 'react-final-form';
 
 import * as workerApi from 'api/workerApi';
 import * as MESSAGES from 'constants/messages';
-import * as s from './Styles';
+import * as s from './styles';
 import NodeSelectModal from '../NodeSelectModal';
 import PluginSelectModal from '../PluginSelectModal';
 import { Modal } from 'common/Modal';

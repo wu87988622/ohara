@@ -26,7 +26,7 @@ import { primaryBtn } from 'theme/btnTheme';
 import NodeNewModal from './NodeNewModal';
 import NodeEditModal from './NodeEditModal';
 
-import * as s from './Styles';
+import * as s from './styles';
 
 const NODE_NEW_MODAL = 'nodeNewModal';
 const NODE_EDIT_MODAL = 'nodeEditModal';
