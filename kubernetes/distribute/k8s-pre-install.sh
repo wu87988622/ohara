@@ -15,7 +15,9 @@
 # limitations under the License.
 #
 
-yum install -y https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-17.05.0.ce-1.el7.centos.x86_64.rpm
+yum install -y yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install -y docker-ce
 systemctl enable docker
 systemctl start docker
 systemctl disable firewalld
