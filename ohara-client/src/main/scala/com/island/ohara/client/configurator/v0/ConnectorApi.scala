@@ -206,7 +206,7 @@ object ConnectorApi {
       * display the custom name by default.
       * @return name
       */
-    override def name: String = plain.getOrElse(ConnectorFormatter.NAME_KEY, id)
+    override def name: String = plain.getOrElse(SettingDefinition.CONNECTOR_NAME_DEFINITION.key(), id)
     override def kind: String = "connector"
     def className: String = plain.getOrElse(
       SettingDefinition.CONNECTOR_CLASS_DEFINITION.key(),
