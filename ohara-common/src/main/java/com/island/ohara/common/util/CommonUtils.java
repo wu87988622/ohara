@@ -400,6 +400,10 @@ public final class CommonUtils {
   public static <T extends Collection<?>> boolean isEmpty(T s) {
     return s == null || s.isEmpty();
   }
+
+  public static <T extends Map<?, ?>> boolean isEmpty(T s) {
+    return s == null || s.isEmpty();
+  }
   /**
    * throw exception if the input collection is either null or empty.
    *
@@ -430,7 +434,7 @@ public final class CommonUtils {
    * @return input map
    */
   public static <T extends Map<?, ?>> T requireNonEmpty(T s, Supplier<String> msg) {
-    if (Objects.requireNonNull(s).isEmpty()) throw new IllegalArgumentException(msg.get());
+    if (isEmpty(s)) throw new IllegalArgumentException(msg.get());
     return s;
   }
 
