@@ -502,7 +502,7 @@ object WorkerClient {
 
     @Optional("Default is none")
     def settings(settings: Map[String, String]): Validator = {
-      this.formatter.settings(CommonUtils.requireNonEmpty(settings.asJava))
+      this.formatter.settings(CommonUtils.requireNonEmpty(Objects.requireNonNull(settings).asJava))
       this
     }
 
