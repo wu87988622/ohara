@@ -32,9 +32,10 @@ dependencies {
   testImplementation project(path: ':ohara-common', configuration: 'tests')
   testImplementation project(path: ':ohara-configurator', configuration: 'tests')
   testImplementation project(path: ':ohara-connector', configuration: 'tests')
-  testImplementation project(path: ':ohara-shabondi', configuration: 'tests')
   testImplementation project(path: ':ohara-it', configuration: 'tests')
   testImplementation project(path: ':ohara-kafka', configuration: 'tests')
+  testImplementation project(path: ':ohara-metrics', configuration: 'tests')
+  testImplementation project(path: ':ohara-shabondi', configuration: 'tests')
   testImplementation project(path: ':ohara-streams', configuration: 'tests')
   testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation libs.scalaLogging

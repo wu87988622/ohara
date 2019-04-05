@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-include 'ohara-testing-util',
-        'ohara-common',
-        'ohara-metrics',
-        'ohara-client',
-        'ohara-kafka',
-        'ohara-manager',
-        'ohara-connector',
-        'ohara-shabondi',
-        'ohara-agent',
-        'ohara-configurator',
-        'ohara-assembly',
-        'ohara-it',
-        'ohara-streams'
+apply from: "$rootDir/gradle/dependencies.gradle"
+
+dependencies {
+  implementation project(':ohara-common')
+  implementation libs.slf4jApi
+  implementation libs.slf4jlog4j
+  testImplementation project(':ohara-common').sourceSets.test.output
+  testImplementation libs.junit
+}
