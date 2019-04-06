@@ -339,4 +339,34 @@ public class TestCommonUtils extends SmallTest {
     Assert.assertFalse(CommonUtils.onlyNumberAndChar("@"));
     Assert.assertFalse(CommonUtils.onlyNumberAndChar("12313_"));
   }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullString() {
+    CommonUtils.requireNonEmpty((String) null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyString() {
+    CommonUtils.requireNonEmpty("");
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullCollection() {
+    CommonUtils.requireNonEmpty((Collection<?>) null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyCollection() {
+    CommonUtils.requireNonEmpty(Collections.emptyList());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullMap() {
+    CommonUtils.requireNonEmpty((Map<?, ?>) null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyMap() {
+    CommonUtils.requireNonEmpty(Collections.emptyMap());
+  }
 }

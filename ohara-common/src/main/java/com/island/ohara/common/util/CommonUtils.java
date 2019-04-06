@@ -434,7 +434,7 @@ public final class CommonUtils {
    * @return input map
    */
   public static <T extends Map<?, ?>> T requireNonEmpty(T s, Supplier<String> msg) {
-    if (isEmpty(s)) throw new IllegalArgumentException(msg.get());
+    if (Objects.requireNonNull(s).isEmpty()) throw new IllegalArgumentException(msg.get());
     return s;
   }
 
