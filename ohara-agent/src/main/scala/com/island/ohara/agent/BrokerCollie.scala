@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.BrokerApi
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.Optional
@@ -48,22 +49,22 @@ trait BrokerCollie extends Collie[BrokerClusterInfo, BrokerCollie.ClusterCreator
 
 object BrokerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[BrokerClusterInfo] {
-    private[this] var clientPort: Int = CommonUtils.availablePort()
+    private[this] var clientPort: Int = BrokerApi.CLIENT_PORT_DEFAULT
     private[this] var zookeeperClusterName: String = _
-    private[this] var exporterPort: Int = CommonUtils.availablePort()
+    private[this] var exporterPort: Int = BrokerApi.EXPORTER_PORT_DEFAULT
 
     def zookeeperClusterName(zookeeperClusterName: String): ClusterCreator = {
       this.zookeeperClusterName = CommonUtils.requireNonEmpty(zookeeperClusterName)
       this
     }
 
-    @Optional("default is random port")
+    @Optional("default is com.island.ohara.client.configurator.v0.BrokerApi.CLIENT_PORT_DEFAULT")
     def clientPort(clientPort: Int): ClusterCreator = {
       this.clientPort = CommonUtils.requirePositiveInt(clientPort)
       this
     }
 
-    @Optional("default is random port")
+    @Optional("default is com.island.ohara.client.configurator.v0.BrokerApi.EXPORTER_PORT_DEFAULT")
     def exporterPort(exporterPort: Int): ClusterCreator = {
       this.exporterPort = CommonUtils.requirePositiveInt(exporterPort)
       this

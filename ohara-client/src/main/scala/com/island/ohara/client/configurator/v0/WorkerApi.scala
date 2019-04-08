@@ -34,6 +34,11 @@ object WorkerApi {
     */
   val CLIENT_PORT_DEFAULT: Int = 8083
 
+  /**
+    * bound by jmx service which supplies a connection to get java beans from worker process.
+    */
+  val JMX_PORT_DEFAULT: Int = 8084
+
   val CONFIG_TOPIC_REPLICATIONS_DEFAULT: Short = 1
 
   val STATUS_TOPIC_PARTITIONS_DEFAULT: Int = 1
@@ -56,6 +61,7 @@ object WorkerApi {
       imageName = None,
       brokerClusterName = None,
       clientPort = None,
+      jmxPort = None,
       groupId = None,
       statusTopicName = None,
       statusTopicPartitions = None,
@@ -73,6 +79,7 @@ object WorkerApi {
                                                 imageName: Option[String],
                                                 brokerClusterName: Option[String],
                                                 clientPort: Option[Int],
+                                                jmxPort: Option[Int],
                                                 groupId: Option[String],
                                                 configTopicName: Option[String],
                                                 // configTopicPartitions must be 1
@@ -86,11 +93,11 @@ object WorkerApi {
                                                 jars: Seq[String],
                                                 nodeNames: Seq[String])
       extends ClusterCreationRequest {
-    override def ports: Seq[Int] = Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT))
+    override def ports: Seq[Int] = Seq(clientPort.getOrElse(CLIENT_PORT_DEFAULT), jmxPort.getOrElse(JMX_PORT_DEFAULT))
   }
 
   implicit val WORKER_CLUSTER_CREATION_REQUEST_JSON_FORMAT: RootJsonFormat[WorkerClusterCreationRequest] =
-    jsonFormat15(WorkerClusterCreationRequest)
+    jsonFormat16(WorkerClusterCreationRequest)
 
   implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDefinition] =
     new RootJsonFormat[SettingDefinition] {
@@ -110,6 +117,7 @@ object WorkerApi {
   trait WorkerClusterInfo extends ClusterInfo {
     def brokerClusterName: String
     def clientPort: Int
+    def jmxPort: Int
     def groupId: String
     def statusTopicName: String
     def statusTopicPartitions: Int
@@ -129,7 +137,7 @@ object WorkerApi {
       * Our client to broker and worker accept the connection props:host:port,host2:port2
       */
     def connectionProps: String = nodeNames.map(n => s"$n:$clientPort").mkString(",")
-    override def ports: Seq[Int] = Seq(clientPort)
+    override def ports: Seq[Int] = Seq(clientPort, jmxPort)
   }
 
   private[this] def toCaseClass(obj: WorkerClusterInfo): WorkerClusterInfoImpl = obj match {
@@ -140,6 +148,7 @@ object WorkerApi {
         imageName = obj.imageName,
         brokerClusterName = obj.brokerClusterName,
         clientPort = obj.clientPort,
+        jmxPort = obj.jmxPort,
         groupId = obj.groupId,
         statusTopicName = obj.statusTopicName,
         statusTopicPartitions = obj.statusTopicPartitions,
@@ -163,6 +172,7 @@ object WorkerApi {
               imageName: String,
               brokerClusterName: String,
               clientPort: Int,
+              jmxPort: Int,
               groupId: String,
               statusTopicName: String,
               statusTopicPartitions: Int,
@@ -180,6 +190,7 @@ object WorkerApi {
       imageName = imageName,
       brokerClusterName = brokerClusterName,
       clientPort = clientPort,
+      jmxPort = jmxPort,
       groupId = groupId,
       statusTopicName = statusTopicName,
       statusTopicPartitions = statusTopicPartitions,
@@ -211,6 +222,7 @@ object WorkerApi {
                                                  imageName: String,
                                                  brokerClusterName: String,
                                                  clientPort: Int,
+                                                 jmxPort: Int,
                                                  groupId: String,
                                                  statusTopicName: String,
                                                  statusTopicPartitions: Int,
@@ -227,7 +239,7 @@ object WorkerApi {
                                                  sinks: Seq[ConnectorVersion],
                                                  nodeNames: Seq[String])
       extends WorkerClusterInfo
-  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat19(
+  private[this] implicit val WORKER_CLUSTER_INFO_IMPL_JSON_FORMAT: RootJsonFormat[WorkerClusterInfoImpl] = jsonFormat20(
     WorkerClusterInfoImpl)
 
   def access(): ClusterAccess[WorkerClusterCreationRequest, WorkerClusterInfo] =

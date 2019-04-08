@@ -119,6 +119,7 @@ class TestMixedFakeCollie extends WithBrokerWorker with Matchers {
             imageName = None,
             brokerClusterName = Some(bk.name),
             clientPort = None,
+            jmxPort = None,
             groupId = None,
             configTopicName = None,
             configTopicReplications = None,

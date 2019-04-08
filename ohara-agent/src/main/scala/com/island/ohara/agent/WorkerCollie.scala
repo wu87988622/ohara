@@ -18,6 +18,7 @@ package com.island.ohara.agent
 import java.net.URL
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.WorkerApi
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
@@ -48,7 +49,7 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
 
 object WorkerCollie {
   trait ClusterCreator extends Collie.ClusterCreator[WorkerClusterInfo] {
-    private[this] var clientPort: Int = CommonUtils.availablePort()
+    private[this] var clientPort: Int = WorkerApi.CLIENT_PORT_DEFAULT
     private[this] var brokerClusterName: String = _
     private[this] var groupId: String = CommonUtils.randomString(10)
     private[this] var offsetTopicName: String = s"$groupId-offsetTopicName"
@@ -61,13 +62,14 @@ object WorkerCollie {
     private[this] var statusTopicReplications: Short = 1
     private[this] var statusTopicPartitions: Int = 1
     private[this] var jarUrls: Seq[URL] = Seq.empty
+    private[this] var jmxPort: Int = WorkerApi.JMX_PORT_DEFAULT
 
     def brokerClusterName(name: String): ClusterCreator = {
       this.brokerClusterName = CommonUtils.requireNonEmpty(name)
       this
     }
 
-    @Optional("default is random port")
+    @Optional("default is WorkerApi.CLIENT_PORT_DEFAULT.WorkerApi.CLIENT_PORT_DEFAULT")
     def clientPort(clientPort: Int): ClusterCreator = {
       this.clientPort = CommonUtils.requirePositiveInt(clientPort)
       this
@@ -133,12 +135,19 @@ object WorkerCollie {
       this
     }
 
+    @Optional("default is WorkerApi.CLIENT_PORT_DEFAULT.WorkerApi.CLIENT_PORT_DEFAULT")
+    def jmxPort(jmxPort: Int): ClusterCreator = {
+      this.jmxPort = CommonUtils.requirePositiveInt(jmxPort)
+      this
+    }
+
     override def create()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo] = doCreate(
       executionContext = Objects.requireNonNull(executionContext),
       clusterName = CommonUtils.requireNonEmpty(clusterName),
       imageName = CommonUtils.requireNonEmpty(imageName),
       brokerClusterName = CommonUtils.requireNonEmpty(brokerClusterName),
       clientPort = CommonUtils.requirePositiveInt(clientPort),
+      jmxPort = CommonUtils.requirePositiveInt(jmxPort),
       groupId = CommonUtils.requireNonEmpty(groupId),
       offsetTopicName = CommonUtils.requireNonEmpty(offsetTopicName),
       offsetTopicReplications = CommonUtils.requirePositiveShort(offsetTopicReplications),
@@ -157,6 +166,7 @@ object WorkerCollie {
                            imageName: String,
                            brokerClusterName: String,
                            clientPort: Int,
+                           jmxPort: Int,
                            groupId: String,
                            offsetTopicName: String,
                            offsetTopicReplications: Short,
@@ -183,5 +193,6 @@ object WorkerCollie {
   private[agent] val ADVERTISED_CLIENT_PORT_KEY: String = "WORKER_ADVERTISED_CLIENT_PORT"
   private[agent] val CLIENT_PORT_KEY: String = "WORKER_CLIENT_PORT"
   private[agent] val PLUGINS_KEY: String = "WORKER_PLUGINS"
-
+  private[agent] val JMX_HOSTNAME_KEY: String = "JMX_HOSTNAME"
+  private[agent] val JMX_PORT_KEY: String = "JMX_PORT"
 }

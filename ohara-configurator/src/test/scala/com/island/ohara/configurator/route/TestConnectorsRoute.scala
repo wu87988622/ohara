@@ -292,6 +292,7 @@ class TestConnectorsRoute extends SmallTest with Matchers {
           imageName = None,
           brokerClusterName = Some(bk.name),
           clientPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
           groupId = Some(CommonUtils.randomString(10)),
           statusTopicName = Some(CommonUtils.randomString(10)),
           statusTopicPartitions = None,

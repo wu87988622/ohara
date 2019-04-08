@@ -105,6 +105,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
+                                   jmxPort: Int,
                                    bkClusterName: String,
                                    nodeNames: Seq[String]): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie
@@ -112,6 +113,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
+      .jmxPort(jmxPort)
       .brokerClusterName(bkClusterName)
       .groupId(CommonUtils.randomString(10))
       .configTopicName(CommonUtils.randomString(10))
@@ -122,6 +124,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
 
   override protected def wk_create(clusterName: String,
                                    clientPort: Int,
+                                   jmxPort: Int,
                                    groupId: String,
                                    configTopicName: String,
                                    statusTopicName: String,
@@ -133,6 +136,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
       .imageName(WorkerApi.IMAGE_NAME_DEFAULT)
       .clusterName(clusterName)
       .clientPort(clientPort)
+      .jmxPort(jmxPort)
       .brokerClusterName(bkClusterName)
       .groupId(groupId)
       .configTopicName(configTopicName)

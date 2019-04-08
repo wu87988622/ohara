@@ -85,8 +85,25 @@ public interface BeanChannel extends Iterable<BeanObject> {
     return beanObjects().stream();
   }
 
+  /**
+   * @return the number of beans in this channel
+   */
   default int size() {
     return beanObjects().size();
+  }
+
+  /**
+   * @return true if there is no beans in this channel.
+   */
+  default boolean empty() {
+    return beanObjects().isEmpty();
+  }
+
+  /**
+   * @return false if there is no beans in this channel.
+   */
+  default boolean nonEmpty() {
+    return !empty();
   }
 
   @Override

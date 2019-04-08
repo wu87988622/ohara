@@ -17,6 +17,7 @@
 package com.island.ohara.agent
 import java.util.Objects
 
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
@@ -31,23 +32,23 @@ trait ZookeeperCollie extends Collie[ZookeeperClusterInfo, ZookeeperCollie.Clust
 
 object ZookeeperCollie {
   trait ClusterCreator extends Collie.ClusterCreator[ZookeeperClusterInfo] {
-    private[this] var clientPort: Int = CommonUtils.availablePort()
-    private[this] var peerPort: Int = CommonUtils.availablePort()
-    private[this] var electionPort: Int = CommonUtils.availablePort()
+    private[this] var clientPort: Int = ZookeeperApi.CLIENT_PORT_DEFAULT
+    private[this] var peerPort: Int = ZookeeperApi.PEER_PORT_DEFAULT
+    private[this] var electionPort: Int = ZookeeperApi.ELECTION_PORT_DEFAULT
 
-    @Optional("default is random port")
+    @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.CLIENT_PORT_DEFAULT")
     def clientPort(clientPort: Int): ClusterCreator = {
       this.clientPort = CommonUtils.requirePositiveInt(clientPort)
       this
     }
 
-    @Optional("default is random port")
+    @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.PEER_PORT_DEFAULT")
     def peerPort(peerPort: Int): ClusterCreator = {
       this.peerPort = CommonUtils.requirePositiveInt(peerPort)
       this
     }
 
-    @Optional("default is random port")
+    @Optional("default is com.island.ohara.client.configurator.v0.ZookeeperApi.ELECTION_PORT_DEFAULT")
     def electionPort(electionPort: Int): ClusterCreator = {
       this.electionPort = CommonUtils.requirePositiveInt(electionPort)
       this

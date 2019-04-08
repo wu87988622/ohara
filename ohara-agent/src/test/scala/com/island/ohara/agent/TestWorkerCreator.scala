@@ -31,6 +31,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
                                                                 imageName,
                                                                 brokerClusterName,
                                                                 clientPort,
+                                                                jmxPort,
                                                                 groupId: String,
                                                                 offsetTopicName: String,
                                                                 offsetTopicReplications,
@@ -48,6 +49,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
     if (imageName == null || imageName.isEmpty) throw new AssertionError()
     if (brokerClusterName == null || brokerClusterName.isEmpty) throw new AssertionError()
     if (clientPort <= 0) throw new AssertionError()
+    if (jmxPort <= 0) throw new AssertionError()
     if (groupId == null || groupId.isEmpty) throw new AssertionError()
     if (offsetTopicName == null || offsetTopicName.isEmpty) throw new AssertionError()
     if (offsetTopicReplications <= 0) throw new AssertionError()
@@ -66,6 +68,7 @@ class TestWorkerCreator extends SmallTest with Matchers {
         imageName = imageName,
         brokerClusterName = brokerClusterName,
         clientPort = clientPort,
+        jmxPort = jmxPort,
         groupId = groupId,
         offsetTopicName = offsetTopicName,
         offsetTopicReplications = offsetTopicReplications,
@@ -105,6 +108,11 @@ class TestWorkerCreator extends SmallTest with Matchers {
   @Test
   def negativeClientPort(): Unit = {
     an[IllegalArgumentException] should be thrownBy wkCreator().clientPort(-1)
+  }
+
+  @Test
+  def negativeJmxPort(): Unit = {
+    an[IllegalArgumentException] should be thrownBy wkCreator().jmxPort(-1)
   }
 
   @Test

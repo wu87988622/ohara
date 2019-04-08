@@ -102,6 +102,7 @@ object WorkerRoute {
                 .creator()
                 .clusterName(req.name)
                 .clientPort(req.clientPort.getOrElse(WorkerApi.CLIENT_PORT_DEFAULT))
+                .jmxPort(req.jmxPort.getOrElse(WorkerApi.JMX_PORT_DEFAULT))
                 .brokerClusterName(bkName)
                 .groupId(req.groupId.getOrElse(CommonUtils.randomString(10)))
                 .configTopicName(req.configTopicName.getOrElse(s"setting-${CommonUtils.randomString(10)}"))

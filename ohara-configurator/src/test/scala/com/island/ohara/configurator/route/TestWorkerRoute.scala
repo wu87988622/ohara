@@ -80,6 +80,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       brokerClusterName = None,
       clientPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
+      jmxPort = Some(CommonUtils.availablePort()),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
       statusTopicReplications = None,
@@ -98,6 +99,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -121,6 +123,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         imageName = None,
         brokerClusterName = Some(CommonUtils.randomString(10)),
         clientPort = Some(CommonUtils.availablePort()),
+        jmxPort = Some(CommonUtils.availablePort()),
         groupId = Some(CommonUtils.randomString(10)),
         statusTopicName = Some(CommonUtils.randomString(10)),
         statusTopicPartitions = None,
@@ -141,7 +144,8 @@ class TestWorkerRoute extends MediumTest with Matchers {
       name = CommonUtils.randomString(10),
       imageName = None,
       brokerClusterName = Some(bkClusterName),
-      clientPort = Some(123),
+      clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       configTopicName = Some(CommonUtils.randomString(10)),
       configTopicReplications = Some(2.asInstanceOf[Short]),
@@ -221,6 +225,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
           imageName = None,
           brokerClusterName = Some(bkClusterName),
           clientPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
           groupId = Some(CommonUtils.randomString(10)),
           statusTopicName = Some(CommonUtils.randomString(10)),
           statusTopicPartitions = None,
@@ -244,6 +249,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         imageName = None,
         brokerClusterName = Some(bkClusterName),
         clientPort = Some(CommonUtils.availablePort()),
+        jmxPort = Some(CommonUtils.availablePort()),
         groupId = Some(CommonUtils.randomString(10)),
         statusTopicName = Some(CommonUtils.randomString(10)),
         statusTopicPartitions = None,
@@ -265,6 +271,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -295,6 +302,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -317,6 +325,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -337,6 +346,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -364,6 +374,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -389,6 +400,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -418,6 +430,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -439,6 +452,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
         imageName = cluster.imageName,
         brokerClusterName = cluster.brokerClusterName,
         clientPort = cluster.clientPort,
+        jmxPort = cluster.jmxPort,
         groupId = cluster.groupId,
         statusTopicName = cluster.statusTopicName,
         statusTopicPartitions = cluster.statusTopicPartitions,
@@ -461,6 +475,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -481,6 +496,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = cluster.imageName,
       brokerClusterName = cluster.brokerClusterName,
       clientPort = cluster.clientPort,
+      jmxPort = cluster.jmxPort,
       groupId = cluster.groupId,
       statusTopicName = cluster.statusTopicName,
       statusTopicPartitions = cluster.statusTopicPartitions,
@@ -504,6 +520,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = None,
+      jmxPort = None,
       groupId = None,
       configTopicName = None,
       configTopicReplications = None,
@@ -527,6 +544,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -556,6 +574,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(clientPort),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -579,6 +598,38 @@ class TestWorkerRoute extends MediumTest with Matchers {
   }
 
   @Test
+  def jmxPortConflict(): Unit = {
+    val jmxPort = CommonUtils.availablePort()
+
+    def createReq() = WorkerClusterCreationRequest(
+      name = CommonUtils.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(jmxPort),
+      groupId = Some(CommonUtils.randomString(10)),
+      statusTopicName = Some(CommonUtils.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtils.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtils.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+
+    // pass
+    result(workerApi.add(createReq()))
+
+    an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
+
+    // pass by different port
+    result(workerApi.add(createReq().copy(jmxPort = Some(CommonUtils.availablePort()))))
+  }
+
+  @Test
   def duplicateGroupId(): Unit = {
     val groupId = CommonUtils.randomString(10)
 
@@ -587,6 +638,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(groupId),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -614,6 +666,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -641,6 +694,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(CommonUtils.randomString(10)),
       statusTopicPartitions = None,
@@ -668,6 +722,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
       imageName = None,
       brokerClusterName = Some(bkClusterName),
       clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
       groupId = Some(CommonUtils.randomString(10)),
       statusTopicName = Some(statusTopic),
       statusTopicPartitions = None,

@@ -154,6 +154,7 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
                 imageName = c.imageName,
                 brokerClusterName = c.brokerClusterName,
                 clientPort = c.clientPort,
+                jmxPort = c.jmxPort,
                 groupId = c.groupId,
                 statusTopicName = c.statusTopicName,
                 statusTopicPartitions = c.statusTopicPartitions,

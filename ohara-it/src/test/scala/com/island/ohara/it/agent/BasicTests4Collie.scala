@@ -30,6 +30,7 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.it.IntegrationTest
 import com.island.ohara.kafka.exception.OharaExecutionException
 import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
+import com.island.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.{InvalidReplicationFactorException, UnknownTopicOrPartitionException}
 import org.junit.Test
@@ -84,10 +85,12 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
   protected def wk_exist(clusterName: String): Future[Boolean]
   protected def wk_create(clusterName: String,
                           clientPort: Int,
+                          jmxPort: Int,
                           bkClusterName: String,
                           nodeNames: Seq[String]): Future[WorkerClusterInfo]
   protected def wk_create(clusterName: String,
                           clientPort: Int,
+                          jmxPort: Int,
                           groupId: String,
                           configTopicName: String,
                           statusTopicName: String,
@@ -226,8 +229,12 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         container.portMappings.head.portPairs.size shouldBe 2
         container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
         container.environments.exists(_._2 == clientPort.toString) shouldBe true
-        testTopic(
-          testRemoveNodeToRunningBrokerCluster(testTopic(testAddNodeToRunningBrokerCluster(testTopic(bkCluster)))))
+        var curCluster = bkCluster
+        testTopic(bkCluster)
+        curCluster = testAddNodeToRunningBrokerCluster(curCluster)
+        testTopic(bkCluster)
+        curCluster = testRemoveNodeToRunningBrokerCluster(curCluster)
+        testTopic(bkCluster)
       } finally if (cleanup) {
         result(bk_delete(bkCluster.name))
         assertNoCluster(() => result(bk_clusters()), bkCluster.name)
@@ -264,7 +271,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
     } else previousCluster
   }
 
-  private[this] def testTopic(cluster: BrokerClusterInfo): BrokerClusterInfo = {
+  private[this] def testTopic(cluster: BrokerClusterInfo): Unit = {
     val topicName = CommonUtils.randomString()
     val brokers = cluster.nodeNames.map(_ + s":${cluster.clientPort}").mkString(",")
     log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers")
@@ -347,7 +354,6 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
       } finally consumer.close()
       brokerClient.deleteTopic(topicName)
     } finally brokerClient.close()
-    cluster
   }
 
   private[this] def testRemoveNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
@@ -395,11 +401,13 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         result(wk_exist(clusterName)) shouldBe false
         log.info("[WORKER] verify:nonExists done")
         val clientPort = CommonUtils.availablePort()
+        val jmxPort = CommonUtils.availablePort()
         def assert(workerCluster: WorkerClusterInfo): WorkerClusterInfo = {
           workerCluster.brokerClusterName shouldBe bkCluster.name
           workerCluster.name shouldBe clusterName
           workerCluster.nodeNames.head shouldBe nodeName
           workerCluster.clientPort shouldBe clientPort
+          workerCluster.jmxPort shouldBe jmxPort
           workerCluster.configTopicPartitions shouldBe 1
           workerCluster.configTopicReplications shouldBe 1
           workerCluster.statusTopicPartitions shouldBe 1
@@ -414,6 +422,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             wk_create(
               clusterName = clusterName,
               clientPort = clientPort,
+              jmxPort = jmxPort,
               bkClusterName = bkCluster.name,
               nodeNames = Seq(nodeName)
             )))
@@ -443,9 +452,16 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
           // container.portMappings.head.portPairs.size shouldBe 1
           // container.portMappings.head.portPairs.exists(_.containerPort == clientPort) shouldBe true
           container.environments.exists(_._2 == clientPort.toString) shouldBe true
-          testConnectors(
-            testRemoveNodeToRunningWorkerCluster(
-              testConnectors(testAddNodeToRunningWorkerCluster(testConnectors(wkCluster)))))
+
+          var curCluster = wkCluster
+          testConnectors(curCluster)
+          testJmx(curCluster)
+          curCluster = testAddNodeToRunningWorkerCluster(curCluster)
+          testConnectors(curCluster)
+          testJmx(curCluster)
+          curCluster = testRemoveNodeToRunningWorkerCluster(curCluster)
+          testConnectors(curCluster)
+          testJmx(curCluster)
         } finally if (cleanup) {
           result(wk_delete(wkCluster.name))
           assertNoCluster(() => result(wk_clusters()), wkCluster.name)
@@ -458,19 +474,21 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
 
   }
 
-  private[this] def testConnectors(cluster: WorkerClusterInfo): WorkerClusterInfo = {
-    val workerClient = WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}")
+  private[this] def testConnectors(cluster: WorkerClusterInfo): Unit =
     await(
       () =>
-        try result(workerClient.connectors).nonEmpty
+        try result(WorkerClient(s"${cluster.nodeNames.head}:${cluster.clientPort}").connectors).nonEmpty
         catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)
             false
       }
     )
-    cluster
+
+  private[this] def testJmx(cluster: WorkerClusterInfo): Unit = cluster.nodeNames.foreach { node =>
+    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().size() should not be 0
   }
+
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
     result(wk_exist(previousCluster.name)) shouldBe true
     an[IllegalArgumentException] should be thrownBy result(
@@ -656,6 +674,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
             wk_create(
               clusterName = wkName,
               clientPort = CommonUtils.availablePort(),
+              jmxPort = CommonUtils.availablePort(),
               bkClusterName = bk.name,
               groupId = groupIds(index),
               configTopicName = configTopicNames(index),
@@ -696,6 +715,7 @@ abstract class BasicTests4Collie extends IntegrationTest with Matchers {
         another.jarNames shouldBe c.jarNames
         another.imageName shouldBe c.imageName
         testConnectors(c)
+        testJmx(c)
       }
     } finally if (cleanup) {
       wkNames.foreach { name =>

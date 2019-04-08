@@ -76,6 +76,7 @@ private[agent] class ClusterCollieImpl(expiredTime: Duration, nodeCollie: NodeCo
         imageName = containers.head.imageName,
         brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
         clientPort = port,
+        jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
         groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
         offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
         offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,

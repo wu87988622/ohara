@@ -399,6 +399,7 @@ private object K8SClusterCollieImpl {
                                                            imageName,
                                                            brokerClusterName,
                                                            clientPort,
+                                                           jmxPort,
                                                            groupId,
                                                            offsetTopicName,
                                                            offsetTopicReplications,
@@ -488,7 +489,9 @@ private object K8SClusterCollieImpl {
                       WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                       WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                       WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
-                      BROKER_CLUSTER_NAME -> brokerClusterName
+                      BROKER_CLUSTER_NAME -> brokerClusterName,
+                      WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                      WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
                     ))
                     .labelName(OHARA_LABEL)
                     .domainName(K8S_DOMAIN_NAME)
@@ -509,6 +512,7 @@ private object K8SClusterCollieImpl {
               imageName = imageName,
               brokerClusterName = brokerClusterName,
               clientPort = clientPort,
+              jmxPort = jmxPort,
               groupId = groupId,
               offsetTopicName = offsetTopicName,
               offsetTopicPartitions = offsetTopicPartitions,
@@ -545,6 +549,7 @@ private object K8SClusterCollieImpl {
           .filter(_.nonEmpty)
           .map(s => new URL(s)))
       .nodeName(newNodeName)
+      .jmxPort(previousCluster.jmxPort)
       .create()
 
     override val service: Service = WORKER
@@ -559,6 +564,7 @@ private object K8SClusterCollieImpl {
           imageName = containers.head.imageName,
           brokerClusterName = containers.head.environments(BROKER_CLUSTER_NAME),
           clientPort = containers.head.environments(WorkerCollie.CLIENT_PORT_KEY).toInt,
+          jmxPort = containers.head.environments(WorkerCollie.JMX_PORT_KEY).toInt,
           groupId = containers.head.environments(WorkerCollie.GROUP_ID_KEY),
           offsetTopicName = containers.head.environments(WorkerCollie.OFFSET_TOPIC_KEY),
           offsetTopicPartitions = containers.head.environments(WorkerCollie.OFFSET_TOPIC_PARTITIONS_KEY).toInt,

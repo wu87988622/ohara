@@ -49,6 +49,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                                                          imageName,
                                                          brokerClusterName,
                                                          clientPort,
+                                                         jmxPort,
                                                          groupId,
                                                          offsetTopicName,
                                                          offsetTopicReplications,
@@ -141,16 +142,24 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                             WorkerCollie.ADVERTISED_HOSTNAME_KEY -> node.name,
                             WorkerCollie.ADVERTISED_CLIENT_PORT_KEY -> clientPort.toString,
                             WorkerCollie.PLUGINS_KEY -> jarUrls.mkString(","),
-                            BROKER_CLUSTER_NAME -> brokerClusterName
+                            BROKER_CLUSTER_NAME -> brokerClusterName,
+                            WorkerCollie.JMX_HOSTNAME_KEY -> node.name,
+                            WorkerCollie.JMX_PORT_KEY -> jmxPort.toString
                           ))
                           .name(containerName)
                           .route(route ++ existRoute)
-                          // we use --network=host for worker cluster since the connectors run on worker cluster may need to
+                          // [Before] we use --network=host for worker cluster since the connectors run on worker cluster may need to
                           // access external system to request data. In ssh mode, dns service "may" be not deployed.
                           // In order to simplify their effort, we directly mount host's route on the container.
                           // This is not a normal case I'd say. However, we always meet special case which must be addressed
                           // by this "special" solution...
-                          .networkDriver(NETWORK_DRIVER)
+                          //.networkDriver(NETWORK_DRIVER)
+                          // [AFTER] Given that we have no use case about using port in custom connectors and there is no
+                          // similar case in other type (streamapp and k8s impl). Hence we change the network type from host to bridge
+                          .portMappings(Map(
+                            clientPort -> clientPort,
+                            jmxPort -> jmxPort
+                          ))
                           .execute()
                       )
                       Some(node.name)
@@ -176,6 +185,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
                   imageName = imageName,
                   brokerClusterName = brokerClusterName,
                   clientPort = clientPort,
+                  jmxPort = jmxPort,
                   groupId = groupId,
                   offsetTopicName = offsetTopicName,
                   offsetTopicPartitions = offsetTopicPartitions,
@@ -215,6 +225,7 @@ private class WorkerCollieImpl(nodeCollie: NodeCollie,
           .filter(_.nonEmpty)
           .map(s => new URL(s)))
       .nodeName(newNodeName)
+      .jmxPort(previousCluster.jmxPort)
       .create()
   }
 }

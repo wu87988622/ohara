@@ -143,6 +143,8 @@ class ConfiguratorBuilder {
         imageName = "None",
         brokerClusterName = bkCluster.name,
         clientPort = port,
+        // Assigning a negative value can make test fail quickly.
+        jmxPort = -1,
         groupId = "None",
         statusTopicName = "None",
         statusTopicPartitions = 1,
@@ -219,6 +221,8 @@ class ConfiguratorBuilder {
           brokerClusterName = bkCluster.name,
           // Assigning a negative value can make test fail quickly.
           clientPort = -1,
+          // Assigning a negative value can make test fail quickly.
+          jmxPort = -1,
           groupId = s"groupId$index",
           statusTopicName = s"statusTopicName$index",
           statusTopicPartitions = 1,

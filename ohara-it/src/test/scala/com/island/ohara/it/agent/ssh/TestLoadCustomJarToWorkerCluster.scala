@@ -130,6 +130,7 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
           name = nameHolder.generateClusterName(),
           imageName = None,
           clientPort = Some(CommonUtils.availablePort()),
+          jmxPort = Some(CommonUtils.availablePort()),
           brokerClusterName = Some(bkCluster.name),
           groupId = None,
           configTopicName = None,

@@ -41,6 +41,26 @@ if [[ -f "$CONFIG" ]]; then
   exit 2
 fi
 
+# jmx setting
+
+if [[ -z $JMX_PORT ]]; then
+  echo "JMX_PORT is required!!!"
+  exit 2
+fi
+if [[ -z $JMX_HOSTNAME ]]; then
+  echo "JMX_HOSTNAME is required!!!"
+  exit 2
+fi
+
+# this option will rewrite the default setting in kafka script
+export KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
+-Dcom.sun.management.jmxremote.port=$JMX_PORT \
+-Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT \
+-Djava.rmi.server.hostname=$JMX_HOSTNAME
+"
+
 # We need to change working folder to another one which contains less files. Kafka had a issue
 # (see https://issues.apache.org/jira/browse/KAFKA-4247) which generating classpath starting with colon and it make
 # reflection tool scan all stuff under the current folder. It may be slow if the folder has many files...
