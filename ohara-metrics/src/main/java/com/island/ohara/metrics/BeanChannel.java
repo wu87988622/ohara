@@ -18,7 +18,19 @@ package com.island.ohara.metrics;
 
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.basic.CounterMBean;
-
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -35,73 +47,67 @@ import javax.management.ReflectionException;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
- * This channel is a SNAPSHOT of all bean objects from local/remote bean server.
- * Since Java APIs don't allow us to get all objects in single connection, the implementation has to send multi
- * requests to fetch all bean objects. If you really case the performance, you should set both {@link BeanChannel.Builder#domainName}
- * and {@link BeanChannel.Builder#properties(Map)} to filter unwanted objects. If you don't set both arguments, the filter
- * will happen after the connection to local/remote bean server. It won't save your life.
+ * This channel is a SNAPSHOT of all bean objects from local/remote bean server. Since Java APIs
+ * don't allow us to get all objects in single connection, the implementation has to send multi
+ * requests to fetch all bean objects. If you really case the performance, you should set both
+ * {@link BeanChannel.Builder#domainName} and {@link BeanChannel.Builder#properties(Map)} to filter
+ * unwanted objects. If you don't set both arguments, the filter will happen after the connection to
+ * local/remote bean server. It won't save your life.
  */
 @FunctionalInterface
 public interface BeanChannel extends Iterable<BeanObject> {
 
   /**
+   * remove unused beans from local jvm. This is not a public method since it should be called by
+   * ohara's beans only.
+   *
+   * @param domain domain
+   * @param properties properties
+   */
+  static void unregister(String domain, Map<String, String> properties) {
+    try {
+      ManagementFactory.getPlatformMBeanServer()
+          .unregisterMBean(ObjectName.getInstance(domain, new Hashtable<>(properties)));
+    } catch (InstanceNotFoundException
+        | MBeanRegistrationException
+        | MalformedObjectNameException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+  /**
    * a helper method creating a channel to access local mbean server
+   *
    * @return a bean channel connecting to local bean server
    */
   static BeanChannel local() {
     return builder().local().build();
   }
 
-  /**
-   * @return a immutable list of bean objects
-   */
+  /** @return a immutable list of bean objects */
   List<BeanObject> beanObjects();
 
-  /**
-   * @return get only counter type from bean objects
-   */
+  /** @return get only counter type from bean objects */
   default List<CounterMBean> counterMBeans() {
-    return stream().filter(CounterMBean::is)
-      .map(CounterMBean::of)
-      .collect(Collectors.toList());
+    return stream().filter(CounterMBean::is).map(CounterMBean::of).collect(Collectors.toList());
   }
 
   default Stream<BeanObject> stream() {
     return beanObjects().stream();
   }
 
-  /**
-   * @return the number of beans in this channel
-   */
+  /** @return the number of beans in this channel */
   default int size() {
     return beanObjects().size();
   }
 
-  /**
-   * @return true if there is no beans in this channel.
-   */
+  /** @return true if there is no beans in this channel. */
   default boolean empty() {
     return beanObjects().isEmpty();
   }
 
-  /**
-   * @return false if there is no beans in this channel.
-   */
+  /** @return false if there is no beans in this channel. */
   default boolean nonEmpty() {
     return !empty();
   }
@@ -126,8 +132,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
     private int port = -1;
     private boolean local = true;
 
-    private Builder() {
-    }
+    private Builder() {}
 
     public Builder hostname(String hostname) {
       this.hostname = CommonUtils.requireNonEmpty(hostname);
@@ -145,8 +150,9 @@ public interface BeanChannel extends Iterable<BeanObject> {
     }
 
     /**
-     * list the bean objects having the same domain.
-     * Setting a specific domain can reduce the communication to jmx server
+     * list the bean objects having the same domain. Setting a specific domain can reduce the
+     * communication to jmx server
+     *
      * @param domainName domain
      * @return this builder
      */
@@ -156,8 +162,9 @@ public interface BeanChannel extends Iterable<BeanObject> {
     }
 
     /**
-     * list the bean objects having the same property.
-     * Setting a specific property can reduce the communication to jmx server
+     * list the bean objects having the same property. Setting a specific property can reduce the
+     * communication to jmx server
+     *
      * @param key property key
      * @param value property value
      * @return this builder
@@ -167,39 +174,47 @@ public interface BeanChannel extends Iterable<BeanObject> {
     }
 
     /**
-     * list the bean objects having the same properties.
-     * Setting a specific properties can reduce the communication to jmx server
+     * list the bean objects having the same properties. Setting a specific properties can reduce
+     * the communication to jmx server
+     *
      * @param properties properties
      * @return this builder
      */
     public Builder properties(Map<String, String> properties) {
-      CommonUtils.requireNonEmpty(properties).forEach((k, v) ->{
-          CommonUtils.requireNonEmpty(k);
-          CommonUtils.requireNonEmpty(v);}
-        );
+      CommonUtils.requireNonEmpty(properties)
+          .forEach(
+              (k, v) -> {
+                CommonUtils.requireNonEmpty(k);
+                CommonUtils.requireNonEmpty(v);
+              });
       this.properties = CommonUtils.requireNonEmpty(properties);
       return this;
     }
 
-    private BeanObject to(ObjectName objectName,
-                          MBeanInfo beanInfo,
-                          Function<String, Object> valueGetter) {
+    private BeanObject to(
+        ObjectName objectName, MBeanInfo beanInfo, Function<String, Object> valueGetter) {
       // used to filter the "illegal" attribute
       Object unknown = new Object();
       return BeanObject.builder()
-        .domainName(objectName.getDomain())
-        .properties(objectName.getKeyPropertyList())
-        .attributes(Stream.of(beanInfo.getAttributes())
-          .collect(Collectors.toMap(MBeanAttributeInfo::getName, attribute -> {
-            try {
-              return valueGetter.apply(attribute.getName());
-            } catch (Throwable e){
-              // It is not allow to access the value.
-              return unknown;
-            }
-          })).entrySet().stream().filter(e -> e.getValue() != unknown)
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-        .build();
+          .domainName(objectName.getDomain())
+          .properties(objectName.getKeyPropertyList())
+          .attributes(
+              Stream.of(beanInfo.getAttributes())
+                  .collect(
+                      Collectors.toMap(
+                          MBeanAttributeInfo::getName,
+                          attribute -> {
+                            try {
+                              return valueGetter.apply(attribute.getName());
+                            } catch (Throwable e) {
+                              // It is not allow to access the value.
+                              return unknown;
+                            }
+                          }))
+                  .entrySet().stream()
+                  .filter(e -> e.getValue() != unknown)
+                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+          .build();
     }
 
     private ObjectName objectName() {
@@ -216,63 +231,95 @@ public interface BeanChannel extends Iterable<BeanObject> {
     private List<BeanObject> doBuild() {
       if (local) {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        return server.queryMBeans(objectName(), null).stream().map(objectInstance -> {
-          try {
-            return Optional.of(to(objectInstance.getObjectName(),
-              server.getMBeanInfo(objectInstance.getObjectName()),
-              (attribute) -> {
-                try {
-                  return server.getAttribute(objectInstance.getObjectName(), attribute);
-                } catch (MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException e) {
-                  throw new IllegalArgumentException(e);
-                }
-              }));
-          } catch (Throwable e) {
-            return Optional.empty();
-          }
-        }).filter(Optional::isPresent).map(o -> (BeanObject) o.get()).collect(Collectors.toList());
-      } else {
-        try(JMXConnector connector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:rmi:///jndi/rmi://"
-          + CommonUtils.requireNonEmpty(hostname) + ":"
-          + CommonUtils.requirePositiveInt(port)
-          + "/jmxrmi"), null)) {
-          MBeanServerConnection connection = connector.getMBeanServerConnection();
-          return connection.queryMBeans(objectName(), null).stream().map(objectInstance -> {
-            try {
-              return Optional.of(to(objectInstance.getObjectName(),
-                connection.getMBeanInfo(objectInstance.getObjectName()),
-                (attribute) -> {
+        return server.queryMBeans(objectName(), null).stream()
+            .map(
+                objectInstance -> {
                   try {
-                    return connection.getAttribute(objectInstance.getObjectName(), attribute);
-                  } catch (MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException | IOException e) {
-                    throw new IllegalArgumentException(e);
+                    return Optional.of(
+                        to(
+                            objectInstance.getObjectName(),
+                            server.getMBeanInfo(objectInstance.getObjectName()),
+                            (attribute) -> {
+                              try {
+                                return server.getAttribute(
+                                    objectInstance.getObjectName(), attribute);
+                              } catch (MBeanException
+                                  | AttributeNotFoundException
+                                  | InstanceNotFoundException
+                                  | ReflectionException e) {
+                                throw new IllegalArgumentException(e);
+                              }
+                            }));
+                  } catch (Throwable e) {
+                    return Optional.empty();
                   }
-                }));
-            } catch (Throwable e) {
-              return Optional.empty();
-            }
-          }).filter(Optional::isPresent).map(o -> (BeanObject) o.get()).collect(Collectors.toList());
+                })
+            .filter(Optional::isPresent)
+            .map(o -> (BeanObject) o.get())
+            .collect(Collectors.toList());
+      } else {
+        try (JMXConnector connector =
+            JMXConnectorFactory.connect(
+                new JMXServiceURL(
+                    "service:jmx:rmi:///jndi/rmi://"
+                        + CommonUtils.requireNonEmpty(hostname)
+                        + ":"
+                        + CommonUtils.requirePositiveInt(port)
+                        + "/jmxrmi"),
+                null)) {
+          MBeanServerConnection connection = connector.getMBeanServerConnection();
+          return connection.queryMBeans(objectName(), null).stream()
+              .map(
+                  objectInstance -> {
+                    try {
+                      return Optional.of(
+                          to(
+                              objectInstance.getObjectName(),
+                              connection.getMBeanInfo(objectInstance.getObjectName()),
+                              (attribute) -> {
+                                try {
+                                  return connection.getAttribute(
+                                      objectInstance.getObjectName(), attribute);
+                                } catch (MBeanException
+                                    | AttributeNotFoundException
+                                    | InstanceNotFoundException
+                                    | ReflectionException
+                                    | IOException e) {
+                                  throw new IllegalArgumentException(e);
+                                }
+                              }));
+                    } catch (Throwable e) {
+                      return Optional.empty();
+                    }
+                  })
+              .filter(Optional::isPresent)
+              .map(o -> (BeanObject) o.get())
+              .collect(Collectors.toList());
         } catch (IOException e) {
           throw new IllegalArgumentException(e);
         }
       }
     }
+
     public BeanChannel build() {
-      List<BeanObject> objs = doBuild().stream()
-        .filter(o -> CommonUtils.isEmpty(domainName) || o.domainName().equals(domainName))
-        .filter(o -> CommonUtils.isEmpty(properties) || new HashMap<>(o.properties()).equals(new HashMap<>(properties)))
-        .collect(Collectors.toList());
+      List<BeanObject> objs =
+          doBuild().stream()
+              .filter(o -> CommonUtils.isEmpty(domainName) || o.domainName().equals(domainName))
+              .filter(
+                  o ->
+                      CommonUtils.isEmpty(properties)
+                          || new HashMap<>(o.properties()).equals(new HashMap<>(properties)))
+              .collect(Collectors.toList());
       return () -> objs;
     }
   }
 
-  static class Register<T> {
+  class Register<T> {
     private String domain = null;
     private Map<String, String> properties = Collections.emptyMap();
     private T beanObject = null;
 
-    private Register() {
-    }
+    private Register() {}
 
     public Register<T> domain(String domain) {
       this.domain = CommonUtils.requireNonEmpty(domain);
@@ -301,7 +348,10 @@ public interface BeanChannel extends Iterable<BeanObject> {
         ObjectName name = ObjectName.getInstance(domain, new Hashtable<>(properties));
         ManagementFactory.getPlatformMBeanServer().registerMBean(beanObject, name);
         return beanObject;
-      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+      } catch (MalformedObjectNameException
+          | InstanceAlreadyExistsException
+          | MBeanRegistrationException
+          | NotCompliantMBeanException e) {
         throw new IllegalArgumentException(e);
       }
     }

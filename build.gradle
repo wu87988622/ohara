@@ -144,7 +144,11 @@ subprojects {
   // All sub-projects have been applied the java or scala checkstyle.
   if (it.name != 'ohara-manager') {
     apply plugin: "com.diffplug.gradle.spotless"
-    if (it.name == 'ohara-common' || it.name == 'ohara-testing-util'||it.name=='ohara-kafka' || it.name == 'ohara-streams') {
+    if (it.name == 'ohara-common'
+      || it.name == 'ohara-metrics'
+      || it.name == 'ohara-testing-util'
+      || it.name == 'ohara-kafka'
+      || it.name == 'ohara-streams') {
       spotless {
         java {
           googleJavaFormat()

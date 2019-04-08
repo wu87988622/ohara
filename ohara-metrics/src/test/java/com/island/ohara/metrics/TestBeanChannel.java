@@ -18,12 +18,11 @@ package com.island.ohara.metrics;
 
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestBeanChannel extends SmallTest {
 
@@ -31,11 +30,12 @@ public class TestBeanChannel extends SmallTest {
   public void listLocal() {
     BeanChannel channel = BeanChannel.local();
     Assert.assertTrue(channel.iterator().hasNext());
-    channel.forEach(beanObject -> {
-      CommonUtils.requireNonEmpty(beanObject.domainName());
-      Objects.requireNonNull(beanObject.properties());
-      Objects.requireNonNull(beanObject.attributes());
-    });
+    channel.forEach(
+        beanObject -> {
+          CommonUtils.requireNonEmpty(beanObject.domainName());
+          Objects.requireNonNull(beanObject.properties());
+          Objects.requireNonNull(beanObject.attributes());
+        });
   }
 
   @Test
@@ -45,29 +45,33 @@ public class TestBeanChannel extends SmallTest {
     double value0 = 1.2;
     double value1 = 2.2;
 
-    BeanChannel.register().domain(domain)
-      .properties(props)
-      .beanObject(new SimpleInfo(value0, value1))
-      .run();
+    BeanChannel.register()
+        .domain(domain)
+        .properties(props)
+        .beanObject(new SimpleInfo(value0, value1))
+        .run();
 
     Assert.assertEquals(1, BeanChannel.builder().local().domainName(domain).build().size());
 
     BeanChannel.builder().local().domainName(domain).build().stream()
-      .filter(beanObject -> beanObject.domainName().equals(domain))
-      .forEach(beanObject -> {
-        Assert.assertEquals(value0, (double) beanObject.attributes().get("Value0"), 0);
-        Assert.assertEquals(value1, (double) beanObject.attributes().get("Value1"), 0);
-      });
+        .filter(beanObject -> beanObject.domainName().equals(domain))
+        .forEach(
+            beanObject -> {
+              Assert.assertEquals(value0, (double) beanObject.attributes().get("Value0"), 0);
+              Assert.assertEquals(value1, (double) beanObject.attributes().get("Value1"), 0);
+            });
   }
 
   public interface SimpleInfoMBean {
     double getValue0();
+
     double getValue1();
   }
 
   static class SimpleInfo implements SimpleInfoMBean {
     private final double value0;
     private final double value1;
+
     SimpleInfo(double value0, double value1) {
       this.value0 = value0;
       this.value1 = value1;

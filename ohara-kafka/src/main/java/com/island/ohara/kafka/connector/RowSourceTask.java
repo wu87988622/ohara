@@ -17,7 +17,10 @@
 package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
+import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
+import com.island.ohara.metrics.basic.Counter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,23 +93,44 @@ public abstract class RowSourceTask extends SourceTask {
    */
   protected RowSourceContext rowContext = null;
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
+  @VisibleForTesting Counter rowCounter = null;
+  @VisibleForTesting Counter sizeCounter = null;
+
   @Override
   public final List<SourceRecord> poll() {
     List<RowSourceRecord> value = _poll();
     // kafka connector doesn't support the empty list in testing. see
     // https://github.com/apache/kafka/pull/4958
     if (value == null || value.isEmpty()) return null;
-    else return value.stream().map(RowSourceRecord::toSourceRecord).collect(Collectors.toList());
+    else {
+      List<SourceRecord> records =
+          value.stream().map(RowSourceRecord::toSourceRecord).collect(Collectors.toList());
+      try {
+        return records;
+      } finally {
+        if (rowCounter != null) rowCounter.addAndGet(records.size());
+        if (sizeCounter != null)
+          sizeCounter.addAndGet(records.stream().mapToLong(ConnectorUtils::sizeOf).sum());
+      }
+    }
   }
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(TaskConfig.of(ImmutableMap.copyOf(props)));
+    TaskConfig taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
+    rowCounter = ConnectorUtils.rowCounter(taskConfig.name());
+    sizeCounter = ConnectorUtils.sizeCounter(taskConfig.name());
+    _start(taskConfig);
   }
 
   @Override
   public final void stop() {
-    _stop();
+    try {
+      _stop();
+    } finally {
+      Releasable.close(rowCounter);
+      Releasable.close(sizeCounter);
+    }
   }
 
   @Override

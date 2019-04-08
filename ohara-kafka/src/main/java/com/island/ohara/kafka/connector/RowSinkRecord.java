@@ -107,10 +107,15 @@ public class RowSinkRecord {
   static RowSinkRecord of(SinkRecord record) {
     return builder()
         .topic(record.topic())
-        .row(Serializer.ROW.from((byte[]) record.key()))
+        // add a room to accept the row in kafka
+        .row(
+            (record.key() instanceof Row)
+                ? ((Row) record.key())
+                : Serializer.ROW.from((byte[]) record.key()))
         .partition(record.kafkaPartition())
         .offset(record.kafkaOffset())
-        .timestamp(record.timestamp())
+        // constructing a record without timeout is legal in kafka ...
+        .timestamp(record.timestamp() == null ? 0 : record.timestamp())
         .timestampType(TimestampType.to(record.timestampType()))
         .build();
   }

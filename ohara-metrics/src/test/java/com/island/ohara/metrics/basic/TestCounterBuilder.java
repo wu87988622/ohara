@@ -21,66 +21,80 @@ import com.island.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Random;
-
 public class TestCounterBuilder extends SmallTest {
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
+  public void testNullGroup() {
+    Counter.builder().group(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyGroup() {
+    Counter.builder().group("");
+  }
+
+  @Test(expected = NullPointerException.class)
   public void testNullName() {
     Counter.builder().name(null);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyName() {
     Counter.builder().name("");
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullUnit() {
     Counter.builder().unit(null);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyUnit() {
     Counter.builder().unit("");
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullDocument() {
     Counter.builder().document(null);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyDocument() {
     Counter.builder().document("");
   }
 
   @Test
   public void testSetOnlyName() {
-    Counter counter = Counter.builder().name(CommonUtils.randomString()).build();
-    CommonUtils.requireNonEmpty(counter.getDocument());
-    CommonUtils.requireNonEmpty(counter.getUnit());
+    try (Counter counter = Counter.builder().name(CommonUtils.randomString()).build()) {
+      CommonUtils.requireNonEmpty(counter.getDocument());
+      CommonUtils.requireNonEmpty(counter.getUnit());
+      Assert.assertEquals(counter.name(), counter.group());
+    }
   }
 
   @Test
   public void testSetters() {
+    String group = CommonUtils.randomString();
     String name = CommonUtils.randomString();
     String document = CommonUtils.randomString();
     String unit = CommonUtils.randomString();
     long value = CommonUtils.current();
     long startTime = CommonUtils.current();
-    Counter counter = Counter.builder()
-      .name(name)
-      .value(value)
-      .startTime(startTime)
-      .document(document)
-      .unit(unit)
-      .build();
-    Assert.assertEquals(name, counter.name());
-    Assert.assertEquals(document, counter.getDocument());
-    Assert.assertEquals(value, counter.getValue());
-    Assert.assertEquals(startTime, counter.getStartTime());
-    Assert.assertEquals(unit, counter.getUnit());
+    try (Counter counter =
+        Counter.builder()
+            .group(group)
+            .name(name)
+            .value(value)
+            .startTime(startTime)
+            .document(document)
+            .unit(unit)
+            .build()) {
+      Assert.assertEquals(group, counter.group());
+      Assert.assertEquals(name, counter.name());
+      Assert.assertEquals(document, counter.getDocument());
+      Assert.assertEquals(value, counter.getValue());
+      Assert.assertEquals(startTime, counter.getStartTime());
+      Assert.assertEquals(unit, counter.getUnit());
+    }
   }
-
 }

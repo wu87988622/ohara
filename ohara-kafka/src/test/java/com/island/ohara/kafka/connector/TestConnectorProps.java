@@ -16,8 +16,14 @@
 
 package com.island.ohara.kafka.connector;
 
+import com.island.ohara.common.data.Cell;
+import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.SmallTest;
+import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
+import java.util.List;
+import org.apache.kafka.connect.sink.SinkRecord;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestConnectorProps extends SmallTest {
@@ -46,5 +52,60 @@ public class TestConnectorProps extends SmallTest {
   public void testNoTopicsInSinkTask() {
     DumbSinkTask task = new DumbSinkTask();
     assertException(IllegalArgumentException.class, () -> task.start(Collections.emptyMap()));
+  }
+
+  @Test
+  public void testCounterInSink() {
+    RowSinkTask task = new DumbSinkTask();
+    String connectorName = CommonUtils.randomString();
+    // we call start to initialize counter.
+    task.start(Collections.singletonMap("name", connectorName));
+    try {
+      Assert.assertNotNull(task.rowCounter);
+      Assert.assertNotNull(task.sizeCounter);
+      Assert.assertEquals(task.rowCounter.group(), connectorName);
+      Assert.assertEquals(task.sizeCounter.group(), connectorName);
+      Assert.assertEquals(task.rowCounter.getValue(), 0);
+      Assert.assertEquals(task.sizeCounter.getValue(), 0);
+      Row row = Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString()));
+      task.put(Collections.singletonList(new SinkRecord("topic", 0, null, row, null, null, 10)));
+      Assert.assertEquals(task.rowCounter.getValue(), 1);
+      Assert.assertNotEquals(task.sizeCounter.getValue(), 0);
+    } finally {
+      task.stop();
+      Assert.assertTrue(task.rowCounter.isClosed());
+      Assert.assertTrue(task.sizeCounter.isClosed());
+    }
+  }
+
+  @Test
+  public void testCounterInSource() {
+    Row row = Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString()));
+    RowSourceTask task =
+        new DumbSourceTask() {
+          @Override
+          protected List<RowSourceRecord> _poll() {
+            return Collections.singletonList(
+                RowSourceRecord.builder().row(row).topic(CommonUtils.randomString()).build());
+          }
+        };
+    String connectorName = CommonUtils.randomString();
+    // we call start to initialize counter.
+    task.start(Collections.singletonMap("name", connectorName));
+    try {
+      Assert.assertNotNull(task.rowCounter);
+      Assert.assertNotNull(task.sizeCounter);
+      Assert.assertEquals(task.rowCounter.group(), connectorName);
+      Assert.assertEquals(task.sizeCounter.group(), connectorName);
+      Assert.assertEquals(task.rowCounter.getValue(), 0);
+      Assert.assertEquals(task.sizeCounter.getValue(), 0);
+      task.poll();
+      Assert.assertEquals(task.rowCounter.getValue(), 1);
+      Assert.assertNotEquals(task.sizeCounter.getValue(), 0);
+    } finally {
+      task.stop();
+      Assert.assertTrue(task.rowCounter.isClosed());
+      Assert.assertTrue(task.sizeCounter.isClosed());
+    }
   }
 }

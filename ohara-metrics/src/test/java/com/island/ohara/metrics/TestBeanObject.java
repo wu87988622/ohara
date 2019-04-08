@@ -18,74 +18,75 @@ package com.island.ohara.metrics;
 
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
-import org.junit.Test;
-
 import java.util.Collections;
+import org.junit.Test;
 
 public class TestBeanObject extends SmallTest {
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullDomain() {
     BeanObject.builder().domainName(null);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyDomain() {
     BeanObject.builder().domainName("");
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullProperties() {
     BeanObject.builder().properties(null);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyProperties() {
     BeanObject.builder().properties(Collections.emptyMap());
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullValueInProperties() {
     BeanObject.builder().properties(Collections.singletonMap("a", null));
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyValueInProperties() {
     BeanObject.builder().properties(Collections.singletonMap("a", ""));
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullAttributes() {
     BeanObject.builder().attributes(null);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEmptyAttributes() {
     BeanObject.builder().attributes(Collections.emptyMap());
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testNullValueInAttributes() {
     BeanObject.builder().attributes(Collections.singletonMap("a", null));
   }
 
-  @Test (expected = UnsupportedOperationException.class)
+  @Test(expected = UnsupportedOperationException.class)
   public void testImmutableProperties() {
-    BeanObject obj = BeanObject.builder()
-      .domainName(CommonUtils.randomString())
-      .properties(Collections.singletonMap("a", "b"))
-      .attributes(Collections.singletonMap("a", "b"))
-      .build();
+    BeanObject obj =
+        BeanObject.builder()
+            .domainName(CommonUtils.randomString())
+            .properties(Collections.singletonMap("a", "b"))
+            .attributes(Collections.singletonMap("a", "b"))
+            .build();
     obj.properties().remove(("a"));
   }
 
-  @Test (expected = UnsupportedOperationException.class)
+  @Test(expected = UnsupportedOperationException.class)
   public void testImmutableAttributes() {
-    BeanObject obj = BeanObject.builder()
-      .domainName(CommonUtils.randomString())
-      .properties(Collections.singletonMap("a", "b"))
-      .attributes(Collections.singletonMap("a", "b"))
-      .build();
+    BeanObject obj =
+        BeanObject.builder()
+            .domainName(CommonUtils.randomString())
+            .properties(Collections.singletonMap("a", "b"))
+            .attributes(Collections.singletonMap("a", "b"))
+            .build();
     obj.attributes().remove(("a"));
   }
 }

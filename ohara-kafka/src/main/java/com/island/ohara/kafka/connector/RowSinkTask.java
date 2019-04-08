@@ -17,7 +17,10 @@
 package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
+import com.island.ohara.common.annotations.VisibleForTesting;
+import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
+import com.island.ohara.metrics.basic.Counter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -112,22 +115,38 @@ public abstract class RowSinkTask extends SinkTask {
 
   protected RowSinkContext rowContext;
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
+  @VisibleForTesting Counter rowCounter = null;
+  @VisibleForTesting Counter sizeCounter = null;
 
   @Override
   public final void put(Collection<SinkRecord> records) {
-
-    if (records == null) _put(Collections.emptyList());
-    else _put(records.stream().map(RowSinkRecord::of).collect(Collectors.toList()));
+    if (records == null) records = Collections.emptyList();
+    try {
+      _put(records.stream().map(RowSinkRecord::of).collect(Collectors.toList()));
+    } finally {
+      // rowCounter should not be null ....
+      if (rowCounter != null) rowCounter.addAndGet(records.size());
+      if (sizeCounter != null)
+        sizeCounter.addAndGet(records.stream().mapToLong(ConnectorUtils::sizeOf).sum());
+    }
   }
 
   @Override
   public final void start(Map<String, String> props) {
-    _start(TaskConfig.of(ImmutableMap.copyOf(props)));
+    TaskConfig taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
+    rowCounter = ConnectorUtils.rowCounter(taskConfig.name());
+    sizeCounter = ConnectorUtils.sizeCounter(taskConfig.name());
+    _start(taskConfig);
   }
 
   @Override
   public final void stop() {
-    _stop();
+    try {
+      _stop();
+    } finally {
+      Releasable.close(rowCounter);
+      Releasable.close(sizeCounter);
+    }
   }
 
   @Override
