@@ -16,7 +16,6 @@
 
 include 'ohara-testing-util',
         'ohara-common',
-        'ohara-metrics',
         'ohara-client',
         'ohara-kafka',
         'ohara-manager',
