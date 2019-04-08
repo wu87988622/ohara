@@ -166,6 +166,6 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest with Matchers {
   @After
   final def tearDown(): Unit = {
     Releasable.close(configurator)
-//    Releasable.close(nameHolder)
+    Releasable.close(nameHolder)
   }
 }
