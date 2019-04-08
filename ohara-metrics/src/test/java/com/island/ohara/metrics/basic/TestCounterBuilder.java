@@ -35,15 +35,38 @@ public class TestCounterBuilder extends SmallTest {
     Counter.builder().name("");
   }
 
+  @Test (expected = NullPointerException.class)
+  public void testNullUnit() {
+    Counter.builder().unit(null);
+  }
+
+  @Test (expected = IllegalArgumentException.class)
+  public void testEmptyUnit() {
+    Counter.builder().unit("");
+  }
+
+  @Test (expected = NullPointerException.class)
+  public void testNullDocument() {
+    Counter.builder().document(null);
+  }
+
+  @Test (expected = IllegalArgumentException.class)
+  public void testEmptyDocument() {
+    Counter.builder().document("");
+  }
+
   @Test
   public void testSetOnlyName() {
-    Counter.builder().name(CommonUtils.randomString()).build();
+    Counter counter = Counter.builder().name(CommonUtils.randomString()).build();
+    CommonUtils.requireNonEmpty(counter.getDocument());
+    CommonUtils.requireNonEmpty(counter.getUnit());
   }
 
   @Test
   public void testSetters() {
     String name = CommonUtils.randomString();
     String document = CommonUtils.randomString();
+    String unit = CommonUtils.randomString();
     long value = CommonUtils.current();
     long startTime = CommonUtils.current();
     Counter counter = Counter.builder()
@@ -51,11 +74,13 @@ public class TestCounterBuilder extends SmallTest {
       .value(value)
       .startTime(startTime)
       .document(document)
+      .unit(unit)
       .build();
     Assert.assertEquals(name, counter.name());
     Assert.assertEquals(document, counter.getDocument());
     Assert.assertEquals(value, counter.getValue());
     Assert.assertEquals(startTime, counter.getStartTime());
+    Assert.assertEquals(unit, counter.getUnit());
   }
 
 }

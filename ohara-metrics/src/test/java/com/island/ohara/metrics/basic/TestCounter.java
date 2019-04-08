@@ -18,10 +18,13 @@ package com.island.ohara.metrics.basic;
 
 import com.island.ohara.common.rule.SmallTest;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.metrics.BeanChannel;
 import org.junit.Assert;
 import org.junit.Test;
 
 import javax.activation.CommandMap;
+import javax.management.InstanceAlreadyExistsException;
+import java.util.List;
 
 public class TestCounter extends SmallTest {
 
@@ -99,17 +102,16 @@ public class TestCounter extends SmallTest {
 
   @Test
   public void testEquals() {
-    String name = CommonUtils.randomString();
-    Counter.Builder builder = Counter.builder()
+    Counter counter = Counter.builder()
       .value(CommonUtils.current())
       .startTime(CommonUtils.current())
-      .name(CommonUtils.randomString());
-    Assert.assertEquals(builder.build(), builder.build());
+      .name(CommonUtils.randomString())
+            .build();
+    Assert.assertEquals(counter, counter);
   }
 
   @Test
   public void testEqualsOnDiffDocument() {
-    String name = CommonUtils.randomString();
     Counter.Builder builder = Counter.builder()
       .value(CommonUtils.current())
       .startTime(CommonUtils.current())
@@ -119,7 +121,6 @@ public class TestCounter extends SmallTest {
 
   @Test
   public void testHashCodesOnDiffDocument() {
-    String name = CommonUtils.randomString();
     Counter.Builder builder = Counter.builder()
       .value(CommonUtils.current())
       .startTime(CommonUtils.current())
@@ -128,18 +129,53 @@ public class TestCounter extends SmallTest {
   }
 
   @Test
-  public void testHashCode() {
-    String name = CommonUtils.randomString();
+  public void testNotEqualsOnDiffUnit() {
     Counter.Builder builder = Counter.builder()
+            .value(CommonUtils.current())
+            .startTime(CommonUtils.current())
+            .name(CommonUtils.randomString());
+    Assert.assertNotEquals(builder.build(), builder.unit(CommonUtils.randomString()).build());
+  }
+
+  @Test
+  public void testHashCodesOnDiffUnit() {
+    Counter.Builder builder = Counter.builder()
+            .value(CommonUtils.current())
+            .startTime(CommonUtils.current())
+            .name(CommonUtils.randomString());
+    Assert.assertNotEquals(builder.build().hashCode(), builder.unit(CommonUtils.randomString()).build().hashCode());
+  }
+
+  @Test
+  public void testNotEqualsOnDiffValue() {
+    Counter.Builder builder = Counter.builder()
+            .value(CommonUtils.current())
+            .startTime(CommonUtils.current())
+            .name(CommonUtils.randomString());
+    Assert.assertNotEquals(builder.build(), builder.value(CommonUtils.current() + 1000).build());
+  }
+
+  @Test
+  public void testHashCodesOnDiffValue() {
+    Counter.Builder builder = Counter.builder()
+            .value(CommonUtils.current())
+            .startTime(CommonUtils.current())
+            .name(CommonUtils.randomString());
+    Assert.assertNotEquals(builder.build().hashCode(), builder.value(CommonUtils.current() + 1000).build().hashCode());
+  }
+
+  @Test
+  public void testHashCode() {
+    Counter counter = Counter.builder()
       .value(CommonUtils.current())
       .startTime(CommonUtils.current())
-      .name(CommonUtils.randomString());
-    Assert.assertEquals(builder.build().hashCode(), builder.build().hashCode());
+      .name(CommonUtils.randomString())
+      .build();
+    Assert.assertEquals(counter.hashCode(), counter.hashCode());
   }
 
   @Test
   public void testNotEqualsOnName() {
-    String name = CommonUtils.randomString();
     Counter.Builder builder = Counter.builder()
       .value(CommonUtils.current())
       .startTime(CommonUtils.current())
@@ -149,7 +185,6 @@ public class TestCounter extends SmallTest {
 
   @Test
   public void testDiffHashCodeOnName() {
-    String name = CommonUtils.randomString();
     Counter.Builder builder = Counter.builder()
       .value(CommonUtils.current())
       .startTime(CommonUtils.current())
@@ -158,42 +193,50 @@ public class TestCounter extends SmallTest {
   }
 
   @Test
-  public void testNotEqualsOnStartTime() {
-    String name = CommonUtils.randomString();
+  public void illegalInUsingSameName() {
     Counter.Builder builder = Counter.builder()
-      .value(CommonUtils.current())
-      .startTime(CommonUtils.current())
-      .name(CommonUtils.randomString());
-    Assert.assertNotEquals(builder.build(), builder.startTime(CommonUtils.current() + 1).build());
+            .value(CommonUtils.current())
+            .startTime(CommonUtils.current())
+            .name(CommonUtils.randomString());
+    // pass
+    builder.register();
+    // fail
+    try {
+      builder.register();
+      throw new AssertionError("this should not happen!!!");
+    } catch (IllegalArgumentException e) {
+      // pass
+    }
   }
 
   @Test
-  public void testDiffHashCodeOnStartTime() {
+  public void testFromBean() {
     String name = CommonUtils.randomString();
-    Counter.Builder builder = Counter.builder()
-      .value(CommonUtils.current())
-      .startTime(CommonUtils.current())
-      .name(CommonUtils.randomString());
-    Assert.assertNotEquals(builder.build().hashCode(), builder.startTime(CommonUtils.current() + 1).build().hashCode());
-  }
+    String document = CommonUtils.randomString();
+    String unit = CommonUtils.randomString();
+    Counter counter = Counter.builder()
+            .name(name)
+            .document(document)
+            .unit(unit)
+            .register();
+    List<CounterMBean> beans = BeanChannel.local().counterMBeans();
+    Assert.assertNotEquals(0, beans.size());
+    CounterMBean bean = beans.stream().filter(c -> c.name().equals(name)).findFirst().get();
+    Assert.assertEquals(counter.name(), bean.name());
+    Assert.assertEquals(counter.getDocument(), bean.getDocument());
+    Assert.assertEquals(counter.getUnit(), bean.getUnit());
+    Assert.assertEquals(name, bean.name());
+    Assert.assertEquals(document, bean.getDocument());
+    Assert.assertEquals(unit, bean.getUnit());
 
-  @Test
-  public void testNotEqualsOnValue() {
-    String name = CommonUtils.randomString();
-    Counter.Builder builder = Counter.builder()
-      .value(CommonUtils.current())
-      .startTime(CommonUtils.current())
-      .name(CommonUtils.randomString());
-    Assert.assertNotEquals(builder.build(), builder.value(CommonUtils.current() + 1).build());
-  }
+    counter.setAndGet(CommonUtils.current());
 
-  @Test
-  public void testDiffHashCodeOnValue() {
-    String name = CommonUtils.randomString();
-    Counter.Builder builder = Counter.builder()
-      .value(CommonUtils.current())
-      .startTime(CommonUtils.current())
-      .name(CommonUtils.randomString());
-    Assert.assertNotEquals(builder.build().hashCode(), builder.value(CommonUtils.current() + 1).build().hashCode());
+    CommonUtils.await(() -> BeanChannel.local().counterMBeans()
+                    .stream()
+                    .filter(c -> c.name().equals(name))
+                    .findFirst()
+                    .get()
+                    .getValue() == counter.getValue(),
+            java.time.Duration.ofSeconds(10));
   }
 }

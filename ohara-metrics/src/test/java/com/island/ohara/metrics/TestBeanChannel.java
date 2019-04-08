@@ -65,10 +65,10 @@ public class TestBeanChannel extends SmallTest {
     double getValue1();
   }
 
-  public static class SimpleInfo implements SimpleInfoMBean {
+  static class SimpleInfo implements SimpleInfoMBean {
     private final double value0;
     private final double value1;
-    public SimpleInfo(double value0, double value1) {
+    SimpleInfo(double value0, double value1) {
       this.value0 = value0;
       this.value1 = value1;
     }

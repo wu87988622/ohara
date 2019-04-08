@@ -16,69 +16,51 @@
 
 package com.island.ohara.metrics.basic;
 
-import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.metrics.BeanChannel;
 import com.island.ohara.metrics.BeanObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public interface CounterMBean {
   String DOMAIN = "com.island.ohara";
   String TYPE_KEY = "type";
   String TYPE_VALUE = "counter";
   /**
-   * we have to put the name in properties in order to distinuish the metrics in GUI tool (for example, jmc)
+   * we have to put the name in properties in order to distinguish the metrics in GUI tool (for example, jmc)
    */
   String NAME_KEY = "name";
   String START_TIME_KEY = "StartTime";
   String VALUE_KEY = "Value";
   String DOCUMENT_KEY = "Document";
-
-  /**
-   * create and register a mutable CounterMBean.
-   * @param name the name of counter
-   * @return Counter
-   */
-  static Counter register(String name) {
-    Map<String, String> properties = new HashMap<>();
-    properties.put(TYPE_KEY, TYPE_VALUE);
-    properties.put(NAME_KEY, CommonUtils.requireNonEmpty(name));
-    return BeanChannel.<Counter>register()
-      .domain(DOMAIN)
-      .properties(properties)
-      .beanObject(Counter.builder()
-        .name(name)
-        .value(0)
-        .startTime(CommonUtils.current())
-        .build())
-      .run();
-  }
+  String UNIT_KEY = "Unit";
 
   static boolean is(BeanObject obj) {
     return obj.domainName().equals(DOMAIN)
       && TYPE_VALUE.equals(obj.properties().get(TYPE_KEY))
       && obj.properties().containsKey(NAME_KEY)
       && obj.attributes().containsKey(START_TIME_KEY)
-      && obj.attributes().containsKey(VALUE_KEY);
+      && obj.attributes().containsKey(VALUE_KEY)
+      && obj.attributes().containsKey(DOCUMENT_KEY)
+      && obj.attributes().containsKey(UNIT_KEY);
   }
 
   static CounterMBean of(BeanObject obj) {
     return Counter.builder()
+      // NOTED: name is NOT a part of attribute!!!!
       .name(obj.properties().get(NAME_KEY))
       .startTime((long) obj.attributes().get(START_TIME_KEY))
       .value((long) obj.attributes().get(VALUE_KEY))
+      .document((String) obj.attributes().get(DOCUMENT_KEY))
+      .unit((String) obj.attributes().get(UNIT_KEY))
       .build();
   }
 
   /**
+   * NOTED: this is NOT a part of java beans!!!
    * @return name of this counter
    */
   String name();
 
   /**
    * NOTED: if you are going to change the method name, you have to rewrite the {@link CounterMBean#START_TIME_KEY} also
-   * @return the statt time of this counter
+   * @return the start time of this counter
    */
   long getStartTime();
 
@@ -88,6 +70,10 @@ public interface CounterMBean {
    */
   long getValue();
 
+  /**
+   * @return the unit of value
+   */
+  String getUnit();
   /**
    * NOTED: if you are going to change the method name, you have to rewrite the {@link CounterMBean#DOCUMENT_KEY} also
    * @return description of counter

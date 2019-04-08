@@ -17,8 +17,12 @@
 package com.island.ohara.metrics.basic;
 
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.util.CommonUtils;
+import com.island.ohara.metrics.BeanChannel;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -30,12 +34,14 @@ public final class Counter implements CounterMBean {
 
   private final String name;
   private final String document;
+  private final String unit;
   private final AtomicLong value = new AtomicLong(0);
   private final long startTime;
 
-  private Counter(String name, String document, long startTime, long value) {
+  private Counter(String name, String document, String unit, long startTime, long value) {
     this.name = CommonUtils.requireNonEmpty(name);
     this.document = CommonUtils.requireNonEmpty(document);
+    this.unit = CommonUtils.requireNonEmpty(unit);
     this.startTime = startTime;
     this.value.set(value);
   }
@@ -50,6 +56,10 @@ public final class Counter implements CounterMBean {
     return document;
   }
 
+  @Override
+  public String getUnit() {
+    return unit;
+  }
   /**
    * Atomically increments by one the current value.
    *
@@ -139,30 +149,33 @@ public final class Counter implements CounterMBean {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof CounterMBean) {
-      CounterMBean another = (CounterMBean) obj;
+    if (obj instanceof Counter) {
+      Counter another = (Counter) obj;
       return another.name().equals(name())
         && another.getStartTime() == getStartTime()
-        && another.getValue() == getValue();
+        && another.getValue() == getValue()
+        && another.getUnit().equals(getUnit());
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name(), getValue(), getStartTime());
+    return Objects.hash(name(), getValue(), getStartTime(), getUnit());
   }
 
   @Override
   public String toString() {
     return "name:" + name()
       + " start:" + getStartTime()
-      + " value:" + getValue();
+      + " value:" + getValue()
+      + " unit:" + getUnit();
   }
 
 
   static class Builder {
     private String name;
+    private String unit = "N/A";
     private String document = "there is no document for this counter...";
     private long value = 0;
     private long startTime = CommonUtils.current();
@@ -193,8 +206,44 @@ public final class Counter implements CounterMBean {
       return this;
     }
 
-    public Counter build() {
-      return new Counter(name, document, startTime, value);
+    @Optional("default is N/A")
+    public Builder unit(String unit) {
+      this.unit = CommonUtils.requireNonEmpty(unit);
+      return this;
+    }
+
+    private void checkArgument() {
+      CommonUtils.requireNonEmpty(name);
+      CommonUtils.requireNonEmpty(unit);
+      CommonUtils.requireNonEmpty(document);
+    }
+
+    /**
+     * create a mutable counter.
+     * NOTED: this method is NOT public since we disallow user to create a counter without registry.
+     * @return Counter
+     */
+    @VisibleForTesting
+    Counter build() {
+      checkArgument();
+      return new Counter(name, document, unit, startTime, value);
+    }
+
+    /**
+     * create and register a mutable counter.
+     * @return Counter
+     */
+    public Counter register() {
+      Counter counter = build();
+      Map<String, String> properties = new HashMap<>();
+      properties.put(TYPE_KEY, TYPE_VALUE);
+      // the metrics tools (for example, jmc) can distinguish the counter via the name.
+      properties.put(NAME_KEY, name);
+      return BeanChannel.<Counter>register()
+              .domain(DOMAIN)
+              .properties(properties)
+              .beanObject(counter)
+              .run();
     }
   }
 }
