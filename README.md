@@ -124,10 +124,6 @@ through configruator's RESTful APIs.
 
 **NOTED:** you should prepare the broker and zookeeper images in each node where pre-created clusters will be running at if you want to use the `node` option
 
-**NOTED:** you can enable the jmx reporter via inputing two env variables - "JMX_HOSTNAME" and "JMX_PORT".
-- "JMX_HOSTNAME" should be same as the host running configurator container so as to access the jmx service in docker from outside.
-- "JMX_PORT" should be opened by docker (for example, add "-p $JMX_PORT:JMX_PORT")
-
 ### Running manager by docker
 
 ```sh

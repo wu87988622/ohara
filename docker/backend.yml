@@ -25,10 +25,6 @@ services:
     # command: ["--port", "12345", "--node", "username:password@hostname:port"]
     ports:
       - 12345:12345
-#    see readme for more details
-#    environment:
-#      - JMX_PORT=9999
-#      - JMX_HOSTNAME="your hostname"
     # You have got to specify hostname mappings in order to enable configurator to connect to other nodes which are not hosted by docker-compose
 #    extra_hosts:
 #      - "node00:192.168.56.200"

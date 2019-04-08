@@ -27,7 +27,7 @@ BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 PROJECT_HOME="$(dirname "$BIN_DIR")"
 
 #----------[JAVA]----------#
-if [[ -z "$OHARA_OPTS" ]]; then
+if [ -z "$OHARA_OPTS" ]; then
   JAVA="java -cp"
 else
   JAVA="java $OHARA_OPTS -cp"
@@ -58,4 +58,4 @@ do
 done
 
 #----------[EXECUTION]----------#
-exec $JAVA $CLASSPATH $OHARA_JMX_OPTS $LOG4J $CLASS $ARGS
+exec $JAVA $CLASSPATH $LOG4J $CLASS $ARGS
