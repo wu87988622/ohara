@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WORKER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZOOKEEPER_PREFIX_PATH
 import com.island.ohara.client.configurator.v0.LogApi._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Used to take log from specified cluster. We haven't log infra to provide UI to get log from specified "connector".
@@ -36,9 +36,10 @@ import scala.concurrent.ExecutionContext
   */
 object LogRoute {
 
-  private[this] def route(clusterName: String, data: Map[ContainerInfo, String]): server.Route =
-    complete(
-      if (data.isEmpty)
+  private[this] def route(clusterName: String, data: Future[Map[ContainerInfo, String]])(
+    implicit executionContext: ExecutionContext): server.Route =
+    complete(data.map { d =>
+      if (d.isEmpty)
         ClusterLog(
           name = clusterName,
           logs = Seq(
@@ -50,33 +51,34 @@ object LogRoute {
       else
         ClusterLog(
           name = clusterName,
-          logs = data.map {
+          logs = d.map {
             case (container, log) => NodeLog(container.nodeName, log)
           }.toSeq
-        ))
+        )
+    })
 
   def apply(implicit collie: ClusterCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LogApi.LOG_PREFIX_PATH) {
       pathPrefix(ZOOKEEPER_PREFIX_PATH) {
         path(Segment) { zkClusterName =>
-          onSuccess(collie.zookeeperCollie().logs(zkClusterName))(data => route(zkClusterName, data))
+          route(zkClusterName, collie.zookeeperCollie().logs(zkClusterName))
         } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { zkClusterName =>
           // TODO: this api is deprecated
-          onSuccess(collie.zookeeperCollie().logs(zkClusterName))(data => route(zkClusterName, data))
+          route(zkClusterName, collie.zookeeperCollie().logs(zkClusterName))
         })
       } ~ pathPrefix(BROKER_PREFIX_PATH) {
         path(Segment) { bkClusterName =>
-          onSuccess(collie.brokerCollie().logs(bkClusterName))(data => route(bkClusterName, data))
+          route(bkClusterName, collie.brokerCollie().logs(bkClusterName))
         } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { bkClusterName =>
           // TODO: this api is deprecated
-          onSuccess(collie.brokerCollie().logs(bkClusterName))(data => route(bkClusterName, data))
+          route(bkClusterName, collie.brokerCollie().logs(bkClusterName))
         })
       } ~ pathPrefix(WORKER_PREFIX_PATH) {
         path(Segment) { wkClusterName =>
-          onSuccess(collie.workerCollie().logs(wkClusterName))(data => route(wkClusterName, data))
+          route(wkClusterName, collie.workerCollie().logs(wkClusterName))
         } ~ pathEnd(parameter(Parameters.CLUSTER_NAME) { wkClusterName =>
           // TODO: this api is deprecated
-          onSuccess(collie.workerCollie().logs(wkClusterName))(data => route(wkClusterName, data))
+          route(wkClusterName, collie.workerCollie().logs(wkClusterName))
         })
       }
     }
