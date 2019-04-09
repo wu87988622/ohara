@@ -36,9 +36,9 @@ private[configurator] object JarsRoute {
     pathPrefix(JAR_PREFIX_PATH) {
       storeUploadedFile("jar", tempDestination) {
         case (metadata, file) =>
-          onSuccess(jarStore.add(file, metadata.fileName))(complete(_))
-      } ~ get(onSuccess(jarStore.jarInfos)(complete(_))) ~ path(Segment) { id =>
-        delete(onSuccess(jarStore.remove(id))(complete(_))) ~ get(onSuccess(jarStore.jarInfo(id))(complete(_)))
+          complete(jarStore.add(file, metadata.fileName))
+      } ~ get(complete(jarStore.jarInfos)) ~ path(Segment) { id =>
+        delete(complete(jarStore.remove(id))) ~ get(complete(jarStore.jarInfo(id)))
       }
     }
 }

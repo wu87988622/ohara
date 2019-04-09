@@ -109,38 +109,41 @@ private[configurator] object StreamRoute {
               //upload jars
               post {
                 storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
-                  onSuccess(
-                    Future.sequence(files.map {
-                      case (metadata, file) =>
-                        if (file.length() > StreamApi.MAX_FILE_SIZE) {
-                          throw new RuntimeException(
-                            s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB.")
-                        }
-                        jarStore.add(file, s"${metadata.fileName}")
-                    })
-                  ) { jarInfos =>
-                    val jars = Future.sequence(jarInfos.map { jarInfo =>
-                      val time = CommonUtils.current()
-                      val streamId = CommonUtils.uuid()
-                      store
-                        .add(toStore(pipelineId = id, streamId = streamId, jarInfo = jarInfo, lastModified = time))
-                        .map { data =>
-                          StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified)
-                        }
-                    })
-                    //delete temp jars after success
-                    files.foreach { case (_, file) => file.deleteOnExit() }
-                    complete(jars)
-                  }
+                  complete(
+                    Future
+                      .sequence(files.map {
+                        case (metadata, file) =>
+                          if (file.length() > StreamApi.MAX_FILE_SIZE) {
+                            throw new RuntimeException(
+                              s"the file : ${metadata.fileName} size is bigger than ${StreamApi.MAX_FILE_SIZE / 1024 / 1024} MB.")
+                          }
+                          jarStore.add(file, s"${metadata.fileName}")
+                      })
+                      .map { jarInfos =>
+                        val jars = Future.sequence(jarInfos.map { jarInfo =>
+                          val time = CommonUtils.current()
+                          val streamId = CommonUtils.uuid()
+                          store
+                            .add(toStore(pipelineId = id, streamId = streamId, jarInfo = jarInfo, lastModified = time))
+                            .map { data =>
+                              StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified)
+                            }
+                        })
+                        //delete temp jars after success
+                        files.foreach { case (_, file) => file.deleteOnExit() }
+                        jars
+                      }
+                  )
                 }
               } ~
                 //return list
                 get {
-                  onSuccess(store.values[StreamApp]) { values =>
-                    complete(values
-                      .filter(f => f.pipelineId.equals(id)) //note : this id is given by UI (pipeline_id)
-                      .map(data => StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified)))
-                  }
+                  complete(
+                    store
+                      .values[StreamApp]
+                      .map(_.filter(f => f.pipelineId.equals(id))
+                      //note : this id is given by UI (pipeline_id)
+                        .map(data => StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified))))
                 } ~
                 //delete jar
                 delete {
@@ -150,10 +153,8 @@ private[configurator] object StreamRoute {
                     f1 <- store.remove[StreamApp](id)
                     f2 <- jarStore.remove(f1.jarInfo.id)
                   } yield f1
-
-                  onSuccess(result) { data =>
-                    complete(StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified))
-                  }
+                  complete(
+                    result.map(data => StreamListResponse(data.id, data.name, data.jarInfo.name, data.lastModified)))
                 } ~
                 //update jar name
                 put {
@@ -184,9 +185,8 @@ private[configurator] object StreamRoute {
                                     CommonUtils.current()))
                       )
                     } yield f5
-                    onSuccess(result) { newData =>
-                      complete(StreamListResponse(newData.id, newData.name, newData.jarInfo.name, newData.lastModified))
-                    }
+                    complete(result.map(newData =>
+                      StreamListResponse(newData.id, newData.name, newData.jarInfo.name, newData.lastModified)))
                   }
                 }
             }
@@ -209,45 +209,50 @@ private[configurator] object StreamRoute {
                 } ~
                 // get property
                 get {
-                  onSuccess(store.value[StreamApp](id)) { data =>
-                    complete(
-                      StreamPropertyResponse(id,
-                                             data.jarInfo.name,
-                                             data.name,
-                                             data.fromTopics,
-                                             data.toTopics,
-                                             data.instances,
-                                             data.lastModified))
-                  }
+                  complete(
+                    store
+                      .value[StreamApp](id)
+                      .map(
+                        data =>
+                          StreamPropertyResponse(id,
+                                                 data.jarInfo.name,
+                                                 data.name,
+                                                 data.fromTopics,
+                                                 data.toTopics,
+                                                 data.instances,
+                                                 data.lastModified)))
                 } ~
                 // update
                 put {
                   entity(as[StreamPropertyRequest]) { req =>
-                    onSuccess(store.value[StreamApp](id).flatMap { data =>
-                      val newData = toStore(
-                        pipelineId = data.pipelineId,
-                        streamId = data.id,
-                        name = req.name,
-                        instances = req.instances,
-                        jarInfo = data.jarInfo,
-                        fromTopics = req.fromTopics,
-                        toTopics = req.toTopics,
-                        lastModified = CommonUtils.current()
-                      )
-                      store.update[StreamApp](
-                        id,
-                        _ => Future.successful(newData)
-                      )
-                    }) { newData =>
-                      complete(
-                        StreamPropertyResponse(id,
-                                               newData.jarInfo.name,
-                                               newData.name,
-                                               newData.fromTopics,
-                                               newData.toTopics,
-                                               newData.instances,
-                                               newData.lastModified))
-                    }
+                    complete(
+                      store
+                        .value[StreamApp](id)
+                        .flatMap { data =>
+                          val newData = toStore(
+                            pipelineId = data.pipelineId,
+                            streamId = data.id,
+                            name = req.name,
+                            instances = req.instances,
+                            jarInfo = data.jarInfo,
+                            fromTopics = req.fromTopics,
+                            toTopics = req.toTopics,
+                            lastModified = CommonUtils.current()
+                          )
+                          store.update[StreamApp](
+                            id,
+                            _ => Future.successful(newData)
+                          )
+                        }
+                        .map(
+                          newData =>
+                            StreamPropertyResponse(id,
+                                                   newData.jarInfo.name,
+                                                   newData.name,
+                                                   newData.fromTopics,
+                                                   newData.toTopics,
+                                                   newData.instances,
+                                                   newData.lastModified)))
                   }
                 }
             }
@@ -258,7 +263,7 @@ private[configurator] object StreamRoute {
           // start streamApp
           path(START_COMMAND) {
             put {
-              onSuccess(
+              complete(
                 store.value[StreamApp](id).flatMap { data =>
                   if (!assertParameters(data))
                     throw new IllegalArgumentException(
@@ -382,13 +387,13 @@ private[configurator] object StreamRoute {
                           }
                     }
                 }
-              )(complete(_))
+              )
             }
           } ~
           // stop streamApp
           path(STOP_COMMAND) {
             put {
-              onSuccess(store.value[StreamApp](id).flatMap { data =>
+              complete(store.value[StreamApp](id).flatMap { data =>
                 // support 1 instance for 0.3...by Sam
                 val node = data.nodes.headOption.getOrElse(
                   throw new RuntimeException(s"the streamApp [$id] is not running at any node. we cannot stop it."))
@@ -419,7 +424,7 @@ private[configurator] object StreamRoute {
                     )
                     res
                   }
-              })(complete(_))
+              })
             }
           }
       }
