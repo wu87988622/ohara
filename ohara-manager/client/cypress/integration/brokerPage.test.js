@@ -16,10 +16,11 @@
 
 import { BROKER } from '../../src/constants/urls';
 
-// TODO: move the tests to configuration modal
 describe('BrokerPage', () => {
   it('creates a new topic', () => {
     cy.visit(BROKER);
+
+    cy.deleteAllTopics();
 
     cy.getByText('New topic').click();
 
@@ -40,6 +41,5 @@ describe('BrokerPage', () => {
     cy.get('td')
       .contains('test cluster')
       .should('have.length', 1);
-    cy.deleteAllTopics();
   });
 });
