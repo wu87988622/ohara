@@ -20,6 +20,7 @@ export const HOME = '/';
 export const PIPELINE = '/pipelines';
 
 export const KAFKA = '/kafka';
+export const BROKER = 'services/brokers';
 export const NODES = '/nodes';
 export const SERVICES = '/services';
 export const MONITORING = '/monitoring';
