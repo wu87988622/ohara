@@ -17,6 +17,7 @@
 package com.island.ohara.configurator
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.Data
+import com.island.ohara.client.configurator.v0.PipelineApi.Metrics
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -40,6 +41,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       settings = Map.empty,
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     Await.result(store.add(s), timeout)
@@ -55,6 +57,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       settings = Map.empty,
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     store.add(s)
@@ -75,6 +78,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       settings = Map.empty,
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     store.add(s)
@@ -93,6 +97,7 @@ class TestConfiguratorStore extends MediumTest with Matchers {
       settings = Map.empty,
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     store.add(s)

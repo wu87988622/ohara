@@ -18,6 +18,7 @@ package com.island.ohara.client.configurator.v0
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorState._
 import com.island.ohara.client.configurator.v0.ConnectorApi.{ConnectorCreationRequest, _}
+import com.island.ohara.client.configurator.v0.PipelineApi.Metrics
 import com.island.ohara.common.data.{Column, DataType, Serializer}
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
@@ -123,6 +124,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       ),
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     val jsonString = CONNECTOR_DESCRIPTION_JSON_FORMAT.write(desc).toString()
@@ -165,6 +167,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       settings = Map(CommonUtils.randomString() -> JsString(CommonUtils.randomString())),
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     // pass
@@ -179,6 +182,7 @@ class TestConnectorApi extends SmallTest with Matchers {
       settings = Map(SettingDefinition.CONNECTOR_CLASS_DEFINITION.key() -> JsString(className)),
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
     ConnectorApi.CONNECTOR_DESCRIPTION_JSON_FORMAT
@@ -212,6 +216,9 @@ class TestConnectorApi extends SmallTest with Matchers {
                                                                                       | \"lastModified\": 123,
                                                                                       | \"settings\": {
                                                                                       | \"className\": \"$className\"
+                                                                                      | },
+                                                                                      | \"metrics\": {
+                                                                                      |   "counters":[]
                                                                                       | }
                                                                                       | }
      """.stripMargin.parseJson)

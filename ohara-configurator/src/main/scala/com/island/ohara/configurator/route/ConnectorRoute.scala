@@ -21,12 +21,14 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi._
+import com.island.ohara.client.configurator.v0.PipelineApi.{CounterInfo, Metrics}
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils._
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.SettingDefinition
+import com.island.ohara.metrics.basic.CounterMBean
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
@@ -42,8 +44,10 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       id = id,
       settings = request.settings ++ Map(
         SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key() -> JsString(wkClusterName)),
+      // we don't need to fetch connector from kafka since it has not existed in kafka.
       state = None,
       error = None,
+      metrics = Metrics(Seq.empty),
       lastModified = CommonUtils.current()
     )
   }
@@ -59,8 +63,11 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
   private[route] def errorMessage(state: Option[ConnectorState]): Option[String] = state
     .filter(_ == ConnectorState.FAILED)
     .map(_ => "Some terrible things happen on your connector... Please use LOG APIs to see more details")
-  private[this] def update(connectorConfig: ConnectorDescription, workerClient: WorkerClient)(
-    implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
+
+  private[this] def update(
+    connectorConfig: ConnectorDescription,
+    workerClient: WorkerClient,
+    counters: Seq[CounterMBean])(implicit executionContext: ExecutionContext): Future[ConnectorDescription] =
     workerClient
       .status(connectorConfig.id)
       .map(s => Some(s.connector.state))
@@ -70,7 +77,22 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           None
       }
       .map { state =>
-        connectorConfig.copy(state = state, error = errorMessage(state))
+        connectorConfig.copy(
+          state = state,
+          error = errorMessage(state),
+          metrics = Metrics(
+            counters
+              .filter(_.group() == connectorConfig.id)
+              .map(
+                c =>
+                  CounterInfo(
+                    value = c.getValue,
+                    startTime = c.getStartTime,
+                    unit = c.getUnit,
+                    document = c.getDocument
+                ))
+          )
+        )
       }
 
   def apply(implicit store: DataStore, workerCollie: WorkerCollie, executionContext: ExecutionContext): server.Route =
@@ -95,14 +117,14 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
       },
       hookOfGet = (response: ConnectorDescription) =>
         CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
-          case (_, wkClient) =>
-            update(response, wkClient)
+          case (cluster, wkClient) =>
+            update(response, wkClient, workerCollie.counters(cluster))
       },
       hookOfList = (responses: Seq[ConnectorDescription]) =>
         Future.sequence(responses.map { response =>
           CollieUtils.workerClient(Some(response.workerClusterName)).flatMap {
-            case (_, wkClient) =>
-              update(response, wkClient)
+            case (cluster, wkClient) =>
+              update(response, wkClient, workerCollie.counters(cluster))
           }
         }),
       hookOfDelete = (response: ConnectorDescription) =>
@@ -136,17 +158,18 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
                   case (cluster, wkClient) =>
                     store
                       .values[TopicInfo]
-                      .map(topics => (wkClient, topics.filter(t => t.brokerClusterName == cluster.brokerClusterName)))
+                      .map(topics =>
+                        (cluster, wkClient, topics.filter(t => t.brokerClusterName == cluster.brokerClusterName)))
                 }
                 .flatMap {
-                  case (wkClient, topicInfos) =>
+                  case (cluster, wkClient, topicInfos) =>
                     connectorDesc.topicNames.foreach(t =>
                       if (!topicInfos.exists(_.id == t))
                         throw new NoSuchElementException(
                           s"$t doesn't exist. actual:${topicInfos.map(_.id).mkString(",")}"))
                     if (connectorDesc.topicNames.isEmpty) throw new IllegalArgumentException("topics are required")
                     wkClient.exist(connectorDesc.id).flatMap {
-                      if (_) update(connectorDesc, wkClient)
+                      if (_) update(connectorDesc, wkClient, workerCollie.counters(cluster))
                       else
                         wkClient
                           .connectorCreator()
@@ -166,10 +189,13 @@ private[configurator] object ConnectorRoute extends SprayJsonSupport {
           put {
             onSuccess(store.value[ConnectorDescription](id).flatMap { connectorConfig =>
               CollieUtils.workerClient(Some(connectorConfig.workerClusterName)).flatMap {
-                case (_, wkClient) =>
+                case (cluster, wkClient) =>
                   wkClient.exist(id).flatMap {
-                    if (_) wkClient.delete(id).flatMap(_ => update(connectorConfig, wkClient))
-                    else update(connectorConfig, wkClient)
+                    if (_)
+                      wkClient
+                        .delete(id)
+                        .flatMap(_ => update(connectorConfig, wkClient, workerCollie.counters(cluster)))
+                    else update(connectorConfig, wkClient, workerCollie.counters(cluster))
                   }
               }
             })(complete(_))

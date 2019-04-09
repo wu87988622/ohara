@@ -179,6 +179,8 @@ object ConnectorApi {
       }
     }
 
+  import PipelineApi._
+
   /**
     * this is what we store in configurator
     */
@@ -186,6 +188,7 @@ object ConnectorApi {
                                         settings: Map[String, JsValue],
                                         state: Option[ConnectorState],
                                         error: Option[String],
+                                        metrics: Metrics,
                                         lastModified: Long)
       extends Data {
 
@@ -240,22 +243,16 @@ object ConnectorApi {
     */
   implicit val CONNECTOR_DESCRIPTION_JSON_FORMAT: RootJsonFormat[ConnectorDescription] =
     new RootJsonFormat[ConnectorDescription] {
-      override def read(json: JsValue): ConnectorDescription = {
-        val fields: Map[String, JsValue] = noJsNull(json.asJsObject.fields)
-        ConnectorDescription(
-          id = fields("id").asInstanceOf[JsString].value,
-          settings = fields.get("settings").map(_.asInstanceOf[JsObject].fields).getOrElse(Map.empty),
-          state = fields.get("state").map(_.asInstanceOf[JsString]).map(CONNECTOR_STATE_JSON_FORMAT.read),
-          error = fields.get("error").map(_.asInstanceOf[JsString].value),
-          lastModified = fields("lastModified").asInstanceOf[JsNumber].value.toLong
-        )
-      }
+      import spray.json.DefaultJsonProtocol._
+      private[this] val format = jsonFormat6(ConnectorDescription)
+      override def read(json: JsValue): ConnectorDescription = format.read(json)
 
       override def write(obj: ConnectorDescription): JsValue = JsObject(
         "id" -> JsString(obj.id),
         "settings" -> JsObject(obj.settings),
         "state" -> obj.state.map(CONNECTOR_STATE_JSON_FORMAT.write).getOrElse(JsNull),
         "error" -> obj.error.map(JsString(_)).getOrElse(JsNull),
+        "metrics" -> METRICS_JSON_FORMAT.write(obj.metrics),
         "lastModified" -> JsNumber(obj.lastModified),
         // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
         "name" -> obj.plain.get(ConnectorFormatter.NAME_KEY).map(JsString(_)).getOrElse(JsNull),

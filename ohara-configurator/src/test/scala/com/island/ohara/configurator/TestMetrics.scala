@@ -39,7 +39,48 @@ class TestMetrics extends WithBrokerWorker with Matchers {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
-  def testNormalCase(): Unit = {
+  def testConnector(): Unit = {
+    val topicName = methodName
+    val topic = Await.result(
+      TopicApi
+        .access()
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .add(
+          TopicCreationRequest(name = Some(topicName),
+                               brokerClusterName = None,
+                               numberOfPartitions = None,
+                               numberOfReplications = None)),
+      10 seconds
+    )
+    val request = ConnectorCreationRequest(
+      workerClusterName = None,
+      className = Some(classOf[DumbSink].getName),
+      columns = Seq.empty,
+      topicNames = Seq(topic.id),
+      numberOfTasks = Some(1),
+      settings = Map.empty
+    )
+
+    val sink = result(access.add(request))
+
+    sink.metrics.counters.size shouldBe 0
+
+    result(access.start(sink.id))
+
+    CommonUtils.await(() => {
+      result(access.get(sink.id)).metrics.counters.nonEmpty
+    }, java.time.Duration.ofSeconds(20))
+
+    result(access.stop(sink.id))
+
+    CommonUtils.await(() => {
+      result(access.get(sink.id)).metrics.counters.isEmpty
+    }, java.time.Duration.ofSeconds(20))
+  }
+
+  @Test
+  def testPipeline(): Unit = {
     val topicName = methodName
     val topic = Await.result(
       TopicApi
