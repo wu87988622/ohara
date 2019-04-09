@@ -80,11 +80,11 @@ private[configurator] class FakeBrokerCollie(bkConnectionProps: String)
             nodeNames = previous.nodeNames :+ nodeName
           )))
   }
-  override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin =
-    // < 0 means it is a fake cluster
-    if (cluster.isInstanceOf[FakeBrokerClusterInfo]) {
+  override def topicAdmin(cluster: BrokerClusterInfo): TopicAdmin = cluster match {
+    case _: FakeBrokerClusterInfo =>
       val fake = new FakeTopicAdmin
       val r = fakeAdminCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
-    } else TopicAdmin(bkConnectionProps)
+    case _ => TopicAdmin(bkConnectionProps)
+  }
 }

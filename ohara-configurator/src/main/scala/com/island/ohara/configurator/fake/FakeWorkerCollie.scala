@@ -21,12 +21,18 @@ import java.util.concurrent.ConcurrentHashMap
 import com.island.ohara.agent.WorkerCollie
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.basic.CounterMBean
 
 import scala.concurrent.{ExecutionContext, Future}
-
+import scala.collection.JavaConverters._
 private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
     extends FakeCollie[WorkerClusterInfo, WorkerCollie.ClusterCreator]
     with WorkerCollie {
+
+  override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
+    // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
+    BeanChannel.local().counterMBeans().asScala
 
   /**
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
@@ -138,11 +144,11 @@ private[configurator] class FakeWorkerCollie(wkConnectionProps: String)
             nodeNames = previous.nodeNames :+ nodeName
           )))
   }
-  override def workerClient(cluster: WorkerClusterInfo): WorkerClient =
-    // < 0 means it is a fake cluster
-    if (cluster.isInstanceOf[FakeWorkerClusterInfo]) {
+  override def workerClient(cluster: WorkerClusterInfo): WorkerClient = cluster match {
+    case _: FakeWorkerClusterInfo =>
       val fake = new FakeWorkerClient
       val r = fakeClientCache.putIfAbsent(cluster, fake)
       if (r == null) fake else r
-    } else WorkerClient(wkConnectionProps)
+    case _ => WorkerClient(wkConnectionProps)
+  }
 }

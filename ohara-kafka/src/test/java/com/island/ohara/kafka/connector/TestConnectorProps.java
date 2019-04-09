@@ -108,4 +108,19 @@ public class TestConnectorProps extends SmallTest {
       Assert.assertTrue(task.sizeCounter.isClosed());
     }
   }
+
+  @Test
+  public void testStop() {
+    Row row = Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString()));
+    RowSourceTask task =
+        new DumbSourceTask() {
+          @Override
+          protected List<RowSourceRecord> _poll() {
+            return Collections.singletonList(
+                RowSourceRecord.builder().row(row).topic(CommonUtils.randomString()).build());
+          }
+        };
+    // we don't call start() so all internal counters should be null
+    task.stop();
+  }
 }

@@ -32,6 +32,7 @@ dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
   implementation project(":ohara-streams")
+  implementation project(":ohara-metrics")
   /**
    * The Hadoop use jersey 1.x, but the Kafka use jersey 2.x so jar conflict
    *

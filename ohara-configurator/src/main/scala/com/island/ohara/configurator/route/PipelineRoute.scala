@@ -29,9 +29,10 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.RouteUtils.{Id, TargetCluster}
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.connector.json.SettingDefinitions
+import com.island.ohara.metrics.basic.CounterMBean
 import com.typesafe.scalalogging.Logger
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object PipelineRoute {
 
@@ -100,8 +101,15 @@ private[configurator] object PipelineRoute {
           case (pipeline, clusterOption) =>
             clusterOption
               .map(cluster =>
-                abstracts(pipeline.rules, workerCollie.workerClient(cluster)).map(objects =>
-                  pipeline.copy(objects = objects)))
+                abstracts(
+                  pipeline.rules,
+                  workerCollie.workerClient(cluster),
+                  try workerCollie.counters(cluster)
+                  catch {
+                    // TODO: We can endure the lack of metrics? ... by chia
+                    case _: Throwable => Seq.empty
+                  }
+                ).map(objects => pipeline.copy(objects = objects)))
               .getOrElse(Future.successful(pipeline))
         }))
       .map(_.toSeq)
@@ -113,7 +121,7 @@ private[configurator] object PipelineRoute {
     * @param store store
     * @return description of objects
     */
-  private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient)(
+  private[this] def abstracts(rules: Map[String, Seq[String]], workerClient: WorkerClient, counters: Seq[CounterMBean])(
     implicit store: DataStore,
     executionContext: ExecutionContext): Future[List[ObjectAbstract]] =
     Future
@@ -130,6 +138,16 @@ private[configurator] object PipelineRoute {
         case (connectors, objs) =>
           Future.traverse(objs) {
             case data: ConnectorDescription =>
+              // the group of counter is equal to connector's name (this is a part of kafka's core setting)
+              // Hence, we filter the connectors having different "name" (we use id instead of name in creating connector)
+              val metrics = Metrics(counters.filter(_.group() == data.id).map { counter =>
+                CounterInfo(
+                  value = counter.getValue,
+                  unit = counter.getUnit,
+                  document = counter.getDocument,
+                  startTime = counter.getStartTime
+                )
+              })
               workerClient
                 .exist(data.id)
                 .flatMap(
@@ -151,6 +169,7 @@ private[configurator] object PipelineRoute {
                       className = Some(data.className),
                       state = state.map(_.name),
                       error = ConnectorRoute.errorMessage(state),
+                      metrics = metrics,
                       lastModified = data.lastModified
                     )
                 }
@@ -165,6 +184,7 @@ private[configurator] object PipelineRoute {
                       state = None,
                       error = Some(s"Failed to get status and type of connector:${data.id}." +
                         s"This may be temporary since our worker cluster is too busy to sync status of connector. ${e.getMessage}"),
+                      metrics = metrics,
                       lastModified = data.lastModified
                     )
                 }
@@ -178,6 +198,7 @@ private[configurator] object PipelineRoute {
                   className = None,
                   state = data.state,
                   error = None,
+                  metrics = Metrics(Seq.empty),
                   lastModified = data.lastModified
                 ))
 
@@ -189,6 +210,7 @@ private[configurator] object PipelineRoute {
                                className = None,
                                state = None,
                                error = None,
+                               metrics = Metrics(Seq.empty),
                                lastModified = data.lastModified))
           }
       }

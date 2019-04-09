@@ -23,8 +23,10 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.util.CommonUtils
-import collection.JavaConverters._
+import com.island.ohara.metrics.BeanChannel
+import com.island.ohara.metrics.basic.CounterMBean
 
+import collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator] {
 
@@ -45,6 +47,24 @@ trait WorkerCollie extends Collie[WorkerClusterInfo, WorkerCollie.ClusterCreator
     * @return worker client
     */
   def workerClient(cluster: WorkerClusterInfo): WorkerClient = WorkerClient(cluster.connectionProps)
+
+  /**
+    * Get all counter beans from specific worker cluster
+    * @param clusterName cluster name
+    * @param executionContext thread pool
+    * @return counter beans
+    */
+  def counters(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[CounterMBean]] =
+    cluster(clusterName).map(_._1).map(counters)
+
+  /**
+    * Get all counter beans from specific worker cluster
+    * @param cluster cluster
+    * @return counter beans
+    */
+  def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] = cluster.nodeNames.flatMap { node =>
+    BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
+  }
 }
 
 object WorkerCollie {
