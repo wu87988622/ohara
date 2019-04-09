@@ -14,22 +14,28 @@
  * limitations under the License.
  */
 
-import { KAFKA } from '../../src/constants/urls';
+import { BROKER } from '../../src/constants/urls';
 
-// TODO: move the tests to configuration modal
-describe.skip('KafkaPage', () => {
+describe('BrokerPage', () => {
   it('creates a new topic', () => {
-    cy.visit(KAFKA);
+    cy.visit(BROKER);
+
+    cy.deleteAllTopics();
 
     cy.getByText('New topic').click();
 
     cy.get('.ReactModal__Content').should('have.length', 1);
 
-    cy.getByLabelText('Topic name').type('test cluster');
-    cy.getByLabelText('Partitions').type('1');
-    cy.getByLabelText('Replication factor').type('2');
+    cy.getByLabelText('Topic name')
+      .click()
+      .type('test cluster');
+    cy.getByLabelText('Partitions')
+      .click()
+      .type('1');
+    cy.getByLabelText('Replication factor')
+      .click()
+      .type('1');
     cy.getByText('Save').click();
-
     cy.get('.toast-success').should('have.length', 1);
     cy.get('.ReactModal__Content').should('have.length', 0);
     cy.get('td')

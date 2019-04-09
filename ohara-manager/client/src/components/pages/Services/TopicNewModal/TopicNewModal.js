@@ -79,8 +79,9 @@ class TopicNewModal extends React.Component {
               <form onSubmit={handleSubmit}>
                 <Box shadow={false}>
                   <FormGroup data-testid="name">
-                    <Label>Topic name</Label>
+                    <Label htmlFor="topicInput">Topic name</Label>
                     <Field
+                      id="topicInput"
                       name="name"
                       component={InputField}
                       width="100%"
@@ -89,8 +90,9 @@ class TopicNewModal extends React.Component {
                     />
                   </FormGroup>
                   <FormGroup data-testid="partitions">
-                    <Label>Partitions</Label>
+                    <Label htmlFor="partInput">Partitions</Label>
                     <Field
+                      id="partInput"
                       name="numberOfPartitions"
                       component={InputField}
                       type="number"
@@ -102,8 +104,9 @@ class TopicNewModal extends React.Component {
                     />
                   </FormGroup>
                   <FormGroup data-testid="replications">
-                    <Label>Replication factor</Label>
+                    <Label htmlFor="repInput">Replication factor</Label>
                     <Field
+                      id="repInput"
                       name="numberOfReplications"
                       component={InputField}
                       type="number"

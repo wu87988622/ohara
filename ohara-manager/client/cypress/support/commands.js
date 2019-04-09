@@ -123,3 +123,21 @@ Cypress.Commands.add(
     });
   },
 );
+
+Cypress.Commands.add('deleteAllTopics', () => {
+  Cypress.log({
+    name: 'DELETE_ALL_TOPICS',
+  });
+
+  const _ = Cypress._;
+
+  cy.request('GET', 'api/topics')
+    .then(res => res.body)
+    .then(topics => {
+      if (!_.isEmpty(topics)) {
+        _.forEach(topics, topic => {
+          cy.request('DELETE', `api/topics/${topic.id}`);
+        });
+      }
+    });
+});
