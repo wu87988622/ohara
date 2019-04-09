@@ -15,10 +15,11 @@
  */
 
 import React from 'react';
-import { isEmpty } from 'lodash';
+import { get, isEmpty } from 'lodash';
 
 import Select from './Select';
 import ColumnTable from './ColumnTable';
+import { isEmptyStr } from 'utils/commonUtils';
 import { findByGraphId } from '../../pipelineUtils/commonUtils';
 import { FormGroup, Input, Label } from 'common/Form';
 
@@ -246,4 +247,26 @@ export const renderForm = ({
 
     return null;
   });
+};
+
+export const getCurrTopicId = ({ originals, target }) => {
+  let topics = [];
+
+  if (isEmpty(originals) || isEmptyStr(target)) {
+    topics.push(''); // back end API need this data structure
+  } else {
+    const findByTopicName = ({ name }) => name === target;
+    const { id } = originals.find(findByTopicName);
+    topics.push(id);
+  }
+
+  return topics;
+};
+
+export const getCurrTopicName = ({ originals, target }) => {
+  const topicId = get(target, '[0]', '');
+  const findByTopicId = ({ id }) => id === topicId;
+  const currTopic = originals.find(findByTopicId);
+  const topicName = get(currTopic, 'name', '');
+  return topicName;
 };

@@ -240,34 +240,28 @@ class PipelineNewPage extends React.Component {
     const { sources, sinks, streams } = getConnectors(connectors);
     this.updateRunningConnectors(sources, sinks, streams);
 
-    const sourcePromises = sources.map(source =>
+    const connectorPromises = [...sources, ...sinks].map(source =>
       connectorApi.startConnector(source),
     );
-    const sinkPromises = sinks.map(sink => connectorApi.startConnector(sink));
     const streamsPromises = streams.map(stream => streamApi.start(stream));
 
-    return Promise.all([
-      ...sourcePromises,
-      ...sinkPromises,
-      ...streamsPromises,
-    ]).then(result => result);
+    return Promise.all([...connectorPromises, ...streamsPromises]).then(
+      result => result,
+    );
   };
 
   stopConnectors = connectors => {
     const { sources, sinks, streams } = getConnectors(connectors);
     this.updateRunningConnectors(sources, sinks, streams);
 
-    const sourcePromises = sources.map(source =>
-      connectorApi.stopConnector(source),
+    const connectorPromises = [...sources, ...sinks].map(sink =>
+      connectorApi.stopConnector(sink),
     );
-    const sinkPromises = sinks.map(sink => connectorApi.stopConnector(sink));
     const streamsPromises = streams.map(stream => streamApi.stop(stream));
 
-    return Promise.all([
-      ...sourcePromises,
-      ...sinkPromises,
-      ...streamsPromises,
-    ]).then(result => result);
+    return Promise.all([...connectorPromises, ...streamsPromises]).then(
+      result => result,
+    );
   };
 
   handleConnectorResponse = (isSuccess, action) => {

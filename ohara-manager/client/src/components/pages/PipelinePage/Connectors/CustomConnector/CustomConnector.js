@@ -108,9 +108,12 @@ class CustomConnector extends React.Component {
     const result = get(res, 'data.result', null);
 
     if (result) {
-      const topics = get(result, 'settings.topics[0]', '');
+      const topicName = utils.getCurrTopicName({
+        originals: this.state.originalTopics,
+        target: result.settings.topics,
+      });
 
-      const configs = { ...result.settings, topics };
+      const configs = { ...result.settings, topics: topicName };
       this.setState({ configs });
     }
   };
@@ -170,7 +173,13 @@ class CustomConnector extends React.Component {
     const { updateHasChanges, match, graph, updateGraph } = this.props;
     const { configs, originalTopics } = this.state;
     const { connectorId } = match.params;
-    const params = { ...configs, topics: [configs.topics] };
+
+    const topicId = utils.getCurrTopicId({
+      originals: originalTopics,
+      target: configs.topics,
+    });
+
+    const params = { ...configs, topics: topicId };
 
     await connectorApi.updateConnector({ id: connectorId, params });
     updateHasChanges(false);
