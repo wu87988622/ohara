@@ -25,7 +25,6 @@ import org.scalatest.Matchers
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestConfiguratorMain extends LargeTest with Matchers {
-
   @Test
   def testStandalone(): Unit = {
     Configurator.closeRunningConfigurator = false
@@ -39,25 +38,6 @@ class TestConfiguratorMain extends LargeTest with Matchers {
       Configurator.closeRunningConfigurator = true
       service.shutdownNow()
       service.awaitTermination(60, TimeUnit.SECONDS)
-    }
-  }
-
-  @Test
-  def testErrorArgument(): Unit = {
-    intercept[IllegalArgumentException] {
-      Configurator.main(Array[String](Configurator.K8S_KEY, ""))
-    }
-
-    intercept[IllegalArgumentException] {
-      Configurator.main(Array[String](Configurator.K8S_KEY))
-    }
-
-    intercept[IllegalArgumentException] {
-      Configurator.main(
-        Array[String](Configurator.K8S_KEY,
-                      "http://ohara-it-02:8080/api/v1",
-                      Configurator.NODE_KEY,
-                      "ohara:111@ohara-it-02:22"))
     }
   }
 }

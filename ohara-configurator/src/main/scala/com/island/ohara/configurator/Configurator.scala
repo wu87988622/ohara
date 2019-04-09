@@ -19,7 +19,6 @@ package com.island.ohara.configurator
 import java.io.File
 import java.net.URL
 import java.util.concurrent.{ExecutionException, TimeUnit}
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
@@ -32,8 +31,10 @@ import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
-import com.island.ohara.client.configurator.v0.NodeApi.NodeCreationRequest
+import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest}
+import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
+import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
+import com.island.ohara.client.configurator.v0.ZookeeperApi
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterCreationRequest
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.data.Serializer
@@ -43,7 +44,6 @@ import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, Future}
@@ -245,13 +245,15 @@ object Configurator {
 
     val configuratorBuilder = Configurator.builder()
     var nodeRequest: Option[NodeCreationRequest] = None
+    var k8sClient: Option[K8SClient] = None
     var k8sValue = ""
     args.sliding(2, 2).foreach {
       case Array(HOSTNAME_KEY, value) => configuratorBuilder.advertisedHostname(value)
       case Array(PORT_KEY, value)     => configuratorBuilder.advertisedPort(value.toInt)
       case Array(K8S_KEY, value) =>
+        k8sClient = Option(K8SClient(value))
         configuratorBuilder.clusterCollie(
-          ClusterCollie.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(K8SClient(value)).build())
+          ClusterCollie.builderOfK8s().nodeCollie(configuratorBuilder.nodeCollie()).k8sClient(k8sClient.get).build())
         k8sValue = value
       case Array(NODE_KEY, value) =>
         val user = value.split(":").head
@@ -267,54 +269,41 @@ object Configurator {
           ))
       case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
-    if (k8sValue.nonEmpty && nodeRequest.nonEmpty)
-      throw new IllegalArgumentException(s"${K8S_KEY} and ${NODE_KEY} cannot exist at the same time.")
-
     val configurator = configuratorBuilder.build()
-    try nodeRequest.foreach { req =>
-      LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
-      import scala.concurrent.duration._
-      val node =
-        Await.result(NodeApi.access().hostname(CommonUtils.hostname()).port(configurator.port).add(req), 30 seconds)
-      val dockerClient =
-        DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
-      try {
-        val images = dockerClient.imageNames()
-        if (!images.contains(ZookeeperApi.IMAGE_NAME_DEFAULT))
-          throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
-        if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))
-          throw new IllegalArgumentException(s"$node doesn't have ${BrokerApi.IMAGE_NAME_DEFAULT}")
-      } finally dockerClient.close()
-      val zkCluster = Await.result(
-        ZookeeperApi
-          .access()
-          .hostname(CommonUtils.hostname())
-          .port(configurator.port)
-          .add(
-            ZookeeperClusterCreationRequest(name = "preCreatedZkCluster",
-                                            imageName = None,
-                                            clientPort = None,
-                                            electionPort = None,
-                                            peerPort = None,
-                                            nodeNames = Seq(node.name))),
-        30 seconds
+    try if (k8sValue.nonEmpty) {
+      nodeRequestEach(
+        nodeRequest,
+        configurator,
+        "precreatedzkcluster",
+        "precreatedbkcluster",
+        (node: Node) => {
+          val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
+            ValidationApi
+              .access()
+              .hostname(CommonUtils.hostname)
+              .port(configurator.port)
+              .verify(NodeValidationRequest(node.name, node.port, node.user, node.password)),
+            30 seconds
+          )
+          val isValidationPass: Boolean = validationResult.map(x => x.pass).head
+          if (!isValidationPass) throw new IllegalArgumentException(s"${validationResult.map(x => x.message).head}")
+          checkImageExists(node, Await.result(k8sClient.get.images(node.name), 30 seconds))
+        }
       )
-      LOG.info(s"succeed to create zk cluster:$zkCluster")
-      val bkCluster = Await.result(
-        BrokerApi
-          .access()
-          .hostname(CommonUtils.hostname())
-          .port(configurator.port)
-          .add(
-            BrokerClusterCreationRequest(name = "preCreatedBkCluster",
-                                         imageName = None,
-                                         zookeeperClusterName = Some(zkCluster.name),
-                                         exporterPort = None,
-                                         clientPort = None,
-                                         nodeNames = Seq(node.name))),
-        30 seconds
+    } else {
+      nodeRequestEach(
+        nodeRequest,
+        configurator,
+        "preCreatedZkCluster",
+        "preCreatedBkCluster",
+        (node: Node) => {
+          val dockerClient =
+            DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+          try checkImageExists(node, dockerClient.imageNames)
+          finally dockerClient.close()
+        }
       )
-      LOG.info(s"succeed to create bk cluster:$bkCluster")
+
     } catch {
       case e: Throwable =>
         LOG.error("failed to initialize cluster. Will close configurator", e)
@@ -338,6 +327,59 @@ object Configurator {
       Releasable.close(configurator)
       HttpExecutor.close()
       CollieUtils.close()
+    }
+  }
+
+  private[this] def checkImageExists(node: Node, images: Seq[String]): Unit = {
+    if (!images.contains(ZookeeperApi.IMAGE_NAME_DEFAULT))
+      throw new IllegalArgumentException(s"$node doesn't have ${ZookeeperApi.IMAGE_NAME_DEFAULT}")
+    if (!images.contains(BrokerApi.IMAGE_NAME_DEFAULT))
+      throw new IllegalArgumentException(s"$node doesn't have ${BrokerApi.IMAGE_NAME_DEFAULT}")
+  }
+
+  private[this] def nodeRequestEach(nodeRequest: Option[NodeCreationRequest],
+                                    configurator: Configurator,
+                                    zkName: String,
+                                    bkName: String,
+                                    otherCheck: Node => Unit): Unit = {
+    nodeRequest.foreach { req =>
+      LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
+
+      val node =
+        Await.result(NodeApi.access().hostname(CommonUtils.hostname()).port(configurator.port).add(req), 30 seconds)
+      otherCheck(node)
+
+      val zkCluster = Await.result(
+        ZookeeperApi
+          .access()
+          .hostname(CommonUtils.hostname())
+          .port(configurator.port)
+          .add(
+            ZookeeperClusterCreationRequest(name = zkName,
+                                            imageName = None,
+                                            clientPort = None,
+                                            electionPort = None,
+                                            peerPort = None,
+                                            nodeNames = Seq(node.name))),
+        30 seconds
+      )
+      LOG.info(s"succeed to create zk cluster:$zkCluster")
+
+      val bkCluster = Await.result(
+        BrokerApi
+          .access()
+          .hostname(CommonUtils.hostname())
+          .port(configurator.port)
+          .add(
+            BrokerClusterCreationRequest(name = bkName,
+                                         imageName = None,
+                                         zookeeperClusterName = Some(zkName),
+                                         exporterPort = None,
+                                         clientPort = None,
+                                         nodeNames = Seq(node.name))),
+        30 seconds
+      )
+      LOG.info(s"succeed to create bk cluster:$bkCluster")
     }
   }
 
