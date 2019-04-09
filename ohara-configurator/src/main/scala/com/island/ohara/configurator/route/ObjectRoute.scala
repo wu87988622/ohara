@@ -34,7 +34,7 @@ private[configurator] object ObjectRoute {
   )
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     pathPrefix(OBJECT_PREFIX_PATH) {
-      pathEnd(get(complete(store.values[Data].map(_.map(toObject))))) ~ path(Segment)(id =>
-        get(complete(store.value[Data](id).map(toObject))))
+      pathEnd(get(onSuccess(store.values[Data])(ds => complete(ds.map(toObject))))) ~ path(Segment)(id =>
+        get(onSuccess(store.value[Data](id))(d => complete(toObject(d)))))
     }
 }

@@ -33,30 +33,29 @@ object InfoRoute extends SprayJsonSupport {
     path(INFO_PREFIX_PATH) {
       get {
         import scala.collection.JavaConverters._
-        complete(
-          workerCollie.clusters
-            .flatMap { clusters =>
-              clusters.size match {
-                case 1 => workerCollie.workerClient(clusters.head._1.name).flatMap(_._2.connectors)
-                case _ => Future.successful(Seq.empty)
-              }
-            }
-            .map(plugins =>
-              ConfiguratorInfo(
-                connectors = plugins,
-                // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
-                sources = plugins.map(InfoApi.toConnectorVersion).filter(_.typeName == "source"),
-                // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
-                sinks = plugins.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink"),
-                supportedDatabases = SUPPORTED_DATABASES,
-                supportedDataTypes = DataType.all.asScala,
-                versionInfo = ConfiguratorVersion(
-                  version = VersionUtils.VERSION,
-                  user = VersionUtils.USER,
-                  revision = VersionUtils.REVISION,
-                  date = VersionUtils.DATE
-                )
-            )))
+        onSuccess(workerCollie.clusters.flatMap { clusters =>
+          clusters.size match {
+            case 1 => workerCollie.workerClient(clusters.head._1.name).flatMap(_._2.connectors)
+            case _ => Future.successful(Seq.empty)
+          }
+        }) { plugins =>
+          complete(
+            ConfiguratorInfo(
+              connectors = plugins,
+              // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
+              sources = plugins.map(InfoApi.toConnectorVersion).filter(_.typeName == "source"),
+              // TODO: remove this (https://github.com/oharastream/ohara/issues/518) by chia
+              sinks = plugins.map(InfoApi.toConnectorVersion).filter(_.typeName == "sink"),
+              supportedDatabases = SUPPORTED_DATABASES,
+              supportedDataTypes = DataType.all.asScala,
+              versionInfo = ConfiguratorVersion(
+                version = VersionUtils.VERSION,
+                user = VersionUtils.USER,
+                revision = VersionUtils.REVISION,
+                date = VersionUtils.DATE
+              )
+            ))
+        }
       }
     }
 }

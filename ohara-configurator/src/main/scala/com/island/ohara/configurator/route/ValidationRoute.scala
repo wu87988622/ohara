@@ -18,7 +18,7 @@ package com.island.ohara.configurator.route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
+import akka.http.scaladsl.server.Directives.{as, complete, entity, onSuccess, path, pathPrefix, put, _}
 import com.island.ohara.agent.{BrokerCollie, ClusterCollie, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -37,15 +37,17 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
   private[this] val DEFAULT_NUMBER_OF_VALIDATION = 3
 
   private[this] def verifyRoute[Req](root: String, verify: (Option[String], Req) => Future[Seq[ValidationReport]])(
-    implicit rm: RootJsonFormat[Req],
-    executionContext: ExecutionContext): server.Route = path(root) {
+    implicit rm: RootJsonFormat[Req]): server.Route = path(root) {
     put {
       parameter(Parameters.CLUSTER_NAME.?) { clusterName =>
-        entity(as[Req])(req =>
-          complete(verify(clusterName, req).map { reports =>
-            if (reports.isEmpty) throw new IllegalStateException(s"No report!!! Failed to run verification on $root")
-            else reports
-          }))
+        entity(as[Req])(
+          req =>
+            onSuccess(verify(clusterName, req))(
+              reports =>
+                if (reports.isEmpty)
+                  failWith(new IllegalStateException(s"No report!!! Failed to run verification on $root"))
+                else complete(reports)))
+
       }
     }
   }
@@ -116,23 +118,18 @@ private[configurator] object ValidationRoute extends SprayJsonSupport {
             .map(Seq(_))
       ) ~ path(VALIDATION_CONNECTOR_PREFIX_PATH) {
         put {
-          entity(as[ConnectorCreationRequest])(
-            req =>
-              complete(
-                CollieUtils
-                  .workerClient(req.workerClusterName)
-                  .flatMap {
-                    case (cluster, workerClient) =>
-                      workerClient
-                        .connectorValidator()
-                        .connectorClassName(req.className)
-                        .settings(req.plain)
-                        // we define the cluster name again since user may ignore the worker cluster in request
-                        // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
-                        .setting(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)
-                        .run()
-                  }
-                  .map(settingInfo => HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
+          entity(as[ConnectorCreationRequest])(req =>
+            onSuccess(CollieUtils.workerClient(req.workerClusterName).flatMap {
+              case (cluster, workerClient) =>
+                workerClient
+                  .connectorValidator()
+                  .connectorClassName(req.className)
+                  .settings(req.plain)
+                  // we define the cluster name again since user may ignore the worker cluster in request
+                  // matching a cluster is supported by ohara 0.3 so we have to set matched cluster to response
+                  .setting(SettingDefinition.WORKER_CLUSTER_NAME_DEFINITION.key(), cluster.name)
+                  .run()
+            })(settingInfo => complete(HttpEntity(ContentTypes.`application/json`, settingInfo.toJsonString))))
         }
       }
     }

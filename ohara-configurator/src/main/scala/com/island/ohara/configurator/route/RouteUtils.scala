@@ -56,19 +56,21 @@ private[route] object RouteUtils {
     rm2: RootJsonFormat[Res],
     executionContext: ExecutionContext) = post {
     entity(as[Req]) { req =>
-      parameter(Parameters.CLUSTER_NAME.?)(name => complete(hook(name, CommonUtils.uuid(), req).flatMap(store.add)))
+      parameter(Parameters.CLUSTER_NAME.?)(name =>
+        onSuccess(hook(name, CommonUtils.uuid(), req).flatMap(store.add))(value => complete(value)))
     }
   }
 
   private[this] def routeOfList[Res <: Data: ClassTag](hook: Seq[Res] => Future[Seq[Res]])(
     implicit store: DataStore,
     rm: RootJsonFormat[Res],
-    executionContext: ExecutionContext) = get(complete(store.values[Res].flatMap(values => hook(values))))
+    executionContext: ExecutionContext) = get(
+    onSuccess(store.values[Res].flatMap(values => hook(values)))(values => complete(values)))
 
   private[this] def routeOfGet[Res <: Data: ClassTag](
     id: Id,
     hook: Res => Future[Res])(implicit store: DataStore, rm: RootJsonFormat[Res], executionContext: ExecutionContext) =
-    get(complete(store.value[Res](id).flatMap(value => hook(value))))
+    get(onSuccess(store.value[Res](id).flatMap(value => hook(value)))(value => complete(value)))
 
   private[this] def routeOfDelete[Res <: Data: ClassTag](id: Id,
                                                          hook: Res => Future[Res],
@@ -76,7 +78,8 @@ private[route] object RouteUtils {
     implicit store: DataStore,
     rm: RootJsonFormat[Res],
     executionContext: ExecutionContext) =
-    delete(complete(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).flatMap(value => hook(value)))))
+    delete(onSuccess(hookBeforeDelete(id).flatMap(id => store.remove[Res](id).flatMap(value => hook(value))))(value =>
+      complete(value)))
 
   private[this] def routeOfUpdate[Req, Res <: Data: ClassTag](id: Id, hook: (Id, Req, Res) => Future[Res])(
     implicit store: DataStore,
@@ -84,7 +87,8 @@ private[route] object RouteUtils {
     rm2: RootJsonFormat[Res],
     executionContext: ExecutionContext) =
     put {
-      entity(as[Req])(req => complete(store.update(id, (previous: Res) => hook(id, req, previous))))
+      entity(as[Req])(req =>
+        onSuccess(store.update(id, (previous: Res) => hook(id, req, previous)))(value => complete(value)))
     }
 
   /**
@@ -183,7 +187,7 @@ private[route] object RouteUtils {
           entity(as[Req]) { req =>
             if (req.nodeNames.isEmpty) throw new IllegalArgumentException(s"You are too poor to buy any server?")
             // nodeCollie.nodes(req.nodeNames) is used to check the existence of node names of request
-            complete(
+            onSuccess(
               nodeCollie
                 .nodes(req.nodeNames)
                 .flatMap(clusterCollie.images)
@@ -227,19 +231,21 @@ private[route] object RouteUtils {
                     .mkString(";")).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
 
                   hookOfCreation(clusters, req)
-                })
+                })(complete(_))
           }
-        } ~ get(complete(collie.clusters.map(_.keys)))
+        } ~ get(onSuccess(collie.clusters) { clusters =>
+          complete(clusters.keys)
+        })
       } ~ pathPrefix(Segment) { clusterName =>
         path(Segment) { nodeName =>
           post {
-            complete(collie.addNode(clusterName, nodeName))
+            onSuccess(collie.addNode(clusterName, nodeName))(complete(_))
           } ~ delete {
-            complete(collie.removeNode(clusterName, nodeName))
+            onSuccess(collie.removeNode(clusterName, nodeName))(complete(_))
           }
         } ~ pathEnd {
           delete {
-            complete(
+            onSuccess(
               clusterCollie.clusters
                 .map(_.keys.toSeq)
                 // if cluster doesn't exist, we throw exception directly.
@@ -247,7 +253,7 @@ private[route] object RouteUtils {
                   if (clusters.exists(_.name == clusterName)) clusters
                   else throw new NoSuchClusterException(s"$clusterName doesn't exist"))
                 .flatMap(clusters => hookBeforeDelete(clusters, clusterName))
-                .flatMap(_ => collie.remove(clusterName)))
+                .flatMap(_ => collie.remove(clusterName)))(complete(_))
           } ~ get {
             complete(collie.containers(clusterName))
           }
