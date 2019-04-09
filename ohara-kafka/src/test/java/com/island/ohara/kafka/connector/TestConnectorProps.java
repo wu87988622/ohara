@@ -111,16 +111,64 @@ public class TestConnectorProps extends SmallTest {
 
   @Test
   public void testStop() {
-    Row row = Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString()));
-    RowSourceTask task =
-        new DumbSourceTask() {
-          @Override
-          protected List<RowSourceRecord> _poll() {
-            return Collections.singletonList(
-                RowSourceRecord.builder().row(row).topic(CommonUtils.randomString()).build());
-          }
-        };
+    RowSourceTask task = new DumbSourceTask();
     // we don't call start() so all internal counters should be null
     task.stop();
+  }
+
+  @Test
+  public void testInternalTaskConfigOfSource() {
+    RowSourceConnector connector = new DumbSource();
+    Assert.assertNull(connector.taskConfig);
+
+    connector.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    Assert.assertNotNull(connector.taskConfig);
+  }
+
+  @Test
+  public void testInternalTaskConfigOfSourceTask() {
+    RowSourceTask task = new DumbSourceTask();
+    Assert.assertNull(task.taskConfig);
+
+    task.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    Assert.assertNotNull(task.taskConfig);
+  }
+
+  @Test
+  public void testInternalTaskConfigOfSink() {
+    RowSinkConnector connector = new DumbSink();
+    Assert.assertNull(connector.taskConfig);
+
+    connector.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    Assert.assertNotNull(connector.taskConfig);
+  }
+
+  @Test
+  public void testInternalTaskConfigOfSinkTask() {
+    RowSinkTask task = new DumbSinkTask();
+    Assert.assertNull(task.taskConfig);
+
+    task.start(Collections.singletonMap("name", CommonUtils.randomString()));
+    Assert.assertNotNull(task.taskConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failToCallCounterBuilderBeforeStartingSource() {
+    new DumbSource().counterBuilder();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failToCallCounterBuilderBeforeStartingSink() {
+    new DumbSink().counterBuilder();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failToCallCounterBuilderBeforeStartingSourceTask() {
+    new DumbSourceTask().counterBuilder();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void failToCallCounterBuilderBeforeStartingSinkTask() {
+    new DumbSinkTask().counterBuilder();
   }
 }

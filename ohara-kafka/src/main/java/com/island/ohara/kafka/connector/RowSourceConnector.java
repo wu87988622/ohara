@@ -17,6 +17,7 @@
 package com.island.ohara.kafka.connector;
 
 import com.google.common.collect.ImmutableMap;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.kafka.connector.json.SettingDefinition;
 import com.island.ohara.kafka.connector.json.SettingDefinitions;
 import java.util.Collections;
@@ -75,6 +76,19 @@ public abstract class RowSourceConnector extends SourceConnector {
   protected ConnectorVersion _version() {
     return ConnectorVersion.builder().build();
   }
+
+  /**
+   * create counter builder. This is a helper method for custom connector which want to expose some
+   * number via ohara's metrics. NOTED: THIS METHOD MUST BE USED AFTER STARTING THIS CONNECTOR.
+   * otherwise, an IllegalArgumentException will be thrown.
+   *
+   * @return counter
+   */
+  protected CounterBuilder counterBuilder() {
+    if (taskConfig == null)
+      throw new IllegalArgumentException("you can't create a counter before starting connector");
+    return new CounterBuilder(taskConfig.name());
+  }
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
   @Override
@@ -87,9 +101,12 @@ public abstract class RowSourceConnector extends SourceConnector {
     return _taskClass();
   }
 
+  @VisibleForTesting TaskConfig taskConfig = null;
+
   @Override
   public final void start(Map<String, String> props) {
-    _start(TaskConfig.of(ImmutableMap.copyOf(props)));
+    taskConfig = TaskConfig.of(ImmutableMap.copyOf(props));
+    _start(taskConfig);
   }
 
   @Override

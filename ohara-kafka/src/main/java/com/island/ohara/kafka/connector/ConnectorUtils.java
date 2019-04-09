@@ -95,7 +95,6 @@ final class ConnectorUtils {
    * @return size of record
    */
   static long sizeOf(ConnectRecord<?> record) {
-    // TODO: we only count the size of byte array...??? by chia
     return sizeOf(record.key()) + sizeOf(record.value());
   }
 
