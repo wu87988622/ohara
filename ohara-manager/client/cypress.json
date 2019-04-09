@@ -5,5 +5,5 @@
     "mochaFile": "../test-reports/clientE2e.xml",
     "toConsole": true
   },
-  "watchForFileChanges": false
+  "watchForFileChanges": true
 }
