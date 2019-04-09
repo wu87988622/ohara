@@ -66,6 +66,7 @@ export const createConnector = async ({ updateGraph, connector }) => {
       const params = {
         name: connectorName,
         'connector.class': className,
+        'connector.name': connectorName,
       };
 
       const res = await connectorApi.createConnector(params);
