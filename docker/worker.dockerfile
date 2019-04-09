@@ -28,7 +28,6 @@ RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/worker_version
 
 # build ohara
-# TODO: we should clone ohara libs from official release... by chia
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
@@ -60,7 +59,7 @@ RUN useradd -ms /bin/bash -g $USER $USER
 # TODO: we should remove unused dependencies since this image is used to run broker only
 COPY --from=deps /opt/kafka /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "kafka_*") /home/$USER/default
-ADD ./worker.sh /home/$USER/default/bin/
+COPY --from=deps /testpatch/ohara/docker/worker.sh /home/$USER/default/bin/
 RUN chmod +x /home/$USER/default/bin/worker.sh
 RUN chown -R $USER:$USER /home/$USER
 ENV KAFKA_HOME=/home/$USER/default

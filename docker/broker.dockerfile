@@ -18,7 +18,8 @@ FROM centos:7.6.1810 as deps
 
 # install tools
 RUN yum install -y \
-  wget
+  wget \
+  git
 
 # download kafka
 # WARN: Please don't change the value of KAFKA_DIR
@@ -37,6 +38,14 @@ RUN mkdir /prometheus
 RUN wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/${EXPORTER_VERSION}/jmx_prometheus_javaagent-${EXPORTER_VERSION}.jar -O /prometheus/jmx_prometheus_javaagent.jar
 ADD ./prometheus/exporter.config.yml /prometheus/config.yml
 
+# clone ohara
+ARG BRANCH="master"
+ARG COMMIT=$BRANCH
+ARG REPO="https://github.com/oharastream/ohara.git"
+WORKDIR /testpatch/ohara
+RUN git clone $REPO /testpatch/ohara
+RUN git checkout $COMMIT
+
 FROM centos:7.6.1810
 
 # install openjdk-1.8
@@ -54,7 +63,7 @@ RUN useradd -ms /bin/bash -g $USER $USER
 # TODO: we should remove unused dependencies since this image is used to run broker only
 COPY --from=deps /opt/kafka /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "kafka_*") /home/$USER/default
-ADD ./broker.sh /home/$USER/default/bin/
+COPY --from=deps /testpatch/ohara/docker/broker.sh /home/$USER/default/bin/
 RUN chmod +x /home/$USER/default/bin/broker.sh
 RUN chown -R $USER:$USER /home/$USER
 ENV KAFKA_HOME=/home/$USER/default

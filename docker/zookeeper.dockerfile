@@ -18,7 +18,8 @@ FROM centos:7.6.1810 as deps
 
 # install tools
 RUN yum install -y \
-  wget
+  wget \
+  git
 
 # download zookeeper
 # WARN: Please don't change the value of ZOOKEEPER_DIR
@@ -29,6 +30,14 @@ RUN mkdir ${ZOOKEEPER_DIR}
 RUN tar -zxvf zookeeper-${ZOOKEEPER_VERSION}.tar.gz -C ${ZOOKEEPER_DIR}
 RUN rm -f zookeeper-${ZOOKEEPER_VERSION}.tar.gz
 RUN echo "$ZOOKEEPER_VERSION" > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "zookeeper-*")/bin/true_version
+
+# clone ohara
+ARG BRANCH="master"
+ARG COMMIT=$BRANCH
+ARG REPO="https://github.com/oharastream/ohara.git"
+WORKDIR /testpatch/ohara
+RUN git clone $REPO /testpatch/ohara
+RUN git checkout $COMMIT
 
 FROM centos:7.6.1810
 
@@ -46,7 +55,7 @@ RUN useradd -ms /bin/bash -g $USER $USER
 # copy zookeeper binary
 COPY --from=deps /opt/zookeeper /home/$USER
 RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "zookeeper-*") /home/$USER/default
-COPY ./zk.sh /home/$USER/default/bin/
+COPY --from=deps /testpatch/ohara/docker/zk.sh /home/$USER/default/bin/
 RUN chown -R $USER:$USER /home/$USER
 RUN chmod +x /home/$USER/default/bin/zk.sh
 ENV ZOOKEEPER_HOME=/home/$USER/default
