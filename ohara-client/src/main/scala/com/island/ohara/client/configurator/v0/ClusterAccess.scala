@@ -15,10 +15,9 @@
  */
 
 package com.island.ohara.client.configurator.v0
-import com.island.ohara.client.configurator.v0.ContainerApi._
 import com.island.ohara.common.util.CommonUtils
-import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,8 +34,8 @@ class ClusterAccess[Req, Res <: ClusterInfo] private[v0] (prefixPath: String)(im
   private[this] def _nodeName(name: String): String =
     CommonUtils.requireNonEmpty(name, () => "node name can't be empty")
 
-  def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
-    exec.get[Seq[ContainerInfo], ErrorApi.Error](
+  def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
+    exec.get[Res, ErrorApi.Error](
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${_clusterName(clusterName)}")
   def delete(clusterName: String)(implicit executionContext: ExecutionContext): Future[Res] =
     exec.delete[Res, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$clusterName")

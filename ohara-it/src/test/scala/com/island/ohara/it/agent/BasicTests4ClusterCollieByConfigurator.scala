@@ -43,6 +43,8 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
 
   private[this] def logApi = LogApi.access().hostname(configurator.hostname).port(configurator.port)
 
+  private[this] def containerApi = ContainerApi.access().hostname(configurator.hostname).port(configurator.port)
+
   //--------------------------------------------------[zk operations]--------------------------------------------------//
   override protected def zk_exist(clusterName: String): Future[Boolean] =
     zkApi.list.map(_.exists(_.name == clusterName))
@@ -68,7 +70,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
     logApi.log4ZookeeperCluster(clusterName).map(_.logs.map(_.value))
 
   override protected def zk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    zkApi.get(clusterName)
+    containerApi.get(clusterName).map(_.flatMap(_.containers))
 
   override protected def zk_delete(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
     zkApi.delete(clusterName)
@@ -97,7 +99,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
     logApi.log4BrokerCluster(clusterName).map(_.logs.map(_.value))
 
   override protected def bk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    bkApi.get(clusterName)
+    containerApi.get(clusterName).map(_.flatMap(_.containers))
 
   override protected def bk_delete(clusterName: String): Future[BrokerApi.BrokerClusterInfo] = bkApi.delete(clusterName)
 
@@ -169,7 +171,7 @@ abstract class BasicTests4ClusterCollieByConfigurator extends BasicTests4Collie 
     logApi.log4WorkerCluster(clusterName).map(_.logs.map(_.value))
 
   override protected def wk_containers(clusterName: String): Future[Seq[ContainerApi.ContainerInfo]] =
-    wkApi.get(clusterName)
+    containerApi.get(clusterName).map(_.flatMap(_.containers))
 
   override protected def wk_delete(clusterName: String): Future[WorkerApi.WorkerClusterInfo] = wkApi.delete(clusterName)
 

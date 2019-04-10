@@ -321,8 +321,7 @@ class TestBrokerRoute extends MediumTest with Matchers {
     val cluster = result(brokerApi.add(request))
     assert(request, cluster)
 
-    val containers = result(brokerApi.get(request.name))
-    containers.size shouldBe request.nodeNames.size
+    assert(request, result(brokerApi.get(request.name)))
 
     result(brokerApi.delete(request.name)) shouldBe cluster
     result(brokerApi.list).size shouldBe 0

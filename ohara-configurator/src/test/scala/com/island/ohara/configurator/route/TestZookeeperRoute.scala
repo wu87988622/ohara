@@ -210,8 +210,7 @@ class TestZookeeperRoute extends MediumTest with Matchers {
     val cluster = result(zookeeperApi.add(request))
     assert(request, cluster)
 
-    val containers = result(zookeeperApi.get(request.name))
-    containers.size shouldBe request.nodeNames.size
+    assert(request, result(zookeeperApi.get(request.name)))
 
     result(zookeeperApi.delete(request.name)) shouldBe cluster
     result(zookeeperApi.list).size shouldBe 1

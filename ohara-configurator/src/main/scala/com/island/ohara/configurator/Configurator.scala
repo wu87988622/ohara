@@ -143,7 +143,8 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
       WorkerRoute.apply,
       JarsRoute.apply,
       LogRoute.apply,
-      ObjectRoute.apply
+      ObjectRoute.apply,
+      ContainerRoute.apply
     ).reduce[server.Route]((a, b) => a ~ b))
 
   private[this] def privateRoute(): server.Route =

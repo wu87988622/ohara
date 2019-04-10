@@ -15,10 +15,14 @@
  */
 
 package com.island.ohara.client.configurator.v0
+import com.island.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
+import scala.concurrent.{ExecutionContext, Future}
+
 object ContainerApi {
+  val CONTAINER_PREFIX_PATH: String = "containers"
   final case class PortPair(hostPort: Int, containerPort: Int)
   implicit val PORT_PAIR_JSON_FORMAT: RootJsonFormat[PortPair] = jsonFormat2(PortPair)
 
@@ -37,4 +41,15 @@ object ContainerApi {
                                  environments: Map[String, String],
                                  hostname: String)
   implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat11(ContainerInfo)
+
+  final case class ContainerGroup(clusterName: String, clusterType: String, containers: Seq[ContainerInfo])
+  implicit val CONTAINER_GROUP_JSON_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)
+
+  class Access private[v0] extends BasicAccess(CONTAINER_PREFIX_PATH) {
+    def get(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
+      exec.get[Seq[ContainerGroup], ErrorApi.Error](
+        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/${CommonUtils.requireNonEmpty(clusterName)}")
+  }
+
+  def access(): Access = new Access
 }

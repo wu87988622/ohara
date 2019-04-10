@@ -416,8 +416,7 @@ class TestWorkerRoute extends MediumTest with Matchers {
     val cluster = result(workerApi.add(request))
     assert(request, cluster)
 
-    val containers = result(workerApi.get(request.name))
-    containers.size shouldBe request.nodeNames.size
+    assert(request, result(workerApi.get(request.name)))
 
     result(workerApi.delete(request.name)) shouldBe cluster
     result(workerApi.list).size shouldBe 0

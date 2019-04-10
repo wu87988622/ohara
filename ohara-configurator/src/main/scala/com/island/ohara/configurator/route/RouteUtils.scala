@@ -249,7 +249,7 @@ private[route] object RouteUtils {
                 .flatMap(clusters => hookBeforeDelete(clusters, clusterName))
                 .flatMap(_ => collie.remove(clusterName)))
           } ~ get {
-            complete(collie.containers(clusterName))
+            complete(collie.cluster(clusterName).map(_._1))
           }
         }
       }
