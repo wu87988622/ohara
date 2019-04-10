@@ -7,41 +7,6 @@ Easy to deploy the streaming application
 
 ### Getting Started
 
-**Start Your Own Ohara StreamApp**
-
-For development
-
-- [add oharastream maven repo](#Resolving-artifacts)
-- include the following jars in build.gradle
-
-```groovy
-implementation "com.island.ohara:ohara-streams:0.4-SNAPSHOT"
-implementation "com.island.ohara:ohara-common:0.4-SNAPSHOT"
-implementation "com.island.ohara:ohara-kafka:0.4-SNAPSHOT"
-```
-
-
-- sample ohara code can be found in
-
-```sh
-# for external cluster
-ohara-streams/src/test/java/com/island/ohara/streams/SimpleApplicationForExternalEnv.java
-# for ohara environment
-ohara-streams/src/test/java/com/island/ohara/streams/SimpleApplicationForOharaEnv.java
-```
-
-For compilation
-
-- In addition to ohara libraries, you will also need to include kafka libraries
-
-```
-<dependency>
-    <groupId>org.apache.kafka</groupId>
-    <artifactId>kafka-streams</artifactId>
-    <version>1.0.2</version>
-</dependency>
-```
-
 ### Prerequisites
 
 - OpenJDK 1.8
@@ -171,17 +136,6 @@ gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -Pbin
 - bintrayKey: the account API Key
 - dryRun: whether to publish artifacts (default is true)
 - override: whether to override version artifacts already published
-
-### Resolving artifacts
-
-To resolve artifacts from the ohara repository use the following configuration :
-```groovy
-repositories {
-     maven {
-         url "https://dl.bintray.com/oharastream/ohara"
-     }
- }
-```
 
 ### Built With
 
