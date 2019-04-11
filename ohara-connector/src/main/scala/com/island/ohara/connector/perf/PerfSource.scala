@@ -15,6 +15,7 @@
  */
 
 package com.island.ohara.connector.perf
+import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskConfig}
 
 import scala.collection.JavaConverters._
@@ -29,8 +30,8 @@ class PerfSource extends RowSourceConnector {
   /**
     * this method is exposed to test scope
     */
+  @VisibleForTesting
   override protected[perf] def _start(config: TaskConfig): Unit = {
-    if (config.columns.isEmpty) throw new IllegalArgumentException("columns can't be empty")
     if (config.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
     val props = PerfSourceProps(config.raw().asScala.toMap)
     if (props.batch < 0) throw new IllegalArgumentException(s"batch:${props.batch} can't be negative")

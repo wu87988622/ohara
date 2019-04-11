@@ -45,11 +45,21 @@ class TestPerfSourceProps extends SmallTest with Matchers {
   }
 
   @Test
-  def testEmptySchema(): Unit = {
+  def testEmptySchemaOnSource(): Unit = {
     val source = new PerfSource
 
-    an[IllegalArgumentException] should be thrownBy source._start(
+    source._start(
       ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).taskConfig())
+  }
+
+  @Test
+  def testEmptySchemaOnSourceTask(): Unit = {
+    val task = new PerfSourceTask
+
+    task._start(
+      ConnectorFormatter.of().name(methodName()).topicNames(topics.asJava).settings(props.toMap.asJava).taskConfig())
+
+    task.schema shouldBe DEFAULT_SCHEMA
   }
 
   @Test

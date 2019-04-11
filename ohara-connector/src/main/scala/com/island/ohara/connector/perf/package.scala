@@ -16,8 +16,19 @@
 
 package com.island.ohara.connector
 
+import com.island.ohara.common.data.{Column, DataType}
+
 package object perf {
   val PERF_BATCH: String = "perf.batch"
   val PERF_FREQUENCE: String = "perf.frequence"
 
+  /**
+    * this is the default schema used to generate random data in perf source.
+    * Since schema is not "required" in ohara, making a default schema avoid confusing users when they miss the schema
+    */
+  val DEFAULT_SCHEMA: Seq[Column] = Seq(
+    Column.builder().name("a").dataType(DataType.STRING).order(0).build(),
+    Column.builder().name("b").dataType(DataType.STRING).order(1).build(),
+    Column.builder().name("c").dataType(DataType.STRING).order(2).build()
+  )
 }
