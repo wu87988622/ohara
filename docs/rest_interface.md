@@ -16,6 +16,12 @@ and add content type of the response via the HTTP Accept header:
 - [FTP Information](#ftp-connection-information)
 - [HDFS Information](#hdfs-connection-information)
 - [JDBC Information](#jdbc-connection-information)
+- [Connector](#connector)
+- [Pipeline](#pipeline)
+- [Zookeeper](#zookeeper)
+- [Broker](#broker)
+- [Worker](#worker)
+- [StreamApp](#streamapp)
 
 ----------
 ## object id
@@ -631,11 +637,11 @@ Apart from custom settings, common settings are required by all connectors. The 
 1. workerClusterName (**string**) - target worker cluster
 
 The following information are updated by ohara.
-1. [id](#object-id) (**string**) — jdbc information id
-1. lastModified (**long**) — the last time to update this jdbc information
+1. [id](#object-id) (**string**) — connector's id
+1. lastModified (**long**) — the last time to update this connector
 1. state (**string**) — the state of a started connector. If the connector is not started, you won't see this field
 1. error (**string**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
-1. metrics (**object**) — the metrics from a running connector
+1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from a running connector
   - counters (**array(object)**) — the metrics in counter type
     - counters[i].value (**long**) — the number stored in counter
     - counters[i].unit (**string**) — unit for value
@@ -786,7 +792,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
 
 Ohara will send a start request to specific worker cluster to start the connector with stored settings, and then make
 a response to called. The connector is executed async so the connector may be still in starting after you retrieve
-the response. You can send [GET request](#get-a-settings-of-connectors) to see the state of connector.
+the response. You can send [GET request](#get-information-of-connector) to see the state of connector.
 This request is idempotent so it is safe to retry this command repeatedly.
 
 **Example response**
@@ -898,4 +904,375 @@ This request is idempotent so it is safe to retry this command repeatedly.
   }
 }
 ```
+----------
+## Pipeline
+
+Pipeline APIs are born of ohara-manager which needs a way to store the relationship of components in streaming.
+The relationship in pipeline is made up of multi **flows**. Each **flow** describe a **from** and multi **to**s.
+For example, you have a [topic](#topic) as source and a [connector](#connector) as consumer, so you can describe the relationship
+via following flow.
+```json
+{
+  "flows": [
+    {
+      "from": "topic's id",
+      "to": ["connector's id"]
+    }
+  ]
+}
+```
+
+Each object described in pipeline must be related to a existent object. If you delete a object which is already used by
+a pipeline, it will be deleted from pipeline's flow.
+
+All objects in pipeline MUST work on the same cluster hierarchy. For example, you have following clusters.
+1. a ([worker cluster](#worker)) based on
+1. b ([broker cluster](#broker)) based on
+1. c ([zookeeper cluster](#zookeeper))
+
+When you add a [topic](#topic) to pipeline which is located at cluster-a, the [topic](#topic) must be located at broker-b. Otherwise, you will get
+a error saying the [topic](#topic) can't be belong to you. A [connect](#connector) which is not hosted by same worker cluster
+can't be related to pipeline also.
+
+The properties used in generating pipeline are shown below.
+1. name (**string**) — pipeline's name
+1. flows (**array(object)**) — the relationship between objects
+  - flows[i].from (**string**) — the endpoint of source
+  - flows[i].to (**array(string)**) — the endpoint of sink
+1. workerClusterName (**string**) - target worker cluster
+  
+Following information are written by ohara.
+ 1. [id](#object-id) (**string**) — pipeline's id
+ 1. lastModified (**long**) — the last time to update this pipeline
+ 1. objects(**array(object)**) — the abstract of all objects mentioned by pipeline
+   - objects[i].[id](#object-id) (**string**) — object's id
+   - objects[i].name (**string**) — object's name
+   - objects[i].kind (**string**) — the type of this object. for instance, [topic](#topic), [connector](#connector), and [streamapp](#streamapp) 
+   - objects[i].className (**string**) — object's implementation. Normally, it shows the full name of a java class
+   - objects[i].state (**string**) — the state of object. If the object can't have state (eg, [topic](#topic)), you won't see this field
+   - objects[i].error (**string**) — the error message of this object
+   - objects[i].lastModified (**long**) — the last time to update this object
+   - [metrics](custom_connector.md#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
+     - counters (**array(object)**) — the metrics in counter type
+       - counters[i].value (**long**) — the number stored in counter
+       - counters[i].unit (**string**) — unit for value
+       - counters[i].document (**string**) — document of this counter
+       - counters[i].startTime (**long**) — start time of counter (Normally, it is equal to create time)
+----------
+### create a pipeline
+
+*POST /v0/pipelines*
+
+The following example creates a pipeline with a [topic](#topic) and [connector](#connector). The [topic](#topic) is created on
+[broker cluster](#broker) but the [connector](#connector) isn't. Hence, the response from server shows that it fails
+to find the status of the [connector](#connector). That is to say, it is ok to add un-running [connector](#connector) to pipeline.
+
+**Example request 1**
+
+```json
+{
+  "name": "pipeline0",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-aaa",
+      "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
+    }
+  ]
+}
+```
+
+**Example response 1**
+
+```json
+{
+  "name": "pipeline0",
+  "lastModified": 1554950999668,
+  "workerClusterName": "wk00",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "to": [
+        "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+      ]
+    }
+  ],
+  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
+  "objects": [
+    {
+      "name": "topic0",
+      "lastModified": 1554950034608,
+      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "topic"
+    },
+    {
+      "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "lastModified": 1554950058696,
+      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "connector"
+    }
+  ]
+}
+```
+
+Don't worry about creating a pipeline with incomplete flows. It is ok to add a flow with only **from**. The following
+example creates a pipeline with only a object and leave empty in **to** field.
+
+**Example request 1**
+
+```json
+{
+  "name": "pipeline1",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "to": []
+    }
+  ]
+}
+```
+
+**Example response 1**
+
+```json
+{
+  "name": "pipeline1",
+  "lastModified": 1554952500972,
+  "workerClusterName": "wk00",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "to": []
+    }
+  ],
+  "id": "8105c8cd-7e75-46a6-9142-65afde430b2d",
+  "objects": [
+    {
+      "name": "topic0",
+      "lastModified": 1554950034608,
+      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "topic"
+    }
+  ]
+}
+```
+----------
+### update a pipeline
+
+*POST /v0/pipelines/$id*
+
+**Example request**
+
+```json
+{
+  "name": "pipeline0",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-aaa",
+      "to": ["81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"]
+    }
+  ]
+}
+```
+
+**Example response**
+
+```json
+{
+  "name": "pipeline0",
+  "lastModified": 1554950999668,
+  "workerClusterName": "wk00",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "to": [
+        "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+      ]
+    }
+  ],
+  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
+  "objects": [
+    {
+      "name": "topic0",
+      "lastModified": 1554950034608,
+      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "topic"
+    },
+    {
+      "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "lastModified": 1554950058696,
+      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "connector"
+    }
+  ]
+}
+```
+----------
+### list all pipelines
+
+*GET /v0/pipelines*
+
+Listing all pipelines is a expensive operation as it invokes a iteration to all objects stored in pipeline. The loop will
+do a lot of checks and fetch status, metrics and log from backend clusters. If you have the id of pipeline, please
+use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
+
+**Example response**
+
+```json
+[
+  {
+    "name": "pipeline0",
+    "lastModified": 1554950999668,
+    "workerClusterName": "wk00",
+    "flows": [
+      {
+        "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+        "to": [
+          "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+        ]
+      }
+    ],
+    "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
+    "objects": [
+      {
+        "name": "topic0",
+        "lastModified": 1554950034608,
+        "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+        "metrics": {
+          "counters": []
+        },
+        "kind": "topic"
+      },
+      {
+        "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+        "lastModified": 1554950058696,
+        "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+        "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
+        "metrics": {
+          "counters": []
+        },
+        "kind": "connector"
+      }
+    ]
+  }
+]
+```
+----------
+### delete a pipeline
+
+*DELETE /v0/pipelines/$id*
+
+Deleting a pipeline does not delete the objects related to the pipeline.
+
+**Example response**
+
+```json
+{
+  "name": "pipeline0",
+  "lastModified": 1554950999668,
+  "workerClusterName": "wk00",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "to": [
+        "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+      ]
+    }
+  ],
+  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
+  "objects": [
+    {
+      "name": "topic0",
+      "lastModified": 1554950034608,
+      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "topic"
+    },
+    {
+      "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "lastModified": 1554950058696,
+      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "connector"
+    }
+  ]
+}
+```
+----------
+### get a pipeline
+
+*GET /v0/pipelines/$id*
+
+**Example response**
+
+```json
+{
+  "name": "pipeline0",
+  "lastModified": 1554950999668,
+  "workerClusterName": "wk00",
+  "flows": [
+    {
+      "from": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "to": [
+        "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd"
+      ]
+    }
+  ],
+  "id": "e77e7c3e-1b73-4d31-ad85-ff575f0850f2",
+  "objects": [
+    {
+      "name": "topic0",
+      "lastModified": 1554950034608,
+      "id": "be48b7d8-08a8-40a4-8f17-9c1d1fe655b6",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "topic"
+    },
+    {
+      "name": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "lastModified": 1554950058696,
+      "id": "81cb80a9-34a5-4e45-881a-cb87d4fbb5bd",
+      "error": "Failed to get status and type of connector:81cb80a9-34a5-4e45-881a-cb87d4fbb5bd.This may be temporary since our worker cluster is too busy to sync status of connector. abc doesn't exist",
+      "metrics": {
+        "counters": []
+      },
+      "kind": "connector"
+    }
+  ]
+}
+```
+----------
+## zookeeper
+
+----------
+## broker
+
+----------
+## worker
+
+----------
+## streamapp
+
 ----------
