@@ -427,7 +427,6 @@ class JdbcSource extends React.Component {
               />
               {/* Incomplete feature, don't display this for now */}
               {false && <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />}
-              <JdbcQuicklyFillIn onFillIn={this.quicklyFillIn} />
             </FormGroup>
 
             <FormGroup>
