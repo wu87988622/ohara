@@ -608,3 +608,294 @@ The following information are tagged by ohara.
   "password": "aaa"
 }
 ```
+----------
+## Connector
+
+Connector is core of application in ohara [pipeline](#pipeline). Connector has two type - source and sink. Source connector
+pulls data from another system and then push to topic. By contrast, Sink connector pulls data from topic and then push to
+another system. In order to use connector in [pipeline](#pipeline), you have to set up a connector settings in ohara and then add it
+to [pipeline](#pipeline). Of course, the connector settings must belong to a existent connector in target worker cluster. By default,
+worker cluster hosts only the official connectors. If you have more custom requirement for connector, please follow
+[custome connector guideline](custom_connector.md) to write your connector. 
+
+Apart from custom settings, common settings are required by all connectors. The common settings are shown below.
+1. connector.name (**string**) — the name of this connector
+1. connector.class (**class**) — class name of connector implementation
+1. topics(**array(string)**) — the source topics or target topics for this connector
+1. columns (**array(object)**) — the schema of data for this connector
+  - columns[i].name (**string**) — origin name of column
+  - columns[i].newName (**string**) - new name of column
+  - columns[i].dataType (**string**) - the type used to convert data
+  - columns[i].order (**int**) - the order of this column
+1. numberOfTasks (**int**) — the number of tasks
+1. workerClusterName (**string**) - target worker cluster
+
+The following information are updated by ohara.
+1. [id](#object-id) (**string**) — jdbc information id
+1. lastModified (**long**) — the last time to update this jdbc information
+1. state (**string**) — the state of a started connector. If the connector is not started, you won't see this field
+1. error (**string**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
+1. metrics (**object**) — the metrics from a running connector
+  - counters (**array(object)**) — the metrics in counter type
+    - counters[i].value (**long**) — the number stored in counter
+    - counters[i].unit (**string**) — unit for value
+    - counters[i].document (**string**) — document of this counter
+    - counters[i].startTime (**long**) — start time of counter (Normally, it is equal to create time)
+    
+The settings from request, BTW, is a individual item in response. Hence, you will observe the following response
+after you store the settings with connector.class.
+
+```json
+{
+  "settings": {
+    "connector.class": "abc"
+  }
+}
+
+```
+----------
+### create the settings of connector
+
+*POST /v0/connectors*
+
+It is ok to lack some common settings when creating settings for a connector. However, it is illegal to start a connector
+with incomplete settings. For example, storing the settings consisting of only **connector.name** is ok. But stating
+a connector with above incomplete settings will introduce a error.
+
+**Example request**
+
+```json
+{
+  "connector.name": "jdbc_name",
+  "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+}
+```
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "metrics": {
+    "counters": []
+  }
+}
+```
+----------
+### update the settings of connector
+
+*POST /v0/connectors/${id}*
+
+**Example request**
+
+```json
+{
+  "connector.name": "jdbc_name",
+  "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+}
+```
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "metrics": {
+    "counters": []
+  }
+}
+```
+----------
+### list information of all connectors
+
+*GET /v0/connectors*
+
+**Example response**
+
+```json
+[
+  {
+    "lastModified": 1540967970407,
+    "id": "9d128f43-8725-42b2-9377-0dad10863166",
+    "settings": {
+      "connector.name": "jdbc_name",
+      "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+    },
+    "metrics": {
+      "counters": []
+    }
+  }
+]
+```
+----------
+### delete a connector
+
+*DELETE /v0/connectors/${id}*
+
+Deleting the settings used by a running connector is not allowed. You should [stop](#stop-a-connector) connector before deleting it.
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "metrics": {
+    "counters": []
+  }
+}
+```
+----------
+### get information of connector
+
+*GET /v0/connectors/${id}*
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "metrics": {
+    "counters": []
+  }
+}
+```
+----------
+### start a connector
+
+*PUT /v0/connectors/${id}/start*
+
+Ohara will send a start request to specific worker cluster to start the connector with stored settings, and then make
+a response to called. The connector is executed async so the connector may be still in starting after you retrieve
+the response. You can send [GET request](#get-a-settings-of-connectors) to see the state of connector.
+This request is idempotent so it is safe to retry this command repeatedly.
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "state": "RUNNING",
+  "metrics": {
+    "counters": [
+      {
+        "value": 1234,
+        "unit": "rows",
+        "document": "number of processed rows",
+        "startTime": 111111
+      }
+    ]
+  }
+}
+```
+### stop a connector
+
+*PUT /v0/connectors/${id}/stop*
+
+Ohara will send a stop request to specific worker cluster to stop the connector. The stopped connector will be removed from
+worker cluster. The settings of connector is still kept by ohara so you can start the connector with same settings again
+in the future. If you want to delete the connector totally, you should stop the connector and then [delete](#delete-a-connector) it.
+This request is idempotent so it is safe to send this request repeatedly.
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "metrics": {
+    "counters": []
+  }
+}
+```
+----------
+### pause a connector
+
+*PUT /v0/connectors/${id}/pause*
+
+Pausing a connector is to disable connector to pull/push data from/to source/sink. The connector is still alive in kafka.
+This request is idempotent so it is safe to send this request repeatedly.
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "state": "PAUSED",
+  "metrics": {
+    "counters": [
+      {
+        "value": 1234,
+        "unit": "rows",
+        "document": "number of processed rows",
+        "startTime": 111111
+      }
+    ]
+  }
+}
+```
+----------
+### resume a connector
+
+*PUT /v0/connectors/${id}/resume*
+
+Resuming a connector is to enable connector to pull/push data from/to source/sink.
+This request is idempotent so it is safe to retry this command repeatedly.
+
+**Example response**
+
+```json
+{
+  "lastModified": 1540967970407,
+  "id": "9d128f43-8725-42b2-9377-0dad10863166",
+  "settings": {
+    "connector.name": "jdbc_name",
+    "connector.class": "com.island.ohara.connector.ftp.FtpSource"
+  },
+  "state": "RUNNING",
+  "metrics": {
+    "counters": [
+      {
+        "value": 1234,
+        "unit": "rows",
+        "document": "number of processed rows",
+        "startTime": 111111
+      }
+    ]
+  }
+}
+```
+----------
