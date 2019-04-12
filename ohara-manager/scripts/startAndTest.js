@@ -17,44 +17,25 @@
 /* eslint-disable no-process-exit, no-console */
 
 const execa = require('execa');
-const waitOn = require('wait-on');
 const yargs = require('yargs');
 const { getConfig } = require('../utils/configHelpers');
+const { waited } = require('./lib/waitOn');
 
 const { configurator, port } = getConfig;
 
-const { prod = false } = yargs.argv;
+const { prod = false, nodeHost, nodePort, nodeUser, nodePass } = yargs.argv;
 
-debug('Production: ', prod);
-debug('Configurator: ', configurator);
-debug('Port: ', port);
+debug('prod: ', prod);
+debug('configurator: ', configurator);
+debug('port: ', port);
+debug('nodeHost: ', nodeHost || 'Not input.');
+debug('nodePort: ', nodePort || 'Not input.');
+debug('nodeUser: ', nodeUser || 'Not input.');
+debug('nodePass: ', nodePass || 'Not input.');
 
 function debug(...message) {
   console.log(...message);
 }
-
-const waited = url =>
-  new Promise((resolve, reject) => {
-    debug('starting waitOn %s', url);
-    waitOn(
-      {
-        resources: Array.isArray(url) ? url : [url],
-        // delay: 10000, // 10s
-        interval: 2000, // 2s
-        window: 1000,
-        log: true,
-      },
-      err => {
-        if (err) {
-          debug('error waiting for url', url);
-          debug(err.message);
-          return reject(err);
-        }
-        debug('waitOn finished successfully');
-        resolve();
-      },
-    );
-  });
 
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
@@ -111,6 +92,24 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     await waited(`http://localhost:${clientPort}`);
   }
 
+  const buildCypressEnv = () => {
+    const env = [];
+    env.push(`port=${prod ? serverPort : clientPort}`);
+    if (nodeHost) {
+      env.push(`nodeHost=${nodeHost}`);
+    }
+    if (nodePort) {
+      env.push(`nodePort=${nodePort}`);
+    }
+    if (nodeUser) {
+      env.push(`nodeUser=${nodeUser}`);
+    }
+    if (nodePass) {
+      env.push(`nodePass=${nodePass}`);
+    }
+    return env.join(',');
+  };
+
   // Run e2e test
   debug('========= Run e2e test =========');
   cypress = execa(
@@ -120,7 +119,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
       '--config',
       `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
       '--env',
-      `port=${prod ? serverPort : clientPort}`,
+      buildCypressEnv(),
     ],
     {
       cwd: 'client',

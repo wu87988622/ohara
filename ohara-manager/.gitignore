@@ -8,3 +8,4 @@ yarn-error.log
 /client/cypress/videos
 /client/cypress/screenshots
 /client/junit.xml
+/client/cypress.env.json

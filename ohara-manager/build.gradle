@@ -64,7 +64,19 @@ task it {
         if(!project.hasProperty('configurator')) throw new IllegalArgumentException("configurator is required")
         String configurator = project.getProperty('configurator')
 
-        commandLine 'yarn', 'test:e2e:ci', '--port', port, "--configurator", configurator
+        if(!project.hasProperty('nodeHost')) throw new IllegalArgumentException("nodeHost is required")
+        String nodeHost = project.getProperty('nodeHost')
+
+        if(!project.hasProperty('nodePort')) throw new IllegalArgumentException("nodePort is required")
+        String nodePort = project.getProperty('nodePort')
+
+        if(!project.hasProperty('nodeUser')) throw new IllegalArgumentException("nodeUser is required")
+        String nodeUser = project.getProperty('nodeUser')
+
+        if(!project.hasProperty('nodePass')) throw new IllegalArgumentException("nodePass is required")
+        String nodePass = project.getProperty('nodePass')
+
+        commandLine 'yarn', 'test:e2e:ci', '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
       }
     }
   }
