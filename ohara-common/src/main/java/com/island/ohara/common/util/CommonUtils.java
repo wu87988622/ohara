@@ -494,6 +494,27 @@ public final class CommonUtils {
     else throw new IllegalArgumentException("Only number and char are accepted!!! actual:" + s);
   }
 
+  /**
+   * Check word has uppercase
+   *
+   * @param str
+   * @return
+   */
+  public static boolean hasUpperCase(String str) {
+    return !str.equals(str.toLowerCase());
+  }
+
+  /**
+   * Require lowercase function
+   *
+   * @param str
+   * @return
+   */
+  public static String requireLowerCase(String str, String errorMessage) {
+    if (hasUpperCase(str)) throw new IllegalArgumentException(errorMessage);
+    return str;
+  }
+
   /** disable to instantiate CommonUtils. */
   private CommonUtils() {}
 }

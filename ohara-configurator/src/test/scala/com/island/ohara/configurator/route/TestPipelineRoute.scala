@@ -56,6 +56,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
       configurator.clusterCollie.workerCollie().cluster(pipeline0.workerClusterName))._1.name
 
     // add node
+    val addNodeName: String = methodName().toLowerCase
     result(
       NodeApi
         .access()
@@ -63,7 +64,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .port(configurator.port)
         .add(
           NodeCreationRequest(
-            name = Some(methodName()),
+            name = Some(addNodeName),
             port = 22,
             user = CommonUtils.randomString(10),
             password = CommonUtils.randomString(10)
@@ -74,7 +75,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
         .access()
         .hostname(configurator.hostname)
         .port(configurator.port)
-        .add(WorkerApi.creationRequest(CommonUtils.randomString(10), Seq(methodName())))
+        .add(WorkerApi.creationRequest(CommonUtils.randomString(10), Seq(addNodeName)))
     )
 
     val pipeline1 = result(

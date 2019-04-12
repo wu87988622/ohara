@@ -171,7 +171,11 @@ class ConfiguratorBuilder {
     * @param numberOfWorkerCluster number of worker cluster
     * @return this builder
     */
-  def fake(numberOfBrokerCluster: Int, numberOfWorkerCluster: Int): ConfiguratorBuilder = {
+  def fake(numberOfBrokerCluster: Int,
+           numberOfWorkerCluster: Int,
+           zkClusterNamePrefix: String = "fakezkcluster",
+           bkClusterNamePrefix: String = "fakebkcluster",
+           wkClusterNamePrefix: String = "fakewkcluster"): ConfiguratorBuilder = {
     if (numberOfBrokerCluster < 0)
       throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
     if (numberOfWorkerCluster < 0)
@@ -184,7 +188,7 @@ class ConfiguratorBuilder {
       collie
         .zookeeperCollie()
         .addCluster(FakeZookeeperClusterInfo(
-          name = s"fakeZkCluster$index",
+          name = s"$zkClusterNamePrefix$index",
           imageName = s"fakeImage$index",
           // Assigning a negative value can make test fail quickly.
           clientPort = -1,
@@ -200,7 +204,7 @@ class ConfiguratorBuilder {
         collie
           .brokerCollie()
           .addCluster(FakeBrokerClusterInfo(
-            name = s"fakeBkCluster$index",
+            name = s"$bkClusterNamePrefix$index",
             imageName = s"fakeImage$index",
             zookeeperClusterName = zkCluster.name,
             // Assigning a negative value can make test fail quickly.
@@ -216,7 +220,7 @@ class ConfiguratorBuilder {
       collie
         .workerCollie()
         .addCluster(FakeWorkerClusterInfo(
-          name = s"fakeWkCluster$index",
+          name = s"$wkClusterNamePrefix$index",
           imageName = s"fakeImage$index",
           brokerClusterName = bkCluster.name,
           // Assigning a negative value can make test fail quickly.
