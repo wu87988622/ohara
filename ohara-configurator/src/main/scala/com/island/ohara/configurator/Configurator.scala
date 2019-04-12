@@ -277,12 +277,11 @@ object Configurator {
       case _ => throw new IllegalArgumentException(s"input:${args.mkString(" ")}. $USAGE")
     }
     val configurator = configuratorBuilder.build()
+
     try if (k8sValue.nonEmpty) {
       nodeRequestEach(
         nodeRequest,
         configurator,
-        "precreatedzkcluster",
-        "precreatedbkcluster",
         (node: Node) => {
           val validationResult: Seq[ValidationApi.ValidationReport] = Await.result(
             ValidationApi
@@ -301,8 +300,6 @@ object Configurator {
       nodeRequestEach(
         nodeRequest,
         configurator,
-        "preCreatedZkCluster",
-        "preCreatedBkCluster",
         (node: Node) => {
           val dockerClient =
             DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
@@ -346,8 +343,6 @@ object Configurator {
 
   private[this] def nodeRequestEach(nodeRequest: Option[NodeCreationRequest],
                                     configurator: Configurator,
-                                    zkName: String,
-                                    bkName: String,
                                     otherCheck: Node => Unit): Unit = {
     nodeRequest.foreach { req =>
       LOG.info(s"Find a pre-created node:$req. Will create zookeeper and broker!!")
@@ -362,7 +357,7 @@ object Configurator {
           .hostname(CommonUtils.hostname())
           .port(configurator.port)
           .add(
-            ZookeeperClusterCreationRequest(name = zkName,
+            ZookeeperClusterCreationRequest(name = PRE_CREATE_ZK_NAME,
                                             imageName = None,
                                             clientPort = None,
                                             electionPort = None,
@@ -378,17 +373,29 @@ object Configurator {
           .hostname(CommonUtils.hostname())
           .port(configurator.port)
           .add(
-            BrokerClusterCreationRequest(name = bkName,
-                                         imageName = None,
-                                         zookeeperClusterName = Some(zkName),
-                                         exporterPort = None,
-                                         clientPort = None,
-                                         nodeNames = Seq(node.name))),
+            BrokerClusterCreationRequest(
+              name = PRE_CREATE_BK_NAME,
+              imageName = None,
+              zookeeperClusterName = Some(PRE_CREATE_ZK_NAME),
+              exporterPort = None,
+              clientPort = None,
+              nodeNames = Seq(node.name)
+            )),
         30 seconds
       )
       LOG.info(s"succeed to create bk cluster:$bkCluster")
     }
   }
+
+  /**
+    * Add --node argument to pre create zookeeper cluster name
+    */
+  private[configurator] val PRE_CREATE_ZK_NAME: String = "precreatezkcluster"
+
+  /**
+    * Add --node argument to pre create broker cluster name
+    */
+  private[configurator] val PRE_CREATE_BK_NAME: String = "precreatebkcluster"
 
   /**
     * visible for testing.

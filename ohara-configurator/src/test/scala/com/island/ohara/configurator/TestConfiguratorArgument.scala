@@ -17,6 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.common.rule.SmallTest
+import com.island.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.Matchers
 
@@ -36,5 +37,11 @@ class TestConfiguratorArgument extends SmallTest with Matchers {
                       Configurator.NODE_KEY,
                       "ohara:111@ohara-it-100:22"))
     }
+  }
+
+  @Test
+  def testPreCreateClusterName(): Unit = {
+    CommonUtils.hasUpperCase(Configurator.PRE_CREATE_ZK_NAME) shouldBe false
+    CommonUtils.hasUpperCase(Configurator.PRE_CREATE_BK_NAME) shouldBe false
   }
 }

@@ -44,7 +44,7 @@ class TestClusterNameUpperCaseRoute extends SmallTest with Matchers {
 
     an[IllegalArgumentException] should be thrownBy {
       val zkCreateRequest = ZookeeperClusterCreationRequest(
-        name = CommonUtils.randomString(10),
+        name = s"ZK-${CommonUtils.randomString(10)}",
         imageName = None,
         clientPort = Some(123),
         electionPort = Some(456),
