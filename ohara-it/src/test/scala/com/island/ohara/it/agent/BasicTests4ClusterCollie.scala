@@ -63,7 +63,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     zkCollie.containers(clusterName)
 
   override protected def zk_delete(clusterName: String): Future[ZookeeperApi.ZookeeperClusterInfo] =
-    zkCollie.remove(clusterName)
+    zkCollie.forceRemove(clusterName)
 
   //--------------------------------------------------[bk operations]--------------------------------------------------//
   override protected def bk_exist(clusterName: String): Future[Boolean] = bkCollie.exist(clusterName)
@@ -92,7 +92,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     bkCollie.containers(clusterName)
 
   override protected def bk_delete(clusterName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkCollie.remove(clusterName)
+    bkCollie.forceRemove(clusterName)
 
   override protected def bk_addNode(clusterName: String, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
     bkCollie.addNode(clusterName, nodeName)
@@ -154,7 +154,7 @@ abstract class BasicTests4ClusterCollie extends BasicTests4Collie {
     wkCollie.containers(clusterName)
 
   override protected def wk_delete(clusterName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkCollie.remove(clusterName)
+    wkCollie.forceRemove(clusterName)
 
   override protected def wk_addNode(clusterName: String, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
     wkCollie.addNode(clusterName, nodeName)

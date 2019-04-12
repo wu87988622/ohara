@@ -29,4 +29,9 @@ object Parameters {
     */
   def appendTargetCluster(url: String, target: String): String =
     Objects.requireNonNull(url) + s"?$CLUSTER_NAME=${Objects.requireNonNull(target)}"
+
+  /**
+    * this query parameter works for cluster operation. see ZookeeperRoute, BrokerRoute and WorkerRoute
+    */
+  val FORCE_REMOVE: String = "force"
 }

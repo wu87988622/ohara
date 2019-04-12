@@ -242,15 +242,20 @@ private[route] object RouteUtils {
           }
         } ~ pathEnd {
           delete {
-            complete(
-              clusterCollie.clusters
-                .map(_.keys.toSeq)
-                // if cluster doesn't exist, we throw exception directly.
-                .map(clusters =>
-                  if (clusters.exists(_.name == clusterName)) clusters
-                  else throw new NoSuchClusterException(s"$clusterName doesn't exist"))
-                .flatMap(clusters => hookBeforeDelete(clusters, clusterName))
-                .flatMap(_ => collie.remove(clusterName)))
+            parameter(Parameters.FORCE_REMOVE ?)(
+              force =>
+                complete(
+                  clusterCollie.clusters
+                    .map(_.keys.toSeq)
+                    // if cluster doesn't exist, we throw exception directly.
+                    .map(clusters =>
+                      if (clusters.exists(_.name == clusterName)) clusters
+                      else throw new NoSuchClusterException(s"$clusterName doesn't exist"))
+                    .flatMap(clusters => hookBeforeDelete(clusters, clusterName))
+                    // we don't use boolean convert since we don't want to see the convert exception
+                    .flatMap(_ =>
+                      if (force.exists(_.toLowerCase == "true")) collie.forceRemove(clusterName)
+                      else collie.remove(clusterName))))
           } ~ get {
             complete(collie.cluster(clusterName).map(_._1))
           }

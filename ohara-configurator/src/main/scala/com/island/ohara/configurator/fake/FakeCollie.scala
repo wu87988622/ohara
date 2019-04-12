@@ -16,6 +16,8 @@
 
 package com.island.ohara.configurator.fake
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.island.ohara.agent.Collie.ClusterCreator
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{Collie, NoSuchClusterException}
@@ -72,4 +74,11 @@ private[configurator] abstract class FakeCollie[T <: ClusterInfo, Creator <: Clu
 
   override def clusters(implicit executionContext: ExecutionContext): Future[Map[T, Seq[ContainerInfo]]] =
     Future.successful(clusterCache.toMap)
+
+  private[this] val _forceRemoveCount = new AtomicInteger(0)
+  override def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = {
+    _forceRemoveCount.incrementAndGet()
+    remove(clusterName)
+  }
+  def forceRemoveCount: Int = _forceRemoveCount.get()
 }

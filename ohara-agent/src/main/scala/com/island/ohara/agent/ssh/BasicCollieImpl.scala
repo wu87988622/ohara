@@ -80,14 +80,29 @@ private abstract class BasicCollieImpl[T <: ClusterInfo: ClassTag, Creator <: Cl
       CommonUtils.randomString(LENGTH_OF_CONTAINER_NAME_ID)
     ).mkString(DIVIDER)
 
+  override def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    remove(clusterName, true)
+
   override def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] =
+    remove(clusterName, false)
+
+  private[this] def remove(clusterName: String, force: Boolean)(
+    implicit executionContext: ExecutionContext): Future[T] =
     cluster(clusterName).flatMap {
       case (cluster, containerInfos) =>
         Future
           .traverse(containerInfos) { containerInfo =>
             nodeCollie
               .node(containerInfo.nodeName)
-              .map(node => dockerCache.exec(node, _.forceRemove(containerInfo.name)))
+              .map(
+                node =>
+                  dockerCache.exec(node,
+                                   client =>
+                                     if (force) client.forceRemove(containerInfo.name)
+                                     else {
+                                       client.stop(containerInfo.name)
+                                       client.remove(containerInfo.name)
+                                   }))
           }
           .map(_ => cluster)
     }

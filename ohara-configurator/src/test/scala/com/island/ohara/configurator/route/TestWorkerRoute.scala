@@ -24,15 +24,18 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, Z
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.fake.FakeWorkerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestWorkerRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
+  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build()
+
+  /**
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
@@ -739,6 +742,38 @@ class TestWorkerRoute extends MediumTest with Matchers {
     result(workerApi.add(createReq()))
 
     an[IllegalArgumentException] should be thrownBy result(workerApi.add(createReq()))
+  }
+
+  @Test
+  def testForceDelete(): Unit = {
+    val initialCount = configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount
+    val request = WorkerClusterCreationRequest(
+      name = CommonUtils.randomString(10),
+      imageName = None,
+      brokerClusterName = Some(bkClusterName),
+      clientPort = Some(CommonUtils.availablePort()),
+      jmxPort = Some(CommonUtils.availablePort()),
+      groupId = Some(CommonUtils.randomString(10)),
+      statusTopicName = Some(CommonUtils.randomString(10)),
+      statusTopicPartitions = None,
+      statusTopicReplications = None,
+      configTopicName = Some(CommonUtils.randomString(10)),
+      configTopicReplications = None,
+      offsetTopicName = Some(CommonUtils.randomString(10)),
+      offsetTopicPartitions = None,
+      offsetTopicReplications = None,
+      jars = Seq.empty,
+      nodeNames = nodeNames
+    )
+
+    // graceful delete
+    result(workerApi.delete(result(workerApi.add(request)).name))
+    configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount
+
+    // force delete
+    result(workerApi.forceDelete(result(workerApi.add(request)).name))
+    configurator.clusterCollie.workerCollie().asInstanceOf[FakeWorkerCollie].forceRemoveCount shouldBe initialCount + 1
+
   }
 
   @After

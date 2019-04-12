@@ -93,12 +93,14 @@ trait DockerClient extends Releasable {
 
   /**
     * remove a stopped container. If the container doesn't exist, exception will be thrown.
+    * Noted: you should call stop() first. Otherwise, you will get a exception
     * @param name container's name
     */
   def remove(name: String): Unit
 
   /**
     * remove a container. If the container doesn't exist, exception will be thrown.
+    * Noted. this method is going to kill container straightaway without graceful shutdown!
     * @param name container's name
     */
   def forceRemove(name: String): Unit

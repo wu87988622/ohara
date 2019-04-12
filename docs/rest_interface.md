@@ -80,7 +80,7 @@ following information.
 
 *GET /v0/info*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -123,7 +123,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 (**it is illegal to input the number of replications which is larger than the number of broker nodes**)
 1. numberOfPartitions (optional **int**)— the number of partitions for this topic
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -133,7 +133,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -154,7 +154,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 1. numberOfPartitions (**int**) — the number of partitions for this topic
 (**it is illegal to decrease the number**)
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -162,7 +162,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -179,7 +179,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 *GET /v0/topics*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -206,7 +206,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 *DELETE /v0/topics/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -223,7 +223,7 @@ And it works only if there is only a broker cluster exists in ohara**)
 
 *GET /v0/topics/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -265,7 +265,7 @@ The following information are tagged by ohara.
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -277,7 +277,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -303,7 +303,7 @@ The following information are tagged by ohara.
 
 > the string value can't be empty or null. the port should be small than 65535 and larger than zero.
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -315,7 +315,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -333,7 +333,7 @@ The following information are tagged by ohara.
 
 *GET /v0/ftp*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -353,7 +353,7 @@ The following information are tagged by ohara.
 
 *DELETE /v0/ftp/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -371,7 +371,7 @@ The following information are tagged by ohara.
 
 *GET /v0/ftp/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -403,7 +403,7 @@ The following information are tagged by ohara.
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -412,7 +412,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -430,7 +430,7 @@ The following information are tagged by ohara.
 1. name (**string**) — name of this hdfs information.
 1. uri (**string**) — hdfs connection information. The form looks like "hdfs://namenode:9999/"
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -439,7 +439,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -454,7 +454,7 @@ The following information are tagged by ohara.
 
 *GET /v0/hdfs*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -471,7 +471,7 @@ The following information are tagged by ohara.
 
 *DELETE /v0/hdfs/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -486,7 +486,7 @@ The following information are tagged by ohara.
 
 *GET /v0/hdfs/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -522,7 +522,7 @@ The following information are tagged by ohara.
 1. user (**string**) — the account which has permission to access database
 1. password (**string**) — password of account. It is stored as text in ohara
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -533,7 +533,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -555,7 +555,7 @@ The following information are tagged by ohara.
 1. user (**string**) — the account which has permission to access database
 1. password (**string**) — password of account. It is stored as text in ohara
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -566,7 +566,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -583,7 +583,7 @@ The following information are tagged by ohara.
 
 *GET /v0/jdbc*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -602,7 +602,7 @@ The following information are tagged by ohara.
 
 *DELETE /v0/jdbc/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -619,7 +619,7 @@ The following information are tagged by ohara.
 
 *GET /v0/jdbc/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -685,7 +685,7 @@ It is ok to lack some common settings when creating settings for a connector. Ho
 with incomplete settings. For example, storing the settings consisting of only **connector.name** is ok. But stating
 a connector with above incomplete settings will introduce a error.
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -694,7 +694,7 @@ a connector with above incomplete settings will introduce a error.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -714,7 +714,7 @@ a connector with above incomplete settings will introduce a error.
 
 *POST /v0/connectors/${id}*
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -723,7 +723,7 @@ a connector with above incomplete settings will introduce a error.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -743,7 +743,7 @@ a connector with above incomplete settings will introduce a error.
 
 *GET /v0/connectors*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -767,7 +767,7 @@ a connector with above incomplete settings will introduce a error.
 
 Deleting the settings used by a running connector is not allowed. You should [stop](#stop-a-connector) connector before deleting it.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -787,7 +787,7 @@ Deleting the settings used by a running connector is not allowed. You should [st
 
 *GET /v0/connectors/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -812,7 +812,7 @@ a response to called. The connector is executed async so the connector may be st
 the response. You can send [GET request](#get-information-of-connector) to see the state of connector.
 This request is idempotent so it is safe to retry this command repeatedly.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -844,7 +844,7 @@ worker cluster. The settings of connector is still kept by ohara so you can star
 in the future. If you want to delete the connector totally, you should stop the connector and then [delete](#delete-a-connector) it.
 This request is idempotent so it is safe to send this request repeatedly.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -867,7 +867,7 @@ This request is idempotent so it is safe to send this request repeatedly.
 Pausing a connector is to disable connector to pull/push data from/to source/sink. The connector is still alive in kafka.
 This request is idempotent so it is safe to send this request repeatedly.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -898,7 +898,7 @@ This request is idempotent so it is safe to send this request repeatedly.
 Resuming a connector is to enable connector to pull/push data from/to source/sink.
 This request is idempotent so it is safe to retry this command repeatedly.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -984,7 +984,7 @@ The following example creates a pipeline with a [topic](#topic) and [connector](
 [broker cluster](#broker) but the [connector](#connector) isn't. Hence, the response from server shows that it fails
 to find the status of the [connector](#connector). That is to say, it is ok to add un-running [connector](#connector) to pipeline.
 
-**Example request 1**
+**Example Request 1**
 
 ```json
 {
@@ -998,7 +998,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
 }
 ```
 
-**Example response 1**
+**Example Response 1**
 
 ```json
 {
@@ -1041,7 +1041,7 @@ to find the status of the [connector](#connector). That is to say, it is ok to a
 Don't worry about creating a pipeline with incomplete flows. It is ok to add a flow with only **from**. The following
 example creates a pipeline with only a object and leave empty in **to** field.
 
-**Example request 1**
+**Example Request 1**
 
 ```json
 {
@@ -1055,7 +1055,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
 }
 ```
 
-**Example response 1**
+**Example Response 1**
 
 ```json
 {
@@ -1087,7 +1087,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
 
 *POST /v0/pipelines/$id*
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1101,7 +1101,7 @@ example creates a pipeline with only a object and leave empty in **to** field.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1149,7 +1149,7 @@ Listing all pipelines is a expensive operation as it invokes a iteration to all 
 do a lot of checks and fetch status, metrics and log from backend clusters. If you have the id of pipeline, please
 use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -1197,7 +1197,7 @@ use [GET](#get-a-pipeline) to fetch details of **single** pipeline.
 
 Deleting a pipeline does not delete the objects related to the pipeline.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1241,7 +1241,7 @@ Deleting a pipeline does not delete the objects related to the pipeline.
 
 *GET /v0/pipelines/$id*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1321,7 +1321,7 @@ The following information are tagged by ohara.
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1332,7 +1332,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1354,7 +1354,7 @@ The following information are tagged by ohara.
 1. user (**string**) — ssh account
 1. password (**string**) — ssh password
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1365,7 +1365,7 @@ The following information are tagged by ohara.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1382,7 +1382,7 @@ The following information are tagged by ohara.
 
 *GET /v0/nodes*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -1404,7 +1404,7 @@ The following information are tagged by ohara.
 It is disallowed to remove a node which is running service. If you do want to delete the node from ohara, please stop all
 services from the node.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1421,7 +1421,7 @@ services from the node.
 
 *GET /v0/nodes/${id}*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1461,7 +1461,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 1. peerPort (**int**) — port used by internal communication
 1. nodeNames (**array(string)**) — the nodes running the zookeeper process
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1476,7 +1476,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1493,7 +1493,7 @@ all configs but open a room to enable you to overwrite somethings you do care.
 
 As mentioned before, ohara provides default to most settings. You can just input name and nodeNames to run a zookeeper cluster.
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1507,7 +1507,7 @@ As mentioned before, ohara provides default to most settings. You can just input
 > All ports have default value so you can ignore them when creating zookeeper cluster. However, the port conflict detect
 does not allow you to reuse port on different purpose (a dangerous behavior, right?).
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1526,7 +1526,7 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
 
 *GET /v0/zookeepers*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -1549,7 +1549,10 @@ does not allow you to reuse port on different purpose (a dangerous behavior, rig
 
 It is disallowed to remove a zookeeper cluster used by a running [broker cluster](#broker).
 
-**Example response**
+**Query Parameters**
+1. force (**boolean**) — true if you don't want to wait the graceful shutdown (it can save your time but may damage your data). Other values invoke graceful delete. 
+
+**Example Response**
 
 ```json
 {
@@ -1568,7 +1571,7 @@ It is disallowed to remove a zookeeper cluster used by a running [broker cluster
 
 *GET /v0/zookeepers/$name*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1612,7 +1615,7 @@ The properties which can be set by user are shown below.
 1. zookeeperClusterName (**String**) — name of zookeeper cluster used to store metadata of broker cluster
 1. nodeNames (**array(string)**) — the nodes running the broker process
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1627,7 +1630,7 @@ The properties which can be set by user are shown below.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1644,7 +1647,7 @@ The properties which can be set by user are shown below.
 
 As mentioned before, ohara provides default to most settings. You can just input name and nodeNames to run a broker cluster.
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1660,7 +1663,7 @@ ohara will say that it can't match a zookeeper cluster for you.  All ports have 
 them when creating zookeeper cluster. However, the port conflict detect does not allow you to reuse port on
 different purpose (a dangerous behavior, right?).
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1679,7 +1682,7 @@ different purpose (a dangerous behavior, right?).
 
 *GET /v0/brokers*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -1702,7 +1705,10 @@ different purpose (a dangerous behavior, right?).
 
 It is disallowed to remove a broker cluster used by a running [worker cluster](#worker).
 
-**Example response**
+**Query Parameters**
+1. force (**boolean**) — true if you don't want to wait the graceful shutdown (it can save your time but may damage your data). Other values invoke graceful delete. 
+
+**Example Response**
 
 ```json
 {
@@ -1721,7 +1727,7 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
 
 *GET /v0/brokers/$name*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1743,7 +1749,7 @@ It is disallowed to remove a broker cluster used by a running [worker cluster](#
 If you want to extend a running broker cluster, you can add a node to share the heavy loading of a running broker cluster.
 However, the balance is not triggered at once.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1766,7 +1772,7 @@ However, the balance is not triggered at once.
 If your budget is limited, you can decrease the number of nodes running broker cluster. BUT, removing a node from a
 running broker cluster invoke a lot of data move. The loading may burn out the remaining nodes.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -1799,18 +1805,18 @@ The properties which can be set by user are shown below.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jars (**array(string)**) -- the id of jars that will be loaded by worker cluster
-1. nodeNames (**array(string)**) -- the nodes running the worker process
-1. configTopicName (**string**) -- a internal topic used to store connector configuration
-1. configTopicReplications (**int**) -- number of replications for config topic
-1. configTopicPartitions (**int**) -- number of partitions for config topic
-1. offsetTopicName (**string**) -- a internal topic used to store connector offset
-1. offsetTopicReplications (**int**) -- number of replications for offset topic
-1. offsetTopicPartitions (**int**) -- number of partitions for offset topic
-1. statusTopicName (**string**) -- a internal topic used to store connector status
-1. statusTopicReplications (**int**) -- number of replications for status topic
-1. statusTopicPartitions (**int**) -- number of partitions for status topic
-1. groupId (**string**) -- the id of worker stored in broker cluster
+1. jars (**array(string)**) — the id of jars that will be loaded by worker cluster
+1. nodeNames (**array(string)**) — the nodes running the worker process
+1. configTopicName (**string**) — a internal topic used to store connector configuration
+1. configTopicReplications (**int**) — number of replications for config topic
+1. configTopicPartitions (**int**) — number of partitions for config topic
+1. offsetTopicName (**string**) — a internal topic used to store connector offset
+1. offsetTopicReplications (**int**) — number of replications for offset topic
+1. offsetTopicPartitions (**int**) — number of partitions for offset topic
+1. statusTopicName (**string**) — a internal topic used to store connector status
+1. statusTopicReplications (**int**) — number of replications for status topic
+1. statusTopicPartitions (**int**) — number of partitions for status topic
+1. groupId (**string**) — the id of worker stored in broker cluster
 1. nodeNames (**array(string)**) — the nodes running the worker process
 
 > The groupId, configTopicName, offsetTopicName and statusTopicName must be unique in broker cluster. Don't reuse them
@@ -1939,19 +1945,19 @@ ignore this element. However, we still list the available values here.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jars (**array(string)**) -- the id of jars that will be loaded by worker cluster
-1. groupId (**string**) -- the id of worker stored in broker cluster
-1. configTopicName (**string**) -- a internal topic used to store connector configuration
-1. configTopicReplications (**int**) -- number of replications for config topic
-1. offsetTopicName (**string**) -- a internal topic used to store connector offset
-1. offsetTopicReplications (**int**) -- number of replications for offset topic
-1. offsetTopicPartitions (**int**) -- number of partitions for offset topic
-1. statusTopicName (**string**) -- a internal topic used to store connector status
-1. statusTopicReplications (**int**) -- number of replications for status topic
-1. statusTopicPartitions (**int**) -- number of partitions for status topic
+1. jars (**array(string)**) — the id of jars that will be loaded by worker cluster
+1. groupId (**string**) — the id of worker stored in broker cluster
+1. configTopicName (**string**) — a internal topic used to store connector configuration
+1. configTopicReplications (**int**) — number of replications for config topic
+1. offsetTopicName (**string**) — a internal topic used to store connector offset
+1. offsetTopicReplications (**int**) — number of replications for offset topic
+1. offsetTopicPartitions (**int**) — number of partitions for offset topic
+1. statusTopicName (**string**) — a internal topic used to store connector status
+1. statusTopicReplications (**int**) — number of replications for status topic
+1. statusTopicPartitions (**int**) — number of partitions for status topic
 1. nodeNames (**array(string)**) — the nodes running the worker process
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -1976,7 +1982,7 @@ ignore this element. However, we still list the available values here.
 }
 ```
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -2006,7 +2012,7 @@ ignore this element. However, we still list the available values here.
 
 As mentioned before, ohara provides default to most settings. You can just input name, nodeNames and jars to run a worker cluster.
 
-**Example request**
+**Example Request**
 
 ```json
 {
@@ -2023,7 +2029,7 @@ ohara will say that it can't match a broker cluster for you.  All ports have def
 them when creating worker cluster. However, the port conflict detect does not allow you to reuse port on
 different purpose (a dangerous behavior, right?).
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -2054,7 +2060,7 @@ different purpose (a dangerous behavior, right?).
 
 *GET /v0/workers*
 
-**Example response**
+**Example Response**
 
 ```json
 [
@@ -2087,7 +2093,10 @@ different purpose (a dangerous behavior, right?).
 
 *DELETE /v0/workers/$name*
 
-**Example response**
+**Query Parameters**
+1. force (**boolean**) — true if you don't want to wait the graceful shutdown (it can save your time but may damage your data). Other values invoke graceful delete. 
+
+**Example Response**
 
 ```json
 {
@@ -2118,7 +2127,7 @@ different purpose (a dangerous behavior, right?).
 
 *GET /v0/workers/$name*
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -2332,7 +2341,7 @@ If you want to extend a running worker cluster, you can add a node to share the 
 However, the balance is not triggered at once. By the way, moving a task to another idle node needs to **stop** task
 first. Don't worry about the temporary lower throughput when balancer is running.
 
-**Example response**
+**Example Response**
 
 ```json
 {
@@ -2367,7 +2376,7 @@ first. Don't worry about the temporary lower throughput when balancer is running
 If your budget is limited, you can decrease the number of nodes running worker cluster. BUT, removing a node from a
 running worker cluster invoke a lot of task move, and it will decrease the throughput of your connector.
 
-**Example response**
+**Example Response**
 
 ```json
 {

@@ -31,11 +31,23 @@ import scala.concurrent.{ExecutionContext, Future}
 trait Collie[T <: ClusterInfo, Creator <: ClusterCreator[T]] {
 
   /**
-    * remove whole cluster by specified name.
-    * NOTED: Graceful downing whole cluster may take some time...
+    * remove whole cluster by specified name. The process, mostly, has a graceful shutdown
+    * which can guarantee the data consistency. However, the graceful downing whole cluster may take some time...
+    *
     * @param clusterName cluster name
+    * @param executionContext thread pool
+    * @return the removed cluster
     */
   def remove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T]
+
+  /**
+    * This method open a door to sub class to implement a force remove which kill whole cluster without graceful shutdown.
+    * NOTED: The default implementation is reference to graceful remove.
+    * @param clusterName cluster name
+    * @param executionContext thread pool
+    * @return the removed cluster
+    */
+  def forceRemove(clusterName: String)(implicit executionContext: ExecutionContext): Future[T] = remove(clusterName)
 
   /**
     * get logs from all containers.

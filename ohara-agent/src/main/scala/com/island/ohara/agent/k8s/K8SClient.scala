@@ -53,6 +53,7 @@ case class Report(nodeName: String, isK8SNode: Boolean, statusInfo: Option[K8SSt
 trait K8SClient extends ReleaseOnce {
   def containers(implicit executionContext: ExecutionContext): Seq[ContainerInfo]
   def remove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo
+  def forceRemove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo
   def removeNode(clusterName: String, nodeName: String, serviceName: String)(
     implicit executionContext: ExecutionContext): Seq[ContainerInfo]
   def log(name: String): String
@@ -150,6 +151,25 @@ object K8SClient {
             Await.result(
               Http().singleRequest(
                 HttpRequest(HttpMethods.DELETE, uri = s"${k8sApiServerURL}/namespaces/default/pods/${container.name}")),
+              TIMEOUT
+            )
+            container
+          })
+          .getOrElse(throw new IllegalArgumentException(s"Name:$name doesn't exist"))
+      }
+
+      override def forceRemove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo = {
+        containers
+          .find(_.name == name)
+          .map(container => {
+            LOG.info(s"Container ${container.name} is removing")
+
+            Await.result(
+              Http().singleRequest(
+                // ref: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#delete-replicaset-v1-apps
+                HttpRequest(
+                  HttpMethods.DELETE,
+                  uri = s"${k8sApiServerURL}/namespaces/default/pods/${container.name}?gracePeriodSeconds=0")),
               TIMEOUT
             )
             container

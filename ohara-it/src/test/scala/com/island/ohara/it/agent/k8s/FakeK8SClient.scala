@@ -26,6 +26,8 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo]) ex
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): ContainerApi.ContainerInfo = ???
 
+  override def forceRemove(name: String)(implicit executionContext: ExecutionContext): ContainerApi.ContainerInfo = ???
+
   override def removeNode(clusterName: String, nodeName: String, serviceName: String)(
     implicit executionContext: ExecutionContext): Seq[ContainerApi.ContainerInfo] = ???
 

@@ -24,6 +24,7 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, Z
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.fake.FakeBrokerCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
@@ -534,6 +535,27 @@ class TestBrokerRoute extends MediumTest with Matchers {
         clientPort = Some(CommonUtils.availablePort()),
         exporterPort = Some(CommonUtils.availablePort())
       )))
+  }
+
+  @Test
+  def testForceDelete(): Unit = {
+    val initialCount = configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount
+    val request = BrokerClusterCreationRequest(
+      name = CommonUtils.randomString(10),
+      imageName = None,
+      zookeeperClusterName = None,
+      clientPort = Some(CommonUtils.availablePort()),
+      exporterPort = Some(CommonUtils.availablePort()),
+      nodeNames = nodeNames
+    )
+
+    // graceful delete
+    result(brokerApi.delete(result(brokerApi.add(request)).name))
+    configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount
+
+    // force delete
+    result(brokerApi.forceDelete(result(brokerApi.add(request)).name))
+    configurator.clusterCollie.brokerCollie().asInstanceOf[FakeBrokerCollie].forceRemoveCount shouldBe initialCount + 1
   }
 
   @After

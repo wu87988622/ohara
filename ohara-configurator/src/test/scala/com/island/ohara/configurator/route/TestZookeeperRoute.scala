@@ -22,15 +22,18 @@ import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi
 import com.island.ohara.common.rule.MediumTest
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.configurator.fake.FakeZookeeperCollie
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 class TestZookeeperRoute extends MediumTest with Matchers {
   private[this] val numberOfCluster = 1
-  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build() /**
+  private[this] val configurator = Configurator.builder().fake(numberOfCluster, 0).build()
+
+  /**
     * a fake cluster has 3 fake node.
     */
   private[this] val numberOfDefaultNodes = 3 * numberOfCluster
@@ -380,6 +383,32 @@ class TestZookeeperRoute extends MediumTest with Matchers {
         electionPort = Some(CommonUtils.availablePort()),
         peerPort = Some(CommonUtils.availablePort())
       )))
+  }
+
+  @Test
+  def testForceDelete(): Unit = {
+    val initialCount = configurator.clusterCollie.zookeeperCollie().asInstanceOf[FakeZookeeperCollie].forceRemoveCount
+    val request = ZookeeperClusterCreationRequest(
+      name = CommonUtils.randomString(10),
+      imageName = None,
+      clientPort = Some(CommonUtils.availablePort()),
+      electionPort = Some(CommonUtils.availablePort()),
+      peerPort = Some(CommonUtils.availablePort()),
+      nodeNames = nodeNames
+    )
+    // graceful delete
+    result(zookeeperApi.delete(result(zookeeperApi.add(request)).name))
+    configurator.clusterCollie
+      .zookeeperCollie()
+      .asInstanceOf[FakeZookeeperCollie]
+      .forceRemoveCount shouldBe initialCount
+
+    // force delete
+    result(zookeeperApi.forceDelete(result(zookeeperApi.add(request)).name))
+    configurator.clusterCollie
+      .zookeeperCollie()
+      .asInstanceOf[FakeZookeeperCollie]
+      .forceRemoveCount shouldBe initialCount + 1
   }
 
   @After
