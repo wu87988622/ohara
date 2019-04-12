@@ -20,6 +20,7 @@ export const HOME = '/';
 export const PIPELINE = '/pipelines';
 
 export const BROKER = 'services/brokers';
+export const CONNECT = 'services/workers';
 export const NODES = '/nodes';
 export const SERVICES = '/services';
 export const MONITORING = '/monitoring';
