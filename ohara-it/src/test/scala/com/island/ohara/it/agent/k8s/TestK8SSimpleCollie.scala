@@ -17,7 +17,7 @@
 package com.island.ohara.it.agent.k8s
 
 import com.island.ohara.agent._
-import com.island.ohara.agent.k8s.{K8SClient, K8sContainerState}
+import com.island.ohara.agent.k8s.{K8SClient, K8SStatusInfo, K8sContainerState}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
@@ -491,7 +491,7 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   @Test
   def testMockK8sClientVerifyNode1(): Unit = {
-    val fakeK8SClient = new FakeK8SClient(true, true)
+    val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(true, "")))
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
@@ -503,25 +503,38 @@ class TestK8SSimpleCollie extends IntegrationTest with Matchers {
 
   @Test
   def testMockK8sClientVerifyNode2(): Unit = {
-    val fakeK8SClient = new FakeK8SClient(true, false)
+    val fakeK8SClient = new FakeK8SClient(true, Option(K8SStatusInfo(false, "node failed.")))
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
     runningNode match {
       case Success(value) => throw new AssertionError()
-      case Failure(e)     => e.getMessage shouldBe "ohara node doesn't running container"
+      case Failure(e)     => e.getMessage shouldBe "ohara node doesn't running container. cause: node failed."
     }
   }
 
   @Test
   def testMockK8sClientVerifyNode3(): Unit = {
-    val fakeK8SClient = new FakeK8SClient(false, true)
+    val fakeK8SClient = new FakeK8SClient(false, Option(K8SStatusInfo(false, "failed")))
     val clusterCollie: ClusterCollie =
       ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
     val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
     runningNode match {
       case Success(value) => throw new AssertionError()
-      case Failure(e)     => e.getMessage() shouldBe "ohara node doesn't exists."
+      case Failure(e)     => e.getMessage() shouldBe "ohara node doesn't running container. cause: failed"
+    }
+  }
+
+  @Test
+  def testMockK8SClientVerifyNode4(): Unit = {
+    val fakeK8SClient = new FakeK8SClient(false, None)
+    val clusterCollie: ClusterCollie =
+      ClusterCollie.builderOfK8s().nodeCollie(nodeCollie).k8sClient(fakeK8SClient).build()
+    val runningNode = Await.result(clusterCollie.verifyNode(Node("ohara", 22, "", "")), 30 seconds)
+    runningNode match {
+      case Success(value) => throw new AssertionError()
+      case Failure(e) =>
+        e.getMessage() shouldBe "ohara node doesn't running container. cause: ohara node doesn't exists."
     }
   }
 

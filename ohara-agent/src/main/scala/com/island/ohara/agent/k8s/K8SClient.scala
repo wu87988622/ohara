@@ -47,6 +47,9 @@ import spray.json.{RootJsonFormat, _}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 
+case class K8SStatusInfo(isHealth: Boolean, message: String)
+case class Report(nodeName: String, isK8SNode: Boolean, statusInfo: Option[K8SStatusInfo])
+
 trait K8SClient extends ReleaseOnce {
   def containers(implicit executionContext: ExecutionContext): Seq[ContainerInfo]
   def remove(name: String)(implicit executionContext: ExecutionContext): ContainerInfo
@@ -56,8 +59,7 @@ trait K8SClient extends ReleaseOnce {
   def nodeNameIPInfo(implicit executionContext: ExecutionContext): Seq[HostAliases]
   def containerCreator(): ContainerCreator
   def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]]
-  def isK8SNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
-  def isNodeHealth(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report]
 }
 
 object K8SClient {
@@ -118,24 +120,23 @@ object K8SClient {
             }
         }
 
-      override def isK8SNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = {
+      override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] = {
         Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes")).flatMap { response =>
           Unmarshal(response.entity).to[K8SNodeInfo] map { r =>
-            r.items.filter(x => x.metadata.name.equals(nodeName)).size == 1
-          }
-        }
-      }
-
-      override def isNodeHealth(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = {
-        Http().singleRequest(HttpRequest(HttpMethods.GET, uri = s"${k8sApiServerURL}/nodes")).flatMap { response =>
-          Unmarshal(response.entity).to[K8SNodeInfo] map { r =>
-            r.items
-              .filter(x => x.metadata.name.equals(nodeName))
-              .map(x =>
-                x.status.conditions.filter(y => {
-                  y.conditionType.equals("Ready") && y.status.equals("True")
-                }))
-              .size == 1
+            val filterNode: Seq[NodeItems] = r.items.filter(x => x.metadata.name.equals(nodeName))
+            val isK8SNode: Boolean = filterNode.size == 1
+            var statusInfo: Option[K8SStatusInfo] = None
+            if (isK8SNode)
+              statusInfo = Some(
+                filterNode
+                  .flatMap(x => {
+                    x.status.conditions.filter(y => y.conditionType.equals("Ready"))
+                  }.map(x => {
+                    if (x.status.equals("True")) K8SStatusInfo(true, x.message)
+                    else K8SStatusInfo(false, x.message)
+                  }))
+                  .head)
+            Report(nodeName, isK8SNode, statusInfo)
           }
         }
       }
@@ -318,7 +319,6 @@ object K8SClient {
             .flatMap(error => {
               Future.failed(new RuntimeException(error.message))
             })
-
     }
   }
 

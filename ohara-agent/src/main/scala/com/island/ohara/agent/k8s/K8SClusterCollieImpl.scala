@@ -59,17 +59,15 @@ private[agent] class K8SClusterCollieImpl(nodeCollie: NodeCollie, k8sClient: K8S
 
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[Try[String]] =
     k8sClient
-      .isK8SNode(node.name)
-      .flatMap(
-        isK8SNode =>
-          k8sClient
-            .isNodeHealth(node.name)
-            .map(
-              isNodeHealth =>
-                if (isK8SNode && isNodeHealth)
-                  Try(s"${node.name} node is running.")
-                else if (!isK8SNode) Failure(new IllegalStateException(s"${node.name} node doesn't exists."))
-                else Failure(new IllegalStateException(s"${node.name} node doesn't running container"))))
+      .checkNode(node.name)
+      .map(report => {
+        val statusInfo = report.statusInfo.getOrElse(K8SStatusInfo(false, s"${node.name} node doesn't exists."))
+        if (statusInfo.isHealth)
+          Try(s"${node.name} node is running.")
+        else
+          Failure(
+            new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}"))
+      })
 }
 
 private object K8SClusterCollieImpl {

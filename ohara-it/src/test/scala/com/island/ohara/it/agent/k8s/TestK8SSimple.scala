@@ -24,7 +24,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import com.island.ohara.agent.k8s.{K8SClient, K8sContainerState}
+import com.island.ohara.agent.k8s.{K8SClient, K8SStatusInfo, K8sContainerState}
 import com.island.ohara.agent.k8s.K8SJson.K8SErrorResponse
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi
@@ -181,23 +181,32 @@ class TestK8SSimple extends IntegrationTest with Matchers {
   @Test
   def testSlaveNode(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val k8sNode: Boolean = Await.result(k8sClient.isK8SNode(nodeServerNames.last), TIMEOUT)
+    val k8sNode: Boolean = Await.result(k8sClient.checkNode(nodeServerNames.last), TIMEOUT).isK8SNode
     k8sNode shouldBe true
 
-    val unknownNode: Boolean = Await.result(k8sClient.isK8SNode("ohara-it-08"), TIMEOUT)
+    val unknownNode: Boolean = Await.result(k8sClient.checkNode("ohara-it-08"), TIMEOUT).isK8SNode
     unknownNode shouldBe false
   }
 
   @Test
   def testNodeHealth(): Unit = {
     val k8sClient = K8SClient(k8sApiServerURL)
-    val oharaIt03: Boolean = Await.result(k8sClient.isNodeHealth(nodeServerNames.head), TIMEOUT)
+    val oharaIt03: Boolean = Await
+      .result(k8sClient.checkNode(nodeServerNames.head), TIMEOUT)
+      .statusInfo
+      .getOrElse(K8SStatusInfo(false, ""))
+      .isHealth
     oharaIt03 shouldBe true
 
-    val oharaIt04: Boolean = Await.result(k8sClient.isNodeHealth(nodeServerNames.last), TIMEOUT)
+    val oharaIt04: Boolean = Await
+      .result(k8sClient.checkNode(nodeServerNames.last), TIMEOUT)
+      .statusInfo
+      .getOrElse(K8SStatusInfo(false, ""))
+      .isHealth
     oharaIt04 shouldBe true
 
-    val oharaIt08: Boolean = Await.result(k8sClient.isNodeHealth("ohara-it-08"), TIMEOUT)
+    val oharaIt08: Boolean =
+      Await.result(k8sClient.checkNode("ohara-it-08"), TIMEOUT).statusInfo.getOrElse(K8SStatusInfo(false, "")).isHealth
     oharaIt08 shouldBe false
   }
 }

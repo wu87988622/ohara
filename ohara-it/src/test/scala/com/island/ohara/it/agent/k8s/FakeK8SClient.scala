@@ -16,12 +16,12 @@
 
 package com.island.ohara.it.agent.k8s
 
-import com.island.ohara.agent.k8s.{K8SClient, K8SJson}
+import com.island.ohara.agent.k8s.{K8SClient, K8SJson, K8SStatusInfo, Report}
 import com.island.ohara.client.configurator.v0.ContainerApi
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class FakeK8SClient(k8sNode: Boolean, nodeHealth: Boolean) extends K8SClient {
+class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo]) extends K8SClient {
   override def containers(implicit executionContext: ExecutionContext): Seq[ContainerApi.ContainerInfo] = ???
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): ContainerApi.ContainerInfo = ???
@@ -37,12 +37,8 @@ class FakeK8SClient(k8sNode: Boolean, nodeHealth: Boolean) extends K8SClient {
 
   override def images(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] = ???
 
-  override def isK8SNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = Future {
-    k8sNode
-  }
-
-  override def isNodeHealth(nodeName: String)(implicit executionContext: ExecutionContext): Future[Boolean] = Future {
-    nodeHealth
+  override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] = Future {
+    Report(nodeName, isK8SNode, k8sStatusInfo)
   }
 
   /** Do what you want to do when calling closing. */
