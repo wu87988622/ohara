@@ -73,6 +73,29 @@ Cypress.Commands.add('insertNode', node => {
   });
 });
 
+Cypress.Commands.add('testNodeCheck', () => {
+  Cypress.log({
+    name: 'TEST_NODE_CHECK',
+  });
+  const _ = Cypress._;
+
+  cy.request('GET', 'api/nodes')
+    .then(res => res.body)
+    .then(nodes => {
+      if (_.isEmpty(nodes)) {
+        Cypress.log({
+          name: 'ADD_TEST_NODE',
+        });
+        cy.request('POST', 'api/nodes', {
+          name: Cypress.env('nodeName'),
+          port: Cypress.env('nodePort'),
+          user: Cypress.env('nodeID'),
+          password: Cypress.env('nodePW'),
+        });
+      }
+    });
+});
+
 Cypress.Commands.add('deleteAllPipelines', () => {
   Cypress.log({
     name: 'DELETE_ALL_PIPELINES',
@@ -123,6 +146,27 @@ Cypress.Commands.add(
     });
   },
 );
+Cypress.Commands.add('uploadPlugin', (selector, fixturePath, name, type) => {
+  Cypress.log({
+    name: 'UPLOAD_PLUGIN',
+  });
+
+  cy.get(selector).then(subject =>
+    cy.window().then(win =>
+      cy
+        .fixture(fixturePath, 'base64')
+        .then(Cypress.Blob.base64StringToBlob)
+        .then(blob => {
+          const el = subject[0];
+          const testFile = new win.File([blob], name, { type });
+          const dataTransfer = new win.DataTransfer();
+          dataTransfer.items.add(testFile);
+          el.files = dataTransfer.files;
+          cy.wrap(subject).trigger('change', { force: true });
+        }),
+    ),
+  );
+});
 
 Cypress.Commands.add('deleteAllTopics', () => {
   Cypress.log({

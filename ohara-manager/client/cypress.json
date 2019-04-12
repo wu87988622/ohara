@@ -5,5 +5,11 @@
     "mochaFile": "../test-reports/clientE2e.xml",
     "toConsole": true
   },
-  "watchForFileChanges": true
+  "watchForFileChanges": true,
+  "env": {
+    "nodeName": "10.1.13.101",
+    "nodePort": 22,
+    "nodeID": "robert",
+    "nodePW": "abab2424"
+  }
 }

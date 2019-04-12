@@ -14,32 +14,57 @@
  * limitations under the License.
  */
 
-import { BROKER } from '../../src/constants/urls';
+import { CONNECT } from '../../src/constants/urls';
 
 describe('ConnectPage', () => {
   it('creates a new cluster', () => {
-    cy.visit(BROKER);
+    cy.testNodeCheck();
 
-    cy.deleteAllTopics();
+    cy.visit(CONNECT);
 
-    cy.getByText('New topic').click();
+    cy.getByText('New cluster').click();
 
+    cy.getByPlaceholderText('cluster00').type('testcluster');
+    cy.getByLabelText('Port')
+      .click()
+      .type('65535');
+
+    cy.getByText('Add node').click();
+    cy.get('.ReactModal__Content').should('have.length', 2);
+
+    cy.getByText(Cypress.env('nodeName')).click();
+    cy.get('div.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      });
     cy.get('.ReactModal__Content').should('have.length', 1);
+    cy.getByText(Cypress.env('nodeName')).should('have.length', 1);
 
-    cy.getByLabelText('Topic name')
-      .click()
-      .type('test cluster');
-    cy.getByLabelText('Partitions')
-      .click()
-      .type('1');
-    cy.getByLabelText('Replication factor')
-      .click()
-      .type('1');
-    cy.getByText('Save').click();
-    cy.get('.toast-success').should('have.length', 1);
-    cy.get('.ReactModal__Content').should('have.length', 0);
-    cy.get('td')
-      .contains('test cluster')
-      .should('have.length', 1);
+    cy.getByText('Add plugin').click();
+    cy.get('.ReactModal__Content').should('have.length', 2);
+
+    cy.uploadPlugin(
+      'input[type=file]',
+      'plugin/ohara-it-sink.jar',
+      'ohara-it-sink.jar',
+      'application/java-archive',
+    ).wait(500);
+
+    cy.get('div.ReactModal__Content')
+      .eq(1)
+      .within(() => {
+        cy.getByText('Add').click();
+      });
+    cy.get('.ReactModal__Content').should('have.length', 1);
+    cy.getByText('ohara-it-sink.jar').should('have.length', 1);
+    cy.get('div.ReactModal__Content')
+      .eq(0)
+      .within(() => {
+        cy.getByText('Add').click();
+      });
+    cy.get('td').within(() => {
+      cy.getByText('testcluster').should('have.length', 1);
+    });
   });
 });

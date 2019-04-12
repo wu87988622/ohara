@@ -132,10 +132,12 @@ class WorkerNewModal extends React.Component {
                             <p>2. Must be between 1 and 30 characters long</p>
                           </div>
                         }
+                        htmlFor="clInput"
                       >
                         Service
                       </Label>
                       <Field
+                        id="clInput"
                         name="name"
                         component={InputField}
                         width="24rem"
@@ -146,10 +148,14 @@ class WorkerNewModal extends React.Component {
                       />
                     </s.FormCol>
                     <s.FormCol width="8rem">
-                      <Label tooltipString="Must be between 5000 and 65535">
+                      <Label
+                        tooltipString="Must be between 5000 and 65535"
+                        htmlFor="poInput"
+                      >
                         Port
                       </Label>
                       <Field
+                        id="poInput"
                         name="clientPort"
                         component={InputField}
                         type="number"
