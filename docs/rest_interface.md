@@ -22,6 +22,7 @@ and add content type of the response via the HTTP Accept header:
 - [Zookeeper](#zookeeper)
 - [Broker](#broker)
 - [Worker](#worker)
+- [Validation](#validation)
 - [StreamApp](#streamapp)
 
 ----------
@@ -2402,6 +2403,216 @@ running worker cluster invoke a lot of task move, and it will decrease the throu
   ]
 }
 ```
+----------
+## Validation
+
+Notwithstanding we have read a lot of document and guideline, there is a chance to input incorrect request or settings
+when operating ohara. Hence, ohara provides a serial APIs used to validate request/settings before you do use them
+to start service. Noted that not all request/settings are validated by Ohara configurator. If the request/settings is
+used by other system (for example, kafka), ohara automatically bypass the validation request to target system and then
+wrap the result to JSON representation.
+
+----------
+### Validate the FTP connection
+
+The parameters of request are shown below.
+1. hostname (**string**) — ftp server hostname
+1. port (**int**) — ftp server port
+1. user (**string**) — account of ftp server
+1. password (**string**) — password of ftp server
+1. workerClusterName (**string**) — the target cluster used to validate this connection
+
+**Example Request**
+
+```json
+{
+  "hostname": "node00",
+  "port": 22,
+  "user": "user",
+  "password": "pwd"
+}
+```
+
+> Ohara pick up the single worker cluster directly when you ignore the element of worker cluster.
+
+Since FTP connection is used by ftp connector only, ohara configurator involves several connectors to test the connection properties.
+Ohara configurator collects report from each connectors and then generate a JSON response shown below.
+1. hostname (**string**) — the node which execute this validation
+1. message (**string**) — the description about this validation
+1. pass (**boolean**) — true is pass
+
+**Example Request**
+
+```json
+[
+  {
+    "hostname": "node00",
+    "message": "succeed to connector to ftp server",
+    "pass": true
+  }
+]
+```
+----------
+### Validate the JDBC connection
+
+The parameters of request are shown below.
+1. url (**string**) — jdbc url
+1. user (**string**) — account of db server
+1. password (**string**) — password of db server
+1. workerClusterName (**string**) — the target cluster used to validate this connection
+
+**Example Response**
+
+```json
+{
+  "url": "jdbc://",
+  "user": "user",
+  "password": "pwd"
+}
+```
+
+> Ohara pick up the single worker cluster directly when you ignore the element of worker cluster.
+
+Since JDBC connection is used by jdbc connector only, ohara configurator involves several connectors to test the connection properties.
+Ohara configurator collects report from each connectors and then generate a JSON response shown below.
+1. hostname (**string**) — the node which execute this validation
+1. message (**string**) — the description about this validation
+1. pass (**boolean**) — true is pass
+
+**Example Response**
+
+```json
+[
+  {
+    "hostname": "node00",
+    "message": "succeed to connector to db server",
+    "pass": true
+  }
+]
+```
+----------
+### Validate the HDFS connection
+
+The parameters of request are shown below.
+1. uri (**string**) — hdfs url
+1. workerClusterName (**string**) — the target cluster used to validate this connection
+
+**Example Request**
+
+```json
+{
+  "uri": "file://"
+}
+```
+
+> Ohara pick up the single worker cluster directly when you ignore the element of worker cluster.
+
+Since HDFS connection is used by hdfs connector only, ohara configurator involves several connectors to test the connection properties.
+Ohara configurator collects report from each connectors and then generate a JSON response shown below.
+1. hostname (**string**) — the node which execute this validation
+1. message (**string**) — the description about this validation
+1. pass (**boolean**) — true is pass
+
+**Example Response**
+
+```json
+[
+  {
+    "hostname": "node00",
+    "message": "succeed to connector to hdfs server",
+    "pass": true
+  }
+]
+```
+----------
+### Validate the node connection
+
+The parameters of request are shown below.
+1. name (**string**) — hostname of node
+1. port (**int**) — ssh port of node
+1. user (**string**) — ssh account
+1. password (**string**) — ssh password
+
+**Example Request**
+
+```json
+{
+  "name": "node00",
+  "port": 22,
+  "user": "abc",
+  "password": "pwd"
+}
+```
+
+Since Node connection is used by ohara configurator only, ohara configurator validates the connection by itself.
+The format of report is same to other reports but the **hostname** is fill with **node's hostname** rather than node which
+execute the validation.
+1. hostname (**string**) — node's hostname
+1. message (**string**) — the description about this validation
+1. pass (**boolean**) — true is pass
+
+**Example Response**
+
+```json
+[
+  {
+    "hostname": "node00",
+    "message": "succeed to connector to ssh server",
+    "pass": true
+  }
+]
+```
+----------
+### Validate the connector settings
+
+Before starting a connector, you can send the settings to test whether all settings are available for specific connector.
+Ohara is not in charge of settings validation. Connector MUST define its setting via [setting definitions](custom_connector.md#setting-definitions).
+Ohara configurator only repackage the request to kafka format and then collect the validation result from kafka.
+
+**Example Request**
+
+The request format is same as [connector request](#create-the-settings-of-connector)
+
+**Example Response**
+
+If target connector has defined the settings correctly, kafka is doable to validate each setting of request. Ohara configurator
+collect the result and then generate the following report.
+
+```json
+{
+  "errorCount": 0,
+  "settings": [
+    {
+      "definition": {
+        "reference": "NONE",
+        "displayName": "connector.class",
+        "internal": false,
+        "documentation": "the class name of connector",
+        "valueType": "CLASS",
+        "tableKeys": [],
+        "orderInGroup": 0,
+        "key": "connector.class",
+        "required": true,
+        "defaultValue": null,
+        "group": "core",
+        "editable": true
+      },
+      "setting": {
+        "key": "connector.class",
+        "value": "com.island.ohara.connector.perf",
+        "errors": []
+      }
+    }
+  ]
+}
+```
+
+The above example only show a part of report. The element **definition** is equal to [connector's setting definition](#worker).
+The definition is what connector must define. If you don't write any definitions for you connector, the validation will do nothing
+for you. The element **setting** is what you request to validate.
+1. key (**string**) — the property key. It is equal to key in **definition**
+1. value (**string**) — the value you request to validate
+1. errors (**array(string)**) — error message when the input value is illegal to connector 
 ----------
 ## Streamapp
 
