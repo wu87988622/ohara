@@ -19,6 +19,7 @@ package com.island.ohara.configurator
 import java.io.File
 import java.net.URL
 import java.util.concurrent.{ExecutionException, TimeUnit}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
@@ -29,9 +30,10 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
+import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
-import com.island.ohara.client.configurator.v0.BrokerApi.{BrokerClusterCreationRequest}
+import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeCreationRequest}
 import com.island.ohara.client.configurator.v0.ValidationApi.NodeValidationRequest
 import com.island.ohara.client.configurator.v0.ZookeeperApi
@@ -44,6 +46,7 @@ import com.island.ohara.configurator.route._
 import com.island.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, Future}
@@ -94,6 +97,9 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
 
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
+  //TODO : need to support k8s...by Sam
+  private[this] implicit val crane: Crane =
+    Crane.builderOfDocker().nodeCollie(nodeCollie).dockerClientCache(DockerClientCache()).executorDefault().build()
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
     case e @ (_: DeserializationException | _: ParsingException | _: IllegalArgumentException |

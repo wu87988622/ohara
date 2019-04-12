@@ -164,6 +164,7 @@ class TestStreamRoute extends SmallTest with Matchers {
 
   @Test
   def testStreamRunFailWithFakeNode(): Unit = {
+    skipTest("This test needs to be refactor in #723")
     val fromTopic = "foo"
     val toTopic = "bar"
 

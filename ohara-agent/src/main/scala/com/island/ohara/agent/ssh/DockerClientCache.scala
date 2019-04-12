@@ -24,6 +24,7 @@ import scala.collection.mutable
 
 trait DockerClientCache extends Releasable {
   def exec[T](node: Node, f: DockerClient => T): T
+  def getClient(node: Node): DockerClient
 }
 
 object DockerClientCache {
@@ -31,28 +32,38 @@ object DockerClientCache {
 
   // this is only for testing usage
   private[agent] def fake(): DockerClientCache = new DockerClientCacheImpl() {
-    override def exec[T](node: Node, f: DockerClient => T): T = {
-      f(new FakeDockerClient())
-    }
+    val cache: mutable.HashMap[Node, DockerClient] =
+      new mutable.HashMap[Node, DockerClient]()
+
+    override def getClient(node: Node): DockerClient = cache.getOrElseUpdate(
+      node,
+      new FakeDockerClient()
+    )
   }
 
   private[this] class DockerClientCacheImpl extends ReleaseOnce with DockerClientCache {
     private[this] val lock = new Object()
-    private[this] val cache: mutable.HashMap[Node, DockerClient] = new mutable.HashMap[Node, DockerClient]()
+    private[this] val cache: mutable.HashMap[Node, DockerClient] =
+      new mutable.HashMap[Node, DockerClient]()
 
     override protected def doClose(): Unit = lock.synchronized {
       cache.values.foreach(Releasable.close)
       cache.clear()
     }
 
-    override def exec[T](node: Node, f: DockerClient => T): T = if (isClosed) throw new IllegalStateException()
+    override def exec[T](node: Node, f: DockerClient => T): T = {
+      val client = getClient(node)
+      f(client)
+    }
+
+    override def getClient(node: Node): DockerClient = if (isClosed) throw new IllegalStateException()
     else {
-      val client = lock.synchronized {
+      lock.synchronized {
         cache.getOrElseUpdate(
           node,
-          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build())
+          DockerClient.builder().hostname(node.name).port(node.port).user(node.user).password(node.password).build()
+        )
       }
-      f(client)
     }
   }
 }

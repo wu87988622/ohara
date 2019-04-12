@@ -112,8 +112,7 @@ object StreamApi {
     * @param fromTopics the candidate topics for streamApp consume from
     * @param toTopics the candidate topics for streamApp produce to
     * @param lastModified this data change time
-    * @param state this streamApp current state
-    * @param nodes the streamApp running nodes
+    * @param state this streamApp current state (ContainerState)
     */
   final case class StreamApp(pipelineId: String,
                              id: String,
@@ -123,10 +122,20 @@ object StreamApi {
                              fromTopics: Seq[String],
                              toTopics: Seq[String],
                              lastModified: Long,
-                             state: Option[String] = None,
-                             nodes: Seq[NodeApi.Node] = Seq.empty)
+                             state: Option[String] = None)
       extends Data {
     override def kind: String = "streamApp"
+    override def toString: String =
+      s"""
+          pipeline: $pipelineId,
+          id: $id,
+          name: $name,
+          instances: $instances,
+          jarInfo: $jarInfo,
+          fromTopics: $fromTopics,
+          toTopics: $toTopics,
+          state: $state
+      """.stripMargin
   }
 
   // StreamApp Action Response Body
@@ -264,4 +273,28 @@ object StreamApi {
     )(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse] =
       access.update(id, request)
   }
+
+  /**
+    * The Stream Warehouse Cluster Information
+    *
+    * @param name cluster name
+    * @param imageName image name
+    * @param jarUrl jar url
+    * @param brokerProps broker list
+    * @param fromTopics from topic list
+    * @param toTopics to topic list
+    * @param ports port list (useless in stream)
+    * @param nodeNames actual running nodes
+    */
+  case class StreamClusterInfo(
+    name: String,
+    imageName: String,
+    jarUrl: String,
+    brokerProps: String,
+    fromTopics: Seq[String],
+    toTopics: Seq[String],
+    // We don't care the ports since streamApp is communicated by broker
+    ports: Seq[Int] = Seq.empty,
+    nodeNames: Seq[String]
+  ) extends ClusterInfo
 }

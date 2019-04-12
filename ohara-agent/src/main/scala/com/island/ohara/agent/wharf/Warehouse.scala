@@ -15,62 +15,104 @@
  */
 
 package com.island.ohara.agent.wharf
+
+import com.island.ohara.agent.wharf.Warehouse.WarehouseCreator
+import com.island.ohara.client.configurator.v0.ClusterInfo
+import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
-  * Warehouse is a factory to store all cargoes.
-  * This class is a cargo group (container group).
+  * Warehouse is a factory to manage containers.
+  * This class is as equal as a container cluster.
+  * NOTED: since collie is used for two impl (ssh, k8s) and will refactor in the future,
+  * we need to decouple "worker cluster" and "container cluster" for further usage.
+  * TODO : need to refactor this after k8s refactor done..by Sam
   */
-trait Warehouse {
+trait Warehouse[T <: ClusterInfo] {
 
   /**
-    * the prefix to identify class
-    */
-  private[this] val WAREHOUSE_KEY = "warehouse-"
-  private[this] final val _name: String = WAREHOUSE_KEY + CommonUtils.randomString()
-
-  /**
-    * The unique name for this warehouse
-    *
-    * @return this warehouse name
-    */
-  def name: String = _name
-
-  /**
-    * Get all cargoes from this warehouse
+    * Get the number of the containers
     *
     * @param executionContext execution context
-    * @return cargo list
+    * @return size of container
     */
-  def list()(implicit executionContext: ExecutionContext): Future[Seq[Cargo]]
+  def size(clusterName: String)(implicit executionContext: ExecutionContext): Future[Int] =
+    containers(clusterName).map(_.size)
 
   /**
-    * Get the specific cargo
+    * Get all containers from this cluster
     *
-    * @param cargoName the required cargo name
     * @param executionContext execution context
-    * @return the require cargo, or None if not found
+    * @return containers information
     */
-  def get(cargoName: String)(implicit executionContext: ExecutionContext): Future[Option[Cargo]] =
-    list().map(_.find(_.name == cargoName))
+  def containers(clusterName: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
 
   /**
-    * Add a cargo to this warehouse (should also create container)
-    *
-    * @param nodeName the node to be added cargo
-    * @param executionContext execution context
-    * @return value of the added cargo if not exists, or the previous value
+    * create a warehouse creator
+    * @return creator of warehouse
     */
-  def add(nodeName: String)(implicit executionContext: ExecutionContext): Future[Cargo]
+  def creator(): WarehouseCreator[T]
 
   /**
-    * Delete cargo by it's name
+    * format the container name
+    * format : {prefix}-{clusterName}-{serviceName}-{randomId}
     *
-    * @param cargoName the cargo name that is want to be deleted
-    * @param executionContext execution context
-    * @return the deleted cargo, or exception if no such cargo
+    * @param serviceName service name (ex : stream)
+    * @param clusterName cluster name
+    * @return formatted string
     */
-  def delete(cargoName: String)(implicit executionContext: ExecutionContext): Future[Cargo]
+  protected def format(serviceName: String, clusterName: String): String = {
+    Seq(
+      Warehouse.PREFIX_KEY,
+      clusterName,
+      serviceName,
+      CommonUtils.randomString(Warehouse.LENGTH_OF_CONTAINER_NAME_ID)
+    ).mkString(Warehouse.DIVIDER)
+  }
+}
+
+object Warehouse {
+
+  final val LENGTH_OF_CONTAINER_NAME_ID: Int = 7
+  final val PREFIX_KEY: String = "osw"
+  final val DIVIDER: String = "-"
+
+  /**
+    * docker does limit the length of name (< 64). And we "may" salt the name so we release only 30 chars to user.
+    */
+  final val LIMIT_OF_NAME_LENGTH: Int = 30
+
+  trait WarehouseCreator[T <: ClusterInfo] {
+
+    protected var imageName: String = _
+    protected var clusterName: String = _
+
+    private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_NAME_LENGTH)
+      throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_NAME_LENGTH. actual: ${s.length}")
+    else s
+
+    /**
+      * set the image name used to create cluster's container
+      * @param imageName image name
+      * @return this creator
+      */
+    def imageName(imageName: String): WarehouseCreator.this.type = {
+      this.imageName = CommonUtils.requireNonEmpty(imageName)
+      this
+    }
+
+    /**
+      * set the cluster name
+      * @param clusterName cluster name
+      * @return this creator
+      */
+    def clusterName(clusterName: String): WarehouseCreator.this.type = {
+      this.clusterName = assertLength(CommonUtils.assertOnlyNumberAndChar(clusterName))
+      this
+    }
+
+    def create()(implicit executionContext: ExecutionContext): Future[T]
+  }
 }

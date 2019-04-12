@@ -142,7 +142,7 @@ trait ContainerCreator {
   /**
     * set docker container's network driver. implement by --network=$value
     *
-    * @param driver network driver
+    * @param networkDriver network driver
     * @return this builder
     */
   @Optional("default is NetworkDriver.BRIDGE")
