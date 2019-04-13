@@ -23,6 +23,7 @@ and add content type of the response via the HTTP Accept header:
 - [Broker](#broker)
 - [Worker](#worker)
 - [Validation](#validation)
+- [Container](#container)
 - [StreamApp](#streamapp)
 
 ----------
@@ -2415,6 +2416,8 @@ wrap the result to JSON representation.
 ----------
 ### Validate the FTP connection
 
+*PUT /v0/validate/ftp*
+
 The parameters of request are shown below.
 1. hostname (**string**) — ftp server hostname
 1. port (**int**) — ftp server port
@@ -2455,6 +2458,8 @@ Ohara configurator collects report from each connectors and then generate a JSON
 ----------
 ### Validate the JDBC connection
 
+*PUT /v0/validate/rdb*
+
 The parameters of request are shown below.
 1. url (**string**) — jdbc url
 1. user (**string**) — account of db server
@@ -2493,6 +2498,8 @@ Ohara configurator collects report from each connectors and then generate a JSON
 ----------
 ### Validate the HDFS connection
 
+*PUT /v0/validate/hdfs*
+
 The parameters of request are shown below.
 1. uri (**string**) — hdfs url
 1. workerClusterName (**string**) — the target cluster used to validate this connection
@@ -2526,6 +2533,8 @@ Ohara configurator collects report from each connectors and then generate a JSON
 ```
 ----------
 ### Validate the node connection
+
+*PUT /v0/validate/node*
 
 The parameters of request are shown below.
 1. name (**string**) — hostname of node
@@ -2564,6 +2573,8 @@ execute the validation.
 ```
 ----------
 ### Validate the connector settings
+
+*PUT /v0/validate/connector*
 
 Before starting a connector, you can send the settings to test whether all settings are available for specific connector.
 Ohara is not in charge of settings validation. Connector MUST define its setting via [setting definitions](custom_connector.md#setting-definitions).
@@ -2613,6 +2624,85 @@ for you. The element **setting** is what you request to validate.
 1. key (**string**) — the property key. It is equal to key in **definition**
 1. value (**string**) — the value you request to validate
 1. errors (**array(string)**) — error message when the input value is illegal to connector 
+----------
+## Container
+
+All process managed by ohara is based on docker container. This APIs provide the container details of a running cluster.
+
+----------
+### retrieve the container details of a running cluster
+
+*GET /v0/containers/$clusterName*
+
+The **cluster name** may be mapped to different services (of course, it would be better to avoid using same name on different services),
+hence, the returned JSON is in array type. The details of elements are shown below.
+1. clusterName (**string**) — cluster name
+1. clusterType (**string**) —  cluster type
+1. containers (**array(object)**) — the container in this cluster 
+  - environments (**object**) — the environment variables of container
+  - name (**string**) — the name of container
+  - hostname (**string**) — hostname of container
+  - size (**string**) — the disk size used by this container
+  - state (**string**) — the state of container
+  - portMappings (**array(object)**) —  the exported ports of this container
+    - portMappings[i].hostIp (**string**) — the network interface of container host
+    - portMappings[i].portPairs (**object**) — the container port and host port
+      - portMappings[i].portPairs[j].hostPort (**int**) — host port
+      - portMappings[i].portPairs[j].containerPort (**int**) — container port
+  - nodeName (**string**) — the node which host this container
+  - imageName (**string**) — the image used to create this container
+  - id (**string**) — container id
+  - created (**string**) — create time
+```json
+[
+  {
+    "clusterName": "zk00",
+    "clusterType": "zookeeper",
+    "containers": [
+      {
+        "environments": {
+          "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/zookeeper/default/bin",
+          "ZK_ID": "0",
+          "ZK_ELECTION_PORT": "3888",
+          "JAVA_HOME": "/usr/lib/jvm/jre",
+          "ZK_CLIENT_PORT": "2181",
+          "ZK_SERVERS": "node00",
+          "ZK_PEER_PORT": "2888",
+          "ZOOKEEPER_HOME": "/home/zookeeper/default"
+        },
+        "name": "occl-zk00-zk-2aa11cc",
+        "hostname": "node00",
+        "size": "32.9kB (virtual 595MB)",
+        "state": "RUNNING",
+        "portMappings": [
+          {
+            "hostIp": "0.0.0.0",
+            "portPairs": [
+              {
+                "hostPort": 2181,
+                "containerPort": 2181
+              },
+              {
+                "hostPort": 2888,
+                "containerPort": 2888
+              },
+              {
+                "hostPort": 3888,
+                "containerPort": 3888
+              }
+            ]
+          }
+        ],
+        "nodeName": "node00",
+        "imageName": "oharastream/zookeeper:0.4-SNAPSHOT",
+        "id": "22169c48646c",
+        "kind": "SSH",
+        "created": "2019-04-12 03:30:56 -0400 EDT"
+      }
+    ]
+  }
+]
+```
 ----------
 ## Streamapp
 
