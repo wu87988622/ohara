@@ -649,17 +649,17 @@ Apart from custom settings, common settings are required by all connectors. The 
 1. topics(**array(string)**) — the source topics or target topics for this connector
 1. columns (**array(object)**) — the schema of data for this connector
   - columns[i].name (**string**) — origin name of column
-  - columns[i].newName (**string**) - new name of column
-  - columns[i].dataType (**string**) - the type used to convert data
-  - columns[i].order (**int**) - the order of this column
+  - columns[i].newName (**string**) — new name of column
+  - columns[i].dataType (**string**) — the type used to convert data
+  - columns[i].order (**int**) — the order of this column
 1. numberOfTasks (**int**) — the number of tasks
-1. workerClusterName (**string**) - target worker cluster
+1. workerClusterName (**string**) — target worker cluster
 
 The following information are updated by ohara.
 1. [id](#object-id) (**string**) — connector's id
 1. lastModified (**long**) — the last time to update this connector
-1. state (**string**) — the state of a started connector. If the connector is not started, you won't see this field
-1. error (**string**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
+1. state (**optional(string)**) — the state of a started connector. If the connector is not started, you won't see this field
+1. error (**optional(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won't get this field.
 1. [metrics](custom_connector.md#metrics) (**object**) — the metrics from a running connector
   - counters (**array(object)**) — the metrics in counter type
     - counters[i].value (**long**) — the number stored in counter
@@ -958,7 +958,7 @@ The properties used in generating pipeline are shown below.
 1. flows (**array(object)**) — the relationship between objects
   - flows[i].from (**string**) — the endpoint of source
   - flows[i].to (**array(string)**) — the endpoint of sink
-1. workerClusterName (**string**) - target worker cluster
+1. workerClusterName (**string**) — target worker cluster
   
 Following information are written by ohara.
  1. [id](#object-id) (**string**) — pipeline's id
@@ -968,8 +968,8 @@ Following information are written by ohara.
    - objects[i].name (**string**) — object's name
    - objects[i].kind (**string**) — the type of this object. for instance, [topic](#topic), [connector](#connector), and [streamapp](#streamapp) 
    - objects[i].className (**string**) — object's implementation. Normally, it shows the full name of a java class
-   - objects[i].state (**string**) — the state of object. If the object can't have state (eg, [topic](#topic)), you won't see this field
-   - objects[i].error (**string**) — the error message of this object
+   - objects[i].state (**optional(string)**) — the state of object. If the object can't have state (eg, [topic](#topic)), you won't see this field
+   - objects[i].error (**optional(string)**) — the error message of this object
    - objects[i].lastModified (**long**) — the last time to update this object
    - [metrics](custom_connector.md#metrics) (**object**) — the metrics from this object. Not all objects in pipeline have metrics!
      - counters (**array(object)**) — the metrics in counter type
@@ -2634,6 +2634,8 @@ All process managed by ohara is based on docker container. This APIs provide the
 
 *GET /v0/containers/$clusterName*
 
+**Example Response**
+
 The **cluster name** may be mapped to different services (of course, it would be better to avoid using same name on different services),
 hence, the returned JSON is in array type. The details of elements are shown below.
 1. clusterName (**string**) — cluster name
@@ -2643,7 +2645,7 @@ hence, the returned JSON is in array type. The details of elements are shown bel
   - name (**string**) — the name of container
   - hostname (**string**) — hostname of container
   - size (**string**) — the disk size used by this container
-  - state (**string**) — the state of container
+  - state (**optional(string)**) — the state of container
   - portMappings (**array(object)**) —  the exported ports of this container
     - portMappings[i].hostIp (**string**) — the network interface of container host
     - portMappings[i].portPairs (**object**) — the container port and host port
@@ -2704,6 +2706,287 @@ hence, the returned JSON is in array type. The details of elements are shown bel
 ]
 ```
 ----------
-## Streamapp
+## StreamApp
 
+Ohara StreamApp is a unparalleled wrap of kafka streaming. It leverages and enhances kafka streaming to make developer
+easily design and implement the streaming application. More details of developing streaming application is in [custom stream guideline](custom_streamapp.md).
+
+Assume that you have completed a streaming application via ohara Java APIs, and you have generated a jar including your streaming code.
+By Ohara Restful APIs, you are enable to control, deploy, and monitor your streaming application.
+As with cluster APIs, ohara leverages docker container to host streaming application. Of course, you can apply your favor  
+container management tool including simple (based on ssh) and k8s when you are starting ohara.
+
+Before stating to use restful APIs, please ensure that all nodes have downloaded the [StreamApp image](https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp).
+The jar you uploaded to run streaming application will be packaged to the image and then be executed as docker container.
+The [StreamApp image](https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp) is kept in each node so don't worry about the network. We all hate re-download everything when running services.
+
+The properties of a StreamApp are shown below.
+1. id (**string**) — id of this streamApp
+1. state (**option(string)**) — only started/stopped streamApp has state.
+1. lastModified (**long**) — last modified this jar time
 ----------
+### start a StreamApp
+
+*PUT /v0/stream/${id}/start*
+
+**Example Response**
+
+```json
+{
+  "id": "147dd6f2-dc5e-4538-8cb7-fdcdb785a17d",
+  "state": "RUNNING"
+}
+```
+----------
+### stop a StreamApp
+
+*PUT /v0/stream/${id}/stop*
+
+**Example Response**
+
+```json
+{
+  "id": "147dd6f2-dc5e-4538-8cb7-fdcdb785a17d",
+  "state": "EXITED"
+}
+```
+----------
+### upload streamApp jars
+
+*POST /v0/stream/jars/${pipelineId}*
+
+**Example Request**
+
+```http request
+<form name="jarUpload" action="" method="post" enctype="multipart/form-data">
+  <input type="file" name="streamapp"></input>
+  <input type="file" name="streamapp"></input>
+  <button type="submit">Submit</button>
+</form>
+```
+
+**Example Response**
+
+```json
+[
+  {
+    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+    "jarName": "ohara-streams.jar",
+    "lastModified": 1547141282866
+  },
+  {
+    "id": "1a012c59-53de-3381-a062-f8e29f4c00fe",
+    "jarName": "other.jar",
+    "lastModified": 1547141282889
+  }
+]
+```
+----------
+### delete a streamApp jar
+
+*DELETE /v0/stream/jars/${pipelineId}*
+
+**Example Request**
+
+```http request
+<form name="jarUpload" action="" method="post" enctype="multipart/form-data">
+  <input type="file" name="streamapp"></input>
+  <input type="file" name="streamapp"></input>
+  <button type="submit">Submit</button>
+</form>
+```
+
+**Example Response**
+
+```json
+{
+  "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+  "jarName": "ohara-streams.jar",
+  "lastModified": 1547141282866
+}
+```
+----------
+### list uploaded streamApp jars
+
+*GET /v0/stream/jars/${pipelineId}*
+
+**Example Response**
+
+```json
+[
+  {
+    "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+    "jarName": "ohara-streams.jar",
+    "lastModified": 1547141282866
+  },
+  {
+    "id": "1a012c59-53de-3381-a062-f8e29f4c00fe",
+    "jarName": "other.jar",
+    "lastModified": 1547141282889
+  }
+]
+```
+----------
+### update streamApp jar
+
+*PUT /v0/stream/jars/${id}*
+
+**Example Request**
+
+```json
+{
+  "jarName": "new-streams.jar"
+}
+```
+
+**Example Response**
+
+```json
+{
+  "id": "1b022c59-93f9-452c-a062-f8e4cb6c00fe",
+  "jarName": "new-streams.jar",
+  "lastModified": 1547141282866
+}
+```
+----------
+### get properties from specific streamApp
+
+*GET /v0/stream/property/${id}*
+
+**Example Request**
+
+```json
+{
+  "jarName": "new-streams.jar"
+}
+```
+
+**Example Response**
+
+1. id (**string**) — id of this streamApp
+1. jarName (**string**) — the upload jar name
+1. name (**string**) — the streamApp name
+1. from (**array(string)**) — source topics for this streamApp
+1. to (**array(string)**) — target topics for this streamApp
+1. instance (**int**) — the number of running streamApp application at same time
+1. lastModified (**long**) — last modified this jar time
+
+```json
+{
+  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
+  "jarName": "new-name.jar",
+  "name": "my-app",
+  "from": [
+    "topic1"
+  ],
+  "to": [
+    "topic2"
+  ],
+  "instance": 3,
+  "lastModified": 1542102595892
+}
+```
+----------
+### update properties from specific streamApp
+
+*PUT /v0/stream/property/${id}*
+
+**Example Request**
+
+1. name (**string**) — new streamApp name
+1. from (**array(string)**) — new source topics
+1. to (**array(string)**) — new target topics
+1. instance (**int**) — new number of running streamApp
+
+```json
+{
+  "jarName": "new-streams.jar"
+}
+```
+
+**Example Response**
+
+1. id (**string**) — id of this streamApp
+1. jarName (**string**) — the upload jar name
+1. name (**string**) — the streamApp name
+1. from (**array(string)**) — source topics for this streamApp
+1. to (**array(string)**) — target topics for this streamApp
+1. instance (**int**) — the number of running streamApp application at same time
+1. lastModified (**long**) — last modified this jar time
+
+```json
+{
+  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
+  "jarName": "new-name.jar",
+  "name": "my-app",
+  "from": [
+    "topic1"
+  ],
+  "to": [
+    "topic2"
+  ],
+  "instance": 3,
+  "lastModified": 1542102595892
+}
+```
+----------
+### get topology tree graph from specific streamApp
+
+*GET /v0/stream/view/${id}*
+
+**Example Response**
+
+1. id (**string**) — id of this streamApp
+1. jarName (**string**) — the upload jar name
+1. name (**string**) — the streamApp name
+1. poneglyph (**object**) — the streamApp topology tree graph
+  - steles (**array(object)**) — the topology collection
+    - steles[i].kind (**string**) — this component kind (SOURCE, PROCESSOR, or SINK)
+    - steles[i].key (**string**) — this component kind with order
+    - steles[i].name (**string**) — depend on kind, the name is 
+        - SOURCE — source topic name
+        - PROCESSOR — the function name
+        - SINK — target topic name
+    - steles[i].from (**string**) — the prior component key (could be empty if this is the first component)
+    - steles[i].to (**string**) — the posterior component key (could be empty if this is the final component)
+
+```json
+{
+  "id": "d312871a-4a05-488d-aae0-c8b27c5312c2",
+  "jarName": "new-name.jar",
+  "name": "my-app",
+  "poneglyph": {
+    "steles": [
+      {
+        "kind": "SOURCE",
+        "key" : "SOURCE-0",
+        "name": "stream-in",
+        "from": "",
+        "to": "PROCESSOR-1"
+      },
+      {
+        "kind": "PROCESSOR",
+        "key" : "PROCESSOR-1",
+        "name": "filter",
+        "from": "SOURCE-0",
+        "to": "PROCESSOR-2"
+      },
+      {
+        "kind": "PROCESSOR",
+        "key" : "PROCESSOR-2",
+        "name": "mapvalues",
+        "from": "PROCESSOR-1",
+        "to": "SINK-3"
+      },
+      {
+        "kind": "SINK",
+        "key" : "SINK-3",
+        "name": "stream-out",
+        "from": "PROCESSOR-2",
+        "to": ""
+      }
+    ]
+  }
+}
+```
+
