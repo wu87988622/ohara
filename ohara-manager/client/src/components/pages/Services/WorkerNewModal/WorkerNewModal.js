@@ -123,6 +123,7 @@ class WorkerNewModal extends React.Component {
                   <s.FormRow>
                     <s.FormCol width="26rem">
                       <Label
+                        tooltipAlignment="right"
                         tooltipRender={
                           <div>
                             <p>
@@ -151,6 +152,7 @@ class WorkerNewModal extends React.Component {
                       <Label
                         tooltipString="Must be between 5000 and 65535"
                         htmlFor="poInput"
+                        tooltipAlignment="right"
                       >
                         Port
                       </Label>

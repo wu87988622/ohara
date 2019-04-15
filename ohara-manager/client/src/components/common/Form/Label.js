@@ -26,7 +26,10 @@ const LabelWrapper = styled.label`
   font-size: 13px;
   margin: ${props => props.margin};
   display: block;
-  width: 100%;
+
+  .label-name {
+    margin-right: 4px;
+  }
 `;
 
 LabelWrapper.displayName = 'Label';
@@ -47,7 +50,8 @@ const Label = ({
 }) => {
   return (
     <LabelWrapper {...css} {...rest}>
-      {children} {required && <span>*</span>}
+      <span className="label-name">{children}</span>{' '}
+      {required && <span>*</span>}
       {tooltipString && (
         <TooltipIcon alignment={tooltipAlignment} data-tip={tooltipString}>
           <i className="fas fa-info-circle" />
@@ -55,7 +59,7 @@ const Label = ({
       )}
       {tooltipString && <ReactTooltip />}
       {tooltipRender && (
-        <TooltipIcon data-tip data-for={tooltipId}>
+        <TooltipIcon alignment={tooltipAlignment} data-tip data-for={tooltipId}>
           <i className="fas fa-info-circle" />
         </TooltipIcon>
       )}
