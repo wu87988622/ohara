@@ -114,6 +114,16 @@ Cypress.Commands.add('deleteAllPipelines', () => {
     });
 });
 
+Cypress.Commands.add('deletePipeline', pipelineName => {
+  cy.request('GET', 'api/pipelines').then(res => {
+    res.body.forEach(pipeline => {
+      if (pipeline.name === pipelineName) {
+        cy.request('DELETE', `api/pipelines/${pipeline.id}`);
+      }
+    });
+  });
+});
+
 Cypress.Commands.add('insertPipeline', (cluster, pipeline) => {
   Cypress.log({
     name: 'INSERT_PIPELINE',
