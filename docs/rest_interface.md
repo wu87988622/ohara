@@ -25,6 +25,7 @@ and add content type of the response via the HTTP Accept header:
 - [Validation](#validation)
 - [Container](#container)
 - [StreamApp](#streamapp)
+- [Jars](#jars)
 
 ----------
 ## object id
@@ -641,7 +642,7 @@ pulls data from another system and then push to topic. By contrast, Sink connect
 another system. In order to use connector in [pipeline](#pipeline), you have to set up a connector settings in ohara and then add it
 to [pipeline](#pipeline). Of course, the connector settings must belong to a existent connector in target worker cluster. By default,
 worker cluster hosts only the official connectors. If you have more custom requirement for connector, please follow
-[custome connector guideline](custom_connector.md) to write your connector. 
+[custom connector guideline](custom_connector.md) to write your connector. 
 
 Apart from custom settings, common settings are required by all connectors. The common settings are shown below.
 1. connector.name (**string**) — the name of this connector
@@ -1807,7 +1808,9 @@ The properties which can be set by user are shown below.
 1. clientPort (**int**) — worker client port.
 1. jmxPort (**int**) — worker jmx port.
 1. brokerClusterName (**string**) — broker cluster used to host topics for this worker cluster
-1. jars (**array(string)**) — the id of jars that will be loaded by worker cluster
+1. jars (**array(string)**) — the id of jars that will be loaded by worker cluster. You can require worker cluster to
+                              load the jars stored in ohara if you want to run custom connectors on the worker cluster.
+                              see [Jars APIs](#jars) for uploading jars to ohara.  
 1. nodeNames (**array(string)**) — the nodes running the worker process
 1. configTopicName (**string**) — a internal topic used to store connector configuration
 1. configTopicReplications (**int**) — number of replications for config topic
@@ -2989,4 +2992,43 @@ The properties of a StreamApp are shown below.
   }
 }
 ```
+----------
+## Jars
+
+Ohara encourages user to write custom application if the official applications can satisfy requirements for your use case.
+Jar APIs is a useful entry of putting your jar on ohara and then start related services with it. For example, [Worker APIs](#create-a-worker-cluster)
+accept a **jars** element which can carry the jar id pointing to a existent jar in ohara. The worker cluster will load all
+connectors of the input jar, and then you are able to use the connectors on the worker cluster.
+
+After you succeed to upload a jar to ohara, the lifecycle of jar is held by ohara so you can't **remove** or **update** the jar
+arbitrarily. You can consider this APIs as a way to set custom jars in running [worker cluster](#create-a-worker-cluster).
+
+----------
+### upload a jar to ohara
+
+*POST /v0/jars*
+
+*Example Request*
+
+```http request
+Content-Disposition: form-data
+filename="aa.jar"
+```
+
+You have to specify the file name since it is a part of metadata stored by ohara.
+
+*Example Response*
+```json
+{
+  "id": "aaa",
+  "name": "aa.jar",
+  "size": 12345,
+  "lastModified": 7777
+}
+```
+
+1. id (**string**) — the jar id
+1. name (**string**) — the file name
+1. size (**long**) — file size
+1. lastModified (**long**) — the time of uploading this file
 
