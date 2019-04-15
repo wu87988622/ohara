@@ -75,7 +75,9 @@ class BrokerListPage extends React.Component {
   };
 
   render() {
-    const { isLoading, topics, isModalOpen } = this.state;
+    const { isLoading, topics, isModalOpen, broker } = this.state;
+    const isNewTopicBtnDisabled = isEmpty(broker) ? true : false;
+
     return (
       <React.Fragment>
         {isLoading && (
@@ -112,6 +114,7 @@ class BrokerListPage extends React.Component {
                 theme={primaryBtn}
                 text="New topic"
                 data-testid="new-topic"
+                disabled={isNewTopicBtnDisabled}
                 handleClick={() => {
                   this.setState({ isModalOpen: true });
                 }}
