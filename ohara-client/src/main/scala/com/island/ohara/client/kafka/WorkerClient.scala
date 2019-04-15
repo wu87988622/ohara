@@ -190,7 +190,7 @@ object WorkerClient {
     val workerList = _connectionProps.split(",")
     if (workerList.isEmpty) throw new IllegalArgumentException(s"Invalid workers:${_connectionProps}")
     new WorkerClient() with SprayJsonSupport {
-      private[this] val workerAddress: String = workerList(Random.nextInt(workerList.size))
+      private[this] def workerAddress: String = workerList(Random.nextInt(workerList.size))
 
       /**
         * kafka worker has weakness of doing consistent operation so it is easy to encounter conflict error. Wrapping all operations with
