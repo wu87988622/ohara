@@ -15,16 +15,15 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-
-const makeRandomName = () => {
-  return Math.random()
-    .toString(36)
-    .substring(7);
-};
+import { makeRandomStr, makeServiceNames } from '../support/utils';
 
 describe('PipelineListPage', () => {
+  const serviceNames = makeServiceNames();
+  before(() => cy.initServices(serviceNames));
+  after(() => cy.clearServices(serviceNames));
+
   it('should display an newly created pipeline in the list', () => {
-    const pipelineName = makeRandomName();
+    const pipelineName = makeRandomStr();
 
     cy.visit(URLS.PIPELINE)
       .getByText('New pipeline')
@@ -45,11 +44,11 @@ describe('PipelineListPage', () => {
   });
 
   it('edits a pipeline', () => {
-    const pipelineName = makeRandomName();
+    const pipelineName = makeRandomStr();
 
     // hard code the wk00 name for now, we'll
     // addressed this in another issue, see #264
-    cy.insertPipeline('wk00', { name: pipelineName })
+    cy.insertPipeline(serviceNames.workerName, { name: pipelineName })
       .visit(URLS.PIPELINE)
       .getByTestId('edit-pipeline')
       .click()
@@ -59,9 +58,9 @@ describe('PipelineListPage', () => {
   });
 
   it('deletes a pipeline', () => {
-    const pipelineName = makeRandomName();
+    const pipelineName = makeRandomStr();
 
-    cy.insertPipeline('wk00', { name: pipelineName })
+    cy.insertPipeline(serviceNames.workerName, { name: pipelineName })
       .visit(URLS.PIPELINE)
       .getByText(pipelineName)
       .getByTestId('delete-pipeline')

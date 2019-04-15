@@ -16,6 +16,7 @@
 
 import 'cypress-testing-library/add-commands';
 
+import { makeRandomPort, getFakeNode } from './utils';
 import { setUserKey } from '../../src/utils/authUtils';
 import { VALID_USER } from '../../src/constants/cypress';
 import * as _ from '../../src/utils/commonUtils';
@@ -41,6 +42,94 @@ Cypress.Commands.add('login', () => {
     }
   });
 });
+
+Cypress.Commands.add(
+  'initServices',
+  ({ zookeeperName, brokerName, workerName }) => {
+    cy.log('INIT_SERVICES');
+
+    const { name: nodeName } = getFakeNode();
+
+    cy.request('POST', 'api/zookeepers', {
+      clientPort: makeRandomPort(),
+      electionPort: makeRandomPort(),
+      peerPort: makeRandomPort(),
+      name: zookeeperName,
+      nodeNames: [nodeName],
+    });
+
+    cy.request('POST', 'api/brokers', {
+      name: brokerName,
+      clientPort: makeRandomPort(),
+      exporterPort: makeRandomPort(),
+      zookeeperClusterName: zookeeperName,
+      nodeNames: [nodeName],
+    });
+
+    cy.request('POST', 'api/workers', {
+      name: workerName,
+      jars: [],
+      brokerClusterName: brokerName,
+      nodeNames: [nodeName],
+      clientPort: makeRandomPort(),
+      jmxPort: makeRandomPort(),
+    });
+
+    // Make a request to configurator see if worker cluster is ready for use
+    const req = endPoint => {
+      cy.request('GET', endPoint).then(res => {
+        // When connectors field has the right connector info
+        // this means everything is ready to be tested
+        if (res.body.connectors.length > 0) return;
+
+        // if it's not ready yet, wait a bit and make another request
+        cy.wait(1500);
+        req(endPoint);
+      });
+    };
+
+    const endPoint = `api/workers/${workerName}`;
+    cy.request('GET', endPoint).then(() => req(endPoint));
+  },
+);
+
+Cypress.Commands.add(
+  'clearServices',
+  ({ zookeeperName, brokerName, workerName }) => {
+    cy.log('CLEAR SERVICES');
+
+    console.log({ zookeeperName });
+    console.log({ brokerName });
+    console.log({ workerName });
+
+    const req = (endPoint, serviceName) => {
+      // We need to wait for specific service removed from the node
+      // then we can move on and remove another service
+      cy.request('GET', endPoint).then(res => {
+        const isServiceExit = res.body.some(
+          service => service.name === serviceName,
+        );
+
+        // Target service is not in the list anymore, break the loop
+        if (!isServiceExit) return;
+
+        // Wait and make another request
+        cy.wait(1500);
+        req(endPoint, serviceName);
+      });
+    };
+
+    cy.request('DELETE', `api/workers/${workerName}?force=true`).then(() =>
+      req('api/workers', workerName),
+    );
+
+    cy.request('DELETE', `api/brokers/${brokerName}?force=true`).then(() =>
+      req('api/brokers', brokerName),
+    );
+
+    cy.request('DELETE', `api/zookeepers/${zookeeperName}?force=true`);
+  },
+);
 
 Cypress.Commands.add('deleteAllNodes', () => {
   Cypress.log({

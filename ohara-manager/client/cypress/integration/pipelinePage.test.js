@@ -15,8 +15,19 @@
  */
 
 import * as URLS from '../../src/constants/urls';
+import { generateServiceNames } from '../support/utils';
 
 describe('PipelinePage', () => {
+  const serviceNames = generateServiceNames();
+
+  before(() => {
+    cy.initServices(serviceNames);
+  });
+
+  after(() => {
+    cy.clearServices(serviceNames);
+  });
+
   beforeEach(() => {
     cy.visit(URLS.PIPELINE);
     cy.getByTestId('new-pipeline').click();
