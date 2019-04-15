@@ -1,6 +1,6 @@
 # Ohara REST Interface
 
-ohara provides a bunch of REST APIs to advanced user for managing data, applications and cluster.
+ohara provides a bunch of REST APIs of managing data, applications and cluster for ohara users.
 Both request and response must have application/json content type, hence you should set content type to application/json in your request.
     
     Content-Type: application/json
@@ -26,6 +26,7 @@ and add content type of the response via the HTTP Accept header:
 - [Container](#container)
 - [StreamApp](#streamapp)
 - [Jars](#jars)
+- [Logs](#logs)
 
 ----------
 ## object id
@@ -2630,7 +2631,10 @@ for you. The element **setting** is what you request to validate.
 ----------
 ## Container
 
-All process managed by ohara is based on docker container. This APIs provide the container details of a running cluster.
+Each processes managed by ohara is based on docker container. In most cases, user don't need to know the details of containers
+since the management of containers is on ohara's shoulder. However, ohara understand that we all have curious brain so ohara
+supports to display the container's details of a running cluster. Noted that the context may be changed between different
+release of ohara. And the distinct implementations of container manager possibly provide different context of containers.
 
 ----------
 ### retrieve the container details of a running cluster
@@ -3008,7 +3012,7 @@ arbitrarily. You can consider this APIs as a way to set custom jars in running [
 
 *POST /v0/jars*
 
-*Example Request*
+**Example Request**
 
 ```http request
 Content-Disposition: form-data
@@ -3017,7 +3021,7 @@ filename="aa.jar"
 
 You have to specify the file name since it is a part of metadata stored by ohara.
 
-*Example Response*
+**Example Response**
 ```json
 {
   "id": "aaa",
@@ -3031,4 +3035,39 @@ You have to specify the file name since it is a part of metadata stored by ohara
 1. name (**string**) — the file name
 1. size (**long**) — file size
 1. lastModified (**long**) — the time of uploading this file
+----------
+## Logs
 
+This world is beautiful but not safe. Even though ohara shoulders the blame for simplifying your life, there is a
+slim chance that something don't work well in ohara. The Logs APIs, which are engineers' best friend, open a door
+to observe the logs of running cluster.
+
+It collect output from all containers' of a cluster and then format them to JSON representation which has following elements.
+1. name (**string**) — cluster name
+1. logs (**array(object)**) — log of each container
+  - logs[i].name — container's name
+  - logs[i].value — total output of a container
+ 
+----------
+### get the log of a running cluster
+
+*GET /v0/logs/$clusterType/$clusterName*
+
+- clusterType (**string**)
+  - zookeepers
+  - brokers
+  - workers
+
+**Example Response**
+
+```json
+{
+  "name": "precreatezkcluster",
+  "logs": [
+    {
+      "name": "node00",
+      "value": "2019-04-15 02:13:33,168 [myid:] - INFO [main:QuorumPeerConfig@136"
+    }
+  ]
+}
+```
