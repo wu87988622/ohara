@@ -23,7 +23,7 @@ import { H2 } from 'common/Headings';
 import { TableLoader } from 'common/Loader';
 import { FormGroup } from 'common/Form';
 
-import * as s from '../styles';
+import * as s from './styles';
 
 class ZookeeperListPage extends React.Component {
   state = {
