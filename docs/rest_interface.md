@@ -2440,7 +2440,7 @@ The parameters of request are shown below.
 }
 ```
 
-> Ohara pick up the single worker cluster directly when you ignore the element of worker cluster.
+> Ohara picks up the single worker cluster directly when you ignore the element of worker cluster.
 
 Since FTP connection is used by ftp connector only, ohara configurator involves several connectors to test the connection properties.
 Ohara configurator collects report from each connectors and then generate a JSON response shown below.
@@ -2480,7 +2480,7 @@ The parameters of request are shown below.
 }
 ```
 
-> Ohara pick up the single worker cluster directly when you ignore the element of worker cluster.
+> Ohara picks up the single worker cluster directly when you ignore the element of worker cluster.
 
 Since JDBC connection is used by jdbc connector only, ohara configurator involves several connectors to test the connection properties.
 Ohara configurator collects report from each connectors and then generate a JSON response shown below.
@@ -2516,7 +2516,7 @@ The parameters of request are shown below.
 }
 ```
 
-> Ohara pick up the single worker cluster directly when you ignore the element of worker cluster.
+> Ohara picks up the single worker cluster directly when you ignore the element of worker cluster.
 
 Since HDFS connection is used by hdfs connector only, ohara configurator involves several connectors to test the connection properties.
 Ohara configurator collects report from each connectors and then generate a JSON response shown below.
