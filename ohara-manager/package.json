@@ -35,7 +35,8 @@
     "format": "prettier --write \"**/*.*(js|json|html|md)\"",
     "license:test": "cd .. && gradle licenseTest",
     "license:apply": "cd .. && gradle licenseApply",
-    "prepush": "run-s lint test license:apply format"
+    "prepush": "run-s lint test license:apply format",
+    "copy:jars": "cp ../ohara-it/build/libs/ohara-it-sink.jar client/cypress/fixtures/plugin/ && cp ../ohara-it/build/libs/ohara-it-source.jar client/cypress/fixtures/plugin/"
   },
   "dependencies": {
     "axios": "0.18.0",

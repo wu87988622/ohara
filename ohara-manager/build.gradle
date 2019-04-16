@@ -38,6 +38,7 @@ task setup {
     doLast {
       exec {
         commandLine 'yarn', 'setup'
+        commandLine 'yarn', 'copy:jars'
       }
     }
   }
