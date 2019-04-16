@@ -16,6 +16,7 @@
 
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
+import { DataTable } from 'common/Table';
 
 const Layout = styled.div`
   display: flex;
@@ -54,4 +55,12 @@ const SubLink = styled(Link)`
   font-weight: 400;
 `;
 
-export { Layout, Link, SubLink };
+const Table = styled(DataTable)`
+  text-align: left;
+
+  .is-running {
+    background: ${props => props.theme.trBgColor};
+  }
+`;
+
+export { Layout, Link, SubLink, Table };
