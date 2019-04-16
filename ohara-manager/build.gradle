@@ -38,7 +38,6 @@ task setup {
     doLast {
       exec {
         commandLine 'yarn', 'setup'
-        commandLine 'yarn', 'copy:jars'
       }
     }
   }
@@ -77,6 +76,7 @@ task it {
         if(!project.hasProperty('nodePass')) throw new IllegalArgumentException("nodePass is required")
         String nodePass = project.getProperty('nodePass')
 
+        commandLine 'yarn', 'copy:jars'
         commandLine 'yarn', 'test:e2e:ci', '--port', port, '--configurator', configurator, '--nodeHost', nodeHost, '--nodePort', nodePort, '--nodeUser', nodeUser, '--nodePass', nodePass
       }
     }
