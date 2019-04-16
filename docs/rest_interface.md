@@ -2715,7 +2715,7 @@ hence, the returned JSON is in array type. The details of elements are shown bel
 ----------
 ## StreamApp
 
-Ohara StreamApp is a unparalleled wrap of kafka streaming. It leverages and enhances kafka streaming to make developer
+Ohara StreamApp is a unparalleled wrap of kafka streaming. It leverages and enhances [kafka streams](https://kafka.apache.org/documentation/streams/) to make developer
 easily design and implement the streaming application. More details of developing streaming application is in [custom stream guideline](custom_streamapp.md).
 
 Assume that you have completed a streaming application via ohara Java APIs, and you have generated a jar including your streaming code.
@@ -2724,12 +2724,18 @@ As with cluster APIs, ohara leverages docker container to host streaming applica
 container management tool including simple (based on ssh) and k8s when you are starting ohara.
 
 Before stating to use restful APIs, please ensure that all nodes have downloaded the [StreamApp image](https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp).
-The jar you uploaded to run streaming application will be packaged to the image and then be executed as docker container.
+The jar you uploaded to run streaming application will be included in the image and then executes as a docker container.
 The [StreamApp image](https://cloud.docker.com/u/oharastream/repository/docker/oharastream/streamapp) is kept in each node so don't worry about the network. We all hate re-download everything when running services.
 
-The properties of a StreamApp are shown below.
-1. id (**string**) — id of this streamApp
-1. state (**option(string)**) — only started/stopped streamApp has state.
+The following information of StreamApp are updated by ohara.
+1. workerClusterName (**string**) — worker cluster name this streamApp belong to
+1. id (**string**) — unique id of this streamApp
+1. name (**string**) — custom name of this streamApp
+1. instances ( **int**) — numbers of streamApp container
+1. jarInfo (**object**) — uploaded jar information
+1. fromTopics (**array(string)**) — topics of streamApp consume with
+1. toTopics (**array(string)**) — topics of streamApp produce to
+1. state (**option(string)**) — only started/failed streamApp has state
 1. lastModified (**long**) — last modified this jar time
 ----------
 ### start a StreamApp
@@ -2747,25 +2753,27 @@ The properties of a StreamApp are shown below.
 ----------
 ### stop a StreamApp
 
+This action will graceful stop and remove all docker containers belong to this streamApp.
+
 *PUT /v0/stream/${id}/stop*
 
 **Example Response**
 
 ```json
 {
-  "id": "147dd6f2-dc5e-4538-8cb7-fdcdb785a17d",
-  "state": "EXITED"
+  "id": "147dd6f2-dc5e-4538-8cb7-fdcdb785a17d"
 }
 ```
 ----------
 ### upload streamApp jars
 
-*POST /v0/stream/jars/${pipelineId}*
+*POST /v0/stream/jars*
 
 **Example Request**
 
 ```http request
 <form name="jarUpload" action="" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="workerClusterName" value="wk00"></input>
   <input type="file" name="streamapp"></input>
   <input type="file" name="streamapp"></input>
   <button type="submit">Submit</button>
@@ -2791,17 +2799,7 @@ The properties of a StreamApp are shown below.
 ----------
 ### delete a streamApp jar
 
-*DELETE /v0/stream/jars/${pipelineId}*
-
-**Example Request**
-
-```http request
-<form name="jarUpload" action="" method="post" enctype="multipart/form-data">
-  <input type="file" name="streamapp"></input>
-  <input type="file" name="streamapp"></input>
-  <button type="submit">Submit</button>
-</form>
-```
+*DELETE /v0/stream/jars/${id}*
 
 **Example Response**
 
@@ -2815,7 +2813,7 @@ The properties of a StreamApp are shown below.
 ----------
 ### list uploaded streamApp jars
 
-*GET /v0/stream/jars/${pipelineId}*
+*GET /v0/stream/jars/${workerClusterName}*
 
 **Example Response**
 
@@ -2835,6 +2833,8 @@ The properties of a StreamApp are shown below.
 ```
 ----------
 ### update streamApp jar
+
+Currently, this api is only used for changing jar name.
 
 *PUT /v0/stream/jars/${id}*
 
@@ -2860,14 +2860,6 @@ The properties of a StreamApp are shown below.
 
 *GET /v0/stream/property/${id}*
 
-**Example Request**
-
-```json
-{
-  "jarName": "new-streams.jar"
-}
-```
-
 **Example Response**
 
 1. id (**string**) — id of this streamApp
@@ -2875,7 +2867,8 @@ The properties of a StreamApp are shown below.
 1. name (**string**) — the streamApp name
 1. from (**array(string)**) — source topics for this streamApp
 1. to (**array(string)**) — target topics for this streamApp
-1. instance (**int**) — the number of running streamApp application at same time
+1. instances (**int**) — the number of running streamApp application at same time
+1. state (**string**) — the state of running streamApp. If the streamApp is not started, you won't see this field
 1. lastModified (**long**) — last modified this jar time
 
 ```json
@@ -2889,12 +2882,15 @@ The properties of a StreamApp are shown below.
   "to": [
     "topic2"
   ],
-  "instance": 3,
+  "instances": 3,
+  "state": "RUNNING",
   "lastModified": 1542102595892
 }
 ```
 ----------
 ### update properties from specific streamApp
+
+Update the properties of a non-started streamApp. 
 
 *PUT /v0/stream/property/${id}*
 
@@ -2903,13 +2899,18 @@ The properties of a StreamApp are shown below.
 1. name (**string**) — new streamApp name
 1. from (**array(string)**) — new source topics
 1. to (**array(string)**) — new target topics
-1. instance (**int**) — new number of running streamApp
+1. instances (**int**) — new number of running streamApp
 
-```json
 {
-  "jarName": "new-streams.jar"
+  "name": "my-new-app",
+  "from": [
+    "topic1"
+  ],
+  "to": [
+    "topic2"
+  ],
+  "instances": 3
 }
-```
 
 **Example Response**
 
@@ -2918,7 +2919,8 @@ The properties of a StreamApp are shown below.
 1. name (**string**) — the streamApp name
 1. from (**array(string)**) — source topics for this streamApp
 1. to (**array(string)**) — target topics for this streamApp
-1. instance (**int**) — the number of running streamApp application at same time
+1. instances (**int**) — the number of running streamApp application at same time
+1. state (**string**) — the state of running streamApp. If the streamApp is not started, you won't see this field
 1. lastModified (**long**) — last modified this jar time
 
 ```json
@@ -2932,7 +2934,8 @@ The properties of a StreamApp are shown below.
   "to": [
     "topic2"
   ],
-  "instance": 3,
+  "instances": 3,
+  "state": "RUNNING",
   "lastModified": 1542102595892
 }
 ```
