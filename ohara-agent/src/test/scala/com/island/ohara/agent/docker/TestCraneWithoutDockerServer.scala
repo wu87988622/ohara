@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestStreamCraneWithoutDockerServer extends SmallTest with Matchers {
+class TestCraneWithoutDockerServer extends SmallTest with Matchers {
 
   private[this] val SIZE: Int = 10
   private[this] val WAREHOUSE_NAME = CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH)
@@ -65,7 +65,7 @@ class TestStreamCraneWithoutDockerServer extends SmallTest with Matchers {
         .clusterName(WAREHOUSE_NAME)
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .instance(SIZE)
+        .instances(SIZE)
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))

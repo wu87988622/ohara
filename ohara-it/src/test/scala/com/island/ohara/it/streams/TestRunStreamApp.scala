@@ -117,8 +117,8 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
     val streamAppProp = result(
       streamAppPropertyAccess.update(jarData.head.id, req)
     )
-    streamAppProp.fromTopics.size shouldBe 1
-    streamAppProp.toTopics.size shouldBe 1
+    streamAppProp.from.size shouldBe 1
+    streamAppProp.to.size shouldBe 1
     streamAppProp.instances shouldBe 1
 
     //Start StreamApp

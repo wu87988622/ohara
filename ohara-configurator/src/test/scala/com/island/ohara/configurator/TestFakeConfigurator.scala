@@ -16,7 +16,7 @@
 
 package com.island.ohara.configurator
 
-import com.island.ohara.agent.ClusterCollie
+import com.island.ohara.agent.{ClusterCollie, Crane}
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.common.rule.SmallTest
 import org.junit.Test
@@ -51,6 +51,7 @@ class TestFakeConfigurator extends SmallTest with Matchers {
             .result(configurator.clusterCollie.clusters, 10 seconds)
             .flatMap(_._1.nodeNames)
             .foreach(name => nodes.exists(_.name == name) shouldBe true)
+          Await.result(configurator.crane.list, 10 seconds)
         } finally configurator.close()
     }
   }
@@ -78,12 +79,13 @@ class TestFakeConfigurator extends SmallTest with Matchers {
   }
 
   @Test
-  def reassignClusterCollieㄉ(): Unit = {
-    an[IllegalArgumentException] should be thrownBy Configurator
+  def assignCrane(): Unit = {
+    Configurator
       .builder()
-      .clusterCollie(MockitoSugar.mock[ClusterCollie])
-      // in fake mode, a fake collie will be created
+      // in fake mode, we use fake docker client
       .fake(1, 1)
+      // assign is ok, since crane is defined in build()
+      .crane(MockitoSugar.mock[Crane])
       .build()
   }
 }

@@ -21,9 +21,9 @@ import java.util.concurrent.ExecutorService
 import com.island.ohara.agent.ssh.{Cache, DockerClientCache}
 import com.island.ohara.agent.wharf.{StreamWarehouse, Warehouse}
 import com.island.ohara.agent.{Crane, NoSuchClusterException, NodeCollie}
+import com.island.ohara.client.configurator.v0.ClusterInfo
 import com.island.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import com.island.ohara.client.configurator.v0.{ClusterInfo, StreamApi}
 import com.island.ohara.common.util.{Releasable, ReleaseOnce}
 import com.typesafe.scalalogging.Logger
 
@@ -52,7 +52,12 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
         case (cluster, containers) =>
           Future
             .traverse(containers) { container =>
-              nodeCollie.node(container.nodeName).map(node => dockerCache.exec(node, _.forceRemove(container.name)))
+              nodeCollie
+                .node(container.nodeName)
+                .map(node => {
+                  dockerCache.exec(node, _.stop(container.name))
+                  dockerCache.exec(node, _.remove(container.name))
+                })
             }
             .map(_ => cluster)
       }
@@ -75,11 +80,17 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
       StreamClusterInfo(
         name = clusterName,
         imageName = first.imageName,
-        jarUrl = first.environments(StreamApi.JARURL_KEY),
-        brokerProps = first.environments(StreamApi.SERVERS_KEY),
-        fromTopics = first.environments(StreamApi.FROM_TOPIC_KEY).split(","),
-        toTopics = first.environments(StreamApi.TO_TOPIC_KEY).split(","),
-        nodeNames = containers.map(_.nodeName)
+        nodeNames = containers.map(_.nodeName),
+        state = {
+          // we only have two possible results here:
+          // 1. only assume cluster is "running" if all of containers are running
+          // 2. the cluster state is always "dead" if one of container state was not running
+          Some(containers.map(_.state).reduce[String] {
+            case (c1, c2) =>
+              if (c1 == ContainerState.RUNNING.name) c2
+              else ContainerState.DEAD.name
+          })
+        }
       )
     )
   }
@@ -95,7 +106,7 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
             dockerCache
               .exec(
                 node,
-                _.activeContainers(
+                _.containers(
                   containerName => containerName.startsWith(Warehouse.PREFIX_KEY)
                 )
               )
@@ -134,7 +145,6 @@ private[agent] class DockerCraneImpl(nodeCollie: NodeCollie, dockerCache: Docker
                 }
             )
             .map(_.toMap)
-
         parse(StreamWarehouse.STREAM_SERVICE_NAME, toStreamCluster)
       }
   }

@@ -36,7 +36,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
      nodeNames,
      imageName,
      jarUrl,
-     instance,
+     instances,
      appId,
      brokerProps,
      fromTopics,
@@ -55,13 +55,9 @@ class TestStreamWarehouse extends SmallTest with Matchers {
         StreamClusterInfo(
           name = clusterName,
           imageName = imageName,
-          jarUrl = jarUrl,
-          brokerProps = brokerProps,
-          fromTopics = fromTopics,
-          toTopics = toTopics,
           nodeNames = {
             if (CommonUtils.isEmpty(nodeNames.asJava))
-              CommonUtils.requireNonEmpty(Seq.fill(CommonUtils.requirePositiveInt(instance))("fake").asJava).asScala
+              CommonUtils.requireNonEmpty(Seq.fill(CommonUtils.requirePositiveInt(instances))("fake").asJava).asScala
             else CommonUtils.requireNonEmpty(nodeNames.asJava).asScala
           }
         ))
@@ -152,26 +148,26 @@ class TestStreamWarehouse extends SmallTest with Matchers {
   @Test
   def testNormalCase(): Unit = {
 
-    // 0 instance is not allowed
+    // 0 instances is not allowed
     an[IllegalArgumentException] should be thrownBy awaitResult(
       streamCreator()
         .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .instance(0)
+        .instances(0)
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))
         .toTopics(Seq("topic2"))
         .create())
 
-    // negative instance is not allowed
+    // negative instances is not allowed
     an[IllegalArgumentException] should be thrownBy awaitResult(
       streamCreator()
         .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .instance(-5)
+        .instances(-5)
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))
@@ -191,13 +187,13 @@ class TestStreamWarehouse extends SmallTest with Matchers {
         .toTopics(Seq("topic2"))
         .create()).nodeNames.size shouldBe 3
 
-    // nodeNames will override the effect of instance
+    // nodeNames will override the effect of instances
     awaitResult(
       streamCreator()
         .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .instance(10)
+        .instances(10)
         .nodeNames(Seq("bar", "foo"))
         .appId("app")
         .brokerProps("broker")
@@ -213,7 +209,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
         .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH))
         .imageName(CommonUtils.randomString())
         .jarUrl("jar")
-        .instance(10)
+        .instances(10)
         .appId("app")
         .brokerProps("broker")
         .fromTopics(Seq("topic1"))
@@ -227,7 +223,7 @@ class TestStreamWarehouse extends SmallTest with Matchers {
       .clusterName(CommonUtils.randomString(Warehouse.LIMIT_OF_NAME_LENGTH + 1))
       .imageName(CommonUtils.randomString())
       .jarUrl("jar")
-      .instance(10)
+      .instances(10)
       .appId("app")
       .brokerProps("broker")
       .fromTopics(Seq("topic1"))

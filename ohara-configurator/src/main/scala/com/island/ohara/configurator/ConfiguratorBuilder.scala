@@ -16,8 +16,11 @@
 
 package com.island.ohara.configurator
 
+import java.util.Objects
+
 import akka.http.scaladsl.server
 import com.island.ohara.agent._
+import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, NodeService}
@@ -41,6 +44,8 @@ class ConfiguratorBuilder {
   private[this] var terminationTimeout: Option[Duration] = Some(10 seconds)
   private[this] var extraRoute: Option[server.Route] = None
   private[this] var clusterCollie: Option[ClusterCollie] = None
+  private[this] var crane: Option[Crane] = None
+  private[this] var clientCache: Option[DockerClientCache] = None
 
   @Optional("default is none")
   def extraRoute(extraRoute: server.Route): ConfiguratorBuilder = {
@@ -162,6 +167,7 @@ class ConfiguratorBuilder {
     }
     collie.brokerCollie().addCluster(bkCluster)
     collie.workerCollie().addCluster(wkCluster)
+    this.clientCache = Some(DockerClientCache.fake())
     clusterCollie(collie)
   }
 
@@ -260,6 +266,7 @@ class ConfiguratorBuilder {
                    services = Seq.empty,
                    lastModified = CommonUtils.current()))
       .foreach(store.add)
+    this.clientCache = Some(DockerClientCache.fake())
     clusterCollie(collie)
   }
 
@@ -267,6 +274,12 @@ class ConfiguratorBuilder {
   def clusterCollie(clusterCollie: ClusterCollie): ConfiguratorBuilder = {
     if (this.clusterCollie.isDefined) throw new IllegalArgumentException(s"cluster collie is defined!!!")
     this.clusterCollie = Some(clusterCollie)
+    this
+  }
+
+  @Optional("default is implemented by docker")
+  def crane(crane: Crane): ConfiguratorBuilder = {
+    this.crane = Some(Objects.requireNonNull(crane))
     this
   }
 
@@ -280,7 +293,14 @@ class ConfiguratorBuilder {
       store = store,
       nodeCollie = nodeCollie(),
       clusterCollie =
-        clusterCollie.getOrElse(ClusterCollie.builderOfSsh().nodeCollie(nodeCollie()).executorDefault().build())
+        clusterCollie.getOrElse(ClusterCollie.builderOfSsh().nodeCollie(nodeCollie()).executorDefault().build()),
+      crane = crane.getOrElse(
+        Crane
+          .builderOfDocker()
+          .nodeCollie(nodeCollie())
+          .dockerClientCache(clientCache.getOrElse(DockerClientCache()))
+          .executorDefault()
+          .build())
     )
   }
 }

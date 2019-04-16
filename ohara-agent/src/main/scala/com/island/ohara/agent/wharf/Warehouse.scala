@@ -80,9 +80,9 @@ object Warehouse {
   final val DIVIDER: String = "-"
 
   /**
-    * docker does limit the length of name (< 64). And we "may" salt the name so we release only 30 chars to user.
+    * docker does limit the length of name (< 64). So we release only half length (32 chars) to user.
     */
-  final val LIMIT_OF_NAME_LENGTH: Int = 30
+  final val LIMIT_OF_NAME_LENGTH: Int = 32
 
   trait WarehouseCreator[T <: ClusterInfo] {
 

@@ -100,29 +100,31 @@ object StreamApi {
   val STREAM_PROPERTY_PREFIX_PATH: String = "property"
   val START_COMMAND: String = "start"
   val STOP_COMMAND: String = "stop"
+  val STATUS_COMMAND: String = "status"
 
   /**
-    * the streamApp data keeps into ohara Stores
+    * the streamApp description that is kept in ohara Stores
     *
     * @param pipelineId the ohara pipeline id
+    * @param clusterName the streamApp cluster name
     * @param id the streamApp unique id
     * @param name streamApp name in pipeline
-    * @param instances streamApp running configuration : num.stream.threads
+    * @param instances numbers of streamApp running container
     * @param jarInfo saving jar information
-    * @param fromTopics the candidate topics for streamApp consume from
-    * @param toTopics the candidate topics for streamApp produce to
+    * @param from the candidate topics for streamApp consume from
+    * @param to the candidate topics for streamApp produce to
     * @param lastModified this data change time
-    * @param state this streamApp current state (ContainerState)
     */
-  final case class StreamApp(pipelineId: String,
-                             id: String,
-                             name: String,
-                             instances: Int,
-                             jarInfo: JarApi.JarInfo,
-                             fromTopics: Seq[String],
-                             toTopics: Seq[String],
-                             lastModified: Long,
-                             state: Option[String] = None)
+  final case class StreamAppDescription(pipelineId: String,
+                                        clusterName: String,
+                                        id: String,
+                                        name: String,
+                                        instances: Int,
+                                        jarInfo: JarApi.JarInfo,
+                                        from: Seq[String],
+                                        to: Seq[String],
+                                        state: Option[String],
+                                        lastModified: Long)
       extends Data {
     override def kind: String = "streamApp"
     override def toString: String =
@@ -132,16 +134,30 @@ object StreamApi {
           name: $name,
           instances: $instances,
           jarInfo: $jarInfo,
-          fromTopics: $fromTopics,
-          toTopics: $toTopics,
-          state: $state
+          fromTopics: $from,
+          toTopics: $to
       """.stripMargin
   }
+  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat10(
+    StreamAppDescription)
 
-  // StreamApp Action Response Body
-  final case class StreamActionResponse(id: String, state: Option[String])
-  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamActionResponse] = jsonFormat2(
-    StreamActionResponse)
+  /**
+    * The Stream Cluster Information
+    *
+    * @param name cluster name
+    * @param imageName image name
+    * @param ports port list (useless in stream)
+    * @param nodeNames actual running nodes
+    * @param state the state of this warehouse (see '''ContainerState''')
+    */
+  final case class StreamClusterInfo(
+    name: String,
+    imageName: String,
+    // We don't care the ports since streamApp communicates by broker
+    ports: Seq[Int] = Seq.empty,
+    nodeNames: Seq[String] = Seq.empty,
+    state: Option[String] = None
+  ) extends ClusterInfo
 
   // StreamApp List Request Body
   final case class StreamListRequest(jarName: String)
@@ -153,7 +169,7 @@ object StreamApi {
     jsonFormat4(StreamListResponse)
 
   // StreamApp Property Request Body
-  final case class StreamPropertyRequest(name: String, fromTopics: Seq[String], toTopics: Seq[String], instances: Int)
+  final case class StreamPropertyRequest(name: String, from: Seq[String], to: Seq[String], instances: Int)
   implicit val STREAM_PROPERTY_REQUEST_JSON_FORMAT: RootJsonFormat[StreamPropertyRequest] = jsonFormat4(
     StreamPropertyRequest)
 
@@ -161,8 +177,8 @@ object StreamApi {
   final case class StreamPropertyResponse(id: String,
                                           jarName: String,
                                           name: String,
-                                          fromTopics: Seq[String],
-                                          toTopics: Seq[String],
+                                          from: Seq[String],
+                                          to: Seq[String],
                                           instances: Int,
                                           lastModified: Long)
   implicit val STREAM_PROPERTY_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamPropertyResponse] = jsonFormat7(
@@ -170,16 +186,19 @@ object StreamApi {
   )
 
   sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
-    def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse]
-    def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse]
+    def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+    def status(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
   }
   def accessOfAction(): ActionAccess = new ActionAccess {
     private[this] def url(id: String, action: String): String =
       s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id/$action"
-    override def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse] =
-      exec.put[StreamActionResponse, ErrorApi.Error](url(id, START_COMMAND))
-    override def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamActionResponse] =
-      exec.put[StreamActionResponse, ErrorApi.Error](url(id, STOP_COMMAND))
+    override def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](url(id, START_COMMAND))
+    override def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](url(id, STOP_COMMAND))
+    override def status(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
+      exec.put[StreamAppDescription, ErrorApi.Error](url(id, STATUS_COMMAND))
   }
 
   sealed abstract class ListAccess extends BasicAccess(s"$STREAM_PREFIX_PATH/$STREAM_LIST_PREFIX_PATH") {
@@ -273,28 +292,4 @@ object StreamApi {
     )(implicit executionContext: ExecutionContext): Future[StreamPropertyResponse] =
       access.update(id, request)
   }
-
-  /**
-    * The Stream Warehouse Cluster Information
-    *
-    * @param name cluster name
-    * @param imageName image name
-    * @param jarUrl jar url
-    * @param brokerProps broker list
-    * @param fromTopics from topic list
-    * @param toTopics to topic list
-    * @param ports port list (useless in stream)
-    * @param nodeNames actual running nodes
-    */
-  case class StreamClusterInfo(
-    name: String,
-    imageName: String,
-    jarUrl: String,
-    brokerProps: String,
-    fromTopics: Seq[String],
-    toTopics: Seq[String],
-    // We don't care the ports since streamApp is communicated by broker
-    ports: Seq[Int] = Seq.empty,
-    nodeNames: Seq[String]
-  ) extends ClusterInfo
 }

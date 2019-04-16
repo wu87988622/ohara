@@ -31,7 +31,7 @@ object DockerClientCache {
   def apply(): DockerClientCache = new DockerClientCacheImpl()
 
   // this is only for testing usage
-  private[agent] def fake(): DockerClientCache = new DockerClientCacheImpl() {
+  def fake(): DockerClientCache = new DockerClientCacheImpl() {
     val cache: mutable.HashMap[Node, DockerClient] =
       new mutable.HashMap[Node, DockerClient]()
 

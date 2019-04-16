@@ -30,7 +30,6 @@ import akka.stream.ActorMaterializer
 import com.island.ohara.agent._
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.agent.ssh.DockerClientCache
 import com.island.ohara.client.HttpExecutor
 import com.island.ohara.client.configurator.ConfiguratorApiInfo
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterCreationRequest
@@ -65,7 +64,8 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
                                           terminationTimeout: Duration,
                                           extraRoute: Option[server.Route])(implicit val store: DataStore,
                                                                             nodeCollie: NodeCollie,
-                                                                            val clusterCollie: ClusterCollie)
+                                                                            val clusterCollie: ClusterCollie,
+                                                                            val crane: Crane)
     extends ReleaseOnce
     with SprayJsonSupport {
 
@@ -97,9 +97,6 @@ class Configurator private[configurator] (advertisedHostname: Option[String],
 
   private[this] implicit val brokerCollie: BrokerCollie = clusterCollie.brokerCollie()
   private[this] implicit val workerCollie: WorkerCollie = clusterCollie.workerCollie()
-  //TODO : need to support k8s...by Sam
-  private[this] implicit val crane: Crane =
-    Crane.builderOfDocker().nodeCollie(nodeCollie).dockerClientCache(DockerClientCache()).executorDefault().build()
 
   private[this] def exceptionHandler(): ExceptionHandler = ExceptionHandler {
     case e @ (_: DeserializationException | _: ParsingException | _: IllegalArgumentException |

@@ -21,7 +21,7 @@ import com.island.ohara.agent.{NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorDescription
 import com.island.ohara.client.configurator.v0.Data
 import com.island.ohara.client.configurator.v0.PipelineApi._
-import com.island.ohara.client.configurator.v0.StreamApi.StreamApp
+import com.island.ohara.client.configurator.v0.StreamApi.StreamAppDescription
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerClient
@@ -189,7 +189,7 @@ private[configurator] object PipelineRoute {
                     )
                 }
 
-            case data: StreamApp =>
+            case data: StreamAppDescription =>
               Future.successful(
                 ObjectAbstract(
                   id = data.id,
@@ -245,8 +245,8 @@ private[configurator] object PipelineRoute {
               throw new IllegalArgumentException(
                 s"topic:${d.name} is run by ${d.brokerClusterName} so it can't be placed at pipeline:$name which is placed at broker cluster:${cluster.brokerClusterName}")
             else id
-          case _: StreamApp => id
-          case raw          => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
+          case _: StreamAppDescription => id
+          case raw                     => throw new IllegalArgumentException(s"${raw.getClass.getName} can't be placed at pipeline")
         }
         .recover {
           // the component has been removed!

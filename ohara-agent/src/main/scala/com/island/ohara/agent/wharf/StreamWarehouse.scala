@@ -35,7 +35,7 @@ private[agent] object StreamWarehouse {
   trait StreamCreator extends Warehouse.WarehouseCreator[StreamClusterInfo] {
 
     private[this] var jarUrl: String = _
-    private[this] var instance: Int = 0
+    private[this] var instances: Int = 0
     private[this] var appId: String = _
     private[this] var brokerProps: String = _
     private[this] var fromTopics: Seq[String] = Seq.empty
@@ -54,22 +54,22 @@ private[agent] object StreamWarehouse {
     }
 
     /**
-      * set the running instance for the streamApp
+      * set the running instances for the streamApp
       * NOTED: do not set this value if you had set the nodeNames
       *
-      * @param instance number of instance
+      * @param instances number of instances
       * @return the creator
       */
     @Optional("you can ignore this parameter if set nodeNames")
-    def instance(instance: Int): StreamCreator = {
-      this.instance = instance
+    def instances(instances: Int): StreamCreator = {
+      this.instances = instances
       this
     }
 
     /**
       *  set nodes for cluster
       *  NOTED: this is a async method since starting a cluster is always gradual.
-      *  ANOTHER NOTED: this value will override the effects of `instance`
+      *  ANOTHER NOTED: this value will override the effects of `instances`
       *
       * @param nodeNames nodes' name
       * @return this creator
@@ -130,8 +130,8 @@ private[agent] object StreamWarehouse {
       nodeNames,
       CommonUtils.requireNonEmpty(imageName),
       CommonUtils.requireNonEmpty(jarUrl),
-      // we check instance in StreamWarehouseImpl
-      instance,
+      // we check instances in StreamWarehouseImpl
+      instances,
       CommonUtils.requireNonEmpty(appId),
       CommonUtils.requireNonEmpty(brokerProps),
       CommonUtils.requireNonEmpty(fromTopics.asJava).asScala,
@@ -143,7 +143,7 @@ private[agent] object StreamWarehouse {
                            nodeNames: Seq[String],
                            imageName: String,
                            jarUrl: String,
-                           instance: Int,
+                           instances: Int,
                            appId: String,
                            brokerProps: String,
                            fromTopics: Seq[String],

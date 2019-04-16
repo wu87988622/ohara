@@ -62,11 +62,6 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
               }
               .map(_.map(node => node -> format(StreamWarehouse.STREAM_SERVICE_NAME, clusterName)).toMap)
               .flatMap { nodes =>
-                // add route in order to make each node can connect to others.
-//                val route: Map[String, String] = nodes.map {
-//                  case (node, _) =>
-//                    node.name -> CommonUtils.address(node.name)
-//                }
                 // ssh connection is slow so we submit request by multi-thread
                 Future
                   .sequence(nodes.map {
@@ -89,7 +84,6 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
                                 )
                               )
                               .name(name)
-//                              .route(route)
                               .execute()
                           )
                           Some(node.name)
@@ -115,11 +109,9 @@ private class StreamWarehouseImpl(nodeCollie: NodeCollie,
                     StreamClusterInfo(
                       name = clusterName,
                       imageName = imageName,
-                      jarUrl = jarUrl,
-                      brokerProps = brokerProps,
-                      fromTopics = fromTopics,
-                      toTopics = toTopics,
-                      nodeNames = successfulNodeNames
+                      nodeNames = successfulNodeNames,
+                      // creating warehouse success could be applied containers are "running"
+                      state = Some(ContainerState.RUNNING.name)
                     )
                   }
               }
