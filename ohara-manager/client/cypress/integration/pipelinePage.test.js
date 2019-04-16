@@ -15,10 +15,10 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-import { generateServiceNames } from '../support/utils';
+import { makeServiceNames } from '../utils';
 
 describe('PipelinePage', () => {
-  const serviceNames = generateServiceNames();
+  const serviceNames = makeServiceNames();
 
   before(() => {
     cy.initServices(serviceNames);

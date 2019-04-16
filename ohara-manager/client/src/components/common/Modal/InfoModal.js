@@ -75,6 +75,7 @@ const Modal = ({
   handleCancel,
   children,
   width = '300px',
+  testId,
 }) => {
   return (
     <ModalWrapper
@@ -83,9 +84,10 @@ const Modal = ({
       ariaHideApp={false}
       width={width}
       onRequestClose={handleCancel}
+      testId={testId}
     >
       <H2Wrapper>{title}</H2Wrapper>
-      <CloseBtn onClick={handleCancel}>
+      <CloseBtn data-testid="close-btn" onClick={handleCancel}>
         <i className="fas fa-times" />
       </CloseBtn>
       {children}
@@ -99,6 +101,7 @@ Modal.propTypes = {
   title: PropTypes.string.isRequired,
   children: PropTypes.any.isRequired,
   width: PropTypes.string,
+  testId: PropTypes.string,
 };
 
 export default Modal;

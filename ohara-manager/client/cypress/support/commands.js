@@ -16,7 +16,7 @@
 
 import 'cypress-testing-library/add-commands';
 
-import { makeRandomPort, getFakeNode } from './utils';
+import { makeRandomPort, getFakeNode } from '../utils';
 import { setUserKey } from '../../src/utils/authUtils';
 import { VALID_USER } from '../../src/constants/cypress';
 import * as _ from '../../src/utils/commonUtils';
@@ -98,10 +98,6 @@ Cypress.Commands.add(
   ({ zookeeperName, brokerName, workerName }) => {
     cy.log('CLEAR SERVICES');
 
-    console.log({ zookeeperName });
-    console.log({ brokerName });
-    console.log({ workerName });
-
     const req = (endPoint, serviceName) => {
       // We need to wait for specific service removed from the node
       // then we can move on and remove another service
@@ -162,29 +158,6 @@ Cypress.Commands.add('insertNode', node => {
   });
 });
 
-Cypress.Commands.add('testNodeCheck', () => {
-  Cypress.log({
-    name: 'TEST_NODE_CHECK',
-  });
-  const _ = Cypress._;
-
-  cy.request('GET', 'api/nodes')
-    .then(res => res.body)
-    .then(nodes => {
-      if (_.isEmpty(nodes)) {
-        Cypress.log({
-          name: 'ADD_TEST_NODE',
-        });
-        cy.request('POST', 'api/nodes', {
-          name: Cypress.env('nodeName'),
-          port: Cypress.env('nodePort'),
-          user: Cypress.env('nodeID'),
-          password: Cypress.env('nodePW'),
-        });
-      }
-    });
-});
-
 Cypress.Commands.add('deleteAllPipelines', () => {
   Cypress.log({
     name: 'DELETE_ALL_PIPELINES',
@@ -201,6 +174,16 @@ Cypress.Commands.add('deleteAllPipelines', () => {
         });
       }
     });
+});
+
+Cypress.Commands.add('deleteTopic', topicName => {
+  cy.request('GET', 'api/topics').then(res => {
+    res.body.forEach(({ name, id }) => {
+      if (name === topicName) {
+        cy.request('DELETE', `api/topics/${id}`);
+      }
+    });
+  });
 });
 
 Cypress.Commands.add('deletePipeline', pipelineName => {
@@ -245,11 +228,8 @@ Cypress.Commands.add(
     });
   },
 );
-Cypress.Commands.add('uploadPlugin', (selector, fixturePath, name, type) => {
-  Cypress.log({
-    name: 'UPLOAD_PLUGIN',
-  });
 
+Cypress.Commands.add('uploadPlugin', (selector, fixturePath, name, type) => {
   cy.get(selector).then(subject =>
     cy.window().then(win =>
       cy

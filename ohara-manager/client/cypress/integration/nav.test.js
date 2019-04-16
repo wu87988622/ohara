@@ -23,26 +23,49 @@ describe('Header', () => {
 
   it('visits all pages from main navigation', () => {
     cy.get('nav').within(() => {
-      cy.getByText('Pipelines').click();
-      cy.location('pathname').should('eq', URLS.PIPELINE);
+      cy.getByText('Pipelines')
+        .click()
+        .location('pathname')
+        .should('eq', URLS.PIPELINE);
 
-      cy.getByText('Nodes').click();
-      cy.location('pathname').should('eq', URLS.NODES);
+      cy.getByText('Nodes')
+        .click()
+        .location('pathname')
+        .should('eq', URLS.NODES);
 
-      cy.getByText('Services').click();
-      cy.location('pathname').should('contains', URLS.SERVICES);
+      cy.getByText('Services')
+        .click()
+        .location('pathname')
+        .should('contains', URLS.SERVICES);
     });
   });
 
-  // ignore this for now. The config modal is not currently visible in the UI
-  it.skip('toggles configuration modal', () => {
-    cy.getByTestId('config-btn').click();
-    cy.get('.ReactModal__Content')
-      .contains('Configuration')
-      .should('be.visible');
+  it('shows ohara version info', () => {
+    cy.request('GET', 'api/info')
+      .then(({ body: { versionInfo } }) => versionInfo)
+      .as('info');
 
-    cy.getByTestId('close-btn').click();
+    cy.getByTestId('version-btn')
+      .click()
+      .getByTestId('info-modal')
+      .then($el => {
+        cy.wrap($el)
+          .should('be.visible')
+          .getByText('Ohara version')
+          .should('be.visible');
 
-    cy.get('.ReactModal__Content').should('not.be.visible');
+        cy.get('@info').then(({ version, revision, date }) => {
+          cy.getByText(version)
+            .should('exist')
+            .getByText(revision)
+            .should('exist')
+            .getByText(date)
+            .should('exist');
+        });
+      })
+      .getByTestId('close-btn')
+      .click()
+      .queryByTestId('info-modal', { timeout: 500 }) // we don't want to throw here, so use queryByTestId instead of getByTestId
+      .should('not.be.visible');
   });
 });

@@ -217,6 +217,7 @@ class Header extends React.Component {
           width="440px"
           onRequestClose={this.handleVersionModalClose}
           handleCancel={this.handleVersionModalClose}
+          testId="info-modal"
         >
           {isLoading ? (
             <LoaderWrapper>

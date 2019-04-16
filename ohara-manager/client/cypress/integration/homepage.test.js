@@ -18,7 +18,8 @@ import { PIPELINE, HOME } from '../../src/constants/urls';
 
 describe('HomePage', () => {
   it('loads with the correct URL', () => {
-    cy.visit(HOME);
-    cy.location('pathname').should('eq', PIPELINE);
+    cy.visit(HOME)
+      .location('pathname')
+      .should('eq', PIPELINE);
   });
 });

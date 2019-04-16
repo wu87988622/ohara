@@ -17,29 +17,45 @@
 import { BROKER } from '../../src/constants/urls';
 
 describe('BrokerPage', () => {
+  beforeEach(() => cy.visit(BROKER));
+
+  it('has correct page heading', () => {
+    cy.getByText('Services > Broker').should('have.length', 1);
+  });
+
+  it('displays broker node info in the list', () => {
+    const brokerList = Cypress.env('node_name');
+    cy.request('GET', 'api/brokers')
+      .then(res => res.body[0].clientPort) // we now only have one broker cluster!
+      .as('clientPort');
+
+    cy.get('@clientPort').then(port => {
+      const expected = `${brokerList}:${port}`;
+      cy.getByLabelText('Broker list').should('have.value', expected);
+    });
+  });
+
   it('creates a new topic', () => {
-    cy.visit(BROKER);
+    const topicName = 'test topic';
 
-    cy.deleteAllTopics();
-
-    cy.getByText('New topic').click();
-
-    cy.get('.ReactModal__Content').should('have.length', 1);
-
-    cy.getByLabelText('Topic name')
+    cy.visit(BROKER)
+      .getByText('New topic')
       .click()
-      .type('test cluster');
-    cy.getByLabelText('Partitions')
+      .getByLabelText('Topic name')
       .click()
-      .type('1');
-    cy.getByLabelText('Replication factor')
+      .type(topicName)
+      .getByLabelText('Partitions')
       .click()
-      .type('1');
-    cy.getByText('Save').click();
-    cy.get('.toast-success').should('have.length', 1);
-    cy.get('.ReactModal__Content').should('have.length', 0);
-    cy.get('td')
-      .contains('test cluster')
-      .should('have.length', 1);
+      .type('1')
+      .getByLabelText('Replication factor')
+      .click()
+      .type('1')
+      .getByText('Save')
+      .click()
+      .getByText('Topic successfully created!')
+      .should('have.length', 1)
+      .getByText(topicName)
+      .should('have.length', 1)
+      .deleteTopic(topicName);
   });
 });

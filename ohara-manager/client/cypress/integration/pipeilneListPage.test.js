@@ -15,7 +15,7 @@
  */
 
 import * as URLS from '../../src/constants/urls';
-import { makeRandomStr, makeServiceNames } from '../support/utils';
+import { makeRandomStr, makeServiceNames } from '../utils';
 
 describe('PipelineListPage', () => {
   const serviceNames = makeServiceNames();
@@ -46,8 +46,6 @@ describe('PipelineListPage', () => {
   it('edits a pipeline', () => {
     const pipelineName = makeRandomStr();
 
-    // hard code the wk00 name for now, we'll
-    // addressed this in another issue, see #264
     cy.insertPipeline(serviceNames.workerName, { name: pipelineName })
       .visit(URLS.PIPELINE)
       .getByTestId('edit-pipeline')

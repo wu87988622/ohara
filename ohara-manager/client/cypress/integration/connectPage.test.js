@@ -18,31 +18,31 @@ import { CONNECT } from '../../src/constants/urls';
 
 describe('ConnectPage', () => {
   it('creates a new cluster', () => {
-    cy.testNodeCheck();
+    const nodeName = Cypress.env('node_name');
+    const clusterName = 'testcluster';
 
-    cy.visit(CONNECT);
-
-    cy.getByText('New cluster').click();
-
-    cy.getByPlaceholderText('cluster00').type('testcluster');
-    cy.getByLabelText('Port')
+    cy.visit(CONNECT)
+      .getByText('New cluster')
       .click()
-      .type('65535');
+      .getByPlaceholderText('cluster00')
+      .type(clusterName)
+      .getByLabelText('Port')
+      .click()
+      .type('65535')
+      .getByText('Add node')
+      .click()
+      .getByText(nodeName)
+      .click();
 
-    cy.getByText('Add node').click();
-    cy.get('.ReactModal__Content').should('have.length', 2);
-
-    cy.getByText(Cypress.env('nodeName')).click();
-    cy.get('div.ReactModal__Content')
+    cy.get('.ReactModal__Content')
       .eq(1)
       .within(() => {
         cy.getByText('Add').click();
-      });
-    cy.get('.ReactModal__Content').should('have.length', 1);
-    cy.getByText(Cypress.env('nodeName')).should('have.length', 1);
-
-    cy.getByText('Add plugin').click();
-    cy.get('.ReactModal__Content').should('have.length', 2);
+      })
+      .getByText(nodeName)
+      .should('have.length', 1)
+      .getByText('Add plugin')
+      .click();
 
     cy.uploadPlugin(
       'input[type=file]',
@@ -56,6 +56,7 @@ describe('ConnectPage', () => {
       .within(() => {
         cy.getByText('Add').click();
       });
+
     cy.get('.ReactModal__Content').should('have.length', 1);
     cy.getByText('ohara-it-sink.jar').should('have.length', 1);
     cy.get('div.ReactModal__Content')
@@ -64,7 +65,7 @@ describe('ConnectPage', () => {
         cy.getByText('Add').click();
       });
     cy.get('td').within(() => {
-      cy.getByText('testcluster').should('have.length', 1);
+      cy.getByText(clusterName).should('have.length', 1);
     });
   });
 });

@@ -88,6 +88,7 @@ class WorkerNewModal extends React.Component {
 
   render() {
     const { activeModal } = this.state;
+
     return (
       <Form
         onSubmit={this.onSubmit}
@@ -123,6 +124,7 @@ class WorkerNewModal extends React.Component {
                   <s.FormRow>
                     <s.FormCol width="26rem">
                       <Label
+                        htmlFor="cluster-input"
                         tooltipAlignment="right"
                         tooltipRender={
                           <div>
@@ -133,12 +135,11 @@ class WorkerNewModal extends React.Component {
                             <p>2. Must be between 1 and 30 characters long</p>
                           </div>
                         }
-                        htmlFor="clInput"
                       >
                         Service
                       </Label>
                       <Field
-                        id="clInput"
+                        id="cluster-input"
                         name="name"
                         component={InputField}
                         width="24rem"
@@ -150,14 +151,14 @@ class WorkerNewModal extends React.Component {
                     </s.FormCol>
                     <s.FormCol width="8rem">
                       <Label
+                        htmlFor="port-input"
                         tooltipString="Must be between 5000 and 65535"
-                        htmlFor="poInput"
                         tooltipAlignment="right"
                       >
                         Port
                       </Label>
                       <Field
-                        id="poInput"
+                        id="port-input"
                         name="clientPort"
                         component={InputField}
                         type="number"

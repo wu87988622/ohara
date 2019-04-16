@@ -95,8 +95,11 @@ class BrokerListPage extends React.Component {
               <H2>Services > Broker</H2>
             </FormGroup>
             <FormGroup isInline>
-              <Label style={{ marginRight: '2rem' }}>Broker list</Label>
+              <Label htmlFor="broker-list" style={{ marginRight: '2rem' }}>
+                Broker list
+              </Label>
               <Input
+                id="broker-list"
                 width="30rem"
                 value={join(this.getNodeList(), ', ')}
                 data-testid="broker-list"

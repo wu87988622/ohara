@@ -63,8 +63,11 @@ class ZookeeperListPage extends React.Component {
             <TableLoader />
           ) : (
             <FormGroup isInline>
-              <Label style={{ marginRight: '2rem' }}>Zookeeper list</Label>
+              <Label htmlFor="zookeeper-list" style={{ marginRight: '2rem' }}>
+                Zookeeper list
+              </Label>
               <Input
+                id="zookeeper-list"
                 width="30rem"
                 value={join(this.getNodeList(), ', ')}
                 data-testid="zookeeper-list"
