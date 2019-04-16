@@ -9,3 +9,5 @@ yarn-error.log
 /client/cypress/screenshots
 /client/junit.xml
 /client/cypress.env.json
+/client/cypress/fixtures/plugin
+/client/cypress/fixtures/streamApp
