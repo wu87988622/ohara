@@ -107,8 +107,9 @@ object K8SJson {
   final case class CreatePodContainer(name: String,
                                       image: String,
                                       env: Seq[CreatePodEnv],
-                                      ports: Seq[CreatePodPortMapping])
-  implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = jsonFormat4(CreatePodContainer)
+                                      ports: Seq[CreatePodPortMapping],
+                                      imagePullPolicy: String)
+  implicit val CREATEPOD_CONTAINER_FORMAT: RootJsonFormat[CreatePodContainer] = jsonFormat5(CreatePodContainer)
 
   final case class CreatePodNodeSelector(hostname: String)
   implicit val CREATEPOD_NODESELECTOR_FORMAT: RootJsonFormat[CreatePodNodeSelector] =

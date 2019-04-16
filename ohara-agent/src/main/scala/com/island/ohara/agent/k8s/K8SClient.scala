@@ -236,6 +236,9 @@ object K8SClient {
         private[this] var nodename: String = _
         private[this] var domainName: String = _
         private[this] var labelName: String = _
+
+        private[this] var imagePullPolicy: ImagePullPolicy.Value = ImagePullPolicy.IfNotPresent
+
         private[this] var envs: Map[String, String] = Map.empty
         private[this] var ports: Map[Int, Int] = Map.empty
 
@@ -279,6 +282,11 @@ object K8SClient {
           this
         }
 
+        override def pullImagePolicy(imagePullPolicy: ImagePullPolicy.Value): ContainerCreator = {
+          this.imagePullPolicy = imagePullPolicy
+          this
+        }
+
         override def run()(implicit executionContext: ExecutionContext): Option[ContainerInfo] = {
           val podSpec = CreatePodSpec(
             CreatePodNodeSelector(nodename),
@@ -289,7 +297,8 @@ object K8SClient {
               CreatePodContainer(labelName,
                                  imageName,
                                  envs.map(x => CreatePodEnv(x._1, x._2)).toSeq,
-                                 ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq))
+                                 ports.map(x => CreatePodPortMapping(x._1, x._2)).toSeq,
+                                 imagePullPolicy.toString))
           )
 
           val requestJson =
@@ -360,6 +369,11 @@ object K8SClient {
     def domainName(domainName: String): ContainerCreator
 
     def labelName(labelName: String): ContainerCreator
+
+    def pullImagePolicy(imagePullPolicy: ImagePullPolicy.Value): ContainerCreator
   }
 
+  object ImagePullPolicy extends Enumeration {
+    val Always, Never, IfNotPresent = Value
+  }
 }

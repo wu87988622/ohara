@@ -126,3 +126,6 @@ curl -H "Content-Type: application/json" \
 ```
 # kubectl get pods
 ```
+
+## Other
+* OharaStream K8SClient ImagePullPolicy default is IfNotPresent.
