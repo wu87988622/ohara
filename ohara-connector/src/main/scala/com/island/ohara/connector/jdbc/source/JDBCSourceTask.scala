@@ -88,7 +88,7 @@ class JDBCSourceTask extends RowSourceTask {
               .sourceOffset(JDBCSourceTask.offset(offsetTimestampValue).asJava)
               //Create Ohara Row
               .row(row(newSchema, columns))
-              .topic(_)
+              .topicName(_)
               .build())
       }
       .toList

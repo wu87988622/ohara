@@ -183,7 +183,7 @@ class FtpSourceTask extends RowSourceTask {
           case (index, row) =>
             val p = partition(path).asJava
             val o = offset(index).asJava
-            topics.map(t => RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).row(row).topic(t).build())
+            topics.map(t => RowSourceRecord.builder().sourcePartition(p).sourceOffset(o).row(row).topicName(t).build())
         }.toSeq
         // ok. all data are prepared. let update the cache
         rows.foreach {

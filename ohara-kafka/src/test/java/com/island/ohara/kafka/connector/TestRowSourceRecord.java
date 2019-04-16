@@ -37,7 +37,27 @@ public class TestRowSourceRecord extends SmallTest {
 
   @Test(expected = NullPointerException.class)
   public void requireRow() {
-    RowSourceRecord.builder().topic("Adasd").build();
+    RowSourceRecord.builder().topicName("Adasd").build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullRow() {
+    RowSourceRecord.builder().row(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullTopicName() {
+    RowSourceRecord.builder().topicName(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullSourcePartition() {
+    RowSourceRecord.builder().sourcePartition(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullSourceOffset() {
+    RowSourceRecord.builder().sourcePartition(null);
   }
 
   @Test
@@ -45,8 +65,8 @@ public class TestRowSourceRecord extends SmallTest {
     Row row = Row.of(Cell.of(methodName(), 123));
     String topic = methodName();
 
-    RowSourceRecord r = RowSourceRecord.builder().topic(topic).row(row).build();
-    assertEquals(topic, r.topic());
+    RowSourceRecord r = RowSourceRecord.builder().topicName(topic).row(row).build();
+    assertEquals(topic, r.topicName());
     assertEquals(row, r.row());
     assertFalse(r.partition().isPresent());
     assertFalse(r.timestamp().isPresent());
@@ -65,18 +85,38 @@ public class TestRowSourceRecord extends SmallTest {
 
     RowSourceRecord r =
         RowSourceRecord.builder()
-            .topic(topic)
+            .topicName(topic)
             .row(row)
             .timestamp(ts)
             .partition(partition)
             .sourceOffset(sourceOffset)
             .sourcePartition(sourcePartition)
             .build();
-    assertEquals(topic, r.topic());
+    assertEquals(topic, r.topicName());
     assertEquals(row, r.row());
     assertEquals(ts, (long) r.timestamp().get());
     assertEquals(partition, (int) r.partition().get());
     assertEquals(sourceOffset, r.sourceOffset());
     assertEquals(sourcePartition, r.sourcePartition());
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void failedToModifySourcePartition() {
+    RowSourceRecord.builder()
+        .topicName(methodName())
+        .row(Row.of(Cell.of(methodName(), 123)))
+        .build()
+        .sourceOffset()
+        .remove("a");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void failedToModifySourceOffset() {
+    RowSourceRecord.builder()
+        .topicName(methodName())
+        .row(Row.of(Cell.of(methodName(), 123)))
+        .build()
+        .sourceOffset()
+        .remove("a");
   }
 }

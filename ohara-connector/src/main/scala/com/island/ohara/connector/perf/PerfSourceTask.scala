@@ -60,7 +60,7 @@ class PerfSourceTask extends RowSourceTask {
           )
         }: _*
       )
-      val records: Seq[RowSourceRecord] = topics.map(RowSourceRecord.builder().row(row).topic(_).build())
+      val records: Seq[RowSourceRecord] = topics.map(RowSourceRecord.builder().row(row).topicName(_).build())
       lastPoll = current
       (0 until props.batch).flatMap(_ => records).asJava
     } else Seq.empty.asJava

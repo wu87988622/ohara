@@ -86,7 +86,7 @@ public class TestConnectorProps extends SmallTest {
           @Override
           protected List<RowSourceRecord> _poll() {
             return Collections.singletonList(
-                RowSourceRecord.builder().row(row).topic(CommonUtils.randomString()).build());
+                RowSourceRecord.builder().row(row).topicName(CommonUtils.randomString()).build());
           }
         };
     String connectorName = CommonUtils.randomString();

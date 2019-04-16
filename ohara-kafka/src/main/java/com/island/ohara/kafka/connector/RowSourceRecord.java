@@ -19,6 +19,7 @@ package com.island.ohara.kafka.connector;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
+import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +31,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 public class RowSourceRecord {
   private final Map<String, ?> sourcePartition;
   private final Map<String, ?> sourceOffset;
-  private final String topic;
+  private final String topicName;
 
   @Nullable("thanks to kafka")
   private final Integer partition;
@@ -43,13 +44,13 @@ public class RowSourceRecord {
   private RowSourceRecord(
       Map<String, ?> sourcePartition,
       Map<String, ?> sourceOffset,
-      String topic,
+      String topicName,
       Integer partition,
       Row row,
       Long timestamp) {
-    this.sourcePartition = sourcePartition;
-    this.sourceOffset = sourceOffset;
-    this.topic = topic;
+    this.sourcePartition = Collections.unmodifiableMap(Objects.requireNonNull(sourcePartition));
+    this.sourceOffset = Collections.unmodifiableMap(Objects.requireNonNull(sourceOffset));
+    this.topicName = topicName;
     this.partition = partition;
     this.row = row;
     this.timestamp = timestamp;
@@ -63,8 +64,8 @@ public class RowSourceRecord {
     return sourceOffset;
   }
 
-  public String topic() {
-    return topic;
+  public String topicName() {
+    return topicName;
   }
 
   public Optional<Integer> partition() {
@@ -80,7 +81,7 @@ public class RowSourceRecord {
   }
 
   public static RowSourceRecord of(String topic, Row row) {
-    return builder().row(row).topic(topic).build();
+    return builder().row(row).topicName(topic).build();
   }
 
   /**
@@ -91,7 +92,7 @@ public class RowSourceRecord {
    */
   static RowSourceRecord of(SourceRecord record) {
     Builder builder = new Builder();
-    builder.topic(record.topic());
+    builder.topicName(record.topic());
     // kakfa fucking love null!!! We have got to handle the null manually....
     if (record.sourceOffset() != null) builder.sourceOffset(record.sourceOffset());
     if (record.sourcePartition() != null) builder.sourcePartition(record.sourcePartition());
@@ -110,7 +111,7 @@ public class RowSourceRecord {
     return new SourceRecord(
         sourcePartition(),
         sourceOffset(),
-        topic(),
+        topicName(),
         partition,
         Schema.BYTES_SCHEMA,
         Serializer.ROW.to(row()),
@@ -134,7 +135,7 @@ public class RowSourceRecord {
     private Integer partition = null;
     private Row row = null;
     private Long timestamp = null;
-    private String topic = null;
+    private String topicName = null;
 
     @com.island.ohara.common.annotations.Optional("default is empty")
     public Builder sourcePartition(Map<String, ?> sourcePartition) {
@@ -166,8 +167,8 @@ public class RowSourceRecord {
       return this;
     }
 
-    public Builder topic(String topic) {
-      this.topic = topic;
+    public Builder topicName(String topicName) {
+      this.topicName = CommonUtils.requireNonEmpty(topicName);
       return this;
     }
 
@@ -175,7 +176,7 @@ public class RowSourceRecord {
       return new RowSourceRecord(
           Objects.requireNonNull(sourcePartition),
           Objects.requireNonNull(sourceOffset),
-          Objects.requireNonNull(topic),
+          Objects.requireNonNull(topicName),
           partition,
           Objects.requireNonNull(row),
           timestamp);

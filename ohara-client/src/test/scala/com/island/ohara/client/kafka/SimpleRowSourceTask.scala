@@ -53,7 +53,7 @@ class SimpleRowSourceTask extends RowSourceTask {
           .filter(_.key.isPresent)
           .map(_.key.get)
           .flatMap(row =>
-            config.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topic(topic).build()))
+            config.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topicName(topic).build()))
           .foreach(r => queue.put(r))
       } finally Releasable.close(consumer)
     }

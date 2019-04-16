@@ -34,7 +34,7 @@ class MyConnectorTask extends RowSourceTask {
     val current = System.currentTimeMillis()
     if (current - lastSent >= 1000) {
       lastSent = current
-      java.util.Collections.singletonList(RowSourceRecord.builder().topic(topicName).row(ROW).build())
+      java.util.Collections.singletonList(RowSourceRecord.builder().topicName(topicName).row(ROW).build())
     } else java.util.Collections.emptyList()
   }
 }
