@@ -15,14 +15,14 @@
  */
 
 import React from 'react';
-import { isEmpty, join, map, get, orderBy } from 'lodash';
+import { isEmpty, get, orderBy } from 'lodash';
 
 import * as brokerApi from 'api/brokerApi';
 import * as topicApi from 'api/topicApi';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { TableLoader } from 'common/Loader';
-import { FormGroup, Input, Label } from 'common/Form';
+import { FormGroup } from 'common/Form';
 import { primaryBtn } from 'theme/btnTheme';
 
 import TopicNewModal from '../TopicNewModal';
@@ -30,7 +30,7 @@ import * as s from './styles';
 
 class BrokerListPage extends React.Component {
   headers = ['TOPIC NAME', 'PARTITIONS', 'REPLICATION FACTOR'];
-
+  brokerHeaders = ['SERVICES', 'PORT', 'NODES'];
   state = {
     isLoading: true,
     broker: [],
@@ -65,49 +65,32 @@ class BrokerListPage extends React.Component {
     }
   };
 
-  getNodeList = () => {
-    const { broker } = this.state;
-    if (!broker) return [];
-
-    return map(broker.nodeNames, nodeName => {
-      return `${nodeName}:${broker.clientPort}`;
-    });
-  };
-
   render() {
     const { isLoading, topics, isModalOpen, broker } = this.state;
     const isNewTopicBtnDisabled = isEmpty(broker) ? true : false;
 
     return (
       <React.Fragment>
-        {isLoading && (
-          <Box>
-            <FormGroup isInline>
-              <H2>Services > Broker</H2>
-            </FormGroup>
+        <Box>
+          <FormGroup isInline>
+            <H2>Services > Broker</H2>
+          </FormGroup>
+          {isLoading ? (
             <TableLoader />
-          </Box>
-        )}
-
-        {!isLoading && (
-          <Box>
-            <FormGroup isInline>
-              <H2>Services > Broker</H2>
-            </FormGroup>
-            <FormGroup isInline>
-              <Label htmlFor="broker-list" style={{ marginRight: '2rem' }}>
-                Broker list
-              </Label>
-              <Input
-                id="broker-list"
-                width="30rem"
-                value={join(this.getNodeList(), ', ')}
-                data-testid="broker-list"
-                disabled
-              />
-            </FormGroup>
-          </Box>
-        )}
+          ) : (
+            <s.Table headers={this.brokerHeaders}>
+              <tr>
+                <td>{broker.name}</td>
+                <td>{broker.clientPort}</td>
+                <td>
+                  {broker.nodeNames.map(nodeName => (
+                    <div key={nodeName}>{nodeName}</div>
+                  ))}
+                </td>
+              </tr>
+            </s.Table>
+          )}
+        </Box>
 
         {!isLoading && (
           <Box>

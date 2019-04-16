@@ -15,19 +15,23 @@
  */
 
 import React from 'react';
-import { isEmpty, join, map, get } from 'lodash';
+import { isEmpty, map, get } from 'lodash';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import { Box } from 'common/Layout';
 import { H2 } from 'common/Headings';
 import { TableLoader } from 'common/Loader';
-import { FormGroup, Input, Label } from 'common/Form';
+import { FormGroup } from 'common/Form';
+
+import * as s from './styles';
 
 class ZookeeperListPage extends React.Component {
   state = {
     isLoading: true,
     zookeeper: [],
   };
+
+  zookeeperHeaders = ['SERVICES', 'PORT', 'NODES'];
 
   componentDidMount() {
     this.fetchZookeepers();
@@ -45,14 +49,13 @@ class ZookeeperListPage extends React.Component {
   getNodeList = () => {
     const { zookeeper } = this.state;
     if (!zookeeper) return [];
-
     return map(zookeeper.nodeNames, nodeName => {
       return `${nodeName}:${zookeeper.clientPort}`;
     });
   };
 
   render() {
-    const { isLoading } = this.state;
+    const { isLoading, zookeeper } = this.state;
     return (
       <React.Fragment>
         <Box>
@@ -62,18 +65,17 @@ class ZookeeperListPage extends React.Component {
           {isLoading ? (
             <TableLoader />
           ) : (
-            <FormGroup isInline>
-              <Label htmlFor="zookeeper-list" style={{ marginRight: '2rem' }}>
-                Zookeeper list
-              </Label>
-              <Input
-                id="zookeeper-list"
-                width="30rem"
-                value={join(this.getNodeList(), ', ')}
-                data-testid="zookeeper-list"
-                disabled
-              />
-            </FormGroup>
+            <s.Table headers={this.zookeeperHeaders}>
+              <tr>
+                <td>{zookeeper.name}</td>
+                <td>{zookeeper.clientPort}</td>
+                <td>
+                  {zookeeper.nodeNames.map(nodeName => (
+                    <div key={nodeName}>{nodeName}</div>
+                  ))}
+                </td>
+              </tr>
+            </s.Table>
           )}
         </Box>
       </React.Fragment>
