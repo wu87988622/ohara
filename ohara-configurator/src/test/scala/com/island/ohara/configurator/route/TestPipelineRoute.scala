@@ -677,11 +677,7 @@ class TestPipelineRoute extends SmallTest with Matchers {
 
     val filePath = File.createTempFile("empty_", ".jar").getPath
     val streamapp = result(
-      StreamApi
-        .accessOfList()
-        .hostname(configurator.hostname)
-        .port(configurator.port)
-        .upload(pipeline.id, Seq(filePath))
+      StreamApi.accessOfList().hostname(configurator.hostname).port(configurator.port).upload(Seq(filePath), None)
     )
 
     result(

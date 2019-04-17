@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package com.island.ohara.client
-import com.island.ohara.client.configurator.v0.StreamApi
+package com.island.ohara.client.configurator.v0
+
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.VersionUtils
 import org.junit.Test
@@ -38,4 +38,9 @@ class TestStreamApi extends SmallTest with Matchers {
     an[IllegalArgumentException] should be thrownBy StreamApi.formatAppId(appId)
   }
 
+  @Test
+  def checkClusterNameChar(): Unit = {
+    val appId = "this!@is#_not@@allow))string"
+    an[IllegalArgumentException] should be thrownBy StreamApi.formatClusterName(appId)
+  }
 }

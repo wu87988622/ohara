@@ -2733,8 +2733,8 @@ The following information of StreamApp are updated by ohara.
 1. name (**string**) — custom name of this streamApp
 1. instances ( **int**) — numbers of streamApp container
 1. jarInfo (**object**) — uploaded jar information
-1. fromTopics (**array(string)**) — topics of streamApp consume with
-1. toTopics (**array(string)**) — topics of streamApp produce to
+1. from (**array(string)**) — topics of streamApp consume with
+1. to (**array(string)**) — topics of streamApp produce to
 1. state (**option(string)**) — only started/failed streamApp has state
 1. lastModified (**long**) — last modified this jar time
 ----------
@@ -2773,7 +2773,7 @@ This action will graceful stop and remove all docker containers belong to this s
 
 ```http request
 <form name="jarUpload" action="" method="post" enctype="multipart/form-data">
-  <input type="hidden" name="workerClusterName" value="wk00"></input>
+  <input type="hidden" name="cluster" value="wk00"></input>
   <input type="file" name="streamapp"></input>
   <input type="file" name="streamapp"></input>
   <button type="submit">Submit</button>
@@ -2813,7 +2813,7 @@ This action will graceful stop and remove all docker containers belong to this s
 ----------
 ### list uploaded streamApp jars
 
-*GET /v0/stream/jars/${workerClusterName}*
+*GET /v0/stream/jars?cluster=${workerClusterName}*
 
 **Example Response**
 

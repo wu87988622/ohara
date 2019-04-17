@@ -19,15 +19,12 @@ package com.island.ohara.configurator.route
 import java.io.File
 
 import com.island.ohara.agent.docker.ContainerState
-import com.island.ohara.client.configurator.v0.PipelineApi.{Flow, Pipeline, PipelineCreationRequest}
 import com.island.ohara.client.configurator.v0.StreamApi.{StreamListRequest, StreamPropertyRequest}
-import com.island.ohara.client.configurator.v0.TopicApi.TopicCreationRequest
-import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.SmallTest
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.Configurator
-import org.junit.{Before, Test}
+import org.junit.Test
 import org.scalatest.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -45,30 +42,10 @@ class TestStreamRoute extends SmallTest with Matchers {
     StreamApi.accessOfProperty().hostname(configurator.hostname).port(configurator.port)
   private[this] val accessStreamAction =
     StreamApi.accessOfAction().hostname(configurator.hostname).port(configurator.port)
-  private[this] val accessTopic =
-    TopicApi.access().hostname(configurator.hostname).port(configurator.port)
-  private[this] val accessWorker =
-    WorkerApi.access().hostname(configurator.hostname).port(configurator.port)
-  private[this] val accessPipeline =
-    PipelineApi.access().hostname(configurator.hostname).port(configurator.port)
 
-  private[this] val fileSize: Int = 3
-  private[this] var workerCluster: WorkerClusterInfo = _
-  private[this] var pipeline: Pipeline = _
+  private[this] val fileSize: Int = 5
 
   private[this] def awaitResult[T](f: Future[T]): T = Await.result(f, 20 seconds)
-
-  @Before
-  def setUp(): Unit = {
-    // create pipeline
-    workerCluster = awaitResult(accessWorker.list).head
-    val request: PipelineCreationRequest = PipelineCreationRequest(
-      name = "test-stream-pipeline",
-      workerClusterName = Some(workerCluster.name),
-      flows = Seq.empty
-    )
-    pipeline = awaitResult(accessPipeline.add(request))
-  }
 
   @Test
   def testStreamAppListPage(): Unit = {
@@ -76,23 +53,26 @@ class TestStreamRoute extends SmallTest with Matchers {
       val file = File.createTempFile("empty_", ".jar")
       file.getPath
     }
-    // upload files
-    awaitResult(accessStreamList.upload(pipeline.id, filePaths)).foreach(jar => {
+    // upload files (without assign wkName, will upload to pre-defined worker cluster)
+    awaitResult(accessStreamList.upload(filePaths, None)).foreach(jar => {
       jar.jarName.startsWith("empty_") shouldBe true
       jar.name shouldBe "Untitled stream app"
     })
 
-    // get files
-    val res = awaitResult(accessStreamList.list(pipeline.id))
+    // get all files
+    val res = awaitResult(accessStreamList.list(None))
     res.foreach(_.name shouldBe "Untitled stream app")
-    res.size shouldBe 3
+    res.size shouldBe fileSize
+
+    // get files with not exists cluster
+    awaitResult(accessStreamList.list(Some("non_exist_worker_cluster"))).size shouldBe 0
 
     // delete first jar file
     val deleteStreamJar = res.head
     val d = awaitResult(accessStreamList.delete(deleteStreamJar.id))
     d.name shouldBe "Untitled stream app"
     d.jarName shouldBe deleteStreamJar.jarName
-    awaitResult(accessStreamList.list(pipeline.id)).size shouldBe 2
+    awaitResult(accessStreamList.list(None)).size shouldBe fileSize - 1
 
     // update last jar name
     val originJar = res.last
@@ -101,6 +81,17 @@ class TestStreamRoute extends SmallTest with Matchers {
     updated.name shouldBe "Untitled stream app"
     updated.jarName shouldBe "new-name.jar"
 
+    val wkName = awaitResult(configurator.clusterCollie.workerCollie().clusters).keys.head.name
+    // upload same files but specific worker cluster
+    awaitResult(accessStreamList.upload(filePaths, Some(wkName))).foreach(jar => {
+      jar.jarName.startsWith("empty_") shouldBe true
+      jar.name shouldBe "Untitled stream app"
+    })
+    // upload twice to same cluster (fileSize * 2), and delete one jar (-1)
+    awaitResult(accessStreamList.list(Some(wkName))).size shouldBe fileSize * 2 - 1
+    // without parameter, same result as previous
+    awaitResult(accessStreamList.list(None)).size shouldBe fileSize * 2 - 1
+
     filePaths.foreach(new File(_).deleteOnExit())
   }
 
@@ -108,7 +99,7 @@ class TestStreamRoute extends SmallTest with Matchers {
   def testStreamAppPropertyPage(): Unit = {
     val file = File.createTempFile("empty_", ".jar")
 
-    val jarData = awaitResult(accessStreamList.upload(pipeline.id, Seq(file.getPath)))
+    val jarData = awaitResult(accessStreamList.upload(Seq(file.getPath), None))
 
     // get properties
     val id = jarData.head.id
@@ -138,48 +129,24 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamAppName = CommonUtils.assertOnlyNumberAndChar(CommonUtils.randomString(5))
 
     // upload jar
-    val streamJar = awaitResult(accessStreamList.upload(pipeline.id, Seq(file.getPath))).head
-
-    // add topic
-    val fromReq = TopicCreationRequest.apply(Some("from"), Some(workerCluster.brokerClusterName), None, None)
-    val fromTopic = awaitResult(accessTopic.add(fromReq))
-    val toReq = TopicCreationRequest.apply(Some("to"), Some(workerCluster.brokerClusterName), None, None)
-    val toTopic = awaitResult(accessTopic.add(toReq))
+    val streamJar = awaitResult(accessStreamList.upload(Seq(file.getPath), None)).head
 
     // update properties
-    val req = StreamPropertyRequest(streamAppName, Seq(fromTopic.id), Seq(toTopic.id), instances)
+    val req = StreamPropertyRequest(streamAppName, Seq("fromTopic_id"), Seq("toTopic_id"), instances)
     awaitResult(accessStreamProperty.update(streamJar.id, req))
-
-    // add streamApp to pipeline
-    val pipeLineReq: PipelineCreationRequest = PipelineCreationRequest(
-      name = pipeline.id,
-      workerClusterName = Some(workerCluster.name),
-      // fake flow : from topic -> streamApp -> to topic
-      flows = Seq(
-        Flow(fromTopic.id, Seq(streamJar.id)),
-        Flow(streamJar.id, Seq(toTopic.id)),
-      )
-    )
-    awaitResult(accessPipeline.update(pipeline.id, pipeLineReq))
 
     val res1 = awaitResult(accessStreamAction.start(streamJar.id))
     res1.id shouldBe streamJar.id
     res1.name shouldBe streamAppName
-    res1.pipelineId shouldBe pipeline.id
-    res1.from shouldBe Seq(fromTopic.id)
-    res1.to shouldBe Seq(toTopic.id)
+    res1.workerClusterName should not be None
+    res1.from shouldBe Seq("fromTopic_id")
+    res1.to shouldBe Seq("toTopic_id")
     res1.jarInfo.name shouldBe streamJar.jarName
     res1.instances shouldBe instances
     res1.state.get shouldBe ContainerState.RUNNING.name
 
-    val res2 = awaitResult(accessStreamAction.status(streamJar.id))
-    res2.state.get shouldBe ContainerState.RUNNING.name
-
-    val res3 = awaitResult(accessStreamAction.stop(streamJar.id))
-    res3.state shouldBe None
-
-    an[IllegalArgumentException] should be thrownBy
-      awaitResult(accessStreamAction.status(streamJar.id))
+    val res2 = awaitResult(accessStreamAction.stop(streamJar.id))
+    res2.state shouldBe None
 
     file.deleteOnExit()
   }
@@ -203,7 +170,7 @@ class TestStreamRoute extends SmallTest with Matchers {
     val streamAppName = CommonUtils.assertOnlyNumberAndChar(CommonUtils.randomString(5))
 
     // upload jar
-    val streamJar = awaitResult(accessStreamList.upload(pipeline.id, Seq(file.getPath))).head
+    val streamJar = awaitResult(accessStreamList.upload(Seq(file.getPath), None)).head
 
     // update properties
     val req = StreamPropertyRequest(streamAppName, Seq("topic1_id"), Seq("topic2_id"), 1)

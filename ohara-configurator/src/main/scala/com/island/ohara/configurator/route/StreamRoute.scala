@@ -25,9 +25,9 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent.docker.ContainerState
 import com.island.ohara.agent.{BrokerCollie, Crane, WorkerCollie}
-import com.island.ohara.client.configurator.v0.PipelineApi.Pipeline
+import com.island.ohara.client.configurator.v0.JarApi.JarInfo
 import com.island.ohara.client.configurator.v0.StreamApi._
-import com.island.ohara.client.configurator.v0.{JarApi, StreamApi}
+import com.island.ohara.client.configurator.v0.{Parameters, StreamApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.jar.JarStore
 import com.island.ohara.configurator.route.RouteUtils._
@@ -46,31 +46,28 @@ private[configurator] object StreamRoute {
   /**
     * save the streamApp properties
     *
-    * @param pipelineId the pipeline id that streamApp sited in
-    * @param clusterName the streamApp cluster name
+    * @param workerClusterName the pipeline id that streamApp sited in
     * @param streamId unique uuid for streamApp
     * @param name customize name
     * @param instances number of streamApp running
-    * @param jarInfo jar of streamApp running with
+    * @param jarInfo jar information of streamApp running with
     * @param from streamApp consume with
     * @param to streamApp produce to
     * @param lastModified last modified time for this data
     * @return '''StreamApp''' object
     */
-  private[this] def toStore(pipelineId: String,
-                            clusterName: String = "",
+  private[this] def toStore(workerClusterName: String,
                             streamId: String,
                             // default streamApp component name
                             name: String = "Untitled stream app",
                             // default instances
                             instances: Int = 0,
-                            jarInfo: JarApi.JarInfo,
+                            jarInfo: JarInfo,
                             from: Seq[String] = Seq.empty,
                             to: Seq[String] = Seq.empty,
                             lastModified: Long): StreamAppDescription =
     StreamAppDescription(
-      pipelineId = pipelineId,
-      clusterName = clusterName,
+      workerClusterName = workerClusterName,
       id = streamId,
       name = name,
       instances = instances,
@@ -88,8 +85,8 @@ private[configurator] object StreamRoute {
     */
   private[this] def assertParameters(data: StreamAppDescription): Unit = {
     CommonUtils.requireNonEmpty(
-      data.pipelineId,
-      () => "pipelineId fail assert"
+      data.workerClusterName,
+      () => "workerClusterName fail assert"
     )
     CommonUtils.requireNonEmpty(data.id, () => "id fail assert")
     require(data.instances > 0, "instances should bigger than 0")
@@ -109,14 +106,14 @@ private[configurator] object StreamRoute {
         complete(StatusCodes.BadRequest -> "wrong uri")
       } ~
         pathPrefix(STREAM_LIST_PREFIX_PATH) {
-          pathEnd {
-            complete(StatusCodes.BadRequest -> "wrong uri")
-          } ~
-            path(Segment) { id =>
-              //upload jars
-              post {
-                storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
-                  complete(
+          //upload jars
+          post {
+            formFields(Parameters.CLUSTER_NAME.?) { reqName =>
+              storeUploadedFiles(StreamApi.INPUT_KEY, StreamApi.saveTmpFile) { files =>
+                complete(
+                  // here we try to find the pre-defined wk if not assigned by request
+                  CollieUtils.workerClient(reqName).map(_._1.name).map { wkName =>
+                    log.debug(s"worker: $wkName, files: ${files.map(_._1.fileName)}")
                     Future
                       .sequence(files.map {
                         case (metadata, file) =>
@@ -127,75 +124,79 @@ private[configurator] object StreamRoute {
                           }
                           jarStore.add(file, s"${metadata.fileName}")
                       })
-                      .map { jarInfos =>
-                        val jars = Future.sequence(jarInfos.map { jarInfo =>
-                          val time = CommonUtils.current()
-                          val streamId = CommonUtils.uuid()
-                          store
-                            .add(
-                              toStore(
-                                // In here, id is pipelineId which passed from API
-                                pipelineId = id,
-                                streamId = streamId,
-                                jarInfo = jarInfo,
-                                lastModified = time
+                      .map {
+                        jarInfos =>
+                          val jars = Future.sequence(jarInfos.map { jarInfo =>
+                            val time = CommonUtils.current()
+                            val streamId = CommonUtils.uuid()
+                            store
+                              .add(
+                                toStore(
+                                  workerClusterName = wkName,
+                                  streamId = streamId,
+                                  jarInfo = jarInfo,
+                                  lastModified = time
+                                )
                               )
-                            )
-                            .map { data =>
-                              StreamListResponse(
-                                data.id,
-                                data.name,
-                                data.jarInfo.name,
-                                data.lastModified
-                              )
-                            }
-                        })
-                        //delete temp jars after success
-                        files.foreach {
-                          case (_, file) => file.deleteOnExit()
-                        }
-                        jars
+                              .map { data =>
+                                StreamListResponse(
+                                  data.id,
+                                  data.name,
+                                  jarInfo.name,
+                                  data.lastModified
+                                )
+                              }
+                          })
+                          //delete temp jars after success
+                          files.foreach {
+                            case (_, file) => file.deleteOnExit()
+                          }
+                          jars
                       }
-                  )
-                }
-              } ~
-                //return list
-                get {
-                  complete(
-                    store
-                      .values[StreamAppDescription]
-                      .map(
-                        // In here, id is pipelineId which passed from API
-                        _.filter(f => f.pipelineId.equals(id)).map(
-                          data =>
-                            StreamListResponse(
-                              data.id,
-                              data.name,
-                              data.jarInfo.name,
-                              data.lastModified
-                          )
-                        )
-                      )
-                  )
-                } ~
-                //delete jar
-                delete {
-                  // In here, id is streamApp id which passed from API
-                  assertNotRelated2Pipeline(id)
-                  complete(store.remove[StreamAppDescription](id).flatMap { data =>
-                    jarStore
-                      .remove(data.jarInfo.id)
-                      .map(
-                        _ =>
+                  }
+                )
+              }
+            }
+          } ~
+            //return list
+            get {
+              parameter(Parameters.CLUSTER_NAME.?) { wkName =>
+                complete(
+                  store
+                    .values[StreamAppDescription]
+                    .map(
+                      // filter specific cluster only, or return all otherwise
+                      _.filter(f => wkName.isEmpty || f.workerClusterName.equals(wkName.get)).map(
+                        data =>
                           StreamListResponse(
                             data.id,
                             data.name,
                             data.jarInfo.name,
                             data.lastModified
-                        )
+                        )))
+                )
+              }
+            } ~
+            // need id to delete / update jar
+            path(Segment) { id =>
+              //delete jar
+              delete {
+                // check the jar is not used in pipeline
+                assertNotRelated2Pipeline(id)
+                complete(store.remove[StreamAppDescription](id).flatMap { data =>
+                  jarStore
+                    .remove(data.jarInfo.id)
+                    .map(
+                      _ =>
+                        StreamListResponse(
+                          data.id,
+                          data.name,
+                          data.jarInfo.name,
+                          data.lastModified
                       )
-                  })
-                } ~
+                    )
+                })
+              } ~
                 //update jar name
                 put {
                   entity(as[StreamListRequest]) { req =>
@@ -221,14 +222,8 @@ private[configurator] object StreamRoute {
                                 id,
                                 previous =>
                                   Future.successful(
-                                    toStore(
-                                      pipelineId = previous.pipelineId,
-                                      streamId = previous.id,
-                                      name = previous.name,
-                                      instances = previous.instances,
+                                    previous.copy(
                                       jarInfo = jarInfo,
-                                      from = previous.from,
-                                      to = previous.to,
                                       lastModified = CommonUtils.current()
                                     )
                                 )
@@ -293,25 +288,19 @@ private[configurator] object StreamRoute {
                   entity(as[StreamPropertyRequest]) { req =>
                     complete(
                       store
-                        .value[StreamAppDescription](id)
-                        .flatMap { data =>
-                          val newData = toStore(
-                            pipelineId = data.pipelineId,
-                            // we use streamApp unique id as the cluster name
-                            clusterName = data.id.replaceAll("-", ""),
-                            streamId = data.id,
-                            name = req.name,
-                            instances = req.instances,
-                            jarInfo = data.jarInfo,
-                            from = req.from,
-                            to = req.to,
-                            lastModified = CommonUtils.current()
+                        .update[StreamAppDescription](
+                          id,
+                          previous =>
+                            Future.successful(
+                              previous.copy(
+                                name = req.name,
+                                instances = req.instances,
+                                from = req.from,
+                                to = req.to,
+                                lastModified = CommonUtils.current()
+                              )
                           )
-                          store.update[StreamAppDescription](
-                            id,
-                            _ => Future.successful(newData)
-                          )
-                        }
+                        )
                         .map(
                           newData =>
                             StreamPropertyResponse(
@@ -342,16 +331,9 @@ private[configurator] object StreamRoute {
                   // 1) use any available node of worker cluster to run streamApp
                   // 2) use one from/to pair topic (multiple from/to topics will need to discuss flow)
 
-                  // get the broker info and topic info from worker cluster
-                  // TODO : we should get the workerClusterName by url request, see
-                  // TODO : https://github.com/oharastream/ohara/issues/751
-                  store
-                    .value[Pipeline](data.pipelineId)
-                    .flatMap { pipeline =>
-                      CollieUtils.both(
-                        Some(pipeline.workerClusterName)
-                      )
-                    }
+                  // get the broker info and topic info from worker cluster name
+                  CollieUtils
+                    .both(Some(data.workerClusterName))
                     // get broker props from worker cluster
                     .map { case (_, topicAdmin, _, _) => topicAdmin.connectionProps }
                     .flatMap { bkProps =>
@@ -364,7 +346,7 @@ private[configurator] object StreamRoute {
                             crane
                               .streamWarehouse()
                               .creator()
-                              .clusterName(data.clusterName)
+                              .clusterName(formatClusterName(data.id))
                               .instances(data.instances)
                               .imageName(STREAMAPP_IMAGE)
                               .jarUrl(url.toString)
@@ -402,11 +384,11 @@ private[configurator] object StreamRoute {
                 store.value[StreamAppDescription](id).flatMap { data =>
                   crane
                   // if remove failed, we throw the exception instead of swallowing it
-                    .remove(data.clusterName)
+                    .remove(formatClusterName(data.id))
                     .map(
                       _ =>
                         StreamClusterInfo(
-                          name = data.clusterName,
+                          name = formatClusterName(data.id),
                           imageName = STREAMAPP_IMAGE,
                           state = None
                       ))
@@ -417,23 +399,6 @@ private[configurator] object StreamRoute {
                       )
                     }
                 }
-              )
-            }
-          } ~
-          path(STATUS_COMMAND) {
-            put {
-              complete(
-                store
-                  .value[StreamAppDescription](id)
-                  .flatMap { data =>
-                    crane.get(data.clusterName).map(_._1.asInstanceOf[StreamClusterInfo])
-                  }
-                  .flatMap { info =>
-                    store.update[StreamAppDescription](
-                      id,
-                      data => Future.successful(data.copy(state = info.state))
-                    )
-                  }
               )
             }
           }

@@ -37,7 +37,7 @@ object StreamApi {
   final val MAX_FILE_SIZE = 1 * 1024 * 1024L
 
   /**
-    * StreamApp List Page "key name" for form-data
+    * StreamApp List Page file "key name" for form-data
     */
   final val INPUT_KEY = "streamapp"
 
@@ -55,13 +55,27 @@ object StreamApi {
     */
   final val LIMIT_OF_DOCKER_NAME_LENGTH: Int = 60
 
-  private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_DOCKER_NAME_LENGTH)
-    throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_DOCKER_NAME_LENGTH. actual: ${s.length}")
-  else s
-
   final val PREFIX_KEY = "ost"
 
   final val DIVIDER: String = "-"
+
+  final val JARURL_KEY: String = "STREAMAPP_JARURL"
+  final val APPID_KEY: String = "STREAMAPP_APPID"
+  final val SERVERS_KEY: String = "STREAMAPP_SERVERS"
+  final val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
+  final val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
+
+  /**
+    * StreamApp Docker Image name
+    */
+  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
+
+  val STREAM_PREFIX_PATH: String = "stream"
+  val STREAM_LIST_PREFIX_PATH: String = "jars"
+  val STREAM_PROPERTY_PREFIX_PATH: String = "property"
+  val START_COMMAND: String = "start"
+  val STOP_COMMAND: String = "stop"
+  val STATUS_COMMAND: String = "status"
 
   /**
     * format unique applicationId for the streamApp.
@@ -76,16 +90,14 @@ object StreamApi {
         streamId
       ).mkString(DIVIDER))
 
-  final val JARURL_KEY: String = "STREAMAPP_JARURL"
-  final val APPID_KEY: String = "STREAMAPP_APPID"
-  final val SERVERS_KEY: String = "STREAMAPP_SERVERS"
-  final val FROM_TOPIC_KEY: String = "STREAMAPP_FROMTOPIC"
-  final val TO_TOPIC_KEY: String = "STREAMAPP_TOTOPIC"
-
   /**
-    * StreamApp Docker Image name
+    * format the cluster name by unique id
+    *
+    * @param id the streamApp unique id
+    * @return cluster name
     */
-  final val STREAMAPP_IMAGE: String = s"oharastream/streamapp:${VersionUtils.VERSION}"
+  def formatClusterName(id: String): String =
+    CommonUtils.assertOnlyNumberAndChar(id.replaceAll("-", ""))
 
   /**
     * create temp file(with suffix .tmp) inside temp folder
@@ -95,28 +107,23 @@ object StreamApi {
     */
   def saveTmpFile(fileInfo: FileInfo): File = CommonUtils.createTempFile(fileInfo.fileName)
 
-  val STREAM_PREFIX_PATH: String = "stream"
-  val STREAM_LIST_PREFIX_PATH: String = "jars"
-  val STREAM_PROPERTY_PREFIX_PATH: String = "property"
-  val START_COMMAND: String = "start"
-  val STOP_COMMAND: String = "stop"
-  val STATUS_COMMAND: String = "status"
+  private[this] def assertLength(s: String): String = if (s.length > LIMIT_OF_DOCKER_NAME_LENGTH)
+    throw new IllegalArgumentException(s"limit of length is $LIMIT_OF_DOCKER_NAME_LENGTH. actual: ${s.length}")
+  else s
 
   /**
     * the streamApp description that is kept in ohara Stores
     *
-    * @param pipelineId the ohara pipeline id
-    * @param clusterName the streamApp cluster name
+    * @param workerClusterName the worker cluster name
     * @param id the streamApp unique id
     * @param name streamApp name in pipeline
     * @param instances numbers of streamApp running container
-    * @param jarInfo saving jar information
+    * @param jarInfo uploaded jar information
     * @param from the candidate topics for streamApp consume from
     * @param to the candidate topics for streamApp produce to
     * @param lastModified this data change time
     */
-  final case class StreamAppDescription(pipelineId: String,
-                                        clusterName: String,
+  final case class StreamAppDescription(workerClusterName: String,
                                         id: String,
                                         name: String,
                                         instances: Int,
@@ -129,7 +136,7 @@ object StreamApi {
     override def kind: String = "streamApp"
     override def toString: String =
       s"""
-          pipeline: $pipelineId,
+          workerClusterName: $workerClusterName,
           id: $id,
           name: $name,
           instances: $instances,
@@ -138,7 +145,7 @@ object StreamApi {
           toTopics: $to
       """.stripMargin
   }
-  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat10(
+  implicit val STREAM_ACTION_RESPONSE_JSON_FORMAT: RootJsonFormat[StreamAppDescription] = jsonFormat9(
     StreamAppDescription)
 
   /**
@@ -186,9 +193,24 @@ object StreamApi {
   )
 
   sealed abstract class ActionAccess extends BasicAccess(s"$STREAM_PREFIX_PATH") {
+
+    /**
+      *  start a streamApp
+      *
+      * @param id streamApp component id
+      * @param executionContext execution context
+      * @return status of streamApp ("RUNNING" if success, "EXITED" if fail)
+      */
     def start(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
+
+    /**
+      * stop a streamApp
+      *
+      * @param id streamApp component id
+      * @param executionContext execution context
+      * @return status of streamApp (None if stop successful, or throw exception)
+      */
     def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
-    def status(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription]
   }
   def accessOfAction(): ActionAccess = new ActionAccess {
     private[this] def url(id: String, action: String): String =
@@ -197,35 +219,71 @@ object StreamApi {
       exec.put[StreamAppDescription, ErrorApi.Error](url(id, START_COMMAND))
     override def stop(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
       exec.put[StreamAppDescription, ErrorApi.Error](url(id, STOP_COMMAND))
-    override def status(id: String)(implicit executionContext: ExecutionContext): Future[StreamAppDescription] =
-      exec.put[StreamAppDescription, ErrorApi.Error](url(id, STATUS_COMMAND))
   }
 
   sealed abstract class ListAccess extends BasicAccess(s"$STREAM_PREFIX_PATH/$STREAM_LIST_PREFIX_PATH") {
-    def list(pipeline_id: String)(implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
-    def upload(pipeline_id: String, filePaths: Seq[String])(
+
+    /**
+      * list jar information of uploading streamApp jars
+      *
+      * @param wkName query parameter to filter by assigned worker cluster name
+      * @param executionContext execution context
+      * @return jar list in the worker cluster name, or all jars if not specify
+      */
+    def list(wkName: Option[String])(implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
+
+    /**
+      * upload streamApp jars to worker cluster,
+      * will try to find pre-defined worker cluster if not assigned worker cluster name
+      *
+      * @param filePaths jar path list
+      * @param wkName uploaded worker cluster name
+      * @param executionContext execution context
+      * @return upload jars to assigned worker cluster, or pre-defined worker cluster
+      */
+    def upload(filePaths: Seq[String], wkName: Option[String])(
       implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] =
       upload(
-        pipeline_id: String,
         filePaths: Seq[String],
+        wkName,
         INPUT_KEY,
         CONTENT_TYPE
       )
-    def upload(pipeline_id: String, filePaths: Seq[String], inputKey: String, contentType: ContentType)(
+    def upload(filePaths: Seq[String], wkName: Option[String], inputKey: String, contentType: ContentType)(
       implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]]
-    def delete(jar_id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse]
-    def update(jar_id: String, request: StreamListRequest)(
+
+    /**
+      * delete streamApp jar by id
+      *
+      * @param id streamApp id
+      * @param executionContext execution context
+      * @return the deleted jar
+      */
+    def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse]
+
+    /**
+      * update jar information
+      *
+      * @param id streamApp id
+      * @param request update request
+      * @param executionContext execution context
+      * @return the updated jar
+      */
+    def update(id: String, request: StreamListRequest)(
       implicit executionContext: ExecutionContext): Future[StreamListResponse]
   }
-
   // To avoid different charset handle, replace the malformedInput and unMappable char
   implicit val codec = Codec("UTF-8")
   codec.onMalformedInput(CodingErrorAction.REPLACE)
   codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
   def accessOfList(): ListAccess = new ListAccess {
-    private[this] def request(target: String, inputKey: String, contentType: ContentType, filePaths: Seq[String])(
-      implicit executionContext: ExecutionContext): Future[HttpRequest] =
-      Marshal(Multipart.FormData(filePaths.map(filePath => {
+    private[this] def request(
+      target: String,
+      inputKey: String,
+      contentType: ContentType,
+      filePaths: Seq[String],
+      wkName: Option[String])(implicit executionContext: ExecutionContext): Future[HttpRequest] = {
+      var stricts = filePaths.map(filePath => {
         Multipart.FormData.BodyPart.Strict(
           inputKey,
           HttpEntity(
@@ -234,29 +292,33 @@ object StreamApi {
           ),
           Map("filename" -> new File(filePath).getName)
         )
-      }): _*))
+      })
+      if (wkName.isDefined) stricts :+= Multipart.FormData.BodyPart.Strict(Parameters.CLUSTER_NAME, wkName.get)
+
+      Marshal(Multipart.FormData(stricts: _*))
         .to[RequestEntity]
         .map(
           entity => HttpRequest(HttpMethods.POST, uri = target, entity = entity)
         )
+    }
 
-    override def list(pipeline_id: String)(
+    override def list(wkName: Option[String])(
       implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] =
       exec.get[Seq[StreamListResponse], ErrorApi.Error](
-        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id")
+        Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}",
+                                       wkName.getOrElse("")))
 
-    override def upload(pipeline_id: String, filePaths: Seq[String], inputKey: String, contentType: ContentType)(
+    override def upload(filePaths: Seq[String], wkName: Option[String], inputKey: String, contentType: ContentType)(
       implicit executionContext: ExecutionContext): Future[Seq[StreamListResponse]] = {
-      request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$pipeline_id", inputKey, contentType, filePaths)
+      request(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}", inputKey, contentType, filePaths, wkName)
         .flatMap(exec.request[Seq[StreamListResponse], ErrorApi.Error])
     }
-    override def delete(jar_id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse] =
-      exec.delete[StreamListResponse, ErrorApi.Error](
-        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id")
-    override def update(jar_id: String, request: StreamListRequest)(
+    override def delete(id: String)(implicit executionContext: ExecutionContext): Future[StreamListResponse] =
+      exec.delete[StreamListResponse, ErrorApi.Error](s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id")
+    override def update(id: String, request: StreamListRequest)(
       implicit executionContext: ExecutionContext): Future[StreamListResponse] =
       exec.put[StreamListRequest, StreamListResponse, ErrorApi.Error](
-        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$jar_id",
+        s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$id",
         request
       )
   }

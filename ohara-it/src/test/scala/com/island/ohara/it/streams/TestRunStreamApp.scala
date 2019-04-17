@@ -32,7 +32,6 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
   private[this] val configurator =
     Configurator.builder().advertisedHostname(CommonUtils.hostname()).advertisedPort(0).fake().build()
 
-  private[this] val pipeline_id = "pipeline-id"
   private[this] val instances = 1
 
   private[this] val streamAppActionAccess =
@@ -87,7 +86,7 @@ class TestRunStreamApp extends IntegrationTest with Matchers {
 
     // Upload Jar
     val jarData = result(
-      streamAppListAccess.upload(pipeline_id, filePaths)
+      streamAppListAccess.upload(filePaths, None)
     )
 
     //Get topic information

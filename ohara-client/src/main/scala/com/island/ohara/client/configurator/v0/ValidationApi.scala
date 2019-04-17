@@ -173,9 +173,7 @@ object ValidationApi {
   def access(): Access = new Access(VALIDATION_PREFIX_PATH) {
 
     private[this] def url(prefix: String, target: String): String = {
-      val url = s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix"
-      if (target == null) url
-      else Parameters.appendTargetCluster(url, target)
+      Parameters.appendTargetCluster(s"http://${_hostname}:${_port}/${_version}/${_prefixPath}/$prefix", target)
     }
 
     override def verify(request: HdfsValidationRequest, target: String)(

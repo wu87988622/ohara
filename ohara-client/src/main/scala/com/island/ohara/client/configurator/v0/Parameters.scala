@@ -18,6 +18,8 @@ package com.island.ohara.client.configurator.v0
 
 import java.util.Objects
 
+import com.island.ohara.common.util.CommonUtils
+
 /**
   * a collection of query parameter
   */
@@ -26,9 +28,14 @@ object Parameters {
 
   /**
     * CLUSTER is our first query parameter. We introduce this method to append cluster parameter to url.
+    * NOTED: If the `target` string is empty, return no parameter url
     */
   def appendTargetCluster(url: String, target: String): String =
-    Objects.requireNonNull(url) + s"?$CLUSTER_NAME=${Objects.requireNonNull(target)}"
+    CommonUtils
+      .requireNonEmpty(url)
+      .concat(
+        if (!CommonUtils.isEmpty(target)) s"?$CLUSTER_NAME=${Objects.requireNonNull(target)}"
+        else "")
 
   /**
     * this query parameter works for cluster operation. see ZookeeperRoute, BrokerRoute and WorkerRoute
