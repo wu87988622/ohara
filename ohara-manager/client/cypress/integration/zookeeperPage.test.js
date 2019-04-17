@@ -28,10 +28,9 @@ describe('ZookeeperPage', () => {
     cy.request('GET', 'api/zookeepers')
       .then(res => res.body[0].clientPort) // we now only have one broker cluster!
       .as('clientPort');
-
     cy.get('@clientPort').then(port => {
-      const expected = `${zookeeperList}:${port}`;
-      cy.getByLabelText('Zookeeper list').should('have.value', expected);
+      cy.getByText(String(port)).should('have.length', 1);
+      cy.getByText(zookeeperList).should('have.length', 1);
     });
   });
 });
