@@ -30,8 +30,8 @@ describe('BrokerPage', () => {
       .as('clientPort');
 
     cy.get('@clientPort').then(port => {
-      const expected = `${brokerList}:${port}`;
-      cy.getByLabelText('Broker list').should('have.value', expected);
+      cy.getByText(String(port)).should('have.length', 1);
+      cy.getByText(brokerList).should('have.length', 1);
     });
   });
 
