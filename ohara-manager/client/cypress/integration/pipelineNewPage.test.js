@@ -15,6 +15,7 @@
  */
 
 import * as URLS from '../../src/constants/urls';
+import { CONNECTOR_TYPES } from '../../src/constants/pipelines';
 import { makeServiceNames } from '../utils';
 
 describe('PipelineNewPage', () => {
@@ -53,18 +54,65 @@ describe('PipelineNewPage', () => {
       });
   });
 
-  it('Creates a FTP source connector', () => {
-    cy.location('pathname').should('contain', '/pipelines/new/');
-    cy.getByTestId('toolbar-sources').click();
+  context('Source connectors', () => {
+    beforeEach(() => {
+      cy.getByTestId('toolbar-sources').click();
+      cy.getByText('Add a new source connector').should('be.exist');
+    });
 
-    cy.getByText('Add a new source connector').should('have.length', 1);
-    cy.getByText('com.island.ohara.connector.ftp.FtpSource').click();
+    it('adds a FTP source connector', () => {
+      cy.getByText(CONNECTOR_TYPES.ftpSource)
+        .click()
+        .getByText('Add')
+        .click();
 
-    cy.getByText('Add').click();
+      cy.getByText('Untitled source')
+        .should('have.length', '1')
+        .get('.node-type')
+        .should('contain', 'FtpSource');
+    });
 
-    cy.getByText('Untitled source')
-      .should('have.length', '1')
-      .get('.node-type')
-      .should('contain', 'FtpSource');
+    it('adds a JDBC source connector', () => {
+      cy.getByText(CONNECTOR_TYPES.jdbcSource)
+        .click()
+        .getByText('Add')
+        .click();
+
+      cy.getByText('Untitled source')
+        .should('have.length', '1')
+        .get('.node-type')
+        .should('contain', 'JDBCSourceConnector');
+    });
+  });
+
+  context('Sink connectors', () => {
+    beforeEach(() => {
+      cy.getByTestId('toolbar-sinks').click();
+      cy.getByText('Add a new sink connector').should('be.exist');
+    });
+
+    it('adds a FTP sink connector', () => {
+      cy.getByText(CONNECTOR_TYPES.ftpSink)
+        .click()
+        .getByText('Add')
+        .click();
+
+      cy.getByText('Untitled sink')
+        .should('have.length', '1')
+        .get('.node-type')
+        .should('contain', 'FtpSink');
+    });
+
+    it('adds a HDFS sink connector', () => {
+      cy.getByText(CONNECTOR_TYPES.hdfsSink)
+        .click()
+        .getByText('Add')
+        .click();
+
+      cy.getByText('Untitled sink')
+        .should('have.length', '1')
+        .get('.node-type')
+        .should('contain', 'HDFSSinkConnector');
+    });
   });
 });
